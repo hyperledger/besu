@@ -66,6 +66,13 @@ public interface GenesisConfigOptions {
   boolean isClique();
 
   /**
+   * Is a Proof of Authority network.
+   *
+   * @return the boolean
+   */
+  boolean isPoa();
+
+  /**
    * Is consensus migration boolean.
    *
    * @return the boolean
@@ -394,6 +401,11 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getThanosBlockNumber();
 
+  /**
+   * Block number to enable Falcon signature verifier precompiled feature.
+   *
+   * @return block number of falcon signature precompiled verifier
+   */
   OptionalLong getLacchainPostQuantumBlockNumber();
 
   /**
@@ -460,21 +472,6 @@ public interface GenesisConfigOptions {
    * @return the transitions
    */
   TransitionsConfigOptions getTransitions();
-
-  /**
-   * Set Besu in Quorum-compatibility mode
-   *
-   * @return true, if Besu is running on Quorum-compatibility mode, false, otherwise.
-   */
-  boolean isQuorum();
-
-  /**
-   * Block number to activate Quorum Permissioning. This option is used on Quorum-compatibility
-   * mode.
-   *
-   * @return block number to activate Quorum Permissioning
-   */
-  OptionalLong getQip714BlockNumber();
 
   /**
    * The PoW algorithm associated with the genesis file.

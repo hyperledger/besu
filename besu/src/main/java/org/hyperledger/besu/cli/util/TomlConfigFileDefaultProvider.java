@@ -15,6 +15,8 @@
 package org.hyperledger.besu.cli.util;
 
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.util.number.Fraction;
+import org.hyperledger.besu.util.number.Percentage;
 
 import java.io.File;
 import java.io.IOException;
@@ -88,6 +90,10 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
     } else if (optionSpec.type().equals(Double.class) || optionSpec.type().equals(double.class)) {
       defaultValue = getNumericEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(Float.class) || optionSpec.type().equals(float.class)) {
+      defaultValue = getNumericEntryAsString(optionSpec);
+    } else if (optionSpec.type().equals(Percentage.class)) {
+      defaultValue = getNumericEntryAsString(optionSpec);
+    } else if (optionSpec.type().equals(Fraction.class)) {
       defaultValue = getNumericEntryAsString(optionSpec);
     } else { // else will be treated as String
       defaultValue = getEntryAsString(optionSpec);

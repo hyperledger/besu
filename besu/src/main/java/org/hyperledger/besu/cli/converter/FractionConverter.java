@@ -20,12 +20,12 @@ import org.hyperledger.besu.util.number.Fraction;
 import picocli.CommandLine;
 
 /** The Fraction converter to convert floats in CLI. */
-public class FractionConverter implements CommandLine.ITypeConverter<Float> {
+public class FractionConverter implements CommandLine.ITypeConverter<Fraction> {
 
   @Override
-  public Float convert(final String value) throws FractionConversionException {
+  public Fraction convert(final String value) throws FractionConversionException {
     try {
-      return Fraction.fromString(value).getValue();
+      return Fraction.fromString(value);
     } catch (final NullPointerException | IllegalArgumentException e) {
       throw new FractionConversionException(value);
     }

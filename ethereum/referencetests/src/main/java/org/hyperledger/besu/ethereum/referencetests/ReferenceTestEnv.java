@@ -19,6 +19,7 @@ package org.hyperledger.besu.ethereum.referencetests;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -39,7 +40,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import org.apache.tuweni.bytes.Bytes;
@@ -47,7 +47,6 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 
 /** A memory holder for testing. */
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class ReferenceTestEnv extends BlockHeader {
 
   public record EnvWithdrawal(
@@ -79,6 +78,12 @@ public class ReferenceTestEnv extends BlockHeader {
 
   private final Map<Long, Hash> blockHashes;
 
+  private final String parentExcessBlobGas;
+
+  private final String parentBlobGasUsed;
+
+  private final Bytes32 beaconRoot;
+
   /**
    * Public constructor.
    *
@@ -99,19 +104,31 @@ public class ReferenceTestEnv extends BlockHeader {
       @JsonProperty("currentBaseFee") final String baseFee,
       @JsonProperty("currentTimestamp") final String timestamp,
       @JsonProperty("currentRandom") final String random,
+      @JsonProperty("currentStateRoot") final String stateRoot,
       @JsonProperty("previousHash") final String previousHash,
       @JsonProperty("parentDifficulty") final String parentDifficulty,
       @JsonProperty("parentBaseFee") final String parentBaseFee,
       @JsonProperty("parentGasUsed") final String parentGasUsed,
       @JsonProperty("parentGasLimit") final String parentGasLimit,
       @JsonProperty("parentTimestamp") final String parentTimestamp,
+      @JsonProperty("ommers") final List<String> _ommers,
+      @JsonProperty("parentUncleHash") final String _parentUncleHash,
       @JsonProperty("withdrawals") final List<EnvWithdrawal> withdrawals,
-      @JsonProperty("blockHashes") final Map<String, String> blockHashes) {
+      @JsonProperty("blockHashes") final Map<String, String> blockHashes,
+      @JsonProperty("currentExcessBlobGas") final String currentExcessBlobGas,
+      @JsonProperty("currentBlobGasUsed") final String currentBlobGasUsed,
+      @JsonProperty("currentExcessDataGas") final String currentExcessDataGas,
+      @JsonProperty("currentDataGasUsed") final String currentDataGasUsed,
+      @JsonProperty("parentExcessBlobGas") final String parentExcessBlobGas,
+      @JsonProperty("parentBlobGasUsed") final String parentBlobGasUsed,
+      @JsonProperty("parentExcessDataGas") final String parentExcessDataGas,
+      @JsonProperty("parentDataGasUsed") final String parentDataGasUsed,
+      @JsonProperty("beaconRoot") final String beaconRoot) {
     super(
         generateTestBlockHash(previousHash, number),
         Hash.EMPTY_LIST_HASH, // ommersHash
         Address.fromHexString(coinbase),
-        Hash.EMPTY, // stateRoot
+        Optional.ofNullable(stateRoot).map(Hash::fromHexString).orElse(Hash.EMPTY), // stateRoot
         Hash.EMPTY, // transactionsRoot
         Hash.EMPTY, // receiptsRoot
         new LogsBloomFilter(),
@@ -125,14 +142,23 @@ public class ReferenceTestEnv extends BlockHeader {
         Optional.ofNullable(random).map(Difficulty::fromHexString).orElse(Difficulty.ZERO),
         0L,
         null, // withdrawalsRoot
+        currentBlobGasUsed == null
+            ? currentDataGasUsed == null ? null : Long.decode(currentDataGasUsed)
+            : Long.decode(currentBlobGasUsed),
+        currentExcessBlobGas == null
+            ? currentExcessDataGas == null ? null : BlobGas.fromHexString(currentExcessDataGas)
+            : BlobGas.fromHexString(currentExcessBlobGas),
+        beaconRoot == null ? null : Bytes32.fromHexString(beaconRoot),
         null, // depositsRoot
-        null,
         new MainnetBlockHeaderFunctions());
     this.parentDifficulty = parentDifficulty;
     this.parentBaseFee = parentBaseFee;
     this.parentGasUsed = parentGasUsed;
     this.parentGasLimit = parentGasLimit;
     this.parentTimestamp = parentTimestamp;
+    this.parentExcessBlobGas =
+        parentExcessBlobGas == null ? parentExcessDataGas : parentExcessBlobGas;
+    this.parentBlobGasUsed = parentBlobGasUsed == null ? parentDataGasUsed : parentBlobGasUsed;
     this.withdrawals =
         withdrawals == null
             ? List.of()
@@ -146,6 +172,7 @@ public class ReferenceTestEnv extends BlockHeader {
                         Map.entry(
                             Long.decode(entry.getKey()), Hash.fromHexString(entry.getValue())))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    this.beaconRoot = beaconRoot == null ? null : Hash.fromHexString(beaconRoot);
   }
 
   @Override
@@ -195,6 +222,14 @@ public class ReferenceTestEnv extends BlockHeader {
                           .buildBlockHeader(),
                       null)));
     }
+    if (excessBlobGas.isEmpty() && parentExcessBlobGas != null && parentBlobGasUsed != null) {
+      builder.excessBlobGas(
+          BlobGas.of(
+              protocolSpec
+                  .getGasCalculator()
+                  .computeExcessBlobGas(
+                      Long.decode(parentExcessBlobGas), Long.decode(parentGasUsed))));
+    }
 
     return builder.buildBlockHeader();
   }
@@ -217,7 +252,10 @@ public class ReferenceTestEnv extends BlockHeader {
         && Objects.equals(parentGasUsed, that.parentGasUsed)
         && Objects.equals(parentGasLimit, that.parentGasLimit)
         && Objects.equals(parentTimestamp, that.parentTimestamp)
-        && Objects.equals(withdrawals, that.withdrawals);
+        && Objects.equals(parentBlobGasUsed, that.parentBlobGasUsed)
+        && Objects.equals(parentExcessBlobGas, that.parentExcessBlobGas)
+        && Objects.equals(withdrawals, that.withdrawals)
+        && Objects.equals(beaconRoot, that.beaconRoot);
   }
 
   @Override
@@ -229,6 +267,9 @@ public class ReferenceTestEnv extends BlockHeader {
         parentGasUsed,
         parentGasLimit,
         parentTimestamp,
-        withdrawals);
+        parentBlobGasUsed,
+        parentExcessBlobGas,
+        withdrawals,
+        beaconRoot);
   }
 }

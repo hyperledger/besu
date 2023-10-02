@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.datatypes.AccessListEntry;
+import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.evm.AccessListEntry;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.List;
 
@@ -37,6 +38,7 @@ import org.apache.tuweni.bytes.Bytes;
   "gasPrice",
   "maxPriorityFeePerGas",
   "maxFeePerGas",
+  "maxFeePerBlobGas",
   "hash",
   "input",
   "nonce",
@@ -46,7 +48,8 @@ import org.apache.tuweni.bytes.Bytes;
   "value",
   "v",
   "r",
-  "s"
+  "s",
+  "blobVersionedHashes"
 })
 public class TransactionCompleteResult implements TransactionResult {
 
@@ -69,6 +72,9 @@ public class TransactionCompleteResult implements TransactionResult {
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String maxFeePerGas;
 
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final String maxFeePerBlobGas;
+
   private final String hash;
   private final String input;
   private final String nonce;
@@ -79,6 +85,9 @@ public class TransactionCompleteResult implements TransactionResult {
   private final String v;
   private final String r;
   private final String s;
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final List<VersionedHash> versionedHashes;
 
   public TransactionCompleteResult(final TransactionWithMetadata tx) {
     final Transaction transaction = tx.getTransaction();
@@ -93,6 +102,8 @@ public class TransactionCompleteResult implements TransactionResult {
         tx.getTransaction().getMaxPriorityFeePerGas().map(Wei::toShortHexString).orElse(null);
     this.maxFeePerGas =
         tx.getTransaction().getMaxFeePerGas().map(Wei::toShortHexString).orElse(null);
+    this.maxFeePerBlobGas =
+        transaction.getMaxFeePerBlobGas().map(Wei::toShortHexString).orElse(null);
     this.gasPrice =
         Quantity.create(
             transaction
@@ -111,6 +122,7 @@ public class TransactionCompleteResult implements TransactionResult {
     this.v = Quantity.create(transaction.getV());
     this.r = Quantity.create(transaction.getR());
     this.s = Quantity.create(transaction.getS());
+    this.versionedHashes = transaction.getVersionedHashes().orElse(null);
   }
 
   @JsonGetter(value = "accessList")
@@ -151,6 +163,11 @@ public class TransactionCompleteResult implements TransactionResult {
   @JsonGetter(value = "maxFeePerGas")
   public String getMaxFeePerGas() {
     return maxFeePerGas;
+  }
+
+  @JsonGetter(value = "maxFeePerBlobGas")
+  public String getMaxFeePerBlobGas() {
+    return maxFeePerBlobGas;
   }
 
   @JsonGetter(value = "gasPrice")
@@ -206,5 +223,10 @@ public class TransactionCompleteResult implements TransactionResult {
   @JsonGetter(value = "s")
   public String getS() {
     return s;
+  }
+
+  @JsonGetter(value = "blobVersionedHashes")
+  public List<VersionedHash> getVersionedHashes() {
+    return versionedHashes;
   }
 }

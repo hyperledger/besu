@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public final class GetAccountRangeMessageTest {
 

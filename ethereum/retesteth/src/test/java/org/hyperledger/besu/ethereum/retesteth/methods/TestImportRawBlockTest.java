@@ -20,10 +20,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
 
 import java.io.IOException;
@@ -31,15 +31,15 @@ import java.io.IOException;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TestImportRawBlockTest {
   private TestImportRawBlock test_importRawBlock;
   private TestRewindToBlock test_rewindToBlock;
   private RetestethContext context;
 
-  @Before
+  @BeforeEach
   public void setupClass() throws IOException {
     context = new RetestethContext();
     test_importRawBlock = new TestImportRawBlock(context);
@@ -72,8 +72,8 @@ public class TestImportRawBlockTest {
 
     final var response = test_importRawBlock.response(request);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
-    assertThat(((JsonRpcErrorResponse) response).getError())
-        .isEqualTo(JsonRpcError.BLOCK_IMPORT_ERROR);
+    assertThat(((JsonRpcErrorResponse) response).getErrorType())
+        .isEqualTo(RpcErrorType.BLOCK_IMPORT_ERROR);
   }
 
   @Test
@@ -87,8 +87,8 @@ public class TestImportRawBlockTest {
 
     final var response = test_importRawBlock.response(request);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
-    assertThat(((JsonRpcErrorResponse) response).getError())
-        .isEqualTo(JsonRpcError.BLOCK_RLP_IMPORT_ERROR);
+    assertThat(((JsonRpcErrorResponse) response).getErrorType())
+        .isEqualTo(RpcErrorType.BLOCK_RLP_IMPORT_ERROR);
   }
 
   @Test

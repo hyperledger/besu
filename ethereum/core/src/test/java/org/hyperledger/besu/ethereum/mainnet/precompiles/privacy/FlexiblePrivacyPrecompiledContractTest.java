@@ -64,15 +64,11 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 public class FlexiblePrivacyPrecompiledContractTest {
-
-  @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
   private final Bytes privateTransactionLookupId = Bytes.random(32);
   private final Bytes privateTransactionLookupId64 = Bytes.random(64);
@@ -106,7 +102,7 @@ public class FlexiblePrivacyPrecompiledContractTest {
     return mockPrivateTransactionProcessor;
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
     when(mutableWorldState.updater()).thenReturn(mock(WorldUpdater.class));

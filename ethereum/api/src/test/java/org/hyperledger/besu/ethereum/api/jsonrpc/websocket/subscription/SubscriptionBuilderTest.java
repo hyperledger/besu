@@ -29,15 +29,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing.
 
 import java.util.function.Function;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SubscriptionBuilderTest {
 
   private static final String CONNECTION_ID = "connectionId";
   private SubscriptionBuilder subscriptionBuilder;
 
-  @Before
+  @BeforeEach
   public void before() {
     subscriptionBuilder = new SubscriptionBuilder();
   }

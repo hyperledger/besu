@@ -34,8 +34,8 @@ dependencies {
   implementation project(':crypto:algorithms')
   implementation project(':ethereum:rlp')
   implementation 'com.google.guava:guava'
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.tmio:tuweni-units'
 
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'

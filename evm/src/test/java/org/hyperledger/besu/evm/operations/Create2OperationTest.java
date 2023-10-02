@@ -40,9 +40,8 @@ import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
-import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -56,11 +55,9 @@ public class Create2OperationTest {
 
   private MessageFrame messageFrame;
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
-  private final WrappedEvmAccount account = mock(WrappedEvmAccount.class);
-  private final MutableAccount mutableAccount = mock(MutableAccount.class);
+  private final MutableAccount account = mock(MutableAccount.class);
   private final EVM evm = mock(EVM.class);
-  private final WrappedEvmAccount newAccount = mock(WrappedEvmAccount.class);
-  private final MutableAccount newMutableAccount = mock(MutableAccount.class);
+  private final MutableAccount newAccount = mock(MutableAccount.class);
 
   private final Create2Operation operation =
       new Create2Operation(new ConstantinopleGasCalculator(), Integer.MAX_VALUE);
@@ -147,7 +144,6 @@ public class Create2OperationTest {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final Bytes codeBytes = Bytes.fromHexString(code);
     final UInt256 memoryLength = UInt256.valueOf(codeBytes.size());
-    when(account.getMutable()).thenReturn(mutableAccount);
     messageFrame =
         MessageFrame.builder()
             .type(MessageFrame.Type.CONTRACT_CREATION)
@@ -157,13 +153,11 @@ public class Create2OperationTest {
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
             .code(CodeFactory.createCode(codeBytes, 0, true))
-            .depth(1)
             .completer(__ -> {})
             .address(Address.fromHexString(sender))
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
             .blockValues(mock(BlockValues.class))
             .gasPrice(Wei.ZERO)
-            .messageFrameStack(new ArrayDeque<>())
             .miningBeneficiary(Address.ZERO)
             .originator(Address.ZERO)
             .initialGas(100_000L)
@@ -176,7 +170,7 @@ public class Create2OperationTest {
     messageFrame.expandMemory(0, 500);
     messageFrame.writeMemory(memoryOffset.trimLeadingZeros().toInt(), code.length(), codeBytes);
 
-    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
+    when(account.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
     when(evm.getCode(any(), any()))
@@ -214,24 +208,20 @@ public class Create2OperationTest {
   void shanghaiMaxInitCodeSizeCreate() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.fromHexString("0xc000");
-    final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-    final MessageFrame messageFrame =
-        testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1, messageFrameStack);
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
 
-    when(account.getMutable()).thenReturn(mutableAccount);
     when(account.getNonce()).thenReturn(55L);
-    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
+    when(account.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
     when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
-    when(newAccount.getMutable()).thenReturn(newMutableAccount);
-    when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
     var result = maxInitCodeOperation.execute(messageFrame, evm);
-    final MessageFrame createFrame = messageFrameStack.peek();
+    final MessageFrame createFrame = messageFrame.getMessageFrameStack().peek();
     final ContractCreationProcessor ccp =
         new ContractCreationProcessor(evm.getGasCalculator(), evm, false, List.of(), 0, List.of());
     ccp.process(createFrame, OperationTracer.NO_TRACING);
@@ -246,19 +236,15 @@ public class Create2OperationTest {
   void shanghaiMaxInitCodeSizePlus1Create() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.fromHexString("0xc001");
-    final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-    final MessageFrame messageFrame =
-        testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1, messageFrameStack);
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
 
-    when(account.getMutable()).thenReturn(mutableAccount);
     when(account.getNonce()).thenReturn(55L);
-    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
+    when(account.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
     when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
-    when(newAccount.getMutable()).thenReturn(newMutableAccount);
-    when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
@@ -271,8 +257,7 @@ public class Create2OperationTest {
       final UInt256 memoryOffset,
       final UInt256 memoryLength,
       final UInt256 value,
-      final int depth,
-      final ArrayDeque<MessageFrame> messageFrameStack) {
+      final int depth) {
     final MessageFrame messageFrame =
         MessageFrame.builder()
             .type(MessageFrame.Type.CONTRACT_CREATION)
@@ -282,13 +267,11 @@ public class Create2OperationTest {
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
             .code(CodeFactory.createCode(SIMPLE_CREATE, 0, true))
-            .depth(depth)
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
             .blockValues(mock(BlockValues.class))
             .gasPrice(Wei.ZERO)
-            .messageFrameStack(messageFrameStack)
             .miningBeneficiary(Address.ZERO)
             .originator(Address.ZERO)
             .initialGas(100000L)
@@ -301,6 +284,10 @@ public class Create2OperationTest {
     messageFrame.expandMemory(0, 500);
     messageFrame.writeMemory(
         memoryOffset.trimLeadingZeros().toInt(), SIMPLE_CREATE.size(), SIMPLE_CREATE);
+    final Deque<MessageFrame> messageFrameStack = messageFrame.getMessageFrameStack();
+    while (messageFrameStack.size() < depth) {
+      messageFrameStack.push(messageFrame);
+    }
     return messageFrame;
   }
 
@@ -319,8 +306,7 @@ public class Create2OperationTest {
             .build();
     messageFrame.writeMemory(memoryOffset.toLong(), memoryLength.toLong(), SIMPLE_CREATE);
 
-    when(account.getMutable()).thenReturn(mutableAccount);
-    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
+    when(account.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
 
     final EVM evm = MainnetEVMs.cancun(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
@@ -344,9 +330,8 @@ public class Create2OperationTest {
             .build();
     messageFrame.writeMemory(memoryOffset.toLong(), memoryLength.toLong(), SIMPLE_EOF);
 
-    when(account.getMutable()).thenReturn(mutableAccount);
     when(account.getNonce()).thenReturn(55L);
-    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
+    when(account.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);

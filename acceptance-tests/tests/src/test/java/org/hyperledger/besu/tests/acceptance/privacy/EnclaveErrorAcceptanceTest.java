@@ -20,7 +20,7 @@ import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.EC;
 import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.NACL;
 import static org.hyperledger.enclave.testutil.EnclaveType.TESSERA;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
@@ -116,7 +116,7 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
 
     assertThat(throwable)
         .hasMessageContaining(
-            JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY.getMessage());
+            RpcErrorType.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY.getMessage());
   }
 
   @Test
@@ -131,7 +131,7 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
                         alice.getEnclaveKey(),
                         wrongPublicKey)));
 
-    final String tesseraMessage = JsonRpcError.TESSERA_NODE_MISSING_PEER_URL.getMessage();
+    final String tesseraMessage = RpcErrorType.TESSERA_NODE_MISSING_PEER_URL.getMessage();
 
     assertThat(throwable.getMessage()).has(matchTesseraEnclaveMessage(tesseraMessage));
   }
@@ -213,7 +213,7 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
   public void createPrivacyGroupReturnsCorrectError() {
     final Throwable throwable =
         catchThrowable(() -> alice.execute(privacyTransactions.createPrivacyGroup(null, null)));
-    final String tesseraMessage = JsonRpcError.TESSERA_CREATE_GROUP_INCLUDE_SELF.getMessage();
+    final String tesseraMessage = RpcErrorType.TESSERA_CREATE_GROUP_INCLUDE_SELF.getMessage();
 
     assertThat(throwable.getMessage()).has(matchTesseraEnclaveMessage(tesseraMessage));
   }

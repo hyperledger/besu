@@ -398,7 +398,7 @@ public class BesuNodeFactory {
     config.setAccountAllowlist(accountAllowList);
     config.setAccountPermissioningConfigFilePath(configFile.getAbsolutePath());
     final PermissioningConfiguration permissioningConfiguration =
-        new PermissioningConfiguration(Optional.of(config), Optional.empty(), Optional.empty());
+        new PermissioningConfiguration(Optional.of(config), Optional.empty());
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)

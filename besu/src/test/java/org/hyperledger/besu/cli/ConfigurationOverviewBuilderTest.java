@@ -15,6 +15,8 @@
 package org.hyperledger.besu.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LEGACY;
 import static org.mockito.Mockito.mock;
 
 import java.math.BigInteger;
@@ -137,10 +139,24 @@ class ConfigurationOverviewBuilderTest {
   @Test
   void setHighSpecEnabled() {
     final String highSpecNotEnabled = builder.build();
-    assertThat(highSpecNotEnabled).doesNotContain("High spec configuration enabled");
+    assertThat(highSpecNotEnabled).doesNotContain("Experimental high spec configuration enabled");
 
     builder.setHighSpecEnabled();
     final String highSpecEnabled = builder.build();
-    assertThat(highSpecEnabled).contains("High spec configuration enabled");
+    assertThat(highSpecEnabled).contains("Experimental high spec configuration enabled");
+  }
+
+  @Test
+  void setTxPoolImplementationLayered() {
+    builder.setTxPoolImplementation(LAYERED);
+    final String layeredTxPoolSelected = builder.build();
+    assertThat(layeredTxPoolSelected).contains("Using LAYERED transaction pool implementation");
+  }
+
+  @Test
+  void setTxPoolImplementationLegacy() {
+    builder.setTxPoolImplementation(LEGACY);
+    final String legacyTxPoolSelected = builder.build();
+    assertThat(legacyTxPoolSelected).contains("Using LEGACY transaction pool implementation");
   }
 }

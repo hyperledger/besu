@@ -36,6 +36,8 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,20 +45,22 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 @SuppressWarnings("unused")
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class TransactionLogBloomCacherTest {
 
-  @Rule public TemporaryFolder cacheDir = new TemporaryFolder();
+  @TempDir private Path cacheDir;
 
   private Hash testHash;
   private static LogsBloomFilter testLogsBloomFilter;
@@ -65,7 +69,7 @@ public class TransactionLogBloomCacherTest {
   @Mock EthScheduler scheduler;
   private TransactionLogBloomCacher transactionLogBloomCacher;
 
-  @BeforeClass
+  @BeforeAll
   public static void setupClass() {
     final Address testAddress = Address.fromHexString("0x123456");
     final Bytes testMessage = Bytes.fromHexString("0x9876");
@@ -81,7 +85,7 @@ public class TransactionLogBloomCacherTest {
   }
 
   @SuppressWarnings({"unchecked", "ReturnValueIgnored"})
-  @Before
+  @BeforeEach
   public void setup() throws IOException {
     final BlockHeader fakeHeader =
         new BlockHeader(
@@ -104,6 +108,8 @@ public class TransactionLogBloomCacherTest {
             null,
             null,
             null,
+            null,
+            null,
             new MainnetBlockHeaderFunctions());
     testHash = fakeHeader.getHash();
     when(blockchain.getBlockHeader(anyLong())).thenReturn(Optional.of(fakeHeader));
@@ -119,22 +125,21 @@ public class TransactionLogBloomCacherTest {
               invocation.getArgument(0, Supplier.class).get();
               return null;
             });
-    transactionLogBloomCacher =
-        new TransactionLogBloomCacher(blockchain, cacheDir.getRoot().toPath(), scheduler);
+    transactionLogBloomCacher = new TransactionLogBloomCacher(blockchain, cacheDir, scheduler);
   }
 
   @Test
   public void shouldSplitLogsIntoSeveralFiles() {
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(200003L);
-    assertThat(cacheDir.getRoot().list().length).isEqualTo(0);
+    assertThat(cacheDir.toFile().list().length).isEqualTo(0);
     transactionLogBloomCacher.cacheAll();
-    assertThat(cacheDir.getRoot().list().length).isEqualTo(2);
+    assertThat(cacheDir.toFile().list().length).isEqualTo(2);
   }
 
   @Test
   public void shouldUpdateCacheWhenBlockAdded() throws IOException {
-    final File logBloom = cacheDir.newFile("logBloom-0.cache");
+    final File logBloom = Files.createFile(cacheDir.resolve("logBloom-0.cache")).toFile();
 
     createLogBloomCache(logBloom);
 
@@ -146,12 +151,12 @@ public class TransactionLogBloomCacherTest {
         header, Optional.empty(), Optional.of(logBloom));
 
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 4);
-    assertThat(cacheDir.getRoot().list().length).isEqualTo(1);
+    assertThat(cacheDir.toFile().list().length).isEqualTo(1);
   }
 
   @Test
   public void shouldReloadCacheWhenBLockIsMissing() throws IOException {
-    final File logBloom = cacheDir.newFile("logBloom-0.cache");
+    final File logBloom = Files.createFile(cacheDir.resolve("logBloom-0.cache")).toFile();
 
     createLogBloomCache(logBloom);
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 3);
@@ -170,31 +175,32 @@ public class TransactionLogBloomCacherTest {
     }
 
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 5);
-    assertThat(cacheDir.getRoot().list().length).isEqualTo(1);
+    assertThat(cacheDir.toFile().list().length).isEqualTo(1);
   }
 
   @Test
   public void shouldReloadCacheWhenFileIsInvalid() throws IOException {
-    final File logBloom = cacheDir.newFile("logBloom-0.cache");
-    final File logBloom1 = cacheDir.newFile("logBloom-1.cache");
+    final File logBloom = Files.createFile(cacheDir.resolve("logBloom-0.cache")).toFile();
+
+    final File logBloom1 = Files.createFile(cacheDir.resolve("logBloom-1.cache")).toFile();
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(100003L);
     assertThat(logBloom.length()).isEqualTo(0);
     assertThat(logBloom1.length()).isEqualTo(0);
 
-    assertThat(cacheDir.getRoot().list().length).isEqualTo(2);
+    assertThat(cacheDir.toFile().list().length).isEqualTo(2);
 
     transactionLogBloomCacher.cacheAll();
 
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * BLOCKS_PER_BLOOM_CACHE);
     assertThat(logBloom1.length()).isEqualTo(0);
 
-    assertThat(cacheDir.getRoot().list().length).isEqualTo(2);
+    assertThat(cacheDir.toFile().list().length).isEqualTo(2);
   }
 
   @Test
   public void shouldUpdateCacheWhenChainReorgFired() throws IOException {
-    final File logBloom = cacheDir.newFile("logBloom-0.cache");
+    final File logBloom = Files.createFile(cacheDir.resolve("logBloom-0.cache")).toFile();
 
     final List<BlockHeader> firstBranch = new ArrayList<>();
 
@@ -229,7 +235,7 @@ public class TransactionLogBloomCacherTest {
         forkBranch.get(1), Optional.empty(), Optional.of(logBloom));
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 2);
 
-    assertThat(cacheDir.getRoot().list().length).isEqualTo(1);
+    assertThat(cacheDir.toFile().list().length).isEqualTo(1);
   }
 
   private void createLogBloomCache(final File logBloom) throws IOException {
@@ -274,6 +280,8 @@ public class TransactionLogBloomCacherTest {
             null,
             Hash.EMPTY,
             0,
+            null,
+            null,
             null,
             null,
             null,

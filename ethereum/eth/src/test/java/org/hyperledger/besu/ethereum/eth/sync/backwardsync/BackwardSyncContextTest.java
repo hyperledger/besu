@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.BlockValidator;
@@ -46,8 +47,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
-import org.hyperledger.besu.plugin.data.TransactionType;
+import org.hyperledger.besu.ethereum.referencetests.DefaultReferenceTestWorldState;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -60,16 +60,19 @@ import java.util.concurrent.ExecutionException;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackwardSyncContextTest {
 
   public static final int REMOTE_HEIGHT = 50;
@@ -105,7 +108,7 @@ public class BackwardSyncContextTest {
   private Block uncle;
   private Block genesisBlock;
 
-  @Before
+  @BeforeEach
   public void setup() {
     when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);
     doReturn(protocolSpec).when(protocolSchedule).getByBlockHeader(any());
@@ -146,7 +149,10 @@ public class BackwardSyncContextTest {
               return new BlockProcessingResult(
                   Optional.of(
                       new BlockProcessingOutputs(
-                          new ReferenceTestWorldState(), blockDataGenerator.receipts(block))));
+                          // use forest-based worldstate since it does not require
+                          // blockheader stateroot to match actual worldstate root
+                          DefaultReferenceTestWorldState.create(Collections.emptyMap()),
+                          blockDataGenerator.receipts(block))));
             });
 
     backwardChain = inMemoryBackwardChain();

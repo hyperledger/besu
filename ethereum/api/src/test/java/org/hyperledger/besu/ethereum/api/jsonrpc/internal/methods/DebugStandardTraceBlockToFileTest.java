@@ -32,19 +32,19 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Answers;
 
 public class DebugStandardTraceBlockToFileTest {
 
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir private static Path folder;
 
   private final WorldStateArchive archive =
       mock(WorldStateArchive.class, Answers.RETURNS_DEEP_STUBS);
@@ -53,8 +53,7 @@ public class DebugStandardTraceBlockToFileTest {
       spy(new BlockchainQueries(blockchain, archive));
   private final TransactionTracer transactionTracer = mock(TransactionTracer.class);
   private final DebugStandardTraceBlockToFile debugStandardTraceBlockToFile =
-      new DebugStandardTraceBlockToFile(
-          () -> transactionTracer, blockchainQueries, folder.getRoot().toPath());
+      new DebugStandardTraceBlockToFile(() -> transactionTracer, blockchainQueries, folder);
 
   @Test
   public void nameShouldBeDebugTraceTransaction() {

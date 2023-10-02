@@ -16,6 +16,10 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -37,13 +41,17 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
@@ -62,8 +70,6 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStora
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
@@ -76,14 +82,14 @@ import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.io.TempDir;
 
 public abstract class AbstractIsolationTests {
   protected BonsaiWorldStateProvider archive;
   protected BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorage;
   protected ProtocolContext protocolContext;
+  protected EthContext ethContext;
   final Function<String, KeyPair> asKeyPair =
       key ->
           SignatureAlgorithmFactory.getInstance()
@@ -125,10 +131,11 @@ public abstract class AbstractIsolationTests {
           .collect(Collectors.toList());
 
   KeyPair sender1 = asKeyPair.apply(accounts.get(0).getPrivateKey().get());
+  TransactionPool transactionPool;
 
-  @Rule public final TemporaryFolder tempData = new TemporaryFolder();
+  @TempDir private Path tempData;
 
-  @Before
+  @BeforeEach
   public void createStorage() {
     bonsaiWorldStateStorage =
         (BonsaiWorldStateKeyValueStorage)
@@ -144,48 +151,55 @@ public abstract class AbstractIsolationTests {
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
     protocolContext = new ProtocolContext(blockchain, archive, null, Optional.empty());
+    ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
+    when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
+    transactionPool =
+        new TransactionPool(
+            () -> sorter,
+            protocolSchedule,
+            protocolContext,
+            mock(TransactionBroadcaster.class),
+            ethContext,
+            mock(MiningParameters.class),
+            txPoolMetrics,
+            poolConfiguration);
+    transactionPool.setEnabled();
   }
 
   // storage provider which uses a temporary directory based rocksdb
   protected StorageProvider createKeyValueStorageProvider() {
-    try {
-      tempData.create();
-      return new KeyValueStorageProviderBuilder()
-          .withStorageFactory(
-              new RocksDBKeyValueStorageFactory(
-                  () ->
-                      new RocksDBFactoryConfiguration(
-                          1024 /* MAX_OPEN_FILES*/,
-                          4 /*BACKGROUND_THREAD_COUNT*/,
-                          8388608 /*CACHE_CAPACITY*/,
-                          false),
-                  Arrays.asList(KeyValueSegmentIdentifier.values()),
-                  2,
-                  RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
-          .withCommonConfiguration(
-              new BesuConfiguration() {
+    return new KeyValueStorageProviderBuilder()
+        .withStorageFactory(
+            new RocksDBKeyValueStorageFactory(
+                () ->
+                    new RocksDBFactoryConfiguration(
+                        1024 /* MAX_OPEN_FILES*/,
+                        4 /*BACKGROUND_THREAD_COUNT*/,
+                        8388608 /*CACHE_CAPACITY*/,
+                        false),
+                Arrays.asList(KeyValueSegmentIdentifier.values()),
+                2,
+                RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
+        .withCommonConfiguration(
+            new BesuConfiguration() {
 
-                @Override
-                public Path getStoragePath() {
-                  return new File(tempData.getRoot().toString() + File.pathSeparator + "database")
-                      .toPath();
-                }
+              @Override
+              public Path getStoragePath() {
+                return tempData.resolve("database");
+              }
 
-                @Override
-                public Path getDataPath() {
-                  return tempData.getRoot().toPath();
-                }
+              @Override
+              public Path getDataPath() {
+                return tempData;
+              }
 
-                @Override
-                public int getDatabaseVersion() {
-                  return 2;
-                }
-              })
-          .withMetricsSystem(new NoOpMetricsSystem())
-          .build();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+              @Override
+              public int getDatabaseVersion() {
+                return 2;
+              }
+            })
+        .withMetricsSystem(new NoOpMetricsSystem())
+        .build();
   }
 
   static class TestBlockCreator extends AbstractBlockCreator {
@@ -194,7 +208,7 @@ public abstract class AbstractIsolationTests {
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         final Supplier<Optional<Long>> targetGasLimitSupplier,
         final ExtraDataCalculator extraDataCalculator,
-        final PendingTransactions pendingTransactions,
+        final TransactionPool transactionPool,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
         final Wei minTransactionGasPrice,
@@ -205,7 +219,7 @@ public abstract class AbstractIsolationTests {
           miningBeneficiaryCalculator,
           targetGasLimitSupplier,
           extraDataCalculator,
-          pendingTransactions,
+          transactionPool,
           protocolContext,
           protocolSchedule,
           minTransactionGasPrice,
@@ -218,13 +232,13 @@ public abstract class AbstractIsolationTests {
         final BlockHeader parentHeader,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
-        final PendingTransactions sorter) {
+        final TransactionPool transactionPool) {
       return new TestBlockCreator(
           Address.ZERO,
           __ -> Address.ZERO,
           () -> Optional.of(30_000_000L),
           __ -> Bytes.fromHexString("deadbeef"),
-          sorter,
+          transactionPool,
           protocolContext,
           protocolSchedule,
           Wei.of(1L),
@@ -260,7 +274,7 @@ public abstract class AbstractIsolationTests {
 
   protected Block forTransactions(
       final List<Transaction> transactions, final BlockHeader forHeader) {
-    return TestBlockCreator.forHeader(forHeader, protocolContext, protocolSchedule, sorter)
+    return TestBlockCreator.forHeader(forHeader, protocolContext, protocolSchedule, transactionPool)
         .createBlock(transactions, Collections.emptyList(), System.currentTimeMillis())
         .getBlock();
   }

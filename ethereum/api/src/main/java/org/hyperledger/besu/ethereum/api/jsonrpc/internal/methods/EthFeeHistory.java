@@ -21,10 +21,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedIntParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FeeHistory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHistory;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -69,7 +69,7 @@ public class EthFeeHistory implements JsonRpcMethod {
     final int blockCount = request.getRequiredParameter(0, UnsignedIntParameter.class).getValue();
 
     if (blockCount < 1 || blockCount > 1024) {
-      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS);
     }
     final BlockParameter highestBlock = request.getRequiredParameter(1, BlockParameter.class);
     final Optional<List<Double>> maybeRewardPercentiles =
@@ -84,7 +84,7 @@ public class EthFeeHistory implements JsonRpcMethod {
                 chainHeadBlockNumber /* both latest and pending use the head block until we have pending block support */);
 
     if (resolvedHighestBlockNumber > chainHeadBlockNumber) {
-      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS);
     }
 
     final long oldestBlock = Math.max(0, resolvedHighestBlockNumber - (blockCount - 1));

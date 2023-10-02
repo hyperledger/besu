@@ -15,6 +15,9 @@
  */
 package org.hyperledger.besu.ethereum.bonsai.storage.flat;
 
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
@@ -23,7 +26,7 @@ import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -81,9 +84,10 @@ public class PartialFlatDbReaderStrategy extends FlatDbReaderStrategy {
       final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       final NodeLoader nodeLoader,
       final Hash accountHash,
-      final KeyValueStorage accountStorage) {
+      final SegmentedKeyValueStorage storage) {
     getAccountCounter.inc();
-    Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    Optional<Bytes> response =
+        storage.get(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe()).map(Bytes::wrap);
     if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
       final Optional<Bytes> worldStateRootHash = worldStateRootHashSupplier.get();
@@ -113,11 +117,13 @@ public class PartialFlatDbReaderStrategy extends FlatDbReaderStrategy {
       final NodeLoader nodeLoader,
       final Hash accountHash,
       final StorageSlotKey storageSlotKey,
-      final KeyValueStorage storageStorage) {
+      final SegmentedKeyValueStorage storage) {
     getStorageValueCounter.inc();
     Optional<Bytes> response =
-        storageStorage
-            .get(Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
+        storage
+            .get(
+                ACCOUNT_STORAGE_STORAGE,
+                Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
             .map(Bytes::wrap);
     if (response.isEmpty()) {
       final Optional<Hash> storageRoot = storageRootSupplier.get();

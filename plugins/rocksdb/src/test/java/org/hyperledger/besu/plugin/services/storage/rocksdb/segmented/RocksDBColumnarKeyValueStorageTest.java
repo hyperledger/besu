@@ -16,15 +16,26 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.kvstore.AbstractKeyValueStorageTest;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
-import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
-import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage.Transaction;
-import org.hyperledger.besu.services.kvstore.SnappableSegmentedKeyValueStorageAdapter;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -33,12 +44,20 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.LongSupplier;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 
 public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageTest {
+
+  @Mock private ObservableMetricsSystem metricsSystemMock;
+  @Mock private LabelledMetric<OperationTimer> labelledMetricOperationTimerMock;
+  @Mock private LabelledMetric<Counter> labelledMetricCounterMock;
+  @Mock private OperationTimer operationTimerMock;
 
   @TempDir public Path folder;
 
@@ -47,14 +66,14 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     final byte[] key = bytesFromHexString("0001");
     final byte[] val1 = bytesFromHexString("0FFF");
     final byte[] val2 = bytesFromHexString("1337");
-    final SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store = createSegmentedStore();
-    RocksDbSegmentIdentifier segment = store.getSegmentIdentifierByName(TestSegment.FOO);
+    final SegmentedKeyValueStorage store = createSegmentedStore();
+    var segment = TestSegment.FOO;
     KeyValueStorage duplicateSegmentRef =
-        new SnappableSegmentedKeyValueStorageAdapter<>(TestSegment.FOO, store);
+        new SegmentedKeyValueStorageAdapter(TestSegment.FOO, store);
 
     final Consumer<byte[]> insert =
         value -> {
-          final Transaction<RocksDbSegmentIdentifier> tx = store.startTransaction();
+          final SegmentedKeyValueStorageTransaction tx = store.startTransaction();
           tx.put(segment, key, value);
           tx.commit();
         };
@@ -79,17 +98,13 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
 
   @Test
   public void twoSegmentsAreIndependent() throws Exception {
-    final SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store = createSegmentedStore();
+    final SegmentedKeyValueStorage store = createSegmentedStore();
 
-    final Transaction<RocksDbSegmentIdentifier> tx = store.startTransaction();
-    tx.put(
-        store.getSegmentIdentifierByName(TestSegment.BAR),
-        bytesFromHexString("0001"),
-        bytesFromHexString("0FFF"));
+    final SegmentedKeyValueStorageTransaction tx = store.startTransaction();
+    tx.put(TestSegment.BAR, bytesFromHexString("0001"), bytesFromHexString("0FFF"));
     tx.commit();
 
-    final Optional<byte[]> result =
-        store.get(store.getSegmentIdentifierByName(TestSegment.FOO), bytesFromHexString("0001"));
+    final Optional<byte[]> result = store.get(TestSegment.FOO, bytesFromHexString("0001"));
 
     assertThat(result).isEmpty();
 
@@ -101,43 +116,41 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     // we're looping this in order to catch intermittent failures when rocksdb objects are not close
     // properly
     for (int i = 0; i < 50; i++) {
-      final SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store = createSegmentedStore();
-      final RocksDbSegmentIdentifier fooSegment = store.getSegmentIdentifierByName(TestSegment.FOO);
-      final RocksDbSegmentIdentifier barSegment = store.getSegmentIdentifierByName(TestSegment.BAR);
+      final SegmentedKeyValueStorage store = createSegmentedStore();
 
-      final Transaction<RocksDbSegmentIdentifier> tx = store.startTransaction();
-      tx.put(fooSegment, bytesOf(1), bytesOf(1));
-      tx.put(fooSegment, bytesOf(2), bytesOf(2));
-      tx.put(fooSegment, bytesOf(3), bytesOf(3));
-      tx.put(barSegment, bytesOf(4), bytesOf(4));
-      tx.put(barSegment, bytesOf(5), bytesOf(5));
-      tx.put(barSegment, bytesOf(6), bytesOf(6));
+      final SegmentedKeyValueStorageTransaction tx = store.startTransaction();
+      tx.put(TestSegment.FOO, bytesOf(1), bytesOf(1));
+      tx.put(TestSegment.FOO, bytesOf(2), bytesOf(2));
+      tx.put(TestSegment.FOO, bytesOf(3), bytesOf(3));
+      tx.put(TestSegment.BAR, bytesOf(4), bytesOf(4));
+      tx.put(TestSegment.BAR, bytesOf(5), bytesOf(5));
+      tx.put(TestSegment.BAR, bytesOf(6), bytesOf(6));
       tx.commit();
 
-      store.stream(fooSegment)
+      store.stream(TestSegment.FOO)
           .map(Pair::getKey)
           .forEach(
               key -> {
-                if (!Arrays.equals(key, bytesOf(3))) store.tryDelete(fooSegment, key);
+                if (!Arrays.equals(key, bytesOf(3))) store.tryDelete(TestSegment.FOO, key);
               });
-      store.stream(barSegment)
+      store.stream(TestSegment.BAR)
           .map(Pair::getKey)
           .forEach(
               key -> {
-                if (!Arrays.equals(key, bytesOf(4))) store.tryDelete(barSegment, key);
+                if (!Arrays.equals(key, bytesOf(4))) store.tryDelete(TestSegment.BAR, key);
               });
 
-      for (final RocksDbSegmentIdentifier segment : Set.of(fooSegment, barSegment)) {
+      for (final var segment : Set.of(TestSegment.FOO, TestSegment.BAR)) {
         assertThat(store.stream(segment).count()).isEqualTo(1);
       }
 
-      assertThat(store.get(fooSegment, bytesOf(1))).isEmpty();
-      assertThat(store.get(fooSegment, bytesOf(2))).isEmpty();
-      assertThat(store.get(fooSegment, bytesOf(3))).contains(bytesOf(3));
+      assertThat(store.get(TestSegment.FOO, bytesOf(1))).isEmpty();
+      assertThat(store.get(TestSegment.FOO, bytesOf(2))).isEmpty();
+      assertThat(store.get(TestSegment.FOO, bytesOf(3))).contains(bytesOf(3));
 
-      assertThat(store.get(barSegment, bytesOf(4))).contains(bytesOf(4));
-      assertThat(store.get(barSegment, bytesOf(5))).isEmpty();
-      assertThat(store.get(barSegment, bytesOf(6))).isEmpty();
+      assertThat(store.get(TestSegment.BAR, bytesOf(4))).contains(bytesOf(4));
+      assertThat(store.get(TestSegment.BAR, bytesOf(5))).isEmpty();
+      assertThat(store.get(TestSegment.BAR, bytesOf(6))).isEmpty();
 
       store.close();
     }
@@ -145,26 +158,24 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
 
   @Test
   public void canGetThroughSegmentIteration() throws Exception {
-    final SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store = createSegmentedStore();
-    final RocksDbSegmentIdentifier fooSegment = store.getSegmentIdentifierByName(TestSegment.FOO);
-    final RocksDbSegmentIdentifier barSegment = store.getSegmentIdentifierByName(TestSegment.BAR);
+    final SegmentedKeyValueStorage store = createSegmentedStore();
 
-    final Transaction<RocksDbSegmentIdentifier> tx = store.startTransaction();
-    tx.put(fooSegment, bytesOf(1), bytesOf(1));
-    tx.put(fooSegment, bytesOf(2), bytesOf(2));
-    tx.put(fooSegment, bytesOf(3), bytesOf(3));
-    tx.put(barSegment, bytesOf(4), bytesOf(4));
-    tx.put(barSegment, bytesOf(5), bytesOf(5));
-    tx.put(barSegment, bytesOf(6), bytesOf(6));
+    final SegmentedKeyValueStorageTransaction tx = store.startTransaction();
+    tx.put(TestSegment.FOO, bytesOf(1), bytesOf(1));
+    tx.put(TestSegment.FOO, bytesOf(2), bytesOf(2));
+    tx.put(TestSegment.FOO, bytesOf(3), bytesOf(3));
+    tx.put(TestSegment.BAR, bytesOf(4), bytesOf(4));
+    tx.put(TestSegment.BAR, bytesOf(5), bytesOf(5));
+    tx.put(TestSegment.BAR, bytesOf(6), bytesOf(6));
     tx.commit();
 
     final Set<byte[]> gotFromFoo =
-        store.getAllKeysThat(fooSegment, x -> Arrays.equals(x, bytesOf(3)));
+        store.getAllKeysThat(TestSegment.FOO, x -> Arrays.equals(x, bytesOf(3)));
     final Set<byte[]> gotFromBar =
         store.getAllKeysThat(
-            barSegment, x -> Arrays.equals(x, bytesOf(4)) || Arrays.equals(x, bytesOf(5)));
+            TestSegment.BAR, x -> Arrays.equals(x, bytesOf(4)) || Arrays.equals(x, bytesOf(5)));
     final Set<byte[]> gotEmpty =
-        store.getAllKeysThat(fooSegment, x -> Arrays.equals(x, bytesOf(0)));
+        store.getAllKeysThat(TestSegment.FOO, x -> Arrays.equals(x, bytesOf(0)));
 
     assertThat(gotFromFoo.size()).isEqualTo(1);
     assertThat(gotFromBar.size()).isEqualTo(2);
@@ -180,7 +191,7 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
   public void dbShouldIgnoreExperimentalSegmentsIfNotExisted(@TempDir final Path testPath)
       throws Exception {
     // Create new db should ignore experimental column family
-    SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
+    SegmentedKeyValueStorage store =
         createSegmentedStore(
             testPath,
             Arrays.asList(TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
@@ -194,10 +205,11 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
   }
 
   @Test
-  public void dbShouldNotIgnoreExperimentalSegmentsIfExisted(@TempDir final Path testPath)
+  public void dbShouldNotIgnoreExperimentalSegmentsIfExisted(@TempDir final Path tempDir)
       throws Exception {
+    final Path testPath = tempDir.resolve("testdb");
     // Create new db with experimental column family
-    SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
+    SegmentedKeyValueStorage store =
         createSegmentedStore(
             testPath,
             Arrays.asList(TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
@@ -210,7 +222,7 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
       createSegmentedStore(testPath, Arrays.asList(TestSegment.FOO, TestSegment.BAR), List.of());
       fail("DB without knowledge of experimental column family should fail");
     } catch (StorageException e) {
-      assertThat(e.getMessage()).contains("Column families not opened");
+      assertThat(e.getMessage()).contains("Unhandled column families");
     }
 
     // Even if the column family is marked as ignored, as long as it exists, it will not be ignored
@@ -227,7 +239,7 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
   public void dbWillBeBackwardIncompatibleAfterExperimentalSegmentsAreAdded(
       @TempDir final Path testPath) throws Exception {
     // Create new db should ignore experimental column family
-    SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
+    SegmentedKeyValueStorage store =
         createSegmentedStore(
             testPath,
             Arrays.asList(TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
@@ -253,8 +265,81 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
       createSegmentedStore(testPath, Arrays.asList(TestSegment.FOO, TestSegment.BAR), List.of());
       fail("DB without knowledge of experimental column family should fail");
     } catch (StorageException e) {
-      assertThat(e.getMessage()).contains("Column families not opened");
+      assertThat(e.getMessage()).contains("Unhandled column families");
     }
+  }
+
+  @Test
+  public void createStoreMustCreateMetrics() throws Exception {
+    // Prepare mocks
+    when(labelledMetricOperationTimerMock.labels(any())).thenReturn(operationTimerMock);
+    when(metricsSystemMock.createLabelledTimer(
+            eq(BesuMetricCategory.KVSTORE_ROCKSDB), anyString(), anyString(), any()))
+        .thenReturn(labelledMetricOperationTimerMock);
+    when(metricsSystemMock.createLabelledCounter(
+            eq(BesuMetricCategory.KVSTORE_ROCKSDB), anyString(), anyString(), any()))
+        .thenReturn(labelledMetricCounterMock);
+    // Prepare argument captors
+    final ArgumentCaptor<String> labelledTimersMetricsNameArgs =
+        ArgumentCaptor.forClass(String.class);
+    final ArgumentCaptor<String> labelledTimersHelpArgs = ArgumentCaptor.forClass(String.class);
+    final ArgumentCaptor<String> labelledCountersMetricsNameArgs =
+        ArgumentCaptor.forClass(String.class);
+    final ArgumentCaptor<String> labelledCountersHelpArgs = ArgumentCaptor.forClass(String.class);
+    final ArgumentCaptor<String> longGaugesMetricsNameArgs = ArgumentCaptor.forClass(String.class);
+    final ArgumentCaptor<String> longGaugesHelpArgs = ArgumentCaptor.forClass(String.class);
+
+    // Actual call
+
+    final SegmentedKeyValueStorage store =
+        createSegmentedStore(
+            folder, metricsSystemMock, List.of(TestSegment.FOO), List.of(TestSegment.EXPERIMENTAL));
+
+    KeyValueStorage keyValueStorage = new SegmentedKeyValueStorageAdapter(TestSegment.FOO, store);
+
+    // Assertions
+    assertThat(keyValueStorage).isNotNull();
+    verify(metricsSystemMock, times(4))
+        .createLabelledTimer(
+            eq(BesuMetricCategory.KVSTORE_ROCKSDB),
+            labelledTimersMetricsNameArgs.capture(),
+            labelledTimersHelpArgs.capture(),
+            any());
+    assertThat(labelledTimersMetricsNameArgs.getAllValues())
+        .containsExactly(
+            "read_latency_seconds",
+            "remove_latency_seconds",
+            "write_latency_seconds",
+            "commit_latency_seconds");
+    assertThat(labelledTimersHelpArgs.getAllValues())
+        .containsExactly(
+            "Latency for read from RocksDB.",
+            "Latency of remove requests from RocksDB.",
+            "Latency for write to RocksDB.",
+            "Latency for commits to RocksDB.");
+
+    verify(metricsSystemMock, times(2))
+        .createLongGauge(
+            eq(BesuMetricCategory.KVSTORE_ROCKSDB),
+            longGaugesMetricsNameArgs.capture(),
+            longGaugesHelpArgs.capture(),
+            any(LongSupplier.class));
+    assertThat(longGaugesMetricsNameArgs.getAllValues())
+        .containsExactly("rocks_db_table_readers_memory_bytes", "rocks_db_files_size_bytes");
+    assertThat(longGaugesHelpArgs.getAllValues())
+        .containsExactly(
+            "Estimated memory used for RocksDB index and filter blocks in bytes",
+            "Estimated database size in bytes");
+
+    verify(metricsSystemMock)
+        .createLabelledCounter(
+            eq(BesuMetricCategory.KVSTORE_ROCKSDB),
+            labelledCountersMetricsNameArgs.capture(),
+            labelledCountersHelpArgs.capture(),
+            any());
+    assertThat(labelledCountersMetricsNameArgs.getValue()).isEqualTo("rollback_count");
+    assertThat(labelledCountersHelpArgs.getValue())
+        .isEqualTo("Number of RocksDB transactions rolled back.");
   }
 
   public enum TestSegment implements SegmentIdentifier {
@@ -294,16 +379,21 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     }
   }
 
-  protected abstract SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore()
-      throws Exception;
+  protected abstract SegmentedKeyValueStorage createSegmentedStore() throws Exception;
 
-  protected abstract SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore(
+  protected abstract SegmentedKeyValueStorage createSegmentedStore(
       final Path path,
+      final List<SegmentIdentifier> segments,
+      final List<SegmentIdentifier> ignorableSegments);
+
+  protected abstract SegmentedKeyValueStorage createSegmentedStore(
+      final Path path,
+      final MetricsSystem metricsSystem,
       final List<SegmentIdentifier> segments,
       final List<SegmentIdentifier> ignorableSegments);
 
   @Override
   protected KeyValueStorage createStore() throws Exception {
-    return new SnappableSegmentedKeyValueStorageAdapter<>(TestSegment.FOO, createSegmentedStore());
+    return new SegmentedKeyValueStorageAdapter(TestSegment.FOO, createSegmentedStore());
   }
 }

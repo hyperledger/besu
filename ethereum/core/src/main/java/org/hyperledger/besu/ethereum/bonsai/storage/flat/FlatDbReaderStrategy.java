@@ -15,13 +15,17 @@
  */
 package org.hyperledger.besu.ethereum.bonsai.storage.flat;
 
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
 import java.util.Map;
 import java.util.Optional;
@@ -84,7 +88,7 @@ public abstract class FlatDbReaderStrategy {
       Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       NodeLoader nodeLoader,
       Hash accountHash,
-      KeyValueStorage accountStorage);
+      SegmentedKeyValueStorage storage);
 
   /*
    * Retrieves the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
@@ -96,49 +100,45 @@ public abstract class FlatDbReaderStrategy {
       NodeLoader nodeLoader,
       Hash accountHash,
       StorageSlotKey storageSlotKey,
-      KeyValueStorage storageStorage);
+      SegmentedKeyValueStorage storageStorage);
 
   /*
    * Retrieves the code data for the given code hash and account hash.
    */
   public Optional<Bytes> getCode(
-      final Bytes32 codeHash, final Hash accountHash, final KeyValueStorage codeStorage) {
+      final Bytes32 codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
-      return codeStorage
-          .get(accountHash.toArrayUnsafe())
+      return storage
+          .get(CODE_STORAGE, accountHash.toArrayUnsafe())
           .map(Bytes::wrap)
           .filter(b -> Hash.hash(b).equals(codeHash));
     }
   }
 
-  public void clearAll(
-      final KeyValueStorage accountStorage,
-      final KeyValueStorage storageStorage,
-      final KeyValueStorage codeStorage) {
-    accountStorage.clear();
-    storageStorage.clear();
-    codeStorage.clear();
+  public void clearAll(final SegmentedKeyValueStorage storage) {
+    storage.clear(ACCOUNT_INFO_STATE);
+    storage.clear(ACCOUNT_STORAGE_STORAGE);
+    storage.clear(CODE_STORAGE);
   }
 
-  public void resetOnResync(
-      final KeyValueStorage accountStorage, final KeyValueStorage storageStorage) {
-    accountStorage.clear();
-    storageStorage.clear();
+  public void resetOnResync(final SegmentedKeyValueStorage storage) {
+    storage.clear(ACCOUNT_INFO_STATE);
+    storage.clear(ACCOUNT_STORAGE_STORAGE);
   }
 
   public Map<Bytes32, Bytes> streamAccountFlatDatabase(
-      final KeyValueStorage accountStorage,
+      final SegmentedKeyValueStorage storage,
       final Bytes startKeyHash,
       final Bytes32 endKeyHash,
       final long max) {
     final Stream<Pair<Bytes32, Bytes>> pairStream =
-        accountStorage
-            .streamFromKey(startKeyHash.toArrayUnsafe())
+        storage
+            .streamFromKey(
+                ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe(), endKeyHash.toArrayUnsafe())
             .limit(max)
-            .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())))
-            .takeWhile(pair -> pair.getFirst().compareTo(endKeyHash) <= 0);
+            .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
 
     final TreeMap<Bytes32, Bytes> collected =
         pairStream.collect(
@@ -148,22 +148,23 @@ public abstract class FlatDbReaderStrategy {
   }
 
   public Map<Bytes32, Bytes> streamStorageFlatDatabase(
-      final KeyValueStorage storageStorage,
+      final SegmentedKeyValueStorage storage,
       final Hash accountHash,
       final Bytes startKeyHash,
       final Bytes32 endKeyHash,
       final long max) {
     final Stream<Pair<Bytes32, Bytes>> pairStream =
-        storageStorage
-            .streamFromKey(Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe())
-            .takeWhile(pair -> Bytes.wrap(pair.getKey()).slice(0, Hash.SIZE).equals(accountHash))
+        storage
+            .streamFromKey(
+                ACCOUNT_STORAGE_STORAGE,
+                Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe(),
+                Bytes.concatenate(accountHash, endKeyHash).toArrayUnsafe())
             .limit(max)
             .map(
                 pair ->
                     new Pair<>(
                         Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
-                        RLP.encodeValue(Bytes.wrap(pair.getValue()).trimLeadingZeros())))
-            .takeWhile(pair -> pair.getFirst().compareTo(endKeyHash) <= 0);
+                        RLP.encodeValue(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
 
     final TreeMap<Bytes32, Bytes> collected =
         pairStream.collect(

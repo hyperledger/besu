@@ -26,10 +26,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePreparePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePreparePayloadResult;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 
@@ -67,6 +67,7 @@ public class EnginePreparePayloadDebug extends ExecutionEngineJsonRpcMethod {
                     Optional.empty(),
                     Optional.empty(),
                     Optional.empty(),
+                    Optional.empty(),
                     Optional.empty()));
 
     final var requestId = requestContext.getRequest().getId();
@@ -80,7 +81,7 @@ public class EnginePreparePayloadDebug extends ExecutionEngineJsonRpcMethod {
             payloadIdentifier ->
                 new JsonRpcSuccessResponse(
                     requestId, new EnginePreparePayloadResult(VALID, payloadIdentifier)))
-        .orElseGet(() -> new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PARAMS));
+        .orElseGet(() -> new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS));
   }
 
   @VisibleForTesting
@@ -99,6 +100,7 @@ public class EnginePreparePayloadDebug extends ExecutionEngineJsonRpcMethod {
                     param.getTimestamp().orElse(parentHeader.getTimestamp() + 1L),
                     param.getPrevRandao(),
                     param.getFeeRecipient(),
-                    Optional.of(withdrawals)));
+                    Optional.of(withdrawals),
+                    param.getParentBeaconBlockRoot()));
   }
 }

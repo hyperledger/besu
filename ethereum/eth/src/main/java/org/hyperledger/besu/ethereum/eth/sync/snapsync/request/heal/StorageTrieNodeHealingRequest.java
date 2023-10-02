@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
-import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
@@ -59,27 +58,8 @@ public class StorageTrieNodeHealingRequest extends TrieNodeHealingRequest {
   @Override
   public Optional<Bytes> getExistingData(
       final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage) {
-    Optional<Bytes> accountStorageTrieNode =
-        worldStateStorage.getAccountStorageTrieNode(
-            getAccountHash(),
-            getLocation(),
-            null); // push null to not check the hash in the getAccountStorageTrieNode method
-    if (accountStorageTrieNode.isPresent()) {
-      return accountStorageTrieNode
-          .filter(node -> Hash.hash(node).equals(getNodeHash()))
-          .or(
-              () -> { // if we have a storage in database but not the good one we will need to fix
-                // the account later
-                downloadState.addAccountsToBeRepaired(
-                    CompactEncoding.bytesToPath(getAccountHash()));
-                return Optional.empty();
-              });
-    } else {
-      if (getNodeHash().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
-        return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
-      }
-      return Optional.empty();
-    }
+    return worldStateStorage.getAccountStorageTrieNode(
+        getAccountHash(), getLocation(), getNodeHash());
   }
 
   @Override
@@ -91,6 +71,7 @@ public class StorageTrieNodeHealingRequest extends TrieNodeHealingRequest {
   @Override
   protected Stream<SnapDataRequest> getRequestsFromTrieNodeValue(
       final WorldStateStorage worldStateStorage,
+      final SnapWorldDownloadState downloadState,
       final Bytes location,
       final Bytes path,
       final Bytes value) {

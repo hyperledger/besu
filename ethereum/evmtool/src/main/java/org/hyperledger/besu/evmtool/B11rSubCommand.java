@@ -19,10 +19,12 @@ package org.hyperledger.besu.evmtool;
 import static org.hyperledger.besu.evmtool.B11rSubCommand.COMMAND_ALIAS;
 import static org.hyperledger.besu.evmtool.B11rSubCommand.COMMAND_NAME;
 
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec.ReferenceTestBlockHeader;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -152,6 +154,9 @@ public class B11rSubCommand implements Runnable {
 
   @Override
   public void run() {
+    LogConfigurator.setLevel("", "OFF");
+    // presume ethereum mainnet for reference and state tests
+    SignatureAlgorithmFactory.setDefaultInstance();
     ObjectMapper objectMapper = JsonUtils.createObjectMapper();
     final ObjectReader b11rReader = objectMapper.reader();
 
@@ -210,7 +215,7 @@ public class B11rSubCommand implements Runnable {
 
     if (config.has("txs")) {
       String txsString = config.get("txs").textValue();
-      if (txsString.length() > 0) {
+      if (!txsString.isEmpty()) {
         txsBytes = Bytes.fromHexString(txsString);
       }
     }
@@ -222,7 +227,7 @@ public class B11rSubCommand implements Runnable {
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     rlpOut.startList();
     newHeader.writeTo(rlpOut);
-    if (txsBytes != null && txsBytes.size() > 0) {
+    if (txsBytes != null && !txsBytes.isEmpty()) {
       rlpOut.writeRaw(txsBytes);
     } else {
       rlpOut.startList();

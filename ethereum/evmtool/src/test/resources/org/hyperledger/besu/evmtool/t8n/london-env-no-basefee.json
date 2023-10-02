@@ -48,11 +48,12 @@
       "currentGasLimit": "100000000000000000",
       "currentNumber": "1",
       "currentTimestamp": "1000",
+      "currentStateRoot": "0x5c0f211cd1bea44ac01bd3fd7e0ab742d316adabd139bcf60a7aac6c458d596d",
       "parentDifficulty": "131072",
       "parentBaseFee": "7",
       "parentGasUsed": "50000000000000000",
       "parentGasLimit": "100000000000000000",
-      "parentTimstamp": "0",
+      "parentTimestamp": "0",
       "blockHashes": {
         "0": "0xe3c84688fa32c20955c535c7d25b5b4b196079e40a9c47c9cb1edb5e58b3dce5"
       },

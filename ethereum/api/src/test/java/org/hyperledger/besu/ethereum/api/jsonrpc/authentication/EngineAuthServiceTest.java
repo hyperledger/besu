@@ -34,7 +34,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.jwt.JWTAuth;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class EngineAuthServiceTest {
 

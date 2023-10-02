@@ -19,10 +19,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
@@ -34,13 +34,13 @@ import java.util.Optional;
 import com.google.common.io.BaseEncoding;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EthGetWorkTest {
 
   private EthGetWork method;
@@ -50,7 +50,7 @@ public class EthGetWorkTest {
 
   @Mock private PoWMiningCoordinator miningCoordinator;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(miningCoordinator.getEpochCalculator())
         .thenReturn(new EpochCalculator.DefaultEpochCalculator());
@@ -136,7 +136,7 @@ public class EthGetWorkTest {
   public void shouldReturnErrorOnNoneMiningNode() {
     final JsonRpcRequestContext request = requestWithParams();
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.NO_MINING_WORK_FOUND);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.NO_MINING_WORK_FOUND);
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.empty());
 
     final JsonRpcResponse actualResponse = method.response(request);

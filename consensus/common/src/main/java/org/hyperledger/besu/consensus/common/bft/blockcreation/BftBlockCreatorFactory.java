@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
@@ -53,7 +53,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
   /** The Forks schedule. */
   protected final ForksSchedule<T> forksSchedule;
 
-  private final PendingTransactions pendingTransactions;
+  private final TransactionPool transactionPool;
   /** The Protocol context. */
   protected final ProtocolContext protocolContext;
   /** The Protocol schedule. */
@@ -73,7 +73,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
   /**
    * Instantiates a new Bft block creator factory.
    *
-   * @param pendingTransactions the pending transactions
+   * @param transactionPool the pending transactions
    * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
    * @param forksSchedule the forks schedule
@@ -82,14 +82,14 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
    * @param bftExtraDataCodec the bft extra data codec
    */
   public BftBlockCreatorFactory(
-      final PendingTransactions pendingTransactions,
+      final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final ForksSchedule<T> forksSchedule,
       final MiningParameters miningParams,
       final Address localAddress,
       final BftExtraDataCodec bftExtraDataCodec) {
-    this.pendingTransactions = pendingTransactions;
+    this.transactionPool = transactionPool;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.forksSchedule = forksSchedule;
@@ -114,7 +114,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
         localAddress,
         () -> targetGasLimit.map(AtomicLong::longValue),
         ph -> createExtraData(round, ph),
-        pendingTransactions,
+        transactionPool,
         protocolContext,
         protocolSchedule,
         minTransactionGasPrice,

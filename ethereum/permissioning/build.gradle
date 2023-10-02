@@ -41,9 +41,9 @@ dependencies {
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-toml'
-  implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.tmio:tuweni-toml'
+  implementation 'io.tmio:tuweni-units'
   implementation 'org.web3j:abi'
 
   testImplementation project(':config')
@@ -52,10 +52,8 @@ dependencies {
   testImplementation project(':testutil')
 
   testImplementation 'io.vertx:vertx-core'
-  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
 }

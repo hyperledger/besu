@@ -30,14 +30,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngin
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateForkchoiceResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.List;
 import java.util.Optional;
@@ -49,8 +51,8 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineForkchoiceUpdated.class);
-  private final ProtocolSchedule protocolSchedule;
   private final MergeMiningCoordinator mergeCoordinator;
+  private final Long cancunTimestamp;
 
   public AbstractEngineForkchoiceUpdated(
       final Vertx vertx,
@@ -58,9 +60,17 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EngineCallListener engineCallListener) {
-    super(vertx, protocolContext, engineCallListener);
-    this.protocolSchedule = protocolSchedule;
+    super(vertx, protocolSchedule, protocolContext, engineCallListener);
+
     this.mergeCoordinator = mergeCoordinator;
+    Optional<ScheduledProtocolSpec.Hardfork> cancun =
+        protocolSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
+    cancunTimestamp = cancun.map(ScheduledProtocolSpec.Hardfork::milestone).orElse(Long.MAX_VALUE);
+  }
+
+  protected ValidationResult<RpcErrorType> validateParameter(
+      final EngineForkchoiceUpdatedParameter forkchoiceUpdatedParameter) {
+    return ValidationResult.valid();
   }
 
   @Override
@@ -75,6 +85,20 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
         requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
 
     LOG.debug("Forkchoice parameters {}", forkChoice);
+
+    if (maybePayloadAttributes.isPresent()) {
+      final EnginePayloadAttributesParameter payloadAttributes = maybePayloadAttributes.get();
+      ValidationResult<RpcErrorType> forkValidationResult =
+          validateForkSupported(payloadAttributes.getTimestamp());
+      if (!forkValidationResult.isValid()) {
+        return new JsonRpcSuccessResponse(requestId, forkValidationResult);
+      }
+    }
+
+    ValidationResult<RpcErrorType> parameterValidationResult = validateParameter(forkChoice);
+    if (!parameterValidationResult.isValid()) {
+      return new JsonRpcSuccessResponse(requestId, parameterValidationResult);
+    }
 
     mergeContext
         .get()
@@ -113,23 +137,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     if (!isValidForkchoiceState(
         forkChoice.getSafeBlockHash(), forkChoice.getFinalizedBlockHash(), newHead)) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
-      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_FORKCHOICE_STATE);
-    }
-
-    // TODO: post-merge cleanup, this should be unnecessary after merge
-    if (requireTerminalPoWBlockValidation()
-        && !mergeContext.get().isCheckpointPostMergeSync()
-        && !mergeContext.get().isPostMergeAtGenesis()
-        && !mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead)
-        && !mergeContext.get().isChainPruningEnabled()) {
-      logForkchoiceUpdatedCall(INVALID, forkChoice);
-      return new JsonRpcSuccessResponse(
-          requestId,
-          new EngineUpdateForkchoiceResult(
-              INVALID,
-              Hash.ZERO,
-              null,
-              Optional.of(newHead + " did not descend from terminal block")));
+      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_FORKCHOICE_STATE);
     }
 
     maybePayloadAttributes.ifPresentOrElse(
@@ -178,7 +186,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
                     payloadAttributes.getTimestamp(),
                     payloadAttributes.getPrevRandao(),
                     payloadAttributes.getSuggestedFeeRecipient(),
-                    withdrawals));
+                    withdrawals,
+                    Optional.ofNullable(payloadAttributes.getParentBeaconBlockRoot())));
 
     payloadId.ifPresent(
         pid ->
@@ -204,12 +213,29 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final BlockHeader headBlockHeader) {
 
-    final boolean newTimestampGreaterThanHead =
-        payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
-    return newTimestampGreaterThanHead
-        && getWithdrawalsValidator(
-                protocolSchedule, headBlockHeader, payloadAttributes.getTimestamp())
-            .validateWithdrawals(maybeWithdrawals);
+    if (payloadAttributes.getTimestamp() <= headBlockHeader.getTimestamp()) {
+      LOG.warn(
+          "Payload attributes timestamp is smaller than timestamp of header in fork choice update");
+      return false;
+    }
+    if (payloadAttributes.getTimestamp() < cancunTimestamp) {
+      if (payloadAttributes.getParentBeaconBlockRoot() != null) {
+        LOG.error(
+            "Parent beacon block root hash present in payload attributes before cancun hardfork");
+        return false;
+      }
+    } else if (payloadAttributes.getParentBeaconBlockRoot() == null) {
+      LOG.error(
+          "Parent beacon block root hash not present in payload attributes after cancun hardfork");
+      return false;
+    }
+    if (!getWithdrawalsValidator(
+            protocolSchedule.get(), headBlockHeader, payloadAttributes.getTimestamp())
+        .validateWithdrawals(maybeWithdrawals)) {
+      return false;
+    }
+
+    return true;
   }
 
   private JsonRpcResponse handleNonValidForkchoiceUpdate(
@@ -310,8 +336,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     return false;
   }
 
-  protected JsonRpcError getInvalidPayloadError() {
-    return JsonRpcError.INVALID_PARAMS;
+  protected RpcErrorType getInvalidPayloadError() {
+    return RpcErrorType.INVALID_PARAMS;
   }
 
   // fcU calls are synchronous, no need to make volatile

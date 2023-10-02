@@ -20,11 +20,13 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.DatabaseMetadata;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -38,7 +40,7 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
   private static final Logger LOG =
       LoggerFactory.getLogger(RocksDBKeyValuePrivacyStorageFactory.class);
   private static final int DEFAULT_VERSION = 1;
-  private static final Set<Integer> SUPPORTED_VERSIONS = Set.of(0, 1);
+  private static final Set<Integer> SUPPORTED_VERSIONS = Set.of(1);
 
   private static final String PRIVATE_DATABASE_PATH = "private";
   private final RocksDBKeyValueStorageFactory publicFactory;
@@ -76,8 +78,30 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
   }
 
   @Override
+  public SegmentedKeyValueStorage create(
+      final List<SegmentIdentifier> segments,
+      final BesuConfiguration commonConfiguration,
+      final MetricsSystem metricsSystem)
+      throws StorageException {
+    if (databaseVersion == null) {
+      try {
+        databaseVersion = readDatabaseVersion(commonConfiguration);
+      } catch (final IOException e) {
+        throw new StorageException("Failed to retrieve the RocksDB database meta version", e);
+      }
+    }
+
+    return publicFactory.create(segments, commonConfiguration, metricsSystem);
+  }
+
+  @Override
   public boolean isSegmentIsolationSupported() {
     return publicFactory.isSegmentIsolationSupported();
+  }
+
+  @Override
+  public boolean isSnapshotIsolationSupported() {
+    return publicFactory.isSnapshotIsolationSupported();
   }
 
   @Override
@@ -96,7 +120,7 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
         commonConfiguration.getStoragePath().resolve(PRIVATE_DATABASE_PATH).toFile().exists();
     final int privacyDatabaseVersion;
     if (privacyDatabaseExists) {
-      privacyDatabaseVersion = DatabaseMetadata.lookUpFrom(dataDir).maybePrivacyVersion().orElse(0);
+      privacyDatabaseVersion = DatabaseMetadata.lookUpFrom(dataDir).maybePrivacyVersion().orElse(1);
       LOG.info(
           "Existing private database detected at {}. Version {}", dataDir, privacyDatabaseVersion);
     } else {

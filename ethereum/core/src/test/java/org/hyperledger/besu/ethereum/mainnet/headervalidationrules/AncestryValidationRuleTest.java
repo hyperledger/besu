@@ -20,7 +20,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class AncestryValidationRuleTest {
 

@@ -18,9 +18,11 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -40,8 +42,8 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.TestClock;
+import org.hyperledger.besu.util.number.Fraction;
 
 import java.math.BigInteger;
 import java.time.ZoneId;
@@ -53,6 +55,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+@SuppressWarnings("unchecked")
 public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
 
   private static final Wei BASE_FEE_FLOOR = Wei.of(7L);
@@ -63,7 +66,7 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
     return new BaseFeePendingTransactionsSorter(
         ImmutableTransactionPoolConfiguration.builder()
             .txPoolMaxSize(MAX_TRANSACTIONS)
-            .txPoolLimitByAccountPercentage(1)
+            .txPoolLimitByAccountPercentage(Fraction.fromFloat(1.0f))
             .build(),
         TestClock.system(ZoneId.systemDefault()),
         metricsSystem,
@@ -250,6 +253,25 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
             add1559TxAndGetPendingTxsCount(
                 genesisBaseFee, minGasPrice, lastBlockBaseFee, txMaxFeePerGas, true))
         .isEqualTo(1);
+  }
+
+  @Test
+  public void addRemoteTransactionsShouldAllowDuplicates() {
+    final Transaction transaction1 = createTransaction(1, Wei.of(7L));
+    final Transaction transaction2 = createTransaction(2, Wei.of(7L));
+    final Transaction transaction3 = createTransaction(2, Wei.of(7L));
+    final Transaction transaction4 = createTransaction(3, Wei.of(7L));
+
+    givenTransactionIsValid(transaction1);
+    givenTransactionIsValid(transaction2);
+    givenTransactionIsValid(transaction3);
+    givenTransactionIsValid(transaction4);
+
+    assertThatCode(
+            () ->
+                transactionPool.addRemoteTransactions(
+                    List.of(transaction1, transaction2, transaction3, transaction4)))
+        .doesNotThrowAnyException();
   }
 
   private int add1559TxAndGetPendingTxsCount(

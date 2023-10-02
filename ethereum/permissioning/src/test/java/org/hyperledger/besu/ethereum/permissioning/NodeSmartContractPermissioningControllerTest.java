@@ -41,12 +41,12 @@ import java.io.IOException;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Resources;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
+@ExtendWith(MockitoExtension.class)
 public class NodeSmartContractPermissioningControllerTest {
   @Mock private MetricsSystem metricsSystem;
   @Mock private Counter checkCounter;

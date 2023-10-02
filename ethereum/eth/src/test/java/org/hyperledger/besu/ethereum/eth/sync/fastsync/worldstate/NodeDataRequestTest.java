@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderExc
 
 import java.util.Optional;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class NodeDataRequestTest {
 

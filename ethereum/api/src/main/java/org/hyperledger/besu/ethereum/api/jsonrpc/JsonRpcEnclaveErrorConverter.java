@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import java.util.Arrays;
 import java.util.List;
@@ -22,17 +22,17 @@ import java.util.stream.Collectors;
 
 public class JsonRpcEnclaveErrorConverter {
 
-  public static JsonRpcError convertEnclaveInvalidReason(final String reason) {
+  public static RpcErrorType convertEnclaveInvalidReason(final String reason) {
 
-    final List<JsonRpcError> err =
-        Arrays.stream(JsonRpcError.values())
+    final List<RpcErrorType> err =
+        Arrays.stream(RpcErrorType.values())
             .filter(e -> e.getMessage().equals(reason))
             .collect(Collectors.toList());
 
     if (err.size() == 1) {
       return err.get(0);
     } else {
-      return JsonRpcError.ENCLAVE_ERROR;
+      return RpcErrorType.ENCLAVE_ERROR;
     }
   }
 }

@@ -147,6 +147,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public boolean isPoa() {
+    return isQbft() || isClique() || isIbft2() || isIbftLegacy();
+  }
+
+  @Override
   public BftConfigOptions getBftConfigOptions() {
     final String fieldKey = isIbft2() ? IBFT2_CONFIG_KEY : QBFT_CONFIG_KEY;
     return JsonUtil.getObjectNode(configRoot, fieldKey)
@@ -401,16 +406,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public boolean isQuorum() {
-    return getOptionalBoolean("isquorum").orElse(false);
-  }
-
-  @Override
-  public OptionalLong getQip714BlockNumber() {
-    return getOptionalLong("qip714block");
-  }
-
-  @Override
   public PowAlgorithm getPowAlgorithm() {
     return isEthHash() ? PowAlgorithm.ETHASH : PowAlgorithm.UNSUPPORTED;
   }
@@ -488,11 +483,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     }
     if (isQbft()) {
       builder.put("qbft", getQbftConfigOptions().asMap());
-    }
-
-    if (isQuorum()) {
-      builder.put("isQuorum", true);
-      getQip714BlockNumber().ifPresent(blockNumber -> builder.put("qip714block", blockNumber));
     }
 
     if (isZeroBaseFee()) {
