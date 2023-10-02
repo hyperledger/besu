@@ -97,7 +97,9 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             ethPeers,
             engineCallListener);
     lenient().when(protocolSpec.getGasCalculator()).thenReturn(new CancunGasCalculator());
-    lenient().when(protocolSpec.getGasLimitCalculator()).thenReturn(mock(CancunTargetingGasLimitCalculator.class));
+    lenient()
+        .when(protocolSpec.getGasLimitCalculator())
+        .thenReturn(mock(CancunTargetingGasLimitCalculator.class));
   }
 
   @Test
