@@ -18,17 +18,15 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.permissioning.GoQuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.TransactionSmartContractPermissioningController;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
@@ -45,8 +43,7 @@ public class AccountPermissioningControllerFactory {
   public static Optional<AccountPermissioningController> create(
       final PermissioningConfiguration permissioningConfiguration,
       final TransactionSimulator transactionSimulator,
-      final MetricsSystem metricsSystem,
-      final Blockchain blockchain) {
+      final MetricsSystem metricsSystem) {
 
     if (permissioningConfiguration == null) {
       return Optional.empty();
@@ -64,24 +61,10 @@ public class AccountPermissioningControllerFactory {
     if (accountLocalConfigPermissioningController.isPresent()
         || transactionSmartContractPermissioningController.isPresent()) {
 
-      final Optional<GoQuorumQip714Gate> goQuorumQip714Gate =
-          permissioningConfiguration
-              .getQuorumPermissioningConfig()
-              .flatMap(
-                  config -> {
-                    if (config.isEnabled()) {
-                      return Optional.of(
-                          GoQuorumQip714Gate.getInstance(config.getQip714Block(), blockchain));
-                    } else {
-                      return Optional.empty();
-                    }
-                  });
-
       final AccountPermissioningController controller =
           new AccountPermissioningController(
               accountLocalConfigPermissioningController,
-              transactionSmartContractPermissioningController,
-              goQuorumQip714Gate);
+              transactionSmartContractPermissioningController);
 
       return Optional.of(controller);
     } else {

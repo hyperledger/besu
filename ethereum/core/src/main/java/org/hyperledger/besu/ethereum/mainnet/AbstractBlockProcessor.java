@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
+
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -36,7 +38,6 @@ import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -103,23 +104,35 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
 
+    if (blockHeader.getParentBeaconBlockRoot().isPresent()) {
+      final WorldUpdater updater = worldState.updater();
+      ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
+          updater, blockHeader.getTimestamp(), blockHeader.getParentBeaconBlockRoot().get());
+    }
+
     for (final Transaction transaction : transactions) {
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
         return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
       }
 
       final WorldUpdater worldStateUpdater = worldState.updater();
+
       final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
-      final Wei dataGasPrice =
-          protocolSpec
-              .getFeeMarket()
-              .dataPrice(
-                  blockchain
-                      .getBlockHeader(blockHeader.getParentHash())
-                      .flatMap(BlockHeader::getExcessDataGas)
-                      .orElse(DataGas.ZERO));
+
+      Optional<BlockHeader> maybeParentHeader =
+          blockchain.getBlockHeader(blockHeader.getParentHash());
+
+      Wei blobGasPrice =
+          maybeParentHeader
+              .map(
+                  (parentHeader) ->
+                      protocolSpec
+                          .getFeeMarket()
+                          .blobGasPricePerGas(
+                              calculateExcessBlobGasForParent(protocolSpec, parentHeader)))
+              .orElse(Wei.ZERO);
 
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
@@ -133,7 +146,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               true,
               TransactionValidationParams.processingBlock(),
               privateMetadataUpdater,
-              dataGasPrice);
+              blobGasPrice);
       if (result.isInvalid()) {
         String errorMessage =
             MessageFormat.format(

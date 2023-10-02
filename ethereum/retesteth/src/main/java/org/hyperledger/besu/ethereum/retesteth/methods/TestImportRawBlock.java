@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.retesteth.methods;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
@@ -62,7 +62,7 @@ public class TestImportRawBlock implements JsonRpcMethod {
     } catch (final RLPException | IllegalArgumentException e) {
       LOG.debug("Failed to parse block RLP", e);
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.BLOCK_RLP_IMPORT_ERROR);
+          requestContext.getRequest().getId(), RpcErrorType.BLOCK_RLP_IMPORT_ERROR);
     }
 
     // retesteth expects test_rawImportBlock to not only import the block, but append it to head
@@ -89,7 +89,7 @@ public class TestImportRawBlock implements JsonRpcMethod {
       if (!result.isImported()) {
         LOG.debug("Failed to import block.");
         return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), JsonRpcError.BLOCK_IMPORT_ERROR);
+            requestContext.getRequest().getId(), RpcErrorType.BLOCK_IMPORT_ERROR);
       }
     }
     // return success on append or import

@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
-import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
@@ -41,9 +40,9 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
+public class BonsaiAccount implements MutableAccount, AccountValue {
   private final BonsaiWorldView context;
-  private final boolean mutable;
+  private boolean mutable;
 
   private final Address address;
   private final Hash addressHash;
@@ -83,7 +82,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
     this(
         context,
         address,
-        Hash.hash(address),
+        address.addressHash(),
         stateTrieAccount.getNonce(),
         stateTrieAccount.getBalance(),
         stateTrieAccount.getStorageRoot(),
@@ -142,7 +141,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
     in.leaveList();
 
     return new BonsaiAccount(
-        context, address, Hash.hash(address), nonce, balance, storageRoot, codeHash, mutable);
+        context, address, address.addressHash(), nonce, balance, storageRoot, codeHash, mutable);
   }
 
   @Override
@@ -163,7 +162,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
   @Override
   public void setNonce(final long value) {
     if (!mutable) {
-      throw new UnsupportedOperationException("Account is immutable");
+      throw new ModificationNotAllowedException();
     }
     nonce = value;
   }
@@ -176,7 +175,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
   @Override
   public void setBalance(final Wei value) {
     if (!mutable) {
-      throw new UnsupportedOperationException("Account is immutable");
+      throw new ModificationNotAllowedException();
     }
     balance = value;
   }
@@ -192,7 +191,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
   @Override
   public void setCode(final Bytes code) {
     if (!mutable) {
-      throw new UnsupportedOperationException("Account is immutable");
+      throw new ModificationNotAllowedException();
     }
     this.code = code;
     if (code == null || code.isEmpty()) {
@@ -220,7 +219,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
   @Override
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
       final Bytes32 startKeyHash, final int limit) {
-    throw new RuntimeException("Bonsai Tries does not currently support enumerating storage");
+    return context.getWorldStateStorage().storageEntriesFrom(this.addressHash, startKeyHash, limit);
   }
 
   public Bytes serializeAccount() {
@@ -244,7 +243,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
   @Override
   public void setStorageValue(final UInt256 key, final UInt256 value) {
     if (!mutable) {
-      throw new UnsupportedOperationException("Account is immutable");
+      throw new ModificationNotAllowedException();
     }
     updatedStorage.put(key, value);
   }
@@ -260,24 +259,20 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
   }
 
   @Override
-  public MutableAccount getMutable() throws ModificationNotAllowedException {
-    if (mutable) {
-      return this;
-    } else {
-      throw new ModificationNotAllowedException();
-    }
-  }
-
-  @Override
   public Hash getStorageRoot() {
     return storageRoot;
   }
 
   public void setStorageRoot(final Hash storageRoot) {
     if (!mutable) {
-      throw new UnsupportedOperationException("Account is immutable");
+      throw new ModificationNotAllowedException();
     }
     this.storageRoot = storageRoot;
+  }
+
+  @Override
+  public void becomeImmutable() {
+    mutable = false;
   }
 
   @Override

@@ -58,10 +58,10 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
-import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -81,6 +81,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -97,7 +98,10 @@ public abstract class AbstractTransactionPoolTest {
 
   private static final KeyPair KEY_PAIR2 =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
-  @Mock protected MainnetTransactionValidator transactionValidator;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  protected TransactionValidatorFactory transactionValidatorFactory;
+
   @Mock protected PendingTransactionAddedListener listener;
   @Mock protected MiningParameters miningParameters;
   @Mock protected TransactionsMessageSender transactionsMessageSender;
@@ -136,7 +140,7 @@ public abstract class AbstractTransactionPoolTest {
     protocolContext = executionContext.getProtocolContext();
     blockchain = executionContext.getBlockchain();
     transactions = spy(createPendingTransactionsSorter());
-    when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
+    when(protocolSpec.getTransactionValidatorFactory()).thenReturn(transactionValidatorFactory);
     when(protocolSpec.getFeeMarket()).thenReturn(getFeeMarket());
     protocolSchedule = spy(executionContext.getProtocolSchedule());
     doReturn(protocolSpec).when(protocolSchedule).getByBlockHeader(any());
@@ -364,13 +368,13 @@ public abstract class AbstractTransactionPoolTest {
     transactionPool.addRemoteTransactions(singletonList(transaction));
 
     assertTransactionNotPending(transaction);
-    verifyNoMoreInteractions(transactionValidator);
+    verifyNoMoreInteractions(transactionValidatorFactory);
   }
 
   @Test
   public void shouldNotAddRemoteTransactionsWhenThereIsAnLowestInvalidNonceForTheSender() {
     givenTransactionIsValid(transaction2);
-    when(transactionValidator.validate(eq(transaction1), any(Optional.class), any()))
+    when(transactionValidatorFactory.get().validate(eq(transaction1), any(Optional.class), any()))
         .thenReturn(ValidationResult.invalid(NONCE_TOO_LOW));
 
     transactionPool.addRemoteTransactions(asList(transaction1, transaction2));
@@ -384,20 +388,23 @@ public abstract class AbstractTransactionPoolTest {
   public void shouldNotAddRemoteTransactionsThatAreInvalidAccordingToStateDependentChecks() {
     givenTransactionIsValid(transaction1);
     givenTransactionIsValid(transaction2);
-    when(transactionValidator.validateForSender(
-            eq(transaction2), eq(null), any(TransactionValidationParams.class)))
+    when(transactionValidatorFactory
+            .get()
+            .validateForSender(eq(transaction2), eq(null), any(TransactionValidationParams.class)))
         .thenReturn(ValidationResult.invalid(NONCE_TOO_LOW));
     transactionPool.addRemoteTransactions(asList(transaction1, transaction2));
 
     assertTransactionPending(transaction1);
     assertTransactionNotPending(transaction2);
     verify(transactionBroadcaster).onTransactionsAdded(singletonList(transaction1));
-    verify(transactionValidator).validate(eq(transaction1), any(Optional.class), any());
-    verify(transactionValidator)
+    verify(transactionValidatorFactory.get())
+        .validate(eq(transaction1), any(Optional.class), any());
+    verify(transactionValidatorFactory.get())
         .validateForSender(eq(transaction1), eq(null), any(TransactionValidationParams.class));
-    verify(transactionValidator).validate(eq(transaction2), any(Optional.class), any());
-    verify(transactionValidator).validateForSender(eq(transaction2), any(), any());
-    verifyNoMoreInteractions(transactionValidator);
+    verify(transactionValidatorFactory.get())
+        .validate(eq(transaction2), any(Optional.class), any());
+    verify(transactionValidatorFactory.get()).validateForSender(eq(transaction2), any(), any());
+    verifyNoMoreInteractions(transactionValidatorFactory.get());
   }
 
   @ParameterizedTest
@@ -440,7 +447,7 @@ public abstract class AbstractTransactionPoolTest {
     transactionPool.addRemoteTransactions(singletonList(transaction1));
 
     verify(transactions).containsTransaction(transaction1);
-    verifyNoInteractions(transactionValidator);
+    verifyNoInteractions(transactionValidatorFactory);
   }
 
   @Test
@@ -584,9 +591,11 @@ public abstract class AbstractTransactionPoolTest {
     final ArgumentCaptor<TransactionValidationParams> txValidationParamCaptor =
         ArgumentCaptor.forClass(TransactionValidationParams.class);
 
-    when(transactionValidator.validate(eq(transaction1), any(Optional.class), any()))
+    when(transactionValidatorFactory.get().validate(eq(transaction1), any(Optional.class), any()))
         .thenReturn(valid());
-    when(transactionValidator.validateForSender(any(), any(), txValidationParamCaptor.capture()))
+    when(transactionValidatorFactory
+            .get()
+            .validateForSender(any(), any(), txValidationParamCaptor.capture()))
         .thenReturn(valid());
 
     final TransactionValidationParams expectedValidationParams =
@@ -685,10 +694,12 @@ public abstract class AbstractTransactionPoolTest {
   }
 
   protected void givenTransactionIsValid(final Transaction transaction) {
-    when(transactionValidator.validate(eq(transaction), any(Optional.class), any()))
+    when(transactionValidatorFactory.get().validate(eq(transaction), any(Optional.class), any()))
         .thenReturn(valid());
-    when(transactionValidator.validateForSender(
-            eq(transaction), nullable(Account.class), any(TransactionValidationParams.class)))
+    when(transactionValidatorFactory
+            .get()
+            .validateForSender(
+                eq(transaction), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
   }
 

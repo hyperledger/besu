@@ -15,24 +15,20 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.BlobsWithCommitments;
+import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.AccessListEntry;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class TransactionTestFixture {
-  private static final Hash DEFAULT_VERSIONED_HASH =
-      Hash.wrap(
-          Bytes32.wrap(
-              Bytes.concatenate(Bytes.fromHexString("0x01"), Bytes.repeat((byte) 42, 31))));
 
   private TransactionType transactionType = TransactionType.FRONTIER;
 
@@ -53,11 +49,12 @@ public class TransactionTestFixture {
 
   private Optional<Wei> maxPriorityFeePerGas = Optional.empty();
   private Optional<Wei> maxFeePerGas = Optional.empty();
-  private Optional<Wei> maxFeePerDataGas = Optional.empty();
+  private Optional<Wei> maxFeePerBlobGas = Optional.empty();
 
   private Optional<List<AccessListEntry>> accessListEntries = Optional.empty();
-  private Optional<List<Hash>> versionedHashes = Optional.empty();
+  private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
 
+  private Optional<BlobsWithCommitments> blobs = Optional.empty();
   private Optional<BigInteger> v = Optional.empty();
 
   public Transaction createTransaction(final KeyPair keys) {
@@ -87,8 +84,13 @@ public class TransactionTestFixture {
         builder.maxPriorityFeePerGas(maxPriorityFeePerGas.orElse(Wei.of(500)));
         builder.maxFeePerGas(maxFeePerGas.orElse(Wei.of(5000)));
         builder.accessList(accessListEntries.orElse(List.of()));
-        builder.maxFeePerDataGas(maxFeePerDataGas.orElse(Wei.ONE));
-        builder.versionedHashes(versionedHashes.orElse(List.of(DEFAULT_VERSIONED_HASH)));
+        builder.maxFeePerBlobGas(maxFeePerBlobGas.orElse(Wei.ONE));
+        builder.versionedHashes(
+            versionedHashes.orElse(List.of(VersionedHash.DEFAULT_VERSIONED_HASH)));
+        blobs.ifPresent(
+            bwc -> {
+              builder.kzgBlobs(bwc.getKzgCommitments(), bwc.getBlobs(), bwc.getKzgProofs());
+            });
         break;
     }
 
@@ -154,8 +156,8 @@ public class TransactionTestFixture {
     return this;
   }
 
-  public TransactionTestFixture maxFeePerDataGas(final Optional<Wei> maxFeePerDataGas) {
-    this.maxFeePerDataGas = maxFeePerDataGas;
+  public TransactionTestFixture maxFeePerBlobGas(final Optional<Wei> maxFeePerBlobGas) {
+    this.maxFeePerBlobGas = maxFeePerBlobGas;
     return this;
   }
 
@@ -164,13 +166,19 @@ public class TransactionTestFixture {
     return this;
   }
 
-  public TransactionTestFixture versionedHashes(final List<Hash> versionedHashes) {
-    this.versionedHashes = Optional.ofNullable(versionedHashes);
+  public TransactionTestFixture versionedHashes(
+      final Optional<List<VersionedHash>> versionedHashes) {
+    this.versionedHashes = versionedHashes;
     return this;
   }
 
   public TransactionTestFixture v(final Optional<BigInteger> v) {
     this.v = v;
+    return this;
+  }
+
+  public TransactionTestFixture blobsWithCommitments(final Optional<BlobsWithCommitments> blobs) {
+    this.blobs = blobs;
     return this;
   }
 }

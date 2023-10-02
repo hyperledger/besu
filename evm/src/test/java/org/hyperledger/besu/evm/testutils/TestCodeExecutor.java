@@ -28,7 +28,6 @@ import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.function.Consumer;
 
@@ -54,8 +53,6 @@ public class TestCodeExecutor {
 
   public MessageFrame executeCode(
       final String codeHexString, final long gasLimit, final WorldUpdater worldUpdater) {
-    final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-
     final MessageCallProcessor messageCallProcessor =
         new MessageCallProcessor(evm, new PrecompileContractRegistry());
     final Bytes codeBytes = Bytes.fromHexString(codeHexString.replaceAll("\\s", ""));
@@ -63,7 +60,6 @@ public class TestCodeExecutor {
 
     final MessageFrame initialFrame =
         new TestMessageFrameBuilder()
-            .messageFrameStack(messageFrameStack)
             .worldUpdater(worldUpdater)
             .initialGas(gasLimit)
             .address(SENDER_ADDRESS)
@@ -75,10 +71,9 @@ public class TestCodeExecutor {
             .value(Wei.ZERO)
             .code(code)
             .blockValues(blockValues)
-            .depth(0)
             .build();
-    messageFrameStack.addFirst(initialFrame);
 
+    final Deque<MessageFrame> messageFrameStack = initialFrame.getMessageFrameStack();
     while (!messageFrameStack.isEmpty()) {
       messageCallProcessor.process(messageFrameStack.peekFirst(), OperationTracer.NO_TRACING);
     }
@@ -88,7 +83,7 @@ public class TestCodeExecutor {
   public static void deployContract(
       final WorldUpdater worldUpdater, final Address contractAddress, final String codeHexString) {
     var updater = worldUpdater.updater();
-    final MutableAccount contract = updater.getOrCreate(contractAddress).getMutable();
+    final MutableAccount contract = updater.getOrCreate(contractAddress);
 
     contract.setNonce(0);
     contract.clearStorage();
@@ -100,8 +95,7 @@ public class TestCodeExecutor {
     ToyWorld toyWorld = new ToyWorld();
 
     final WorldUpdater worldState = toyWorld.updater();
-    final MutableAccount senderAccount =
-        worldState.getOrCreate(TestCodeExecutor.SENDER_ADDRESS).getMutable();
+    final MutableAccount senderAccount = worldState.getOrCreate(TestCodeExecutor.SENDER_ADDRESS);
     accountSetup.accept(senderAccount);
     worldState.commit();
     return toyWorld.updater();

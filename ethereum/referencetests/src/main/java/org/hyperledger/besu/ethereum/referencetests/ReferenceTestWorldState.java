@@ -17,12 +17,9 @@ package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,9 +32,9 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 /** Represent a worldState for testing. */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ReferenceTestWorldState extends DefaultMutableWorldState {
+public interface ReferenceTestWorldState extends MutableWorldState {
 
-  public static class AccountMock {
+  class AccountMock {
     private final long nonce;
     private final Wei balance;
     private final Bytes code;
@@ -81,7 +78,7 @@ public class ReferenceTestWorldState extends DefaultMutableWorldState {
 
   static void insertAccount(
       final WorldUpdater updater, final Address address, final AccountMock toCopy) {
-    final MutableAccount account = updater.getOrCreate(address).getMutable();
+    final MutableAccount account = updater.getOrCreate(address);
     account.setNonce(toCopy.getNonce());
     account.setBalance(toCopy.getBalance());
     account.setCode(toCopy.getCode());
@@ -90,22 +87,11 @@ public class ReferenceTestWorldState extends DefaultMutableWorldState {
     }
   }
 
+  ReferenceTestWorldState copy();
+
   @JsonCreator
-  public static ReferenceTestWorldState create(final Map<String, AccountMock> accounts) {
-    final ReferenceTestWorldState worldState = new ReferenceTestWorldState();
-    final WorldUpdater updater = worldState.updater();
-
-    for (final Map.Entry<String, AccountMock> entry : accounts.entrySet()) {
-      insertAccount(updater, Address.fromHexString(entry.getKey()), entry.getValue());
-    }
-
-    updater.commit();
-    return worldState;
-  }
-
-  public ReferenceTestWorldState() {
-    super(
-        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
-        new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
+  static ReferenceTestWorldState create(final Map<String, AccountMock> accounts) {
+    // delegate to a Bonsai reference test world state:
+    return BonsaiReferenceTestWorldState.create(accounts);
   }
 }

@@ -24,16 +24,19 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented.RocksDBKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.OptimisticRocksDBColumnarKeyValueStorage;
+import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
@@ -58,11 +61,17 @@ public class OperationBenchmarkHelper {
 
   public static OperationBenchmarkHelper create() throws IOException {
     final Path storageDirectory = Files.createTempDirectory("benchmark");
-    final KeyValueStorage keyValueStorage =
-        new RocksDBKeyValueStorage(
+    final OptimisticRocksDBColumnarKeyValueStorage optimisticRocksDBColumnarKeyValueStorage =
+        new OptimisticRocksDBColumnarKeyValueStorage(
             new RocksDBConfigurationBuilder().databaseDir(storageDirectory).build(),
+            List.of(KeyValueSegmentIdentifier.BLOCKCHAIN),
+            emptyList(),
             new NoOpMetricsSystem(),
             RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
+
+    final KeyValueStorage keyValueStorage =
+        new SegmentedKeyValueStorageAdapter(
+            KeyValueSegmentIdentifier.BLOCKCHAIN, optimisticRocksDBColumnarKeyValueStorage);
 
     final ExecutionContextTestFixture executionContext =
         ExecutionContextTestFixture.builder().blockchainKeyValueStorage(keyValueStorage).build();
@@ -103,25 +112,19 @@ public class OperationBenchmarkHelper {
 
   public MessageFrame.Builder createMessageFrameBuilder() {
     return MessageFrame.builder()
+        .parentMessageFrame(messageFrame)
         .type(MessageFrame.Type.MESSAGE_CALL)
-        .messageFrameStack(messageFrame.getMessageFrameStack())
         .worldUpdater(messageFrame.getWorldUpdater())
         .initialGas(messageFrame.getRemainingGas())
         .address(messageFrame.getContractAddress())
-        .originator(messageFrame.getOriginatorAddress())
         .contract(messageFrame.getRecipientAddress())
-        .gasPrice(messageFrame.getGasPrice())
         .inputData(messageFrame.getInputData())
         .sender(messageFrame.getSenderAddress())
         .value(messageFrame.getValue())
         .apparentValue(messageFrame.getApparentValue())
         .code(messageFrame.getCode())
-        .blockValues(messageFrame.getBlockValues())
-        .depth(messageFrame.getMessageStackDepth())
         .isStatic(messageFrame.isStatic())
-        .completer(messageFrame -> {})
-        .miningBeneficiary(messageFrame.getMiningBeneficiary())
-        .maxStackSize(messageFrame.getMaxStackSize());
+        .completer(frame -> {});
   }
 
   public void cleanUp() throws IOException {

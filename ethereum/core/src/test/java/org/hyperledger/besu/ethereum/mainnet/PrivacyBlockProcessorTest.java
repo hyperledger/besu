@@ -45,7 +45,6 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.Collections;
@@ -53,13 +52,13 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
-public class PrivacyBlockProcessorTest {
+@ExtendWith(MockitoExtension.class)
+class PrivacyBlockProcessorTest {
 
   private PrivacyBlockProcessor privacyBlockProcessor;
   private PrivateStateStorage privateStateStorage;
@@ -69,7 +68,7 @@ public class PrivacyBlockProcessorTest {
   private ProtocolSchedule protocolSchedule;
   private WorldStateArchive publicWorldStateArchive;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     blockProcessor = mock(AbstractBlockProcessor.class);
     privateStateStorage = new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
@@ -91,7 +90,7 @@ public class PrivacyBlockProcessorTest {
   }
 
   @Test
-  public void mustCopyPreviousPrivacyGroupBlockHeadMap() {
+  void mustCopyPreviousPrivacyGroupBlockHeadMap() {
     final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
     final Blockchain blockchain = mock(Blockchain.class);
     final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
@@ -132,7 +131,7 @@ public class PrivacyBlockProcessorTest {
   }
 
   @Test
-  public void mustPerformRehydration() {
+  void mustPerformRehydration() {
     final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
     final Blockchain blockchain = mock(Blockchain.class);
     final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
@@ -191,9 +190,7 @@ public class PrivacyBlockProcessorTest {
   private MutableWorldState mockPrivateStateArchive() {
     final MutableWorldState mockPrivateState = mock(MutableWorldState.class);
     final WorldUpdater mockWorldUpdater = mock(WorldUpdater.class);
-    final WrappedEvmAccount mockWrappedEvmAccount = mock(WrappedEvmAccount.class);
-    final MutableAccount mockMutableAccount = mock(MutableAccount.class);
-    when(mockWrappedEvmAccount.getMutable()).thenReturn(mockMutableAccount);
+    final MutableAccount mockWrappedEvmAccount = mock(MutableAccount.class);
     when(mockWorldUpdater.createAccount(any())).thenReturn(mockWrappedEvmAccount);
     when(mockPrivateState.updater()).thenReturn(mockWorldUpdater);
     when(mockPrivateState.rootHash()).thenReturn(Hash.ZERO);

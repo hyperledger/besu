@@ -15,24 +15,18 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
-import java.util.Optional;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
-
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class EngineForkchoiceUpdatedV1Test extends AbstractEngineForkchoiceUpdatedTest {
 
   public EngineForkchoiceUpdatedV1Test() {
@@ -45,33 +39,13 @@ public class EngineForkchoiceUpdatedV1Test extends AbstractEngineForkchoiceUpdat
     assertThat(method.getName()).isEqualTo("engine_forkchoiceUpdatedV1");
   }
 
-  @Test
-  public void shouldReturnInvalidOnBadTerminalBlock() {
-    BlockHeader mockHeader = blockHeaderBuilder.buildHeader();
-
-    when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
-        .thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(false);
-    assertSuccessWithPayloadForForkchoiceResult(
-        new EngineForkchoiceUpdatedParameter(mockHeader.getHash(), Hash.ZERO, Hash.ZERO),
-        Optional.empty(),
-        mock(MergeMiningCoordinator.ForkchoiceResult.class),
-        INVALID,
-        Optional.of(Hash.ZERO));
-  }
-
   @Override
   protected String getMethodName() {
     return RpcMethod.ENGINE_FORKCHOICE_UPDATED_V1.getMethodName();
   }
 
   @Override
-  protected boolean validateTerminalPoWBlock() {
-    return true;
-  }
-
-  @Override
-  protected JsonRpcError expectedInvalidPayloadError() {
-    return JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES;
+  protected RpcErrorType expectedInvalidPayloadError() {
+    return RpcErrorType.INVALID_PAYLOAD_ATTRIBUTES;
   }
 }

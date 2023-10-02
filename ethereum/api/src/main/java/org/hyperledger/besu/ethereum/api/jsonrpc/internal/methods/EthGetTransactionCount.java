@@ -21,25 +21,25 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
 public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMethod {
-  private final Supplier<PendingTransactions> pendingTransactions;
+  private final Supplier<TransactionPool> transactionPoolSupplier;
 
   public EthGetTransactionCount(
-      final BlockchainQueries blockchain, final PendingTransactions pendingTransactions) {
-    this(Suppliers.ofInstance(blockchain), Suppliers.ofInstance(pendingTransactions));
+      final BlockchainQueries blockchain, final TransactionPool transactionPoolSupplier) {
+    this(Suppliers.ofInstance(blockchain), Suppliers.ofInstance(transactionPoolSupplier));
   }
 
   public EthGetTransactionCount(
       final Supplier<BlockchainQueries> blockchain,
-      final Supplier<PendingTransactions> pendingTransactions) {
+      final Supplier<TransactionPool> transactionPoolSupplier) {
     super(blockchain);
-    this.pendingTransactions = pendingTransactions;
+    this.transactionPoolSupplier = transactionPoolSupplier;
   }
 
   @Override
@@ -56,7 +56,8 @@ public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMet
   @Override
   protected Object pendingResult(final JsonRpcRequestContext request) {
     final Address address = request.getRequiredParameter(0, Address.class);
-    final long pendingNonce = pendingTransactions.get().getNextNonceForSender(address).orElse(0);
+    final long pendingNonce =
+        transactionPoolSupplier.get().getNextNonceForSender(address).orElse(0);
     final long latestNonce =
         getBlockchainQueries()
             .getTransactionCount(

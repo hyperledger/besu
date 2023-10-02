@@ -24,10 +24,10 @@ import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionResult;
@@ -42,13 +42,13 @@ import java.util.Optional;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.impl.UserImpl;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PrivGetPrivateTransactionTest {
 
   @Mock private PrivacyController privacyController;
@@ -63,7 +63,7 @@ public class PrivGetPrivateTransactionTest {
   private PrivGetPrivateTransaction privGetPrivateTransaction;
   private Transaction markerTransaction;
 
-  @Before
+  @BeforeEach
   public void before() {
     privGetPrivateTransaction = new PrivGetPrivateTransaction(privacyController, privacyIdProvider);
 
@@ -125,7 +125,7 @@ public class PrivGetPrivateTransactionTest {
   public void failsWithEnclaveErrorOnEnclaveError() {
     final JsonRpcRequestContext request = createRequestContext();
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.ENCLAVE_ERROR);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.ENCLAVE_ERROR);
 
     when(privacyController.findPrivateTransactionByPmtHash(any(), any()))
         .thenThrow(new EnclaveClientException(500, "enclave failure"));

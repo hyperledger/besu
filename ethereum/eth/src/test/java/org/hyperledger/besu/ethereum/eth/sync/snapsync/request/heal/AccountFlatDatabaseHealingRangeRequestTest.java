@@ -47,24 +47,27 @@ import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class AccountFlatDatabaseHealingRangeRequestTest {
 
   @Mock private SnapWorldDownloadState downloadState;
   @Mock private SnapSyncProcessState snapSyncState;
 
-  @Before
+  @BeforeEach
   public void setup() {
     Mockito.when(downloadState.getMetricsManager())
         .thenReturn(Mockito.mock(SnapsyncMetricsManager.class));
-    Mockito.when(downloadState.getAccountsToBeRepaired()).thenReturn(new HashSet<>());
+    Mockito.when(downloadState.getAccountsHealingList()).thenReturn(new HashSet<>());
   }
 
   @Test
@@ -117,7 +120,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
     Assertions.assertThat(snapDataRequest.getStartKeyHash()).isGreaterThan(accounts.lastKey());
 
     // Verify that we have storage healing request when the account need to be repaired
-    Mockito.when(downloadState.getAccountsToBeRepaired())
+    Mockito.when(downloadState.getAccountsHealingList())
         .thenReturn(
             new HashSet<>(
                 accounts.keySet().stream()

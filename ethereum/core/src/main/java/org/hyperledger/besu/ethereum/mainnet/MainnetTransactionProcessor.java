@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVAT
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -31,9 +32,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -43,7 +42,6 @@ import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
@@ -64,7 +62,7 @@ public class MainnetTransactionProcessor {
 
   protected final GasCalculator gasCalculator;
 
-  protected final MainnetTransactionValidator transactionValidator;
+  protected final TransactionValidatorFactory transactionValidatorFactory;
 
   private final AbstractMessageProcessor contractCreationProcessor;
 
@@ -81,7 +79,7 @@ public class MainnetTransactionProcessor {
 
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
-      final MainnetTransactionValidator transactionValidator,
+      final TransactionValidatorFactory transactionValidatorFactory,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
@@ -90,7 +88,7 @@ public class MainnetTransactionProcessor {
       final FeeMarket feeMarket,
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
     this.gasCalculator = gasCalculator;
-    this.transactionValidator = transactionValidator;
+    this.transactionValidatorFactory = transactionValidatorFactory;
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
     this.clearEmptyAccounts = clearEmptyAccounts;
@@ -125,7 +123,7 @@ public class MainnetTransactionProcessor {
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
-      final Wei dataGasPrice) {
+      final Wei blobGasPrice) {
     return processTransaction(
         blockchain,
         worldState,
@@ -137,7 +135,7 @@ public class MainnetTransactionProcessor {
         isPersistingPrivateState,
         transactionValidationParams,
         null,
-        dataGasPrice);
+        blobGasPrice);
   }
 
   /**
@@ -167,7 +165,7 @@ public class MainnetTransactionProcessor {
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
-      final Wei dataGasPrice) {
+      final Wei blobGasPrice) {
     return processTransaction(
         blockchain,
         worldState,
@@ -179,7 +177,7 @@ public class MainnetTransactionProcessor {
         isPersistingPrivateState,
         transactionValidationParams,
         null,
-        dataGasPrice);
+        blobGasPrice);
   }
 
   /**
@@ -204,7 +202,7 @@ public class MainnetTransactionProcessor {
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
-      final Wei dataGasPrice) {
+      final Wei blobGasPrice) {
     return processTransaction(
         blockchain,
         worldState,
@@ -216,7 +214,7 @@ public class MainnetTransactionProcessor {
         isPersistingPrivateState,
         ImmutableTransactionValidationParams.builder().build(),
         null,
-        dataGasPrice);
+        blobGasPrice);
   }
 
   /**
@@ -243,7 +241,7 @@ public class MainnetTransactionProcessor {
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
-      final Wei dataGasPrice) {
+      final Wei blobGasPrice) {
     return processTransaction(
         blockchain,
         worldState,
@@ -255,7 +253,7 @@ public class MainnetTransactionProcessor {
         isPersistingPrivateState,
         transactionValidationParams,
         null,
-        dataGasPrice);
+        blobGasPrice);
   }
 
   public TransactionProcessingResult processTransaction(
@@ -269,8 +267,9 @@ public class MainnetTransactionProcessor {
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
       final PrivateMetadataUpdater privateMetadataUpdater,
-      final Wei dataGasPrice) {
+      final Wei blobGasPrice) {
     try {
+      final var transactionValidator = transactionValidatorFactory.get();
       LOG.trace("Starting execution of {}", transaction);
       ValidationResult<TransactionInvalidReason> validationResult =
           transactionValidator.validate(
@@ -285,7 +284,7 @@ public class MainnetTransactionProcessor {
 
       final Address senderAddress = transaction.getSender();
 
-      final EvmAccount sender = worldState.getOrCreateSenderAccount(senderAddress);
+      final MutableAccount sender = worldState.getOrCreateSenderAccount(senderAddress);
 
       validationResult =
           transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
@@ -294,8 +293,7 @@ public class MainnetTransactionProcessor {
         return TransactionProcessingResult.invalid(validationResult);
       }
 
-      final MutableAccount senderMutableAccount = sender.getMutable();
-      final long previousNonce = senderMutableAccount.incrementNonce();
+      final long previousNonce = sender.incrementNonce();
       LOG.trace(
           "Incremented sender {} nonce ({} -> {})",
           senderAddress,
@@ -305,11 +303,11 @@ public class MainnetTransactionProcessor {
       final Wei transactionGasPrice =
           feeMarket.getTransactionPriceCalculator().price(transaction, blockHeader.getBaseFee());
 
-      final long dataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
+      final long blobGas = gasCalculator.blobGasCost(transaction.getBlobCount());
 
       final Wei upfrontGasCost =
-          transaction.getUpfrontGasCost(transactionGasPrice, dataGasPrice, dataGas);
-      final Wei previousBalance = senderMutableAccount.decrementBalance(upfrontGasCost);
+          transaction.getUpfrontGasCost(transactionGasPrice, blobGasPrice, blobGas);
+      final Wei previousBalance = sender.decrementBalance(upfrontGasCost);
       LOG.trace(
           "Deducted sender {} upfront gas cost {} ({} -> {})",
           senderAddress,
@@ -324,9 +322,9 @@ public class MainnetTransactionProcessor {
       final Multimap<Address, Bytes32> storageList = HashMultimap.create();
       int accessListStorageCount = 0;
       for (final var entry : accessListEntries) {
-        final Address address = entry.getAddress();
+        final Address address = entry.address();
         addressList.add(address);
-        final List<Bytes32> storageKeys = entry.getStorageKeys();
+        final List<Bytes32> storageKeys = entry.storageKeys();
         storageList.putAll(address, storageKeys);
         accessListStorageCount += storageKeys.size();
       }
@@ -339,17 +337,16 @@ public class MainnetTransactionProcessor {
               transaction.getPayload(), transaction.isContractCreation());
       final long accessListGas =
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
-
       final long gasAvailable = transaction.getGasLimit() - intrinsicGas - accessListGas;
       LOG.trace(
-          "Gas available for execution {} = {} - {} - {} (limit - intrinsic - accessList)",
+          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList - data)",
           gasAvailable,
           transaction.getGasLimit(),
           intrinsicGas,
-          accessListGas);
+          accessListGas,
+          blobGas);
 
       final WorldUpdater worldUpdater = worldState.updater();
-      final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
       final ImmutableMap.Builder<String, Object> contextVariablesBuilder =
           ImmutableMap.<String, Object>builder()
               .put(KEY_IS_PERSISTING_PRIVATE_STATE, isPersistingPrivateState)
@@ -361,17 +358,16 @@ public class MainnetTransactionProcessor {
 
       final MessageFrame.Builder commonMessageFrameBuilder =
           MessageFrame.builder()
-              .messageFrameStack(messageFrameStack)
               .maxStackSize(maxStackSize)
               .worldUpdater(worldUpdater.updater())
               .initialGas(gasAvailable)
               .originator(senderAddress)
               .gasPrice(transactionGasPrice)
+              .blobGasPrice(blobGasPrice)
               .sender(senderAddress)
               .value(transaction.getValue())
               .apparentValue(transaction.getValue())
               .blockValues(blockHeader)
-              .depth(0)
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
@@ -379,10 +375,17 @@ public class MainnetTransactionProcessor {
               .accessListWarmAddresses(addressList)
               .accessListWarmStorage(storageList);
 
+      if (transaction.getVersionedHashes().isPresent()) {
+        commonMessageFrameBuilder.versionedHashes(
+            Optional.of(transaction.getVersionedHashes().get().stream().toList()));
+      } else {
+        commonMessageFrameBuilder.versionedHashes(Optional.empty());
+      }
+
       final MessageFrame initialFrame;
       if (transaction.isContractCreation()) {
         final Address contractAddress =
-            Address.contractAddress(senderAddress, senderMutableAccount.getNonce() - 1L);
+            Address.contractAddress(senderAddress, sender.getNonce() - 1L);
 
         final Bytes initCodeBytes = transaction.getPayload();
         initialFrame =
@@ -391,7 +394,6 @@ public class MainnetTransactionProcessor {
                 .address(contractAddress)
                 .contract(contractAddress)
                 .inputData(Bytes.EMPTY)
-                .versionedHashes(transaction.getVersionedHashes())
                 .code(contractCreationProcessor.getCodeFromEVM(null, initCodeBytes))
                 .build();
       } else {
@@ -404,15 +406,13 @@ public class MainnetTransactionProcessor {
                 .address(to)
                 .contract(to)
                 .inputData(transaction.getPayload())
-                .versionedHashes(transaction.getVersionedHashes())
                 .code(
                     maybeContract
                         .map(c -> messageCallProcessor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
                         .orElse(CodeV0.EMPTY_CODE))
                 .build();
       }
-
-      messageFrameStack.addFirst(initialFrame);
+      Deque<MessageFrame> messageFrameStack = initialFrame.getMessageFrameStack();
 
       if (initialFrame.getCode().isValid()) {
         while (!messageFrameStack.isEmpty()) {
@@ -441,12 +441,19 @@ public class MainnetTransactionProcessor {
       final long baseRefundGas = initialFrame.getGasRefund() + selfDestructRefund;
       final long refundedGas = refunded(transaction, initialFrame.getRemainingGas(), baseRefundGas);
       final Wei refundedWei = transactionGasPrice.multiply(refundedGas);
-      senderMutableAccount.incrementBalance(refundedWei);
-
+      final Wei balancePriorToRefund = sender.getBalance();
+      sender.incrementBalance(refundedWei);
+      LOG.atTrace()
+          .setMessage("refunded sender {}  {} wei ({} -> {})")
+          .addArgument(senderAddress)
+          .addArgument(refundedWei)
+          .addArgument(balancePriorToRefund)
+          .addArgument(sender.getBalance())
+          .log();
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
 
       // update the coinbase
-      final var coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
+      final var coinbase = worldState.getOrCreate(miningBeneficiary);
       final long usedGas = transaction.getGasLimit() - refundedGas;
       final CoinbaseFeePriceCalculator coinbaseCalculator;
       if (blockHeader.getBaseFee().isPresent()) {
@@ -498,25 +505,17 @@ public class MainnetTransactionProcessor {
     }
   }
 
-  public MainnetTransactionValidator getTransactionValidator() {
-    return transactionValidator;
-  }
-
-  protected void process(final MessageFrame frame, final OperationTracer operationTracer) {
+  public void process(final MessageFrame frame, final OperationTracer operationTracer) {
     final AbstractMessageProcessor executor = getMessageProcessor(frame.getType());
 
     executor.process(frame, operationTracer);
   }
 
   private AbstractMessageProcessor getMessageProcessor(final MessageFrame.Type type) {
-    switch (type) {
-      case MESSAGE_CALL:
-        return messageCallProcessor;
-      case CONTRACT_CREATION:
-        return contractCreationProcessor;
-      default:
-        throw new IllegalStateException("Request for unsupported message processor type " + type);
-    }
+    return switch (type) {
+      case MESSAGE_CALL -> messageCallProcessor;
+      case CONTRACT_CREATION -> contractCreationProcessor;
+    };
   }
 
   protected long refunded(

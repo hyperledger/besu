@@ -21,13 +21,13 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class TransactionSimulatorResultTest {
 
   private TransactionSimulatorResult transactionSimulatorResult;
@@ -35,7 +35,7 @@ public class TransactionSimulatorResultTest {
   @Mock private Transaction transaction;
   @Mock private TransactionProcessingResult result;
 
-  @Before
+  @BeforeEach
   public void before() {
     this.transactionSimulatorResult = new TransactionSimulatorResult(transaction, result);
   }

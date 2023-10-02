@@ -49,6 +49,7 @@ public class DebugOperationTracer implements OperationTracer {
   private long gasRemaining;
   private Bytes inputData;
   private int pc;
+  private int depth;
 
   public DebugOperationTracer(final TraceOptions options) {
     this.options = options;
@@ -58,16 +59,16 @@ public class DebugOperationTracer implements OperationTracer {
   public void tracePreExecution(final MessageFrame frame) {
     preExecutionStack = captureStack(frame);
     gasRemaining = frame.getRemainingGas();
-    if (lastFrame != null && frame.getMessageStackDepth() > lastFrame.getDepth())
+    if (lastFrame != null && frame.getDepth() > lastFrame.getDepth())
       inputData = frame.getInputData().copy();
     else inputData = frame.getInputData();
     pc = frame.getPC();
+    depth = frame.getDepth();
   }
 
   @Override
   public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
     final Operation currentOperation = frame.getCurrentOperation();
-    final int depth = frame.getMessageStackDepth();
     final String opcode = currentOperation.getName();
     final WorldUpdater worldUpdater = frame.getWorldUpdater();
     final Bytes outputData = frame.getOutputData();
@@ -122,7 +123,7 @@ public class DebugOperationTracer implements OperationTracer {
               frame.getRemainingGas(),
               OptionalLong.empty(),
               frame.getGasRefund(),
-              frame.getMessageStackDepth(),
+              frame.getDepth(),
               Optional.empty(),
               frame.getRecipientAddress(),
               frame.getValue(),
@@ -168,7 +169,7 @@ public class DebugOperationTracer implements OperationTracer {
                     frame.getRemainingGas(),
                     OptionalLong.empty(),
                     frame.getGasRefund(),
-                    frame.getMessageStackDepth(),
+                    frame.getDepth(),
                     Optional.of(exceptionalHaltReason),
                     frame.getRecipientAddress(),
                     frame.getValue(),
@@ -198,11 +199,8 @@ public class DebugOperationTracer implements OperationTracer {
     try {
       final Map<UInt256, UInt256> storageContents =
           new TreeMap<>(
-              frame
-                  .getWorldUpdater()
-                  .getAccount(frame.getRecipientAddress())
-                  .getMutable()
-                  .getUpdatedStorage());
+              frame.getWorldUpdater().getAccount(frame.getRecipientAddress()).getUpdatedStorage());
+
       return Optional.of(storageContents);
     } catch (final ModificationNotAllowedException e) {
       return Optional.of(new TreeMap<>());

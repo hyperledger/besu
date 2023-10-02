@@ -22,9 +22,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.AccessListEntry;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.AccessListEntry;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -34,7 +34,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.google.common.base.Suppliers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class TransactionBuilderTest {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
@@ -57,9 +57,7 @@ public class TransactionBuilderTest {
 
     assertThat(guessedTypes)
         .containsExactlyInAnyOrder(
-            new TransactionType[] {
-              TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
-            });
+            TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559);
   }
 
   @Test
@@ -68,11 +66,14 @@ public class TransactionBuilderTest {
       new TransactionTestFixture()
           .type(TransactionType.BLOB)
           .chainId(Optional.of(BigInteger.ONE))
-          .versionedHashes(List.of())
+          .versionedHashes(Optional.of(List.of()))
+          .maxFeePerGas(Optional.of(Wei.of(5)))
+          .maxPriorityFeePerGas(Optional.of(Wei.of(5)))
+          .maxFeePerBlobGas(Optional.of(Wei.of(5)))
           .createTransaction(senderKeys);
       fail();
     } catch (IllegalArgumentException iea) {
-      assertThat(iea).hasMessage("Blob transaction must have at least one blob");
+      assertThat(iea).hasMessage("Blob transaction must have at least one versioned hash");
     }
   }
 }

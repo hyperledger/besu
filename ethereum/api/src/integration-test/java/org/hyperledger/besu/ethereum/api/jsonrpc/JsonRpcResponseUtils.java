@@ -38,6 +38,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.WITHD
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -52,7 +53,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -127,7 +127,9 @@ public class JsonRpcResponseUtils {
             mixHash,
             nonce,
             withdrawalsRoot,
-            null, // ToDo 4844: set with the value of excess_data_gas field
+            null, // ToDo 4844: set with the value of blob_gas_used field
+            null, // ToDo 4844: set with the value of excess_blob_gas field
+            null, // TODO 4788: set with the value of the parent beacon block root field
             depositsRoot,
             blockHeaderFunctions);
 
@@ -194,7 +196,6 @@ public class JsonRpcResponseUtils {
                             .byteValueExact()))
             .payload(bytes(input))
             .sender(address(fromAddress))
-            .v(bigInteger(v))
             .build();
 
     return new TransactionCompleteResult(
@@ -222,10 +223,6 @@ public class JsonRpcResponseUtils {
 
   private String removeHexPrefix(final String prefixedHex) {
     return prefixedHex.startsWith("0x") ? prefixedHex.substring(2) : prefixedHex;
-  }
-
-  private BigInteger bigInteger(final String hex) {
-    return hex == null ? null : new BigInteger(removeHexPrefix(hex), HEX_RADIX);
   }
 
   private Wei wei(final String hex) {

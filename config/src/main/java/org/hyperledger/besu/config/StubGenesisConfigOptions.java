@@ -118,6 +118,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
+  public boolean isPoa() {
+    return false;
+  }
+
+  @Override
   public CheckpointConfigOptions getCheckpointOptions() {
     return CheckpointConfigOptions.DEFAULT;
   }
@@ -394,16 +399,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   @Override
   public TransitionsConfigOptions getTransitions() {
     return transitions;
-  }
-
-  @Override
-  public boolean isQuorum() {
-    return false;
-  }
-
-  @Override
-  public OptionalLong getQip714BlockNumber() {
-    return OptionalLong.empty();
   }
 
   @Override

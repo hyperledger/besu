@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,45 +25,37 @@ import java.util.Collection;
 import io.vertx.core.json.JsonObject;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class JsonRpcHttpServiceParameterizedTest extends JsonRpcHttpServiceTestBase {
 
-  private final String requestJson;
-
-  public JsonRpcHttpServiceParameterizedTest(final String requestJson) {
-    this.requestJson = requestJson;
-  }
-
-  @BeforeClass
+  @BeforeAll
   public static void setup() throws Exception {
     initServerAndClient();
   }
 
   /** Tears down the HTTP server. */
-  @AfterClass
+  @AfterAll
   public static void shutdownServer() {
     service.stop().join();
   }
 
-  @Parameterized.Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] {{"\"a string\""}, {"a string"}, {"{bla"}, {""}});
   }
 
-  @Test
-  public void invalidJsonShouldReturnParseError() throws Exception {
+  @ParameterizedTest
+  @MethodSource("data")
+  public void invalidJsonShouldReturnParseError(final String requestJson) throws Exception {
     final RequestBody body = RequestBody.create(requestJson, JSON);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(400);
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.PARSE_ERROR;
+      final JsonRpcError expectedError = new JsonRpcError(RpcErrorType.PARSE_ERROR);
       testHelper.assertValidJsonRpcError(
           json, null, expectedError.getCode(), expectedError.getMessage());
     }

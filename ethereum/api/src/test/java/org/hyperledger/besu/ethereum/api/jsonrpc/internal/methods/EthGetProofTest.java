@@ -31,10 +31,10 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.proof.GetProofResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -133,7 +133,7 @@ class EthGetProofTest {
     when(archive.getAccountProof(any(Hash.class), any(Address.class), any()))
         .thenReturn(Optional.empty());
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.NO_ACCOUNT_FOUND);
+        new JsonRpcErrorResponse(null, RpcErrorType.NO_ACCOUNT_FOUND);
 
     final JsonRpcRequestContext request =
         requestWithParams(
@@ -150,7 +150,7 @@ class EthGetProofTest {
   void errorWhenWorldStateUnavailable() {
 
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.WORLD_STATE_UNAVAILABLE);
+        new JsonRpcErrorResponse(null, RpcErrorType.WORLD_STATE_UNAVAILABLE);
     when(archive.getMutable(any(BlockHeader.class), anyBoolean())).thenReturn(Optional.empty());
 
     final JsonRpcRequestContext request =

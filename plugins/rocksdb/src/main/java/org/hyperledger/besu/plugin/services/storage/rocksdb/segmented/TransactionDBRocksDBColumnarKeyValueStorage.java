@@ -17,10 +17,11 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBTransaction;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
-import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageTransactionTransitionValidatorDecorator;
+import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageTransactionValidatorDecorator;
 
 import java.util.List;
 
@@ -62,10 +63,10 @@ public class TransactionDBRocksDBColumnarKeyValueStorage extends RocksDBColumnar
               columnDescriptors,
               columnHandles);
       initMetrics();
-      initColumnHandler();
+      initColumnHandles();
 
     } catch (final RocksDBException e) {
-      throw new StorageException(e);
+      throw parseRocksDBException(e, segments, ignorableSegments);
     }
   }
 
@@ -81,11 +82,13 @@ public class TransactionDBRocksDBColumnarKeyValueStorage extends RocksDBColumnar
    * @throws StorageException the storage exception
    */
   @Override
-  public Transaction<RocksDbSegmentIdentifier> startTransaction() throws StorageException {
+  public SegmentedKeyValueStorageTransaction startTransaction() throws StorageException {
     throwIfClosed();
     final WriteOptions writeOptions = new WriteOptions();
     writeOptions.setIgnoreMissingColumnFamilies(true);
-    return new SegmentedKeyValueStorageTransactionTransitionValidatorDecorator<>(
-        new RocksDbTransaction(db.beginTransaction(writeOptions), writeOptions), this.closed::get);
+    return new SegmentedKeyValueStorageTransactionValidatorDecorator(
+        new RocksDBTransaction(
+            this::safeColumnHandle, db.beginTransaction(writeOptions), writeOptions, metrics),
+        this.closed::get);
   }
 }

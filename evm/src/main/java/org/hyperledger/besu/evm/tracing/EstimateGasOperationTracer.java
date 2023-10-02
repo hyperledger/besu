@@ -27,12 +27,12 @@ public class EstimateGasOperationTracer implements OperationTracer {
 
   @Override
   public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
-    if (frame.getCurrentOperation() instanceof SStoreOperation && sStoreStipendNeeded == 0L) {
-      sStoreStipendNeeded =
-          ((SStoreOperation) frame.getCurrentOperation()).getMinimumGasRemaining();
+    if (frame.getCurrentOperation() instanceof SStoreOperation sStoreOperation
+        && sStoreStipendNeeded == 0L) {
+      sStoreStipendNeeded = sStoreOperation.getMinimumGasRemaining();
     }
-    if (maxDepth < frame.getMessageStackDepth()) {
-      maxDepth = frame.getMessageStackDepth();
+    if (maxDepth < frame.getDepth()) {
+      maxDepth = frame.getDepth();
     }
   }
 

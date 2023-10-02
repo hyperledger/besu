@@ -18,6 +18,7 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -46,8 +47,14 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -132,11 +139,7 @@ public class CliqueBlockCreatorTest {
             coinbase,
             () -> Optional.of(10_000_000L),
             parent -> extraData,
-            new GasPricePendingTransactionsSorter(
-                ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(5).build(),
-                TestClock.system(ZoneId.systemDefault()),
-                metricsSystem,
-                blockchain::getChainHeadHeader),
+            createTransactionPool(),
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
@@ -165,11 +168,7 @@ public class CliqueBlockCreatorTest {
             coinbase,
             () -> Optional.of(10_000_000L),
             parent -> extraData,
-            new GasPricePendingTransactionsSorter(
-                ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(5).build(),
-                TestClock.system(ZoneId.systemDefault()),
-                metricsSystem,
-                blockchain::getChainHeadHeader),
+            createTransactionPool(),
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
@@ -203,11 +202,7 @@ public class CliqueBlockCreatorTest {
             coinbase,
             () -> Optional.of(10_000_000L),
             parent -> extraData,
-            new GasPricePendingTransactionsSorter(
-                ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(5).build(),
-                TestClock.system(ZoneId.systemDefault()),
-                metricsSystem,
-                blockchain::getChainHeadHeader),
+            createTransactionPool(),
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
@@ -219,5 +214,29 @@ public class CliqueBlockCreatorTest {
     final Block createdBlock = blockCreator.createBlock(0L).getBlock();
     assertThat(createdBlock.getHeader().getNonce()).isEqualTo(CliqueBlockInterface.DROP_NONCE);
     assertThat(createdBlock.getHeader().getCoinbase()).isEqualTo(Address.fromHexString("0"));
+  }
+
+  private TransactionPool createTransactionPool() {
+    final TransactionPoolConfiguration conf =
+        ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(5).build();
+    final EthContext ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
+    when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
+    final TransactionPool transactionPool =
+        new TransactionPool(
+            () ->
+                new GasPricePendingTransactionsSorter(
+                    conf,
+                    TestClock.system(ZoneId.systemDefault()),
+                    metricsSystem,
+                    blockchain::getChainHeadHeader),
+            protocolSchedule,
+            protocolContext,
+            mock(TransactionBroadcaster.class),
+            ethContext,
+            mock(MiningParameters.class),
+            new TransactionPoolMetrics(metricsSystem),
+            conf);
+    transactionPool.setEnabled();
+    return transactionPool;
   }
 }

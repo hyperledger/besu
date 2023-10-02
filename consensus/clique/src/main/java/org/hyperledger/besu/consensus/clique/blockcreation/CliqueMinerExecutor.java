@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -54,7 +54,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
    *
    * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
-   * @param pendingTransactions the pending transactions
+   * @param transactionPool the pending transactions
    * @param nodeKey the node key
    * @param miningParams the mining params
    * @param blockScheduler the block scheduler
@@ -63,12 +63,12 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
   public CliqueMinerExecutor(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final PendingTransactions pendingTransactions,
+      final TransactionPool transactionPool,
       final NodeKey nodeKey,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
       final EpochManager epochManager) {
-    super(protocolContext, protocolSchedule, pendingTransactions, miningParams, blockScheduler);
+    super(protocolContext, protocolSchedule, transactionPool, miningParams, blockScheduler);
     this.nodeKey = nodeKey;
     this.localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     this.epochManager = epochManager;
@@ -85,7 +85,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
                 localAddress, // TOOD(tmm): This can be removed (used for voting not coinbase).
                 () -> targetGasLimit.map(AtomicLong::longValue),
                 this::calculateExtraData,
-                pendingTransactions,
+                transactionPool,
                 protocolContext,
                 protocolSchedule,
                 nodeKey,

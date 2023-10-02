@@ -36,13 +36,12 @@ import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
-import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
-import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
+import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
@@ -52,7 +51,6 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.time.Instant;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -87,6 +85,7 @@ import picocli.CommandLine.Option;
     footerHeading = "%n",
     footer = "Hyperledger Besu is licensed under the Apache License 2.0",
     subcommands = {
+      BenchmarkSubCommand.class,
       B11rSubCommand.class,
       CodeValidateSubCommand.class,
       StateTestSubCommand.class,
@@ -116,6 +115,12 @@ public class EvmToolCommand implements Runnable {
       description = "Price of gas (in GWei) for this invocation",
       paramLabel = "<int>")
   private final Wei gasPriceGWei = Wei.ZERO;
+
+  @Option(
+      names = {"--blob-price"},
+      description = "Price of blob gas for this invocation",
+      paramLabel = "<int>")
+  private final Wei blobGasPrice = Wei.ZERO;
 
   @Option(
       names = {"--sender"},
@@ -177,6 +182,14 @@ public class EvmToolCommand implements Runnable {
   final Boolean showReturnData = false;
 
   @Option(
+      names = {"--trace.storage"},
+      description =
+          "Show the updated storage slots for the current account. Default is to not show updated storage.",
+      scope = INHERIT,
+      negatable = true)
+  final Boolean showStorage = false;
+
+  @Option(
       names = {"--notime"},
       description = "Don't include time data in summary output.",
       scope = INHERIT,
@@ -228,6 +241,9 @@ public class EvmToolCommand implements Runnable {
     final CommandLine commandLine = new CommandLine(this).setOut(output);
     out = output;
     in = input;
+
+    // don't require exact case to match enum values
+    commandLine.setCaseInsensitiveEnumValuesAllowed(true);
 
     // add dagger-injected options
     commandLine.addMixin("Dagger Options", daggerOptions);
@@ -283,6 +299,7 @@ public class EvmToolCommand implements Runnable {
 
   @Override
   public void run() {
+    LogConfigurator.setLevel("", "OFF");
     try {
       final EvmToolComponent component =
           DaggerEvmToolComponent.builder()
@@ -343,8 +360,6 @@ public class EvmToolCommand implements Runnable {
               .orElse(0L);
       long txGas = gas - intrinsicGasCost - accessListCost;
 
-      final PrecompileContractRegistry precompileContractRegistry =
-          protocolSpec.getPrecompileContractRegistry();
       final EVM evm = protocolSpec.getEvm();
       Code code = evm.getCode(Hash.hash(codeBytes), codeBytes);
       if (!code.isValid()) {
@@ -358,18 +373,16 @@ public class EvmToolCommand implements Runnable {
 
         final OperationTracer tracer = // You should have picked Mercy.
             lastLoop && showJsonResults
-                ? new StandardJsonTracer(out, showMemory, !hideStack, showReturnData)
+                ? new StandardJsonTracer(out, showMemory, !hideStack, showReturnData, showStorage)
                 : OperationTracer.NO_TRACING;
 
         WorldUpdater updater = component.getWorldUpdater();
         updater.getOrCreate(sender);
         updater.getOrCreate(receiver);
 
-        final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-        messageFrameStack.add(
+        MessageFrame initialMessageFrame =
             MessageFrame.builder()
                 .type(MessageFrame.Type.MESSAGE_CALL)
-                .messageFrameStack(messageFrameStack)
                 .worldUpdater(updater)
                 .initialGas(txGas)
                 .contract(Address.ZERO)
@@ -377,22 +390,22 @@ public class EvmToolCommand implements Runnable {
                 .originator(sender)
                 .sender(sender)
                 .gasPrice(gasPriceGWei)
+                .blobGasPrice(blobGasPrice)
                 .inputData(callData)
                 .value(ethValue)
                 .apparentValue(ethValue)
                 .code(code)
                 .blockValues(blockHeader)
-                .depth(0)
                 .completer(c -> {})
                 .miningBeneficiary(blockHeader.getCoinbase())
                 .blockHashLookup(new CachingBlockHashLookup(blockHeader, component.getBlockchain()))
-                .build());
+                .build();
+        Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
 
-        final MessageCallProcessor mcp = new MessageCallProcessor(evm, precompileContractRegistry);
         stopwatch.start();
         while (!messageFrameStack.isEmpty()) {
           final MessageFrame messageFrame = messageFrameStack.peek();
-          mcp.process(messageFrame, tracer);
+          protocolSpec.getTransactionProcessor().process(messageFrame, tracer);
           if (messageFrameStack.isEmpty()) {
             stopwatch.stop();
             if (lastTime == 0) {
@@ -446,7 +459,7 @@ public class EvmToolCommand implements Runnable {
             account -> {
               out.println(
                   " \"" + account.getAddress().map(Address::toHexString).orElse("-") + "\": {");
-              if (account.getCode() != null && account.getCode().size() > 0) {
+              if (account.getCode() != null && !account.getCode().isEmpty()) {
                 out.println("  \"code\": \"" + account.getCode().toHexString() + "\",");
               }
               NavigableMap<Bytes32, AccountStorageEntry> storageEntries =
@@ -461,10 +474,10 @@ public class EvmToolCommand implements Runnable {
                                     "   \""
                                         + accountStorageEntry
                                             .getKey()
-                                            .map(UInt256::toHexString)
+                                            .map(UInt256::toQuantityHexString)
                                             .orElse("-")
                                         + "\": \""
-                                        + accountStorageEntry.getValue().toHexString()
+                                        + accountStorageEntry.getValue().toQuantityHexString()
                                         + "\"")
                             .toList()));
                 out.println("  },");

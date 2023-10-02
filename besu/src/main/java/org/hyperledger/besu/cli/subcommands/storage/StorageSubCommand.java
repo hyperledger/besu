@@ -99,6 +99,8 @@ public class StorageSubCommand implements Runnable {
     }
 
     private StorageProvider getStorageProvider() {
+      // init collection of ignorable segments
+      parentCommand.parentCommand.setIgnorableStorageSegments();
       return parentCommand.parentCommand.getStorageProvider();
     }
 

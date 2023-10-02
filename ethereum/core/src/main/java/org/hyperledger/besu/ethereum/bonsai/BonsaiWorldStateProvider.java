@@ -102,14 +102,14 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
             pluginContext);
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;
-    this.persistedState = new BonsaiWorldState(this, worldStateStorage);
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
+    this.persistedState = new BonsaiWorldState(this, worldStateStorage);
     blockchain
-        .getBlockHeader(persistedState.worldStateBlockHash)
+        .getBlockHeader(persistedState.getWorldStateBlockHash())
         .ifPresent(
             blockHeader ->
                 this.trieLogManager.addCachedLayer(
-                    blockHeader, persistedState.worldStateRootHash, persistedState));
+                    blockHeader, persistedState.getWorldStateRootHash(), persistedState));
   }
 
   @VisibleForTesting
@@ -124,11 +124,11 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     this.persistedState = new BonsaiWorldState(this, worldStateStorage);
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
     blockchain
-        .getBlockHeader(persistedState.worldStateBlockHash)
+        .getBlockHeader(persistedState.getWorldStateBlockHash())
         .ifPresent(
             blockHeader ->
                 this.trieLogManager.addCachedLayer(
-                    blockHeader, persistedState.worldStateRootHash, persistedState));
+                    blockHeader, persistedState.getWorldStateRootHash(), persistedState));
   }
 
   @Override
@@ -300,7 +300,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
   public void prepareStateHealing(final Address address, final Bytes location) {
     final Set<Bytes> keysToDelete = new HashSet<>();
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = worldStateStorage.updater();
-    final Hash accountHash = Hash.hash(address);
+    final Hash accountHash = address.addressHash();
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(
             (l, h) -> {
@@ -310,7 +310,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
               }
               return node;
             },
-            persistedState.worldStateRootHash,
+            persistedState.getWorldStateRootHash(),
             Function.identity(),
             Function.identity());
     try {
@@ -359,7 +359,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     persistedState.resetWorldStateTo(blockHeader);
     this.trieLogManager.reset();
     this.trieLogManager.addCachedLayer(
-        blockHeader, persistedState.worldStateRootHash, persistedState);
+        blockHeader, persistedState.getWorldStateRootHash(), persistedState);
   }
 
   @Override

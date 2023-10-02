@@ -174,7 +174,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
           LOG.debug("Block builder executor status {}", blockBuilderExecutor);
           return CompletableFuture.runAsync(task, blockBuilderExecutor);
         },
-        transactionPool.getPendingTransactions(),
+        transactionPool,
         miningParameters,
         backwardSyncContext,
         depositContractAddress);

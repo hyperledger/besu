@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -23,7 +24,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
@@ -37,12 +38,12 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
-import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.txselection.TransactionSelector;
 import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -71,6 +72,7 @@ import org.slf4j.LoggerFactory;
  *   <li>A list of receipts for inclusion in the block.
  *   <li>The root hash of the world state at the completion of transaction execution.
  *   <li>The amount of gas consumed when executing all transactions.
+ *   <li>A list of transactions evaluated but not included in the block being constructed.
  * </ul>
  *
  * Once "used" this class must be discarded and another created. This class contains state which is
@@ -78,49 +80,45 @@ import org.slf4j.LoggerFactory;
  */
 public class BlockTransactionSelector {
 
-  public record TransactionValidationResult(
-      Transaction transaction, ValidationResult<TransactionInvalidReason> validationResult) {}
-
   public static class TransactionSelectionResults {
-    private final List<Transaction> transactions = Lists.newArrayList();
+    private final List<Transaction> selectedTransactions = Lists.newArrayList();
     private final Map<TransactionType, List<Transaction>> transactionsByType =
         new EnumMap<>(TransactionType.class);
     private final List<TransactionReceipt> receipts = Lists.newArrayList();
-    private final List<TransactionValidationResult> invalidTransactions = Lists.newArrayList();
-    private final List<TransactionSelectionResult> selectionResults = Lists.newArrayList();
+    private final Map<Transaction, TransactionSelectionResult> notSelectedTransactions =
+        new HashMap<>();
     private long cumulativeGasUsed = 0;
-    private long cumulativeDataGasUsed = 0;
+    private long cumulativeBlobGasUsed = 0;
 
-    private void update(
+    private void updateSelected(
         final Transaction transaction,
         final TransactionReceipt receipt,
         final long gasUsed,
-        final long dataGasUsed) {
-      transactions.add(transaction);
+        final long blobGasUsed) {
+      selectedTransactions.add(transaction);
       transactionsByType
           .computeIfAbsent(transaction.getType(), type -> new ArrayList<>())
           .add(transaction);
       receipts.add(receipt);
       cumulativeGasUsed += gasUsed;
-      cumulativeDataGasUsed += dataGasUsed;
+      cumulativeBlobGasUsed += blobGasUsed;
       LOG.atTrace()
           .setMessage(
-              "New selected transaction {}, total transactions {}, cumulative gas used {}, cumulative data gas used {}")
+              "New selected transaction {}, total transactions {}, cumulative gas used {}, cumulative blob gas used {}")
           .addArgument(transaction::toTraceLog)
-          .addArgument(transactions::size)
+          .addArgument(selectedTransactions::size)
           .addArgument(cumulativeGasUsed)
-          .addArgument(cumulativeDataGasUsed)
+          .addArgument(cumulativeBlobGasUsed)
           .log();
     }
 
-    private void updateWithInvalidTransaction(
-        final Transaction transaction,
-        final ValidationResult<TransactionInvalidReason> validationResult) {
-      invalidTransactions.add(new TransactionValidationResult(transaction, validationResult));
+    public void updateNotSelected(
+        final Transaction transaction, final TransactionSelectionResult res) {
+      notSelectedTransactions.put(transaction, res);
     }
 
-    public List<Transaction> getTransactions() {
-      return transactions;
+    public List<Transaction> getSelectedTransactions() {
+      return selectedTransactions;
     }
 
     public List<Transaction> getTransactionsByType(final TransactionType type) {
@@ -135,43 +133,31 @@ public class BlockTransactionSelector {
       return cumulativeGasUsed;
     }
 
-    public long getCumulativeDataGasUsed() {
-      return cumulativeDataGasUsed;
+    public long getCumulativeBlobGasUsed() {
+      return cumulativeBlobGasUsed;
     }
 
-    public List<TransactionValidationResult> getInvalidTransactions() {
-      return invalidTransactions;
-    }
-
-    public void addSelectionResult(final TransactionSelectionResult res) {
-      selectionResults.add(res);
+    public Map<Transaction, TransactionSelectionResult> getNotSelectedTransactions() {
+      return notSelectedTransactions;
     }
 
     public void logSelectionStats() {
       if (LOG.isDebugEnabled()) {
-        final Map<TransactionSelectionResult, Long> selectionStats =
-            selectionResults.stream()
+        final Map<TransactionSelectionResult, Long> notSelectedStats =
+            notSelectedTransactions.values().stream()
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
         LOG.debug(
-            "Selection stats: Totals[Evaluated={}, Selected={}, Skipped={}, Dropped={}]; Detailed[{}]",
-            selectionResults.size(),
-            selectionStats.entrySet().stream()
-                .filter(e -> e.getKey().selected())
-                .map(Map.Entry::getValue)
-                .mapToInt(Long::intValue)
-                .sum(),
-            selectionStats.entrySet().stream()
-                .filter(e -> !e.getKey().selected())
-                .map(Map.Entry::getValue)
-                .mapToInt(Long::intValue)
-                .sum(),
-            selectionStats.entrySet().stream()
+            "Selection stats: Totals[Evaluated={}, Selected={}, NotSelected={}, Discarded={}]; Detailed[{}]",
+            selectedTransactions.size() + notSelectedTransactions.size(),
+            selectedTransactions.size(),
+            notSelectedStats.size(),
+            notSelectedStats.entrySet().stream()
                 .filter(e -> e.getKey().discard())
                 .map(Map.Entry::getValue)
                 .mapToInt(Long::intValue)
                 .sum(),
-            selectionStats.entrySet().stream()
+            notSelectedStats.entrySet().stream()
                 .map(e -> e.getKey().toString() + "=" + e.getValue())
                 .sorted()
                 .collect(Collectors.joining(", ")));
@@ -188,30 +174,41 @@ public class BlockTransactionSelector {
       }
       TransactionSelectionResults that = (TransactionSelectionResults) o;
       return cumulativeGasUsed == that.cumulativeGasUsed
-          && cumulativeDataGasUsed == that.cumulativeDataGasUsed
-          && transactions.equals(that.transactions)
-          && receipts.equals(that.receipts)
-          && invalidTransactions.equals(that.invalidTransactions);
+          && cumulativeBlobGasUsed == that.cumulativeBlobGasUsed
+          && selectedTransactions.equals(that.selectedTransactions)
+          && notSelectedTransactions.equals(that.notSelectedTransactions)
+          && receipts.equals(that.receipts);
     }
 
     @Override
     public int hashCode() {
       return Objects.hash(
-          transactions, receipts, invalidTransactions, cumulativeGasUsed, cumulativeDataGasUsed);
+          selectedTransactions,
+          notSelectedTransactions,
+          receipts,
+          cumulativeGasUsed,
+          cumulativeBlobGasUsed);
     }
 
     public String toTraceLog() {
       return "cumulativeGasUsed="
           + cumulativeGasUsed
-          + ", cumulativeDataGasUsed="
-          + cumulativeDataGasUsed
-          + ", transactions="
-          + transactions.stream().map(Transaction::toTraceLog).collect(Collectors.joining("; "));
+          + ", cumulativeBlobGasUsed="
+          + cumulativeBlobGasUsed
+          + ", selectedTransactions="
+          + selectedTransactions.stream()
+              .map(Transaction::toTraceLog)
+              .collect(Collectors.joining("; "))
+          + ", notSelectedTransactions="
+          + notSelectedTransactions.entrySet().stream()
+              .map(e -> e.getValue() + ":" + e.getKey().toTraceLog())
+              .collect(Collectors.joining(";"));
     }
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(BlockTransactionSelector.class);
-
+  private static final TransactionSelector ALWAYS_SELECT =
+      (_1, _2, _3, _4) -> TransactionSelectionResult.SELECTED;
   private final Wei minTransactionGasPrice;
   private final Double minBlockOccupancyRatio;
   private final Supplier<Boolean> isCancelled;
@@ -219,15 +216,14 @@ public class BlockTransactionSelector {
   private final ProcessableBlockHeader processableBlockHeader;
   private final Blockchain blockchain;
   private final MutableWorldState worldState;
-  private final PendingTransactions pendingTransactions;
+  private final TransactionPool transactionPool;
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private final Address miningBeneficiary;
-  private final Wei dataGasPrice;
+  private final Wei blobGasPrice;
   private final FeeMarket feeMarket;
   private final GasCalculator gasCalculator;
   private final GasLimitCalculator gasLimitCalculator;
   private final TransactionSelector transactionSelector;
-
   private final TransactionSelectionResults transactionSelectionResults =
       new TransactionSelectionResults();
 
@@ -235,14 +231,14 @@ public class BlockTransactionSelector {
       final MainnetTransactionProcessor transactionProcessor,
       final Blockchain blockchain,
       final MutableWorldState worldState,
-      final PendingTransactions pendingTransactions,
+      final TransactionPool transactionPool,
       final ProcessableBlockHeader processableBlockHeader,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,
       final Supplier<Boolean> isCancelled,
       final Address miningBeneficiary,
-      final Wei dataGasPrice,
+      final Wei blobGasPrice,
       final FeeMarket feeMarket,
       final GasCalculator gasCalculator,
       final GasLimitCalculator gasLimitCalculator,
@@ -250,36 +246,37 @@ public class BlockTransactionSelector {
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
     this.worldState = worldState;
-    this.pendingTransactions = pendingTransactions;
+    this.transactionPool = transactionPool;
     this.processableBlockHeader = processableBlockHeader;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.isCancelled = isCancelled;
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.minBlockOccupancyRatio = minBlockOccupancyRatio;
     this.miningBeneficiary = miningBeneficiary;
-    this.dataGasPrice = dataGasPrice;
+    this.blobGasPrice = blobGasPrice;
     this.feeMarket = feeMarket;
     this.gasCalculator = gasCalculator;
     this.gasLimitCalculator = gasLimitCalculator;
     this.transactionSelector =
-        transactionSelectorFactory.map(TransactionSelectorFactory::create).orElse(null);
+        transactionSelectorFactory.map(TransactionSelectorFactory::create).orElse(ALWAYS_SELECT);
   }
 
   /*
   This function iterates over (potentially) all transactions in the PendingTransactions, this is a
-  long running process.
-  If running in a thread, it can be cancelled via the isCancelled supplier (which will result
+  long-running process. If running in a thread, it can be cancelled via the isCancelled supplier (which will result
   in this throwing an CancellationException).
    */
   public TransactionSelectionResults buildTransactionListForBlock() {
     LOG.atDebug()
         .setMessage("Transaction pool stats {}")
-        .addArgument(pendingTransactions.logStats())
+        .addArgument(transactionPool::logStats)
         .log();
-    pendingTransactions.selectTransactions(
+    transactionPool.selectTransactions(
         pendingTransaction -> {
-          final var res = evaluateTransaction(pendingTransaction, false);
-          transactionSelectionResults.addSelectionResult(res);
+          final var res = evaluateTransaction(pendingTransaction);
+          if (!res.selected()) {
+            transactionSelectionResults.updateNotSelected(pendingTransaction, res);
+          }
           return res;
         });
     LOG.atTrace()
@@ -297,8 +294,12 @@ public class BlockTransactionSelector {
    */
   public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
     transactions.forEach(
-        transaction ->
-            transactionSelectionResults.addSelectionResult(evaluateTransaction(transaction, true)));
+        transaction -> {
+          final var res = evaluateTransaction(transaction);
+          if (!res.selected()) {
+            transactionSelectionResults.updateNotSelected(transaction, res);
+          }
+        });
     return transactionSelectionResults;
   }
 
@@ -311,8 +312,7 @@ public class BlockTransactionSelector {
    * the space remaining in the block.
    *
    */
-  private TransactionSelectionResult evaluateTransaction(
-      final Transaction transaction, final boolean reportFutureNonceTransactionsAsInvalid) {
+  private TransactionSelectionResult evaluateTransaction(final Transaction transaction) {
     if (isCancelled.get()) {
       throw new CancellationException("Cancelled during transaction selection.");
     }
@@ -354,7 +354,7 @@ public class BlockTransactionSelector {
             blockHashLookup,
             false,
             TransactionValidationParams.mining(),
-            dataGasPrice);
+            blobGasPrice);
 
     if (!effectiveResult.isInvalid()) {
 
@@ -364,16 +364,13 @@ public class BlockTransactionSelector {
       final long cumulativeGasUsed =
           transactionSelectionResults.getCumulativeGasUsed() + gasUsedByTransaction;
 
-      TransactionSelectionResult txSelectionResult = TransactionSelectionResult.SELECTED;
-
-      if (transactionSelector != null) {
-        txSelectionResult =
-            transactionSelector.selectTransaction(
-                transaction,
-                effectiveResult.getStatus() == TransactionProcessingResult.Status.SUCCESSFUL,
-                getLogs(effectiveResult.getLogs()),
-                cumulativeGasUsed);
-      }
+      // check if the transaction is valid also for an optional configured plugin
+      final TransactionSelectionResult txSelectionResult =
+          transactionSelector.selectTransaction(
+              transaction,
+              effectiveResult.getStatus() == TransactionProcessingResult.Status.SUCCESSFUL,
+              getLogs(effectiveResult.getLogs()),
+              cumulativeGasUsed);
 
       if (txSelectionResult.equals(TransactionSelectionResult.SELECTED)) {
 
@@ -382,26 +379,25 @@ public class BlockTransactionSelector {
             transactionReceiptFactory.create(
                 transaction.getType(), effectiveResult, worldState, cumulativeGasUsed);
 
-        final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
+        final long blobGasUsed = gasCalculator.blobGasCost(transaction.getBlobCount());
 
-        transactionSelectionResults.update(transaction, receipt, gasUsedByTransaction, dataGasUsed);
+        transactionSelectionResults.updateSelected(
+            transaction, receipt, gasUsedByTransaction, blobGasUsed);
 
         LOG.atTrace()
             .setMessage("Selected {} for block creation")
             .addArgument(transaction::toTraceLog)
             .log();
-      }
-      return txSelectionResult;
-    } else {
 
-      final boolean isIncorrectNonce = isIncorrectNonce(effectiveResult.getValidationResult());
-      if (!isIncorrectNonce || reportFutureNonceTransactionsAsInvalid) {
-        transactionSelectionResults.updateWithInvalidTransaction(
-            transaction, effectiveResult.getValidationResult());
+        return TransactionSelectionResult.SELECTED;
       }
-      return transactionSelectionResultForInvalidResult(
-          transaction, effectiveResult.getValidationResult());
+
+      // the transaction is not valid for the plugin
+      return txSelectionResult;
     }
+
+    return transactionSelectionResultForInvalidResult(
+        transaction, effectiveResult.getValidationResult());
   }
 
   private List<org.hyperledger.besu.plugin.data.Log> getLogs(final List<Log> logs) {
@@ -410,7 +406,7 @@ public class BlockTransactionSelector {
 
   private boolean transactionDataPriceBelowMin(final Transaction transaction) {
     if (transaction.getType().supportsBlob()) {
-      if (transaction.getMaxFeePerDataGas().orElseThrow().lessThan(dataGasPrice)) {
+      if (transaction.getMaxFeePerBlobGas().orElseThrow().lessThan(blobGasPrice)) {
         return true;
       }
     }
@@ -421,7 +417,7 @@ public class BlockTransactionSelector {
     // Here we only care about EIP1159 since for Frontier and local transactions the checks
     // that we do when accepting them in the pool are enough
     if (transaction.getType().supports1559FeeMarket()
-        && !pendingTransactions.isLocalSender(transaction.getSender())) {
+        && !transactionPool.isLocalSender(transaction.getSender())) {
 
       // For EIP1559 transactions, the price is dynamic and depends on network conditions, so we can
       // only calculate at this time the current minimum price the transaction is willing to pay
@@ -472,20 +468,16 @@ public class BlockTransactionSelector {
         || invalidReason.equals(TransactionInvalidReason.NONCE_TOO_HIGH);
   }
 
-  private boolean isIncorrectNonce(final ValidationResult<TransactionInvalidReason> result) {
-    return result.getInvalidReason().equals(TransactionInvalidReason.NONCE_TOO_HIGH);
-  }
-
   private boolean transactionTooLargeForBlock(final Transaction transaction) {
-    final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
+    final long blobGasUsed = gasCalculator.blobGasCost(transaction.getBlobCount());
 
-    if (dataGasUsed
-        > gasLimitCalculator.currentDataGasLimit()
-            - transactionSelectionResults.getCumulativeDataGasUsed()) {
+    if (blobGasUsed
+        > gasLimitCalculator.currentBlobGasLimit()
+            - transactionSelectionResults.getCumulativeBlobGasUsed()) {
       return true;
     }
 
-    return transaction.getGasLimit() + dataGasUsed
+    return transaction.getGasLimit() + blobGasUsed
         > processableBlockHeader.getGasLimit() - transactionSelectionResults.getCumulativeGasUsed();
   }
 

@@ -14,13 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CreateAccessListResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -29,7 +30,6 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
-import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.tracing.AccessListOperationTracer;
 
 import java.util.List;
@@ -53,7 +53,7 @@ public class EthCreateAccessList extends AbstractEstimateGas {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final JsonCallParameter jsonCallParameter = validateAndGetCallParams(requestContext);
     final BlockHeader blockHeader = blockHeader();
-    final Optional<JsonRpcError> jsonRpcError = validateBlockHeader(blockHeader);
+    final Optional<RpcErrorType> jsonRpcError = validateBlockHeader(blockHeader);
     if (jsonRpcError.isPresent()) {
       return errorResponse(requestContext, jsonRpcError.get());
     }
@@ -70,14 +70,14 @@ public class EthCreateAccessList extends AbstractEstimateGas {
     }
   }
 
-  private Optional<JsonRpcError> validateBlockHeader(final BlockHeader blockHeader) {
+  private Optional<RpcErrorType> validateBlockHeader(final BlockHeader blockHeader) {
     if (blockHeader == null) {
-      return Optional.of(JsonRpcError.INTERNAL_ERROR);
+      return Optional.of(RpcErrorType.INTERNAL_ERROR);
     }
     if (!blockchainQueries
         .getWorldStateArchive()
         .isWorldStateAvailable(blockHeader.getStateRoot(), blockHeader.getHash())) {
-      return Optional.of(JsonRpcError.WORLD_STATE_UNAVAILABLE);
+      return Optional.of(RpcErrorType.WORLD_STATE_UNAVAILABLE);
     }
     return Optional.empty();
   }
@@ -87,7 +87,7 @@ public class EthCreateAccessList extends AbstractEstimateGas {
     return result
         .getResult()
         .map(createResponse(requestContext, result.getTracer()))
-        .orElse(errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR));
+        .orElse(errorResponse(requestContext, RpcErrorType.INTERNAL_ERROR));
   }
 
   private TransactionValidationParams transactionValidationParams(

@@ -26,7 +26,7 @@ import java.nio.ByteOrder;
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public final class EthHashTest {
 

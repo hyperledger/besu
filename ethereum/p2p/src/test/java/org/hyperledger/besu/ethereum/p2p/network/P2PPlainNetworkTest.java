@@ -64,12 +64,12 @@ import java.util.stream.Stream;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
+@ExtendWith(MockitoExtension.class)
 public class P2PPlainNetworkTest {
   // See ethereum/p2p/src/test/resources/keys/README.md for certificates setup.
   private final Vertx vertx = Vertx.vertx();
@@ -81,7 +81,7 @@ public class P2PPlainNetworkTest {
                   .setBindPort(0)
                   .setSupportedProtocols(MockSubProtocol.create()));
 
-  @After
+  @AfterEach
   public void closeVertx() {
     vertx.close();
   }

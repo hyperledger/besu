@@ -26,7 +26,7 @@ import org.hyperledger.besu.evm.log.LogTopic;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class LogsQueryTest {
 
