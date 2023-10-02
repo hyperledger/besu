@@ -58,7 +58,7 @@ public class EngineForkchoiceUpdatedV2 extends AbstractEngineForkchoiceUpdated {
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final BlockHeader headBlockHeader) {
     if (payloadAttributes.getTimestamp() >= cancunTimestamp) {
-      return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS));
+      return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.UNSUPPORTED_FORK));
     } else if (payloadAttributes.getParentBeaconBlockRoot() != null) {
       LOG.error(
           "Parent beacon block root hash present in payload attributes before cancun hardfork");

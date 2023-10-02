@@ -249,4 +249,14 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
         .versionedHashes(Optional.of(bwc.getVersionedHashes()))
         .createTransaction(senderKeys);
   }
+
+  @Override
+  protected JsonRpcResponse resp(final EnginePayloadParameter payload) {
+    Object[] params =
+            maybeParentBeaconBlockRoot
+                    .map(bytes32 -> new Object[] {payload, Collections.emptyList(), bytes32.toHexString()})
+                    .orElseGet(() -> new Object[] {payload});
+    return method.response(
+            new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
+  }
 }
