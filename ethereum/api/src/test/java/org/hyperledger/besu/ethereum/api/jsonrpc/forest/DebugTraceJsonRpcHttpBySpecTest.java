@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.bonsai;
+package org.hyperledger.besu.ethereum.api.jsonrpc.forest;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.AbstractJsonRpcHttpBySpecTest;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
@@ -20,12 +20,12 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 
 import org.junit.jupiter.api.BeforeEach;
 
-public class DebugTraceRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
+public class DebugTraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
 
   @Override
   @BeforeEach
   public void setup() throws Exception {
-    setupBonsaiBlockchain();
+    setupBlockchain();
     startService();
   }
 
