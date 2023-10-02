@@ -138,6 +138,7 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   private void initLogForReplay() {
+    // log the initial block header data
     LOG_FOR_REPLAY
         .atTrace()
         .setMessage("{},{},{},{}")
@@ -150,6 +151,16 @@ public class TransactionPool implements BlockAddedObserver {
                     .orElse(BigInteger.ZERO))
         .addArgument(() -> getChainHeadBlockHeader().map(BlockHeader::getGasUsed).orElse(0L))
         .addArgument(() -> getChainHeadBlockHeader().map(BlockHeader::getGasLimit).orElse(0L))
+        .log();
+    // log the priority senders
+    LOG_FOR_REPLAY
+        .atTrace()
+        .setMessage("{}")
+        .addArgument(
+            () ->
+                configuration.getPrioritySenders().stream()
+                    .map(Address::toHexString)
+                    .collect(Collectors.joining(",")))
         .log();
   }
 
@@ -214,17 +225,18 @@ public class TransactionPool implements BlockAddedObserver {
 
   private ValidationResult<TransactionInvalidReason> addTransaction(
       final Transaction transaction, final boolean isLocal) {
+
+    final boolean hasPriority = isPriorityTransaction(transaction, isLocal);
+
     if (pendingTransactions.containsTransaction(transaction)) {
       LOG.atTrace()
           .setMessage("Discard already present transaction {}")
           .addArgument(transaction::toTraceLog)
           .log();
       // We already have this transaction, don't even validate it.
-      metrics.incrementRejected(isLocal, TRANSACTION_ALREADY_KNOWN, "txpool");
+      metrics.incrementRejected(isLocal, hasPriority, TRANSACTION_ALREADY_KNOWN, "txpool");
       return ValidationResult.invalid(TRANSACTION_ALREADY_KNOWN);
     }
-
-    final boolean hasPriority = isPriorityTransaction(transaction, isLocal);
 
     final ValidationResultAndAccount validationResult =
         validateTransaction(transaction, isLocal, hasPriority);
@@ -254,7 +266,7 @@ public class TransactionPool implements BlockAddedObserver {
             .addArgument(transaction::toTraceLog)
             .addArgument(rejectReason)
             .log();
-        metrics.incrementRejected(isLocal, rejectReason, "txpool");
+        metrics.incrementRejected(isLocal, hasPriority, rejectReason, "txpool");
         return ValidationResult.invalid(rejectReason);
       }
     } else {
@@ -263,7 +275,8 @@ public class TransactionPool implements BlockAddedObserver {
           .addArgument(transaction::toTraceLog)
           .addArgument(validationResult.result::getInvalidReason)
           .log();
-      metrics.incrementRejected(isLocal, validationResult.result.getInvalidReason(), "txpool");
+      metrics.incrementRejected(
+          isLocal, hasPriority, validationResult.result.getInvalidReason(), "txpool");
       if (!isLocal) {
         pendingTransactions.signalInvalidAndRemoveDependentTransactions(transaction);
       }

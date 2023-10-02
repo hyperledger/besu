@@ -173,12 +173,14 @@ public class BaseTransactionPoolTest {
     }
   }
 
-  protected long getAddedCount(final String source, final String layer) {
-    return metricsSystem.getCounterValue(TransactionPoolMetrics.ADDED_COUNTER_NAME, source, layer);
+  protected long getAddedCount(final String source, final String priority, final String layer) {
+    return metricsSystem.getCounterValue(
+        TransactionPoolMetrics.ADDED_COUNTER_NAME, source, priority, layer);
   }
 
-  protected long getRemovedCount(final String source, final String operation, final String layer) {
+  protected long getRemovedCount(
+      final String source, final String priority, final String operation, final String layer) {
     return metricsSystem.getCounterValue(
-        TransactionPoolMetrics.REMOVED_COUNTER_NAME, source, operation, layer);
+        TransactionPoolMetrics.REMOVED_COUNTER_NAME, source, priority, operation, layer);
   }
 }

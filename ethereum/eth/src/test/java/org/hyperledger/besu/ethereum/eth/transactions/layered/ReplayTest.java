@@ -44,10 +44,12 @@ import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.zip.GZIPInputStream;
 
 import com.google.common.base.Splitter;
@@ -60,9 +62,6 @@ import org.slf4j.LoggerFactory;
 
 public class ReplayTest {
   private static final Logger LOG = LoggerFactory.getLogger(ReplayTest.class);
-  private final TransactionPoolConfiguration poolConfig =
-      ImmutableTransactionPoolConfiguration.builder().build();
-
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
   private final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
 
@@ -111,6 +110,11 @@ public class ReplayTest {
       currBlockHeader = mockBlockHeader(br.readLine());
       final BaseFeeMarket baseFeeMarket = FeeMarket.london(0L);
 
+      final TransactionPoolConfiguration poolConfig =
+          ImmutableTransactionPoolConfiguration.builder()
+              .prioritySenders(readPrioritySenders(br.readLine()))
+              .build();
+
       final AbstractPrioritizedTransactions prioritizedTransactions =
           createLayers(poolConfig, txPoolMetrics, baseFeeMarket);
       final LayeredPendingTransactions pendingTransactions =
@@ -153,6 +157,10 @@ public class ReplayTest {
     }
   }
 
+  private List<Address> readPrioritySenders(final String line) {
+    return Arrays.stream(line.split(",")).map(Address::fromHexString).toList();
+  }
+
   private BlockHeader mockBlockHeader(final String line) {
     final List<String> commaSplit = Splitter.on(',').splitToList(line);
     final long number = Long.parseLong(commaSplit.get(0));
@@ -174,20 +182,20 @@ public class ReplayTest {
       final TransactionPoolMetrics txPoolMetrics,
       final BaseFeeMarket baseFeeMarket) {
     final EvictCollectorLayer evictCollector = new EvictCollectorLayer(txPoolMetrics);
+    final BiFunction<PendingTransaction, PendingTransaction, Boolean> txReplacementTester =
+        (tx1, tx2) -> transactionReplacementTester(poolConfig, tx1, tx2);
     final SparseTransactions sparseTransactions =
-        new SparseTransactions(
-            poolConfig, evictCollector, txPoolMetrics, this::transactionReplacementTester);
+        new SparseTransactions(poolConfig, evictCollector, txPoolMetrics, txReplacementTester);
 
     final ReadyTransactions readyTransactions =
-        new ReadyTransactions(
-            poolConfig, sparseTransactions, txPoolMetrics, this::transactionReplacementTester);
+        new ReadyTransactions(poolConfig, sparseTransactions, txPoolMetrics, txReplacementTester);
 
     return new BaseFeePrioritizedTransactions(
         poolConfig,
         () -> currBlockHeader,
         readyTransactions,
         txPoolMetrics,
-        this::transactionReplacementTester,
+        txReplacementTester,
         baseFeeMarket);
   }
 
@@ -282,11 +290,6 @@ public class ReplayTest {
     if (tx.getSender().equals(senderToLog)) {
       LOG.warn("After {}", prioritizedTransactions.logSender(senderToLog));
     }
-  }
-
-  private boolean transactionReplacementTester(
-      final PendingTransaction pt1, final PendingTransaction pt2) {
-    return transactionReplacementTester(poolConfig, pt1, pt2);
   }
 
   private boolean transactionReplacementTester(
