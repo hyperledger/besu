@@ -471,8 +471,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final List<PendingTransaction> parsedTransactions = new ArrayList<>(1);
     pendingTransactions.selectTransactions(
-        transaction -> {
-          parsedTransactions.add(transaction);
+        pendingTx -> {
+          parsedTransactions.add(pendingTx);
           return TransactionSelectionResult.invalid(UPFRONT_COST_EXCEEDS_BALANCE.name());
         });
 
@@ -490,8 +490,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final List<PendingTransaction> parsedTransactions = new ArrayList<>(1);
     pendingTransactions.selectTransactions(
-        transaction -> {
-          parsedTransactions.add(transaction);
+        pendingTx -> {
+          parsedTransactions.add(pendingTx);
           return TransactionSelectionResult.invalidTransient(
               GAS_PRICE_BELOW_CURRENT_BASE_FEE.name());
         });

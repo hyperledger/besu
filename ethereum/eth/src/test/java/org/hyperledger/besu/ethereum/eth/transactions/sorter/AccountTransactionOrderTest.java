@@ -30,48 +30,43 @@ public class AccountTransactionOrderTest {
 
   private static final KeyPair KEYS = SignatureAlgorithmFactory.getInstance().generateKeyPair();
 
-  private final PendingTransaction transaction1 =
-      PendingTransaction.newPendingTransaction(transaction(1), false, false);
-  private final PendingTransaction transaction2 =
-      PendingTransaction.newPendingTransaction(transaction(2), false, false);
-  private final PendingTransaction transaction3 =
-      PendingTransaction.newPendingTransaction(transaction(3), false, false);
-  private final PendingTransaction transaction4 =
-      PendingTransaction.newPendingTransaction(transaction(4), false, false);
+  private final PendingTransaction pendingTx1 = new PendingTransaction.Remote((transaction(1)));
+  private final PendingTransaction pendingTx2 = new PendingTransaction.Remote((transaction(2)));
+  private final PendingTransaction pendingTx3 = new PendingTransaction.Remote((transaction(3)));
+  private final PendingTransaction pendingTx4 = new PendingTransaction.Remote((transaction(4)));
   private final AccountTransactionOrder accountTransactionOrder =
-      new AccountTransactionOrder(
-          Stream.of(transaction1, transaction2, transaction3, transaction4));
+      new AccountTransactionOrder(Stream.of(pendingTx1, pendingTx2, pendingTx3, pendingTx4));
 
   @Test
   public void shouldProcessATransactionImmediatelyIfItsTheLowestNonce() {
-    assertThat(accountTransactionOrder.transactionsToProcess(transaction1))
-        .containsExactly(transaction1);
+    assertThat(accountTransactionOrder.transactionsToProcess(pendingTx1))
+        .containsExactly(pendingTx1);
   }
 
   @Test
   public void shouldDeferProcessingATransactionIfItIsNotTheLowestNonce() {
-    assertThat(accountTransactionOrder.transactionsToProcess(transaction2)).isEmpty();
+    assertThat(accountTransactionOrder.transactionsToProcess(pendingTx2)).isEmpty();
   }
 
   @Test
   public void shouldProcessDeferredTransactionsAfterPrerequisiteIsProcessed() {
-    assertThat(accountTransactionOrder.transactionsToProcess(transaction2)).isEmpty();
-    assertThat(accountTransactionOrder.transactionsToProcess(transaction3)).isEmpty();
+    assertThat(accountTransactionOrder.transactionsToProcess(pendingTx2)).isEmpty();
+    assertThat(accountTransactionOrder.transactionsToProcess(pendingTx3)).isEmpty();
 
-    assertThat(accountTransactionOrder.transactionsToProcess(transaction1))
-        .containsExactly(transaction1, transaction2, transaction3);
+    assertThat(accountTransactionOrder.transactionsToProcess(pendingTx1))
+        .containsExactly(pendingTx1, pendingTx2, pendingTx3);
   }
 
   @Test
   public void shouldNotProcessDeferredTransactionsThatAreNotYetDue() {
-    assertThat(accountTransactionOrder.transactionsToProcess(transaction2)).isEmpty();
-    assertThat(accountTransactionOrder.transactionsToProcess(transaction4)).isEmpty();
+    assertThat(accountTransactionOrder.transactionsToProcess(pendingTx2)).isEmpty();
+    assertThat(accountTransactionOrder.transactionsToProcess(pendingTx4)).isEmpty();
 
-    assertThat(accountTransactionOrder.transactionsToProcess(transaction1))
-        .containsExactly(transaction1, transaction2);
+    assertThat(accountTransactionOrder.transactionsToProcess(pendingTx1))
+        .containsExactly(pendingTx1, pendingTx2);
 
-    assertThat(accountTransactionOrder.transactionsToProcess(transaction3))
-        .containsExactly(transaction3, transaction4);
+    assertThat(accountTransactionOrder.transactionsToProcess(pendingTx3))
+        .containsExactly(pendingTx3, pendingTx4);
   }
 
   private Transaction transaction(final int nonce) {
