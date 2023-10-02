@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.trie.bonsai.storage.flat.FlatDbStrategyProv
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
-import org.hyperledger.besu.ethereum.worldstate.FlatWorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
@@ -56,7 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("unused")
-public class BonsaiWorldStateKeyValueStorage implements FlatWorldStateStorage, AutoCloseable {
+public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateKeyValueStorage.class);
 
   // 0x776f726c64526f6f74
@@ -337,7 +336,6 @@ public class BonsaiWorldStateKeyValueStorage implements FlatWorldStateStorage, A
     throw new RuntimeException("removeNodeAddedListener not available");
   }
 
-  @Override
   public FlatDbStrategy getFlatDbStrategy() {
     return flatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage);
   }

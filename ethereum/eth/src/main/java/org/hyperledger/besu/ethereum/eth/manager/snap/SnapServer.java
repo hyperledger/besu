@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetAccountRangeMessage;
+import org.hyperledger.besu.ethereum.eth.messages.snap.GetByteCodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetStorageRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetTrieNodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
@@ -29,13 +30,14 @@ import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedBonsaiWorldView;
-import org.hyperledger.besu.ethereum.worldstate.FlatWorldStateStorage;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -64,9 +66,12 @@ class SnapServer {
       StorageRangeMessage.create(new ArrayDeque<>(), Collections.emptyList());
   private static final TrieNodesMessage EMPTY_TRIE_NODES_MESSAGE =
       TrieNodesMessage.create(new ArrayList<>());
+  private static final ByteCodesMessage EMPTY_BYTE_CODES_MESSAGE =
+      ByteCodesMessage.create(new ArrayDeque<>());
 
   private final EthMessages snapMessages;
-  private final Function<Hash, Optional<FlatWorldStateStorage>> worldStateStorageProvider;
+  private final Function<Optional<Hash>, Optional<BonsaiWorldStateKeyValueStorage>>
+      worldStateStorageProvider;
 
   SnapServer(final EthMessages snapMessages, final WorldStateArchive archive) {
     this.snapMessages = snapMessages;
@@ -81,7 +86,8 @@ class SnapServer {
 
   SnapServer(
       final EthMessages snapMessages,
-      final Function<Hash, Optional<FlatWorldStateStorage>> worldStateStorageProvider) {
+      final Function<Optional<Hash>, Optional<BonsaiWorldStateKeyValueStorage>>
+          worldStateStorageProvider) {
     this.snapMessages = snapMessages;
     this.worldStateStorageProvider = worldStateStorageProvider;
   }
@@ -111,7 +117,7 @@ class SnapServer {
     var worldStateHash = getAccountRangeMessage.range(true).worldStateRootHash();
 
     return worldStateStorageProvider
-        .apply(worldStateHash)
+        .apply(Optional.of(worldStateHash))
         .map(
             storage -> {
               NavigableMap<Bytes32, Bytes> accounts =
@@ -159,7 +165,7 @@ class SnapServer {
         .log();
 
     return worldStateStorageProvider
-        .apply(range.worldStateRootHash())
+        .apply(Optional.of(range.worldStateRootHash()))
         .map(
             storage -> {
               // reusable predicate to limit by rec count and bytes:
@@ -207,7 +213,24 @@ class SnapServer {
 
   private MessageData constructGetBytecodesResponse(final MessageData message) {
     // TODO implement once code is stored by hash
-    return ByteCodesMessage.create(new ArrayDeque<>());
+    final GetByteCodesMessage getByteCodesMessage = GetByteCodesMessage.readFrom(message);
+    final GetByteCodesMessage.CodeHashes codeHashes = getByteCodesMessage.codeHashes(true);
+
+    // there is no worldstate root or block header for us to use, so default to head.  This
+    // can cause problems for self-destructed contracts pre-shanghai.  for now since this impl
+    // is deferring to #5889, we can just get any flat code storage and know we are not deleting
+    // code for now.
+    return worldStateStorageProvider
+        .apply(Optional.empty())
+        .map(
+            storage -> {
+              List<Bytes> codeBytes = new ArrayDeque<>();
+              for (Bytes32 codeHash : codeHashes.hashes()) {
+                storage.getCode(codeHash, null).ifPresent(codeBytes::add);
+              }
+              return ByteCodesMessage.create(codeBytes);
+            })
+        .orElse(EMPTY_BYTE_CODES_MESSAGE);
   }
 
   MessageData constructGetTrieNodesResponse(final MessageData message) {
@@ -220,14 +243,14 @@ class SnapServer {
         .addArgument(() -> triePaths.paths().size())
         .log();
 
-    //TODO: implement limits
+    // TODO: implement limits
     return worldStateStorageProvider
-        .apply(triePaths.worldStateRootHash())
+        .apply(Optional.of(triePaths.worldStateRootHash()))
         .map(
             storage -> {
               ArrayList<Bytes> trieNodes = new ArrayList<>();
               for (var triePath : triePaths.paths()) {
-                // first element is paths is account
+                // first element in paths is account
                 if (triePath.size() == 1) {
                   // if there is only one path, presume it should be compact encoded account path
                   storage.getTrieNodeUnsafe(triePath.get(0)).ifPresent(trieNodes::add);
