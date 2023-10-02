@@ -106,7 +106,7 @@ public class RocksDBTransactionTest {
 
       doThrow(new RocksDBException("Busy"))
           .doThrow(new RocksDBException("Busy"))
-          .doNothing()
+          .doCallRealMethod()
           .when(innerTx)
           .commit();
 
