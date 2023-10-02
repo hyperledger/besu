@@ -637,7 +637,7 @@ public class Benchmarks {
         new FalconPrecompiledContract(new IstanbulGasCalculator());
     final JsonNode falconVectors;
     try (final InputStream testVectors =
-        FalconPrecompiledBenchmark.class.getResourceAsStream("falconBenchVectors.json")) {
+        Benchmarks.class.getResourceAsStream("falconBenchVectors.json")) {
       falconVectors = new ObjectMapper().readTree(testVectors);
 
     } catch (IOException e) {
