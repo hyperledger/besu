@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
@@ -40,14 +41,14 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
    * Evaluates a transaction considering its price. If the transaction's current price is below the
    * minimum, it returns a selection result indicating the reason.
    *
-   * @param transaction The transaction to be evaluated.
+   * @param pendingTransaction The transaction to be evaluated.
    * @param ignored The results of other transaction evaluations in the same block.
    * @return The result of the transaction selection.
    */
   @Override
   public TransactionSelectionResult evaluateTransactionPreProcessing(
-      final Transaction transaction, final TransactionSelectionResults ignored) {
-    if (transactionCurrentPriceBelowMin(transaction)) {
+      final PendingTransaction pendingTransaction, final TransactionSelectionResults ignored) {
+    if (transactionCurrentPriceBelowMin(pendingTransaction)) {
       return TransactionSelectionResult.CURRENT_TX_PRICE_BELOW_MIN;
     }
     return TransactionSelectionResult.SELECTED;
@@ -55,7 +56,7 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
 
   @Override
   public TransactionSelectionResult evaluateTransactionPostProcessing(
-      final Transaction transaction,
+      final PendingTransaction pendingTransaction,
       final TransactionSelectionResults blockTransactionResults,
       final TransactionProcessingResult processingResult) {
     // All necessary checks were done in the pre-processing method, so nothing to do here.
@@ -65,14 +66,15 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
   /**
    * Checks if the transaction's current price is below the minimum.
    *
-   * @param transaction The transaction to be checked.
+   * @param pendingTransaction The transaction to be checked.
    * @return True if the transaction's current price is below the minimum, false otherwise.
    */
-  private boolean transactionCurrentPriceBelowMin(final Transaction transaction) {
+  private boolean transactionCurrentPriceBelowMin(final PendingTransaction pendingTransaction) {
+    final Transaction transaction = pendingTransaction.getTransaction();
     // Here we only care about EIP1159 since for Frontier and local transactions the checks
     // that we do when accepting them in the pool are enough
     if (transaction.getType().supports1559FeeMarket()
-        && !context.transactionPool().isLocalSender(transaction.getSender())) {
+        && !pendingTransaction.isReceivedFromLocalSource()) {
 
       // For EIP1559 transactions, the price is dynamic and depends on network conditions, so we can
       // only calculate at this time the current minimum price the transaction is willing to pay

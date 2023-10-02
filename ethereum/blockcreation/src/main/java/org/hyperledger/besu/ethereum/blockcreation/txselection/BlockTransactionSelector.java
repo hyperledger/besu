@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -142,7 +143,8 @@ public class BlockTransactionSelector {
             pendingTransaction -> {
               final var res = evaluateTransaction(pendingTransaction);
               if (!res.selected()) {
-                transactionSelectionResults.updateNotSelected(pendingTransaction, res);
+                transactionSelectionResults.updateNotSelected(
+                    pendingTransaction.getTransaction(), res);
               }
               return res;
             });
@@ -165,7 +167,7 @@ public class BlockTransactionSelector {
   public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
     transactions.forEach(
         transaction -> {
-          final var res = evaluateTransaction(transaction);
+          final var res = evaluateTransaction(new PendingTransaction.Local(transaction));
           if (!res.selected()) {
             transactionSelectionResults.updateNotSelected(transaction, res);
           }
@@ -182,12 +184,16 @@ public class BlockTransactionSelector {
    * the space remaining in the block.
    *
    */
-  private TransactionSelectionResult evaluateTransaction(final Transaction transaction) {
+  private TransactionSelectionResult evaluateTransaction(
+      final PendingTransaction pendingTransaction) {
     if (isCancelled.get()) {
       throw new CancellationException("Cancelled during transaction selection.");
     }
 
-    TransactionSelectionResult selectionResult = evaluateTransactionPreProcessing(transaction);
+    final Transaction transaction = pendingTransaction.getTransaction();
+
+    TransactionSelectionResult selectionResult =
+        evaluateTransactionPreProcessing(pendingTransaction);
     if (!selectionResult.selected()) {
       return selectionResult;
     }
@@ -209,7 +215,7 @@ public class BlockTransactionSelector {
             blockSelectionContext.blobGasPrice());
 
     var transactionWithProcessingContextResult =
-        evaluateTransactionPostProcessing(transaction, effectiveResult);
+        evaluateTransactionPostProcessing(pendingTransaction, effectiveResult);
     if (!transactionWithProcessingContextResult.selected()) {
       return transactionWithProcessingContextResult;
     }
@@ -243,16 +249,17 @@ public class BlockTransactionSelector {
    * it then processes it through external selectors. If the transaction is selected by all
    * selectors, it returns SELECTED.
    *
-   * @param transaction The transaction to be evaluated.
+   * @param pendingTransaction The transaction to be evaluated.
    * @return The result of the transaction selection process.
    */
   private TransactionSelectionResult evaluateTransactionPreProcessing(
-      final Transaction transaction) {
+      final PendingTransaction pendingTransaction) {
 
     // Process the transaction through internal selectors
     for (var selector : transactionSelectors) {
       TransactionSelectionResult result =
-          selector.evaluateTransactionPreProcessing(transaction, transactionSelectionResults);
+          selector.evaluateTransactionPreProcessing(
+              pendingTransaction, transactionSelectionResults);
       // If the transaction is not selected by any internal selector, return the result
       if (!result.equals(TransactionSelectionResult.SELECTED)) {
         return result;
@@ -261,7 +268,8 @@ public class BlockTransactionSelector {
 
     // Process the transaction through external selectors
     for (var selector : externalTransactionSelectors) {
-      TransactionSelectionResult result = selector.evaluateTransactionPreProcessing(transaction);
+      TransactionSelectionResult result =
+          selector.evaluateTransactionPreProcessing(pendingTransaction);
       // If the transaction is not selected by any external selector, return the result
       if (!result.equals(TransactionSelectionResult.SELECTED)) {
         return result;
@@ -277,18 +285,19 @@ public class BlockTransactionSelector {
    * whether the transaction should be included in a block. If the transaction is selected by all
    * selectors, it returns SELECTED.
    *
-   * @param transaction The transaction to be evaluated.
+   * @param pendingTransaction The transaction to be evaluated.
    * @param processingResult The result of the transaction processing.
    * @return The result of the transaction selection process.
    */
   private TransactionSelectionResult evaluateTransactionPostProcessing(
-      final Transaction transaction, final TransactionProcessingResult processingResult) {
+      final PendingTransaction pendingTransaction,
+      final TransactionProcessingResult processingResult) {
 
     // Process the transaction through internal selectors
     for (var selector : transactionSelectors) {
       TransactionSelectionResult result =
           selector.evaluateTransactionPostProcessing(
-              transaction, transactionSelectionResults, processingResult);
+              pendingTransaction, transactionSelectionResults, processingResult);
       // If the transaction is not selected by any selector, return the result
       if (!result.equals(TransactionSelectionResult.SELECTED)) {
         return result;
