@@ -31,7 +31,9 @@ import org.slf4j.LoggerFactory;
 /** The RocksDb transaction. */
 public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
   private static final Logger logger = LoggerFactory.getLogger(RocksDBTransaction.class);
-  private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
+  private static final String ERR_NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
+  private static final String ERR_BUSY = "Busy";
+  private static final String ERR_LOCK_TIMED_OUT = "TimedOut(LockTimeout)";
 
   private final RocksDBMetrics metrics;
   private final Transaction innerTx;
@@ -62,7 +64,7 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
     try (final OperationTimer.TimingContext ignored = metrics.getWriteLatency().startTimer()) {
       innerTx.put(columnFamilyMapper.apply(segmentId), key, value);
     } catch (final RocksDBException e) {
-      if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
+      if (e.getMessage().contains(ERR_NO_SPACE_LEFT_ON_DEVICE)) {
         logger.error(e.getMessage());
         System.exit(0);
       }
@@ -75,7 +77,7 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
     try (final OperationTimer.TimingContext ignored = metrics.getRemoveLatency().startTimer()) {
       innerTx.delete(columnFamilyMapper.apply(segmentId), key);
     } catch (final RocksDBException e) {
-      if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
+      if (e.getMessage().contains(ERR_NO_SPACE_LEFT_ON_DEVICE)) {
         logger.error(e.getMessage());
         System.exit(0);
       }
@@ -85,14 +87,35 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
 
   @Override
   public void commit() throws StorageException {
+    commit(0, 3);
+  }
+
+  public void commitWithRetries(final int retryLimit) throws StorageException {
+    commit(0, retryLimit);
+  }
+
+  void commit(final int attemptNumber, final int retryLimit) throws StorageException {
     try (final OperationTimer.TimingContext ignored = metrics.getCommitLatency().startTimer()) {
       innerTx.commit();
     } catch (final RocksDBException e) {
-      if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
+      if (e.getMessage().contains(ERR_NO_SPACE_LEFT_ON_DEVICE)) {
         logger.error(e.getMessage());
         System.exit(0);
+      } else if (e.getMessage().equals(ERR_BUSY) && attemptNumber < retryLimit) {
+        logger.trace(
+            "RocksDB Busy exception caught on attempt {} of {}, retrying",
+            attemptNumber,
+            retryLimit);
+        commit(attemptNumber + 1, retryLimit);
+      } else if (e.getMessage().equals(ERR_LOCK_TIMED_OUT) && attemptNumber < retryLimit) {
+        logger.trace(
+            "RocksDB Lock Timeout exception caught on attempt {} of {}, retrying",
+            attemptNumber,
+            retryLimit);
+        commit(attemptNumber + 1, retryLimit);
+      } else {
+        throw new StorageException(e);
       }
-      throw new StorageException(e);
     } finally {
       close();
     }
@@ -104,7 +127,7 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
       innerTx.rollback();
       metrics.getRollbackCount().inc();
     } catch (final RocksDBException e) {
-      if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
+      if (e.getMessage().contains(ERR_NO_SPACE_LEFT_ON_DEVICE)) {
         logger.error(e.getMessage());
         System.exit(0);
       }
