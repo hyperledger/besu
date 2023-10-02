@@ -446,12 +446,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       }
     }
 
-     if (protocolSpec.getGasCalculator().blobGasCost(transactionVersionedHashes.size()) >
-             protocolSpec.getGasLimitCalculator().currentBlobGasLimit()){
-       return ValidationResult.invalid(
-               RpcErrorType.INVALID_PARAMS,
-               String.format("Invalid Blob Count: %d",transactionVersionedHashes.size()));
-     }
+    if (protocolSpec.getGasCalculator().blobGasCost(transactionVersionedHashes.size())
+        > protocolSpec.getGasLimitCalculator().currentBlobGasLimit()) {
+      return ValidationResult.invalid(
+          RpcErrorType.INVALID_PARAMS,
+          String.format("Invalid Blob Count: %d", transactionVersionedHashes.size()));
+    }
     return ValidationResult.valid();
   }
 
