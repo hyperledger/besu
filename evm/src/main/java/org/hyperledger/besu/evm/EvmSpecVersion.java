@@ -141,7 +141,7 @@ public enum EvmSpecVersion {
   /**
    * Calculate a spec version from a text fork name.
    *
-   * @param name The name of the fork, such as "jshanghai" or "berlin"
+   * @param name The name of the fork, such as "shanghai" or "berlin"
    * @return the EVM spec version for that fork, or null if no fork matched.
    */
   public static EvmSpecVersion fromName(final String name) {

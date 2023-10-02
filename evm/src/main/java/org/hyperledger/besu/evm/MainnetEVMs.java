@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
@@ -278,7 +279,7 @@ public class MainnetEVMs {
    * @return the evm
    */
   public static EVM homestead(final EvmConfiguration evmConfiguration) {
-    return homestead(new FrontierGasCalculator(), evmConfiguration);
+    return homestead(new HomesteadGasCalculator(), evmConfiguration);
   }
 
   /**
