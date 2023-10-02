@@ -188,6 +188,9 @@ task acceptanceTestCliqueBft(type: Test) {
   doFirst { mkdir "${buildDir}/jvmErrorLogs" }
 }
 
+
+def tesseraDist = '23.4.0'
+
 task acceptanceTestPrivacy(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
   include '**/privacy/**'
@@ -195,9 +198,11 @@ task acceptanceTestPrivacy(type: Test) {
   useJUnitPlatform {}
 
   dependsOn(rootProject.installDist)
+  dependsOn(unzipTessera)
   setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runBesuAsProcess', 'true'
   systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
+  systemProperty 'tessera-dist', "${buildDir}/tessera/dist/tessera-${tesseraDist}/bin/tessera"
   mustRunAfter rootProject.subprojects*.test
   description = 'Runs Privacy Besu acceptance tests.'
   group = 'verification'
@@ -222,6 +227,7 @@ task acceptanceTestPermissioning(type: Test) {
   useJUnitPlatform {}
 
   dependsOn(rootProject.installDist)
+  dependsOn(unzipTessera)
   setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runBesuAsProcess', 'true'
   systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
@@ -240,24 +246,4 @@ task acceptanceTestPermissioning(type: Test) {
   }
 
   doFirst { mkdir "${buildDir}/jvmErrorLogs" }
-
-  def tesseraDist = '23.4.0'
-  acceptanceTest {
-    useJUnitPlatform()
-    systemProperty "tessera-dist", "${buildDir}/tessera/dist/tessera-${tesseraDist}/bin/tessera"
-  }
-
-  task copyDependencies(type: Copy) {
-    def outputDir = file("${buildDir}/tessera/dist")
-    from configurations.tessera
-    into outputDir
-  }
-  task unzipTessera(type: Copy) {
-    def zipFile = file("${buildDir}/tessera/dist/tessera-dist-${tesseraDist}.tar")
-    def outputDir = file("${buildDir}/tessera/dist")
-    from tarTree(zipFile)
-    into outputDir
-  }
-  unzipTessera.dependsOn copyDependencies
-  acceptanceTest.dependsOn unzipTessera
 }

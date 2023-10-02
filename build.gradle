@@ -328,7 +328,13 @@ tasks.register('checkPluginAPIChanges', DefaultTask) {}
 checkPluginAPIChanges.dependsOn(':plugin-api:checkAPIChanges')
 check.dependsOn('checkPluginAPIChanges', 'checkMavenCoordinateCollisions')
 
+
+def tesseraDist = '23.4.0'
+
 subprojects {
+  configurations {
+    tessera.extendsFrom integrationTestRuntimeOnly
+  }
 
   if (file('src/test-support').directory) {
     sourceSets {
@@ -361,6 +367,7 @@ subprojects {
           srcDir file('src/integration-test/java')
         }
         resources.srcDir file('src/integration-test/resources')
+
       }
     }
 
@@ -368,7 +375,7 @@ subprojects {
       dependencies { integrationTestImplementation sourceSets.testSupport.output }
     }
 
-    task integrationTest(type: Test, dependsOn: ["compileTestJava"]) {
+    task integrationTest(type: Test, dependsOn: ["compileTestJava", "unzipTessera"]) {
       group = "verification"
       description = "Runs the Besu integration tests"
 
@@ -382,6 +389,7 @@ subprojects {
       classpath = sourceSets.integrationTest.runtimeClasspath
       outputs.upToDateWhen { false }
       useJUnitPlatform {}
+      systemProperty 'tessera-dist', "${buildDir}/tessera/dist/tessera-${tesseraDist}/bin/tessera"
     }
   }
 
@@ -452,6 +460,20 @@ subprojects {
         }
       }
     }
+  }
+
+  task copyDependencies(type: Copy) {
+    def outputDir = file("${buildDir}/tessera/dist")
+    from configurations.tessera
+    into outputDir
+  }
+
+  task unzipTessera(type: Copy) {
+    dependsOn(copyDependencies)
+    def zipFile = file("${buildDir}/tessera/dist/tessera-dist-${tesseraDist}.tar")
+    def outputDir = file("${buildDir}/tessera/dist")
+    from tarTree(zipFile)
+    into outputDir
   }
 
   tasks.withType(Test) {

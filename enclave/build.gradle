@@ -37,16 +37,3 @@ integrationTest {
   systemProperty "tessera-dist", "${buildDir}/tessera/dist/tessera-${tesseraDist}/bin/tessera"
 }
 
-task copyDependencies(type: Copy) {
-  def outputDir = file("${buildDir}/tessera/dist")
-  from configurations.tessera
-  into outputDir
-}
-task unzipTessera(type: Copy) {
-  def zipFile = file("${buildDir}/tessera/dist/tessera-dist-${tesseraDist}.tar")
-  def outputDir = file("${buildDir}/tessera/dist")
-  from tarTree(zipFile)
-  into outputDir
-}
-unzipTessera.dependsOn copyDependencies
-integrationTest.dependsOn unzipTessera
