@@ -90,6 +90,12 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
     commit(0, 3);
   }
 
+  /**
+   * commit transaction with an explicit number of retries.
+   *
+   * @param retryLimit limit for the number of retry attempts
+   * @throws StorageException
+   */
   public void commitWithRetries(final int retryLimit) throws StorageException {
     commit(0, retryLimit);
   }
@@ -102,13 +108,13 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
         logger.error(e.getMessage());
         System.exit(0);
       } else if (e.getMessage().equals(ERR_BUSY) && attemptNumber < retryLimit) {
-        logger.trace(
+        logger.info(
             "RocksDB Busy exception caught on attempt {} of {}, retrying",
             attemptNumber,
             retryLimit);
         commit(attemptNumber + 1, retryLimit);
       } else if (e.getMessage().equals(ERR_LOCK_TIMED_OUT) && attemptNumber < retryLimit) {
-        logger.trace(
+        logger.info(
             "RocksDB Lock Timeout exception caught on attempt {} of {}, retrying",
             attemptNumber,
             retryLimit);
