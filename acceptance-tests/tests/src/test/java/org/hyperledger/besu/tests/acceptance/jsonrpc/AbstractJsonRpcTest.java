@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -90,7 +91,7 @@ abstract class AbstractJsonRpcTest {
                 .post(RequestBody.create(testCase.getRequest().toString(), MEDIA_TYPE_JSON))
                 .build());
     final Response response = testRequest.execute();
-
+    evaluateResponse(response, testRequest, testCase, testCaseFileURI.toURL());
     assertThat(response.code()).isEqualTo(testCase.getStatusCode());
     final ObjectNode actualBody = JsonUtil.objectNodeFromString(response.body().string());
     final ObjectNode expectedBody =
@@ -100,6 +101,12 @@ abstract class AbstractJsonRpcTest {
             "%s\ndid not equal\n %s", actualBody.toPrettyString(), expectedBody.toPrettyString())
         .isEqualTo(expectedBody);
   }
+
+  protected void evaluateResponse(
+      final Response response,
+      final Call testRequest,
+      final JsonRpcTestCase testCase,
+      final URL url) {}
 
   private String getRpcUrl(final String rpcMethod) {
     if (rpcMethod.contains("eth_") || rpcMethod.contains("engine_")) {

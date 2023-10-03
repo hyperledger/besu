@@ -196,10 +196,10 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
   @Override
   protected JsonRpcResponse resp(final EnginePayloadParameter payload) {
     Object[] params =
-            maybeParentBeaconBlockRoot
-                    .map(bytes32 -> new Object[] {payload, Collections.emptyList(), bytes32.toHexString()})
-                    .orElseGet(() -> new Object[] {payload});
+        maybeParentBeaconBlockRoot
+            .map(bytes32 -> new Object[] {payload, Collections.emptyList(), bytes32.toHexString()})
+            .orElseGet(() -> new Object[] {payload});
     return method.response(
-            new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
   }
 }
