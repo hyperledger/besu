@@ -29,8 +29,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +44,8 @@ public class CachedWorldStorageManager
   private static final Logger LOG = LoggerFactory.getLogger(CachedWorldStorageManager.class);
   private final BonsaiWorldStateProvider archive;
   private final EvmConfiguration evmConfiguration;
+  private final Cache<Hash, Hash> stateRootToBlockHashCache =
+      Caffeine.newBuilder().maximumSize(512).expireAfterWrite(100, TimeUnit.MINUTES).build();
 
   private final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
   private final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash;
@@ -104,6 +109,8 @@ public class CachedWorldStorageManager
                 blockHeader,
                 ((BonsaiWorldStateLayerStorage) forWorldState.getWorldStateStorage()).clone()));
       }
+      // add stateroot -> blockHeader cache entry
+      stateRootToBlockHashCache.put(blockHeader.getStateRoot(), blockHeader.getBlockHash());
     }
     scrubCachedLayers(blockHeader.getNumber());
   }
@@ -198,6 +205,7 @@ public class CachedWorldStorageManager
 
   public Optional<CachedBonsaiWorldView> getStorageByRootHash(final Optional<Hash> rootHash) {
     return rootHash
+        .map(stateRootToBlockHashCache::getIfPresent)
         .map(Optional::of)
         .orElseGet(rootWorldStateStorage::getWorldStateBlockHash)
         .map(cachedWorldStatesByHash::get);

@@ -21,7 +21,9 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
+import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetAccountRangeMessage;
+import org.hyperledger.besu.ethereum.eth.messages.snap.GetByteCodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetStorageRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetTrieNodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
@@ -203,6 +205,19 @@ public class SnapServerTest {
     assertThat(trieNodes.size()).isEqualTo(4);
   }
 
+  @Test
+  public void assertCodePresent() {
+    insertTestAccounts(acct1, acct2, acct3, acct4);
+    var codeRequest = requestByteCodes(
+        List.of(
+            acct3.accountValue.getCodeHash(),
+            acct4.accountValue.getCodeHash()));
+    assertThat(codeRequest).isNotNull();
+    ByteCodesMessage.ByteCodes codes = codeRequest.bytecodes(false);
+    assertThat(codes).isNotNull();
+    assertThat(codes.codes().size()).isEqualTo(2);
+  }
+
   static SnapTestAccount createTestAccount(final String hexAddr) {
     return new SnapTestAccount(
         Hash.wrap(Bytes32.rightPad(Bytes.fromHexString(hexAddr))),
@@ -226,6 +241,7 @@ public class SnapServerTest {
     // mock some storage data
     var flatdb = storage.getFlatDbStrategy();
     var updater = storage.updater();
+    updater.putCode(Hash.hash(mockCode), mockCode);
     IntStream.range(10, 20)
         .boxed()
         .forEach(
@@ -313,6 +329,13 @@ public class SnapServerTest {
         snapServer.constructGetTrieNodesResponse(
             GetTrieNodesMessage.create(Hash.wrap(rootHash), trieNodesList)
                 .wrapMessageData(BigInteger.ONE));
+  }
+
+  ByteCodesMessage requestByteCodes(final List<Bytes32> codeHashes) {
+    return (ByteCodesMessage)
+        snapServer.constructGetBytecodesResponse(GetByteCodesMessage.create(
+            codeHashes)
+            .wrapMessageData(BigInteger.ONE));
   }
 
   AccountRangeMessage.AccountRangeData getAndVerifyAcountRangeData(

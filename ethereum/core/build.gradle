@@ -47,6 +47,7 @@ dependencies {
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
+  implementation 'com.github.ben-manes.caffeine:caffeine'
   implementation 'com.google.dagger:dagger'
   annotationProcessor 'com.google.dagger:dagger-compiler'
   implementation 'io.opentelemetry:opentelemetry-api'

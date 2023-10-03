@@ -74,14 +74,13 @@ class SnapServer {
       worldStateStorageProvider;
 
   SnapServer(final EthMessages snapMessages, final WorldStateArchive archive) {
-    this.snapMessages = snapMessages;
-    // TODO remove dirty bonsai cast:
-    this.worldStateStorageProvider =
+    this(snapMessages,
         rootHash ->
+            // TODO remove dirty bonsai cast:
             ((BonsaiWorldStateProvider) archive)
                 .getCachedWorldStorageManager()
                 .getStorageByRootHash(rootHash)
-                .map(CachedBonsaiWorldView::getWorldStateStorage);
+                .map(CachedBonsaiWorldView::getWorldStateStorage));
   }
 
   SnapServer(
@@ -90,6 +89,7 @@ class SnapServer {
           worldStateStorageProvider) {
     this.snapMessages = snapMessages;
     this.worldStateStorageProvider = worldStateStorageProvider;
+    registerResponseConstructors();
   }
 
   private void registerResponseConstructors() {
@@ -109,10 +109,12 @@ class SnapServer {
     final int maxResponseBytes = Math.min(range.responseBytes().intValue(), MAX_RESPONSE_SIZE);
 
     // TODO: drop to TRACE
-    LOGGER.info(
-        "Receive get account range message from {} to {}",
-        range.startKeyHash().toHexString(),
-        range.endKeyHash().toHexString());
+    LOGGER.atInfo()
+        .setMessage("Receive getAccountRangeMessage for {} from {} to {}")
+        .addArgument(range.worldStateRootHash()::toHexString)
+        .addArgument(range.startKeyHash()::toHexString)
+        .addArgument(range.endKeyHash()::toHexString)
+        .log();
 
     var worldStateHash = getAccountRangeMessage.range(true).worldStateRootHash();
 
@@ -141,9 +143,15 @@ class SnapServer {
                     worldStateProof.getAccountProofRelatedNodes(
                         range.worldStateRootHash(), Hash.wrap(accounts.lastKey())));
               }
-              return AccountRangeMessage.create(accounts, proof);
+              var resp = AccountRangeMessage.create(accounts, proof);
+              LOGGER.info("returned message with {} accounts and {} proofs",
+                  accounts.size(), proof.size());
+              return resp;
             })
-        .orElse(EMPTY_ACCOUNT_RANGE);
+        .orElseGet(() -> {
+          LOGGER.info("returned empty account range due to worldstate not present");
+          return EMPTY_ACCOUNT_RANGE;
+        });
   }
 
   MessageData constructGetStorageRangeResponse(final MessageData message) {
@@ -211,10 +219,15 @@ class SnapServer {
         .orElse(EMPTY_STORAGE_RANGE);
   }
 
-  private MessageData constructGetBytecodesResponse(final MessageData message) {
+  MessageData constructGetBytecodesResponse(final MessageData message) {
     // TODO implement once code is stored by hash
     final GetByteCodesMessage getByteCodesMessage = GetByteCodesMessage.readFrom(message);
     final GetByteCodesMessage.CodeHashes codeHashes = getByteCodesMessage.codeHashes(true);
+    // TODO: drop to TRACE
+    LOGGER.atInfo()
+        .setMessage("Receive get bytecodes message for {} hashes")
+        .addArgument(codeHashes.hashes()::size)
+        .log();
 
     // there is no worldstate root or block header for us to use, so default to head.  This
     // can cause problems for self-destructed contracts pre-shanghai.  for now since this impl
