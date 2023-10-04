@@ -41,7 +41,8 @@ public class ExecutionEngineCancunBlockBulidingAcceptanceTest extends AbstractJs
 
   private static JsonRpcTestsContext testsContext;
 
-  public ExecutionEngineCancunBlockBulidingAcceptanceTest(final String ignored, final URI testCaseFileURI) {
+  public ExecutionEngineCancunBlockBulidingAcceptanceTest(
+      final String ignored, final URI testCaseFileURI) {
     super(ignored, testsContext, testCaseFileURI);
   }
 
@@ -77,6 +78,8 @@ public class ExecutionEngineCancunBlockBulidingAcceptanceTest extends AbstractJs
         final ObjectNode blobsBundle = (ObjectNode) result.get("blobsBundle");
         assertThat(execPayload.get("transactions").getNodeType()).isEqualTo(JsonNodeType.ARRAY);
         final ArrayNode transactions = (ArrayNode) execPayload.get("transactions");
+        // actually, you need to decode the transactions and count how many unique
+        // versioned hashes are referenced amongst them.
         assertThat(blobsBundle.get("commitments").getNodeType()).isEqualTo(JsonNodeType.ARRAY);
         final ArrayNode commitments = (ArrayNode) blobsBundle.get("commitments");
         assertThat(blobsBundle.get("blobs").getNodeType()).isEqualTo(JsonNodeType.ARRAY);
