@@ -385,6 +385,9 @@ subprojects {
     }
   }
 
+  def cloudsmithUser = project.hasProperty('cloudsmithUser') ? project.property('cloudsmithUser') : System.getenv('CLOUDSMITH_USER')
+  def cloudsmithKey = project.hasProperty('cloudsmithApiKey') ? project.property('cloudsmithApiKey') : System.getenv('CLOUDSMITH_API_KEY')
+
   def sourceSetIsPopulated = { sourceSetName ->
     def result = project.sourceSets.names.contains(sourceSetName) && !project.sourceSets.getAt(sourceSetName).allSource.empty
     logger.info("Project = " + project.name + " Has Source Set (" + sourceSetName + ") = " + result + "(" + project.sourceSets.names + ")")
@@ -392,13 +395,22 @@ subprojects {
   }
 
   if (sourceSetIsPopulated("main") || sourceSetIsPopulated("testSupport")) {
-    apply plugin: 'com.jfrog.artifactory'
     apply plugin: 'maven-publish'
 
     publishing {
+      repositories {
+        maven {
+          name = "cloudsmith"
+          url = "https://api-g.cloudsmith.io/maven/consensys/linea-besu/"
+          credentials {
+            username = cloudsmithUser
+            password = cloudsmithKey
+          }
+        }
+      }
       publications {
         mavenJava(MavenPublication) {
-          groupId "org.hyperledger.besu.internal"
+          groupId "com.consensys.linea-besu.internal"
           version "${project.version}"
           if (sourceSetIsPopulated("main")) {
             from components.java
@@ -414,8 +426,8 @@ subprojects {
             usage('java-runtime') { fromResolutionResult() }
           }
           pom {
-            name = "Besu - ${project.name}"
-            url = 'http://github.com/hyperledger/besu'
+            name = "Linea Besu - ${project.name}"
+            url = 'https://github.com/ConsenSys/linea-besu'
             licenses {
               license {
                 name = 'The Apache License, Version 2.0'
@@ -423,32 +435,11 @@ subprojects {
               }
             }
             scm {
-              connection = 'scm:git:git://github.com/hyperledger/besu.git'
-              developerConnection = 'scm:git:ssh://github.com/hyperledger/besu.git'
-              url = 'https://github.com/hyperledger/besu'
+              connection = 'scm:git:git://github.com/ConsenSys/linea-besu.git'
+              developerConnection = 'scm:git:ssh://github.com/ConsenSys/linea-besu.git'
+              url = 'https://github.com/ConsenSys/linea-besu'
             }
           }
-        }
-      }
-    }
-
-    def artifactoryUser = project.hasProperty('artifactoryUser') ? project.property('artifactoryUser') : System.getenv('ARTIFACTORY_USER')
-    def artifactoryKey = project.hasProperty('artifactoryApiKey') ? project.property('artifactoryApiKey') : System.getenv('ARTIFACTORY_KEY')
-    def artifactoryRepo = System.getenv('ARTIFACTORY_REPO') ?: 'besu-maven'
-    def artifactoryOrg = System.getenv('ARTIFACTORY_ORG') ?: 'hyperledger'
-
-    artifactory {
-      contextUrl = "https://hyperledger.jfrog.io/${artifactoryOrg}"
-      publish {
-        repository {
-          repoKey = "${artifactoryRepo}"
-          username = artifactoryUser
-          password = artifactoryKey
-        }
-        defaults {
-          publications('mavenJava')
-          publishArtifacts = true
-          publishPom = true
         }
       }
     }
