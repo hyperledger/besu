@@ -599,6 +599,18 @@ distZip {
   }
 }
 
+publishing {
+  publications {
+    distArtifactory(MavenPublication) {
+      groupId = '.'
+      version = project.version
+      artifactId = 'besu'
+      artifact("$buildDir/distributions/besu-${project.version}.zip")
+      artifact("$buildDir/distributions/besu-${project.version}.tar.gz") { extension = 'tar.gz' }
+    }
+  }
+}
+
 def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
 def dockerOrgName = project.hasProperty('dockerOrgName') ? project.getProperty("dockerOrgName") : "hyperledger"
 def dockerArtifactName = project.hasProperty("dockerArtifactName") ? project.getProperty("dockerArtifactName") : "besu"
