@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedBonsaiWorldView;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
@@ -74,7 +75,8 @@ class SnapServer {
       worldStateStorageProvider;
 
   SnapServer(final EthMessages snapMessages, final WorldStateArchive archive) {
-    this(snapMessages,
+    this(
+        snapMessages,
         rootHash ->
             // TODO remove dirty bonsai cast:
             ((BonsaiWorldStateProvider) archive)
@@ -109,7 +111,8 @@ class SnapServer {
     final int maxResponseBytes = Math.min(range.responseBytes().intValue(), MAX_RESPONSE_SIZE);
 
     // TODO: drop to TRACE
-    LOGGER.atInfo()
+    LOGGER
+        .atInfo()
         .setMessage("Receive getAccountRangeMessage for {} from {} to {}")
         .addArgument(range.worldStateRootHash()::toHexString)
         .addArgument(range.startKeyHash()::toHexString)
@@ -144,14 +147,15 @@ class SnapServer {
                         range.worldStateRootHash(), Hash.wrap(accounts.lastKey())));
               }
               var resp = AccountRangeMessage.create(accounts, proof);
-              LOGGER.info("returned message with {} accounts and {} proofs",
-                  accounts.size(), proof.size());
+              LOGGER.info(
+                  "returned message with {} accounts and {} proofs", accounts.size(), proof.size());
               return resp;
             })
-        .orElseGet(() -> {
-          LOGGER.info("returned empty account range due to worldstate not present");
-          return EMPTY_ACCOUNT_RANGE;
-        });
+        .orElseGet(
+            () -> {
+              LOGGER.info("returned empty account range due to worldstate not present");
+              return EMPTY_ACCOUNT_RANGE;
+            });
   }
 
   MessageData constructGetStorageRangeResponse(final MessageData message) {
@@ -224,7 +228,8 @@ class SnapServer {
     final GetByteCodesMessage getByteCodesMessage = GetByteCodesMessage.readFrom(message);
     final GetByteCodesMessage.CodeHashes codeHashes = getByteCodesMessage.codeHashes(true);
     // TODO: drop to TRACE
-    LOGGER.atInfo()
+    LOGGER
+        .atInfo()
         .setMessage("Receive get bytecodes message for {} hashes")
         .addArgument(codeHashes.hashes()::size)
         .log();
@@ -266,7 +271,9 @@ class SnapServer {
                 // first element in paths is account
                 if (triePath.size() == 1) {
                   // if there is only one path, presume it should be compact encoded account path
-                  storage.getTrieNodeUnsafe(triePath.get(0)).ifPresent(trieNodes::add);
+                  storage
+                      .getTrieNodeUnsafe(CompactEncoding.decode(triePath.get(0)))
+                      .ifPresent(trieNodes::add);
                 } else {
                   // otherwise the first element should be account hash, and subsequent paths
                   // are compact encoded account storage paths
@@ -277,7 +284,9 @@ class SnapServer {
                       .forEach(
                           path ->
                               storage
-                                  .getTrieNodeUnsafe(Bytes.concatenate(accountPrefix, path))
+                                  .getTrieNodeUnsafe(
+                                      Bytes.concatenate(
+                                          accountPrefix, CompactEncoding.decode(path)))
                                   .ifPresent(trieNodes::add));
                 }
               }

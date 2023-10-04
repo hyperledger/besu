@@ -190,9 +190,9 @@ public class SnapServerTest {
   @Test
   public void assertStorageTriePathRequest() {
     insertTestAccounts(acct1, acct2, acct3, acct4);
-    var pathToSlot11 = Bytes.fromHexStringLenient("0x0101");
-    var pathToSlot12 = Bytes.fromHexStringLenient("0x0102");
-    var pathToSlot1a = Bytes.fromHexStringLenient("0x010A"); // not present
+    var pathToSlot11 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0101"));
+    var pathToSlot12 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0102"));
+    var pathToSlot1a = CompactEncoding.encode(Bytes.fromHexStringLenient("0x010A")); // not present
     var trieNodeRequest =
         requestTrieNodes(
             storageTrie.getRootHash(),
@@ -208,10 +208,9 @@ public class SnapServerTest {
   @Test
   public void assertCodePresent() {
     insertTestAccounts(acct1, acct2, acct3, acct4);
-    var codeRequest = requestByteCodes(
-        List.of(
-            acct3.accountValue.getCodeHash(),
-            acct4.accountValue.getCodeHash()));
+    var codeRequest =
+        requestByteCodes(
+            List.of(acct3.accountValue.getCodeHash(), acct4.accountValue.getCodeHash()));
     assertThat(codeRequest).isNotNull();
     ByteCodesMessage.ByteCodes codes = codeRequest.bytecodes(false);
     assertThat(codes).isNotNull();
@@ -333,9 +332,8 @@ public class SnapServerTest {
 
   ByteCodesMessage requestByteCodes(final List<Bytes32> codeHashes) {
     return (ByteCodesMessage)
-        snapServer.constructGetBytecodesResponse(GetByteCodesMessage.create(
-            codeHashes)
-            .wrapMessageData(BigInteger.ONE));
+        snapServer.constructGetBytecodesResponse(
+            GetByteCodesMessage.create(codeHashes).wrapMessageData(BigInteger.ONE));
   }
 
   AccountRangeMessage.AccountRangeData getAndVerifyAcountRangeData(

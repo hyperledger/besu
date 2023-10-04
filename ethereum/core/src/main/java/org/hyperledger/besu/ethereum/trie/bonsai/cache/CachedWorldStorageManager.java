@@ -203,16 +203,20 @@ public class CachedWorldStorageManager
     return cachedWorldStatesByHash.containsKey(blockHash);
   }
 
-  public Optional<CachedBonsaiWorldView> getStorageByRootHash(final Optional<Hash> rootHash) {
-    return rootHash
-        .map(stateRootToBlockHashCache::getIfPresent)
-        .map(Optional::of)
-        .orElseGet(rootWorldStateStorage::getWorldStateBlockHash)
-        .map(cachedWorldStatesByHash::get);
-  }
-
   public void reset() {
     this.cachedWorldStatesByHash.clear();
+  }
+
+  public Optional<CachedBonsaiWorldView> getStorageByRootHash(final Optional<Hash> rootHash) {
+    if (rootHash.isPresent()) {
+      // if we supplied a hash, return the worldstate for that hash if it is available:
+      return rootHash
+          .map(stateRootToBlockHashCache::getIfPresent)
+          .map(cachedWorldStatesByHash::get);
+    } else {
+      // if we did not supply a hash, return the head worldstate from cachedWorldStates
+      return rootWorldStateStorage.getWorldStateBlockHash().map(cachedWorldStatesByHash::get);
+    }
   }
 
   @Override
