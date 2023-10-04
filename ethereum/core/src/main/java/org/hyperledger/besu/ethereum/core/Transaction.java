@@ -670,6 +670,7 @@ public class Transaction
    *
    * @return the size in bytes of the encoded transaction.
    */
+  @Override
   public int getSize() {
     if (size == -1) {
       memoizeHashAndSize();

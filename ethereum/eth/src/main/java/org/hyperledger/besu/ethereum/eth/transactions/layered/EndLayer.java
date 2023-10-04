@@ -115,8 +115,11 @@ public class EndLayer implements TransactionsLayer {
   }
 
   @Override
-  public PendingTransaction promote(final Predicate<PendingTransaction> promotionFilter) {
-    return null;
+  public List<PendingTransaction> promote(
+      final Predicate<PendingTransaction> promotionFilter,
+      final long freeSpace,
+      final int freeSlots) {
+    return List.of();
   }
 
   @Override

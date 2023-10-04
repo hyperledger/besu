@@ -35,6 +35,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
+import org.hyperledger.besu.consensus.merge.PayloadWrapper;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator.ProposalBuilderExecutor;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
 import org.hyperledger.besu.crypto.KeyPair;
@@ -55,7 +56,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -242,11 +242,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void coinbaseShouldMatchSuggestedFeeRecipient() {
     doAnswer(
             invocation -> {
-              coordinator.finalizeProposalById(invocation.getArgument(0, PayloadIdentifier.class));
+              coordinator.finalizeProposalById(
+                  invocation.getArgument(0, PayloadWrapper.class).payloadIdentifier());
               return null;
             })
         .when(mergeContext)
-        .putPayloadById(any(), any());
+        .putPayloadById(any());
 
     var payloadId =
         coordinator.preparePayload(
@@ -257,12 +258,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             Optional.empty(),
             Optional.empty());
 
-    ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
-        ArgumentCaptor.forClass(BlockWithReceipts.class);
+    ArgumentCaptor<PayloadWrapper> payloadWrapper = ArgumentCaptor.forClass(PayloadWrapper.class);
 
-    verify(mergeContext, atLeastOnce()).putPayloadById(eq(payloadId), blockWithReceipts.capture());
+    verify(mergeContext, atLeastOnce()).putPayloadById(payloadWrapper.capture());
 
-    assertThat(blockWithReceipts.getValue().getHeader().getCoinbase())
+    assertThat(payloadWrapper.getValue().payloadIdentifier()).isEqualTo(payloadId);
+    assertThat(payloadWrapper.getValue().blockWithReceipts().getHeader().getCoinbase())
         .isEqualTo(suggestedFeeRecipient);
   }
 
@@ -317,12 +318,13 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                     createTransaction(retries.get() - 1), Optional.empty());
               } else {
                 // when we have 5 transactions finalize block creation
-                willThrow.finalizeProposalById(invocation.getArgument(0, PayloadIdentifier.class));
+                willThrow.finalizeProposalById(
+                    invocation.getArgument(0, PayloadWrapper.class).payloadIdentifier());
               }
               return null;
             })
         .when(mergeContext)
-        .putPayloadById(any(), any());
+        .putPayloadById(any());
 
     var payloadId =
         willThrow.preparePayload(
@@ -336,12 +338,19 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     verify(willThrow, never()).addBadBlock(any(), any());
     blockCreationTask.get();
 
-    ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
-        ArgumentCaptor.forClass(BlockWithReceipts.class);
+    ArgumentCaptor<PayloadWrapper> payloadWrapper = ArgumentCaptor.forClass(PayloadWrapper.class);
 
     verify(mergeContext, times(txPerBlock + 1))
-        .putPayloadById(eq(payloadId), blockWithReceipts.capture()); // +1 for the empty
-    assertThat(blockWithReceipts.getValue().getBlock().getBody().getTransactions().size())
+        .putPayloadById(payloadWrapper.capture()); // +1 for the empty
+    assertThat(payloadWrapper.getValue().payloadIdentifier()).isEqualTo(payloadId);
+    assertThat(
+            payloadWrapper
+                .getValue()
+                .blockWithReceipts()
+                .getBlock()
+                .getBody()
+                .getTransactions()
+                .size())
         .isEqualTo(txPerBlock);
     // this only verifies that adding the bad block didn't happen through the mergeCoordinator, it
     // still may be called directly.
@@ -383,12 +392,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
               } else {
                 // when we have 5 transactions finalize block creation
                 coordinator.finalizeProposalById(
-                    invocation.getArgument(0, PayloadIdentifier.class));
+                    invocation.getArgument(0, PayloadWrapper.class).payloadIdentifier());
               }
               return null;
             })
         .when(mergeContext)
-        .putPayloadById(any(), any());
+        .putPayloadById(any());
 
     var payloadId =
         coordinator.preparePayload(
@@ -401,15 +410,21 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     blockCreationTask.get();
 
-    ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
-        ArgumentCaptor.forClass(BlockWithReceipts.class);
+    ArgumentCaptor<PayloadWrapper> payloadWrapper = ArgumentCaptor.forClass(PayloadWrapper.class);
 
-    verify(mergeContext, times(retries.intValue()))
-        .putPayloadById(eq(payloadId), blockWithReceipts.capture());
+    verify(mergeContext, times(retries.intValue())).putPayloadById(payloadWrapper.capture());
 
-    assertThat(blockWithReceipts.getAllValues().size()).isEqualTo(retries.intValue());
+    assertThat(payloadWrapper.getValue().payloadIdentifier()).isEqualTo(payloadId);
+    assertThat(payloadWrapper.getAllValues().size()).isEqualTo(retries.intValue());
     for (int i = 0; i < retries.intValue(); i++) {
-      assertThat(blockWithReceipts.getAllValues().get(i).getBlock().getBody().getTransactions())
+      assertThat(
+              payloadWrapper
+                  .getAllValues()
+                  .get(i)
+                  .blockWithReceipts()
+                  .getBlock()
+                  .getBody()
+                  .getTransactions())
           .hasSize(i);
     }
   }
@@ -435,12 +450,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
               } else {
                 // finalize after 5 repetitions
                 coordinator.finalizeProposalById(
-                    invocation.getArgument(0, PayloadIdentifier.class));
+                    invocation.getArgument(0, PayloadWrapper.class).payloadIdentifier());
               }
               return null;
             })
         .when(mergeContext)
-        .putPayloadById(any(), any());
+        .putPayloadById(any());
 
     var payloadId =
         coordinator.preparePayload(
@@ -453,7 +468,10 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     blockCreationTask.get();
 
-    verify(mergeContext, times(retries.intValue())).putPayloadById(eq(payloadId), any());
+    ArgumentCaptor<PayloadWrapper> payloadWrapper = ArgumentCaptor.forClass(PayloadWrapper.class);
+
+    verify(mergeContext, times(retries.intValue())).putPayloadById(payloadWrapper.capture());
+    assertThat(payloadWrapper.getValue().payloadIdentifier()).isEqualTo(payloadId);
 
     // check with a tolerance
     assertThat(repetitionDurations)
@@ -466,7 +484,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     doAnswer(
             invocation -> {
               if (invocation
-                  .getArgument(1, BlockWithReceipts.class)
+                  .getArgument(0, PayloadWrapper.class)
+                  .blockWithReceipts()
                   .getBlock()
                   .getBody()
                   .getTransactions()
@@ -480,12 +499,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
               } else {
                 // stop block creation loop when we see a not empty block
                 coordinator.finalizeProposalById(
-                    invocation.getArgument(0, PayloadIdentifier.class));
+                    invocation.getArgument(0, PayloadWrapper.class).payloadIdentifier());
               }
               return null;
             })
         .when(mergeContext)
-        .putPayloadById(any(), any());
+        .putPayloadById(any());
 
     transactions.addLocalTransaction(createTransaction(0), Optional.empty());
 
@@ -500,15 +519,29 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     blockCreationTask.get();
 
-    ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
-        ArgumentCaptor.forClass(BlockWithReceipts.class);
+    ArgumentCaptor<PayloadWrapper> payloadWrapper = ArgumentCaptor.forClass(PayloadWrapper.class);
 
-    verify(mergeContext, times(2)).putPayloadById(eq(payloadId), blockWithReceipts.capture());
+    verify(mergeContext, times(2)).putPayloadById(payloadWrapper.capture());
+    assertThat(payloadWrapper.getValue().payloadIdentifier()).isEqualTo(payloadId);
 
-    assertThat(blockWithReceipts.getAllValues().size()).isEqualTo(2);
-    assertThat(blockWithReceipts.getAllValues().get(0).getBlock().getBody().getTransactions())
+    assertThat(payloadWrapper.getAllValues().size()).isEqualTo(2);
+    assertThat(
+            payloadWrapper
+                .getAllValues()
+                .get(0)
+                .blockWithReceipts()
+                .getBlock()
+                .getBody()
+                .getTransactions())
         .hasSize(0);
-    assertThat(blockWithReceipts.getAllValues().get(1).getBlock().getBody().getTransactions())
+    assertThat(
+            payloadWrapper
+                .getAllValues()
+                .get(1)
+                .blockWithReceipts()
+                .getBlock()
+                .getBody()
+                .getTransactions())
         .hasSize(1);
   }
 
@@ -522,7 +555,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
               return null;
             })
         .when(mergeContext)
-        .putPayloadById(any(), any());
+        .putPayloadById(any());
 
     var payloadId =
         coordinator.preparePayload(
@@ -540,7 +573,10 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
       assertThat(e).hasCauseInstanceOf(TimeoutException.class);
     }
 
-    verify(mergeContext, atLeast(retries.intValue())).putPayloadById(eq(payloadId), any());
+    ArgumentCaptor<PayloadWrapper> payloadWrapper = ArgumentCaptor.forClass(PayloadWrapper.class);
+
+    verify(mergeContext, atLeast(retries.intValue())).putPayloadById(payloadWrapper.capture());
+    assertThat(payloadWrapper.getValue().payloadIdentifier()).isEqualTo(payloadId);
   }
 
   @Test
@@ -565,7 +601,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                     .when(blockchain)
                     .getBlockHeader(any()))
         .when(mergeContext)
-        .putPayloadById(any(), any());
+        .putPayloadById(any());
 
     var payloadId =
         coordinator.preparePayload(
@@ -582,13 +618,20 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     blockCreationTask.get();
 
     // check that we only the empty block has been built
-    ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
-        ArgumentCaptor.forClass(BlockWithReceipts.class);
+    ArgumentCaptor<PayloadWrapper> payloadWrapper = ArgumentCaptor.forClass(PayloadWrapper.class);
 
-    verify(mergeContext, times(1)).putPayloadById(eq(payloadId), blockWithReceipts.capture());
+    verify(mergeContext, times(1)).putPayloadById(payloadWrapper.capture());
+    assertThat(payloadWrapper.getValue().payloadIdentifier()).isEqualTo(payloadId);
 
-    assertThat(blockWithReceipts.getAllValues().size()).isEqualTo(1);
-    assertThat(blockWithReceipts.getAllValues().get(0).getBlock().getBody().getTransactions())
+    assertThat(payloadWrapper.getAllValues().size()).isEqualTo(1);
+    assertThat(
+            payloadWrapper
+                .getAllValues()
+                .get(0)
+                .blockWithReceipts()
+                .getBlock()
+                .getBody()
+                .getTransactions())
         .hasSize(0);
   }
 
@@ -605,12 +648,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
               } else {
                 // when we have 5 transactions finalize block creation
                 coordinator.finalizeProposalById(
-                    invocation.getArgument(0, PayloadIdentifier.class));
+                    invocation.getArgument(0, PayloadWrapper.class).payloadIdentifier());
               }
               return null;
             })
         .when(mergeContext)
-        .putPayloadById(any(), any());
+        .putPayloadById(any());
 
     final long timestamp = System.currentTimeMillis() / 1000;
 
@@ -642,17 +685,22 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     blockCreationTask.get();
 
-    ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
-        ArgumentCaptor.forClass(BlockWithReceipts.class);
+    ArgumentCaptor<PayloadWrapper> payloadWrapper = ArgumentCaptor.forClass(PayloadWrapper.class);
 
-    verify(mergeContext, times(retries.intValue()))
-        .putPayloadById(eq(payloadId1), blockWithReceipts.capture());
+    verify(mergeContext, times(retries.intValue())).putPayloadById(payloadWrapper.capture());
 
-    assertThat(blockWithReceipts.getAllValues().size()).isEqualTo(retries.intValue());
+    assertThat(payloadWrapper.getAllValues().size()).isEqualTo(retries.intValue());
     for (int i = 0; i < retries.intValue(); i++) {
-      assertThat(blockWithReceipts.getAllValues().get(i).getBlock().getBody().getTransactions())
+      assertThat(
+              payloadWrapper
+                  .getAllValues()
+                  .get(i)
+                  .blockWithReceipts()
+                  .getBlock()
+                  .getBody()
+                  .getTransactions())
           .hasSize(i);
-      assertThat(blockWithReceipts.getAllValues().get(i).getReceipts()).hasSize(i);
+      assertThat(payloadWrapper.getAllValues().get(i).blockWithReceipts().getReceipts()).hasSize(i);
     }
   }
 
@@ -711,12 +759,13 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             Optional.empty(),
             Optional.empty());
 
-    ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
-        ArgumentCaptor.forClass(BlockWithReceipts.class);
+    ArgumentCaptor<PayloadWrapper> payloadWrapper = ArgumentCaptor.forClass(PayloadWrapper.class);
 
-    verify(mergeContext, atLeastOnce()).putPayloadById(eq(payloadId), blockWithReceipts.capture());
+    verify(mergeContext, atLeastOnce()).putPayloadById(payloadWrapper.capture());
 
-    assertThat(blockWithReceipts.getValue().getHeader().getExtraData()).isEqualTo(extraData);
+    assertThat(payloadWrapper.getValue().payloadIdentifier()).isEqualTo(payloadId);
+    assertThat(payloadWrapper.getValue().blockWithReceipts().getHeader().getExtraData())
+        .isEqualTo(extraData);
   }
 
   @Test

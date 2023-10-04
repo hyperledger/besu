@@ -219,4 +219,11 @@ public interface Transaction {
    * @return the encoded transaction as Bytes
    */
   Bytes encoded();
+
+  /**
+   * Returns the size in bytes of the encoded transaction.
+   *
+   * @return the size in bytes of the encoded transaction.
+   */
+  int getSize();
 }
