@@ -25,7 +25,7 @@ jar {
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion(),
-      'Automatic-Module-Name': 'org.hyperledger.besu.evm'
+      'Automatic-Module-Name': 'com.consensys.linea-besu.evm'
       )
   }
 }
@@ -61,7 +61,7 @@ dependencies {
 publishing {
   publications {
     mavenJava(MavenPublication) {
-      groupId 'org.hyperledger.besu'
+      groupId 'com.consensys.linea-besu'
       pom {
         name = 'Besu EVM'
         description = 'EVM Engine component'

@@ -23,7 +23,7 @@ jar {
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion(),
-      'Automatic-Module-Name': 'org.hyperledger.besu.datatypes'
+      'Automatic-Module-Name': 'com.consensys.linea-besu.datatypes'
       )
   }
 }
@@ -48,7 +48,7 @@ configurations { testArtifacts }
 publishing {
   publications {
     mavenJava(MavenPublication) {
-      groupId 'org.hyperledger.besu'
+      groupId 'com.consensys.linea-besu'
       artifactId 'besu-datatypes'
       pom {
         name = 'Besu Datatypes'

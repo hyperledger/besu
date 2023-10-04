@@ -29,27 +29,14 @@ plugins {
   id 'me.champeau.jmh' version '0.7.0' apply false
   id 'net.ltgt.errorprone' version '2.0.2'
   id 'maven-publish'
-  id 'org.sonarqube' version '3.4.0.2513'
 }
-
-sonarqube {
-  properties {
-    property "sonar.projectKey", "hyperledger_besu"
-    property "sonar.organization", "hyperledger"
-    property "sonar.host.url", "https://sonarcloud.io"
-    property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
-    property "sonar.coverage.exclusions", "acceptance-tests/**/*"
-  }
-}
-
-project.tasks["sonarqube"].dependsOn "jacocoRootReport"
 
 if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
   throw new GradleException("Java 17 or later is required to build Besu.\n" +
   "  Detected version ${JavaVersion.current()}")
 }
 
-group = 'org.hyperledger.besu'
+group = 'com.consensys.linea-besu'
 
 defaultTasks 'build', 'checkLicenses', 'javadoc'
 
@@ -610,43 +597,6 @@ distZip {
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
-}
-
-publishing {
-  publications {
-    distArtifactory(MavenPublication) {
-      groupId = '.'
-      version = project.version
-      artifactId = 'besu'
-      artifact("$buildDir/distributions/besu-${project.version}.zip")
-      artifact("$buildDir/distributions/besu-${project.version}.tar.gz") { extension = 'tar.gz' }
-    }
-  }
-}
-
-def artifactoryUser = project.hasProperty('artifactoryUser') ? project.property('artifactoryUser') : System.getenv('ARTIFACTORY_USER')
-def artifactoryKey = project.hasProperty('artifactoryApiKey') ? project.property('artifactoryApiKey') : System.getenv('ARTIFACTORY_KEY')
-def artifactoryOrg = System.getenv('ARTIFACTORY_ORG') ?: 'hyperledger'
-
-artifactory {
-  contextUrl = "https://hyperledger.jfrog.io/${artifactoryOrg}"
-  publish {
-    repository {
-      repoKey = "besu-binaries"
-      username = artifactoryUser
-      password = artifactoryKey
-    }
-    defaults {
-      publications('distArtifactory')
-      publishArtifacts = true
-      publishPom = false
-    }
-  }
-}
-
-artifactoryPublish {
-  dependsOn distTar
-  dependsOn distZip
 }
 
 def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
