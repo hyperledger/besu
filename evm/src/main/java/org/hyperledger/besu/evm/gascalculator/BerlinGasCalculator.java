@@ -247,15 +247,24 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
         BigIntegerModularExponentiationPrecompiledContract.modulusLength(input);
     final long exponentOffset =
         clampedAdd(BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET, baseLength);
-    final long firstExponentBytesCap =
-        Math.min(exponentLength, ByzantiumGasCalculator.MAX_FIRST_EXPONENT_BYTES);
-    final BigInteger firstExpBytes =
-        BigIntegerModularExponentiationPrecompiledContract.extractParameter(
-            input, clampedToInt(exponentOffset), clampedToInt(firstExponentBytesCap));
-    final long adjustedExponentLength = adjustedExponentLength(exponentLength, firstExpBytes);
+
     long multiplicationComplexity = (Math.max(modulusLength, baseLength) + 7L) / 8L;
     multiplicationComplexity =
         Words.clampedMultiply(multiplicationComplexity, multiplicationComplexity);
+
+    if (multiplicationComplexity > 0) {
+      long maxExponentLength = Long.MAX_VALUE / multiplicationComplexity * 3 / 8;
+      if (exponentLength > maxExponentLength) {
+        return Long.MAX_VALUE;
+      }
+    }
+
+    final long firstExponentBytesCap =
+            Math.min(exponentLength, ByzantiumGasCalculator.MAX_FIRST_EXPONENT_BYTES);
+    final BigInteger firstExpBytes =
+            BigIntegerModularExponentiationPrecompiledContract.extractParameter(
+                    input, clampedToInt(exponentOffset), clampedToInt(firstExponentBytesCap));
+    final long adjustedExponentLength = adjustedExponentLength(exponentLength, firstExpBytes);
 
     long gasRequirement =
         clampedMultiply(multiplicationComplexity, Math.max(adjustedExponentLength, 1L));
