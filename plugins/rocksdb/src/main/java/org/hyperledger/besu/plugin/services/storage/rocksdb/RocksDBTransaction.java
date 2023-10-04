@@ -90,7 +90,11 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
     commit(0, 3);
   }
 
-  /** commit transaction with an explicit number of retries. */
+  /**
+   * commit transaction with an explicit number of retries.
+   *
+   * @param retryLimit limit for the number of retry attempts
+   */
   public void commitWithRetries(final int retryLimit) throws StorageException {
     commit(0, retryLimit);
   }
