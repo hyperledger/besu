@@ -122,8 +122,8 @@ public class SimpleWorld implements WorldUpdater {
   public void commit() {
     accounts.forEach(
         (address, account) -> {
-          if (!account.commit()) {
-            accounts.put(address, account);
+          if (!account.updateParent()) {
+            parent.accounts.put(address, account);
           }
         });
   }

@@ -60,8 +60,8 @@ public class SelfDestructOperation extends AbstractOperation {
     final boolean beneficiaryIsWarm =
         frame.warmUpAddress(beneficiaryAddress) || gasCalculator().isPrecompile(beneficiaryAddress);
 
-    final Address originatorAddresss = frame.getRecipientAddress();
-    final MutableAccount originatorAccount = frame.getWorldUpdater().getAccount(originatorAddresss);
+    final Address originatorAddress = frame.getRecipientAddress();
+    final MutableAccount originatorAccount = frame.getWorldUpdater().getAccount(originatorAddress);
     final Wei originatorBalance = originatorAccount.getBalance();
 
     final long cost =
