@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockTransactionSelector;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -62,8 +64,7 @@ public class LineaBlockTransactionSelectorTest extends LondonFeeMarketBlockTrans
     ensureTransactionIsValid(tx);
     transactionPool.addRemoteTransactions(List.of(tx));
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     assertThat(results.getSelectedTransactions()).containsExactly(tx);
   }
@@ -93,8 +94,7 @@ public class LineaBlockTransactionSelectorTest extends LondonFeeMarketBlockTrans
       transactionPool.addRemoteTransactions(List.of(tx));
     }
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     assertThat(results.getSelectedTransactions()).containsExactly(txs);
   }
@@ -132,8 +132,7 @@ public class LineaBlockTransactionSelectorTest extends LondonFeeMarketBlockTrans
     ensureTransactionIsValid(tx);
     transactionPool.addRemoteTransactions(List.of(tx));
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     assertThat(results.getSelectedTransactions()).containsExactly(txs);
   }
@@ -156,8 +155,7 @@ public class LineaBlockTransactionSelectorTest extends LondonFeeMarketBlockTrans
     ensureTransactionIsValid(tx);
     transactionPool.addRemoteTransactions(List.of(tx));
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     assertThat(results.getSelectedTransactions()).isEmpty();
   }
@@ -186,8 +184,7 @@ public class LineaBlockTransactionSelectorTest extends LondonFeeMarketBlockTrans
       transactionPool.addRemoteTransactions(List.of(tx));
     }
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     assertThat(results.getSelectedTransactions()).containsExactly(txs);
   }
