@@ -260,10 +260,10 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
     }
 
     final long firstExponentBytesCap =
-            Math.min(exponentLength, ByzantiumGasCalculator.MAX_FIRST_EXPONENT_BYTES);
+        Math.min(exponentLength, ByzantiumGasCalculator.MAX_FIRST_EXPONENT_BYTES);
     final BigInteger firstExpBytes =
-            BigIntegerModularExponentiationPrecompiledContract.extractParameter(
-                    input, clampedToInt(exponentOffset), clampedToInt(firstExponentBytesCap));
+        BigIntegerModularExponentiationPrecompiledContract.extractParameter(
+            input, clampedToInt(exponentOffset), clampedToInt(firstExponentBytesCap));
     final long adjustedExponentLength = adjustedExponentLength(exponentLength, firstExpBytes);
 
     long gasRequirement =
