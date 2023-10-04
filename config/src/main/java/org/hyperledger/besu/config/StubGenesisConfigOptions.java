@@ -606,6 +606,12 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
     return this;
   }
 
+  /**
+   * Linea with opcodes changes stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions lineaOpcodesBlock(final long blockNumber) {
     lineaOpCodesBlockNumber = OptionalLong.of(blockNumber);
     return this;
