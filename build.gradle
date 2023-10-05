@@ -36,7 +36,7 @@ if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
   "  Detected version ${JavaVersion.current()}")
 }
 
-group = 'com.consensys.linea-besu'
+group = 'io.consensys.linea-besu'
 
 defaultTasks 'build', 'checkLicenses', 'javadoc'
 
@@ -397,7 +397,7 @@ subprojects {
       }
       publications {
         mavenJava(MavenPublication) {
-          groupId "com.consensys.linea-besu.internal"
+          groupId "io.consensys.linea-besu.internal"
           version "${project.version}"
           if (sourceSetIsPopulated("main")) {
             from components.java

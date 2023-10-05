@@ -22,7 +22,7 @@ jar {
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion(),
-      'Automatic-Module-Name': 'com.consensys.linea-besu.plugin.api'
+      'Automatic-Module-Name': 'io.consensys.linea-besu.plugin.api'
       )
   }
 }
@@ -76,7 +76,7 @@ check.dependsOn('checkAPIChanges')
 publishing {
   publications {
     mavenJava(MavenPublication) {
-      groupId 'com.consensys.linea-besu'
+      groupId 'io.consensys.linea-besu'
       pom {
         name = 'Besu Plugins Library'
         description = 'Core Plugins Libraries for Besu'
