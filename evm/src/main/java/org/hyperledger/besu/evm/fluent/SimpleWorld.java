@@ -66,6 +66,9 @@ public class SimpleWorld implements WorldUpdater {
 
   @Override
   public MutableAccount createAccount(final Address address, final long nonce, final Wei balance) {
+    if (getAccount(address) != null) {
+      throw new IllegalStateException("Cannot create an account when one already exists");
+    }
     SimpleAccount account = new SimpleAccount(address, nonce, balance);
     accounts.put(address, account);
     return account;
@@ -73,13 +76,23 @@ public class SimpleWorld implements WorldUpdater {
 
   @Override
   public MutableAccount getAccount(final Address address) {
-    if (accounts.containsKey(address)) {
-      return accounts.get(address);
-    } else if (parent != null) {
-      return parent.getAccount(address);
-    } else {
-      return null;
+    SimpleAccount account = accounts.get(address);
+    if (account != null) {
+      return account;
     }
+    Account parentAccount = parent == null ? null : parent.getAccount(address);
+    if (parentAccount != null) {
+      account =
+          new SimpleAccount(
+              parentAccount,
+              parentAccount.getAddress(),
+              parentAccount.getNonce(),
+              parentAccount.getBalance(),
+              parentAccount.getCode());
+      accounts.put(address, account);
+      return account;
+    }
+    return null;
   }
 
   @Override
@@ -107,11 +120,16 @@ public class SimpleWorld implements WorldUpdater {
 
   @Override
   public void commit() {
-    parent.accounts.putAll(accounts);
+    accounts.forEach(
+        (address, account) -> {
+          if (!account.updateParent()) {
+            parent.accounts.put(address, account);
+          }
+        });
   }
 
   @Override
   public Optional<WorldUpdater> parentUpdater() {
-    return Optional.empty();
+    return Optional.ofNullable(parent);
   }
 }

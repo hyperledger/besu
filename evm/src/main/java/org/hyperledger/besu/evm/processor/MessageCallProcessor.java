@@ -151,12 +151,6 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
       final OperationTracer operationTracer) {
     final long gasRequirement = contract.gasRequirement(frame.getInputData());
     if (frame.getRemainingGas() < gasRequirement) {
-      LOG.trace(
-          "Not enough gas available for pre-compiled contract code {}: requiring "
-              + "{} but only {} gas available",
-          contract,
-          gasRequirement,
-          frame.getRemainingGas());
       frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
     } else {
@@ -174,11 +168,6 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
       }
       frame.setState(result.getState());
       frame.setExceptionalHaltReason(result.getHaltReason());
-      LOG.trace(
-          "Precompiled contract {} {} (gasComsumed: {})",
-          contract.getName(),
-          result.getState(),
-          result.isRefundGas() ? 0L : gasRequirement);
     }
   }
 }

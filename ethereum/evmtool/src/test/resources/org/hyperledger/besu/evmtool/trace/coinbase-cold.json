@@ -1,0 +1,57 @@
+{
+  "cli": [
+    "--notime",
+    "--json",
+    "--code",
+    "4131ff",
+    "--coinbase",
+    "4444588443C3A91288C5002483449ABA1054192B",
+    "--fork",
+    "paris"
+  ],
+  "stdin": "",
+  "stdout": [
+    {
+      "pc": 0,
+      "op": 65,
+      "gas": "0x2540b91f8",
+      "gasCost": "0x2",
+      "memSize": 0,
+      "stack": [],
+      "depth": 1,
+      "refund": 0,
+      "opName": "COINBASE"
+    },
+    {
+      "pc": 1,
+      "op": 49,
+      "gas": "0x2540b91f6",
+      "gasCost": "0xa28",
+      "memSize": 0,
+      "stack": [
+        "0x4444588443c3a91288c5002483449aba1054192b"
+      ],
+      "depth": 1,
+      "refund": 0,
+      "opName": "BALANCE"
+    },
+    {
+      "pc": 2,
+      "op": 255,
+      "gas": "0x2540b87ce",
+      "gasCost": "0x1388",
+      "memSize": 0,
+      "stack": [
+        "0x0"
+      ],
+      "depth": 1,
+      "refund": 0,
+      "opName": "SELFDESTRUCT"
+    },
+    {
+      "gasUser": "0x1db2",
+      "gasTotal": "0x1db2",
+      "output": "0x"
+    }
+  ]
+}

@@ -30,8 +30,12 @@ import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Deposit;
@@ -170,7 +174,7 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
             .baseFeePerGas(Wei.ONE)
             .timestamp(super.experimentalHardfork.milestone())
             .excessBlobGas(BlobGas.ZERO)
-            .blobGasUsed(100L)
+            .blobGasUsed(0L)
             .buildHeader();
 
     BlockHeader mockHeader =
@@ -181,11 +185,21 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
             .timestamp(parentBlockHeader.getTimestamp() + 1)
             .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
             .excessBlobGas(BlobGas.ZERO)
-            .blobGasUsed(100L)
+            .blobGasUsed(0L)
             .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
             .parentBeaconBlockRoot(
                 maybeParentBeaconBlockRoot.isPresent() ? maybeParentBeaconBlockRoot : null)
             .buildHeader();
     return mockHeader;
+  }
+
+  @Override
+  protected JsonRpcResponse resp(final EnginePayloadParameter payload) {
+    Object[] params =
+        maybeParentBeaconBlockRoot
+            .map(bytes32 -> new Object[] {payload, Collections.emptyList(), bytes32.toHexString()})
+            .orElseGet(() -> new Object[] {payload});
+    return method.response(
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
   }
 }
