@@ -96,11 +96,11 @@ public class SelfDestructOperationTest {
     }
 
     when(worldUpdater.getAccount(originatorAddress)).thenReturn(accountOriginator);
-    when(worldUpdater.get(originatorAddress)).thenReturn(accountOriginator);
     if (!originatorAddress.equals(beneficiaryAddress)) {
       when(worldUpdater.get(beneficiaryAddress)).thenReturn(accountBeneficiary);
     }
     when(worldUpdater.getOrCreate(beneficiaryAddress)).thenReturn(accountBeneficiary);
+    when(accountOriginator.getAddress()).thenReturn(originatorAddress);
     when(accountOriginator.getBalance()).thenReturn(Wei.fromHexString(balanceHex));
 
     final Operation.OperationResult operationResult = operation.execute(messageFrame, evm);
