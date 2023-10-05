@@ -21,10 +21,12 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
+import java.util.EnumSet;
 import java.util.function.Function;
 
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.RocksDBException;
+import org.rocksdb.Status;
 import org.rocksdb.Transaction;
 import org.rocksdb.WriteOptions;
 import org.slf4j.Logger;
@@ -34,8 +36,6 @@ import org.slf4j.LoggerFactory;
 public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
   private static final Logger logger = LoggerFactory.getLogger(RocksDBTransaction.class);
   private static final String ERR_NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
-  private static final String ERR_BUSY = "Busy";
-  private static final String ERR_LOCK_TIMED_OUT = "TimedOut(LockTimeout)";
   private static final int DEFAULT_MAX_RETRIES = 3;
 
   private final RocksDBMetrics metrics;
@@ -120,6 +120,9 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
   interface RetryableRocksDBAction {
     void retry() throws RocksDBException;
 
+    EnumSet<Status.Code> RETRYABLE_STATUS_CODES =
+        EnumSet.of(Status.Code.TimedOut, Status.Code.TryAgain, Status.Code.Busy);
+
     static void maybeRetryRocksDBAction(
         final RocksDBException ex,
         final int attemptNumber,
@@ -131,13 +134,12 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
         System.exit(0);
       }
       if (attemptNumber <= retryLimit) {
-        if (ex.getMessage().contains(ERR_BUSY) || ex.getMessage().contains(ERR_LOCK_TIMED_OUT)) {
+        if (RETRYABLE_STATUS_CODES.contains(ex.getStatus().getCode())) {
           logger.warn(
-              "RocksDB Transient exception caught on attempt {} of {}, retrying.\n"
-                  + "\tmessage: {}",
+              "RocksDB Transient exception caught on attempt {} of {}, status: {}, retrying.",
               attemptNumber,
               retryLimit,
-              ex.getMessage());
+              ex.getStatus().getCodeString());
           try {
             retryAction.retry();
           } catch (RocksDBException ex2) {

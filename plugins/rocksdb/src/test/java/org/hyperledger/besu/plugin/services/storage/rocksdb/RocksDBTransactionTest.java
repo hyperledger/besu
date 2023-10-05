@@ -33,11 +33,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDBException;
+import org.rocksdb.Status;
 import org.rocksdb.Transaction;
 import org.rocksdb.WriteOptions;
 
 @ExtendWith(MockitoExtension.class)
 public class RocksDBTransactionTest {
+  static final Status BUSY = new Status(Status.Code.Busy, Status.SubCode.None, "Busy");
+  static final Status TIMED_OUT =
+      new Status(Status.Code.TimedOut, Status.SubCode.LockTimeout, "TimedOut(LockTimeout)");
+
   @TempDir public Path folder;
 
   @Mock(answer = RETURNS_DEEP_STUBS)
@@ -60,8 +65,8 @@ public class RocksDBTransactionTest {
 
   @Test
   public void assertDefaultBusyRetryBehavior() throws Exception {
-    doThrow(new RocksDBException("Busy"))
-        .doThrow(new RocksDBException("Busy"))
+    doThrow(new RocksDBException("Busy", BUSY))
+        .doThrow(new RocksDBException("Busy", BUSY))
         .doNothing()
         .when(mockTransaction)
         .commit();
@@ -71,9 +76,9 @@ public class RocksDBTransactionTest {
 
   @Test
   public void assertLockTimeoutBusyRetryBehavior() throws Exception {
-    doThrow(new RocksDBException("Busy"))
-        .doThrow(new RocksDBException("TimedOut(LockTimeout)"))
-        .doThrow(new RocksDBException("TimedOut(LockTimeout)"))
+    doThrow(new RocksDBException("Busy", BUSY))
+        .doThrow(new RocksDBException("TimedOut(LockTimeout)", TIMED_OUT))
+        .doThrow(new RocksDBException("TimedOut(LockTimeout)", TIMED_OUT))
         .doNothing()
         .when(mockTransaction)
         .commit();
@@ -83,7 +88,7 @@ public class RocksDBTransactionTest {
 
   @Test
   public void assertBusyRetryFailBehavior() throws Exception {
-    doThrow(new RocksDBException("Busy")).when(mockTransaction).commit();
+    doThrow(new RocksDBException("Busy", BUSY)).when(mockTransaction).commit();
 
     assertThatThrownBy(tx::commit)
         .isInstanceOf(StorageException.class)
@@ -100,8 +105,8 @@ public class RocksDBTransactionTest {
 
       tx = spy(new RocksDBTransaction(__ -> null, innerTx, writeOptions, mockMetrics));
 
-      doThrow(new RocksDBException("Busy"))
-          .doThrow(new RocksDBException("Busy"))
+      doThrow(new RocksDBException("Busy", BUSY))
+          .doThrow(new RocksDBException("Busy", BUSY))
           .doCallRealMethod()
           .when(innerTx)
           .commit();
