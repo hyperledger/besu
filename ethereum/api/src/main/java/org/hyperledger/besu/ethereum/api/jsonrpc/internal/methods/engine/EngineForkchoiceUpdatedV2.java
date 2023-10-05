@@ -58,6 +58,11 @@ public class EngineForkchoiceUpdatedV2 extends AbstractEngineForkchoiceUpdated {
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final BlockHeader headBlockHeader) {
     if (payloadAttributes.getTimestamp() >= cancunTimestamp) {
+      if (payloadAttributes.getParentBeaconBlockRoot() == null
+          || payloadAttributes.getParentBeaconBlockRoot().isEmpty()
+          || payloadAttributes.getParentBeaconBlockRoot().isZero()) {
+        return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS));
+      }
       return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.UNSUPPORTED_FORK));
     } else if (payloadAttributes.getParentBeaconBlockRoot() != null) {
       LOG.error(
