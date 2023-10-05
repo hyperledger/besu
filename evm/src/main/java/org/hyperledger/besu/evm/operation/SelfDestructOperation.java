@@ -61,7 +61,8 @@ public class SelfDestructOperation extends AbstractOperation {
         frame.warmUpAddress(beneficiaryAddress) || gasCalculator().isPrecompile(beneficiaryAddress);
 
     final Address originatorAddress = frame.getRecipientAddress();
-    final Wei originatorBalance = frame.getWorldUpdater().get(originatorAddress).getBalance();
+    final MutableAccount originatorAccount = frame.getWorldUpdater().getAccount(originatorAddress);
+    final Wei originatorBalance = originatorAccount.getBalance();
 
     final long cost =
         gasCalculator().selfDestructOperationGasCost(beneficiaryNullable, originatorBalance)
@@ -75,7 +76,6 @@ public class SelfDestructOperation extends AbstractOperation {
     }
 
     // We passed preliminary checks, get mutable accounts.
-    final MutableAccount originatorAccount = frame.getWorldUpdater().getAccount(originatorAddress);
     final MutableAccount beneficiaryAccount =
         frame.getWorldUpdater().getOrCreate(beneficiaryAddress);
 
@@ -86,8 +86,8 @@ public class SelfDestructOperation extends AbstractOperation {
     // If we are actually destroying the originator (pre-Cancun or same-tx-create) we need to
     // explicitly zero out the account balance (destroying ether/value if the originator is the
     // beneficiary) as well as tag it for later self-destruct cleanup.
-    if (!eip6780Semantics || frame.wasCreatedInTransaction(originatorAddress)) {
-      frame.addSelfDestruct(originatorAddress);
+    if (!eip6780Semantics || frame.wasCreatedInTransaction(originatorAccount.getAddress())) {
+      frame.addSelfDestruct(originatorAccount.getAddress());
       originatorAccount.setBalance(Wei.ZERO);
     }
 

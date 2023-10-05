@@ -546,6 +546,7 @@ public class BesuNodeFactory {
             .bootnodeEligible(false)
             .miningEnabled()
             .jsonRpcEnabled()
+            .jsonRpcTxPool()
             .engineRpcEnabled(true)
             .jsonRpcDebug()
             .build());

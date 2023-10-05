@@ -135,16 +135,19 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
                               ws.stream()
                                   .map(WithdrawalParameter::toWithdrawal)
                                   .collect(toList())));
-      if (!isPayloadAttributesValid(maybePayloadAttributes.get(), withdrawals, newHead)) {
+      Optional<JsonRpcErrorResponse> maybeError =
+          isPayloadAttributesValid(requestId, payloadAttributes, withdrawals, newHead);
+      if (maybeError.isPresent()) {
         LOG.atWarn()
-            .setMessage("Invalid payload attributes: {}")
+            .setMessage("RpcError {}: {}")
+            .addArgument(maybeError.get().getErrorType())
             .addArgument(
                 () ->
                     maybePayloadAttributes
                         .map(EnginePayloadAttributesParameter::serialize)
                         .orElse(null))
             .log();
-        return new JsonRpcErrorResponse(requestId, getInvalidPayloadError());
+        return maybeError.get();
       }
       ValidationResult<RpcErrorType> forkValidationResult =
           validateForkSupported(payloadAttributes.getTimestamp());
@@ -207,7 +210,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
             Optional.empty()));
   }
 
-  protected boolean isPayloadAttributesValid(
+  protected Optional<JsonRpcErrorResponse> isPayloadAttributesValid(
+      final Object requestId,
       final EnginePayloadAttributesParameter payloadAttributes,
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final BlockHeader headBlockHeader) {
@@ -215,26 +219,15 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     if (payloadAttributes.getTimestamp() <= headBlockHeader.getTimestamp()) {
       LOG.warn(
           "Payload attributes timestamp is smaller than timestamp of header in fork choice update");
-      return false;
-    }
-    if (payloadAttributes.getTimestamp() < cancunTimestamp) {
-      if (payloadAttributes.getParentBeaconBlockRoot() != null) {
-        LOG.error(
-            "Parent beacon block root hash present in payload attributes before cancun hardfork");
-        return false;
-      }
-    } else if (payloadAttributes.getParentBeaconBlockRoot() == null) {
-      LOG.error(
-          "Parent beacon block root hash not present in payload attributes after cancun hardfork");
-      return false;
+      return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadError()));
     }
     if (!getWithdrawalsValidator(
             protocolSchedule.get(), headBlockHeader, payloadAttributes.getTimestamp())
         .validateWithdrawals(maybeWithdrawals)) {
-      return false;
+      return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadError()));
     }
 
-    return true;
+    return Optional.empty();
   }
 
   private JsonRpcResponse handleNonValidForkchoiceUpdate(
