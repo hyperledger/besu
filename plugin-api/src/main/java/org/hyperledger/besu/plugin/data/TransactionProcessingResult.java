@@ -47,8 +47,8 @@ public interface TransactionProcessingResult {
   long getGasRemaining();
 
   /**
-   * Returns the estimate gas used by the transaction, the difference between the transactions gas limit and the
-   * remaining gas
+   * Returns the estimate gas used by the transaction, the difference between the transactions gas
+   * limit and the remaining gas
    *
    * @return the estimate gas used
    */
