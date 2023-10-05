@@ -70,24 +70,23 @@ public class ExecutionEngineCancunBlockBuildingAcceptanceTest extends AbstractJs
     }
     if (url.toString().endsWith("12_cancun_get_built_block.json")) {
 
-        //final ObjectNode rpcResponse = JsonUtil.objectNodeFromString(response.body().string());
-        final ObjectNode result = (ObjectNode) responseBody.get("result");
-        final ObjectNode execPayload = (ObjectNode) result.get("executionPayload");
-        final ObjectNode blobsBundle = (ObjectNode) result.get("blobsBundle");
-        assertThat(execPayload.get("transactions").getNodeType()).isEqualTo(JsonNodeType.ARRAY);
-        final ArrayNode transactions = (ArrayNode) execPayload.get("transactions");
-        // actually, you need to decode the transactions and count how many unique
-        // versioned hashes are referenced amongst them.
-        assertThat(blobsBundle.get("commitments").getNodeType()).isEqualTo(JsonNodeType.ARRAY);
-        final ArrayNode commitments = (ArrayNode) blobsBundle.get("commitments");
-        assertThat(blobsBundle.get("blobs").getNodeType()).isEqualTo(JsonNodeType.ARRAY);
-        final ArrayNode blobs = (ArrayNode) blobsBundle.get("blobs");
-        final ArrayNode proofs = (ArrayNode) blobsBundle.get("proofs");
-        assertThat(2).isEqualTo(transactions.size());
-        assertThat(6).isEqualTo(commitments.size());
-        assertThat(6).isEqualTo(blobs.size());
-        assertThat(6).isEqualTo(proofs.size());
-
+      // final ObjectNode rpcResponse = JsonUtil.objectNodeFromString(response.body().string());
+      final ObjectNode result = (ObjectNode) responseBody.get("result");
+      final ObjectNode execPayload = (ObjectNode) result.get("executionPayload");
+      final ObjectNode blobsBundle = (ObjectNode) result.get("blobsBundle");
+      assertThat(execPayload.get("transactions").getNodeType()).isEqualTo(JsonNodeType.ARRAY);
+      final ArrayNode transactions = (ArrayNode) execPayload.get("transactions");
+      // actually, you need to decode the transactions and count how many unique
+      // versioned hashes are referenced amongst them.
+      assertThat(blobsBundle.get("commitments").getNodeType()).isEqualTo(JsonNodeType.ARRAY);
+      final ArrayNode commitments = (ArrayNode) blobsBundle.get("commitments");
+      assertThat(blobsBundle.get("blobs").getNodeType()).isEqualTo(JsonNodeType.ARRAY);
+      final ArrayNode blobs = (ArrayNode) blobsBundle.get("blobs");
+      final ArrayNode proofs = (ArrayNode) blobsBundle.get("proofs");
+      assertThat(2).isEqualTo(transactions.size());
+      assertThat(6).isEqualTo(commitments.size());
+      assertThat(6).isEqualTo(blobs.size());
+      assertThat(6).isEqualTo(proofs.size());
     }
   }
 
