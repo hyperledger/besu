@@ -58,7 +58,6 @@ import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.NavigableMap;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -345,17 +344,15 @@ public class EvmToolCommand implements Runnable {
       final ProtocolSpec protocolSpec =
           component.getProtocolSpec().apply(BlockHeaderBuilder.createDefault().buildBlockHeader());
       final Transaction tx =
-          new Transaction(
-              0,
-              Wei.ZERO,
-              Long.MAX_VALUE,
-              Optional.ofNullable(receiver),
-              Wei.ZERO,
-              null,
-              callData,
-              sender,
-              Optional.empty(),
-              Optional.empty());
+          new Transaction.Builder()
+              .nonce(0)
+              .gasPrice(Wei.ZERO)
+              .gasLimit(Long.MAX_VALUE)
+              .to(receiver)
+              .value(Wei.ZERO)
+              .payload(callData)
+              .sender(sender)
+              .build();
 
       final long intrinsicGasCost =
           protocolSpec

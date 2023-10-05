@@ -38,7 +38,6 @@ import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFact
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -68,64 +67,64 @@ public class BaseEeaSendRawTransaction {
   final GasCalculator gasCalculator = new BerlinGasCalculator();
 
   final Transaction PUBLIC_FLEXIBLE_TRANSACTION =
-      new Transaction(
-          0L,
-          Wei.of(1),
-          21000L,
-          Optional.of(FLEXIBLE_PRIVACY),
-          Wei.ZERO,
-          SIGNATURE_ALGORITHM_SUPPLIER
-              .get()
-              .createSignature(
-                  new BigInteger(
-                      "104310573331543561412661001400556426894275857431274618344686100036716947434951"),
-                  new BigInteger(
-                      "33080506591748900530090726168809539464160321639149722208454899701475015405641"),
-                  Byte.parseByte("1")),
-          Bytes.fromBase64String(MOCK_ORION_KEY),
-          Address.wrap(Bytes.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
-          Optional.empty(),
-          Optional.empty());
+      new Transaction.Builder()
+          .nonce(0)
+          .gasPrice(Wei.ONE)
+          .gasLimit(21000)
+          .value(Wei.ZERO)
+          .to(FLEXIBLE_PRIVACY)
+          .signature(
+              SIGNATURE_ALGORITHM_SUPPLIER
+                  .get()
+                  .createSignature(
+                      new BigInteger(
+                          "104310573331543561412661001400556426894275857431274618344686100036716947434951"),
+                      new BigInteger(
+                          "33080506591748900530090726168809539464160321639149722208454899701475015405641"),
+                      Byte.parseByte("1")))
+          .payload(Bytes.fromBase64String(MOCK_ORION_KEY))
+          .sender(Address.wrap(Bytes.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")))
+          .build();
 
   final Transaction PUBLIC_PLUGIN_TRANSACTION =
-      new Transaction(
-          0L,
-          Wei.of(1),
-          21112L,
-          Optional.of(PLUGIN_PRIVACY),
-          Wei.ZERO,
-          SIGNATURE_ALGORITHM_SUPPLIER
-              .get()
-              .createSignature(
-                  new BigInteger(
-                      "111331907905663242841915789134040957461022579868467291368609335839524284474080"),
-                  new BigInteger(
-                      "16338460226177675602590882211136457396059831699034102939076916361204709826919"),
-                  Byte.parseByte("0")),
-          Bytes.fromBase64String(MOCK_ORION_KEY),
-          Address.wrap(Bytes.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
-          Optional.empty(),
-          Optional.empty());
+      new Transaction.Builder()
+          .nonce(0)
+          .gasPrice(Wei.ONE)
+          .gasLimit(21112)
+          .value(Wei.ZERO)
+          .to(PLUGIN_PRIVACY)
+          .signature(
+              SIGNATURE_ALGORITHM_SUPPLIER
+                  .get()
+                  .createSignature(
+                      new BigInteger(
+                          "111331907905663242841915789134040957461022579868467291368609335839524284474080"),
+                      new BigInteger(
+                          "16338460226177675602590882211136457396059831699034102939076916361204709826919"),
+                      Byte.parseByte("0")))
+          .payload(Bytes.fromBase64String(MOCK_ORION_KEY))
+          .sender(Address.wrap(Bytes.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")))
+          .build();
 
   final Transaction PUBLIC_OFF_CHAIN_TRANSACTION =
-      new Transaction(
-          0L,
-          Wei.of(1),
-          21000L,
-          Optional.of(DEFAULT_PRIVACY),
-          Wei.ZERO,
-          SIGNATURE_ALGORITHM_SUPPLIER
-              .get()
-              .createSignature(
-                  new BigInteger(
-                      "45331864585825234947874751069766983839005678711670143534492294352090223768785"),
-                  new BigInteger(
-                      "32813839561238589140263096892921088101761344639911577803805398248765156383629"),
-                  Byte.parseByte("1")),
-          Bytes.fromBase64String(MOCK_ORION_KEY),
-          Address.wrap(Bytes.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
-          Optional.empty(),
-          Optional.empty());
+      new Transaction.Builder()
+          .nonce(0)
+          .gasPrice(Wei.ONE)
+          .gasLimit(21000)
+          .value(Wei.ZERO)
+          .to(DEFAULT_PRIVACY)
+          .signature(
+              SIGNATURE_ALGORITHM_SUPPLIER
+                  .get()
+                  .createSignature(
+                      new BigInteger(
+                          "45331864585825234947874751069766983839005678711670143534492294352090223768785"),
+                      new BigInteger(
+                          "32813839561238589140263096892921088101761344639911577803805398248765156383629"),
+                      Byte.parseByte("1")))
+          .payload(Bytes.fromBase64String(MOCK_ORION_KEY))
+          .sender(Address.wrap(Bytes.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")))
+          .build();
 
   final JsonRpcRequestContext validPrivateForTransactionRequest =
       new JsonRpcRequestContext(
