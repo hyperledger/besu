@@ -106,13 +106,13 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
       if (e.getMessage().contains(ERR_NO_SPACE_LEFT_ON_DEVICE)) {
         logger.error(e.getMessage());
         System.exit(0);
-      } else if (e.getMessage().equals(ERR_BUSY) && attemptNumber < retryLimit) {
+      } else if (e.getMessage().contains(ERR_BUSY) && attemptNumber < retryLimit) {
         logger.warn(
             "RocksDB Busy exception caught on attempt {} of {}, retrying",
             attemptNumber,
             retryLimit);
         commit(attemptNumber + 1, retryLimit);
-      } else if (e.getMessage().equals(ERR_LOCK_TIMED_OUT) && attemptNumber < retryLimit) {
+      } else if (e.getMessage().contains(ERR_LOCK_TIMED_OUT) && attemptNumber < retryLimit) {
         logger.warn(
             "RocksDB Lock Timeout exception caught on attempt {} of {}, retrying",
             attemptNumber,
