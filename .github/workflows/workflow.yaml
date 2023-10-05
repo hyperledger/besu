@@ -58,11 +58,14 @@ jobs:
           CLOUDSMITH_USER: ${{ secrets.CLOUDSMITH_USER }}
           CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
 
-      - name: Store distribution artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: distributions
-          path: build/distributions
+      - name: Publish distribution artifacts
+        run: |
+          sudo apt update
+          sudo apt install -y python3 python3-pip python3-venv
+          ./gradlew cloudsmithUpload
+        env:
+          CLOUDSMITH_USER: ${{ secrets.CLOUDSMITH_USER }}
+          CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
 
       - name: Check Dockerfile syntax
         run: |

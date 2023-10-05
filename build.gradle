@@ -590,6 +590,7 @@ distTar {
   }
   compression = Compression.GZIP
   archiveExtension = 'tar.gz'
+  archiveBaseName = 'linea-besu'
 }
 
 distZip {
@@ -597,6 +598,7 @@ distZip {
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
+  archiveBaseName = 'linea-besu'
 }
 
 publishing {
@@ -604,9 +606,9 @@ publishing {
     distArtifactory(MavenPublication) {
       groupId = '.'
       version = project.version
-      artifactId = 'besu'
-      artifact("$buildDir/distributions/besu-${project.version}.zip")
-      artifact("$buildDir/distributions/besu-${project.version}.tar.gz") { extension = 'tar.gz' }
+      artifactId = 'linea-besu'
+      artifact("$buildDir/distributions/linea-besu-${project.version}.zip")
+      artifact("$buildDir/distributions/linea-besu-${project.version}.tar.gz") { extension = 'tar.gz' }
     }
   }
 }
@@ -1009,9 +1011,15 @@ distributions {
   }
 }
 
+task cloudsmithUpload {
+  dependsOn([distTar, distZip])
+  doLast {
+    exec {
+      executable project.file("scripts/cloudsmith-upload.sh")
+      args rootProject.version, distTar.archiveFile.get(), distZip.archiveFile.get()
+    }
+  }
+}
+
 check.dependsOn checkSpdxHeader
 build.dependsOn verifyDistributions
-artifactoryPublish.dependsOn verifyDistributions
-artifactoryPublish.mustRunAfter(distTar)
-artifactoryPublish.mustRunAfter(distZip)
-artifactoryPublish.mustRunAfter(javadocJar)
