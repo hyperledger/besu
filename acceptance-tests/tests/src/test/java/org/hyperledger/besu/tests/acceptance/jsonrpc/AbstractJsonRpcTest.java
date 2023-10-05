@@ -100,9 +100,10 @@ abstract class AbstractJsonRpcTest {
                 .post(RequestBody.create(testCase.getRequest().toString(), MEDIA_TYPE_JSON))
                 .build());
     final Response response = testRequest.execute();
-    evaluateResponse(response, testRequest, testCase, testCaseFileURI.toURL());
+
     assertThat(response.code()).isEqualTo(testCase.getStatusCode());
     final ObjectNode actualBody = JsonUtil.objectNodeFromString(response.body().string());
+    evaluateResponse(actualBody, testRequest, testCase, testCaseFileURI.toURL());
     final ObjectNode expectedBody =
         JsonUtil.objectNodeFromString(testCase.getResponse().toString());
     assertThat(actualBody)
@@ -112,7 +113,7 @@ abstract class AbstractJsonRpcTest {
   }
 
   protected void evaluateResponse(
-      final Response response,
+      final ObjectNode responseBody,
       final Call testRequest,
       final JsonRpcTestCase testCase,
       final URL url) {}

@@ -58,7 +58,7 @@ public class ExecutionEngineCancunBlockBulidingAcceptanceTest extends AbstractJs
 
   @Override
   protected void evaluateResponse(
-      final Response response,
+      final ObjectNode responseBody,
       final Call testRequest,
       final JsonRpcTestCase testCase,
       final URL url) {
@@ -71,9 +71,9 @@ public class ExecutionEngineCancunBlockBulidingAcceptanceTest extends AbstractJs
       }
     }
     if (url.toString().endsWith("12_cancun_get_built_block.json")) {
-      try {
-        final ObjectNode rpcResponse = JsonUtil.objectNodeFromString(response.body().string());
-        final ObjectNode result = (ObjectNode) rpcResponse.get("result");
+
+        //final ObjectNode rpcResponse = JsonUtil.objectNodeFromString(response.body().string());
+        final ObjectNode result = (ObjectNode) responseBody.get("result");
         final ObjectNode execPayload = (ObjectNode) result.get("executionPayload");
         final ObjectNode blobsBundle = (ObjectNode) result.get("blobsBundle");
         assertThat(execPayload.get("transactions").getNodeType()).isEqualTo(JsonNodeType.ARRAY);
@@ -85,12 +85,11 @@ public class ExecutionEngineCancunBlockBulidingAcceptanceTest extends AbstractJs
         assertThat(blobsBundle.get("blobs").getNodeType()).isEqualTo(JsonNodeType.ARRAY);
         final ArrayNode blobs = (ArrayNode) blobsBundle.get("blobs");
         final ArrayNode proofs = (ArrayNode) blobsBundle.get("proofs");
-        assertThat(transactions.size()).isEqualTo(commitments.size());
-        assertThat(transactions.size()).isEqualTo(blobs.size());
-        assertThat(transactions.size()).isEqualTo(proofs.size());
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+        assertThat(2).isEqualTo(transactions.size());
+        assertThat(6).isEqualTo(commitments.size());
+        assertThat(6).isEqualTo(blobs.size());
+        assertThat(6).isEqualTo(proofs.size());
+
     }
   }
 
