@@ -3,6 +3,17 @@
 ## Next release
 
 ### Breaking Changes
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Download Links
+
+
+## 23.10.0
+
+### Breaking Changes
 - Removed support for Kotti network (ETC) [#5816](https://github.com/hyperledger/besu/pull/5816)
 - Layered transaction pool implementation is now stable and enabled by default, so the following changes to experimental options have been done [#5772](https://github.com/hyperledger/besu):
     - `--Xlayered-tx-pool` is gone, to select the implementation use the new `--tx-pool` option with values `layered` (default) or `legacy`
