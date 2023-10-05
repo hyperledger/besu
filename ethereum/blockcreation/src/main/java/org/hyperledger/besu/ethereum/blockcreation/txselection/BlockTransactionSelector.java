@@ -46,7 +46,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,8 +118,7 @@ public class BlockTransactionSelector {
             transactionPool);
     transactionSelectors = createTransactionSelectors(blockSelectionContext);
     externalTransactionSelectors =
-        createExternalTransactionSelectors(
-            transactionSelectorFactory.map(List::of).orElseGet(List::of));
+        transactionSelectorFactory.map(TransactionSelectorFactory::create).orElse(List.of());
   }
 
   /**
@@ -304,8 +302,15 @@ public class BlockTransactionSelector {
       }
     }
 
-    // TODO: External selectors are not used here because TransactionProcessingResult is not
-    //  exposed to the Plugin API yet.
+    // Process the transaction through external selectors
+    for (var selector : externalTransactionSelectors) {
+      TransactionSelectionResult result =
+          selector.evaluateTransactionPostProcessing(pendingTransaction, processingResult);
+      // If the transaction is not selected by any external selector, return the result
+      if (!result.equals(TransactionSelectionResult.SELECTED)) {
+        return result;
+      }
+    }
 
     // If the transaction is selected by all selectors, return SELECTED
     return TransactionSelectionResult.SELECTED;
@@ -318,12 +323,5 @@ public class BlockTransactionSelector {
         new PriceTransactionSelector(context),
         new BlobPriceTransactionSelector(context),
         new ProcessingResultTransactionSelector(context));
-  }
-
-  private List<TransactionSelector> createExternalTransactionSelectors(
-      final List<TransactionSelectorFactory> transactionSelectorFactory) {
-    return transactionSelectorFactory.stream()
-        .map(TransactionSelectorFactory::create)
-        .collect(Collectors.toList());
   }
 }

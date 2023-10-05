@@ -29,10 +29,13 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @JsonPropertyOrder({"commitments", "proofs", "blobs"})
 public class BlobsBundleV1 {
 
+  private static final Logger LOG = LoggerFactory.getLogger(BlobsBundleV1.class);
   private final List<String> commitments;
 
   private final List<String> proofs;
@@ -67,6 +70,14 @@ public class BlobsBundleV1 {
             .map(Blob::getData)
             .map(Bytes::toString)
             .collect(Collectors.toList());
+
+    LOG.debug(
+        "BlobsBundleV1: totalTxs: {}, blobTxs: {}, commitments: {}, proofs: {}, blobs: {}",
+        transactions.size(),
+        blobsWithCommitments.size(),
+        commitments.size(),
+        proofs.size(),
+        blobs.size());
   }
 
   public BlobsBundleV1(
