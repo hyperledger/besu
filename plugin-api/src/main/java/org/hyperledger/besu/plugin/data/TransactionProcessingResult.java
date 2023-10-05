@@ -21,6 +21,11 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/**
+ * This interface represents the result of processing a transaction. It provides methods to access
+ * various details about the transaction processing result such as logs, gas remaining, output, and
+ * status.
+ */
 public interface TransactionProcessingResult {
 
   /**
