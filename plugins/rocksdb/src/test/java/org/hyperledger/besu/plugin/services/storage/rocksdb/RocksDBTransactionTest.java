@@ -70,24 +70,6 @@ public class RocksDBTransactionTest {
   }
 
   @Test
-  public void assertExplicitBusyRetryBehavior() throws Exception {
-    doThrow(new RocksDBException("Busy"))
-        .doThrow(new RocksDBException("Busy"))
-        .doThrow(new RocksDBException("Busy"))
-        .doThrow(new RocksDBException("Busy"))
-        .doThrow(new RocksDBException("Busy"))
-        .doThrow(new RocksDBException("Busy"))
-        .doThrow(new RocksDBException("Busy"))
-        .doThrow(new RocksDBException("Busy"))
-        .doThrow(new RocksDBException("Busy"))
-        .doNothing()
-        .when(mockTransaction)
-        .commit();
-
-    assertThatCode(() -> tx.commitWithRetries(10)).doesNotThrowAnyException();
-  }
-
-  @Test
   public void assertLockTimeoutBusyRetryBehavior() throws Exception {
     doThrow(new RocksDBException("Busy"))
         .doThrow(new RocksDBException("TimedOut(LockTimeout)"))
@@ -96,7 +78,7 @@ public class RocksDBTransactionTest {
         .when(mockTransaction)
         .commit();
 
-    assertThatCode(() -> tx.commitWithRetries(7)).doesNotThrowAnyException();
+    assertThatCode(() -> tx.commit()).doesNotThrowAnyException();
   }
 
   @Test

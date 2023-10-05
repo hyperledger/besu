@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBTransaction.RetryableRocksDBAction.maybeRetryRocksDBAction;
+
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -34,6 +36,7 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
   private static final String ERR_NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
   private static final String ERR_BUSY = "Busy";
   private static final String ERR_LOCK_TIMED_OUT = "TimedOut(LockTimeout)";
+  private static final int DEFAULT_MAX_RETRIES = 3;
 
   private final RocksDBMetrics metrics;
   private final Transaction innerTx;
@@ -64,11 +67,11 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
     try (final OperationTimer.TimingContext ignored = metrics.getWriteLatency().startTimer()) {
       innerTx.put(columnFamilyMapper.apply(segmentId), key, value);
     } catch (final RocksDBException e) {
-      if (e.getMessage().contains(ERR_NO_SPACE_LEFT_ON_DEVICE)) {
-        logger.error(e.getMessage());
-        System.exit(0);
-      }
-      throw new StorageException(e);
+      maybeRetryRocksDBAction(
+          e,
+          0,
+          DEFAULT_MAX_RETRIES,
+          () -> innerTx.put(columnFamilyMapper.apply(segmentId), key, value));
     }
   }
 
@@ -77,50 +80,20 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
     try (final OperationTimer.TimingContext ignored = metrics.getRemoveLatency().startTimer()) {
       innerTx.delete(columnFamilyMapper.apply(segmentId), key);
     } catch (final RocksDBException e) {
-      if (e.getMessage().contains(ERR_NO_SPACE_LEFT_ON_DEVICE)) {
-        logger.error(e.getMessage());
-        System.exit(0);
-      }
-      throw new StorageException(e);
+      maybeRetryRocksDBAction(
+          e,
+          0,
+          DEFAULT_MAX_RETRIES,
+          () -> innerTx.delete(columnFamilyMapper.apply(segmentId), key));
     }
   }
 
   @Override
   public void commit() throws StorageException {
-    commit(0, 3);
-  }
-
-  /**
-   * commit transaction with an explicit number of retries.
-   *
-   * @param retryLimit limit for the number of retry attempts
-   */
-  public void commitWithRetries(final int retryLimit) throws StorageException {
-    commit(0, retryLimit);
-  }
-
-  void commit(final int attemptNumber, final int retryLimit) throws StorageException {
     try (final OperationTimer.TimingContext ignored = metrics.getCommitLatency().startTimer()) {
       innerTx.commit();
     } catch (final RocksDBException e) {
-      if (e.getMessage().contains(ERR_NO_SPACE_LEFT_ON_DEVICE)) {
-        logger.error(e.getMessage());
-        System.exit(0);
-      } else if (e.getMessage().contains(ERR_BUSY) && attemptNumber < retryLimit) {
-        logger.warn(
-            "RocksDB Busy exception caught on attempt {} of {}, retrying",
-            attemptNumber,
-            retryLimit);
-        commit(attemptNumber + 1, retryLimit);
-      } else if (e.getMessage().contains(ERR_LOCK_TIMED_OUT) && attemptNumber < retryLimit) {
-        logger.warn(
-            "RocksDB Lock Timeout exception caught on attempt {} of {}, retrying",
-            attemptNumber,
-            retryLimit);
-        commit(attemptNumber + 1, retryLimit);
-      } else {
-        throw new StorageException(e);
-      }
+      maybeRetryRocksDBAction(e, 0, DEFAULT_MAX_RETRIES, innerTx::commit);
     } finally {
       close();
     }
@@ -130,14 +103,10 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
   public void rollback() {
     try {
       innerTx.rollback();
-      metrics.getRollbackCount().inc();
     } catch (final RocksDBException e) {
-      if (e.getMessage().contains(ERR_NO_SPACE_LEFT_ON_DEVICE)) {
-        logger.error(e.getMessage());
-        System.exit(0);
-      }
-      throw new StorageException(e);
+      maybeRetryRocksDBAction(e, 0, DEFAULT_MAX_RETRIES, innerTx::rollback);
     } finally {
+      metrics.getRollbackCount().inc();
       close();
     }
   }
@@ -145,5 +114,39 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
   private void close() {
     innerTx.close();
     options.close();
+  }
+
+  @FunctionalInterface
+  interface RetryableRocksDBAction {
+    void retry() throws RocksDBException;
+
+    static void maybeRetryRocksDBAction(
+        final RocksDBException ex,
+        final int attemptNumber,
+        final int retryLimit,
+        final RetryableRocksDBAction retryAction) {
+
+      if (ex.getMessage().contains(ERR_NO_SPACE_LEFT_ON_DEVICE)) {
+        logger.error(ex.getMessage());
+        System.exit(0);
+      }
+      if (attemptNumber <= retryLimit) {
+        if (ex.getMessage().contains(ERR_BUSY) || ex.getMessage().contains(ERR_LOCK_TIMED_OUT)) {
+          logger.warn(
+              "RocksDB Transient exception caught on attempt {} of {}, retrying.\n"
+                  + "\tmessage: {}",
+              attemptNumber,
+              retryLimit,
+              ex.getMessage());
+          try {
+            retryAction.retry();
+          } catch (RocksDBException ex2) {
+            maybeRetryRocksDBAction(ex2, attemptNumber + 1, retryLimit, retryAction);
+          }
+        }
+      } else {
+        throw new StorageException(ex);
+      }
+    }
   }
 }
