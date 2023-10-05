@@ -1,6 +1,6 @@
 # Changelog
 
-## Next release
+## 23.10.0-RC
 
 ### Breaking Changes
 - Removed support for Kotti network (ETC) [#5816](https://github.com/hyperledger/besu/pull/5816)
