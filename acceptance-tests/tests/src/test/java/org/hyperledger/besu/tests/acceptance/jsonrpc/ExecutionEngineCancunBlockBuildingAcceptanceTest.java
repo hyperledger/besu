@@ -16,7 +16,6 @@ package org.hyperledger.besu.tests.acceptance.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.tests.acceptance.dsl.rpc.JsonRpcTestCase;
 
 import java.io.IOException;
@@ -28,20 +27,19 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import okhttp3.Call;
-import okhttp3.Response;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class ExecutionEngineCancunBlockBulidingAcceptanceTest extends AbstractJsonRpcTest {
+public class ExecutionEngineCancunBlockBuildingAcceptanceTest extends AbstractJsonRpcTest {
   private static final String GENESIS_FILE = "/jsonrpc/engine/cancun/genesis.json";
   private static final String TEST_CASE_PATH = "/jsonrpc/engine/cancun/test-cases/block-production";
 
   private static JsonRpcTestsContext testsContext;
 
-  public ExecutionEngineCancunBlockBulidingAcceptanceTest(
+  public ExecutionEngineCancunBlockBuildingAcceptanceTest(
       final String ignored, final URI testCaseFileURI) {
     super(ignored, testsContext, testCaseFileURI);
   }
