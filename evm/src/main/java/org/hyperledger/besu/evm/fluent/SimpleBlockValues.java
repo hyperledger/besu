@@ -39,7 +39,7 @@ public class SimpleBlockValues implements BlockValues {
   }
 
   /**
-   * Sets teh difficulty of the block
+   * Sets the difficulty of the block
    *
    * @param difficultyBytes the difficulty
    */
