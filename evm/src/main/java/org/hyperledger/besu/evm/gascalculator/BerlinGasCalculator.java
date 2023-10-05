@@ -252,7 +252,9 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
     multiplicationComplexity =
         Words.clampedMultiply(multiplicationComplexity, multiplicationComplexity);
 
-    if (multiplicationComplexity > 0) {
+    if (multiplicationComplexity == 0) {
+      return 200;
+    } else if (multiplicationComplexity > 0) {
       long maxExponentLength = Long.MAX_VALUE / multiplicationComplexity * 3 / 8;
       if (exponentLength > maxExponentLength) {
         return Long.MAX_VALUE;
