@@ -51,6 +51,7 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
+import org.hyperledger.besu.ethereum.mainnet.CancunTargetingGasLimitCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 
@@ -96,6 +97,9 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             ethPeers,
             engineCallListener);
     lenient().when(protocolSpec.getGasCalculator()).thenReturn(new CancunGasCalculator());
+    lenient()
+        .when(protocolSpec.getGasLimitCalculator())
+        .thenReturn(mock(CancunTargetingGasLimitCalculator.class));
   }
 
   @Test
@@ -248,5 +252,15 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
         .blobsWithCommitments(Optional.of(bwc))
         .versionedHashes(Optional.of(bwc.getVersionedHashes()))
         .createTransaction(senderKeys);
+  }
+
+  @Override
+  protected JsonRpcResponse resp(final EnginePayloadParameter payload) {
+    Object[] params =
+        maybeParentBeaconBlockRoot
+            .map(bytes32 -> new Object[] {payload, Collections.emptyList(), bytes32.toHexString()})
+            .orElseGet(() -> new Object[] {payload});
+    return method.response(
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
   }
 }
