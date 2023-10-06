@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AbstractTransactionSelector;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AllAcceptingTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlobPriceTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlockSizeTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.PriceTransactionSelector;
@@ -46,7 +47,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +74,7 @@ import org.slf4j.LoggerFactory;
  */
 public class BlockTransactionSelector {
   private static final Logger LOG = LoggerFactory.getLogger(BlockTransactionSelector.class);
+
   private final Supplier<Boolean> isCancelled;
   private final MainnetTransactionProcessor transactionProcessor;
   private final Blockchain blockchain;
@@ -83,7 +84,7 @@ public class BlockTransactionSelector {
   private final TransactionSelectionResults transactionSelectionResults =
       new TransactionSelectionResults();
   private final List<AbstractTransactionSelector> transactionSelectors;
-  private final List<TransactionSelector> externalTransactionSelectors;
+  private final TransactionSelector externalTransactionSelector;
 
   public BlockTransactionSelector(
       final MainnetTransactionProcessor transactionProcessor,
@@ -118,9 +119,10 @@ public class BlockTransactionSelector {
             miningBeneficiary,
             transactionPool);
     transactionSelectors = createTransactionSelectors(blockSelectionContext);
-    externalTransactionSelectors =
-        createExternalTransactionSelectors(
-            transactionSelectorFactory.map(List::of).orElseGet(List::of));
+    externalTransactionSelector =
+        transactionSelectorFactory
+            .map(TransactionSelectorFactory::create)
+            .orElse(AllAcceptingTransactionSelector.INSTANCE);
   }
 
   /**
@@ -265,18 +267,7 @@ public class BlockTransactionSelector {
         return result;
       }
     }
-
-    // Process the transaction through external selectors
-    for (var selector : externalTransactionSelectors) {
-      TransactionSelectionResult result =
-          selector.evaluateTransactionPreProcessing(pendingTransaction);
-      // If the transaction is not selected by any external selector, return the result
-      if (!result.equals(TransactionSelectionResult.SELECTED)) {
-        return result;
-      }
-    }
-    // If the transaction is selected by all selectors, return SELECTED
-    return TransactionSelectionResult.SELECTED;
+    return externalTransactionSelector.evaluateTransactionPreProcessing(pendingTransaction);
   }
 
   /**
@@ -303,19 +294,8 @@ public class BlockTransactionSelector {
         return result;
       }
     }
-
-    // Process the transaction through external selectors
-    for (var selector : externalTransactionSelectors) {
-      TransactionSelectionResult result =
-          selector.evaluateTransactionPostProcessing(pendingTransaction, processingResult);
-      // If the transaction is not selected by any external selector, return the result
-      if (!result.equals(TransactionSelectionResult.SELECTED)) {
-        return result;
-      }
-    }
-
-    // If the transaction is selected by all selectors, return SELECTED
-    return TransactionSelectionResult.SELECTED;
+    return externalTransactionSelector.evaluateTransactionPostProcessing(
+        pendingTransaction, processingResult);
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(
@@ -325,12 +305,5 @@ public class BlockTransactionSelector {
         new PriceTransactionSelector(context),
         new BlobPriceTransactionSelector(context),
         new ProcessingResultTransactionSelector(context));
-  }
-
-  private List<TransactionSelector> createExternalTransactionSelectors(
-      final List<TransactionSelectorFactory> transactionSelectorFactory) {
-    return transactionSelectorFactory.stream()
-        .map(TransactionSelectorFactory::create)
-        .collect(Collectors.toList());
   }
 }
