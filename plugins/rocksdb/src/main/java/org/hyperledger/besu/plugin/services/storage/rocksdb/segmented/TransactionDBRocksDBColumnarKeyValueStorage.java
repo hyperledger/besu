@@ -28,6 +28,7 @@ import java.util.List;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.TransactionDB;
+import org.rocksdb.TransactionOptions;
 import org.rocksdb.WriteOptions;
 
 /** TransactionDB RocksDB Columnar key value storage */
@@ -85,10 +86,15 @@ public class TransactionDBRocksDBColumnarKeyValueStorage extends RocksDBColumnar
   public SegmentedKeyValueStorageTransaction startTransaction() throws StorageException {
     throwIfClosed();
     final WriteOptions writeOptions = new WriteOptions();
+    final TransactionOptions transactionOptions =
+        new TransactionOptions().setLockTimeout(5000).setDeadlockDetect(true);
     writeOptions.setIgnoreMissingColumnFamilies(true);
     return new SegmentedKeyValueStorageTransactionValidatorDecorator(
         new RocksDBTransaction(
-            this::safeColumnHandle, db.beginTransaction(writeOptions), writeOptions, metrics),
+            this::safeColumnHandle,
+            db.beginTransaction(writeOptions, transactionOptions),
+            writeOptions,
+            metrics),
         this.closed::get);
   }
 }
