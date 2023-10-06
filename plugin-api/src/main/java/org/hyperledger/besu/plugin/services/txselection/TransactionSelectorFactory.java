@@ -24,9 +24,9 @@ import java.util.List;
 public interface TransactionSelectorFactory {
 
   /**
-   * Create a list of transaction selectors
+   * Create a transaction selector
    *
-   * @return the transaction selector list
+   * @return the transaction selector
    */
-  List<TransactionSelector> create();
+  TransactionSelector create();
 }

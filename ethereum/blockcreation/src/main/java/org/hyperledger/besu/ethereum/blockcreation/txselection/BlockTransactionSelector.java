@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.txselection.TransactionSelector;
@@ -82,7 +83,8 @@ public class BlockTransactionSelector {
   private final TransactionSelectionResults transactionSelectionResults =
       new TransactionSelectionResults();
   private final List<AbstractTransactionSelector> transactionSelectors;
-  private final List<TransactionSelector> externalTransactionSelectors;
+  private TransactionSelector externalTransactionSelector = null;
+  private OperationTracer tracer = OperationTracer.NO_TRACING;
 
   public BlockTransactionSelector(
       final MainnetTransactionProcessor transactionProcessor,
@@ -117,8 +119,10 @@ public class BlockTransactionSelector {
             miningBeneficiary,
             transactionPool);
     transactionSelectors = createTransactionSelectors(blockSelectionContext);
-    externalTransactionSelectors =
-        transactionSelectorFactory.map(TransactionSelectorFactory::create).orElse(List.of());
+    if (transactionSelectorFactory.isPresent()) {
+      externalTransactionSelector = transactionSelectorFactory.get().create();
+      tracer = externalTransactionSelector.getTracer();
+    }
   }
 
   /**
@@ -207,6 +211,7 @@ public class BlockTransactionSelector {
             blockSelectionContext.processableBlockHeader(),
             transaction,
             blockSelectionContext.miningBeneficiary(),
+            tracer,
             blockHashLookup,
             false,
             TransactionValidationParams.mining(),
@@ -264,17 +269,8 @@ public class BlockTransactionSelector {
       }
     }
 
-    // Process the transaction through external selectors
-    for (var selector : externalTransactionSelectors) {
-      TransactionSelectionResult result =
-          selector.evaluateTransactionPreProcessing(pendingTransaction);
-      // If the transaction is not selected by any external selector, return the result
-      if (!result.equals(TransactionSelectionResult.SELECTED)) {
-        return result;
-      }
-    }
-    // If the transaction is selected by all selectors, return SELECTED
-    return TransactionSelectionResult.SELECTED;
+    // Process the transaction through external selector
+   return externalTransactionSelector == null ? TransactionSelectionResult.SELECTED : externalTransactionSelector.evaluateTransactionPreProcessing(pendingTransaction);
   }
 
   /**
@@ -302,18 +298,8 @@ public class BlockTransactionSelector {
       }
     }
 
-    // Process the transaction through external selectors
-    for (var selector : externalTransactionSelectors) {
-      TransactionSelectionResult result =
-          selector.evaluateTransactionPostProcessing(pendingTransaction, processingResult);
-      // If the transaction is not selected by any external selector, return the result
-      if (!result.equals(TransactionSelectionResult.SELECTED)) {
-        return result;
-      }
-    }
-
-    // If the transaction is selected by all selectors, return SELECTED
-    return TransactionSelectionResult.SELECTED;
+    // Process the transaction through external selector
+    return externalTransactionSelector == null ? TransactionSelectionResult.SELECTED : externalTransactionSelector.evaluateTransactionPostProcessing(pendingTransaction, processingResult);
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(

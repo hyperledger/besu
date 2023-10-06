@@ -16,6 +16,7 @@
 package org.hyperledger.besu.plugin.services.txselection;
 
 import org.hyperledger.besu.datatypes.PendingTransaction;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
@@ -43,4 +44,13 @@ public interface TransactionSelector {
    */
   TransactionSelectionResult evaluateTransactionPostProcessing(
       PendingTransaction pendingTransaction, TransactionProcessingResult processingResult);
+
+  /**
+   * Method to get the tracer for the transaction selection for the current block
+   *
+   * @return the tracer
+   */
+  default OperationTracer getTracer() {
+    return OperationTracer.NO_TRACING;
+  }
 }
