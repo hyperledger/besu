@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -28,7 +27,6 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.OptimisticRocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.TransactionDBRocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
 
 import java.io.IOException;
@@ -166,8 +164,10 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       final BesuConfiguration commonConfiguration,
       final MetricsSystem metricsSystem)
       throws StorageException {
-    final boolean isForestStorageFormat =
-        DataStorageFormat.FOREST.getDatabaseVersion() == commonConfiguration.getDatabaseVersion();
+    // TODO: removed for testing/discovery
+    // final boolean isForestStorageFormat =
+    //     DataStorageFormat.FOREST.getDatabaseVersion() ==
+    // commonConfiguration.getDatabaseVersion();
     if (requiresInit()) {
       init(commonConfiguration);
     }
@@ -192,25 +192,26 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
               configuredSegments.stream()
                   .filter(segmentId -> segmentId.includeInDatabaseVersion(databaseVersion))
                   .collect(Collectors.toList());
-          if (isForestStorageFormat) {
-            LOG.debug("FOREST mode detected, using TransactionDB.");
-            segmentedStorage =
-                new TransactionDBRocksDBColumnarKeyValueStorage(
-                    rocksDBConfiguration,
-                    segmentsForVersion,
-                    ignorableSegments,
-                    metricsSystem,
-                    rocksDBMetricsFactory);
-          } else {
-            LOG.debug("Using OptimisticTransactionDB.");
-            segmentedStorage =
-                new OptimisticRocksDBColumnarKeyValueStorage(
-                    rocksDBConfiguration,
-                    segmentsForVersion,
-                    ignorableSegments,
-                    metricsSystem,
-                    rocksDBMetricsFactory);
-          }
+          // TODO: removing TransactionDB for testing/discovery only:
+          // if (isForestStorageFormat) {
+          //  LOG.debug("FOREST mode detected, using TransactionDB.");
+          //  segmentedStorage =
+          //      new TransactionDBRocksDBColumnarKeyValueStorage(
+          //          rocksDBConfiguration,
+          //          segmentsForVersion,
+          //          ignorableSegments,
+          //          metricsSystem,
+          //          rocksDBMetricsFactory);
+          // } else {
+          LOG.debug("Using OptimisticTransactionDB.");
+          segmentedStorage =
+              new OptimisticRocksDBColumnarKeyValueStorage(
+                  rocksDBConfiguration,
+                  segmentsForVersion,
+                  ignorableSegments,
+                  metricsSystem,
+                  rocksDBMetricsFactory);
+          // }
         }
         return segmentedStorage;
       }
