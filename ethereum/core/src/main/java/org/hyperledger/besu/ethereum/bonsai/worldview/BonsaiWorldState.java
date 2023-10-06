@@ -248,10 +248,16 @@ public class BonsaiWorldState
               worldStateUpdater.getCodeToUpdate().entrySet()) {
             final Bytes updatedCode = codeUpdate.getValue().getUpdated();
             final Hash accountHash = codeUpdate.getKey().addressHash();
-            if (updatedCode == null || updatedCode.isEmpty()) {
-              bonsaiUpdater.removeCode(accountHash);
-            } else {
-              bonsaiUpdater.putCode(accountHash, null, updatedCode);
+            final Bytes priorCode = codeUpdate.getValue().getPrior();
+            // TODO JF add test to ensure we don't remove code that is already removed otherwise
+            // will affect code ctr
+            if (!(priorCode == null || priorCode.isEmpty())
+                && (updatedCode == null || updatedCode.isEmpty())) {
+              final Hash priorCodeHash = Hash.hash(priorCode);
+              bonsaiUpdater.removeCode(accountHash, priorCodeHash);
+            } else if (updatedCode != null && !updatedCode.isEmpty()) {
+              final Hash codeHash = Hash.hash(codeUpdate.getValue().getUpdated());
+              bonsaiUpdater.putCode(accountHash, codeHash, updatedCode);
             }
           }
         });
@@ -504,7 +510,10 @@ public class BonsaiWorldState
     return calculateRootHash(
         Optional.of(
             new BonsaiWorldStateKeyValueStorage.Updater(
-                noOpSegmentedTx, noOpTx, worldStateStorage.getFlatDbStrategy())),
+                noOpSegmentedTx,
+                noOpTx,
+                worldStateStorage.getFlatDbStrategy(),
+                worldStateStorage.getWorldStateStorage())),
         accumulator.copy());
   }
 

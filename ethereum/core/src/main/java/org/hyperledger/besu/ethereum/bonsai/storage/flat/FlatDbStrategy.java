@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.bonsai.storage.flat;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
@@ -53,9 +52,12 @@ public abstract class FlatDbStrategy {
 
   protected final Counter getStorageValueCounter;
   protected final Counter getStorageValueFlatDatabaseCounter;
+  private final CodeStorageStrategy codeStorageStrategy;
 
-  public FlatDbStrategy(final MetricsSystem metricsSystem) {
+  public FlatDbStrategy(final MetricsSystem metricsSystem, final boolean useLegacyCodeStorage) {
     this.metricsSystem = metricsSystem;
+    this.codeStorageStrategy =
+        useLegacyCodeStorage ? new LegacyCodeStorageStrategy() : new DefaultCodeStorageStrategy();
 
     getAccountCounter =
         metricsSystem.createCounter(
@@ -111,10 +113,7 @@ public abstract class FlatDbStrategy {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
-      return storage
-          .get(CODE_STORAGE, accountHash.toArrayUnsafe())
-          .map(Bytes::wrap)
-          .filter(b -> Hash.hash(b).equals(codeHash));
+      return codeStorageStrategy.getFlatCode(codeHash, accountHash, storage);
     }
   }
 
@@ -162,8 +161,11 @@ public abstract class FlatDbStrategy {
    * Removes code for the given account hash.
    */
   public void removeFlatCode(
-      final SegmentedKeyValueStorageTransaction transaction, final Hash accountHash) {
-    transaction.remove(CODE_STORAGE, accountHash.toArrayUnsafe());
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Hash codeHash,
+      final SegmentedKeyValueStorage keyValueStorage) {
+    codeStorageStrategy.removeFlatCode(transaction, accountHash, codeHash, keyValueStorage);
   }
 
   /*
@@ -173,14 +175,15 @@ public abstract class FlatDbStrategy {
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Bytes32 codeHash,
-      final Bytes code) {
-    transaction.put(CODE_STORAGE, accountHash.toArrayUnsafe(), code.toArrayUnsafe());
+      final Bytes code,
+      final SegmentedKeyValueStorage keyValueStorage) {
+    codeStorageStrategy.putFlatCode(transaction, accountHash, codeHash, code, keyValueStorage);
   }
 
   public void clearAll(final SegmentedKeyValueStorage storage) {
     storage.clear(ACCOUNT_INFO_STATE);
     storage.clear(ACCOUNT_STORAGE_STORAGE);
-    storage.clear(CODE_STORAGE);
+    codeStorageStrategy.clear(storage);
   }
 
   public void resetOnResync(final SegmentedKeyValueStorage storage) {

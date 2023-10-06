@@ -16,7 +16,9 @@ package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_HASH_COUNT;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE_BY_HASH;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -85,7 +87,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     this.composedWorldStateStorage =
         provider.getStorageBySegmentIdentifiers(
             List.of(
-                ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE));
+                ACCOUNT_INFO_STATE,
+                CODE_STORAGE_BY_HASH,
+                ACCOUNT_STORAGE_STORAGE,
+                TRIE_BRANCH_STORAGE));
     this.trieLogStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
     this.metricsSystem = metricsSystem;
@@ -108,19 +113,19 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   private void loadFlatDbStrategy() {
     // derive our flatdb strategy from db or default:
     var newFlatDbMode = deriveFlatDbStrategy();
-
+    final boolean useLegacyCodeStorage = composedWorldStateStorage.hasValues(CODE_STORAGE);
     // if  flatDbMode is not loaded or has changed, reload flatDbStrategy
     if (this.flatDbMode == null || !this.flatDbMode.equals(newFlatDbMode)) {
       this.flatDbMode = newFlatDbMode;
       if (flatDbMode == FlatDbMode.FULL) {
-        this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem);
+        this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem, useLegacyCodeStorage);
       } else {
-        this.flatDbStrategy = new PartialFlatDbStrategy(metricsSystem);
+        this.flatDbStrategy = new PartialFlatDbStrategy(metricsSystem, useLegacyCodeStorage);
       }
     }
   }
 
-  public FlatDbMode deriveFlatDbStrategy() {
+  private FlatDbMode deriveFlatDbStrategy() {
     var flatDbMode =
         FlatDbMode.fromVersion(
             composedWorldStateStorage
@@ -137,6 +142,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       loadFlatDbStrategy();
     }
     return flatDbStrategy;
+  }
+
+  public SegmentedKeyValueStorage getWorldStateStorage() {
+    return composedWorldStateStorage;
   }
 
   @Override
@@ -156,6 +165,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     } else {
       return getFlatDbStrategy().getFlatCode(codeHash, accountHash, composedWorldStateStorage);
     }
+  }
+
+  private long getCodeHashCount(final Bytes32 codeHash) {
+    return composedWorldStateStorage
+        .get(CODE_HASH_COUNT, codeHash.toArrayUnsafe())
+        .map(b -> Bytes.wrap(b).toLong())
+        .orElse(0L);
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
@@ -327,7 +343,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return new Updater(
         composedWorldStateStorage.startTransaction(),
         trieLogStorage.startTransaction(),
-        flatDbStrategy);
+        flatDbStrategy,
+        composedWorldStateStorage);
   }
 
   @Override
@@ -346,7 +363,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public interface BonsaiUpdater extends WorldStateStorage.Updater {
-    BonsaiUpdater removeCode(final Hash accountHash);
+    BonsaiUpdater removeCode(final Hash accountHash, Hash codeHash);
 
     BonsaiUpdater removeAccountInfoState(final Hash accountHash);
 
@@ -367,30 +384,34 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     private final SegmentedKeyValueStorageTransaction composedWorldStateTransaction;
     private final KeyValueStorageTransaction trieLogStorageTransaction;
     private final FlatDbStrategy flatDbStrategy;
+    private final SegmentedKeyValueStorage composedWorldStateStorage;
 
     public Updater(
         final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
         final KeyValueStorageTransaction trieLogStorageTransaction,
-        final FlatDbStrategy flatDbStrategy) {
-
+        final FlatDbStrategy flatDbStrategy,
+        final SegmentedKeyValueStorage composedWorldStateStorage) {
       this.composedWorldStateTransaction = composedWorldStateTransaction;
       this.trieLogStorageTransaction = trieLogStorageTransaction;
       this.flatDbStrategy = flatDbStrategy;
+      this.composedWorldStateStorage = composedWorldStateStorage;
     }
 
     @Override
-    public BonsaiUpdater removeCode(final Hash accountHash) {
-      flatDbStrategy.removeFlatCode(composedWorldStateTransaction, accountHash);
+    public BonsaiUpdater removeCode(final Hash accountHash, final Hash codeHash) {
+      flatDbStrategy.removeFlatCode(
+          composedWorldStateTransaction, accountHash, codeHash, composedWorldStateStorage);
       return this;
     }
 
     @Override
     public BonsaiUpdater putCode(final Hash accountHash, final Bytes32 codeHash, final Bytes code) {
-      if (code.size() == 0) {
+      if (code.isEmpty()) {
         // Don't save empty values
         return this;
       }
-      flatDbStrategy.putFlatCode(composedWorldStateTransaction, accountHash, codeHash, code);
+      flatDbStrategy.putFlatCode(
+          composedWorldStateTransaction, accountHash, codeHash, code, composedWorldStateStorage);
       return this;
     }
 
@@ -402,7 +423,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
     @Override
     public BonsaiUpdater putAccountInfoState(final Hash accountHash, final Bytes accountValue) {
-      if (accountValue.size() == 0) {
+      if (accountValue.isEmpty()) {
         // Don't save empty values
         return this;
       }
