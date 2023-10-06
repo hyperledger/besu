@@ -315,8 +315,8 @@ public abstract class AbstractPendingTransactionsTestBase {
 
     final List<Transaction> parsedTransactions = Lists.newArrayList();
     transactions.selectTransactions(
-        transaction -> {
-          parsedTransactions.add(transaction);
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
           return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
         });
 
@@ -331,8 +331,8 @@ public abstract class AbstractPendingTransactionsTestBase {
 
     final List<Transaction> parsedTransactions = Lists.newArrayList();
     transactions.selectTransactions(
-        transaction -> {
-          parsedTransactions.add(transaction);
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
           return SELECTED;
         });
 
@@ -351,8 +351,8 @@ public abstract class AbstractPendingTransactionsTestBase {
 
     final List<Transaction> parsedTransactions = Lists.newArrayList();
     transactions.selectTransactions(
-        transaction -> {
-          parsedTransactions.add(transaction);
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
           return SELECTED;
         });
 
@@ -366,8 +366,8 @@ public abstract class AbstractPendingTransactionsTestBase {
 
     final List<Transaction> parsedTransactions = Lists.newArrayList();
     transactions.selectTransactions(
-        transaction -> {
-          parsedTransactions.add(transaction);
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
           return TransactionSelectionResult.invalid(
               TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE.name());
         });
@@ -535,8 +535,8 @@ public abstract class AbstractPendingTransactionsTestBase {
 
     final List<Transaction> iterationOrder = new ArrayList<>();
     transactions.selectTransactions(
-        transaction -> {
-          iterationOrder.add(transaction);
+        pendingTx -> {
+          iterationOrder.add(pendingTx.getTransaction());
           return SELECTED;
         });
 
@@ -553,8 +553,8 @@ public abstract class AbstractPendingTransactionsTestBase {
 
     final List<Transaction> iterationOrder = new ArrayList<>();
     transactions.selectTransactions(
-        transaction -> {
-          iterationOrder.add(transaction);
+        pendingTx -> {
+          iterationOrder.add(pendingTx.getTransaction());
           return SELECTED;
         });
 
@@ -575,8 +575,8 @@ public abstract class AbstractPendingTransactionsTestBase {
 
     final List<Transaction> iterationOrder = new ArrayList<>();
     transactions.selectTransactions(
-        transaction -> {
-          iterationOrder.add(transaction);
+        pendingTx -> {
+          iterationOrder.add(pendingTx.getTransaction());
           return SELECTED;
         });
 

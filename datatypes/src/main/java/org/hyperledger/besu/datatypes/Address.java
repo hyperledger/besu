@@ -113,7 +113,13 @@ public class Address extends DelegatingBytes {
         "An account address must be %s bytes long, got %s",
         SIZE,
         value.size());
-    return new Address(value);
+    if (value instanceof Address address) {
+      return address;
+    } else if (value instanceof DelegatingBytes delegatingBytes) {
+      return new Address(delegatingBytes.copy());
+    } else {
+      return new Address(value);
+    }
   }
 
   /**

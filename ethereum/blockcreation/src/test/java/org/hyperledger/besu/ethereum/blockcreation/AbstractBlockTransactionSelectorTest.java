@@ -26,6 +26,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.PendingTransaction;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -66,6 +67,7 @@ import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.txselection.TransactionSelector;
 import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -538,7 +540,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   }
 
   @Test
-  public void transactionSelectionPluginShouldWork() {
+  public void transactionSelectionPluginShouldWork_PreProcessing() {
     final ProcessableBlockHeader blockHeader = createBlock(300_000);
 
     final Transaction selected = createTransaction(0, Wei.of(10), 21_000);
@@ -552,13 +554,26 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final TransactionSelectorFactory transactionSelectorFactory =
         () ->
-            (tx) -> {
-              if (tx.equals(notSelectedTransient))
-                return TransactionSelectionResult.invalidTransient("transient");
-              if (tx.equals(notSelectedInvalid))
-                return TransactionSelectionResult.invalid("invalid");
-              return TransactionSelectionResult.SELECTED;
-            };
+            List.of(
+                new TransactionSelector() {
+                  @Override
+                  public TransactionSelectionResult evaluateTransactionPreProcessing(
+                      final PendingTransaction pendingTransaction) {
+                    if (pendingTransaction.getTransaction().equals(notSelectedTransient))
+                      return TransactionSelectionResult.invalidTransient("transient");
+                    if (pendingTransaction.getTransaction().equals(notSelectedInvalid))
+                      return TransactionSelectionResult.invalid("invalid");
+                    return TransactionSelectionResult.SELECTED;
+                  }
+
+                  @Override
+                  public TransactionSelectionResult evaluateTransactionPostProcessing(
+                      final PendingTransaction pendingTransaction,
+                      final org.hyperledger.besu.plugin.data.TransactionProcessingResult
+                          processingResult) {
+                    return TransactionSelectionResult.SELECTED;
+                  }
+                });
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
@@ -572,7 +587,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             transactionSelectorFactory);
 
     transactionPool.addRemoteTransactions(
-        List.of(selected, notSelectedInvalid, notSelectedTransient));
+        List.of(selected, notSelectedTransient, notSelectedInvalid));
 
     final TransactionSelectionResults transactionSelectionResults =
         selector.buildTransactionListForBlock();
@@ -584,6 +599,67 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .containsOnly(
             entry(notSelectedTransient, TransactionSelectionResult.invalidTransient("transient")),
             entry(notSelectedInvalid, TransactionSelectionResult.invalid("invalid")));
+  }
+
+  @Test
+  public void transactionSelectionPluginShouldWork_PostProcessing() {
+    final ProcessableBlockHeader blockHeader = createBlock(300_000);
+
+    long maxGasUsedByTransaction = 21_000;
+
+    final Transaction selected = createTransaction(0, Wei.of(10), 21_000);
+    ensureTransactionIsValid(selected, maxGasUsedByTransaction, 0);
+
+    // Add + 1 to gasUsedByTransaction so it will fail in the post processing selection
+    final Transaction notSelected = createTransaction(1, Wei.of(10), 30_000);
+    ensureTransactionIsValid(notSelected, maxGasUsedByTransaction + 1, 0);
+
+    final Transaction selected3 = createTransaction(3, Wei.of(10), 21_000);
+    ensureTransactionIsValid(selected3, maxGasUsedByTransaction, 0);
+
+    final TransactionSelectorFactory transactionSelectorFactory =
+        () ->
+            List.of(
+                new TransactionSelector() {
+                  @Override
+                  public TransactionSelectionResult evaluateTransactionPreProcessing(
+                      final PendingTransaction pendingTransaction) {
+                    return TransactionSelectionResult.SELECTED;
+                  }
+
+                  @Override
+                  public TransactionSelectionResult evaluateTransactionPostProcessing(
+                      final PendingTransaction pendingTransaction,
+                      final org.hyperledger.besu.plugin.data.TransactionProcessingResult
+                          processingResult) {
+                    // the transaction with max gas +1 should fail
+                    if (processingResult.getEstimateGasUsedByTransaction()
+                        > maxGasUsedByTransaction) {
+                      return TransactionSelectionResult.invalidTransient("Invalid");
+                    }
+                    return TransactionSelectionResult.SELECTED;
+                  }
+                });
+
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+    final BlockTransactionSelector selector =
+        createBlockSelectorWithTxSelPlugin(
+            transactionProcessor,
+            blockHeader,
+            Wei.ZERO,
+            miningBeneficiary,
+            Wei.ZERO,
+            MIN_OCCUPANCY_80_PERCENT,
+            transactionSelectorFactory);
+
+    transactionPool.addRemoteTransactions(List.of(selected, notSelected, selected3));
+
+    final TransactionSelectionResults transactionSelectionResults =
+        selector.buildTransactionListForBlock();
+
+    assertThat(transactionSelectionResults.getSelectedTransactions()).contains(selected, selected3);
+    assertThat(transactionSelectionResults.getNotSelectedTransactions())
+        .containsOnly(entry(notSelected, TransactionSelectionResult.invalidTransient("Invalid")));
   }
 
   @Test
