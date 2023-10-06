@@ -22,6 +22,8 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.EnumSet;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import org.rocksdb.ColumnFamilyHandle;
@@ -141,6 +143,10 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
               retryLimit,
               ex.getStatus().getCodeString());
           try {
+            if (ex.getStatus().getSubCode().equals(Status.SubCode.Deadlock)) {
+              // deadlock detection returns immediately, backoff and wait if deadlock is detected
+              retryBackoff();
+            }
             retryAction.retry();
           } catch (RocksDBException ex2) {
             maybeRetryRocksDBAction(ex2, attemptNumber + 1, retryLimit, retryAction);
@@ -148,6 +154,31 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
         }
       } else {
         throw new StorageException(ex);
+      }
+    }
+
+    long BASE_TIMEOUT = 1000; // Base timeout in milliseconds
+    long MAX_TIMEOUT = 10000; // Max timeout in milliseconds
+    long DECAY_TIME = 5000; // Time in milliseconds after which the timeout decays
+    AtomicLong timeout = new AtomicLong(BASE_TIMEOUT);
+    AtomicLong lastCallTime = new AtomicLong(System.currentTimeMillis());
+
+    static void retryBackoff() {
+      try {
+        long currentTime = System.currentTimeMillis();
+        long delay = timeout.get();
+        // If the function hasn't been called for DECAY_TIME milliseconds, decay the timeout back to
+        // the base value
+        if (currentTime - lastCallTime.get() > DECAY_TIME) {
+          delay = BASE_TIMEOUT;
+          timeout.set(BASE_TIMEOUT);
+        }
+        TimeUnit.MILLISECONDS.sleep(delay);
+        // Increase the timeout for the next call, up to the maximum
+        timeout.updateAndGet(t -> Math.min(t * 2, MAX_TIMEOUT));
+        lastCallTime.set(currentTime);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt(); // Preserve interrupt status
       }
     }
   }
