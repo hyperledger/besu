@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolEvictionService;
 import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner;
+import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.ethstats.EthStatsService;
 import org.hyperledger.besu.metrics.MetricsService;
@@ -420,6 +421,10 @@ public class Runner implements AutoCloseable {
   @VisibleForTesting
   Optional<EnodeURL> getLocalEnode() {
     return networkRunner.getNetwork().getLocalEnode();
+  }
+
+  public P2PNetwork getP2PNetwork() {
+    return networkRunner.getNetwork();
   }
 
   @FunctionalInterface

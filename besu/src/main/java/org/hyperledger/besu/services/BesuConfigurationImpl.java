@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.services;
 
+import org.hyperledger.besu.cli.options.stable.JsonRpcHttpOptions;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -21,13 +22,18 @@ import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.nio.file.Path;
+import java.util.Optional;
 
 /** A concrete implementation of BesuConfiguration which is used in Besu plugin framework. */
 public class BesuConfigurationImpl implements BesuConfiguration {
   private Path storagePath;
   private Path dataPath;
   private DataStorageConfiguration dataStorageConfiguration;
-  private MiningParameters miningParameters;
+
+  // defaults
+  private MiningParameters miningParameters = MiningParameters.newDefault();
+  private Optional<String> rpcHttpHost = Optional.of("http://localhost");
+  private Optional<Integer> rpcHttpPort = Optional.of(8545);
 
   /**
    * Post creation initialization
@@ -35,17 +41,36 @@ public class BesuConfigurationImpl implements BesuConfiguration {
    * @param dataPath The Path representing data folder
    * @param storagePath The path representing storage folder
    * @param dataStorageConfiguration The data storage configuration
-   * @param miningParameters The mining parameters
    */
-  public void init(
+  public BesuConfigurationImpl init(
       final Path dataPath,
       final Path storagePath,
-      final DataStorageConfiguration dataStorageConfiguration,
-      final MiningParameters miningParameters) {
+      final DataStorageConfiguration dataStorageConfiguration) {
     this.dataPath = dataPath;
     this.storagePath = storagePath;
     this.dataStorageConfiguration = dataStorageConfiguration;
+    return this;
+  }
+
+  public BesuConfigurationImpl withMiningParameters(final MiningParameters miningParameters) {
     this.miningParameters = miningParameters;
+    return this;
+  }
+
+  public BesuConfigurationImpl withJsonRpcHttpOptions(final JsonRpcHttpOptions rpcHttpOptions) {
+    this.rpcHttpHost = Optional.of(rpcHttpOptions.getRpcHttpHost());
+    this.rpcHttpPort = Optional.of(rpcHttpOptions.getRpcHttpPort());
+    return this;
+  }
+
+  @Override
+  public Optional<String> getRpcHttpHost() {
+    return rpcHttpHost;
+  }
+
+  @Override
+  public Optional<Integer> getRpcHttpPort() {
+    return rpcHttpPort;
   }
 
   @Override

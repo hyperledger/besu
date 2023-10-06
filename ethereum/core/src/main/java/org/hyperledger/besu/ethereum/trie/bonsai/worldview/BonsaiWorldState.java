@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.ethereum.trie.NoOpMerkleTrie;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiValue;
@@ -78,20 +79,23 @@ public class BonsaiWorldState
   protected final TrieLogManager trieLogManager;
   private BonsaiWorldStateUpdateAccumulator accumulator;
 
+  private final BonsaiWorldStateConfig bonsaiWorldStateConfig;
+
   protected Hash worldStateRootHash;
   Hash worldStateBlockHash;
-  private boolean isFrozen;
 
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final BonsaiWorldStateConfig bonsaiWorldStateConfig) {
     this(
         worldStateKeyValueStorage,
         archive.getCachedMerkleTrieLoader(),
         archive.getCachedWorldStorageManager(),
         archive.getTrieLogManager(),
-        evmConfiguration);
+        evmConfiguration,
+        bonsaiWorldStateConfig);
   }
 
   public BonsaiWorldState(
@@ -99,7 +103,8 @@ public class BonsaiWorldState
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
       final CachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final BonsaiWorldStateConfig bonsaiWorldStateConfig) {
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.worldStateRootHash =
         Hash.wrap(
@@ -120,6 +125,7 @@ public class BonsaiWorldState
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
     this.cachedWorldStorageManager = cachedWorldStorageManager;
     this.trieLogManager = trieLogManager;
+    this.bonsaiWorldStateConfig = bonsaiWorldStateConfig;
   }
 
   /**
@@ -202,7 +208,7 @@ public class BonsaiWorldState
     updateCode(maybeStateUpdater, worldStateUpdater);
 
     // next walk the account trie
-    final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
+    final MerkleTrie<Bytes, Bytes> accountTrie =
         createTrie(
             (location, hash) ->
                 cachedMerkleTrieLoader.getAccountStateTrieNode(
@@ -230,7 +236,7 @@ public class BonsaiWorldState
   private void updateTheAccounts(
       final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater,
-      final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie) {
+      final MerkleTrie<Bytes, Bytes> accountTrie) {
     for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> accountUpdate :
         worldStateUpdater.getAccountsToUpdate().entrySet()) {
       final Bytes accountKey = accountUpdate.getKey();
@@ -307,7 +313,8 @@ public class BonsaiWorldState
                   || worldStateUpdater.getStorageToClear().contains(updatedAddress))
               ? Hash.EMPTY_TRIE_HASH
               : accountOriginal.getStorageRoot();
-      final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
+      //      final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
+      final MerkleTrie<Bytes, Bytes> storageTrie =
           createTrie(
               (location, key) ->
                   cachedMerkleTrieLoader.getAccountStorageTrieNode(
@@ -430,7 +437,9 @@ public class BonsaiWorldState
 
     try {
       final Hash newWorldStateRootHash =
-          calculateRootHash(isFrozen ? Optional.empty() : Optional.of(stateUpdater), accumulator);
+          calculateRootHash(
+              bonsaiWorldStateConfig.isFrozen() ? Optional.empty() : Optional.of(stateUpdater),
+              accumulator);
       // if we are persisted with a block header, and the prior state is the parent
       // then persist the TrieLog for that transition.
       // If specified but not a direct descendant simply store the new block hash.
@@ -440,7 +449,7 @@ public class BonsaiWorldState
             () -> {
               trieLogManager.saveTrieLog(localCopy, newWorldStateRootHash, blockHeader, this);
               // not save a frozen state in the cache
-              if (!isFrozen) {
+              if (!bonsaiWorldStateConfig.isFrozen()) {
                 cachedWorldStorageManager.addCachedLayer(blockHeader, newWorldStateRootHash, this);
               }
             };
@@ -472,7 +481,8 @@ public class BonsaiWorldState
   }
 
   protected void verifyWorldStateRoot(final Hash calculatedStateRoot, final BlockHeader header) {
-    if (!calculatedStateRoot.equals(header.getStateRoot())) {
+    if (!bonsaiWorldStateConfig.isTrieDisabled()
+        && !calculatedStateRoot.equals(header.getStateRoot())) {
       throw new RuntimeException(
           "World State Root does not match expected value, header "
               + header.getStateRoot().toHexString()
@@ -488,7 +498,7 @@ public class BonsaiWorldState
 
   @Override
   public Hash rootHash() {
-    if (isFrozen && accumulator.isAccumulatorStateChanged()) {
+    if (bonsaiWorldStateConfig.isFrozen() && accumulator.isAccumulatorStateChanged()) {
       worldStateRootHash = calculateRootHash(Optional.empty(), accumulator.copy());
       accumulator.resetAccumulatorStateChanged();
     }
@@ -626,7 +636,7 @@ public class BonsaiWorldState
 
   @Override
   public Map<Bytes32, Bytes> getAllAccountStorage(final Address address, final Hash rootHash) {
-    final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
+    final MerkleTrie<Bytes, Bytes> storageTrie =
         createTrie(
             (location, key) -> getStorageTrieNode(address.addressHash(), location, key), rootHash);
     return storageTrie.entriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
@@ -634,15 +644,18 @@ public class BonsaiWorldState
 
   @Override
   public MutableWorldState freeze() {
-    this.isFrozen = true;
+    this.bonsaiWorldStateConfig.setFrozen(true);
     this.worldStateKeyValueStorage = new BonsaiWorldStateLayerStorage(worldStateKeyValueStorage);
     return this;
   }
 
-  private StoredMerklePatriciaTrie<Bytes, Bytes> createTrie(
-      final NodeLoader nodeLoader, final Bytes32 rootHash) {
-    return new StoredMerklePatriciaTrie<>(
-        nodeLoader, rootHash, Function.identity(), Function.identity());
+  private MerkleTrie<Bytes, Bytes> createTrie(final NodeLoader nodeLoader, final Bytes32 rootHash) {
+    if (bonsaiWorldStateConfig.isTrieDisabled()) {
+      return new NoOpMerkleTrie<>();
+    } else {
+      return new StoredMerklePatriciaTrie<>(
+          nodeLoader, rootHash, Function.identity(), Function.identity());
+    }
   }
 
   @Override
@@ -650,7 +663,7 @@ public class BonsaiWorldState
     try {
       if (!isPersisted()) {
         this.worldStateKeyValueStorage.close();
-        if (isFrozen) {
+        if (bonsaiWorldStateConfig.isFrozen()) {
           closeFrozenStorage();
         }
       }
