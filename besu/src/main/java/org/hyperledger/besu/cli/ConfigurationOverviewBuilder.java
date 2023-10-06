@@ -193,7 +193,7 @@ public class ConfigurationOverviewBuilder {
   /**
    * Sets the environment variables.
    *
-   * @param environment the enveironment variables
+   * @param environment the environment variables
    * @return the builder
    */
   public ConfigurationOverviewBuilder setEnvironment(final Map<String, String> environment) {

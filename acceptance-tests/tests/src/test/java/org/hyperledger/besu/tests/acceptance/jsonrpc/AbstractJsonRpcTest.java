@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -82,9 +83,18 @@ abstract class AbstractJsonRpcTest {
         testsContext.mapper.readValue(testCaseFileURI.toURL(), JsonRpcTestCase.class);
 
     final String rpcMethod = String.valueOf(testCase.getRequest().get("method"));
-
+    OkHttpClient client = testsContext.httpClient;
+    if (System.getenv("BESU_DEBUG_CHILD_PROCESS_PORT") != null) {
+      // if running in debug mode, set a longer timeout
+      client =
+          testsContext
+              .httpClient
+              .newBuilder()
+              .readTimeout(900, java.util.concurrent.TimeUnit.SECONDS)
+              .build();
+    }
     final Call testRequest =
-        testsContext.httpClient.newCall(
+        client.newCall(
             new Request.Builder()
                 .url(getRpcUrl(rpcMethod))
                 .post(RequestBody.create(testCase.getRequest().toString(), MEDIA_TYPE_JSON))
@@ -93,6 +103,7 @@ abstract class AbstractJsonRpcTest {
 
     assertThat(response.code()).isEqualTo(testCase.getStatusCode());
     final ObjectNode actualBody = JsonUtil.objectNodeFromString(response.body().string());
+    evaluateResponse(actualBody, testRequest, testCase, testCaseFileURI.toURL());
     final ObjectNode expectedBody =
         JsonUtil.objectNodeFromString(testCase.getResponse().toString());
     assertThat(actualBody)
@@ -100,6 +111,12 @@ abstract class AbstractJsonRpcTest {
             "%s\ndid not equal\n %s", actualBody.toPrettyString(), expectedBody.toPrettyString())
         .isEqualTo(expectedBody);
   }
+
+  protected void evaluateResponse(
+      final ObjectNode responseBody,
+      final Call testRequest,
+      final JsonRpcTestCase testCase,
+      final URL url) {}
 
   private String getRpcUrl(final String rpcMethod) {
     if (rpcMethod.contains("eth_") || rpcMethod.contains("engine_")) {

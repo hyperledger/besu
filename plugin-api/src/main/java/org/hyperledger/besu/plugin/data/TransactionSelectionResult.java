@@ -78,8 +78,8 @@ public class TransactionSelectionResult {
    * The transaction has not been selected since its data price is below the current network data
    * price, but the selection should continue.
    */
-  public static final TransactionSelectionResult DATA_PRICE_BELOW_CURRENT_MIN =
-      TransactionSelectionResult.invalidTransient("DATA_PRICE_BELOW_CURRENT_MIN");
+  public static final TransactionSelectionResult BLOB_PRICE_BELOW_CURRENT_MIN =
+      TransactionSelectionResult.invalidTransient("BLOB_PRICE_BELOW_CURRENT_MIN");
 
   private final Status status;
   private final Optional<String> maybeInvalidReason;

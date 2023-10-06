@@ -83,7 +83,7 @@ public class EthScheduler {
             metricsSystem),
         MonitoredExecutors.newCachedThreadPool(
             EthScheduler.class.getSimpleName() + "-Services", metricsSystem),
-        MonitoredExecutors.newBoundedThreadPool(
+        MonitoredExecutors.newFixedThreadPool(
             EthScheduler.class.getSimpleName() + "-Computation",
             1,
             computationWorkerCount,
@@ -131,6 +131,10 @@ public class EthScheduler {
 
   public void scheduleTxWorkerTask(final Runnable command) {
     txWorkerExecutor.execute(command);
+  }
+
+  public <T> CompletableFuture<T> scheduleServiceTask(final Supplier<T> task) {
+    return CompletableFuture.supplyAsync(task, servicesExecutor);
   }
 
   public <T> CompletableFuture<T> scheduleServiceTask(final EthTask<T> task) {

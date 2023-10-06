@@ -28,7 +28,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * Tracks the additional metadata associated with transactions to enable prioritization for mining
  * and deciding which transactions to drop when the transaction pool reaches its size limit.
  */
-public abstract class PendingTransaction {
+public abstract class PendingTransaction
+    implements org.hyperledger.besu.datatypes.PendingTransaction {
   static final int NOT_INITIALIZED = -1;
   static final int FRONTIER_BASE_MEMORY_SIZE = 944;
   static final int ACCESS_LIST_BASE_MEMORY_SIZE = 944;
@@ -52,6 +53,7 @@ public abstract class PendingTransaction {
     this.sequence = TRANSACTIONS_ADDED.getAndIncrement();
   }
 
+  @Override
   public Transaction getTransaction() {
     return transaction;
   }
@@ -72,12 +74,11 @@ public abstract class PendingTransaction {
     return transaction.getSender();
   }
 
-  public abstract boolean isReceivedFromLocalSource();
-
   public Hash getHash() {
     return transaction.getHash();
   }
 
+  @Override
   public long getAddedAt() {
     return addedAt;
   }
@@ -184,6 +185,8 @@ public abstract class PendingTransaction {
         + addedAt
         + ", sequence="
         + sequence
+        + ", isLocal="
+        + isReceivedFromLocalSource()
         + '}';
   }
 
@@ -192,6 +195,8 @@ public abstract class PendingTransaction {
         + sequence
         + ", addedAt: "
         + addedAt
+        + ", isLocal="
+        + isReceivedFromLocalSource()
         + ", "
         + transaction.toTraceLog()
         + "}";

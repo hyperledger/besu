@@ -95,7 +95,8 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                   protocolContext,
                   mergeCoordinator.get(),
                   blockResultFactory,
-                  engineQosTimer),
+                  engineQosTimer,
+                  protocolSchedule),
               new EngineNewPayloadV1(
                   consensusEngineServer,
                   protocolSchedule,
