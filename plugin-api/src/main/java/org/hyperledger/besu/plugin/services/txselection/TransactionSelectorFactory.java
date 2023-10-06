@@ -22,9 +22,9 @@ import org.hyperledger.besu.plugin.Unstable;
 public interface TransactionSelectorFactory {
 
   /**
-   * Create a list of transaction selectors
+   * Create a transaction selector
    *
-   * @return the transaction selector list
+   * @return the transaction selector
    */
   TransactionSelector create();
 }
