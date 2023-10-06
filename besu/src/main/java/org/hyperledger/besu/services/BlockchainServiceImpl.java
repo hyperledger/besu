@@ -15,6 +15,7 @@
 
 package org.hyperledger.besu.services;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.plugin.Unstable;
@@ -51,6 +52,11 @@ public class BlockchainServiceImpl implements BlockchainService {
     return blockchain
         .getBlockByNumber(number)
         .map(block -> blockContext(block::getHeader, block::getBody));
+  }
+
+  @Override
+  public BlockHeader getChainHead() {
+    return blockchain.getChainHead().getBlockHeader();
   }
 
   private static BlockContext blockContext(

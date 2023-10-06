@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStor
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateConfig;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -58,7 +59,7 @@ public class RollingImport {
             provider, null, cachedMerkleTrieLoader, new NoOpMetricsSystem(), null);
     final BonsaiWorldState bonsaiState =
         new BonsaiWorldState(
-            archive, new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()));
+            archive, new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()), new BonsaiWorldStateConfig());
     final SegmentedInMemoryKeyValueStorage worldStateStorage =
         (SegmentedInMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifiers(

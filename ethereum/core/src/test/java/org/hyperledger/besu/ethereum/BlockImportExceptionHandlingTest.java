@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateConfig;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -95,7 +96,7 @@ public class BlockImportExceptionHandlingTest {
       spy(
           new BonsaiWorldState(
               (BonsaiWorldStateProvider) worldStateArchive,
-              (BonsaiWorldStateKeyValueStorage) worldStateStorage));
+              (BonsaiWorldStateKeyValueStorage) worldStateStorage, new BonsaiWorldStateConfig()));
 
   private final BadBlockManager badBlockManager = new BadBlockManager();
 

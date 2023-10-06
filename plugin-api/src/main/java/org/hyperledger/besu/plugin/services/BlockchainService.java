@@ -16,6 +16,7 @@ package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.BlockContext;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.Optional;
 
@@ -29,4 +30,7 @@ public interface BlockchainService extends BesuService {
    * @return the BlockContext
    */
   Optional<BlockContext> getBlockByNumber(final long number);
+
+
+  BlockHeader getChainHead();
 }

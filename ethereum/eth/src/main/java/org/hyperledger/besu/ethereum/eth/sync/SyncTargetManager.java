@@ -28,6 +28,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,8 @@ import org.slf4j.LoggerFactory;
 public abstract class SyncTargetManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(SyncTargetManager.class);
+
+  private final AtomicBoolean cancelled = new AtomicBoolean(false);
 
   private final SynchronizerConfiguration config;
   private final ProtocolSchedule protocolSchedule;
@@ -56,6 +59,9 @@ public abstract class SyncTargetManager {
   }
 
   public CompletableFuture<SyncTarget> findSyncTarget() {
+    if(isCancelled()){
+      return completedFuture(null);
+    }
     return selectBestAvailableSyncTarget()
         .thenCompose(
             maybeBestPeer -> {
@@ -99,6 +105,10 @@ public abstract class SyncTargetManager {
             });
   }
 
+  public synchronized void cancel() {
+    cancelled.set(true);
+  }
+
   protected Optional<SyncTarget> finalizeSelectedSyncTarget(final SyncTarget syncTarget) {
     return Optional.of(syncTarget);
   }
@@ -115,5 +125,10 @@ public abstract class SyncTargetManager {
         .timeout(WaitForPeerTask.create(ethContext, metricsSystem), Duration.ofSeconds(5));
   }
 
+
+  private boolean isCancelled(){
+    return cancelled.get();
+
+  }
   public abstract boolean shouldContinueDownloading();
 }

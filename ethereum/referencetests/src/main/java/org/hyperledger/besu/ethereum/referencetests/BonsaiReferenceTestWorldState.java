@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogAddedEvent;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateConfig;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
@@ -54,7 +55,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
       final TrieLogManager trieLogManager,
       final BonsaiPreImageProxy preImageProxy) {
-    super(worldStateStorage, cachedMerkleTrieLoader, trieLogManager);
+    super(worldStateStorage, cachedMerkleTrieLoader, trieLogManager, new BonsaiWorldStateConfig());
     this.refTestStorage = worldStateStorage;
     this.preImageProxy = preImageProxy;
     setAccumulator(
