@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_HASH_COUNT;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE_BY_HASH;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
@@ -165,13 +164,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     } else {
       return getFlatDbStrategy().getFlatCode(codeHash, accountHash, composedWorldStateStorage);
     }
-  }
-
-  private long getCodeHashCount(final Bytes32 codeHash) {
-    return composedWorldStateStorage
-        .get(CODE_HASH_COUNT, codeHash.toArrayUnsafe())
-        .map(b -> Bytes.wrap(b).toLong())
-        .orElse(0L);
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
@@ -363,7 +355,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public interface BonsaiUpdater extends WorldStateStorage.Updater {
-    BonsaiUpdater removeCode(final Hash accountHash, Hash codeHash);
+    BonsaiUpdater removeCode(final Hash accountHash, final Hash codeHash);
 
     BonsaiUpdater removeAccountInfoState(final Hash accountHash);
 
