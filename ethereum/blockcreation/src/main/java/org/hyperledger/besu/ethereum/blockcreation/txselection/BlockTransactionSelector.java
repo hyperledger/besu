@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,7 +119,8 @@ public class BlockTransactionSelector {
             transactionPool);
     transactionSelectors = createTransactionSelectors(blockSelectionContext);
     externalTransactionSelectors =
-        transactionSelectorFactory.map(TransactionSelectorFactory::create).orElse(List.of());
+        createExternalTransactionSelectors(
+            transactionSelectorFactory.map(List::of).orElseGet(List::of));
   }
 
   /**
@@ -323,5 +325,12 @@ public class BlockTransactionSelector {
         new PriceTransactionSelector(context),
         new BlobPriceTransactionSelector(context),
         new ProcessingResultTransactionSelector(context));
+  }
+
+  private List<TransactionSelector> createExternalTransactionSelectors(
+      final List<TransactionSelectorFactory> transactionSelectorFactory) {
+    return transactionSelectorFactory.stream()
+        .map(TransactionSelectorFactory::create)
+        .collect(Collectors.toList());
   }
 }

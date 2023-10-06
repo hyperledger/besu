@@ -17,8 +17,6 @@ package org.hyperledger.besu.plugin.services.txselection;
 
 import org.hyperledger.besu.plugin.Unstable;
 
-import java.util.List;
-
 /** Interface for a factory that creates transaction selectors */
 @Unstable
 public interface TransactionSelectorFactory {
@@ -28,5 +26,5 @@ public interface TransactionSelectorFactory {
    *
    * @return the transaction selector list
    */
-  List<TransactionSelector> create();
+  TransactionSelector create();
 }
