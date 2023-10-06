@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.Status;
@@ -38,7 +39,7 @@ import org.slf4j.LoggerFactory;
 public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
   private static final Logger logger = LoggerFactory.getLogger(RocksDBTransaction.class);
   private static final String ERR_NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
-  private static final int DEFAULT_MAX_RETRIES = 3;
+  private static final int DEFAULT_MAX_RETRIES = 5;
 
   private final RocksDBMetrics metrics;
   private final Transaction innerTx;
@@ -143,10 +144,7 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
               retryLimit,
               ex.getStatus().getCodeString());
           try {
-            if (ex.getStatus().getSubCode().equals(Status.SubCode.Deadlock)) {
-              // deadlock detection returns immediately, backoff and wait if deadlock is detected
-              retryBackoff();
-            }
+            retryBackoff();
             retryAction.retry();
           } catch (RocksDBException ex2) {
             maybeRetryRocksDBAction(ex2, attemptNumber + 1, retryLimit, retryAction);
@@ -158,20 +156,25 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
     }
 
     long BASE_TIMEOUT = 1000; // Base timeout in milliseconds
-    long MAX_TIMEOUT = 10000; // Max timeout in milliseconds
+    long MAX_TIMEOUT = 30000; // Max timeout in milliseconds
     long DECAY_TIME = 5000; // Time in milliseconds after which the timeout decays
     AtomicLong timeout = new AtomicLong(BASE_TIMEOUT);
     AtomicLong lastCallTime = new AtomicLong(System.currentTimeMillis());
+
+    @VisibleForTesting
+    static void resetTimeout(final long timeoutVal) {
+      timeout.set(timeoutVal);
+    }
 
     static void retryBackoff() {
       try {
         long currentTime = System.currentTimeMillis();
         long delay = timeout.get();
-        // If the function hasn't been called for DECAY_TIME milliseconds, decay the timeout back to
-        // the base value
-        if (currentTime - lastCallTime.get() > DECAY_TIME) {
-          delay = BASE_TIMEOUT;
-          timeout.set(BASE_TIMEOUT);
+        // If no retries for DECAY_TIME milliseconds, decay the timeout towards base value
+        long callDiff = currentTime - lastCallTime.get();
+        if (callDiff > DECAY_TIME) {
+          delay = Math.max(BASE_TIMEOUT, delay - callDiff / 2);
+          timeout.set(delay);
         }
         TimeUnit.MILLISECONDS.sleep(delay);
         // Increase the timeout for the next call, up to the maximum

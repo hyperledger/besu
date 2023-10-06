@@ -56,6 +56,7 @@ public class RocksDBTransactionTest {
   @BeforeEach
   void setupTx() {
     tx = spy(new RocksDBTransaction(__ -> null, mockTransaction, mockOptions, mockMetrics));
+    RocksDBTransaction.RetryableRocksDBAction.resetTimeout(1);
   }
 
   @Test
