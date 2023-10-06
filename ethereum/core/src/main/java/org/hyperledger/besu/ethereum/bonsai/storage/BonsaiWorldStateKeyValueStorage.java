@@ -87,6 +87,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         provider.getStorageBySegmentIdentifiers(
             List.of(
                 ACCOUNT_INFO_STATE,
+                CODE_STORAGE,
                 CODE_STORAGE_BY_HASH,
                 ACCOUNT_STORAGE_STORAGE,
                 TRIE_BRANCH_STORAGE));
@@ -112,7 +113,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   private void loadFlatDbStrategy() {
     // derive our flatdb strategy from db or default:
     var newFlatDbMode = deriveFlatDbStrategy();
-    final boolean useLegacyCodeStorage = composedWorldStateStorage.hasValues(CODE_STORAGE);
+    final boolean useLegacyCodeStorage = isLegacyCodeStorageMode();
     // if  flatDbMode is not loaded or has changed, reload flatDbStrategy
     if (this.flatDbMode == null || !this.flatDbMode.equals(newFlatDbMode)) {
       this.flatDbMode = newFlatDbMode;
@@ -145,6 +146,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   public SegmentedKeyValueStorage getWorldStateStorage() {
     return composedWorldStateStorage;
+  }
+
+  public boolean isLegacyCodeStorageMode() {
+    return composedWorldStateStorage.hasValues(CODE_STORAGE);
   }
 
   @Override
