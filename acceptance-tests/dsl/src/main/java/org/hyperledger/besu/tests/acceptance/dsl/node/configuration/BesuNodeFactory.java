@@ -117,6 +117,7 @@ public class BesuNodeFactory {
             .name(name)
             .miningEnabled()
             .jsonRpcEnabled()
+            .jsonRpcTxPool()
             .webSocketEnabled()
             .extraCLIOptions(extraCliOptions);
     builder = configModifier.apply(builder);
@@ -545,6 +546,7 @@ public class BesuNodeFactory {
             .bootnodeEligible(false)
             .miningEnabled()
             .jsonRpcEnabled()
+            .jsonRpcTxPool()
             .engineRpcEnabled(true)
             .jsonRpcDebug()
             .build());

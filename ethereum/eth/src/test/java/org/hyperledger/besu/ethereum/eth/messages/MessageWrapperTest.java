@@ -52,14 +52,24 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
 public class MessageWrapperTest {
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
+  private static final SimpleModule module = new SimpleModule();
+
+  static {
+    module.addDeserializer(Transaction.class, new TransactionDeserializer());
+    objectMapper.registerModule(module);
+  }
 
   @Test
   public void GetBlockHeaders() throws IOException {
@@ -228,8 +238,7 @@ public class MessageWrapperTest {
         PooledTransactionsMessage.create(
             Arrays.asList(
                 objectMapper.treeToValue(
-                    testJson.get("data").get("PooledTransactionsPacket"),
-                    TestTransaction[].class)));
+                    testJson.get("data").get("PooledTransactionsPacket"), Transaction[].class)));
     final Bytes actual =
         pooledTransactionsMessage.wrapMessageData(BigInteger.valueOf(1111)).getData();
     assertThat(actual).isEqualTo(expected);
@@ -291,48 +300,46 @@ public class MessageWrapperTest {
         () -> BlockBody.readFrom(bytesValueRLPInput, new MainnetBlockHeaderFunctions()));
   }
 
-  private static class TestTransaction extends Transaction {
+  private static class TransactionDeserializer extends StdDeserializer<Transaction> {
+    protected TransactionDeserializer() {
+      this(null);
+    }
 
-    @JsonCreator
-    public TestTransaction(
-        @JsonProperty("nonce") final String nonce,
-        @JsonProperty("gasPrice") final String gasPrice,
-        @JsonProperty("gas") final String gasLimit,
-        @JsonProperty("to") final String to,
-        @JsonProperty("value") final String value,
-        @JsonProperty("input") final String data,
-        @JsonProperty("v") final String v,
-        @JsonProperty("r") final String r,
-        @JsonProperty("s") final String s,
-        @JsonProperty("hash") final String __) {
+    protected TransactionDeserializer(final Class<?> vc) {
+      super(vc);
+    }
 
-      super(
-          Bytes.fromHexStringLenient(nonce).toLong(),
-          Wei.fromHexString(gasPrice),
-          Long.decode(gasLimit),
-          Address.fromHexString(to),
-          Wei.fromHexString(value),
-          new SECP256K1()
-              .createSignature(
-                  new BigInteger(r.substring(2), 16),
-                  new BigInteger(s.substring(2), 16),
-                  recIdAndChainId(Byte.decode(v)).getKey()),
-          Bytes.fromHexString(data),
-          recIdAndChainId(Byte.decode(v)).getValue(),
-          Optional.empty(),
-          Optional.empty());
+    @Override
+    public Transaction deserialize(final JsonParser p, final DeserializationContext ctxt)
+        throws IOException {
+      JsonNode node = p.getCodec().readTree(p);
+      return new Transaction.Builder()
+          .nonce(Bytes.fromHexStringLenient(node.get("nonce").asText()).toLong())
+          .gasPrice(Wei.fromHexString(node.get("gasPrice").asText()))
+          .gasLimit(Long.decode(node.get("gas").asText()))
+          .to(Address.fromHexString(node.get("to").asText()))
+          .value(Wei.fromHexString(node.get("value").asText()))
+          .signature(
+              new SECP256K1()
+                  .createSignature(
+                      new BigInteger(node.get("r").asText().substring(2), 16),
+                      new BigInteger(node.get("s").asText().substring(2), 16),
+                      recIdAndChainId(Byte.decode(node.get("v").asText())).getKey()))
+          .payload(Bytes.fromHexString(node.get("input").asText()))
+          .chainId(recIdAndChainId(Byte.decode(node.get("v").asText())).getValue())
+          .build();
     }
   }
 
-  private static Map.Entry<Byte, Optional<BigInteger>> recIdAndChainId(final Byte vByte) {
+  private static Map.Entry<Byte, BigInteger> recIdAndChainId(final Byte vByte) {
     final BigInteger v = BigInteger.valueOf(vByte);
     final byte recId;
-    Optional<BigInteger> chainId = Optional.empty();
+    BigInteger chainId = null;
     if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
       recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
     } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
-      chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
-      recId = v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
+      chainId = v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO);
+      recId = v.subtract(TWO.multiply(chainId).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
     } else {
       throw new RuntimeException(
           String.format("An unsupported encoded `v` value of %s was found", v));
@@ -343,7 +350,7 @@ public class MessageWrapperTest {
   public static class TestBlockBody extends BlockBody {
     @JsonCreator
     public TestBlockBody(
-        @JsonProperty("Transactions") final List<TestTransaction> transactions,
+        @JsonProperty("Transactions") final List<Transaction> transactions,
         @JsonProperty("Uncles") final List<TestBlockHeader> uncles) {
       super(
           transactions.stream().collect(toUnmodifiableList()),

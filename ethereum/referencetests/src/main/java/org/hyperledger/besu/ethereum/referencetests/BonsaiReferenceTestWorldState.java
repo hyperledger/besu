@@ -75,6 +75,23 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
         layerCopy, cachedMerkleTrieLoader, trieLogManager, preImageProxy);
   }
 
+  /**
+   * If the supplied header has a non-zero state root, verify. Else we assume that stateroot is an
+   * output instead of an input for this reference test and we bypass the state root check.
+   *
+   * <p>Besu reference-test style test cases should supply a stateroot to verify to prevent bonsai
+   * regressions.
+   *
+   * @param calculatedStateRoot state root calculated during bonsai persist step.
+   * @param header supplied reference test block header.
+   */
+  @Override
+  protected void verifyWorldStateRoot(final Hash calculatedStateRoot, final BlockHeader header) {
+    if (!header.getStateRoot().equals(Hash.ZERO)) {
+      super.verifyWorldStateRoot(calculatedStateRoot, header);
+    }
+  }
+
   @JsonCreator
   public static BonsaiReferenceTestWorldState create(
       final Map<String, ReferenceTestWorldState.AccountMock> accounts) {

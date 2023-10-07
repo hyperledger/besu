@@ -156,7 +156,8 @@ public class BesuEventsImplTest {
             new NoOpMetricsSystem(),
             syncState,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
-            txPoolConfig);
+            txPoolConfig,
+            null);
 
     serviceImpl = new BesuEventsImpl(blockchain, blockBroadcaster, transactionPool, syncState);
   }

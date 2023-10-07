@@ -58,7 +58,7 @@ import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.NavigableMap;
-import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Joiner;
@@ -133,6 +133,12 @@ public class EvmToolCommand implements Runnable {
       paramLabel = "<address>",
       description = "Receiving address for this invocation.")
   private final Address receiver = Address.fromHexString("0x00");
+
+  @Option(
+      names = {"--coinbase"},
+      paramLabel = "<address>",
+      description = "Coinbase for this invocation.")
+  private final Address coinbase = Address.fromHexString("0x00");
 
   @Option(
       names = {"--input"},
@@ -317,7 +323,7 @@ public class EvmToolCommand implements Runnable {
       final BlockHeader blockHeader =
           BlockHeaderBuilder.create()
               .parentHash(Hash.EMPTY)
-              .coinbase(Address.ZERO)
+              .coinbase(coinbase)
               .difficulty(Difficulty.ONE)
               .number(1)
               .gasLimit(5000)
@@ -338,17 +344,15 @@ public class EvmToolCommand implements Runnable {
       final ProtocolSpec protocolSpec =
           component.getProtocolSpec().apply(BlockHeaderBuilder.createDefault().buildBlockHeader());
       final Transaction tx =
-          new Transaction(
-              0,
-              Wei.ZERO,
-              Long.MAX_VALUE,
-              Optional.ofNullable(receiver),
-              Wei.ZERO,
-              null,
-              callData,
-              sender,
-              Optional.empty(),
-              Optional.empty());
+          new Transaction.Builder()
+              .nonce(0)
+              .gasPrice(Wei.ZERO)
+              .gasLimit(Long.MAX_VALUE)
+              .to(receiver)
+              .value(Wei.ZERO)
+              .payload(callData)
+              .sender(sender)
+              .build();
 
       final long intrinsicGasCost =
           protocolSpec
@@ -399,6 +403,10 @@ public class EvmToolCommand implements Runnable {
                 .completer(c -> {})
                 .miningBeneficiary(blockHeader.getCoinbase())
                 .blockHashLookup(new CachingBlockHashLookup(blockHeader, component.getBlockchain()))
+                .accessListWarmAddresses(
+                    EvmSpecVersion.SHANGHAI.compareTo(evm.getEvmVersion()) <= 0
+                        ? Set.of(coinbase)
+                        : Set.of())
                 .build();
         Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
 

@@ -21,6 +21,7 @@ import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.services.BesuService;
 import org.hyperledger.besu.plugin.services.PluginVersionsProvider;
+import org.hyperledger.besu.util.log.FramedLogMessage;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -104,6 +105,9 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
    * @param pluginsDir the plugins dir
    */
   public void registerPlugins(final Path pluginsDir) {
+    final List<String> lines = new ArrayList<>();
+    lines.add("plugins dir " + pluginsDir.toAbsolutePath());
+    lines.add("");
     checkState(
         state == Lifecycle.UNINITIALIZED,
         "Besu plugins have already been registered.  Cannot register additional plugins.");
@@ -120,6 +124,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
       try {
         plugin.register(this);
         LOG.info("Registered plugin of type {}.", plugin.getClass().getName());
+        lines.add(String.format("SUCCESS %s", plugin.getClass().getSimpleName()));
         addPluginVersion(plugin);
       } catch (final Exception e) {
         LOG.error(
@@ -127,12 +132,16 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
                 + plugin.getClass().getName()
                 + ", start and stop will not be called.",
             e);
+        lines.add(String.format("ERROR %s", plugin.getClass().getSimpleName()));
         continue;
       }
       plugins.add(plugin);
     }
 
     LOG.debug("Plugin registration complete.");
+    lines.add("");
+    lines.add("TOTAL = " + plugins.size());
+    LOG.debug(FramedLogMessage.generate(lines));
 
     state = Lifecycle.REGISTERED;
   }
@@ -259,7 +268,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
 
   private Optional<ClassLoader> pluginDirectoryLoader(final Path pluginsDir) {
     if (pluginsDir != null && pluginsDir.toFile().isDirectory()) {
-      LOG.debug("Searching for plugins in {}", pluginsDir.toAbsolutePath().toString());
+      LOG.debug("Searching for plugins in {}", pluginsDir.toAbsolutePath());
 
       try (final Stream<Path> pluginFilesList = Files.list(pluginsDir)) {
         final URL[] pluginJarURLs =

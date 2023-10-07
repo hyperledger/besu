@@ -26,7 +26,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
-import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionSelectionResults;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -341,7 +341,8 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             ethContext,
             mock(MiningParameters.class),
             new TransactionPoolMetrics(metricsSystem),
-            poolConf);
+            poolConf,
+            null);
     transactionPool.setEnabled();
 
     return transactionPool;

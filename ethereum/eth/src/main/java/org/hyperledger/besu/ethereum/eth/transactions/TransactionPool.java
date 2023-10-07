@@ -42,6 +42,8 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidator;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.io.BufferedReader;
@@ -60,7 +62,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -88,6 +92,7 @@ public class TransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
   private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
   private final Supplier<PendingTransactions> pendingTransactionsSupplier;
+  private final PluginTransactionValidator pluginTransactionValidator;
   private volatile PendingTransactions pendingTransactions;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
@@ -101,6 +106,8 @@ public class TransactionPool implements BlockAddedObserver {
       new PendingTransactionsListenersProxy();
   private volatile OptionalLong subscribeConnectId = OptionalLong.empty();
   private final SaveRestoreManager saveRestoreManager = new SaveRestoreManager();
+  private final Lock blockAddedLock = new ReentrantLock();
+  private final Queue<BlockAddedEvent> blockAddedQueue = new ConcurrentLinkedQueue<>();
 
   public TransactionPool(
       final Supplier<PendingTransactions> pendingTransactionsSupplier,
@@ -110,7 +117,8 @@ public class TransactionPool implements BlockAddedObserver {
       final EthContext ethContext,
       final MiningParameters miningParameters,
       final TransactionPoolMetrics metrics,
-      final TransactionPoolConfiguration configuration) {
+      final TransactionPoolConfiguration configuration,
+      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory) {
     this.pendingTransactionsSupplier = pendingTransactionsSupplier;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -119,6 +127,10 @@ public class TransactionPool implements BlockAddedObserver {
     this.miningParameters = miningParameters;
     this.metrics = metrics;
     this.configuration = configuration;
+    this.pluginTransactionValidator =
+        pluginTransactionValidatorFactory == null
+            ? null
+            : pluginTransactionValidatorFactory.create();
     initLogForReplay();
   }
 
@@ -313,16 +325,47 @@ public class TransactionPool implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     if (isPoolEnabled.get()) {
-      LOG.trace("Block added event {}", event);
+      final long started = System.currentTimeMillis();
       if (event.getEventType().equals(BlockAddedEvent.EventType.HEAD_ADVANCED)
           || event.getEventType().equals(BlockAddedEvent.EventType.CHAIN_REORG)) {
 
-        pendingTransactions.manageBlockAdded(
-            event.getBlock().getHeader(),
-            event.getAddedTransactions(),
-            event.getRemovedTransactions(),
-            protocolSchedule.getByBlockHeader(event.getBlock().getHeader()).getFeeMarket());
-        reAddTransactions(event.getRemovedTransactions());
+        // add the event to the processing queue
+        blockAddedQueue.add(event);
+
+        // we want to process the added block asynchronously,
+        // but at the same time we must ensure that blocks are processed in order one at time
+        ethContext
+            .getScheduler()
+            .scheduleServiceTask(
+                () -> {
+                  while (!blockAddedQueue.isEmpty()) {
+                    if (blockAddedLock.tryLock()) {
+                      // no other thread is processing the queue, so start processing it
+                      try {
+                        BlockAddedEvent e = blockAddedQueue.poll();
+                        // check again since another thread could have stolen our task
+                        if (e != null) {
+                          pendingTransactions.manageBlockAdded(
+                              e.getBlock().getHeader(),
+                              e.getAddedTransactions(),
+                              e.getRemovedTransactions(),
+                              protocolSchedule
+                                  .getByBlockHeader(e.getBlock().getHeader())
+                                  .getFeeMarket());
+                          reAddTransactions(e.getRemovedTransactions());
+                          LOG.atDebug()
+                              .setMessage("Block added event {} processed in {}ms")
+                              .addArgument(e)
+                              .addArgument(() -> System.currentTimeMillis() - started)
+                              .log();
+                        }
+                      } finally {
+                        blockAddedLock.unlock();
+                      }
+                    }
+                  }
+                  return null;
+                });
       }
     }
   }
@@ -409,7 +452,7 @@ public class TransactionPool implements BlockAddedObserver {
     }
 
     if (isLocal
-        && strictReplayProtectionShouldBeEnforceLocally(chainHeadBlockHeader)
+        && strictReplayProtectionShouldBeEnforcedLocally(chainHeadBlockHeader)
         && transaction.getChainId().isEmpty()) {
       // Strict replay protection is enabled but the tx is not replay-protected
       return ValidationResultAndAccount.invalid(
@@ -426,6 +469,18 @@ public class TransactionPool implements BlockAddedObserver {
       return ValidationResultAndAccount.invalid(
           TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
           "EIP-1559 transaction are not allowed yet");
+    } else if (transaction.getType().equals(TransactionType.BLOB)
+        && transaction.getBlobsWithCommitments().isEmpty()) {
+      return ValidationResultAndAccount.invalid(
+          TransactionInvalidReason.INVALID_BLOBS, "Blob transaction must have at least one blob");
+    }
+
+    // Call the transaction validator plugin if one is available
+    if (pluginTransactionValidator != null
+        && !pluginTransactionValidator.validateTransaction(transaction)) {
+      return ValidationResultAndAccount.invalid(
+          TransactionInvalidReason.PLUGIN_TX_VALIDATOR_INVALIDATED,
+          "Plugin transaction vaildator returned false");
     }
 
     try (final var worldState =
@@ -477,7 +532,7 @@ public class TransactionPool implements BlockAddedObserver {
     return null;
   }
 
-  private boolean strictReplayProtectionShouldBeEnforceLocally(
+  private boolean strictReplayProtectionShouldBeEnforcedLocally(
       final BlockHeader chainHeadBlockHeader) {
     return configuration.getStrictTransactionReplayProtectionEnabled()
         && protocolSchedule.getChainId().isPresent()

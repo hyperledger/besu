@@ -23,10 +23,10 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.REPLACED;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOB_PRICE_BELOW_CURRENT_MIN;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_FULL;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.CURRENT_TX_PRICE_BELOW_MIN;
-import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.DATA_PRICE_BELOW_CURRENT_MIN;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_GAS;
 import static org.mockito.Mockito.mock;
@@ -67,6 +67,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   protected static final int MAX_TRANSACTIONS = 5;
   protected static final int MAX_CAPACITY_BYTES = 10_000;
+  protected static final Wei DEFAULT_BASE_FEE = Wei.of(100);
   protected static final int LIMITED_TRANSACTIONS_BY_SENDER = 4;
   protected static final String REMOTE = "remote";
   protected static final String LOCAL = "local";
@@ -96,7 +97,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   private static BlockHeader mockBlockHeader() {
     final BlockHeader blockHeader = mock(BlockHeader.class);
-    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.of(100)));
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(DEFAULT_BASE_FEE));
     return blockHeader;
   }
 
@@ -301,8 +302,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final List<Transaction> parsedTransactions = new ArrayList<>();
     pendingTransactions.selectTransactions(
-        transaction -> {
-          parsedTransactions.add(transaction);
+        pendingTX -> {
+          parsedTransactions.add(pendingTX.getTransaction());
           return selectionResult;
         });
 
@@ -321,8 +322,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final List<Transaction> parsedTransactions = new ArrayList<>();
     pendingTransactions.selectTransactions(
-        transaction -> {
-          parsedTransactions.add(transaction);
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
           return SELECTED;
         });
 
@@ -341,8 +342,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final List<Transaction> parsedTransactions = new ArrayList<>();
     pendingTransactions.selectTransactions(
-        transaction -> {
-          parsedTransactions.add(transaction);
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
           return SELECTED;
         });
 
@@ -362,8 +363,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final List<Transaction> iterationOrder = new ArrayList<>(3);
     pendingTransactions.selectTransactions(
-        transaction -> {
-          iterationOrder.add(transaction);
+        pendingTx -> {
+          iterationOrder.add(pendingTx.getTransaction());
           return SELECTED;
         });
 
@@ -374,10 +375,10 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   @MethodSource
   public void ignoreSenderTransactionsAfterASkippedOne(
       final TransactionSelectionResult skipSelectionResult) {
-    final Transaction transaction0a = createTransaction(0, Wei.of(20), KEYS1);
-    final Transaction transaction1a = createTransaction(1, Wei.of(20), KEYS1);
-    final Transaction transaction2a = createTransaction(2, Wei.of(20), KEYS1);
-    final Transaction transaction0b = createTransaction(0, Wei.of(10), KEYS2);
+    final Transaction transaction0a = createTransaction(0, DEFAULT_BASE_FEE.add(Wei.of(20)), KEYS1);
+    final Transaction transaction1a = createTransaction(1, DEFAULT_BASE_FEE.add(Wei.of(20)), KEYS1);
+    final Transaction transaction2a = createTransaction(2, DEFAULT_BASE_FEE.add(Wei.of(20)), KEYS1);
+    final Transaction transaction0b = createTransaction(0, DEFAULT_BASE_FEE.add(Wei.of(10)), KEYS2);
 
     pendingTransactions.addLocalTransaction(transaction0a, Optional.empty());
     pendingTransactions.addLocalTransaction(transaction1a, Optional.empty());
@@ -386,10 +387,10 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final List<Transaction> iterationOrder = new ArrayList<>(3);
     pendingTransactions.selectTransactions(
-        transaction -> {
-          iterationOrder.add(transaction);
+        pendingTx -> {
+          iterationOrder.add(pendingTx.getTransaction());
           // pretending that the 2nd tx of the 1st sender is not selected
-          return transaction.getNonce() == 1 ? skipSelectionResult : SELECTED;
+          return pendingTx.getNonce() == 1 ? skipSelectionResult : SELECTED;
         });
 
     // the 3rd tx of the 1st must not be processed, since the 2nd is skipped
@@ -400,7 +401,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   static Stream<TransactionSelectionResult> ignoreSenderTransactionsAfterASkippedOne() {
     return Stream.of(
         CURRENT_TX_PRICE_BELOW_MIN,
-        DATA_PRICE_BELOW_CURRENT_MIN,
+        BLOB_PRICE_BELOW_CURRENT_MIN,
         TX_TOO_LARGE_FOR_REMAINING_GAS,
         TransactionSelectionResult.invalidTransient(GAS_PRICE_BELOW_CURRENT_BASE_FEE.name()),
         TransactionSelectionResult.invalid(UPFRONT_COST_EXCEEDS_BALANCE.name()));
@@ -411,7 +412,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     final Account sender2 = mock(Account.class);
     when(sender2.getNonce()).thenReturn(1L);
 
-    final Transaction transactionSender1 = createTransaction(0, Wei.of(10), KEYS1);
+    final Transaction transactionSender1 = createTransaction(0, Wei.of(100), KEYS1);
     final Transaction transactionSender2 = createTransaction(1, Wei.of(200), KEYS2);
 
     pendingTransactions.addLocalTransaction(transactionSender1, Optional.empty());
@@ -419,8 +420,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final List<Transaction> iterationOrder = new ArrayList<>(2);
     pendingTransactions.selectTransactions(
-        transaction -> {
-          iterationOrder.add(transaction);
+        pendingTx -> {
+          iterationOrder.add(pendingTx.getTransaction());
           return SELECTED;
         });
 
@@ -434,8 +435,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final List<Transaction> parsedTransactions = new ArrayList<>(1);
     pendingTransactions.selectTransactions(
-        transaction -> {
-          parsedTransactions.add(transaction);
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
           return TransactionSelectionResult.invalid(UPFRONT_COST_EXCEEDS_BALANCE.name());
         });
 
@@ -454,8 +455,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final List<Transaction> parsedTransactions = new ArrayList<>(1);
     pendingTransactions.selectTransactions(
-        transaction -> {
-          parsedTransactions.add(transaction);
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
           return TransactionSelectionResult.invalidTransient(
               GAS_PRICE_BELOW_CURRENT_BASE_FEE.name());
         });
@@ -473,9 +474,9 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   @Test
   public void replaceTransactionWithSameSenderAndNonce() {
-    final Transaction transaction1 = createTransaction(0, Wei.of(20), KEYS1);
+    final Transaction transaction1 = createTransaction(0, Wei.of(200), KEYS1);
     final Transaction transaction1b = createTransactionReplacement(transaction1, KEYS1);
-    final Transaction transaction2 = createTransaction(1, Wei.of(10), KEYS1);
+    final Transaction transaction2 = createTransaction(1, Wei.of(100), KEYS1);
     assertThat(pendingTransactions.addRemoteTransaction(transaction1, Optional.empty()))
         .isEqualTo(ADDED);
     assertThat(pendingTransactions.addRemoteTransaction(transaction2, Optional.empty()))
@@ -499,14 +500,14 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   public void replaceTransactionWithSameSenderAndNonce_multipleReplacements() {
     final int replacedTxCount = 5;
     final List<Transaction> replacedTransactions = new ArrayList<>(replacedTxCount);
-    Transaction duplicateTx = createTransaction(0, Wei.of(50), KEYS1);
+    Transaction duplicateTx = createTransaction(0, DEFAULT_BASE_FEE.add(Wei.of(50)), KEYS1);
     for (int i = 0; i < replacedTxCount; i++) {
       replacedTransactions.add(duplicateTx);
       pendingTransactions.addRemoteTransaction(duplicateTx, Optional.empty());
       duplicateTx = createTransactionReplacement(duplicateTx, KEYS1);
     }
 
-    final Transaction independentTx = createTransaction(1, Wei.ONE, KEYS1);
+    final Transaction independentTx = createTransaction(1, DEFAULT_BASE_FEE.add(Wei.ONE), KEYS1);
     assertThat(pendingTransactions.addRemoteTransaction(independentTx, Optional.empty()))
         .isEqualTo(ADDED);
     assertThat(
