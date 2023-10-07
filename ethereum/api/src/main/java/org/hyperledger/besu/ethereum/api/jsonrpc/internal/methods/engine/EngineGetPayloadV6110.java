@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,6 +89,22 @@ public class EngineGetPayloadV6110 extends AbstractEngineGetPayload {
       LOG.error(
           "configuration error, can't call V6110 endpoint with non-default protocol schedule");
       return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INTERNAL_ERROR);
+    }
+  }
+
+  @Override
+  protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
+    if (protocolSchedule.isPresent()) {
+      if (eip6110.isPresent() && blockTimestamp >= eip6110.get().milestone()) {
+        return ValidationResult.valid();
+      } else {
+        return ValidationResult.invalid(
+            RpcErrorType.UNSUPPORTED_FORK,
+            "EIP-6110 configured to start at timestamp: " + eip6110.get().milestone());
+      }
+    } else {
+      return ValidationResult.invalid(
+          RpcErrorType.UNSUPPORTED_FORK, "Configuration error, no schedule for EIP-6110 fork set");
     }
   }
 }
