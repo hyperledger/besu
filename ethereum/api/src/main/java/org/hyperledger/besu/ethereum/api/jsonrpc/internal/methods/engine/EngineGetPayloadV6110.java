@@ -27,11 +27,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFac
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
-import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
