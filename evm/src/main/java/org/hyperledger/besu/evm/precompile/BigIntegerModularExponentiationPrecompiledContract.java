@@ -203,7 +203,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
     if (offset > input.size() || length == 0) {
       return BigInteger.ZERO;
     }
-    final byte[] raw = Arrays.copyOfRange(input.toArray(), offset, offset + length);
+    final byte[] raw = Arrays.copyOfRange(input.toArrayUnsafe(), offset, offset + length);
     return new BigInteger(1, raw);
   }
 
