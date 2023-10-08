@@ -211,7 +211,8 @@ public class EvmToyCommand implements Runnable {
           }
           if (messageFrame.getRevertReason().isPresent()) {
             out.println(
-                new String(messageFrame.getRevertReason().get().toArrayUnsafe(), StandardCharsets.UTF_8));
+                new String(
+                    messageFrame.getRevertReason().get().toArrayUnsafe(), StandardCharsets.UTF_8));
           }
         }
         if (messageFrameStack.isEmpty()) {
