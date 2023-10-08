@@ -264,4 +264,22 @@ public class TrieLogLayer implements TrieLog {
         .append(storage)
         .toHashCode();
   }
+
+  @Override
+  public String toString() {
+    return "TrieLogLayer{"
+        + "blockHash="
+        + blockHash
+        + ", blockNumber="
+        + blockNumber
+        + ", accounts="
+        + accounts
+        + ", code="
+        + code
+        + ", storage="
+        + storage
+        + ", frozen="
+        + frozen
+        + '}';
+  }
 }

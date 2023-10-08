@@ -95,6 +95,11 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
     }
   }
 
+  @Override
+  public boolean deleteTrieLogLayer(final Hash blockHash) {
+    return rootWorldStateStorage.deleteTrieLog(blockHash);
+  }
+
   @VisibleForTesting
   TrieLog prepareTrieLog(
       final BlockHeader blockHeader, final BonsaiWorldStateUpdateAccumulator localUpdater) {

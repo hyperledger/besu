@@ -335,6 +335,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     throw new RuntimeException("Bonsai Tries do not work with pruning.");
   }
 
+  public boolean deleteTrieLog(final Hash blockHash) {
+    return trieLogStorage.tryDelete(blockHash.toArrayUnsafe());
+  }
+
   @Override
   public long addNodeAddedListener(final NodesAddedListener listener) {
     throw new RuntimeException("addNodeAddedListener not available");

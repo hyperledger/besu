@@ -36,7 +36,8 @@ import picocli.CommandLine.Spec;
       GenerateBlockchainConfig.class,
       GenerateLogBloomCache.class,
       BackupState.class,
-      RestoreState.class
+      RestoreState.class,
+      TrieLogSubCommand.class
     })
 public class OperatorSubCommand implements Runnable {
 

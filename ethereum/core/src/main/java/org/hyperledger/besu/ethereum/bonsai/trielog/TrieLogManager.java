@@ -33,6 +33,8 @@ public interface TrieLogManager {
       final BlockHeader forBlockHeader,
       final BonsaiWorldState forWorldState);
 
+  boolean deleteTrieLogLayer(final Hash blockHash);
+
   void addCachedLayer(
       BlockHeader blockHeader, Hash worldStateRootHash, BonsaiWorldState forWorldState);
 

@@ -141,6 +141,11 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     }
 
     @Override
+    public boolean deleteTrieLogLayer(final Hash blockHash) {
+      return false;
+    }
+
+    @Override
     public void addCachedLayer(
         final BlockHeader blockHeader,
         final Hash worldStateRootHash,
