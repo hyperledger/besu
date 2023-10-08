@@ -21,11 +21,17 @@ import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
@@ -38,7 +44,7 @@ import picocli.CommandLine.ParentCommand;
     description = "Manipulate trie logs",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class,
-    subcommands = {TrieLogSubCommand.DeleteTrieLog.class})
+    subcommands = {TrieLogSubCommand.DeleteTrieLog.class, TrieLogSubCommand.ListTrieLog.class})
 public class TrieLogSubCommand implements Runnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(TrieLogSubCommand.class);
@@ -139,6 +145,58 @@ public class TrieLogSubCommand implements Runnable {
         //      boolean success =
         // trieLogStorage.tryDelete((Bytes.fromHexString(parentCommand.targetBlockHash.toString()).toArrayUnsafe()));
         LOG.atInfo().setMessage("success? {}").addArgument(success).log();
+      } else {
+        LOG.info("Subcommand only works with Bonsai");
+      }
+    }
+  }
+
+  @Command(
+      name = "list",
+      description = "This command lists all the trie logs",
+      mixinStandardHelpOptions = true,
+      versionProvider = VersionProvider.class)
+  static class ListTrieLog implements Runnable {
+    private static final Logger LOG = LoggerFactory.getLogger(TrieLogSubCommand.ListTrieLog.class);
+
+    @SuppressWarnings("unused")
+    @ParentCommand
+    private TrieLogSubCommand parentCommand;
+
+    private BesuController besuController;
+
+    @Override
+    public void run() {
+      checkNotNull(parentCommand);
+
+      besuController = parentCommand.createBesuController();
+
+      WorldStateArchive worldStateArchive =
+          besuController.getProtocolContext().getWorldStateArchive();
+      final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
+
+      if (worldStateArchive instanceof BonsaiWorldStateProvider) {
+        final KeyValueStorage trieLogStorage =
+            besuController
+                .getStorageProvider()
+                .getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+        trieLogStorage
+            .streamKeys()
+            .map(Bytes32::wrap)
+            .map(Bytes::toHexString)
+            .map(Hash::fromHexString)
+            .forEach(
+                hash ->
+                    LOG.atInfo()
+                        .setMessage("trieLog for hash {} block: {}")
+                        .addArgument(hash)
+                        .addArgument(
+                            blockchain
+                                .getBlockHeader(hash)
+                                .map(BlockHeader::getNumber)
+                                .map(String::valueOf)
+                                .orElse(""))
+                        .log());
       } else {
         LOG.info("Subcommand only works with Bonsai");
       }
