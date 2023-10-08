@@ -25,7 +25,6 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.nativelib.arithmetic.LibArithmetic;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
@@ -200,13 +199,14 @@ public class BigIntegerModularExponentiationPrecompiledContract
    * @return the big integer
    */
   public static BigInteger extractParameter(final Bytes input, final int offset, final int length) {
-    if (offset > input.size() || length == 0) {
+    if (offset >= input.size() || length == 0) {
       return BigInteger.ZERO;
-    }
-    if (offset + length < input.size()) {
+    } else if (offset + length < input.size()) {
       return new BigInteger(1, input.slice(offset, length).toArray());
     } else {
-      final byte[] raw = Arrays.copyOfRange(input.toArrayUnsafe(), offset, offset + length);
+      byte[] raw = new byte[length];
+      Bytes partial = input.slice(offset);
+      System.arraycopy(partial.toArray(), 0, raw, 0, partial.size());
       return new BigInteger(1, raw);
     }
   }
