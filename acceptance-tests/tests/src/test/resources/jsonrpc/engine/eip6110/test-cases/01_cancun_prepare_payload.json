@@ -1,7 +1,7 @@
 {
   "request": {
     "jsonrpc": "2.0",
-    "method": "engine_forkchoiceUpdatedV2",
+    "method": "engine_forkchoiceUpdatedV3",
     "params": [
       {
         "headBlockHash": "0x26118cf71453320edcebbc4ebb34af5b578087a32385b80108bf691fa23efc42",

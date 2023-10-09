@@ -19,7 +19,6 @@ import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -32,23 +31,10 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class EngineGetPayloadV6110 extends AbstractEngineGetPayload {
 
-  private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadV6110.class);
   private final Optional<ScheduledProtocolSpec.Hardfork> eip6110;
-
-  public EngineGetPayloadV6110(
-      final Vertx vertx,
-      final ProtocolContext protocolContext,
-      final MergeMiningCoordinator mergeMiningCoordinator,
-      final BlockResultFactory blockResultFactory,
-      final EngineCallListener engineCallListener) {
-    super(vertx, protocolContext, mergeMiningCoordinator, blockResultFactory, engineCallListener);
-    this.eip6110 = Optional.empty();
-  }
 
   public EngineGetPayloadV6110(
       final Vertx vertx,
@@ -57,7 +43,13 @@ public class EngineGetPayloadV6110 extends AbstractEngineGetPayload {
       final BlockResultFactory blockResultFactory,
       final EngineCallListener engineCallListener,
       final ProtocolSchedule schedule) {
-    super(vertx, protocolContext, mergeMiningCoordinator, blockResultFactory, engineCallListener);
+    super(
+        vertx,
+        schedule,
+        protocolContext,
+        mergeMiningCoordinator,
+        blockResultFactory,
+        engineCallListener);
     this.eip6110 = schedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("ExperimentalEips"));
   }
 
@@ -72,24 +64,9 @@ public class EngineGetPayloadV6110 extends AbstractEngineGetPayload {
       final PayloadIdentifier payloadId,
       final BlockWithReceipts blockWithReceipts) {
 
-    try {
-      long builtAt = blockWithReceipts.getHeader().getTimestamp();
-
-      if (eip6110.isPresent() && builtAt >= eip6110.get().milestone()) {
-        return new JsonRpcSuccessResponse(
-            request.getRequest().getId(),
-            blockResultFactory.payloadTransactionCompleteV6110(blockWithReceipts));
-      } else {
-        LOG.error("Timestamp of the built payload is less than EIP-6110 activation timestamp");
-        return new JsonRpcErrorResponse(
-            request.getRequest().getId(), RpcErrorType.UNSUPPORTED_FORK);
-      }
-
-    } catch (ClassCastException e) {
-      LOG.error(
-          "configuration error, can't call V6110 endpoint with non-default protocol schedule");
-      return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INTERNAL_ERROR);
-    }
+    return new JsonRpcSuccessResponse(
+        request.getRequest().getId(),
+        blockResultFactory.payloadTransactionCompleteV6110(blockWithReceipts));
   }
 
   @Override

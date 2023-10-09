@@ -1,12 +1,12 @@
 {
   "request": {
     "jsonrpc": "2.0",
-    "method": "engine_forkchoiceUpdatedV2",
+    "method": "engine_forkchoiceUpdatedV3",
     "params": [
       {
-        "headBlockHash": "0xb9203a1bb9ed08e8160522c78039f4b83c7c932012fc3068db7dc9be537f1673",
-        "safeBlockHash": "0xb9203a1bb9ed08e8160522c78039f4b83c7c932012fc3068db7dc9be537f1673",
-        "finalizedBlockHash": "0xb9203a1bb9ed08e8160522c78039f4b83c7c932012fc3068db7dc9be537f1673"
+        "headBlockHash": "0x17da7aea0f4e4ba1d905dbb7d60f6ab4133f3009ae1a1ba99e6e9cb37c15412c",
+        "safeBlockHash": "0x17da7aea0f4e4ba1d905dbb7d60f6ab4133f3009ae1a1ba99e6e9cb37c15412c",
+        "finalizedBlockHash": "0x17da7aea0f4e4ba1d905dbb7d60f6ab4133f3009ae1a1ba99e6e9cb37c15412c"
       },
       null
     ],
@@ -18,7 +18,7 @@
     "result": {
       "payloadStatus": {
         "status": "VALID",
-        "latestValidHash": "0xb9203a1bb9ed08e8160522c78039f4b83c7c932012fc3068db7dc9be537f1673",
+        "latestValidHash": "0x17da7aea0f4e4ba1d905dbb7d60f6ab4133f3009ae1a1ba99e6e9cb37c15412c",
         "validationError": null
       },
       "payloadId": null
