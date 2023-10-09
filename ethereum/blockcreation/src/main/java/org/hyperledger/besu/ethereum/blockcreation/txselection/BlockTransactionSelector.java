@@ -234,8 +234,7 @@ public class BlockTransactionSelector {
     final long blobGasUsed =
         blockSelectionContext.gasCalculator().blobGasCost(transaction.getBlobCount());
 
-    transactionSelectionResults.updateSelected(
-        transaction, receipt, gasUsedByTransaction, blobGasUsed);
+    updateTransactionSelected(pendingTransaction, receipt, gasUsedByTransaction, blobGasUsed);
 
     LOG.atTrace()
         .setMessage("Selected {} for block creation")
@@ -243,6 +242,19 @@ public class BlockTransactionSelector {
         .log();
 
     return TransactionSelectionResult.SELECTED;
+  }
+
+  private void updateTransactionSelected(
+      final PendingTransaction pendingTransaction,
+      final TransactionReceipt receipt,
+      final long gasUsedByTransaction,
+      final long blobGasUsed) {
+
+    transactionSelectionResults.updateSelected(
+        pendingTransaction.getTransaction(), receipt, gasUsedByTransaction, blobGasUsed);
+
+    // notify external selector if any
+    externalTransactionSelector.onTransactionSelected(pendingTransaction);
   }
 
   /**
