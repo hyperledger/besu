@@ -145,8 +145,7 @@ public class BlockTransactionSelector {
             pendingTransaction -> {
               final var res = evaluateTransaction(pendingTransaction);
               if (!res.selected()) {
-                transactionSelectionResults.updateNotSelected(
-                    pendingTransaction.getTransaction(), res);
+                updateTransactionRejected(pendingTransaction, res);
               }
               return res;
             });
@@ -169,9 +168,10 @@ public class BlockTransactionSelector {
   public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
     transactions.forEach(
         transaction -> {
-          final var res = evaluateTransaction(new PendingTransaction.Local(transaction));
+          var pendingTransaction = new PendingTransaction.Local(transaction);
+          final var res = evaluateTransaction(pendingTransaction);
           if (!res.selected()) {
-            transactionSelectionResults.updateNotSelected(transaction, res);
+            updateTransactionRejected(pendingTransaction, res);
           }
         });
     return transactionSelectionResults;
@@ -255,6 +255,17 @@ public class BlockTransactionSelector {
 
     // notify external selector if any
     externalTransactionSelector.onTransactionSelected(pendingTransaction);
+  }
+
+  private void updateTransactionRejected(
+      final PendingTransaction pendingTransaction,
+      final TransactionSelectionResult processingResult) {
+
+    transactionSelectionResults.updateNotSelected(
+        pendingTransaction.getTransaction(), processingResult);
+
+    // notify external selector if any
+    externalTransactionSelector.onTransactionRejected(pendingTransaction);
   }
 
   /**
