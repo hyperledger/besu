@@ -139,7 +139,7 @@ public interface Words {
     long ay = Math.abs(b);
     if (((ax | ay) >>> 31 != 0)
         && (((b != 0) && (r / b != a)) || (a == Long.MIN_VALUE && b == -1))) {
-       // out of bounds, clamp it!
+      // out of bounds, clamp it!
       return ((a ^ b) < 0) ? Long.MIN_VALUE : Long.MAX_VALUE;
     } else {
       return r;
