@@ -14,9 +14,8 @@
  */
 package org.hyperledger.besu.cli.subcommands.operator;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
-
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.datatypes.Hash;
@@ -27,18 +26,23 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
-
-import java.io.PrintWriter;
-import java.util.Optional;
-
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
+
+import java.io.PrintWriter;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
+import static org.hyperledger.besu.ethereum.bonsai.trielog.AbstractTrieLogManager.LOG_RANGE_LIMIT;
 
 /** The Trie Log subcommand. */
 @Command(
@@ -59,8 +63,22 @@ public class TrieLogSubCommand implements Runnable {
       names = "--block",
       paramLabel = MANDATORY_LONG_FORMAT_HELP,
       description = "The block",
-      arity = "1..1")
+      arity = "0..1")
   private String targetBlockHash = "";
+
+  @Option(
+      names = {"--from", "--from-block-number"},
+      paramLabel = MANDATORY_LONG_FORMAT_HELP,
+      description = "Start of the block number range",
+      arity = "0..1")
+  private Long fromBlockNumber;
+
+  @Option(
+      names = {"--to", "--to-block-number"},
+      paramLabel = MANDATORY_LONG_FORMAT_HELP,
+      description = "End of the block number range",
+      arity = "0..1")
+  private Long toBlockNumber;
 
   @ParentCommand private OperatorSubCommand parentCommand;
 
@@ -122,6 +140,15 @@ public class TrieLogSubCommand implements Runnable {
     return parentCommand.parentCommand.buildController();
   }
 
+  private Stream<Long> rangeAsStream(final long fromBlockNumber, final long toBlockNumber) {
+    if (Math.abs(toBlockNumber - fromBlockNumber) > LOG_RANGE_LIMIT) {
+      throw new IllegalArgumentException("Requested Range too large");
+    }
+    long left = Math.min(fromBlockNumber, toBlockNumber);
+    long right = Math.max(fromBlockNumber, toBlockNumber);
+    return LongStream.range(left, right).boxed();
+  }
+
   @Command(
       name = "delete",
       description = "This command deletes the trie log stored under the specified block.",
@@ -146,15 +173,41 @@ public class TrieLogSubCommand implements Runnable {
       checkNotNull(parentCommand);
 
       besuController = parentCommand.createBesuController();
+      final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
 
       WorldStateArchive worldStateArchive =
           besuController.getProtocolContext().getWorldStateArchive();
 
       if (worldStateArchive instanceof BonsaiWorldStateProvider) {
-        boolean success =
-            ((BonsaiWorldStateProvider) worldStateArchive)
-                .getTrieLogManager()
-                .deleteTrieLogLayer(Hash.fromHexString(parentCommand.targetBlockHash.toString()));
+        final String targetBlockHash = parentCommand.targetBlockHash;
+        final Long fromBlockNumber = parentCommand.fromBlockNumber;
+        final Long toBlockNumber = parentCommand.toBlockNumber;
+
+        boolean success = false;
+        if (!targetBlockHash.isEmpty()) {
+          success =
+              ((BonsaiWorldStateProvider) worldStateArchive)
+                  .getTrieLogManager()
+                  .deleteTrieLogLayer(Hash.fromHexString(targetBlockHash));
+        } else if (fromBlockNumber != null && toBlockNumber != null) {
+
+          final Stream<Hash> toDelete =
+              parentCommand
+                  .rangeAsStream(fromBlockNumber, toBlockNumber)
+                  .map(blockchain::getBlockHeader)
+                  .flatMap(Optional::stream)
+                  .map(BlockHeader::getHash);
+
+          success =
+              toDelete.allMatch(
+                  h ->
+                      ((BonsaiWorldStateProvider) worldStateArchive)
+                          .getTrieLogManager()
+                          .deleteTrieLogLayer(h));
+
+        } else {
+          out.println("Please specify either --block or --fromBlockNumber and --toBlockNumber");
+        }
 
         //      KeyValueStorage trieLogStorage =
         // besuController.getStorageProvider().getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
@@ -206,11 +259,27 @@ public class TrieLogSubCommand implements Runnable {
             "                    block hash (key)                               | block number");
         out.println(
             "___________________________________________________________________|__________________");
+
+        Predicate<Hash> rangeFilter = (_ignore) -> true;
+        if (parentCommand.fromBlockNumber != null && parentCommand.toBlockNumber != null) {
+
+          final List<Hash> blockHashRange =
+              parentCommand
+                  .rangeAsStream(parentCommand.fromBlockNumber, parentCommand.toBlockNumber)
+                  .map(blockchain::getBlockHeader)
+                  .flatMap(Optional::stream)
+                  .map(BlockHeader::getHash)
+                  .toList();
+
+          rangeFilter = blockHashRange::contains;
+        }
+
         trieLogStorage
             .streamKeys()
             .map(Bytes32::wrap)
             .map(Bytes::toHexString)
             .map(Hash::fromHexString)
+            .filter(rangeFilter)
             .forEach(
                 hash ->
                     out.printf(
@@ -218,8 +287,18 @@ public class TrieLogSubCommand implements Runnable {
                         hash,
                         blockchain
                             .getBlockHeader(hash)
-                            .map(BlockHeader::getNumber)
-                            .map(String::valueOf)
+                            .map(
+                                (header) -> {
+                                  long number = header.getNumber();
+                                  final Optional<BlockHeader> headerByNumber =
+                                      blockchain.getBlockHeader(number);
+                                  if (headerByNumber.isPresent()
+                                      && headerByNumber.get().getHash().equals(hash)) {
+                                    return String.valueOf(number);
+                                  } else {
+                                    return "fork of " + number;
+                                  }
+                                })
                             .orElse("not in blockchain")));
       } else {
         out.println("Subcommand only works with Bonsai");
