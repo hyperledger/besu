@@ -59,7 +59,9 @@ public class RollingImport {
             provider, null, cachedMerkleTrieLoader, new NoOpMetricsSystem(), null);
     final BonsaiWorldState bonsaiState =
         new BonsaiWorldState(
-            archive, new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()), new BonsaiWorldStateConfig());
+            archive,
+            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
+            new BonsaiWorldStateConfig());
     final SegmentedInMemoryKeyValueStorage worldStateStorage =
         (SegmentedInMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifiers(

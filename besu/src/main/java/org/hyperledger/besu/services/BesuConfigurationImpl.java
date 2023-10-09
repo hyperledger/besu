@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.services;
 
-import jnr.ffi.annotations.In;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 
 import java.nio.file.Path;
@@ -22,8 +21,6 @@ import java.util.Optional;
 
 /** A concrete implementation of BesuConfiguration which is used in Besu plugin framework. */
 public class BesuConfigurationImpl implements BesuConfiguration {
-
-
 
   private final Path storagePath;
   private final Path dataPath;
@@ -38,7 +35,11 @@ public class BesuConfigurationImpl implements BesuConfiguration {
     this.dataPath = dataPath;
   }
 
-  public BesuConfigurationImpl(final String rpcHttpHost, final int rpcHttpPort, final Path storagePath, final Path dataPath) {
+  public BesuConfigurationImpl(
+      final String rpcHttpHost,
+      final int rpcHttpPort,
+      final Path storagePath,
+      final Path dataPath) {
     this.rpcHttpHost = Optional.of(rpcHttpHost);
     this.rpcHttpPort = Optional.of(rpcHttpPort);
     this.storagePath = storagePath;

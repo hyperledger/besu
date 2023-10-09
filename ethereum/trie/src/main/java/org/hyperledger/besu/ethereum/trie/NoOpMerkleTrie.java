@@ -14,26 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.trie.patricia.DefaultNodeFactory;
-
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toUnmodifiableSet;
-import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * A noop {@link MerkleTrie}.
@@ -42,9 +33,7 @@ import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
  */
 public class NoOpMerkleTrie<K extends Bytes, V> implements MerkleTrie<K, V> {
 
-
-  public NoOpMerkleTrie() {
-  }
+  public NoOpMerkleTrie() {}
 
   @Override
   public Optional<V> get(final K key) {
@@ -63,27 +52,27 @@ public class NoOpMerkleTrie<K extends Bytes, V> implements MerkleTrie<K, V> {
 
   @Override
   public void put(final K key, final V value) {
-    //noop
+    // noop
   }
 
   @Override
   public void putPath(final K path, final V value) {
-    //noop
+    // noop
   }
 
   @Override
   public void put(final K key, final PathNodeVisitor<V> putVisitor) {
-    //noop
+    // noop
   }
 
   @Override
   public void remove(final K key) {
-    //noop
+    // noop
   }
 
   @Override
   public void removePath(final K path, final PathNodeVisitor<V> removeVisitor) {
-    //noop
+    // noop
   }
 
   @Override
@@ -118,7 +107,7 @@ public class NoOpMerkleTrie<K extends Bytes, V> implements MerkleTrie<K, V> {
 
   @Override
   public void visitAll(final Consumer<Node<V>> nodeConsumer) {
-    //noop
+    // noop
   }
 
   @Override
@@ -129,6 +118,6 @@ public class NoOpMerkleTrie<K extends Bytes, V> implements MerkleTrie<K, V> {
 
   @Override
   public void visitLeafs(final TrieIterator.LeafHandler<V> handler) {
-    //nopop
+    // nopop
   }
 }

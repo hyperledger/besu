@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.bonsai.cache;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
@@ -46,6 +45,7 @@ import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,12 +74,12 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
   }
 
   public CachedWorldStorageManager(
-          final BonsaiWorldStateProvider archive,
-          final Blockchain blockchain,
-          final BonsaiWorldStateKeyValueStorage worldStateStorage,
-          final ObservableMetricsSystem metricsSystem,
-          final long maxLayersToLoad,
-          final Supplier<BonsaiWorldStateConfig> defaultBonsaiWorldStateConfigSupplier,
+      final BonsaiWorldStateProvider archive,
+      final Blockchain blockchain,
+      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final ObservableMetricsSystem metricsSystem,
+      final long maxLayersToLoad,
+      final Supplier<BonsaiWorldStateConfig> defaultBonsaiWorldStateConfigSupplier,
       final BesuContext pluginContext) {
     this(
         archive,
@@ -87,7 +87,7 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
         worldStateStorage,
         maxLayersToLoad,
         new ConcurrentHashMap<>(),
-            defaultBonsaiWorldStateConfigSupplier,
+        defaultBonsaiWorldStateConfigSupplier,
         pluginContext,
         metricsSystem);
   }
@@ -148,7 +148,9 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
           .map(
               cached ->
                   new BonsaiWorldState(
-                      archive, new BonsaiWorldStateLayerStorage(cached.getWorldStateStorage()), defaultBonsaiWorldStateConfigSupplier.get()));
+                      archive,
+                      new BonsaiWorldStateLayerStorage(cached.getWorldStateStorage()),
+                      defaultBonsaiWorldStateConfigSupplier.get()));
     }
     LOG.atDebug()
         .setMessage("did not find worldstate in cache for {}")
@@ -188,7 +190,9 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
         .map(
             storage ->
                 new BonsaiWorldState( // wrap the state in a layered worldstate
-                    archive, new BonsaiWorldStateLayerStorage(storage), defaultBonsaiWorldStateConfigSupplier.get()));
+                    archive,
+                    new BonsaiWorldStateLayerStorage(storage),
+                    defaultBonsaiWorldStateConfigSupplier.get()));
   }
 
   @Override
@@ -206,7 +210,8 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
               addCachedLayer(
                   blockHeader,
                   blockHeader.getStateRoot(),
-                  new BonsaiWorldState(archive, rootWorldStateStorage, defaultBonsaiWorldStateConfigSupplier.get()));
+                  new BonsaiWorldState(
+                      archive, rootWorldStateStorage, defaultBonsaiWorldStateConfigSupplier.get()));
               return getWorldState(blockHeader.getHash());
             });
   }
@@ -228,6 +233,11 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
 
   @Override
   public void onClearTrieLog() {
+    this.cachedWorldStatesByHash.clear();
+  }
+
+  @Override
+  public void onClearTrie() {
     this.cachedWorldStatesByHash.clear();
   }
 
@@ -272,16 +282,19 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
       @Override
       public Optional<Bytes> getRawTrieLogLayer(final long blockNumber) {
         return CachedWorldStorageManager.this
-                .blockchain
-                .getBlockHeader(blockNumber)
-                .map(BlockHeader::getHash)
-                .flatMap(this::getRawTrieLogLayer);
+            .blockchain
+            .getBlockHeader(blockNumber)
+            .map(BlockHeader::getHash)
+            .flatMap(this::getRawTrieLogLayer);
       }
 
       @Override
       public void saveRawTrieLogLayer(final Hash blockHash, final Bytes trieLog) {
-        final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = rootWorldStateStorage.updater();
-        updater.getTrieLogStorageTransaction().put(blockHash.toArrayUnsafe(), trieLog.toArrayUnsafe());
+        final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater =
+            rootWorldStateStorage.updater();
+        updater
+            .getTrieLogStorageTransaction()
+            .put(blockHash.toArrayUnsafe(), trieLog.toArrayUnsafe());
         updater.commit();
       }
 

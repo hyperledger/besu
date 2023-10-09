@@ -96,7 +96,8 @@ public class BlockImportExceptionHandlingTest {
       spy(
           new BonsaiWorldState(
               (BonsaiWorldStateProvider) worldStateArchive,
-              (BonsaiWorldStateKeyValueStorage) worldStateStorage, new BonsaiWorldStateConfig()));
+              (BonsaiWorldStateKeyValueStorage) worldStateStorage,
+              new BonsaiWorldStateConfig()));
 
   private final BadBlockManager badBlockManager = new BadBlockManager();
 

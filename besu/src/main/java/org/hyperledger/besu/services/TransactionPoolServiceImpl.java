@@ -5,19 +5,19 @@ import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolServi
 
 public class TransactionPoolServiceImpl implements TransactionPoolService {
 
-    private final TransactionPool transactionPool;
+  private final TransactionPool transactionPool;
 
-    public TransactionPoolServiceImpl(final TransactionPool transactionPool) {
-        this.transactionPool = transactionPool;
-    }
+  public TransactionPoolServiceImpl(final TransactionPool transactionPool) {
+    this.transactionPool = transactionPool;
+  }
 
-    @Override
-    public void disableTransactionPool(){
-        transactionPool.setDisabled();
-    }
+  @Override
+  public void disableTransactionPool() {
+    transactionPool.setDisabled();
+  }
 
-    @Override
-    public void enableTransactionPool(){
-        transactionPool.setEnabled();
-    }
+  @Override
+  public void enableTransactionPool() {
+    transactionPool.setEnabled();
+  }
 }

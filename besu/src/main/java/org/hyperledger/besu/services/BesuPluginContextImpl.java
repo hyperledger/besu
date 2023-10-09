@@ -214,10 +214,10 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
 
   public void afterExternalServicesMainLoop() {
     checkState(
-            state == Lifecycle.BEFORE_MAIN_LOOP_FINISHED,
-            "BesuContext should be in state %s but it was in %s",
-            Lifecycle.BEFORE_MAIN_LOOP_FINISHED,
-            state);
+        state == Lifecycle.BEFORE_MAIN_LOOP_FINISHED,
+        "BesuContext should be in state %s but it was in %s",
+        Lifecycle.BEFORE_MAIN_LOOP_FINISHED,
+        state);
     final Iterator<BesuPlugin> pluginsIterator = plugins.iterator();
 
     while (pluginsIterator.hasNext()) {

@@ -26,12 +26,13 @@ public class SynchronizationServiceImpl implements SynchronizationService {
 
   private final SyncState syncState;
   private final BonsaiWorldStateProvider
-          worldStateArchive; // TODO check bonsai activated for this plugin
+      worldStateArchive; // TODO check bonsai activated for this plugin
 
   public SynchronizationServiceImpl(
-          final ProtocolContext protocolContext,
-          final ProtocolSchedule protocolSchedule,
-          final SyncState syncState, final WorldStateArchive worldStateArchive) {
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final SyncState syncState,
+      final WorldStateArchive worldStateArchive) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.syncState = syncState;
@@ -46,32 +47,40 @@ public class SynchronizationServiceImpl implements SynchronizationService {
   @Override
   public boolean setHead(final BlockHeader blockHeader, final BlockBody blockBody) {
     final BlockImporter blockImporter =
-            protocolSchedule.getByBlockHeader((org.hyperledger.besu.ethereum.core.BlockHeader) blockHeader).getBlockImporter();
+        protocolSchedule
+            .getByBlockHeader((org.hyperledger.besu.ethereum.core.BlockHeader) blockHeader)
+            .getBlockImporter();
     return blockImporter
-            .importBlock(
-                    protocolContext, new Block((org.hyperledger.besu.ethereum.core.BlockHeader) blockHeader, (org.hyperledger.besu.ethereum.core.BlockBody) blockBody), HeaderValidationMode.SKIP_DETACHED)
-            .isImported();
+        .importBlock(
+            protocolContext,
+            new Block(
+                (org.hyperledger.besu.ethereum.core.BlockHeader) blockHeader,
+                (org.hyperledger.besu.ethereum.core.BlockBody) blockBody),
+            HeaderValidationMode.SKIP_DETACHED)
+        .isImported();
   }
 
   @Override
   public boolean setHeadUnsafe(final BlockHeader blockHeader, final BlockBody blockBody) {
     final org.hyperledger.besu.ethereum.core.BlockHeader coreHeader =
-            (org.hyperledger.besu.ethereum.core.BlockHeader)blockHeader;
+        (org.hyperledger.besu.ethereum.core.BlockHeader) blockHeader;
     final org.hyperledger.besu.ethereum.core.BlockBody coreBody =
-            (org.hyperledger.besu.ethereum.core.BlockBody)blockBody;
+        (org.hyperledger.besu.ethereum.core.BlockBody) blockBody;
 
     // move blockchain
-    protocolContext.getBlockchain().appendBlock(new Block(coreHeader,coreBody), Collections.emptyList());
+    protocolContext
+        .getBlockchain()
+        .appendBlock(new Block(coreHeader, coreBody), Collections.emptyList());
 
-    final Optional<MutableWorldState> worldState =
-            worldStateArchive.getMutable(coreHeader, true);
+    final Optional<MutableWorldState> worldState = worldStateArchive.getMutable(coreHeader, true);
     return worldState.isPresent();
   }
 
   @Override
-  public boolean isInitialSyncPhaseDone(){
+  public boolean isInitialSyncPhaseDone() {
     return syncState.isInitialSyncPhaseDone();
   }
+
   @Override
   public void startSynchronizer() {
     protocolContext.getSynchronizer().ifPresent(Synchronizer::start);
@@ -79,13 +88,16 @@ public class SynchronizationServiceImpl implements SynchronizationService {
 
   @Override
   public void stopSynchronizer() {
-    System.out.println(protocolContext.getSynchronizer());
     protocolContext.getSynchronizer().ifPresent(Synchronizer::stop);
   }
 
   @Override
   public void setWorldStateConfiguration(final WorldStateConfiguration worldStateConfiguration) {
-    worldStateArchive.getDefaultBonsaiWorldStateConfig().setTrieDisabled(worldStateConfiguration.isTrieDisabled());
+    worldStateArchive
+        .getDefaultBonsaiWorldStateConfig()
+        .setTrieDisabled(worldStateConfiguration.isTrieDisabled());
+    if (worldStateConfiguration.isTrieDisabled()) {
+      worldStateArchive.disableTrie();
+    }
   }
-
 }

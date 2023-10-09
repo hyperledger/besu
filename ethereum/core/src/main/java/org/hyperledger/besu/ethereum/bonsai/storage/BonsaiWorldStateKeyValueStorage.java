@@ -317,6 +317,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   @Override
+  public void clearTrie() {
+    subscribers.forEach(BonsaiStorageSubscriber::onClearTrie);
+    composedWorldStateStorage.clear(TRIE_BRANCH_STORAGE);
+  }
+
+  @Override
   public void clearFlatDatabase() {
     subscribers.forEach(BonsaiStorageSubscriber::onClearFlatDatabaseStorage);
     getFlatDbStrategy().resetOnResync(composedWorldStateStorage);
@@ -545,6 +551,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     default void onClearFlatDatabaseStorage() {}
 
     default void onClearTrieLog() {}
+
+    default void onClearTrie() {}
 
     default void onCloseStorage() {}
   }

@@ -115,6 +115,12 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
+  public void clearTrie() {
+    throw new RuntimeException(
+        "Direct deletion of the trie in the forest is not possible as it could potentially damage the node");
+  }
+
+  @Override
   public void clearFlatDatabase() {
     // nothing to do for forest
   }

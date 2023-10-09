@@ -4,6 +4,7 @@ import org.hyperledger.besu.plugin.services.BesuService;
 
 public interface P2PService extends BesuService {
 
-    void enableDiscovery();
-    void disableDiscovery();
+  void enableDiscovery();
+
+  void disableDiscovery();
 }

@@ -79,15 +79,21 @@ public class BonsaiWorldState
   Hash worldStateBlockHash;
 
   public BonsaiWorldState(
-          final BonsaiWorldStateProvider archive,
-          final BonsaiWorldStateKeyValueStorage worldStateStorage, final BonsaiWorldStateConfig bonsaiWorldStateConfig) {
-    this(worldStateStorage, archive.getCachedMerkleTrieLoader(), archive.getTrieLogManager(), bonsaiWorldStateConfig);
+      final BonsaiWorldStateProvider archive,
+      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final BonsaiWorldStateConfig bonsaiWorldStateConfig) {
+    this(
+        worldStateStorage,
+        archive.getCachedMerkleTrieLoader(),
+        archive.getTrieLogManager(),
+        bonsaiWorldStateConfig);
   }
 
   protected BonsaiWorldState(
-          final BonsaiWorldStateKeyValueStorage worldStateStorage,
-          final CachedMerkleTrieLoader cachedMerkleTrieLoader,
-          final TrieLogManager trieLogManager, final BonsaiWorldStateConfig bonsaiWorldStateConfig) {
+      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final CachedMerkleTrieLoader cachedMerkleTrieLoader,
+      final TrieLogManager trieLogManager,
+      final BonsaiWorldStateConfig bonsaiWorldStateConfig) {
     this.worldStateStorage = worldStateStorage;
     this.worldStateRootHash =
         Hash.wrap(
@@ -388,12 +394,15 @@ public class BonsaiWorldState
 
     try {
       final Hash newWorldStateRootHash =
-          calculateRootHash(bonsaiWorldStateConfig.isFrozen() ? Optional.empty() : Optional.of(stateUpdater), accumulator);
+          calculateRootHash(
+              bonsaiWorldStateConfig.isFrozen() ? Optional.empty() : Optional.of(stateUpdater),
+              accumulator);
       // if we are persisted with a block header, and the prior state is the parent
       // then persist the TrieLog for that transition.
       // If specified but not a direct descendant simply store the new block hash.
       if (blockHeader != null) {
-        if (!bonsaiWorldStateConfig.isTrieDisabled() && !newWorldStateRootHash.equals(blockHeader.getStateRoot())) {
+        if (!bonsaiWorldStateConfig.isTrieDisabled()
+            && !newWorldStateRootHash.equals(blockHeader.getStateRoot())) {
           throw new RuntimeException(
               "World State Root does not match expected value, header "
                   + blockHeader.getStateRoot().toHexString()
@@ -593,13 +602,12 @@ public class BonsaiWorldState
     return this;
   }
 
-  private MerkleTrie<Bytes, Bytes> createTrie(
-      final NodeLoader nodeLoader, final Bytes32 rootHash) {
-    if(bonsaiWorldStateConfig.isTrieDisabled()){
+  private MerkleTrie<Bytes, Bytes> createTrie(final NodeLoader nodeLoader, final Bytes32 rootHash) {
+    if (bonsaiWorldStateConfig.isTrieDisabled()) {
       return new NoOpMerkleTrie<>();
     } else {
       return new StoredMerklePatriciaTrie<>(
-              nodeLoader, rootHash, Function.identity(), Function.identity());
+          nodeLoader, rootHash, Function.identity(), Function.identity());
     }
   }
 

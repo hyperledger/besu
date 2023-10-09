@@ -166,20 +166,20 @@ import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.PluginTransactionValidatorService;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
-import org.hyperledger.besu.plugin.services.p2p.P2PService;
-import org.hyperledger.besu.plugin.services.rlp.RlpConverterService;
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
-import org.hyperledger.besu.plugin.services.sync.SynchronizationService;
 import org.hyperledger.besu.plugin.services.TraceService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.p2p.P2PService;
+import org.hyperledger.besu.plugin.services.rlp.RlpConverterService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
+import org.hyperledger.besu.plugin.services.sync.SynchronizationService;
 import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolService;
 import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
@@ -1709,22 +1709,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     besuPluginContext.addService(
         SynchronizationService.class,
-        new SynchronizationServiceImpl(besuController.getProtocolContext(),
+        new SynchronizationServiceImpl(
+            besuController.getProtocolContext(),
             besuController.getProtocolSchedule(),
-                besuController.getSyncState(), besuController.getProtocolContext().getWorldStateArchive()));
+            besuController.getSyncState(),
+            besuController.getProtocolContext().getWorldStateArchive()));
+
+    besuPluginContext.addService(P2PService.class, new P2PServiceImpl(runner.getP2PNetwork()));
 
     besuPluginContext.addService(
-            P2PService.class,
-            new P2PServiceImpl(runner.getP2PNetwork()));
+        TransactionPoolService.class,
+        new TransactionPoolServiceImpl(besuController.getTransactionPool()));
 
     besuPluginContext.addService(
-            TransactionPoolService.class,
-            new TransactionPoolServiceImpl(besuController.getTransactionPool()));
-
-    besuPluginContext.addService(
-            RlpConverterService.class,
-            new RlpConverterServiceImpl(
-                    besuController.getProtocolSchedule()));
+        RlpConverterService.class,
+        new RlpConverterServiceImpl(besuController.getProtocolSchedule()));
 
     besuPluginContext.addService(
         TraceService.class,
@@ -3395,12 +3394,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     @Override
     public Optional<String> getRpcHttpHost() {
-      return jsonRPCHttpOptionGroup.isRpcHttpEnabled?Optional.of(jsonRPCHttpOptionGroup.rpcHttpHost):Optional.empty();
+      return jsonRPCHttpOptionGroup.isRpcHttpEnabled
+          ? Optional.of(jsonRPCHttpOptionGroup.rpcHttpHost)
+          : Optional.empty();
     }
 
     @Override
     public Optional<Integer> getRpcHttpPort() {
-      return jsonRPCHttpOptionGroup.isRpcHttpEnabled?Optional.of(jsonRPCHttpOptionGroup.rpcHttpPort):Optional.empty();
+      return jsonRPCHttpOptionGroup.isRpcHttpEnabled
+          ? Optional.of(jsonRPCHttpOptionGroup.rpcHttpPort)
+          : Optional.empty();
     }
 
     @Override

@@ -59,7 +59,7 @@ public abstract class SyncTargetManager {
   }
 
   public CompletableFuture<SyncTarget> findSyncTarget() {
-    if(isCancelled()){
+    if (isCancelled()) {
       return completedFuture(null);
     }
     return selectBestAvailableSyncTarget()
@@ -125,10 +125,9 @@ public abstract class SyncTargetManager {
         .timeout(WaitForPeerTask.create(ethContext, metricsSystem), Duration.ofSeconds(5));
   }
 
-
-  private boolean isCancelled(){
+  private boolean isCancelled() {
     return cancelled.get();
-
   }
+
   public abstract boolean shouldContinueDownloading();
 }

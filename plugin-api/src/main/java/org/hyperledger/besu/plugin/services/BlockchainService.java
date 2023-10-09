@@ -31,6 +31,5 @@ public interface BlockchainService extends BesuService {
    */
   Optional<BlockContext> getBlockByNumber(final long number);
 
-
   BlockHeader getChainHead();
 }

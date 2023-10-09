@@ -12,7 +12,6 @@ public interface SynchronizationService extends BesuService {
 
   boolean setHeadUnsafe(BlockHeader blockHeader, BlockBody blockBody);
 
-
   boolean isInitialSyncPhaseDone();
 
   void startSynchronizer();
@@ -20,5 +19,4 @@ public interface SynchronizationService extends BesuService {
   void stopSynchronizer();
 
   void setWorldStateConfiguration(final WorldStateConfiguration worldStateConfiguration);
-
 }

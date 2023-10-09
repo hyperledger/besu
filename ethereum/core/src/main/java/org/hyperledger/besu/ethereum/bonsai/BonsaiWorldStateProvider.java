@@ -102,13 +102,14 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
             worldStateStorage,
             metricsSystem,
             maxLayersToLoad.orElse(RETAINED_LAYERS),
-                this::cloneBonsaiWorldStateConfig,
+            this::cloneBonsaiWorldStateConfig,
             pluginContext);
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;
     this.defaultBonsaiWorldStateConfig = new BonsaiWorldStateConfig();
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
-    this.persistedState = new BonsaiWorldState(this, worldStateStorage, defaultBonsaiWorldStateConfig);
+    this.persistedState =
+        new BonsaiWorldState(this, worldStateStorage, defaultBonsaiWorldStateConfig);
     blockchain
         .getBlockHeader(persistedState.getWorldStateBlockHash())
         .ifPresent(
@@ -127,7 +128,8 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;
     this.defaultBonsaiWorldStateConfig = new BonsaiWorldStateConfig();
-    this.persistedState = new BonsaiWorldState(this, worldStateStorage, defaultBonsaiWorldStateConfig);
+    this.persistedState =
+        new BonsaiWorldState(this, worldStateStorage, defaultBonsaiWorldStateConfig);
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
     blockchain
         .getBlockHeader(persistedState.getWorldStateBlockHash())
@@ -360,6 +362,11 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     return defaultBonsaiWorldStateConfig;
   }
 
+  public void disableTrie() {
+    defaultBonsaiWorldStateConfig.setTrieDisabled(true);
+    worldStateStorage.clearTrie();
+  }
+
   public TrieLogManager getTrieLogManager() {
     return trieLogManager;
   }
@@ -406,7 +413,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     }
   }
 
-  private BonsaiWorldStateConfig cloneBonsaiWorldStateConfig(){
+  private BonsaiWorldStateConfig cloneBonsaiWorldStateConfig() {
     return new BonsaiWorldStateConfig(defaultBonsaiWorldStateConfig);
   }
 }

@@ -211,6 +211,15 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
+  public void onClearTrie() {
+    try {
+      doClose();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
   protected synchronized void doClose() throws Exception {
     if (!isClosedGet()) {
       // alert any subscribers we are closing:
