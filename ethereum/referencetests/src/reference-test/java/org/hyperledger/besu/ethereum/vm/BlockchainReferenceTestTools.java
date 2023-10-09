@@ -87,7 +87,7 @@ public class BlockchainReferenceTestTools {
     params.ignore("blockWithAllTransactionTypes");
 
     // EIP-4788 is still in flux and the current fill is not against the final address
-    params.ignore("[Cancun]");
+    params.ignore("\\[Cancun\\]");
 
     // EOF tests are written against an older version of the spec
     params.ignore("/stEOF/");

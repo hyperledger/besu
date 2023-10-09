@@ -76,25 +76,23 @@ public class SimpleWorld implements WorldUpdater {
 
   @Override
   public MutableAccount getAccount(final Address address) {
-    if (accounts.containsKey(address)) {
-      return accounts.get(address);
+    SimpleAccount account = accounts.get(address);
+    if (account != null) {
+      return account;
     }
-    if (parent == null) {
-      return null;
+    Account parentAccount = parent == null ? null : parent.getAccount(address);
+    if (parentAccount != null) {
+      account =
+          new SimpleAccount(
+              parentAccount,
+              parentAccount.getAddress(),
+              parentAccount.getNonce(),
+              parentAccount.getBalance(),
+              parentAccount.getCode());
+      accounts.put(address, account);
+      return account;
     }
-    Account parentAccount = parent.getAccount(address);
-    if (parentAccount == null) {
-      return null;
-    }
-    SimpleAccount account =
-        new SimpleAccount(
-            parentAccount,
-            parentAccount.getAddress(),
-            parentAccount.getNonce(),
-            parentAccount.getBalance(),
-            parentAccount.getCode());
-    accounts.put(address, account);
-    return account;
+    return null;
   }
 
   @Override
@@ -124,8 +122,8 @@ public class SimpleWorld implements WorldUpdater {
   public void commit() {
     accounts.forEach(
         (address, account) -> {
-          if (!account.commit()) {
-            accounts.put(address, account);
+          if (!account.updateParent()) {
+            parent.accounts.put(address, account);
           }
         });
   }

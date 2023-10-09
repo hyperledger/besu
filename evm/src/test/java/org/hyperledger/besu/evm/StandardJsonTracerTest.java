@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.fluent.EVMExecutor;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 
 import java.io.ByteArrayOutputStream;
@@ -37,7 +36,7 @@ class StandardJsonTracerTest {
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     PrintStream out = new PrintStream(baos);
-    var executor = EVMExecutor.istanbul(EvmConfiguration.DEFAULT);
+    var executor = EVMExecutor.evm(EvmSpecVersion.ISTANBUL);
     StandardJsonTracer tracer = new StandardJsonTracer(out, true, true, true, false);
     executor.tracer(tracer);
     executor.gas(10_000_000_000L);
@@ -82,7 +81,7 @@ class StandardJsonTracerTest {
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     PrintStream out = new PrintStream(baos);
-    var executor = EVMExecutor.istanbul(EvmConfiguration.DEFAULT);
+    var executor = EVMExecutor.evm(EvmSpecVersion.ISTANBUL);
     StandardJsonTracer tracer = new StandardJsonTracer(out, false, false, false, true);
     executor.tracer(tracer);
     executor.gas(10_000_000_000L);
