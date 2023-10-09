@@ -51,8 +51,8 @@ public class StackTrie {
   private final AtomicInteger nbSegments;
   private final int maxSegments;
   private final Bytes32 startKeyHash;
-  private final Map<Bytes32, TaskElement> elements;
-  private final AtomicLong elementsCount;
+  private Map<Bytes32, TaskElement> elements;
+  private AtomicLong elementsCount;
 
   public StackTrie(final Hash rootHash, final Bytes32 startKeyHash) {
     this(rootHash, 1, 1, startKeyHash);
@@ -76,6 +76,11 @@ public class StackTrie {
     this.elementsCount.addAndGet(keys.size());
     this.elements.put(
         taskIdentifier, ImmutableTaskElement.builder().proofs(proofs).keys(keys).build());
+  }
+
+  public void removeElement(final Bytes32 taskIdentifier) {
+    ;
+    this.elementsCount.addAndGet(-this.elements.remove(taskIdentifier).keys().size());
   }
 
   public TaskElement getElement(final Bytes32 taskIdentifier) {
@@ -140,6 +145,11 @@ public class StackTrie {
             }
           }));
     }
+  }
+
+  public void clear() {
+    this.elements = new LinkedHashMap<>();
+    this.elementsCount = new AtomicLong();
   }
 
   public boolean addSegment() {

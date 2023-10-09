@@ -14,10 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
+import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.canRetryOnError;
+
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.services.tasks.Task;
 
 import java.util.List;
@@ -43,41 +46,51 @@ public class PersistDataStep {
   }
 
   public List<Task<SnapDataRequest>> persist(final List<Task<SnapDataRequest>> tasks) {
-    final WorldStateStorage.Updater updater = worldStateStorage.updater();
-    for (Task<SnapDataRequest> task : tasks) {
-      if (task.getData().isResponseReceived()) {
-        // enqueue child requests
-        final Stream<SnapDataRequest> childRequests =
-            task.getData().getChildRequests(downloadState, worldStateStorage, snapSyncState);
-        if (!(task.getData() instanceof TrieNodeHealingRequest)) {
-          enqueueChildren(childRequests);
-        } else {
-          if (!task.getData().isExpired(snapSyncState)) {
+    try {
+      final WorldStateStorage.Updater updater = worldStateStorage.updater();
+      for (Task<SnapDataRequest> task : tasks) {
+        if (task.getData().isResponseReceived()) {
+          // enqueue child requests
+          final Stream<SnapDataRequest> childRequests =
+              task.getData().getChildRequests(downloadState, worldStateStorage, snapSyncState);
+          if (!(task.getData() instanceof TrieNodeHealingRequest)) {
             enqueueChildren(childRequests);
           } else {
-            continue;
+            if (!task.getData().isExpired(snapSyncState)) {
+              enqueueChildren(childRequests);
+            } else {
+              continue;
+            }
           }
-        }
 
-        // persist nodes
-        final int persistedNodes =
-            task.getData()
-                .persist(
-                    worldStateStorage,
-                    updater,
-                    downloadState,
-                    snapSyncState,
-                    snapSyncConfiguration);
-        if (persistedNodes > 0) {
-          if (task.getData() instanceof TrieNodeHealingRequest) {
-            downloadState.getMetricsManager().notifyTrieNodesHealed(persistedNodes);
-          } else {
-            downloadState.getMetricsManager().notifyNodesGenerated(persistedNodes);
+          // persist nodes
+          final int persistedNodes =
+              task.getData()
+                  .persist(
+                      worldStateStorage,
+                      updater,
+                      downloadState,
+                      snapSyncState,
+                      snapSyncConfiguration);
+          if (persistedNodes > 0) {
+            if (task.getData() instanceof TrieNodeHealingRequest) {
+              downloadState.getMetricsManager().notifyTrieNodesHealed(persistedNodes);
+            } else {
+              downloadState.getMetricsManager().notifyNodesGenerated(persistedNodes);
+            }
           }
         }
       }
+      updater.commit();
+    } catch (StorageException storageException) {
+      if (canRetryOnError(storageException)) {
+        // We reset the task by setting it to null. This way, it is considered as failed by the
+        // pipeline, and it will attempt to execute it again later.
+        tasks.forEach(task -> task.getData().clear());
+      } else {
+        throw storageException;
+      }
     }
-    updater.commit();
     return tasks;
   }
 

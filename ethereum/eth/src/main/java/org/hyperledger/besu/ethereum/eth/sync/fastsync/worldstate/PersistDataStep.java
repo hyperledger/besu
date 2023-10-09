@@ -14,10 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
+import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.canRetryOnError;
+
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.services.tasks.Task;
 
 import java.util.List;
@@ -33,24 +36,34 @@ public class PersistDataStep {
       final List<Task<NodeDataRequest>> tasks,
       final BlockHeader blockHeader,
       final WorldDownloadState<NodeDataRequest> downloadState) {
-    final Updater updater = worldStateStorage.updater();
-    tasks.stream()
-        .map(
-            task -> {
-              enqueueChildren(task, downloadState);
-              return task;
-            })
-        .map(Task::getData)
-        .filter(request -> request.getData() != null)
-        .forEach(
-            request -> {
-              if (isRootState(blockHeader, request)) {
-                downloadState.setRootNodeData(request.getData());
-              } else {
-                request.persist(updater);
-              }
-            });
-    updater.commit();
+    try {
+      final Updater updater = worldStateStorage.updater();
+      tasks.stream()
+          .map(
+              task -> {
+                enqueueChildren(task, downloadState);
+                return task;
+              })
+          .map(Task::getData)
+          .filter(request -> request.getData() != null)
+          .forEach(
+              request -> {
+                if (isRootState(blockHeader, request)) {
+                  downloadState.setRootNodeData(request.getData());
+                } else {
+                  request.persist(updater);
+                }
+              });
+      updater.commit();
+    } catch (StorageException storageException) {
+      if (canRetryOnError(storageException)) {
+        // We reset the task by setting it to null. This way, it is considered as failed by the
+        // pipeline, and it will attempt to execute it again later.
+        tasks.forEach(nodeDataRequestTask -> nodeDataRequestTask.getData().setData(null));
+      } else {
+        throw storageException;
+      }
+    }
     return tasks;
   }
 

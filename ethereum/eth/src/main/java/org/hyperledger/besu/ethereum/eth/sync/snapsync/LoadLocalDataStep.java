@@ -14,11 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
+import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.canRetryOnError;
+
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.services.pipeline.Pipe;
 import org.hyperledger.besu.services.tasks.Task;
@@ -58,19 +61,29 @@ public class LoadLocalDataStep {
       final Task<SnapDataRequest> task, final Pipe<Task<SnapDataRequest>> completedTasks) {
     final TrieNodeHealingRequest request = (TrieNodeHealingRequest) task.getData();
     // check if node is already stored in the worldstate
-    if (snapSyncState.hasPivotBlockHeader()) {
-      Optional<Bytes> existingData = request.getExistingData(downloadState, worldStateStorage);
-      if (existingData.isPresent()) {
-        existingNodeCounter.inc();
-        request.setData(existingData.get());
-        request.setRequiresPersisting(false);
-        final WorldStateStorage.Updater updater = worldStateStorage.updater();
-        request.persist(
-            worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration);
-        updater.commit();
-        downloadState.enqueueRequests(request.getRootStorageRequests(worldStateStorage));
-        completedTasks.put(task);
-        return Stream.empty();
+    try {
+      if (snapSyncState.hasPivotBlockHeader()) {
+        Optional<Bytes> existingData = request.getExistingData(downloadState, worldStateStorage);
+        if (existingData.isPresent()) {
+          existingNodeCounter.inc();
+          request.setData(existingData.get());
+          request.setRequiresPersisting(false);
+          final WorldStateStorage.Updater updater = worldStateStorage.updater();
+          request.persist(
+              worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration);
+          updater.commit();
+          downloadState.enqueueRequests(request.getRootStorageRequests(worldStateStorage));
+          completedTasks.put(task);
+          return Stream.empty();
+        }
+      }
+    } catch (StorageException storageException) {
+      if (canRetryOnError(storageException)) {
+        // We reset the task by setting it to null. This way, it is considered as failed by the
+        // pipeline, and it will attempt to execute it again later.
+        task.getData().clear();
+      } else {
+        throw storageException;
       }
     }
     return Stream.of(task);
