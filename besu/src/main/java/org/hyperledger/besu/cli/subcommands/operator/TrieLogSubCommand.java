@@ -114,6 +114,7 @@ public class TrieLogSubCommand implements Runnable {
       //              .log();
     } catch (final Exception e) {
       LOG.error("TODO SLD", e);
+      spec.commandLine().usage(System.out);
     }
   }
 
@@ -200,6 +201,11 @@ public class TrieLogSubCommand implements Runnable {
             besuController
                 .getStorageProvider()
                 .getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+        out.println("list of trie logs:");
+        out.println(
+            "                    block hash (key)                               | block number");
+        out.println(
+            "___________________________________________________________________|__________________");
         trieLogStorage
             .streamKeys()
             .map(Bytes32::wrap)
@@ -208,13 +214,13 @@ public class TrieLogSubCommand implements Runnable {
             .forEach(
                 hash ->
                     out.printf(
-                        "trieLog for hash %s block: %s",
+                        "%s | %s\n",
                         hash,
                         blockchain
                             .getBlockHeader(hash)
                             .map(BlockHeader::getNumber)
                             .map(String::valueOf)
-                            .orElse("")));
+                            .orElse("not in blockchain")));
       } else {
         out.println("Subcommand only works with Bonsai");
       }
