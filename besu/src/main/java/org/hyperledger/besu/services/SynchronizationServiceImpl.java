@@ -88,7 +88,6 @@ public class SynchronizationServiceImpl implements SynchronizationService {
 
   @Override
   public void stopSynchronizer() {
-    System.out.println(protocolContext.getSynchronizer());
     protocolContext.getSynchronizer().ifPresent(Synchronizer::stop);
   }
 
@@ -97,5 +96,8 @@ public class SynchronizationServiceImpl implements SynchronizationService {
     worldStateArchive
         .getDefaultBonsaiWorldStateConfig()
         .setTrieDisabled(worldStateConfiguration.isTrieDisabled());
+    if (worldStateConfiguration.isTrieDisabled()) {
+      worldStateArchive.disableTrie();
+    }
   }
 }

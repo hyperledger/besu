@@ -174,8 +174,7 @@ public class TrieLogManager {
 
       @Override
       public void saveRawTrieLogLayer(final Hash blockHash, final Bytes trieLog) {
-        final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater =
-            rootWorldStateStorage.updater();
+        final BonsaiWorldStateKeyValueStorage.Updater updater = rootWorldStateStorage.updater();
         updater
             .getTrieLogStorageTransaction()
             .put(blockHash.toArrayUnsafe(), trieLog.toArrayUnsafe());

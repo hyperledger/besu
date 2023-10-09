@@ -91,6 +91,8 @@ public interface BesuEvents extends BesuService {
    */
   void removeBlockReorgListener(long listenerIdentifier);
 
+  long addInitialSyncCompletionListener(final InitialSyncCompletionListener listener);
+
   /**
    * Add a listener watching new transactions added to the node.
    *

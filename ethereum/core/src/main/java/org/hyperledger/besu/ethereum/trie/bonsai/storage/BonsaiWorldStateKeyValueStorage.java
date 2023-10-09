@@ -262,6 +262,11 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
     trieLogStorage.clear();
   }
 
+  public void clearTrie() {
+    subscribers.forEach(BonsaiStorageSubscriber::onClearTrie);
+    composedWorldStateStorage.clear(TRIE_BRANCH_STORAGE);
+  }
+
   public void clearFlatDatabase() {
     subscribers.forEach(BonsaiStorageSubscriber::onClearFlatDatabaseStorage);
     flatDbStrategyProvider
@@ -465,6 +470,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
     default void onClearFlatDatabaseStorage() {}
 
     default void onClearTrieLog() {}
+
+    default void onClearTrie() {}
 
     default void onCloseStorage() {}
   }

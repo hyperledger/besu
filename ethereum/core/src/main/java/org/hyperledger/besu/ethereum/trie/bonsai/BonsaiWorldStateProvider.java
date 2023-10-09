@@ -353,6 +353,11 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     return defaultBonsaiWorldStateConfig;
   }
 
+  public void disableTrie() {
+    defaultBonsaiWorldStateConfig.setTrieDisabled(true);
+    worldStateKeyValueStorage.clearTrie();
+  }
+
   public TrieLogManager getTrieLogManager() {
     return trieLogManager;
   }
