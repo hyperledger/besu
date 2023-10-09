@@ -25,7 +25,13 @@ import org.hyperledger.besu.services.tasks.Task;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class PersistDataStep {
+
+  private static final Logger LOG = LoggerFactory.getLogger(PersistDataStep.class);
+
   private final WorldStateStorage worldStateStorage;
 
   public PersistDataStep(final WorldStateStorage worldStateStorage) {
@@ -59,6 +65,7 @@ public class PersistDataStep {
       if (canRetryOnError(storageException)) {
         // We reset the task by setting it to null. This way, it is considered as failed by the
         // pipeline, and it will attempt to execute it again later.
+        LOG.info("retry on rocksdb issue " + storageException.getMessage());
         tasks.forEach(nodeDataRequestTask -> nodeDataRequestTask.getData().setData(null));
       } else {
         throw storageException;

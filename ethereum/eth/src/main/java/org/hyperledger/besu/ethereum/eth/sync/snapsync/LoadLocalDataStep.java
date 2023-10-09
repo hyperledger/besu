@@ -30,9 +30,12 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LoadLocalDataStep {
 
+  private static final Logger LOG = LoggerFactory.getLogger(LoadLocalDataStep.class);
   private final WorldStateStorage worldStateStorage;
   private final SnapWorldDownloadState downloadState;
   private final SnapSyncProcessState snapSyncState;
@@ -81,6 +84,7 @@ public class LoadLocalDataStep {
       if (canRetryOnError(storageException)) {
         // We reset the task by setting it to null. This way, it is considered as failed by the
         // pipeline, and it will attempt to execute it again later.
+        LOG.info("retry on rocksdb issue " + storageException.getMessage());
         task.getData().clear();
       } else {
         throw storageException;
