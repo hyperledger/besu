@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.cli.subcommands.operator;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
+import static org.hyperledger.besu.ethereum.bonsai.trielog.AbstractTrieLogManager.LOG_RANGE_LIMIT;
+
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.datatypes.Hash;
@@ -26,12 +28,6 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import picocli.CommandLine;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.ParentCommand;
 
 import java.io.PrintWriter;
 import java.util.List;
@@ -40,9 +36,14 @@ import java.util.function.Predicate;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
-import static org.hyperledger.besu.ethereum.bonsai.trielog.AbstractTrieLogManager.LOG_RANGE_LIMIT;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.ParentCommand;
 
 /** The Trie Log subcommand. */
 @Command(
@@ -150,11 +151,11 @@ public class TrieLogSubCommand implements Runnable {
   }
 
   @Command(
-      name = "delete",
-      description = "This command deletes the trie log stored under the specified block.",
+      name = "count",
+      description = "This command counts all the trie logs",
       mixinStandardHelpOptions = true,
       versionProvider = VersionProvider.class)
-  static class DeleteTrieLog implements Runnable {
+  static class CountTrieLog implements Runnable {
 
     @SuppressWarnings("unused")
     @ParentCommand
@@ -168,54 +169,35 @@ public class TrieLogSubCommand implements Runnable {
 
     @Override
     public void run() {
-      final PrintWriter out = spec.commandLine().getOut();
-
       checkNotNull(parentCommand);
 
+      final PrintWriter out = spec.commandLine().getOut();
+
       besuController = parentCommand.createBesuController();
-      final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
 
       WorldStateArchive worldStateArchive =
           besuController.getProtocolContext().getWorldStateArchive();
+      final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
 
       if (worldStateArchive instanceof BonsaiWorldStateProvider) {
-        final String targetBlockHash = parentCommand.targetBlockHash;
-        final Long fromBlockNumber = parentCommand.fromBlockNumber;
-        final Long toBlockNumber = parentCommand.toBlockNumber;
+        final KeyValueStorage trieLogStorage =
+            besuController
+                .getStorageProvider()
+                .getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+        final long totalCount = trieLogStorage.stream().count();
 
-        boolean success = false;
-        if (!targetBlockHash.isEmpty()) {
-          success =
-              ((BonsaiWorldStateProvider) worldStateArchive)
-                  .getTrieLogManager()
-                  .deleteTrieLogLayer(Hash.fromHexString(targetBlockHash));
-        } else if (fromBlockNumber != null && toBlockNumber != null) {
-
-          final Stream<Hash> toDelete =
-              parentCommand
-                  .rangeAsStream(fromBlockNumber, toBlockNumber)
-                  .map(blockchain::getBlockHeader)
-                  .flatMap(Optional::stream)
-                  .map(BlockHeader::getHash);
-
-          success =
-              toDelete.allMatch(
-                  h ->
-                      ((BonsaiWorldStateProvider) worldStateArchive)
-                          .getTrieLogManager()
-                          .deleteTrieLogLayer(h));
-
-        } else {
-          out.println("Please specify either --block or --fromBlockNumber and --toBlockNumber");
-        }
-
-        //      KeyValueStorage trieLogStorage =
-        // besuController.getStorageProvider().getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
-        //      boolean success =
-        // trieLogStorage.tryDelete((Bytes.fromHexString(parentCommand.targetBlockHash.toString()).toArrayUnsafe()));
-        out.printf("success? %s", success);
+        final long canonicalCount =
+            trieLogStorage
+                .streamKeys()
+                .map(Bytes32::wrap)
+                .map(Bytes::toHexString)
+                .map(Hash::fromHexString)
+                .map(blockchain::getBlockHeader)
+                .filter(Optional::isPresent)
+                .count();
+        out.printf("trieLog total count: %d; blockchain count: %d", totalCount, canonicalCount);
       } else {
-        out.println("Subcommand only works with Bonsai");
+        out.print("Subcommand only works with Bonsai");
       }
     }
   }
@@ -307,11 +289,11 @@ public class TrieLogSubCommand implements Runnable {
   }
 
   @Command(
-      name = "count",
-      description = "This command counts all the trie logs",
+      name = "delete",
+      description = "This command deletes the trie log stored under the specified block.",
       mixinStandardHelpOptions = true,
       versionProvider = VersionProvider.class)
-  static class CountTrieLog implements Runnable {
+  static class DeleteTrieLog implements Runnable {
 
     @SuppressWarnings("unused")
     @ParentCommand
@@ -325,35 +307,54 @@ public class TrieLogSubCommand implements Runnable {
 
     @Override
     public void run() {
-      checkNotNull(parentCommand);
-
       final PrintWriter out = spec.commandLine().getOut();
 
+      checkNotNull(parentCommand);
+
       besuController = parentCommand.createBesuController();
+      final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
 
       WorldStateArchive worldStateArchive =
           besuController.getProtocolContext().getWorldStateArchive();
-      final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
 
       if (worldStateArchive instanceof BonsaiWorldStateProvider) {
-        final KeyValueStorage trieLogStorage =
-            besuController
-                .getStorageProvider()
-                .getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
-        final long totalCount = trieLogStorage.stream().count();
+        final String targetBlockHash = parentCommand.targetBlockHash;
+        final Long fromBlockNumber = parentCommand.fromBlockNumber;
+        final Long toBlockNumber = parentCommand.toBlockNumber;
 
-        final long canonicalCount =
-            trieLogStorage
-                .streamKeys()
-                .map(Bytes32::wrap)
-                .map(Bytes::toHexString)
-                .map(Hash::fromHexString)
-                .map(blockchain::getBlockHeader)
-                .filter(Optional::isPresent)
-                .count();
-        out.printf("trieLog total count: %d; blockchain count: %d", totalCount, canonicalCount);
+        boolean success = false;
+        if (!targetBlockHash.isEmpty()) {
+          success =
+              ((BonsaiWorldStateProvider) worldStateArchive)
+                  .getTrieLogManager()
+                  .deleteTrieLogLayer(Hash.fromHexString(targetBlockHash));
+        } else if (fromBlockNumber != null && toBlockNumber != null) {
+
+          final Stream<Hash> toDelete =
+              parentCommand
+                  .rangeAsStream(fromBlockNumber, toBlockNumber)
+                  .map(blockchain::getBlockHeader)
+                  .flatMap(Optional::stream)
+                  .map(BlockHeader::getHash);
+
+          success =
+              toDelete.allMatch(
+                  h ->
+                      ((BonsaiWorldStateProvider) worldStateArchive)
+                          .getTrieLogManager()
+                          .deleteTrieLogLayer(h));
+
+        } else {
+          out.println("Please specify either --block or --fromBlockNumber and --toBlockNumber");
+        }
+
+        //      KeyValueStorage trieLogStorage =
+        // besuController.getStorageProvider().getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+        //      boolean success =
+        // trieLogStorage.tryDelete((Bytes.fromHexString(parentCommand.targetBlockHash.toString()).toArrayUnsafe()));
+        out.printf("success? %s", success);
       } else {
-        out.print("Subcommand only works with Bonsai");
+        out.println("Subcommand only works with Bonsai");
       }
     }
   }
