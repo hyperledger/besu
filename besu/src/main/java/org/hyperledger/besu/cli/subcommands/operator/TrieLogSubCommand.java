@@ -22,6 +22,7 @@ import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.bonsai.trielog.AbstractTrieLogManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -32,6 +33,7 @@ import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
@@ -52,9 +54,10 @@ import picocli.CommandLine.ParentCommand;
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class,
     subcommands = {
-      TrieLogSubCommand.DeleteTrieLog.class,
+      TrieLogSubCommand.CountTrieLog.class,
       TrieLogSubCommand.ListTrieLog.class,
-      TrieLogSubCommand.CountTrieLog.class
+      TrieLogSubCommand.DeleteTrieLog.class,
+      TrieLogSubCommand.PruneTrieLog.class
     })
 public class TrieLogSubCommand implements Runnable {
 
@@ -290,7 +293,7 @@ public class TrieLogSubCommand implements Runnable {
 
   @Command(
       name = "delete",
-      description = "This command deletes the trie log stored under the specified block.",
+      description = "Deletes the trie logs stored under the specified hash or block number range.",
       mixinStandardHelpOptions = true,
       versionProvider = VersionProvider.class)
   static class DeleteTrieLog implements Runnable {
@@ -355,6 +358,95 @@ public class TrieLogSubCommand implements Runnable {
         out.printf("success? %s", success);
       } else {
         out.println("Subcommand only works with Bonsai");
+      }
+    }
+  }
+
+  @Command(
+      name = "prune",
+      description =
+          "This command prunes all trie logs below the specified block number, including orphaned trie logs.",
+      mixinStandardHelpOptions = true,
+      versionProvider = VersionProvider.class)
+  static class PruneTrieLog implements Runnable {
+
+    @SuppressWarnings("unused")
+    @ParentCommand
+    private TrieLogSubCommand parentCommand;
+
+    @SuppressWarnings("unused")
+    @CommandLine.Spec
+    private CommandLine.Model.CommandSpec spec; // Picocli injects reference to command spec
+
+    private BesuController besuController;
+
+    @Option(
+        names = {"--below", "--below-block-number"},
+        paramLabel = MANDATORY_LONG_FORMAT_HELP,
+        description = "First block number to retain, prune below this number",
+        arity = "0..1")
+    private Long belowBlockNumber = AbstractTrieLogManager.RETAINED_LAYERS;
+
+    @Override
+    public void run() {
+      final PrintWriter out = spec.commandLine().getOut();
+
+      checkNotNull(parentCommand);
+
+      besuController = parentCommand.createBesuController();
+      final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
+
+      WorldStateArchive worldStateArchive =
+          besuController.getProtocolContext().getWorldStateArchive();
+
+      if (worldStateArchive instanceof BonsaiWorldStateProvider) {
+        if (belowBlockNumber != null) {
+
+          final KeyValueStorage trieLogStorage =
+              besuController
+                  .getStorageProvider()
+                  .getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+
+          final AtomicInteger prunedCount = new AtomicInteger();
+          trieLogStorage
+              .streamKeys()
+              .forEach(
+                  hashAsBytes -> {
+                    Hash hash = Hash.wrap(Bytes32.wrap(hashAsBytes));
+
+                    final Optional<BlockHeader> header = blockchain.getBlockHeader(hash);
+                    if (header.isEmpty()) {
+                      // Orphaned trie logs are neither in the canonical blockchain nor forks.
+                      // Likely created during block production
+                      recordResult(trieLogStorage.tryDelete(hashAsBytes), prunedCount, hash);
+                    } else if (header.get().getNumber() < belowBlockNumber) {
+                      // Prune canonical and fork trie logs below the block number
+                      recordResult(trieLogStorage.tryDelete(hashAsBytes), prunedCount, hash);
+                    } else {
+                      LOG.atInfo().setMessage("Retain {}").addArgument(hash::toHexString).log();
+                    }
+                  });
+          out.printf("Pruned %d trie logs", prunedCount.get());
+        } else {
+          out.println("Please specify --belowBlockNumber");
+        }
+
+        //      KeyValueStorage trieLogStorage =
+        // besuController.getStorageProvider().getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+        //      boolean success =
+        // trieLogStorage.tryDelete((Bytes.fromHexString(parentCommand.targetBlockHash.toString()).toArrayUnsafe()));
+      } else {
+        out.println("Subcommand only works with Bonsai");
+      }
+    }
+
+    private void recordResult(
+        final boolean success, final AtomicInteger prunedCount, final Hash hash) {
+      if (success) {
+        prunedCount.getAndIncrement();
+        LOG.atInfo().setMessage("Pruned {}").addArgument(hash::toHexString).log();
+      } else {
+        LOG.atInfo().setMessage("Failed to prune {}").addArgument(hash::toHexString).log();
       }
     }
   }
