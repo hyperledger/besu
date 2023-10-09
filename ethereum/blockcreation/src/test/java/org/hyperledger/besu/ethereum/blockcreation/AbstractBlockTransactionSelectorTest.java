@@ -554,26 +554,25 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final TransactionSelectorFactory transactionSelectorFactory =
         () ->
-            List.of(
-                new TransactionSelector() {
-                  @Override
-                  public TransactionSelectionResult evaluateTransactionPreProcessing(
-                      final PendingTransaction pendingTransaction) {
-                    if (pendingTransaction.getTransaction().equals(notSelectedTransient))
-                      return TransactionSelectionResult.invalidTransient("transient");
-                    if (pendingTransaction.getTransaction().equals(notSelectedInvalid))
-                      return TransactionSelectionResult.invalid("invalid");
-                    return TransactionSelectionResult.SELECTED;
-                  }
+            new TransactionSelector() {
+              @Override
+              public TransactionSelectionResult evaluateTransactionPreProcessing(
+                  final PendingTransaction pendingTransaction) {
+                if (pendingTransaction.getTransaction().equals(notSelectedTransient))
+                  return TransactionSelectionResult.invalidTransient("transient");
+                if (pendingTransaction.getTransaction().equals(notSelectedInvalid))
+                  return TransactionSelectionResult.invalid("invalid");
+                return TransactionSelectionResult.SELECTED;
+              }
 
-                  @Override
-                  public TransactionSelectionResult evaluateTransactionPostProcessing(
-                      final PendingTransaction pendingTransaction,
-                      final org.hyperledger.besu.plugin.data.TransactionProcessingResult
-                          processingResult) {
-                    return TransactionSelectionResult.SELECTED;
-                  }
-                });
+              @Override
+              public TransactionSelectionResult evaluateTransactionPostProcessing(
+                  final PendingTransaction pendingTransaction,
+                  final org.hyperledger.besu.plugin.data.TransactionProcessingResult
+                      processingResult) {
+                return TransactionSelectionResult.SELECTED;
+              }
+            };
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
@@ -619,27 +618,25 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final TransactionSelectorFactory transactionSelectorFactory =
         () ->
-            List.of(
-                new TransactionSelector() {
-                  @Override
-                  public TransactionSelectionResult evaluateTransactionPreProcessing(
-                      final PendingTransaction pendingTransaction) {
-                    return TransactionSelectionResult.SELECTED;
-                  }
+            new TransactionSelector() {
+              @Override
+              public TransactionSelectionResult evaluateTransactionPreProcessing(
+                  final PendingTransaction pendingTransaction) {
+                return TransactionSelectionResult.SELECTED;
+              }
 
-                  @Override
-                  public TransactionSelectionResult evaluateTransactionPostProcessing(
-                      final PendingTransaction pendingTransaction,
-                      final org.hyperledger.besu.plugin.data.TransactionProcessingResult
-                          processingResult) {
-                    // the transaction with max gas +1 should fail
-                    if (processingResult.getEstimateGasUsedByTransaction()
-                        > maxGasUsedByTransaction) {
-                      return TransactionSelectionResult.invalidTransient("Invalid");
-                    }
-                    return TransactionSelectionResult.SELECTED;
-                  }
-                });
+              @Override
+              public TransactionSelectionResult evaluateTransactionPostProcessing(
+                  final PendingTransaction pendingTransaction,
+                  final org.hyperledger.besu.plugin.data.TransactionProcessingResult
+                      processingResult) {
+                // the transaction with max gas +1 should fail
+                if (processingResult.getEstimateGasUsedByTransaction() > maxGasUsedByTransaction) {
+                  return TransactionSelectionResult.invalidTransient("Invalid");
+                }
+                return TransactionSelectionResult.SELECTED;
+              }
+            };
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
