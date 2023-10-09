@@ -115,7 +115,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
       return PrecompileContractResult.halt(
           null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     } else {
-      byte[] hash = Hash.sha256(commitment).toArray();
+      byte[] hash = Hash.sha256(commitment).toArrayUnsafe();
       hash[0] = 0x01;
       if (!versionedHash.equals(Bytes32.wrap(hash))) {
         return PrecompileContractResult.halt(
