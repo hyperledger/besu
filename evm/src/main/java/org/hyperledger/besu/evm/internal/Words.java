@@ -117,10 +117,12 @@ public interface Words {
    * @return value of a plus b if no over/underflows or Long.MAX_VALUE/Long.MIN_VALUE otherwise
    */
   static long clampedAdd(final long a, final long b) {
-    try {
-      return Math.addExact(a, b);
-    } catch (final ArithmeticException ae) {
+    long r = a + b;
+    if (((a ^ r) & (b ^ r)) < 0) {
+      // out of bounds, clamp it!
       return a > 0 ? Long.MAX_VALUE : Long.MIN_VALUE;
+    } else {
+      return r;
     }
   }
 
@@ -132,10 +134,15 @@ public interface Words {
    * @return value of a times b if no over/underflows or Long.MAX_VALUE/Long.MIN_VALUE otherwise
    */
   static long clampedMultiply(final long a, final long b) {
-    try {
-      return Math.multiplyExact(a, b);
-    } catch (final ArithmeticException ae) {
+    long r = a * b;
+    long ax = Math.abs(a);
+    long ay = Math.abs(b);
+    if (((ax | ay) >>> 31 != 0)
+        && (((b != 0) && (r / b != a)) || (a == Long.MIN_VALUE && b == -1))) {
+       // out of bounds, clamp it!
       return ((a ^ b) < 0) ? Long.MIN_VALUE : Long.MAX_VALUE;
+    } else {
+      return r;
     }
   }
 
@@ -148,9 +155,12 @@ public interface Words {
    *     otherwise
    */
   static int clampedMultiply(final int a, final int b) {
-    try {
-      return Math.multiplyExact(a, b);
-    } catch (final ArithmeticException ae) {
+    long r = (long) a * (long) b;
+    int ri = (int) r;
+    if (ri == r) {
+      return ri;
+    } else {
+      // out of bounds, clamp it!
       return ((a ^ b) < 0) ? Integer.MIN_VALUE : Integer.MAX_VALUE;
     }
   }

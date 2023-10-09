@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.frame;
 
+import org.hyperledger.besu.evm.internal.Words;
+
 import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -100,7 +102,7 @@ public class Memory {
     }
 
     try {
-      final long byteSize = Math.addExact(Math.addExact(location, numBytes), 31);
+      final long byteSize = Words.clampedAdd(Words.clampedAdd(location, numBytes), 31);
       long wordSize = byteSize / 32;
       return Math.max(wordSize, activeWords);
     } catch (ArithmeticException ae) {
