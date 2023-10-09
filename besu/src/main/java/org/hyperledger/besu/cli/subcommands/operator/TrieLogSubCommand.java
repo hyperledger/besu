@@ -28,12 +28,14 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
+import java.io.PrintWriter;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
@@ -44,7 +46,11 @@ import picocli.CommandLine.ParentCommand;
     description = "Manipulate trie logs",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class,
-    subcommands = {TrieLogSubCommand.DeleteTrieLog.class, TrieLogSubCommand.ListTrieLog.class})
+    subcommands = {
+      TrieLogSubCommand.DeleteTrieLog.class,
+      TrieLogSubCommand.ListTrieLog.class,
+      TrieLogSubCommand.CountTrieLog.class
+    })
 public class TrieLogSubCommand implements Runnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(TrieLogSubCommand.class);
@@ -58,12 +64,17 @@ public class TrieLogSubCommand implements Runnable {
 
   @ParentCommand private OperatorSubCommand parentCommand;
 
+  @SuppressWarnings("unused")
+  @CommandLine.Spec
+  private CommandLine.Model.CommandSpec spec; // Picocli injects reference to command spec
+
   private BesuController besuController;
-  //  private WorldStateStorage.Updater updater;
 
   @Override
   public void run() {
     try {
+      final PrintWriter out = spec.commandLine().getOut();
+
       besuController = createBesuController();
 
       // TODO SLD use TrieLogProvider instead?
@@ -84,14 +95,14 @@ public class TrieLogSubCommand implements Runnable {
         Optional<? extends TrieLog> trieLogLayer =
             ((BonsaiWorldStateProvider) besuController.getProtocolContext().getWorldStateArchive())
                 .getTrieLogManager()
-                .getTrieLogLayer(Hash.fromHexString(targetBlockHash.toString()));
+                .getTrieLogLayer(Hash.fromHexString(targetBlockHash));
         if (trieLogLayer.isPresent()) {
-          LOG.atInfo().setMessage("result: {}").addArgument(trieLogLayer.get()).log();
+          out.printf("result: %s", trieLogLayer.get());
         } else {
-          LOG.info("No trie log found for block hash {}", targetBlockHash.toString());
+          out.printf("No trie log found for block hash %s", targetBlockHash);
         }
       } else {
-        LOG.info("Subcommand only works with Bonsai");
+        out.println("Subcommand only works with Bonsai");
       }
 
       //      KeyValueStorage trieLogStorage =
@@ -116,17 +127,21 @@ public class TrieLogSubCommand implements Runnable {
       mixinStandardHelpOptions = true,
       versionProvider = VersionProvider.class)
   static class DeleteTrieLog implements Runnable {
-    private static final Logger LOG =
-        LoggerFactory.getLogger(TrieLogSubCommand.DeleteTrieLog.class);
 
     @SuppressWarnings("unused")
     @ParentCommand
     private TrieLogSubCommand parentCommand;
 
+    @SuppressWarnings("unused")
+    @CommandLine.Spec
+    private CommandLine.Model.CommandSpec spec; // Picocli injects reference to command spec
+
     private BesuController besuController;
 
     @Override
     public void run() {
+      final PrintWriter out = spec.commandLine().getOut();
+
       checkNotNull(parentCommand);
 
       besuController = parentCommand.createBesuController();
@@ -144,9 +159,9 @@ public class TrieLogSubCommand implements Runnable {
         // besuController.getStorageProvider().getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
         //      boolean success =
         // trieLogStorage.tryDelete((Bytes.fromHexString(parentCommand.targetBlockHash.toString()).toArrayUnsafe()));
-        LOG.atInfo().setMessage("success? {}").addArgument(success).log();
+        out.printf("success? %s", success);
       } else {
-        LOG.info("Subcommand only works with Bonsai");
+        out.println("Subcommand only works with Bonsai");
       }
     }
   }
@@ -157,17 +172,22 @@ public class TrieLogSubCommand implements Runnable {
       mixinStandardHelpOptions = true,
       versionProvider = VersionProvider.class)
   static class ListTrieLog implements Runnable {
-    private static final Logger LOG = LoggerFactory.getLogger(TrieLogSubCommand.ListTrieLog.class);
 
     @SuppressWarnings("unused")
     @ParentCommand
     private TrieLogSubCommand parentCommand;
+
+    @SuppressWarnings("unused")
+    @CommandLine.Spec
+    private CommandLine.Model.CommandSpec spec; // Picocli injects reference to command spec
 
     private BesuController besuController;
 
     @Override
     public void run() {
       checkNotNull(parentCommand);
+
+      final PrintWriter out = spec.commandLine().getOut();
 
       besuController = parentCommand.createBesuController();
 
@@ -187,18 +207,68 @@ public class TrieLogSubCommand implements Runnable {
             .map(Hash::fromHexString)
             .forEach(
                 hash ->
-                    LOG.atInfo()
-                        .setMessage("trieLog for hash {} block: {}")
-                        .addArgument(hash)
-                        .addArgument(
-                            blockchain
-                                .getBlockHeader(hash)
-                                .map(BlockHeader::getNumber)
-                                .map(String::valueOf)
-                                .orElse(""))
-                        .log());
+                    out.printf(
+                        "trieLog for hash %s block: %s",
+                        hash,
+                        blockchain
+                            .getBlockHeader(hash)
+                            .map(BlockHeader::getNumber)
+                            .map(String::valueOf)
+                            .orElse("")));
       } else {
-        LOG.info("Subcommand only works with Bonsai");
+        out.println("Subcommand only works with Bonsai");
+      }
+    }
+  }
+
+  @Command(
+      name = "count",
+      description = "This command counts all the trie logs",
+      mixinStandardHelpOptions = true,
+      versionProvider = VersionProvider.class)
+  static class CountTrieLog implements Runnable {
+
+    @SuppressWarnings("unused")
+    @ParentCommand
+    private TrieLogSubCommand parentCommand;
+
+    @SuppressWarnings("unused")
+    @CommandLine.Spec
+    private CommandLine.Model.CommandSpec spec; // Picocli injects reference to command spec
+
+    private BesuController besuController;
+
+    @Override
+    public void run() {
+      checkNotNull(parentCommand);
+
+      final PrintWriter out = spec.commandLine().getOut();
+
+      besuController = parentCommand.createBesuController();
+
+      WorldStateArchive worldStateArchive =
+          besuController.getProtocolContext().getWorldStateArchive();
+      final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
+
+      if (worldStateArchive instanceof BonsaiWorldStateProvider) {
+        final KeyValueStorage trieLogStorage =
+            besuController
+                .getStorageProvider()
+                .getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+        final long totalCount = trieLogStorage.stream().count();
+
+        final long canonicalCount =
+            trieLogStorage
+                .streamKeys()
+                .map(Bytes32::wrap)
+                .map(Bytes::toHexString)
+                .map(Hash::fromHexString)
+                .map(blockchain::getBlockHeader)
+                .filter(Optional::isPresent)
+                .count();
+        out.printf("trieLog total count: %d; blockchain count: %d", totalCount, canonicalCount);
+      } else {
+        out.print("Subcommand only works with Bonsai");
       }
     }
   }

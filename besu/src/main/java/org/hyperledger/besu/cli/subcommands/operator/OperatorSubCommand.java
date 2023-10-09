@@ -37,7 +37,8 @@ import picocli.CommandLine.Spec;
       GenerateLogBloomCache.class,
       BackupState.class,
       RestoreState.class,
-      TrieLogSubCommand.class
+      TrieLogSubCommand.class,
+      RocksDbSubCommand.class
     })
 public class OperatorSubCommand implements Runnable {
 
