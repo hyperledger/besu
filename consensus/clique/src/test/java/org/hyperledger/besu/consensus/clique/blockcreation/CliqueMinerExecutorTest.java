@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -101,18 +102,31 @@ public class CliqueMinerExecutorTest {
   public void extraDataCreatedOnEpochBlocksContainsValidators() {
     final Bytes vanityData = generateRandomVanityData();
 
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder()
+            .isMiningEnabled(false)
+            .coinbase(AddressHelpers.ofValue(1))
+            .build()
+            .getDynamic()
+            .setExtraData(vanityData)
+            .setMinTransactionGasPrice(Wei.ZERO)
+            .setMinBlockOccupancyRatio(0.8)
+            .toParameters();
+
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
             cliqueProtocolSchedule,
             createTransactionPool(),
             proposerNodeKey,
-            new MiningParameters.Builder()
-                .coinbase(AddressHelpers.ofValue(1))
-                .minTransactionGasPrice(Wei.ZERO)
-                .extraData(vanityData)
-                .miningEnabled(false)
-                .build(),
+            miningParameters,
+
+            //            new MiningParameters.Builder()
+            //                .coinbase(AddressHelpers.ofValue(1))
+            //                .minTransactionGasPrice(Wei.ZERO)
+            //                .extraData(vanityData)
+            //                .miningEnabled(false)
+            //                .build(),
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH));
 
@@ -138,18 +152,30 @@ public class CliqueMinerExecutorTest {
   public void extraDataForNonEpochBlocksDoesNotContainValidaors() {
     final Bytes vanityData = generateRandomVanityData();
 
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder()
+            .isMiningEnabled(false)
+            .coinbase(AddressHelpers.ofValue(1))
+            .build()
+            .getDynamic()
+            .setExtraData(vanityData)
+            .setMinTransactionGasPrice(Wei.ZERO)
+            .setMinBlockOccupancyRatio(0.8)
+            .toParameters();
+
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
             cliqueProtocolSchedule,
             createTransactionPool(),
             proposerNodeKey,
-            new MiningParameters.Builder()
-                .coinbase(AddressHelpers.ofValue(1))
-                .minTransactionGasPrice(Wei.ZERO)
-                .extraData(vanityData)
-                .miningEnabled(false)
-                .build(),
+            miningParameters,
+            //            new MiningParameters.Builder()
+            //                .coinbase(AddressHelpers.ofValue(1))
+            //                .minTransactionGasPrice(Wei.ZERO)
+            //                .extraData(vanityData)
+            //                .miningEnabled(false)
+            //                .build(),
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH));
 
@@ -175,18 +201,30 @@ public class CliqueMinerExecutorTest {
     final Bytes initialVanityData = generateRandomVanityData();
     final Bytes modifiedVanityData = generateRandomVanityData();
 
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder()
+            .isMiningEnabled(false)
+            .coinbase(AddressHelpers.ofValue(1))
+            .build()
+            .getDynamic()
+            .setExtraData(initialVanityData)
+            .setMinTransactionGasPrice(Wei.ZERO)
+            .setMinBlockOccupancyRatio(0.8)
+            .toParameters();
+
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
             cliqueProtocolSchedule,
             createTransactionPool(),
             proposerNodeKey,
-            new MiningParameters.Builder()
-                .coinbase(AddressHelpers.ofValue(1))
-                .minTransactionGasPrice(Wei.ZERO)
-                .extraData(initialVanityData)
-                .miningEnabled(false)
-                .build(),
+            miningParameters,
+            //            new MiningParameters.Builder()
+            //                .coinbase(AddressHelpers.ofValue(1))
+            //                .minTransactionGasPrice(Wei.ZERO)
+            //                .extraData(initialVanityData)
+            //                .miningEnabled(false)
+            //                .build(),
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH));
 

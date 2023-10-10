@@ -39,9 +39,9 @@ import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.InMemoryPrivacyStorageProvider;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -188,10 +188,13 @@ public class PrivacyReorgTest {
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .networkId(BigInteger.ONE)
             .miningParameters(
-                new MiningParameters.Builder()
-                    .minTransactionGasPrice(Wei.of(1000))
-                    .miningEnabled(false)
-                    .build())
+                ImmutableMiningParameters.builder().isMiningEnabled(false).build()
+
+                //                new MiningParameters.Builder()
+                //                    .minTransactionGasPrice(Wei.of(1000))
+                //                    .miningEnabled(false)
+                //                    .build()
+                )
             .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
             .dataDirectory(folder)

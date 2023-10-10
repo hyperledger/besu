@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -58,7 +59,6 @@ import org.hyperledger.besu.util.Subscribers;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.function.Function;
 
 import com.google.common.collect.Lists;
@@ -106,17 +106,28 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
 
     final TransactionPool transactionPool = createTransactionPool(executionContextTestFixture);
 
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder()
+            .coinbase(BLOCK_1_COINBASE)
+            .build()
+            .getDynamic()
+            .setExtraData(BLOCK_1_EXTRA_DATA)
+            .setMinTransactionGasPrice(Wei.ONE)
+            .setMinBlockOccupancyRatio(0.8)
+            .toParameters();
+
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
+            miningParameters,
             BLOCK_1_COINBASE,
-            Optional::empty,
+            //            Optional::empty,
             parent -> BLOCK_1_EXTRA_DATA,
             transactionPool,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
-            Wei.ZERO,
-            0.8,
+            //            Wei.ZERO,
+            //            0.8,
             executionContextTestFixture.getBlockchain().getChainHeadHeader());
 
     // A Hashrate should not exist in the block creator prior to creating a block
@@ -162,17 +173,28 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
 
     final TransactionPool transactionPool = createTransactionPool(executionContextTestFixture);
 
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder()
+            .coinbase(BLOCK_1_COINBASE)
+            .build()
+            .getDynamic()
+            .setExtraData(BLOCK_1_EXTRA_DATA)
+            .setMinTransactionGasPrice(Wei.ONE)
+            .setMinBlockOccupancyRatio(0.8)
+            .toParameters();
+
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
+            miningParameters,
             BLOCK_1_COINBASE,
-            Optional::empty,
+            //            Optional::empty,
             parent -> BLOCK_1_EXTRA_DATA,
             transactionPool,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
-            Wei.ZERO,
-            0.8,
+            //            Wei.ZERO,
+            //            0.8,
             executionContextTestFixture.getBlockchain().getChainHeadHeader());
 
     assertThat(blockCreator.createBlock(BLOCK_1_TIMESTAMP)).isNotNull();
@@ -209,17 +231,29 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
 
     final TransactionPool transactionPool = createTransactionPool(executionContextTestFixture);
 
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder()
+            .coinbase(BLOCK_1_COINBASE)
+            .build()
+            .getDynamic()
+            .setTargetGasLimit(10_000_000L)
+            .setExtraData(BLOCK_1_EXTRA_DATA)
+            .setMinTransactionGasPrice(Wei.ONE)
+            .setMinBlockOccupancyRatio(0.8)
+            .toParameters();
+
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
+            miningParameters,
             BLOCK_1_COINBASE,
-            () -> Optional.of(10_000_000L),
+            //            () -> Optional.of(10_000_000L),
             parent -> BLOCK_1_EXTRA_DATA,
             transactionPool,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
-            Wei.ZERO,
-            0.8,
+            //            Wei.ZERO,
+            //            0.8,
             executionContextTestFixture.getBlockchain().getChainHeadHeader());
 
     final MutableWorldState mutableWorldState =
@@ -278,17 +312,29 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
 
     final TransactionPool transactionPool = createTransactionPool(executionContextTestFixture);
 
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder()
+            .coinbase(BLOCK_1_COINBASE)
+            .build()
+            .getDynamic()
+            .setTargetGasLimit(10_000_000L)
+            .setExtraData(BLOCK_1_EXTRA_DATA)
+            .setMinTransactionGasPrice(Wei.ONE)
+            .setMinBlockOccupancyRatio(0.8)
+            .toParameters();
+
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
+            miningParameters,
             BLOCK_1_COINBASE,
-            () -> Optional.of(10_000_000L),
+            //            () -> Optional.of(10_000_000L),
             parent -> BLOCK_1_EXTRA_DATA,
             transactionPool,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
-            Wei.ZERO,
-            0.8,
+            //            Wei.ZERO,
+            //            0.8,
             executionContextTestFixture.getBlockchain().getChainHeadHeader());
 
     final MutableWorldState mutableWorldState =

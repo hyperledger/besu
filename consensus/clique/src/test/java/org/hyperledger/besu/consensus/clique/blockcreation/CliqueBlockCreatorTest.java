@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -134,17 +135,30 @@ public class CliqueBlockCreatorTest {
         CliqueExtraData.createWithoutProposerSeal(Bytes.wrap(new byte[32]), validatorList);
 
     final Address coinbase = AddressHelpers.ofValue(1);
+
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder()
+            .coinbase(coinbase)
+            .build()
+            .getDynamic()
+            .setExtraData(extraData)
+            .setTargetGasLimit(10_000_000L)
+            .setMinTransactionGasPrice(Wei.ZERO)
+            .setMinBlockOccupancyRatio(0.8)
+            .toParameters();
+
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
+            miningParameters,
             coinbase,
-            () -> Optional.of(10_000_000L),
+            //            () -> Optional.of(10_000_000L),
             parent -> extraData,
             createTransactionPool(),
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
-            Wei.ZERO,
-            0.8,
+            //            Wei.ZERO,
+            //            0.8,
             blockchain.getChainHeadHeader(),
             epochManager);
 
@@ -163,17 +177,29 @@ public class CliqueBlockCreatorTest {
     when(voteProvider.getVoteAfterBlock(any(), any()))
         .thenReturn(Optional.of(new ValidatorVote(VoteType.ADD, coinbase, a1)));
 
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder()
+            .coinbase(coinbase)
+            .build()
+            .getDynamic()
+            .setExtraData(extraData)
+            .setTargetGasLimit(10_000_000L)
+            .setMinTransactionGasPrice(Wei.ZERO)
+            .setMinBlockOccupancyRatio(0.8)
+            .toParameters();
+
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
+            miningParameters,
             coinbase,
-            () -> Optional.of(10_000_000L),
+            //            () -> Optional.of(10_000_000L),
             parent -> extraData,
             createTransactionPool(),
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
-            Wei.ZERO,
-            0.8,
+            //            Wei.ZERO,
+            //            0.8,
             blockchain.getChainHeadHeader(),
             epochManager);
 
@@ -197,17 +223,29 @@ public class CliqueBlockCreatorTest {
     when(mockVoteProvider.getVoteAfterBlock(any(), any()))
         .thenReturn(Optional.of(new ValidatorVote(VoteType.ADD, coinbase, a1)));
 
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder()
+            .coinbase(coinbase)
+            .build()
+            .getDynamic()
+            .setExtraData(extraData)
+            .setTargetGasLimit(10_000_000L)
+            .setMinTransactionGasPrice(Wei.ZERO)
+            .setMinBlockOccupancyRatio(0.8)
+            .toParameters();
+
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
+            miningParameters,
             coinbase,
-            () -> Optional.of(10_000_000L),
+            //            () -> Optional.of(10_000_000L),
             parent -> extraData,
             createTransactionPool(),
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
-            Wei.ZERO,
-            0.8,
+            //            Wei.ZERO,
+            //            0.8,
             blockchain.getChainHeadHeader(),
             epochManager);
 

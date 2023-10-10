@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
@@ -51,7 +50,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
       final int maxOmmerDepth) {
     super(protocolContext, protocolSchedule, transactionPool, miningParams, blockScheduler);
     this.coinbase = miningParams.getCoinbase();
-    this.nonceGenerator = miningParams.getNonceGenerator().orElse(new RandomNonceGenerator());
+    this.nonceGenerator = miningParams.nonceGenerator().orElse(new RandomNonceGenerator());
     this.epochCalculator = epochCalculator;
     this.powJobTimeToLive = powJobTimeToLive;
     this.maxOmmerDepth = maxOmmerDepth;
@@ -89,15 +88,16 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
     final Function<BlockHeader, PoWBlockCreator> blockCreator =
         (header) ->
             new PoWBlockCreator(
+                miningParameters,
                 coinbase.orElse(Address.ZERO),
-                () -> targetGasLimit.map(AtomicLong::longValue),
-                parent -> extraData,
+                //                () -> miningParameters.getTargetGasLimit()::get,
+                parent -> miningParameters.getDynamic().getExtraData(),
                 transactionPool,
                 protocolContext,
                 protocolSchedule,
                 solver,
-                minTransactionGasPrice,
-                minBlockOccupancyRatio,
+                //                miningParameters.getMinTransactionGasPrice(),
+                //                    miningParameters.getMinBlockOccupancyRatio(),
                 parentHeader);
 
     return new PoWBlockMiner(

@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -148,6 +149,6 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   public MiningParameters getMiningParameterOverrides(final MiningParameters fromCli) {
     // Clique mines by default, reflect that with in the mining parameters:
-    return new MiningParameters.Builder(fromCli).miningEnabled(true).build();
+    return ImmutableMiningParameters.builder().from(fromCli).isMiningEnabled(true).build();
   }
 }

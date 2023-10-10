@@ -37,7 +37,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -1116,7 +1116,13 @@ public final class EthProtocolManagerTest {
               TestClock.system(ZoneId.systemDefault()),
               metricsSystem,
               new SyncState(blockchain, ethManager.ethContext().getEthPeers()),
-              new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
+              ImmutableMiningParameters.builder()
+                  .build()
+                  .getDynamic()
+                  .setMinTransactionGasPrice(Wei.ZERO)
+                  .toParameters(),
+              //              new
+              // MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
               TransactionPoolConfiguration.DEFAULT,
               null)
           .setEnabled();

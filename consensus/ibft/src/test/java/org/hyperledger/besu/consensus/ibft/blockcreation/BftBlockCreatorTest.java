@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -150,11 +151,29 @@ public class BftBlockCreatorTest {
 
     transactionPool.setEnabled();
 
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder()
+            .coinbase(AddressHelpers.ofValue(1))
+            .build()
+            .getDynamic()
+            .setExtraData(
+                bftExtraDataEncoder.encode(
+                    new BftExtraData(
+                        Bytes.wrap(new byte[32]),
+                        Collections.emptyList(),
+                        Optional.empty(),
+                        0,
+                        initialValidatorList)))
+            .setMinTransactionGasPrice(Wei.ZERO)
+            .setMinBlockOccupancyRatio(0.8)
+            .toParameters();
+
     final BftBlockCreator blockCreator =
         new BftBlockCreator(
+            miningParameters,
             forksSchedule,
             initialValidatorList.get(0),
-            () -> Optional.of(10_000_000L),
+            //            () -> Optional.of(10_000_000L),
             parent ->
                 bftExtraDataEncoder.encode(
                     new BftExtraData(
@@ -166,8 +185,8 @@ public class BftBlockCreatorTest {
             transactionPool,
             protContext,
             protocolSchedule,
-            Wei.ZERO,
-            0.8,
+            //            Wei.ZERO,
+            //            0.8,
             parentHeader,
             bftExtraDataEncoder);
 

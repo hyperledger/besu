@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlockSi
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.PriceTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.ProcessingResultTransactionSelector;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -46,6 +47,11 @@ import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFacto
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -75,6 +81,7 @@ import org.slf4j.LoggerFactory;
 public class BlockTransactionSelector {
   private static final Logger LOG = LoggerFactory.getLogger(BlockTransactionSelector.class);
 
+  //  private final MiningParameters miningParameters;
   private final Supplier<Boolean> isCancelled;
   private final MainnetTransactionProcessor transactionProcessor;
   private final Blockchain blockchain;
@@ -85,16 +92,18 @@ public class BlockTransactionSelector {
       new TransactionSelectionResults();
   private final List<AbstractTransactionSelector> transactionSelectors;
   private final TransactionSelector externalTransactionSelector;
+  private final AtomicBoolean isTimeout = new AtomicBoolean(false);
 
   public BlockTransactionSelector(
+      final MiningParameters miningParameters,
       final MainnetTransactionProcessor transactionProcessor,
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final TransactionPool transactionPool,
       final ProcessableBlockHeader processableBlockHeader,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
-      final Wei minTransactionGasPrice,
-      final Double minBlockOccupancyRatio,
+      //          final Wei minTransactionGasPrice,
+      //          final Double minBlockOccupancyRatio,
       final Supplier<Boolean> isCancelled,
       final Address miningBeneficiary,
       final Wei blobGasPrice,
@@ -102,6 +111,7 @@ public class BlockTransactionSelector {
       final GasCalculator gasCalculator,
       final GasLimitCalculator gasLimitCalculator,
       final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
+    //    this.miningParameters = miningParameters;
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
     this.worldState = worldState;
@@ -109,10 +119,11 @@ public class BlockTransactionSelector {
     this.isCancelled = isCancelled;
     this.blockSelectionContext =
         new BlockSelectionContext(
+            miningParameters,
             gasCalculator,
             gasLimitCalculator,
-            minTransactionGasPrice,
-            minBlockOccupancyRatio,
+            //            minTransactionGasPrice,
+            //            minBlockOccupancyRatio,
             processableBlockHeader,
             feeMarket,
             blobGasPrice,
@@ -139,22 +150,43 @@ public class BlockTransactionSelector {
         .setMessage("Transaction pool stats {}")
         .addArgument(blockSelectionContext.transactionPool().logStats())
         .log();
-    blockSelectionContext
-        .transactionPool()
-        .selectTransactions(
-            pendingTransaction -> {
-              final var res = evaluateTransaction(pendingTransaction);
-              if (!res.selected()) {
-                transactionSelectionResults.updateNotSelected(
-                    pendingTransaction.getTransaction(), res);
-              }
-              return res;
-            });
+    timeLimitedSelection();
     LOG.atTrace()
         .setMessage("Transaction selection result {}")
         .addArgument(transactionSelectionResults::toTraceLog)
         .log();
     return transactionSelectionResults;
+  }
+
+  private void timeLimitedSelection() {
+    final var txSelection =
+        CompletableFuture.runAsync(
+            () ->
+                blockSelectionContext
+                    .transactionPool()
+                    .selectTransactions(
+                        pendingTransaction -> {
+                          final var res = evaluateTransaction(pendingTransaction);
+                          if (!res.selected()) {
+                            transactionSelectionResults.updateNotSelected(
+                                pendingTransaction.getTransaction(), res);
+                          }
+                          return res;
+                        }));
+
+    try {
+      txSelection.get(5000, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException | ExecutionException e) {
+      if (isCancelled.get()) {
+        throw new CancellationException("Cancelled during transaction selection.");
+      }
+      LOG.warn("Error during block transaction selection", e);
+    } catch (TimeoutException e) {
+      synchronized (isTimeout) {
+        isTimeout.set(true);
+      }
+      LOG.warn("Timeout during block transaction selection, interrupting transaction selection", e);
+    }
   }
 
   /**
@@ -226,23 +258,29 @@ public class BlockTransactionSelector {
     final long cumulativeGasUsed =
         transactionSelectionResults.getCumulativeGasUsed() + gasUsedByTransaction;
 
-    worldStateUpdater.commit();
-    final TransactionReceipt receipt =
-        transactionReceiptFactory.create(
-            transaction.getType(), effectiveResult, worldState, cumulativeGasUsed);
+    synchronized (isTimeout) {
+      if (!isTimeout.get()) {
+        worldStateUpdater.commit();
+        final TransactionReceipt receipt =
+            transactionReceiptFactory.create(
+                transaction.getType(), effectiveResult, worldState, cumulativeGasUsed);
 
-    final long blobGasUsed =
-        blockSelectionContext.gasCalculator().blobGasCost(transaction.getBlobCount());
+        final long blobGasUsed =
+            blockSelectionContext.gasCalculator().blobGasCost(transaction.getBlobCount());
 
-    transactionSelectionResults.updateSelected(
-        transaction, receipt, gasUsedByTransaction, blobGasUsed);
+        transactionSelectionResults.updateSelected(
+            transaction, receipt, gasUsedByTransaction, blobGasUsed);
 
-    LOG.atTrace()
-        .setMessage("Selected {} for block creation")
-        .addArgument(transaction::toTraceLog)
-        .log();
+        LOG.atTrace()
+            .setMessage("Selected {} for block creation")
+            .addArgument(transaction::toTraceLog)
+            .log();
 
-    return TransactionSelectionResult.SELECTED;
+        return TransactionSelectionResult.SELECTED;
+      } else {
+        return TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT;
+      }
+    }
   }
 
   /**

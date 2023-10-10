@@ -26,7 +26,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler;
@@ -136,7 +136,12 @@ public abstract class AbstractMessageTaskTest<T, R> {
             TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
             syncState,
-            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
+            ImmutableMiningParameters.builder()
+                .build()
+                .getDynamic()
+                .setMinTransactionGasPrice(Wei.ONE)
+                .toParameters(),
+            //            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             TransactionPoolConfiguration.DEFAULT,
             null);
     transactionPool.setEnabled();

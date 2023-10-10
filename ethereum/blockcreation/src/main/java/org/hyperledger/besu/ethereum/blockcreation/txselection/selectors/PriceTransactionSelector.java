@@ -87,11 +87,16 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
               .feeMarket()
               .getTransactionPriceCalculator()
               .price(transaction, context.processableBlockHeader().getBaseFee());
-      if (context.minTransactionGasPrice().compareTo(currentMinTransactionGasPriceInBlock) > 0) {
+      if (context
+              .miningParameters()
+              .getDynamic()
+              .getMinTransactionGasPrice()
+              .compareTo(currentMinTransactionGasPriceInBlock)
+          > 0) {
         LOG.trace(
             "Current gas fee of {} is lower than configured minimum {}, skipping",
             transaction,
-            context.minTransactionGasPrice());
+            context.miningParameters().getDynamic().getMinTransactionGasPrice());
         return true;
       }
     }

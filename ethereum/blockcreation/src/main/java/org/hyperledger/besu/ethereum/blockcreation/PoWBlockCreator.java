@@ -15,10 +15,10 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.EthHash;
@@ -31,7 +31,6 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Supplier;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -40,26 +39,28 @@ public class PoWBlockCreator extends AbstractBlockCreator {
   private final PoWSolver nonceSolver;
 
   public PoWBlockCreator(
+      final MiningParameters miningParameters,
       final Address coinbase,
-      final Supplier<Optional<Long>> targetGasLimitSupplier,
+      //      final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final PoWSolver nonceSolver,
-      final Wei minTransactionGasPrice,
-      final Double minBlockOccupancyRatio,
+      //      final Wei minTransactionGasPrice,
+      //      final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
     super(
+        miningParameters,
         coinbase,
         __ -> coinbase,
-        targetGasLimitSupplier,
+        //        targetGasLimitSupplier,
         extraDataCalculator,
         transactionPool,
         protocolContext,
         protocolSchedule,
-        minTransactionGasPrice,
-        minBlockOccupancyRatio,
+        //        minTransactionGasPrice,
+        //        minBlockOccupancyRatio,
         parentHeader,
         Optional.empty());
 

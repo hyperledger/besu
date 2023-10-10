@@ -20,17 +20,16 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Optional;
-import java.util.function.Supplier;
 
 /** The Bft block creator. */
 // This class is responsible for creating a block without committer seals (basically it was just
@@ -42,40 +41,40 @@ public class BftBlockCreator extends AbstractBlockCreator {
   /**
    * Instantiates a new Bft block creator.
    *
+   * @param miningParameters the mining parameters
    * @param forksSchedule the forks schedule
    * @param localAddress the local address
-   * @param targetGasLimitSupplier the target gas limit supplier
    * @param extraDataCalculator the extra data calculator
    * @param transactionPool the pending transactions
-   * @param protocolContext the protocol context
+   * @param protocolContext the protocol miningParameters
    * @param protocolSchedule the protocol schedule
-   * @param minTransactionGasPrice the min transaction gas price
-   * @param minBlockOccupancyRatio the min block occupancy ratio
    * @param parentHeader the parent header
    * @param bftExtraDataCodec the bft extra data codec
    */
   public BftBlockCreator(
+      final MiningParameters miningParameters,
       final ForksSchedule<? extends BftConfigOptions> forksSchedule,
       final Address localAddress,
-      final Supplier<Optional<Long>> targetGasLimitSupplier,
+      //          final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final Wei minTransactionGasPrice,
-      final Double minBlockOccupancyRatio,
+      //          final Wei minTransactionGasPrice,
+      //          final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader,
       final BftExtraDataCodec bftExtraDataCodec) {
     super(
+        miningParameters,
         localAddress,
         miningBeneficiaryCalculator(localAddress, forksSchedule),
-        targetGasLimitSupplier,
+        //        targetGasLimitSupplier,
         extraDataCalculator,
         transactionPool,
         protocolContext,
         protocolSchedule,
-        minTransactionGasPrice,
-        minBlockOccupancyRatio,
+        //        minTransactionGasPrice,
+        //        minBlockOccupancyRatio,
         parentHeader,
         Optional.empty());
     this.bftExtraDataCodec = bftExtraDataCodec;

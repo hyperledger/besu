@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
@@ -77,7 +78,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -205,26 +205,28 @@ public abstract class AbstractIsolationTests {
 
   static class TestBlockCreator extends AbstractBlockCreator {
     private TestBlockCreator(
+        final MiningParameters miningParameters,
         final Address coinbase,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-        final Supplier<Optional<Long>> targetGasLimitSupplier,
+        //        final Supplier<Optional<Long>> targetGasLimitSupplier,
         final ExtraDataCalculator extraDataCalculator,
         final TransactionPool transactionPool,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
-        final Wei minTransactionGasPrice,
-        final Double minBlockOccupancyRatio,
+        //        final Wei minTransactionGasPrice,
+        //        final Double minBlockOccupancyRatio,
         final BlockHeader parentHeader) {
       super(
+          miningParameters,
           coinbase,
           miningBeneficiaryCalculator,
-          targetGasLimitSupplier,
+          //          targetGasLimitSupplier,
           extraDataCalculator,
           transactionPool,
           protocolContext,
           protocolSchedule,
-          minTransactionGasPrice,
-          minBlockOccupancyRatio,
+          //          minTransactionGasPrice,
+          //          minBlockOccupancyRatio,
           parentHeader,
           Optional.empty());
     }
@@ -234,16 +236,29 @@ public abstract class AbstractIsolationTests {
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
         final TransactionPool transactionPool) {
+
+      final MiningParameters miningParameters =
+          ImmutableMiningParameters.builder()
+              .coinbase(Address.ZERO)
+              .build()
+              .getDynamic()
+              .setExtraData(Bytes.fromHexString("deadbeef"))
+              .setTargetGasLimit(30_000_000L)
+              .setMinTransactionGasPrice(Wei.ONE)
+              .setMinBlockOccupancyRatio(0d)
+              .toParameters();
+
       return new TestBlockCreator(
+          miningParameters,
           Address.ZERO,
           __ -> Address.ZERO,
-          () -> Optional.of(30_000_000L),
+          //          () -> Optional.of(30_000_000L),
           __ -> Bytes.fromHexString("deadbeef"),
           transactionPool,
           protocolContext,
           protocolSchedule,
-          Wei.of(1L),
-          0d,
+          //          Wei.of(1L),
+          //          0d,
           parentHeader);
     }
 

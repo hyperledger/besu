@@ -131,7 +131,10 @@ public abstract class AbstractTransactionPoolTest {
   protected TransactionValidatorFactory transactionValidatorFactory;
 
   @Mock protected PendingTransactionAddedListener listener;
-  @Mock protected MiningParameters miningParameters;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  protected MiningParameters miningParameters;
+
   @Mock protected TransactionsMessageSender transactionsMessageSender;
   @Mock protected NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
   @Mock protected ProtocolSpec protocolSpec;
@@ -249,7 +252,7 @@ public abstract class AbstractTransactionPoolTest {
 
     transactionPool = createTransactionPool();
     blockchain.observeBlockAdded(transactionPool);
-    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.of(2));
+    when(miningParameters.getDynamic().getMinTransactionGasPrice()).thenReturn(Wei.of(2));
   }
 
   protected TransactionPool createTransactionPool() {
@@ -944,7 +947,7 @@ public abstract class AbstractTransactionPoolTest {
   public void shouldAcceptZeroGasPriceTransactionWhenMinGasPriceIsZero(
       final boolean disableLocalTxs) {
     transactionPool = createTransactionPool(b -> b.disableLocalTransactions(disableLocalTxs));
-    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
+    when(miningParameters.getDynamic().getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
 
     final Transaction transaction = createTransaction(0, Wei.ZERO);
 
@@ -958,7 +961,7 @@ public abstract class AbstractTransactionPoolTest {
   public void shouldAcceptZeroGasPriceFrontierTxsWhenMinGasPriceIsZeroAndLondonWithZeroBaseFee(
       final boolean disableLocalTxs) {
     transactionPool = createTransactionPool(b -> b.disableLocalTransactions(disableLocalTxs));
-    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
+    when(miningParameters.getDynamic().getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0, Optional.of(Wei.ZERO)));
     whenBlockBaseFeeIs(Wei.ZERO);
 
@@ -973,7 +976,7 @@ public abstract class AbstractTransactionPoolTest {
   public void shouldAcceptZeroGasPrice1559TxsWhenMinGasPriceIsZeroAndLondonWithZeroBaseFee(
       final boolean disableLocalTxs) {
     transactionPool = createTransactionPool(b -> b.disableLocalTransactions(disableLocalTxs));
-    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
+    when(miningParameters.getDynamic().getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0, Optional.of(Wei.ZERO)));
     whenBlockBaseFeeIs(Wei.ZERO);
 
@@ -1243,7 +1246,7 @@ public abstract class AbstractTransactionPoolTest {
       final Wei lastBlockBaseFee,
       final Wei txMaxFeePerGas,
       final boolean isLocal) {
-    when(miningParameters.getMinTransactionGasPrice()).thenReturn(minGasPrice);
+    when(miningParameters.getDynamic().getMinTransactionGasPrice()).thenReturn(minGasPrice);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0, Optional.of(genesisBaseFee)));
     whenBlockBaseFeeIs(lastBlockBaseFee);
 

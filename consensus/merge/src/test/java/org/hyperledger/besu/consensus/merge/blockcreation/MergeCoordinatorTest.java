@@ -57,6 +57,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
@@ -134,7 +135,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   @Spy
   MiningParameters miningParameters =
-      new MiningParameters.Builder()
+      ImmutableMiningParameters.builder()
           .coinbase(coinbase)
           .posBlockCreationRepetitionMinDuration(REPETITION_MIN_DURATION)
           .build();
@@ -278,13 +279,15 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
           MergeBlockCreator beingSpiedOn =
               spy(
                   new MergeBlockCreator(
-                      address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
-                      () -> Optional.of(30000000L),
+                      miningParameters,
+                      //
+                      // address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
+                      //                      () -> Optional.of(30000000L),
                       parent -> Bytes.EMPTY,
                       transactionPool,
                       protocolContext,
                       protocolSchedule,
-                      this.miningParameters.getMinTransactionGasPrice(),
+                      //                      miningParameters.getMinTransactionGasPrice(),
                       address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                       parentHeader,
                       Optional.empty()));
@@ -738,7 +741,13 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void shouldUseExtraDataFromMiningParameters() {
     final Bytes extraData = Bytes.fromHexString("0x1234");
 
-    miningParameters = new MiningParameters.Builder().extraData(extraData).build();
+    miningParameters =
+        ImmutableMiningParameters.builder()
+            .build()
+            .getDynamic()
+            .setExtraData(extraData)
+            .toParameters();
+    //            new MiningParameters.Builder().extraData(extraData).build();
 
     this.coordinator =
         new MergeCoordinator(

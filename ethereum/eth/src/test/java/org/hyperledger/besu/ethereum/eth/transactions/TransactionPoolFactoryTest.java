@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -241,7 +241,12 @@ public class TransactionPoolFactoryTest {
             TestClock.fixed(),
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
             syncState,
-            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
+            ImmutableMiningParameters.builder()
+                .build()
+                .getDynamic()
+                .setMinTransactionGasPrice(Wei.ONE)
+                .toParameters(),
+            //            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             ImmutableTransactionPoolConfiguration.builder()
                 .txPoolMaxSize(1)
                 .pendingTxRetentionPeriod(1)
@@ -350,7 +355,12 @@ public class TransactionPoolFactoryTest {
             TestClock.fixed(),
             new NoOpMetricsSystem(),
             syncState,
-            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
+            ImmutableMiningParameters.builder()
+                .build()
+                .getDynamic()
+                .setMinTransactionGasPrice(Wei.ONE)
+                .toParameters(),
+            //            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             ImmutableTransactionPoolConfiguration.builder()
                 .txPoolImplementation(implementation)
                 .txPoolMaxSize(1)

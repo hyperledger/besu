@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -134,7 +135,10 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transitionProtocolSchedule.getPreMergeSchedule(),
                 protocolContext,
                 transactionPool,
-                new MiningParameters.Builder(miningParameters).miningEnabled(false).build(),
+                ImmutableMiningParameters.builder()
+                    .from(miningParameters)
+                    .isMiningEnabled(false)
+                    .build(),
                 syncState,
                 ethProtocolManager),
             mergeBesuControllerBuilder.createTransitionMiningCoordinator(
@@ -277,7 +281,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
           }
         });
 
-    // initialize our merge context merge status before we would start either
+    // initialize our merge miningParameters merge status before we would start either
     Blockchain blockchain = protocolContext.getBlockchain();
     blockchain
         .getTotalDifficultyByHash(blockchain.getChainHeadHash())

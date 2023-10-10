@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -56,11 +57,19 @@ public class BesuNodeConfigurationBuilder {
   private String name;
   private Optional<Path> dataPath = Optional.empty();
   private MiningParameters miningParameters =
-      new MiningParameters.Builder()
-          .miningEnabled(false)
+      ImmutableMiningParameters.builder()
+          .isMiningEnabled(false)
           .coinbase(AddressHelpers.ofValue(1))
-          .minTransactionGasPrice(Wei.of(1000))
-          .build();
+          .build()
+          .getDynamic()
+          .setMinTransactionGasPrice(Wei.of(1000))
+          .toParameters();
+
+  //      new MiningParameters.Builder()
+  //          .miningEnabled(false)
+  //          .coinbase(AddressHelpers.ofValue(1))
+  //          .minTransactionGasPrice(Wei.of(1000))
+  //          .build();
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
   private JsonRpcConfiguration engineRpcConfiguration = JsonRpcConfiguration.createEngineDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
@@ -114,11 +123,18 @@ public class BesuNodeConfigurationBuilder {
 
   public BesuNodeConfigurationBuilder miningEnabled(final boolean enabled) {
     this.miningParameters =
-        new MiningParameters.Builder()
-            .miningEnabled(enabled)
-            .minTransactionGasPrice(Wei.of(1000))
+        ImmutableMiningParameters.builder()
+            .isMiningEnabled(enabled)
             .coinbase(AddressHelpers.ofValue(1))
-            .build();
+            .build()
+            .getDynamic()
+            .setMinTransactionGasPrice(Wei.of(1000))
+            .toParameters();
+    //        new MiningParameters.Builder()
+    //            .miningEnabled(enabled)
+    //            .minTransactionGasPrice(Wei.of(1000))
+    //            .coinbase(AddressHelpers.ofValue(1))
+    //            .build();
     this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER.name());
     return this;
   }

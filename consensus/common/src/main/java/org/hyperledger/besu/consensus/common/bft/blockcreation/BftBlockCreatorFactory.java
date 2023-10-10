@@ -40,7 +40,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -53,8 +52,9 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
   /** The Forks schedule. */
   protected final ForksSchedule<T> forksSchedule;
 
+  protected final MiningParameters miningParameters;
   private final TransactionPool transactionPool;
-  /** The Protocol context. */
+  /** The Protocol miningParameters. */
   protected final ProtocolContext protocolContext;
   /** The Protocol schedule. */
   protected final ProtocolSchedule protocolSchedule;
@@ -64,17 +64,17 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
   private final Address localAddress;
 
   /** The Vanity data. */
-  protected volatile Bytes vanityData;
-
-  private volatile Wei minTransactionGasPrice;
-  private volatile Double minBlockOccupancyRatio;
-  private volatile Optional<AtomicLong> targetGasLimit;
+  //  protected volatile Bytes vanityData;
+  //
+  //  private volatile Wei minTransactionGasPrice;
+  //  private volatile Double minBlockOccupancyRatio;
+  //  private volatile Optional<AtomicLong> targetGasLimit;
 
   /**
    * Instantiates a new Bft block creator factory.
    *
    * @param transactionPool the pending transactions
-   * @param protocolContext the protocol context
+   * @param protocolContext the protocol miningParameters
    * @param protocolSchedule the protocol schedule
    * @param forksSchedule the forks schedule
    * @param miningParams the mining params
@@ -94,11 +94,12 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
     this.protocolSchedule = protocolSchedule;
     this.forksSchedule = forksSchedule;
     this.localAddress = localAddress;
-    this.minTransactionGasPrice = miningParams.getMinTransactionGasPrice();
-    this.minBlockOccupancyRatio = miningParams.getMinBlockOccupancyRatio();
-    this.vanityData = miningParams.getExtraData();
+    this.miningParameters = miningParams;
+    //    this.minTransactionGasPrice = miningParams.getMinTransactionGasPrice();
+    //    this.minBlockOccupancyRatio = miningParams.getMinBlockOccupancyRatio();
+    //    this.vanityData = miningParams.getExtraData();
     this.bftExtraDataCodec = bftExtraDataCodec;
-    this.targetGasLimit = miningParams.getTargetGasLimit();
+    //    this.targetGasLimit = miningParams.getTargetGasLimit();
   }
 
   /**
@@ -110,15 +111,16 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
    */
   public BlockCreator create(final BlockHeader parentHeader, final int round) {
     return new BftBlockCreator(
+        miningParameters,
         forksSchedule,
         localAddress,
-        () -> targetGasLimit.map(AtomicLong::longValue),
+        //        () -> targetGasLimit.map(AtomicLong::longValue),
         ph -> createExtraData(round, ph),
         transactionPool,
         protocolContext,
         protocolSchedule,
-        minTransactionGasPrice,
-        minBlockOccupancyRatio,
+        //        minTransactionGasPrice,
+        //        minBlockOccupancyRatio,
         parentHeader,
         bftExtraDataCodec);
   }
@@ -129,7 +131,8 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
    * @param extraData the extra data
    */
   public void setExtraData(final Bytes extraData) {
-    this.vanityData = extraData.copy();
+
+    miningParameters.getDynamic().setExtraData(extraData.copy());
   }
 
   /**
@@ -138,7 +141,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
    * @param minTransactionGasPrice the min transaction gas price
    */
   public void setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
-    this.minTransactionGasPrice = minTransactionGasPrice;
+    miningParameters.getDynamic().setMinTransactionGasPrice(minTransactionGasPrice);
   }
 
   /**
@@ -147,7 +150,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
    * @return the min transaction gas price
    */
   public Wei getMinTransactionGasPrice() {
-    return minTransactionGasPrice;
+    return miningParameters.getDynamic().getMinTransactionGasPrice();
   }
 
   /**
@@ -171,7 +174,9 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
 
     final BftExtraData extraData =
         new BftExtraData(
-            ConsensusHelpers.zeroLeftPad(vanityData, BftExtraDataCodec.EXTRA_VANITY_LENGTH),
+            ConsensusHelpers.zeroLeftPad(
+                miningParameters.getDynamic().getExtraData(),
+                BftExtraDataCodec.EXTRA_VANITY_LENGTH),
             Collections.emptyList(),
             toVote(proposal),
             round,
@@ -187,9 +192,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
    */
   public void changeTargetGasLimit(final Long newTargetGasLimit) {
     if (AbstractGasLimitSpecification.isValidTargetGasLimit(newTargetGasLimit)) {
-      this.targetGasLimit.ifPresentOrElse(
-          existing -> existing.set(newTargetGasLimit),
-          () -> this.targetGasLimit = Optional.of(new AtomicLong(newTargetGasLimit)));
+      miningParameters.getDynamic().setTargetGasLimit(newTargetGasLimit);
     } else {
       throw new UnsupportedOperationException("Specified target gas limit is invalid");
     }

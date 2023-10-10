@@ -307,6 +307,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final org.hyperledger.besu.cli.options.stable.TransactionPoolOptions
       stableTransactionPoolOptions = TransactionPoolOptions.create();
 
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold Miner Options|@%n")
+  final org.hyperledger.besu.cli.options.stable.MiningOptions stableMiningOptions =
+      org.hyperledger.besu.cli.options.stable.MiningOptions.create();
+
   private final RunnerBuilder runnerBuilder;
   private final BesuController.Builder controllerBuilderFactory;
   private final BesuPluginContextImpl besuPluginContext;
@@ -1069,61 +1073,60 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Long reorgLoggingThreshold = 6L;
 
   // Miner options group
-  @CommandLine.ArgGroup(validate = false, heading = "@|bold Miner Options|@%n")
-  MinerOptionGroup minerOptionGroup = new MinerOptionGroup();
 
-  static class MinerOptionGroup {
-    @Option(
-        names = {"--miner-enabled"},
-        description = "Set if node will perform mining (default: ${DEFAULT-VALUE})")
-    private final Boolean isMiningEnabled = false;
+  //  static class MinerOptionGroup {
+  //    @Option(
+  //        names = {"--miner-enabled"},
+  //        description = "Set if node will perform mining (default: ${DEFAULT-VALUE})")
+  //    private final Boolean isMiningEnabled = false;
+  //
+  //    @Option(
+  //        names = {"--miner-stratum-enabled"},
+  //        description = "Set if node will perform Stratum mining (default: ${DEFAULT-VALUE})")
+  //    private final Boolean iStratumMiningEnabled = false;
+  //
+  //    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final
+  // Strings.
+  //    @Option(
+  //        names = {"--miner-stratum-host"},
+  //        description = "Host for Stratum network mining service (default: ${DEFAULT-VALUE})")
+  //    private String stratumNetworkInterface = "0.0.0.0";
+  //
+  //    @Option(
+  //        names = {"--miner-stratum-port"},
+  //        description = "Stratum port binding (default: ${DEFAULT-VALUE})")
+  //    private final Integer stratumPort = 8008;
+  //
+  //    @Option(
+  //        names = {"--miner-coinbase"},
+  //        description =
+  //            "Account to which mining rewards are paid. You must specify a valid coinbase if "
+  //                + "mining is enabled using --miner-enabled option",
+  //        arity = "1")
+  //    private final Address coinbase = null;
+  //
+  //    @Option(
+  //        names = {"--miner-extra-data"},
+  //        description =
+  //            "A hex string representing the (32) bytes to be included in the extra data "
+  //                + "field of a mined block (default: ${DEFAULT-VALUE})",
+  //        arity = "1")
+  //    private final Bytes extraData = DEFAULT_EXTRA_DATA;
+  //  }
 
-    @Option(
-        names = {"--miner-stratum-enabled"},
-        description = "Set if node will perform Stratum mining (default: ${DEFAULT-VALUE})")
-    private final Boolean iStratumMiningEnabled = false;
+  //  @Option(
+  //      names = {"--min-gas-price"},
+  //      description =
+  //          "Minimum price (in Wei) offered by a transaction for it to be included in a mined "
+  //              + "block (default: ${DEFAULT-VALUE})",
+  //      arity = "1")
+  //  private final Wei minTransactionGasPrice = DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 
-    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-    @Option(
-        names = {"--miner-stratum-host"},
-        description = "Host for Stratum network mining service (default: ${DEFAULT-VALUE})")
-    private String stratumNetworkInterface = "0.0.0.0";
-
-    @Option(
-        names = {"--miner-stratum-port"},
-        description = "Stratum port binding (default: ${DEFAULT-VALUE})")
-    private final Integer stratumPort = 8008;
-
-    @Option(
-        names = {"--miner-coinbase"},
-        description =
-            "Account to which mining rewards are paid. You must specify a valid coinbase if "
-                + "mining is enabled using --miner-enabled option",
-        arity = "1")
-    private final Address coinbase = null;
-
-    @Option(
-        names = {"--miner-extra-data"},
-        description =
-            "A hex string representing the (32) bytes to be included in the extra data "
-                + "field of a mined block (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private final Bytes extraData = DEFAULT_EXTRA_DATA;
-  }
-
-  @Option(
-      names = {"--min-gas-price"},
-      description =
-          "Minimum price (in Wei) offered by a transaction for it to be included in a mined "
-              + "block (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Wei minTransactionGasPrice = DEFAULT_MIN_TRANSACTION_GAS_PRICE;
-
-  @Option(
-      names = {"--min-block-occupancy-ratio"},
-      description = "Minimum occupancy ratio for a mined block (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Double minBlockOccupancyRatio = DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
+  //  @Option(
+  //      names = {"--min-block-occupancy-ratio"},
+  //      description = "Minimum occupancy ratio for a mined block (default: ${DEFAULT-VALUE})",
+  //      arity = "1")
+  //  private final Double minBlockOccupancyRatio = DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
 
   @Option(
       names = {"--pruning-enabled"},
@@ -1311,6 +1314,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Collection<EnodeURL> staticNodes;
   private BesuController besuController;
   private BesuConfiguration pluginCommonConfiguration;
+  private MiningParameters miningParameters;
 
   private BesuComponent besuComponent;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
@@ -1723,7 +1727,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--privacy-marker-transaction-signing-key-file can not be used in conjunction with a plugin that specifies a PrivateMarkerTransactionFactory");
       }
 
-      if (Wei.ZERO.compareTo(minTransactionGasPrice) < 0
+      if (Wei.ZERO.compareTo(miningParameters.getDynamic().getMinTransactionGasPrice()) < 0
           && (privacyOptionGroup.privateMarkerTransactionSigningKeyPath == null
               && (privacyPluginService == null
                   || privacyPluginService.getPrivateMarkerTransactionFactory() == null))) {
@@ -1868,20 +1872,24 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings("ConstantConditions")
   private void validateMiningParams() {
-    if (Boolean.TRUE.equals(minerOptionGroup.isMiningEnabled)
-        && minerOptionGroup.coinbase == null) {
-      throw new ParameterException(
-          this.commandLine,
-          "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled) "
-              + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
-    }
-    if (Boolean.FALSE.equals(minerOptionGroup.isMiningEnabled)
-        && Boolean.TRUE.equals(minerOptionGroup.iStratumMiningEnabled)) {
-      throw new ParameterException(
-          this.commandLine,
-          "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) "
-              + "or specify mining is enabled (--miner-enabled)");
-    }
+    stableMiningOptions.validate(
+        commandLine, logger, isMergeEnabled(), getActualGenesisConfigOptions().isEthHash());
+    //    if (Boolean.TRUE.equals(minerOptionGroup.isMiningEnabled)
+    //        && minerOptionGroup.coinbase == null) {
+    //      throw new ParameterException(
+    //          this.commandLine,
+    //          "Unable to mine without a valid coinbase. Either disable mining (remove
+    // --miner-enabled) "
+    //              + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
+    //    }
+    //    if (Boolean.FALSE.equals(minerOptionGroup.isMiningEnabled)
+    //        && Boolean.TRUE.equals(minerOptionGroup.iStratumMiningEnabled)) {
+    //      throw new ParameterException(
+    //          this.commandLine,
+    //          "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining
+    // (remove --miner-stratum-enabled) "
+    //              + "or specify mining is enabled (--miner-enabled)");
+    //    }
     if (unstableMiningOptions.getPosBlockCreationMaxTime() <= 0
         || unstableMiningOptions.getPosBlockCreationMaxTime()
             > MiningParameters.DEFAULT_POS_BLOCK_CREATION_MAX_TIME) {
@@ -2067,30 +2075,30 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--p2p-port",
             "--remote-connections-max-percentage"));
 
-    // Check that block producer options work
-    if (!isMergeEnabled() && getActualGenesisConfigOptions().isEthHash()) {
-      CommandLineUtils.checkOptionDependencies(
-          logger,
-          commandLine,
-          "--miner-enabled",
-          !minerOptionGroup.isMiningEnabled,
-          asList(
-              "--miner-coinbase",
-              "--min-gas-price",
-              "--min-block-occupancy-ratio",
-              "--miner-extra-data"));
-
-      // Check that mining options are able to work
-      CommandLineUtils.checkOptionDependencies(
-          logger,
-          commandLine,
-          "--miner-enabled",
-          !minerOptionGroup.isMiningEnabled,
-          asList(
-              "--miner-stratum-enabled",
-              "--Xminer-remote-sealers-limit",
-              "--Xminer-remote-sealers-hashrate-ttl"));
-    }
+    //    // Check that block producer options work
+    //    if (!isMergeEnabled() && getActualGenesisConfigOptions().isEthHash()) {
+    //      CommandLineUtils.checkOptionDependencies(
+    //          logger,
+    //          commandLine,
+    //          "--miner-enabled",
+    //          !minerOptionGroup.isMiningEnabled,
+    //          asList(
+    //              "--miner-coinbase",
+    //              "--min-gas-price",
+    //              "--min-block-occupancy-ratio",
+    //              "--miner-extra-data"));
+    //
+    //      // Check that mining options are able to work
+    //      CommandLineUtils.checkOptionDependencies(
+    //          logger,
+    //          commandLine,
+    //          "--miner-enabled",
+    //          !minerOptionGroup.isMiningEnabled,
+    //          asList(
+    //              "--miner-stratum-enabled",
+    //              "--Xminer-remote-sealers-limit",
+    //              "--Xminer-remote-sealers-hashrate-ttl"));
+    //    }
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
@@ -2134,6 +2142,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     syncMode = getDefaultSyncModeIfNotSet();
 
     ethNetworkConfig = updateNetworkConfig(network);
+
+    miningParameters = buildMininingParameters();
 
     jsonRpcConfiguration =
         jsonRpcConfiguration(
@@ -2245,26 +2255,29 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .transactionSelectorFactory(getTransactionSelectorFactory())
         .pluginTransactionValidatorFactory(getPluginTransactionValidatorFactory())
         .dataDirectory(dataDir())
-        .miningParameters(
-            new MiningParameters.Builder()
-                .coinbase(minerOptionGroup.coinbase)
-                .targetGasLimit(targetGasLimit)
-                .minTransactionGasPrice(minTransactionGasPrice)
-                .extraData(minerOptionGroup.extraData)
-                .miningEnabled(minerOptionGroup.isMiningEnabled)
-                .stratumMiningEnabled(minerOptionGroup.iStratumMiningEnabled)
-                .stratumNetworkInterface(minerOptionGroup.stratumNetworkInterface)
-                .stratumPort(minerOptionGroup.stratumPort)
-                .stratumExtranonce(unstableMiningOptions.getStratumExtranonce())
-                .minBlockOccupancyRatio(minBlockOccupancyRatio)
-                .remoteSealersLimit(unstableMiningOptions.getRemoteSealersLimit())
-                .remoteSealersTimeToLive(unstableMiningOptions.getRemoteSealersTimeToLive())
-                .powJobTimeToLive(unstableMiningOptions.getPowJobTimeToLive())
-                .maxOmmerDepth(unstableMiningOptions.getMaxOmmersDepth())
-                .posBlockCreationMaxTime(unstableMiningOptions.getPosBlockCreationMaxTime())
-                .posBlockCreationRepetitionMinDuration(
-                    unstableMiningOptions.getPosBlockCreationRepetitionMinDuration())
-                .build())
+        //        .miningParameters(
+        //            new MiningParameters.Builder()
+        //                .coinbase(minerOptionGroup.coinbase)
+        //                .targetGasLimit(targetGasLimit)
+        //                .minTransactionGasPrice(minTransactionGasPrice)
+        //                .extraData(minerOptionGroup.extraData)
+        //                .miningEnabled(minerOptionGroup.isMiningEnabled)
+        //                .stratumMiningEnabled(minerOptionGroup.iStratumMiningEnabled)
+        //                .stratumNetworkInterface(minerOptionGroup.stratumNetworkInterface)
+        //                .stratumPort(minerOptionGroup.stratumPort)
+        //                .stratumExtranonce(unstableMiningOptions.getStratumExtranonce())
+        //                .minBlockOccupancyRatio(minBlockOccupancyRatio)
+        //                .remoteSealersLimit(unstableMiningOptions.getRemoteSealersLimit())
+        //
+        // .remoteSealersTimeToLive(unstableMiningOptions.getRemoteSealersTimeToLive())
+        //                .powJobTimeToLive(unstableMiningOptions.getPowJobTimeToLive())
+        //                .maxOmmerDepth(unstableMiningOptions.getMaxOmmersDepth())
+        //
+        // .posBlockCreationMaxTime(unstableMiningOptions.getPosBlockCreationMaxTime())
+        //                .posBlockCreationRepetitionMinDuration(
+        //                    unstableMiningOptions.getPosBlockCreationRepetitionMinDuration())
+        //                .build())
+        .miningParameters(miningParameters)
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(new NodeKey(securityModule()))
         .metricsSystem(metricsSystem.get())
@@ -2607,7 +2620,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return ImmutableApiConfiguration.builder()
         .gasPriceBlocks(apiGasPriceBlocks)
         .gasPricePercentile(apiGasPricePercentile)
-        .gasPriceMin(minTransactionGasPrice.toLong())
+        .gasPriceMinSupplier(
+            miningParameters.getDynamic().getMinTransactionGasPrice().getAsBigInteger()
+                ::longValueExact)
         .gasPriceMax(apiGasPriceMax)
         .build();
   }
@@ -2941,6 +2956,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .unstable(unstableTransactionPoolOptions.toDomainObject())
         .saveFile((dataPath.resolve(stableTxPoolOption.getSaveFile().getPath()).toFile()))
         .build();
+  }
+
+  private MiningParameters buildMininingParameters() {
+    return stableMiningOptions.toDomainObject();
   }
 
   private boolean isPruningEnabled() {
@@ -3338,7 +3357,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     addPortIfEnabled(
         effectivePorts, metricsOptionGroup.metricsPort, metricsOptionGroup.isMetricsEnabled);
     addPortIfEnabled(
-        effectivePorts, minerOptionGroup.stratumPort, minerOptionGroup.iStratumMiningEnabled);
+        effectivePorts,
+        miningParameters.getStratumPort(),
+        miningParameters.isStratumMiningEnabled());
     return effectivePorts;
   }
 

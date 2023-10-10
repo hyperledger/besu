@@ -32,7 +32,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -48,10 +47,12 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
   protected final TransactionPool transactionPool;
   protected final AbstractBlockScheduler blockScheduler;
 
-  protected volatile Bytes extraData;
-  protected volatile Wei minTransactionGasPrice;
-  protected volatile Double minBlockOccupancyRatio;
-  protected volatile Optional<AtomicLong> targetGasLimit;
+  //  protected volatile Bytes extraData;
+  //  protected volatile Wei minTransactionGasPrice;
+  //  protected volatile Double minBlockOccupancyRatio;
+  //  protected volatile Optional<AtomicLong> targetGasLimit;
+
+  protected final MiningParameters miningParameters;
 
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
@@ -64,11 +65,12 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.transactionPool = transactionPool;
-    this.extraData = miningParams.getExtraData();
-    this.minTransactionGasPrice = miningParams.getMinTransactionGasPrice();
+    //    this.extraData = miningParams.getExtraData();
+    //    this.minTransactionGasPrice = miningParams.getMinTransactionGasPrice();
     this.blockScheduler = blockScheduler;
-    this.minBlockOccupancyRatio = miningParams.getMinBlockOccupancyRatio();
-    this.targetGasLimit = miningParams.getTargetGasLimit();
+    //    this.minBlockOccupancyRatio = miningParams.getMinBlockOccupancyRatio();
+    //    this.targetGasLimit = miningParams.getTargetGasLimit();
+    this.miningParameters = miningParams;
   }
 
   public Optional<M> startAsyncMining(
@@ -103,24 +105,25 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
       final BlockHeader parentHeader);
 
   public void setExtraData(final Bytes extraData) {
-    this.extraData = extraData.copy();
+    miningParameters.getDynamic().setExtraData(extraData.copy());
   }
 
   public void setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
-    this.minTransactionGasPrice = minTransactionGasPrice;
+    miningParameters.getDynamic().setMinTransactionGasPrice(minTransactionGasPrice);
   }
 
   public Wei getMinTransactionGasPrice() {
-    return minTransactionGasPrice;
+    return miningParameters.getDynamic().getMinTransactionGasPrice();
   }
 
   public abstract Optional<Address> getCoinbase();
 
   public void changeTargetGasLimit(final Long newTargetGasLimit) {
     if (AbstractGasLimitSpecification.isValidTargetGasLimit(newTargetGasLimit)) {
-      this.targetGasLimit.ifPresentOrElse(
-          existing -> existing.set(newTargetGasLimit),
-          () -> this.targetGasLimit = Optional.of(new AtomicLong(newTargetGasLimit)));
+      //      miningContext.getTargetGasLimit().ifPresentOrElse(
+      //          existing -> existing.set(newTargetGasLimit),
+      //          () -> miningContext.setTargetGasLimit(Optional.of(new
+      // AtomicLong(newTargetGasLimit))));
     } else {
       throw new UnsupportedOperationException("Specified target gas limit is invalid");
     }

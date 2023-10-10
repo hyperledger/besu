@@ -20,9 +20,9 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -48,8 +48,9 @@ public class PoWMinerExecutorTest {
 
   @Test
   public void startingMiningWithoutCoinbaseThrowsException() {
-    final MiningParameters miningParameters =
-        new MiningParameters.Builder().coinbase(null).minTransactionGasPrice(Wei.of(1000)).build();
+    final MiningParameters miningParameters = ImmutableMiningParameters.builder().build();
+    //        new
+    // MiningParameters.Builder().coinbase(null).minTransactionGasPrice(Wei.of(1000)).build();
 
     final TransactionPool transactionPool = createTransactionPool(miningParameters);
 
@@ -71,7 +72,7 @@ public class PoWMinerExecutorTest {
 
   @Test
   public void settingCoinbaseToNullThrowsException() {
-    final MiningParameters miningParameters = new MiningParameters.Builder().build();
+    final MiningParameters miningParameters = ImmutableMiningParameters.builder().build();
 
     final TransactionPool transactionPool = createTransactionPool(miningParameters);
 

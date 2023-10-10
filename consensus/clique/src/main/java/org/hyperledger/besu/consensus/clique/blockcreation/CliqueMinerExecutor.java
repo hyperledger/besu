@@ -35,7 +35,6 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -82,15 +81,17 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
     final Function<BlockHeader, CliqueBlockCreator> blockCreator =
         (header) ->
             new CliqueBlockCreator(
+                miningParameters,
                 localAddress, // TOOD(tmm): This can be removed (used for voting not coinbase).
-                () -> targetGasLimit.map(AtomicLong::longValue),
+                //                () ->
+                // miningContext.getTargetGasLimit().map(AtomicLong::longValue),
                 this::calculateExtraData,
                 transactionPool,
                 protocolContext,
                 protocolSchedule,
                 nodeKey,
-                minTransactionGasPrice,
-                minBlockOccupancyRatio,
+                //                miningContext.getMinTransactionGasPrice(),
+                //                    miningContext.getMinBlockOccupancyRatio(),
                 header,
                 epochManager);
 
@@ -120,7 +121,8 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
     final List<Address> validators = Lists.newArrayList();
 
     final Bytes vanityDataToInsert =
-        ConsensusHelpers.zeroLeftPad(extraData, CliqueExtraData.EXTRA_VANITY_LENGTH);
+        ConsensusHelpers.zeroLeftPad(
+            miningParameters.getDynamic().getExtraData(), CliqueExtraData.EXTRA_VANITY_LENGTH);
     // Building ON TOP of canonical head, if the next block is epoch, include validators.
     if (epochManager.isEpochBlock(parentHeader.getNumber() + 1)) {
 

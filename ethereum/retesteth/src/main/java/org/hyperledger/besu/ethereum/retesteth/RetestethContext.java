@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -231,6 +232,9 @@ public class RetestethContext {
             .txPoolLimitByAccountPercentage(Fraction.fromFloat(0.004f))
             .build();
 
+    final MiningParameters miningParameters = ImmutableMiningParameters.builder().build();
+    miningParameters.getDynamic().setMinTransactionGasPrice(Wei.ZERO);
+
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
             protocolSchedule,
@@ -239,7 +243,7 @@ public class RetestethContext {
             retestethClock,
             metricsSystem,
             syncState,
-            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
+            miningParameters,
             transactionPoolConfiguration,
             null);
 

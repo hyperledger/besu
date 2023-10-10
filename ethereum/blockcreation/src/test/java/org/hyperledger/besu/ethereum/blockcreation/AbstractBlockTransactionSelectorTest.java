@@ -111,7 +111,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected ProtocolContext protocolContext;
 
   @Mock protected MainnetTransactionProcessor transactionProcessor;
-  @Mock protected MiningParameters miningParameters;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  protected MiningParameters miningParameters;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   protected EthContext ethContext;
@@ -143,7 +145,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     when(protocolContext.getWorldStateArchive().getMutable(any(), anyBoolean()))
         .thenReturn(Optional.of(worldState));
     when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
-    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ONE);
+    when(miningParameters.getDynamic().getMinTransactionGasPrice()).thenReturn(Wei.ONE);
 
     transactionPool = createTransactionPool();
   }
@@ -699,14 +701,15 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final double minBlockOccupancyRatio) {
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
+            miningParameters,
             transactionProcessor,
             blockchain,
             worldState,
             transactionPool,
             blockHeader,
             this::createReceipt,
-            minGasPrice,
-            minBlockOccupancyRatio,
+            //            minGasPrice,
+            //            minBlockOccupancyRatio,
             this::isCancelled,
             miningBeneficiary,
             blobGasPrice,
@@ -728,14 +731,15 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final TransactionSelectorFactory transactionSelectorFactory) {
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
+            miningParameters,
             transactionProcessor,
             blockchain,
             worldState,
             transactionPool,
             blockHeader,
             this::createReceipt,
-            minGasPrice,
-            minBlockOccupancyRatio,
+            //            minGasPrice,
+            //            minBlockOccupancyRatio,
             this::isCancelled,
             miningBeneficiary,
             blobGasPrice,

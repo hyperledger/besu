@@ -56,7 +56,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -69,9 +68,16 @@ import org.slf4j.LoggerFactory;
 /** The Merge coordinator. */
 public class MergeCoordinator implements MergeMiningCoordinator, BadChainListener {
   private static final Logger LOG = LoggerFactory.getLogger(MergeCoordinator.class);
-
+  /**
+   * On PoS you do not need to compete with other nodes for block production, since you have an
+   * allocated slot for that, so in this case make sense to always try to fill the block, if there
+   * are enough pending transactions, until the remaining gas is less than the minimum needed for
+   * the smaller transaction. So for PoS the min-block-occupancy-ratio option is set to always try
+   * to fill 100% of the block.
+   */
+  private static final double TRY_FILL_BLOCK = 1.0;
   /** The Target gas limit. */
-  protected final AtomicLong targetGasLimit;
+  //  protected final AtomicLong targetGasLimit;
   /** The Mining parameters. */
   protected final MiningParameters miningParameters;
   /** The Merge block creator factory. */
@@ -79,15 +85,13 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   /** The Extra data. */
   protected final AtomicReference<Bytes> extraData =
       new AtomicReference<>(Bytes.fromHexString("0x"));
-  /** The Latest descends from terminal. */
-  protected final AtomicReference<BlockHeader> latestDescendsFromTerminal = new AtomicReference<>();
-  /** The Merge context. */
+  /** The Merge miningParameters. */
   protected final MergeContext mergeContext;
-  /** The Protocol context. */
+  /** The Protocol miningParameters. */
   protected final ProtocolContext protocolContext;
   /** The Block builder executor. */
   protected final ProposalBuilderExecutor blockBuilderExecutor;
-  /** The Backward sync context. */
+  /** The Backward sync miningParameters. */
   protected final BackwardSyncContext backwardSyncContext;
   /** The Protocol schedule. */
   protected final ProtocolSchedule protocolSchedule;
@@ -98,12 +102,12 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   /**
    * Instantiates a new Merge coordinator.
    *
-   * @param protocolContext the protocol context
+   * @param protocolContext the protocol miningParameters
    * @param protocolSchedule the protocol schedule
    * @param blockBuilderExecutor the block builder executor
    * @param transactionPool the pending transactions
    * @param miningParams the mining params
-   * @param backwardSyncContext the backward sync context
+   * @param backwardSyncContext the backward sync miningParameters
    * @param depositContractAddress the address of the deposit contract
    */
   public MergeCoordinator(
@@ -118,25 +122,33 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     this.protocolSchedule = protocolSchedule;
     this.blockBuilderExecutor = blockBuilderExecutor;
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
-    this.miningParameters = miningParams;
     this.backwardSyncContext = backwardSyncContext;
-    this.targetGasLimit =
-        miningParameters
-            .getTargetGasLimit()
-            // TODO: revisit default target gas limit
-            .orElse(new AtomicLong(30000000L));
-    this.extraData.set(miningParams.getExtraData());
+
+    if (miningParams.getDynamic().getTargetGasLimit().isEmpty()) {
+      miningParams.getDynamic().setTargetGasLimit(30000000L);
+    }
+    miningParams.getDynamic().setMinBlockOccupancyRatio(TRY_FILL_BLOCK);
+
+    this.miningParameters = miningParams;
+
+    //    this.targetGasLimit =
+    //        miningParameters
+    //            .getTargetGasLimit()
+    //            // TODO: revisit default target gas limit
+    //            .orElse(new AtomicLong(30000000L));
+    //    this.extraData.set(miningParams.getExtraData());
 
     this.mergeBlockCreatorFactory =
         (parentHeader, address) ->
             new MergeBlockCreator(
-                address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
-                () -> Optional.of(targetGasLimit.longValue()),
+                miningParameters,
+                //                address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
+                //                () -> Optional.of(targetGasLimit.longValue()),
                 parent -> extraData.get(),
                 transactionPool,
                 protocolContext,
                 protocolSchedule,
-                this.miningParameters.getMinTransactionGasPrice(),
+                //                this.miningParameters.getMinTransactionGasPrice(),
                 address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                 parentHeader,
                 depositContractAddress);
@@ -147,11 +159,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   /**
    * Instantiates a new Merge coordinator.
    *
-   * @param protocolContext the protocol context
+   * @param protocolContext the protocol miningParameters
    * @param protocolSchedule the protocol schedule
    * @param blockBuilderExecutor the block builder executor
    * @param miningParams the mining params
-   * @param backwardSyncContext the backward sync context
+   * @param backwardSyncContext the backward sync miningParameters
    * @param mergeBlockCreatorFactory the merge block creator factory
    */
   public MergeCoordinator(
@@ -166,13 +178,20 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     this.protocolSchedule = protocolSchedule;
     this.blockBuilderExecutor = blockBuilderExecutor;
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
-    this.miningParameters = miningParams;
+    //    this.miningParameters = miningParams;
     this.backwardSyncContext = backwardSyncContext;
-    this.targetGasLimit =
-        miningParameters
-            .getTargetGasLimit()
-            // TODO: revisit default target gas limit
-            .orElse(new AtomicLong(30000000L));
+    if (miningParams.getDynamic().getTargetGasLimit().isEmpty()) {
+      miningParams.getDynamic().setTargetGasLimit(30000000L);
+    }
+    miningParams.getDynamic().setMinBlockOccupancyRatio(TRY_FILL_BLOCK);
+    this.miningParameters = miningParams;
+    //
+    //
+    //    this.targetGasLimit =
+    //        miningParameters
+    //            .getTargetGasLimit()
+    //            // TODO: revisit default target gas limit
+    //            .orElse(new AtomicLong(30000000L));
 
     this.mergeBlockCreatorFactory = mergeBlockCreatorFactory;
 
@@ -205,7 +224,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public Wei getMinTransactionGasPrice() {
-    return miningParameters.getMinTransactionGasPrice();
+    return miningParameters.getDynamic().getMinTransactionGasPrice();
   }
 
   @Override
@@ -234,7 +253,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   @Override
   public void changeTargetGasLimit(final Long newTargetGasLimit) {
     if (AbstractGasLimitSpecification.isValidTargetGasLimit(newTargetGasLimit)) {
-      this.targetGasLimit.set(newTargetGasLimit);
+      this.miningParameters.getDynamic().setTargetGasLimit(newTargetGasLimit);
     } else {
       throw new IllegalArgumentException("Specified target gas limit is invalid");
     }

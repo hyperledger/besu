@@ -90,6 +90,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -365,12 +366,21 @@ public class TestContextBuilder {
       final List<QbftFork> qbftForks) {
 
     final MiningParameters miningParams =
-        new MiningParameters.Builder()
+        ImmutableMiningParameters.builder()
+            .isMiningEnabled(true)
             .coinbase(AddressHelpers.ofValue(1))
-            .minTransactionGasPrice(Wei.ZERO)
-            .extraData(Bytes.wrap("Qbft Int tests".getBytes(UTF_8)))
-            .miningEnabled(true)
-            .build();
+            .build()
+            .getDynamic()
+            .setMinTransactionGasPrice(Wei.ZERO)
+            .setExtraData(Bytes.wrap("Qbft Int tests".getBytes(UTF_8)))
+            .toParameters();
+
+    //        new MiningParameters.Builder()
+    //            .coinbase(AddressHelpers.ofValue(1))
+    //            .minTransactionGasPrice(Wei.ZERO)
+    //            .extraData(Bytes.wrap("Qbft Int tests".getBytes(UTF_8)))
+    //            .miningEnabled(true)
+    //            .build();
 
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     final Map<String, Object> qbftConfigValues =

@@ -72,6 +72,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -291,8 +292,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.FAST);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.empty());
-    assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
-    assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.EMPTY);
+    assertThat(miningArg.getValue().getDynamic().getMinTransactionGasPrice())
+        .isEqualTo(Wei.of(1000));
+    assertThat(miningArg.getValue().getDynamic().getExtraData()).isEqualTo(Bytes.EMPTY);
     assertThat(ethNetworkArg.getValue().getNetworkId()).isEqualTo(1);
     assertThat(ethNetworkArg.getValue().getBootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
   }
@@ -916,12 +918,23 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockControllerBuilder)
         .miningParameters(
-            new MiningParameters.Builder()
+            ImmutableMiningParameters.builder()
+                .isMiningEnabled(false)
                 .coinbase(Address.fromHexString(expectedCoinbase))
-                .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
-                .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
-                .miningEnabled(false)
-                .build());
+                .build()
+                .getDynamic()
+                .setMinTransactionGasPrice(
+                    MiningParameters.Dynamic.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
+                .setExtraData(MiningParameters.Dynamic.DEFAULT_EXTRA_DATA)
+                .toParameters());
+
+    //            new MiningParameters.Builder()
+    //                .coinbase(Address.fromHexString(expectedCoinbase))
+    //
+    // .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
+    //                .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
+    //                .miningEnabled(false)
+    //                .build());
   }
 
   @Test
@@ -933,12 +946,24 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockControllerBuilder)
         .miningParameters(
-            new MiningParameters.Builder()
+            ImmutableMiningParameters.builder()
+                .isMiningEnabled(false)
                 .coinbase(Address.fromHexString(expectedCoinbase))
-                .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
-                .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
-                .miningEnabled(false)
-                .build());
+                .build()
+                .getDynamic()
+                .setMinTransactionGasPrice(
+                    MiningParameters.Dynamic.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
+                .setExtraData(MiningParameters.Dynamic.DEFAULT_EXTRA_DATA)
+                .toParameters()
+
+            //            new MiningParameters.Builder()
+            //                .coinbase(Address.fromHexString(expectedCoinbase))
+            //
+            // .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
+            //                .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
+            //                .miningEnabled(false)
+            //                .build()
+            );
   }
 
   @Test
@@ -3903,8 +3928,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.of(requestedCoinbase));
-    assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(15));
-    assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.fromHexString(extraDataString));
+    assertThat(miningArg.getValue().getDynamic().getMinTransactionGasPrice()).isEqualTo(Wei.of(15));
+    assertThat(miningArg.getValue().getDynamic().getExtraData())
+        .isEqualTo(Bytes.fromHexString(extraDataString));
   }
 
   @Test
@@ -4633,7 +4659,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
-    assertThat(miningParametersArgumentCaptor.getValue().getTargetGasLimit().get().longValue())
+    assertThat(
+            miningParametersArgumentCaptor.getValue().getDynamic().getTargetGasLimit().getAsLong())
         .isEqualTo(10_000_000L);
   }
 
