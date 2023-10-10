@@ -339,12 +339,11 @@ public class MainnetTransactionProcessor {
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
       final long gasAvailable = transaction.getGasLimit() - intrinsicGas - accessListGas;
       LOG.trace(
-          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList - data)",
+          "Gas available for execution {} = {} - {} - {} (limit - intrinsic - accessList)",
           gasAvailable,
           transaction.getGasLimit(),
           intrinsicGas,
-          accessListGas,
-          blobGas);
+          accessListGas);
 
       final WorldUpdater worldUpdater = worldState.updater();
       final ImmutableMap.Builder<String, Object> contextVariablesBuilder =
