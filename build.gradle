@@ -375,7 +375,10 @@ subprojects {
       dependencies { integrationTestImplementation sourceSets.testSupport.output }
     }
 
-    task integrationTest(type: Test, dependsOn: ["compileTestJava", "unzipTessera"]) {
+    task integrationTest(type: Test, dependsOn: [
+      "compileTestJava",
+      "unzipTessera"
+    ]) {
       group = "verification"
       description = "Runs the Besu integration tests"
 

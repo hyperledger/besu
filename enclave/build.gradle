@@ -36,4 +36,3 @@ integrationTest {
   useJUnitPlatform()
   systemProperty "tessera-dist", "${buildDir}/tessera/dist/tessera-${tesseraDist}/bin/tessera"
 }
-
