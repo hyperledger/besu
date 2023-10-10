@@ -77,7 +77,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private Comparator<BlockHeader> blockChoiceRule;
 
-  private int numberOfblocksToCache;
+  private int numberBlocksToCache;
   private Optional<Cache<Hash, BlockHeader>> blockHeadersCache = Optional.empty();
   private Optional<Cache<Hash, BlockBody>> blockBodiesCache = Optional.empty();
   private Optional<Cache<Hash, List<TransactionReceipt>>> transactionReceiptsCache =
@@ -157,7 +157,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     this.reorgLoggingThreshold = reorgLoggingThreshold;
     this.blockChoiceRule = heaviestChainBlockChoiceRule;
     if (numberOfblocksToCache != 0) {
-      this.numberOfblocksToCache = numberOfblocksToCache;
+      this.numberBlocksToCache = numberOfblocksToCache;
       blockHeadersCache =
           Optional.of(
               CacheBuilder.newBuilder().recordStats().maximumSize(numberOfblocksToCache).build());
@@ -360,13 +360,13 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public synchronized void appendBlock(final Block block, final List<TransactionReceipt> receipts) {
-    if (numberOfblocksToCache != 0) cacheBlockData(block, receipts);
+    if (numberBlocksToCache != 0) cacheBlockData(block, receipts);
     appendBlockHelper(new BlockWithReceipts(block, receipts), false);
   }
 
   @Override
   public synchronized void storeBlock(final Block block, final List<TransactionReceipt> receipts) {
-    cacheBlockData(block, receipts);
+    if (numberBlocksToCache != 0) cacheBlockData(block, receipts);
     appendBlockHelper(new BlockWithReceipts(block, receipts), true);
   }
 

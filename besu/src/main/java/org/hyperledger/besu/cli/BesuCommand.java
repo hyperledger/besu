@@ -1297,7 +1297,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @CommandLine.Option(
       names = {"--cache-last-blocks"},
       description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
-  private final Integer numberOfblocksToCache = 0;
+  private final int numberOfblocksToCache = 0;
 
   @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
 

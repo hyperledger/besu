@@ -188,7 +188,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   private PluginTransactionValidatorFactory pluginTransactionValidatorFactory;
 
-  private Integer numberOfBlocksToCache;
+  private int numberOfBlocksToCache = 0;
 
   /**
    * Provide a BesuComponent which can be used to get other dependencies
