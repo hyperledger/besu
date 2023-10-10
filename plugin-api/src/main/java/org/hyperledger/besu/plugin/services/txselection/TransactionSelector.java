@@ -43,4 +43,17 @@ public interface TransactionSelector {
    */
   TransactionSelectionResult evaluateTransactionPostProcessing(
       PendingTransaction pendingTransaction, TransactionProcessingResult processingResult);
+
+  /**
+   * Method called when a transaction is selected to be added to a block.
+   *
+   * @param pendingTransaction The transaction that has been selected.
+   */
+  default void onTransactionSelected(final PendingTransaction pendingTransaction) {}
+  /**
+   * Method called when a transaction is rejected to be added to a block.
+   *
+   * @param pendingTransaction The transaction that has been rejected.
+   */
+  default void onTransactionRejected(final PendingTransaction pendingTransaction) {}
 }
