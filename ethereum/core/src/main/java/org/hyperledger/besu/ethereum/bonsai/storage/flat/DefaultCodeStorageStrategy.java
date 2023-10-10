@@ -30,7 +30,7 @@ import org.apache.tuweni.bytes.Bytes32;
 public class DefaultCodeStorageStrategy implements CodeStorageStrategy {
   @Override
   public Optional<Bytes> getFlatCode(
-      final Bytes32 codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
+      final Hash codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
     return storage.get(CODE_STORAGE_BY_HASH, codeHash.toArrayUnsafe()).map(Bytes::wrap);
   }
 
@@ -38,7 +38,7 @@ public class DefaultCodeStorageStrategy implements CodeStorageStrategy {
   public void putFlatCode(
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
-      final Bytes32 codeHash,
+      final Hash codeHash,
       final Bytes code,
       final SegmentedKeyValueStorage keyValueStorage) {
     final long codeHashCount = getCodeHashCount(keyValueStorage, codeHash);
@@ -65,6 +65,7 @@ public class DefaultCodeStorageStrategy implements CodeStorageStrategy {
   @Override
   public void clear(final SegmentedKeyValueStorage storage) {
     storage.clear(CODE_STORAGE_BY_HASH);
+    storage.clear(CODE_HASH_COUNT);
   }
 
   private long getCodeHashCount(

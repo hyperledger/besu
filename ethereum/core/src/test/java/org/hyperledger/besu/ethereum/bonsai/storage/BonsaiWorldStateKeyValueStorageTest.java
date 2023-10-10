@@ -479,7 +479,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
             new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
     if (useLegacyCodeStorage) {
       final SegmentedKeyValueStorageTransaction transaction =
-          bonsaiWorldStateKeyValueStorage.composedWorldStateStorage.startTransaction();
+          bonsaiWorldStateKeyValueStorage.getWorldStateStorage().startTransaction();
       transaction.put(
           KeyValueSegmentIdentifier.CODE_STORAGE, Bytes.of(1).toArray(), Bytes.of(1).toArray());
       transaction.commit();

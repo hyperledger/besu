@@ -163,7 +163,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   @Override
-  public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
+  public Optional<Bytes> getCode(final Hash codeHash, final Hash accountHash) {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
@@ -402,7 +402,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     }
 
     @Override
-    public BonsaiUpdater putCode(final Hash accountHash, final Bytes32 codeHash, final Bytes code) {
+    public BonsaiUpdater putCode(final Hash accountHash, final Hash codeHash, final Bytes code) {
       if (code.isEmpty()) {
         // Don't save empty values
         return this;

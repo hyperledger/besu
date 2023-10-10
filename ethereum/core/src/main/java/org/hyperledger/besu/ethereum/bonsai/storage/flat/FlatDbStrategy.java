@@ -109,7 +109,7 @@ public abstract class FlatDbStrategy {
    * Retrieves the code data for the given code hash and account hash.
    */
   public Optional<Bytes> getFlatCode(
-      final Bytes32 codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
+      final Hash codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
@@ -174,7 +174,7 @@ public abstract class FlatDbStrategy {
   public void putFlatCode(
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
-      final Bytes32 codeHash,
+      final Hash codeHash,
       final Bytes code,
       final SegmentedKeyValueStorage keyValueStorage) {
     codeStorageStrategy.putFlatCode(transaction, accountHash, codeHash, code, keyValueStorage);

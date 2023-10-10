@@ -22,17 +22,16 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public interface CodeStorageStrategy {
 
   Optional<Bytes> getFlatCode(
-      final Bytes32 codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage);
+      final Hash codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage);
 
   void putFlatCode(
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
-      final Bytes32 codeHash,
+      final Hash codeHash,
       final Bytes code,
       final SegmentedKeyValueStorage keyValueStorage);
 

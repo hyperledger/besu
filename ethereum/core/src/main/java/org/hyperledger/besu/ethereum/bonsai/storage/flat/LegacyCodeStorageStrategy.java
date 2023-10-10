@@ -24,12 +24,11 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class LegacyCodeStorageStrategy implements CodeStorageStrategy {
   @Override
   public Optional<Bytes> getFlatCode(
-      final Bytes32 codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
+      final Hash codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
     return storage
         .get(CODE_STORAGE, accountHash.toArrayUnsafe())
         .map(Bytes::wrap)
@@ -40,7 +39,7 @@ public class LegacyCodeStorageStrategy implements CodeStorageStrategy {
   public void putFlatCode(
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
-      final Bytes32 codeHash,
+      final Hash codeHash,
       final Bytes code,
       final SegmentedKeyValueStorage keyValueStorage) {
     transaction.put(CODE_STORAGE, accountHash.toArrayUnsafe(), code.toArrayUnsafe());
