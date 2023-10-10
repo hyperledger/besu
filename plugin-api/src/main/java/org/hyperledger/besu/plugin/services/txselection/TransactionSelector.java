@@ -54,8 +54,9 @@ public interface TransactionSelector {
    * Method called when a transaction is not selected to be added to a block.
    *
    * @param pendingTransaction The transaction that has not been selected.
+   * @param transactionSelectionResult The transaction selection result
    */
   default void onTransactionNotSelected(
       final PendingTransaction pendingTransaction,
-      final TransactionSelectionResult selectionResult) {}
+      final TransactionSelectionResult transactionSelectionResult) {}
 }
