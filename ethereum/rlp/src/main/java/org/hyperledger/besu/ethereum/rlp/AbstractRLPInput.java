@@ -24,6 +24,7 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes48;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.bytes.MutableBytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -97,6 +98,8 @@ abstract class AbstractRLPInput implements RLPInput {
   protected abstract Bytes inputSlice(long offset, int length);
 
   protected abstract Bytes32 inputSlice32(long offset);
+
+  protected abstract Bytes48 inputSlice48(long offset);
 
   protected abstract String inputHex(long offset, int length);
 
@@ -422,6 +425,14 @@ abstract class AbstractRLPInput implements RLPInput {
   public Bytes32 readBytes32() {
     checkElt("32 bytes value", 32);
     final Bytes32 res = inputSlice32(currentPayloadOffset);
+    setTo(nextItem());
+    return res;
+  }
+
+  @Override
+  public Bytes48 readBytes48() {
+    checkElt("48 bytes value", 48);
+    final Bytes48 res = inputSlice48(currentPayloadOffset);
     setTo(nextItem());
     return res;
   }

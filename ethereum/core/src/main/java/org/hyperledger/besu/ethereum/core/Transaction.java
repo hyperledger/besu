@@ -927,17 +927,19 @@ public class Transaction
     sb.append("nonce=").append(getNonce()).append(", ");
     getGasPrice()
         .ifPresent(
-            gasPrice -> sb.append("gasPrice=").append(gasPrice.toShortHexString()).append(", "));
+            gasPrice ->
+                sb.append("gasPrice=").append(gasPrice.toHumanReadableString()).append(", "));
     if (getMaxPriorityFeePerGas().isPresent() && getMaxFeePerGas().isPresent()) {
       sb.append("maxPriorityFeePerGas=")
-          .append(getMaxPriorityFeePerGas().map(Wei::toShortHexString).get())
+          .append(getMaxPriorityFeePerGas().map(Wei::toHumanReadableString).get())
           .append(", ");
       sb.append("maxFeePerGas=")
-          .append(getMaxFeePerGas().map(Wei::toShortHexString).get())
+          .append(getMaxFeePerGas().map(Wei::toHumanReadableString).get())
           .append(", ");
       getMaxFeePerBlobGas()
           .ifPresent(
-              wei -> sb.append("maxFeePerBlobGas=").append(wei.toShortHexString()).append(", "));
+              wei ->
+                  sb.append("maxFeePerBlobGas=").append(wei.toHumanReadableString()).append(", "));
     }
     sb.append("gasLimit=").append(getGasLimit()).append(", ");
     if (getTo().isPresent()) sb.append("to=").append(getTo().get()).append(", ");
@@ -993,7 +995,7 @@ public class Transaction
     }
     sb.append("gl: ").append(getGasLimit()).append(", ");
     sb.append("v: ").append(getValue().toHumanReadableString()).append(", ");
-    getTo().ifPresent(to -> sb.append(to));
+    getTo().ifPresent(to -> sb.append("to: ").append(to));
     return sb.append("}").toString();
   }
 
