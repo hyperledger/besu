@@ -120,9 +120,9 @@ public abstract class PendingTransaction
   }
 
   private int computeBlobMemorySize() {
-    long blobsSize =
+    int blobsSize =
         transaction.getBlobsWithCommitments().map(BlobsWithCommitments::getByteCount).orElse(0);
-    return computeEIP1559MemorySize() + (int) blobsSize;
+    return computeEIP1559MemorySize() + blobsSize;
   }
 
   private int computePayloadMemorySize() {
