@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AbstractTransactionSelector;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AllAcceptingTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlobPriceTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlockSizeTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.PriceTransactionSelector;
@@ -73,6 +74,7 @@ import org.slf4j.LoggerFactory;
  */
 public class BlockTransactionSelector {
   private static final Logger LOG = LoggerFactory.getLogger(BlockTransactionSelector.class);
+
   private final Supplier<Boolean> isCancelled;
   private final MainnetTransactionProcessor transactionProcessor;
   private final Blockchain blockchain;
@@ -82,7 +84,7 @@ public class BlockTransactionSelector {
   private final TransactionSelectionResults transactionSelectionResults =
       new TransactionSelectionResults();
   private final List<AbstractTransactionSelector> transactionSelectors;
-  private final List<TransactionSelector> externalTransactionSelectors;
+  private final TransactionSelector externalTransactionSelector;
 
   public BlockTransactionSelector(
       final MainnetTransactionProcessor transactionProcessor,
@@ -117,8 +119,10 @@ public class BlockTransactionSelector {
             miningBeneficiary,
             transactionPool);
     transactionSelectors = createTransactionSelectors(blockSelectionContext);
-    externalTransactionSelectors =
-        transactionSelectorFactory.map(TransactionSelectorFactory::create).orElse(List.of());
+    externalTransactionSelector =
+        transactionSelectorFactory
+            .map(TransactionSelectorFactory::create)
+            .orElse(AllAcceptingTransactionSelector.INSTANCE);
   }
 
   /**
@@ -141,8 +145,7 @@ public class BlockTransactionSelector {
             pendingTransaction -> {
               final var res = evaluateTransaction(pendingTransaction);
               if (!res.selected()) {
-                transactionSelectionResults.updateNotSelected(
-                    pendingTransaction.getTransaction(), res);
+                updateTransactionRejected(pendingTransaction, res);
               }
               return res;
             });
@@ -165,9 +168,10 @@ public class BlockTransactionSelector {
   public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
     transactions.forEach(
         transaction -> {
-          final var res = evaluateTransaction(new PendingTransaction.Local(transaction));
+          var pendingTransaction = new PendingTransaction.Local(transaction);
+          final var res = evaluateTransaction(pendingTransaction);
           if (!res.selected()) {
-            transactionSelectionResults.updateNotSelected(transaction, res);
+            updateTransactionRejected(pendingTransaction, res);
           }
         });
     return transactionSelectionResults;
@@ -230,8 +234,7 @@ public class BlockTransactionSelector {
     final long blobGasUsed =
         blockSelectionContext.gasCalculator().blobGasCost(transaction.getBlobCount());
 
-    transactionSelectionResults.updateSelected(
-        transaction, receipt, gasUsedByTransaction, blobGasUsed);
+    updateTransactionSelected(pendingTransaction, receipt, gasUsedByTransaction, blobGasUsed);
 
     LOG.atTrace()
         .setMessage("Selected {} for block creation")
@@ -239,6 +242,30 @@ public class BlockTransactionSelector {
         .log();
 
     return TransactionSelectionResult.SELECTED;
+  }
+
+  private void updateTransactionSelected(
+      final PendingTransaction pendingTransaction,
+      final TransactionReceipt receipt,
+      final long gasUsedByTransaction,
+      final long blobGasUsed) {
+
+    transactionSelectionResults.updateSelected(
+        pendingTransaction.getTransaction(), receipt, gasUsedByTransaction, blobGasUsed);
+
+    // notify external selector if any
+    externalTransactionSelector.onTransactionSelected(pendingTransaction);
+  }
+
+  private void updateTransactionRejected(
+      final PendingTransaction pendingTransaction,
+      final TransactionSelectionResult processingResult) {
+
+    transactionSelectionResults.updateNotSelected(
+        pendingTransaction.getTransaction(), processingResult);
+
+    // notify external selector if any
+    externalTransactionSelector.onTransactionRejected(pendingTransaction);
   }
 
   /**
@@ -263,18 +290,7 @@ public class BlockTransactionSelector {
         return result;
       }
     }
-
-    // Process the transaction through external selectors
-    for (var selector : externalTransactionSelectors) {
-      TransactionSelectionResult result =
-          selector.evaluateTransactionPreProcessing(pendingTransaction);
-      // If the transaction is not selected by any external selector, return the result
-      if (!result.equals(TransactionSelectionResult.SELECTED)) {
-        return result;
-      }
-    }
-    // If the transaction is selected by all selectors, return SELECTED
-    return TransactionSelectionResult.SELECTED;
+    return externalTransactionSelector.evaluateTransactionPreProcessing(pendingTransaction);
   }
 
   /**
@@ -301,19 +317,8 @@ public class BlockTransactionSelector {
         return result;
       }
     }
-
-    // Process the transaction through external selectors
-    for (var selector : externalTransactionSelectors) {
-      TransactionSelectionResult result =
-          selector.evaluateTransactionPostProcessing(pendingTransaction, processingResult);
-      // If the transaction is not selected by any external selector, return the result
-      if (!result.equals(TransactionSelectionResult.SELECTED)) {
-        return result;
-      }
-    }
-
-    // If the transaction is selected by all selectors, return SELECTED
-    return TransactionSelectionResult.SELECTED;
+    return externalTransactionSelector.evaluateTransactionPostProcessing(
+        pendingTransaction, processingResult);
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(
