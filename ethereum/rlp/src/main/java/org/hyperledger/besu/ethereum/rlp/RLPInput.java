@@ -22,6 +22,7 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes48;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.apache.tuweni.units.bigints.UInt64;
 
@@ -299,6 +300,16 @@ public interface RLPInput {
    *     bytes.
    */
   Bytes32 readBytes32();
+
+  /**
+   * Reads the next item of this input (assuming it is not a list) that must be exact 48 bytes.
+   *
+   * @return The next item read of this input.
+   * @throws RLPException if the next item to read is a list, the input is at the end of its current
+   *     list (and {@link #leaveList()} hasn't been called) or the next element is not exactly 48
+   *     bytes.
+   */
+  Bytes48 readBytes48();
 
   /**
    * Reads the next item of this input (assuming it is not a list) and transforms it with the

@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes48;
 import org.junit.jupiter.api.Test;
 
 public class BlobsWithCommitmentsTest {
@@ -45,9 +46,9 @@ public class BlobsWithCommitmentsTest {
                 InvalidParameterException.class,
                 () ->
                     new BlobsWithCommitments(
-                        List.of(new KZGCommitment(Bytes.of(1))),
+                        List.of(new KZGCommitment(Bytes48.fromHexStringLenient("1"))),
                         List.of(new Blob(Bytes.EMPTY)),
-                        List.of(new KZGProof(Bytes.EMPTY)),
+                        List.of(new KZGProof(Bytes48.ZERO)),
                         List.of()))
             .getMessage();
     final String expectedMessage =
@@ -64,7 +65,7 @@ public class BlobsWithCommitmentsTest {
                     new BlobsWithCommitments(
                         List.of(),
                         List.of(new Blob(Bytes.EMPTY)),
-                        List.of(new KZGProof(Bytes.EMPTY)),
+                        List.of(new KZGProof(Bytes48.ZERO)),
                         List.of(new VersionedHash(Bytes32.rightPad(Bytes.fromHexString("0x01"))))))
             .getMessage();
     final String expectedMessage =
@@ -79,7 +80,7 @@ public class BlobsWithCommitmentsTest {
                 InvalidParameterException.class,
                 () ->
                     new BlobsWithCommitments(
-                        List.of(new KZGCommitment(Bytes.of(1))),
+                        List.of(new KZGCommitment(Bytes48.fromHexStringLenient("1"))),
                         List.of(new Blob(Bytes.EMPTY)),
                         List.of(),
                         List.of(new VersionedHash(Bytes32.rightPad(Bytes.fromHexString("0x01"))))))
