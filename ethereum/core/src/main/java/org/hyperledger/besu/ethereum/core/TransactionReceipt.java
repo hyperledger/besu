@@ -204,9 +204,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       rlpOutput.writeLongScalar(status);
     }
     rlpOutput.writeLongScalar(cumulativeGasUsed);
-    if (compacted) {
-      rlpOutput.writeNull();
-    } else {
+    if (!compacted) {
       rlpOutput.writeBytes(bloomFilter);
     }
     rlpOutput.writeList(logs, (log, logOutput) -> log.writeTo(logOutput, compacted));
@@ -251,15 +249,13 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
 
     LogsBloomFilter bloomFilter = null;
 
-    // Compacted receipts don't include the bloom filter so use this to detect the receipt format
-    final boolean compacted = input.nextIsNull();
-    if (compacted) {
-      input.skipNext();
-    } else {
+    final boolean hasLogs = !input.nextIsList() && input.nextSize() == LogsBloomFilter.BYTE_SIZE;
+    if (hasLogs) {
       // The logs below will populate the bloom filter upon construction.
       bloomFilter = LogsBloomFilter.readFrom(input);
     }
     // TODO consider validating that the logs and bloom filter match.
+    final boolean compacted = !hasLogs;
     final List<Log> logs = input.readList(logInput -> Log.readFrom(logInput, compacted));
     if (compacted) {
       bloomFilter = LogsBloomFilter.builder().insertLogs(logs).build();
