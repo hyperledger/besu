@@ -218,10 +218,8 @@ public class AccountRangeDataRequest extends SnapDataRequest {
 
   @Override
   public void clear() {
-    if (isResponseReceived()) {
-      stackTrie.clear();
-      isProofValid = Optional.of(false);
-    }
+    stackTrie.clear();
+    isProofValid = Optional.of(false);
   }
 
   public Bytes serialize() {
