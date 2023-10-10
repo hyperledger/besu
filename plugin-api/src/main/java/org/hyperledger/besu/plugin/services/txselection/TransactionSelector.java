@@ -51,9 +51,11 @@ public interface TransactionSelector {
    */
   default void onTransactionSelected(final PendingTransaction pendingTransaction) {}
   /**
-   * Method called when a transaction is rejected to be added to a block.
+   * Method called when a transaction is not selected to be added to a block.
    *
-   * @param pendingTransaction The transaction that has been rejected.
+   * @param pendingTransaction The transaction that has not been selected.
    */
-  default void onTransactionRejected(final PendingTransaction pendingTransaction) {}
+  default void onTransactionNotSelected(
+      final PendingTransaction pendingTransaction,
+      final TransactionSelectionResult selectionResult) {}
 }
