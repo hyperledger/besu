@@ -79,7 +79,6 @@ public class StackTrie {
   }
 
   public void removeElement(final Bytes32 taskIdentifier) {
-    ;
     this.elementsCount.addAndGet(-this.elements.remove(taskIdentifier).keys().size());
   }
 

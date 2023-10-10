@@ -207,8 +207,10 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
   @Override
   public void clear() {
-    this.isProofValid = Optional.of(false);
-    this.stackTrie.removeElement(startKeyHash);
+    if (isResponseReceived()) {
+      this.isProofValid = Optional.of(false);
+      this.stackTrie.removeElement(startKeyHash);
+    }
   }
 
   @VisibleForTesting
