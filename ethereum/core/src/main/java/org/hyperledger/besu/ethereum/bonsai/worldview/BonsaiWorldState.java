@@ -484,6 +484,13 @@ public class BonsaiWorldState
       new SegmentedKeyValueStorageTransaction() {
 
         @Override
+        public Optional<byte[]> get(final SegmentIdentifier segment, final byte[] key)
+            throws StorageException {
+          // no-op
+          return Optional.empty();
+        }
+
+        @Override
         public void put(
             final SegmentIdentifier segmentIdentifier, final byte[] key, final byte[] value) {
           // no-op

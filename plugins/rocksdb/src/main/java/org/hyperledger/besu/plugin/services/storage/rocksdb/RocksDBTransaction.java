@@ -19,9 +19,11 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 import org.rocksdb.ColumnFamilyHandle;
+import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.Transaction;
 import org.rocksdb.WriteOptions;
@@ -37,6 +39,7 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
   private final Transaction innerTx;
   private final WriteOptions options;
   private final Function<SegmentIdentifier, ColumnFamilyHandle> columnFamilyMapper;
+  private final ReadOptions readOptions = new ReadOptions().setVerifyChecksums(false);
 
   /**
    * Instantiates a new RocksDb transaction.
@@ -55,6 +58,21 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
     this.innerTx = innerTx;
     this.options = options;
     this.metrics = metrics;
+  }
+
+  @Override
+  public Optional<byte[]> get(final SegmentIdentifier segmentId, final byte[] key)
+      throws StorageException {
+    try (final OperationTimer.TimingContext ignored = metrics.getWriteLatency().startTimer()) {
+      return Optional.ofNullable(
+          innerTx.get(columnFamilyMapper.apply(segmentId), readOptions, key));
+    } catch (final RocksDBException e) {
+      if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
+        logger.error(e.getMessage());
+        System.exit(0);
+      }
+      throw new StorageException(e);
+    }
   }
 
   @Override
