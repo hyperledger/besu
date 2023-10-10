@@ -159,19 +159,29 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
 
   @Override
   public MiningParameters toDomainObject() {
-    return ImmutableMiningParameters.builder()
-        .isMiningEnabled(isMiningEnabled)
-        .coinbase(coinbase)
-        .isStratumMiningEnabled(iStratumMiningEnabled)
-        .stratumNetworkInterface(stratumNetworkInterface)
-        .stratumPort(stratumPort)
-        .build()
-        .getDynamic()
-        .setExtraData(extraData)
-        .setMinBlockOccupancyRatio(minBlockOccupancyRatio)
-        .setMinTransactionGasPrice(minTransactionGasPrice)
-        .setTargetGasLimit(targetGasLimit)
-        .toParameters();
+    final var miningParametersBuilder =
+        ImmutableMiningParameters.builder()
+            .isMiningEnabled(isMiningEnabled)
+            .isStratumMiningEnabled(iStratumMiningEnabled)
+            .stratumNetworkInterface(stratumNetworkInterface)
+            .stratumPort(stratumPort);
+
+    if (coinbase != null) {
+      miningParametersBuilder.coinbase(coinbase);
+    }
+
+    final var dynamicParameters =
+        miningParametersBuilder
+            .build()
+            .getDynamic()
+            .setExtraData(extraData)
+            .setMinBlockOccupancyRatio(minBlockOccupancyRatio)
+            .setMinTransactionGasPrice(minTransactionGasPrice);
+
+    if (targetGasLimit != null) {
+      dynamicParameters.setTargetGasLimit(targetGasLimit);
+    }
+    return dynamicParameters.toParameters();
   }
 
   @Override

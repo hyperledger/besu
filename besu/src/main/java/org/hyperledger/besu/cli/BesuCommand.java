@@ -1206,12 +1206,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "*",
       split = ",")
   private final Map<Long, Hash> requiredBlocks = new HashMap<>();
-
-  @Option(
-      names = {"--target-gas-limit"},
-      description =
-          "Sets target gas limit per block. If set, each block's gas limit will approach this setting over time if the current gas limit is different.")
-  private final Long targetGasLimit = null;
+  //
+  //  @Option(
+  //      names = {"--target-gas-limit"},
+  //      description =
+  //          "Sets target gas limit per block. If set, each block's gas limit will approach this
+  // setting over time if the current gas limit is different.")
+  //  private final Long targetGasLimit = null;
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
@@ -2137,13 +2138,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void configure() throws Exception {
+    miningParameters = buildMininingParameters();
     checkPortClash();
     checkIfRequiredPortsAreAvailable();
     syncMode = getDefaultSyncModeIfNotSet();
 
     ethNetworkConfig = updateNetworkConfig(network);
-
-    miningParameters = buildMininingParameters();
 
     jsonRpcConfiguration =
         jsonRpcConfiguration(
@@ -2292,9 +2292,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             new PrunerConfiguration(pruningBlockConfirmations, pruningBlocksRetained))
         .genesisConfigOverrides(genesisConfigOverrides)
         .gasLimitCalculator(
-            Optional.ofNullable(targetGasLimit)
-                .<GasLimitCalculator>map(z -> new FrontierTargetingGasLimitCalculator())
-                .orElse(GasLimitCalculator.constant()))
+            miningParameters.getDynamic().getTargetGasLimit().isPresent()
+                ? new FrontierTargetingGasLimitCalculator()
+                : GasLimitCalculator.constant())
         .requiredBlocks(requiredBlocks)
         .reorgLoggingThreshold(reorgLoggingThreshold)
         .evmConfiguration(unstableEvmOptions.toDomainObject())
