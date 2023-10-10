@@ -1489,6 +1489,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
+      miningParameters = buildMininingParameters();
 
       validateOptions();
       configure();
@@ -2076,30 +2077,30 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--p2p-port",
             "--remote-connections-max-percentage"));
 
-    //    // Check that block producer options work
-    //    if (!isMergeEnabled() && getActualGenesisConfigOptions().isEthHash()) {
-    //      CommandLineUtils.checkOptionDependencies(
-    //          logger,
-    //          commandLine,
-    //          "--miner-enabled",
-    //          !minerOptionGroup.isMiningEnabled,
-    //          asList(
-    //              "--miner-coinbase",
-    //              "--min-gas-price",
-    //              "--min-block-occupancy-ratio",
-    //              "--miner-extra-data"));
-    //
-    //      // Check that mining options are able to work
-    //      CommandLineUtils.checkOptionDependencies(
-    //          logger,
-    //          commandLine,
-    //          "--miner-enabled",
-    //          !minerOptionGroup.isMiningEnabled,
-    //          asList(
-    //              "--miner-stratum-enabled",
-    //              "--Xminer-remote-sealers-limit",
-    //              "--Xminer-remote-sealers-hashrate-ttl"));
-    //    }
+    // Check that block producer options work
+    if (!isMergeEnabled() && getActualGenesisConfigOptions().isEthHash()) {
+      CommandLineUtils.checkOptionDependencies(
+          logger,
+          commandLine,
+          "--miner-enabled",
+          !miningParameters.isMiningEnabled(),
+          asList(
+              "--miner-coinbase",
+              "--min-gas-price",
+              "--min-block-occupancy-ratio",
+              "--miner-extra-data"));
+
+      // Check that mining options are able to work
+      CommandLineUtils.checkOptionDependencies(
+          logger,
+          commandLine,
+          "--miner-enabled",
+          !miningParameters.isMiningEnabled(),
+          asList(
+              "--miner-stratum-enabled",
+              "--Xminer-remote-sealers-limit",
+              "--Xminer-remote-sealers-hashrate-ttl"));
+    }
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
@@ -2138,7 +2139,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void configure() throws Exception {
-    miningParameters = buildMininingParameters();
     checkPortClash();
     checkIfRequiredPortsAreAvailable();
     syncMode = getDefaultSyncModeIfNotSet();
