@@ -39,9 +39,8 @@ public class DefaultCodeStorageStrategy implements CodeStorageStrategy {
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash codeHash,
-      final Bytes code,
-      final SegmentedKeyValueStorage keyValueStorage) {
-    final long codeHashCount = getCodeHashCount(keyValueStorage, codeHash);
+      final Bytes code) {
+    final long codeHashCount = getCodeHashCount(transaction, codeHash);
     updateCodeHashCount(transaction, codeHash, codeHashCount + 1);
     transaction.put(CODE_STORAGE_BY_HASH, codeHash.toArrayUnsafe(), code.toArrayUnsafe());
   }
@@ -50,9 +49,8 @@ public class DefaultCodeStorageStrategy implements CodeStorageStrategy {
   public void removeFlatCode(
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
-      final Hash codeHash,
-      final SegmentedKeyValueStorage keyValueStorage) {
-    final long codeHashCount = getCodeHashCount(keyValueStorage, codeHash);
+      final Hash codeHash) {
+    final long codeHashCount = getCodeHashCount(transaction, codeHash);
     final long updatedCodeHashCount =
         codeHashCount > 0 ? codeHashCount - 1 : 0; // ensure count min value is 0
     updateCodeHashCount(transaction, codeHash, updatedCodeHashCount);
@@ -69,8 +67,8 @@ public class DefaultCodeStorageStrategy implements CodeStorageStrategy {
   }
 
   private long getCodeHashCount(
-      final SegmentedKeyValueStorage keyValueStorage, final Bytes32 codeHash) {
-    return keyValueStorage
+      final SegmentedKeyValueStorageTransaction transaction, final Bytes32 codeHash) {
+    return transaction
         .get(CODE_HASH_COUNT, codeHash.toArrayUnsafe())
         .map(b -> Bytes.wrap(b).toLong())
         .orElse(0L);

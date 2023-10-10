@@ -32,14 +32,12 @@ public interface CodeStorageStrategy {
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash codeHash,
-      final Bytes code,
-      final SegmentedKeyValueStorage keyValueStorage);
+      final Bytes code);
 
   void removeFlatCode(
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
-      final Hash codeHash,
-      final SegmentedKeyValueStorage keyValueStorage);
+      final Hash codeHash);
 
   void clear(SegmentedKeyValueStorage storage);
 }

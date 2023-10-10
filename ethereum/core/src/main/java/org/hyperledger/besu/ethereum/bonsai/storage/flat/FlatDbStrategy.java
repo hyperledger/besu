@@ -165,7 +165,7 @@ public abstract class FlatDbStrategy {
       final Hash accountHash,
       final Hash codeHash,
       final SegmentedKeyValueStorage keyValueStorage) {
-    codeStorageStrategy.removeFlatCode(transaction, accountHash, codeHash, keyValueStorage);
+    codeStorageStrategy.removeFlatCode(transaction, accountHash, codeHash);
   }
 
   /*
@@ -177,7 +177,7 @@ public abstract class FlatDbStrategy {
       final Hash codeHash,
       final Bytes code,
       final SegmentedKeyValueStorage keyValueStorage) {
-    codeStorageStrategy.putFlatCode(transaction, accountHash, codeHash, code, keyValueStorage);
+    codeStorageStrategy.putFlatCode(transaction, accountHash, codeHash, code);
   }
 
   public void clearAll(final SegmentedKeyValueStorage storage) {

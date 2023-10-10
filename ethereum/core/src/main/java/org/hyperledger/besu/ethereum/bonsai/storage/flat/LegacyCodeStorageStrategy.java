@@ -40,8 +40,7 @@ public class LegacyCodeStorageStrategy implements CodeStorageStrategy {
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash codeHash,
-      final Bytes code,
-      final SegmentedKeyValueStorage keyValueStorage) {
+      final Bytes code) {
     transaction.put(CODE_STORAGE, accountHash.toArrayUnsafe(), code.toArrayUnsafe());
   }
 
@@ -49,8 +48,7 @@ public class LegacyCodeStorageStrategy implements CodeStorageStrategy {
   public void removeFlatCode(
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
-      final Hash codeHash,
-      final SegmentedKeyValueStorage keyValueStorage) {
+      final Hash codeHash) {
     transaction.remove(CODE_STORAGE, accountHash.toArrayUnsafe());
   }
 

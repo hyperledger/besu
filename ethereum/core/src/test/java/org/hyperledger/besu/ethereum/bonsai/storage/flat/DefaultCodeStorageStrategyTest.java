@@ -40,7 +40,7 @@ class DefaultCodeStorageStrategyTest {
 
   @Test
   void updatesCodeWhenCodeDoesntAlreadyExist() {
-    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code, keyValueStorage));
+    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code));
 
     assertThat(keyValueStorage.get(CODE_STORAGE_BY_HASH, codeHash.toArray()))
         .hasValue(code.toArray());
@@ -49,8 +49,8 @@ class DefaultCodeStorageStrategyTest {
 
   @Test
   void updatesCodeWhenCodeAlreadyExists() {
-    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code, keyValueStorage));
-    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code, keyValueStorage));
+    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code));
+    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code));
 
     assertThat(keyValueStorage.get(CODE_STORAGE_BY_HASH, codeHash.toArray()))
         .hasValue(code.toArray());
@@ -61,8 +61,8 @@ class DefaultCodeStorageStrategyTest {
   void updatesCodeCountForMultipleCodeUpdatesInSameTransaction() {
     useTransaction(
         t -> {
-          codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code, keyValueStorage);
-          codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code, keyValueStorage);
+          codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code);
+          codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code);
         });
 
     assertThat(keyValueStorage.get(CODE_STORAGE_BY_HASH, codeHash.toArray()))
@@ -72,8 +72,8 @@ class DefaultCodeStorageStrategyTest {
 
   @Test
   void removeDeletesWhenZeroReferences() {
-    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code, keyValueStorage));
-    useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, codeHash, keyValueStorage));
+    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code));
+    useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, codeHash));
 
     assertThat(keyValueStorage.get(CODE_STORAGE_BY_HASH, codeHash.toArray())).isEmpty();
     assertThat(keyValueStorage.get(CODE_HASH_COUNT, codeHash.toArray())).hasValue(codeCount(0));
@@ -81,9 +81,9 @@ class DefaultCodeStorageStrategyTest {
 
   @Test
   void removeDoesntDeleteWhenMoreThanZeroReferences() {
-    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code, keyValueStorage));
-    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code, keyValueStorage));
-    useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, codeHash, keyValueStorage));
+    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code));
+    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code));
+    useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, codeHash));
 
     assertThat(keyValueStorage.get(CODE_STORAGE_BY_HASH, codeHash.toArray()))
         .hasValue(code.toArray());
@@ -92,8 +92,8 @@ class DefaultCodeStorageStrategyTest {
 
   @Test
   void removeDoesntDecrementBelowZero() {
-    useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, codeHash, keyValueStorage));
-    useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, codeHash, keyValueStorage));
+    useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, codeHash));
+    useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, codeHash));
 
     assertThat(keyValueStorage.get(CODE_STORAGE_BY_HASH, codeHash.toArray())).isEmpty();
     assertThat(keyValueStorage.get(CODE_HASH_COUNT, codeHash.toArray())).hasValue(codeCount(0));
@@ -101,7 +101,7 @@ class DefaultCodeStorageStrategyTest {
 
   @Test
   void clearDeletesCodeStorageAndCodeHashCount() {
-    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code, keyValueStorage));
+    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code));
 
     codeStorage.clear(keyValueStorage);
 
