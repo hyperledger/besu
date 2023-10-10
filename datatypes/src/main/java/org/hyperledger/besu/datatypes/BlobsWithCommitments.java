@@ -89,4 +89,11 @@ public class BlobsWithCommitments {
   public List<VersionedHash> getVersionedHashes() {
     return versionedHashes;
   }
+
+  public int getByteCount() {
+    int blobSize = blobs.stream().mapToInt(b -> b.getData().size()).sum();
+    int commitmentSize = kzgCommitments.stream().mapToInt(c -> c.getData().size()).sum();
+    int proofSize = kzgProofs.stream().mapToInt(p -> p.getData().size()).sum();
+    return blobSize + commitmentSize + proofSize;
+  }
 }

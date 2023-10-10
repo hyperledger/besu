@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -119,8 +120,9 @@ public abstract class PendingTransaction
   }
 
   private int computeBlobMemorySize() {
-    // ToDo 4844: adapt for blobs
-    return computeEIP1559MemorySize();
+    long blobsSize =
+        transaction.getBlobsWithCommitments().map(BlobsWithCommitments::getByteCount).orElse(0);
+    return computeEIP1559MemorySize() + (int) blobsSize;
   }
 
   private int computePayloadMemorySize() {
