@@ -402,9 +402,12 @@ public class TrieLogSubCommand implements Runnable {
       out.println("Current trie log disk usage:");
       printTrieLogDiskUsage(out);
 
+      out.printf("Current head block number: %d\n", blockchain.getChainHead().getHeight());
       out.printf("Trie log layers to retain: %d\n", layersToRetain);
-      final long deleteBelowHere = blockchain.getChainHead().getHeight() - layersToRetain;
-      out.printf("Attempting trie log layer prune below block %s...\n", deleteBelowHere);
+      final long deleteBelowHere = blockchain.getChainHead().getHeight() - layersToRetain + 1;
+      out.printf(
+          "Attempting trie log layer prune below block %s = (%s - %s + 1)...\n",
+          deleteBelowHere, blockchain.getChainHead().getHeight(), layersToRetain);
 
       WorldStateArchive worldStateArchive =
           besuController.getProtocolContext().getWorldStateArchive();
