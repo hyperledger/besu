@@ -145,8 +145,7 @@ public class BlockTransactionSelector {
             pendingTransaction -> {
               final var res = evaluateTransaction(pendingTransaction);
               if (!res.selected()) {
-                transactionSelectionResults.updateNotSelected(
-                    pendingTransaction.getTransaction(), res);
+                updateTransactionRejected(pendingTransaction, res);
               }
               return res;
             });
@@ -169,9 +168,10 @@ public class BlockTransactionSelector {
   public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
     transactions.forEach(
         transaction -> {
-          final var res = evaluateTransaction(new PendingTransaction.Local(transaction));
+          var pendingTransaction = new PendingTransaction.Local(transaction);
+          final var res = evaluateTransaction(pendingTransaction);
           if (!res.selected()) {
-            transactionSelectionResults.updateNotSelected(transaction, res);
+            updateTransactionRejected(pendingTransaction, res);
           }
         });
     return transactionSelectionResults;
@@ -234,8 +234,7 @@ public class BlockTransactionSelector {
     final long blobGasUsed =
         blockSelectionContext.gasCalculator().blobGasCost(transaction.getBlobCount());
 
-    transactionSelectionResults.updateSelected(
-        transaction, receipt, gasUsedByTransaction, blobGasUsed);
+    updateTransactionSelected(pendingTransaction, receipt, gasUsedByTransaction, blobGasUsed);
 
     LOG.atTrace()
         .setMessage("Selected {} for block creation")
@@ -243,6 +242,30 @@ public class BlockTransactionSelector {
         .log();
 
     return TransactionSelectionResult.SELECTED;
+  }
+
+  private void updateTransactionSelected(
+      final PendingTransaction pendingTransaction,
+      final TransactionReceipt receipt,
+      final long gasUsedByTransaction,
+      final long blobGasUsed) {
+
+    transactionSelectionResults.updateSelected(
+        pendingTransaction.getTransaction(), receipt, gasUsedByTransaction, blobGasUsed);
+
+    // notify external selector if any
+    externalTransactionSelector.onTransactionSelected(pendingTransaction);
+  }
+
+  private void updateTransactionRejected(
+      final PendingTransaction pendingTransaction,
+      final TransactionSelectionResult processingResult) {
+
+    transactionSelectionResults.updateNotSelected(
+        pendingTransaction.getTransaction(), processingResult);
+
+    // notify external selector if any
+    externalTransactionSelector.onTransactionRejected(pendingTransaction);
   }
 
   /**
