@@ -63,6 +63,7 @@ public class EngineExchangeCapabilities extends ExecutionEngineJsonRpcMethod {
             .filter(e -> e.getMethodName().startsWith("engine_"))
             .filter(e -> !e.equals(ENGINE_EXCHANGE_CAPABILITIES))
             .filter(e -> !e.equals(ENGINE_PREPARE_PAYLOAD_DEBUG))
+            .filter(e -> !e.getMethodName().endsWith("6110"))
             .map(RpcMethod::getMethodName)
             .collect(Collectors.toList());
 

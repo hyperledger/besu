@@ -20,12 +20,10 @@ import java.net.URISyntaxException;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-@Ignore("EIP-6110 is not yet implemented")
 public class ExecutionEngineEip6110AcceptanceTest extends AbstractJsonRpcTest {
   private static final String GENESIS_FILE = "/jsonrpc/engine/eip6110/genesis.json";
   private static final String TEST_CASE_PATH = "/jsonrpc/engine/eip6110/test-cases/";
