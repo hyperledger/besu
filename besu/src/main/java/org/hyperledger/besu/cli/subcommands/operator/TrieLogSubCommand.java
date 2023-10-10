@@ -126,9 +126,9 @@ public class TrieLogSubCommand implements Runnable {
                 .getTrieLogManager()
                 .getTrieLogLayer(Hash.fromHexString(targetBlockHash));
         if (trieLogLayer.isPresent()) {
-          out.printf("result: %s", trieLogLayer.get());
+          out.printf("result: %s\n", trieLogLayer.get());
         } else {
-          out.printf("No trie log found for block hash %s", targetBlockHash);
+          out.printf("No trie log found for block hash %s\n", targetBlockHash);
         }
       } else {
         out.println("Subcommand only works with Bonsai");
@@ -206,9 +206,9 @@ public class TrieLogSubCommand implements Runnable {
                 .map(blockchain::getBlockHeader)
                 .filter(Optional::isPresent)
                 .count();
-        out.printf("trieLog total count: %d; blockchain count: %d", totalCount, canonicalCount);
+        out.printf("trieLog total count: %d; blockchain count: %d\n", totalCount, canonicalCount);
       } else {
-        out.print("Subcommand only works with Bonsai");
+        out.println("Subcommand only works with Bonsai");
       }
     }
   }
@@ -358,12 +358,7 @@ public class TrieLogSubCommand implements Runnable {
         } else {
           out.println("Please specify either --block or --fromBlockNumber and --toBlockNumber");
         }
-
-        //      KeyValueStorage trieLogStorage =
-        // besuController.getStorageProvider().getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
-        //      boolean success =
-        // trieLogStorage.tryDelete((Bytes.fromHexString(parentCommand.targetBlockHash.toString()).toArrayUnsafe()));
-        out.printf("success? %s", success);
+        out.printf("success? %s\n", success);
       } else {
         out.println("Subcommand only works with Bonsai");
       }
@@ -373,7 +368,7 @@ public class TrieLogSubCommand implements Runnable {
   @Command(
       name = "prune",
       description =
-          "This command prunes all trie logs below the specified block number, including orphaned trie logs.",
+          "This command prunes all trie log layers below the specified block number, including orphaned trie logs.",
       mixinStandardHelpOptions = true,
       versionProvider = VersionProvider.class)
   static class PruneTrieLog implements Runnable {
@@ -389,28 +384,33 @@ public class TrieLogSubCommand implements Runnable {
     private BesuController besuController;
 
     @Option(
-        names = {"--below", "--below-block-number"},
+        names = {"--retain", "--layers-to-retain"},
         paramLabel = MANDATORY_LONG_FORMAT_HELP,
-        description = "First block number to retain, prune below this number",
+        description =
+            "Number of trie log layers to retain starting at head, prune below this number",
         arity = "0..1")
-    private Long belowBlockNumber = AbstractTrieLogManager.RETAINED_LAYERS;
+    private Long layersToRetain = AbstractTrieLogManager.RETAINED_LAYERS;
 
     @Override
     public void run() {
       checkNotNull(parentCommand);
 
       final PrintWriter out = spec.commandLine().getOut();
-
-      printTrieLogDiskUsage(out);
-
       besuController = parentCommand.createBesuController();
       final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
+
+      out.println("Current trie log disk usage:");
+      printTrieLogDiskUsage(out);
+
+      out.printf("Trie log layers to retain: %d\n", layersToRetain);
+      final long deleteBelowHere = blockchain.getChainHead().getHeight() - layersToRetain;
+      out.printf("Attempting trie log layer prune below block %s...\n", deleteBelowHere);
 
       WorldStateArchive worldStateArchive =
           besuController.getProtocolContext().getWorldStateArchive();
 
       if (worldStateArchive instanceof BonsaiWorldStateProvider) {
-        if (belowBlockNumber != null) {
+        if (layersToRetain != null) {
 
           final KeyValueStorage trieLogStorage =
               besuController
@@ -429,24 +429,22 @@ public class TrieLogSubCommand implements Runnable {
                       // Orphaned trie logs are neither in the canonical blockchain nor forks.
                       // Likely created during block production
                       recordResult(trieLogStorage.tryDelete(hashAsBytes), prunedCount, hash);
-                    } else if (header.get().getNumber() < belowBlockNumber) {
-                      // Prune canonical and fork trie logs below the block number
-                      recordResult(trieLogStorage.tryDelete(hashAsBytes), prunedCount, hash);
                     } else {
-                      LOG.atInfo().setMessage("Retain {}").addArgument(hash::toHexString).log();
+                      if (header.get().getNumber() < deleteBelowHere) {
+                        // Prune canonical and fork trie logs below the block number
+                        recordResult(trieLogStorage.tryDelete(hashAsBytes), prunedCount, hash);
+                      } else {
+                        LOG.atInfo().setMessage("Retain {}").addArgument(hash::toHexString).log();
+                      }
                     }
                   });
           out.printf("Pruned %d trie logs\n", prunedCount.get());
 
+          out.println("New trie log disk usage:");
           printTrieLogDiskUsage(out);
         } else {
           out.println("Please specify --belowBlockNumber");
         }
-
-        //      KeyValueStorage trieLogStorage =
-        // besuController.getStorageProvider().getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
-        //      boolean success =
-        // trieLogStorage.tryDelete((Bytes.fromHexString(parentCommand.targetBlockHash.toString()).toArrayUnsafe()));
       } else {
         out.println("Subcommand only works with Bonsai");
       }
