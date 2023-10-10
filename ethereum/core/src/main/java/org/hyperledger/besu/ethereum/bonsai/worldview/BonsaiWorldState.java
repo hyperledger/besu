@@ -393,6 +393,8 @@ public class BonsaiWorldState
         verifyWorldStateRoot(newWorldStateRootHash, blockHeader);
         saveTrieLog =
             () -> {
+              // TODO SLD if isFrozen pushTo CACHE1 else persist ? To avoid persisting when
+              // producing block (cache to keep optimisation between build and newPayload import)
               trieLogManager.saveTrieLog(localCopy, newWorldStateRootHash, blockHeader, this);
               // not save a frozen state in the cache
               if (!isFrozen) {

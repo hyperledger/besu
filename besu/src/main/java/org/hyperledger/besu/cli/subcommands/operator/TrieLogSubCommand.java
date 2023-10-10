@@ -127,13 +127,14 @@ public class TrieLogSubCommand implements Runnable {
         out.println("Subcommand only works with Bonsai");
       }
 
-      //      KeyValueStorage trieLogStorage =
+      //            KeyValueStorage trieLogStorage =
+      //
       // besuController.getStorageProvider().getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
-      //      Optional<byte[]> bytes =
-      // trieLogStorage.get(Bytes.fromHexString(targetBlockHash.toString()).toArrayUnsafe());
-      //      LOG.atInfo().setMessage("result: {}")
-      //              .addArgument(HexFormat.of().formatHex(bytes.orElse(new byte[0])))
-      //              .log();
+      //            Optional<byte[]> bytes =
+      //       trieLogStorage.get(Bytes.fromHexString(targetBlockHash.toString()).toArrayUnsafe());
+      //            LOG.atInfo().setMessage("result: {}")
+      //                    .addArgument(HexFormat.of().formatHex(bytes.orElse(new byte[0])))
+      //                    .log();
     } catch (final Exception e) {
       LOG.error("TODO SLD", e);
       spec.commandLine().usage(System.out);
@@ -415,7 +416,7 @@ public class TrieLogSubCommand implements Runnable {
                     Hash hash = Hash.wrap(Bytes32.wrap(hashAsBytes));
 
                     final Optional<BlockHeader> header = blockchain.getBlockHeader(hash);
-                    if (header.isEmpty()) {
+                    if (header.isEmpty()) { // TODO SLD what if we're still producing this block?
                       // Orphaned trie logs are neither in the canonical blockchain nor forks.
                       // Likely created during block production
                       recordResult(trieLogStorage.tryDelete(hashAsBytes), prunedCount, hash);

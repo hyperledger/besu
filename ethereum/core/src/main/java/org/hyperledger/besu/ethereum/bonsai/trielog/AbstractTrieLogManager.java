@@ -154,6 +154,7 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
 
   @Override
   public Optional<TrieLog> getTrieLogLayer(final Hash blockHash) {
+    // TODO SLD check CACHE1 first?
     return rootWorldStateStorage.getTrieLog(blockHash).map(trieLogFactory::deserialize);
   }
 

@@ -153,6 +153,12 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
         || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
 
+  // TODO SLD protection against pruned trie logs when rolling back/forward etc so we're not relying
+  // on 512 max layers config.
+
+  // TODO SLD during reorg, prune trie logs, then another reorg -> roll forward - could be a problem
+  // with roll forward?
+
   @Override
   public Optional<MutableWorldState> getMutable(
       final BlockHeader blockHeader, final boolean shouldPersistState) {
