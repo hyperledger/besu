@@ -27,9 +27,6 @@ public class BesuExecutionExceptionHandler implements IExecutionExceptionHandler
       final CommandLine.ParseResult parseResult) {
     final CommandSpec spec = commandLine.getCommandSpec();
     commandLine.getErr().println(ex);
-    // TODO SLD
-    commandLine.getErr().println(ex.getCause());
-    ex.printStackTrace(commandLine.getErr());
     return commandLine.getExitCodeExceptionMapper() != null
         ? commandLine.getExitCodeExceptionMapper().getExitCode(ex)
         : spec.exitCodeOnExecutionException();
