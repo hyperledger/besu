@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.subcommands.operator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
+import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.bonsai.trielog.AbstractTrieLogManager.LOG_RANGE_LIMIT;
 
 import org.hyperledger.besu.cli.util.VersionProvider;
@@ -31,6 +32,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -40,6 +42,11 @@ import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.rocksdb.ColumnFamilyDescriptor;
+import org.rocksdb.ColumnFamilyHandle;
+import org.rocksdb.Options;
+import org.rocksdb.RocksDB;
+import org.rocksdb.RocksDBException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -390,9 +397,11 @@ public class TrieLogSubCommand implements Runnable {
 
     @Override
     public void run() {
+      checkNotNull(parentCommand);
+
       final PrintWriter out = spec.commandLine().getOut();
 
-      checkNotNull(parentCommand);
+      printTrieLogDiskUsage(out);
 
       besuController = parentCommand.createBesuController();
       final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
@@ -427,7 +436,9 @@ public class TrieLogSubCommand implements Runnable {
                       LOG.atInfo().setMessage("Retain {}").addArgument(hash::toHexString).log();
                     }
                   });
-          out.printf("Pruned %d trie logs", prunedCount.get());
+          out.printf("Pruned %d trie logs\n", prunedCount.get());
+
+          printTrieLogDiskUsage(out);
         } else {
           out.println("Please specify --belowBlockNumber");
         }
@@ -438,6 +449,41 @@ public class TrieLogSubCommand implements Runnable {
         // trieLogStorage.tryDelete((Bytes.fromHexString(parentCommand.targetBlockHash.toString()).toArrayUnsafe()));
       } else {
         out.println("Subcommand only works with Bonsai");
+      }
+    }
+
+    private void printTrieLogDiskUsage(final PrintWriter out) {
+
+      final String dbPath =
+          parentCommand
+              .parentCommand
+              .parentCommand
+              .dataDir()
+              .toString()
+              .concat("/")
+              .concat(DATABASE_PATH);
+
+      RocksDB.loadLibrary();
+      Options options = new Options();
+      options.setCreateIfMissing(true);
+
+      List<ColumnFamilyHandle> cfHandles = new ArrayList<>();
+      List<ColumnFamilyDescriptor> cfDescriptors = new ArrayList<>();
+      cfDescriptors.add(new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY));
+      cfDescriptors.add(
+          new ColumnFamilyDescriptor(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE.getId()));
+      try (final RocksDB rocksdb = RocksDB.openReadOnly(dbPath, cfDescriptors, cfHandles)) {
+        for (ColumnFamilyHandle cfHandle : cfHandles) {
+          RocksDbUsageHelper.printUsageForColumnFamily(rocksdb, cfHandle, out);
+        }
+      } catch (RocksDBException e) {
+        LOG.error("TODO SLD ", e);
+        e.printStackTrace();
+        throw new RuntimeException(e);
+      } finally {
+        for (ColumnFamilyHandle cfHandle : cfHandles) {
+          cfHandle.close();
+        }
       }
     }
 

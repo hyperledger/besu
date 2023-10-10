@@ -17,16 +17,13 @@ package org.hyperledger.besu.cli.subcommands.operator;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 
 import org.hyperledger.besu.cli.util.VersionProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.bouncycastle.util.Arrays;
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
-import org.rocksdb.ColumnFamilyMetaData;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
@@ -88,7 +85,7 @@ public class RocksDbSubCommand implements Runnable {
       options.setCreateIfMissing(true);
 
       // Open the RocksDB database with multiple column families
-      List<byte[]> cfNames = null;
+      List<byte[]> cfNames;
       try {
         cfNames = RocksDB.listColumnFamilies(options, dbPath);
       } catch (RocksDBException e) {
@@ -99,55 +96,9 @@ public class RocksDbSubCommand implements Runnable {
       for (byte[] cfName : cfNames) {
         cfDescriptors.add(new ColumnFamilyDescriptor(cfName));
       }
-      boolean emptyColumnFamily;
       try (final RocksDB rocksdb = RocksDB.openReadOnly(dbPath, cfDescriptors, cfHandles)) {
-        for (int i = 0; i < cfNames.size(); i++) {
-          emptyColumnFamily = false;
-          byte[] cfName = cfNames.get(i);
-          ColumnFamilyHandle cfHandle = cfHandles.get(i);
-          String size = rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size");
-          if (!size.isEmpty() && !size.isBlank()) {
-            long sizeLong = Long.parseLong(size);
-            if (sizeLong == 0) emptyColumnFamily = true;
-            if (!emptyColumnFamily) {
-              out.println(
-                  "****** Column family '"
-                      + getNameById(cfName)
-                      + "' size: "
-                      + formatOutputSize(sizeLong)
-                      + " ******");
-              // System.out.println("SST table : "+ rocksdb.getProperty(cfHandle,
-              // "rocksdb.sstables"));
-
-              out.println(
-                  "Number of live snapshots : "
-                      + rocksdb.getProperty(cfHandle, "rocksdb.num-snapshots"));
-              out.println(
-                  "Number of keys : " + rocksdb.getProperty(cfHandle, "rocksdb.estimate-num-keys"));
-
-              String totolSstFilesSize =
-                  rocksdb.getProperty(cfHandle, "rocksdb.total-sst-files-size");
-              if (!totolSstFilesSize.isEmpty() && !totolSstFilesSize.isBlank()) {
-                out.println(
-                    "Total size of SST Files : "
-                        + formatOutputSize(Long.parseLong(totolSstFilesSize)));
-              }
-              String liveSstFilesSize =
-                  rocksdb.getProperty(cfHandle, "rocksdb.live-sst-files-size");
-              if (!liveSstFilesSize.isEmpty() && !liveSstFilesSize.isBlank()) {
-                out.println(
-                    "Size of live SST Filess : "
-                        + formatOutputSize(Long.parseLong(liveSstFilesSize)));
-              }
-
-              ColumnFamilyMetaData columnFamilyMetaData = rocksdb.getColumnFamilyMetaData(cfHandle);
-              long sizeBytes = columnFamilyMetaData.size();
-              out.println(
-                  "Column family size (with getColumnFamilyMetaData) : "
-                      + formatOutputSize(sizeBytes));
-              out.println("");
-            }
-          }
+        for (ColumnFamilyHandle cfHandle : cfHandles) {
+          RocksDbUsageHelper.printUsageForColumnFamily(rocksdb, cfHandle, out);
         }
       } catch (RocksDBException e) {
         throw new RuntimeException(e);
@@ -156,30 +107,6 @@ public class RocksDbSubCommand implements Runnable {
           cfHandle.close();
         }
       }
-    }
-
-    private static String formatOutputSize(final long size) {
-      if (size > (1024 * 1024 * 1024)) {
-        long sizeInGiB = size / (1024 * 1024 * 1024);
-        return sizeInGiB + " GiB";
-      } else if (size > (1024 * 1024)) {
-        long sizeInMiB = size / (1024 * 1024);
-        return sizeInMiB + " MiB";
-      } else if (size > 1024) {
-        long sizeInKiB = size / 1024;
-        return sizeInKiB + " KiB";
-      } else {
-        return size + " B";
-      }
-    }
-
-    public static String getNameById(final byte[] id) {
-      for (KeyValueSegmentIdentifier segment : KeyValueSegmentIdentifier.values()) {
-        if (Arrays.areEqual(segment.getId(), id)) {
-          return segment.getName();
-        }
-      }
-      return null; // id not found
     }
   }
 }
