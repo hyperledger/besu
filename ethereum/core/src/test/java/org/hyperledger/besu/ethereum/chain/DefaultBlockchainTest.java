@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -36,10 +35,6 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -50,7 +45,6 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 public class DefaultBlockchainTest {
 
@@ -955,7 +949,7 @@ public class DefaultBlockchainTest {
     final KeyValueStorage kvStoreVariables = new InMemoryKeyValueStorage();
     final Block genesisBlock = gen.genesisBlock();
     final DefaultBlockchain blockchain =
-            createMutableBlockchain(kvStore,kvStoreVariables, genesisBlock);
+        createMutableBlockchain(kvStore, kvStoreVariables, genesisBlock);
 
     assertThat(blockchain.getBlockHeadersCache()).isEmpty();
     assertThat(blockchain.getBlockBodiesCache()).isEmpty();
@@ -970,12 +964,12 @@ public class DefaultBlockchainTest {
     final KeyValueStorage kvStoreVariables = new InMemoryKeyValueStorage();
     final Block genesisBlock = gen.genesisBlock();
     final DefaultBlockchain blockchain =
-            createMutableBlockchain(kvStore, kvStoreVariables, genesisBlock, "/data/test", 512);
+        createMutableBlockchain(kvStore, kvStoreVariables, genesisBlock, "/data/test", 512);
 
     final BlockDataGenerator.BlockOptions options =
-            new BlockDataGenerator.BlockOptions()
-                    .setBlockNumber(1L)
-                    .setParentHash(genesisBlock.getHash());
+        new BlockDataGenerator.BlockOptions()
+            .setBlockNumber(1L)
+            .setParentHash(genesisBlock.getHash());
     final Block newBlock = gen.block(options);
     final List<TransactionReceipt> receipts = gen.receipts(newBlock);
 
@@ -992,18 +986,21 @@ public class DefaultBlockchainTest {
     blockchain.appendBlock(newBlock, receipts);
 
     assertThat(blockchain.getBlockHeadersCache().get().size()).isEqualTo(1);
-    assertThat(blockchain.getBlockHeadersCache().get().getIfPresent(newBlock.getHash())).isEqualTo(newBlock.getHeader());
+    assertThat(blockchain.getBlockHeadersCache().get().getIfPresent(newBlock.getHash()))
+        .isEqualTo(newBlock.getHeader());
 
     assertThat(blockchain.getBlockBodiesCache().get().size()).isEqualTo(1);
-    assertThat(blockchain.getBlockBodiesCache().get().getIfPresent(newBlock.getHash())).isEqualTo(newBlock.getBody());
+    assertThat(blockchain.getBlockBodiesCache().get().getIfPresent(newBlock.getHash()))
+        .isEqualTo(newBlock.getBody());
 
     assertThat(blockchain.getTransactionReceiptsCache().get().size()).isEqualTo(1);
-    assertThat(blockchain.getTransactionReceiptsCache().get().getIfPresent(newBlock.getHash())).isEqualTo(receipts);
+    assertThat(blockchain.getTransactionReceiptsCache().get().getIfPresent(newBlock.getHash()))
+        .isEqualTo(receipts);
 
     assertThat(blockchain.getTotalDifficultyCache().get().size()).isEqualTo(1);
-    assertThat(blockchain.getTotalDifficultyCache().get().getIfPresent(newBlock.getHash())).isEqualTo(newBlock.getHeader().getDifficulty());
+    assertThat(blockchain.getTotalDifficultyCache().get().getIfPresent(newBlock.getHash()))
+        .isEqualTo(newBlock.getHeader().getDifficulty());
   }
-
 
   /*
    * Check that block header, block body, block number, transaction locations, and receipts for this
@@ -1053,8 +1050,6 @@ public class DefaultBlockchainTest {
     assertThat(blockchain.getChainHead().getTotalDifficulty()).isEqualTo(td);
   }
 
-
-
   private BlockchainStorage createStorage(
       final KeyValueStorage kvStoreChain, final KeyValueStorage kvStorageVariables) {
     return new KeyValueStoragePrefixedKeyBlockchainStorage(
@@ -1089,21 +1084,22 @@ public class DefaultBlockchainTest {
   private Blockchain createBlockchain(
       final KeyValueStorage kvStore, final KeyValueStorage kvStorageVariables) {
     return DefaultBlockchain.create(
-            createStorage(kvStore, kvStorageVariables), new NoOpMetricsSystem(), 0);
+        createStorage(kvStore, kvStorageVariables), new NoOpMetricsSystem(), 0);
   }
 
   private DefaultBlockchain createMutableBlockchain(
-          final KeyValueStorage kvStore,
-          final KeyValueStorage kvStorageVariables,
-          final Block genesisBlock,
-          final String dataDirectory,
-          final int numberOfBlocksToCache) {
+      final KeyValueStorage kvStore,
+      final KeyValueStorage kvStorageVariables,
+      final Block genesisBlock,
+      final String dataDirectory,
+      final int numberOfBlocksToCache) {
     return (DefaultBlockchain)
-            DefaultBlockchain.createMutable(
-                    genesisBlock,
-                    createStorage(kvStore, kvStorageVariables),
-                    new NoOpMetricsSystem(),
-                    0,
-                    dataDirectory, numberOfBlocksToCache);
+        DefaultBlockchain.createMutable(
+            genesisBlock,
+            createStorage(kvStore, kvStorageVariables),
+            new NoOpMetricsSystem(),
+            0,
+            dataDirectory,
+            numberOfBlocksToCache);
   }
 }
