@@ -1,6 +1,6 @@
 # Changelog
 
-## 23.10.0-RC
+## 23.10.0
 ### Layered Transaction Pool: the new default transaction pool implementation
 With this release the previously experimental Layered txpool is marked stable and enabled by default, so please read the following instructions if you used to tune txpool behaviour,
 otherwise you can simply go with the default and enjoy the improved performance of the new txpool.
