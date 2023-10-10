@@ -2,7 +2,7 @@
 
 ## 23.10.0-RC
 ### Layered Transaction Pool: the new default transaction pool implementation
-Why this release the previously experimental Layered txpool is marked stable and enabled by default, so please read the following instructions if you used to tune txpool behaviour,
+With this release the previously experimental Layered txpool is marked stable and enabled by default, so please read the following instructions if you used to tune txpool behaviour,
 otherwise you can simply go with the default and enjoy the improved performance of the new txpool.
 
 #### Upgrading to Layered Transaction Pool
@@ -13,11 +13,11 @@ then you need to update your configuration as described below:
 - `tx-pool-limit-by-account-percentage`: replace it with `tx-pool-max-future-by-sender`, which specify the max number of sequential transactions of single sender are kept in the txpool, by default it is 200.
 - `tx-pool-max-size`: the Layered txpool is not limited by a max number of transactions, but by the estimated memory size the transactions occupy, so you need to remove this option, and to tune the max amount of memory<sup>*</sup> use the new option `tx-pool-layer-max-capacity` as described below.
 
-You can still opt-out the Layered txpool, setting `tx-pool=legacy` in config file or via cli argument, but be warned that the Legacy implementation will be deprecated for removal soon, so start testing the new implementation.
+You can still opt-out of the Layered txpool, setting `tx-pool=legacy` in config file or via cli argument, but be warned that the Legacy implementation will be deprecated for removal soon, so start testing the new implementation.
 
 #### Configuring the Layered Transaction Pool
-By default, the txpool is tuned for mainnet usage, but if you are using on private networks or want otherwise tune it, these are the new options:
-- `tx-pool-max-future-by-sender`: specify the max number of sequential transactions of single sender are kept in the txpool, by default it is 200, increase it to allow a single sender to fit more transactions in a single block.
+By default, the txpool is tuned for mainnet usage, but if you are using private networks or want otherwise tune it, these are the new options:
+- `tx-pool-max-future-by-sender`: specify the max number of sequential transactions of a single sender are kept in the txpool, by default it is 200, increase it to allow a single sender to fit more transactions in a single block.
 - `tx-pool-layer-max-capacity`: set the max amount of memory<sup>*</sup> in bytes, a single memory limited layer can occupy, by default is 12.5MB, keep in mind that there are 2 memory limited layers, so the expected memory consumption is twice the value specified by this option, so 25MB by default. Increase this value if you have spare ram and the eviction rate is high for you network.
 - `tx-pool-max-prioritized`: set the max number of transactions allowed in the first layer, that only contains transactions that are candidate for inclusion in the next block creation task, here it make sense to limit the value to the max number of transactions that fix in a block in your network, by default is 2000.
 
