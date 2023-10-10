@@ -16,10 +16,10 @@ then you need to update your configuration as described below:
 You can still opt-out of the Layered txpool, setting `tx-pool=legacy` in config file or via cli argument, but be warned that the Legacy implementation will be deprecated for removal soon, so start testing the new implementation.
 
 #### Configuring the Layered Transaction Pool
-By default, the txpool is tuned for mainnet usage, but if you are using private networks or want otherwise tune it, these are the new options:
-- `tx-pool-max-future-by-sender`: specify the max number of sequential transactions of a single sender are kept in the txpool, by default it is 200, increase it to allow a single sender to fit more transactions in a single block.
-- `tx-pool-layer-max-capacity`: set the max amount of memory<sup>*</sup> in bytes, a single memory limited layer can occupy, by default is 12.5MB, keep in mind that there are 2 memory limited layers, so the expected memory consumption is twice the value specified by this option, so 25MB by default. Increase this value if you have spare ram and the eviction rate is high for you network.
-- `tx-pool-max-prioritized`: set the max number of transactions allowed in the first layer, that only contains transactions that are candidate for inclusion in the next block creation task, here it make sense to limit the value to the max number of transactions that fix in a block in your network, by default is 2000.
+By default, the txpool is tuned for mainnet usage, but if you are using private networks or want to otherwise tune it, these are the new options:
+- `tx-pool-max-future-by-sender`: specify the max number of sequential transactions of a single sender are kept in the txpool, by default it is 200, increase it to allow a single sender to fit more transactions in a single block. For private networks, this can safely be set in the hundreds or thousands if you want to ensure future transactions (with large nonce gaps) remain in the pool.
+- `tx-pool-layer-max-capacity`: set the max amount of memory<sup>*</sup> in bytes, a single memory limited layer can occupy, by default is 12.5MB, keep in mind that there are 2 memory limited layers, so the expected memory consumption is twice the value specified by this option, so 25MB by default. Increase this value if you have spare RAM and the eviction rate is high for your network.
+- `tx-pool-max-prioritized`: set the max number of transactions allowed in the first layer, that only contains transactions that are candidate for inclusion in the next block creation task. It makes sense to limit the value to the max number of transactions that fit in a block in your network, by default is 2000.
 
 <sup>*</sup>: the memory used by the txpool is an estimation, we are working to make it always more accurate.
 
