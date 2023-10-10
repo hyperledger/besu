@@ -1,0 +1,28 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "engine_forkchoiceUpdatedV3",
+    "params": [
+      {
+        "headBlockHash": "0x17da7aea0f4e4ba1d905dbb7d60f6ab4133f3009ae1a1ba99e6e9cb37c15412c",
+        "safeBlockHash": "0x17da7aea0f4e4ba1d905dbb7d60f6ab4133f3009ae1a1ba99e6e9cb37c15412c",
+        "finalizedBlockHash": "0x17da7aea0f4e4ba1d905dbb7d60f6ab4133f3009ae1a1ba99e6e9cb37c15412c"
+      },
+      null
+    ],
+    "id": 67
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 67,
+    "result": {
+      "payloadStatus": {
+        "status": "VALID",
+        "latestValidHash": "0x17da7aea0f4e4ba1d905dbb7d60f6ab4133f3009ae1a1ba99e6e9cb37c15412c",
+        "validationError": null
+      },
+      "payloadId": null
+    }
+  },
+  "statusCode": 200
+}
