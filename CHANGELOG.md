@@ -1,10 +1,12 @@
 # Changelog
 
-## Next Release
+## 24.1.0
 
 ### Breaking Changes
 
 ### Additions and Improvements
+
+ - Add option to avoid grouping transactions from a single sender when selecting candidate transactions for a block [#6022](https://github.com/hyperledger/besu/pull/6022)
 
 ### Bug Fixes
 

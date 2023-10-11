@@ -147,6 +147,15 @@ public class TransactionPoolOptionsTest
   }
 
   @Test
+  public void disableSenderTXGrouping() {
+    final Boolean senderTXGrouping = Boolean.FALSE;
+    internalTestSuccess(
+        config -> assertThat(config.getNoSenderTXGrouping()).isEqualTo(senderTXGrouping),
+        "--tx-pool-disable-sender-grouping",
+        senderTXGrouping.toString());
+  }
+
+  @Test
   public void invalidPriceBumpShouldFail() {
     internalTestFailure(
         "Invalid value: 101, should be a number between 0 and 100 inclusive",
