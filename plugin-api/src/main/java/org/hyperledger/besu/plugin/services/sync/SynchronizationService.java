@@ -14,9 +14,7 @@ public interface SynchronizationService extends BesuService {
 
   boolean isInitialSyncPhaseDone();
 
-  void startSynchronizer();
-
-  void stopSynchronizer();
+  void disableSynchronization();
 
   void setWorldStateConfiguration(final WorldStateConfiguration worldStateConfiguration);
 }

@@ -1,6 +1,8 @@
 package org.hyperledger.besu.services;
 
+import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -27,12 +29,15 @@ public class SynchronizationServiceImpl implements SynchronizationService {
   private final SyncState syncState;
   private final BonsaiWorldStateProvider
       worldStateArchive; // TODO check bonsai activated for this plugin
+  private final BesuController besuController;
 
   public SynchronizationServiceImpl(
+      final BesuController besuController,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final SyncState syncState,
       final WorldStateArchive worldStateArchive) {
+    this.besuController = besuController;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.syncState = syncState;
@@ -82,13 +87,10 @@ public class SynchronizationServiceImpl implements SynchronizationService {
   }
 
   @Override
-  public void startSynchronizer() {
-    protocolContext.getSynchronizer().ifPresent(Synchronizer::start);
-  }
-
-  @Override
-  public void stopSynchronizer() {
+  public void disableSynchronization() {
     protocolContext.getSynchronizer().ifPresent(Synchronizer::stop);
+    besuController.setMiningCoordinator(
+        new NoopMiningCoordinator(besuController.getMiningParameters()));
   }
 
   @Override
