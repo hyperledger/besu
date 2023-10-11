@@ -255,7 +255,7 @@ public class BonsaiWorldState
             // code is already deleted then do nothing
             if ((priorCode == null || priorCode.isEmpty())
                 && (updatedCode == null || updatedCode.isEmpty())) {
-              return;
+              continue;
             }
 
             if (updatedCode == null || updatedCode.isEmpty()) {

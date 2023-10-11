@@ -29,11 +29,13 @@ import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -93,6 +95,32 @@ class BonsaiWorldStateTest {
     worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
 
     verify(bonsaiUpdater).putCode(accountHash, codeHash, code);
+  }
+
+  @Test
+  void addsCodeForExistingCodeValue() {
+    final Map<Address, BonsaiValue<Bytes>> codeToUpdate =
+        Map.of(account, new BonsaiValue<>(code, code));
+
+    when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
+    worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
+
+    verify(bonsaiUpdater).putCode(accountHash, codeHash, code);
+  }
+
+  @Test
+  void updateCodeForMultipleValues() {
+    final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new HashMap<>();
+    codeToUpdate.put(Address.fromHexString("0x1"), new BonsaiValue<>(null, code));
+    codeToUpdate.put(Address.fromHexString("0x2"), new BonsaiValue<>(code, null));
+    codeToUpdate.put(Address.fromHexString("0x3"), new BonsaiValue<>(code, code));
+
+    when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
+    worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
+
+    verify(bonsaiUpdater).putCode(Address.fromHexString("0x1").addressHash(), codeHash, code);
+    verify(bonsaiUpdater).removeCode(Address.fromHexString("0x2").addressHash(), codeHash);
+    verify(bonsaiUpdater).putCode(Address.fromHexString("0x3").addressHash(), codeHash, code);
   }
 
   private static Stream<Bytes> emptyAndNullBytes() {
