@@ -157,7 +157,7 @@ public class EVMExecutor {
       case ISTANBUL -> istanbul(chainId, evmConfiguration);
       case BERLIN -> berlin(chainId, evmConfiguration);
       case LONDON -> london(chainId, evmConfiguration);
-      case PARIS -> paris(chainId, evmConfiguration);
+      case PARIS, LINEA -> paris(chainId, evmConfiguration);
       case SHANGHAI -> shanghai(chainId, evmConfiguration);
       case CANCUN -> cancun(chainId, evmConfiguration);
       case PRAGUE -> prague(chainId, evmConfiguration);
