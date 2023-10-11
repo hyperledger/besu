@@ -452,9 +452,11 @@ public class TrieLogSubCommand implements Runnable {
                       if (header.get().getNumber() < deleteBelowHere) {
                         // Prune canonical and fork trie logs below the block number
                         recordResult(trieLogStorage.tryDelete(hashAsBytes), prunedCount, hash);
-                      } else {
-                        LOG.atInfo().setMessage("Retain {}").addArgument(hash::toHexString).log();
                       }
+                      //                      else {
+                      //                        LOG.atInfo().setMessage("Retain
+                      // {}").addArgument(hash::toHexString).log();
+                      //                      }
                     }
                   });
           out.printf("Pruned %d trie logs\n", prunedCount.get());
@@ -508,7 +510,7 @@ public class TrieLogSubCommand implements Runnable {
         final boolean success, final AtomicInteger prunedCount, final Hash hash) {
       if (success) {
         prunedCount.getAndIncrement();
-        LOG.atInfo().setMessage("Pruned {}").addArgument(hash::toHexString).log();
+        //        LOG.atInfo().setMessage("Pruned {}").addArgument(hash::toHexString).log();
       } else {
         LOG.atInfo().setMessage("Failed to prune {}").addArgument(hash::toHexString).log();
       }
