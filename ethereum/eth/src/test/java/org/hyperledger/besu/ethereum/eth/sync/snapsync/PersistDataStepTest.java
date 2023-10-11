@@ -96,7 +96,8 @@ public class PersistDataStepTest {
           } else if (task.getData() instanceof BytecodeRequest) {
             final BytecodeRequest data = (BytecodeRequest) task.getData();
             assertThat(
-                    worldStateStorage.getCode(data.getCodeHash(), Hash.wrap(data.getAccountHash())))
+                    worldStateStorage.getCode(
+                        Hash.wrap(data.getCodeHash()), Hash.wrap(data.getAccountHash())))
                 .isPresent();
           } else {
             fail("not expected message");
