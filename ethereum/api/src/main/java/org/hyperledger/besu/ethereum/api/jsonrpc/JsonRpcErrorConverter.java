@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 public class JsonRpcErrorConverter {
 
   public static RpcErrorType convertTransactionInvalidReason(
-          final TransactionInvalidReason reason) {
+      final TransactionInvalidReason reason) {
     switch (reason) {
       case NONCE_TOO_LOW:
       case PRIVATE_NONCE_TOO_LOW:

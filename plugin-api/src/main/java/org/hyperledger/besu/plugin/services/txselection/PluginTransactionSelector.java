@@ -22,7 +22,7 @@ import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 /** Interface for the transaction selector */
 @Unstable
-public interface TransactionSelector {
+public interface PluginTransactionSelector {
   /**
    * Method called to decide whether a transaction is added to a block. The result can also indicate
    * that no further transactions can be added to the block.

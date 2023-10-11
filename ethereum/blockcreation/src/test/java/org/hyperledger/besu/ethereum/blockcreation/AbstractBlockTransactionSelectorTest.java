@@ -71,8 +71,8 @@ import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelector;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
@@ -557,9 +557,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final Transaction notSelectedInvalid = createTransaction(2, Wei.of(10), 21_000);
     ensureTransactionIsValid(notSelectedInvalid, 21_000, 0);
 
-    final TransactionSelectorFactory transactionSelectorFactory =
+    final PluginTransactionSelectorFactory transactionSelectorFactory =
         () ->
-            new TransactionSelector() {
+            new PluginTransactionSelector() {
               @Override
               public TransactionSelectionResult evaluateTransactionPreProcessing(
                   final PendingTransaction pendingTransaction) {
@@ -621,9 +621,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final Transaction selected3 = createTransaction(3, Wei.of(10), 21_000);
     ensureTransactionIsValid(selected3, maxGasUsedByTransaction, 0);
 
-    final TransactionSelectorFactory transactionSelectorFactory =
+    final PluginTransactionSelectorFactory transactionSelectorFactory =
         () ->
-            new TransactionSelector() {
+            new PluginTransactionSelector() {
               @Override
               public TransactionSelectionResult evaluateTransactionPreProcessing(
                   final PendingTransaction pendingTransaction) {
@@ -666,19 +666,17 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
   @Test
   public void transactionSelectionPluginShouldBeNotifiedWhenTransactionSelectionCompletes() {
-    final TransactionSelectorFactory transactionSelectorFactory =
-        mock(TransactionSelectorFactory.class);
-    TransactionSelector transactionSelector = spy(AllAcceptingTransactionSelector.INSTANCE);
+    final PluginTransactionSelectorFactory transactionSelectorFactory =
+        mock(PluginTransactionSelectorFactory.class);
+    PluginTransactionSelector transactionSelector = spy(AllAcceptingTransactionSelector.INSTANCE);
     when(transactionSelectorFactory.create()).thenReturn(transactionSelector);
 
     final Transaction transaction = createTransaction(0, Wei.of(10), 21_000);
     ensureTransactionIsValid(transaction, 21_000, 0);
 
-    final TransactionInvalidReason invalidReason =
-        TransactionInvalidReason.PLUGIN_TX_VALIDATOR;
+    final TransactionInvalidReason invalidReason = TransactionInvalidReason.PLUGIN_TX_VALIDATOR;
     final Transaction invalidTransaction = createTransaction(1, Wei.of(10), 21_000);
-    ensureTransactionIsInvalid(
-        invalidTransaction, TransactionInvalidReason.PLUGIN_TX_VALIDATOR);
+    ensureTransactionIsInvalid(invalidTransaction, TransactionInvalidReason.PLUGIN_TX_VALIDATOR);
     transactionPool.addRemoteTransactions(List.of(transaction, invalidTransaction));
 
     createBlockSelectorWithTxSelPlugin(
@@ -774,7 +772,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final Address miningBeneficiary,
       final Wei blobGasPrice,
       final double minBlockOccupancyRatio,
-      final TransactionSelectorFactory transactionSelectorFactory) {
+      final PluginTransactionSelectorFactory transactionSelectorFactory) {
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
             transactionProcessor,

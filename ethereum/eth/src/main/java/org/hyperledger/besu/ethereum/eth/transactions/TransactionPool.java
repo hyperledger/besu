@@ -477,10 +477,11 @@ public class TransactionPool implements BlockAddedObserver {
 
     // Call the transaction validator plugin if one is available
     if (pluginTransactionValidator != null) {
-      final Optional<String> maybeError = pluginTransactionValidator.validateTransaction(transaction);
+      final Optional<String> maybeError =
+          pluginTransactionValidator.validateTransaction(transaction);
       if (maybeError.isPresent()) {
-      return ValidationResultAndAccount.invalid(
-                TransactionInvalidReason.PLUGIN_TX_VALIDATOR, maybeError.get());
+        return ValidationResultAndAccount.invalid(
+            TransactionInvalidReason.PLUGIN_TX_VALIDATOR, maybeError.get());
       }
     }
 

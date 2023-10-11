@@ -92,23 +92,28 @@ public class EthSendRawTransaction implements JsonRpcMethod {
         () ->
             new JsonRpcSuccessResponse(
                 requestContext.getRequest().getId(), transaction.getHash().toString()),
-        errorReason ->
-                getJsonRpcResponse(requestContext, errorReason, validationResult));
+        errorReason -> getJsonRpcResponse(requestContext, errorReason, validationResult));
   }
 
   @NotNull
-  private JsonRpcResponse getJsonRpcResponse(final JsonRpcRequestContext requestContext, final TransactionInvalidReason errorReason, final ValidationResult<TransactionInvalidReason> validationResult) {
+  private JsonRpcResponse getJsonRpcResponse(
+      final JsonRpcRequestContext requestContext,
+      final TransactionInvalidReason errorReason,
+      final ValidationResult<TransactionInvalidReason> validationResult) {
     if (sendEmptyHashOnInvalidBlock) {
-      return new JsonRpcSuccessResponse(
-              requestContext.getRequest().getId(), Hash.EMPTY.toString());
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Hash.EMPTY.toString());
     } else {
       if (errorReason == TransactionInvalidReason.PLUGIN_TX_VALIDATOR) {
-        final RpcErrorType rpcErrorType = JsonRpcErrorConverter.convertTransactionInvalidReason(validationResult.getInvalidReason());
-        return new JsonRpcErrorResponse(requestContext.getRequest().getId(), new JsonRpcError(rpcErrorType.getCode(), validationResult.getErrorMessage(), null));
+        final RpcErrorType rpcErrorType =
+            JsonRpcErrorConverter.convertTransactionInvalidReason(
+                validationResult.getInvalidReason());
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(),
+            new JsonRpcError(rpcErrorType.getCode(), validationResult.getErrorMessage(), null));
       } else {
         return new JsonRpcErrorResponse(
-                requestContext.getRequest().getId(),
-                JsonRpcErrorConverter.convertTransactionInvalidReason(errorReason));
+            requestContext.getRequest().getId(),
+            JsonRpcErrorConverter.convertTransactionInvalidReason(errorReason));
       }
     }
   }

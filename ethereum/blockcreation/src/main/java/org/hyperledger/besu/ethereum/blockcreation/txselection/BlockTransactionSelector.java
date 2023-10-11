@@ -40,8 +40,8 @@ import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelector;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -84,7 +84,7 @@ public class BlockTransactionSelector {
   private final TransactionSelectionResults transactionSelectionResults =
       new TransactionSelectionResults();
   private final List<AbstractTransactionSelector> transactionSelectors;
-  private final TransactionSelector externalTransactionSelector;
+  private final PluginTransactionSelector externalTransactionSelector;
 
   public BlockTransactionSelector(
       final MainnetTransactionProcessor transactionProcessor,
@@ -101,7 +101,7 @@ public class BlockTransactionSelector {
       final FeeMarket feeMarket,
       final GasCalculator gasCalculator,
       final GasLimitCalculator gasLimitCalculator,
-      final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
+      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
     this.worldState = worldState;
@@ -121,7 +121,7 @@ public class BlockTransactionSelector {
     transactionSelectors = createTransactionSelectors(blockSelectionContext);
     externalTransactionSelector =
         transactionSelectorFactory
-            .map(TransactionSelectorFactory::create)
+            .map(PluginTransactionSelectorFactory::create)
             .orElse(AllAcceptingTransactionSelector.INSTANCE);
   }
 
