@@ -55,6 +55,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -239,7 +240,8 @@ public class BonsaiWorldState
     }
   }
 
-  private void updateCode(
+  @VisibleForTesting
+  protected void updateCode(
       final Optional<BonsaiWorldStateKeyValueStorage.BonsaiUpdater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
     maybeStateUpdater.ifPresent(
@@ -249,13 +251,17 @@ public class BonsaiWorldState
             final Bytes updatedCode = codeUpdate.getValue().getUpdated();
             final Hash accountHash = codeUpdate.getKey().addressHash();
             final Bytes priorCode = codeUpdate.getValue().getPrior();
-            // TODO JF add test to ensure we don't remove code that is already removed otherwise
-            // will affect code ctr
-            if (!(priorCode == null || priorCode.isEmpty())
+
+            // code is already deleted then do nothing
+            if ((priorCode == null || priorCode.isEmpty())
                 && (updatedCode == null || updatedCode.isEmpty())) {
+              return;
+            }
+
+            if (updatedCode == null || updatedCode.isEmpty()) {
               final Hash priorCodeHash = Hash.hash(priorCode);
               bonsaiUpdater.removeCode(accountHash, priorCodeHash);
-            } else if (updatedCode != null && !updatedCode.isEmpty()) {
+            } else {
               final Hash codeHash = Hash.hash(codeUpdate.getValue().getUpdated());
               bonsaiUpdater.putCode(accountHash, codeHash, updatedCode);
             }
