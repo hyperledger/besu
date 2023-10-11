@@ -98,7 +98,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final MetricsSystem metricsSystem,
       final long reorgLoggingThreshold,
       final String dataDirectory,
-      final int numberOfblocksToCache) {
+      final int numberOfBlocksToCache) {
     checkNotNull(genesisBlock);
     checkNotNull(blockchainStorage);
     checkNotNull(metricsSystem);
@@ -156,20 +156,20 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     this.reorgLoggingThreshold = reorgLoggingThreshold;
     this.blockChoiceRule = heaviestChainBlockChoiceRule;
-    if (numberOfblocksToCache != 0) {
-      this.numberBlocksToCache = numberOfblocksToCache;
+    if (numberOfBlocksToCache != 0) {
+      this.numberBlocksToCache = numberOfBlocksToCache;
       blockHeadersCache =
           Optional.of(
-              CacheBuilder.newBuilder().recordStats().maximumSize(numberOfblocksToCache).build());
+              CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
       blockBodiesCache =
           Optional.of(
-              CacheBuilder.newBuilder().recordStats().maximumSize(numberOfblocksToCache).build());
+              CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
       transactionReceiptsCache =
           Optional.of(
-              CacheBuilder.newBuilder().recordStats().maximumSize(numberOfblocksToCache).build());
+              CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
       totalDifficultyCache =
           Optional.of(
-              CacheBuilder.newBuilder().recordStats().maximumSize(numberOfblocksToCache).build());
+              CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
       CacheMetricsCollector cacheMetrics = new CacheMetricsCollector();
       cacheMetrics.addCache("blockHeaders", blockHeadersCache.get());
       cacheMetrics.addCache("blockBodies", blockBodiesCache.get());

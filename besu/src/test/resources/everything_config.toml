@@ -227,3 +227,6 @@ Xp2p-tls-clienthello-sni=false
 
 #contracts
 Xevm-jumpdest-cache-weight-kb=32000
+
+#caching
+cache-last-blocks=512
