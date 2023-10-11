@@ -54,10 +54,9 @@ public abstract class FlatDbStrategy {
   protected final Counter getStorageValueFlatDatabaseCounter;
   private final CodeStorageStrategy codeStorageStrategy;
 
-  public FlatDbStrategy(final MetricsSystem metricsSystem, final boolean useLegacyCodeStorage) {
+  public FlatDbStrategy(final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
-    this.codeStorageStrategy =
-        useLegacyCodeStorage ? new LegacyCodeStorageStrategy() : new DefaultCodeStorageStrategy();
+    this.codeStorageStrategy = new BothCodeStorageStrategy();
 
     getAccountCounter =
         metricsSystem.createCounter(
