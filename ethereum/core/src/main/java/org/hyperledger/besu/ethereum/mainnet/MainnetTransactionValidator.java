@@ -22,7 +22,6 @@ import org.hyperledger.besu.datatypes.Blob;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.KZGCommitment;
-import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -50,8 +49,6 @@ import org.bouncycastle.crypto.digests.SHA256Digest;
  * {@link Transaction}.
  */
 public class MainnetTransactionValidator implements TransactionValidator {
-
-  private static final byte BLOB_COMMITMENT_VERSION_KZG = 0x01;
 
   private final GasCalculator gasCalculator;
   private final GasLimitCalculator gasLimitCalculator;
@@ -336,11 +333,11 @@ public class MainnetTransactionValidator implements TransactionValidator {
       final KZGCommitment commitment = blobsWithCommitments.getKzgCommitments().get(i);
       final VersionedHash versionedHash = versionedHashes.get(i);
 
-      if (versionedHash.getVersionId() != BLOB_COMMITMENT_VERSION_KZG) {
+      if (versionedHash.getVersionId() != VersionedHash.SHA256_VERSION_ID) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_BLOBS,
             "transaction blobs commitment version is not supported. Expected "
-                + BLOB_COMMITMENT_VERSION_KZG
+                + VersionedHash.SHA256_VERSION_ID
                 + ", found "
                 + versionedHash.getVersionId());
       }
@@ -353,30 +350,27 @@ public class MainnetTransactionValidator implements TransactionValidator {
       }
     }
 
-    final Bytes blobs =
-        blobsWithCommitments.getBlobs().stream()
-            .map(Blob::getData)
-            .reduce(Bytes::concatenate)
-            .orElseThrow();
+    final byte[] blobs =
+        Bytes.wrap(blobsWithCommitments.getBlobs().stream().map(Blob::getData).toList())
+            .toArrayUnsafe();
 
-    final Bytes kzgCommitments =
-        blobsWithCommitments.getKzgCommitments().stream()
-            .map(KZGCommitment::getData)
-            .reduce(Bytes::concatenate)
-            .orElseThrow();
+    final byte[] kzgCommitments =
+        Bytes.wrap(
+                blobsWithCommitments.getKzgCommitments().stream()
+                    .map(kc -> (Bytes) kc.getData())
+                    .toList())
+            .toArrayUnsafe();
 
-    final Bytes kzgProofs =
-        blobsWithCommitments.getKzgProofs().stream()
-            .map(KZGProof::getData)
-            .reduce(Bytes::concatenate)
-            .orElseThrow();
+    final byte[] kzgProofs =
+        Bytes.wrap(
+                blobsWithCommitments.getKzgProofs().stream()
+                    .map(kp -> (Bytes) kp.getData())
+                    .toList())
+            .toArrayUnsafe();
 
     final boolean kzgVerification =
         CKZG4844JNI.verifyBlobKzgProofBatch(
-            blobs.toArrayUnsafe(),
-            kzgCommitments.toArrayUnsafe(),
-            kzgProofs.toArrayUnsafe(),
-            blobsWithCommitments.getBlobs().size());
+            blobs, kzgCommitments, kzgProofs, blobsWithCommitments.getBlobs().size());
 
     if (!kzgVerification) {
       return ValidationResult.invalid(
@@ -387,14 +381,6 @@ public class MainnetTransactionValidator implements TransactionValidator {
     return ValidationResult.valid();
   }
 
-  /*
-  private VersionedHash hashCommitment(final Bytes32 commitment) {
-    return new VersionedHash(
-        VersionedHash.SHA256_VERSION_ID, Sha256Hash.hash(commitment));
-  }
-
-   */
-
   private VersionedHash hashCommitment(final KZGCommitment commitment) {
     final SHA256Digest digest = new SHA256Digest();
     digest.update(commitment.getData().toArrayUnsafe(), 0, commitment.getData().size());
@@ -403,7 +389,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
     digest.doFinal(dig, 0);
 
-    dig[0] = BLOB_COMMITMENT_VERSION_KZG;
+    dig[0] = VersionedHash.SHA256_VERSION_ID;
     return new VersionedHash(Bytes32.wrap(dig));
   }
 }
