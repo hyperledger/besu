@@ -364,7 +364,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
 
   public void disableTrie() {
     defaultBonsaiWorldStateConfig.setTrieDisabled(true);
-    worldStateStorage.clearTrie();
+    worldStateStorage.clearTrie(); //TODO FIND A BEST WAY TO DELETE AND DISABLE TRIE
   }
 
   public TrieLogManager getTrieLogManager() {

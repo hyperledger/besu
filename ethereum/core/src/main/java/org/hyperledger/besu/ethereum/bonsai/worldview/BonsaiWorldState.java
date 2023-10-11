@@ -322,8 +322,11 @@ public class BonsaiWorldState
                     (location, key, value) ->
                         writeStorageTrieNode(
                             bonsaiUpdater, updatedAddressHash, location, key, value)));
-        final Hash newStorageRoot = Hash.wrap(storageTrie.getRootHash());
-        accountUpdated.setStorageRoot(newStorageRoot);
+        // only use storage root of the trie when trie is enabled
+        if (!bonsaiWorldStateConfig.isTrieDisabled()) {
+          final Hash newStorageRoot = Hash.wrap(storageTrie.getRootHash());
+          accountUpdated.setStorageRoot(newStorageRoot);
+        }
       }
     }
     // for manicured tries and composting, trim and compost here
