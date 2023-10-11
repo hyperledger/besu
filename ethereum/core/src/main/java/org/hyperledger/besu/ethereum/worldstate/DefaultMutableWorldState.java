@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -48,6 +49,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class DefaultMutableWorldState implements MutableWorldState {
 
+  private final EvmConfiguration evmConfiguration;
   private final WorldStateStorage worldStateStorage;
   private final WorldStatePreimageStorage preimageStorage;
 
@@ -58,20 +60,25 @@ public class DefaultMutableWorldState implements MutableWorldState {
   private final Map<Bytes32, Address> newAccountKeyPreimages = new HashMap<>();
 
   public DefaultMutableWorldState(
-      final WorldStateStorage storage, final WorldStatePreimageStorage preimageStorage) {
-    this(MerkleTrie.EMPTY_TRIE_NODE_HASH, storage, preimageStorage);
+      final WorldStateStorage storage,
+      final WorldStatePreimageStorage preimageStorage,
+      final EvmConfiguration evmConfiguration) {
+    this(MerkleTrie.EMPTY_TRIE_NODE_HASH, storage, preimageStorage, evmConfiguration);
   }
 
   public DefaultMutableWorldState(
       final Bytes32 rootHash,
       final WorldStateStorage worldStateStorage,
-      final WorldStatePreimageStorage preimageStorage) {
+      final WorldStatePreimageStorage preimageStorage,
+      final EvmConfiguration evmConfiguration) {
     this.worldStateStorage = worldStateStorage;
     this.accountStateTrie = newAccountStateTrie(rootHash);
     this.preimageStorage = preimageStorage;
+    this.evmConfiguration = evmConfiguration;
   }
 
-  public DefaultMutableWorldState(final WorldState worldState) {
+  public DefaultMutableWorldState(
+      final WorldState worldState, final EvmConfiguration evmConfiguration) {
     // TODO: this is an abstraction leak (and kind of incorrect in that we reuse the underlying
     // storage), but the reason for this is that the accounts() method is unimplemented below and
     // can't be until NC-754.
@@ -82,6 +89,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
     this.worldStateStorage = other.worldStateStorage;
     this.preimageStorage = other.preimageStorage;
     this.accountStateTrie = newAccountStateTrie(other.accountStateTrie.getRootHash());
+    this.evmConfiguration = evmConfiguration;
   }
 
   private MerkleTrie<Bytes32, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
@@ -123,16 +131,9 @@ public class DefaultMutableWorldState implements MutableWorldState {
     return new WorldStateAccount(address, addressHash, accountValue);
   }
 
-  private static Bytes serializeAccount(
-      final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
-    final StateTrieAccountValue accountValue =
-        new StateTrieAccountValue(nonce, balance, storageRoot, codeHash);
-    return RLP.encode(accountValue::writeTo);
-  }
-
   @Override
   public WorldUpdater updater() {
-    return new Updater(this);
+    return new Updater(this, evmConfiguration);
   }
 
   @Override
@@ -191,11 +192,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
     // Push changes to underlying storage
     preimageUpdater.commit();
     stateUpdater.commit();
-  }
-
-  private Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {
-    return Optional.ofNullable(newStorageKeyPreimages.get(trieKey))
-        .or(() -> preimageStorage.getStorageTrieKeyPreimage(trieKey));
   }
 
   private static UInt256 convertToUInt256(final Bytes value) {
@@ -338,13 +334,19 @@ public class DefaultMutableWorldState implements MutableWorldState {
           + ", "
           + "}";
     }
+
+    private Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {
+      return Optional.ofNullable(newStorageKeyPreimages.get(trieKey))
+          .or(() -> preimageStorage.getStorageTrieKeyPreimage(trieKey));
+    }
   }
 
   protected static class Updater
       extends AbstractWorldUpdater<DefaultMutableWorldState, WorldStateAccount> {
 
-    protected Updater(final DefaultMutableWorldState world) {
-      super(world);
+    protected Updater(
+        final DefaultMutableWorldState world, final EvmConfiguration evmConfiguration) {
+      super(world, evmConfiguration);
     }
 
     @Override
@@ -434,6 +436,13 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
         wrapped.accountStateTrie.put(updated.getAddressHash(), account);
       }
+    }
+
+    private static Bytes serializeAccount(
+        final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
+      final StateTrieAccountValue accountValue =
+          new StateTrieAccountValue(nonce, balance, storageRoot, codeHash);
+      return RLP.encode(accountValue::writeTo);
     }
   }
 }

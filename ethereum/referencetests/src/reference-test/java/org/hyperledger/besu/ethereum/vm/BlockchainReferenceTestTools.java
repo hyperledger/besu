@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -29,12 +30,14 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
 
 public class BlockchainReferenceTestTools {
@@ -58,7 +61,8 @@ public class BlockchainReferenceTestTools {
           .generator(
               (testName, fullPath, spec, collector) -> {
                 final String eip = spec.getNetwork();
-                collector.add(testName + "[" + eip + "]", fullPath, spec, NETWORKS_TO_RUN.contains(eip));
+                collector.add(
+                    testName + "[" + eip + "]", fullPath, spec, NETWORKS_TO_RUN.contains(eip));
               });
 
   static {
@@ -107,6 +111,13 @@ public class BlockchainReferenceTestTools {
         spec.getWorldStateArchive()
             .getMutable(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash())
             .get();
+    // don't world states that have empty accounts
+    assumeThat(
+            worldState
+                .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
+                .anyMatch(AccountState::isEmpty))
+        .withFailMessage("Empty account detected")
+        .isFalse();
     assertThat(worldState.rootHash()).isEqualTo(genesisBlockHeader.getStateRoot());
 
     final ProtocolSchedule schedule =

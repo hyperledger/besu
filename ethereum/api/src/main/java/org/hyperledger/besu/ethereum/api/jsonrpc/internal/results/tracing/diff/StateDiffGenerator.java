@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.worldstate.JournaledAccount;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Collections;
@@ -60,7 +60,7 @@ public class StateDiffGenerator {
       // calculate storage diff
       final Map<String, DiffNode> storageDiff = new TreeMap<>();
       for (final Map.Entry<UInt256, UInt256> entry :
-          ((JournaledAccount) updatedAccount).getUpdatedStorage().entrySet()) { // FIXME cast
+          ((MutableAccount) updatedAccount).getUpdatedStorage().entrySet()) { // FIXME cast
         final UInt256 newValue = entry.getValue();
         if (rootAccount == null) {
           if (!UInt256.ZERO.equals(newValue)) {

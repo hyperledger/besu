@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
@@ -65,6 +66,7 @@ public class BonsaiWorldStateUpdateAccumulator
   private final AccountConsumingMap<BonsaiValue<BonsaiAccount>> accountsToUpdate;
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
+  private final EvmConfiguration evmConfiguration;
 
   // storage sub mapped by _hashed_ key.  This is because in self_destruct calls we need to
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the
@@ -77,18 +79,20 @@ public class BonsaiWorldStateUpdateAccumulator
   public BonsaiWorldStateUpdateAccumulator(
       final BonsaiWorldView world,
       final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader,
-      final Consumer<StorageSlotKey> storagePreloader) {
-    super(world);
+      final Consumer<StorageSlotKey> storagePreloader,
+      final EvmConfiguration evmConfiguration) {
+    super(world, evmConfiguration);
     this.accountsToUpdate = new AccountConsumingMap<>(new ConcurrentHashMap<>(), accountPreloader);
     this.accountPreloader = accountPreloader;
     this.storagePreloader = storagePreloader;
     this.isAccumulatorStateChanged = false;
+    this.evmConfiguration = evmConfiguration;
   }
 
   public BonsaiWorldStateUpdateAccumulator copy() {
     final BonsaiWorldStateUpdateAccumulator copy =
         new BonsaiWorldStateUpdateAccumulator(
-            wrappedWorldView(), accountPreloader, storagePreloader);
+            wrappedWorldView(), accountPreloader, storagePreloader, evmConfiguration);
     copy.cloneFromUpdater(this);
     return copy;
   }

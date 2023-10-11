@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -78,14 +79,20 @@ public class BonsaiWorldState
 
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
-      final BonsaiWorldStateKeyValueStorage worldStateStorage) {
-    this(worldStateStorage, archive.getCachedMerkleTrieLoader(), archive.getTrieLogManager());
+      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final EvmConfiguration evmConfiguration) {
+    this(
+        worldStateStorage,
+        archive.getCachedMerkleTrieLoader(),
+        archive.getTrieLogManager(),
+        evmConfiguration);
   }
 
   protected BonsaiWorldState(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
-      final TrieLogManager trieLogManager) {
+      final TrieLogManager trieLogManager,
+      final EvmConfiguration evmConfiguration) {
     this.worldStateStorage = worldStateStorage;
     this.worldStateRootHash =
         Hash.wrap(
@@ -99,7 +106,8 @@ public class BonsaiWorldState
                 cachedMerkleTrieLoader.preLoadAccount(
                     getWorldStateStorage(), worldStateRootHash, addr),
             (addr, value) ->
-                cachedMerkleTrieLoader.preLoadStorageSlot(getWorldStateStorage(), addr, value));
+                cachedMerkleTrieLoader.preLoadStorageSlot(getWorldStateStorage(), addr, value),
+            evmConfiguration);
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
     this.trieLogManager = trieLogManager;
   }

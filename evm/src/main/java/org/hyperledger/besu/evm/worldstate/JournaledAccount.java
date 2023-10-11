@@ -228,6 +228,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
 
   /**
    * Mark the account as deleted/not deleted
+   *
    * @param accountDeleted delete or don't delete this account.
    */
   public void setDeleted(final boolean accountDeleted) {
@@ -239,6 +240,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
 
   /**
    * Is the account marked as deleted?
+   *
    * @return is the account deleted?
    */
   public Boolean getDeleted() {

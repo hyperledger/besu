@@ -43,6 +43,7 @@ public class UndoNavigableMap<K, V> extends UndoMap<K, V> implements NavigableMa
 
   /**
    * Create an undo navigable map backed by a specific map.
+   *
    * @param map The map storing the current state
    * @return an undoable map
    * @param <K> the key type

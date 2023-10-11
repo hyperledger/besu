@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,6 +35,7 @@ import java.util.Optional;
  */
 public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
 
+  final EvmConfiguration evmConfiguration;
   final WorldUpdater parentWorld;
   final AbstractWorldUpdater<W, ? extends MutableAccount> rootWorld;
   final UndoMap<Address, JournaledAccount> accounts;
@@ -44,10 +46,12 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
    * Instantiates a new Stacked updater.
    *
    * @param world the world
+   * @param evmConfiguration the EVM Configuration parameters
    */
   @SuppressWarnings("unchecked")
-  public JournaledUpdater(final WorldUpdater world) {
+  public JournaledUpdater(final WorldUpdater world, final EvmConfiguration evmConfiguration) {
     parentWorld = world;
+    this.evmConfiguration = evmConfiguration;
     if (world instanceof JournaledUpdater<?>) {
       JournaledUpdater<W> journaledUpdater = (JournaledUpdater<W>) world;
       accounts = journaledUpdater.accounts;
@@ -175,6 +179,6 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
 
   @Override
   public WorldUpdater updater() {
-    return new JournaledUpdater<W>(this);
+    return new JournaledUpdater<W>(this, evmConfiguration);
   }
 }
