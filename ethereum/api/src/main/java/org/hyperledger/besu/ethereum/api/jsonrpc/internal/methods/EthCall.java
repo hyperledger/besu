@@ -178,6 +178,6 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
       }
     }
     // Prior 1559, when gas price == 0 or is not provided the balance is not checked
-    return isZeroGasPrice;
+    return !isZeroGasPrice;
   }
 }
