@@ -35,29 +35,31 @@ public class BothCodeStorageStrategy implements CodeStorageStrategy {
 
   @Override
   public Optional<Bytes> getFlatCode(
-      Hash codeHash, Hash accountHash, SegmentedKeyValueStorage storage) {
+      final Hash codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
     return defaultCodeStorageStrategy.getFlatCode(codeHash, accountHash, storage);
   }
 
   @Override
   public void putFlatCode(
-      SegmentedKeyValueStorageTransaction transaction,
-      Hash accountHash,
-      Hash codeHash,
-      Bytes code) {
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Hash codeHash,
+      final Bytes code) {
     defaultCodeStorageStrategy.putFlatCode(transaction, accountHash, codeHash, code);
     legacyCodeStorageStrategy.putFlatCode(transaction, accountHash, codeHash, code);
   }
 
   @Override
   public void removeFlatCode(
-      SegmentedKeyValueStorageTransaction transaction, Hash accountHash, Hash codeHash) {
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Hash codeHash) {
     defaultCodeStorageStrategy.removeFlatCode(transaction, accountHash, codeHash);
     legacyCodeStorageStrategy.removeFlatCode(transaction, accountHash, codeHash);
   }
 
   @Override
-  public void clear(SegmentedKeyValueStorage storage) {
+  public void clear(final SegmentedKeyValueStorage storage) {
     defaultCodeStorageStrategy.clear(storage);
     legacyCodeStorageStrategy.clear(storage);
   }
