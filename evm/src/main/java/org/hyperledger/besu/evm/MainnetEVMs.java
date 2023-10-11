@@ -802,6 +802,17 @@ public class MainnetEVMs {
   /**
    * Linea evm.
    *
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM linea(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return linea(new LondonGasCalculator(), chainId, evmConfiguration);
+  }
+
+  /**
+   * Linea evm.
+   *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
    * @param evmConfiguration the evm configuration

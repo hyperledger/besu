@@ -157,7 +157,7 @@ public class EVMExecutor {
       case ISTANBUL -> istanbul(chainId, evmConfiguration);
       case BERLIN -> berlin(chainId, evmConfiguration);
       case LONDON -> london(chainId, evmConfiguration);
-      case PARIS, LINEA -> paris(chainId, evmConfiguration);
+      case PARIS -> paris(chainId, evmConfiguration);
       case SHANGHAI -> shanghai(chainId, evmConfiguration);
       case CANCUN -> cancun(chainId, evmConfiguration);
       case PRAGUE -> prague(chainId, evmConfiguration);
@@ -165,6 +165,7 @@ public class EVMExecutor {
       case BOGOTA -> bogota(chainId, evmConfiguration);
       case FUTURE_EIPS -> futureEips(chainId, evmConfiguration);
       case EXPERIMENTAL_EIPS -> experimentalEips(chainId, evmConfiguration);
+      case LINEA -> linea(chainId, evmConfiguration);
     };
   }
 
@@ -580,6 +581,21 @@ public class EVMExecutor {
         new EVMExecutor(MainnetEVMs.experimentalEips(chainId, evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.futureEIPs(executor.evm.getGasCalculator());
+    return executor;
+  }
+
+  /**
+   * Instantiate Linea evm executor.
+   *
+   * @param chainId the chain ID
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor linea(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.linea(chainId, evmConfiguration));
+    executor.precompileContractRegistry =
+        MainnetPrecompiledContracts.istanbul(executor.evm.getGasCalculator());
     return executor;
   }
 
