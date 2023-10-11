@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static java.util.stream.Collectors.toUnmodifiableList;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -54,7 +55,7 @@ public class EthFeeHistory implements JsonRpcMethod {
   private final Cache<RewardCacheKey, List<Wei>> cache;
   private static final int MAXIMUM_CACHE_SIZE = 100_000;
 
-  record RewardCacheKey(Long blockNumber, List<Double> rewardPercentiles) {}
+  record RewardCacheKey(Hash blockHash, List<Double> rewardPercentiles) {}
 
   public EthFeeHistory(final ProtocolSchedule protocolSchedule, final Blockchain blockchain) {
     this.protocolSchedule = protocolSchedule;
@@ -149,16 +150,16 @@ public class EthFeeHistory implements JsonRpcMethod {
     final Optional<List<List<Wei>>> maybeRewards =
         maybeRewardPercentiles.map(
             rewardPercentiles ->
-                LongStream.range(oldestBlock, lastBlock)
+                    blockHeaders.stream()
                     .parallel()
-                    .mapToObj(
-                        blockNumber -> {
-                          RewardCacheKey key = new RewardCacheKey(blockNumber, rewardPercentiles);
+                    .map(
+                        blockHeader -> {
+                          RewardCacheKey key = new RewardCacheKey(blockHeader.getBlockHash(), rewardPercentiles);
                           return Optional.ofNullable(cache.getIfPresent(key))
                               .or(
                                   () -> {
                                     Optional<Block> block =
-                                        blockchain.getBlockByNumber(blockNumber);
+                                        blockchain.getBlockByHash(blockHeader.getBlockHash());
                                     return block.map(
                                         b -> {
                                           List<Wei> rewards =
@@ -246,7 +247,7 @@ public class EthFeeHistory implements JsonRpcMethod {
       }
     }
     // Put the computed rewards in the cache
-    RewardCacheKey key = new RewardCacheKey(block.getHeader().getNumber(), rewardPercentiles);
+    RewardCacheKey key = new RewardCacheKey(block.getHeader().getBlockHash(), rewardPercentiles);
     cache.put(key, rewards);
 
     return rewards;
