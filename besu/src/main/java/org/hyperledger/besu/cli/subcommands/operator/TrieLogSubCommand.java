@@ -267,6 +267,10 @@ public class TrieLogSubCommand implements Runnable {
           rangeFilter = blockHashRange::contains;
         }
 
+        final AtomicInteger count = new AtomicInteger();
+        final AtomicInteger canonicalCount = new AtomicInteger();
+        final AtomicInteger forkCount = new AtomicInteger();
+        final AtomicInteger orphanCount = new AtomicInteger();
         trieLogStorage
             .streamKeys()
             .map(Bytes32::wrap)
@@ -274,25 +278,37 @@ public class TrieLogSubCommand implements Runnable {
             .map(Hash::fromHexString)
             .filter(rangeFilter)
             .forEach(
-                hash ->
-                    out.printf(
-                        "%s | %s\n",
-                        hash,
-                        blockchain
-                            .getBlockHeader(hash)
-                            .map(
-                                (header) -> {
-                                  long number = header.getNumber();
-                                  final Optional<BlockHeader> headerByNumber =
-                                      blockchain.getBlockHeader(number);
-                                  if (headerByNumber.isPresent()
-                                      && headerByNumber.get().getHash().equals(hash)) {
-                                    return String.valueOf(number);
-                                  } else {
-                                    return "fork of " + number;
-                                  }
-                                })
-                            .orElse("not in blockchain")));
+                hash -> {
+                  count.getAndIncrement();
+                  out.printf(
+                      "%s | %s\n",
+                      hash,
+                      blockchain
+                          .getBlockHeader(hash)
+                          .map(
+                              (header) -> {
+                                long number = header.getNumber();
+                                final Optional<BlockHeader> headerByNumber =
+                                    blockchain.getBlockHeader(number);
+                                if (headerByNumber.isPresent()
+                                    && headerByNumber.get().getHash().equals(hash)) {
+                                  canonicalCount.getAndIncrement();
+                                  return String.valueOf(number);
+                                } else {
+                                  forkCount.getAndIncrement();
+                                  return "fork of " + number;
+                                }
+                              })
+                          .orElseGet(
+                              () -> {
+                                orphanCount.getAndIncrement();
+                                return "not in blockchain";
+                              }));
+                });
+
+        out.printf(
+            "trieLog count: %s\n - canonical count: %s\n - fork count: %s\n - orphaned count: %s\n",
+            count, canonicalCount, forkCount, orphanCount);
       } else {
         out.println("Subcommand only works with Bonsai");
       }
