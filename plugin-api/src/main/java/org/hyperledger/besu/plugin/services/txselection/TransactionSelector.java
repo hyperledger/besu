@@ -17,6 +17,7 @@ package org.hyperledger.besu.plugin.services.txselection;
 
 import org.hyperledger.besu.datatypes.PendingTransaction;
 import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.data.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 /** Interface for the transaction selector */
@@ -31,4 +32,31 @@ public interface TransactionSelector {
    */
   TransactionSelectionResult evaluateTransactionPreProcessing(
       PendingTransaction pendingTransaction);
+
+  /**
+   * Method called to decide whether a processed transaction is added to a block. The result can
+   * also indicate that no further transactions can be added to the block.
+   *
+   * @param pendingTransaction candidate transaction
+   * @param processingResult the transaction processing result
+   * @return TransactionSelectionResult that indicates whether to include the transaction
+   */
+  TransactionSelectionResult evaluateTransactionPostProcessing(
+      PendingTransaction pendingTransaction, TransactionProcessingResult processingResult);
+
+  /**
+   * Method called when a transaction is selected to be added to a block.
+   *
+   * @param pendingTransaction The transaction that has been selected.
+   */
+  default void onTransactionSelected(final PendingTransaction pendingTransaction) {}
+  /**
+   * Method called when a transaction is not selected to be added to a block.
+   *
+   * @param pendingTransaction The transaction that has not been selected.
+   * @param transactionSelectionResult The transaction selection result
+   */
+  default void onTransactionNotSelected(
+      final PendingTransaction pendingTransaction,
+      final TransactionSelectionResult transactionSelectionResult) {}
 }

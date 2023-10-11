@@ -57,6 +57,7 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes48;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -503,9 +504,9 @@ public class MainnetTransactionValidatorTest {
             .blobsWithCommitments(
                 Optional.of(
                     new BlobsWithCommitments(
-                        List.of(new KZGCommitment(Bytes.EMPTY)),
+                        List.of(new KZGCommitment(Bytes48.ZERO)),
                         List.of(new Blob(Bytes.EMPTY)),
-                        List.of(new KZGProof(Bytes.EMPTY)),
+                        List.of(new KZGProof(Bytes48.ZERO)),
                         List.of(VersionedHash.DEFAULT_VERSIONED_HASH))))
             .versionedHashes(Optional.of(List.of(VersionedHash.DEFAULT_VERSIONED_HASH)))
             .createTransaction(senderKeys);
