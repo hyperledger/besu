@@ -150,7 +150,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     }
 
     if (addStatus.isSuccess()) {
-      processAdded(pendingTransaction);
+      processAdded(pendingTransaction.detachedCopy());
       addStatus.maybeReplacedTransaction().ifPresent(this::replaced);
 
       nextLayer.notifyAdded(pendingTransaction);

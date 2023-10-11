@@ -674,9 +674,10 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final Transaction transaction = createTransaction(0, Wei.of(10), 21_000);
     ensureTransactionIsValid(transaction, 21_000, 0);
 
+    final TransactionInvalidReason invalidReason =
+        TransactionInvalidReason.PLUGIN_TX_VALIDATOR_INVALIDATED;
     final Transaction invalidTransaction = createTransaction(1, Wei.of(10), 21_000);
-    ensureTransactionIsInvalid(
-        invalidTransaction, TransactionInvalidReason.PLUGIN_TX_VALIDATOR_INVALIDATED);
+    ensureTransactionIsInvalid(invalidTransaction, invalidReason);
     transactionPool.addRemoteTransactions(List.of(transaction, invalidTransaction));
 
     createBlockSelectorWithTxSelPlugin(
@@ -692,11 +693,16 @@ public abstract class AbstractBlockTransactionSelectorTest {
     ArgumentCaptor<PendingTransaction> argumentCaptor =
         ArgumentCaptor.forClass(PendingTransaction.class);
 
+    // selected transaction must be notified to the selector
     verify(transactionSelector).onTransactionSelected(argumentCaptor.capture());
     PendingTransaction selected = argumentCaptor.getValue();
     assertThat(selected.getTransaction()).isEqualTo(transaction);
 
-    verify(transactionSelector).onTransactionRejected(argumentCaptor.capture());
+    // unselected transaction must be notified to the selector with correct reason
+    verify(transactionSelector)
+        .onTransactionNotSelected(
+            argumentCaptor.capture(),
+            eq(TransactionSelectionResult.invalid(invalidReason.toString())));
     PendingTransaction rejectedTransaction = argumentCaptor.getValue();
     assertThat(rejectedTransaction.getTransaction()).isEqualTo(invalidTransaction);
   }
