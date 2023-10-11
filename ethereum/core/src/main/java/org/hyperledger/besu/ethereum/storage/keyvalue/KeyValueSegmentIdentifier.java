@@ -43,7 +43,8 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   CHAIN_PRUNER_STATE(new byte[] {18}),
 
   CODE_STORAGE_BY_HASH(new byte[] {19}, new int[] {2}),
-  CODE_HASH_COUNT(new byte[] {20}, new int[] {2});
+  CODE_HASH_COUNT(new byte[] {20}, new int[] {2}),
+  CODE_STORAGE_COMPARE(new byte[] {21}, new int[] {2});
 
   private final byte[] id;
   private final int[] versionList;
