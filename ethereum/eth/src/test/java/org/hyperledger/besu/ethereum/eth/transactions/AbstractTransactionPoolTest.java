@@ -1065,9 +1065,9 @@ public abstract class AbstractTransactionPoolTest {
   }
 
   private static PluginTransactionValidatorFactory getPluginTransactionValidatorFactoryReturning(
-      final String s) {
+      final String errorMessage) {
     final PluginTransactionValidator pluginTransactionValidator =
-        transaction -> Optional.ofNullable(s);
+        transaction -> Optional.ofNullable(errorMessage);
     return () -> pluginTransactionValidator;
   }
 
