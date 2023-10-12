@@ -469,14 +469,20 @@ public class TransactionPool implements BlockAddedObserver {
       return ValidationResultAndAccount.invalid(
           TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
           "EIP-1559 transaction are not allowed yet");
+    } else if (transaction.getType().equals(TransactionType.BLOB)
+        && transaction.getBlobsWithCommitments().isEmpty()) {
+      return ValidationResultAndAccount.invalid(
+          TransactionInvalidReason.INVALID_BLOBS, "Blob transaction must have at least one blob");
     }
 
     // Call the transaction validator plugin if one is available
-    if (pluginTransactionValidator != null
-        && !pluginTransactionValidator.validateTransaction(transaction)) {
-      return ValidationResultAndAccount.invalid(
-          TransactionInvalidReason.PLUGIN_TX_VALIDATOR_INVALIDATED,
-          "Plugin transaction vaildator returned false");
+    if (pluginTransactionValidator != null) {
+      final Optional<String> maybeError =
+          pluginTransactionValidator.validateTransaction(transaction);
+      if (maybeError.isPresent()) {
+        return ValidationResultAndAccount.invalid(
+            TransactionInvalidReason.PLUGIN_TX_VALIDATOR, maybeError.get());
+      }
     }
 
     try (final var worldState =

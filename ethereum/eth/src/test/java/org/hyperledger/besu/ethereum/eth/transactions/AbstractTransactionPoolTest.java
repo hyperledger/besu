@@ -52,6 +52,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -144,6 +145,7 @@ public abstract class AbstractTransactionPoolTest {
   protected PendingTransactions transactions;
   protected final Transaction transaction0 = createTransaction(0);
   protected final Transaction transaction1 = createTransaction(1);
+  protected final Transaction transactionBlob = createBlobTransaction(0);
 
   protected final Transaction transactionOtherSender = createTransaction(1, KEY_PAIR2);
   private ExecutionContextTestFixture executionContext;
@@ -454,6 +456,40 @@ public abstract class AbstractTransactionPoolTest {
     assertTransactionPending(transaction1);
   }
 
+  @Test
+  public void shouldNotReAddBlobTxsWhenReorgHappens() {
+    givenTransactionIsValid(transaction0);
+    givenTransactionIsValid(transaction1);
+    givenTransactionIsValid(transactionBlob);
+
+    addAndAssertRemoteTransactionValid(transaction0);
+    addAndAssertRemoteTransactionValid(transaction1);
+    addAndAssertRemoteTransactionInvalid(transactionBlob);
+
+    final BlockHeader commonParent = getHeaderForCurrentChainHead();
+    final Block originalFork1 = appendBlock(Difficulty.of(1000), commonParent, transaction0);
+    final Block originalFork2 =
+        appendBlock(Difficulty.of(10), originalFork1.getHeader(), transaction1);
+    final Block originalFork3 =
+        appendBlock(Difficulty.of(1), originalFork2.getHeader(), transactionBlob);
+    assertTransactionNotPending(transaction0);
+    assertTransactionNotPending(transaction1);
+    assertTransactionNotPending(transactionBlob);
+
+    final Block reorgFork1 = appendBlock(Difficulty.ONE, commonParent);
+    verifyChainHeadIs(originalFork3);
+
+    final Block reorgFork2 = appendBlock(Difficulty.of(2000), reorgFork1.getHeader());
+    verifyChainHeadIs(reorgFork2);
+
+    final Block reorgFork3 = appendBlock(Difficulty.of(3000), reorgFork2.getHeader());
+    verifyChainHeadIs(reorgFork3);
+
+    assertTransactionNotPending(transactionBlob);
+    assertTransactionPending(transaction0);
+    assertTransactionPending(transaction1);
+  }
+
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
   public void addLocalTransaction_strictReplayProtectionOn_txWithChainId_chainIdIsConfigured(
@@ -737,7 +773,7 @@ public abstract class AbstractTransactionPoolTest {
   @ValueSource(booleans = {true, false})
   public void transactionNotRejectedByPluginShouldBeAdded(final boolean disableLocalTxs) {
     final PluginTransactionValidatorFactory pluginTransactionValidatorFactory =
-        getPluginTransactionValidatorFactoryReturning(true);
+        getPluginTransactionValidatorFactoryReturning(null); // null -> not rejecting !!
     this.transactionPool =
         createTransactionPool(
             b -> b.disableLocalTransactions(disableLocalTxs), pluginTransactionValidatorFactory);
@@ -751,7 +787,7 @@ public abstract class AbstractTransactionPoolTest {
   @ValueSource(booleans = {true, false})
   public void transactionRejectedByPluginShouldNotBeAdded(final boolean disableLocalTxs) {
     final PluginTransactionValidatorFactory pluginTransactionValidatorFactory =
-        getPluginTransactionValidatorFactoryReturning(false);
+        getPluginTransactionValidatorFactoryReturning("false");
     this.transactionPool =
         createTransactionPool(
             b -> b.disableLocalTransactions(disableLocalTxs), pluginTransactionValidatorFactory);
@@ -759,13 +795,13 @@ public abstract class AbstractTransactionPoolTest {
     givenTransactionIsValid(transaction0);
 
     addAndAssertTransactionViaApiInvalid(
-        transaction0, TransactionInvalidReason.PLUGIN_TX_VALIDATOR_INVALIDATED);
+        transaction0, TransactionInvalidReason.PLUGIN_TX_VALIDATOR);
   }
 
   @Test
   public void remoteTransactionRejectedByPluginShouldNotBeAdded() {
     final PluginTransactionValidatorFactory pluginTransactionValidatorFactory =
-        getPluginTransactionValidatorFactoryReturning(false);
+        getPluginTransactionValidatorFactoryReturning("false");
     this.transactionPool = createTransactionPool(b -> {}, pluginTransactionValidatorFactory);
 
     givenTransactionIsValid(transaction0);
@@ -1029,8 +1065,9 @@ public abstract class AbstractTransactionPoolTest {
   }
 
   private static PluginTransactionValidatorFactory getPluginTransactionValidatorFactoryReturning(
-      final boolean b) {
-    final PluginTransactionValidator pluginTransactionValidator = transaction -> b;
+      final String errorMessage) {
+    final PluginTransactionValidator pluginTransactionValidator =
+        transaction -> Optional.ofNullable(errorMessage);
     return () -> pluginTransactionValidator;
   }
 
@@ -1186,6 +1223,18 @@ public abstract class AbstractTransactionPoolTest {
         .gasPrice(gasPrice)
         .gasLimit(blockGasLimit)
         .type(TransactionType.FRONTIER)
+        .createTransaction(KEY_PAIR1);
+  }
+
+  protected Transaction createBlobTransaction(final int nonce) {
+    return new TransactionTestFixture()
+        .nonce(nonce)
+        .gasLimit(blockGasLimit)
+        .gasPrice(null)
+        .maxFeePerGas(Optional.of(Wei.of(5000L)))
+        .maxPriorityFeePerGas(Optional.of(Wei.of(1000L)))
+        .type(TransactionType.BLOB)
+        .blobsWithCommitments(Optional.of(new BlobTestFixture().createBlobsWithCommitments(1)))
         .createTransaction(KEY_PAIR1);
   }
 

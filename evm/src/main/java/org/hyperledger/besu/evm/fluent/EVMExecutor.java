@@ -18,9 +18,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.contractvalidation.ContractValidationRule;
@@ -36,14 +38,19 @@ import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.errorprone.annotations.InlineMe;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -57,22 +64,27 @@ public class EVMExecutor {
   private long gas = Long.MAX_VALUE;
   private Address receiver = Address.ZERO;
   private Address sender = Address.ZERO;
+  private Address contract = Address.ZERO;
+  private Address coinbase = Address.ZERO;
   private Wei gasPriceGWei = Wei.ZERO;
   private Wei blobGasPrice = Wei.ZERO;
   private Bytes callData = Bytes.EMPTY;
   private Wei ethValue = Wei.ZERO;
   private Code code = CodeV0.EMPTY_CODE;
   private BlockValues blockValues = new SimpleBlockValues();
+  private Function<Long, Hash> blockHashLookup = h -> null;
+  private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
   private OperationTracer tracer = OperationTracer.NO_TRACING;
   private boolean requireDeposit = true;
   private List<ContractValidationRule> contractValidationRules =
       List.of(MaxCodeSizeRule.of(0x6000), PrefixCodeRule.of());
-  private long initialNonce = 0;
+  private long initialNonce = 1;
   private Collection<Address> forceCommitAddresses = List.of(Address.fromHexString("0x03"));
-  private Set<Address> accessListWarmAddresses = Set.of();
+  private Set<Address> accessListWarmAddresses = new HashSet<>();
   private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
   private MessageCallProcessor messageCallProcessor = null;
   private ContractCreationProcessor contractCreationProcessor = null;
+  private MessageFrame.Type messageFrameType = MessageFrame.Type.MESSAGE_CALL;
 
   private EVMExecutor(final EVM evm) {
     checkNotNull(evm, "evm must not be null");
@@ -80,7 +92,84 @@ public class EVMExecutor {
   }
 
   /**
-   * Instandiate Evm executor.
+   * Create an EVM with the most current activated fork on chain ID 1.
+   *
+   * <p>Note, this will change across versions
+   *
+   * @return executor builder
+   */
+  public static EVMExecutor evm() {
+    return evm(EvmSpecVersion.mostRecent());
+  }
+
+  /**
+   * Create an EVM at the specified version with chain ID 1.
+   *
+   * @param fork the EVM spec version to use
+   * @return executor builder
+   */
+  public static EVMExecutor evm(final EvmSpecVersion fork) {
+    return evm(fork, BigInteger.ONE);
+  }
+
+  /**
+   * Create an EVM at the specified version and chain ID
+   *
+   * @param fork the EVM spec version to use
+   * @param chainId the chain ID to use
+   * @return executor builder
+   */
+  public static EVMExecutor evm(final EvmSpecVersion fork, final BigInteger chainId) {
+    return evm(fork, chainId, EvmConfiguration.DEFAULT);
+  }
+
+  /**
+   * Create an EVM at the specified version and chain ID
+   *
+   * @param fork the EVM spec version to use
+   * @param chainId the chain ID to use
+   * @return executor builder
+   */
+  public static EVMExecutor evm(final EvmSpecVersion fork, final Bytes chainId) {
+    return evm(fork, new BigInteger(1, chainId.toArrayUnsafe()), EvmConfiguration.DEFAULT);
+  }
+
+  /**
+   * Create an EVM at the specified version and chain ID
+   *
+   * @param fork the EVM spec version to use
+   * @param chainId the chain ID to use
+   * @param evmConfiguration system configuration options.
+   * @return executor builder
+   */
+  public static EVMExecutor evm(
+      final EvmSpecVersion fork,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return switch (fork) {
+      case FRONTIER -> frontier(evmConfiguration);
+      case HOMESTEAD -> homestead(evmConfiguration);
+      case TANGERINE_WHISTLE -> tangerineWhistle(evmConfiguration);
+      case SPURIOUS_DRAGON -> spuriousDragon(evmConfiguration);
+      case BYZANTIUM -> byzantium(evmConfiguration);
+      case CONSTANTINOPLE -> constantinople(evmConfiguration);
+      case PETERSBURG -> petersburg(evmConfiguration);
+      case ISTANBUL -> istanbul(chainId, evmConfiguration);
+      case BERLIN -> berlin(chainId, evmConfiguration);
+      case LONDON -> london(chainId, evmConfiguration);
+      case PARIS -> paris(chainId, evmConfiguration);
+      case SHANGHAI -> shanghai(chainId, evmConfiguration);
+      case CANCUN -> cancun(chainId, evmConfiguration);
+      case PRAGUE -> prague(chainId, evmConfiguration);
+      case OSAKA -> osaka(chainId, evmConfiguration);
+      case BOGOTA -> bogota(chainId, evmConfiguration);
+      case FUTURE_EIPS -> futureEips(chainId, evmConfiguration);
+      case EXPERIMENTAL_EIPS -> experimentalEips(chainId, evmConfiguration);
+    };
+  }
+
+  /**
+   * Instantiate Evm executor.
    *
    * @param evm the evm
    * @return the evm executor
@@ -102,6 +191,7 @@ public class EVMExecutor {
     executor.contractValidationRules = List.of();
     executor.requireDeposit = false;
     executor.forceCommitAddresses = List.of();
+    executor.initialNonce = 0;
     return executor;
   }
 
@@ -117,20 +207,7 @@ public class EVMExecutor {
         MainnetPrecompiledContracts.frontier(executor.evm.getGasCalculator());
     executor.contractValidationRules = List.of();
     executor.forceCommitAddresses = List.of();
-    return executor;
-  }
-
-  /**
-   * Instantiate Spurious dragon evm executor.
-   *
-   * @param evmConfiguration the evm configuration
-   * @return the evm executor
-   */
-  public static EVMExecutor spuriousDragon(final EvmConfiguration evmConfiguration) {
-    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.spuriousDragon(evmConfiguration));
-    executor.precompileContractRegistry =
-        MainnetPrecompiledContracts.frontier(executor.evm.getGasCalculator());
-    executor.contractValidationRules = List.of(MaxCodeSizeRule.of(0x6000));
+    executor.initialNonce = 0;
     return executor;
   }
 
@@ -142,6 +219,21 @@ public class EVMExecutor {
    */
   public static EVMExecutor tangerineWhistle(final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.tangerineWhistle(evmConfiguration));
+    executor.precompileContractRegistry =
+        MainnetPrecompiledContracts.frontier(executor.evm.getGasCalculator());
+    executor.contractValidationRules = List.of(MaxCodeSizeRule.of(0x6000));
+    executor.initialNonce = 0;
+    return executor;
+  }
+
+  /**
+   * Instantiate Spurious dragon evm executor.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor spuriousDragon(final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.spuriousDragon(evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.frontier(executor.evm.getGasCalculator());
     executor.contractValidationRules = List.of(MaxCodeSizeRule.of(0x6000));
@@ -195,9 +287,30 @@ public class EVMExecutor {
    *
    * @param evmConfiguration the evm configuration
    * @return the evm executor
+   * @deprecated Migrate to use {@link EVMExecutor#evm(EvmSpecVersion)}.
    */
+  @InlineMe(
+      replacement = "EVMExecutor.evm(EvmSpecVersion.ISTANBUL, BigInteger.ONE, evmConfiguration)",
+      imports = {
+        "java.math.BigInteger",
+        "org.hyperledger.besu.evm.EvmSpecVersion",
+        "org.hyperledger.besu.evm.fluent.EVMExecutor"
+      })
+  @Deprecated(forRemoval = true)
   public static EVMExecutor istanbul(final EvmConfiguration evmConfiguration) {
-    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.istanbul(evmConfiguration));
+    return evm(EvmSpecVersion.ISTANBUL, BigInteger.ONE, evmConfiguration);
+  }
+
+  /**
+   * Instantiate Istanbul evm executor.
+   *
+   * @param chainId the chain ID
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor istanbul(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.istanbul(chainId, evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.istanbul(executor.evm.getGasCalculator());
     executor.contractValidationRules = List.of(MaxCodeSizeRule.of(0x6000));
@@ -209,9 +322,30 @@ public class EVMExecutor {
    *
    * @param evmConfiguration the evm configuration
    * @return the evm executor
+   * @deprecated Migrate to use {@link EVMExecutor#evm(EvmSpecVersion)}.
    */
+  @InlineMe(
+      replacement = "EVMExecutor.evm(EvmSpecVersion.BERLIN, BigInteger.ONE, evmConfiguration)",
+      imports = {
+        "java.math.BigInteger",
+        "org.hyperledger.besu.evm.EvmSpecVersion",
+        "org.hyperledger.besu.evm.fluent.EVMExecutor"
+      })
+  @Deprecated(forRemoval = true)
   public static EVMExecutor berlin(final EvmConfiguration evmConfiguration) {
-    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.berlin(evmConfiguration));
+    return evm(EvmSpecVersion.BERLIN, BigInteger.ONE, evmConfiguration);
+  }
+
+  /**
+   * Instantiate berlin evm executor.
+   *
+   * @param chainId the chain ID
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor berlin(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.berlin(chainId, evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.istanbul(executor.evm.getGasCalculator());
     executor.contractValidationRules = List.of(MaxCodeSizeRule.of(0x6000));
@@ -223,9 +357,30 @@ public class EVMExecutor {
    *
    * @param evmConfiguration the evm configuration
    * @return the evm executor
+   * @deprecated Migrate to use {@link EVMExecutor#evm(EvmSpecVersion)}.
    */
+  @InlineMe(
+      replacement = "EVMExecutor.evm(EvmSpecVersion.LONDON, BigInteger.ONE, evmConfiguration)",
+      imports = {
+        "java.math.BigInteger",
+        "org.hyperledger.besu.evm.EvmSpecVersion",
+        "org.hyperledger.besu.evm.fluent.EVMExecutor"
+      })
+  @Deprecated(forRemoval = true)
   public static EVMExecutor london(final EvmConfiguration evmConfiguration) {
-    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.london(evmConfiguration));
+    return evm(EvmSpecVersion.LONDON, BigInteger.ONE, evmConfiguration);
+  }
+
+  /**
+   * Instantiate London evm executor.
+   *
+   * @param chainId the chain ID
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor london(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.london(chainId, evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.istanbul(executor.evm.getGasCalculator());
     return executor;
@@ -236,9 +391,30 @@ public class EVMExecutor {
    *
    * @param evmConfiguration the evm configuration
    * @return the evm executor
+   * @deprecated Migrate to use {@link EVMExecutor#evm(EvmSpecVersion)}.
    */
+  @InlineMe(
+      replacement = "EVMExecutor.evm(EvmSpecVersion.PARIS, BigInteger.ONE, evmConfiguration)",
+      imports = {
+        "java.math.BigInteger",
+        "org.hyperledger.besu.evm.EvmSpecVersion",
+        "org.hyperledger.besu.evm.fluent.EVMExecutor"
+      })
+  @Deprecated(forRemoval = true)
   public static EVMExecutor paris(final EvmConfiguration evmConfiguration) {
-    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.paris(evmConfiguration));
+    return evm(EvmSpecVersion.PARIS, BigInteger.ONE, evmConfiguration);
+  }
+
+  /**
+   * Instantiate Paris evm executor.
+   *
+   * @param chainId the chain ID
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor paris(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.paris(chainId, evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.istanbul(executor.evm.getGasCalculator());
     return executor;
@@ -249,9 +425,30 @@ public class EVMExecutor {
    *
    * @param evmConfiguration the evm configuration
    * @return the evm executor
+   * @deprecated Migrate to use {@link EVMExecutor#evm(EvmSpecVersion)}.
    */
+  @InlineMe(
+      replacement = "EVMExecutor.evm(EvmSpecVersion.SHANGHAI, BigInteger.ONE, evmConfiguration)",
+      imports = {
+        "java.math.BigInteger",
+        "org.hyperledger.besu.evm.EvmSpecVersion",
+        "org.hyperledger.besu.evm.fluent.EVMExecutor"
+      })
+  @Deprecated(forRemoval = true)
   public static EVMExecutor shanghai(final EvmConfiguration evmConfiguration) {
-    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.shanghai(evmConfiguration));
+    return evm(EvmSpecVersion.SHANGHAI, BigInteger.ONE, evmConfiguration);
+  }
+
+  /**
+   * Instantiate Shanghai evm executor.
+   *
+   * @param chainId the chain ID
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor shanghai(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.shanghai(chainId, evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.istanbul(executor.evm.getGasCalculator());
     return executor;
@@ -262,9 +459,75 @@ public class EVMExecutor {
    *
    * @param evmConfiguration the evm configuration
    * @return the evm executor
+   * @deprecated Migrate to use {@link EVMExecutor#evm(EvmSpecVersion)}.
    */
+  @InlineMe(
+      replacement = "EVMExecutor.evm(EvmSpecVersion.CANCUN, BigInteger.ONE, evmConfiguration)",
+      imports = {
+        "java.math.BigInteger",
+        "org.hyperledger.besu.evm.EvmSpecVersion",
+        "org.hyperledger.besu.evm.fluent.EVMExecutor"
+      })
+  @Deprecated(forRemoval = true)
   public static EVMExecutor cancun(final EvmConfiguration evmConfiguration) {
-    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.cancun(evmConfiguration));
+    return evm(EvmSpecVersion.CANCUN, BigInteger.ONE, evmConfiguration);
+  }
+
+  /**
+   * Instantiate Cancun evm executor.
+   *
+   * @param chainId the chain ID
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor cancun(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.cancun(chainId, evmConfiguration));
+    executor.precompileContractRegistry =
+        MainnetPrecompiledContracts.cancun(executor.evm.getGasCalculator());
+    return executor;
+  }
+
+  /**
+   * Instantiate Prague evm executor.
+   *
+   * @param chainId the chain ID
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor prague(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.prague(chainId, evmConfiguration));
+    executor.precompileContractRegistry =
+        MainnetPrecompiledContracts.cancun(executor.evm.getGasCalculator());
+    return executor;
+  }
+
+  /**
+   * Instantiate Osaka evm executor.
+   *
+   * @param chainId the chain ID
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor osaka(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.osaka(chainId, evmConfiguration));
+    executor.precompileContractRegistry =
+        MainnetPrecompiledContracts.cancun(executor.evm.getGasCalculator());
+    return executor;
+  }
+
+  /**
+   * Instantiate Bogota evm executor.
+   *
+   * @param chainId the chain ID
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor bogota(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.bogota(chainId, evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.cancun(executor.evm.getGasCalculator());
     return executor;
@@ -275,9 +538,46 @@ public class EVMExecutor {
    *
    * @param evmConfiguration the evm configuration
    * @return the evm executor
+   * @deprecated Migrate to use {@link EVMExecutor#evm(EvmSpecVersion)}.
    */
-  public static EVMExecutor futureEIPs(final EvmConfiguration evmConfiguration) {
-    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.cancun(evmConfiguration));
+  @InlineMe(
+      replacement = "EVMExecutor.evm(EvmSpecVersion.FUTURE_EIPS, BigInteger.ONE, evmConfiguration)",
+      imports = {
+        "java.math.BigInteger",
+        "org.hyperledger.besu.evm.EvmSpecVersion",
+        "org.hyperledger.besu.evm.fluent.EVMExecutor"
+      })
+  @Deprecated(forRemoval = true)
+  public static EVMExecutor futureEips(final EvmConfiguration evmConfiguration) {
+    return evm(EvmSpecVersion.FUTURE_EIPS, BigInteger.ONE, evmConfiguration);
+  }
+
+  /**
+   * Instantiate Future EIPs evm executor.
+   *
+   * @param chainId the chain ID
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor futureEips(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.futureEips(chainId, evmConfiguration));
+    executor.precompileContractRegistry =
+        MainnetPrecompiledContracts.futureEIPs(executor.evm.getGasCalculator());
+    return executor;
+  }
+
+  /**
+   * Instantiate Experimental EIPs evm executor.
+   *
+   * @param chainId the chain ID
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor experimentalEips(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor =
+        new EVMExecutor(MainnetEVMs.experimentalEips(chainId, evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.futureEIPs(executor.evm.getGasCalculator());
     return executor;
@@ -347,10 +647,10 @@ public class EVMExecutor {
     final ContractCreationProcessor ccp = thisContractCreationProcessor();
     final MessageFrame initialMessageFrame =
         MessageFrame.builder()
-            .type(MessageFrame.Type.MESSAGE_CALL)
+            .type(messageFrameType)
             .worldUpdater(worldUpdater.updater())
             .initialGas(gas)
-            .contract(Address.ZERO)
+            .contract(contract)
             .address(receiver)
             .originator(sender)
             .sender(sender)
@@ -361,11 +661,12 @@ public class EVMExecutor {
             .apparentValue(ethValue)
             .code(code)
             .blockValues(blockValues)
-            .completer(c -> {})
-            .miningBeneficiary(Address.ZERO)
-            .blockHashLookup(h -> null)
+            .miningBeneficiary(coinbase)
+            .blockHashLookup(blockHashLookup)
             .accessListWarmAddresses(accessListWarmAddresses)
             .accessListWarmStorage(accessListWarmStorage)
+            .versionedHashes(versionedHashes)
+            .completer(c -> {})
             .build();
 
     final Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
@@ -389,8 +690,7 @@ public class EVMExecutor {
    * @return the evm executor
    */
   public EVMExecutor commitWorldState() {
-    this.commitWorldState = true;
-    return this;
+    return commitWorldState(true);
   }
 
   /**
@@ -445,6 +745,32 @@ public class EVMExecutor {
    */
   public EVMExecutor sender(final Address sender) {
     this.sender = sender;
+    return this;
+  }
+
+  /**
+   * Sets the address of the executing contract
+   *
+   * @param contract the contract
+   * @return the evm executor
+   */
+  public EVMExecutor contract(final Address contract) {
+    this.contract = contract;
+    return this;
+  }
+
+  /**
+   * Sets the address of the coinbase aka mining beneficiary
+   *
+   * @param coinbase the coinbase
+   * @return the evm executor
+   */
+  public EVMExecutor coinbase(final Address coinbase) {
+    this.coinbase = coinbase;
+    // EIP-3651
+    if (EvmSpecVersion.SHANGHAI.compareTo(evm.getEvmVersion()) <= 0) {
+      this.warmAddress(coinbase);
+    }
     return this;
   }
 
@@ -507,6 +833,16 @@ public class EVMExecutor {
    * Sets Code.
    *
    * @param codeBytes the code bytes
+   * @return the evm executor
+   */
+  public EVMExecutor code(final Bytes codeBytes) {
+    return code(codeBytes, Hash.hash(codeBytes));
+  }
+
+  /**
+   * Sets Code.
+   *
+   * @param codeBytes the code bytes
    * @param hash the hash
    * @return the evm executor
    */
@@ -523,6 +859,131 @@ public class EVMExecutor {
    */
   public EVMExecutor blockValues(final BlockValues blockValues) {
     this.blockValues = blockValues;
+    return this;
+  }
+
+  /**
+   * Sets the difficulty bytes on a SimpleBlockValues object
+   *
+   * @param difficulty the difficulty
+   * @return the evm executor
+   * @throws ClassCastException if the blockValues was set with a value that is not a {@link
+   *     SimpleBlockValues}
+   */
+  public EVMExecutor difficulty(final Bytes difficulty) {
+    ((SimpleBlockValues) this.blockValues).setDifficultyBytes(difficulty);
+    return this;
+  }
+
+  /**
+   * Sets the mix hash bytes on a SimpleBlockValues object
+   *
+   * @param mixHash the mix hash
+   * @return the evm executor
+   * @throws ClassCastException if the blockValues was set with a value that is not a {@link
+   *     SimpleBlockValues}
+   */
+  public EVMExecutor mixHash(final Bytes32 mixHash) {
+    ((SimpleBlockValues) this.blockValues).setMixHashOrPrevRandao(mixHash);
+    return this;
+  }
+
+  /**
+   * Sets the prev randao bytes on a SimpleBlockValues object
+   *
+   * @param prevRandao the prev randao
+   * @return the evm executor
+   * @throws ClassCastException if the blockValues was set with a value that is not a {@link
+   *     SimpleBlockValues}
+   */
+  public EVMExecutor prevRandao(final Bytes32 prevRandao) {
+    ((SimpleBlockValues) this.blockValues).setMixHashOrPrevRandao(prevRandao);
+    return this;
+  }
+
+  /**
+   * Sets the baseFee for the block, directly.
+   *
+   * @param baseFee the baseFee
+   * @return the evm executor
+   * @throws ClassCastException if the blockValues was set with a value that is not a {@link
+   *     SimpleBlockValues}
+   */
+  public EVMExecutor baseFee(final Wei baseFee) {
+    return baseFee(Optional.ofNullable(baseFee));
+  }
+
+  /**
+   * Sets the baseFee for the block, as an Optional.
+   *
+   * @param baseFee the baseFee
+   * @return the evm executor
+   * @throws ClassCastException if the blockValues was set with a value that is not a {@link
+   *     SimpleBlockValues}
+   */
+  public EVMExecutor baseFee(final Optional<Wei> baseFee) {
+    ((SimpleBlockValues) this.blockValues).setBaseFee(baseFee);
+    return this;
+  }
+
+  /**
+   * Sets the block number for the block.
+   *
+   * @param number the block number
+   * @return the evm executor
+   * @throws ClassCastException if the blockValues was set with a value that is not a {@link
+   *     SimpleBlockValues}
+   */
+  public EVMExecutor number(final long number) {
+    ((SimpleBlockValues) this.blockValues).setNumber(number);
+    return this;
+  }
+
+  /**
+   * Sets the timestamp for the block.
+   *
+   * @param timestamp the block timestamp
+   * @return the evm executor
+   * @throws ClassCastException if the blockValues was set with a value that is not a {@link
+   *     SimpleBlockValues}
+   */
+  public EVMExecutor timestamp(final long timestamp) {
+    ((SimpleBlockValues) this.blockValues).setTimestamp(timestamp);
+    return this;
+  }
+
+  /**
+   * Sets the gas limit for the block.
+   *
+   * @param gasLimit the block gas limit
+   * @return the evm executor
+   * @throws ClassCastException if the blockValues was set with a value that is not a {@link
+   *     SimpleBlockValues}
+   */
+  public EVMExecutor gasLimit(final long gasLimit) {
+    ((SimpleBlockValues) this.blockValues).setGasLimit(gasLimit);
+    return this;
+  }
+
+  /**
+   * Sets the block hash lookup function
+   *
+   * @param blockHashLookup the block hash lookup function
+   * @return the evm executor
+   */
+  public EVMExecutor blockHashLookup(final Function<Long, Hash> blockHashLookup) {
+    this.blockHashLookup = blockHashLookup;
+    return this;
+  }
+
+  /**
+   * Sets Version Hashes for blobs. The blobs themselves are not accessible.
+   *
+   * @param versionedHashes the versioned hashes
+   * @return the evm executor
+   */
+  public EVMExecutor versionedHashes(final Optional<List<VersionedHash>> versionedHashes) {
+    this.versionedHashes = versionedHashes;
     return this;
   }
 
@@ -663,5 +1124,34 @@ public class EVMExecutor {
       final ContractCreationProcessor contractCreationProcessor) {
     this.contractCreationProcessor = contractCreationProcessor;
     return this;
+  }
+
+  /**
+   * Sets the message frame type
+   *
+   * @param messageFrameType message frame type
+   * @return the builder
+   */
+  public EVMExecutor messageFrameType(final MessageFrame.Type messageFrameType) {
+    this.messageFrameType = messageFrameType;
+    return this;
+  }
+
+  /**
+   * Returns the EVM version this executor is using
+   *
+   * @return the current EVM version
+   */
+  public EvmSpecVersion getEVMVersion() {
+    return evm.getEvmVersion();
+  }
+
+  /**
+   * Returns the ChaindD this executor is using
+   *
+   * @return the current chain ID
+   */
+  public Optional<Bytes> getChainId() {
+    return evm.getChainId();
   }
 }

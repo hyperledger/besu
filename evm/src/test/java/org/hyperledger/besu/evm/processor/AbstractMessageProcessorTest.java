@@ -26,9 +26,9 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.fluent.EVMExecutor;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -99,7 +99,7 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
 
   @Test
   void shouldTraceContextEnterExitForEip3155Test() {
-    final EVMExecutor executor = EVMExecutor.shanghai(EvmConfiguration.DEFAULT);
+    final EVMExecutor executor = EVMExecutor.evm(EvmSpecVersion.SHANGHAI);
     final ContextTracer contextTracer = new ContextTracer();
 
     executor.tracer(contextTracer);
