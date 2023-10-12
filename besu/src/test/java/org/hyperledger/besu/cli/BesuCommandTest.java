@@ -35,7 +35,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
-//import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
@@ -912,14 +911,14 @@ public class BesuCommandTest extends CommandTestAbstract {
                     MiningParameters.Dynamic.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
                 .setExtraData(MiningParameters.Dynamic.DEFAULT_EXTRA_DATA)
                 .toParameters());
-//
-//                new MiningParameters.Builder()
-//                    .coinbase(Address.fromHexString(expectedCoinbase))
-//
-//     .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
-//                    .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
-//                    .miningEnabled(false)
-//                    .build());
+    //
+    //                new MiningParameters.Builder()
+    //                    .coinbase(Address.fromHexString(expectedCoinbase))
+    //
+    //     .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
+    //                    .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
+    //                    .miningEnabled(false)
+    //                    .build());
   }
 
   @Test
@@ -3661,7 +3660,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith("--metrics-enabled option and --metrics-push-enabled option can't be used");
   }
-
 
   @Test
   public void colorCanBeEnabledOrDisabledExplicitly() {

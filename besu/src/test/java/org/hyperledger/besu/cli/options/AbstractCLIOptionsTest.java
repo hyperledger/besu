@@ -20,12 +20,8 @@ import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.verify;
 
-import io.vertx.core.json.JsonObject;
 import org.hyperledger.besu.cli.CommandTestAbstract;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -140,12 +136,12 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
    * @param mainOption the main option name
    */
   protected void verifyOptionsConstraintLoggerCall(
-          final String mainOption, final String... dependentOptions) {
+      final String mainOption, final String... dependentOptions) {
     verify(mockLogger, atLeast(1))
-            .warn(
-                    stringArgumentCaptor.capture(),
-                    stringArgumentCaptor.capture(),
-                    stringArgumentCaptor.capture());
+        .warn(
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture());
     assertThat(stringArgumentCaptor.getAllValues().get(0)).isEqualTo(DEPENDENCY_WARNING_MSG);
 
     for (final String option : dependentOptions) {
@@ -154,5 +150,4 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
 
     assertThat(stringArgumentCaptor.getAllValues().get(2)).isEqualTo(mainOption);
   }
-
 }

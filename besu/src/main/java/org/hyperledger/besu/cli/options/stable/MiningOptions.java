@@ -53,7 +53,6 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
       description = "Set if node will perform Stratum mining (default: ${DEFAULT-VALUE})")
   private Boolean iStratumMiningEnabled = false;
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--miner-stratum-host"},
       description = "Host for Stratum network mining service (default: ${DEFAULT-VALUE})")
@@ -100,65 +99,62 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
           "Sets target gas limit per block. If set, each block's gas limit will approach this setting over time if the current gas limit is different.")
   private Long targetGasLimit = null;
 
-  @CommandLine.ArgGroup(
-          validate = false)
+  @CommandLine.ArgGroup(validate = false)
   private final Unstable unstableOptions = new Unstable();
 
   static class Unstable {
     @CommandLine.Option(
-            hidden = true,
-            names = {"--Xminer-remote-sealers-limit"},
-            description =
-                    "Limits the number of remote sealers that can submit their hashrates (default: ${DEFAULT-VALUE})")
+        hidden = true,
+        names = {"--Xminer-remote-sealers-limit"},
+        description =
+            "Limits the number of remote sealers that can submit their hashrates (default: ${DEFAULT-VALUE})")
     private Integer remoteSealersLimit = DEFAULT_REMOTE_SEALERS_LIMIT;
 
     @CommandLine.Option(
-            hidden = true,
-            names = {"--Xminer-remote-sealers-hashrate-ttl"},
-            description =
-                    "Specifies the lifetime of each entry in the cache. An entry will be automatically deleted if no update has been received before the deadline (default: ${DEFAULT-VALUE} minutes)")
+        hidden = true,
+        names = {"--Xminer-remote-sealers-hashrate-ttl"},
+        description =
+            "Specifies the lifetime of each entry in the cache. An entry will be automatically deleted if no update has been received before the deadline (default: ${DEFAULT-VALUE} minutes)")
     private Long remoteSealersTimeToLive = DEFAULT_REMOTE_SEALERS_TTL;
 
     @CommandLine.Option(
-            hidden = true,
-            names = {"--Xminer-pow-job-ttl"},
-            description =
-                    "Specifies the time PoW jobs are kept in cache and will accept a solution from miners (default: ${DEFAULT-VALUE} milliseconds)")
+        hidden = true,
+        names = {"--Xminer-pow-job-ttl"},
+        description =
+            "Specifies the time PoW jobs are kept in cache and will accept a solution from miners (default: ${DEFAULT-VALUE} milliseconds)")
     private Long powJobTimeToLive = DEFAULT_POW_JOB_TTL;
 
     @CommandLine.Option(
-            hidden = true,
-            names = {"--Xmax-ommers-depth"},
-            description =
-                    "Specifies the depth of ommer blocks to accept when receiving solutions (default: ${DEFAULT-VALUE})")
+        hidden = true,
+        names = {"--Xmax-ommers-depth"},
+        description =
+            "Specifies the depth of ommer blocks to accept when receiving solutions (default: ${DEFAULT-VALUE})")
     private Integer maxOmmersDepth = DEFAULT_MAX_OMMERS_DEPTH;
 
     @CommandLine.Option(
-            hidden = true,
-            names = {"--Xminer-stratum-extranonce"},
-            description = "Extranonce for Stratum network miners (default: ${DEFAULT-VALUE})")
+        hidden = true,
+        names = {"--Xminer-stratum-extranonce"},
+        description = "Extranonce for Stratum network miners (default: ${DEFAULT-VALUE})")
     private String stratumExtranonce = "080c";
 
     @CommandLine.Option(
-            hidden = true,
-            names = {"--Xpos-block-creation-max-time"},
-            description =
-                    "Specifies the maximum time, in milliseconds, a PoS block creation jobs is allowed to run. Must be positive and ≤ 12000 (default: ${DEFAULT-VALUE} milliseconds)")
+        hidden = true,
+        names = {"--Xpos-block-creation-max-time"},
+        description =
+            "Specifies the maximum time, in milliseconds, a PoS block creation jobs is allowed to run. Must be positive and ≤ 12000 (default: ${DEFAULT-VALUE} milliseconds)")
     private Long posBlockCreationMaxTime = DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
 
     @CommandLine.Option(
-            hidden = true,
-            names = {"--Xpos-block-creation-repetition-min-duration"},
-            description =
-                    "If a PoS block creation repetition takes less than this duration, in milliseconds,"
-                            + " then it waits before next repetition. Must be positive and ≤ 2000 (default: ${DEFAULT-VALUE} milliseconds)")
+        hidden = true,
+        names = {"--Xpos-block-creation-repetition-min-duration"},
+        description =
+            "If a PoS block creation repetition takes less than this duration, in milliseconds,"
+                + " then it waits before next repetition. Must be positive and ≤ 2000 (default: ${DEFAULT-VALUE} milliseconds)")
     private Long posBlockCreationRepetitionMinDuration =
-            DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
+        DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
   }
 
-  private MiningOptions() {
-
-  }
+  private MiningOptions() {}
 
   /**
    * Create mining options.
@@ -222,17 +218,16 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
     }
 
     if (unstableOptions.posBlockCreationMaxTime <= 0
-            || unstableOptions.posBlockCreationMaxTime
+        || unstableOptions.posBlockCreationMaxTime
             > MiningParameters.DEFAULT_POS_BLOCK_CREATION_MAX_TIME) {
       throw new ParameterException(
-              commandLine, "--Xpos-block-creation-max-time must be positive and ≤ 12000");
+          commandLine, "--Xpos-block-creation-max-time must be positive and ≤ 12000");
     }
 
     if (unstableOptions.posBlockCreationRepetitionMinDuration <= 0
-            || unstableOptions.posBlockCreationRepetitionMinDuration > 2000) {
+        || unstableOptions.posBlockCreationRepetitionMinDuration > 2000) {
       throw new ParameterException(
-              commandLine,
-              "--Xpos-block-creation-repetition-min-duration must be positive and ≤ 2000");
+          commandLine, "--Xpos-block-creation-repetition-min-duration must be positive and ≤ 2000");
     }
   }
 
@@ -243,18 +238,26 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
     miningOptions.stratumNetworkInterface = miningParameters.getStratumNetworkInterface();
     miningOptions.stratumPort = miningParameters.getStratumPort();
     miningOptions.extraData = miningParameters.getDynamic().getExtraData();
-    miningOptions.minTransactionGasPrice = miningParameters.getDynamic().getMinTransactionGasPrice();
-    miningOptions.minBlockOccupancyRatio = miningParameters.getDynamic().getMinBlockOccupancyRatio();
+    miningOptions.minTransactionGasPrice =
+        miningParameters.getDynamic().getMinTransactionGasPrice();
+    miningOptions.minBlockOccupancyRatio =
+        miningParameters.getDynamic().getMinBlockOccupancyRatio();
     miningOptions.unstableOptions.remoteSealersLimit = miningParameters.getRemoteSealersLimit();
-    miningOptions.unstableOptions.remoteSealersTimeToLive = miningParameters.getRemoteSealersTimeToLive();
+    miningOptions.unstableOptions.remoteSealersTimeToLive =
+        miningParameters.getRemoteSealersTimeToLive();
     miningOptions.unstableOptions.powJobTimeToLive = miningParameters.getPowJobTimeToLive();
     miningOptions.unstableOptions.maxOmmersDepth = miningParameters.getMaxOmmerDepth();
     miningOptions.unstableOptions.stratumExtranonce = miningParameters.getStratumExtranonce();
-    miningOptions.unstableOptions.posBlockCreationMaxTime = miningParameters.getPosBlockCreationMaxTime();
-    miningOptions.unstableOptions.posBlockCreationRepetitionMinDuration = miningParameters.getPosBlockCreationRepetitionMinDuration();
+    miningOptions.unstableOptions.posBlockCreationMaxTime =
+        miningParameters.getPosBlockCreationMaxTime();
+    miningOptions.unstableOptions.posBlockCreationRepetitionMinDuration =
+        miningParameters.getPosBlockCreationRepetitionMinDuration();
 
     miningParameters.getCoinbase().ifPresent(coinbase -> miningOptions.coinbase = coinbase);
-    miningParameters.getDynamic().getTargetGasLimit().ifPresent(tgl -> miningOptions.targetGasLimit = tgl);
+    miningParameters
+        .getDynamic()
+        .getTargetGasLimit()
+        .ifPresent(tgl -> miningOptions.targetGasLimit = tgl);
     return miningOptions;
   }
 
@@ -266,13 +269,14 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
             .isStratumMiningEnabled(iStratumMiningEnabled)
             .stratumNetworkInterface(stratumNetworkInterface)
             .stratumPort(stratumPort)
-                .remoteSealersLimit(unstableOptions.remoteSealersLimit)
-                .remoteSealersTimeToLive(unstableOptions.remoteSealersTimeToLive)
-                .powJobTimeToLive(unstableOptions.powJobTimeToLive)
-                .maxOmmerDepth(unstableOptions.maxOmmersDepth)
-                .stratumExtranonce(unstableOptions.stratumExtranonce)
-                .posBlockCreationMaxTime(unstableOptions.posBlockCreationMaxTime)
-                .posBlockCreationRepetitionMinDuration(unstableOptions.posBlockCreationRepetitionMinDuration);
+            .remoteSealersLimit(unstableOptions.remoteSealersLimit)
+            .remoteSealersTimeToLive(unstableOptions.remoteSealersTimeToLive)
+            .powJobTimeToLive(unstableOptions.powJobTimeToLive)
+            .maxOmmerDepth(unstableOptions.maxOmmersDepth)
+            .stratumExtranonce(unstableOptions.stratumExtranonce)
+            .posBlockCreationMaxTime(unstableOptions.posBlockCreationMaxTime)
+            .posBlockCreationRepetitionMinDuration(
+                unstableOptions.posBlockCreationRepetitionMinDuration);
 
     if (coinbase != null) {
       miningParametersBuilder.coinbase(coinbase);
@@ -294,6 +298,6 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
 
   @Override
   public List<String> getCLIOptions() {
-    return null;
+    return CommandLineUtils.getCLIOptions(this, new MiningOptions());
   }
 }

@@ -25,7 +25,6 @@ import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -99,7 +98,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -133,7 +131,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   @Mock ProposalBuilderExecutor proposalBuilderExecutor;
   private final Address coinbase = genesisAllocations(getPosGenesisConfigFile()).findFirst().get();
 
-  @Spy
   MiningParameters miningParameters =
       ImmutableMiningParameters.builder()
           .coinbase(coinbase)
@@ -551,7 +548,11 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   @Test
   public void shouldStopRetryBlockCreationIfTimeExpired() throws InterruptedException {
     final AtomicLong retries = new AtomicLong(0);
-    doReturn(100L).when(miningParameters).getPosBlockCreationMaxTime();
+    miningParameters =
+        ImmutableMiningParameters.builder()
+            .from(miningParameters)
+            .posBlockCreationMaxTime(100)
+            .build();
     doAnswer(
             invocation -> {
               retries.incrementAndGet();

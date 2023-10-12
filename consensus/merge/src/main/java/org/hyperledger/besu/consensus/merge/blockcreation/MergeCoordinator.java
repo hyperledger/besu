@@ -56,7 +56,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -83,8 +82,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   /** The Merge block creator factory. */
   protected final MergeBlockCreatorFactory mergeBlockCreatorFactory;
   /** The Extra data. */
-  protected final AtomicReference<Bytes> extraData =
-      new AtomicReference<>(Bytes.fromHexString("0x"));
+  //  protected final AtomicReference<Bytes> extraData =
+  //      new AtomicReference<>(Bytes.fromHexString("0x"));
   /** The Merge miningParameters. */
   protected final MergeContext mergeContext;
   /** The Protocol miningParameters. */
@@ -144,7 +143,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 miningParameters,
                 //                address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                 //                () -> Optional.of(targetGasLimit.longValue()),
-                parent -> extraData.get(),
+                parent -> miningParameters.getDynamic().getExtraData(),
                 transactionPool,
                 protocolContext,
                 protocolSchedule,
@@ -229,7 +228,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public void setExtraData(final Bytes extraData) {
-    this.extraData.set(extraData);
+    this.miningParameters.getDynamic().setExtraData(extraData);
   }
 
   @Override

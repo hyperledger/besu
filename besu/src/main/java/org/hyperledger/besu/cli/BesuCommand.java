@@ -287,7 +287,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       unstableTransactionPoolOptions =
           org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions.create();
   private final DnsOptions unstableDnsOptions = DnsOptions.create();
-//  private final MiningOptions unstableMiningOptions = MiningOptions.create();
+  //  private final MiningOptions unstableMiningOptions = MiningOptions.create();
   private final NatOptions unstableNatOptions = NatOptions.create();
   private final NativeLibraryOptions unstableNativeLibraryOptions = NativeLibraryOptions.create();
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
@@ -1586,7 +1586,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("Privacy Plugin Configuration", unstablePrivacyPluginOptions)
             .put("Synchronizer", unstableSynchronizerOptions)
             .put("TransactionPool", unstableTransactionPoolOptions)
-//            .put("Mining", unstableMiningOptions)
+            //            .put("Mining", unstableMiningOptions)
             .put("Native Library", unstableNativeLibraryOptions)
             .put("EVM Options", unstableEvmOptions)
             .put("IPC Options", unstableIpcOptions)
@@ -1871,7 +1871,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             });
   }
 
-//  @SuppressWarnings("ConstantConditions")
+  //  @SuppressWarnings("ConstantConditions")
   private void validateMiningParams() {
     miningOptions.validate(
         commandLine, logger, isMergeEnabled(), getActualGenesisConfigOptions().isEthHash());
@@ -1891,19 +1891,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // (remove --miner-stratum-enabled) "
     //              + "or specify mining is enabled (--miner-enabled)");
     //    }
-//    if (unstableMiningOptions.getPosBlockCreationMaxTime() <= 0
-//        || unstableMiningOptions.getPosBlockCreationMaxTime()
-//            > MiningParameters.DEFAULT_POS_BLOCK_CREATION_MAX_TIME) {
-//      throw new ParameterException(
-//          this.commandLine, "--Xpos-block-creation-max-time must be positive and ≤ 12000");
-//    }
-//
-//    if (unstableMiningOptions.getPosBlockCreationRepetitionMinDuration() <= 0
-//        || unstableMiningOptions.getPosBlockCreationRepetitionMinDuration() > 2000) {
-//      throw new ParameterException(
-//          this.commandLine,
-//          "--Xpos-block-creation-repetition-min-duration must be positive and ≤ 2000");
-//    }
+    //    if (unstableMiningOptions.getPosBlockCreationMaxTime() <= 0
+    //        || unstableMiningOptions.getPosBlockCreationMaxTime()
+    //            > MiningParameters.DEFAULT_POS_BLOCK_CREATION_MAX_TIME) {
+    //      throw new ParameterException(
+    //          this.commandLine, "--Xpos-block-creation-max-time must be positive and ≤ 12000");
+    //    }
+    //
+    //    if (unstableMiningOptions.getPosBlockCreationRepetitionMinDuration() <= 0
+    //        || unstableMiningOptions.getPosBlockCreationRepetitionMinDuration() > 2000) {
+    //      throw new ParameterException(
+    //          this.commandLine,
+    //          "--Xpos-block-creation-repetition-min-duration must be positive and ≤ 2000");
+    //    }
   }
 
   /**
@@ -2076,30 +2076,30 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--p2p-port",
             "--remote-connections-max-percentage"));
 
-//    // Check that block producer options work
-//    if (!isMergeEnabled() && getActualGenesisConfigOptions().isEthHash()) {
-//      CommandLineUtils.checkOptionDependencies(
-//          logger,
-//          commandLine,
-//          "--miner-enabled",
-//          !miningParameters.isMiningEnabled(),
-//          asList(
-//              "--miner-coinbase",
-//              "--min-gas-price",
-//              "--min-block-occupancy-ratio",
-//              "--miner-extra-data"));
-//
-//      // Check that mining options are able to work
-//      CommandLineUtils.checkOptionDependencies(
-//          logger,
-//          commandLine,
-//          "--miner-enabled",
-//          !miningParameters.isMiningEnabled(),
-//          asList(
-//              "--miner-stratum-enabled",
-//              "--Xminer-remote-sealers-limit",
-//              "--Xminer-remote-sealers-hashrate-ttl"));
-//    }
+    //    // Check that block producer options work
+    //    if (!isMergeEnabled() && getActualGenesisConfigOptions().isEthHash()) {
+    //      CommandLineUtils.checkOptionDependencies(
+    //          logger,
+    //          commandLine,
+    //          "--miner-enabled",
+    //          !miningParameters.isMiningEnabled(),
+    //          asList(
+    //              "--miner-coinbase",
+    //              "--min-gas-price",
+    //              "--min-block-occupancy-ratio",
+    //              "--miner-extra-data"));
+    //
+    //      // Check that mining options are able to work
+    //      CommandLineUtils.checkOptionDependencies(
+    //          logger,
+    //          commandLine,
+    //          "--miner-enabled",
+    //          !miningParameters.isMiningEnabled(),
+    //          asList(
+    //              "--miner-stratum-enabled",
+    //              "--Xminer-remote-sealers-limit",
+    //              "--Xminer-remote-sealers-hashrate-ttl"));
+    //    }
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,

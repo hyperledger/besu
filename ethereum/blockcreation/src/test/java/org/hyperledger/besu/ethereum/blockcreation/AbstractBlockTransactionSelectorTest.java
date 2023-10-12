@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -106,14 +107,12 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected TransactionPool transactionPool;
   protected MutableWorldState worldState;
   protected ProtocolSchedule protocolSchedule;
+  protected MiningParameters miningParameters;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   protected ProtocolContext protocolContext;
 
   @Mock protected MainnetTransactionProcessor transactionProcessor;
-
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  protected MiningParameters miningParameters;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   protected EthContext ethContext;
@@ -145,7 +144,12 @@ public abstract class AbstractBlockTransactionSelectorTest {
     when(protocolContext.getWorldStateArchive().getMutable(any(), anyBoolean()))
         .thenReturn(Optional.of(worldState));
     when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
-    when(miningParameters.getDynamic().getMinTransactionGasPrice()).thenReturn(Wei.ONE);
+    miningParameters =
+        ImmutableMiningParameters.builder()
+            .build()
+            .getDynamic()
+            .setMinTransactionGasPrice(Wei.ONE)
+            .toParameters();
 
     transactionPool = createTransactionPool();
   }
@@ -701,7 +705,11 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final double minBlockOccupancyRatio) {
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
-            miningParameters,
+            miningParameters
+                .getDynamic()
+                .setMinTransactionGasPrice(minGasPrice)
+                .setMinBlockOccupancyRatio(minBlockOccupancyRatio)
+                .toParameters(),
             transactionProcessor,
             blockchain,
             worldState,

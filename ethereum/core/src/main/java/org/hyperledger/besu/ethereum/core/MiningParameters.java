@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.time.Duration;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -81,6 +82,37 @@ public interface MiningParameters {
     public Dynamic setTargetGasLimit(final long targetGasLimit) {
       this.targetGasLimit = OptionalLong.of(targetGasLimit);
       return this;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      final Dynamic dynamic = (Dynamic) o;
+      return Double.compare(minBlockOccupancyRatio, dynamic.minBlockOccupancyRatio) == 0
+          && Objects.equals(extraData, dynamic.extraData)
+          && Objects.equals(minTransactionGasPrice, dynamic.minTransactionGasPrice)
+          && Objects.equals(targetGasLimit, dynamic.targetGasLimit);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(
+          extraData, minTransactionGasPrice, minBlockOccupancyRatio, targetGasLimit);
+    }
+
+    @Override
+    public String toString() {
+      return "Dynamic{"
+          + "extraData="
+          + extraData
+          + ", minTransactionGasPrice="
+          + minTransactionGasPrice
+          + ", minBlockOccupancyRatio="
+          + minBlockOccupancyRatio
+          + ", targetGasLimit="
+          + targetGasLimit
+          + '}';
     }
   }
 
