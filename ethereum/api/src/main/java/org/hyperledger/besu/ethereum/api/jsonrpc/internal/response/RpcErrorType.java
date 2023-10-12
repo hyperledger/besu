@@ -74,7 +74,7 @@ public enum RpcErrorType {
   LOWER_NONCE_INVALID_TRANSACTION_EXISTS(
       -32000, "An invalid transaction with a lower nonce exists"),
   TOTAL_BLOB_GAS_TOO_HIGH(-32000, "Total blob gas too high"),
-  PLUGIN_TX_VALIDATOR(-32000, "Plugin returned transaction invalid"),
+  PLUGIN_TX_VALIDATOR(-32000, "Plugin has marked the transaction as invalid"),
 
   // Execution engine failures
   UNKNOWN_PAYLOAD(-32001, "Payload does not exist / is not available"),
