@@ -98,9 +98,9 @@ class BonsaiWorldStateTest {
   }
 
   @Test
-  void addsCodeForExistingCodeValue() {
+  void doesNothingWhenAddingCodeForExistingCodeValue() {
     final Map<Address, BonsaiValue<Bytes>> codeToUpdate =
-        Map.of(account, new BonsaiValue<>(code, code));
+        Map.of(account, new BonsaiValue<>(Bytes.of(11), code));
 
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
     worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
@@ -113,7 +113,7 @@ class BonsaiWorldStateTest {
     final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new HashMap<>();
     codeToUpdate.put(Address.fromHexString("0x1"), new BonsaiValue<>(null, code));
     codeToUpdate.put(Address.fromHexString("0x2"), new BonsaiValue<>(code, null));
-    codeToUpdate.put(Address.fromHexString("0x3"), new BonsaiValue<>(code, code));
+    codeToUpdate.put(Address.fromHexString("0x3"), new BonsaiValue<>(Bytes.of(9), code));
 
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
     worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
