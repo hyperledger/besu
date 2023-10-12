@@ -48,7 +48,7 @@ import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
@@ -185,7 +185,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final int maxPeers = 25;
 
-    final Optional<TransactionSelectorFactory> transactionSelectorFactory =
+    final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory =
         getTransactionSelectorFactory(besuPluginContext);
 
     final PluginTransactionValidatorFactory pluginTransactionValidatorFactory =
@@ -323,7 +323,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     throw new RuntimeException("Console contents can only be captured in process execution");
   }
 
-  private Optional<TransactionSelectorFactory> getTransactionSelectorFactory(
+  private Optional<PluginTransactionSelectorFactory> getTransactionSelectorFactory(
       final BesuPluginContextImpl besuPluginContext) {
     final Optional<TransactionSelectionService> txSelectionService =
         besuPluginContext.getService(TransactionSelectionService.class);
