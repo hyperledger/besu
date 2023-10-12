@@ -773,7 +773,7 @@ public abstract class AbstractTransactionPoolTest {
   @ValueSource(booleans = {true, false})
   public void transactionNotRejectedByPluginShouldBeAdded(final boolean disableLocalTxs) {
     final PluginTransactionValidatorFactory pluginTransactionValidatorFactory =
-        getPluginTransactionValidatorFactoryReturning(null);
+        getPluginTransactionValidatorFactoryReturning(null); // null -> not rejecting !!
     this.transactionPool =
         createTransactionPool(
             b -> b.disableLocalTransactions(disableLocalTxs), pluginTransactionValidatorFactory);
@@ -1066,7 +1066,8 @@ public abstract class AbstractTransactionPoolTest {
 
   private static PluginTransactionValidatorFactory getPluginTransactionValidatorFactoryReturning(
       final String s) {
-    final PluginTransactionValidator pluginTransactionValidator = transaction -> Optional.of(s);
+    final PluginTransactionValidator pluginTransactionValidator =
+        transaction -> Optional.ofNullable(s);
     return () -> pluginTransactionValidator;
   }
 
