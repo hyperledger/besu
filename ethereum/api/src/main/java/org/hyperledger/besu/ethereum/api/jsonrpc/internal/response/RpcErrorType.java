@@ -213,7 +213,7 @@ public enum RpcErrorType {
   BLOCK_RLP_IMPORT_ERROR(-32000, "Could not decode RLP for Block"),
   BLOCK_IMPORT_ERROR(-32000, "Could not import Block"),
 
-  UNKNOWN(-32000, "");
+  UNKNOWN(-32603, "Unknown internal error");
 
   private final int code;
   private final String message;

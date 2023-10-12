@@ -693,7 +693,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
         ArgumentCaptor.forClass(PendingTransaction.class);
 
     // selected transaction must be notified to the selector
-    verify(transactionSelector).onTransactionSelected(argumentCaptor.capture());
+    verify(transactionSelector)
+        .onTransactionSelected(argumentCaptor.capture(), any(TransactionProcessingResult.class));
     PendingTransaction selected = argumentCaptor.getValue();
     assertThat(selected.getTransaction()).isEqualTo(transaction);
 

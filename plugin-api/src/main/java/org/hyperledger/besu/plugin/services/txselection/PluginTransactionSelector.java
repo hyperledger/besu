@@ -49,7 +49,9 @@ public interface PluginTransactionSelector {
    *
    * @param pendingTransaction The transaction that has been selected.
    */
-  default void onTransactionSelected(final PendingTransaction pendingTransaction) {}
+  default void onTransactionSelected(
+      final PendingTransaction pendingTransaction,
+      final TransactionProcessingResult processingResult) {}
   /**
    * Method called when a transaction is not selected to be added to a block.
    *

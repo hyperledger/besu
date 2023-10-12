@@ -307,7 +307,7 @@ public class BlockTransactionSelector {
 
     transactionSelectionResults.updateSelected(
         pendingTransaction.getTransaction(), receipt, gasUsedByTransaction, blobGasUsed);
-    externalTransactionSelector.onTransactionSelected(pendingTransaction);
+    externalTransactionSelector.onTransactionSelected(pendingTransaction, processingResult);
 
     return TransactionSelectionResult.SELECTED;
   }
