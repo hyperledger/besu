@@ -49,6 +49,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -252,13 +253,13 @@ public class BonsaiWorldState
             final Hash accountHash = codeUpdate.getKey().addressHash();
             final Bytes priorCode = codeUpdate.getValue().getPrior();
 
-            // code is already deleted then do nothing
-            if ((priorCode == null || priorCode.isEmpty())
-                && (updatedCode == null || updatedCode.isEmpty())) {
+            // code hasn't changed then do nothing
+            if (Objects.equals(priorCode, updatedCode)
+                || (codeIsEmpty(priorCode) && codeIsEmpty(updatedCode))) {
               continue;
             }
 
-            if (updatedCode == null || updatedCode.isEmpty()) {
+            if (codeIsEmpty(updatedCode)) {
               final Hash priorCodeHash = Hash.hash(priorCode);
               bonsaiUpdater.removeCode(accountHash, priorCodeHash);
             } else {
@@ -267,6 +268,10 @@ public class BonsaiWorldState
             }
           }
         });
+  }
+
+  private boolean codeIsEmpty(final Bytes value) {
+    return value == null || value.isEmpty();
   }
 
   private void updateAccountStorageState(
