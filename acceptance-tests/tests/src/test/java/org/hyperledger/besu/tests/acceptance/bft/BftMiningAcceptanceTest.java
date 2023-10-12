@@ -67,11 +67,6 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
             .getDynamic()
             .setMinTransactionGasPrice(Wei.ZERO)
             .toParameters();
-    //        new MiningParameters.Builder()
-    //            .miningEnabled(true)
-    //            .minTransactionGasPrice(Wei.ZERO)
-    //            .coinbase(AddressHelpers.ofValue(1))
-    //            .build();
     minerNode.setMiningParameters(zeroGasMiningParams);
 
     cluster.start(minerNode);

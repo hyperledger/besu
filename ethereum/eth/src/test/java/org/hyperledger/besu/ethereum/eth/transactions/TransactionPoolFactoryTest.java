@@ -246,7 +246,6 @@ public class TransactionPoolFactoryTest {
                 .getDynamic()
                 .setMinTransactionGasPrice(Wei.ONE)
                 .toParameters(),
-            //            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             ImmutableTransactionPoolConfiguration.builder()
                 .txPoolMaxSize(1)
                 .pendingTxRetentionPeriod(1)
@@ -360,7 +359,6 @@ public class TransactionPoolFactoryTest {
                 .getDynamic()
                 .setMinTransactionGasPrice(Wei.ONE)
                 .toParameters(),
-            //            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             ImmutableTransactionPoolConfiguration.builder()
                 .txPoolImplementation(implementation)
                 .txPoolMaxSize(1)

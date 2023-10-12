@@ -83,15 +83,11 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
             new CliqueBlockCreator(
                 miningParameters,
                 localAddress, // TOOD(tmm): This can be removed (used for voting not coinbase).
-                //                () ->
-                // miningContext.getTargetGasLimit().map(AtomicLong::longValue),
                 this::calculateExtraData,
                 transactionPool,
                 protocolContext,
                 protocolSchedule,
                 nodeKey,
-                //                miningContext.getMinTransactionGasPrice(),
-                //                    miningContext.getMinBlockOccupancyRatio(),
                 header,
                 epochManager);
 

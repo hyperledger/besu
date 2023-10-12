@@ -313,13 +313,6 @@ public class TestContextBuilder {
             .setMinTransactionGasPrice(Wei.ZERO)
             .setExtraData(Bytes.wrap("Ibft Int tests".getBytes(UTF_8)))
             .toParameters();
-    //
-    //        new MiningParameters.Builder()
-    //            .coinbase(AddressHelpers.ofValue(1))
-    //            .minTransactionGasPrice(Wei.ZERO)
-    //            .extraData(Bytes.wrap("Ibft Int tests".getBytes(UTF_8)))
-    //            .miningEnabled(true)
-    //            .build();
 
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.byzantiumBlock(0);

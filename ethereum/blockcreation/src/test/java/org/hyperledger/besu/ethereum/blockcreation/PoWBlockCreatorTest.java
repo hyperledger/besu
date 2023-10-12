@@ -120,14 +120,11 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
         new PoWBlockCreator(
             miningParameters,
             BLOCK_1_COINBASE,
-            //            Optional::empty,
             parent -> BLOCK_1_EXTRA_DATA,
             transactionPool,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
-            //            Wei.ZERO,
-            //            0.8,
             executionContextTestFixture.getBlockchain().getChainHeadHeader());
 
     // A Hashrate should not exist in the block creator prior to creating a block
@@ -187,14 +184,11 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
         new PoWBlockCreator(
             miningParameters,
             BLOCK_1_COINBASE,
-            //            Optional::empty,
             parent -> BLOCK_1_EXTRA_DATA,
             transactionPool,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
-            //            Wei.ZERO,
-            //            0.8,
             executionContextTestFixture.getBlockchain().getChainHeadHeader());
 
     assertThat(blockCreator.createBlock(BLOCK_1_TIMESTAMP)).isNotNull();
@@ -246,14 +240,11 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
         new PoWBlockCreator(
             miningParameters,
             BLOCK_1_COINBASE,
-            //            () -> Optional.of(10_000_000L),
             parent -> BLOCK_1_EXTRA_DATA,
             transactionPool,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
-            //            Wei.ZERO,
-            //            0.8,
             executionContextTestFixture.getBlockchain().getChainHeadHeader());
 
     final MutableWorldState mutableWorldState =
@@ -327,14 +318,11 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
         new PoWBlockCreator(
             miningParameters,
             BLOCK_1_COINBASE,
-            //            () -> Optional.of(10_000_000L),
             parent -> BLOCK_1_EXTRA_DATA,
             transactionPool,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
-            //            Wei.ZERO,
-            //            0.8,
             executionContextTestFixture.getBlockchain().getChainHeadHeader());
 
     final MutableWorldState mutableWorldState =

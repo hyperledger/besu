@@ -141,7 +141,6 @@ public abstract class AbstractMessageTaskTest<T, R> {
                 .getDynamic()
                 .setMinTransactionGasPrice(Wei.ONE)
                 .toParameters(),
-            //            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             TransactionPoolConfiguration.DEFAULT,
             null);
     transactionPool.setEnabled();

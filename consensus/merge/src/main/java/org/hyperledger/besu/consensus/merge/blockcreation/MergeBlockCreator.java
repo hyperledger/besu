@@ -42,20 +42,17 @@ class MergeBlockCreator extends AbstractBlockCreator {
    * @param miningParameters the mining parameters
    * @param extraDataCalculator the extra data calculator
    * @param transactionPool the pending transactions
-   * @param protocolContext the protocol miningParameters
+   * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
    * @param miningBeneficiary the mining beneficiary
    * @param parentHeader the parent header
    */
   public MergeBlockCreator(
       final MiningParameters miningParameters,
-      //      final Address coinbase,
-      //          final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      //          final Wei minTransactionGasPrice,
       final Address miningBeneficiary,
       final BlockHeader parentHeader,
       final Optional<Address> depositContractAddress) {
@@ -63,13 +60,10 @@ class MergeBlockCreator extends AbstractBlockCreator {
         miningParameters,
         miningBeneficiary,
         __ -> miningBeneficiary,
-        //        targetGasLimitSupplier,
         extraDataCalculator,
         transactionPool,
         protocolContext,
         protocolSchedule,
-        //        minTransactionGasPrice,
-        //        TRY_FILL_BLOCK,
         parentHeader,
         depositContractAddress);
   }

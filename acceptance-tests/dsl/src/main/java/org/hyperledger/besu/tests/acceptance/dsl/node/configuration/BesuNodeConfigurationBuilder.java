@@ -65,11 +65,6 @@ public class BesuNodeConfigurationBuilder {
           .setMinTransactionGasPrice(Wei.of(1000))
           .toParameters();
 
-  //      new MiningParameters.Builder()
-  //          .miningEnabled(false)
-  //          .coinbase(AddressHelpers.ofValue(1))
-  //          .minTransactionGasPrice(Wei.of(1000))
-  //          .build();
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
   private JsonRpcConfiguration engineRpcConfiguration = JsonRpcConfiguration.createEngineDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
@@ -130,11 +125,6 @@ public class BesuNodeConfigurationBuilder {
             .getDynamic()
             .setMinTransactionGasPrice(Wei.of(1000))
             .toParameters();
-    //        new MiningParameters.Builder()
-    //            .miningEnabled(enabled)
-    //            .minTransactionGasPrice(Wei.of(1000))
-    //            .coinbase(AddressHelpers.ofValue(1))
-    //            .build();
     this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER.name());
     return this;
   }

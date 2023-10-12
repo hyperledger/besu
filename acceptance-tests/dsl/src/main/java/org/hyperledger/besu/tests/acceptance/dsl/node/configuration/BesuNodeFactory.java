@@ -311,11 +311,6 @@ public class BesuNodeFactory {
             .getDynamic()
             .setMinTransactionGasPrice(Wei.ZERO)
             .toParameters();
-    //        new MiningParameters.Builder()
-    //            .minTransactionGasPrice(Wei.ZERO)
-    //            .coinbase(AddressHelpers.ofValue(1))
-    //            .miningEnabled(true)
-    //            .build();
 
     return create(
         new BesuNodeConfigurationBuilder()

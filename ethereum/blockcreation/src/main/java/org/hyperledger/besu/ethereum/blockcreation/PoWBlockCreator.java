@@ -41,26 +41,20 @@ public class PoWBlockCreator extends AbstractBlockCreator {
   public PoWBlockCreator(
       final MiningParameters miningParameters,
       final Address coinbase,
-      //      final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final PoWSolver nonceSolver,
-      //      final Wei minTransactionGasPrice,
-      //      final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
     super(
         miningParameters,
         coinbase,
         __ -> coinbase,
-        //        targetGasLimitSupplier,
         extraDataCalculator,
         transactionPool,
         protocolContext,
         protocolSchedule,
-        //        minTransactionGasPrice,
-        //        minBlockOccupancyRatio,
         parentHeader,
         Optional.empty());
 

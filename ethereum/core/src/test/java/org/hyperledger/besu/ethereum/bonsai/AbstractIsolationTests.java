@@ -208,25 +208,19 @@ public abstract class AbstractIsolationTests {
         final MiningParameters miningParameters,
         final Address coinbase,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-        //        final Supplier<Optional<Long>> targetGasLimitSupplier,
         final ExtraDataCalculator extraDataCalculator,
         final TransactionPool transactionPool,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
-        //        final Wei minTransactionGasPrice,
-        //        final Double minBlockOccupancyRatio,
         final BlockHeader parentHeader) {
       super(
           miningParameters,
           coinbase,
           miningBeneficiaryCalculator,
-          //          targetGasLimitSupplier,
           extraDataCalculator,
           transactionPool,
           protocolContext,
           protocolSchedule,
-          //          minTransactionGasPrice,
-          //          minBlockOccupancyRatio,
           parentHeader,
           Optional.empty());
     }
@@ -252,13 +246,10 @@ public abstract class AbstractIsolationTests {
           miningParameters,
           Address.ZERO,
           __ -> Address.ZERO,
-          //          () -> Optional.of(30_000_000L),
           __ -> Bytes.fromHexString("deadbeef"),
           transactionPool,
           protocolContext,
           protocolSchedule,
-          //          Wei.of(1L),
-          //          0d,
           parentHeader);
     }
 

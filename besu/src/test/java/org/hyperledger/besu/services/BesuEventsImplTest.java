@@ -160,7 +160,6 @@ public class BesuEventsImplTest {
                 .getDynamic()
                 .setMinTransactionGasPrice(Wei.ZERO)
                 .toParameters(),
-            //            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             txPoolConfig,
             null);
 

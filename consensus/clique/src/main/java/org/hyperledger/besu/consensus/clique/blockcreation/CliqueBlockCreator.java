@@ -52,7 +52,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
    * @param coinbase the coinbase
    * @param extraDataCalculator the extra data calculator
    * @param transactionPool the pending transactions
-   * @param protocolContext the protocol miningParameters
+   * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
    * @param nodeKey the node key
    * @param parentHeader the parent header
@@ -61,27 +61,21 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
   public CliqueBlockCreator(
       final MiningParameters miningParameters,
       final Address coinbase,
-      //      final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final NodeKey nodeKey,
-      //          final Wei minTransactionGasPrice,
-      //          final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader,
       final EpochManager epochManager) {
     super(
         miningParameters,
         coinbase,
         __ -> Util.publicKeyToAddress(nodeKey.getPublicKey()),
-        //        targetGasLimitSupplier,
         extraDataCalculator,
         transactionPool,
         protocolContext,
         protocolSchedule,
-        //        minTransactionGasPrice,
-        //        minBlockOccupancyRatio,
         parentHeader,
         Optional.empty());
     this.nodeKey = nodeKey;

@@ -15,15 +15,15 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static java.util.Arrays.asList;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_MAX_OMMERS_DEPTH;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_POW_JOB_TTL;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_LIMIT;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_TTL;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Dynamic.DEFAULT_EXTRA_DATA;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Dynamic.DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Dynamic.DEFAULT_MIN_TRANSACTION_GAS_PRICE;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_MAX_OMMERS_DEPTH;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_POW_JOB_TTL;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_REMOTE_SEALERS_LIMIT;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_REMOTE_SEALERS_TTL;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
@@ -218,8 +218,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
     }
 
     if (unstableOptions.posBlockCreationMaxTime <= 0
-        || unstableOptions.posBlockCreationMaxTime
-            > MiningParameters.DEFAULT_POS_BLOCK_CREATION_MAX_TIME) {
+        || unstableOptions.posBlockCreationMaxTime > DEFAULT_POS_BLOCK_CREATION_MAX_TIME) {
       throw new ParameterException(
           commandLine, "--Xpos-block-creation-max-time must be positive and ≤ 12000");
     }
@@ -242,16 +241,20 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
         miningParameters.getDynamic().getMinTransactionGasPrice();
     miningOptions.minBlockOccupancyRatio =
         miningParameters.getDynamic().getMinBlockOccupancyRatio();
-    miningOptions.unstableOptions.remoteSealersLimit = miningParameters.getRemoteSealersLimit();
+    miningOptions.unstableOptions.remoteSealersLimit =
+        miningParameters.getUnstable().getRemoteSealersLimit();
     miningOptions.unstableOptions.remoteSealersTimeToLive =
-        miningParameters.getRemoteSealersTimeToLive();
-    miningOptions.unstableOptions.powJobTimeToLive = miningParameters.getPowJobTimeToLive();
-    miningOptions.unstableOptions.maxOmmersDepth = miningParameters.getMaxOmmerDepth();
-    miningOptions.unstableOptions.stratumExtranonce = miningParameters.getStratumExtranonce();
+        miningParameters.getUnstable().getRemoteSealersTimeToLive();
+    miningOptions.unstableOptions.powJobTimeToLive =
+        miningParameters.getUnstable().getPowJobTimeToLive();
+    miningOptions.unstableOptions.maxOmmersDepth =
+        miningParameters.getUnstable().getMaxOmmerDepth();
+    miningOptions.unstableOptions.stratumExtranonce =
+        miningParameters.getUnstable().getStratumExtranonce();
     miningOptions.unstableOptions.posBlockCreationMaxTime =
-        miningParameters.getPosBlockCreationMaxTime();
+        miningParameters.getUnstable().getPosBlockCreationMaxTime();
     miningOptions.unstableOptions.posBlockCreationRepetitionMinDuration =
-        miningParameters.getPosBlockCreationRepetitionMinDuration();
+        miningParameters.getUnstable().getPosBlockCreationRepetitionMinDuration();
 
     miningParameters.getCoinbase().ifPresent(coinbase -> miningOptions.coinbase = coinbase);
     miningParameters
@@ -269,14 +272,17 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
             .isStratumMiningEnabled(iStratumMiningEnabled)
             .stratumNetworkInterface(stratumNetworkInterface)
             .stratumPort(stratumPort)
-            .remoteSealersLimit(unstableOptions.remoteSealersLimit)
-            .remoteSealersTimeToLive(unstableOptions.remoteSealersTimeToLive)
-            .powJobTimeToLive(unstableOptions.powJobTimeToLive)
-            .maxOmmerDepth(unstableOptions.maxOmmersDepth)
-            .stratumExtranonce(unstableOptions.stratumExtranonce)
-            .posBlockCreationMaxTime(unstableOptions.posBlockCreationMaxTime)
-            .posBlockCreationRepetitionMinDuration(
-                unstableOptions.posBlockCreationRepetitionMinDuration);
+            .unstable(
+                ImmutableMiningParameters.Unstable.builder()
+                    .remoteSealersLimit(unstableOptions.remoteSealersLimit)
+                    .remoteSealersTimeToLive(unstableOptions.remoteSealersTimeToLive)
+                    .powJobTimeToLive(unstableOptions.powJobTimeToLive)
+                    .maxOmmerDepth(unstableOptions.maxOmmersDepth)
+                    .stratumExtranonce(unstableOptions.stratumExtranonce)
+                    .posBlockCreationMaxTime(unstableOptions.posBlockCreationMaxTime)
+                    .posBlockCreationRepetitionMinDuration(
+                        unstableOptions.posBlockCreationRepetitionMinDuration)
+                    .build());
 
     if (coinbase != null) {
       miningParametersBuilder.coinbase(coinbase);

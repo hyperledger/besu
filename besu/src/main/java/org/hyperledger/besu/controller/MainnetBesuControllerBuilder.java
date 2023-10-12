@@ -56,16 +56,16 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
                 MainnetBlockHeaderValidator.TIMESTAMP_TOLERANCE_S,
                 clock),
             epochCalculator,
-            miningParameters.getPowJobTimeToLive(),
-            miningParameters.getMaxOmmerDepth());
+            miningParameters.getUnstable().getPowJobTimeToLive(),
+            miningParameters.getUnstable().getMaxOmmerDepth());
 
     final PoWMiningCoordinator miningCoordinator =
         new PoWMiningCoordinator(
             protocolContext.getBlockchain(),
             executor,
             syncState,
-            miningParameters.getRemoteSealersLimit(),
-            miningParameters.getRemoteSealersTimeToLive());
+            miningParameters.getUnstable().getRemoteSealersLimit(),
+            miningParameters.getUnstable().getRemoteSealersTimeToLive());
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
     miningCoordinator.setStratumMiningEnabled(miningParameters.isStratumMiningEnabled());
     if (miningParameters.isMiningEnabled()) {

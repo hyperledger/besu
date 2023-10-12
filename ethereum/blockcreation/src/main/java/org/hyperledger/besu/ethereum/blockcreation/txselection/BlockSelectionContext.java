@@ -27,8 +27,6 @@ public record BlockSelectionContext(
     MiningParameters miningParameters,
     GasCalculator gasCalculator,
     GasLimitCalculator gasLimitCalculator,
-    //    Wei minTransactionGasPrice,
-    //    Double minBlockOccupancyRatio,
     ProcessableBlockHeader processableBlockHeader,
     FeeMarket feeMarket,
     Wei blobGasPrice,

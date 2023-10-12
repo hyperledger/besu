@@ -911,14 +911,6 @@ public class BesuCommandTest extends CommandTestAbstract {
                     MiningParameters.Dynamic.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
                 .setExtraData(MiningParameters.Dynamic.DEFAULT_EXTRA_DATA)
                 .toParameters());
-    //
-    //                new MiningParameters.Builder()
-    //                    .coinbase(Address.fromHexString(expectedCoinbase))
-    //
-    //     .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
-    //                    .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
-    //                    .miningEnabled(false)
-    //                    .build());
   }
 
   @Test
@@ -938,16 +930,7 @@ public class BesuCommandTest extends CommandTestAbstract {
                 .setMinTransactionGasPrice(
                     MiningParameters.Dynamic.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
                 .setExtraData(MiningParameters.Dynamic.DEFAULT_EXTRA_DATA)
-                .toParameters()
-
-            //            new MiningParameters.Builder()
-            //                .coinbase(Address.fromHexString(expectedCoinbase))
-            //
-            // .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
-            //                .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
-            //                .miningEnabled(false)
-            //                .build()
-            );
+                .toParameters());
   }
 
   @Test
@@ -4762,11 +4745,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void assertThatCheckPortClashRejectsAsExpectedForEngineApi() throws Exception {
     // use WS port for HTTP
     final int port = 8545;
-    // TODO: once we have mainnet TTD, we can remove the TTD override parameter here
-    // https://github.com/hyperledger/besu/issues/3874
     parseCommand(
-        "--override-genesis-config",
-        "terminalTotalDifficulty=1337",
         "--rpc-http-enabled",
         "--rpc-http-port",
         String.valueOf(port),

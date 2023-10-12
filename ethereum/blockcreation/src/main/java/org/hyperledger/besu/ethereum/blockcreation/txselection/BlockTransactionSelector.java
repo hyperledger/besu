@@ -80,8 +80,6 @@ import org.slf4j.LoggerFactory;
  */
 public class BlockTransactionSelector {
   private static final Logger LOG = LoggerFactory.getLogger(BlockTransactionSelector.class);
-
-  //  private final MiningParameters miningParameters;
   private final Supplier<Boolean> isCancelled;
   private final MainnetTransactionProcessor transactionProcessor;
   private final Blockchain blockchain;
@@ -102,8 +100,6 @@ public class BlockTransactionSelector {
       final TransactionPool transactionPool,
       final ProcessableBlockHeader processableBlockHeader,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
-      //          final Wei minTransactionGasPrice,
-      //          final Double minBlockOccupancyRatio,
       final Supplier<Boolean> isCancelled,
       final Address miningBeneficiary,
       final Wei blobGasPrice,
@@ -111,7 +107,6 @@ public class BlockTransactionSelector {
       final GasCalculator gasCalculator,
       final GasLimitCalculator gasLimitCalculator,
       final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
-    //    this.miningParameters = miningParameters;
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
     this.worldState = worldState;
@@ -122,8 +117,6 @@ public class BlockTransactionSelector {
             miningParameters,
             gasCalculator,
             gasLimitCalculator,
-            //            minTransactionGasPrice,
-            //            minBlockOccupancyRatio,
             processableBlockHeader,
             feeMarket,
             blobGasPrice,

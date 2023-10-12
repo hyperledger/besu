@@ -585,10 +585,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
         createBlockSelectorWithTxSelPlugin(
             transactionProcessor,
             blockHeader,
-            Wei.ZERO,
             miningBeneficiary,
             Wei.ZERO,
-            MIN_OCCUPANCY_80_PERCENT,
             transactionSelectorFactory);
 
     transactionPool.addRemoteTransactions(
@@ -649,10 +647,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
         createBlockSelectorWithTxSelPlugin(
             transactionProcessor,
             blockHeader,
-            Wei.ZERO,
             miningBeneficiary,
             Wei.ZERO,
-            MIN_OCCUPANCY_80_PERCENT,
             transactionSelectorFactory);
 
     transactionPool.addRemoteTransactions(List.of(selected, notSelected, selected3));
@@ -732,10 +728,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected BlockTransactionSelector createBlockSelectorWithTxSelPlugin(
       final MainnetTransactionProcessor transactionProcessor,
       final ProcessableBlockHeader blockHeader,
-      final Wei minGasPrice,
       final Address miningBeneficiary,
       final Wei blobGasPrice,
-      final double minBlockOccupancyRatio,
       final TransactionSelectorFactory transactionSelectorFactory) {
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
@@ -746,8 +740,6 @@ public abstract class AbstractBlockTransactionSelectorTest {
             transactionPool,
             blockHeader,
             this::createReceipt,
-            //            minGasPrice,
-            //            minBlockOccupancyRatio,
             this::isCancelled,
             miningBeneficiary,
             blobGasPrice,

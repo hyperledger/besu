@@ -276,23 +276,6 @@ public class BlocksSubCommand implements Runnable {
           .setExtraData(extraData)
           .setMinTransactionGasPrice(minTransactionGasPrice)
           .toParameters();
-
-      //      return new MiningParameters.Builder()
-      //          .coinbase(coinbase)
-      //          .minTransactionGasPrice(minTransactionGasPrice)
-      //          .extraData(extraData)
-      //          .miningEnabled(false)
-      //          .stratumMiningEnabled(false)
-      //          .stratumNetworkInterface("0.0.0.0")
-      //          .stratumPort(8008)
-      //          .stratumExtranonce("080c")
-      //          .maybeNonceGenerator(new IncrementingNonceGenerator(0))
-      //          .minBlockOccupancyRatio(0.0)
-      //          .remoteSealersLimit(DEFAULT_REMOTE_SEALERS_LIMIT)
-      //          .remoteSealersTimeToLive(DEFAULT_REMOTE_SEALERS_TTL)
-      //          .powJobTimeToLive(DEFAULT_POW_JOB_TTL)
-      //          .maxOmmerDepth(DEFAULT_MAX_OMMERS_DEPTH)
-      //          .build();
     }
 
     private void importJsonBlocks(final BesuController controller, final Path path)

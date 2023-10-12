@@ -1121,8 +1121,6 @@ public final class EthProtocolManagerTest {
                   .getDynamic()
                   .setMinTransactionGasPrice(Wei.ZERO)
                   .toParameters(),
-              //              new
-              // MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
               TransactionPoolConfiguration.DEFAULT,
               null)
           .setEnabled();

@@ -54,7 +54,6 @@ public class QbftBlockCreatorFactoryTest {
             .getDynamic()
             .setExtraData(Bytes.wrap("Qbft tests".getBytes(UTF_8)))
             .toParameters();
-    //    when(miningParams.getExtraData()).thenReturn(Bytes.wrap("Qbft tests".getBytes(UTF_8)));
 
     final MutableQbftConfigOptions qbftConfigOptions =
         new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);

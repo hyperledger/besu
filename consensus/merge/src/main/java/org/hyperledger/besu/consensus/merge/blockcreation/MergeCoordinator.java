@@ -75,22 +75,17 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
    * to fill 100% of the block.
    */
   private static final double TRY_FILL_BLOCK = 1.0;
-  /** The Target gas limit. */
-  //  protected final AtomicLong targetGasLimit;
   /** The Mining parameters. */
   protected final MiningParameters miningParameters;
   /** The Merge block creator factory. */
   protected final MergeBlockCreatorFactory mergeBlockCreatorFactory;
-  /** The Extra data. */
-  //  protected final AtomicReference<Bytes> extraData =
-  //      new AtomicReference<>(Bytes.fromHexString("0x"));
-  /** The Merge miningParameters. */
+  /** The Merge context. */
   protected final MergeContext mergeContext;
-  /** The Protocol miningParameters. */
+  /** The Protocol context. */
   protected final ProtocolContext protocolContext;
   /** The Block builder executor. */
   protected final ProposalBuilderExecutor blockBuilderExecutor;
-  /** The Backward sync miningParameters. */
+  /** The Backward sync context. */
   protected final BackwardSyncContext backwardSyncContext;
   /** The Protocol schedule. */
   protected final ProtocolSchedule protocolSchedule;
@@ -101,12 +96,12 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   /**
    * Instantiates a new Merge coordinator.
    *
-   * @param protocolContext the protocol miningParameters
+   * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
    * @param blockBuilderExecutor the block builder executor
    * @param transactionPool the pending transactions
    * @param miningParams the mining params
-   * @param backwardSyncContext the backward sync miningParameters
+   * @param backwardSyncContext the backward sync context
    * @param depositContractAddress the address of the deposit contract
    */
   public MergeCoordinator(
@@ -130,24 +125,14 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     this.miningParameters = miningParams;
 
-    //    this.targetGasLimit =
-    //        miningParameters
-    //            .getTargetGasLimit()
-    //            // TODO: revisit default target gas limit
-    //            .orElse(new AtomicLong(30000000L));
-    //    this.extraData.set(miningParams.getExtraData());
-
     this.mergeBlockCreatorFactory =
         (parentHeader, address) ->
             new MergeBlockCreator(
                 miningParameters,
-                //                address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
-                //                () -> Optional.of(targetGasLimit.longValue()),
                 parent -> miningParameters.getDynamic().getExtraData(),
                 transactionPool,
                 protocolContext,
                 protocolSchedule,
-                //                this.miningParameters.getMinTransactionGasPrice(),
                 address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                 parentHeader,
                 depositContractAddress);
@@ -158,11 +143,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   /**
    * Instantiates a new Merge coordinator.
    *
-   * @param protocolContext the protocol miningParameters
+   * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
    * @param blockBuilderExecutor the block builder executor
    * @param miningParams the mining params
-   * @param backwardSyncContext the backward sync miningParameters
+   * @param backwardSyncContext the backward sync context
    * @param mergeBlockCreatorFactory the merge block creator factory
    */
   public MergeCoordinator(
@@ -177,20 +162,12 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     this.protocolSchedule = protocolSchedule;
     this.blockBuilderExecutor = blockBuilderExecutor;
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
-    //    this.miningParameters = miningParams;
     this.backwardSyncContext = backwardSyncContext;
     if (miningParams.getDynamic().getTargetGasLimit().isEmpty()) {
       miningParams.getDynamic().setTargetGasLimit(30000000L);
     }
     miningParams.getDynamic().setMinBlockOccupancyRatio(TRY_FILL_BLOCK);
     this.miningParameters = miningParams;
-    //
-    //
-    //    this.targetGasLimit =
-    //        miningParameters
-    //            .getTargetGasLimit()
-    //            // TODO: revisit default target gas limit
-    //            .orElse(new AtomicLong(30000000L));
 
     this.mergeBlockCreatorFactory = mergeBlockCreatorFactory;
 
@@ -381,11 +358,12 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     LOG.debug(
         "Block creation started for payload id {}, remaining time is {}ms",
         payloadIdentifier,
-        miningParameters.getPosBlockCreationMaxTime());
+        miningParameters.getUnstable().getPosBlockCreationMaxTime());
 
     blockBuilderExecutor
         .buildProposal(() -> retryBlockCreationUntilUseful(payloadIdentifier, blockCreator))
-        .orTimeout(miningParameters.getPosBlockCreationMaxTime(), TimeUnit.MILLISECONDS)
+        .orTimeout(
+            miningParameters.getUnstable().getPosBlockCreationMaxTime(), TimeUnit.MILLISECONDS)
         .whenComplete(
             (unused, throwable) -> {
               if (throwable != null) {
@@ -411,7 +389,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         final long lastDuration = System.currentTimeMillis() - lastStartAt;
         final long waitBeforeRepetition =
             Math.max(
-                100, miningParameters.getPosBlockCreationRepetitionMinDuration() - lastDuration);
+                100,
+                miningParameters.getUnstable().getPosBlockCreationRepetitionMinDuration()
+                    - lastDuration);
         LOG.debug("Waiting {}ms before repeating block creation", waitBeforeRepetition);
         Thread.sleep(waitBeforeRepetition);
       } catch (final CancellationException | InterruptedException ce) {

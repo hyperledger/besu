@@ -90,14 +90,11 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
             new PoWBlockCreator(
                 miningParameters,
                 coinbase.orElse(Address.ZERO),
-                //                () -> miningParameters.getTargetGasLimit()::get,
                 parent -> miningParameters.getDynamic().getExtraData(),
                 transactionPool,
                 protocolContext,
                 protocolSchedule,
                 solver,
-                //                miningParameters.getMinTransactionGasPrice(),
-                //                    miningParameters.getMinBlockOccupancyRatio(),
                 parentHeader);
 
     return new PoWBlockMiner(

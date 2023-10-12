@@ -173,7 +173,6 @@ public class BftBlockCreatorTest {
             miningParameters,
             forksSchedule,
             initialValidatorList.get(0),
-            //            () -> Optional.of(10_000_000L),
             parent ->
                 bftExtraDataEncoder.encode(
                     new BftExtraData(
@@ -185,8 +184,6 @@ public class BftBlockCreatorTest {
             transactionPool,
             protContext,
             protocolSchedule,
-            //            Wei.ZERO,
-            //            0.8,
             parentHeader,
             bftExtraDataEncoder);
 

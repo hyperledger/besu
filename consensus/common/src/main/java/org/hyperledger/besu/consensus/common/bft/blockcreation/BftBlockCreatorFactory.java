@@ -54,7 +54,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
 
   protected final MiningParameters miningParameters;
   private final TransactionPool transactionPool;
-  /** The Protocol miningParameters. */
+  /** The Protocol context. */
   protected final ProtocolContext protocolContext;
   /** The Protocol schedule. */
   protected final ProtocolSchedule protocolSchedule;
@@ -63,18 +63,11 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
 
   private final Address localAddress;
 
-  /** The Vanity data. */
-  //  protected volatile Bytes vanityData;
-  //
-  //  private volatile Wei minTransactionGasPrice;
-  //  private volatile Double minBlockOccupancyRatio;
-  //  private volatile Optional<AtomicLong> targetGasLimit;
-
   /**
    * Instantiates a new Bft block creator factory.
    *
    * @param transactionPool the pending transactions
-   * @param protocolContext the protocol miningParameters
+   * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
    * @param forksSchedule the forks schedule
    * @param miningParams the mining params
@@ -95,11 +88,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
     this.forksSchedule = forksSchedule;
     this.localAddress = localAddress;
     this.miningParameters = miningParams;
-    //    this.minTransactionGasPrice = miningParams.getMinTransactionGasPrice();
-    //    this.minBlockOccupancyRatio = miningParams.getMinBlockOccupancyRatio();
-    //    this.vanityData = miningParams.getExtraData();
     this.bftExtraDataCodec = bftExtraDataCodec;
-    //    this.targetGasLimit = miningParams.getTargetGasLimit();
   }
 
   /**
@@ -114,13 +103,10 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
         miningParameters,
         forksSchedule,
         localAddress,
-        //        () -> targetGasLimit.map(AtomicLong::longValue),
         ph -> createExtraData(round, ph),
         transactionPool,
         protocolContext,
         protocolSchedule,
-        //        minTransactionGasPrice,
-        //        minBlockOccupancyRatio,
         parentHeader,
         bftExtraDataCodec);
   }

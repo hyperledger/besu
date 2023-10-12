@@ -120,13 +120,6 @@ public class CliqueMinerExecutorTest {
             createTransactionPool(),
             proposerNodeKey,
             miningParameters,
-
-            //            new MiningParameters.Builder()
-            //                .coinbase(AddressHelpers.ofValue(1))
-            //                .minTransactionGasPrice(Wei.ZERO)
-            //                .extraData(vanityData)
-            //                .miningEnabled(false)
-            //                .build(),
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH));
 
@@ -170,12 +163,6 @@ public class CliqueMinerExecutorTest {
             createTransactionPool(),
             proposerNodeKey,
             miningParameters,
-            //            new MiningParameters.Builder()
-            //                .coinbase(AddressHelpers.ofValue(1))
-            //                .minTransactionGasPrice(Wei.ZERO)
-            //                .extraData(vanityData)
-            //                .miningEnabled(false)
-            //                .build(),
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH));
 
@@ -219,12 +206,6 @@ public class CliqueMinerExecutorTest {
             createTransactionPool(),
             proposerNodeKey,
             miningParameters,
-            //            new MiningParameters.Builder()
-            //                .coinbase(AddressHelpers.ofValue(1))
-            //                .minTransactionGasPrice(Wei.ZERO)
-            //                .extraData(initialVanityData)
-            //                .miningEnabled(false)
-            //                .build(),
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH));
 

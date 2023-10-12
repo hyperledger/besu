@@ -46,7 +46,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
    * @param localAddress the local address
    * @param extraDataCalculator the extra data calculator
    * @param transactionPool the pending transactions
-   * @param protocolContext the protocol miningParameters
+   * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
    * @param parentHeader the parent header
    * @param bftExtraDataCodec the bft extra data codec
@@ -55,26 +55,20 @@ public class BftBlockCreator extends AbstractBlockCreator {
       final MiningParameters miningParameters,
       final ForksSchedule<? extends BftConfigOptions> forksSchedule,
       final Address localAddress,
-      //          final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      //          final Wei minTransactionGasPrice,
-      //          final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader,
       final BftExtraDataCodec bftExtraDataCodec) {
     super(
         miningParameters,
         localAddress,
         miningBeneficiaryCalculator(localAddress, forksSchedule),
-        //        targetGasLimitSupplier,
         extraDataCalculator,
         transactionPool,
         protocolContext,
         protocolSchedule,
-        //        minTransactionGasPrice,
-        //        minBlockOccupancyRatio,
         parentHeader,
         Optional.empty());
     this.bftExtraDataCodec = bftExtraDataCodec;

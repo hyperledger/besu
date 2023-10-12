@@ -187,14 +187,7 @@ public class PrivacyReorgTest {
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .networkId(BigInteger.ONE)
-            .miningParameters(
-                ImmutableMiningParameters.builder().isMiningEnabled(false).build()
-
-                //                new MiningParameters.Builder()
-                //                    .minTransactionGasPrice(Wei.of(1000))
-                //                    .miningEnabled(false)
-                //                    .build()
-                )
+            .miningParameters(ImmutableMiningParameters.builder().isMiningEnabled(false).build())
             .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
             .dataDirectory(folder)

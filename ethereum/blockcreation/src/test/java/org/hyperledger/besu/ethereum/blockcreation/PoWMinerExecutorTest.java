@@ -49,8 +49,6 @@ public class PoWMinerExecutorTest {
   @Test
   public void startingMiningWithoutCoinbaseThrowsException() {
     final MiningParameters miningParameters = ImmutableMiningParameters.builder().build();
-    //        new
-    // MiningParameters.Builder().coinbase(null).minTransactionGasPrice(Wei.of(1000)).build();
 
     final TransactionPool transactionPool = createTransactionPool(miningParameters);
 

@@ -81,16 +81,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   protected final Address coinbase;
   private final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
-  //  protected final Supplier<Optional<Long>> targetGasLimitSupplier;
-
   private final ExtraDataCalculator extraDataCalculator;
   private final TransactionPool transactionPool;
   protected final MiningParameters miningParameters;
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
   protected final BlockHeaderFunctions blockHeaderFunctions;
-  //  private final Wei minTransactionGasPrice;
-  //  private final Double minBlockOccupancyRatio;
   protected final BlockHeader parentHeader;
   private final Optional<Address> depositContractAddress;
 
@@ -100,25 +96,19 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final MiningParameters miningParameters,
       final Address coinbase,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      //      final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      //      final Wei minTransactionGasPrice,
-      //      final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader,
       final Optional<Address> depositContractAddress) {
     this.miningParameters = miningParameters;
     this.coinbase = coinbase;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
-    //    this.targetGasLimitSupplier = targetGasLimitSupplier;
     this.extraDataCalculator = extraDataCalculator;
     this.transactionPool = transactionPool;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
-    //    this.minTransactionGasPrice = minTransactionGasPrice;
-    //    this.minBlockOccupancyRatio = minBlockOccupancyRatio;
     this.parentHeader = parentHeader;
     this.depositContractAddress = depositContractAddress;
     blockHeaderFunctions = ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
@@ -351,8 +341,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             transactionPool,
             processableBlockHeader,
             transactionReceiptFactory,
-            //            minTransactionGasPrice,
-            //            minBlockOccupancyRatio,
             isCancelled::get,
             miningBeneficiary,
             blobGasPrice,

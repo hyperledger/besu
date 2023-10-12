@@ -399,13 +399,10 @@ abstract class AbstractBlockCreatorTest {
         miningParameters,
         Address.ZERO,
         __ -> Address.ZERO,
-        //        () -> Optional.of(30_000_000L),
         __ -> Bytes.fromHexString("deadbeef"),
         transactionPool,
         executionContextTestFixture.getProtocolContext(),
         executionContextTestFixture.getProtocolSchedule(),
-        //        Wei.of(1L),
-        //        0d,
         blockchain.getChainHeadHeader(),
         depositContractAddress);
   }
@@ -416,26 +413,20 @@ abstract class AbstractBlockCreatorTest {
         final MiningParameters miningParameters,
         final Address coinbase,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-        //        final Supplier<Optional<Long>> targetGasLimitSupplier,
         final ExtraDataCalculator extraDataCalculator,
         final TransactionPool transactionPool,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
-        //        final Wei minTransactionGasPrice,
-        //        final Double minBlockOccupancyRatio,
         final BlockHeader parentHeader,
         final Optional<Address> depositContractAddress) {
       super(
           miningParameters,
           coinbase,
           miningBeneficiaryCalculator,
-          //          targetGasLimitSupplier,
           extraDataCalculator,
           transactionPool,
           protocolContext,
           protocolSchedule,
-          //          minTransactionGasPrice,
-          //          minBlockOccupancyRatio,
           parentHeader,
           depositContractAddress);
     }

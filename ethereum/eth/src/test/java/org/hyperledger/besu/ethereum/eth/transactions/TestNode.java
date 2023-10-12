@@ -168,7 +168,6 @@ public class TestNode implements Closeable {
                 .getDynamic()
                 .setMinTransactionGasPrice(Wei.ZERO)
                 .toParameters(),
-            //            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             TransactionPoolConfiguration.DEFAULT,
             null);
 

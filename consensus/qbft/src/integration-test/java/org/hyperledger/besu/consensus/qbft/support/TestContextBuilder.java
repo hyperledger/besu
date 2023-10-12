@@ -375,13 +375,6 @@ public class TestContextBuilder {
             .setExtraData(Bytes.wrap("Qbft Int tests".getBytes(UTF_8)))
             .toParameters();
 
-    //        new MiningParameters.Builder()
-    //            .coinbase(AddressHelpers.ofValue(1))
-    //            .minTransactionGasPrice(Wei.ZERO)
-    //            .extraData(Bytes.wrap("Qbft Int tests".getBytes(UTF_8)))
-    //            .miningEnabled(true)
-    //            .build();
-
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     final Map<String, Object> qbftConfigValues =
         useValidatorContract

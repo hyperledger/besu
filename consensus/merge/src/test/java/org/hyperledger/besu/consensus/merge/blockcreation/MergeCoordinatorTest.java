@@ -134,7 +134,10 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   MiningParameters miningParameters =
       ImmutableMiningParameters.builder()
           .coinbase(coinbase)
-          .posBlockCreationRepetitionMinDuration(REPETITION_MIN_DURATION)
+          .unstable(
+              ImmutableMiningParameters.Unstable.builder()
+                  .posBlockCreationRepetitionMinDuration(REPETITION_MIN_DURATION)
+                  .build())
           .build();
 
   private MergeCoordinator coordinator;
@@ -277,14 +280,10 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
               spy(
                   new MergeBlockCreator(
                       miningParameters,
-                      //
-                      // address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
-                      //                      () -> Optional.of(30000000L),
                       parent -> Bytes.EMPTY,
                       transactionPool,
                       protocolContext,
                       protocolSchedule,
-                      //                      miningParameters.getMinTransactionGasPrice(),
                       address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                       parentHeader,
                       Optional.empty()));
@@ -551,7 +550,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     miningParameters =
         ImmutableMiningParameters.builder()
             .from(miningParameters)
-            .posBlockCreationMaxTime(100)
+            .unstable(
+                ImmutableMiningParameters.Unstable.builder().posBlockCreationMaxTime(100).build())
             .build();
     doAnswer(
             invocation -> {

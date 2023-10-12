@@ -122,7 +122,6 @@ public class EthGetFilterChangesIntegrationTest {
                 .getDynamic()
                 .setMinTransactionGasPrice(Wei.ZERO)
                 .toParameters(),
-            //            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             new TransactionPoolMetrics(metricsSystem),
             TransactionPoolConfiguration.DEFAULT,
             null);

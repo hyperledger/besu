@@ -151,14 +151,11 @@ public class CliqueBlockCreatorTest {
         new CliqueBlockCreator(
             miningParameters,
             coinbase,
-            //            () -> Optional.of(10_000_000L),
             parent -> extraData,
             createTransactionPool(),
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
-            //            Wei.ZERO,
-            //            0.8,
             blockchain.getChainHeadHeader(),
             epochManager);
 
@@ -192,14 +189,11 @@ public class CliqueBlockCreatorTest {
         new CliqueBlockCreator(
             miningParameters,
             coinbase,
-            //            () -> Optional.of(10_000_000L),
             parent -> extraData,
             createTransactionPool(),
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
-            //            Wei.ZERO,
-            //            0.8,
             blockchain.getChainHeadHeader(),
             epochManager);
 
@@ -238,14 +232,11 @@ public class CliqueBlockCreatorTest {
         new CliqueBlockCreator(
             miningParameters,
             coinbase,
-            //            () -> Optional.of(10_000_000L),
             parent -> extraData,
             createTransactionPool(),
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
-            //            Wei.ZERO,
-            //            0.8,
             blockchain.getChainHeadHeader(),
             epochManager);
 
