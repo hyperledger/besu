@@ -4,7 +4,8 @@
         "ethash": {
         },
         "londonBlock": 33,
-        "shanghaiTime": 1444660030
+        "shanghaiTime": 1444660030,
+        "cancunTime": 1444660040
     },
     "parentHash" : "0x0000000000000000000000000000000000000000000000000000000000000000",
     "coinbase"   : "0x8888f1f195afa192cfee860698584c030f4c9db1",

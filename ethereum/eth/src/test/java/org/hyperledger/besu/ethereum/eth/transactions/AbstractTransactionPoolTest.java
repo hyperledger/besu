@@ -838,7 +838,7 @@ public abstract class AbstractTransactionPoolTest {
   @ValueSource(booleans = {true, false})
   public void transactionNotRejectedByPluginShouldBeAdded(final boolean noLocalPriority) {
     final PluginTransactionValidatorFactory pluginTransactionValidatorFactory =
-        getPluginTransactionValidatorFactoryReturning(true);
+        getPluginTransactionValidatorFactoryReturning(null); // null -> not rejecting !!
     this.transactionPool =
         createTransactionPool(
             b -> b.noLocalPriority(noLocalPriority), pluginTransactionValidatorFactory);
@@ -852,7 +852,7 @@ public abstract class AbstractTransactionPoolTest {
   @ValueSource(booleans = {true, false})
   public void transactionRejectedByPluginShouldNotBeAdded(final boolean noLocalPriority) {
     final PluginTransactionValidatorFactory pluginTransactionValidatorFactory =
-        getPluginTransactionValidatorFactoryReturning(false);
+        getPluginTransactionValidatorFactoryReturning("false");
     this.transactionPool =
         createTransactionPool(
             b -> b.noLocalPriority(noLocalPriority), pluginTransactionValidatorFactory);
@@ -860,13 +860,13 @@ public abstract class AbstractTransactionPoolTest {
     givenTransactionIsValid(transaction0);
 
     addAndAssertTransactionViaApiInvalid(
-        transaction0, TransactionInvalidReason.PLUGIN_TX_VALIDATOR_INVALIDATED);
+        transaction0, TransactionInvalidReason.PLUGIN_TX_VALIDATOR);
   }
 
   @Test
   public void remoteTransactionRejectedByPluginShouldNotBeAdded() {
     final PluginTransactionValidatorFactory pluginTransactionValidatorFactory =
-        getPluginTransactionValidatorFactoryReturning(false);
+        getPluginTransactionValidatorFactoryReturning("false");
     this.transactionPool = createTransactionPool(b -> {}, pluginTransactionValidatorFactory);
 
     givenTransactionIsValid(transaction0);
@@ -1126,8 +1126,9 @@ public abstract class AbstractTransactionPoolTest {
   }
 
   private static PluginTransactionValidatorFactory getPluginTransactionValidatorFactoryReturning(
-      final boolean b) {
-    final PluginTransactionValidator pluginTransactionValidator = transaction -> b;
+      final String errorMessage) {
+    final PluginTransactionValidator pluginTransactionValidator =
+        transaction -> Optional.ofNullable(errorMessage);
     return () -> pluginTransactionValidator;
   }
 

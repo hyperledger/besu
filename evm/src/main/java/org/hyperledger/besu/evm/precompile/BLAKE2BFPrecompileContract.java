@@ -57,7 +57,7 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
       return 0L;
     }
 
-    final byte[] roundsBytes = copyOfRange(input.toArray(), 0, 4);
+    final byte[] roundsBytes = copyOfRange(input.toArrayUnsafe(), 0, 4);
     final BigInteger rounds = new BigInteger(1, roundsBytes);
     return rounds.longValueExact();
   }

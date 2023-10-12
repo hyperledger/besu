@@ -28,9 +28,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineG
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV3;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV6110;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV3;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV6110;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EnginePreparePayloadDebug;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineQosTimer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
@@ -156,6 +158,26 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 blockResultFactory,
                 engineQosTimer,
                 protocolSchedule));
+      }
+
+      if (protocolSchedule.anyMatch(p -> p.spec().getName().equalsIgnoreCase("ExperimentalEips"))) {
+        executionEngineApisSupported.add(
+            new EngineGetPayloadV6110(
+                consensusEngineServer,
+                protocolContext,
+                mergeCoordinator.get(),
+                blockResultFactory,
+                engineQosTimer,
+                protocolSchedule));
+
+        executionEngineApisSupported.add(
+            new EngineNewPayloadV6110(
+                consensusEngineServer,
+                protocolSchedule,
+                protocolContext,
+                mergeCoordinator.get(),
+                ethPeers,
+                engineQosTimer));
       }
 
       return mapOf(executionEngineApisSupported);
