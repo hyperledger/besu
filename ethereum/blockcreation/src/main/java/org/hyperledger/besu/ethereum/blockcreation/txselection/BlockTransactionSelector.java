@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
@@ -85,6 +86,7 @@ public class BlockTransactionSelector {
       new TransactionSelectionResults();
   private final List<AbstractTransactionSelector> transactionSelectors;
   private final PluginTransactionSelector externalTransactionSelector;
+  private final OperationTracer pluginOperationTracer;
 
   public BlockTransactionSelector(
       final MainnetTransactionProcessor transactionProcessor,
@@ -123,6 +125,7 @@ public class BlockTransactionSelector {
         transactionSelectorFactory
             .map(PluginTransactionSelectorFactory::create)
             .orElse(AllAcceptingTransactionSelector.INSTANCE);
+    pluginOperationTracer = externalTransactionSelector.getOperationTracer();
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(
@@ -269,6 +272,7 @@ public class BlockTransactionSelector {
         blockSelectionContext.processableBlockHeader(),
         pendingTransaction.getTransaction(),
         blockSelectionContext.miningBeneficiary(),
+        pluginOperationTracer,
         blockHashLookup,
         false,
         TransactionValidationParams.mining(),

@@ -16,6 +16,7 @@
 package org.hyperledger.besu.plugin.services.txselection;
 
 import org.hyperledger.besu.datatypes.PendingTransaction;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
@@ -23,6 +24,17 @@ import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 /** Interface for the transaction selector */
 @Unstable
 public interface PluginTransactionSelector {
+
+  /**
+   * Method that returns an OperationTracer that will be used when executing transactions that are
+   * candidates to be added to a block.
+   *
+   * @return OperationTracer to be used to trace candidate transactions
+   */
+  default OperationTracer getOperationTracer() {
+    return OperationTracer.NO_TRACING;
+  }
+
   /**
    * Method called to decide whether a transaction is added to a block. The result can also indicate
    * that no further transactions can be added to the block.
@@ -48,6 +60,7 @@ public interface PluginTransactionSelector {
    * Method called when a transaction is selected to be added to a block.
    *
    * @param pendingTransaction The transaction that has been selected.
+   * @param processingResult The result of processing the selected transaction.
    */
   default void onTransactionSelected(
       final PendingTransaction pendingTransaction,
