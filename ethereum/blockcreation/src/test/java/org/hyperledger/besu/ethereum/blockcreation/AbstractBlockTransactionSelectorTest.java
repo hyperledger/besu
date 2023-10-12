@@ -854,7 +854,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected void ensureTransactionIsValid(
       final Transaction tx, final long gasUsedByTransaction, final long gasRemaining) {
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), eq(tx), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.successful(
                 new ArrayList<>(),
@@ -867,7 +867,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected void ensureTransactionIsInvalid(
       final Transaction tx, final TransactionInvalidReason invalidReason) {
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), eq(tx), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
         .thenReturn(TransactionProcessingResult.invalid(ValidationResult.invalid(invalidReason)));
   }
 
