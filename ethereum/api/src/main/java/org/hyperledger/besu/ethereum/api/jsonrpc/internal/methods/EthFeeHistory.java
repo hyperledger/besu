@@ -150,11 +150,12 @@ public class EthFeeHistory implements JsonRpcMethod {
     final Optional<List<List<Wei>>> maybeRewards =
         maybeRewardPercentiles.map(
             rewardPercentiles ->
-                    blockHeaders.stream()
+                blockHeaders.stream()
                     .parallel()
                     .map(
                         blockHeader -> {
-                          RewardCacheKey key = new RewardCacheKey(blockHeader.getBlockHash(), rewardPercentiles);
+                          RewardCacheKey key =
+                              new RewardCacheKey(blockHeader.getBlockHash(), rewardPercentiles);
                           return Optional.ofNullable(cache.getIfPresent(key))
                               .or(
                                   () -> {
