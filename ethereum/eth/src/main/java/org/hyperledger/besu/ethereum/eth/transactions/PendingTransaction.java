@@ -305,6 +305,15 @@ public abstract class PendingTransaction
         super(transaction, addedAt);
       }
 
+      public Priority(final long sequence, final Transaction transaction) {
+        super(sequence, transaction);
+      }
+
+      @Override
+      public PendingTransaction detachedCopy() {
+        return new Priority(getSequence(), getTransaction().detachedCopy());
+      }
+
       @Override
       public boolean hasPriority() {
         return true;
@@ -348,6 +357,15 @@ public abstract class PendingTransaction
 
       public Priority(final Transaction transaction, final long addedAt) {
         super(transaction, addedAt);
+      }
+
+      public Priority(final long sequence, final Transaction transaction) {
+        super(sequence, transaction);
+      }
+
+      @Override
+      public PendingTransaction detachedCopy() {
+        return new Priority(getSequence(), getTransaction().detachedCopy());
       }
 
       @Override
