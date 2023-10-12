@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 import org.hyperledger.besu.datatypes.PendingTransaction;
 import org.hyperledger.besu.plugin.data.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelector;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 
 /** A TransactionSelector that unconditionally selects all transactions. */
-public class AllAcceptingTransactionSelector implements TransactionSelector {
+public class AllAcceptingTransactionSelector implements PluginTransactionSelector {
   public static final AllAcceptingTransactionSelector INSTANCE =
       new AllAcceptingTransactionSelector();
 

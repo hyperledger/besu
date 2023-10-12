@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -33,6 +34,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,12 +92,29 @@ public class EthSendRawTransaction implements JsonRpcMethod {
         () ->
             new JsonRpcSuccessResponse(
                 requestContext.getRequest().getId(), transaction.getHash().toString()),
-        errorReason ->
-            sendEmptyHashOnInvalidBlock
-                ? new JsonRpcSuccessResponse(
-                    requestContext.getRequest().getId(), Hash.EMPTY.toString())
-                : new JsonRpcErrorResponse(
-                    requestContext.getRequest().getId(),
-                    JsonRpcErrorConverter.convertTransactionInvalidReason(errorReason)));
+        errorReason -> getJsonRpcResponse(requestContext, errorReason, validationResult));
+  }
+
+  @NotNull
+  private JsonRpcResponse getJsonRpcResponse(
+      final JsonRpcRequestContext requestContext,
+      final TransactionInvalidReason errorReason,
+      final ValidationResult<TransactionInvalidReason> validationResult) {
+    if (sendEmptyHashOnInvalidBlock) {
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Hash.EMPTY.toString());
+    } else {
+      if (errorReason == TransactionInvalidReason.PLUGIN_TX_VALIDATOR) {
+        final RpcErrorType rpcErrorType =
+            JsonRpcErrorConverter.convertTransactionInvalidReason(
+                validationResult.getInvalidReason());
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(),
+            new JsonRpcError(rpcErrorType.getCode(), validationResult.getErrorMessage(), null));
+      } else {
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(),
+            JsonRpcErrorConverter.convertTransactionInvalidReason(errorReason));
+      }
+    }
   }
 }
