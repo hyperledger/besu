@@ -154,7 +154,7 @@ public class EthFeeHistory implements JsonRpcMethod {
                     .parallel()
                     .map(
                         blockHeader -> {
-                          RewardCacheKey key =
+                          final RewardCacheKey key =
                               new RewardCacheKey(blockHeader.getBlockHash(), rewardPercentiles);
                           return Optional.ofNullable(cache.getIfPresent(key))
                               .or(
@@ -215,7 +215,7 @@ public class EthFeeHistory implements JsonRpcMethod {
 
     record TransactionInfo(Transaction transaction, Long gasUsed, Wei effectivePriorityFeePerGas) {}
 
-    List<TransactionInfo> transactionsInfo =
+    final List<TransactionInfo> transactionsInfo =
         Streams.zip(
                 transactions.stream(),
                 transactionsGasUsed.stream(),
@@ -224,7 +224,7 @@ public class EthFeeHistory implements JsonRpcMethod {
                         transaction, gasUsed, transaction.getEffectivePriorityFeePerGas(baseFee)))
             .collect(toUnmodifiableList());
 
-    List<TransactionInfo> transactionsAndGasUsedAscendingEffectiveGasFee =
+    final List<TransactionInfo> transactionsAndGasUsedAscendingEffectiveGasFee =
         transactionsInfo.stream()
             .sorted(Comparator.comparing(TransactionInfo::effectivePriorityFeePerGas))
             .collect(toUnmodifiableList());
@@ -248,8 +248,7 @@ public class EthFeeHistory implements JsonRpcMethod {
       }
     }
     // Put the computed rewards in the cache
-    RewardCacheKey key = new RewardCacheKey(block.getHeader().getBlockHash(), rewardPercentiles);
-    cache.put(key, rewards);
+    cache.put(new RewardCacheKey(block.getHeader().getBlockHash(), rewardPercentiles), rewards);
 
     return rewards;
   }
