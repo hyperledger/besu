@@ -50,10 +50,10 @@ class BonsaiWorldStateTest {
   @Mock BonsaiWorldStateUpdateAccumulator bonsaiWorldStateUpdateAccumulator;
   @Mock BonsaiWorldStateKeyValueStorage.BonsaiUpdater bonsaiUpdater;
 
-  private final Bytes code = Bytes.of(10);
-  private final Hash codeHash = Hash.hash(code);
-  private final Hash accountHash = Hash.hash(Address.ZERO);
-  private final Address account = Address.ZERO;
+  private static final Bytes CODE = Bytes.of(10);
+  private static final Hash CODE_HASH = Hash.hash(CODE);
+  private static final Hash ACCOUNT_HASH = Hash.hash(Address.ZERO);
+  private static final Address ACCOUNT = Address.ZERO;
 
   final BonsaiWorldState worldState =
       new BonsaiWorldState(
@@ -74,56 +74,59 @@ class BonsaiWorldStateTest {
     verifyNoInteractions(bonsaiUpdater);
   }
 
+  @Test
+  void doesNothingWhenAddingSameValue() {
+    final Map<Address, BonsaiValue<Bytes>> codeToUpdate =
+        Map.of(Address.ZERO, new BonsaiValue<>(CODE, CODE));
+    when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
+    worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
+
+    verifyNoInteractions(bonsaiUpdater);
+  }
+
   @ParameterizedTest
   @MethodSource("emptyAndNullBytes")
   void removesCodeWhenMarkedAsDeleted(final Bytes updated) {
     final Map<Address, BonsaiValue<Bytes>> codeToUpdate =
-        Map.of(Address.ZERO, new BonsaiValue<>(code, updated));
+        Map.of(Address.ZERO, new BonsaiValue<>(CODE, updated));
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
     worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
 
-    verify(bonsaiUpdater).removeCode(accountHash, codeHash);
+    verify(bonsaiUpdater).removeCode(ACCOUNT_HASH, CODE_HASH);
   }
 
   @ParameterizedTest
-  @MethodSource("emptyAndNullBytes")
+  @MethodSource("codeValueAndEmptyAndNullBytes")
   void addsCodeForNewCodeValue(final Bytes prior) {
     final Map<Address, BonsaiValue<Bytes>> codeToUpdate =
-        Map.of(account, new BonsaiValue<>(prior, code));
+        Map.of(ACCOUNT, new BonsaiValue<>(prior, CODE));
 
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
     worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
 
-    verify(bonsaiUpdater).putCode(accountHash, codeHash, code);
-  }
-
-  @Test
-  void doesNothingWhenAddingCodeForExistingCodeValue() {
-    final Map<Address, BonsaiValue<Bytes>> codeToUpdate =
-        Map.of(account, new BonsaiValue<>(Bytes.of(11), code));
-
-    when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
-    worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
-
-    verify(bonsaiUpdater).putCode(accountHash, codeHash, code);
+    verify(bonsaiUpdater).putCode(ACCOUNT_HASH, CODE_HASH, CODE);
   }
 
   @Test
   void updateCodeForMultipleValues() {
     final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new HashMap<>();
-    codeToUpdate.put(Address.fromHexString("0x1"), new BonsaiValue<>(null, code));
-    codeToUpdate.put(Address.fromHexString("0x2"), new BonsaiValue<>(code, null));
-    codeToUpdate.put(Address.fromHexString("0x3"), new BonsaiValue<>(Bytes.of(9), code));
+    codeToUpdate.put(Address.fromHexString("0x1"), new BonsaiValue<>(null, CODE));
+    codeToUpdate.put(Address.fromHexString("0x2"), new BonsaiValue<>(CODE, null));
+    codeToUpdate.put(Address.fromHexString("0x3"), new BonsaiValue<>(Bytes.of(9), CODE));
 
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
     worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
 
-    verify(bonsaiUpdater).putCode(Address.fromHexString("0x1").addressHash(), codeHash, code);
-    verify(bonsaiUpdater).removeCode(Address.fromHexString("0x2").addressHash(), codeHash);
-    verify(bonsaiUpdater).putCode(Address.fromHexString("0x3").addressHash(), codeHash, code);
+    verify(bonsaiUpdater).putCode(Address.fromHexString("0x1").addressHash(), CODE_HASH, CODE);
+    verify(bonsaiUpdater).removeCode(Address.fromHexString("0x2").addressHash(), CODE_HASH);
+    verify(bonsaiUpdater).putCode(Address.fromHexString("0x3").addressHash(), CODE_HASH, CODE);
   }
 
   private static Stream<Bytes> emptyAndNullBytes() {
+    return Stream.of(Bytes.EMPTY, null);
+  }
+
+  private static Stream<Bytes> codeValueAndEmptyAndNullBytes() {
     return Stream.of(Bytes.EMPTY, null);
   }
 
