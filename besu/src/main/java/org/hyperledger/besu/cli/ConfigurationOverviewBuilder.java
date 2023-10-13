@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.util.log.FramedLogMessage;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
@@ -49,6 +50,7 @@ public class ConfigurationOverviewBuilder {
   private String engineJwtFilePath;
   private boolean isHighSpec = false;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
+  private EvmConfiguration.WorldUpdaterMode worldStateUpdateMode;
   private Map<String, String> environment;
 
   /**
@@ -180,6 +182,18 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets the world state updater mode
+   *
+   * @param worldStateUpdateMode the world state updater mode
+   * @return the buikder
+   */
+  public ConfigurationOverviewBuilder setWorldStateUpdateMode(
+      final EvmConfiguration.WorldUpdaterMode worldStateUpdateMode) {
+    this.worldStateUpdateMode = worldStateUpdateMode;
+    return this;
+  }
+
+  /**
    * Sets the engine jwt file path.
    *
    * @param engineJwtFilePath the engine apis
@@ -255,6 +269,7 @@ public class ConfigurationOverviewBuilder {
     }
 
     lines.add("Using " + txPoolImplementation + " transaction pool implementation");
+    lines.add("Using " + worldStateUpdateMode + " worldstate update mode");
 
     lines.add("");
     lines.add("Host:");

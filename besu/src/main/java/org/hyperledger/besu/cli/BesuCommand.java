@@ -3548,6 +3548,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
+    builder.setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode());
 
     return builder.build();
   }
