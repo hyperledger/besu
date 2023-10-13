@@ -1,6 +1,6 @@
 # Known Issues 
 
-Details on previously identified known issues are provided below. Details on known issues identfied 
+Details on previously identified known issues are provided below. Details on known issues identified 
 in the current release are provided in the [Changelog](CHANGELOG.md).
 
 Known issues are open issues categorized as [Very High or High impact](https://wiki.hyperledger.org/display/BESU/Defect+Prioritisation+Policy). 
