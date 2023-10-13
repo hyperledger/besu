@@ -1424,7 +1424,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
-      miningParameters = buildMiningParameters();
+      miningParameters = getMiningParameters();
 
       validateOptions();
       configure();
@@ -1663,7 +1663,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--privacy-marker-transaction-signing-key-file can not be used in conjunction with a plugin that specifies a PrivateMarkerTransactionFactory");
       }
 
-      if (Wei.ZERO.compareTo(miningParameters.getDynamic().getMinTransactionGasPrice()) < 0
+      if (Wei.ZERO.compareTo(getMiningParameters().getMinTransactionGasPrice()) < 0
           && (privacyOptionGroup.privateMarkerTransactionSigningKeyPath == null
               && (privacyPluginService == null
                   || privacyPluginService.getPrivateMarkerTransactionFactory() == null))) {
@@ -2134,7 +2134,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .transactionSelectorFactory(getTransactionSelectorFactory())
         .pluginTransactionValidatorFactory(getPluginTransactionValidatorFactory())
         .dataDirectory(dataDir())
-        .miningParameters(miningParameters)
+        .miningParameters(getMiningParameters())
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(new NodeKey(securityModule()))
         .metricsSystem(metricsSystem.get())
@@ -2149,8 +2149,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             new PrunerConfiguration(pruningBlockConfirmations, pruningBlocksRetained))
         .genesisConfigOverrides(genesisConfigOverrides)
         .gasLimitCalculator(
-            miningParameters != null
-                    && miningParameters.getDynamic().getTargetGasLimit().isPresent()
+            getMiningParameters().getTargetGasLimit().isPresent()
                 ? new FrontierTargetingGasLimitCalculator()
                 : GasLimitCalculator.constant())
         .requiredBlocks(requiredBlocks)
@@ -2479,8 +2478,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .gasPriceBlocks(apiGasPriceBlocks)
         .gasPricePercentile(apiGasPricePercentile)
         .gasPriceMinSupplier(
-            miningParameters.getDynamic().getMinTransactionGasPrice().getAsBigInteger()
-                ::longValueExact)
+            getMiningParameters().getMinTransactionGasPrice().getAsBigInteger()::longValueExact)
         .gasPriceMax(apiGasPriceMax)
         .build();
   }
@@ -2816,8 +2814,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .build();
   }
 
-  private MiningParameters buildMiningParameters() {
-    return miningOptions.toDomainObject();
+  private MiningParameters getMiningParameters() {
+    if (miningParameters == null) {
+      miningParameters = miningOptions.toDomainObject();
+    }
+    return miningParameters;
   }
 
   private boolean isPruningEnabled() {
@@ -3216,8 +3217,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         effectivePorts, metricsOptionGroup.metricsPort, metricsOptionGroup.isMetricsEnabled);
     addPortIfEnabled(
         effectivePorts,
-        miningParameters.getStratumPort(),
-        miningParameters.isStratumMiningEnabled());
+        getMiningParameters().getStratumPort(),
+        getMiningParameters().isStratumMiningEnabled());
     return effectivePorts;
   }
 

@@ -55,9 +55,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
                 MainnetBlockHeaderValidator.MINIMUM_SECONDS_SINCE_PARENT,
                 MainnetBlockHeaderValidator.TIMESTAMP_TOLERANCE_S,
                 clock),
-            epochCalculator,
-            miningParameters.getUnstable().getPowJobTimeToLive(),
-            miningParameters.getUnstable().getMaxOmmerDepth());
+            epochCalculator);
 
     final PoWMiningCoordinator miningCoordinator =
         new PoWMiningCoordinator(

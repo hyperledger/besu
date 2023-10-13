@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
@@ -156,10 +157,9 @@ public class BesuEventsImplTest {
             new NoOpMetricsSystem(),
             syncState,
             ImmutableMiningParameters.builder()
-                .build()
-                .getDynamic()
-                .setMinTransactionGasPrice(Wei.ZERO)
-                .toParameters(),
+                .updatableInitValues(
+                    UpdatableInitValues.builder().minTransactionGasPrice(Wei.ZERO).build())
+                .build(),
             txPoolConfig,
             null);
 

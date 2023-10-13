@@ -22,7 +22,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -48,7 +47,7 @@ public class PoWMinerExecutorTest {
 
   @Test
   public void startingMiningWithoutCoinbaseThrowsException() {
-    final MiningParameters miningParameters = ImmutableMiningParameters.builder().build();
+    final MiningParameters miningParameters = MiningParameters.newDefault();
 
     final TransactionPool transactionPool = createTransactionPool(miningParameters);
 
@@ -59,9 +58,7 @@ public class PoWMinerExecutorTest {
             transactionPool,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
-            new EpochCalculator.DefaultEpochCalculator(),
-            1000,
-            8);
+            new EpochCalculator.DefaultEpochCalculator());
 
     assertThatExceptionOfType(CoinbaseNotSetException.class)
         .isThrownBy(() -> executor.startAsyncMining(Subscribers.create(), Subscribers.none(), null))
@@ -70,7 +67,7 @@ public class PoWMinerExecutorTest {
 
   @Test
   public void settingCoinbaseToNullThrowsException() {
-    final MiningParameters miningParameters = ImmutableMiningParameters.builder().build();
+    final MiningParameters miningParameters = MiningParameters.newDefault();
 
     final TransactionPool transactionPool = createTransactionPool(miningParameters);
 
@@ -81,9 +78,7 @@ public class PoWMinerExecutorTest {
             transactionPool,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
-            new EpochCalculator.DefaultEpochCalculator(),
-            1000,
-            8);
+            new EpochCalculator.DefaultEpochCalculator());
 
     assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> executor.setCoinbase(null))

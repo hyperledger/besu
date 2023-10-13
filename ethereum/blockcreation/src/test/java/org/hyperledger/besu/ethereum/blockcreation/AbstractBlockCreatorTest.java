@@ -387,13 +387,14 @@ abstract class AbstractBlockCreatorTest {
 
     final MiningParameters miningParameters =
         ImmutableMiningParameters.builder()
+            .updatableInitValues(
+                ImmutableMiningParameters.UpdatableInitValues.builder()
+                    .extraData(Bytes.fromHexString("deadbeef"))
+                    .minTransactionGasPrice(Wei.ONE)
+                    .minBlockOccupancyRatio(0d)
+                    .build())
             .coinbase(Address.ZERO)
-            .build()
-            .getDynamic()
-            .setExtraData(Bytes.fromHexString("deadbeef"))
-            .setMinTransactionGasPrice(Wei.ONE)
-            .setMinBlockOccupancyRatio(0d)
-            .toParameters();
+            .build();
 
     return new TestBlockCreator(
         miningParameters,

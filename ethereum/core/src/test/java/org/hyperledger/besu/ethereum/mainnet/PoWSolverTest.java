@@ -21,6 +21,9 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Arrays;
@@ -48,13 +51,11 @@ public class PoWSolverTest {
     final List<Long> noncesToTry = Arrays.asList(1L, 1L, 1L, 1L, 1L, 1L, 0L);
     final PoWSolver solver =
         new PoWSolver(
-            noncesToTry,
+            createMiningParameters(noncesToTry, 1000, 8),
             PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator(),
-            1000,
-            8);
+            new EpochCalculator.DefaultEpochCalculator());
 
     assertThat(solver.hashesPerSecond()).isEqualTo(Optional.empty());
     assertThat(solver.getWorkDefinition()).isEqualTo(Optional.empty());
@@ -83,13 +84,11 @@ public class PoWSolverTest {
 
     final PoWSolver solver =
         new PoWSolver(
-            noncesToTry,
+            createMiningParameters(noncesToTry, 1000, 8),
             hasher,
             false,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator(),
-            1000,
-            8);
+            new EpochCalculator.DefaultEpochCalculator());
 
     final Stopwatch operationTimer = Stopwatch.createStarted();
     final PoWSolverInputs inputs = new PoWSolverInputs(UInt256.ONE, Bytes.EMPTY, 5);
@@ -150,13 +149,15 @@ public class PoWSolverTest {
     // Nonces need to have a 0L inserted, as it is a "wasted" nonce in the solver.
     final PoWSolver solver =
         new PoWSolver(
-            Lists.newArrayList(expectedFirstOutput.getNonce(), 0L, expectedSecondOutput.getNonce()),
+            createMiningParameters(
+                Lists.newArrayList(
+                    expectedFirstOutput.getNonce(), 0L, expectedSecondOutput.getNonce()),
+                1000,
+                8),
             PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator(),
-            1000,
-            8);
+            new EpochCalculator.DefaultEpochCalculator());
 
     PoWSolution soln = solver.solveFor(PoWSolver.PoWSolverJob.createFromInputs(firstInputs));
     assertThat(soln.getMixHash()).isEqualTo(expectedFirstOutput.getMixHash());
@@ -210,13 +211,15 @@ public class PoWSolverTest {
     // Nonces need to have a 0L inserted, as it is a "wasted" nonce in the solver.
     final PoWSolver solver =
         new PoWSolver(
-            Lists.newArrayList(expectedFirstOutput.getNonce(), 0L, expectedSecondOutput.getNonce()),
+            createMiningParameters(
+                Lists.newArrayList(
+                    expectedFirstOutput.getNonce(), 0L, expectedSecondOutput.getNonce()),
+                1000,
+                8),
             PoWHasher.ETHASH_LIGHT,
             true,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator(),
-            1000,
-            8);
+            new EpochCalculator.DefaultEpochCalculator());
 
     CompletableFuture<PoWSolution> soln1 = new CompletableFuture<>();
     CompletableFuture<PoWSolution> soln2 = new CompletableFuture<>();
@@ -291,13 +294,15 @@ public class PoWSolverTest {
     // Nonces need to have a 0L inserted, as it is a "wasted" nonce in the solver.
     final PoWSolver solver =
         new PoWSolver(
-            Lists.newArrayList(expectedFirstOutput.getNonce(), 0L, expectedSecondOutput.getNonce()),
+            createMiningParameters(
+                Lists.newArrayList(
+                    expectedFirstOutput.getNonce(), 0L, expectedSecondOutput.getNonce()),
+                10000,
+                8),
             PoWHasher.ETHASH_LIGHT,
             true,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator(),
-            10000,
-            8);
+            new EpochCalculator.DefaultEpochCalculator());
 
     CompletableFuture<PoWSolution> soln1 = new CompletableFuture<>();
     CompletableFuture<PoWSolution> soln2 = new CompletableFuture<>();
@@ -382,13 +387,15 @@ public class PoWSolverTest {
     // Nonces need to have a 0L inserted, as it is a "wasted" nonce in the solver.
     final PoWSolver solver =
         new PoWSolver(
-            Lists.newArrayList(expectedFirstOutput.getNonce(), 0L, expectedSecondOutput.getNonce()),
+            createMiningParameters(
+                Lists.newArrayList(
+                    expectedFirstOutput.getNonce(), 0L, expectedSecondOutput.getNonce()),
+                1000,
+                8),
             PoWHasher.ETHASH_LIGHT,
             true,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator(),
-            1000,
-            8);
+            new EpochCalculator.DefaultEpochCalculator());
 
     CompletableFuture<PoWSolution> soln1 = new CompletableFuture<>();
     CompletableFuture<PoWSolution> soln2 = new CompletableFuture<>();
@@ -475,13 +482,15 @@ public class PoWSolverTest {
     // Nonces need to have a 0L inserted, as it is a "wasted" nonce in the solver.
     final PoWSolver solver =
         new PoWSolver(
-            Lists.newArrayList(expectedFirstOutput.getNonce(), 0L, expectedSecondOutput.getNonce()),
+            createMiningParameters(
+                Lists.newArrayList(
+                    expectedFirstOutput.getNonce(), 0L, expectedSecondOutput.getNonce()),
+                1000,
+                8),
             PoWHasher.ETHASH_LIGHT,
             true,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator(),
-            1000,
-            8);
+            new EpochCalculator.DefaultEpochCalculator());
 
     CompletableFuture<PoWSolution> soln1 = new CompletableFuture<>();
     CompletableFuture<PoWSolution> soln2 = new CompletableFuture<>();
@@ -519,5 +528,17 @@ public class PoWSolverTest {
 
     assertThat(result2.getMixHash()).isEqualTo(expectedSecondOutput.getMixHash());
     powThread1.interrupt();
+  }
+
+  private MiningParameters createMiningParameters(
+      final List<Long> nonceToTry, final int powJobTimeToLive, final int maxOmmerDepth) {
+    return ImmutableMiningParameters.builder()
+        .updatableInitValues(UpdatableInitValues.builder().nonceGenerator(nonceToTry).build())
+        .unstable(
+            ImmutableMiningParameters.Unstable.builder()
+                .maxOmmerDepth(maxOmmerDepth)
+                .powJobTimeToLive(powJobTimeToLive)
+                .build())
+        .build();
   }
 }

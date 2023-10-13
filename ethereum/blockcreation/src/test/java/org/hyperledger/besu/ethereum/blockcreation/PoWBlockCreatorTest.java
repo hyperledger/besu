@@ -94,27 +94,18 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                     .createProtocolSchedule())
             .build();
 
+    final MiningParameters miningParameters =
+        createMiningParameters(Lists.newArrayList(BLOCK_1_NONCE));
+
     final PoWSolver solver =
         new PoWSolver(
-            Lists.newArrayList(BLOCK_1_NONCE),
+            miningParameters,
             PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator(),
-            1000,
-            8);
+            new EpochCalculator.DefaultEpochCalculator());
 
     final TransactionPool transactionPool = createTransactionPool(executionContextTestFixture);
-
-    final MiningParameters miningParameters =
-        ImmutableMiningParameters.builder()
-            .coinbase(BLOCK_1_COINBASE)
-            .build()
-            .getDynamic()
-            .setExtraData(BLOCK_1_EXTRA_DATA)
-            .setMinTransactionGasPrice(Wei.ONE)
-            .setMinBlockOccupancyRatio(0.8)
-            .toParameters();
 
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
@@ -158,27 +149,18 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                     .createProtocolSchedule())
             .build();
 
+    final MiningParameters miningParameters =
+        createMiningParameters(Lists.newArrayList(BLOCK_1_NONCE));
+
     final PoWSolver solver =
         new PoWSolver(
-            Lists.newArrayList(BLOCK_1_NONCE),
+            miningParameters,
             PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator(),
-            1000,
-            8);
+            new EpochCalculator.DefaultEpochCalculator());
 
     final TransactionPool transactionPool = createTransactionPool(executionContextTestFixture);
-
-    final MiningParameters miningParameters =
-        ImmutableMiningParameters.builder()
-            .coinbase(BLOCK_1_COINBASE)
-            .build()
-            .getDynamic()
-            .setExtraData(BLOCK_1_EXTRA_DATA)
-            .setMinTransactionGasPrice(Wei.ONE)
-            .setMinBlockOccupancyRatio(0.8)
-            .toParameters();
 
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
@@ -213,28 +195,18 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder().protocolSchedule(protocolSchedule).build();
 
+    final MiningParameters miningParameters =
+        createMiningParameters(Lists.newArrayList(BLOCK_1_NONCE));
+
     final PoWSolver solver =
         new PoWSolver(
-            Lists.newArrayList(BLOCK_1_NONCE),
+            miningParameters,
             PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator(),
-            1000,
-            8);
+            new EpochCalculator.DefaultEpochCalculator());
 
     final TransactionPool transactionPool = createTransactionPool(executionContextTestFixture);
-
-    final MiningParameters miningParameters =
-        ImmutableMiningParameters.builder()
-            .coinbase(BLOCK_1_COINBASE)
-            .build()
-            .getDynamic()
-            .setTargetGasLimit(10_000_000L)
-            .setExtraData(BLOCK_1_EXTRA_DATA)
-            .setMinTransactionGasPrice(Wei.ONE)
-            .setMinBlockOccupancyRatio(0.8)
-            .toParameters();
 
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
@@ -291,28 +263,18 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder().protocolSchedule(protocolSchedule).build();
 
+    final MiningParameters miningParameters =
+        createMiningParameters(Lists.newArrayList(BLOCK_1_NONCE));
+
     final PoWSolver solver =
         new PoWSolver(
-            Lists.newArrayList(BLOCK_1_NONCE),
+            miningParameters,
             PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator(),
-            1000,
-            8);
+            new EpochCalculator.DefaultEpochCalculator());
 
     final TransactionPool transactionPool = createTransactionPool(executionContextTestFixture);
-
-    final MiningParameters miningParameters =
-        ImmutableMiningParameters.builder()
-            .coinbase(BLOCK_1_COINBASE)
-            .build()
-            .getDynamic()
-            .setTargetGasLimit(10_000_000L)
-            .setExtraData(BLOCK_1_EXTRA_DATA)
-            .setMinTransactionGasPrice(Wei.ONE)
-            .setMinBlockOccupancyRatio(0.8)
-            .toParameters();
 
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
@@ -380,5 +342,17 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
     transactionPool.setEnabled();
 
     return transactionPool;
+  }
+
+  private MiningParameters createMiningParameters(final Iterable<Long> nonceList) {
+    return ImmutableMiningParameters.builder()
+        .updatableInitValues(
+            ImmutableMiningParameters.UpdatableInitValues.builder()
+                .nonceGenerator(nonceList)
+                .extraData(BLOCK_1_EXTRA_DATA)
+                .minTransactionGasPrice(Wei.ONE)
+                .build())
+        .coinbase(BLOCK_1_COINBASE)
+        .build();
   }
 }

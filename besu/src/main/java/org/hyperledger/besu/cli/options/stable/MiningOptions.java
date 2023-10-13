@@ -15,15 +15,15 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static java.util.Arrays.asList;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Dynamic.DEFAULT_EXTRA_DATA;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Dynamic.DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Dynamic.DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_MAX_OMMERS_DEPTH;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_POW_JOB_TTL;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_REMOTE_SEALERS_LIMIT;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_REMOTE_SEALERS_TTL;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.UpdatableInitValues.DEFAULT_EXTRA_DATA;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.UpdatableInitValues.DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.UpdatableInitValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
@@ -236,11 +236,9 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
     miningOptions.iStratumMiningEnabled = miningParameters.isStratumMiningEnabled();
     miningOptions.stratumNetworkInterface = miningParameters.getStratumNetworkInterface();
     miningOptions.stratumPort = miningParameters.getStratumPort();
-    miningOptions.extraData = miningParameters.getDynamic().getExtraData();
-    miningOptions.minTransactionGasPrice =
-        miningParameters.getDynamic().getMinTransactionGasPrice();
-    miningOptions.minBlockOccupancyRatio =
-        miningParameters.getDynamic().getMinBlockOccupancyRatio();
+    miningOptions.extraData = miningParameters.getExtraData();
+    miningOptions.minTransactionGasPrice = miningParameters.getMinTransactionGasPrice();
+    miningOptions.minBlockOccupancyRatio = miningParameters.getMinBlockOccupancyRatio();
     miningOptions.unstableOptions.remoteSealersLimit =
         miningParameters.getUnstable().getRemoteSealersLimit();
     miningOptions.unstableOptions.remoteSealersTimeToLive =
@@ -257,18 +255,26 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
         miningParameters.getUnstable().getPosBlockCreationRepetitionMinDuration();
 
     miningParameters.getCoinbase().ifPresent(coinbase -> miningOptions.coinbase = coinbase);
-    miningParameters
-        .getDynamic()
-        .getTargetGasLimit()
-        .ifPresent(tgl -> miningOptions.targetGasLimit = tgl);
+    miningParameters.getTargetGasLimit().ifPresent(tgl -> miningOptions.targetGasLimit = tgl);
     return miningOptions;
   }
 
   @Override
   public MiningParameters toDomainObject() {
+    final var updatableInitValuesBuilder =
+        ImmutableMiningParameters.UpdatableInitValues.builder()
+            .isMiningEnabled(isMiningEnabled)
+            .extraData(extraData)
+            .minTransactionGasPrice(minTransactionGasPrice)
+            .minBlockOccupancyRatio(minBlockOccupancyRatio);
+
+    if (targetGasLimit != null) {
+      updatableInitValuesBuilder.targetGasLimit(targetGasLimit);
+    }
+
     final var miningParametersBuilder =
         ImmutableMiningParameters.builder()
-            .isMiningEnabled(isMiningEnabled)
+            .updatableInitValues(updatableInitValuesBuilder.build())
             .isStratumMiningEnabled(iStratumMiningEnabled)
             .stratumNetworkInterface(stratumNetworkInterface)
             .stratumPort(stratumPort)
@@ -288,18 +294,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
       miningParametersBuilder.coinbase(coinbase);
     }
 
-    final var dynamicParameters =
-        miningParametersBuilder
-            .build()
-            .getDynamic()
-            .setExtraData(extraData)
-            .setMinBlockOccupancyRatio(minBlockOccupancyRatio)
-            .setMinTransactionGasPrice(minTransactionGasPrice);
-
-    if (targetGasLimit != null) {
-      dynamicParameters.setTargetGasLimit(targetGasLimit);
-    }
-    return dynamicParameters.toParameters();
+    return miningParametersBuilder.build();
   }
 
   @Override

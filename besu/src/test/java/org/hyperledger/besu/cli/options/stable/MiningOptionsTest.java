@@ -24,6 +24,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.Unstable;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 
 import java.io.IOException;
@@ -251,9 +253,8 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
     internalTestSuccess(
         miningParams -> {
           assertThat(miningParams.getCoinbase()).isEqualTo(Optional.of(requestedCoinbase));
-          assertThat(miningParams.getDynamic().getMinTransactionGasPrice()).isEqualTo(Wei.of(15));
-          assertThat(miningParams.getDynamic().getExtraData())
-              .isEqualTo(Bytes.fromHexString(extraDataString));
+          assertThat(miningParams.getMinTransactionGasPrice()).isEqualTo(Wei.of(15));
+          assertThat(miningParams.getExtraData()).isEqualTo(Bytes.fromHexString(extraDataString));
         },
         "--miner-enabled",
         "--miner-coinbase=" + requestedCoinbase.toString(),
@@ -265,8 +266,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   public void targetGasLimitIsEnabledWhenSpecified() {
     internalTestSuccess(
         miningParams ->
-            assertThat(miningParams.getDynamic().getTargetGasLimit().getAsLong())
-                .isEqualTo(10_000_000L),
+            assertThat(miningParams.getTargetGasLimit().getAsLong()).isEqualTo(10_000_000L),
         "--target-gas-limit=10000000");
   }
 
@@ -311,22 +311,22 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
 
   @Override
   protected MiningParameters createDefaultDomainObject() {
-    return ImmutableMiningParameters.builder().build();
+    return MiningParameters.newDefault();
   }
 
   @Override
   protected MiningParameters createCustomizedDomainObject() {
     return ImmutableMiningParameters.builder()
+        .updatableInitValues(
+            UpdatableInitValues.builder()
+                .isMiningEnabled(true)
+                .extraData(Bytes.fromHexString("0xabc321"))
+                .minBlockOccupancyRatio(0.5)
+                .build())
         .coinbase(Address.ZERO)
-        .isMiningEnabled(true)
         .isStratumMiningEnabled(true)
-        .unstable(
-            ImmutableMiningParameters.Unstable.builder().posBlockCreationMaxTime(1000).build())
-        .build()
-        .getDynamic()
-        .setExtraData(Bytes.fromHexString("0xabc321"))
-        .setMinBlockOccupancyRatio(0.5)
-        .toParameters();
+        .unstable(Unstable.builder().posBlockCreationMaxTime(1000).build())
+        .build();
   }
 
   @Override

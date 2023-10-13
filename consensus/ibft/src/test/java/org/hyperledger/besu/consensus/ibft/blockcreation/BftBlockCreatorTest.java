@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -153,20 +154,20 @@ public class BftBlockCreatorTest {
 
     final MiningParameters miningParameters =
         ImmutableMiningParameters.builder()
+            .updatableInitValues(
+                UpdatableInitValues.builder()
+                    .extraData(
+                        bftExtraDataEncoder.encode(
+                            new BftExtraData(
+                                Bytes.wrap(new byte[32]),
+                                Collections.emptyList(),
+                                Optional.empty(),
+                                0,
+                                initialValidatorList)))
+                    .minTransactionGasPrice(Wei.ZERO)
+                    .build())
             .coinbase(AddressHelpers.ofValue(1))
-            .build()
-            .getDynamic()
-            .setExtraData(
-                bftExtraDataEncoder.encode(
-                    new BftExtraData(
-                        Bytes.wrap(new byte[32]),
-                        Collections.emptyList(),
-                        Optional.empty(),
-                        0,
-                        initialValidatorList)))
-            .setMinTransactionGasPrice(Wei.ZERO)
-            .setMinBlockOccupancyRatio(0.8)
-            .toParameters();
+            .build();
 
     final BftBlockCreator blockCreator =
         new BftBlockCreator(

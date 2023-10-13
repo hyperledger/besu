@@ -22,7 +22,6 @@ import static org.hyperledger.besu.pki.keystore.KeyStoreWrapper.KEYSTORE_TYPE_PK
 
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
@@ -57,13 +56,7 @@ public class BesuNodeConfigurationBuilder {
   private String name;
   private Optional<Path> dataPath = Optional.empty();
   private MiningParameters miningParameters =
-      ImmutableMiningParameters.builder()
-          .isMiningEnabled(false)
-          .coinbase(AddressHelpers.ofValue(1))
-          .build()
-          .getDynamic()
-          .setMinTransactionGasPrice(Wei.of(1000))
-          .toParameters();
+      ImmutableMiningParameters.builder().coinbase(AddressHelpers.ofValue(1)).build();
 
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
   private JsonRpcConfiguration engineRpcConfiguration = JsonRpcConfiguration.createEngineDefault();
@@ -117,14 +110,7 @@ public class BesuNodeConfigurationBuilder {
   }
 
   public BesuNodeConfigurationBuilder miningEnabled(final boolean enabled) {
-    this.miningParameters =
-        ImmutableMiningParameters.builder()
-            .isMiningEnabled(enabled)
-            .coinbase(AddressHelpers.ofValue(1))
-            .build()
-            .getDynamic()
-            .setMinTransactionGasPrice(Wei.of(1000))
-            .toParameters();
+    this.miningParameters = miningParameters.setMiningEnabled(enabled);
     this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER.name());
     return this;
   }

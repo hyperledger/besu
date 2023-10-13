@@ -151,10 +151,11 @@ public abstract class AbstractBlockTransactionSelectorTest {
     when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
     miningParameters =
         ImmutableMiningParameters.builder()
-            .build()
-            .getDynamic()
-            .setMinTransactionGasPrice(Wei.ONE)
-            .toParameters();
+            .updatableInitValues(
+                ImmutableMiningParameters.UpdatableInitValues.builder()
+                    .minTransactionGasPrice(Wei.ONE)
+                    .build())
+            .build();
 
     transactionPool = createTransactionPool();
   }
@@ -684,10 +685,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
     createBlockSelectorWithTxSelPlugin(
             transactionProcessor,
             createBlock(300_000),
-            Wei.ZERO,
             AddressHelpers.ofValue(1),
             Wei.ZERO,
-            MIN_OCCUPANCY_80_PERCENT,
             transactionSelectorFactory)
         .buildTransactionListForBlock();
 
@@ -750,18 +749,14 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
             miningParameters
-                .getDynamic()
                 .setMinTransactionGasPrice(minGasPrice)
-                .setMinBlockOccupancyRatio(minBlockOccupancyRatio)
-                .toParameters(),
+                .setMinBlockOccupancyRatio(minBlockOccupancyRatio),
             transactionProcessor,
             blockchain,
             worldState,
             transactionPool,
             blockHeader,
             this::createReceipt,
-            //            minGasPrice,
-            //            minBlockOccupancyRatio,
             this::isCancelled,
             miningBeneficiary,
             blobGasPrice,

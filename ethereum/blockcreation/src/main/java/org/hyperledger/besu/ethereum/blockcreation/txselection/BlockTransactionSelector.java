@@ -169,9 +169,7 @@ public class BlockTransactionSelector {
             () ->
                 blockSelectionContext
                     .transactionPool()
-                    .selectTransactions(
-                          this::evaluateTransaction
-                        ));
+                    .selectTransactions(this::evaluateTransaction));
 
     try {
       txSelection.get(5000, TimeUnit.MILLISECONDS);
@@ -236,11 +234,10 @@ public class BlockTransactionSelector {
       if (!isTimeout.get()) {
         return handleTransactionSelected(pendingTransaction, processingResult, worldStateUpdater);
       } else {
-        return handleTransactionNotSelected(pendingTransaction, TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT);
+        return handleTransactionNotSelected(
+            pendingTransaction, TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT);
       }
     }
-
-
   }
 
   /**

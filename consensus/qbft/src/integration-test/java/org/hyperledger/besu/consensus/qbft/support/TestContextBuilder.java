@@ -367,13 +367,14 @@ public class TestContextBuilder {
 
     final MiningParameters miningParams =
         ImmutableMiningParameters.builder()
-            .isMiningEnabled(true)
+            .updatableInitValues(
+                ImmutableMiningParameters.UpdatableInitValues.builder()
+                    .isMiningEnabled(true)
+                    .minTransactionGasPrice(Wei.ZERO)
+                    .extraData(Bytes.wrap("Qbft Int tests".getBytes(UTF_8)))
+                    .build())
             .coinbase(AddressHelpers.ofValue(1))
-            .build()
-            .getDynamic()
-            .setMinTransactionGasPrice(Wei.ZERO)
-            .setExtraData(Bytes.wrap("Qbft Int tests".getBytes(UTF_8)))
-            .toParameters();
+            .build();
 
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     final Map<String, Object> qbftConfigValues =

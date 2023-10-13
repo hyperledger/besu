@@ -24,7 +24,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.IncrementingNonceGenerator;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -181,25 +180,29 @@ public class RetestethContext {
             ? HeaderValidationMode.LIGHT
             : HeaderValidationMode.FULL;
 
-    final Iterable<Long> nonceGenerator = new IncrementingNonceGenerator(0);
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder()
+            .unstable(
+                ImmutableMiningParameters.Unstable.builder()
+                    .powJobTimeToLive(1000)
+                    .maxOmmerDepth(8)
+                    .build())
+            .build();
+    miningParameters.setMinTransactionGasPrice(Wei.ZERO);
     poWSolver =
         ("NoProof".equals(sealengine) || "NoReward".equals(sealEngine))
             ? new PoWSolver(
-                nonceGenerator,
+                miningParameters,
                 NO_WORK_HASHER,
                 false,
                 Subscribers.none(),
-                new EpochCalculator.DefaultEpochCalculator(),
-                1000,
-                8)
+                new EpochCalculator.DefaultEpochCalculator())
             : new PoWSolver(
-                nonceGenerator,
+                miningParameters,
                 PoWHasher.ETHASH_LIGHT,
                 false,
                 Subscribers.none(),
-                new EpochCalculator.DefaultEpochCalculator(),
-                1000,
-                8);
+                new EpochCalculator.DefaultEpochCalculator());
 
     blockReplay = new BlockReplay(protocolSchedule, blockchainQueries.getBlockchain());
 
@@ -231,9 +234,6 @@ public class RetestethContext {
         ImmutableTransactionPoolConfiguration.builder()
             .txPoolLimitByAccountPercentage(Fraction.fromFloat(0.004f))
             .build();
-
-    final MiningParameters miningParameters = ImmutableMiningParameters.builder().build();
-    miningParameters.getDynamic().setMinTransactionGasPrice(Wei.ZERO);
 
     transactionPool =
         TransactionPoolFactory.createTransactionPool(

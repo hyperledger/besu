@@ -34,7 +34,6 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
 
   protected volatile Optional<Address> coinbase;
   protected boolean stratumMiningEnabled;
-  protected final Iterable<Long> nonceGenerator;
   protected final EpochCalculator epochCalculator;
 
   public PoWMinerExecutor(
@@ -43,11 +42,12 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
       final TransactionPool transactionPool,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
-      final EpochCalculator epochCalculator
-) {
+      final EpochCalculator epochCalculator) {
     super(protocolContext, protocolSchedule, transactionPool, miningParams, blockScheduler);
     this.coinbase = miningParams.getCoinbase();
-    this.nonceGenerator = miningParams.nonceGenerator().orElse(new RandomNonceGenerator());
+    if (miningParams.getNonceGenerator().isEmpty()) {
+      miningParams.setNonceGenerator(new RandomNonceGenerator());
+    }
     this.epochCalculator = epochCalculator;
   }
 
@@ -73,8 +73,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
         protocolSchedule.getForNextBlockHeader(parentHeader, 0);
     final PoWSolver solver =
         new PoWSolver(
-                miningParameters,
-            nonceGenerator,
+            miningParameters,
             nextBlockProtocolSpec.getPoWHasher().get(),
             stratumMiningEnabled,
             ethHashObservers,
@@ -84,7 +83,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
             new PoWBlockCreator(
                 miningParameters,
                 coinbase.orElse(Address.ZERO),
-                parent -> miningParameters.getDynamic().getExtraData(),
+                parent -> miningParameters.getExtraData(),
                 transactionPool,
                 protocolContext,
                 protocolSchedule,

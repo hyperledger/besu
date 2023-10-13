@@ -61,7 +61,7 @@ public class NoopMiningCoordinator implements MiningCoordinator {
 
   @Override
   public Wei getMinTransactionGasPrice() {
-    return miningParameters.getDynamic().getMinTransactionGasPrice();
+    return miningParameters.getMinTransactionGasPrice();
   }
 
   @Override

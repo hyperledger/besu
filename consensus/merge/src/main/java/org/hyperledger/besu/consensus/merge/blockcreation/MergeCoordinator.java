@@ -118,10 +118,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     this.backwardSyncContext = backwardSyncContext;
 
-    if (miningParams.getDynamic().getTargetGasLimit().isEmpty()) {
-      miningParams.getDynamic().setTargetGasLimit(30000000L);
+    if (miningParams.getTargetGasLimit().isEmpty()) {
+      miningParams.setTargetGasLimit(30000000L);
     }
-    miningParams.getDynamic().setMinBlockOccupancyRatio(TRY_FILL_BLOCK);
+    miningParams.setMinBlockOccupancyRatio(TRY_FILL_BLOCK);
 
     this.miningParameters = miningParams;
 
@@ -129,7 +129,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         (parentHeader, address) ->
             new MergeBlockCreator(
                 miningParameters,
-                parent -> miningParameters.getDynamic().getExtraData(),
+                parent -> miningParameters.getExtraData(),
                 transactionPool,
                 protocolContext,
                 protocolSchedule,
@@ -163,10 +163,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     this.blockBuilderExecutor = blockBuilderExecutor;
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     this.backwardSyncContext = backwardSyncContext;
-    if (miningParams.getDynamic().getTargetGasLimit().isEmpty()) {
-      miningParams.getDynamic().setTargetGasLimit(30000000L);
+    if (miningParams.getTargetGasLimit().isEmpty()) {
+      miningParams.setTargetGasLimit(30000000L);
     }
-    miningParams.getDynamic().setMinBlockOccupancyRatio(TRY_FILL_BLOCK);
+    miningParams.setMinBlockOccupancyRatio(TRY_FILL_BLOCK);
     this.miningParameters = miningParams;
 
     this.mergeBlockCreatorFactory = mergeBlockCreatorFactory;
@@ -200,12 +200,12 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public Wei getMinTransactionGasPrice() {
-    return miningParameters.getDynamic().getMinTransactionGasPrice();
+    return miningParameters.getMinTransactionGasPrice();
   }
 
   @Override
   public void setExtraData(final Bytes extraData) {
-    this.miningParameters.getDynamic().setExtraData(extraData);
+    this.miningParameters.setExtraData(extraData);
   }
 
   @Override
@@ -229,7 +229,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   @Override
   public void changeTargetGasLimit(final Long newTargetGasLimit) {
     if (AbstractGasLimitSpecification.isValidTargetGasLimit(newTargetGasLimit)) {
-      this.miningParameters.getDynamic().setTargetGasLimit(newTargetGasLimit);
+      this.miningParameters.setTargetGasLimit(newTargetGasLimit);
     } else {
       throw new IllegalArgumentException("Specified target gas limit is invalid");
     }

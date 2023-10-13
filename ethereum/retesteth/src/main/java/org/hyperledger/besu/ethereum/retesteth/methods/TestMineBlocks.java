@@ -62,12 +62,15 @@ public class TestMineBlocks implements JsonRpcMethod {
     final ProtocolContext protocolContext = context.getProtocolContext();
     final MutableBlockchain blockchain = context.getBlockchain();
     final HeaderValidationMode headerValidationMode = context.getHeaderValidationMode();
-    final MiningParameters miningParameters = ImmutableMiningParameters.builder().build();
-    miningParameters
-        .getDynamic()
-        .setTargetGasLimit(blockchain.getChainHeadHeader().getGasLimit())
-        .setMinBlockOccupancyRatio(0.0)
-        .setMinTransactionGasPrice(Wei.ZERO);
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder()
+            .updatableInitValues(
+                ImmutableMiningParameters.UpdatableInitValues.builder()
+                    .targetGasLimit(blockchain.getChainHeadHeader().getGasLimit())
+                    .minBlockOccupancyRatio(0.0)
+                    .minTransactionGasPrice(Wei.ZERO)
+                    .build())
+            .build();
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             miningParameters,

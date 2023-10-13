@@ -94,15 +94,15 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
       final BlockHeader parentHeader);
 
   public void setExtraData(final Bytes extraData) {
-    miningParameters.getDynamic().setExtraData(extraData.copy());
+    miningParameters.setExtraData(extraData.copy());
   }
 
   public void setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
-    miningParameters.getDynamic().setMinTransactionGasPrice(minTransactionGasPrice);
+    miningParameters.setMinTransactionGasPrice(minTransactionGasPrice);
   }
 
   public Wei getMinTransactionGasPrice() {
-    return miningParameters.getDynamic().getMinTransactionGasPrice();
+    return miningParameters.getMinTransactionGasPrice();
   }
 
   public abstract Optional<Address> getCoinbase();

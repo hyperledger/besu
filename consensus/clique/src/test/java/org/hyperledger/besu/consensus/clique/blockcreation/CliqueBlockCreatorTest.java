@@ -136,16 +136,7 @@ public class CliqueBlockCreatorTest {
 
     final Address coinbase = AddressHelpers.ofValue(1);
 
-    final MiningParameters miningParameters =
-        ImmutableMiningParameters.builder()
-            .coinbase(coinbase)
-            .build()
-            .getDynamic()
-            .setExtraData(extraData)
-            .setTargetGasLimit(10_000_000L)
-            .setMinTransactionGasPrice(Wei.ZERO)
-            .setMinBlockOccupancyRatio(0.8)
-            .toParameters();
+    final MiningParameters miningParameters = createMiningParameters(extraData, coinbase);
 
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
@@ -174,16 +165,7 @@ public class CliqueBlockCreatorTest {
     when(voteProvider.getVoteAfterBlock(any(), any()))
         .thenReturn(Optional.of(new ValidatorVote(VoteType.ADD, coinbase, a1)));
 
-    final MiningParameters miningParameters =
-        ImmutableMiningParameters.builder()
-            .coinbase(coinbase)
-            .build()
-            .getDynamic()
-            .setExtraData(extraData)
-            .setTargetGasLimit(10_000_000L)
-            .setMinTransactionGasPrice(Wei.ZERO)
-            .setMinBlockOccupancyRatio(0.8)
-            .toParameters();
+    final MiningParameters miningParameters = createMiningParameters(extraData, coinbase);
 
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
@@ -217,16 +199,7 @@ public class CliqueBlockCreatorTest {
     when(mockVoteProvider.getVoteAfterBlock(any(), any()))
         .thenReturn(Optional.of(new ValidatorVote(VoteType.ADD, coinbase, a1)));
 
-    final MiningParameters miningParameters =
-        ImmutableMiningParameters.builder()
-            .coinbase(coinbase)
-            .build()
-            .getDynamic()
-            .setExtraData(extraData)
-            .setTargetGasLimit(10_000_000L)
-            .setMinTransactionGasPrice(Wei.ZERO)
-            .setMinBlockOccupancyRatio(0.8)
-            .toParameters();
+    final MiningParameters miningParameters = createMiningParameters(extraData, coinbase);
 
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
@@ -268,5 +241,20 @@ public class CliqueBlockCreatorTest {
             null);
     transactionPool.setEnabled();
     return transactionPool;
+  }
+
+  private static MiningParameters createMiningParameters(
+      final Bytes extraData, final Address coinbase) {
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder()
+            .updatableInitValues(
+                ImmutableMiningParameters.UpdatableInitValues.builder()
+                    .extraData(extraData)
+                    .targetGasLimit(10_000_000L)
+                    .minTransactionGasPrice(Wei.ZERO)
+                    .build())
+            .coinbase(coinbase)
+            .build();
+    return miningParameters;
   }
 }

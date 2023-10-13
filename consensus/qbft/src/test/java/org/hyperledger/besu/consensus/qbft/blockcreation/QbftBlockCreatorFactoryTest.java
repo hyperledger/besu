@@ -50,10 +50,11 @@ public class QbftBlockCreatorFactoryTest {
   public void setUp() {
     final MiningParameters miningParams =
         ImmutableMiningParameters.builder()
-            .build()
-            .getDynamic()
-            .setExtraData(Bytes.wrap("Qbft tests".getBytes(UTF_8)))
-            .toParameters();
+            .updatableInitValues(
+                ImmutableMiningParameters.UpdatableInitValues.builder()
+                    .extraData(Bytes.wrap("Qbft tests".getBytes(UTF_8)))
+                    .build())
+            .build();
 
     final MutableQbftConfigOptions qbftConfigOptions =
         new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);

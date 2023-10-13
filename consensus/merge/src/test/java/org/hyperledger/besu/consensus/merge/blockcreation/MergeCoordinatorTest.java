@@ -57,6 +57,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
@@ -744,11 +745,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     miningParameters =
         ImmutableMiningParameters.builder()
-            .build()
-            .getDynamic()
-            .setExtraData(extraData)
-            .toParameters();
-    //            new MiningParameters.Builder().extraData(extraData).build();
+            .updatableInitValues(UpdatableInitValues.builder().extraData(extraData).build())
+            .build();
 
     this.coordinator =
         new MergeCoordinator(

@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -102,16 +103,7 @@ public class CliqueMinerExecutorTest {
   public void extraDataCreatedOnEpochBlocksContainsValidators() {
     final Bytes vanityData = generateRandomVanityData();
 
-    final MiningParameters miningParameters =
-        ImmutableMiningParameters.builder()
-            .isMiningEnabled(false)
-            .coinbase(AddressHelpers.ofValue(1))
-            .build()
-            .getDynamic()
-            .setExtraData(vanityData)
-            .setMinTransactionGasPrice(Wei.ZERO)
-            .setMinBlockOccupancyRatio(0.8)
-            .toParameters();
+    final MiningParameters miningParameters = createMiningParameters(vanityData);
 
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
@@ -145,16 +137,7 @@ public class CliqueMinerExecutorTest {
   public void extraDataForNonEpochBlocksDoesNotContainValidaors() {
     final Bytes vanityData = generateRandomVanityData();
 
-    final MiningParameters miningParameters =
-        ImmutableMiningParameters.builder()
-            .isMiningEnabled(false)
-            .coinbase(AddressHelpers.ofValue(1))
-            .build()
-            .getDynamic()
-            .setExtraData(vanityData)
-            .setMinTransactionGasPrice(Wei.ZERO)
-            .setMinBlockOccupancyRatio(0.8)
-            .toParameters();
+    final MiningParameters miningParameters = createMiningParameters(vanityData);
 
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
@@ -188,16 +171,7 @@ public class CliqueMinerExecutorTest {
     final Bytes initialVanityData = generateRandomVanityData();
     final Bytes modifiedVanityData = generateRandomVanityData();
 
-    final MiningParameters miningParameters =
-        ImmutableMiningParameters.builder()
-            .isMiningEnabled(false)
-            .coinbase(AddressHelpers.ofValue(1))
-            .build()
-            .getDynamic()
-            .setExtraData(initialVanityData)
-            .setMinTransactionGasPrice(Wei.ZERO)
-            .setMinBlockOccupancyRatio(0.8)
-            .toParameters();
+    final MiningParameters miningParameters = createMiningParameters(initialVanityData);
 
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
@@ -258,5 +232,16 @@ public class CliqueMinerExecutorTest {
     final byte[] vanityData = new byte[32];
     random.nextBytes(vanityData);
     return Bytes.wrap(vanityData);
+  }
+
+  private static MiningParameters createMiningParameters(final Bytes vanityData) {
+    return ImmutableMiningParameters.builder()
+        .updatableInitValues(
+            UpdatableInitValues.builder()
+                .extraData(vanityData)
+                .minTransactionGasPrice(Wei.ZERO)
+                .build())
+        .coinbase(AddressHelpers.ofValue(1))
+        .build();
   }
 }

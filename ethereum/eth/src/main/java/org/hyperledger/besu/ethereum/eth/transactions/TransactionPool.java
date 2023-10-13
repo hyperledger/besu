@@ -203,7 +203,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   private boolean isMaxGasPriceBelowConfiguredMinGasPrice(final Transaction transaction) {
     return getMaxGasPrice(transaction)
-        .map(g -> g.lessThan(miningParameters.getDynamic().getMinTransactionGasPrice()))
+        .map(g -> g.lessThan(miningParameters.getMinTransactionGasPrice()))
         .orElse(true);
   }
 
@@ -526,7 +526,7 @@ public class TransactionPool implements BlockAddedObserver {
         LOG.atTrace()
             .setMessage("Discard transaction {} below min gas price {}")
             .addArgument(transaction::toTraceLog)
-            .addArgument(miningParameters.getDynamic()::getMinTransactionGasPrice)
+            .addArgument(miningParameters::getMinTransactionGasPrice)
             .log();
         return TransactionInvalidReason.GAS_PRICE_TOO_LOW;
       }

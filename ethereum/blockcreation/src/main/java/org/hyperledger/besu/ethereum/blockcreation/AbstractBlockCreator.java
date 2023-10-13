@@ -387,10 +387,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             .getGasLimitCalculator()
             .nextGasLimit(
                 parentHeader.getGasLimit(),
-                miningParameters
-                    .getDynamic()
-                    .getTargetGasLimit()
-                    .orElse(parentHeader.getGasLimit()),
+                miningParameters.getTargetGasLimit().orElse(parentHeader.getGasLimit()),
                 newBlockNumber);
 
     final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();

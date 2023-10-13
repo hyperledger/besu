@@ -26,46 +26,201 @@ import org.apache.tuweni.bytes.Bytes;
 import org.immutables.value.Value;
 
 @Value.Immutable
-@Value.Style(allParameters = true)
 @Value.Enclosing
-public interface MiningParameters {
+public abstract class MiningParameters {
+  public static final MiningParameters MINING_DISABLED =
+      ImmutableMiningParameters.builder()
+          .updatableInitValues(
+              ImmutableMiningParameters.UpdatableInitValues.builder()
+                  .isMiningEnabled(false)
+                  .build())
+          .build();
 
-  Optional<Address> getCoinbase();
+  public static final MiningParameters newDefault() {
+    return ImmutableMiningParameters.builder().build();
+  }
+
+  public abstract Optional<Address> getCoinbase();
+
+  public boolean isMiningEnabled() {
+    return getUpdatableRuntimeValues().miningEnabled;
+  }
+
+  public MiningParameters setMiningEnabled(final boolean miningEnabled) {
+    getUpdatableRuntimeValues().miningEnabled = miningEnabled;
+    return this;
+  }
+
+  public Bytes getExtraData() {
+    return getUpdatableRuntimeValues().extraData;
+  }
+
+  public MiningParameters setExtraData(final Bytes extraData) {
+    getUpdatableRuntimeValues().extraData = extraData;
+    return this;
+  }
+
+  public Wei getMinTransactionGasPrice() {
+    return getUpdatableRuntimeValues().minTransactionGasPrice;
+  }
+
+  public MiningParameters setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
+    getUpdatableRuntimeValues().minTransactionGasPrice = minTransactionGasPrice;
+    return this;
+  }
+
+  public OptionalLong getTargetGasLimit() {
+    return getUpdatableRuntimeValues().targetGasLimit;
+  }
+
+  public MiningParameters setTargetGasLimit(final long targetGasLimit) {
+    getUpdatableRuntimeValues().targetGasLimit = OptionalLong.of(targetGasLimit);
+    return this;
+  }
+
+  public double getMinBlockOccupancyRatio() {
+    return getUpdatableRuntimeValues().minBlockOccupancyRatio;
+  }
+
+  public MiningParameters setMinBlockOccupancyRatio(final double minBlockOccupancyRatio) {
+    getUpdatableRuntimeValues().minBlockOccupancyRatio = minBlockOccupancyRatio;
+    return this;
+  }
+
+  public Optional<Iterable<Long>> getNonceGenerator() {
+    return getUpdatableRuntimeValues().nonceGenerator;
+  }
+
+  public MiningParameters setNonceGenerator(final Iterable<Long> nonceGenerator) {
+    getUpdatableRuntimeValues().nonceGenerator = Optional.of(nonceGenerator);
+    return this;
+  }
 
   @Value.Default
-  default boolean isMiningEnabled() {
+  public boolean isStratumMiningEnabled() {
     return false;
   }
 
   @Value.Default
-  default boolean isStratumMiningEnabled() {
-    return false;
-  }
-
-  @Value.Default
-  default String getStratumNetworkInterface() {
+  public String getStratumNetworkInterface() {
     return "0.0.0.0";
   }
 
   @Value.Default
-  default int getStratumPort() {
+  public int getStratumPort() {
     return 8008;
   }
 
-  Optional<Iterable<Long>> nonceGenerator();
-
   @Value.Default
-  default Dynamic getDynamic() {
-    return new Dynamic(this);
+  protected UpdatableRuntimeValues getUpdatableRuntimeValues() {
+    return new UpdatableRuntimeValues(getUpdatableInitValues());
   }
 
   @Value.Default
-  default Unstable getUnstable() {
+  public Unstable getUnstable() {
     return Unstable.DEFAULT;
   }
 
+  @Value.Default
+  public UpdatableInitValues getUpdatableInitValues() {
+    return UpdatableInitValues.DEFAULT;
+  }
+
   @Value.Immutable
-  interface Unstable {
+  public interface UpdatableInitValues {
+    Bytes DEFAULT_EXTRA_DATA = Bytes.EMPTY;
+    Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
+    double DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
+
+    UpdatableInitValues DEFAULT = ImmutableMiningParameters.UpdatableInitValues.builder().build();
+
+    @Value.Default
+    default boolean isMiningEnabled() {
+      return false;
+    }
+
+    @Value.Default
+    default Bytes getExtraData() {
+      return DEFAULT_EXTRA_DATA;
+    }
+
+    @Value.Default
+    default Wei getMinTransactionGasPrice() {
+      return DEFAULT_MIN_TRANSACTION_GAS_PRICE;
+    }
+
+    @Value.Default
+    default double getMinBlockOccupancyRatio() {
+      return DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
+    }
+
+    OptionalLong getTargetGasLimit();
+
+    Optional<Iterable<Long>> nonceGenerator();
+  }
+
+  static class UpdatableRuntimeValues {
+    private volatile boolean miningEnabled;
+    private volatile Bytes extraData;
+    private volatile Wei minTransactionGasPrice;
+    private volatile double minBlockOccupancyRatio;
+    private volatile OptionalLong targetGasLimit;
+    private volatile Optional<Iterable<Long>> nonceGenerator;
+
+    private UpdatableRuntimeValues(final UpdatableInitValues initValues) {
+      miningEnabled = initValues.isMiningEnabled();
+      extraData = initValues.getExtraData();
+      minTransactionGasPrice = initValues.getMinTransactionGasPrice();
+      minBlockOccupancyRatio = initValues.getMinBlockOccupancyRatio();
+      targetGasLimit = initValues.getTargetGasLimit();
+      nonceGenerator = initValues.nonceGenerator();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      final UpdatableRuntimeValues that = (UpdatableRuntimeValues) o;
+      return miningEnabled == that.miningEnabled
+          && Double.compare(minBlockOccupancyRatio, that.minBlockOccupancyRatio) == 0
+          && Objects.equals(extraData, that.extraData)
+          && Objects.equals(minTransactionGasPrice, that.minTransactionGasPrice)
+          && Objects.equals(targetGasLimit, that.targetGasLimit)
+          && Objects.equals(nonceGenerator, that.nonceGenerator);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(
+          miningEnabled,
+          extraData,
+          minTransactionGasPrice,
+          minBlockOccupancyRatio,
+          targetGasLimit,
+          nonceGenerator);
+    }
+
+    @Override
+    public String toString() {
+      return "UpdatableRuntimeValues{"
+          + "miningEnabled="
+          + miningEnabled
+          + ", extraData="
+          + extraData
+          + ", minTransactionGasPrice="
+          + minTransactionGasPrice
+          + ", minBlockOccupancyRatio="
+          + minBlockOccupancyRatio
+          + ", targetGasLimit="
+          + targetGasLimit
+          + ", nonceGenerator="
+          + nonceGenerator
+          + '}';
+    }
+  }
+
+  @Value.Immutable
+  public interface Unstable {
     int DEFAULT_REMOTE_SEALERS_LIMIT = 1000;
     long DEFAULT_REMOTE_SEALERS_TTL = Duration.ofMinutes(10).toMinutes();
     long DEFAULT_POW_JOB_TTL = Duration.ofMinutes(5).toMillis();
@@ -108,93 +263,6 @@ public interface MiningParameters {
     @Value.Default
     default String getStratumExtranonce() {
       return "080c";
-    }
-  }
-
-  class Dynamic {
-    public static final Bytes DEFAULT_EXTRA_DATA = Bytes.EMPTY;
-    public static final Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
-    public static final double DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
-
-    private final MiningParameters miningParameters;
-    private volatile Bytes extraData = DEFAULT_EXTRA_DATA;
-    private volatile Wei minTransactionGasPrice = DEFAULT_MIN_TRANSACTION_GAS_PRICE;
-    private volatile double minBlockOccupancyRatio = DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
-    private volatile OptionalLong targetGasLimit = OptionalLong.empty();
-
-    private Dynamic(final MiningParameters miningParameters) {
-      this.miningParameters = miningParameters;
-    }
-
-    public MiningParameters toParameters() {
-      return miningParameters;
-    }
-
-    public Bytes getExtraData() {
-      return extraData;
-    }
-
-    public Dynamic setExtraData(final Bytes extraData) {
-      this.extraData = extraData;
-      return this;
-    }
-
-    public Wei getMinTransactionGasPrice() {
-      return minTransactionGasPrice;
-    }
-
-    public Dynamic setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
-      this.minTransactionGasPrice = minTransactionGasPrice;
-      return this;
-    }
-
-    public double getMinBlockOccupancyRatio() {
-      return minBlockOccupancyRatio;
-    }
-
-    public Dynamic setMinBlockOccupancyRatio(final double minBlockOccupancyRatio) {
-      this.minBlockOccupancyRatio = minBlockOccupancyRatio;
-      return this;
-    }
-
-    public OptionalLong getTargetGasLimit() {
-      return targetGasLimit;
-    }
-
-    public Dynamic setTargetGasLimit(final long targetGasLimit) {
-      this.targetGasLimit = OptionalLong.of(targetGasLimit);
-      return this;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      final Dynamic dynamic = (Dynamic) o;
-      return Double.compare(minBlockOccupancyRatio, dynamic.minBlockOccupancyRatio) == 0
-          && Objects.equals(extraData, dynamic.extraData)
-          && Objects.equals(minTransactionGasPrice, dynamic.minTransactionGasPrice)
-          && Objects.equals(targetGasLimit, dynamic.targetGasLimit);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(
-          extraData, minTransactionGasPrice, minBlockOccupancyRatio, targetGasLimit);
-    }
-
-    @Override
-    public String toString() {
-      return "Dynamic{"
-          + "extraData="
-          + extraData
-          + ", minTransactionGasPrice="
-          + minTransactionGasPrice
-          + ", minBlockOccupancyRatio="
-          + minBlockOccupancyRatio
-          + ", targetGasLimit="
-          + targetGasLimit
-          + '}';
     }
   }
 }

@@ -84,8 +84,7 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory<QbftConfigOp
       final BftExtraData extraData =
           new BftExtraData(
               ConsensusHelpers.zeroLeftPad(
-                  miningParameters.getDynamic().getExtraData(),
-                  BftExtraDataCodec.EXTRA_VANITY_LENGTH),
+                  miningParameters.getExtraData(), BftExtraDataCodec.EXTRA_VANITY_LENGTH),
               Collections.emptyList(),
               Optional.empty(),
               round,

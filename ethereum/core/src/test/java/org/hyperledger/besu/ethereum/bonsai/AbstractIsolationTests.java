@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
@@ -233,14 +234,15 @@ public abstract class AbstractIsolationTests {
 
       final MiningParameters miningParameters =
           ImmutableMiningParameters.builder()
+              .updatableInitValues(
+                  UpdatableInitValues.builder()
+                      .extraData(Bytes.fromHexString("deadbeef"))
+                      .targetGasLimit(30_000_000L)
+                      .minTransactionGasPrice(Wei.ONE)
+                      .minBlockOccupancyRatio(0d)
+                      .build())
               .coinbase(Address.ZERO)
-              .build()
-              .getDynamic()
-              .setExtraData(Bytes.fromHexString("deadbeef"))
-              .setTargetGasLimit(30_000_000L)
-              .setMinTransactionGasPrice(Wei.ONE)
-              .setMinBlockOccupancyRatio(0d)
-              .toParameters();
+              .build();
 
       return new TestBlockCreator(
           miningParameters,

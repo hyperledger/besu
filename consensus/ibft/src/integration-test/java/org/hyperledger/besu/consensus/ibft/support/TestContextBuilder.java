@@ -78,6 +78,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -306,13 +307,14 @@ public class TestContextBuilder {
 
     final MiningParameters miningParams =
         ImmutableMiningParameters.builder()
-            .isMiningEnabled(true)
+            .updatableInitValues(
+                UpdatableInitValues.builder()
+                    .isMiningEnabled(true)
+                    .minTransactionGasPrice(Wei.ZERO)
+                    .extraData(Bytes.wrap("Ibft Int tests".getBytes(UTF_8)))
+                    .build())
             .coinbase(AddressHelpers.ofValue(1))
-            .build()
-            .getDynamic()
-            .setMinTransactionGasPrice(Wei.ZERO)
-            .setExtraData(Bytes.wrap("Ibft Int tests".getBytes(UTF_8)))
-            .toParameters();
+            .build();
 
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.byzantiumBlock(0);

@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.IncrementingNonceGenerator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.metrics.MetricsService;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -269,13 +270,14 @@ public class BlocksSubCommand implements Runnable {
       final Address coinbase = Address.ZERO;
       final Bytes extraData = Bytes.EMPTY;
       return ImmutableMiningParameters.builder()
+          .updatableInitValues(
+              UpdatableInitValues.builder()
+                  .nonceGenerator(new IncrementingNonceGenerator(0))
+                  .extraData(extraData)
+                  .minTransactionGasPrice(minTransactionGasPrice)
+                  .build())
           .coinbase(coinbase)
-          .nonceGenerator(new IncrementingNonceGenerator(0))
-          .build()
-          .getDynamic()
-          .setExtraData(extraData)
-          .setMinTransactionGasPrice(minTransactionGasPrice)
-          .toParameters();
+          .build();
     }
 
     private void importJsonBlocks(final BesuController controller, final Path path)
@@ -370,7 +372,11 @@ public class BlocksSubCommand implements Runnable {
     }
 
     private BesuController createBesuController() {
-      return parentCommand.parentCommand.buildController();
+      return parentCommand
+          .parentCommand
+          .getControllerBuilder()
+          .miningParameters(MiningParameters.newDefault())
+          .build();
     }
 
     private void exportRlpFormat(final BesuController controller) throws IOException {

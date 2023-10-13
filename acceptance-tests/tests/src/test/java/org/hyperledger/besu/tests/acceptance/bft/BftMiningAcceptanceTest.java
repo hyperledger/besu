@@ -18,6 +18,7 @@ import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
@@ -61,12 +62,13 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
     final BesuNode minerNode = nodeFactory.createNode(besu, "miner1");
     final MiningParameters zeroGasMiningParams =
         ImmutableMiningParameters.builder()
-            .isMiningEnabled(true)
+            .updatableInitValues(
+                UpdatableInitValues.builder()
+                    .isMiningEnabled(true)
+                    .minTransactionGasPrice(Wei.ZERO)
+                    .build())
             .coinbase(AddressHelpers.ofValue(1))
-            .build()
-            .getDynamic()
-            .setMinTransactionGasPrice(Wei.ZERO)
-            .toParameters();
+            .build();
     minerNode.setMiningParameters(zeroGasMiningParams);
 
     cluster.start(minerNode);

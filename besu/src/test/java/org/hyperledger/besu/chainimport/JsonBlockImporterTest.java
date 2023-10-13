@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -422,11 +423,12 @@ public abstract class JsonBlockImporterTest {
         .networkId(BigInteger.valueOf(10))
         .miningParameters(
             ImmutableMiningParameters.builder()
-                .isMiningEnabled(true)
-                .build()
-                .getDynamic()
-                .setMinTransactionGasPrice(Wei.ZERO)
-                .toParameters())
+                .updatableInitValues(
+                    UpdatableInitValues.builder()
+                        .isMiningEnabled(true)
+                        .minTransactionGasPrice(Wei.ZERO)
+                        .build())
+                .build())
         .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())
         .privacyParameters(PrivacyParameters.DEFAULT)

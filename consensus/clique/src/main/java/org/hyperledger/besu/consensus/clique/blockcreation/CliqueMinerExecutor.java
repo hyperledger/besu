@@ -118,7 +118,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
 
     final Bytes vanityDataToInsert =
         ConsensusHelpers.zeroLeftPad(
-            miningParameters.getDynamic().getExtraData(), CliqueExtraData.EXTRA_VANITY_LENGTH);
+            miningParameters.getExtraData(), CliqueExtraData.EXTRA_VANITY_LENGTH);
     // Building ON TOP of canonical head, if the next block is epoch, include validators.
     if (epochManager.isEpochBlock(parentHeader.getNumber() + 1)) {
 

@@ -32,11 +32,10 @@ import org.slf4j.LoggerFactory;
 
 public class PoWSolver {
 
-//  private final int maxOmmerDepth;
   private static final Logger LOG = LoggerFactory.getLogger(PoWSolver.class);
-//  private final long powJobTimeToLive;
 
   private final MiningParameters miningParameters;
+
   public static class PoWSolverJob {
 
     private final PoWSolverInputs inputs;
@@ -78,7 +77,6 @@ public class PoWSolver {
 
   private final long NO_MINING_CONDUCTED = -1;
 
-  private final Iterable<Long> nonceGenerator;
   private final PoWHasher poWHasher;
   private volatile long hashesPerSecond = NO_MINING_CONDUCTED;
   private final Boolean stratumMiningEnabled;
@@ -88,14 +86,12 @@ public class PoWSolver {
   private final ExpiringMap<Bytes, PoWSolverJob> currentJobs = new ExpiringMap<>();
 
   public PoWSolver(
-          final MiningParameters miningParameters,
-      final Iterable<Long> nonceGenerator,
-          final PoWHasher poWHasher,
-          final Boolean stratumMiningEnabled,
-          final Subscribers<PoWObserver> ethHashObservers,
-          final EpochCalculator epochCalculator) {
+      final MiningParameters miningParameters,
+      final PoWHasher poWHasher,
+      final Boolean stratumMiningEnabled,
+      final Subscribers<PoWObserver> ethHashObservers,
+      final EpochCalculator epochCalculator) {
     this.miningParameters = miningParameters;
-    this.nonceGenerator = nonceGenerator;
     this.poWHasher = poWHasher;
     this.stratumMiningEnabled = stratumMiningEnabled;
     this.ethHashObservers = ethHashObservers;
@@ -107,7 +103,9 @@ public class PoWSolver {
       throws InterruptedException, ExecutionException {
     currentJob = Optional.of(job);
     currentJobs.put(
-        job.getInputs().getPrePowHash(), job, System.currentTimeMillis() + miningParameters.getUnstable().getPowJobTimeToLive());
+        job.getInputs().getPrePowHash(),
+        job,
+        System.currentTimeMillis() + miningParameters.getUnstable().getPowJobTimeToLive());
     if (stratumMiningEnabled) {
       LOG.debug(
           "solving with stratum miner for {} observers", ethHashObservers.getSubscriberCount());
@@ -123,7 +121,7 @@ public class PoWSolver {
     final Stopwatch operationTimer = Stopwatch.createStarted();
     final PoWSolverJob job = currentJob.get();
     long hashesExecuted = 0;
-    for (final Long n : nonceGenerator) {
+    for (final Long n : miningParameters.getNonceGenerator().get()) {
 
       if (job.isDone()) {
         return;
@@ -213,6 +211,6 @@ public class PoWSolver {
   }
 
   public Iterable<Long> getNonceGenerator() {
-    return nonceGenerator;
+    return miningParameters.getNonceGenerator().get();
   }
 }

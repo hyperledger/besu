@@ -276,9 +276,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.FAST);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.empty());
-    assertThat(miningArg.getValue().getDynamic().getMinTransactionGasPrice())
-        .isEqualTo(Wei.of(1000));
-    assertThat(miningArg.getValue().getDynamic().getExtraData()).isEqualTo(Bytes.EMPTY);
+    assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
+    assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.EMPTY);
     assertThat(ethNetworkArg.getValue().getNetworkId()).isEqualTo(1);
     assertThat(ethNetworkArg.getValue().getBootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
   }
@@ -903,14 +902,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder)
         .miningParameters(
             ImmutableMiningParameters.builder()
-                .isMiningEnabled(false)
                 .coinbase(Address.fromHexString(expectedCoinbase))
-                .build()
-                .getDynamic()
-                .setMinTransactionGasPrice(
-                    MiningParameters.Dynamic.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
-                .setExtraData(MiningParameters.Dynamic.DEFAULT_EXTRA_DATA)
-                .toParameters());
+                .build());
   }
 
   @Test
@@ -923,14 +916,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder)
         .miningParameters(
             ImmutableMiningParameters.builder()
-                .isMiningEnabled(false)
                 .coinbase(Address.fromHexString(expectedCoinbase))
-                .build()
-                .getDynamic()
-                .setMinTransactionGasPrice(
-                    MiningParameters.Dynamic.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
-                .setExtraData(MiningParameters.Dynamic.DEFAULT_EXTRA_DATA)
-                .toParameters());
+                .build());
   }
 
   @Test

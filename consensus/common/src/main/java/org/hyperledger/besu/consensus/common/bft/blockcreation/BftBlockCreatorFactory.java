@@ -118,7 +118,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
    */
   public void setExtraData(final Bytes extraData) {
 
-    miningParameters.getDynamic().setExtraData(extraData.copy());
+    miningParameters.setExtraData(extraData.copy());
   }
 
   /**
@@ -127,7 +127,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
    * @param minTransactionGasPrice the min transaction gas price
    */
   public void setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
-    miningParameters.getDynamic().setMinTransactionGasPrice(minTransactionGasPrice);
+    miningParameters.setMinTransactionGasPrice(minTransactionGasPrice);
   }
 
   /**
@@ -136,7 +136,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
    * @return the min transaction gas price
    */
   public Wei getMinTransactionGasPrice() {
-    return miningParameters.getDynamic().getMinTransactionGasPrice();
+    return miningParameters.getMinTransactionGasPrice();
   }
 
   /**
@@ -161,8 +161,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
     final BftExtraData extraData =
         new BftExtraData(
             ConsensusHelpers.zeroLeftPad(
-                miningParameters.getDynamic().getExtraData(),
-                BftExtraDataCodec.EXTRA_VANITY_LENGTH),
+                miningParameters.getExtraData(), BftExtraDataCodec.EXTRA_VANITY_LENGTH),
             Collections.emptyList(),
             toVote(proposal),
             round,
@@ -178,7 +177,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
    */
   public void changeTargetGasLimit(final Long newTargetGasLimit) {
     if (AbstractGasLimitSpecification.isValidTargetGasLimit(newTargetGasLimit)) {
-      miningParameters.getDynamic().setTargetGasLimit(newTargetGasLimit);
+      miningParameters.setTargetGasLimit(newTargetGasLimit);
     } else {
       throw new UnsupportedOperationException("Specified target gas limit is invalid");
     }

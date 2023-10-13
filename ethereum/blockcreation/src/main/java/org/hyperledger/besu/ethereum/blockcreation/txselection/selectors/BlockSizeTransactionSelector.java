@@ -118,13 +118,13 @@ public class BlockSizeTransactionSelector extends AbstractTransactionSelector {
 
     LOG.trace(
         "Min block occupancy ratio {}, gas used {}, available {}, remaining {}, used/available {}",
-        context.miningParameters().getDynamic().getMinBlockOccupancyRatio(),
+        context.miningParameters().getMinBlockOccupancyRatio(),
         gasUsed,
         gasAvailable,
         gasRemaining,
         occupancyRatio);
 
-    return occupancyRatio >= context.miningParameters().getDynamic().getMinBlockOccupancyRatio();
+    return occupancyRatio >= context.miningParameters().getMinBlockOccupancyRatio();
   }
 
   /**
