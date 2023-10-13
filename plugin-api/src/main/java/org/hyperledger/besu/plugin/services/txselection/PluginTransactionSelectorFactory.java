@@ -19,12 +19,12 @@ import org.hyperledger.besu.plugin.Unstable;
 
 /** Interface for a factory that creates transaction selectors */
 @Unstable
-public interface TransactionSelectorFactory {
+public interface PluginTransactionSelectorFactory {
 
   /**
    * Create a transaction selector
    *
    * @return the transaction selector
    */
-  TransactionSelector create();
+  PluginTransactionSelector create();
 }

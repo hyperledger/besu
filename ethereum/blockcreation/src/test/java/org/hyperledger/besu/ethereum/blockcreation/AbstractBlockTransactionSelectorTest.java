@@ -19,6 +19,9 @@ import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -33,6 +36,7 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AllAcceptingTransactionSelector;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -68,8 +72,8 @@ import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelector;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
@@ -85,6 +89,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -558,9 +563,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final Transaction notSelectedInvalid = createTransaction(2, Wei.of(10), 21_000);
     ensureTransactionIsValid(notSelectedInvalid, 21_000, 0);
 
-    final TransactionSelectorFactory transactionSelectorFactory =
+    final PluginTransactionSelectorFactory transactionSelectorFactory =
         () ->
-            new TransactionSelector() {
+            new PluginTransactionSelector() {
               @Override
               public TransactionSelectionResult evaluateTransactionPreProcessing(
                   final PendingTransaction pendingTransaction) {
@@ -620,9 +625,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final Transaction selected3 = createTransaction(3, Wei.of(10), 21_000);
     ensureTransactionIsValid(selected3, maxGasUsedByTransaction, 0);
 
-    final TransactionSelectorFactory transactionSelectorFactory =
+    final PluginTransactionSelectorFactory transactionSelectorFactory =
         () ->
-            new TransactionSelector() {
+            new PluginTransactionSelector() {
               @Override
               public TransactionSelectionResult evaluateTransactionPreProcessing(
                   final PendingTransaction pendingTransaction) {
@@ -659,6 +664,49 @@ public abstract class AbstractBlockTransactionSelectorTest {
     assertThat(transactionSelectionResults.getSelectedTransactions()).contains(selected, selected3);
     assertThat(transactionSelectionResults.getNotSelectedTransactions())
         .containsOnly(entry(notSelected, TransactionSelectionResult.invalidTransient("Invalid")));
+  }
+
+  @Test
+  public void transactionSelectionPluginShouldBeNotifiedWhenTransactionSelectionCompletes() {
+    final PluginTransactionSelectorFactory transactionSelectorFactory =
+        mock(PluginTransactionSelectorFactory.class);
+    PluginTransactionSelector transactionSelector = spy(AllAcceptingTransactionSelector.INSTANCE);
+    when(transactionSelectorFactory.create()).thenReturn(transactionSelector);
+
+    final Transaction transaction = createTransaction(0, Wei.of(10), 21_000);
+    ensureTransactionIsValid(transaction, 21_000, 0);
+
+    final TransactionInvalidReason invalidReason = TransactionInvalidReason.PLUGIN_TX_VALIDATOR;
+    final Transaction invalidTransaction = createTransaction(1, Wei.of(10), 21_000);
+    ensureTransactionIsInvalid(invalidTransaction, TransactionInvalidReason.PLUGIN_TX_VALIDATOR);
+    transactionPool.addRemoteTransactions(List.of(transaction, invalidTransaction));
+
+    createBlockSelectorWithTxSelPlugin(
+            transactionProcessor,
+            createBlock(300_000),
+            Wei.ZERO,
+            AddressHelpers.ofValue(1),
+            Wei.ZERO,
+            MIN_OCCUPANCY_80_PERCENT,
+            transactionSelectorFactory)
+        .buildTransactionListForBlock();
+
+    ArgumentCaptor<PendingTransaction> argumentCaptor =
+        ArgumentCaptor.forClass(PendingTransaction.class);
+
+    // selected transaction must be notified to the selector
+    verify(transactionSelector)
+        .onTransactionSelected(argumentCaptor.capture(), any(TransactionProcessingResult.class));
+    PendingTransaction selected = argumentCaptor.getValue();
+    assertThat(selected.getTransaction()).isEqualTo(transaction);
+
+    // unselected transaction must be notified to the selector with correct reason
+    verify(transactionSelector)
+        .onTransactionNotSelected(
+            argumentCaptor.capture(),
+            eq(TransactionSelectionResult.invalid(invalidReason.toString())));
+    PendingTransaction rejectedTransaction = argumentCaptor.getValue();
+    assertThat(rejectedTransaction.getTransaction()).isEqualTo(invalidTransaction);
   }
 
   @Test
@@ -730,7 +778,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final ProcessableBlockHeader blockHeader,
       final Address miningBeneficiary,
       final Wei blobGasPrice,
-      final TransactionSelectorFactory transactionSelectorFactory) {
+      final PluginTransactionSelectorFactory transactionSelectorFactory) {
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
             miningParameters,
@@ -810,7 +858,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected void ensureTransactionIsValid(
       final Transaction tx, final long gasUsedByTransaction, final long gasRemaining) {
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), eq(tx), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.successful(
                 new ArrayList<>(),
@@ -823,7 +871,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected void ensureTransactionIsInvalid(
       final Transaction tx, final TransactionInvalidReason invalidReason) {
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), eq(tx), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
         .thenReturn(TransactionProcessingResult.invalid(ValidationResult.invalid(invalidReason)));
   }
 
