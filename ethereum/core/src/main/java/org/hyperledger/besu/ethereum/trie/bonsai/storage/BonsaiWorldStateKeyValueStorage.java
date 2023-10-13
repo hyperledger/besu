@@ -237,6 +237,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
         .orElse(false);
   }
 
+  public KeyValueStorage getTrieLogStorage() {
+    return trieLogStorage;
+  }
+
   public void upgradeToFullFlatDbMode() {
     flatDbStrategyProvider.upgradeToFullFlatDbMode(composedWorldStateStorage);
   }

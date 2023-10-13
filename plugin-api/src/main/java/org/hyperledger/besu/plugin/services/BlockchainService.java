@@ -53,4 +53,8 @@ public interface BlockchainService extends BesuService {
    * @return base fee of the next block or empty if the fee market does not support base fee
    */
   Optional<Wei> getNextBlockBaseFee();
+
+  Optional<Hash> getSafeBlock();
+
+  Optional<Hash> getFinalizedBlock();
 }

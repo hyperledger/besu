@@ -18,6 +18,7 @@ package org.hyperledger.besu.services;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
@@ -36,9 +37,7 @@ public class BlockchainServiceImpl implements BlockchainService {
 
   private ProtocolContext protocolContext;
   private ProtocolSchedule protocolSchedule;
-
-  /** Create a new instance */
-  public BlockchainServiceImpl() {}
+  private MutableBlockchain blockchain;
 
   /**
    * Instantiates a new Blockchain service.
@@ -49,6 +48,7 @@ public class BlockchainServiceImpl implements BlockchainService {
   public void init(final ProtocolContext protocolContext, final ProtocolSchedule protocolSchedule) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
+    this.blockchain = protocolContext.getBlockchain();
   }
 
   /**
@@ -90,6 +90,16 @@ public class BlockchainServiceImpl implements BlockchainService {
                     chainHeadHeader.getBaseFee().orElse(Wei.ZERO),
                     chainHeadHeader.getGasUsed(),
                     feeMarket.targetGasUsed(chainHeadHeader)));
+  }
+
+  @Override
+  public Optional<Hash> getSafeBlock() {
+    return blockchain.getSafeBlock();
+  }
+
+  @Override
+  public Optional<Hash> getFinalizedBlock() {
+    return blockchain.getFinalized();
   }
 
   private static BlockContext blockContext(

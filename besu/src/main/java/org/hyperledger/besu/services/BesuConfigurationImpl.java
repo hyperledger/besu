@@ -58,8 +58,8 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   }
 
   public BesuConfigurationImpl withJsonRpcHttpOptions(final JsonRpcHttpOptions rpcHttpOptions) {
-    this.rpcHttpHost = Optional.of(rpcHttpOptions.getRpcHttpHost());
-    this.rpcHttpPort = Optional.of(rpcHttpOptions.getRpcHttpPort());
+    this.rpcHttpHost = Optional.ofNullable(rpcHttpOptions.getRpcHttpHost());
+    this.rpcHttpPort = Optional.ofNullable(rpcHttpOptions.getRpcHttpPort());
     return this;
   }
 

@@ -439,21 +439,30 @@ public class BonsaiWorldState
     Runnable saveTrieLog = () -> {};
 
     try {
-      final Hash newWorldStateRootHash =
-          calculateRootHash(
-              bonsaiWorldStateConfig.isFrozen() ? Optional.empty() : Optional.of(stateUpdater),
-              accumulator);
+      final Hash calculatedRootHash;
+
+      if (blockHeader != null && bonsaiWorldStateConfig.isTrieDisabled()) {
+        calculateRootHash(
+            bonsaiWorldStateConfig.isFrozen() ? Optional.empty() : Optional.of(stateUpdater),
+            accumulator);
+        calculatedRootHash = blockHeader.getStateRoot();
+      } else {
+        calculatedRootHash =
+            calculateRootHash(
+                bonsaiWorldStateConfig.isFrozen() ? Optional.empty() : Optional.of(stateUpdater),
+                accumulator);
+      }
       // if we are persisted with a block header, and the prior state is the parent
       // then persist the TrieLog for that transition.
       // If specified but not a direct descendant simply store the new block hash.
       if (blockHeader != null) {
-        verifyWorldStateRoot(newWorldStateRootHash, blockHeader);
+        verifyWorldStateRoot(calculatedRootHash, blockHeader);
         saveTrieLog =
             () -> {
-              trieLogManager.saveTrieLog(localCopy, newWorldStateRootHash, blockHeader, this);
+              trieLogManager.saveTrieLog(localCopy, calculatedRootHash, blockHeader, this);
               // not save a frozen state in the cache
               if (!bonsaiWorldStateConfig.isFrozen()) {
-                cachedWorldStorageManager.addCachedLayer(blockHeader, newWorldStateRootHash, this);
+                cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);
               }
             };
 
@@ -468,8 +477,8 @@ public class BonsaiWorldState
 
       stateUpdater
           .getWorldStateTransaction()
-          .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, newWorldStateRootHash.toArrayUnsafe());
-      worldStateRootHash = newWorldStateRootHash;
+          .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, calculatedRootHash.toArrayUnsafe());
+      worldStateRootHash = calculatedRootHash;
       success = true;
     } finally {
       if (success) {

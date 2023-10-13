@@ -358,6 +358,10 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     worldStateKeyValueStorage.clearTrie();
   }
 
+  public BonsaiWorldStateKeyValueStorage getWorldStateKeyValueStorage() {
+    return worldStateKeyValueStorage;
+  }
+
   public TrieLogManager getTrieLogManager() {
     return trieLogManager;
   }
