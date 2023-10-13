@@ -155,46 +155,21 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     this.reorgLoggingThreshold = reorgLoggingThreshold;
     this.blockChoiceRule = heaviestChainBlockChoiceRule;
-
     this.numberOfBlocksToCache = numberOfBlocksToCache;
-    blockHeadersCache =
-        Optional.of(numberOfBlocksToCache)
-            .filter(num -> num > 0)
-            .map(
-                numBlocks ->
-                    CacheBuilder.newBuilder()
-                        .recordStats()
-                        .maximumSize(numberOfBlocksToCache)
-                        .build());
-    blockBodiesCache =
-        Optional.of(numberOfBlocksToCache)
-            .filter(num -> num > 0)
-            .map(
-                numBlocks ->
-                    CacheBuilder.newBuilder()
-                        .recordStats()
-                        .maximumSize(numberOfBlocksToCache)
-                        .build());
-    transactionReceiptsCache =
-        Optional.of(numberOfBlocksToCache)
-            .filter(num -> num > 0)
-            .map(
-                numBlocks ->
-                    CacheBuilder.newBuilder()
-                        .recordStats()
-                        .maximumSize(numberOfBlocksToCache)
-                        .build());
-    totalDifficultyCache =
-        Optional.of(numberOfBlocksToCache)
-            .filter(num -> num > 0)
-            .map(
-                numBlocks ->
-                    CacheBuilder.newBuilder()
-                        .recordStats()
-                        .maximumSize(numberOfBlocksToCache)
-                        .build());
 
     if (numberOfBlocksToCache != 0) {
+      blockHeadersCache =
+              Optional.of(
+                      CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
+      blockBodiesCache =
+              Optional.of(
+                      CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
+      transactionReceiptsCache =
+              Optional.of(
+                      CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
+      totalDifficultyCache =
+              Optional.of(
+                      CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
       CacheMetricsCollector cacheMetrics = new CacheMetricsCollector();
       cacheMetrics.addCache("blockHeaders", blockHeadersCache.get());
       cacheMetrics.addCache("blockBodies", blockBodiesCache.get());
@@ -202,6 +177,11 @@ public class DefaultBlockchain implements MutableBlockchain {
       cacheMetrics.addCache("totalDifficulty", totalDifficultyCache.get());
       if (metricsSystem instanceof PrometheusMetricsSystem prometheusMetricsSystem)
         prometheusMetricsSystem.addCollector(BesuMetricCategory.BLOCKCHAIN, () -> cacheMetrics);
+    } else {
+      blockHeadersCache = Optional.empty();
+      blockBodiesCache = Optional.empty();
+      transactionReceiptsCache = Optional.empty();
+      totalDifficultyCache = Optional.empty();
     }
   }
 
