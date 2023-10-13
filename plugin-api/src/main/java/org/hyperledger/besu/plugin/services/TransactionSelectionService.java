@@ -16,7 +16,7 @@
 package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.Unstable;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 
 import java.util.Optional;
 
@@ -29,12 +29,13 @@ public interface TransactionSelectionService extends BesuService {
    *
    * @return the transaction selector factory
    */
-  Optional<TransactionSelectorFactory> get();
+  Optional<PluginTransactionSelectorFactory> get();
 
   /**
    * Registers the transaction selector factory with the service
    *
    * @param transactionSelectorFactory transaction selector factory to be used
    */
-  void registerTransactionSelectorFactory(TransactionSelectorFactory transactionSelectorFactory);
+  void registerTransactionSelectorFactory(
+      PluginTransactionSelectorFactory transactionSelectorFactory);
 }

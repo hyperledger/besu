@@ -14,6 +14,7 @@
  */
 
 
+import groovy.transform.CompileStatic
 import groovy.transform.Memoized
 import net.ltgt.gradle.errorprone.CheckSeverity
 
@@ -134,7 +135,20 @@ allprojects {
     }
   }
 
-  dependencies { errorprone 'com.google.errorprone:error_prone_core' }
+  dependencies {
+    components.all(BouncyCastleCapability)
+    errorprone 'com.google.errorprone:error_prone_core'
+  }
+
+  configurations.all {
+    resolutionStrategy.capabilitiesResolution.withCapability('org.bouncycastle:bcprov-jdk18on') {
+      selectHighestVersion()
+    }
+    resolutionStrategy.capabilitiesResolution.withCapability('org.bouncycastle:bcpkix-jdk18on') {
+      selectHighestVersion()
+    }
+  }
+
 
   apply plugin: 'com.diffplug.spotless'
   spotless {
@@ -997,6 +1011,29 @@ dependencies {
   implementation project(':besu')
   implementation project(':ethereum:evmtool')
   errorprone 'com.google.errorprone:error_prone_core'
+}
+
+@CompileStatic
+class BouncyCastleCapability implements ComponentMetadataRule {
+  void execute(ComponentMetadataContext context) {
+    context.details.with {
+      if (id.group == "org.bouncycastle") {
+        if(id.name == "bcprov-jdk15on") {
+          allVariants {
+            it.withCapabilities {
+              it.addCapability("org.bouncycastle", "bcprov-jdk18on", "0")
+            }
+          }
+        } else if(id.name == "bcpkix-jdk15on") {
+          allVariants {
+            it.withCapabilities {
+              it.addCapability("org.bouncycastle", "bcpkix-jdk18on", "0")
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 distributions {
