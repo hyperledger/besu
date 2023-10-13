@@ -42,7 +42,10 @@ public class DefaultCodeStorageStrategy implements CodeStorageStrategy {
       final Bytes code) {
     final long codeHashCount = getCodeHashCount(transaction, codeHash);
     updateCodeHashCount(transaction, codeHash, codeHashCount + 1);
-    transaction.put(CODE_STORAGE_BY_HASH, codeHash.toArrayUnsafe(), code.toArrayUnsafe());
+
+    if (codeHashCount == 0) {
+      transaction.put(CODE_STORAGE_BY_HASH, codeHash.toArrayUnsafe(), code.toArrayUnsafe());
+    }
   }
 
   @Override
