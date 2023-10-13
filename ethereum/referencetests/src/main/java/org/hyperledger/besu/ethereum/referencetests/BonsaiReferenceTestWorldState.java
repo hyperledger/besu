@@ -49,6 +49,8 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   private final BonsaiReferenceTestWorldStateStorage refTestStorage;
   private final BonsaiPreImageProxy preImageProxy;
 
+  private boolean disableRootHashVerification;
+
   protected BonsaiReferenceTestWorldState(
       final BonsaiReferenceTestWorldStateStorage worldStateStorage,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
@@ -87,7 +89,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
    */
   @Override
   protected void verifyWorldStateRoot(final Hash calculatedStateRoot, final BlockHeader header) {
-    if (!header.getStateRoot().equals(Hash.ZERO)) {
+    if (!disableRootHashVerification) {
       super.verifyWorldStateRoot(calculatedStateRoot, header);
     }
   }
@@ -123,6 +125,10 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   @Override
   public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
     return this.refTestStorage.streamAccounts(this, startKeyHash, limit);
+  }
+
+  public void disableRootHashVerification() {
+    disableRootHashVerification = true;
   }
 
   static class NoOpTrieLogManager implements TrieLogManager {
