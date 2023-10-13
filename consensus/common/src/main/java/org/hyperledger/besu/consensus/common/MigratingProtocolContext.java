@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 
 import java.util.Optional;
 
@@ -41,7 +41,7 @@ public class MigratingProtocolContext extends ProtocolContext {
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ForksSchedule<ConsensusContext> consensusContextSchedule,
-      final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
+      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
     super(blockchain, worldStateArchive, null, transactionSelectorFactory);
     this.consensusContextSchedule = consensusContextSchedule;
   }
@@ -61,7 +61,7 @@ public class MigratingProtocolContext extends ProtocolContext {
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory,
-      final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
+      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
     final ConsensusContext consensusContext =
         consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule);
     final MigratingContext migratingContext = consensusContext.as(MigratingContext.class);
