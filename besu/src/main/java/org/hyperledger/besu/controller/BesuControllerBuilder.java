@@ -188,6 +188,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   private PluginTransactionValidatorFactory pluginTransactionValidatorFactory;
 
+  private int numberOfBlocksToCache = 0;
+
   /**
    * Provide a BesuComponent which can be used to get other dependencies
    *
@@ -506,6 +508,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
+   * Chain pruning configuration besu controller builder.
+   *
+   * @param numberOfBlocksToCache the number of blocks to cache
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder cacheLastBlocks(final Integer numberOfBlocksToCache) {
+    this.numberOfBlocksToCache = numberOfBlocksToCache;
+    return this;
+  }
+
+  /**
    * sets the networkConfiguration in the builder
    *
    * @param networkingConfiguration the networking config
@@ -592,7 +605,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             blockchainStorage,
             metricsSystem,
             reorgLoggingThreshold,
-            dataDirectory.toString());
+            dataDirectory.toString(),
+            numberOfBlocksToCache);
 
     final CachedMerkleTrieLoader cachedMerkleTrieLoader =
         besuComponent
