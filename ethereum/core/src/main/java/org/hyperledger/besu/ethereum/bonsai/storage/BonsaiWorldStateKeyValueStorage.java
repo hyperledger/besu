@@ -282,6 +282,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         .orElse(false);
   }
 
+  public KeyValueStorage getTrieLogStorage() {
+    return trieLogStorage;
+  }
+
   public void upgradeToFullFlatDbMode() {
     final SegmentedKeyValueStorageTransaction transaction =
         composedWorldStateStorage.startTransaction();

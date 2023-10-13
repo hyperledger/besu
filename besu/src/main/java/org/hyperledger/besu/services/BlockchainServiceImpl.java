@@ -15,7 +15,8 @@
 
 package org.hyperledger.besu.services;
 
-import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.BlockContext;
@@ -29,14 +30,14 @@ import java.util.function.Supplier;
 @Unstable
 public class BlockchainServiceImpl implements BlockchainService {
 
-  private final Blockchain blockchain;
+  private final MutableBlockchain blockchain;
 
   /**
    * Instantiates a new Blockchain service.
    *
    * @param blockchain the blockchain
    */
-  public BlockchainServiceImpl(final Blockchain blockchain) {
+  public BlockchainServiceImpl(final MutableBlockchain blockchain) {
     this.blockchain = blockchain;
   }
 
@@ -56,6 +57,16 @@ public class BlockchainServiceImpl implements BlockchainService {
   @Override
   public BlockHeader getChainHead() {
     return blockchain.getChainHead().getBlockHeader();
+  }
+
+  @Override
+  public Optional<Hash> getSafeBlock() {
+    return blockchain.getSafeBlock();
+  }
+
+  @Override
+  public Optional<Hash> getFinalizedBlock() {
+    return blockchain.getFinalized();
   }
 
   private static BlockContext blockContext(

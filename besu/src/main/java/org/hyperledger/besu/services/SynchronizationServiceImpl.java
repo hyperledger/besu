@@ -1,13 +1,14 @@
 package org.hyperledger.besu.services;
 
+import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -15,10 +16,12 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.sync.SynchronizationService;
-import org.hyperledger.besu.plugin.services.sync.WorldStateConfiguration;
 
 import java.util.Collections;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 @SuppressWarnings({"FieldCanBeLocal", "unused"})
 public class SynchronizationServiceImpl implements SynchronizationService {
@@ -45,8 +48,14 @@ public class SynchronizationServiceImpl implements SynchronizationService {
   }
 
   @Override
-  public BlockHeader getHead() {
-    return protocolContext.getBlockchain().getChainHeadHeader();
+  public void fireNewUnverifiedForkchoiceEvent(
+      final Hash head, final Hash safeBlock, final Hash finalizedBlock) {
+    final MergeContext mergeContext = protocolContext.getConsensusContext(MergeContext.class);
+    if (mergeContext != null) {
+      mergeContext.fireNewUnverifiedForkchoiceEvent(head, safeBlock, finalizedBlock);
+    } else {
+      // TODO merge context not available (display error message)
+    }
   }
 
   @Override
@@ -87,21 +96,21 @@ public class SynchronizationServiceImpl implements SynchronizationService {
   }
 
   @Override
-  public void disableSynchronization() {
-    protocolContext.getSynchronizer().ifPresent(Synchronizer::stop);
-    besuController.setMiningCoordinator(
-        new NoopMiningCoordinator(
-            besuController.getMiningCoordinator().getMinTransactionGasPrice(),
-            besuController.getMiningCoordinator().getCoinbase()));
-  }
-
-  @Override
-  public void setWorldStateConfiguration(final WorldStateConfiguration worldStateConfiguration) {
-    worldStateArchive
-        .getDefaultBonsaiWorldStateConfig()
-        .setTrieDisabled(worldStateConfiguration.isTrieDisabled());
-    if (worldStateConfiguration.isTrieDisabled()) {
-      worldStateArchive.disableTrie();
+  public void disableWorldStateTrie() {
+    // TODO MAYBE FIND A BEST WAY TO DELETE AND DISABLE TRIE
+    worldStateArchive.getDefaultBonsaiWorldStateConfig().setTrieDisabled(true);
+    final BonsaiWorldStateKeyValueStorage worldStateStorage =
+        worldStateArchive.getWorldStateStorage();
+    final Optional<Hash> worldStateBlockHash = worldStateStorage.getWorldStateBlockHash();
+    final Optional<Bytes> worldStateRootHash = worldStateStorage.getWorldStateRootHash();
+    if (worldStateRootHash.isPresent() && worldStateBlockHash.isPresent()) {
+      worldStateStorage.clearTrie();
+      // keep root and block hash in the trie branch
+      final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = worldStateStorage.updater();
+      updater.saveWorldState(
+          worldStateBlockHash.get(), Bytes32.wrap(worldStateRootHash.get()), Bytes.EMPTY);
+      updater.commit();
+      worldStateStorage.upgradeToFullFlatDbMode();
     }
   }
 }
