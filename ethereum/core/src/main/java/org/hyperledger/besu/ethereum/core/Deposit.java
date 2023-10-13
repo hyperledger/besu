@@ -32,19 +32,19 @@ import org.apache.tuweni.units.bigints.UInt64;
 
 public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
 
-  private final BLSPublicKey pubKey;
+  private final BLSPublicKey pubkey;
   private final Bytes32 depositWithdrawalCredentials;
   private final GWei amount;
   private final BLSSignature signature;
   private final UInt64 index;
 
   public Deposit(
-      final BLSPublicKey pubKey,
+      final BLSPublicKey pubkey,
       final Bytes32 depositWithdrawalCredentials,
       final GWei amount,
       final BLSSignature signature,
       final UInt64 index) {
-    this.pubKey = pubKey;
+    this.pubkey = pubkey;
     this.depositWithdrawalCredentials = depositWithdrawalCredentials;
     this.amount = amount;
     this.signature = signature;
@@ -64,8 +64,8 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
   }
 
   @Override
-  public PublicKey getPublicKey() {
-    return pubKey;
+  public PublicKey getPubkey() {
+    return pubkey;
   }
 
   @Override
@@ -92,7 +92,7 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
   public String toString() {
     return "Deposit{"
         + "pubKey="
-        + pubKey
+        + pubkey
         + ", withdrawalCredentials="
         + depositWithdrawalCredentials
         + ", amount="
@@ -109,7 +109,7 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     final Deposit that = (Deposit) o;
-    return Objects.equals(pubKey, that.pubKey)
+    return Objects.equals(pubkey, that.pubkey)
         && Objects.equals(depositWithdrawalCredentials, that.depositWithdrawalCredentials)
         && Objects.equals(amount, that.amount)
         && Objects.equals(signature, that.signature)
@@ -118,6 +118,6 @@ public class Deposit implements org.hyperledger.besu.plugin.data.Deposit {
 
   @Override
   public int hashCode() {
-    return Objects.hash(pubKey, depositWithdrawalCredentials, amount, signature, index);
+    return Objects.hash(pubkey, depositWithdrawalCredentials, amount, signature, index);
   }
 }
