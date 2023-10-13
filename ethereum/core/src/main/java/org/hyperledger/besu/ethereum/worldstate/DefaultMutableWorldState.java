@@ -315,24 +315,14 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
     @Override
     public String toString() {
-      return "AccountState"
-          + "{"
-          + "address="
-          + getAddress()
-          + ", "
-          + "nonce="
-          + getNonce()
-          + ", "
-          + "balance="
-          + getBalance()
-          + ", "
-          + "storageRoot="
-          + getStorageRoot()
-          + ", "
-          + "codeHash="
-          + getCodeHash()
-          + ", "
-          + "}";
+      final StringBuilder builder = new StringBuilder();
+      builder.append("AccountState").append("{");
+      builder.append("address=").append(getAddress()).append(", ");
+      builder.append("nonce=").append(getNonce()).append(", ");
+      builder.append("balance=").append(getBalance()).append(", ");
+      builder.append("storageRoot=").append(getStorageRoot()).append(", ");
+      builder.append("codeHash=").append(getCodeHash()).append(", ");
+      return builder.append("}").toString();
     }
 
     private Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {

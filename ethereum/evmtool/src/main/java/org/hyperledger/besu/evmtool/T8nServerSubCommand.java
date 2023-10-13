@@ -117,13 +117,6 @@ public class T8nServerSubCommand implements Runnable {
 
       ReferenceTestEnv referenceTestEnv =
           objectMapper.convertValue(input.get("env"), ReferenceTestEnv.class);
-      //      Map<String, ReferenceTestWorldState.AccountMock> accounts =
-      //          objectMapper.convertValue(
-      //              input.get("alloc"),
-      //              objectMapper
-      //                  .getTypeFactory()
-      //                  .constructMapType(TreeMap.class, String.class,
-      // ReferenceTestWorldState.AccountMock.class));
       Map<String, ReferenceTestWorldState.AccountMock> accounts =
           objectMapper.convertValue(input.get("alloc"), new TypeReference<>() {});
 
