@@ -242,7 +242,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final MetricsSystem metricsSystem,
       final long reorgLoggingThreshold,
       final String dataDirectory,
-      final int numberOfblocksToCache) {
+      final int numberOfBlocksToCache) {
     checkNotNull(genesisBlock);
     return new DefaultBlockchain(
         Optional.of(genesisBlock),
@@ -250,7 +250,7 @@ public class DefaultBlockchain implements MutableBlockchain {
         metricsSystem,
         reorgLoggingThreshold,
         dataDirectory,
-        numberOfblocksToCache);
+        numberOfBlocksToCache);
   }
 
   public static Blockchain create(
