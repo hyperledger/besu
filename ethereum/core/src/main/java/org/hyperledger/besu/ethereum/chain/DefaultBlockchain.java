@@ -77,12 +77,11 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private Comparator<BlockHeader> blockChoiceRule;
 
-  private int numberBlocksToCache;
-  private Optional<Cache<Hash, BlockHeader>> blockHeadersCache = Optional.empty();
-  private Optional<Cache<Hash, BlockBody>> blockBodiesCache = Optional.empty();
-  private Optional<Cache<Hash, List<TransactionReceipt>>> transactionReceiptsCache =
-      Optional.empty();
-  private Optional<Cache<Hash, Difficulty>> totalDifficultyCache = Optional.empty();
+  private final int numberOfBlocksToCache;
+  private final Optional<Cache<Hash, BlockHeader>> blockHeadersCache;
+  private final Optional<Cache<Hash, BlockBody>> blockBodiesCache;
+  private final Optional<Cache<Hash, List<TransactionReceipt>>> transactionReceiptsCache;
+  private final Optional<Cache<Hash, Difficulty>> totalDifficultyCache;
 
   private DefaultBlockchain(
       final Optional<Block> genesisBlock,
@@ -156,20 +155,46 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     this.reorgLoggingThreshold = reorgLoggingThreshold;
     this.blockChoiceRule = heaviestChainBlockChoiceRule;
+
+    this.numberOfBlocksToCache = numberOfBlocksToCache;
+    blockHeadersCache =
+        Optional.of(numberOfBlocksToCache)
+            .filter(num -> num > 0)
+            .map(
+                numBlocks ->
+                    CacheBuilder.newBuilder()
+                        .recordStats()
+                        .maximumSize(numberOfBlocksToCache)
+                        .build());
+    blockBodiesCache =
+        Optional.of(numberOfBlocksToCache)
+            .filter(num -> num > 0)
+            .map(
+                numBlocks ->
+                    CacheBuilder.newBuilder()
+                        .recordStats()
+                        .maximumSize(numberOfBlocksToCache)
+                        .build());
+    transactionReceiptsCache =
+        Optional.of(numberOfBlocksToCache)
+            .filter(num -> num > 0)
+            .map(
+                numBlocks ->
+                    CacheBuilder.newBuilder()
+                        .recordStats()
+                        .maximumSize(numberOfBlocksToCache)
+                        .build());
+    totalDifficultyCache =
+        Optional.of(numberOfBlocksToCache)
+            .filter(num -> num > 0)
+            .map(
+                numBlocks ->
+                    CacheBuilder.newBuilder()
+                        .recordStats()
+                        .maximumSize(numberOfBlocksToCache)
+                        .build());
+
     if (numberOfBlocksToCache != 0) {
-      this.numberBlocksToCache = numberOfBlocksToCache;
-      blockHeadersCache =
-          Optional.of(
-              CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
-      blockBodiesCache =
-          Optional.of(
-              CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
-      transactionReceiptsCache =
-          Optional.of(
-              CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
-      totalDifficultyCache =
-          Optional.of(
-              CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
       CacheMetricsCollector cacheMetrics = new CacheMetricsCollector();
       cacheMetrics.addCache("blockHeaders", blockHeadersCache.get());
       cacheMetrics.addCache("blockBodies", blockBodiesCache.get());
@@ -360,13 +385,13 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public synchronized void appendBlock(final Block block, final List<TransactionReceipt> receipts) {
-    if (numberBlocksToCache != 0) cacheBlockData(block, receipts);
+    if (numberOfBlocksToCache != 0) cacheBlockData(block, receipts);
     appendBlockHelper(new BlockWithReceipts(block, receipts), false);
   }
 
   @Override
   public synchronized void storeBlock(final Block block, final List<TransactionReceipt> receipts) {
-    if (numberBlocksToCache != 0) cacheBlockData(block, receipts);
+    if (numberOfBlocksToCache != 0) cacheBlockData(block, receipts);
     appendBlockHelper(new BlockWithReceipts(block, receipts), true);
   }
 
