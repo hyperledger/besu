@@ -159,17 +159,17 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     if (numberOfBlocksToCache != 0) {
       blockHeadersCache =
-              Optional.of(
-                      CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
+          Optional.of(
+              CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
       blockBodiesCache =
-              Optional.of(
-                      CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
+          Optional.of(
+              CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
       transactionReceiptsCache =
-              Optional.of(
-                      CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
+          Optional.of(
+              CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
       totalDifficultyCache =
-              Optional.of(
-                      CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
+          Optional.of(
+              CacheBuilder.newBuilder().recordStats().maximumSize(numberOfBlocksToCache).build());
       CacheMetricsCollector cacheMetrics = new CacheMetricsCollector();
       cacheMetrics.addCache("blockHeaders", blockHeadersCache.get());
       cacheMetrics.addCache("blockBodies", blockBodiesCache.get());
