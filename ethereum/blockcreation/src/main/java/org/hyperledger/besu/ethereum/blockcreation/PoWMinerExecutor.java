@@ -36,8 +36,6 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
   protected boolean stratumMiningEnabled;
   protected final Iterable<Long> nonceGenerator;
   protected final EpochCalculator epochCalculator;
-  protected final long powJobTimeToLive;
-  protected final int maxOmmerDepth;
 
   public PoWMinerExecutor(
       final ProtocolContext protocolContext,
@@ -45,15 +43,12 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
       final TransactionPool transactionPool,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
-      final EpochCalculator epochCalculator,
-      final long powJobTimeToLive,
-      final int maxOmmerDepth) {
+      final EpochCalculator epochCalculator
+) {
     super(protocolContext, protocolSchedule, transactionPool, miningParams, blockScheduler);
     this.coinbase = miningParams.getCoinbase();
     this.nonceGenerator = miningParams.nonceGenerator().orElse(new RandomNonceGenerator());
     this.epochCalculator = epochCalculator;
-    this.powJobTimeToLive = powJobTimeToLive;
-    this.maxOmmerDepth = maxOmmerDepth;
   }
 
   @Override
@@ -78,13 +73,12 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
         protocolSchedule.getForNextBlockHeader(parentHeader, 0);
     final PoWSolver solver =
         new PoWSolver(
+                miningParameters,
             nonceGenerator,
             nextBlockProtocolSpec.getPoWHasher().get(),
             stratumMiningEnabled,
             ethHashObservers,
-            epochCalculator,
-            powJobTimeToLive,
-            maxOmmerDepth);
+            epochCalculator);
     final Function<BlockHeader, PoWBlockCreator> blockCreator =
         (header) ->
             new PoWBlockCreator(
