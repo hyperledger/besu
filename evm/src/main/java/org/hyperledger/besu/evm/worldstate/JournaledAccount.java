@@ -278,11 +278,10 @@ public class JournaledAccount implements MutableAccount, Undoable {
 
   @Override
   public UInt256 getOriginalStorageValue(final UInt256 key) {
-    if (storageWasCleared) {
-      return getStorageValue(key);
-    } else {
-      return account.getOriginalStorageValue(key);
-    }
+    // if storage was cleared then it is because it was an empty account, hence zero storage
+    // if we have no backing account, it's a new account, hence zero storage
+    // otherwise ask outside of what we are journaling, journaled change may not be original value
+    return (storageWasCleared || account == null) ? UInt256.ZERO : account.getStorageValue(key);
   }
 
   @Override
