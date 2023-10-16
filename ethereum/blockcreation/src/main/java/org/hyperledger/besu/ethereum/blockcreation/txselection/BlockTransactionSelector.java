@@ -48,6 +48,11 @@ import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelecto
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -87,6 +92,7 @@ public class BlockTransactionSelector {
   private final List<AbstractTransactionSelector> transactionSelectors;
   private final PluginTransactionSelector pluginTransactionSelector;
   private final OperationTracer pluginOperationTracer;
+  private final AtomicBoolean isTimeout = new AtomicBoolean(false);
 
   public BlockTransactionSelector(
       final MiningParameters miningParameters,
@@ -149,12 +155,35 @@ public class BlockTransactionSelector {
         .setMessage("Transaction pool stats {}")
         .addArgument(blockSelectionContext.transactionPool().logStats())
         .log();
-    blockSelectionContext.transactionPool().selectTransactions(this::evaluateTransaction);
+    timeLimitedSelection();
     LOG.atTrace()
         .setMessage("Transaction selection result {}")
         .addArgument(transactionSelectionResults::toTraceLog)
         .log();
     return transactionSelectionResults;
+  }
+
+  private void timeLimitedSelection() {
+    final var txSelection =
+        CompletableFuture.runAsync(
+            () ->
+                blockSelectionContext
+                    .transactionPool()
+                    .selectTransactions(this::evaluateTransaction));
+
+    try {
+      txSelection.get(5000, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException | ExecutionException e) {
+      if (isCancelled.get()) {
+        throw new CancellationException("Cancelled during transaction selection.");
+      }
+      LOG.warn("Error during block transaction selection", e);
+    } catch (TimeoutException e) {
+      synchronized (isTimeout) {
+        isTimeout.set(true);
+      }
+      LOG.warn("Timeout during block transaction selection, interrupting transaction selection", e);
+    }
   }
 
   /**
@@ -201,7 +230,14 @@ public class BlockTransactionSelector {
       return handleTransactionNotSelected(pendingTransaction, postProcessingSelectionResult);
     }
 
-    return handleTransactionSelected(pendingTransaction, processingResult, worldStateUpdater);
+    synchronized (isTimeout) {
+      if (!isTimeout.get()) {
+        return handleTransactionSelected(pendingTransaction, processingResult, worldStateUpdater);
+      } else {
+        return handleTransactionNotSelected(
+            pendingTransaction, TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT);
+      }
+    }
   }
 
   /**
