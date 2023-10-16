@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerSet
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerStart;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerStop;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 
 import java.util.Map;
 
@@ -29,7 +30,8 @@ public class MinerJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final MiningCoordinator miningCoordinator;
 
-  public MinerJsonRpcMethods(final MiningCoordinator miningCoordinator) {
+  public MinerJsonRpcMethods(
+      final MiningParameters miningParameters, final MiningCoordinator miningCoordinator) {
     this.miningCoordinator = miningCoordinator;
   }
 
