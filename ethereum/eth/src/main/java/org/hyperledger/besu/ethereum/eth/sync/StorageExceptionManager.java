@@ -15,16 +15,34 @@
 package org.hyperledger.besu.ethereum.eth.sync;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+
+import java.util.EnumSet;
+import java.util.Optional;
+
 import org.rocksdb.RocksDBException;
 import org.rocksdb.Status;
+
 public final class StorageExceptionManager {
 
-  private static final String rocksdbClassName = "RocksDBException";
-  EnumSet<Status.Code> RETRYABLE_STATUS_CODES =
+  private static final EnumSet<Status.Code> RETRYABLE_STATUS_CODES =
       EnumSet.of(Status.Code.TimedOut, Status.Code.TryAgain, Status.Code.Busy);
 
+  /**
+   * Determines if an operation can be retried based on the error received. This method checks if
+   * the cause of the StorageException is a RocksDBException. If it is, it retrieves the status code
+   * of the RocksDBException and checks if it is contained in the list of retryable {@link
+   * StorageExceptionManager.RETRYABLE_STATUS_CODES} status codes.
+   *
+   * @param e the StorageException to check
+   * @return true if the operation can be retried, false otherwise
+   */
   public static boolean canRetryOnError(final StorageException e) {
-    return e.getMessage().contains(rocksdbClassName)
-        && (e.getMessage().contains(ERR_BUSY) || e.getMessage().contains(ERR_LOCK_TIMED_OUT));
+    return Optional.of(e.getCause())
+        .filter(z -> z instanceof RocksDBException)
+        .map(RocksDBException.class::cast)
+        .map(RocksDBException::getStatus)
+        .map(Status::getCode)
+        .map(RETRYABLE_STATUS_CODES::contains)
+        .orElse(false);
   }
 }

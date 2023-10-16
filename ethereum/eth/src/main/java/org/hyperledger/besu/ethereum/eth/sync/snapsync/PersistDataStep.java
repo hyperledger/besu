@@ -90,7 +90,7 @@ public class PersistDataStep {
       if (canRetryOnError(storageException)) {
         // We reset the task by setting it to null. This way, it is considered as failed by the
         // pipeline, and it will attempt to execute it again later.
-        LOG.info("retry on rocksdb issue " + storageException.getMessage());
+        LOG.info("Retry on rocksdb issue " + storageException.getMessage());
         tasks.forEach(task -> task.getData().clear());
       } else {
         throw storageException;
