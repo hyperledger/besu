@@ -1,3 +1,17 @@
+/*
+ * Copyright Hyperledger Besu Contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
@@ -6,9 +20,9 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -17,14 +31,17 @@ import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.sync.SynchronizationService;
 
-import java.util.Collections;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings({"FieldCanBeLocal", "unused"})
 public class SynchronizationServiceImpl implements SynchronizationService {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SynchronizationServiceImpl.class);
 
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
@@ -81,13 +98,25 @@ public class SynchronizationServiceImpl implements SynchronizationService {
     final org.hyperledger.besu.ethereum.core.BlockBody coreBody =
         (org.hyperledger.besu.ethereum.core.BlockBody) blockBody;
 
-    // move blockchain
-    protocolContext
-        .getBlockchain()
-        .appendBlock(new Block(coreHeader, coreBody), Collections.emptyList());
+    final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
-    final Optional<MutableWorldState> worldState = worldStateArchive.getMutable(coreHeader, true);
-    return worldState.isPresent();
+    if (worldStateArchive.getMutable(coreHeader, true).isPresent()) {
+      if (coreHeader.getParentHash().equals(blockchain.getChainHeadHash())) {
+        LOG.atDebug()
+            .setMessage(
+                "Forwarding chain head to the block {} saved from a previous newPayload invocation")
+            .addArgument(coreHeader::toLogString)
+            .log();
+        return blockchain.forwardToBlock(coreHeader);
+      } else {
+        LOG.atDebug()
+            .setMessage("New head {} is a chain reorg, rewind chain head to it")
+            .addArgument(coreHeader::toLogString)
+            .log();
+        return blockchain.rewindToBlock(coreHeader.getBlockHash());
+      }
+    }
+    return false;
   }
 
   @Override

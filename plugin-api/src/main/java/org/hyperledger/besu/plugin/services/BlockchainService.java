@@ -32,6 +32,8 @@ public interface BlockchainService extends BesuService {
    */
   Optional<BlockContext> getBlockByNumber(final long number);
 
+  void storeBlock(BlockHeader blockHeader, org.hyperledger.besu.plugin.data.BlockBody blockBody);
+
   BlockHeader getChainHead();
 
   Optional<Hash> getSafeBlock();
