@@ -19,8 +19,8 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 public final class StorageExceptionManager {
 
   private static final String rocksdbClassName = "RocksDBException";
-  private static final String ERR_BUSY = "Busy";
-  private static final String ERR_LOCK_TIMED_OUT = "TimedOut(LockTimeout)";
+  EnumSet<Status.Code> RETRYABLE_STATUS_CODES =
+      EnumSet.of(Status.Code.TimedOut, Status.Code.TryAgain, Status.Code.Busy);
 
   public static boolean canRetryOnError(final StorageException e) {
     return e.getMessage().contains(rocksdbClassName)
