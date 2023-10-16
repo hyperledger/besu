@@ -55,7 +55,6 @@ import org.hyperledger.besu.evm.operation.CoinbaseOperation;
 import org.hyperledger.besu.evm.operation.Create2Operation;
 import org.hyperledger.besu.evm.operation.CreateOperation;
 import org.hyperledger.besu.evm.operation.DataCopyOperation;
-import org.hyperledger.besu.evm.operation.DataHashOperation;
 import org.hyperledger.besu.evm.operation.DataLoadNOperation;
 import org.hyperledger.besu.evm.operation.DataLoadOperation;
 import org.hyperledger.besu.evm.operation.DataSizeOperation;
