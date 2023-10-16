@@ -33,7 +33,7 @@ public interface PendingTransaction {
   /**
    * Should this transaction be prioritized?
    *
-   * @return true if it is a transactio with priority
+   * @return true if it is a transaction with priority
    */
   boolean hasPriority();
 
