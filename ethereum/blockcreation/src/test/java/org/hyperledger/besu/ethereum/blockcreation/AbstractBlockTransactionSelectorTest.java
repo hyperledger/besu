@@ -71,8 +71,8 @@ import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelector;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
@@ -557,9 +557,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final Transaction notSelectedInvalid = createTransaction(2, Wei.of(10), 21_000);
     ensureTransactionIsValid(notSelectedInvalid, 21_000, 0);
 
-    final TransactionSelectorFactory transactionSelectorFactory =
+    final PluginTransactionSelectorFactory transactionSelectorFactory =
         () ->
-            new TransactionSelector() {
+            new PluginTransactionSelector() {
               @Override
               public TransactionSelectionResult evaluateTransactionPreProcessing(
                   final PendingTransaction pendingTransaction) {
@@ -621,9 +621,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final Transaction selected3 = createTransaction(3, Wei.of(10), 21_000);
     ensureTransactionIsValid(selected3, maxGasUsedByTransaction, 0);
 
-    final TransactionSelectorFactory transactionSelectorFactory =
+    final PluginTransactionSelectorFactory transactionSelectorFactory =
         () ->
-            new TransactionSelector() {
+            new PluginTransactionSelector() {
               @Override
               public TransactionSelectionResult evaluateTransactionPreProcessing(
                   final PendingTransaction pendingTransaction) {
@@ -666,17 +666,17 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
   @Test
   public void transactionSelectionPluginShouldBeNotifiedWhenTransactionSelectionCompletes() {
-    final TransactionSelectorFactory transactionSelectorFactory =
-        mock(TransactionSelectorFactory.class);
-    TransactionSelector transactionSelector = spy(AllAcceptingTransactionSelector.INSTANCE);
+    final PluginTransactionSelectorFactory transactionSelectorFactory =
+        mock(PluginTransactionSelectorFactory.class);
+    PluginTransactionSelector transactionSelector = spy(AllAcceptingTransactionSelector.INSTANCE);
     when(transactionSelectorFactory.create()).thenReturn(transactionSelector);
 
     final Transaction transaction = createTransaction(0, Wei.of(10), 21_000);
     ensureTransactionIsValid(transaction, 21_000, 0);
 
+    final TransactionInvalidReason invalidReason = TransactionInvalidReason.PLUGIN_TX_VALIDATOR;
     final Transaction invalidTransaction = createTransaction(1, Wei.of(10), 21_000);
-    ensureTransactionIsInvalid(
-        invalidTransaction, TransactionInvalidReason.PLUGIN_TX_VALIDATOR_INVALIDATED);
+    ensureTransactionIsInvalid(invalidTransaction, TransactionInvalidReason.PLUGIN_TX_VALIDATOR);
     transactionPool.addRemoteTransactions(List.of(transaction, invalidTransaction));
 
     createBlockSelectorWithTxSelPlugin(
@@ -692,11 +692,17 @@ public abstract class AbstractBlockTransactionSelectorTest {
     ArgumentCaptor<PendingTransaction> argumentCaptor =
         ArgumentCaptor.forClass(PendingTransaction.class);
 
-    verify(transactionSelector).onTransactionSelected(argumentCaptor.capture());
+    // selected transaction must be notified to the selector
+    verify(transactionSelector)
+        .onTransactionSelected(argumentCaptor.capture(), any(TransactionProcessingResult.class));
     PendingTransaction selected = argumentCaptor.getValue();
     assertThat(selected.getTransaction()).isEqualTo(transaction);
 
-    verify(transactionSelector).onTransactionRejected(argumentCaptor.capture());
+    // unselected transaction must be notified to the selector with correct reason
+    verify(transactionSelector)
+        .onTransactionNotSelected(
+            argumentCaptor.capture(),
+            eq(TransactionSelectionResult.invalid(invalidReason.toString())));
     PendingTransaction rejectedTransaction = argumentCaptor.getValue();
     assertThat(rejectedTransaction.getTransaction()).isEqualTo(invalidTransaction);
   }
@@ -767,7 +773,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final Address miningBeneficiary,
       final Wei blobGasPrice,
       final double minBlockOccupancyRatio,
-      final TransactionSelectorFactory transactionSelectorFactory) {
+      final PluginTransactionSelectorFactory transactionSelectorFactory) {
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
             transactionProcessor,
@@ -848,7 +854,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected void ensureTransactionIsValid(
       final Transaction tx, final long gasUsedByTransaction, final long gasRemaining) {
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), eq(tx), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.successful(
                 new ArrayList<>(),
@@ -861,7 +867,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected void ensureTransactionIsInvalid(
       final Transaction tx, final TransactionInvalidReason invalidReason) {
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), eq(tx), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
         .thenReturn(TransactionProcessingResult.invalid(ValidationResult.invalid(invalidReason)));
   }
 
