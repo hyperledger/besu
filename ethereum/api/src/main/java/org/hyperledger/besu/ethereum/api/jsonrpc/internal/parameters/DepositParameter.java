@@ -30,7 +30,7 @@ import org.apache.tuweni.units.bigints.UInt64;
 
 public class DepositParameter {
 
-  private final String publicKey;
+  private final String pubkey;
 
   private final String withdrawalCredentials;
   private final String amount;
@@ -40,12 +40,12 @@ public class DepositParameter {
 
   @JsonCreator
   public DepositParameter(
-      @JsonProperty("pubkey") final String pubKey,
+      @JsonProperty("pubkey") final String pubkey,
       @JsonProperty("withdrawalCredentials") final String withdrawalCredentials,
       @JsonProperty("amount") final String amount,
       @JsonProperty("signature") final String signature,
       @JsonProperty("index") final String index) {
-    this.publicKey = pubKey;
+    this.pubkey = pubkey;
     this.withdrawalCredentials = withdrawalCredentials;
     this.amount = amount;
     this.signature = signature;
@@ -54,7 +54,7 @@ public class DepositParameter {
 
   public static DepositParameter fromDeposit(final Deposit deposit) {
     return new DepositParameter(
-        deposit.getPublicKey().toString(),
+        deposit.getPubkey().toString(),
         deposit.getWithdrawalCredentials().toString(),
         deposit.getAmount().toShortHexString(),
         deposit.getSignature().toString(),
@@ -63,7 +63,7 @@ public class DepositParameter {
 
   public Deposit toDeposit() {
     return new Deposit(
-        BLSPublicKey.fromHexString(publicKey),
+        BLSPublicKey.fromHexString(pubkey),
         Bytes32.fromHexString(withdrawalCredentials),
         GWei.fromHexString(amount),
         BLSSignature.fromHexString(signature),
@@ -72,7 +72,7 @@ public class DepositParameter {
 
   public JsonObject asJsonObject() {
     return new JsonObject()
-        .put("pubKey", publicKey)
+        .put("pubkey", pubkey)
         .put("withdrawalCredentials", withdrawalCredentials)
         .put("amount", amount)
         .put("signature", signature)
@@ -80,8 +80,8 @@ public class DepositParameter {
   }
 
   @JsonGetter
-  public String getPublicKey() {
-    return publicKey;
+  public String getPubkey() {
+    return pubkey;
   }
 
   @JsonGetter
@@ -109,7 +109,7 @@ public class DepositParameter {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     final DepositParameter that = (DepositParameter) o;
-    return Objects.equals(publicKey, that.publicKey)
+    return Objects.equals(pubkey, that.pubkey)
         && Objects.equals(withdrawalCredentials, that.withdrawalCredentials)
         && Objects.equals(amount, that.amount)
         && Objects.equals(signature, that.signature)
@@ -118,14 +118,14 @@ public class DepositParameter {
 
   @Override
   public int hashCode() {
-    return Objects.hash(publicKey, withdrawalCredentials, amount, signature, index);
+    return Objects.hash(pubkey, withdrawalCredentials, amount, signature, index);
   }
 
   @Override
   public String toString() {
     return "DepositParameter{"
         + "pubKey='"
-        + publicKey
+        + pubkey
         + '\''
         + ", withdrawalCredentials='"
         + withdrawalCredentials
