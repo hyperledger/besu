@@ -15,7 +15,8 @@
 package org.hyperledger.besu.ethereum.eth.sync;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-
+import org.rocksdb.RocksDBException;
+import org.rocksdb.Status;
 public final class StorageExceptionManager {
 
   private static final String rocksdbClassName = "RocksDBException";
