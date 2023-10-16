@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
@@ -55,7 +56,8 @@ class MergeBlockCreator extends AbstractBlockCreator {
       final ProtocolSchedule protocolSchedule,
       final Address miningBeneficiary,
       final BlockHeader parentHeader,
-      final Optional<Address> depositContractAddress) {
+      final Optional<Address> depositContractAddress,
+      final EthScheduler ethScheduler) {
     super(
         miningParameters,
         miningBeneficiary,
@@ -65,7 +67,8 @@ class MergeBlockCreator extends AbstractBlockCreator {
         protocolContext,
         protocolSchedule,
         parentHeader,
-        depositContractAddress);
+        depositContractAddress,
+        ethScheduler);
   }
 
   /**

@@ -58,6 +58,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -76,6 +77,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.math.BigInteger;
 import java.time.Clock;
@@ -96,6 +98,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 abstract class AbstractBlockCreatorTest {
   private static final Optional<Address> EMPTY_DEPOSIT_CONTRACT_ADDRESS = Optional.empty();
   @Mock private WithdrawalsProcessor withdrawalsProcessor;
+  protected EthScheduler ethScheduler = new DeterministicEthScheduler();
 
   @Test
   void findDepositsFromReceipts() {
@@ -405,7 +408,8 @@ abstract class AbstractBlockCreatorTest {
         executionContextTestFixture.getProtocolContext(),
         executionContextTestFixture.getProtocolSchedule(),
         blockchain.getChainHeadHeader(),
-        depositContractAddress);
+        depositContractAddress,
+        ethScheduler);
   }
 
   static class TestBlockCreator extends AbstractBlockCreator {
@@ -419,7 +423,8 @@ abstract class AbstractBlockCreatorTest {
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
         final BlockHeader parentHeader,
-        final Optional<Address> depositContractAddress) {
+        final Optional<Address> depositContractAddress,
+        final EthScheduler ethScheduler) {
       super(
           miningParameters,
           coinbase,
@@ -429,7 +434,8 @@ abstract class AbstractBlockCreatorTest {
           protocolContext,
           protocolSchedule,
           parentHeader,
-          depositContractAddress);
+          depositContractAddress,
+          ethScheduler);
     }
 
     @Override

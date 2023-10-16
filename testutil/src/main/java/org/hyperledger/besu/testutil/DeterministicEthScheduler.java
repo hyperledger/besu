@@ -12,9 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.manager;
+package org.hyperledger.besu.testutil;
 
-import org.hyperledger.besu.testutil.MockExecutorService;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -42,6 +42,7 @@ public class DeterministicEthScheduler extends EthScheduler {
         new MockScheduledExecutor(),
         new MockExecutorService(),
         new MockExecutorService(),
+        new MockExecutorService(),
         new MockExecutorService());
 
     this.timeoutPolicy = timeoutPolicy;
@@ -51,7 +52,8 @@ public class DeterministicEthScheduler extends EthScheduler {
             (MockExecutorService) this.scheduler,
             (MockExecutorService) this.txWorkerExecutor,
             (MockExecutorService) this.servicesExecutor,
-            (MockExecutorService) this.computationExecutor);
+            (MockExecutorService) this.computationExecutor,
+            (MockExecutorService) this.blockCreationExecutor);
   }
 
   // Test utility for running pending futures
@@ -73,16 +75,20 @@ public class DeterministicEthScheduler extends EthScheduler {
     executors.forEach(e -> e.setAutoRun(false));
   }
 
-  MockExecutorService mockSyncWorkerExecutor() {
+  public MockExecutorService mockSyncWorkerExecutor() {
     return (MockExecutorService) syncWorkerExecutor;
   }
 
-  MockScheduledExecutor mockScheduledExecutor() {
+  public MockScheduledExecutor mockScheduledExecutor() {
     return (MockScheduledExecutor) scheduler;
   }
 
   public MockExecutorService mockServiceExecutor() {
     return (MockExecutorService) servicesExecutor;
+  }
+
+  public MockExecutorService mockBlockCreationExecutor() {
+    return (MockExecutorService) blockCreationExecutor;
   }
 
   @Override

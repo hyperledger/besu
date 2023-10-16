@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -61,6 +62,8 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
   /** The Bft extra data codec. */
   protected final BftExtraDataCodec bftExtraDataCodec;
 
+  protected final EthScheduler ethScheduler;
+
   private final Address localAddress;
 
   /**
@@ -81,7 +84,8 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
       final ForksSchedule<T> forksSchedule,
       final MiningParameters miningParams,
       final Address localAddress,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final BftExtraDataCodec bftExtraDataCodec,
+      final EthScheduler ethScheduler) {
     this.transactionPool = transactionPool;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
@@ -89,6 +93,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
     this.localAddress = localAddress;
     this.miningParameters = miningParams;
     this.bftExtraDataCodec = bftExtraDataCodec;
+    this.ethScheduler = ethScheduler;
   }
 
   /**
@@ -108,7 +113,8 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
         protocolContext,
         protocolSchedule,
         parentHeader,
-        bftExtraDataCodec);
+        bftExtraDataCodec,
+        ethScheduler);
   }
 
   /**

@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolver;
@@ -42,8 +43,15 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
       final TransactionPool transactionPool,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
-      final EpochCalculator epochCalculator) {
-    super(protocolContext, protocolSchedule, transactionPool, miningParams, blockScheduler);
+      final EpochCalculator epochCalculator,
+      final EthScheduler ethScheduler) {
+    super(
+        protocolContext,
+        protocolSchedule,
+        transactionPool,
+        miningParams,
+        blockScheduler,
+        ethScheduler);
     this.coinbase = miningParams.getCoinbase();
     if (miningParams.getNonceGenerator().isEmpty()) {
       miningParams.setNonceGenerator(new RandomNonceGenerator());
@@ -88,7 +96,8 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
                 protocolContext,
                 protocolSchedule,
                 solver,
-                parentHeader);
+                parentHeader,
+                ethScheduler);
 
     return new PoWBlockMiner(
         blockCreator, protocolSchedule, protocolContext, observers, blockScheduler, parentHeader);

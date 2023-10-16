@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -67,7 +68,8 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
       final ProtocolSchedule protocolSchedule,
       final NodeKey nodeKey,
       final BlockHeader parentHeader,
-      final EpochManager epochManager) {
+      final EpochManager epochManager,
+      final EthScheduler ethScheduler) {
     super(
         miningParameters,
         coinbase,
@@ -77,7 +79,8 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
         protocolContext,
         protocolSchedule,
         parentHeader,
-        Optional.empty());
+        Optional.empty(),
+        ethScheduler);
     this.nodeKey = nodeKey;
     this.epochManager = epochManager;
   }

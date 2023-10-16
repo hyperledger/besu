@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.Optional;
 
@@ -71,7 +72,8 @@ public class QbftBlockCreatorFactoryTest {
             forksSchedule,
             miningParams,
             mock(Address.class),
-            extraDataCodec);
+            extraDataCodec,
+            new DeterministicEthScheduler());
   }
 
   @Test

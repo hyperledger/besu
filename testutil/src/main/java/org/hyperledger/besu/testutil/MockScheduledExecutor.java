@@ -12,9 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.manager;
-
-import org.hyperledger.besu.testutil.MockExecutorService;
+package org.hyperledger.besu.testutil;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Delayed;

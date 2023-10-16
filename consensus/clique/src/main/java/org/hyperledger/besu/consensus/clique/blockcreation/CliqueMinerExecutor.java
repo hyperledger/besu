@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
@@ -66,8 +67,15 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
       final NodeKey nodeKey,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
-      final EpochManager epochManager) {
-    super(protocolContext, protocolSchedule, transactionPool, miningParams, blockScheduler);
+      final EpochManager epochManager,
+      final EthScheduler ethScheduler) {
+    super(
+        protocolContext,
+        protocolSchedule,
+        transactionPool,
+        miningParams,
+        blockScheduler,
+        ethScheduler);
     this.nodeKey = nodeKey;
     this.localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     this.epochManager = epochManager;
@@ -89,7 +97,8 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
                 protocolSchedule,
                 nodeKey,
                 header,
-                epochManager);
+                epochManager,
+                ethScheduler);
 
     return new CliqueBlockMiner(
         blockCreator,

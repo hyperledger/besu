@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
@@ -89,7 +90,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   protected final BlockHeaderFunctions blockHeaderFunctions;
   protected final BlockHeader parentHeader;
   private final Optional<Address> depositContractAddress;
-
+  private final EthScheduler ethScheduler;
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
 
   protected AbstractBlockCreator(
@@ -101,7 +102,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final BlockHeader parentHeader,
-      final Optional<Address> depositContractAddress) {
+      final Optional<Address> depositContractAddress,
+      final EthScheduler ethScheduler) {
     this.miningParameters = miningParameters;
     this.coinbase = coinbase;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
@@ -111,6 +113,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     this.protocolSchedule = protocolSchedule;
     this.parentHeader = parentHeader;
     this.depositContractAddress = depositContractAddress;
+    this.ethScheduler = ethScheduler;
     blockHeaderFunctions = ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
   }
 
@@ -347,7 +350,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             protocolSpec.getFeeMarket(),
             protocolSpec.getGasCalculator(),
             protocolSpec.getGasLimitCalculator(),
-            protocolContext.getTransactionSelectorFactory());
+            protocolContext.getTransactionSelectorFactory(),
+            ethScheduler);
 
     if (transactions.isPresent()) {
       return selector.evaluateTransactions(transactions.get());

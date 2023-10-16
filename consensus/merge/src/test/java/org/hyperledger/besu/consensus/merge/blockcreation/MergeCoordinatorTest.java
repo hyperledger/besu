@@ -35,7 +35,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PayloadWrapper;
-import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator.ProposalBuilderExecutor;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
@@ -62,6 +61,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
@@ -76,6 +76,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.number.Fraction;
 
@@ -129,10 +130,9 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   EthContext ethContext;
 
-  @Mock ProposalBuilderExecutor proposalBuilderExecutor;
   private final Address coinbase = genesisAllocations(getPosGenesisConfigFile()).findFirst().get();
 
-  MiningParameters miningParameters =
+  private MiningParameters miningParameters =
       ImmutableMiningParameters.builder()
           .coinbase(coinbase)
           .unstable(
@@ -178,6 +178,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   CompletableFuture<Void> blockCreationTask = CompletableFuture.completedFuture(null);
 
   private final BadBlockManager badBlockManager = spy(new BadBlockManager());
+  private final EthScheduler ethScheduler = new DeterministicEthScheduler();
 
   @BeforeEach
   public void setUp() {
@@ -204,13 +205,13 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
 
-    when(proposalBuilderExecutor.buildProposal(any()))
-        .thenAnswer(
-            invocation -> {
-              final Runnable runnable = invocation.getArgument(0);
-              blockCreationTask = CompletableFuture.runAsync(runnable);
-              return blockCreationTask;
-            });
+    //    when(proposalBuilderExecutor.buildProposal(any()))
+    //        .thenAnswer(
+    //            invocation -> {
+    //              final Runnable runnable = invocation.getArgument(0);
+    //              blockCreationTask = CompletableFuture.runAsync(runnable);
+    //              return blockCreationTask;
+    //            });
 
     MergeConfigOptions.setMergeEnabled(true);
 
@@ -233,7 +234,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         new MergeCoordinator(
             protocolContext,
             protocolSchedule,
-            proposalBuilderExecutor,
+            ethScheduler,
             transactionPool,
             miningParameters,
             backwardSyncContext,
@@ -287,7 +288,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                       protocolSchedule,
                       address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                       parentHeader,
-                      Optional.empty()));
+                      Optional.empty(),
+                      ethScheduler));
 
           doCallRealMethod()
               .doCallRealMethod()
@@ -304,7 +306,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             new MergeCoordinator(
                 protocolContext,
                 protocolSchedule,
-                proposalBuilderExecutor,
+                ethScheduler,
                 miningParameters,
                 backwardSyncContext,
                 mergeBlockCreatorFactory));
@@ -752,7 +754,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         new MergeCoordinator(
             protocolContext,
             protocolSchedule,
-            proposalBuilderExecutor,
+            ethScheduler,
             transactionPool,
             miningParameters,
             backwardSyncContext,

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_TX_SELECTION_MAX_TIME;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -24,6 +25,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -71,7 +73,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
   }
 
   @Override
-  protected TransactionPool createTransactionPool() {
+  protected TransactionPool createTransactionPool(final MiningParameters miningParameters) {
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder()
             .txPoolMaxSize(5)
@@ -105,13 +107,14 @@ public class LondonFeeMarketBlockTransactionSelectorTest
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
-        createBlockSelector(
+        createBlockSelectorAndSetupTxPool(
+            createMiningParameters(
+                Wei.of(6), MIN_OCCUPANCY_80_PERCENT, DEFAULT_TX_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
-            Wei.of(6),
             miningBeneficiary,
             Wei.ZERO,
-            MIN_OCCUPANCY_80_PERCENT);
+            null);
 
     // tx is willing to pay max 7 wei for gas, but current network condition (baseFee == 1)
     // result in it paying 2 wei, that is below the minimum accepted by the node, so it is skipped
@@ -133,13 +136,14 @@ public class LondonFeeMarketBlockTransactionSelectorTest
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
-        createBlockSelector(
+        createBlockSelectorAndSetupTxPool(
+            createMiningParameters(
+                Wei.of(6), MIN_OCCUPANCY_80_PERCENT, DEFAULT_TX_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
-            Wei.of(6),
             miningBeneficiary,
             Wei.ZERO,
-            MIN_OCCUPANCY_80_PERCENT);
+            null);
 
     // tx is willing to pay max 7 wei for gas, and current network condition (baseFee == 5)
     // result in it paying the max, that is >= the minimum accepted by the node, so it is selected
@@ -160,13 +164,14 @@ public class LondonFeeMarketBlockTransactionSelectorTest
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
-        createBlockSelector(
+        createBlockSelectorAndSetupTxPool(
+            createMiningParameters(
+                Wei.of(6), MIN_OCCUPANCY_80_PERCENT, DEFAULT_TX_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
-            Wei.of(6),
             miningBeneficiary,
             Wei.ZERO,
-            MIN_OCCUPANCY_80_PERCENT);
+            null);
 
     // tx is willing to pay max 7 wei for gas, but current network condition (baseFee == 1)
     // result in it paying 2 wei, that is below the minimum accepted by the node, but since it is
@@ -192,8 +197,6 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     final Transaction txFrontier2 = createTransaction(2, Wei.of(7L), 100_000);
     final Transaction txLondon2 = createEIP1559Transaction(3, Wei.ONE, Wei.ONE, 100_000);
 
-    transactionPool.addRemoteTransactions(List.of(txFrontier1, txLondon1, txFrontier2, txLondon2));
-
     ensureTransactionIsValid(txFrontier1);
     ensureTransactionIsValid(txLondon1);
     ensureTransactionIsValid(txFrontier2);
@@ -201,13 +204,15 @@ public class LondonFeeMarketBlockTransactionSelectorTest
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
-        createBlockSelector(
+        createBlockSelectorAndSetupTxPool(
+            defaultTestMiningParameters,
             transactionProcessor,
             blockHeader,
-            Wei.ZERO,
             miningBeneficiary,
             Wei.ZERO,
-            MIN_OCCUPANCY_80_PERCENT);
+            null);
+
+    transactionPool.addRemoteTransactions(List.of(txFrontier1, txLondon1, txFrontier2, txLondon2));
 
     final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 

@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
@@ -54,7 +55,8 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory<QbftConfigOp
       final ForksSchedule<QbftConfigOptions> forksSchedule,
       final MiningParameters miningParams,
       final Address localAddress,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final BftExtraDataCodec bftExtraDataCodec,
+      final EthScheduler ethScheduler) {
     super(
         transactionPool,
         protocolContext,
@@ -62,7 +64,8 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory<QbftConfigOp
         forksSchedule,
         miningParams,
         localAddress,
-        bftExtraDataCodec);
+        bftExtraDataCodec,
+        ethScheduler);
   }
 
   @Override
