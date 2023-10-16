@@ -449,13 +449,13 @@ public class SparseTransactions extends AbstractTransactionsLayer {
       if (hasPriority) {
         if (standardSenders.contains(sender)) {
           throw new IllegalStateException(
-              "Sender " + sender + " must have and have not priority at the same time");
+              "Sender " + sender + " cannot simultaneously have and not have priority");
         }
         prioritySenders.add(sender);
       } else {
         if (prioritySenders.contains(sender)) {
           throw new IllegalStateException(
-              "Sender " + sender + " must have and have not priority at the same time");
+              "Sender " + sender + " cannot simultaneously have and not have priority");
         }
         standardSenders.add(sender);
       }

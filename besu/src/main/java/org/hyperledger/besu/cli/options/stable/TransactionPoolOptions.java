@@ -114,9 +114,9 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   @CommandLine.Option(
       names = {TX_POOL_PRIORITY_SENDERS},
       split = ",",
-      paramLabel = "Command separated list of addresses",
+      paramLabel = "Comma separated list of addresses",
       description =
-          "Pending transactions sent exclusively by these addresses, from any source, are prioritized and evicted only after the others. If not specified, then only the senders submitting transactions via RPC have priority (default: ${DEFAULT-VALUE})",
+          "Pending transactions sent exclusively by these addresses, from any source, are prioritized and only evicted after all others. If not specified, then only the senders submitting transactions via RPC have priority (default: ${DEFAULT-VALUE})",
       arity = "1..*")
   private Set<Address> prioritySenders = TransactionPoolConfiguration.DEFAULT_PRIORITY_SENDERS;
 
