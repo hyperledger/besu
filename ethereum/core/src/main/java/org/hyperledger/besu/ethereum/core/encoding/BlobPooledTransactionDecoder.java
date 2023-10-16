@@ -24,9 +24,9 @@ import java.util.List;
 
 /**
  * Class responsible for decoding blob transactions from the transaction pool. Blob transactions
- * have two network representations. During transaction gossip responses (PooledTransactions), the
- * EIP-2718 TransactionPayload of the blob transaction is wrapped to become: rlp([tx_payload_body,
- * blobs, commitments, proofs]).
+ * have two representations. The network representation is used during transaction gossip responses
+ * (PooledTransactions), the EIP-2718 TransactionPayload of the blob transaction is wrapped to
+ * become: rlp([tx_payload_body, blobs, commitments, proofs]).
  */
 public class BlobPooledTransactionDecoder {
 

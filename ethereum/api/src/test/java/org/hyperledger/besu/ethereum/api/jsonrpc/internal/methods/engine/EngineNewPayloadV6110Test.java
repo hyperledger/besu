@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,11 +54,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
+public class EngineNewPayloadV6110Test extends EngineNewPayloadV3Test {
   private static final Address depositContractAddress =
       Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
-  public EngineNewPayloadEIP6110Test() {}
+  public EngineNewPayloadV6110Test() {}
 
   @BeforeEach
   @Override
