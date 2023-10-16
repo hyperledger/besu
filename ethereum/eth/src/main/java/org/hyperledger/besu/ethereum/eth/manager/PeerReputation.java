@@ -56,7 +56,8 @@ public class PeerReputation implements Comparable<PeerReputation> {
   }
 
   public PeerReputation(final int initialScore, final int maxScore) {
-    checkArgument(initialScore <= maxScore, "Inital score must be less than or equal to max score");
+    checkArgument(
+        initialScore <= maxScore, "Initial score must be less than or equal to max score");
     this.maxScore = maxScore;
     this.score = initialScore;
   }
