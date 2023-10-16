@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
@@ -28,6 +29,7 @@ import org.hyperledger.besu.plugin.data.BlockContext;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.BlockchainService;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -90,6 +92,16 @@ public class BlockchainServiceImpl implements BlockchainService {
                     chainHeadHeader.getBaseFee().orElse(Wei.ZERO),
                     chainHeadHeader.getGasUsed(),
                     feeMarket.targetGasUsed(chainHeadHeader)));
+  }
+
+  @Override
+  public void storeBlock(
+      final BlockHeader blockHeader, final org.hyperledger.besu.plugin.data.BlockBody blockBody) {
+    final org.hyperledger.besu.ethereum.core.BlockHeader coreHeader =
+        (org.hyperledger.besu.ethereum.core.BlockHeader) blockHeader;
+    final org.hyperledger.besu.ethereum.core.BlockBody coreBody =
+        (org.hyperledger.besu.ethereum.core.BlockBody) blockBody;
+    blockchain.storeBlock(new Block(coreHeader, coreBody), Collections.emptyList());
   }
 
   @Override

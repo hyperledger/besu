@@ -54,6 +54,8 @@ public interface BlockchainService extends BesuService {
    */
   Optional<Wei> getNextBlockBaseFee();
 
+  void storeBlock(BlockHeader blockHeader, org.hyperledger.besu.plugin.data.BlockBody blockBody);
+
   Optional<Hash> getSafeBlock();
 
   Optional<Hash> getFinalizedBlock();
