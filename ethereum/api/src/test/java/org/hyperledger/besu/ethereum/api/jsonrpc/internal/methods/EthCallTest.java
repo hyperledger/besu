@@ -378,9 +378,9 @@ public class EthCallTest {
   }
 
   @Test
-  public void shouldAutoSelectIsAllowedExceedingBalanceToTrueWhenGasPriceIsZero() {
+  public void shouldAutoSelectIsAllowedExceedingBalanceToFalseWhenGasPriceIsZero() {
     final JsonCallParameter callParameters = callParameter(Wei.ZERO, null, null);
-    internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.empty(), true);
+    internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.empty(), false);
   }
 
   @Test
@@ -390,9 +390,9 @@ public class EthCallTest {
   }
 
   @Test
-  public void shouldAutoSelectIsAllowedExceedingBalanceToFalseWhenGasPriceIsNotZero() {
+  public void shouldAutoSelectIsAllowedExceedingBalanceToTrueWhenGasPriceIsNotZero() {
     final JsonCallParameter callParameters = callParameter(Wei.ONE, null, null);
-    internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.empty(), false);
+    internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.empty(), true);
   }
 
   @Test
