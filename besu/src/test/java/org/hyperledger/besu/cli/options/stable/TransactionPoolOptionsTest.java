@@ -259,9 +259,9 @@ public class TransactionPoolOptionsTest
     final Address prioritySender2 = Address.fromHexString("0xDEF456");
     final Address prioritySender3 = Address.fromHexString("0x789000");
     internalTestFailure(
-        "Invalid value for option '--tx-pool-priority-senders' at index 0 (Comma separated list of addresses): " +
-                "cannot convert '0x0000000000000000000000000000000000abc123;0x0000000000000000000000000000000000def456' " +
-                "to Address (java.lang.IllegalArgumentException: Invalid odd-length hex binary representation)",
+        "Invalid value for option '--tx-pool-priority-senders' at index 0 (Comma separated list of addresses): "
+            + "cannot convert '0x0000000000000000000000000000000000abc123;0x0000000000000000000000000000000000def456' "
+            + "to Address (java.lang.IllegalArgumentException: Invalid odd-length hex binary representation)",
         "--tx-pool-priority-senders",
         prioritySender1.toHexString()
             + ";"
