@@ -31,6 +31,13 @@ public interface PendingTransaction {
   boolean isReceivedFromLocalSource();
 
   /**
+   * Should this transaction be prioritized?
+   *
+   * @return true if it is a transaction with priority
+   */
+  boolean hasPriority();
+
+  /**
    * Timestamp in millisecond when this transaction has been added to the pool
    *
    * @return timestamp
