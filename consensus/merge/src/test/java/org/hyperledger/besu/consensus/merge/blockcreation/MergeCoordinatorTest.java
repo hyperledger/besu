@@ -58,11 +58,11 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -314,8 +314,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             invocation -> {
               if (retries.getAndIncrement() < txPerBlock) {
                 // a new transaction every time a block is built
-                transactions.addLocalTransaction(
-                    createTransaction(retries.get() - 1), Optional.empty());
+                transactions.addTransaction(
+                    createLocalTransaction(retries.get() - 1), Optional.empty());
               } else {
                 // when we have 5 transactions finalize block creation
                 willThrow.finalizeProposalById(
@@ -387,8 +387,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             invocation -> {
               if (retries.getAndIncrement() < 5) {
                 // a new transaction every time a block is built
-                transactions.addLocalTransaction(
-                    createTransaction(retries.get() - 1), Optional.empty());
+                transactions.addTransaction(
+                    createLocalTransaction(retries.get() - 1), Optional.empty());
               } else {
                 // when we have 5 transactions finalize block creation
                 coordinator.finalizeProposalById(
@@ -506,7 +506,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         .when(mergeContext)
         .putPayloadById(any());
 
-    transactions.addLocalTransaction(createTransaction(0), Optional.empty());
+    transactions.addTransaction(createLocalTransaction(0), Optional.empty());
 
     var payloadId =
         coordinator.preparePayload(
@@ -643,8 +643,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             invocation -> {
               if (retries.getAndIncrement() < 5) {
                 // a new transaction every time a block is built
-                transactions.addLocalTransaction(
-                    createTransaction(retries.get() - 1), Optional.empty());
+                transactions.addTransaction(
+                    createLocalTransaction(retries.get() - 1), Optional.empty());
               } else {
                 // when we have 5 transactions finalize block creation
                 coordinator.finalizeProposalById(
@@ -1022,20 +1022,24 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         .buildHeader();
   }
 
-  private Transaction createTransaction(final long transactionNumber) {
-    return new TransactionTestFixture()
-        .value(Wei.of(transactionNumber + 1))
-        .to(Optional.of(Address.ZERO))
-        .gasLimit(53000L)
-        .gasPrice(
-            Wei.fromHexString("0x00000000000000000000000000000000000000000000000000000013b9aca00"))
-        .maxFeePerGas(
-            Optional.of(
+  private PendingTransaction createLocalTransaction(final long transactionNumber) {
+    return PendingTransaction.newPendingTransaction(
+        new TransactionTestFixture()
+            .value(Wei.of(transactionNumber + 1))
+            .to(Optional.of(Address.ZERO))
+            .gasLimit(53000L)
+            .gasPrice(
                 Wei.fromHexString(
-                    "0x00000000000000000000000000000000000000000000000000000013b9aca00")))
-        .maxPriorityFeePerGas(Optional.of(Wei.of(100_000)))
-        .nonce(transactionNumber)
-        .createTransaction(KEYS1);
+                    "0x00000000000000000000000000000000000000000000000000000013b9aca00"))
+            .maxFeePerGas(
+                Optional.of(
+                    Wei.fromHexString(
+                        "0x00000000000000000000000000000000000000000000000000000013b9aca00")))
+            .maxPriorityFeePerGas(Optional.of(Wei.of(100_000)))
+            .nonce(transactionNumber)
+            .createTransaction(KEYS1),
+        true,
+        true);
   }
 
   private static BlockHeader mockBlockHeader() {

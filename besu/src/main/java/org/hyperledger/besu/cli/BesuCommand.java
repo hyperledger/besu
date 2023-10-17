@@ -1297,6 +1297,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Specifies the maximum number of blocks to retrieve logs from via RPC. Must be >=0. 0 specifies no limit  (default: ${DEFAULT-VALUE})")
   private final Long rpcMaxLogsRange = 5000L;
 
+  @CommandLine.Option(
+      names = {"--cache-last-blocks"},
+      description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
+  private final Integer numberOfblocksToCache = 0;
+
   @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
 
   @Mixin private PkiBlockCreationOptions pkiBlockCreationOptions;
@@ -2295,6 +2300,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .maxRemotelyInitiatedPeers(maxRemoteInitiatedPeers)
         .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
         .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
+        .cacheLastBlocks(numberOfblocksToCache)
         .lineaParameters(unstableLineaOptions.toDomainObject());
   }
 
