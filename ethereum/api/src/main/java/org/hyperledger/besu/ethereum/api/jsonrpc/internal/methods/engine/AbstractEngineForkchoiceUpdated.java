@@ -146,14 +146,14 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     if (mergeCoordinator.isBadBlock(forkChoice.getHeadBlockHash())) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
       return new JsonRpcSuccessResponse(
-              requestId,
-              new EngineUpdateForkchoiceResult(
-                      INVALID,
-                      mergeCoordinator
-                              .getLatestValidHashOfBadBlock(forkChoice.getHeadBlockHash())
-                              .orElse(Hash.ZERO),
-                      null,
-                      Optional.of(forkChoice.getHeadBlockHash() + " is an invalid block")));
+          requestId,
+          new EngineUpdateForkchoiceResult(
+              INVALID,
+              mergeCoordinator
+                  .getLatestValidHashOfBadBlock(forkChoice.getHeadBlockHash())
+                  .orElse(Hash.ZERO),
+              null,
+              Optional.of(forkChoice.getHeadBlockHash() + " is an invalid block")));
     }
 
     if (maybeNewHead.isEmpty()) {
