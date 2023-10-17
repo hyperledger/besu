@@ -2,6 +2,7 @@
 
 ## Next release
 - Cache last n blocks by using a new Besu flag --cache-last-blocks=n
+- Optimize performances of RPC method Eth_feeHistory
 
 ### Breaking Changes
 
