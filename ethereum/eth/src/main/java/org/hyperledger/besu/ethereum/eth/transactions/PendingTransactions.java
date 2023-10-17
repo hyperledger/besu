@@ -35,11 +35,10 @@ public interface PendingTransactions {
 
   List<Transaction> getLocalTransactions();
 
-  TransactionAddedResult addRemoteTransaction(
-      Transaction transaction, Optional<Account> maybeSenderAccount);
+  List<Transaction> getPriorityTransactions();
 
-  TransactionAddedResult addLocalTransaction(
-      Transaction transaction, Optional<Account> maybeSenderAccount);
+  TransactionAddedResult addTransaction(
+      PendingTransaction transaction, Optional<Account> maybeSenderAccount);
 
   void selectTransactions(TransactionSelector selector);
 
@@ -83,8 +82,6 @@ public interface PendingTransactions {
     // ToDo: remove when the legacy tx pool is removed
     // no-op
   }
-
-  boolean isLocalSender(Address sender);
 
   @FunctionalInterface
   interface TransactionSelector {
