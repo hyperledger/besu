@@ -51,8 +51,9 @@ import org.apache.tuweni.bytes.Bytes;
 public class BftBlockCreatorFactory<T extends BftConfigOptions> {
   /** The Forks schedule. */
   protected final ForksSchedule<T> forksSchedule;
-
+  /** The Mining parameters */
   protected final MiningParameters miningParameters;
+
   private final TransactionPool transactionPool;
   /** The Protocol context. */
   protected final ProtocolContext protocolContext;
