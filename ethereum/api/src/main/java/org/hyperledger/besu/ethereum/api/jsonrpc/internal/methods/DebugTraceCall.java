@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -74,8 +75,10 @@ public class DebugTraceCall extends AbstractTraceCall {
             result -> {
               if (result.isInvalid()) {
                 LOG.error("Invalid simulator result {}", result);
-                return new JsonRpcErrorResponse(
-                    requestContext.getRequest().getId(), INTERNAL_ERROR);
+                final JsonRpcError error =
+                    new JsonRpcError(
+                        INTERNAL_ERROR, result.getValidationResult().getErrorMessage());
+                return new JsonRpcErrorResponse(requestContext.getRequest().getId(), error);
               }
 
               final TransactionTrace transactionTrace =
