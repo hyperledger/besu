@@ -43,7 +43,8 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
 
   private final NavigableSet<PendingTransaction> orderByMaxFee =
       new TreeSet<>(
-          Comparator.comparing((PendingTransaction pt) -> pt.getTransaction().getMaxGasPrice())
+          Comparator.comparing(PendingTransaction::hasPriority)
+              .thenComparing((PendingTransaction pt) -> pt.getTransaction().getMaxGasPrice())
               .thenComparing(PendingTransaction::getSequence));
 
   public ReadyTransactions(

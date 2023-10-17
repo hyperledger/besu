@@ -64,6 +64,28 @@ public abstract class PendingTransaction
     this(transaction, addedAt, TRANSACTIONS_ADDED.getAndIncrement());
   }
 
+  public static PendingTransaction newPendingTransaction(
+      final Transaction transaction, final boolean isLocal, final boolean hasPriority) {
+    return newPendingTransaction(transaction, isLocal, hasPriority, System.currentTimeMillis());
+  }
+
+  public static PendingTransaction newPendingTransaction(
+      final Transaction transaction,
+      final boolean isLocal,
+      final boolean hasPriority,
+      final long addedAt) {
+    if (isLocal) {
+      if (hasPriority) {
+        return new Local.Priority(transaction, addedAt);
+      }
+      return new Local(transaction, addedAt);
+    }
+    if (hasPriority) {
+      return new Remote.Priority(transaction, addedAt);
+    }
+    return new Remote(transaction, addedAt);
+  }
+
   @Override
   public Transaction getTransaction() {
     return transaction;
@@ -226,6 +248,8 @@ public abstract class PendingTransaction
         + sequence
         + ", isLocal="
         + isReceivedFromLocalSource()
+        + ", hasPriority="
+        + hasPriority()
         + '}';
   }
 
@@ -236,6 +260,8 @@ public abstract class PendingTransaction
         + addedAt
         + ", isLocal="
         + isReceivedFromLocalSource()
+        + ", hasPriority="
+        + hasPriority()
         + ", "
         + transaction.toTraceLog()
         + "}";
@@ -264,6 +290,35 @@ public abstract class PendingTransaction
     public boolean isReceivedFromLocalSource() {
       return true;
     }
+
+    @Override
+    public boolean hasPriority() {
+      return false;
+    }
+
+    public static class Priority extends Local {
+      public Priority(final Transaction transaction) {
+        this(transaction, System.currentTimeMillis());
+      }
+
+      public Priority(final Transaction transaction, final long addedAt) {
+        super(transaction, addedAt);
+      }
+
+      public Priority(final long sequence, final Transaction transaction) {
+        super(sequence, transaction);
+      }
+
+      @Override
+      public PendingTransaction detachedCopy() {
+        return new Priority(getSequence(), getTransaction().detachedCopy());
+      }
+
+      @Override
+      public boolean hasPriority() {
+        return true;
+      }
+    }
   }
 
   public static class Remote extends PendingTransaction {
@@ -288,6 +343,35 @@ public abstract class PendingTransaction
     @Override
     public boolean isReceivedFromLocalSource() {
       return false;
+    }
+
+    @Override
+    public boolean hasPriority() {
+      return false;
+    }
+
+    public static class Priority extends Remote {
+      public Priority(final Transaction transaction) {
+        this(transaction, System.currentTimeMillis());
+      }
+
+      public Priority(final Transaction transaction, final long addedAt) {
+        super(transaction, addedAt);
+      }
+
+      public Priority(final long sequence, final Transaction transaction) {
+        super(sequence, transaction);
+      }
+
+      @Override
+      public PendingTransaction detachedCopy() {
+        return new Priority(getSequence(), getTransaction().detachedCopy());
+      }
+
+      @Override
+      public boolean hasPriority() {
+        return true;
+      }
     }
   }
 }
