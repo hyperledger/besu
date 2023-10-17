@@ -43,7 +43,7 @@ By default, the txpool is tuned for mainnet usage, but if you are using private 
 - Removed support for Kotti network (ETC) [#5816](https://github.com/hyperledger/besu/pull/5816)
 - Layered transaction pool implementation is now stable and enabled by default, so the following changes to experimental options have been done [#5772](https://github.com/hyperledger/besu/pull/5772):
     - `--Xlayered-tx-pool` is gone, to select the implementation use the new `--tx-pool` option with values `layered` (default) or `legacy`
-    - `--Xlayered-tx-pool-layer-max-capacity`, `--Xlayered-tx-pool-max-prioritized` and `--Xlayered-tx-pool-max-future-by-sender` just drop the `X` and keep the same behavior
+    - `--Xlayered-tx-pool-layer-max-capacity`, `--Xlayered-tx-pool-max-prioritized` and `--Xlayered-tx-pool-max-future-by-sender` just drop the `Xlayered-` and keep the same behavior
 
 ### Additions and Improvements
 - Add access to an immutable world view to start/end transaction hooks in the tracing API[#5836](https://github.com/hyperledger/besu/pull/5836)
