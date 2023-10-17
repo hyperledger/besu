@@ -17,9 +17,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import org.checkerframework.checker.signedness.qual.Unsigned;
 
 public class UnsignedLongParameter {
 
+  @Unsigned
   private final long value;
 
   @JsonCreator
@@ -33,11 +35,11 @@ public class UnsignedLongParameter {
   }
 
   @JsonCreator
-  public UnsignedLongParameter(final long value) {
+  public UnsignedLongParameter(final @Unsigned long value) {
     this.value = value;
   }
 
-  public long getValue() {
+  public @Unsigned long getValue() {
     return value;
   }
 }
