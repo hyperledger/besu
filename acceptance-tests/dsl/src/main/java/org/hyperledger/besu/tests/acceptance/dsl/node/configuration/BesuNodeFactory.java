@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
@@ -89,7 +90,8 @@ public class BesuNodeFactory {
         config.getKeyPair(),
         config.getPkiKeyStoreConfiguration(),
         config.isStrictTxReplayProtectionEnabled(),
-        config.getEnvironment());
+        config.getEnvironment(),
+        config.getDataStorageFormat());
   }
 
   public BesuNode createMinerNode(
@@ -549,6 +551,7 @@ public class BesuNodeFactory {
             .jsonRpcTxPool()
             .engineRpcEnabled(true)
             .jsonRpcDebug()
+            .dataStorageFormat(DataStorageFormat.BONSAI)
             .build());
   }
 

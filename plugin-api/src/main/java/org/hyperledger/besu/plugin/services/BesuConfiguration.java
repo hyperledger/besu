@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.plugin.services;
 
-import org.hyperledger.besu.plugin.Unstable;
-
 import java.nio.file.Path;
 
 /** Generally useful configuration provided by Besu. */
@@ -40,8 +38,5 @@ public interface BesuConfiguration extends BesuService {
    *
    * @return Database version.
    */
-  @Unstable
-  default int getDatabaseVersion() {
-    return 1;
-  }
+  int getDatabaseVersion();
 }

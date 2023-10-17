@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
@@ -128,6 +129,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration = Optional.empty();
   private final boolean isStrictTxReplayProtectionEnabled;
   private final Map<String, String> environment;
+  private final DataStorageFormat dataStorageFormat;
 
   public BesuNode(
       final String name,
@@ -161,7 +163,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final Optional<KeyPair> keyPair,
       final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration,
       final boolean isStrictTxReplayProtectionEnabled,
-      final Map<String, String> environment)
+      final Map<String, String> environment,
+      final DataStorageFormat dataStorageFormat)
       throws IOException {
     this.homeDirectory = dataPath.orElseGet(BesuNode::createTmpDataDirectory);
     this.isStrictTxReplayProtectionEnabled = isStrictTxReplayProtectionEnabled;
@@ -219,6 +222,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     privacyParameters.ifPresent(this::setPrivacyParameters);
     this.pkiKeyStoreConfiguration = pkiKeyStoreConfiguration;
     this.environment = environment;
+    this.dataStorageFormat = dataStorageFormat;
     LOG.info("Created BesuNode {}", this);
   }
 
@@ -751,6 +755,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
         .add("p2pEnabled", p2pEnabled)
         .add("discoveryEnabled", discoveryEnabled)
         .add("privacyEnabled", privacyParameters.isEnabled())
+        .add("dataStorageFormat", dataStorageFormat)
         .toString();
   }
 
@@ -805,5 +810,9 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public Map<String, String> getEnvironment() {
     return environment;
+  }
+
+  public DataStorageFormat getDataStorageFormat() {
+    return dataStorageFormat;
   }
 }

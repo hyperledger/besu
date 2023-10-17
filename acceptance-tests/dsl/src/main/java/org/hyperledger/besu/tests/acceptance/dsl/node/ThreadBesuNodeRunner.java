@@ -36,6 +36,9 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.MetricsSystemFactory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -143,7 +146,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     final SecurityModuleServiceImpl securityModuleService = new SecurityModuleServiceImpl();
     final Path dataDir = node.homeDirectory();
     final BesuConfiguration commonPluginConfiguration =
-        new BesuConfigurationImpl(dataDir, dataDir.resolve(DATABASE_PATH));
+        new BesuConfigurationImpl(
+            dataDir, dataDir.resolve(DATABASE_PATH), DataStorageFormat.BONSAI.getDatabaseVersion());
     final BesuPluginContextImpl besuPluginContext =
         besuPluginContextMap.computeIfAbsent(
             node,
@@ -190,6 +194,15 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final PluginTransactionValidatorFactory pluginTransactionValidatorFactory =
         getPluginTransactionValidatorFactory(besuPluginContext);
+
+    final DataStorageConfiguration dataStorageConfiguration =
+        DataStorageFormat.BONSAI.equals(node.getDataStorageFormat())
+            ? ImmutableDataStorageConfiguration.builder()
+                .dataStorageFormat(DataStorageFormat.BONSAI)
+                .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+                .build()
+            : DataStorageConfiguration.DEFAULT_CONFIG;
+
     builder
         .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
         .dataDirectory(node.homeDirectory())
@@ -207,6 +220,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             node.getPkiKeyStoreConfiguration()
                 .map(pkiConfig -> new PkiBlockCreationConfigurationProvider().load(pkiConfig)))
         .evmConfiguration(EvmConfiguration.DEFAULT)
+        .dataStorageConfiguration(dataStorageConfiguration)
         .maxPeers(maxPeers)
         .lowerBoundPeers(maxPeers)
         .maxRemotelyInitiatedPeers(15)

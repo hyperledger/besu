@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.services;
 
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 
 import java.nio.file.Path;
@@ -23,6 +24,7 @@ public class BesuConfigurationImpl implements BesuConfiguration {
 
   private final Path storagePath;
   private final Path dataPath;
+  private final int databaseVersion;
 
   /**
    * BesuConfigurationImpl Constructor.
@@ -33,6 +35,14 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   public BesuConfigurationImpl(final Path dataPath, final Path storagePath) {
     this.dataPath = dataPath;
     this.storagePath = storagePath;
+    this.databaseVersion = DataStorageFormat.FOREST.getDatabaseVersion();
+  }
+
+  public BesuConfigurationImpl(
+      final Path dataPath, final Path storagePath, final int databaseVersion) {
+    this.dataPath = dataPath;
+    this.storagePath = storagePath;
+    this.databaseVersion = databaseVersion;
   }
 
   @Override
@@ -43,5 +53,10 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   @Override
   public Path getDataPath() {
     return dataPath;
+  }
+
+  @Override
+  public int getDatabaseVersion() {
+    return databaseVersion;
   }
 }

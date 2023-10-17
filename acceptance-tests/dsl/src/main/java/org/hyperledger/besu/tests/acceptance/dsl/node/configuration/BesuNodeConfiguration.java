@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
@@ -67,6 +68,7 @@ public class BesuNodeConfiguration {
   private final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration;
   private final boolean strictTxReplayProtectionEnabled;
   private final Map<String, String> environment;
+  private final DataStorageFormat dataStorageFormat;
 
   BesuNodeConfiguration(
       final String name,
@@ -100,7 +102,8 @@ public class BesuNodeConfiguration {
       final Optional<KeyPair> keyPair,
       final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration,
       final boolean strictTxReplayProtectionEnabled,
-      final Map<String, String> environment) {
+      final Map<String, String> environment,
+      final DataStorageFormat dataStorageFormat) {
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
@@ -133,6 +136,7 @@ public class BesuNodeConfiguration {
     this.pkiKeyStoreConfiguration = pkiKeyStoreConfiguration;
     this.strictTxReplayProtectionEnabled = strictTxReplayProtectionEnabled;
     this.environment = environment;
+    this.dataStorageFormat = dataStorageFormat;
   }
 
   public String getName() {
@@ -261,5 +265,9 @@ public class BesuNodeConfiguration {
 
   public Map<String, String> getEnvironment() {
     return environment;
+  }
+
+  public DataStorageFormat getDataStorageFormat() {
+    return dataStorageFormat;
   }
 }

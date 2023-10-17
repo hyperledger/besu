@@ -21,6 +21,7 @@ import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.tests.acceptance.dsl.StaticNodesUtils;
@@ -77,6 +78,11 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     params.add("--data-path");
     params.add(dataDir.toAbsolutePath().toString());
+
+    if (DataStorageFormat.BONSAI.equals(node.getDataStorageFormat())) {
+      params.add("--data-storage-format");
+      params.add("BONSAI");
+    }
 
     if (node.isDevMode()) {
       params.add("--network");
