@@ -10,7 +10,7 @@
 - `--tx-pool-disable-locals` has been deprecated for removal in favor of `--tx-pool-no-local-priority`, no semantic change, only a renaming [#5959](https://github.com/hyperledger/besu/pull/5959)
 
 ### Additions and Improvements
-- New options `--tx-pool-priority-senders` to specify a list senders, that has the effect to prioritize any transactions sent by these senders from any source [#5959](https://github.com/hyperledger/besu/pull/5959)
+- New option `--tx-pool-priority-senders` to specify a list of senders, that has the effect to prioritize any transactions sent by these senders from any source [#5959](https://github.com/hyperledger/besu/pull/5959)
 
 ### Bug Fixes
 
