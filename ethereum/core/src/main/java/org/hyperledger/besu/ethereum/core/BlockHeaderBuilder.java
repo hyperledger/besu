@@ -238,7 +238,7 @@ public class BlockHeaderBuilder {
     checkState(this.difficulty != null, "Missing block difficulty");
     checkState(this.number > -1L, "Missing block number");
     checkState(this.gasLimit > -1L, "Missing gas limit");
-    checkState(this.timestamp > -1L, "Missing timestamp");
+    // checkState(this.timestamp > -1L, "Missing timestamp");
   }
 
   private void validateSealableBlockHeader() {
@@ -360,7 +360,6 @@ public class BlockHeaderBuilder {
   }
 
   public BlockHeaderBuilder timestamp(final long timestamp) {
-    checkArgument(timestamp >= 0);
     this.timestamp = timestamp;
     return this;
   }

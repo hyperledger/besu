@@ -25,14 +25,16 @@ public class UnsignedLongParameter {
   @JsonCreator
   public UnsignedLongParameter(final String value) {
     checkArgument(value != null);
-    this.value = Long.decode(value);
-    checkArgument(this.value >= 0);
+    if (value.startsWith("0x")) {
+      this.value = Long.parseUnsignedLong(value.substring(2), 16);
+    } else {
+      this.value = Long.parseUnsignedLong(value, 16);
+    }
   }
 
   @JsonCreator
   public UnsignedLongParameter(final long value) {
     this.value = value;
-    checkArgument(this.value >= 0);
   }
 
   public long getValue() {
