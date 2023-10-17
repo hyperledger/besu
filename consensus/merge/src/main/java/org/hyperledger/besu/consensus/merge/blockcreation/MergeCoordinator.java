@@ -129,15 +129,17 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     this.miningParameters = miningParams;
 
     this.mergeBlockCreatorFactory =
-        (parentHeader, address) ->
-            new MergeBlockCreator(
-                miningParameters,
-                parent -> miningParameters.getExtraData(),
-                transactionPool,
-                protocolContext,
-                protocolSchedule,
-                parentHeader,
-                depositContractAddress);
+        (parentHeader, address) -> {
+          address.ifPresent(miningParams::setCoinbase);
+          return new MergeBlockCreator(
+              miningParameters,
+              parent -> miningParameters.getExtraData(),
+              transactionPool,
+              protocolContext,
+              protocolSchedule,
+              parentHeader,
+              depositContractAddress);
+        };
 
     this.backwardSyncContext.subscribeBadChainListener(this);
   }
