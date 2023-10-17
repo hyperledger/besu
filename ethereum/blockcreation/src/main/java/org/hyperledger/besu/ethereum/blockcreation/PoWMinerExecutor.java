@@ -33,7 +33,6 @@ import java.util.function.Function;
 
 public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
 
-  protected volatile Optional<Address> coinbase;
   protected boolean stratumMiningEnabled;
   protected final EpochCalculator epochCalculator;
 
@@ -52,7 +51,6 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
         miningParams,
         blockScheduler,
         ethScheduler);
-    this.coinbase = miningParams.getCoinbase();
     if (miningParams.getNonceGenerator().isEmpty()) {
       miningParams.setNonceGenerator(new RandomNonceGenerator());
     }
@@ -64,7 +62,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
       final Subscribers<MinedBlockObserver> observers,
       final Subscribers<PoWObserver> ethHashObservers,
       final BlockHeader parentHeader) {
-    if (coinbase.isEmpty()) {
+    if (miningParameters.getCoinbase().isEmpty()) {
       throw new CoinbaseNotSetException("Unable to start mining without a coinbase.");
     }
     return super.startAsyncMining(observers, ethHashObservers, parentHeader);
@@ -90,7 +88,6 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
         (header) ->
             new PoWBlockCreator(
                 miningParameters,
-                coinbase.orElse(Address.ZERO),
                 parent -> miningParameters.getExtraData(),
                 transactionPool,
                 protocolContext,
@@ -107,7 +104,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
     if (coinbase == null) {
       throw new IllegalArgumentException("Coinbase cannot be unset.");
     } else {
-      this.coinbase = Optional.of(Address.wrap(coinbase.copy()));
+      miningParameters.setCoinbase(Address.wrap(coinbase.copy()));
     }
   }
 
@@ -117,7 +114,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
 
   @Override
   public Optional<Address> getCoinbase() {
-    return coinbase;
+    return miningParameters.getCoinbase();
   }
 
   public EpochCalculator getEpochCalculator() {

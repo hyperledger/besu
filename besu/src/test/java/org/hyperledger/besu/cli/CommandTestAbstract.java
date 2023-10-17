@@ -31,8 +31,8 @@ import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.options.MiningOptions;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
-import org.hyperledger.besu.cli.options.stable.MiningOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
@@ -261,6 +261,8 @@ public abstract class CommandTestAbstract {
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.besuComponent(any(BesuComponent.class)))
         .thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.cacheLastBlocks(any())).thenReturn(mockControllerBuilder);
+
     // doReturn used because of generic BesuController
     doReturn(mockController).when(mockControllerBuilder).build();
     lenient().when(mockController.getProtocolManager()).thenReturn(mockEthProtocolManager);

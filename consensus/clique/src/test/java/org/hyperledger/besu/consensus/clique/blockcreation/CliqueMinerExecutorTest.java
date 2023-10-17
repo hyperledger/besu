@@ -246,8 +246,8 @@ public class CliqueMinerExecutorTest {
             UpdatableInitValues.builder()
                 .extraData(vanityData)
                 .minTransactionGasPrice(Wei.ZERO)
+                .coinbase(AddressHelpers.ofValue(1))
                 .build())
-        .coinbase(AddressHelpers.ofValue(1))
         .build();
   }
 }

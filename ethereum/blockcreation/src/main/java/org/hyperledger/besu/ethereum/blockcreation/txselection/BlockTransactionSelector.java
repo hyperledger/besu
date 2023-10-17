@@ -209,7 +209,7 @@ public class BlockTransactionSelector {
    */
   public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
     transactions.forEach(
-        transaction -> evaluateTransaction(new PendingTransaction.Local(transaction)));
+        transaction -> evaluateTransaction(new PendingTransaction.Local.Priority(transaction)));
     return transactionSelectionResults;
   }
 

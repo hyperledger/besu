@@ -45,7 +45,6 @@ class MergeBlockCreator extends AbstractBlockCreator {
    * @param transactionPool the pending transactions
    * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
-   * @param miningBeneficiary the mining beneficiary
    * @param parentHeader the parent header
    */
   public MergeBlockCreator(
@@ -54,14 +53,12 @@ class MergeBlockCreator extends AbstractBlockCreator {
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final Address miningBeneficiary,
       final BlockHeader parentHeader,
       final Optional<Address> depositContractAddress,
       final EthScheduler ethScheduler) {
     super(
         miningParameters,
-        miningBeneficiary,
-        __ -> miningBeneficiary,
+        __ -> miningParameters.getCoinbase().orElseThrow(),
         extraDataCalculator,
         transactionPool,
         protocolContext,

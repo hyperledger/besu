@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -41,7 +40,6 @@ public class PoWBlockCreator extends AbstractBlockCreator {
 
   public PoWBlockCreator(
       final MiningParameters miningParameters,
-      final Address coinbase,
       final ExtraDataCalculator extraDataCalculator,
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
@@ -51,8 +49,7 @@ public class PoWBlockCreator extends AbstractBlockCreator {
       final EthScheduler ethScheduler) {
     super(
         miningParameters,
-        coinbase,
-        __ -> coinbase,
+        __ -> miningParameters.getCoinbase().orElseThrow(),
         extraDataCalculator,
         transactionPool,
         protocolContext,

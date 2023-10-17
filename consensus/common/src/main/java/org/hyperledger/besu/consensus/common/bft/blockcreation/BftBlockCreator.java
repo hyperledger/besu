@@ -64,8 +64,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
       final BftExtraDataCodec bftExtraDataCodec,
       final EthScheduler ethScheduler) {
     super(
-        miningParameters,
-        localAddress,
+        miningParameters.setCoinbase(localAddress),
         miningBeneficiaryCalculator(localAddress, forksSchedule),
         extraDataCalculator,
         transactionPool,

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.retesteth.methods;
 
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -24,7 +23,6 @@ import org.hyperledger.besu.ethereum.blockcreation.PoWBlockCreator;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -62,20 +60,11 @@ public class TestMineBlocks implements JsonRpcMethod {
     final ProtocolContext protocolContext = context.getProtocolContext();
     final MutableBlockchain blockchain = context.getBlockchain();
     final HeaderValidationMode headerValidationMode = context.getHeaderValidationMode();
-    final MiningParameters miningParameters =
-        ImmutableMiningParameters.builder()
-            .updatableInitValues(
-                ImmutableMiningParameters.UpdatableInitValues.builder()
-                    .targetGasLimit(blockchain.getChainHeadHeader().getGasLimit())
-                    .minBlockOccupancyRatio(0.0)
-                    .minTransactionGasPrice(Wei.ZERO)
-                    .build())
-            .build();
+    final MiningParameters miningParameters = context.getMiningParameters();
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             miningParameters,
-            context.getCoinbase(),
-            header -> context.getExtraData(),
+            header -> miningParameters.getExtraData(),
             context.getTransactionPool(),
             protocolContext,
             protocolSchedule,

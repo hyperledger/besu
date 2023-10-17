@@ -23,7 +23,6 @@ import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.cryptoservices.NodeKey;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
@@ -50,7 +49,6 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
    * Instantiates a new Clique block creator.
    *
    * @param miningParameters the mining parameters
-   * @param coinbase the coinbase
    * @param extraDataCalculator the extra data calculator
    * @param transactionPool the pending transactions
    * @param protocolContext the protocol context
@@ -61,7 +59,6 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
    */
   public CliqueBlockCreator(
       final MiningParameters miningParameters,
-      final Address coinbase,
       final ExtraDataCalculator extraDataCalculator,
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
@@ -72,7 +69,6 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
       final EthScheduler ethScheduler) {
     super(
         miningParameters,
-        coinbase,
         __ -> Util.publicKeyToAddress(nodeKey.getPublicKey()),
         extraDataCalculator,
         transactionPool,

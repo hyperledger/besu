@@ -29,7 +29,6 @@ public class TransactionSelectionResult {
     BLOCK_FULL(true, false),
     BLOCK_OCCUPANCY_ABOVE_THRESHOLD(true, false),
     BLOCK_SELECTION_TIMEOUT(true, false),
-    BLOCK_SELECTION_CANCELLED(true, false),
     INVALID_TRANSIENT(false, false),
     INVALID(false, true);
 
@@ -61,9 +60,8 @@ public class TransactionSelectionResult {
   /** There was no more time to add transaction to the block */
   public static final TransactionSelectionResult BLOCK_SELECTION_TIMEOUT =
       new TransactionSelectionResult(Status.BLOCK_SELECTION_TIMEOUT);
-  /** There the selection has been cancelled */
-  public static final TransactionSelectionResult BLOCK_SELECTION_CANCELLED =
-      new TransactionSelectionResult(Status.BLOCK_SELECTION_CANCELLED);
+  ;
+
   /**
    * The transaction has not been selected since too large and the occupancy of the block is enough
    * to stop the selection.

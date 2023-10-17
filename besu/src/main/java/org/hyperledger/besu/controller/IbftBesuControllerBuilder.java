@@ -145,6 +145,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final BftProtocolSchedule bftProtocolSchedule = (BftProtocolSchedule) protocolSchedule;
+    miningParameters.setCoinbase(localAddress);
     final BftBlockCreatorFactory<?> blockCreatorFactory =
         new BftBlockCreatorFactory<>(
             transactionPool,

@@ -210,7 +210,6 @@ public abstract class AbstractIsolationTests {
   static class TestBlockCreator extends AbstractBlockCreator {
     private TestBlockCreator(
         final MiningParameters miningParameters,
-        final Address coinbase,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         final ExtraDataCalculator extraDataCalculator,
         final TransactionPool transactionPool,
@@ -220,7 +219,6 @@ public abstract class AbstractIsolationTests {
         final EthScheduler ethScheduler) {
       super(
           miningParameters,
-          coinbase,
           miningBeneficiaryCalculator,
           extraDataCalculator,
           transactionPool,
@@ -246,13 +244,12 @@ public abstract class AbstractIsolationTests {
                       .targetGasLimit(30_000_000L)
                       .minTransactionGasPrice(Wei.ONE)
                       .minBlockOccupancyRatio(0d)
+                      .coinbase(Address.ZERO)
                       .build())
-              .coinbase(Address.ZERO)
               .build();
 
       return new TestBlockCreator(
           miningParameters,
-          Address.ZERO,
           __ -> Address.ZERO,
           __ -> Bytes.fromHexString("deadbeef"),
           transactionPool,

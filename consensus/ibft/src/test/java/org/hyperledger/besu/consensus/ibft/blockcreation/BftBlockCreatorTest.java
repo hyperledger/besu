@@ -166,8 +166,8 @@ public class BftBlockCreatorTest {
                                 0,
                                 initialValidatorList)))
                     .minTransactionGasPrice(Wei.ZERO)
+                    .coinbase(AddressHelpers.ofValue(1))
                     .build())
-            .coinbase(AddressHelpers.ofValue(1))
             .build();
 
     final BftBlockCreator blockCreator =

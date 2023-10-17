@@ -143,7 +143,6 @@ public class CliqueBlockCreatorTest {
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
             miningParameters,
-            coinbase,
             parent -> extraData,
             createTransactionPool(),
             protocolContext,
@@ -173,7 +172,6 @@ public class CliqueBlockCreatorTest {
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
             miningParameters,
-            coinbase,
             parent -> extraData,
             createTransactionPool(),
             protocolContext,
@@ -208,7 +206,6 @@ public class CliqueBlockCreatorTest {
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
             miningParameters,
-            coinbase,
             parent -> extraData,
             createTransactionPool(),
             protocolContext,
@@ -257,8 +254,8 @@ public class CliqueBlockCreatorTest {
                     .extraData(extraData)
                     .targetGasLimit(10_000_000L)
                     .minTransactionGasPrice(Wei.ZERO)
+                    .coinbase(coinbase)
                     .build())
-            .coinbase(coinbase)
             .build();
     return miningParameters;
   }

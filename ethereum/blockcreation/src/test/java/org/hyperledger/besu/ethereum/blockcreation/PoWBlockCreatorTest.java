@@ -94,8 +94,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                     .createProtocolSchedule())
             .build();
 
-    final MiningParameters miningParameters =
-        createMiningParameters(Lists.newArrayList(BLOCK_1_NONCE));
+    final MiningParameters miningParameters = createMiningParameters();
 
     final PoWSolver solver =
         new PoWSolver(
@@ -110,7 +109,6 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             miningParameters,
-            BLOCK_1_COINBASE,
             parent -> BLOCK_1_EXTRA_DATA,
             transactionPool,
             executionContextTestFixture.getProtocolContext(),
@@ -150,8 +148,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                     .createProtocolSchedule())
             .build();
 
-    final MiningParameters miningParameters =
-        createMiningParameters(Lists.newArrayList(BLOCK_1_NONCE));
+    final MiningParameters miningParameters = createMiningParameters();
 
     final PoWSolver solver =
         new PoWSolver(
@@ -166,7 +163,6 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             miningParameters,
-            BLOCK_1_COINBASE,
             parent -> BLOCK_1_EXTRA_DATA,
             transactionPool,
             executionContextTestFixture.getProtocolContext(),
@@ -197,8 +193,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder().protocolSchedule(protocolSchedule).build();
 
-    final MiningParameters miningParameters =
-        createMiningParameters(Lists.newArrayList(BLOCK_1_NONCE));
+    final MiningParameters miningParameters = createMiningParameters();
 
     final PoWSolver solver =
         new PoWSolver(
@@ -213,7 +208,6 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             miningParameters,
-            BLOCK_1_COINBASE,
             parent -> BLOCK_1_EXTRA_DATA,
             transactionPool,
             executionContextTestFixture.getProtocolContext(),
@@ -266,8 +260,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder().protocolSchedule(protocolSchedule).build();
 
-    final MiningParameters miningParameters =
-        createMiningParameters(Lists.newArrayList(BLOCK_1_NONCE));
+    final MiningParameters miningParameters = createMiningParameters();
 
     final PoWSolver solver =
         new PoWSolver(
@@ -282,7 +275,6 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             miningParameters,
-            BLOCK_1_COINBASE,
             parent -> BLOCK_1_EXTRA_DATA,
             transactionPool,
             executionContextTestFixture.getProtocolContext(),
@@ -348,15 +340,15 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
     return transactionPool;
   }
 
-  private MiningParameters createMiningParameters(final Iterable<Long> nonceList) {
+  private MiningParameters createMiningParameters() {
     return ImmutableMiningParameters.builder()
         .updatableInitValues(
             ImmutableMiningParameters.UpdatableInitValues.builder()
-                .nonceGenerator(nonceList)
+                .nonceGenerator(Lists.newArrayList(BLOCK_1_NONCE))
                 .extraData(BLOCK_1_EXTRA_DATA)
                 .minTransactionGasPrice(Wei.ONE)
+                .coinbase(BLOCK_1_COINBASE)
                 .build())
-        .coinbase(BLOCK_1_COINBASE)
         .build();
   }
 }
