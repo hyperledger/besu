@@ -40,8 +40,6 @@ public abstract class MiningParameters {
     return ImmutableMiningParameters.builder().build();
   }
 
-  public abstract Optional<Address> getCoinbase();
-
   public boolean isMiningEnabled() {
     return getUpdatableRuntimeValues().miningEnabled;
   }
@@ -75,6 +73,15 @@ public abstract class MiningParameters {
 
   public MiningParameters setMinPriorityFeePerGas(final Wei minPriorityFeePerGas) {
     getUpdatableRuntimeValues().minPriorityFeePerGas = minPriorityFeePerGas;
+    return this;
+  }
+
+  public Optional<Address> getCoinbase() {
+    return getUpdatableRuntimeValues().coinbase;
+  }
+
+  public MiningParameters setCoinbase(final Address coinbase) {
+    getUpdatableRuntimeValues().coinbase = Optional.of(coinbase);
     return this;
   }
 
@@ -169,6 +176,8 @@ public abstract class MiningParameters {
       return DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
     }
 
+    Optional<Address> getCoinbase();
+
     OptionalLong getTargetGasLimit();
 
     Optional<Iterable<Long>> nonceGenerator();
@@ -180,6 +189,7 @@ public abstract class MiningParameters {
     private volatile Wei minTransactionGasPrice;
     private volatile Wei minPriorityFeePerGas;
     private volatile double minBlockOccupancyRatio;
+    private volatile Optional<Address> coinbase;
     private volatile OptionalLong targetGasLimit;
     private volatile Optional<Iterable<Long>> nonceGenerator;
 
@@ -189,6 +199,7 @@ public abstract class MiningParameters {
       minTransactionGasPrice = initValues.getMinTransactionGasPrice();
       minPriorityFeePerGas = initValues.getMinPriorityFeePerGas();
       minBlockOccupancyRatio = initValues.getMinBlockOccupancyRatio();
+      coinbase = initValues.getCoinbase();
       targetGasLimit = initValues.getTargetGasLimit();
       nonceGenerator = initValues.nonceGenerator();
     }
@@ -202,6 +213,7 @@ public abstract class MiningParameters {
           && Double.compare(minBlockOccupancyRatio, that.minBlockOccupancyRatio) == 0
           && Objects.equals(extraData, that.extraData)
           && Objects.equals(minTransactionGasPrice, that.minTransactionGasPrice)
+          && Objects.equals(coinbase, that.coinbase)
           && Objects.equals(minPriorityFeePerGas, that.minPriorityFeePerGas)
           && Objects.equals(targetGasLimit, that.targetGasLimit)
           && Objects.equals(nonceGenerator, that.nonceGenerator);
@@ -215,6 +227,7 @@ public abstract class MiningParameters {
           minTransactionGasPrice,
           minPriorityFeePerGas,
           minBlockOccupancyRatio,
+          coinbase,
           targetGasLimit,
           nonceGenerator);
     }
@@ -232,6 +245,8 @@ public abstract class MiningParameters {
           + minPriorityFeePerGas
           + ", minBlockOccupancyRatio="
           + minBlockOccupancyRatio
+          + ", coinbase="
+          + coinbase
           + ", targetGasLimit="
           + targetGasLimit
           + ", nonceGenerator="

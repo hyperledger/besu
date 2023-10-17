@@ -155,7 +155,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
   }
 
   @Test
-  public void eip1559LocalTransactionCurrentGasPriceLessThanMinimumIsSelected() {
+  public void eip1559PriorityTransactionCurrentGasPriceLessThanMinimumIsSelected() {
     final ProcessableBlockHeader blockHeader = createBlock(301_000, Wei.ONE);
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);

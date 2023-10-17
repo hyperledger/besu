@@ -71,6 +71,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
     this.nodeKey = nodeKey;
     this.localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     this.epochManager = epochManager;
+    miningParams.setCoinbase(localAddress);
   }
 
   @Override
@@ -82,7 +83,6 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
         (header) ->
             new CliqueBlockCreator(
                 miningParameters,
-                localAddress, // TOOD(tmm): This can be removed (used for voting not coinbase).
                 this::calculateExtraData,
                 transactionPool,
                 protocolContext,
@@ -103,7 +103,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
 
   @Override
   public Optional<Address> getCoinbase() {
-    return Optional.of(localAddress);
+    return miningParameters.getCoinbase();
   }
 
   /**

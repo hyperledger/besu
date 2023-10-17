@@ -79,7 +79,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractBlockCreator.class);
 
-  protected final Address coinbase;
   private final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private final ExtraDataCalculator extraDataCalculator;
   private final TransactionPool transactionPool;
@@ -94,7 +93,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   protected AbstractBlockCreator(
       final MiningParameters miningParameters,
-      final Address coinbase,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final ExtraDataCalculator extraDataCalculator,
       final TransactionPool transactionPool,
@@ -103,7 +101,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final BlockHeader parentHeader,
       final Optional<Address> depositContractAddress) {
     this.miningParameters = miningParameters;
-    this.coinbase = coinbase;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.extraDataCalculator = extraDataCalculator;
     this.transactionPool = transactionPool;
@@ -411,7 +408,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     final Bytes32 parentBeaconBlockRoot = maybeParentBeaconBlockRoot.orElse(null);
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())
-        .coinbase(coinbase)
+        .coinbase(miningParameters.getCoinbase().orElseThrow())
         .difficulty(Difficulty.of(difficulty))
         .number(newBlockNumber)
         .gasLimit(gasLimit)

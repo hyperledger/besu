@@ -310,8 +310,8 @@ public class BesuNodeFactory {
                 UpdatableInitValues.builder()
                     .isMiningEnabled(true)
                     .minTransactionGasPrice(Wei.ZERO)
+                    .coinbase(AddressHelpers.ofValue(1))
                     .build())
-            .coinbase(AddressHelpers.ofValue(1))
             .build();
 
     return create(

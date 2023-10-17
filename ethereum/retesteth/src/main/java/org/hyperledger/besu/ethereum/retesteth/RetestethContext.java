@@ -32,6 +32,8 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.Unstable;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -99,7 +101,7 @@ public class RetestethContext {
   private HeaderValidationMode headerValidationMode;
   private BlockReplay blockReplay;
   private RetestethClock retestethClock;
-
+  private MiningParameters miningParameters;
   private TransactionPool transactionPool;
   private EthScheduler ethScheduler;
   private PoWSolver poWSolver;
@@ -180,13 +182,17 @@ public class RetestethContext {
             ? HeaderValidationMode.LIGHT
             : HeaderValidationMode.FULL;
 
-    final MiningParameters miningParameters =
+    miningParameters =
         ImmutableMiningParameters.builder()
-            .unstable(
-                ImmutableMiningParameters.Unstable.builder()
-                    .powJobTimeToLive(1000)
-                    .maxOmmerDepth(8)
+            .updatableInitValues(
+                UpdatableInitValues.builder()
+                    .coinbase(coinbase)
+                    .extraData(extraData)
+                    .targetGasLimit(blockchain.getChainHeadHeader().getGasLimit())
+                    .minBlockOccupancyRatio(0.0)
+                    .minTransactionGasPrice(Wei.ZERO)
                     .build())
+            .unstable(Unstable.builder().powJobTimeToLive(1000).maxOmmerDepth(8).build())
             .build();
     miningParameters.setMinTransactionGasPrice(Wei.ZERO);
     poWSolver =
@@ -311,12 +317,8 @@ public class RetestethContext {
     return transactionPool;
   }
 
-  public Address getCoinbase() {
-    return coinbase;
-  }
-
-  public Bytes getExtraData() {
-    return extraData;
+  public MiningParameters getMiningParameters() {
+    return miningParameters;
   }
 
   public MutableBlockchain getBlockchain() {

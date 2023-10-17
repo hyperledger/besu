@@ -19,6 +19,8 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.S2;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.S3;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.S4;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.SP1;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.SP2;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -143,6 +145,12 @@ public class LayersTest extends BaseTransactionPoolTest {
   @ParameterizedTest
   @MethodSource("providerAsyncWorldStateUpdates")
   void asyncWorldStateUpdates(final Scenario scenario) {
+    assertScenario(scenario);
+  }
+
+  @ParameterizedTest
+  @MethodSource("providerPrioritySenders")
+  void prioritySenders(final Scenario scenario) {
     assertScenario(scenario);
   }
 
@@ -1023,6 +1031,141 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .expectedSparseForSender(S1, 8, 9, 7)));
   }
 
+  static Stream<Arguments> providerPrioritySenders() {
+    return Stream.of(
+        Arguments.of(
+            new Scenario("priority first same fee")
+                .addForSenders(S1, 0, SP1, 0)
+                .expectedPrioritizedForSenders(SP1, 0, S1, 0)),
+        Arguments.of(
+            new Scenario("priority first lower fee")
+                .addForSenders(S2, 0, SP1, 0)
+                .expectedPrioritizedForSenders(SP1, 0, S2, 0)),
+        Arguments.of(
+            new Scenario("priority first higher fee")
+                .addForSenders(S1, 0, SP2, 0)
+                .expectedPrioritizedForSenders(SP2, 0, S1, 0)),
+        Arguments.of(
+            new Scenario("same priority order by fee")
+                .addForSenders(SP1, 0, SP2, 0)
+                .expectedPrioritizedForSenders(SP2, 0, SP1, 0)),
+        Arguments.of(
+            new Scenario("same priority order by fee")
+                .addForSenders(SP2, 0, SP1, 0)
+                .expectedPrioritizedForSenders(SP2, 0, SP1, 0)),
+        Arguments.of(
+            new Scenario("priority first overflow to ready")
+                .addForSender(S2, 0, 1, 2)
+                .expectedPrioritizedForSender(S2, 0, 1, 2)
+                .addForSender(SP1, 0)
+                .expectedPrioritizedForSenders(SP1, 0, S2, 0, S2, 1)
+                .expectedReadyForSender(S2, 2)),
+        Arguments.of(
+            new Scenario("priority first overflow to ready 2")
+                .addForSender(S2, 0, 1, 2)
+                .expectedPrioritizedForSender(S2, 0, 1, 2)
+                .addForSender(SP1, 0, 1, 2)
+                .expectedPrioritizedForSender(SP1, 0, 1, 2)
+                .expectedReadyForSender(S2, 0, 1, 2)),
+        Arguments.of(
+            new Scenario("multiple priority senders first overflow to ready")
+                .addForSender(S2, 0, 1, 2)
+                .expectedPrioritizedForSender(S2, 0, 1, 2)
+                .addForSenders(SP2, 0, SP1, 0)
+                .expectedPrioritizedForSenders(SP2, 0, SP1, 0, S2, 0)
+                .expectedReadyForSender(S2, 1, 2)),
+        Arguments.of(
+            new Scenario("priority with initial gap")
+                .addForSender(S2, 0)
+                .expectedPrioritizedForSender(S2, 0)
+                .addForSender(SP1, 1) // initial gap
+                .expectedPrioritizedForSender(S2, 0)
+                .expectedSparseForSender(SP1, 1)
+                .addForSender(SP1, 0) // fill gap
+                .expectedPrioritizedForSenders(SP1, 0, SP1, 1, S2, 0)
+                .expectedSparseForSenders()),
+        Arguments.of(
+            new Scenario("priority with initial gap overflow to ready")
+                .addForSender(S2, 0, 1)
+                .expectedPrioritizedForSender(S2, 0, 1)
+                .addForSender(SP1, 1) // initial gap
+                .expectedSparseForSender(SP1, 1)
+                .addForSender(SP1, 0) // fill gap
+                .expectedPrioritizedForSenders(SP1, 0, SP1, 1, S2, 0)
+                .expectedReadyForSender(S2, 1)
+                .expectedSparseForSenders()),
+        Arguments.of(
+            new Scenario("priority with initial gap overflow to ready when prioritized is full")
+                .addForSender(S2, 0, 1, 2)
+                .expectedPrioritizedForSender(S2, 0, 1, 2)
+                .addForSender(SP1, 1) // initial gap
+                .expectedSparseForSender(SP1, 1)
+                .addForSender(SP1, 0) // fill gap, but there is not enough space to promote
+                .expectedPrioritizedForSenders(SP1, 0, S2, 0, S2, 1)
+                .expectedReadyForSender(S2, 2)
+                .expectedSparseForSender(SP1, 1)
+                .confirmedForSenders(
+                    SP1, 0) // asap there is new space the priority tx is promoted first
+                .expectedPrioritizedForSenders(SP1, 1, S2, 0, S2, 1)
+                .expectedReadyForSender(S2, 2)
+                .expectedSparseForSenders()),
+        Arguments.of(
+            new Scenario("overflow to ready promote priority first")
+                .addForSender(SP2, 0, 1, 2)
+                .expectedPrioritizedForSender(SP2, 0, 1, 2)
+                .addForSender(S2, 0)
+                .expectedReadyForSender(S2, 0)
+                .addForSender(SP1, 0)
+                .expectedReadyForSenders(SP1, 0, S2, 0)
+                .confirmedForSenders(
+                    SP2, 0) // asap there is new space the priority tx is promoted first
+                .expectedPrioritizedForSenders(SP2, 1, SP2, 2, SP1, 0)
+                .expectedReadyForSender(S2, 0)),
+        Arguments.of(
+            new Scenario("priority first overflow to sparse")
+                .addForSender(SP2, 0, 1, 2)
+                .addForSender(S3, 0)
+                .expectedPrioritizedForSender(SP2, 0, 1, 2)
+                .expectedReadyForSender(S3, 0)
+                .addForSender(SP1, 0, 1, 2)
+                .expectedPrioritizedForSender(SP2, 0, 1, 2)
+                .expectedReadyForSender(SP1, 0, 1, 2)
+                .expectedSparseForSender(S3, 0)),
+        Arguments.of(
+            new Scenario("priority first overflow to sparse 2")
+                .addForSender(S2, 0, 1, 2)
+                .addForSender(S3, 0, 1, 2)
+                .expectedPrioritizedForSender(S3, 0, 1, 2)
+                .expectedReadyForSender(S2, 0, 1, 2)
+                .addForSender(SP1, 0)
+                .expectedPrioritizedForSenders(SP1, 0, S3, 0, S3, 1)
+                .expectedReadyForSenders(S3, 2, S2, 0, S2, 1)
+                .expectedSparseForSender(S2, 2)),
+        Arguments.of(
+            new Scenario("overflow to sparse promote priority first")
+                .addForSender(SP2, 0, 1, 2, 3, 4, 5)
+                .expectedPrioritizedForSender(SP2, 0, 1, 2)
+                .expectedReadyForSender(SP2, 3, 4, 5)
+                .addForSender(S3, 0)
+                .expectedSparseForSender(S3, 0)
+                .addForSender(SP1, 0)
+                .expectedSparseForSenders(S3, 0, SP1, 0)
+                .confirmedForSenders(SP2, 0)
+                .expectedPrioritizedForSender(SP2, 1, 2, 3)
+                .expectedReadyForSenders(SP2, 4, SP2, 5, SP1, 0)
+                .expectedSparseForSender(S3, 0)),
+        Arguments.of(
+            new Scenario("discard priority as last")
+                .addForSender(SP2, 0, 1, 2, 3, 4, 5)
+                .expectedPrioritizedForSender(SP2, 0, 1, 2)
+                .expectedReadyForSender(SP2, 3, 4, 5)
+                .addForSender(S3, 0)
+                .expectedSparseForSender(S3, 0)
+                .addForSender(SP1, 0, 1, 2)
+                .expectedSparseForSender(SP1, 0, 1, 2)
+                .expectedDroppedForSender(S3, 0)));
+  }
+
   private static BlockHeader mockBlockHeader() {
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ONE));
@@ -1145,7 +1288,7 @@ public class LayersTest extends BaseTransactionPoolTest {
     private PendingTransaction createEIP1559PendingTransactions(
         final Sender sender, final long nonce) {
       return createRemotePendingTransaction(
-          createEIP1559Transaction(nonce, sender.key, sender.gasFeeMultiplier));
+          createEIP1559Transaction(nonce, sender.key, sender.gasFeeMultiplier), sender.hasPriority);
     }
 
     public Scenario expectedPrioritizedForSender(final Sender sender, final long... nonce) {
@@ -1338,19 +1481,24 @@ public class LayersTest extends BaseTransactionPoolTest {
   }
 
   enum Sender {
-    S1(1),
-    S2(2),
-    S3(3),
-    S4(4);
+    S1(false, 1),
+    S2(false, 2),
+    S3(false, 3),
+    S4(false, 4),
+    SP1(true, 1),
+    SP2(true, 2);
 
     final KeyPair key;
     final Address address;
     final int gasFeeMultiplier;
 
-    Sender(final int gasFeeMultiplier) {
+    final boolean hasPriority;
+
+    Sender(final boolean hasPriority, final int gasFeeMultiplier) {
       this.key = SIGNATURE_ALGORITHM.get().generateKeyPair();
       this.address = Util.publicKeyToAddress(key.getPublicKey());
       this.gasFeeMultiplier = gasFeeMultiplier;
+      this.hasPriority = hasPriority;
     }
   }
 }
