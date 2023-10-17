@@ -3394,20 +3394,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private class BesuCommandConfigurationService implements BesuConfiguration {
 
     @Override
-    public Optional<String> getRpcHttpHost() {
-      return jsonRPCHttpOptionGroup.isRpcHttpEnabled
-          ? Optional.of(jsonRPCHttpOptionGroup.rpcHttpHost)
-          : Optional.empty();
-    }
-
-    @Override
-    public Optional<Integer> getRpcHttpPort() {
-      return jsonRPCHttpOptionGroup.isRpcHttpEnabled
-          ? Optional.of(jsonRPCHttpOptionGroup.rpcHttpPort)
-          : Optional.empty();
-    }
-
-    @Override
     public Path getStoragePath() {
       return dataDir().resolve(DATABASE_PATH);
     }

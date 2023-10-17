@@ -17,43 +17,16 @@ package org.hyperledger.besu.services;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 
 import java.nio.file.Path;
-import java.util.Optional;
 
 /** A concrete implementation of BesuConfiguration which is used in Besu plugin framework. */
 public class BesuConfigurationImpl implements BesuConfiguration {
 
   private final Path storagePath;
   private final Path dataPath;
-  private final Optional<String> rpcHttpHost;
-
-  private final Optional<Integer> rpcHttpPort;
 
   public BesuConfigurationImpl(final Path storagePath, final Path dataPath) {
-    this.rpcHttpHost = Optional.empty();
-    this.rpcHttpPort = Optional.empty();
     this.storagePath = storagePath;
     this.dataPath = dataPath;
-  }
-
-  public BesuConfigurationImpl(
-      final String rpcHttpHost,
-      final int rpcHttpPort,
-      final Path storagePath,
-      final Path dataPath) {
-    this.rpcHttpHost = Optional.of(rpcHttpHost);
-    this.rpcHttpPort = Optional.of(rpcHttpPort);
-    this.storagePath = storagePath;
-    this.dataPath = dataPath;
-  }
-
-  @Override
-  public Optional<String> getRpcHttpHost() {
-    return rpcHttpHost;
-  }
-
-  @Override
-  public Optional<Integer> getRpcHttpPort() {
-    return rpcHttpPort;
   }
 
   @Override

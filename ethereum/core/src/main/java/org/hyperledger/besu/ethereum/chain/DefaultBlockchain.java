@@ -328,7 +328,12 @@ public class DefaultBlockchain implements MutableBlockchain {
       blockAddedEvent = handleStoreOnly(blockWithReceipts);
     } else {
       blockAddedEvent = updateCanonicalChainData(updater, blockWithReceipts);
+      System.out.println(
+          "updateCanonicalChainData " + blockAddedEvent.getBlock().getHeader().getHash());
       if (blockAddedEvent.isNewCanonicalHead()) {
+        System.out.println(
+            "updateCanonicalChainData isNewCanonicalHead "
+                + blockAddedEvent.getBlock().getHeader().getHash());
         updateCacheForNewCanonicalHead(block, td);
       }
     }
@@ -392,12 +397,20 @@ public class DefaultBlockchain implements MutableBlockchain {
     }
 
     try {
+
+      System.out.println(
+          "updateCanonicalChainData in, " + newBlock.getHeader().getParentHash() + " " + chainHead);
+
       if (newBlock.getHeader().getParentHash().equals(chainHead) || chainHead == null) {
         return handleNewHead(updater, blockWithReceipts);
       } else if (blockChoiceRule.compare(newBlock.getHeader(), chainHeader) > 0) {
+        System.out.println(
+            "blockChoiceRule.compare(newBlock.getHeader(), chainHeader) "
+                + blockChoiceRule.compare(newBlock.getHeader(), chainHeader));
         // New block represents a chain reorganization
         return handleChainReorg(updater, blockWithReceipts);
       } else {
+        System.out.println("handleFork " + chainHeader);
         // New block represents a fork
         return handleFork(updater, newBlock);
       }

@@ -17,14 +17,9 @@ package org.hyperledger.besu.plugin.services;
 import org.hyperledger.besu.plugin.Unstable;
 
 import java.nio.file.Path;
-import java.util.Optional;
 
 /** Generally useful configuration provided by Besu. */
 public interface BesuConfiguration extends BesuService {
-
-  Optional<String> getRpcHttpHost();
-
-  Optional<Integer> getRpcHttpPort();
 
   /**
    * Location of the working directory of the storage in the file system running the client.

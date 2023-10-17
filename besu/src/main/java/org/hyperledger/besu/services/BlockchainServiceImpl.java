@@ -18,15 +18,17 @@ package org.hyperledger.besu.services;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockContext;
 import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.data.TransactionReceipt;
 import org.hyperledger.besu.plugin.services.BlockchainService;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /** The Blockchain service implementation. */
 @Unstable
@@ -57,13 +59,27 @@ public class BlockchainServiceImpl implements BlockchainService {
   }
 
   @Override
+  public Optional<List<TransactionReceipt>> getReceiptsByBlockHash(final Hash blockHash) {
+    return blockchain
+        .getTxReceipts(blockHash)
+        .map(
+            list -> list.stream().map(TransactionReceipt.class::cast).collect(Collectors.toList()));
+  }
+
+  @Override
   public void storeBlock(
-      final BlockHeader blockHeader, final org.hyperledger.besu.plugin.data.BlockBody blockBody) {
+      final BlockHeader blockHeader,
+      final BlockBody blockBody,
+      final List<TransactionReceipt> receipts) {
     final org.hyperledger.besu.ethereum.core.BlockHeader coreHeader =
         (org.hyperledger.besu.ethereum.core.BlockHeader) blockHeader;
     final org.hyperledger.besu.ethereum.core.BlockBody coreBody =
         (org.hyperledger.besu.ethereum.core.BlockBody) blockBody;
-    blockchain.storeBlock(new Block(coreHeader, coreBody), Collections.emptyList());
+    final List<org.hyperledger.besu.ethereum.core.TransactionReceipt> coreReceipts =
+        receipts.stream()
+            .map(org.hyperledger.besu.ethereum.core.TransactionReceipt.class::cast)
+            .toList();
+    blockchain.storeBlock(new Block(coreHeader, coreBody), coreReceipts);
   }
 
   @Override
