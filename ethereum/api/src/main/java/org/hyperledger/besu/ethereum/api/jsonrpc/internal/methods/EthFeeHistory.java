@@ -149,33 +149,30 @@ public class EthFeeHistory implements JsonRpcMethod {
 
     final Optional<List<List<Wei>>> maybeRewards =
         maybeRewardPercentiles.map(
-            rewardPercentiles ->
-                blockHeaders.stream()
-                    .parallel()
-                    .map(
-                        blockHeader -> {
-                          final RewardCacheKey key =
-                              new RewardCacheKey(blockHeader.getBlockHash(), rewardPercentiles);
-                          return Optional.ofNullable(cache.getIfPresent(key))
-                              .or(
-                                  () -> {
-                                    Optional<Block> block =
-                                        blockchain.getBlockByHash(blockHeader.getBlockHash());
-                                    return block.map(
-                                        b -> {
-                                          List<Wei> rewards =
-                                              computeRewards(
-                                                  rewardPercentiles.stream()
-                                                      .sorted()
-                                                      .collect(toUnmodifiableList()),
-                                                  b);
-                                          cache.put(key, rewards);
-                                          return rewards;
-                                        });
-                                  });
-                        })
-                    .flatMap(Optional::stream)
-                    .collect(toUnmodifiableList()));
+            rewardPercentiles -> {
+              var sortedPercentiles = rewardPercentiles.stream().sorted().toList();
+              return blockHeaders.stream()
+                  .parallel()
+                  .map(
+                      blockHeader -> {
+                        final RewardCacheKey key =
+                            new RewardCacheKey(blockHeader.getBlockHash(), rewardPercentiles);
+                        return Optional.ofNullable(cache.getIfPresent(key))
+                            .or(
+                                () -> {
+                                  Optional<Block> block =
+                                      blockchain.getBlockByHash(blockHeader.getBlockHash());
+                                  return block.map(
+                                      b -> {
+                                        List<Wei> rewards = computeRewards(sortedPercentiles, b);
+                                        cache.put(key, rewards);
+                                        return rewards;
+                                      });
+                                });
+                      })
+                  .flatMap(Optional::stream)
+                  .toList();
+            });
 
     return new JsonRpcSuccessResponse(
         requestId,
