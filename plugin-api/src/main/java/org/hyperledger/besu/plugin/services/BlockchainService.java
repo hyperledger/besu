@@ -17,9 +17,12 @@ package org.hyperledger.besu.plugin.services;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockContext;
 import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.data.TransactionReceipt;
 
+import java.util.List;
 import java.util.Optional;
 
 /** A service that plugins can use to query blocks by number */
@@ -40,6 +43,10 @@ public interface BlockchainService extends BesuService {
    */
   Hash getChainHeadHash();
 
+  Optional<List<TransactionReceipt>> getReceiptsByBlockHash(Hash blockHash);
+
+  void storeBlock(BlockHeader blockHeader, BlockBody blockBody, List<TransactionReceipt> receipts);
+
   /**
    * Get the block header of the chain head
    *
@@ -53,8 +60,6 @@ public interface BlockchainService extends BesuService {
    * @return base fee of the next block or empty if the fee market does not support base fee
    */
   Optional<Wei> getNextBlockBaseFee();
-
-  void storeBlock(BlockHeader blockHeader, org.hyperledger.besu.plugin.data.BlockBody blockBody);
 
   Optional<Hash> getSafeBlock();
 

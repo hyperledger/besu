@@ -48,6 +48,7 @@ public class ChainDataPruner implements BlockAddedObserver {
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
+    System.out.println("Pruning received ?");
     final long blockNumber = event.getBlock().getHeader().getNumber();
     final long storedPruningMark = prunerStorage.getPruningMark().orElse(blockNumber);
     if (blockNumber < storedPruningMark) {
@@ -74,6 +75,14 @@ public class ChainDataPruner implements BlockAddedObserver {
           long currentPruningMark = storedPruningMark;
           final long newPruningMark = blockNumber - blocksToRetain;
           final long blocksToBePruned = newPruningMark - currentPruningMark;
+          System.out.println(
+              newPruningMark
+                  + " "
+                  + blocksToBePruned
+                  + " "
+                  + currentPruningMark
+                  + " "
+                  + event.isNewCanonicalHead());
           if (event.isNewCanonicalHead() && blocksToBePruned >= pruningFrequency) {
             long currentRetainedBlock = blockNumber - currentPruningMark + 1;
             while (currentRetainedBlock > blocksToRetain) {
