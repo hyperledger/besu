@@ -24,6 +24,7 @@ import org.hyperledger.besu.cli.converter.FractionConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -32,19 +33,25 @@ import org.hyperledger.besu.util.number.Percentage;
 
 import java.io.File;
 import java.util.List;
+import java.util.Set;
 
 import picocli.CommandLine;
 
 /** The Transaction pool Cli stable options. */
 public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfiguration> {
   private static final String TX_POOL_IMPLEMENTATION = "--tx-pool";
+  /** Use TX_POOL_NO_LOCAL_PRIORITY instead */
+  @Deprecated(forRemoval = true)
   private static final String TX_POOL_DISABLE_LOCALS = "--tx-pool-disable-locals";
+
+  private static final String TX_POOL_NO_LOCAL_PRIORITY = "--tx-pool-no-local-priority";
   private static final String TX_POOL_ENABLE_SAVE_RESTORE = "--tx-pool-enable-save-restore";
   private static final String TX_POOL_SAVE_FILE = "--tx-pool-save-file";
   private static final String TX_POOL_PRICE_BUMP = "--tx-pool-price-bump";
   private static final String RPC_TX_FEECAP = "--rpc-tx-feecap";
   private static final String STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG =
       "--strict-tx-replay-protection-enabled";
+  private static final String TX_POOL_PRIORITY_SENDERS = "--tx-pool-priority-senders";
 
   @CommandLine.Option(
       names = {TX_POOL_IMPLEMENTATION},
@@ -54,13 +61,13 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   private TransactionPoolConfiguration.Implementation txPoolImplementation = LAYERED;
 
   @CommandLine.Option(
-      names = {TX_POOL_DISABLE_LOCALS},
+      names = {TX_POOL_NO_LOCAL_PRIORITY, TX_POOL_DISABLE_LOCALS},
       paramLabel = "<Boolean>",
       description =
-          "Set to true if transactions sent via RPC should have the same checks and not be prioritized over remote ones (default: ${DEFAULT-VALUE})",
+          "Set to true if senders of transactions sent via RPC should not have priority (default: ${DEFAULT-VALUE})",
       fallbackValue = "true",
       arity = "0..1")
-  private Boolean disableLocalTxs = TransactionPoolConfiguration.DEFAULT_DISABLE_LOCAL_TXS;
+  private Boolean noLocalPriority = TransactionPoolConfiguration.DEFAULT_NO_LOCAL_PRIORITY;
 
   @CommandLine.Option(
       names = {TX_POOL_ENABLE_SAVE_RESTORE},
@@ -103,6 +110,15 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
       fallbackValue = "true",
       arity = "0..1")
   private Boolean strictTxReplayProtectionEnabled = false;
+
+  @CommandLine.Option(
+      names = {TX_POOL_PRIORITY_SENDERS},
+      split = ",",
+      paramLabel = "Comma separated list of addresses",
+      description =
+          "Pending transactions sent exclusively by these addresses, from any source, are prioritized and only evicted after all others. If not specified, then only the senders submitting transactions via RPC have priority (default: ${DEFAULT-VALUE})",
+      arity = "1..*")
+  private Set<Address> prioritySenders = TransactionPoolConfiguration.DEFAULT_PRIORITY_SENDERS;
 
   @CommandLine.ArgGroup(
       validate = false,
@@ -200,11 +216,12 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     final TransactionPoolOptions options = TransactionPoolOptions.create();
     options.txPoolImplementation = config.getTxPoolImplementation();
     options.saveRestoreEnabled = config.getEnableSaveRestore();
-    options.disableLocalTxs = config.getDisableLocalTransactions();
+    options.noLocalPriority = config.getNoLocalPriority();
     options.priceBump = config.getPriceBump();
     options.txFeeCap = config.getTxFeeCap();
     options.saveFile = config.getSaveFile();
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
+    options.prioritySenders = config.getPrioritySenders();
     options.layeredOptions.txPoolLayerMaxCapacity =
         config.getPendingTransactionsLayerMaxCapacityBytes();
     options.layeredOptions.txPoolMaxPrioritized = config.getMaxPrioritizedTransactions();
@@ -242,11 +259,12 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     return ImmutableTransactionPoolConfiguration.builder()
         .txPoolImplementation(txPoolImplementation)
         .enableSaveRestore(saveRestoreEnabled)
-        .disableLocalTransactions(disableLocalTxs)
+        .noLocalPriority(noLocalPriority)
         .priceBump(priceBump)
         .txFeeCap(txFeeCap)
         .saveFile(saveFile)
         .strictTransactionReplayProtectionEnabled(strictTxReplayProtectionEnabled)
+        .prioritySenders(prioritySenders)
         .pendingTransactionsLayerMaxCapacityBytes(layeredOptions.txPoolLayerMaxCapacity)
         .maxPrioritizedTransactions(layeredOptions.txPoolMaxPrioritized)
         .maxFutureBySender(layeredOptions.txPoolMaxFutureBySender)

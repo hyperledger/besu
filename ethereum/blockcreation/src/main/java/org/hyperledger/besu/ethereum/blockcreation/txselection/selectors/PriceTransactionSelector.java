@@ -73,8 +73,7 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
     final Transaction transaction = pendingTransaction.getTransaction();
     // Here we only care about EIP1159 since for Frontier and local transactions the checks
     // that we do when accepting them in the pool are enough
-    if (transaction.getType().supports1559FeeMarket()
-        && !pendingTransaction.isReceivedFromLocalSource()) {
+    if (transaction.getType().supports1559FeeMarket() && !pendingTransaction.hasPriority()) {
 
       // For EIP1559 transactions, the price is dynamic and depends on network conditions, so we can
       // only calculate at this time the current minimum price the transaction is willing to pay
@@ -90,7 +89,7 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
       if (context.minTransactionGasPrice().compareTo(currentMinTransactionGasPriceInBlock) > 0) {
         LOG.trace(
             "Current gas fee of {} is lower than configured minimum {}, skipping",
-            transaction,
+            pendingTransaction,
             context.minTransactionGasPrice());
         return true;
       }
