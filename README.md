@@ -4,7 +4,7 @@
  [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3174/badge)](https://bestpractices.coreinfrastructure.org/projects/3174)
  [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/hyperledger/besu/blob/main/LICENSE)
  [![Discord](https://img.shields.io/discord/905194001349627914?logo=Hyperledger&style=plastic)](https://discord.gg/hyperledger)
- [![Twitter Follow](https://img.shields.io/twitter/follow/Hyperledger)](https://twitter.com/Hyperledger)
+ [![Twitter Follow](https://img.shields.io/twitter/follow/HyperledgerBesu)](https://twitter.com/HyperledgerBesu)
 
 [Download](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/)
 
