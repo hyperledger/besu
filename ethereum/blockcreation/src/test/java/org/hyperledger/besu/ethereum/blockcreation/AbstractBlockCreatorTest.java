@@ -392,13 +392,12 @@ abstract class AbstractBlockCreatorTest {
                     .extraData(Bytes.fromHexString("deadbeef"))
                     .minTransactionGasPrice(Wei.ONE)
                     .minBlockOccupancyRatio(0d)
+                    .coinbase(Address.ZERO)
                     .build())
-            .coinbase(Address.ZERO)
             .build();
 
     return new TestBlockCreator(
         miningParameters,
-        Address.ZERO,
         __ -> Address.ZERO,
         __ -> Bytes.fromHexString("deadbeef"),
         transactionPool,
@@ -412,7 +411,6 @@ abstract class AbstractBlockCreatorTest {
 
     protected TestBlockCreator(
         final MiningParameters miningParameters,
-        final Address coinbase,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         final ExtraDataCalculator extraDataCalculator,
         final TransactionPool transactionPool,
@@ -422,7 +420,6 @@ abstract class AbstractBlockCreatorTest {
         final Optional<Address> depositContractAddress) {
       super(
           miningParameters,
-          coinbase,
           miningBeneficiaryCalculator,
           extraDataCalculator,
           transactionPool,

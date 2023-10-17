@@ -322,8 +322,8 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
                 .isMiningEnabled(true)
                 .extraData(Bytes.fromHexString("0xabc321"))
                 .minBlockOccupancyRatio(0.5)
+                .coinbase(Address.ZERO)
                 .build())
-        .coinbase(Address.ZERO)
         .isStratumMiningEnabled(true)
         .unstable(Unstable.builder().posBlockCreationMaxTime(1000).build())
         .build();

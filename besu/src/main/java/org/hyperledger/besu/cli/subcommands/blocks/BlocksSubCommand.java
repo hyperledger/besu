@@ -275,8 +275,8 @@ public class BlocksSubCommand implements Runnable {
                   .nonceGenerator(new IncrementingNonceGenerator(0))
                   .extraData(extraData)
                   .minTransactionGasPrice(minTransactionGasPrice)
+                  .coinbase(coinbase)
                   .build())
-          .coinbase(coinbase)
           .build();
     }
 

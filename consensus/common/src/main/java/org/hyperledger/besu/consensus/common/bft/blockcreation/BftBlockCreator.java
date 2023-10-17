@@ -63,7 +63,6 @@ public class BftBlockCreator extends AbstractBlockCreator {
       final BftExtraDataCodec bftExtraDataCodec) {
     super(
         miningParameters,
-        localAddress,
         miningBeneficiaryCalculator(localAddress, forksSchedule),
         extraDataCalculator,
         transactionPool,

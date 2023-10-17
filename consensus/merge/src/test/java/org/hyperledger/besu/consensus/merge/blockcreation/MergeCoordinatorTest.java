@@ -57,6 +57,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.Unstable;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
@@ -134,9 +135,9 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   MiningParameters miningParameters =
       ImmutableMiningParameters.builder()
-          .coinbase(coinbase)
+          .updatableInitValues(UpdatableInitValues.builder().coinbase(coinbase).build())
           .unstable(
-              ImmutableMiningParameters.Unstable.builder()
+              Unstable.builder()
                   .posBlockCreationRepetitionMinDuration(REPETITION_MIN_DURATION)
                   .build())
           .build();
@@ -285,7 +286,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                       transactionPool,
                       protocolContext,
                       protocolSchedule,
-                      address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                       parentHeader,
                       Optional.empty()));
 
@@ -551,8 +551,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     miningParameters =
         ImmutableMiningParameters.builder()
             .from(miningParameters)
-            .unstable(
-                ImmutableMiningParameters.Unstable.builder().posBlockCreationMaxTime(100).build())
+            .unstable(Unstable.builder().posBlockCreationMaxTime(100).build())
             .build();
     doAnswer(
             invocation -> {

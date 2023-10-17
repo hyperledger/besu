@@ -118,6 +118,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     this.backwardSyncContext = backwardSyncContext;
 
+    if (miningParams.getCoinbase().isEmpty()) {
+      miningParams.setCoinbase(Address.ZERO);
+    }
     if (miningParams.getTargetGasLimit().isEmpty()) {
       miningParams.setTargetGasLimit(30000000L);
     }
@@ -133,7 +136,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 transactionPool,
                 protocolContext,
                 protocolSchedule,
-                address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                 parentHeader,
                 depositContractAddress);
 
