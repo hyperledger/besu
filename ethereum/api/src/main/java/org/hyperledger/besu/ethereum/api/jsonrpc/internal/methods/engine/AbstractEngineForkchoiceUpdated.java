@@ -93,9 +93,26 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
             forkChoice.getSafeBlockHash(),
             forkChoice.getFinalizedBlockHash());
 
+    if (mergeCoordinator.isBadBlock(forkChoice.getHeadBlockHash())) {
+      logForkchoiceUpdatedCall(INVALID, forkChoice);
+      return new JsonRpcSuccessResponse(
+          requestId,
+          new EngineUpdateForkchoiceResult(
+              INVALID,
+              mergeCoordinator
+                  .getLatestValidHashOfBadBlock(forkChoice.getHeadBlockHash())
+                  .orElse(Hash.ZERO),
+              null,
+              Optional.of(forkChoice.getHeadBlockHash() + " is an invalid block")));
+    }
+
     final Optional<BlockHeader> maybeNewHead =
         mergeCoordinator.getOrSyncHeadByHash(
             forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
+
+    if (maybeNewHead.isEmpty()) {
+      return syncingResponse(requestId, forkChoice);
+    }
 
     ForkchoiceResult forkchoiceResult = null;
     if (!isValidForkchoiceState(
@@ -143,22 +160,6 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       }
     }
 
-    if (mergeCoordinator.isBadBlock(forkChoice.getHeadBlockHash())) {
-      logForkchoiceUpdatedCall(INVALID, forkChoice);
-      return new JsonRpcSuccessResponse(
-          requestId,
-          new EngineUpdateForkchoiceResult(
-              INVALID,
-              mergeCoordinator
-                  .getLatestValidHashOfBadBlock(forkChoice.getHeadBlockHash())
-                  .orElse(Hash.ZERO),
-              null,
-              Optional.of(forkChoice.getHeadBlockHash() + " is an invalid block")));
-    }
-
-    if (maybeNewHead.isEmpty()) {
-      return syncingResponse(requestId, forkChoice);
-    }
     final BlockHeader newHead = maybeNewHead.get();
     if (maybePayloadAttributes.isPresent()) {
       Optional<JsonRpcErrorResponse> maybeError =
