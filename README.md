@@ -5,7 +5,6 @@
  [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/hyperledger/besu/blob/main/LICENSE)
  [![Discord](https://img.shields.io/discord/905194001349627914?logo=Hyperledger&style=plastic)](https://discord.gg/hyperledger)
  [![Twitter Follow](https://img.shields.io/twitter/follow/Hyperledger)](https://twitter.com/Hyperledger)
- 
 
 [Download](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/)
 
