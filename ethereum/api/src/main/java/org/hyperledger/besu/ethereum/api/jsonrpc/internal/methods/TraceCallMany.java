@@ -64,7 +64,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
     final Optional<BlockParameter> maybeBlockParameter =
-        request.getOptionalParameter(2, BlockParameter.class);
+        request.getOptionalParameter(1, BlockParameter.class);
 
     if (maybeBlockParameter.isPresent()) {
       return maybeBlockParameter.get();
