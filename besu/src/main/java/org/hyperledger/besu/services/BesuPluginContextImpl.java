@@ -138,10 +138,10 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
       plugins.add(plugin);
     }
 
-    LOG.debug("Plugin registration complete.");
+    LOG.info("Plugin registration complete.");
     lines.add("");
     lines.add("TOTAL = " + plugins.size());
-    LOG.debug(FramedLogMessage.generate(lines));
+    LOG.info(FramedLogMessage.generate(lines));
 
     state = Lifecycle.REGISTERED;
   }
