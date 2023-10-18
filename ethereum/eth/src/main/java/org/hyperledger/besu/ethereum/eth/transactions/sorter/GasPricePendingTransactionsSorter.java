@@ -37,7 +37,7 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
 
   private final NavigableSet<PendingTransaction> prioritizedTransactions =
       new TreeSet<>(
-          comparing(PendingTransaction::isReceivedFromLocalSource)
+          comparing(PendingTransaction::hasPriority)
               .thenComparing(PendingTransaction::getGasPrice)
               .thenComparing(PendingTransaction::getAddedAt)
               .thenComparing(PendingTransaction::getSequence)

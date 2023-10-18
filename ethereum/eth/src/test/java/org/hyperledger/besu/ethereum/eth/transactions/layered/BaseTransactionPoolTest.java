@@ -183,6 +183,11 @@ public class BaseTransactionPoolTest {
     return new PendingTransaction.Remote(transaction);
   }
 
+  protected PendingTransaction createRemotePendingTransaction(
+      final Transaction transaction, final boolean hasPriority) {
+    return PendingTransaction.newPendingTransaction(transaction, false, hasPriority);
+  }
+
   protected PendingTransaction createLocalPendingTransaction(final Transaction transaction) {
     return new PendingTransaction.Local(transaction);
   }
@@ -210,16 +215,19 @@ public class BaseTransactionPoolTest {
   protected void addLocalTransactions(
       final PendingTransactions sorter, final Account sender, final long... nonces) {
     for (final long nonce : nonces) {
-      sorter.addLocalTransaction(createTransaction(nonce), Optional.of(sender));
+      sorter.addTransaction(
+          createLocalPendingTransaction(createTransaction(nonce)), Optional.of(sender));
     }
   }
 
-  protected long getAddedCount(final String source, final String layer) {
-    return metricsSystem.getCounterValue(TransactionPoolMetrics.ADDED_COUNTER_NAME, source, layer);
+  protected long getAddedCount(final String source, final String priority, final String layer) {
+    return metricsSystem.getCounterValue(
+        TransactionPoolMetrics.ADDED_COUNTER_NAME, source, priority, layer);
   }
 
-  protected long getRemovedCount(final String source, final String operation, final String layer) {
+  protected long getRemovedCount(
+      final String source, final String priority, final String operation, final String layer) {
     return metricsSystem.getCounterValue(
-        TransactionPoolMetrics.REMOVED_COUNTER_NAME, source, operation, layer);
+        TransactionPoolMetrics.REMOVED_COUNTER_NAME, source, priority, operation, layer);
   }
 }
