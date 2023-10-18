@@ -96,7 +96,7 @@ class DefaultCodeStorageStrategyTest {
     useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, codeHash));
 
     assertThat(keyValueStorage.get(CODE_STORAGE_BY_HASH, codeHash.toArray())).isEmpty();
-    assertThat(keyValueStorage.get(CODE_HASH_COUNT, codeHash.toArray())).hasValue(codeCount(0));
+    assertThat(keyValueStorage.get(CODE_HASH_COUNT, codeHash.toArray())).isEmpty();
   }
 
   @Test
@@ -116,7 +116,7 @@ class DefaultCodeStorageStrategyTest {
     useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, codeHash));
 
     assertThat(keyValueStorage.get(CODE_STORAGE_BY_HASH, codeHash.toArray())).isEmpty();
-    assertThat(keyValueStorage.get(CODE_HASH_COUNT, codeHash.toArray())).hasValue(codeCount(0));
+    assertThat(keyValueStorage.get(CODE_HASH_COUNT, codeHash.toArray())).isEmpty();
   }
 
   @Test

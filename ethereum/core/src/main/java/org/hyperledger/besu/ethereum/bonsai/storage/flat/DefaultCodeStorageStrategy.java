@@ -56,10 +56,12 @@ public class DefaultCodeStorageStrategy implements CodeStorageStrategy {
     final long codeHashCount = getCodeHashCount(transaction, codeHash);
     final long updatedCodeHashCount =
         codeHashCount > 0 ? codeHashCount - 1 : 0; // ensure count min value is 0
-    updateCodeHashCount(transaction, codeHash, updatedCodeHashCount);
 
-    if (updatedCodeHashCount <= 0) {
+    if (updatedCodeHashCount > 0) {
+      updateCodeHashCount(transaction, codeHash, updatedCodeHashCount);
+    } else {
       transaction.remove(CODE_STORAGE_BY_HASH, codeHash.toArrayUnsafe());
+      transaction.remove(CODE_HASH_COUNT, codeHash.toArrayUnsafe());
     }
   }
 
