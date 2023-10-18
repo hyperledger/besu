@@ -97,6 +97,7 @@ public class BlockTransactionSelector {
   private final OperationTracer pluginOperationTracer;
   private final EthScheduler ethScheduler;
   private final AtomicBoolean isTimeout = new AtomicBoolean(false);
+  private WorldUpdater blockWorldStateUpdater;
 
   public BlockTransactionSelector(
       final MiningParameters miningParameters,
@@ -136,6 +137,7 @@ public class BlockTransactionSelector {
             .map(PluginTransactionSelectorFactory::create)
             .orElse(AllAcceptingTransactionSelector.INSTANCE);
     pluginOperationTracer = pluginTransactionSelector.getOperationTracer();
+    blockWorldStateUpdater = worldState.updater();
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(
@@ -232,9 +234,9 @@ public class BlockTransactionSelector {
       return handleTransactionNotSelected(pendingTransaction, selectionResult);
     }
 
-    final WorldUpdater worldStateUpdater = worldState.updater();
+    final WorldUpdater txWorldStateUpdater = blockWorldStateUpdater.updater();
     final TransactionProcessingResult processingResult =
-        processTransaction(pendingTransaction, worldStateUpdater);
+        processTransaction(pendingTransaction, txWorldStateUpdater);
 
     var postProcessingSelectionResult =
         evaluatePostProcessing(pendingTransaction, processingResult);
@@ -245,14 +247,15 @@ public class BlockTransactionSelector {
         // production, and do not rely on the presence of this result, since by the time it is
         // written,
         // the code consuming the selection results, could already have been by another thread
-        return handleTransactionNotSelected(pendingTransaction, BLOCK_SELECTION_TIMEOUT, true);
+        return asyncHandleTransactionNotSelected(
+            pendingTransaction, BLOCK_SELECTION_TIMEOUT, txWorldStateUpdater);
       }
 
       if (postProcessingSelectionResult.selected()) {
-        return handleTransactionSelected(pendingTransaction, processingResult, worldStateUpdater);
+        return handleTransactionSelected(pendingTransaction, processingResult, txWorldStateUpdater);
       }
-
-      return handleTransactionNotSelected(pendingTransaction, postProcessingSelectionResult);
+      return handleTransactionNotSelected(
+          pendingTransaction, postProcessingSelectionResult, txWorldStateUpdater);
     }
   }
 
@@ -336,14 +339,15 @@ public class BlockTransactionSelector {
    *
    * @param pendingTransaction The pending transaction.
    * @param processingResult The result of the transaction processing.
-   * @param worldStateUpdater The world state updater.
+   * @param txWorldStateUpdater The world state updater.
    * @return The result of the transaction selection process.
    */
   private TransactionSelectionResult handleTransactionSelected(
       final PendingTransaction pendingTransaction,
       final TransactionProcessingResult processingResult,
-      final WorldUpdater worldStateUpdater) {
-    worldStateUpdater.commit();
+      final WorldUpdater txWorldStateUpdater) {
+    txWorldStateUpdater.commit();
+    blockWorldStateUpdater.commit();
     final Transaction transaction = pendingTransaction.getTransaction();
 
     final long gasUsedByTransaction =
@@ -362,7 +366,7 @@ public class BlockTransactionSelector {
     transactionSelectionResults.updateSelected(
         pendingTransaction.getTransaction(), receipt, gasUsedByTransaction, blobGasUsed);
     pluginTransactionSelector.onTransactionSelected(pendingTransaction, processingResult);
-
+    blockWorldStateUpdater = worldState.updater();
     return SELECTED;
   }
 
@@ -374,13 +378,17 @@ public class BlockTransactionSelector {
    *
    * @param pendingTransaction The unselected pending transaction.
    * @param selectionResult The result of the transaction selection process.
+   * @param maybeTxWorldStateUpdater The optional world state updater for the pending transaction.
    * @param notifyAsync If the plugin should be notified asynchronously.
    * @return The result of the transaction selection process.
    */
   private TransactionSelectionResult handleTransactionNotSelected(
       final PendingTransaction pendingTransaction,
       final TransactionSelectionResult selectionResult,
+      final Optional<WorldUpdater> maybeTxWorldStateUpdater,
       final boolean notifyAsync) {
+    maybeTxWorldStateUpdater.ifPresent(WorldUpdater::revert);
+
     transactionSelectionResults.updateNotSelected(
         pendingTransaction.getTransaction(), selectionResult);
     final Runnable notifyPlugin =
@@ -396,8 +404,25 @@ public class BlockTransactionSelector {
 
   private TransactionSelectionResult handleTransactionNotSelected(
       final PendingTransaction pendingTransaction,
+      final TransactionSelectionResult selectionResult,
+      final WorldUpdater txWorldStateUpdater) {
+    return handleTransactionNotSelected(
+        pendingTransaction, selectionResult, Optional.of(txWorldStateUpdater), false);
+  }
+
+  private TransactionSelectionResult asyncHandleTransactionNotSelected(
+      final PendingTransaction pendingTransaction,
+      final TransactionSelectionResult selectionResult,
+      final WorldUpdater txWorldStateUpdater) {
+    return handleTransactionNotSelected(
+        pendingTransaction, selectionResult, Optional.of(txWorldStateUpdater), true);
+  }
+
+  private TransactionSelectionResult handleTransactionNotSelected(
+      final PendingTransaction pendingTransaction,
       final TransactionSelectionResult selectionResult) {
-    return handleTransactionNotSelected(pendingTransaction, selectionResult, false);
+    return handleTransactionNotSelected(
+        pendingTransaction, selectionResult, Optional.empty(), false);
   }
 
   private void checkCancellation() {
