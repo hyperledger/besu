@@ -140,7 +140,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
                                   .map(WithdrawalParameter::toWithdrawal)
                                   .collect(toList())));
       Optional<JsonRpcErrorResponse> maybeError =
-          isPayloadAttributesValid(requestId, payloadAttributes, withdrawals);
+          isPayloadAttributesValid(requestId, payloadAttributes);
       if (maybeError.isPresent()) {
         LOG.atWarn()
             .setMessage("RpcError {}: {}")
@@ -229,9 +229,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
   }
 
   protected abstract Optional<JsonRpcErrorResponse> isPayloadAttributesValid(
-      final Object requestId,
-      final EnginePayloadAttributesParameter payloadAttributes,
-      final Optional<List<Withdrawal>> maybeWithdrawals);
+      final Object requestId, final EnginePayloadAttributesParameter payloadAttribute);
 
   protected Optional<JsonRpcErrorResponse> isPayloadAttributeRelevantToNewHead(
       final Object requestId,
