@@ -65,7 +65,8 @@ class BonsaiWorldStateTest {
 
   @ParameterizedTest
   @MethodSource("priorAndUpdatedEmptyAndNullBytes")
-  void doesNothingWhenMarkedAsDeletedButAlreadyDeleted(final Bytes prior, final Bytes updated) {
+  void codeUpdateDoesNothingWhenMarkedAsDeletedButAlreadyDeleted(
+      final Bytes prior, final Bytes updated) {
     final Map<Address, BonsaiValue<Bytes>> codeToUpdate =
         Map.of(Address.ZERO, new BonsaiValue<>(prior, updated));
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
@@ -75,7 +76,7 @@ class BonsaiWorldStateTest {
   }
 
   @Test
-  void doesNothingWhenAddingSameValue() {
+  void codeUpdateDoesNothingWhenAddingSameAsExistingValue() {
     final Map<Address, BonsaiValue<Bytes>> codeToUpdate =
         Map.of(Address.ZERO, new BonsaiValue<>(CODE, CODE));
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
