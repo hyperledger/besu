@@ -63,7 +63,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
    */
   private final NavigableSet<PendingTransaction> prioritizedTransactionsStaticRange =
       new TreeSet<>(
-          comparing(PendingTransaction::isReceivedFromLocalSource)
+          comparing(PendingTransaction::hasPriority)
               .thenComparing(
                   pendingTx ->
                       pendingTx
@@ -79,7 +79,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
 
   private final NavigableSet<PendingTransaction> prioritizedTransactionsDynamicRange =
       new TreeSet<>(
-          comparing(PendingTransaction::isReceivedFromLocalSource)
+          comparing(PendingTransaction::hasPriority)
               .thenComparing(
                   pendingTx ->
                       pendingTx

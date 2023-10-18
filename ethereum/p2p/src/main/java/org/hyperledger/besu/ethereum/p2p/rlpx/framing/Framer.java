@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.framing;
 
 import static io.netty.buffer.ByteBufUtil.hexDump;
 import static io.netty.buffer.Unpooled.wrappedBuffer;
-import static org.bouncycastle.pqc.math.linearalgebra.ByteUtils.xor;
 import static org.hyperledger.besu.ethereum.p2p.rlpx.RlpxFrameConstants.LENGTH_FRAME_SIZE;
 import static org.hyperledger.besu.ethereum.p2p.rlpx.RlpxFrameConstants.LENGTH_MAX_MESSAGE_FRAME;
 
@@ -394,6 +393,23 @@ public class Framer {
   private static int padding16(final int size) {
     final int pad = size % 16;
     return pad == 0 ? 0 : 16 - pad;
+  }
+
+  /**
+   * Compute the bitwise XOR of two arrays of bytes. The arrays have to be of same length. No length
+   * checking is performed.
+   *
+   * @param x1 the first array
+   * @param x2 the second array
+   * @return x1 XOR x2
+   */
+  private static byte[] xor(final byte[] x1, final byte[] x2) {
+    byte[] out = new byte[x1.length];
+
+    for (int i = x1.length - 1; i >= 0; i--) {
+      out[i] = (byte) (x1[i] ^ x2[i]);
+    }
+    return out;
   }
 
   @FormatMethod

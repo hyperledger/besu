@@ -53,6 +53,8 @@ public interface TransactionsLayer {
 
   List<Transaction> getAllLocal();
 
+  List<Transaction> getAllPriority();
+
   int count();
 
   OptionalLong getNextNonceFor(Address sender);
