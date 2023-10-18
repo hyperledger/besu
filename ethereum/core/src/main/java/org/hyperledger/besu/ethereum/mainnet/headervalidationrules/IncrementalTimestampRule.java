@@ -28,6 +28,6 @@ public class IncrementalTimestampRule implements AttachedBlockHeaderValidationRu
     final long blockTimestamp = header.getTimestamp();
     final long parentTimestamp = parent.getTimestamp();
 
-    return Long.compareUnsigned(blockTimestamp, parentTimestamp) >= 0;
+    return Long.compareUnsigned(blockTimestamp, parentTimestamp) > 0;
   }
 }
