@@ -76,8 +76,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
     }
   }
 
-  public void setUp(final FlatDbMode flatDbMode, final boolean useLegacyCodeStorage) {
-    storage = emptyStorage(useLegacyCodeStorage);
+  public void setUp(final FlatDbMode flatDbMode, final boolean useAccountHashCodeStorage) {
+    storage = emptyStorage(useAccountHashCodeStorage);
     if (flatDbMode.equals(FlatDbMode.FULL)) {
       storage.upgradeToFullFlatDbMode();
     }
@@ -117,17 +117,18 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
   @ParameterizedTest
   @MethodSource("flatDbModeAndCodeStorageMode")
-  void getNodeData_returnsEmptyNode(final FlatDbMode flatDbMode, final boolean legacyCodeStorage) {
-    setUp(flatDbMode, legacyCodeStorage);
+  void getNodeData_returnsEmptyNode(
+      final FlatDbMode flatDbMode, final boolean accountHashCodeStorage) {
+    setUp(flatDbMode, accountHashCodeStorage);
     assertThat(storage.getNodeData(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH)).isEmpty();
-    assertThat(storage.isLegacyCodeStorageMode()).isEqualTo(legacyCodeStorage);
+    assertThat(storage.isAccountHashCodeStorageMode()).isEqualTo(accountHashCodeStorage);
   }
 
   @ParameterizedTest
   @MethodSource("flatDbModeAndCodeStorageMode")
   void getCode_saveAndGetSpecialValues(
-      final FlatDbMode flatDbMode, final boolean legacyCodeStorage) {
-    setUp(flatDbMode, legacyCodeStorage);
+      final FlatDbMode flatDbMode, final boolean accountHashCodeStorage) {
+    setUp(flatDbMode, accountHashCodeStorage);
     storage
         .updater()
         .putCode(Hash.EMPTY, MerkleTrie.EMPTY_TRIE_NODE)
@@ -136,19 +137,19 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
     assertThat(storage.getCode(Hash.hash(MerkleTrie.EMPTY_TRIE_NODE), Hash.EMPTY))
         .contains(MerkleTrie.EMPTY_TRIE_NODE);
-    assertThat(storage.isLegacyCodeStorageMode()).isEqualTo(legacyCodeStorage);
+    assertThat(storage.isAccountHashCodeStorageMode()).isEqualTo(accountHashCodeStorage);
   }
 
   @ParameterizedTest
   @MethodSource("flatDbModeAndCodeStorageMode")
   void getCode_saveAndGetRegularValue(
-      final FlatDbMode flatDbMode, final boolean legacyCodeStorage) {
-    setUp(flatDbMode, legacyCodeStorage);
+      final FlatDbMode flatDbMode, final boolean accountHashCodeStorage) {
+    setUp(flatDbMode, accountHashCodeStorage);
     final Bytes bytes = Bytes.fromHexString("0x123456");
     storage.updater().putCode(Hash.EMPTY, bytes).commit();
 
     assertThat(storage.getCode(Hash.hash(bytes), Hash.EMPTY)).contains(bytes);
-    assertThat(storage.isLegacyCodeStorageMode()).isEqualTo(legacyCodeStorage);
+    assertThat(storage.isAccountHashCodeStorageMode()).isEqualTo(accountHashCodeStorage);
   }
 
   @ParameterizedTest
@@ -473,11 +474,11 @@ public class BonsaiWorldStateKeyValueStorageTest {
         new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
   }
 
-  private BonsaiWorldStateKeyValueStorage emptyStorage(final boolean useLegacyCodeStorage) {
+  private BonsaiWorldStateKeyValueStorage emptyStorage(final boolean useAccountHashCodeStorage) {
     final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(
             new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
-    if (useLegacyCodeStorage) {
+    if (useAccountHashCodeStorage) {
       final SegmentedKeyValueStorageTransaction transaction =
           bonsaiWorldStateKeyValueStorage.getWorldStateStorage().startTransaction();
       transaction.put(

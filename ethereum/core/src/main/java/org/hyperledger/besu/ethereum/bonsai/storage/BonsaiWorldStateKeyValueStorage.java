@@ -113,14 +113,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   private void loadFlatDbStrategy() {
     // derive our flatdb strategy from db or default:
     var newFlatDbMode = deriveFlatDbStrategy();
-    final boolean useLegacyCodeStorage = isLegacyCodeStorageMode();
+    final boolean useAccountHashCodeStorage = isAccountHashCodeStorageMode();
     // if  flatDbMode is not loaded or has changed, reload flatDbStrategy
     if (this.flatDbMode == null || !this.flatDbMode.equals(newFlatDbMode)) {
       this.flatDbMode = newFlatDbMode;
       if (flatDbMode == FlatDbMode.FULL) {
-        this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem, useLegacyCodeStorage);
+        this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem, useAccountHashCodeStorage);
       } else {
-        this.flatDbStrategy = new PartialFlatDbStrategy(metricsSystem, useLegacyCodeStorage);
+        this.flatDbStrategy = new PartialFlatDbStrategy(metricsSystem, useAccountHashCodeStorage);
       }
     }
   }
@@ -148,7 +148,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return composedWorldStateStorage;
   }
 
-  public boolean isLegacyCodeStorageMode() {
+  public boolean isAccountHashCodeStorageMode() {
     return composedWorldStateStorage.hasValues(CODE_STORAGE);
   }
 

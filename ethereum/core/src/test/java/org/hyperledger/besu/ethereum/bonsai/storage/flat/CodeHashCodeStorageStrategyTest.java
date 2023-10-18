@@ -33,8 +33,8 @@ import java.util.function.Consumer;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
-class DefaultCodeStorageStrategyTest {
-  final DefaultCodeStorageStrategy codeStorage = new DefaultCodeStorageStrategy();
+class CodeHashCodeStorageStrategyTest {
+  final CodeHashCodeStorageStrategy codeStorage = new CodeHashCodeStorageStrategy();
   final SegmentedKeyValueStorage keyValueStorage =
       new InMemoryKeyValueStorageProvider()
           .getStorageBySegmentIdentifiers(List.of(CODE_STORAGE_BY_HASH, CODE_HASH_COUNT));

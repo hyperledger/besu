@@ -25,7 +25,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class LegacyCodeStorageStrategy implements CodeStorageStrategy {
+public class AccountHashCodeStorageStrategy implements CodeStorageStrategy {
   @Override
   public Optional<Bytes> getFlatCode(
       final Hash codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
