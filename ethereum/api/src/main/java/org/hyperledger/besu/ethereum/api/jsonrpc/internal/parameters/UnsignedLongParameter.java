@@ -21,8 +21,7 @@ import org.checkerframework.checker.signedness.qual.Unsigned;
 
 public class UnsignedLongParameter {
 
-  @Unsigned
-  private final long value;
+  @Unsigned private final long value;
 
   @JsonCreator
   public UnsignedLongParameter(final String value) {
