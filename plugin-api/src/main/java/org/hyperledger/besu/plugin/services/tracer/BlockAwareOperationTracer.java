@@ -14,9 +14,12 @@
  */
 package org.hyperledger.besu.plugin.services.tracer;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
+
+import java.math.BigInteger;
 
 /**
  * An extended operation tracer that can trace the start and end of a block.
@@ -34,10 +37,12 @@ public interface BlockAwareOperationTracer extends OperationTracer {
   /**
    * Trace the start of a block.
    *
-   * @param blockHeader the header of the block which is traced
-   * @param blockBody the body of the block which is traced
+   * @param blockNumber number of the block
+   * @param baseFee the base fee for the block
+   * @param coinbase the coinbase for the block
    */
-  default void traceStartBlock(final BlockHeader blockHeader, final BlockBody blockBody) {}
+  default void traceStartBlock(
+      final int blockNumber, final BigInteger baseFee, final Address coinbase) {}
 
   /**
    * Trace the end of a block.

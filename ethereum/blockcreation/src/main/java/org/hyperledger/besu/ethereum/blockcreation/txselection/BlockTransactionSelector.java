@@ -38,9 +38,9 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 
@@ -86,7 +86,8 @@ public class BlockTransactionSelector {
       new TransactionSelectionResults();
   private final List<AbstractTransactionSelector> transactionSelectors;
   private final PluginTransactionSelector pluginTransactionSelector;
-  private final OperationTracer pluginOperationTracer;
+  private final BlockAwareOperationTracer pluginOperationTracer;
+  private final ProcessableBlockHeader processableBlockHeader;
 
   public BlockTransactionSelector(
       final MainnetTransactionProcessor transactionProcessor,
@@ -126,6 +127,7 @@ public class BlockTransactionSelector {
             .map(PluginTransactionSelectorFactory::create)
             .orElse(AllAcceptingTransactionSelector.INSTANCE);
     pluginOperationTracer = pluginTransactionSelector.getOperationTracer();
+    this.processableBlockHeader = processableBlockHeader;
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(
@@ -151,7 +153,14 @@ public class BlockTransactionSelector {
         .setMessage("Transaction pool stats {}")
         .addArgument(blockSelectionContext.transactionPool().logStats())
         .log();
+
+    final Wei baseFee = processableBlockHeader.getBaseFee().orElse(Wei.ZERO);
+    pluginOperationTracer.traceStartBlock(
+        Math.toIntExact(processableBlockHeader.getNumber()),
+        baseFee.getAsBigInteger(),
+        processableBlockHeader.getCoinbase());
     blockSelectionContext.transactionPool().selectTransactions(this::evaluateTransaction);
+    pluginOperationTracer.traceEndBlock(null, null);
     LOG.atTrace()
         .setMessage("Transaction selection result {}")
         .addArgument(transactionSelectionResults::toTraceLog)

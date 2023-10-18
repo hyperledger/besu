@@ -156,7 +156,9 @@ public class TraceServiceImpl implements TraceService {
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
     final BlockHeader header = block.getHeader();
-    tracer.traceStartBlock(block.getHeader(), block.getBody());
+    final Wei baseFee = header.getBaseFee().orElse(Wei.ZERO);
+    tracer.traceStartBlock(
+        Math.toIntExact(header.getNumber()), baseFee.getAsBigInteger(), header.getCoinbase());
 
     block
         .getBody()
