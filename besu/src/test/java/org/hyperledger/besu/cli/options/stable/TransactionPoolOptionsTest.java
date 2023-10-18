@@ -147,12 +147,17 @@ public class TransactionPoolOptionsTest
   }
 
   @Test
-  public void disableSenderTXGrouping() {
-    final Boolean senderTXGrouping = Boolean.FALSE;
+  public void disableSenderTXGroupingOn() {
     internalTestSuccess(
-        config -> assertThat(config.getNoSenderTXGrouping()).isEqualTo(senderTXGrouping),
-        "--tx-pool-disable-sender-grouping",
-        senderTXGrouping.toString());
+        config -> assertThat(config.getDisableSenderTXGrouping()).isTrue(),
+        "--tx-pool-disable-sender-grouping=true");
+  }
+
+  @Test
+  public void disableSenderTXGroupingOff() {
+    internalTestSuccess(
+        config -> assertThat(config.getDisableSenderTXGrouping()).isFalse(),
+        "--tx-pool-disable-sender-grouping=false");
   }
 
   @Test

@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NavigableSet;
+import java.util.Optional;
 import java.util.TreeSet;
 import java.util.stream.Stream;
 
@@ -50,16 +51,34 @@ public class AccountTransactionOrder {
    */
   public Iterable<PendingTransaction> transactionsToProcess(
       final PendingTransaction nextTransactionInPriorityOrder) {
+    return transactionsToProcess(nextTransactionInPriorityOrder, Integer.MAX_VALUE);
+  }
+
+  public Iterable<PendingTransaction> transactionsToProcess(
+      final PendingTransaction nextTransactionInPriorityOrder, final int maxTransactionsToReturn) {
     deferredTransactions.add(nextTransactionInPriorityOrder);
     final List<PendingTransaction> transactionsToApply = new ArrayList<>();
     while (!deferredTransactions.isEmpty()
         && !transactionsForSender.isEmpty()
-        && deferredTransactions.first().equals(transactionsForSender.first())) {
+        && deferredTransactions.first().equals(transactionsForSender.first())
+        && transactionsToApply.size() < maxTransactionsToReturn) {
       final PendingTransaction transaction = deferredTransactions.first();
       transactionsToApply.add(transaction);
       deferredTransactions.remove(transaction);
       transactionsForSender.remove(transaction);
     }
     return transactionsToApply;
+  }
+
+  public Optional<PendingTransaction> getHighestPriorityDeferredTransaction() {
+    Optional<PendingTransaction> transactionToApply = Optional.empty();
+    if (!deferredTransactions.isEmpty()
+        && !transactionsForSender.isEmpty()
+        && deferredTransactions.first().equals(transactionsForSender.first())) {
+      transactionToApply = Optional.of(deferredTransactions.first());
+      deferredTransactions.remove(transactionToApply.get());
+      transactionsForSender.remove(transactionToApply.get());
+    }
+    return transactionToApply;
   }
 }

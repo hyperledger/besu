@@ -64,6 +64,7 @@ import org.junit.jupiter.api.Test;
 public abstract class AbstractPendingTransactionsTestBase {
 
   protected static final int MAX_TRANSACTIONS = 5;
+  protected static final int MAX_TRANSACTIONS_LARGE_POOL = 15;
   private static final float LIMITED_TRANSACTIONS_BY_SENDER_PERCENTAGE = 0.8f;
   protected static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -92,9 +93,29 @@ public abstract class AbstractPendingTransactionsTestBase {
           .build();
   protected PendingTransactions senderLimitedTransactions =
       getPendingTransactions(senderLimitedConfig, Optional.empty());
+  protected AbstractPendingTransactionsSorter transactionsLarge =
+      getPendingTransactions(
+          ImmutableTransactionPoolConfiguration.builder()
+              .txPoolMaxSize(MAX_TRANSACTIONS_LARGE_POOL)
+              .txPoolLimitByAccountPercentage(Fraction.fromFloat(1.0f))
+              .build(),
+          Optional.empty());
+  protected AbstractPendingTransactionsSorter transactionsLargeNoSenderGrouping =
+      getPendingTransactions(
+          ImmutableTransactionPoolConfiguration.builder()
+              .txPoolMaxSize(MAX_TRANSACTIONS_LARGE_POOL)
+              .disableSenderTXGrouping(true)
+              .txPoolLimitByAccountPercentage(Fraction.fromFloat(1.0f))
+              .build(),
+          Optional.empty());
 
   protected final Transaction transaction1 = createTransaction(2);
   protected final Transaction transaction2 = createTransaction(1);
+  protected final Transaction transaction3 = createTransaction(3);
+
+  protected final Transaction transaction1Sdr2 = createTransactionSender2(1);
+  protected final Transaction transaction2Sdr2 = createTransactionSender2(2);
+  protected final Transaction transaction3Sdr2 = createTransactionSender2(3);
 
   protected final PendingTransactionAddedListener listener =
       mock(PendingTransactionAddedListener.class);
@@ -309,19 +330,86 @@ public abstract class AbstractPendingTransactionsTestBase {
   }
 
   @Test
-  public void selectTransactionsUntilSelectorRequestsNoMore() {
-    transactions.addRemoteTransaction(transaction1, Optional.empty());
-    transactions.addRemoteTransaction(transaction2, Optional.empty());
+  public void selectTransactionsInDefaultOrder() {
+    assertThat(transactionsLarge.addRemoteTransaction(transaction1, Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(transactionsLarge.addRemoteTransaction(transaction2, Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(transactionsLarge.addRemoteTransaction(transaction1Sdr2, Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(transactionsLarge.addRemoteTransaction(transaction2Sdr2, Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(transactionsLarge.addRemoteTransaction(transaction3Sdr2, Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(transactionsLarge.addRemoteTransaction(transaction3, Optional.empty()))
+        .isEqualTo(ADDED);
 
     final List<Transaction> parsedTransactions = Lists.newArrayList();
-    transactions.selectTransactions(
+    transactionsLarge.selectTransactions(
         pendingTx -> {
           parsedTransactions.add(pendingTx.getTransaction());
-          return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
+
+          if (parsedTransactions.size() == 6) {
+            return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
+          }
+          return SELECTED;
         });
 
-    assertThat(parsedTransactions.size()).isEqualTo(1);
-    assertThat(parsedTransactions.get(0)).isEqualTo(transaction2);
+    assertThat(parsedTransactions.size()).isEqualTo(6);
+
+    assertThat(parsedTransactions.get(0)).isEqualTo(transaction1Sdr2);
+    assertThat(parsedTransactions.get(1)).isEqualTo(transaction2Sdr2);
+    assertThat(parsedTransactions.get(2)).isEqualTo(transaction3Sdr2);
+    assertThat(parsedTransactions.get(3))
+        .isEqualTo(transaction2); // Transaction 2 is actually the lowest nonce for this sender
+    assertThat(parsedTransactions.get(4))
+        .isEqualTo(transaction1); // Transaction 1 is the next nonce for the sender
+    assertThat(parsedTransactions.get(5))
+        .isEqualTo(transaction3); // Transaction 3 is the next nonce for the sender
+  }
+
+  @Test
+  public void selectTransactionsInOrderNoGroupBySender() {
+    assertThat(
+            transactionsLargeNoSenderGrouping.addRemoteTransaction(transaction2, Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactionsLargeNoSenderGrouping.addRemoteTransaction(
+                transaction1Sdr2, Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactionsLargeNoSenderGrouping.addRemoteTransaction(
+                transaction2Sdr2, Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactionsLargeNoSenderGrouping.addRemoteTransaction(transaction1, Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactionsLargeNoSenderGrouping.addRemoteTransaction(
+                transaction3Sdr2, Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactionsLargeNoSenderGrouping.addRemoteTransaction(transaction3, Optional.empty()))
+        .isEqualTo(ADDED);
+
+    final List<Transaction> parsedTransactions = Lists.newArrayList();
+    transactionsLargeNoSenderGrouping.selectTransactions(
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
+
+          if (parsedTransactions.size() == 6) {
+            return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
+          }
+          return SELECTED;
+        });
+
+    assertThat(parsedTransactions.size()).isEqualTo(6);
+
+    // Check that by setting --tx-pool-disable-sender-grouping=true then sdr 1 hasn't monopolized
+    // the pool selection just because its transaction (transaction 3) is the first one to be parsed
+    // by the selector
+    assertThat(parsedTransactions.get(0)).isEqualTo(transaction1Sdr2);
+    assertThat(parsedTransactions.get(1)).isEqualTo(transaction2);
   }
 
   @Test
@@ -613,7 +701,16 @@ public abstract class AbstractPendingTransactionsTestBase {
     return new TransactionTestFixture()
         .value(Wei.of(transactionNumber))
         .nonce(transactionNumber)
+        .gasPrice(Wei.of(0))
         .createTransaction(KEYS1);
+  }
+
+  protected Transaction createTransactionSender2(final long transactionNumber) {
+    return new TransactionTestFixture()
+        .value(Wei.of(transactionNumber))
+        .nonce(transactionNumber)
+        .gasPrice(Wei.of(0))
+        .createTransaction(KEYS2);
   }
 
   @Test

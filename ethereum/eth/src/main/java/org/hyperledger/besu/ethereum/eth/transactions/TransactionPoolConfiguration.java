@@ -98,11 +98,6 @@ public interface TransactionPoolConfiguration {
   }
 
   @Value.Default
-  default Boolean getNoSenderTXGrouping() {
-    return DEFAULT_DISABLE_SENDER_TX_GROUPING;
-  }
-
-  @Value.Default
   default Wei getTxFeeCap() {
     return DEFAULT_RPC_TX_FEE_CAP;
   }
