@@ -111,9 +111,9 @@ public final class StatusMessage extends AbstractMessageData {
   }
 
   /**
-   * Return The hash of the head of the associated node's local blockchian.
+   * Return The hash of the head of the associated node's local blockchain.
    *
-   * @return The hash of the head of the associated node's local blockchian.
+   * @return The hash of the head of the associated node's local blockchain.
    */
   public Hash bestHash() {
     return status().bestHash;
