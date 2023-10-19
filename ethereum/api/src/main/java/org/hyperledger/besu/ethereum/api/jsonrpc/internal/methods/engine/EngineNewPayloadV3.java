@@ -71,7 +71,8 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
     if (protocolSchedule.isPresent()) {
-      if (cancun.isPresent() && blockTimestamp >= cancun.get().milestone()) {
+      if (cancun.isPresent()
+          && Long.compareUnsigned(blockTimestamp, cancun.get().milestone()) >= 0) {
         return ValidationResult.valid();
       } else {
         return ValidationResult.invalid(

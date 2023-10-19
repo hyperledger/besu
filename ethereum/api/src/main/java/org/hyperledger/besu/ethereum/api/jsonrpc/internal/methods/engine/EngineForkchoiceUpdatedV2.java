@@ -20,10 +20,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
-import java.util.List;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
@@ -52,9 +50,7 @@ public class EngineForkchoiceUpdatedV2 extends AbstractEngineForkchoiceUpdated {
 
   @Override
   protected Optional<JsonRpcErrorResponse> isPayloadAttributesValid(
-      final Object requestId,
-      final EnginePayloadAttributesParameter payloadAttributes,
-      final Optional<List<Withdrawal>> maybeWithdrawals) {
+      final Object requestId, final EnginePayloadAttributesParameter payloadAttributes) {
     if (payloadAttributes.getTimestamp() >= cancunTimestamp) {
       if (payloadAttributes.getParentBeaconBlockRoot() == null
           || payloadAttributes.getParentBeaconBlockRoot().isEmpty()) {
