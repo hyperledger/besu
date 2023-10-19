@@ -28,7 +28,7 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   CODE_STORAGE(new byte[] {7}, new int[] {2}),
   ACCOUNT_STORAGE_STORAGE(new byte[] {8}, new int[] {2}),
   TRIE_BRANCH_STORAGE(new byte[] {9}, new int[] {2}),
-  TRIE_LOG_STORAGE(new byte[] {10}, new int[] {2}),
+  TRIE_LOG_STORAGE(new byte[] {10}, new int[] {2}, true),
   VARIABLES(new byte[] {11}), // formerly GOQUORUM_PRIVATE_WORLD_STATE
 
   // previously supported GoQuorum private states
