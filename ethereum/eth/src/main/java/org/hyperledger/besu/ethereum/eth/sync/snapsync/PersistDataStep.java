@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.canRetryOnError;
+import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.errorCountAtThreshold;
+import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.getRetryableErrorCounter;
 
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
@@ -89,8 +91,14 @@ public class PersistDataStep {
     } catch (StorageException storageException) {
       if (canRetryOnError(storageException)) {
         // We reset the task by setting it to null. This way, it is considered as failed by the
-        // pipeline, and it will attempt to execute it again later.
-        LOG.info("Retry on rocksdb issue " + storageException.getMessage());
+        // pipeline, and it will attempt to execute it again later. not display all the retryable
+        // issues
+        if (errorCountAtThreshold()) {
+          LOG.info(
+              "Encountered {} retryable RocksDB errors, latest error message {}",
+              getRetryableErrorCounter(),
+              storageException.getMessage());
+        }
         tasks.forEach(task -> task.getData().clear());
       } else {
         throw storageException;

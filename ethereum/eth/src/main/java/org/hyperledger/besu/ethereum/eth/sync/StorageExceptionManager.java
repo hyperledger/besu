@@ -27,6 +27,9 @@ public final class StorageExceptionManager {
   private static final EnumSet<Status.Code> RETRYABLE_STATUS_CODES =
       EnumSet.of(Status.Code.TimedOut, Status.Code.TryAgain, Status.Code.Busy);
 
+  private static final long ERROR_THRESHOLD = 1000;
+
+  private static long retryableErrorCounter;
   /**
    * Determines if an operation can be retried based on the error received. This method checks if
    * the cause of the StorageException is a RocksDBException. If it is, it retrieves the status code
@@ -43,6 +46,19 @@ public final class StorageExceptionManager {
         .map(RocksDBException::getStatus)
         .map(Status::getCode)
         .map(RETRYABLE_STATUS_CODES::contains)
+        .map(
+            result -> {
+              retryableErrorCounter++;
+              return result;
+            })
         .orElse(false);
+  }
+
+  public static long getRetryableErrorCounter() {
+    return retryableErrorCounter;
+  }
+
+  public static boolean errorCountAtThreshold() {
+    return retryableErrorCounter % ERROR_THRESHOLD == 1;
   }
 }
