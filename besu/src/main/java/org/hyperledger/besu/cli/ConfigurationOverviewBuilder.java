@@ -320,6 +320,7 @@ public class ConfigurationOverviewBuilder {
 
   /**
    * set the plugin context
+   *
    * @param besuPluginContext the plugin context
    */
   public void setPluginContext(final BesuPluginContextImpl besuPluginContext) {

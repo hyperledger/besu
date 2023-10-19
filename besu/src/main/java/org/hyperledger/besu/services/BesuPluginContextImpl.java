@@ -149,6 +149,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
 
   /**
    * get the summary log, as a list of string lines
+   *
    * @return the summary
    */
   public List<String> getPluginsSummaryLog() {
