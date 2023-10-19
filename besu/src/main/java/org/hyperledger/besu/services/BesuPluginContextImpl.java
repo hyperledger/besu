@@ -138,7 +138,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
       plugins.add(plugin);
     }
 
-    LOG.info("Plugin registration complete.");
+    LOG.debug("Plugin registration complete.");
     lines.add(
         String.format(
             "TOTAL = %d of %d plugins successfully loaded", plugins.size(), pluginsCount));
