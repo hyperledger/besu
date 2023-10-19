@@ -25,40 +25,40 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class BothCodeStorageStrategy implements CodeStorageStrategy {
 
-  private final DefaultCodeStorageStrategy defaultCodeStorageStrategy;
-  private final LegacyCodeStorageStrategy legacyCodeStorageStrategy;
+  private final CodeHashCodeStorageStrategy codeHashCodeStorageStrategy;
+  private final AccountHashCodeStorageStrategy accountHashCodeStorageStrategy;
 
   public BothCodeStorageStrategy() {
-    defaultCodeStorageStrategy = new DefaultCodeStorageStrategy();
-    legacyCodeStorageStrategy = new LegacyCodeStorageStrategy();
+    codeHashCodeStorageStrategy = new CodeHashCodeStorageStrategy();
+    accountHashCodeStorageStrategy = new AccountHashCodeStorageStrategy();
   }
 
   @Override
   public Optional<Bytes> getFlatCode(
-      Hash codeHash, Hash accountHash, SegmentedKeyValueStorage storage) {
-    return defaultCodeStorageStrategy.getFlatCode(codeHash, accountHash, storage);
+      final Hash codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
+    return codeHashCodeStorageStrategy.getFlatCode(codeHash, accountHash, storage);
   }
 
   @Override
   public void putFlatCode(
-      SegmentedKeyValueStorageTransaction transaction,
-      Hash accountHash,
-      Hash codeHash,
-      Bytes code) {
-    defaultCodeStorageStrategy.putFlatCode(transaction, accountHash, codeHash, code);
-    legacyCodeStorageStrategy.putFlatCode(transaction, accountHash, codeHash, code);
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Hash codeHash,
+      final Bytes code) {
+    codeHashCodeStorageStrategy.putFlatCode(transaction, accountHash, codeHash, code);
+    accountHashCodeStorageStrategy.putFlatCode(transaction, accountHash, codeHash, code);
   }
 
   @Override
   public void removeFlatCode(
-      SegmentedKeyValueStorageTransaction transaction, Hash accountHash, Hash codeHash) {
-    defaultCodeStorageStrategy.removeFlatCode(transaction, accountHash, codeHash);
-    legacyCodeStorageStrategy.removeFlatCode(transaction, accountHash, codeHash);
+      final SegmentedKeyValueStorageTransaction transaction, final Hash accountHash, final Hash codeHash) {
+    codeHashCodeStorageStrategy.removeFlatCode(transaction, accountHash, codeHash);
+    accountHashCodeStorageStrategy.removeFlatCode(transaction, accountHash, codeHash);
   }
 
   @Override
-  public void clear(SegmentedKeyValueStorage storage) {
-    defaultCodeStorageStrategy.clear(storage);
-    legacyCodeStorageStrategy.clear(storage);
+  public void clear(final SegmentedKeyValueStorage storage) {
+    codeHashCodeStorageStrategy.clear(storage);
+    accountHashCodeStorageStrategy.clear(storage);
   }
 }
