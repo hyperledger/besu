@@ -53,8 +53,7 @@ public class ChainDataPruner implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     if (!isInitialSyncPhaseDoneSupplier.get()) {
-      LOG.debug(
-          "Unable to run block pruning because the initial synchronization is still in progress.");
+      // not run block pruning because the initial synchronization is still in progress.
       return;
     }
     final long blockNumber = event.getBlock().getHeader().getNumber();
