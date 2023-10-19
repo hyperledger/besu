@@ -95,7 +95,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 
 import java.io.Closeable;
@@ -182,11 +182,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   private NetworkingConfiguration networkingConfiguration;
   private Boolean randomPeerPriority;
-  private Optional<TransactionSelectorFactory> transactionSelectorFactory = Optional.empty();
+  private Optional<PluginTransactionSelectorFactory> transactionSelectorFactory = Optional.empty();
   /** the Dagger configured context that can provide dependencies */
   protected Optional<BesuComponent> besuComponent = Optional.empty();
 
   private PluginTransactionValidatorFactory pluginTransactionValidatorFactory;
+
+  private int numberOfBlocksToCache = 0;
 
   /**
    * Provide a BesuComponent which can be used to get other dependencies
@@ -506,6 +508,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
+   * Chain pruning configuration besu controller builder.
+   *
+   * @param numberOfBlocksToCache the number of blocks to cache
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder cacheLastBlocks(final Integer numberOfBlocksToCache) {
+    this.numberOfBlocksToCache = numberOfBlocksToCache;
+    return this;
+  }
+
+  /**
    * sets the networkConfiguration in the builder
    *
    * @param networkingConfiguration the networking config
@@ -535,7 +548,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @return the besu controller builder
    */
   public BesuControllerBuilder transactionSelectorFactory(
-      final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
+      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
     this.transactionSelectorFactory = transactionSelectorFactory;
     return this;
   }
@@ -592,7 +605,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             blockchainStorage,
             metricsSystem,
             reorgLoggingThreshold,
-            dataDirectory.toString());
+            dataDirectory.toString(),
+            numberOfBlocksToCache);
 
     final CachedMerkleTrieLoader cachedMerkleTrieLoader =
         besuComponent
@@ -1035,7 +1049,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory,
-      final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
+      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
     return ProtocolContext.init(
         blockchain,
         worldStateArchive,

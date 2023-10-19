@@ -21,13 +21,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkc
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
-import java.util.List;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
@@ -92,16 +89,8 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
 
   @Override
   protected Optional<JsonRpcErrorResponse> isPayloadAttributesValid(
-      final Object requestId,
-      final EnginePayloadAttributesParameter payloadAttributes,
-      final Optional<List<Withdrawal>> maybeWithdrawals,
-      final BlockHeader headBlockHeader) {
-    Optional<JsonRpcErrorResponse> maybeError =
-        super.isPayloadAttributesValid(
-            requestId, payloadAttributes, maybeWithdrawals, headBlockHeader);
-    if (maybeError.isPresent()) {
-      return maybeError;
-    } else if (payloadAttributes.getParentBeaconBlockRoot() == null) {
+      final Object requestId, final EnginePayloadAttributesParameter payloadAttributes) {
+    if (payloadAttributes.getParentBeaconBlockRoot() == null) {
       LOG.error(
           "Parent beacon block root hash not present in payload attributes after cancun hardfork");
       return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS));

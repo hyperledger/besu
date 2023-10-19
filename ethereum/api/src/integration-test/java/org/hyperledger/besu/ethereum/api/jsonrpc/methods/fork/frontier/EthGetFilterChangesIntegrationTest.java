@@ -50,6 +50,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -90,7 +91,8 @@ public class EthGetFilterChangesIntegrationTest {
 
   private static final int MAX_TRANSACTIONS = 5;
   private static final KeyPair keyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
-  private final Transaction transaction = createTransaction(1);
+  private final PendingTransaction pendingTransaction =
+      new PendingTransaction.Local((createTransaction(1)));
   private FilterManager filterManager;
   private EthGetFilterChanges method;
 
@@ -193,7 +195,7 @@ public class EthGetFilterChangesIntegrationTest {
     JsonRpcResponse actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
-    final Block block = appendBlock(transaction);
+    final Block block = appendBlock(pendingTransaction.getTransaction());
 
     // We've added one block, so there should be one new hash.
     expected = new JsonRpcSuccessResponse(null, Lists.newArrayList(block.getHash().toString()));
@@ -223,11 +225,12 @@ public class EthGetFilterChangesIntegrationTest {
     JsonRpcResponse actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
-    transactions.addRemoteTransaction(transaction, Optional.empty());
+    transactions.addTransaction(pendingTransaction, Optional.empty());
 
     // We've added one transaction, so there should be one new hash.
     expected =
-        new JsonRpcSuccessResponse(null, Lists.newArrayList(String.valueOf(transaction.getHash())));
+        new JsonRpcSuccessResponse(
+            null, Lists.newArrayList(String.valueOf(pendingTransaction.getHash())));
     actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
