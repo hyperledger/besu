@@ -462,7 +462,7 @@ public abstract class AbstractTransactionPoolTest {
   }
 
   @Test
-  public void shouldNotReAddBlobTxsWhenReorgHappens() {
+  public void shouldReAddBlobTxsWhenReorgHappens() {
     givenTransactionIsValid(transaction0);
     givenTransactionIsValid(transaction1);
     givenTransactionIsValid(transactionBlob);
@@ -490,9 +490,15 @@ public abstract class AbstractTransactionPoolTest {
     final Block reorgFork3 = appendBlock(Difficulty.of(3000), reorgFork2.getHeader());
     verifyChainHeadIs(reorgFork3);
 
-    assertTransactionNotPending(transactionBlob);
+    assertTransactionPending(transactionBlob);
     assertTransactionPending(transaction0);
     assertTransactionPending(transaction1);
+    Optional<Transaction> maybeBlob = transactions.getTransactionByHash(transactionBlob.getHash());
+    assertThat(maybeBlob).isPresent();
+    Transaction restoredBlob = maybeBlob.get();
+    assertThat(restoredBlob).isEqualTo(transactionBlob);
+
+
   }
 
   @ParameterizedTest
