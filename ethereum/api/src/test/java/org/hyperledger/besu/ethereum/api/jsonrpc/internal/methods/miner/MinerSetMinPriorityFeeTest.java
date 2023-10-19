@@ -62,7 +62,6 @@ public class MinerSetMinPriorityFeeTest {
 
   private JsonRpcRequestContext request(final long longParam) {
     return new JsonRpcRequestContext(
-        new JsonRpcRequest(
-            "2.0", method.getName(), new Object[] {String.valueOf(longParam)}));
+        new JsonRpcRequest("2.0", method.getName(), new Object[] {String.valueOf(longParam)}));
   }
 }

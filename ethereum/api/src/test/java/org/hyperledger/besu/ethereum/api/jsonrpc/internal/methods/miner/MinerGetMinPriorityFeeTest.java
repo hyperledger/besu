@@ -41,8 +41,7 @@ public class MinerGetMinPriorityFeeTest {
   public void shouldReturnMinPriorityFee() {
     Wei minPriorityFee = Wei.of(70);
     final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new JsonRpcRequest("2.0", method.getName(), new Object[] {}));
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", method.getName(), new Object[] {}));
 
     when(miningParameters.getMinPriorityFeePerGas()).thenReturn(minPriorityFee);
 
