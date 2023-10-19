@@ -594,7 +594,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     Optional<BlockHeader> parentOfNewHead = blockchain.getBlockHeader(newHead.getParentHash());
     if (parentOfNewHead.isPresent()
-        && parentOfNewHead.get().getTimestamp() >= newHead.getTimestamp()) {
+        && Long.compareUnsigned(newHead.getTimestamp(), parentOfNewHead.get().getTimestamp())
+            <= 0) {
       return ForkchoiceResult.withFailure(
           INVALID, "new head timestamp not greater than parent", latestValid);
     }
