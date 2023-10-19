@@ -25,7 +25,6 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
   @Override
@@ -40,12 +39,12 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
       final Hash accountHash,
       final Hash codeHash,
       final Bytes code) {
-    final long codeHashCount = getCodeHashCount(transaction, codeHash);
-    updateCodeHashCount(transaction, codeHash, codeHashCount + 1);
+    //    final long codeHashCount = getCodeHashCount(transaction, codeHash);
+    //    updateCodeHashCount(transaction, codeHash, codeHashCount + 1);
 
-    if (codeHashCount == 0) {
-      transaction.put(CODE_STORAGE_BY_HASH, codeHash.toArrayUnsafe(), code.toArrayUnsafe());
-    }
+    //    if (codeHashCount == 0) {
+    transaction.put(CODE_STORAGE_BY_HASH, codeHash.toArrayUnsafe(), code.toArrayUnsafe());
+    //    }
   }
 
   @Override
@@ -53,16 +52,16 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash codeHash) {
-    final long codeHashCount = getCodeHashCount(transaction, codeHash);
-    final long updatedCodeHashCount =
-        codeHashCount > 0 ? codeHashCount - 1 : 0; // ensure count min value is 0
-
-    if (updatedCodeHashCount > 0) {
-      updateCodeHashCount(transaction, codeHash, updatedCodeHashCount);
-    } else {
-      transaction.remove(CODE_STORAGE_BY_HASH, codeHash.toArrayUnsafe());
-      transaction.remove(CODE_HASH_COUNT, codeHash.toArrayUnsafe());
-    }
+    //    final long codeHashCount = getCodeHashCount(transaction, codeHash);
+    //    final long updatedCodeHashCount =
+    //        codeHashCount > 0 ? codeHashCount - 1 : 0; // ensure count min value is 0
+    //
+    //    if (updatedCodeHashCount > 0) {
+    //      updateCodeHashCount(transaction, codeHash, updatedCodeHashCount);
+    //    } else {
+    //      transaction.remove(CODE_STORAGE_BY_HASH, codeHash.toArrayUnsafe());
+    //      transaction.remove(CODE_HASH_COUNT, codeHash.toArrayUnsafe());
+    //    }
   }
 
   @Override
@@ -71,21 +70,21 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
     storage.clear(CODE_HASH_COUNT);
   }
 
-  private long getCodeHashCount(
-      final SegmentedKeyValueStorageTransaction transaction, final Bytes32 codeHash) {
-    return transaction
-        .get(CODE_HASH_COUNT, codeHash.toArrayUnsafe())
-        .map(b -> Bytes.wrap(b).toLong())
-        .orElse(0L);
-  }
-
-  private void updateCodeHashCount(
-      final SegmentedKeyValueStorageTransaction transaction,
-      final Bytes32 codeHash,
-      final long updatedCodeHashCount) {
-    transaction.put(
-        CODE_HASH_COUNT,
-        codeHash.toArray(),
-        Bytes.ofUnsignedLong(updatedCodeHashCount).trimLeadingZeros().toArrayUnsafe());
-  }
+  //  private long getCodeHashCount(
+  //      final SegmentedKeyValueStorageTransaction transaction, final Bytes32 codeHash) {
+  //    return transaction
+  //        .get(CODE_HASH_COUNT, codeHash.toArrayUnsafe())
+  //        .map(b -> Bytes.wrap(b).toLong())
+  //        .orElse(0L);
+  //  }
+  //
+  //  private void updateCodeHashCount(
+  //      final SegmentedKeyValueStorageTransaction transaction,
+  //      final Bytes32 codeHash,
+  //      final long updatedCodeHashCount) {
+  //    transaction.put(
+  //        CODE_HASH_COUNT,
+  //        codeHash.toArray(),
+  //        Bytes.ofUnsignedLong(updatedCodeHashCount).trimLeadingZeros().toArrayUnsafe());
+  //  }
 }
