@@ -181,7 +181,7 @@ import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactor
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.plugin.services.sync.SynchronizationService;
 import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolService;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -1302,6 +1302,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Specifies the maximum number of blocks to retrieve logs from via RPC. Must be >=0. 0 specifies no limit  (default: ${DEFAULT-VALUE})")
   private final Long rpcMaxLogsRange = 5000L;
 
+  @CommandLine.Option(
+      names = {"--cache-last-blocks"},
+      description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
+  private final Integer numberOfblocksToCache = 0;
+
   @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
 
   @Mixin private PkiBlockCreationOptions pkiBlockCreationOptions;
@@ -2320,11 +2325,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .lowerBoundPeers(peersLowerBound)
         .maxRemotelyInitiatedPeers(maxRemoteInitiatedPeers)
         .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
-        .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject());
+        .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
+        .cacheLastBlocks(numberOfblocksToCache);
   }
 
   @NotNull
-  private Optional<TransactionSelectorFactory> getTransactionSelectorFactory() {
+  private Optional<PluginTransactionSelectorFactory> getTransactionSelectorFactory() {
     final Optional<TransactionSelectionService> txSelectionService =
         besuPluginContext.getService(TransactionSelectionService.class);
     return txSelectionService.isPresent() ? txSelectionService.get().get() : Optional.empty();

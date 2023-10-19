@@ -23,10 +23,10 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.REPLACED;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOB_PRICE_BELOW_CURRENT_MIN;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_FULL;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.CURRENT_TX_PRICE_BELOW_MIN;
-import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.DATA_PRICE_BELOW_CURRENT_MIN;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_GAS;
 import static org.mockito.Mockito.mock;
@@ -67,9 +67,11 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   protected static final int MAX_TRANSACTIONS = 5;
   protected static final int MAX_CAPACITY_BYTES = 10_000;
+  protected static final Wei DEFAULT_BASE_FEE = Wei.of(100);
   protected static final int LIMITED_TRANSACTIONS_BY_SENDER = 4;
   protected static final String REMOTE = "remote";
   protected static final String LOCAL = "local";
+  protected static final String NO_PRIORITY = "no";
   protected final PendingTransactionAddedListener listener =
       mock(PendingTransactionAddedListener.class);
   protected final PendingTransactionDroppedListener droppedListener =
@@ -96,7 +98,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   private static BlockHeader mockBlockHeader() {
     final BlockHeader blockHeader = mock(BlockHeader.class);
-    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.of(100)));
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(DEFAULT_BASE_FEE));
     return blockHeader;
   }
 
@@ -147,13 +149,16 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   @Test
   public void returnExclusivelyLocalTransactionsWhenAppropriate() {
     final Transaction localTransaction0 = createTransaction(0, KEYS2);
-    pendingTransactions.addLocalTransaction(localTransaction0, Optional.empty());
+    pendingTransactions.addTransaction(
+        createLocalPendingTransaction(localTransaction0), Optional.empty());
     assertThat(pendingTransactions.size()).isEqualTo(1);
 
-    pendingTransactions.addRemoteTransaction(transaction0, Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(transaction0), Optional.empty());
     assertThat(pendingTransactions.size()).isEqualTo(2);
 
-    pendingTransactions.addRemoteTransaction(transaction1, Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(transaction1), Optional.empty());
     assertThat(pendingTransactions.size()).isEqualTo(3);
 
     final List<Transaction> localTransactions = pendingTransactions.getLocalTransactions();
@@ -162,15 +167,19 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   @Test
   public void addRemoteTransactions() {
-    pendingTransactions.addRemoteTransaction(transaction0, Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(transaction0), Optional.empty());
     assertThat(pendingTransactions.size()).isEqualTo(1);
 
-    assertThat(getAddedCount(REMOTE, layers.prioritizedTransactions.name())).isEqualTo(1);
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, layers.prioritizedTransactions.name()))
+        .isEqualTo(1);
 
-    pendingTransactions.addRemoteTransaction(transaction1, Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(transaction1), Optional.empty());
     assertThat(pendingTransactions.size()).isEqualTo(2);
 
-    assertThat(getAddedCount(REMOTE, layers.prioritizedTransactions.name())).isEqualTo(2);
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, layers.prioritizedTransactions.name()))
+        .isEqualTo(2);
   }
 
   @Test
@@ -180,7 +189,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   @Test
   public void getTransactionByHash() {
-    pendingTransactions.addRemoteTransaction(transaction0, Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(transaction0), Optional.empty());
     assertTransactionPending(pendingTransactions, transaction0);
   }
 
@@ -199,7 +209,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
               Wei.of((i + 1) * 100L),
               (int) poolConf.getPendingTransactionsLayerMaxCapacityBytes() + 1,
               SIGNATURE_ALGORITHM.get().generateKeyPair());
-      pendingTransactions.addRemoteTransaction(tx, Optional.of(sender));
+      pendingTransactions.addTransaction(createRemotePendingTransaction(tx), Optional.of(sender));
       firstTxs.add(tx);
       assertTransactionPending(pendingTransactions, tx);
     }
@@ -214,11 +224,13 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
             SIGNATURE_ALGORITHM.get().generateKeyPair());
     final Account lastSender = mock(Account.class);
     when(lastSender.getNonce()).thenReturn(0L);
-    pendingTransactions.addRemoteTransaction(lastBigTx, Optional.of(lastSender));
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(lastBigTx), Optional.of(lastSender));
     assertTransactionPending(pendingTransactions, lastBigTx);
 
     assertTransactionNotPending(pendingTransactions, firstTxs.get(0));
-    assertThat(getRemovedCount(REMOTE, DROPPED.label(), layers.evictedCollector.name()))
+    assertThat(
+            getRemovedCount(REMOTE, NO_PRIORITY, DROPPED.label(), layers.evictedCollector.name()))
         .isEqualTo(1);
     assertThat(layers.evictedCollector.getEvictedTransactions())
         .map(PendingTransaction::getTransaction)
@@ -230,10 +242,14 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   public void addTransactionForMultipleSenders() {
     final var transactionSenderA = createTransaction(0, KEYS1);
     final var transactionSenderB = createTransaction(0, KEYS2);
-    assertThat(pendingTransactions.addRemoteTransaction(transactionSenderA, Optional.empty()))
+    assertThat(
+            pendingTransactions.addTransaction(
+                createRemotePendingTransaction(transactionSenderA), Optional.empty()))
         .isEqualTo(ADDED);
     assertTransactionPending(pendingTransactions, transactionSenderA);
-    assertThat(pendingTransactions.addRemoteTransaction(transactionSenderB, Optional.empty()))
+    assertThat(
+            pendingTransactions.addTransaction(
+                createRemotePendingTransaction(transactionSenderB), Optional.empty()))
         .isEqualTo(ADDED);
     assertTransactionPending(pendingTransactions, transactionSenderB);
   }
@@ -242,7 +258,9 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   public void dropIfTransactionTooFarInFutureForTheSender() {
     final var futureTransaction =
         createTransaction(poolConf.getTxPoolMaxFutureTransactionByAccount() + 1);
-    assertThat(pendingTransactions.addRemoteTransaction(futureTransaction, Optional.empty()))
+    assertThat(
+            pendingTransactions.addTransaction(
+                createRemotePendingTransaction(futureTransaction), Optional.empty()))
         .isEqualTo(NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER);
     assertTransactionNotPending(pendingTransactions, futureTransaction);
   }
@@ -253,7 +271,9 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     when(sender.getNonce()).thenReturn(5L);
 
     final Transaction oldTransaction = createTransaction(2);
-    assertThat(pendingTransactions.addRemoteTransaction(oldTransaction, Optional.of(sender)))
+    assertThat(
+            pendingTransactions.addTransaction(
+                createRemotePendingTransaction(oldTransaction), Optional.of(sender)))
         .isEqualTo(ALREADY_KNOWN);
     assertThat(pendingTransactions.size()).isEqualTo(0);
     assertTransactionNotPending(pendingTransactions, oldTransaction);
@@ -263,7 +283,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   public void notifyListenerWhenRemoteTransactionAdded() {
     pendingTransactions.subscribePendingTransactions(listener);
 
-    pendingTransactions.addRemoteTransaction(transaction0, Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(transaction0), Optional.empty());
 
     verify(listener).onTransactionAdded(transaction0);
   }
@@ -272,7 +293,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   public void notifyListenerWhenLocalTransactionAdded() {
     pendingTransactions.subscribePendingTransactions(listener);
 
-    pendingTransactions.addLocalTransaction(transaction0, Optional.empty());
+    pendingTransactions.addTransaction(
+        createLocalPendingTransaction(transaction0), Optional.empty());
 
     verify(listener).onTransactionAdded(transaction0);
   }
@@ -281,13 +303,15 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   public void notNotifyListenerAfterUnsubscribe() {
     final long id = pendingTransactions.subscribePendingTransactions(listener);
 
-    pendingTransactions.addRemoteTransaction(transaction0, Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(transaction0), Optional.empty());
 
     verify(listener).onTransactionAdded(transaction0);
 
     pendingTransactions.unsubscribePendingTransactions(id);
 
-    pendingTransactions.addRemoteTransaction(transaction1, Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(transaction1), Optional.empty());
 
     verifyNoMoreInteractions(listener);
   }
@@ -296,13 +320,15 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   @MethodSource
   public void selectTransactionsUntilSelectorRequestsNoMore(
       final TransactionSelectionResult selectionResult) {
-    pendingTransactions.addRemoteTransaction(transaction0, Optional.empty());
-    pendingTransactions.addRemoteTransaction(transaction1, Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(transaction0), Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(transaction1), Optional.empty());
 
     final List<Transaction> parsedTransactions = new ArrayList<>();
     pendingTransactions.selectTransactions(
-        transaction -> {
-          parsedTransactions.add(transaction);
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
           return selectionResult;
         });
 
@@ -316,13 +342,15 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   @Test
   public void selectTransactionsUntilPendingIsEmpty() {
-    pendingTransactions.addRemoteTransaction(transaction0, Optional.empty());
-    pendingTransactions.addRemoteTransaction(transaction1, Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(transaction0), Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(transaction1), Optional.empty());
 
     final List<Transaction> parsedTransactions = new ArrayList<>();
     pendingTransactions.selectTransactions(
-        transaction -> {
-          parsedTransactions.add(transaction);
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
           return SELECTED;
         });
 
@@ -336,13 +364,15 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     final Transaction transaction1 = createTransaction(0, KEYS1);
     final Transaction transaction1b = createTransactionReplacement(transaction1, KEYS1);
 
-    pendingTransactions.addRemoteTransaction(transaction1, Optional.empty());
-    pendingTransactions.addRemoteTransaction(transaction1b, Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(transaction1), Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(transaction1b), Optional.empty());
 
     final List<Transaction> parsedTransactions = new ArrayList<>();
     pendingTransactions.selectTransactions(
-        transaction -> {
-          parsedTransactions.add(transaction);
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
           return SELECTED;
         });
 
@@ -356,14 +386,17 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     final Transaction transaction2 = createTransaction(2, KEYS1);
 
     // add out of order
-    pendingTransactions.addLocalTransaction(transaction2, Optional.empty());
-    pendingTransactions.addLocalTransaction(transaction1, Optional.empty());
-    pendingTransactions.addLocalTransaction(transaction0, Optional.empty());
+    pendingTransactions.addTransaction(
+        createLocalPendingTransaction(transaction2), Optional.empty());
+    pendingTransactions.addTransaction(
+        createLocalPendingTransaction(transaction1), Optional.empty());
+    pendingTransactions.addTransaction(
+        createLocalPendingTransaction(transaction0), Optional.empty());
 
     final List<Transaction> iterationOrder = new ArrayList<>(3);
     pendingTransactions.selectTransactions(
-        transaction -> {
-          iterationOrder.add(transaction);
+        pendingTx -> {
+          iterationOrder.add(pendingTx.getTransaction());
           return SELECTED;
         });
 
@@ -374,22 +407,26 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   @MethodSource
   public void ignoreSenderTransactionsAfterASkippedOne(
       final TransactionSelectionResult skipSelectionResult) {
-    final Transaction transaction0a = createTransaction(0, Wei.of(20), KEYS1);
-    final Transaction transaction1a = createTransaction(1, Wei.of(20), KEYS1);
-    final Transaction transaction2a = createTransaction(2, Wei.of(20), KEYS1);
-    final Transaction transaction0b = createTransaction(0, Wei.of(10), KEYS2);
+    final Transaction transaction0a = createTransaction(0, DEFAULT_BASE_FEE.add(Wei.of(20)), KEYS1);
+    final Transaction transaction1a = createTransaction(1, DEFAULT_BASE_FEE.add(Wei.of(20)), KEYS1);
+    final Transaction transaction2a = createTransaction(2, DEFAULT_BASE_FEE.add(Wei.of(20)), KEYS1);
+    final Transaction transaction0b = createTransaction(0, DEFAULT_BASE_FEE.add(Wei.of(10)), KEYS2);
 
-    pendingTransactions.addLocalTransaction(transaction0a, Optional.empty());
-    pendingTransactions.addLocalTransaction(transaction1a, Optional.empty());
-    pendingTransactions.addLocalTransaction(transaction2a, Optional.empty());
-    pendingTransactions.addLocalTransaction(transaction0b, Optional.empty());
+    pendingTransactions.addTransaction(
+        createLocalPendingTransaction(transaction0a), Optional.empty());
+    pendingTransactions.addTransaction(
+        createLocalPendingTransaction(transaction1a), Optional.empty());
+    pendingTransactions.addTransaction(
+        createLocalPendingTransaction(transaction2a), Optional.empty());
+    pendingTransactions.addTransaction(
+        createLocalPendingTransaction(transaction0b), Optional.empty());
 
     final List<Transaction> iterationOrder = new ArrayList<>(3);
     pendingTransactions.selectTransactions(
-        transaction -> {
-          iterationOrder.add(transaction);
+        pendingTx -> {
+          iterationOrder.add(pendingTx.getTransaction());
           // pretending that the 2nd tx of the 1st sender is not selected
-          return transaction.getNonce() == 1 ? skipSelectionResult : SELECTED;
+          return pendingTx.getNonce() == 1 ? skipSelectionResult : SELECTED;
         });
 
     // the 3rd tx of the 1st must not be processed, since the 2nd is skipped
@@ -400,7 +437,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   static Stream<TransactionSelectionResult> ignoreSenderTransactionsAfterASkippedOne() {
     return Stream.of(
         CURRENT_TX_PRICE_BELOW_MIN,
-        DATA_PRICE_BELOW_CURRENT_MIN,
+        BLOB_PRICE_BELOW_CURRENT_MIN,
         TX_TOO_LARGE_FOR_REMAINING_GAS,
         TransactionSelectionResult.invalidTransient(GAS_PRICE_BELOW_CURRENT_BASE_FEE.name()),
         TransactionSelectionResult.invalid(UPFRONT_COST_EXCEEDS_BALANCE.name()));
@@ -411,16 +448,18 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     final Account sender2 = mock(Account.class);
     when(sender2.getNonce()).thenReturn(1L);
 
-    final Transaction transactionSender1 = createTransaction(0, Wei.of(10), KEYS1);
+    final Transaction transactionSender1 = createTransaction(0, Wei.of(100), KEYS1);
     final Transaction transactionSender2 = createTransaction(1, Wei.of(200), KEYS2);
 
-    pendingTransactions.addLocalTransaction(transactionSender1, Optional.empty());
-    pendingTransactions.addLocalTransaction(transactionSender2, Optional.of(sender2));
+    pendingTransactions.addTransaction(
+        createLocalPendingTransaction(transactionSender1), Optional.empty());
+    pendingTransactions.addTransaction(
+        createLocalPendingTransaction(transactionSender2), Optional.of(sender2));
 
     final List<Transaction> iterationOrder = new ArrayList<>(2);
     pendingTransactions.selectTransactions(
-        transaction -> {
-          iterationOrder.add(transaction);
+        pendingTx -> {
+          iterationOrder.add(pendingTx.getTransaction());
           return SELECTED;
         });
 
@@ -429,38 +468,39 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   @Test
   public void invalidTransactionIsDeletedFromPendingTransactions() {
-    pendingTransactions.addRemoteTransaction(transaction0, Optional.empty());
-    pendingTransactions.addRemoteTransaction(transaction1, Optional.empty());
+    final var pendingTx0 = createRemotePendingTransaction(transaction0);
+    final var pendingTx1 = createRemotePendingTransaction(transaction1);
+    pendingTransactions.addTransaction(pendingTx0, Optional.empty());
+    pendingTransactions.addTransaction(pendingTx1, Optional.empty());
 
-    final List<Transaction> parsedTransactions = new ArrayList<>(1);
+    final List<PendingTransaction> parsedTransactions = new ArrayList<>(1);
     pendingTransactions.selectTransactions(
-        transaction -> {
-          parsedTransactions.add(transaction);
+        pendingTx -> {
+          parsedTransactions.add(pendingTx);
           return TransactionSelectionResult.invalid(UPFRONT_COST_EXCEEDS_BALANCE.name());
         });
 
     // only the first is processed since not being selected will automatically skip the processing
     // all the other txs from the same sender
 
-    assertThat(parsedTransactions).containsExactly(transaction0);
-    assertThat(pendingTransactions.getPendingTransactions())
-        .map(PendingTransaction::getTransaction)
-        .containsExactly(transaction1);
+    assertThat(parsedTransactions).containsExactly(pendingTx0);
+    assertThat(pendingTransactions.getPendingTransactions()).containsExactly(pendingTx1);
   }
 
   @Test
   public void temporarilyInvalidTransactionIsKeptInPendingTransactions() {
-    pendingTransactions.addRemoteTransaction(transaction0, Optional.empty());
+    final var pendingTx0 = createRemotePendingTransaction(transaction0);
+    pendingTransactions.addTransaction(pendingTx0, Optional.empty());
 
-    final List<Transaction> parsedTransactions = new ArrayList<>(1);
+    final List<PendingTransaction> parsedTransactions = new ArrayList<>(1);
     pendingTransactions.selectTransactions(
-        transaction -> {
-          parsedTransactions.add(transaction);
+        pendingTx -> {
+          parsedTransactions.add(pendingTx);
           return TransactionSelectionResult.invalidTransient(
               GAS_PRICE_BELOW_CURRENT_BASE_FEE.name());
         });
 
-    assertThat(parsedTransactions).containsExactly(transaction0);
+    assertThat(parsedTransactions).containsExactly(pendingTx0);
     assertThat(pendingTransactions.getPendingTransactions())
         .map(PendingTransaction::getTransaction)
         .containsExactly(transaction0);
@@ -473,16 +513,20 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   @Test
   public void replaceTransactionWithSameSenderAndNonce() {
-    final Transaction transaction1 = createTransaction(0, Wei.of(20), KEYS1);
+    final Transaction transaction1 = createTransaction(0, Wei.of(200), KEYS1);
     final Transaction transaction1b = createTransactionReplacement(transaction1, KEYS1);
-    final Transaction transaction2 = createTransaction(1, Wei.of(10), KEYS1);
-    assertThat(pendingTransactions.addRemoteTransaction(transaction1, Optional.empty()))
+    final Transaction transaction2 = createTransaction(1, Wei.of(100), KEYS1);
+    assertThat(
+            pendingTransactions.addTransaction(
+                createRemotePendingTransaction(transaction1), Optional.empty()))
         .isEqualTo(ADDED);
-    assertThat(pendingTransactions.addRemoteTransaction(transaction2, Optional.empty()))
+    assertThat(
+            pendingTransactions.addTransaction(
+                createRemotePendingTransaction(transaction2), Optional.empty()))
         .isEqualTo(ADDED);
     assertThat(
             pendingTransactions
-                .addRemoteTransaction(transaction1b, Optional.empty())
+                .addTransaction(createRemotePendingTransaction(transaction1b), Optional.empty())
                 .isReplacement())
         .isTrue();
 
@@ -490,8 +534,11 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     assertTransactionPending(pendingTransactions, transaction1b);
     assertTransactionPending(pendingTransactions, transaction2);
     assertThat(pendingTransactions.size()).isEqualTo(2);
-    assertThat(getAddedCount(REMOTE, layers.prioritizedTransactions.name())).isEqualTo(3);
-    assertThat(getRemovedCount(REMOTE, REPLACED.label(), layers.prioritizedTransactions.name()))
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, layers.prioritizedTransactions.name()))
+        .isEqualTo(3);
+    assertThat(
+            getRemovedCount(
+                REMOTE, NO_PRIORITY, REPLACED.label(), layers.prioritizedTransactions.name()))
         .isEqualTo(1);
   }
 
@@ -499,18 +546,23 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   public void replaceTransactionWithSameSenderAndNonce_multipleReplacements() {
     final int replacedTxCount = 5;
     final List<Transaction> replacedTransactions = new ArrayList<>(replacedTxCount);
-    Transaction duplicateTx = createTransaction(0, Wei.of(50), KEYS1);
+    Transaction duplicateTx = createTransaction(0, DEFAULT_BASE_FEE.add(Wei.of(50)), KEYS1);
     for (int i = 0; i < replacedTxCount; i++) {
       replacedTransactions.add(duplicateTx);
-      pendingTransactions.addRemoteTransaction(duplicateTx, Optional.empty());
+      pendingTransactions.addTransaction(
+          createRemotePendingTransaction(duplicateTx), Optional.empty());
       duplicateTx = createTransactionReplacement(duplicateTx, KEYS1);
     }
 
-    final Transaction independentTx = createTransaction(1, Wei.ONE, KEYS1);
-    assertThat(pendingTransactions.addRemoteTransaction(independentTx, Optional.empty()))
+    final Transaction independentTx = createTransaction(1, DEFAULT_BASE_FEE.add(Wei.ONE), KEYS1);
+    assertThat(
+            pendingTransactions.addTransaction(
+                createRemotePendingTransaction(independentTx), Optional.empty()))
         .isEqualTo(ADDED);
     assertThat(
-            pendingTransactions.addRemoteTransaction(duplicateTx, Optional.empty()).isReplacement())
+            pendingTransactions
+                .addTransaction(createRemotePendingTransaction(duplicateTx), Optional.empty())
+                .isReplacement())
         .isTrue();
 
     // All txs except the last duplicate should be removed
@@ -520,9 +572,11 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     assertTransactionPending(pendingTransactions, independentTx);
 
     assertThat(pendingTransactions.size()).isEqualTo(2);
-    assertThat(getAddedCount(REMOTE, layers.prioritizedTransactions.name()))
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, layers.prioritizedTransactions.name()))
         .isEqualTo(replacedTxCount + 2);
-    assertThat(getRemovedCount(REMOTE, REPLACED.label(), layers.prioritizedTransactions.name()))
+    assertThat(
+            getRemovedCount(
+                REMOTE, NO_PRIORITY, REPLACED.label(), layers.prioritizedTransactions.name()))
         .isEqualTo(replacedTxCount);
   }
 
@@ -536,19 +590,25 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     for (int i = 0; i < replacedTxCount; i++) {
       replacedTransactions.add(replacingTx);
       if (i % 2 == 0) {
-        pendingTransactions.addRemoteTransaction(replacingTx, Optional.empty());
+        pendingTransactions.addTransaction(
+            createRemotePendingTransaction(replacingTx), Optional.empty());
         remoteDuplicateCount++;
       } else {
-        pendingTransactions.addLocalTransaction(replacingTx, Optional.empty());
+        pendingTransactions.addTransaction(
+            createLocalPendingTransaction(replacingTx), Optional.empty());
       }
       replacingTx = createTransactionReplacement(replacingTx, KEYS1);
     }
 
     final Transaction independentTx = createTransaction(1);
     assertThat(
-            pendingTransactions.addLocalTransaction(replacingTx, Optional.empty()).isReplacement())
+            pendingTransactions
+                .addTransaction(createLocalPendingTransaction(replacingTx), Optional.empty())
+                .isReplacement())
         .isTrue();
-    assertThat(pendingTransactions.addRemoteTransaction(independentTx, Optional.empty()))
+    assertThat(
+            pendingTransactions.addTransaction(
+                createRemotePendingTransaction(independentTx), Optional.empty()))
         .isEqualTo(ADDED);
 
     // All txs except the last duplicate should be removed
@@ -560,13 +620,17 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final int localDuplicateCount = replacedTxCount - remoteDuplicateCount;
     assertThat(pendingTransactions.size()).isEqualTo(2);
-    assertThat(getAddedCount(REMOTE, layers.prioritizedTransactions.name()))
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, layers.prioritizedTransactions.name()))
         .isEqualTo(remoteDuplicateCount + 1);
-    assertThat(getAddedCount(LOCAL, layers.prioritizedTransactions.name()))
+    assertThat(getAddedCount(LOCAL, NO_PRIORITY, layers.prioritizedTransactions.name()))
         .isEqualTo(localDuplicateCount + 1);
-    assertThat(getRemovedCount(REMOTE, REPLACED.label(), layers.prioritizedTransactions.name()))
+    assertThat(
+            getRemovedCount(
+                REMOTE, NO_PRIORITY, REPLACED.label(), layers.prioritizedTransactions.name()))
         .isEqualTo(remoteDuplicateCount);
-    assertThat(getRemovedCount(LOCAL, REPLACED.label(), layers.prioritizedTransactions.name()))
+    assertThat(
+            getRemovedCount(
+                LOCAL, NO_PRIORITY, REPLACED.label(), layers.prioritizedTransactions.name()))
         .isEqualTo(localDuplicateCount);
   }
 
@@ -574,11 +638,15 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   public void notReplaceTransactionWithSameSenderAndNonceWhenGasPriceIsLower() {
     final Transaction transaction1 = createTransaction(0, Wei.of(2));
     final Transaction transaction1b = createTransaction(0, Wei.ONE);
-    assertThat(pendingTransactions.addRemoteTransaction(transaction1, Optional.empty()))
+    assertThat(
+            pendingTransactions.addTransaction(
+                createRemotePendingTransaction(transaction1), Optional.empty()))
         .isEqualTo(ADDED);
 
     pendingTransactions.subscribePendingTransactions(listener);
-    assertThat(pendingTransactions.addRemoteTransaction(transaction1b, Optional.empty()))
+    assertThat(
+            pendingTransactions.addTransaction(
+                createRemotePendingTransaction(transaction1b), Optional.empty()))
         .isEqualTo(REJECTED_UNDERPRICED_REPLACEMENT);
 
     assertTransactionNotPending(pendingTransactions, transaction1b);
@@ -594,13 +662,16 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     when(firstSender.getNonce()).thenReturn(0L);
     when(firstSender.getAddress()).thenReturn(SENDER1);
     assertNoNextNonceForSender(pendingTransactions, SENDER1);
-    pendingTransactions.addRemoteTransaction(createTransaction(0, KEYS1), Optional.of(firstSender));
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(0, KEYS1)), Optional.of(firstSender));
     assertNextNonceForSender(pendingTransactions, SENDER1, 1);
 
-    pendingTransactions.addRemoteTransaction(createTransaction(1, KEYS1), Optional.of(firstSender));
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(1, KEYS1)), Optional.of(firstSender));
     assertNextNonceForSender(pendingTransactions, SENDER1, 2);
 
-    pendingTransactions.addRemoteTransaction(createTransaction(2, KEYS1), Optional.of(firstSender));
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(2, KEYS1)), Optional.of(firstSender));
     assertNextNonceForSender(pendingTransactions, SENDER1, 3);
 
     // second sender not in orders: 3->0->2->1
@@ -608,21 +679,21 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     when(secondSender.getNonce()).thenReturn(0L);
     when(secondSender.getAddress()).thenReturn(SENDER2);
     assertNoNextNonceForSender(pendingTransactions, SENDER2);
-    pendingTransactions.addRemoteTransaction(
-        createTransaction(3, KEYS2), Optional.of(secondSender));
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(3, KEYS2)), Optional.of(secondSender));
     assertNoNextNonceForSender(pendingTransactions, SENDER2);
 
-    pendingTransactions.addRemoteTransaction(
-        createTransaction(0, KEYS2), Optional.of(secondSender));
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(0, KEYS2)), Optional.of(secondSender));
     assertNextNonceForSender(pendingTransactions, SENDER2, 1);
 
-    pendingTransactions.addRemoteTransaction(
-        createTransaction(2, KEYS2), Optional.of(secondSender));
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(2, KEYS2)), Optional.of(secondSender));
     assertNextNonceForSender(pendingTransactions, SENDER2, 1);
 
     // tx 1 will fill the nonce gap and all txs will be ready
-    pendingTransactions.addRemoteTransaction(
-        createTransaction(1, KEYS2), Optional.of(secondSender));
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(1, KEYS2)), Optional.of(secondSender));
     assertNextNonceForSender(pendingTransactions, SENDER2, 4);
   }
 
@@ -700,38 +771,49 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   @Test
   public void shouldNotIncrementAddedCounterWhenRemoteTransactionAlreadyPresent() {
-    pendingTransactions.addLocalTransaction(transaction0, Optional.empty());
+    pendingTransactions.addTransaction(
+        createLocalPendingTransaction(transaction0), Optional.empty());
     assertThat(pendingTransactions.size()).isEqualTo(1);
-    assertThat(getAddedCount(LOCAL, layers.prioritizedTransactions.name())).isEqualTo(1);
-    assertThat(getAddedCount(REMOTE, layers.prioritizedTransactions.name())).isZero();
+    assertThat(getAddedCount(LOCAL, NO_PRIORITY, layers.prioritizedTransactions.name()))
+        .isEqualTo(1);
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, layers.prioritizedTransactions.name())).isZero();
 
-    assertThat(pendingTransactions.addRemoteTransaction(transaction0, Optional.empty()))
+    assertThat(
+            pendingTransactions.addTransaction(
+                createRemotePendingTransaction(transaction0), Optional.empty()))
         .isEqualTo(ALREADY_KNOWN);
     assertThat(pendingTransactions.size()).isEqualTo(1);
-    assertThat(getAddedCount(LOCAL, layers.prioritizedTransactions.name())).isEqualTo(1);
-    assertThat(getAddedCount(REMOTE, layers.prioritizedTransactions.name())).isZero();
+    assertThat(getAddedCount(LOCAL, NO_PRIORITY, layers.prioritizedTransactions.name()))
+        .isEqualTo(1);
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, layers.prioritizedTransactions.name())).isZero();
   }
 
   @Test
   public void shouldNotIncrementAddedCounterWhenLocalTransactionAlreadyPresent() {
-    pendingTransactions.addRemoteTransaction(transaction0, Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(transaction0), Optional.empty());
     assertThat(pendingTransactions.size()).isEqualTo(1);
-    assertThat(getAddedCount(LOCAL, layers.prioritizedTransactions.name())).isZero();
-    assertThat(getAddedCount(REMOTE, layers.prioritizedTransactions.name())).isEqualTo(1);
+    assertThat(getAddedCount(LOCAL, NO_PRIORITY, layers.prioritizedTransactions.name())).isZero();
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, layers.prioritizedTransactions.name()))
+        .isEqualTo(1);
 
-    assertThat(pendingTransactions.addLocalTransaction(transaction0, Optional.empty()))
+    assertThat(
+            pendingTransactions.addTransaction(
+                createLocalPendingTransaction(transaction0), Optional.empty()))
         .isEqualTo(ALREADY_KNOWN);
     assertThat(pendingTransactions.size()).isEqualTo(1);
-    assertThat(getAddedCount(LOCAL, layers.prioritizedTransactions.name())).isZero();
-    assertThat(getAddedCount(REMOTE, layers.prioritizedTransactions.name())).isEqualTo(1);
+    assertThat(getAddedCount(LOCAL, NO_PRIORITY, layers.prioritizedTransactions.name())).isZero();
+    assertThat(getAddedCount(REMOTE, NO_PRIORITY, layers.prioritizedTransactions.name()))
+        .isEqualTo(1);
   }
 
   @Test
   public void doNothingIfTransactionAlreadyPending() {
     final var addedTxs = populateCache(1, 0);
     assertThat(
-            pendingTransactions.addRemoteTransaction(
-                addedTxs[0].transaction, Optional.of(addedTxs[0].account)))
+            pendingTransactions.addTransaction(
+                createRemotePendingTransaction(addedTxs[0].transaction),
+                Optional.of(addedTxs[0].account)))
         .isEqualTo(ALREADY_KNOWN);
     assertTransactionPending(pendingTransactions, addedTxs[0].transaction);
   }
@@ -765,7 +847,9 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
         final var transaction = createTransaction(nonce, keys);
         final Account sender = mock(Account.class);
         when(sender.getNonce()).thenReturn(startingNonce);
-        final var res = pendingTransactions.addRemoteTransaction(transaction, Optional.of(sender));
+        final var res =
+            pendingTransactions.addTransaction(
+                createRemotePendingTransaction(transaction), Optional.of(sender));
         assertTransactionPending(pendingTransactions, transaction);
         assertThat(res).isEqualTo(ADDED);
         addedTransactions.add(new TransactionAndAccount(transaction, sender));

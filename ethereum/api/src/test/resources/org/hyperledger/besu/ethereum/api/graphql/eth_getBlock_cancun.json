@@ -1,0 +1,25 @@
+{
+  "request": "{block (number: 34) { baseFeePerGas difficulty extraData miner { address } mixHash nonce stateRoot totalDifficulty withdrawalsRoot withdrawals { address amount index validator } blobGasUsed excessBlobGas transactions { maxFeePerBlobGas blobGasUsed blobGasPrice } }} ",
+  "response":{
+    "data": {
+      "block":{
+        "baseFeePerGas":"0x3437004a",
+        "difficulty":"0x0",
+        "extraData":"0x",
+        "miner": {
+          "address":"0x0000000000000000000000000000000000000000"
+        },
+        "mixHash":"0x0000000000000000000000000000000000000000000000000000000000000000",
+        "nonce":"0x0000000000000000",
+        "stateRoot":"0x34727aff24d1c51cd63fdc14515b15ddaa156fa0671c58a96c72b1553819945d",
+        "totalDifficulty":"0x427c00",
+        "withdrawalsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+        "withdrawals":[],
+        "blobGasUsed":"0x40000",
+        "excessBlobGas":"0x0",
+        "transactions":[{"maxFeePerBlobGas":"0x3b9aca00","blobGasUsed":"0x40000","blobGasPrice":"0x1"}]
+      }
+    }
+  },
+  "statusCode": 200
+}

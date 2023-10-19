@@ -28,16 +28,23 @@ import java.util.concurrent.atomic.AtomicLong;
  * Tracks the additional metadata associated with transactions to enable prioritization for mining
  * and deciding which transactions to drop when the transaction pool reaches its size limit.
  */
-public abstract class PendingTransaction {
+public abstract class PendingTransaction
+    implements org.hyperledger.besu.datatypes.PendingTransaction {
   static final int NOT_INITIALIZED = -1;
-  static final int FRONTIER_BASE_MEMORY_SIZE = 944;
-  static final int ACCESS_LIST_BASE_MEMORY_SIZE = 944;
-  static final int EIP1559_BASE_MEMORY_SIZE = 1056;
-  static final int OPTIONAL_TO_MEMORY_SIZE = 92;
+  static final int FRONTIER_AND_ACCESS_LIST_BASE_MEMORY_SIZE = 872;
+  static final int EIP1559_AND_EIP4844_BASE_MEMORY_SIZE = 984;
+  static final int OPTIONAL_TO_MEMORY_SIZE = 112;
+  static final int OPTIONAL_CHAIN_ID_MEMORY_SIZE = 80;
   static final int PAYLOAD_BASE_MEMORY_SIZE = 32;
   static final int ACCESS_LIST_STORAGE_KEY_MEMORY_SIZE = 32;
-  static final int ACCESS_LIST_ENTRY_BASE_MEMORY_SIZE = 128;
+  static final int ACCESS_LIST_ENTRY_BASE_MEMORY_SIZE = 248;
   static final int OPTIONAL_ACCESS_LIST_MEMORY_SIZE = 24;
+  static final int VERSIONED_HASH_SIZE = 96;
+  static final int BASE_LIST_SIZE = 48;
+  static final int BASE_OPTIONAL_SIZE = 16;
+  static final int KZG_COMMITMENT_OR_PROOF_SIZE = 112;
+  static final int BLOB_SIZE = 131136;
+  static final int BLOBS_WITH_COMMITMENTS_SIZE = 32;
   static final int PENDING_TRANSACTION_MEMORY_SIZE = 40;
   private static final AtomicLong TRANSACTIONS_ADDED = new AtomicLong();
   private final Transaction transaction;
@@ -46,12 +53,40 @@ public abstract class PendingTransaction {
 
   private int memorySize = NOT_INITIALIZED;
 
-  protected PendingTransaction(final Transaction transaction, final long addedAt) {
+  private PendingTransaction(
+      final Transaction transaction, final long addedAt, final long sequence) {
     this.transaction = transaction;
     this.addedAt = addedAt;
-    this.sequence = TRANSACTIONS_ADDED.getAndIncrement();
+    this.sequence = sequence;
   }
 
+  private PendingTransaction(final Transaction transaction, final long addedAt) {
+    this(transaction, addedAt, TRANSACTIONS_ADDED.getAndIncrement());
+  }
+
+  public static PendingTransaction newPendingTransaction(
+      final Transaction transaction, final boolean isLocal, final boolean hasPriority) {
+    return newPendingTransaction(transaction, isLocal, hasPriority, System.currentTimeMillis());
+  }
+
+  public static PendingTransaction newPendingTransaction(
+      final Transaction transaction,
+      final boolean isLocal,
+      final boolean hasPriority,
+      final long addedAt) {
+    if (isLocal) {
+      if (hasPriority) {
+        return new Local.Priority(transaction, addedAt);
+      }
+      return new Local(transaction, addedAt);
+    }
+    if (hasPriority) {
+      return new Remote.Priority(transaction, addedAt);
+    }
+    return new Remote(transaction, addedAt);
+  }
+
+  @Override
   public Transaction getTransaction() {
     return transaction;
   }
@@ -72,12 +107,11 @@ public abstract class PendingTransaction {
     return transaction.getSender();
   }
 
-  public abstract boolean isReceivedFromLocalSource();
-
   public Hash getHash() {
     return transaction.getHash();
   }
 
+  @Override
   public long getAddedAt() {
     return addedAt;
   }
@@ -88,6 +122,8 @@ public abstract class PendingTransaction {
     }
     return memorySize;
   }
+
+  public abstract PendingTransaction detachedCopy();
 
   private int computeMemorySize() {
     return switch (transaction.getType()) {
@@ -100,35 +136,61 @@ public abstract class PendingTransaction {
   }
 
   private int computeFrontierMemorySize() {
-    return FRONTIER_BASE_MEMORY_SIZE + computePayloadMemorySize() + computeToMemorySize();
+    return FRONTIER_AND_ACCESS_LIST_BASE_MEMORY_SIZE
+        + computePayloadMemorySize()
+        + computeToMemorySize()
+        + computeChainIdMemorySize();
   }
 
   private int computeAccessListMemorySize() {
-    return ACCESS_LIST_BASE_MEMORY_SIZE
+    return FRONTIER_AND_ACCESS_LIST_BASE_MEMORY_SIZE
         + computePayloadMemorySize()
         + computeToMemorySize()
+        + computeChainIdMemorySize()
         + computeAccessListEntriesMemorySize();
   }
 
   private int computeEIP1559MemorySize() {
-    return EIP1559_BASE_MEMORY_SIZE
+    return EIP1559_AND_EIP4844_BASE_MEMORY_SIZE
         + computePayloadMemorySize()
         + computeToMemorySize()
+        + computeChainIdMemorySize()
         + computeAccessListEntriesMemorySize();
   }
 
   private int computeBlobMemorySize() {
-    // ToDo 4844: adapt for blobs
-    return computeEIP1559MemorySize();
+    return computeEIP1559MemorySize()
+        + BASE_OPTIONAL_SIZE // for the versionedHashes field
+        + computeBlobWithCommitmentsMemorySize();
+  }
+
+  private int computeBlobWithCommitmentsMemorySize() {
+    final int blobCount = transaction.getBlobCount();
+
+    return BASE_OPTIONAL_SIZE
+        + BLOBS_WITH_COMMITMENTS_SIZE
+        + (BASE_LIST_SIZE * 4)
+        + (KZG_COMMITMENT_OR_PROOF_SIZE * blobCount * 2)
+        + (VERSIONED_HASH_SIZE * blobCount)
+        + (BLOB_SIZE * blobCount);
   }
 
   private int computePayloadMemorySize() {
-    return PAYLOAD_BASE_MEMORY_SIZE + transaction.getPayload().size();
+    return transaction.getPayload().size() > 0
+        ? PAYLOAD_BASE_MEMORY_SIZE + transaction.getPayload().size()
+        : 0;
   }
 
   private int computeToMemorySize() {
     if (transaction.getTo().isPresent()) {
       return OPTIONAL_TO_MEMORY_SIZE;
+    }
+    return 0;
+  }
+
+  private int computeChainIdMemorySize() {
+    if (transaction.getChainId().isPresent()) {
+      return OPTIONAL_CHAIN_ID_MEMORY_SIZE;
     }
     return 0;
   }
@@ -184,6 +246,10 @@ public abstract class PendingTransaction {
         + addedAt
         + ", sequence="
         + sequence
+        + ", isLocal="
+        + isReceivedFromLocalSource()
+        + ", hasPriority="
+        + hasPriority()
         + '}';
   }
 
@@ -192,6 +258,10 @@ public abstract class PendingTransaction {
         + sequence
         + ", addedAt: "
         + addedAt
+        + ", isLocal="
+        + isReceivedFromLocalSource()
+        + ", hasPriority="
+        + hasPriority()
         + ", "
         + transaction.toTraceLog()
         + "}";
@@ -207,9 +277,47 @@ public abstract class PendingTransaction {
       this(transaction, System.currentTimeMillis());
     }
 
+    private Local(final long sequence, final Transaction transaction) {
+      super(transaction, System.currentTimeMillis(), sequence);
+    }
+
+    @Override
+    public PendingTransaction detachedCopy() {
+      return new Local(getSequence(), getTransaction().detachedCopy());
+    }
+
     @Override
     public boolean isReceivedFromLocalSource() {
       return true;
+    }
+
+    @Override
+    public boolean hasPriority() {
+      return false;
+    }
+
+    public static class Priority extends Local {
+      public Priority(final Transaction transaction) {
+        this(transaction, System.currentTimeMillis());
+      }
+
+      public Priority(final Transaction transaction, final long addedAt) {
+        super(transaction, addedAt);
+      }
+
+      public Priority(final long sequence, final Transaction transaction) {
+        super(sequence, transaction);
+      }
+
+      @Override
+      public PendingTransaction detachedCopy() {
+        return new Priority(getSequence(), getTransaction().detachedCopy());
+      }
+
+      @Override
+      public boolean hasPriority() {
+        return true;
+      }
     }
   }
 
@@ -223,9 +331,47 @@ public abstract class PendingTransaction {
       this(transaction, System.currentTimeMillis());
     }
 
+    private Remote(final long sequence, final Transaction transaction) {
+      super(transaction, System.currentTimeMillis(), sequence);
+    }
+
+    @Override
+    public PendingTransaction detachedCopy() {
+      return new Remote(getSequence(), getTransaction().detachedCopy());
+    }
+
     @Override
     public boolean isReceivedFromLocalSource() {
       return false;
+    }
+
+    @Override
+    public boolean hasPriority() {
+      return false;
+    }
+
+    public static class Priority extends Remote {
+      public Priority(final Transaction transaction) {
+        this(transaction, System.currentTimeMillis());
+      }
+
+      public Priority(final Transaction transaction, final long addedAt) {
+        super(transaction, addedAt);
+      }
+
+      public Priority(final long sequence, final Transaction transaction) {
+        super(sequence, transaction);
+      }
+
+      @Override
+      public PendingTransaction detachedCopy() {
+        return new Priority(getSequence(), getTransaction().detachedCopy());
+      }
+
+      @Override
+      public boolean hasPriority() {
+        return true;
+      }
     }
   }
 }

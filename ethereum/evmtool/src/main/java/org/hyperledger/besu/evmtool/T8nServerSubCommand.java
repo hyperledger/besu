@@ -178,7 +178,7 @@ public class T8nServerSubCommand implements Runnable {
       t.printStackTrace(ps);
       ObjectNode json = objectMapper.createObjectNode();
       json.put("error", t.getMessage());
-      json.put("stacktrace", baos.toString(StandardCharsets.UTF_8));
+      json.put("stacktrace", baos.toString(StandardCharsets.UTF_8).replaceAll("\\s", " "));
 
       t.printStackTrace(System.out);
 

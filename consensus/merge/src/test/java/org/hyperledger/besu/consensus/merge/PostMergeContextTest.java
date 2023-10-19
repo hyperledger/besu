@@ -138,7 +138,7 @@ public class PostMergeContextTest {
     BlockWithReceipts mockBlockWithReceipts = createBlockWithReceipts(1, 21000, 1);
 
     PayloadIdentifier firstPayloadId = new PayloadIdentifier(1L);
-    postMergeContext.putPayloadById(firstPayloadId, mockBlockWithReceipts);
+    postMergeContext.putPayloadById(new PayloadWrapper(firstPayloadId, mockBlockWithReceipts));
 
     assertThat(postMergeContext.retrieveBlockById(firstPayloadId)).contains(mockBlockWithReceipts);
   }
@@ -149,8 +149,8 @@ public class PostMergeContextTest {
     BlockWithReceipts betterBlockWithReceipts = createBlockWithReceipts(2, 11, 1);
 
     PayloadIdentifier payloadId = new PayloadIdentifier(1L);
-    postMergeContext.putPayloadById(payloadId, zeroTxBlockWithReceipts);
-    postMergeContext.putPayloadById(payloadId, betterBlockWithReceipts);
+    postMergeContext.putPayloadById(new PayloadWrapper(payloadId, zeroTxBlockWithReceipts));
+    postMergeContext.putPayloadById(new PayloadWrapper(payloadId, betterBlockWithReceipts));
 
     assertThat(postMergeContext.retrieveBlockById(payloadId)).contains(betterBlockWithReceipts);
   }
@@ -162,9 +162,9 @@ public class PostMergeContextTest {
     BlockWithReceipts smallBlockWithReceipts = createBlockWithReceipts(3, 5, 1);
 
     PayloadIdentifier payloadId = new PayloadIdentifier(1L);
-    postMergeContext.putPayloadById(payloadId, zeroTxBlockWithReceipts);
-    postMergeContext.putPayloadById(payloadId, betterBlockWithReceipts);
-    postMergeContext.putPayloadById(payloadId, smallBlockWithReceipts);
+    postMergeContext.putPayloadById(new PayloadWrapper(payloadId, zeroTxBlockWithReceipts));
+    postMergeContext.putPayloadById(new PayloadWrapper(payloadId, betterBlockWithReceipts));
+    postMergeContext.putPayloadById(new PayloadWrapper(payloadId, smallBlockWithReceipts));
 
     assertThat(postMergeContext.retrieveBlockById(payloadId)).contains(betterBlockWithReceipts);
   }
