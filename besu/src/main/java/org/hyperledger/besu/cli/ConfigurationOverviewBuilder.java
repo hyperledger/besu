@@ -280,7 +280,10 @@ public class ConfigurationOverviewBuilder {
     lines.add("CPU cores: " + hardwareInfo.getProcessor().getLogicalProcessorCount());
 
     lines.add("");
-    lines.addAll(getBesuPluginContext().getPluginsSummaryLog());
+
+    if (besuPluginContext != null) {
+      lines.addAll(besuPluginContext.getPluginsSummaryLog());
+    }
 
     return FramedLogMessage.generate(lines);
   }
@@ -312,10 +315,6 @@ public class ConfigurationOverviewBuilder {
 
   private String normalizeSize(final long size) {
     return String.format("%.02f", (double) (size) / 1024 / 1024 / 1024) + " GB";
-  }
-
-  private BesuPluginContextImpl getBesuPluginContext() {
-    return besuPluginContext;
   }
 
   /**
