@@ -51,7 +51,9 @@ public class BothCodeStorageStrategy implements CodeStorageStrategy {
 
   @Override
   public void removeFlatCode(
-      final SegmentedKeyValueStorageTransaction transaction, final Hash accountHash, final Hash codeHash) {
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Hash codeHash) {
     codeHashCodeStorageStrategy.removeFlatCode(transaction, accountHash, codeHash);
     accountHashCodeStorageStrategy.removeFlatCode(transaction, accountHash, codeHash);
   }
