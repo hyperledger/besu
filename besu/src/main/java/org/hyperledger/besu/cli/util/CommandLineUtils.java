@@ -110,7 +110,7 @@ public class CommandLineUtils {
   }
 
   /**
-   * Fail if option doesnt meet requirement.
+   * Fail if option doesn't meet requirement.
    *
    * @param commandLine the command line
    * @param errorMessage the error message
@@ -126,7 +126,8 @@ public class CommandLineUtils {
       final String affectedOptions = getAffectedOptions(commandLine, dependentOptionsNames);
 
       if (!affectedOptions.isEmpty()) {
-        throw new CommandLine.ParameterException(commandLine, errorMessage);
+        throw new CommandLine.ParameterException(
+            commandLine, errorMessage + " [" + affectedOptions + "]");
       }
     }
   }
