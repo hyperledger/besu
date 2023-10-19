@@ -314,10 +314,14 @@ public class ConfigurationOverviewBuilder {
     return String.format("%.02f", (double) (size) / 1024 / 1024 / 1024) + " GB";
   }
 
-  public BesuPluginContextImpl getBesuPluginContext() {
+  private BesuPluginContextImpl getBesuPluginContext() {
     return besuPluginContext;
   }
 
+  /**
+   * set the plugin context
+   * @param besuPluginContext the plugin context
+   */
   public void setPluginContext(final BesuPluginContextImpl besuPluginContext) {
     this.besuPluginContext = besuPluginContext;
   }
