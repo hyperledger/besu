@@ -181,7 +181,7 @@ public class BytesTrieSet<E extends Bytes> extends AbstractSet<E> {
   public boolean contains(final Object o) {
     if (!(o instanceof Bytes bytes)) {
       throw new IllegalArgumentException(
-          "Expected Bytes, got " + o == null ? "null" : o.getClass().getName());
+          "Expected Bytes, got " + (o == null ? "null" : o.getClass().getName()));
     }
     byte[] array = bytes.toArrayUnsafe();
     if (array.length != byteLength) {
@@ -208,7 +208,7 @@ public class BytesTrieSet<E extends Bytes> extends AbstractSet<E> {
     // Two base cases, size==0 and size==1;
     if (!(o instanceof Bytes bytes)) {
       throw new IllegalArgumentException(
-          "Expected Bytes, got " + o == null ? "null" : o.getClass().getName());
+          "Expected Bytes, got " + (o == null ? "null" : o.getClass().getName()));
     }
     byte[] array = bytes.toArrayUnsafe();
     if (array.length != byteLength) {
