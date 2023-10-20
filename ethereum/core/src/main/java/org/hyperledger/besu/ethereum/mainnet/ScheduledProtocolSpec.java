@@ -62,7 +62,7 @@ public interface ScheduledProtocolSpec {
 
     @Override
     public boolean isOnOrAfterMilestoneBoundary(final ProcessableBlockHeader header) {
-      return header.getTimestamp() >= timestamp;
+      return Long.compareUnsigned(header.getTimestamp(), timestamp) >= 0;
     }
 
     @Override

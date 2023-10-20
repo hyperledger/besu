@@ -267,7 +267,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     }
 
     if (maybeParentHeader.isPresent()
-        && (blockParam.getTimestamp() <= maybeParentHeader.get().getTimestamp())) {
+        && (Long.compareUnsigned(maybeParentHeader.get().getTimestamp(), blockParam.getTimestamp())
+            >= 0)) {
       return respondWithInvalid(
           reqId,
           blockParam,
