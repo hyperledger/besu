@@ -19,8 +19,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import org.apache.tuweni.bytes.Bytes;
 import com.google.common.primitives.Longs;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -49,7 +49,8 @@ public interface ParentBeaconBlockRootHelper {
     final UInt256 timestampIndex = UInt256.valueOf(timestampReduced);
     final UInt256 rootIndex = UInt256.valueOf(timestampExtended);
 
-    account.setStorageValue(timestampIndex, UInt256.fromBytes(Bytes.of(Longs.toByteArray(timestamp))));
+    account.setStorageValue(
+        timestampIndex, UInt256.fromBytes(Bytes.of(Longs.toByteArray(timestamp))));
     account.setStorageValue(rootIndex, UInt256.fromBytes(root));
     worldUpdater.commit();
   }
