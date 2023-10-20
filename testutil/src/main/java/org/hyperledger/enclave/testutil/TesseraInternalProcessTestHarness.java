@@ -71,6 +71,11 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
   private URI q2TUri;
   private URI nodeURI;
 
+  private final int thirdPartyPort = 9081;
+  private final int q2TPort = 9082;
+  /** The constant p2pPort. */
+  public static final int p2pPort = 9001;
+
   /**
    * Instantiates a news Tessera test harness as internal process.
    *
@@ -328,7 +333,9 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
             + "        {\n"
             + "            \"app\":\"ThirdParty\",\n"
             + "            \"enabled\": true,\n"
-            + "            \"serverAddress\":\"http://127.0.0.1:0\",\n"
+            + "            \"serverAddress\":\"http://127.0.0.1:"
+            + thirdPartyPort
+            + ",\n"
             + "            \"cors\" : {\n"
             + "                \"allowedMethods\" : [\"GET\", \"OPTIONS\"],\n"
             + "                \"allowedOrigins\" : [\"*\"]\n"
@@ -338,13 +345,17 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
             + "        {\n"
             + "            \"app\":\"Q2T\",\n"
             + "            \"enabled\": true,\n"
-            + "            \"serverAddress\":\"http://localhost:0\",\n"
+            + "            \"serverAddress\":\"http://127.0.0.1:"
+            + q2TPort
+            + ",\n"
             + "            \"communicationType\" : \"REST\"\n"
             + "        },\n"
             + "        {\n"
             + "            \"app\":\"P2P\",\n"
             + "            \"enabled\": true,\n"
-            + "            \"serverAddress\":\"http://127.0.0.1:0\",\n"
+            + "            \"serverAddress\":\"http://127.0.0.1:"
+            + p2pPort
+            + ",\n"
             + "            \"communicationType\" : \"REST\"\n"
             + "        }\n"
             + "    ],\n"
