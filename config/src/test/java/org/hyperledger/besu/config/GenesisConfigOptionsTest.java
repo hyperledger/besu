@@ -52,6 +52,7 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getConsensusEngine()).isEqualTo("ibft2");
   }
 
+  @Test
   public void shouldUseQbftWhenQbftInConfig() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("qbft", emptyMap()));
     assertThat(config.isQbft()).isTrue();
@@ -64,7 +65,7 @@ public class GenesisConfigOptionsTest {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("clique", emptyMap()));
     assertThat(config.isClique()).isTrue();
     assertThat(config.isPoa()).isTrue();
-    assertThat(config.getCliqueConfigOptions()).isNotSameAs(CliqueConfigOptions.DEFAULT);
+    assertThat(config.getCliqueConfigOptions()).isNotSameAs(JsonCliqueConfigOptions.DEFAULT);
     assertThat(config.getConsensusEngine()).isEqualTo("clique");
   }
 
@@ -73,7 +74,7 @@ public class GenesisConfigOptionsTest {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.isClique()).isFalse();
     assertThat(config.isPoa()).isFalse();
-    assertThat(config.getCliqueConfigOptions()).isSameAs(CliqueConfigOptions.DEFAULT);
+    assertThat(config.getCliqueConfigOptions()).isSameAs(JsonCliqueConfigOptions.DEFAULT);
   }
 
   @Test

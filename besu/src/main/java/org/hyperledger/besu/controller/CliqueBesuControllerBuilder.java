@@ -54,7 +54,6 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
 
   private Address localAddress;
   private EpochManager epochManager;
-  private long secondsBetweenBlocks;
   private final BlockInterface blockInterface = new CliqueBlockInterface();
   private ForksSchedule<CliqueConfigOptions> forksSchedule;
 
@@ -111,6 +110,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   protected ProtocolSchedule createProtocolSchedule() {
     return CliqueProtocolSchedule.create(
         configOptionsSupplier.get(),
+        forksSchedule,
         nodeKey,
         privacyParameters,
         isRevertReasonEnabled,

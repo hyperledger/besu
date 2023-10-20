@@ -43,7 +43,7 @@ public class CliqueConfigOptionsTest {
 
   @Test
   public void shouldGetDefaultEpochLengthFromDefaultConfig() {
-    assertThat(CliqueConfigOptions.DEFAULT.getEpochLength())
+    assertThat(JsonCliqueConfigOptions.DEFAULT.getEpochLength())
         .isEqualTo(EXPECTED_DEFAULT_EPOCH_LENGTH);
   }
 
@@ -61,7 +61,7 @@ public class CliqueConfigOptionsTest {
 
   @Test
   public void shouldGetDefaultBlockPeriodFromDefaultConfig() {
-    assertThat(CliqueConfigOptions.DEFAULT.getBlockPeriodSeconds())
+    assertThat(JsonCliqueConfigOptions.DEFAULT.getBlockPeriodSeconds())
         .isEqualTo(EXPECTED_DEFAULT_BLOCK_PERIOD);
   }
 

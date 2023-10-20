@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.clique;
 import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -35,7 +36,10 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 /** Defines the protocol behaviours for a blockchain using Clique. */
 public class CliqueProtocolSchedule {
@@ -46,6 +50,7 @@ public class CliqueProtocolSchedule {
    * Create protocol schedule.
    *
    * @param config the config
+   * @param forksSchedule the transitions
    * @param nodeKey the node key
    * @param privacyParameters the privacy parameters
    * @param isRevertReasonEnabled the is revert reason enabled
@@ -54,6 +59,7 @@ public class CliqueProtocolSchedule {
    */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
+      final ForksSchedule<CliqueConfigOptions> forksSchedule,
       final NodeKey nodeKey,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
@@ -69,17 +75,31 @@ public class CliqueProtocolSchedule {
 
     final EpochManager epochManager = new EpochManager(cliqueConfig.getEpochLength());
 
+    final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> specMap = new HashMap<>();
+    forksSchedule
+        .getForks()
+        .forEach(
+            forkSpec ->
+                specMap.put(
+                    forkSpec.getBlock(),
+                    builder ->
+                        applyCliqueSpecificModifications(
+                            epochManager,
+                            forkSpec.getValue().getBlockPeriodSeconds(),
+                            localNodeAddress,
+                            builder)));
+    final ProtocolSpecAdapters specAdapters = new ProtocolSpecAdapters(specMap);
+
+    ProtocolSpecAdapters.create(
+        0,
+        builder ->
+            applyCliqueSpecificModifications(
+                epochManager, cliqueConfig.getBlockPeriodSeconds(), localNodeAddress, builder));
+
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            ProtocolSpecAdapters.create(
-                0,
-                builder ->
-                    applyCliqueSpecificModifications(
-                        epochManager,
-                        cliqueConfig.getBlockPeriodSeconds(),
-                        localNodeAddress,
-                        builder)),
+            specAdapters,
             privacyParameters,
             isRevertReasonEnabled,
             evmConfiguration)
@@ -90,6 +110,7 @@ public class CliqueProtocolSchedule {
    * Create protocol schedule.
    *
    * @param config the config
+   * @param forksSchedule the transitions
    * @param nodeKey the node key
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param evmConfiguration the evm configuration
@@ -97,11 +118,17 @@ public class CliqueProtocolSchedule {
    */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
+      final ForksSchedule<CliqueConfigOptions> forksSchedule,
       final NodeKey nodeKey,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration) {
     return create(
-        config, nodeKey, PrivacyParameters.DEFAULT, isRevertReasonEnabled, evmConfiguration);
+        config,
+        forksSchedule,
+        nodeKey,
+        PrivacyParameters.DEFAULT,
+        isRevertReasonEnabled,
+        evmConfiguration);
   }
 
   private static ProtocolSpecBuilder applyCliqueSpecificModifications(

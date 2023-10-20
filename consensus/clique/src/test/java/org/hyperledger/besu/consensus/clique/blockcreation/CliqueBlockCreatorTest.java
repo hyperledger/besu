@@ -30,6 +30,7 @@ import org.hyperledger.besu.consensus.clique.CliqueHelpers;
 import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.consensus.clique.TestHelpers;
 import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.consensus.common.validator.VoteProvider;
@@ -96,6 +97,7 @@ public class CliqueBlockCreatorTest {
     protocolSchedule =
         CliqueProtocolSchedule.create(
             GenesisConfigFile.DEFAULT.getConfigOptions(),
+            new ForksSchedule<>(List.of()),
             proposerNodeKey,
             false,
             EvmConfiguration.DEFAULT);
