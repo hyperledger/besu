@@ -1,39 +1,29 @@
 {
   "request": {
     "jsonrpc": "2.0",
-    "method": "engine_newPayloadV2",
+    "method": "engine_newPayloadV3",
     "params": [
       {
-        "parentHash": "0xfdd94e3620a88f08927bffb318981a36b663a26e6fd62ab273eb800b90723c13",
+        "parentHash": "0x26118cf71453320edcebbc4ebb34af5b578087a32385b80108bf691fa23efc42",
         "feeRecipient": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
-        "stateRoot": "0x21395692fae33414143728c9ffc0aed8dcc76eb6731dd0f5a3239977478ca969",
+        "stateRoot": "0x9b8c4a9a86cb49252075c0db2f0e72fb1e49350a0f70ea36f26f700201961e62",
         "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "gasLimit": "0x1c9c380",
         "gasUsed": "0x0",
-        "timestamp": "0x20",
+        "timestamp": "0x10",
         "extraData": "0x",
         "baseFeePerGas": "0x7",
         "transactions": [],
-        "withdrawals": [
-          {
-            "index": "0x0",
-            "validatorIndex": "0x0",
-            "address": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
-            "amount": "0x1"
-          },
-          {
-            "index": "0x1",
-            "validatorIndex": "0x0",
-            "address": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
-            "amount": "0x2"
-          }
-        ],
-        "deposits": [],
-        "blockNumber": "0x2",
-        "blockHash": "0xdfdf57a09e352c38bb2873c5fd7d0d199481c6e13661c4a004d116417377b2e5",
-        "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
-      }
+        "withdrawals": [],
+        "blockNumber": "0x1",
+        "blockHash": "0x45811fa27a100ce9035e5e086b9669275041a4ec0ebbd920be028fd7b0aa2356",
+        "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+        "excessBlobGas": "0x0",
+        "blobGasUsed": "0x0"
+      },
+      [],
+      "0x0000000000000000000000000000000000000000000000000000000000000000"
     ],
     "id": 67
   },
@@ -42,7 +32,7 @@
     "id": 67,
     "result": {
       "status": "VALID",
-      "latestValidHash": "0xdfdf57a09e352c38bb2873c5fd7d0d199481c6e13661c4a004d116417377b2e5",
+      "latestValidHash": "0x45811fa27a100ce9035e5e086b9669275041a4ec0ebbd920be028fd7b0aa2356",
       "validationError": null
     }
   },

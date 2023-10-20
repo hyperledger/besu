@@ -18,6 +18,7 @@ import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes48;
 
 /** An {@link RLPInput} that reads RLP encoded data from a {@link Bytes}. */
 public class BytesValueRLPInput extends AbstractRLPInput {
@@ -49,6 +50,11 @@ public class BytesValueRLPInput extends AbstractRLPInput {
   @Override
   protected Bytes32 inputSlice32(final long offset) {
     return Bytes32.wrap(inputSlice(offset, 32));
+  }
+
+  @Override
+  protected Bytes48 inputSlice48(final long offset) {
+    return Bytes48.wrap(inputSlice(offset, 48));
   }
 
   @Override

@@ -1,9 +1,9 @@
 {
   "request": {
     "jsonrpc": "2.0",
-    "method": "engine_getPayloadV2",
+    "method": "engine_getPayloadV6110",
     "params": [
-      "0x0065bd63871ad606"
+      "0x282643daa04b7631"
     ],
     "id": 67
   },
@@ -12,37 +12,33 @@
     "id": 67,
     "result": {
       "executionPayload": {
-        "parentHash": "0xfdd94e3620a88f08927bffb318981a36b663a26e6fd62ab273eb800b90723c13",
+        "parentHash": "0xb3b483867217b83b1e4a2f95c84d2da30cbff12eb8636f2becbcc05f4507fa7a",
         "feeRecipient": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
-        "stateRoot": "0x21395692fae33414143728c9ffc0aed8dcc76eb6731dd0f5a3239977478ca969",
+        "stateRoot": "0x14208ac0e218167936e220b72d5d5887a963cb858ea2f2d268518f014a3da3fa",
         "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "gasLimit": "0x1c9c380",
         "gasUsed": "0x0",
-        "timestamp": "0x20",
+        "timestamp": "0x30",
         "extraData": "0x",
         "baseFeePerGas": "0x7",
+        "excessBlobGas": "0x0",
+        "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "transactions": [],
-        "withdrawals": [
-          {
-            "index": "0x0",
-            "validatorIndex": "0x0",
-            "address": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
-            "amount": "0x1"
-          },
-          {
-            "index": "0x1",
-            "validatorIndex": "0x0",
-            "address": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
-            "amount": "0x2"
-          }
-        ],
-        "deposits" : [],
-        "blockNumber": "0x2",
-        "blockHash": "0x4c4418c408aeadb4659d31d1c05108f26fabf713bb6f8cc487dba8424a725bf5",
-        "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
+        "withdrawals": [],
+        "depositReceipts": [],
+        "blockNumber": "0x3",
+        "blockHash": "0xa28bf4db3363ce5b67848eb2ad52dbfead62ddb2287ae7eed36daa002528d1af",
+        "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+        "blobGasUsed": "0x0"
       },
-      "blockValue": "0x0"
+      "blockValue": "0x0",
+      "blobsBundle": {
+        "commitments": [],
+        "proofs": [],
+        "blobs": []
+      },
+      "shouldOverrideBuilder": false
     }
   },
   "statusCode": 200

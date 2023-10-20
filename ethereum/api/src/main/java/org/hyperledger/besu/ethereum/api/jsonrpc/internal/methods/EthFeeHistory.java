@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static java.util.stream.Collectors.toUnmodifiableList;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -36,25 +37,30 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.collect.Streams;
 
 public class EthFeeHistory implements JsonRpcMethod {
   private final ProtocolSchedule protocolSchedule;
   private final Blockchain blockchain;
+  private final Cache<RewardCacheKey, List<Wei>> cache;
+  private static final int MAXIMUM_CACHE_SIZE = 100_000;
+
+  record RewardCacheKey(Hash blockHash, List<Double> rewardPercentiles) {}
 
   public EthFeeHistory(final ProtocolSchedule protocolSchedule, final Blockchain blockchain) {
     this.protocolSchedule = protocolSchedule;
     this.blockchain = blockchain;
+    this.cache = Caffeine.newBuilder().maximumSize(MAXIMUM_CACHE_SIZE).build();
   }
 
   @Override
@@ -96,6 +102,7 @@ public class EthFeeHistory implements JsonRpcMethod {
 
     final List<BlockHeader> blockHeaders =
         LongStream.range(oldestBlock, lastBlock)
+            .parallel()
             .mapToObj(blockchain::getBlockHeader)
             .flatMap(Optional::stream)
             .collect(toUnmodifiableList());
@@ -142,16 +149,30 @@ public class EthFeeHistory implements JsonRpcMethod {
 
     final Optional<List<List<Wei>>> maybeRewards =
         maybeRewardPercentiles.map(
-            rewardPercentiles ->
-                LongStream.range(oldestBlock, lastBlock)
-                    .mapToObj(blockchain::getBlockByNumber)
-                    .flatMap(Optional::stream)
-                    .map(
-                        block ->
-                            computeRewards(
-                                rewardPercentiles.stream().sorted().collect(toUnmodifiableList()),
-                                block))
-                    .collect(toUnmodifiableList()));
+            rewardPercentiles -> {
+              var sortedPercentiles = rewardPercentiles.stream().sorted().toList();
+              return blockHeaders.stream()
+                  .parallel()
+                  .map(
+                      blockHeader -> {
+                        final RewardCacheKey key =
+                            new RewardCacheKey(blockHeader.getBlockHash(), rewardPercentiles);
+                        return Optional.ofNullable(cache.getIfPresent(key))
+                            .or(
+                                () -> {
+                                  Optional<Block> block =
+                                      blockchain.getBlockByHash(blockHeader.getBlockHash());
+                                  return block.map(
+                                      b -> {
+                                        List<Wei> rewards = computeRewards(sortedPercentiles, b);
+                                        cache.put(key, rewards);
+                                        return rewards;
+                                      });
+                                });
+                      })
+                  .flatMap(Optional::stream)
+                  .toList();
+            });
 
     return new JsonRpcSuccessResponse(
         requestId,
@@ -188,13 +209,21 @@ public class EthFeeHistory implements JsonRpcMethod {
               : transactionReceipt.getCumulativeGasUsed()
                   - transactionsGasUsed.get(transactionsGasUsed.size() - 1));
     }
-    final List<Map.Entry<Transaction, Long>> transactionsAndGasUsedAscendingEffectiveGasFee =
+
+    record TransactionInfo(Transaction transaction, Long gasUsed, Wei effectivePriorityFeePerGas) {}
+
+    final List<TransactionInfo> transactionsInfo =
         Streams.zip(
-                transactions.stream(), transactionsGasUsed.stream(), AbstractMap.SimpleEntry::new)
-            .sorted(
-                Comparator.comparing(
-                    transactionAndGasUsed ->
-                        transactionAndGasUsed.getKey().getEffectivePriorityFeePerGas(baseFee)))
+                transactions.stream(),
+                transactionsGasUsed.stream(),
+                (transaction, gasUsed) ->
+                    new TransactionInfo(
+                        transaction, gasUsed, transaction.getEffectivePriorityFeePerGas(baseFee)))
+            .collect(toUnmodifiableList());
+
+    final List<TransactionInfo> transactionsAndGasUsedAscendingEffectiveGasFee =
+        transactionsInfo.stream()
+            .sorted(Comparator.comparing(TransactionInfo::effectivePriorityFeePerGas))
             .collect(toUnmodifiableList());
 
     // We need to weight the percentile of rewards by the gas used in the transaction.
@@ -203,18 +232,21 @@ public class EthFeeHistory implements JsonRpcMethod {
     final ArrayList<Wei> rewards = new ArrayList<>();
     int rewardPercentileIndex = 0;
     long gasUsed = 0;
-    for (final Map.Entry<Transaction, Long> transactionAndGasUsed :
+    for (final TransactionInfo transactionAndGasUsed :
         transactionsAndGasUsedAscendingEffectiveGasFee) {
 
-      gasUsed += transactionAndGasUsed.getValue();
+      gasUsed += transactionAndGasUsed.gasUsed();
 
       while (rewardPercentileIndex < rewardPercentiles.size()
           && 100.0 * gasUsed / block.getHeader().getGasUsed()
               >= rewardPercentiles.get(rewardPercentileIndex)) {
-        rewards.add(transactionAndGasUsed.getKey().getEffectivePriorityFeePerGas(baseFee));
+        rewards.add(transactionAndGasUsed.effectivePriorityFeePerGas);
         rewardPercentileIndex++;
       }
     }
+    // Put the computed rewards in the cache
+    cache.put(new RewardCacheKey(block.getHeader().getBlockHash(), rewardPercentiles), rewards);
+
     return rewards;
   }
 }
