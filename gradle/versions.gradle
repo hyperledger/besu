@@ -158,7 +158,7 @@ dependencyManagement {
 
     dependency 'org.fusesource.jansi:jansi:2.4.0'
     dependency 'org.openjdk.jol:jol-core:0.17'
-    dependency 'tech.pegasys:jc-kzg-4844:0.7.0'
+    dependency 'tech.pegasys:jc-kzg-4844:0.8.0'
 
     dependencySet(group: 'org.hyperledger.besu', version: '0.8.2') {
       entry 'arithmetic'

@@ -36,9 +36,9 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
   private static Bytes successResult;
 
   private static void init() {
-    CKZG4844JNI.loadNativeLibrary(CKZG4844JNI.Preset.MAINNET);
+    CKZG4844JNI.loadNativeLibrary();
     Bytes fieldElementsPerBlob =
-        Bytes32.wrap(Words.intBytes(CKZG4844JNI.getFieldElementsPerBlob()).xor(Bytes32.ZERO));
+        Bytes32.wrap(Words.intBytes(CKZG4844JNI.FIELD_ELEMENTS_PER_BLOB).xor(Bytes32.ZERO));
     Bytes blsModulus =
         Bytes32.wrap(Bytes.of(CKZG4844JNI.BLS_MODULUS.toByteArray()).xor(Bytes32.ZERO));
 
@@ -64,7 +64,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
    * Init the C-KZG native lib using a resource identified by the passed network name as trusted
    * setup
    *
-   * @param networkName used to select the resource that contains the trusted setup
+   * @param networkName used to select the resource in /kzg-trusted-setups/ to use.
    * @throws IllegalStateException is the trusted setup was already loaded
    */
   public static void init(final String networkName) {
