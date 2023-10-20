@@ -125,7 +125,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
         };
 
     StackTrie.FlatDatabaseUpdater flatDatabaseUpdater = noop();
-    if (worldStateStorage.getFlatDbMode().equals(FlatDbMode.FULL)) {
+    if (!worldStateStorage.getFlatDbMode().equals(FlatDbMode.PARTIAL)) {
       // we have a flat DB only with Bonsai
       flatDatabaseUpdater =
           (key, value) ->

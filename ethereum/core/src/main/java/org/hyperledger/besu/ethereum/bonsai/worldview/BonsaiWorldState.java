@@ -158,7 +158,9 @@ public class BonsaiWorldState
 
   @Override
   public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
-    return worldStateStorage;
+    // return a worldStateStorage with a clone of the bonsai context, to prevent context change side
+    // effects
+    return worldStateStorage.getContextSafeCopy();
   }
 
   private Hash calculateRootHash(
@@ -380,6 +382,8 @@ public class BonsaiWorldState
 
     boolean success = false;
 
+    // update the bonsai context with the current block before we persist to storage:
+    this.worldStateStorage.getFlatDbStrategy().updateBlockContext(blockHeader);
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater = worldStateStorage.updater();
     Runnable saveTrieLog = () -> {};
 

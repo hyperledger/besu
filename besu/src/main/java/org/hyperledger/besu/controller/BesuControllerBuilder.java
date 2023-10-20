@@ -1073,6 +1073,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI:
+        // TODO, better integrate. Just for PoC, explicitly set our bonsai context chain head:
+        ((BonsaiWorldStateKeyValueStorage) worldStateStorage)
+            .getFlatDbStrategy()
+            .updateBlockContext(blockchain.getChainHeadHeader());
+
         return new BonsaiWorldStateProvider(
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
             blockchain,
