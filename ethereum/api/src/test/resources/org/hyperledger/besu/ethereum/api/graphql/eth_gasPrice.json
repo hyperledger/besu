@@ -3,7 +3,7 @@
   "response": {
     "data": {
       "gasPrice": "0x1",
-      "maxPriorityFeePerGas": "0x0"
+      "maxPriorityFeePerGas": "0x3b9aca00"
     }
   },
   "statusCode": 200

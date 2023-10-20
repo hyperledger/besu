@@ -5585,4 +5585,16 @@ public class BesuCommandTest extends CommandTestAbstract {
         .contains(
             "--Xsnapsync-synchronizer-flat option can only be used when -Xsnapsync-synchronizer-flat-db-healing-enabled is true");
   }
+
+  @Test
+  public void cacheLastBlocksOptionShouldWork() {
+    int numberOfBlocksToCache = 512;
+    parseCommand("--cache-last-blocks", String.valueOf(numberOfBlocksToCache));
+    verify(mockControllerBuilder).cacheLastBlocks(intArgumentCaptor.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(numberOfBlocksToCache);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
 }

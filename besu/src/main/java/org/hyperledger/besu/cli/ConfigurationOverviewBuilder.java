@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.util.log.FramedLogMessage;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
@@ -50,6 +51,7 @@ public class ConfigurationOverviewBuilder {
   private boolean isHighSpec = false;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
   private Map<String, String> environment;
+  private BesuPluginContextImpl besuPluginContext;
 
   /**
    * @param logger the logger
@@ -193,7 +195,7 @@ public class ConfigurationOverviewBuilder {
   /**
    * Sets the environment variables.
    *
-   * @param environment the enveironment variables
+   * @param environment the environment variables
    * @return the builder
    */
   public ConfigurationOverviewBuilder setEnvironment(final Map<String, String> environment) {
@@ -277,6 +279,12 @@ public class ConfigurationOverviewBuilder {
     lines.add("Total memory: " + normalizeSize(hardwareInfo.getMemory().getTotal()));
     lines.add("CPU cores: " + hardwareInfo.getProcessor().getLogicalProcessorCount());
 
+    lines.add("");
+
+    if (besuPluginContext != null) {
+      lines.addAll(besuPluginContext.getPluginsSummaryLog());
+    }
+
     return FramedLogMessage.generate(lines);
   }
 
@@ -307,5 +315,14 @@ public class ConfigurationOverviewBuilder {
 
   private String normalizeSize(final long size) {
     return String.format("%.02f", (double) (size) / 1024 / 1024 / 1024) + " GB";
+  }
+
+  /**
+   * set the plugin context
+   *
+   * @param besuPluginContext the plugin context
+   */
+  public void setPluginContext(final BesuPluginContextImpl besuPluginContext) {
+    this.besuPluginContext = besuPluginContext;
   }
 }
