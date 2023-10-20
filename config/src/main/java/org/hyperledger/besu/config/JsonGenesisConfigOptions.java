@@ -181,10 +181,10 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public CliqueConfigOptions getCliqueConfigOptions() {
+  public JsonCliqueConfigOptions getCliqueConfigOptions() {
     return JsonUtil.getObjectNode(configRoot, CLIQUE_CONFIG_KEY)
-        .map(CliqueConfigOptions::new)
-        .orElse(CliqueConfigOptions.DEFAULT);
+        .map(JsonCliqueConfigOptions::new)
+        .orElse(JsonCliqueConfigOptions.DEFAULT);
   }
 
   @Override

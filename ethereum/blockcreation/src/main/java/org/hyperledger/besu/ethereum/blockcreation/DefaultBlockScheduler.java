@@ -18,21 +18,29 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.time.Clock;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 
 public class DefaultBlockScheduler extends AbstractBlockScheduler {
 
   private final long acceptableClockDriftSeconds;
-  private final long minimumSecondsSinceParent;
+  private final Function<BlockHeader, Long> calcMinimumSecondsSinceParent;
 
   public DefaultBlockScheduler(
-      final long minimumSecondsSinceParent,
+      final long calcMinimumSecondsSinceParent,
+      final long acceptableClockDriftSeconds,
+      final Clock clock) {
+    this((bh) -> calcMinimumSecondsSinceParent, acceptableClockDriftSeconds, clock);
+  }
+
+  protected DefaultBlockScheduler(
+      final Function<BlockHeader, Long> calcMinimumSecondsSinceParent,
       final long acceptableClockDriftSeconds,
       final Clock clock) {
     super(clock);
     this.acceptableClockDriftSeconds = acceptableClockDriftSeconds;
-    this.minimumSecondsSinceParent = minimumSecondsSinceParent;
+    this.calcMinimumSecondsSinceParent = calcMinimumSecondsSinceParent;
   }
 
   @Override
@@ -42,7 +50,8 @@ public class DefaultBlockScheduler extends AbstractBlockScheduler {
     final long now = TimeUnit.SECONDS.convert(msSinceEpoch, TimeUnit.MILLISECONDS);
     final long parentTimestamp = parentHeader.getTimestamp();
 
-    final long nextHeaderTimestamp = Long.max(parentTimestamp + minimumSecondsSinceParent, now);
+    final long minSecondsSinceParent = calcMinimumSecondsSinceParent.apply(parentHeader);
+    final long nextHeaderTimestamp = Long.max(parentTimestamp + minSecondsSinceParent, now);
 
     final long earliestBlockTransmissionTime = nextHeaderTimestamp - acceptableClockDriftSeconds;
     final long msUntilBlocKTransmission = (earliestBlockTransmissionTime * 1000) - msSinceEpoch;

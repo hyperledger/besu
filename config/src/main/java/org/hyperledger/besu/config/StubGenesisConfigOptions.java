@@ -127,8 +127,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
-  public CliqueConfigOptions getCliqueConfigOptions() {
-    return CliqueConfigOptions.DEFAULT;
+  public JsonCliqueConfigOptions getCliqueConfigOptions() {
+    return JsonCliqueConfigOptions.DEFAULT;
   }
 
   @Override

@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.JsonCliqueConfigOptions;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
@@ -85,7 +86,7 @@ public class CliqueProtocolScheduleTest {
 
   @Test
   public void zeroEpochLengthThrowsException() {
-    final CliqueConfigOptions cliqueOptions = mock(CliqueConfigOptions.class);
+    final CliqueConfigOptions cliqueOptions = mock(JsonCliqueConfigOptions.class);
     when(cliqueOptions.getEpochLength()).thenReturn(0L);
     when(genesisConfig.getCliqueConfigOptions()).thenReturn(cliqueOptions);
 
@@ -99,7 +100,7 @@ public class CliqueProtocolScheduleTest {
 
   @Test
   public void negativeEpochLengthThrowsException() {
-    final CliqueConfigOptions cliqueOptions = mock(CliqueConfigOptions.class);
+    final CliqueConfigOptions cliqueOptions = mock(JsonCliqueConfigOptions.class);
     when(cliqueOptions.getEpochLength()).thenReturn(-3000L);
     when(genesisConfig.getCliqueConfigOptions()).thenReturn(cliqueOptions);
 

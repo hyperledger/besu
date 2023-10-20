@@ -15,13 +15,7 @@
 
 package org.hyperledger.besu.config;
 
-import java.util.Map;
+public interface Fork {
 
-public interface CliqueConfigOptions {
-
-  long getEpochLength();
-
-  int getBlockPeriodSeconds();
-
-  Map<String, Object> asMap();
+  long getForkBlock();
 }

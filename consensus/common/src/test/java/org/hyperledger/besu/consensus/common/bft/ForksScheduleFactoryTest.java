@@ -24,7 +24,8 @@ import org.hyperledger.besu.config.JsonBftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
-import org.hyperledger.besu.consensus.common.bft.BftForksScheduleFactory.BftSpecCreator;
+import org.hyperledger.besu.consensus.common.ForksScheduleFactory;
+import org.hyperledger.besu.consensus.common.ForksScheduleFactory.SpecCreator;
 
 import java.util.List;
 import java.util.Map;
@@ -32,18 +33,17 @@ import java.util.Map;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public class BftForksScheduleFactoryTest {
+public class ForksScheduleFactoryTest {
 
   @Test
   @SuppressWarnings("unchecked")
   public void throwsErrorIfHasForkForGenesisBlock() {
     final BftConfigOptions genesisConfigOptions = JsonBftConfigOptions.DEFAULT;
     final BftFork fork = createFork(0, 10);
-    final BftSpecCreator<BftConfigOptions, BftFork> specCreator =
-        Mockito.mock(BftSpecCreator.class);
+    final SpecCreator<BftConfigOptions, BftFork> specCreator = Mockito.mock(SpecCreator.class);
 
     assertThatThrownBy(
-            () -> BftForksScheduleFactory.create(genesisConfigOptions, List.of(fork), specCreator))
+            () -> ForksScheduleFactory.create(genesisConfigOptions, List.of(fork), specCreator))
         .hasMessage("Transition cannot be created for genesis block");
   }
 
@@ -54,12 +54,11 @@ public class BftForksScheduleFactoryTest {
     final BftFork fork1 = createFork(1, 10);
     final BftFork fork2 = createFork(1, 20);
     final BftFork fork3 = createFork(2, 30);
-    final BftSpecCreator<BftConfigOptions, BftFork> specCreator =
-        Mockito.mock(BftSpecCreator.class);
+    final SpecCreator<BftConfigOptions, BftFork> specCreator = Mockito.mock(SpecCreator.class);
 
     assertThatThrownBy(
             () ->
-                BftForksScheduleFactory.create(
+                ForksScheduleFactory.create(
                     genesisConfigOptions, List.of(fork1, fork2, fork3), specCreator))
         .hasMessage("Duplicate transitions cannot be created for the same block");
   }
@@ -71,8 +70,7 @@ public class BftForksScheduleFactoryTest {
     final ForkSpec<BftConfigOptions> genesisForkSpec = new ForkSpec<>(0, genesisConfigOptions);
     final BftFork fork1 = createFork(1, 10);
     final BftFork fork2 = createFork(2, 20);
-    final BftSpecCreator<BftConfigOptions, BftFork> specCreator =
-        Mockito.mock(BftSpecCreator.class);
+    final SpecCreator<BftConfigOptions, BftFork> specCreator = Mockito.mock(SpecCreator.class);
 
     final BftConfigOptions configOptions1 = createBftConfigOptions(10);
     final BftConfigOptions configOptions2 = createBftConfigOptions(20);
@@ -80,7 +78,7 @@ public class BftForksScheduleFactoryTest {
     when(specCreator.create(new ForkSpec<>(1, configOptions1), fork2)).thenReturn(configOptions2);
 
     final ForksSchedule<BftConfigOptions> schedule =
-        BftForksScheduleFactory.create(genesisConfigOptions, List.of(fork1, fork2), specCreator);
+        ForksScheduleFactory.create(genesisConfigOptions, List.of(fork1, fork2), specCreator);
     assertThat(schedule.getFork(0)).isEqualTo(genesisForkSpec);
     assertThat(schedule.getFork(1)).isEqualTo(new ForkSpec<>(1, configOptions1));
     assertThat(schedule.getFork(2)).isEqualTo(new ForkSpec<>(2, configOptions2));

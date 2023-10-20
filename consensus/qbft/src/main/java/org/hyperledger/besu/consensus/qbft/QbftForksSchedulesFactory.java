@@ -20,7 +20,7 @@ import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
-import org.hyperledger.besu.consensus.common.bft.BftForksScheduleFactory;
+import org.hyperledger.besu.consensus.common.ForksScheduleFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +35,7 @@ public class QbftForksSchedulesFactory {
    * @return the forks schedule
    */
   public static ForksSchedule<QbftConfigOptions> create(final GenesisConfigOptions genesisConfig) {
-    return BftForksScheduleFactory.create(
+    return ForksScheduleFactory.create(
         genesisConfig.getQbftConfigOptions(),
         genesisConfig.getTransitions().getQbftForks(),
         QbftForksSchedulesFactory::createQbftConfigOptions);

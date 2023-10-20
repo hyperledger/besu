@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu contributors.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,14 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.bft;
+package org.hyperledger.besu.consensus.common;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.config.BftConfigOptions;
-import org.hyperledger.besu.config.BftFork;
-import org.hyperledger.besu.consensus.common.ForkSpec;
-import org.hyperledger.besu.consensus.common.ForksSchedule;
+import org.hyperledger.besu.config.Fork;
 
 import java.util.Comparator;
 import java.util.List;
@@ -27,15 +24,15 @@ import java.util.NavigableSet;
 import java.util.TreeSet;
 
 /** The Bft forks schedule factory. */
-public class BftForksScheduleFactory {
+public class ForksScheduleFactory {
 
   /**
-   * The interface Bft spec creator.
+   * The interface spec creator.
    *
    * @param <T> the type parameter
    * @param <U> the type parameter
    */
-  public interface BftSpecCreator<T extends BftConfigOptions, U extends BftFork> {
+  public interface SpecCreator<T, U> {
     /**
      * Create type of BftConfigOptions.
      *
@@ -56,13 +53,13 @@ public class BftForksScheduleFactory {
    * @param specCreator the spec creator
    * @return the forks schedule
    */
-  public static <T extends BftConfigOptions, U extends BftFork> ForksSchedule<T> create(
-      final T initial, final List<U> forks, final BftSpecCreator<T, U> specCreator) {
+  public static <T, U extends Fork> ForksSchedule<T> create(
+      final T initial, final List<U> forks, final SpecCreator<T, U> specCreator) {
     checkArgument(
         forks.stream().allMatch(f -> f.getForkBlock() > 0),
         "Transition cannot be created for genesis block");
     checkArgument(
-        forks.stream().map(BftFork::getForkBlock).distinct().count() == forks.size(),
+        forks.stream().map(Fork::getForkBlock).distinct().count() == forks.size(),
         "Duplicate transitions cannot be created for the same block");
 
     final NavigableSet<ForkSpec<T>> specs = new TreeSet<>(Comparator.comparing(ForkSpec::getBlock));
@@ -70,7 +67,7 @@ public class BftForksScheduleFactory {
     specs.add(initialForkSpec);
 
     forks.stream()
-        .sorted(Comparator.comparing(BftFork::getForkBlock))
+        .sorted(Comparator.comparing(Fork::getForkBlock))
         .forEachOrdered(
             f -> {
               final T spec = specCreator.create(specs.last(), f);

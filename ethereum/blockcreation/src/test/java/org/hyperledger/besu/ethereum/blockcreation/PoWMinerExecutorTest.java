@@ -59,7 +59,7 @@ public class PoWMinerExecutorTest {
             null,
             transactionPool,
             miningParameters,
-            new DefaultBlockScheduler(1, 10, TestClock.fixed()),
+            new DefaultBlockScheduler(1L, 10, TestClock.fixed()),
             new EpochCalculator.DefaultEpochCalculator(),
             1000,
             8);

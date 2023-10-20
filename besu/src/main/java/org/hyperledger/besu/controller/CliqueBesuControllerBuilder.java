@@ -19,6 +19,7 @@ import static org.hyperledger.besu.consensus.clique.CliqueHelpers.installCliqueB
 import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
+import org.hyperledger.besu.consensus.clique.CliqueForksSchedulesFactory;
 import org.hyperledger.besu.consensus.clique.CliqueMiningTracker;
 import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueBlockScheduler;
@@ -27,6 +28,7 @@ import org.hyperledger.besu.consensus.clique.blockcreation.CliqueMiningCoordinat
 import org.hyperledger.besu.consensus.clique.jsonrpc.CliqueJsonRpcMethods;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -54,15 +56,15 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   private EpochManager epochManager;
   private long secondsBetweenBlocks;
   private final BlockInterface blockInterface = new CliqueBlockInterface();
+  private ForksSchedule<CliqueConfigOptions> forksSchedule;
 
   @Override
   protected void prepForBuild() {
     localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final CliqueConfigOptions cliqueConfig = configOptionsSupplier.get().getCliqueConfigOptions();
     final long blocksPerEpoch = cliqueConfig.getEpochLength();
-    secondsBetweenBlocks = cliqueConfig.getBlockPeriodSeconds();
-
     epochManager = new EpochManager(blocksPerEpoch);
+    forksSchedule = CliqueForksSchedulesFactory.create(configOptionsSupplier.get());
   }
 
   @Override
@@ -90,7 +92,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
                 clock,
                 protocolContext.getConsensusContext(CliqueContext.class).getValidatorProvider(),
                 localAddress,
-                secondsBetweenBlocks),
+                forksSchedule),
             epochManager);
     final CliqueMiningCoordinator miningCoordinator =
         new CliqueMiningCoordinator(
