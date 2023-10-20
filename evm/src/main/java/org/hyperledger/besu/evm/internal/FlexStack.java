@@ -18,21 +18,25 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
- * An operand stack for the Ethereum Virtual machine (EVM). This stack allocates the entire stack at
- * initialization time.
+ * An operand stack for the Ethereum Virtual machine (EVM). The stack grows 32 entries at a time if
+ * it expands past the top of the allocated stack, up to maxSize.
  *
  * <p>The operand stack is responsible for storing the current operands that the EVM can execute. It
  * is assumed to have a fixed size.
  *
  * @param <T> the type parameter
  */
-public class FixedStack<T> {
+public class FlexStack<T> {
 
-  private final T[] entries;
+  private static final int INCREMENT = 32;
+
+  private T[] entries;
 
   private final int maxSize;
+  private int currentCapacity;
 
   private int top;
 
@@ -43,10 +47,11 @@ public class FixedStack<T> {
    * @param klass the klass
    */
   @SuppressWarnings("unchecked")
-  public FixedStack(final int maxSize, final Class<T> klass) {
+  public FlexStack(final int maxSize, final Class<T> klass) {
     checkArgument(maxSize >= 0, "max size must be non-negative");
 
-    this.entries = (T[]) Array.newInstance(klass, maxSize);
+    this.currentCapacity = Math.min(INCREMENT, maxSize);
+    this.entries = (T[]) Array.newInstance(klass, currentCapacity);
     this.maxSize = maxSize;
     this.top = -1;
   }
@@ -139,6 +144,14 @@ public class FixedStack<T> {
     }
   }
 
+  @SuppressWarnings("unchecked")
+  private void expandEntries(final int nextSize) {
+    var nextEntries = (T[]) Array.newInstance(entries.getClass().getComponentType(), nextSize);
+    System.arraycopy(entries, 0, nextEntries, 0, currentCapacity);
+    entries = nextEntries;
+    currentCapacity = nextSize;
+  }
+
   /**
    * Push operand.
    *
@@ -146,8 +159,11 @@ public class FixedStack<T> {
    */
   public void push(final T operand) {
     final int nextTop = top + 1;
-    if (nextTop == maxSize) {
+    if (nextTop >= maxSize) {
       throw new OverflowException();
+    }
+    if (nextTop >= currentCapacity) {
+      expandEntries(Math.min(currentCapacity + INCREMENT, maxSize));
     }
     entries[nextTop] = operand;
     top = nextTop;
@@ -162,7 +178,7 @@ public class FixedStack<T> {
   public void set(final int offset, final T operand) {
     if (offset < 0) {
       throw new UnderflowException();
-    } else if (offset >= size()) {
+    } else if (offset > top) {
       throw new OverflowException();
     }
 
@@ -181,7 +197,7 @@ public class FixedStack<T> {
   @Override
   public String toString() {
     final StringBuilder builder = new StringBuilder();
-    for (int i = 0; i < entries.length; ++i) {
+    for (int i = 0; i < top; ++i) {
       builder.append(String.format("%n0x%04X ", i)).append(entries[i]);
     }
     return builder.toString();
@@ -189,18 +205,32 @@ public class FixedStack<T> {
 
   @Override
   public int hashCode() {
-    return Arrays.hashCode(entries);
+    int result = 1;
+
+    for (int i = 0; i < currentCapacity; i++) {
+      result = 31 * result + (entries[i] == null ? 0 : entries[i].hashCode());
+    }
+
+    return result;
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public boolean equals(final Object other) {
-    if (!(other instanceof FixedStack)) {
+    if (!(other instanceof FlexStack)) {
       return false;
     }
 
-    final FixedStack<T> that = (FixedStack<T>) other;
-    return Arrays.deepEquals(this.entries, that.entries);
+    final FlexStack<T> that = (FlexStack<T>) other;
+    if (this.currentCapacity != that.currentCapacity) {
+      return false;
+    }
+    for (int i = 0; i < currentCapacity; i++) {
+      if (!Objects.deepEquals(this.entries[i], that.entries[i])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
