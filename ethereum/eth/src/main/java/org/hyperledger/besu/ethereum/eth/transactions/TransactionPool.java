@@ -277,7 +277,12 @@ public class TransactionPool implements BlockAddedObserver {
           .log();
       metrics.incrementRejected(
           isLocal, hasPriority, validationResult.result.getInvalidReason(), "txpool");
-      if (!isLocal) {
+      if (!isLocal
+          && !validationResult
+              .result
+              .getInvalidReason()
+              .name()
+              .equals(TransactionInvalidReason.NONCE_TOO_LOW.name())) {
         pendingTransactions.signalInvalidAndRemoveDependentTransactions(transaction);
       }
     }
