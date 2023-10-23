@@ -218,10 +218,21 @@ public class Memory {
 
     final int start = asByteIndex(location);
 
-    if (!shadow) {
+    if (shadow) {
+      // Arrays.copyOfRange would throw if start > memBytes.length, so just return the expected
+      // number of zeros without expanding the memory.
+      // Otherwise, just follow the happy path.
+
+      if (start > memBytes.length) {
+        return Bytes.wrap(new byte[(int) numBytes]);
+      } else {
+        return Bytes.wrap(Arrays.copyOfRange(memBytes, start, start + length));
+      }
+    } else {
+      // In a non-shadow read, expand the memory as specified by the EVM spec.
       ensureCapacityForBytes(start, length);
+      return Bytes.wrap(Arrays.copyOfRange(memBytes, start, start + length));
     }
-    return Bytes.wrap(Arrays.copyOfRange(memBytes, start, start + length));
   }
 
   /**
