@@ -77,7 +77,6 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
-import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.number.Fraction;
 
@@ -131,6 +130,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   EthContext ethContext;
 
+  @Mock EthScheduler ethScheduler;
+
   private final Address coinbase = genesisAllocations(getPosGenesisConfigFile()).findFirst().get();
 
   private MiningParameters miningParameters =
@@ -179,7 +180,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   CompletableFuture<Void> blockCreationTask = CompletableFuture.completedFuture(null);
 
   private final BadBlockManager badBlockManager = spy(new BadBlockManager());
-  private final EthScheduler ethScheduler = new DeterministicEthScheduler();
 
   @BeforeEach
   public void setUp() {
@@ -206,13 +206,16 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
 
-    //    when(proposalBuilderExecutor.buildProposal(any()))
-    //        .thenAnswer(
-    //            invocation -> {
-    //              final Runnable runnable = invocation.getArgument(0);
-    //              blockCreationTask = CompletableFuture.runAsync(runnable);
-    //              return blockCreationTask;
-    //            });
+    when(ethScheduler.scheduleBlockCreationTask(any()))
+        .thenAnswer(
+            invocation -> {
+              final Runnable runnable = invocation.getArgument(0);
+              if (!invocation.toString().contains("MergeCoordinator")) {
+                return CompletableFuture.runAsync(runnable);
+              }
+              blockCreationTask = CompletableFuture.runAsync(runnable);
+              return blockCreationTask;
+            });
 
     MergeConfigOptions.setMergeEnabled(true);
 
@@ -648,7 +651,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     doAnswer(
             invocation -> {
               if (retries.getAndIncrement() < 5) {
-                // a new transaction every time a block is built
+                // add a new transaction every time a block is built
                 transactions.addTransaction(
                     createLocalTransaction(retries.get() - 1), Optional.empty());
               } else {
