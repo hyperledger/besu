@@ -3585,6 +3585,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
 
+    builder.setPluginContext(besuComponent.getBesuPluginContext());
+
     return builder.build();
   }
 }
