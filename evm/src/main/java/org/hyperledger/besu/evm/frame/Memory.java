@@ -192,6 +192,19 @@ public class Memory {
    *     numBytes}.
    */
   public Bytes getBytes(final long location, final long numBytes) {
+    return getBytes(location, numBytes, false);
+  }
+
+  /**
+   * Returns a copy of bytes from memory.
+   *
+   * @param location The location in memory to start with.
+   * @param numBytes The number of bytes to get.
+   * @param shadow If set, perform a “shadow read”, i.e. do not increase the active words.
+   * @return A fresh copy of the bytes from memory starting at {@code location} and extending {@code
+   *     numBytes}.
+   */
+  public Bytes getBytes(final long location, final long numBytes, final boolean shadow) {
     // Note: if length == 0, we don't require any memory expansion, whatever location is. So
     // we must call asByteIndex(location) after this check so as it doesn't throw if the location
     // is too big but the length is 0 (which is somewhat nonsensical, but is exercise by some
@@ -203,7 +216,9 @@ public class Memory {
 
     final int start = asByteIndex(location);
 
-    ensureCapacityForBytes(start, length);
+    if (!shadow) {
+      ensureCapacityForBytes(start, length);
+    }
     return Bytes.wrap(Arrays.copyOfRange(memBytes, start, start + length));
   }
 

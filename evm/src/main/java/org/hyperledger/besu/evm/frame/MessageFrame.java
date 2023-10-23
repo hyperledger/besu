@@ -655,6 +655,17 @@ public class MessageFrame {
   }
 
   /**
+   * Read bytes in memory without expanding the word capacity.
+   *
+   * @param offset The offset in memory
+   * @param length The length of the bytes to read
+   * @return The bytes in the specified range
+   */
+  public Bytes shadowReadMemory(final long offset, final long length) {
+    return memory.getBytes(offset, length, true);
+  }
+
+  /**
    * Read bytes in memory .
    *
    * @param offset The offset in memory
