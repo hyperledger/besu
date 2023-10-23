@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -249,8 +250,8 @@ public class CliqueBlockCreatorTest {
       final Bytes extraData, final Address coinbase) {
     final MiningParameters miningParameters =
         ImmutableMiningParameters.builder()
-            .updatableInitValues(
-                ImmutableMiningParameters.UpdatableInitValues.builder()
+            .mutableInitValues(
+                MutableInitValues.builder()
                     .extraData(extraData)
                     .targetGasLimit(10_000_000L)
                     .minTransactionGasPrice(Wei.ZERO)

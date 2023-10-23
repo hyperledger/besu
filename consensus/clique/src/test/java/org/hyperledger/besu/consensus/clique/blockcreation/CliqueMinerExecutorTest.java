@@ -38,7 +38,7 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -242,8 +242,8 @@ public class CliqueMinerExecutorTest {
 
   private static MiningParameters createMiningParameters(final Bytes vanityData) {
     return ImmutableMiningParameters.builder()
-        .updatableInitValues(
-            UpdatableInitValues.builder()
+        .mutableInitValues(
+            MutableInitValues.builder()
                 .extraData(vanityData)
                 .minTransactionGasPrice(Wei.ZERO)
                 .coinbase(AddressHelpers.ofValue(1))

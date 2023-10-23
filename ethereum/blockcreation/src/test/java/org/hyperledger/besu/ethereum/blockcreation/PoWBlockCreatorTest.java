@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -342,8 +343,8 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
 
   private MiningParameters createMiningParameters() {
     return ImmutableMiningParameters.builder()
-        .updatableInitValues(
-            ImmutableMiningParameters.UpdatableInitValues.builder()
+        .mutableInitValues(
+            MutableInitValues.builder()
                 .nonceGenerator(Lists.newArrayList(BLOCK_1_NONCE))
                 .extraData(BLOCK_1_EXTRA_DATA)
                 .minTransactionGasPrice(Wei.ONE)

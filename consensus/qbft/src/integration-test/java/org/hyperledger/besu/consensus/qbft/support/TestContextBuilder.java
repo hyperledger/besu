@@ -91,6 +91,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -369,8 +370,8 @@ public class TestContextBuilder {
 
     final MiningParameters miningParams =
         ImmutableMiningParameters.builder()
-            .updatableInitValues(
-                ImmutableMiningParameters.UpdatableInitValues.builder()
+            .mutableInitValues(
+                MutableInitValues.builder()
                     .isMiningEnabled(true)
                     .minTransactionGasPrice(Wei.ZERO)
                     .extraData(Bytes.wrap("Qbft Int tests".getBytes(UTF_8)))

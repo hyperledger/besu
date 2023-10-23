@@ -50,6 +50,7 @@ import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
@@ -390,8 +391,8 @@ abstract class AbstractBlockCreatorTest {
 
     final MiningParameters miningParameters =
         ImmutableMiningParameters.builder()
-            .updatableInitValues(
-                ImmutableMiningParameters.UpdatableInitValues.builder()
+            .mutableInitValues(
+                MutableInitValues.builder()
                     .extraData(Bytes.fromHexString("deadbeef"))
                     .minTransactionGasPrice(Wei.ONE)
                     .minBlockOccupancyRatio(0d)

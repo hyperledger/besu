@@ -23,8 +23,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.Unstable;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 
 import java.io.IOException;
@@ -316,8 +316,8 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   @Override
   protected MiningParameters createCustomizedDomainObject() {
     return ImmutableMiningParameters.builder()
-        .updatableInitValues(
-            UpdatableInitValues.builder()
+        .mutableInitValues(
+            MutableInitValues.builder()
                 .isMiningEnabled(true)
                 .extraData(Bytes.fromHexString("0xabc321"))
                 .minBlockOccupancyRatio(0.5)

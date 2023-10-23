@@ -15,6 +15,9 @@
 package org.hyperledger.besu.cli.options;
 
 import static java.util.Arrays.asList;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.MutableInitValues.DEFAULT_EXTRA_DATA;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.MutableInitValues.DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.MutableInitValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_MAX_OMMERS_DEPTH;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
@@ -22,15 +25,12 @@ import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAU
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_REMOTE_SEALERS_LIMIT;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_REMOTE_SEALERS_TTL;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_TX_SELECTION_MAX_TIME;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.UpdatableInitValues.DEFAULT_EXTRA_DATA;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.UpdatableInitValues.DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.UpdatableInitValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 
 import java.util.List;
@@ -282,7 +282,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
   @Override
   public MiningParameters toDomainObject() {
     final var updatableInitValuesBuilder =
-        UpdatableInitValues.builder()
+        MutableInitValues.builder()
             .isMiningEnabled(isMiningEnabled)
             .extraData(extraData)
             .minTransactionGasPrice(minTransactionGasPrice)
@@ -297,7 +297,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
 
     final var miningParametersBuilder =
         ImmutableMiningParameters.builder()
-            .updatableInitValues(updatableInitValuesBuilder.build())
+            .mutableInitValues(updatableInitValuesBuilder.build())
             .isStratumMiningEnabled(iStratumMiningEnabled)
             .stratumNetworkInterface(stratumNetworkInterface)
             .stratumPort(stratumPort)

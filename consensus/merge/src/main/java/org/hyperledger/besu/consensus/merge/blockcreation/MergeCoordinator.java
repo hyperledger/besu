@@ -76,6 +76,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
    * to fill 100% of the block.
    */
   private static final double TRY_FILL_BLOCK = 1.0;
+
+  private static final long DEFAULT_TARGET_GAS_LIMIT = 30000000L;
   /** The Mining parameters. */
   protected final MiningParameters miningParameters;
   /** The Merge block creator factory. */
@@ -123,7 +125,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       miningParams.setCoinbase(Address.ZERO);
     }
     if (miningParams.getTargetGasLimit().isEmpty()) {
-      miningParams.setTargetGasLimit(30000000L);
+      miningParams.setTargetGasLimit(DEFAULT_TARGET_GAS_LIMIT);
     }
     miningParams.setMinBlockOccupancyRatio(TRY_FILL_BLOCK);
 
@@ -170,7 +172,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     this.backwardSyncContext = backwardSyncContext;
     if (miningParams.getTargetGasLimit().isEmpty()) {
-      miningParams.setTargetGasLimit(30000000L);
+      miningParams.setTargetGasLimit(DEFAULT_TARGET_GAS_LIMIT);
     }
     miningParams.setMinBlockOccupancyRatio(TRY_FILL_BLOCK);
     this.miningParameters = miningParams;

@@ -49,8 +49,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.Unstable;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -924,8 +924,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected MiningParameters createMiningParameters(
       final Wei minGasPrice, final double minBlockOccupancyRatio, final long txSelectionMaxTime) {
     return ImmutableMiningParameters.builder()
-        .updatableInitValues(
-            UpdatableInitValues.builder()
+        .mutableInitValues(
+            MutableInitValues.builder()
                 .minTransactionGasPrice(minGasPrice)
                 .minBlockOccupancyRatio(minBlockOccupancyRatio)
                 .build())
