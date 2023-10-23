@@ -39,8 +39,8 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AbstractTrieLogManager implements TrieLogManager {
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractTrieLogManager.class);
+public class DefaultTrieLogManager implements TrieLogManager {
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultTrieLogManager.class);
   public static final long LOG_RANGE_LIMIT = 1000; // restrict trielog range queries to 1k logs
   protected final Blockchain blockchain;
   protected final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
@@ -50,7 +50,7 @@ public class AbstractTrieLogManager implements TrieLogManager {
 
   protected final TrieLogFactory trieLogFactory;
 
-  public AbstractTrieLogManager(
+  public DefaultTrieLogManager(
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad,
@@ -165,16 +165,16 @@ public class AbstractTrieLogManager implements TrieLogManager {
     return new TrieLogProvider() {
       @Override
       public Optional<TrieLog> getTrieLogLayer(final Hash blockHash) {
-        return AbstractTrieLogManager.this.getTrieLogLayer(blockHash);
+        return DefaultTrieLogManager.this.getTrieLogLayer(blockHash);
       }
 
       @Override
       public Optional<TrieLog> getTrieLogLayer(final long blockNumber) {
-        return AbstractTrieLogManager.this
+        return DefaultTrieLogManager.this
             .blockchain
             .getBlockHeader(blockNumber)
             .map(BlockHeader::getHash)
-            .flatMap(AbstractTrieLogManager.this::getTrieLogLayer);
+            .flatMap(DefaultTrieLogManager.this::getTrieLogLayer);
       }
 
       @Override
@@ -186,7 +186,7 @@ public class AbstractTrieLogManager implements TrieLogManager {
                 headerOpt ->
                     headerOpt.flatMap(
                         header ->
-                            AbstractTrieLogManager.this
+                            DefaultTrieLogManager.this
                                 .getTrieLogLayer(header.getBlockHash())
                                 .map(
                                     layer ->

@@ -54,7 +54,7 @@ public class TrieLogManagerTests {
   @BeforeEach
   public void setup() {
     trieLogManager =
-        new AbstractTrieLogManager(blockchain, bonsaiWorldStateKeyValueStorage, 512, null);
+        new DefaultTrieLogManager(blockchain, bonsaiWorldStateKeyValueStorage, 512, null);
   }
 
   @Test
