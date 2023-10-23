@@ -42,7 +42,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -154,8 +154,8 @@ public class BftBlockCreatorTest {
 
     final MiningParameters miningParameters =
         ImmutableMiningParameters.builder()
-            .updatableInitValues(
-                UpdatableInitValues.builder()
+            .mutableInitValues(
+                MutableInitValues.builder()
                     .extraData(
                         bftExtraDataEncoder.encode(
                             new BftExtraData(

@@ -71,7 +71,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -903,8 +903,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder)
         .miningParameters(
             ImmutableMiningParameters.builder()
-                .updatableInitValues(
-                    UpdatableInitValues.builder()
+                .mutableInitValues(
+                    MutableInitValues.builder()
                         .coinbase(Address.fromHexString(expectedCoinbase))
                         .build())
                 .build());
@@ -920,8 +920,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder)
         .miningParameters(
             ImmutableMiningParameters.builder()
-                .updatableInitValues(
-                    UpdatableInitValues.builder()
+                .mutableInitValues(
+                    MutableInitValues.builder()
                         .coinbase(Address.fromHexString(expectedCoinbase))
                         .build())
                 .build());

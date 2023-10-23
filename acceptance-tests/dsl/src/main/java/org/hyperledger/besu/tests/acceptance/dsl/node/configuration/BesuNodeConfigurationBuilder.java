@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -58,8 +58,8 @@ public class BesuNodeConfigurationBuilder {
   private Optional<Path> dataPath = Optional.empty();
   private MiningParameters miningParameters =
       ImmutableMiningParameters.builder()
-          .updatableInitValues(
-              UpdatableInitValues.builder().coinbase(AddressHelpers.ofValue(1)).build())
+          .mutableInitValues(
+              MutableInitValues.builder().coinbase(AddressHelpers.ofValue(1)).build())
           .build();
 
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();

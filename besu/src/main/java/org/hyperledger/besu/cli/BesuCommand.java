@@ -1429,7 +1429,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
-      miningParameters = getMiningParameters();
 
       validateOptions();
       configure();
