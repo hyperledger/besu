@@ -97,6 +97,8 @@ public class BlockTransactionSelector {
   private final OperationTracer pluginOperationTracer;
   private final EthScheduler ethScheduler;
   private final AtomicBoolean isTimeout = new AtomicBoolean(false);
+  private final long txsSelectionMaxTime;
+  private final long txProcessingMaxTime;
   private WorldUpdater blockWorldStateUpdater;
 
   public BlockTransactionSelector(
@@ -138,6 +140,8 @@ public class BlockTransactionSelector {
             .orElse(AllAcceptingTransactionSelector.INSTANCE);
     pluginOperationTracer = pluginTransactionSelector.getOperationTracer();
     blockWorldStateUpdater = worldState.updater();
+    txsSelectionMaxTime = miningParameters.getUnstable().getTxsSelectionMaxTime();
+    txProcessingMaxTime = miningParameters.getUnstable().getTxsSelectionPerTxMaxTime();
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(
@@ -172,8 +176,6 @@ public class BlockTransactionSelector {
   }
 
   private void timeLimitedSelection() {
-    final long txSelectionMaxTime =
-        blockSelectionContext.miningParameters().getUnstable().getTxsSelectionMaxTime();
     final var txSelection =
         ethScheduler.scheduleBlockCreationTask(
             () ->
@@ -182,7 +184,7 @@ public class BlockTransactionSelector {
                     .selectTransactions(this::evaluateTransaction));
 
     try {
-      txSelection.get(txSelectionMaxTime, TimeUnit.MILLISECONDS);
+      txSelection.get(txsSelectionMaxTime, TimeUnit.MILLISECONDS);
     } catch (InterruptedException | ExecutionException e) {
       if (isCancelled.get()) {
         throw new CancellationException("Cancelled during transaction selection");
@@ -193,8 +195,8 @@ public class BlockTransactionSelector {
         isTimeout.set(true);
       }
       LOG.warn(
-          "Interrupting transaction selection since it is taking more than the max configured time of "
-              + txSelectionMaxTime
+          "Interrupting transactions selection since it is taking more than the max configured time of "
+              + txsSelectionMaxTime
               + "ms",
           e);
     }
@@ -236,7 +238,7 @@ public class BlockTransactionSelector {
 
     final WorldUpdater txWorldStateUpdater = blockWorldStateUpdater.updater();
     final TransactionProcessingResult processingResult =
-        processTransaction(pendingTransaction, txWorldStateUpdater);
+        timeLimitedProcessTransaction(pendingTransaction, txWorldStateUpdater);
 
     var postProcessingSelectionResult =
         evaluatePostProcessing(pendingTransaction, processingResult);
@@ -245,8 +247,7 @@ public class BlockTransactionSelector {
       if (isTimeout.get()) {
         // notify async to avoid that a plugin processing this event could delay the block
         // production, and do not rely on the presence of this result, since by the time it is
-        // written,
-        // the code consuming the selection results, could already have been by another thread
+        // written, the code consuming the selection results, could already have been by another thread
         return asyncHandleTransactionNotSelected(
             pendingTransaction, BLOCK_SELECTION_TIMEOUT, txWorldStateUpdater);
       }
@@ -306,6 +307,32 @@ public class BlockTransactionSelector {
     }
     return pluginTransactionSelector.evaluateTransactionPostProcessing(
         pendingTransaction, processingResult);
+  }
+
+  private TransactionProcessingResult timeLimitedProcessTransaction(
+          final PendingTransaction pendingTransaction, final WorldUpdater worldStateUpdater) {
+    final var txProcess =
+            ethScheduler.scheduleBlockCreationTask(
+                    () -> processTransaction(pendingTransaction, worldStateUpdater));
+
+    try {
+      return txProcess.get(txProcessingMaxTime, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException | ExecutionException e) {
+      if (isCancelled.get()) {
+        throw new CancellationException("Cancelled during transaction selection");
+      }
+      LOG.warn("Error during transaction processing", e);
+    } catch (TimeoutException e) {
+      synchronized (isTimeout) {
+        isTimeout.set(true);
+      }
+      LOG.warn(
+              "Interrupting transaction process since it is taking more than the max configured time of "
+                      + txProcessingMaxTime
+                      + "ms",
+              e);
+      return
+    }
   }
 
   /**

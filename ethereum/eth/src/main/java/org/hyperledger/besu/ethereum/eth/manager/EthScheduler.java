@@ -211,6 +211,11 @@ public class EthScheduler {
     return CompletableFuture.runAsync(task, blockCreationExecutor);
   }
 
+  public <T> CompletableFuture<T> scheduleBlockCreationTask(final Supplier<T> task) {
+    return CompletableFuture.supplyAsync(task, blockCreationExecutor);
+  }
+
+
   public <T> CompletableFuture<T> timeout(final EthTask<T> task) {
     return timeout(task, defaultTimeout);
   }
