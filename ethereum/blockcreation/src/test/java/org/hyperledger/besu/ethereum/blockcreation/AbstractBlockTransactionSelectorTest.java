@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.entry;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_TXS_SELECTION_MAX_TIME;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -88,18 +87,25 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.mockito.stubbing.Answer;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -743,35 +749,53 @@ public abstract class AbstractBlockTransactionSelectorTest {
                     TransactionInvalidReason.NONCE_TOO_HIGH.name())));
   }
 
-  @Test
-  public void subsetOfPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver()
-      throws InterruptedException {
+  @ParameterizedTest
+  @MethodSource("subsetOfPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver")
+  public void subsetOfPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver(
+      final boolean preProcessingTooLate,
+      final boolean processingTooLate,
+      final boolean postProcessingTooLate) {
+
+    final Supplier<Answer<TransactionSelectionResult>> inTime =
+        () -> invocation -> TransactionSelectionResult.SELECTED;
+    final BiFunction<Transaction, Long, Answer<TransactionSelectionResult>> tooLate =
+        (p, t) ->
+            invocation -> {
+              if (((PendingTransaction) invocation.getArgument(0)).getTransaction().equals(p)) {
+                Thread.sleep(t);
+              }
+              return TransactionSelectionResult.SELECTED;
+            };
+
     final ProcessableBlockHeader blockHeader = createBlock(301_000);
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final long txSelectionMaxTime = 100;
     final long longProcessingTxTime = 50;
 
     final List<Transaction> transactionsToInject = new ArrayList<>(3);
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 2; i++) {
       final Transaction tx = createTransaction(i, Wei.of(7), 100_000);
       transactionsToInject.add(tx);
       ensureTransactionIsValid(tx);
     }
 
-    final Transaction longProcessingTx = transactionsToInject.get(2);
+    final Transaction lateTx = createTransaction(2, Wei.of(7), 100_000);
+    transactionsToInject.add(lateTx);
+    ensureTransactionIsValid(
+        lateTx, 0, 0, processingTooLate ? txSelectionMaxTime + longProcessingTxTime : 0);
+
     PluginTransactionSelector transactionSelector = mock(PluginTransactionSelector.class);
-    when(transactionSelector.evaluateTransactionPostProcessing(any(), any()))
-        .thenReturn(TransactionSelectionResult.SELECTED);
     when(transactionSelector.evaluateTransactionPreProcessing(any()))
-        .thenReturn(TransactionSelectionResult.SELECTED);
-    // pretend the third tx takes too much time to process
-    when(transactionSelector.evaluateTransactionPreProcessing(
-            argThat(pt -> pt.getTransaction().equals(longProcessingTx))))
         .thenAnswer(
-            invocation -> {
-              Thread.sleep(txSelectionMaxTime + longProcessingTxTime);
-              return TransactionSelectionResult.SELECTED;
-            });
+            preProcessingTooLate
+                ? inTime.get()
+                : tooLate.apply(lateTx, txSelectionMaxTime + longProcessingTxTime));
+
+    when(transactionSelector.evaluateTransactionPostProcessing(any(), any()))
+        .thenAnswer(
+            postProcessingTooLate
+                ? inTime.get()
+                : tooLate.apply(lateTx, txSelectionMaxTime + longProcessingTxTime));
 
     final PluginTransactionSelectorFactory transactionSelectorFactory =
         mock(PluginTransactionSelectorFactory.class);
@@ -803,11 +827,15 @@ public abstract class AbstractBlockTransactionSelectorTest {
     // Ensure receipts have the correct cumulative gas
     assertThat(results.getReceipts().get(0).getCumulativeGasUsed()).isEqualTo(100_000);
     assertThat(results.getReceipts().get(1).getCumulativeGasUsed()).isEqualTo(200_000);
+  }
 
-    // waiting enough time, we can check also the result of the not selected tx
-    Thread.sleep(longProcessingTxTime);
-    assertThat(results.getNotSelectedTransactions())
-        .containsOnly(entry(longProcessingTx, TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT));
+  private static Stream<Arguments>
+      subsetOfPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver() {
+
+    return Stream.of(
+        Arguments.of(true, false, false),
+        Arguments.of(false, true, false),
+        Arguments.of(false, false, true));
   }
 
   protected BlockTransactionSelector createBlockSelectorAndSetupTxPool(
@@ -908,6 +936,25 @@ public abstract class AbstractBlockTransactionSelectorTest {
                 gasRemaining,
                 Bytes.EMPTY,
                 ValidationResult.valid()));
+  }
+
+  protected void ensureTransactionIsValid(
+      final Transaction tx,
+      final long gasUsedByTransaction,
+      final long gasRemaining,
+      final long processingTime) {
+    when(transactionProcessor.processTransaction(
+            any(), any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
+        .thenAnswer(
+            invocation -> {
+              Thread.sleep(processingTime);
+              return TransactionProcessingResult.successful(
+                  new ArrayList<>(),
+                  gasUsedByTransaction,
+                  gasRemaining,
+                  Bytes.EMPTY,
+                  ValidationResult.valid());
+            });
   }
 
   protected void ensureTransactionIsInvalid(
