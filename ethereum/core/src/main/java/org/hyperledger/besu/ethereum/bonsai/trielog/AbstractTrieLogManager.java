@@ -24,13 +24,18 @@ import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccu
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.plugin.BesuContext;
+import org.hyperledger.besu.plugin.services.TrieLogService;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent.TrieLogObserver;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogProvider;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes32;
@@ -62,8 +67,6 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
     this.maxLayersToLoad = maxLayersToLoad;
     this.trieLogFactory = setupTrieLogFactory(pluginContext);
   }
-
-  protected abstract TrieLogFactory setupTrieLogFactory(final BesuContext pluginContext);
 
   @Override
   public synchronized void saveTrieLog(
@@ -160,5 +163,74 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
   @Override
   public synchronized void unsubscribe(final long id) {
     trieLogObservers.unsubscribe(id);
+  }
+
+  private TrieLogFactory setupTrieLogFactory(final BesuContext pluginContext) {
+    // if we have a TrieLogService from pluginContext, use it.
+    var trieLogServicez =
+        Optional.ofNullable(pluginContext)
+            .flatMap(context -> context.getService(TrieLogService.class));
+
+    if (trieLogServicez.isPresent()) {
+      var trieLogService = trieLogServicez.get();
+      // push the TrieLogProvider into the TrieLogService
+      trieLogService.configureTrieLogProvider(getTrieLogProvider());
+
+      // configure plugin observers:
+      trieLogService.getObservers().forEach(trieLogObservers::subscribe);
+
+      // return the TrieLogFactory implementation from the TrieLogService
+      return trieLogService.getTrieLogFactory();
+    } else {
+      // Otherwise default to TrieLogFactoryImpl
+      return new TrieLogFactoryImpl();
+    }
+  }
+
+  private TrieLogProvider getTrieLogProvider() {
+    return new TrieLogProvider() {
+      @Override
+      public Optional<TrieLog> getTrieLogLayer(final Hash blockHash) {
+        return AbstractTrieLogManager.this.getTrieLogLayer(blockHash);
+      }
+
+      @Override
+      public Optional<TrieLog> getTrieLogLayer(final long blockNumber) {
+        return AbstractTrieLogManager.this
+            .blockchain
+            .getBlockHeader(blockNumber)
+            .map(BlockHeader::getHash)
+            .flatMap(AbstractTrieLogManager.this::getTrieLogLayer);
+      }
+
+      @Override
+      public List<TrieLogRangeTuple> getTrieLogsByRange(
+          final long fromBlockNumber, final long toBlockNumber) {
+        return rangeAsStream(fromBlockNumber, toBlockNumber)
+            .map(blockchain::getBlockHeader)
+            .map(
+                headerOpt ->
+                    headerOpt.flatMap(
+                        header ->
+                            AbstractTrieLogManager.this
+                                .getTrieLogLayer(header.getBlockHash())
+                                .map(
+                                    layer ->
+                                        new TrieLogRangeTuple(
+                                            header.getBlockHash(), header.getNumber(), layer))))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .toList();
+      }
+
+      Stream<Long> rangeAsStream(final long fromBlockNumber, final long toBlockNumber) {
+        if (Math.abs(toBlockNumber - fromBlockNumber) > LOG_RANGE_LIMIT) {
+          throw new IllegalArgumentException("Requested Range too large");
+        }
+        long left = Math.min(fromBlockNumber, toBlockNumber);
+        long right = Math.max(fromBlockNumber, toBlockNumber);
+        return LongStream.range(left, right).boxed();
+      }
+    };
   }
 }
