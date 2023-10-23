@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.options;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_TXS_SELECTION_MAX_TIME;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.verify;
 
@@ -306,6 +307,31 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
         "--Xpos-block-creation-max-time must be positive and ≤ 12000",
         "--Xpos-block-creation-max-time",
         "17000");
+  }
+
+  @Test
+  public void txsSelectionMaxTimeDefaultValue() {
+    internalTestSuccess(
+        miningParams ->
+            assertThat(miningParams.getUnstable().getTxsSelectionMaxTime())
+                .isEqualTo(DEFAULT_TXS_SELECTION_MAX_TIME));
+  }
+
+  @Test
+  public void txsSelectionMaxTimeOption() {
+    internalTestSuccess(
+        miningParams ->
+            assertThat(miningParams.getUnstable().getTxsSelectionMaxTime()).isEqualTo(1700L),
+        "--Xtxs-selection-max-time",
+        "1700");
+  }
+
+  @Test
+  public void txsSelectionMaxTimeOutOfAllowedRange() {
+    internalTestFailure(
+        "--Xtxs-selection-max-time must be positive and ≤ 5000",
+        "--Xtxs-selection-max-time",
+        "6000");
   }
 
   @Override

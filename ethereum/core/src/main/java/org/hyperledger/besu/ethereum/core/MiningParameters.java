@@ -240,7 +240,7 @@ public abstract class MiningParameters {
     int DEFAULT_MAX_OMMERS_DEPTH = 8;
     long DEFAULT_POS_BLOCK_CREATION_MAX_TIME = Duration.ofSeconds(12).toMillis();
     long DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION = Duration.ofMillis(500).toMillis();
-    long DEFAULT_TX_SELECTION_MAX_TIME = Duration.ofSeconds(5).toMillis();
+    long DEFAULT_TXS_SELECTION_MAX_TIME = Duration.ofSeconds(5).toMillis();
 
     MiningParameters.Unstable DEFAULT = ImmutableMiningParameters.Unstable.builder().build();
 
@@ -280,8 +280,8 @@ public abstract class MiningParameters {
     }
 
     @Value.Default
-    default long getTxSelectionMaxTime() {
-      return DEFAULT_TX_SELECTION_MAX_TIME;
+    default long getTxsSelectionMaxTime() {
+      return DEFAULT_TXS_SELECTION_MAX_TIME;
     }
   }
 }

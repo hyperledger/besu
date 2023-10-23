@@ -173,7 +173,7 @@ public class BlockTransactionSelector {
 
   private void timeLimitedSelection() {
     final long txSelectionMaxTime =
-        blockSelectionContext.miningParameters().getUnstable().getTxSelectionMaxTime();
+        blockSelectionContext.miningParameters().getUnstable().getTxsSelectionMaxTime();
     final var txSelection =
         ethScheduler.scheduleBlockCreationTask(
             () ->

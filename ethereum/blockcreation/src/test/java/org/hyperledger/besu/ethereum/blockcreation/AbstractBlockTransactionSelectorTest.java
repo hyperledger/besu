@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_TX_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_TXS_SELECTION_MAX_TIME;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -121,7 +121,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected MutableWorldState worldState;
   protected ProtocolSchedule protocolSchedule;
   protected final MiningParameters defaultTestMiningParameters =
-      createMiningParameters(Wei.ZERO, MIN_OCCUPANCY_80_PERCENT, DEFAULT_TX_SELECTION_MAX_TIME);
+      createMiningParameters(Wei.ZERO, MIN_OCCUPANCY_80_PERCENT, DEFAULT_TXS_SELECTION_MAX_TIME);
 
   @Mock protected EthScheduler ethScheduler;
 
@@ -409,7 +409,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
             createMiningParameters(
-                Wei.ZERO, MIN_OCCUPANCY_100_PERCENT, DEFAULT_TX_SELECTION_MAX_TIME),
+                Wei.ZERO, MIN_OCCUPANCY_100_PERCENT, DEFAULT_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -468,7 +468,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
             createMiningParameters(
-                Wei.ZERO, MIN_OCCUPANCY_100_PERCENT, DEFAULT_TX_SELECTION_MAX_TIME),
+                Wei.ZERO, MIN_OCCUPANCY_100_PERCENT, DEFAULT_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -651,7 +651,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
             createMiningParameters(
-                Wei.ZERO, MIN_OCCUPANCY_80_PERCENT, DEFAULT_TX_SELECTION_MAX_TIME),
+                Wei.ZERO, MIN_OCCUPANCY_80_PERCENT, DEFAULT_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -922,14 +922,14 @@ public abstract class AbstractBlockTransactionSelectorTest {
   }
 
   protected MiningParameters createMiningParameters(
-      final Wei minGasPrice, final double minBlockOccupancyRatio, final long txSelectionMaxTime) {
+      final Wei minGasPrice, final double minBlockOccupancyRatio, final long txsSelectionMaxTime) {
     return ImmutableMiningParameters.builder()
         .mutableInitValues(
             MutableInitValues.builder()
                 .minTransactionGasPrice(minGasPrice)
                 .minBlockOccupancyRatio(minBlockOccupancyRatio)
                 .build())
-        .unstable(Unstable.builder().txSelectionMaxTime(txSelectionMaxTime).build())
+        .unstable(Unstable.builder().txsSelectionMaxTime(txsSelectionMaxTime).build())
         .build();
   }
 }

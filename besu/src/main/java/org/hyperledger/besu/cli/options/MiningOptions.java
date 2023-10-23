@@ -24,7 +24,7 @@ import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAU
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_POW_JOB_TTL;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_REMOTE_SEALERS_LIMIT;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_REMOTE_SEALERS_TTL;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_TX_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_TXS_SELECTION_MAX_TIME;
 
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.datatypes.Address;
@@ -156,11 +156,11 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
 
     @CommandLine.Option(
         hidden = true,
-        names = {"--Xtx-selection-max-time"},
+        names = {"--Xtxs-selection-max-time"},
         description =
             "Specifies the maximum time, in milliseconds, that could be spent selecting transactions to be included in the block."
                 + " Must be positive and ≤  (default: ${DEFAULT-VALUE} milliseconds)")
-    private Long txSelectionMaxTime = DEFAULT_TX_SELECTION_MAX_TIME;
+    private Long txsSelectionMaxTime = DEFAULT_TXS_SELECTION_MAX_TIME;
   }
 
   private MiningOptions() {}
@@ -240,11 +240,11 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
           commandLine, "--Xpos-block-creation-repetition-min-duration must be positive and ≤ 2000");
     }
 
-    if (unstableOptions.txSelectionMaxTime <= 0
-        || unstableOptions.txSelectionMaxTime > DEFAULT_TX_SELECTION_MAX_TIME) {
+    if (unstableOptions.txsSelectionMaxTime <= 0
+        || unstableOptions.txsSelectionMaxTime > DEFAULT_TXS_SELECTION_MAX_TIME) {
       throw new ParameterException(
           commandLine,
-          "--Xtx-selection-max-time must be positive and ≤ " + DEFAULT_TX_SELECTION_MAX_TIME);
+          "--Xtxs-selection-max-time must be positive and ≤ " + DEFAULT_TXS_SELECTION_MAX_TIME);
     }
   }
 
@@ -271,8 +271,8 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
         miningParameters.getUnstable().getPosBlockCreationMaxTime();
     miningOptions.unstableOptions.posBlockCreationRepetitionMinDuration =
         miningParameters.getUnstable().getPosBlockCreationRepetitionMinDuration();
-    miningOptions.unstableOptions.txSelectionMaxTime =
-        miningParameters.getUnstable().getTxSelectionMaxTime();
+    miningOptions.unstableOptions.txsSelectionMaxTime =
+        miningParameters.getUnstable().getTxsSelectionMaxTime();
 
     miningParameters.getCoinbase().ifPresent(coinbase -> miningOptions.coinbase = coinbase);
     miningParameters.getTargetGasLimit().ifPresent(tgl -> miningOptions.targetGasLimit = tgl);
@@ -311,7 +311,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
                     .posBlockCreationMaxTime(unstableOptions.posBlockCreationMaxTime)
                     .posBlockCreationRepetitionMinDuration(
                         unstableOptions.posBlockCreationRepetitionMinDuration)
-                    .txSelectionMaxTime(unstableOptions.txSelectionMaxTime)
+                    .txsSelectionMaxTime(unstableOptions.txsSelectionMaxTime)
                     .build());
 
     return miningParametersBuilder.build();
