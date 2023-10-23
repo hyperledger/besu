@@ -16,7 +16,6 @@
 package org.hyperledger.besu.ethereum.bonsai.trielog;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.cache.CachedBonsaiWorldView;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiUpdater;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
@@ -32,38 +31,32 @@ import org.hyperledger.besu.plugin.services.trielogs.TrieLogProvider;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractTrieLogManager implements TrieLogManager {
+public class AbstractTrieLogManager implements TrieLogManager {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTrieLogManager.class);
-  public static final long RETAINED_LAYERS = 512; // at least 256 + typical rollbacks
   public static final long LOG_RANGE_LIMIT = 1000; // restrict trielog range queries to 1k logs
   protected final Blockchain blockchain;
   protected final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
 
-  protected final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash;
   protected final long maxLayersToLoad;
   protected final Subscribers<TrieLogObserver> trieLogObservers = Subscribers.create();
 
   protected final TrieLogFactory trieLogFactory;
 
-  protected AbstractTrieLogManager(
+  public AbstractTrieLogManager(
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad,
-      final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash,
       final BesuContext pluginContext) {
     this.blockchain = blockchain;
     this.rootWorldStateStorage = worldStateStorage;
-    this.cachedWorldStatesByHash = cachedWorldStatesByHash;
     this.maxLayersToLoad = maxLayersToLoad;
     this.trieLogFactory = setupTrieLogFactory(pluginContext);
   }
@@ -110,20 +103,6 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
     return trieLog;
   }
 
-  public synchronized void scrubCachedLayers(final long newMaxHeight) {
-    if (cachedWorldStatesByHash.size() > RETAINED_LAYERS) {
-      final long waterline = newMaxHeight - RETAINED_LAYERS;
-      cachedWorldStatesByHash.values().stream()
-          .filter(layer -> layer.getBlockNumber() < waterline)
-          .toList()
-          .forEach(
-              layer -> {
-                cachedWorldStatesByHash.remove(layer.getBlockHash());
-                layer.close();
-              });
-    }
-  }
-
   private void persistTrieLog(
       final BlockHeader blockHeader,
       final Hash worldStateRootHash,
@@ -138,11 +117,6 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
     stateUpdater
         .getTrieLogStorageTransaction()
         .put(blockHeader.getHash().toArrayUnsafe(), trieLogFactory.serialize(trieLog));
-  }
-
-  @Override
-  public boolean containWorldStateStorage(final Hash blockHash) {
-    return cachedWorldStatesByHash.containsKey(blockHash);
   }
 
   @Override

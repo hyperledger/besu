@@ -23,7 +23,6 @@ import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
 
 import java.util.Optional;
-import java.util.function.Function;
 
 public interface TrieLogManager {
 
@@ -33,21 +32,7 @@ public interface TrieLogManager {
       final BlockHeader forBlockHeader,
       final BonsaiWorldState forWorldState);
 
-  void addCachedLayer(
-      BlockHeader blockHeader, Hash worldStateRootHash, BonsaiWorldState forWorldState);
-
-  boolean containWorldStateStorage(final Hash blockHash);
-
-  Optional<BonsaiWorldState> getWorldState(final Hash blockHash);
-
-  Optional<BonsaiWorldState> getNearestWorldState(final BlockHeader blockHeader);
-
-  Optional<BonsaiWorldState> getHeadWorldState(
-      final Function<Hash, Optional<BlockHeader>> hashBlockHeaderFunction);
-
   long getMaxLayersToLoad();
-
-  void reset();
 
   Optional<? extends TrieLog> getTrieLogLayer(final Hash blockHash);
 
