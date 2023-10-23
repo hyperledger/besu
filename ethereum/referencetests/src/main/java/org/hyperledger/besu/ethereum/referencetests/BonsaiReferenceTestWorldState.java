@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogAddedEvent;
-import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
@@ -32,8 +31,6 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
-import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
-import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Map;
 import java.util.Optional;
@@ -185,10 +182,13 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     public void reset() {}
   }
 
-  static class NoOpTrieLogManager implements TrieLogManager {
-    private final Subscribers<TrieLogEvent.TrieLogObserver> trieLogObservers = Subscribers.create();
-    private final TrieLogFactory trieLogFactory = new TrieLogFactoryImpl();
+  static class NoOpTrieLogManager extends TrieLogManager {
 
+    public NoOpTrieLogManager() {
+      super(null, null, 0, null);
+    }
+
+    @SuppressWarnings("UnsynchronizedOverridesSynchronized")
     @Override
     public void saveTrieLog(
         final BonsaiWorldStateUpdateAccumulator localUpdater,
@@ -206,7 +206,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     }
 
     @Override
-    public Optional<? extends TrieLog> getTrieLogLayer(final Hash blockHash) {
+    public Optional<TrieLog> getTrieLogLayer(final Hash blockHash) {
       return Optional.empty();
     }
 
