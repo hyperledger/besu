@@ -18,6 +18,7 @@ import org.hyperledger.besu.evm.internal.Words;
 
 import java.util.Arrays;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -179,7 +180,8 @@ public class Memory {
    *
    * @return The current number of active words stored in memory.
    */
-  int getActiveWords() {
+  @VisibleForTesting
+  public int getActiveWords() {
     return activeWords;
   }
 
