@@ -5,6 +5,7 @@
 ### Deprecations
 
 ### Additions and Improvements
+- Introduce the possibility to limit the time spent selecting pending transactions during block creation, using the new experimental option `Xtxs-selection-max-time` (by default set to 5000ms) [#6044](https://github.com/hyperledger/besu/pull/6044)
 
 ### Bug Fixes
 
