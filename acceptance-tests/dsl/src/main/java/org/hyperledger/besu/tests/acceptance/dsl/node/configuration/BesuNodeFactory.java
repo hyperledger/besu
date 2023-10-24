@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.InMemoryPrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -306,8 +306,8 @@ public class BesuNodeFactory {
 
     final MiningParameters miningParameters =
         ImmutableMiningParameters.builder()
-            .updatableInitValues(
-                UpdatableInitValues.builder()
+            .mutableInitValues(
+                MutableInitValues.builder()
                     .isMiningEnabled(true)
                     .minTransactionGasPrice(Wei.ZERO)
                     .coinbase(AddressHelpers.ofValue(1))
