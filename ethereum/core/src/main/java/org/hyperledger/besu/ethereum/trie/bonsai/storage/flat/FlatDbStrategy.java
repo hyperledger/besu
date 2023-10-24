@@ -28,9 +28,11 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
+import java.util.Comparator;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -47,7 +49,6 @@ import org.apache.tuweni.rlp.RLP;
  * data, and storage data from the corresponding KeyValueStorage.
  */
 public abstract class FlatDbStrategy {
-
   protected final MetricsSystem metricsSystem;
   protected final Counter getAccountCounter;
   protected final Counter getAccountFoundInFlatDatabaseCounter;
@@ -112,10 +113,9 @@ public abstract class FlatDbStrategy {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
-      return storage
-          .get(CODE_STORAGE, accountHash.toArrayUnsafe())
-          .map(Bytes::wrap)
-          .filter(b -> Hash.hash(b).equals(codeHash));
+      return storage.get(CODE_STORAGE, /*accountHash*/ codeHash.toArrayUnsafe()).map(Bytes::wrap)
+      // .filter(b -> Hash.hash(b).equals(codeHash))
+      ;
     }
   }
 
@@ -164,7 +164,8 @@ public abstract class FlatDbStrategy {
    */
   public void removeFlatCode(
       final SegmentedKeyValueStorageTransaction transaction, final Hash accountHash) {
-    transaction.remove(CODE_STORAGE, accountHash.toArrayUnsafe());
+    // TODO: no-op for now, defer to 5889 for refcount impl
+    // transaction.remove(CODE_STORAGE, accountHash.toArrayUnsafe());
   }
 
   /*
@@ -208,6 +209,7 @@ public abstract class FlatDbStrategy {
         accountsToPairStream(storage, startKeyHash, endKeyHash).takeWhile(takeWhile));
   }
 
+  /** streams RLP encoded storage values using a specified stream limit. */
   public NavigableMap<Bytes32, Bytes> streamStorageFlatDatabase(
       final SegmentedKeyValueStorage storage,
       final Hash accountHash,
@@ -216,9 +218,11 @@ public abstract class FlatDbStrategy {
       final long max) {
 
     return toNavigableMap(
-        storageToPairStream(storage, accountHash, startKeyHash, endKeyHash).limit(max));
+        storageToPairStream(storage, accountHash, startKeyHash, endKeyHash, RLP::encodeValue)
+            .limit(max));
   }
 
+  /** streams raw storage Bytes using a specified predicate filter and value mapper. */
   public NavigableMap<Bytes32, Bytes> streamStorageFlatDatabase(
       final SegmentedKeyValueStorage storage,
       final Hash accountHash,
@@ -227,14 +231,16 @@ public abstract class FlatDbStrategy {
       final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
 
     return toNavigableMap(
-        storageToPairStream(storage, accountHash, startKeyHash, endKeyHash).takeWhile(takeWhile));
+        storageToPairStream(storage, accountHash, startKeyHash, endKeyHash, RLP::encodeValue)
+            .takeWhile(takeWhile));
   }
 
   private static Stream<Pair<Bytes32, Bytes>> storageToPairStream(
       final SegmentedKeyValueStorage storage,
       final Hash accountHash,
       final Bytes startKeyHash,
-      final Bytes32 endKeyHash) {
+      final Bytes32 endKeyHash,
+      final Function<Bytes, Bytes> valueMapper) {
 
     return storage
         .streamFromKey(
@@ -245,7 +251,7 @@ public abstract class FlatDbStrategy {
             pair ->
                 new Pair<>(
                     Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
-                    RLP.encodeValue(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
+                    valueMapper.apply(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
   }
 
   private static Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
@@ -259,7 +265,11 @@ public abstract class FlatDbStrategy {
       final Stream<Pair<Bytes32, Bytes>> pairStream) {
     final TreeMap<Bytes32, Bytes> collected =
         pairStream.collect(
-            Collectors.toMap(Pair::getFirst, Pair::getSecond, (v1, v2) -> v1, TreeMap::new));
+            Collectors.toMap(
+                Pair::getFirst,
+                Pair::getSecond,
+                (v1, v2) -> v1,
+                () -> new TreeMap<>(Comparator.comparing(Bytes::toHexString))));
     pairStream.close();
     return collected;
   }

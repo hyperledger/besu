@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,7 +86,8 @@ public class WorldStateProofProvider {
       final List<UInt256> accountStorageKeys) {
     final MerkleTrie<Bytes32, Bytes> storageTrie =
         newAccountStorageTrie(accountHash, account.getStorageRoot());
-    final NavigableMap<UInt256, Proof<Bytes>> storageProofs = new TreeMap<>();
+    final NavigableMap<UInt256, Proof<Bytes>> storageProofs =
+        new TreeMap<>(Comparator.comparing(Bytes32::toHexString));
     accountStorageKeys.forEach(
         key -> storageProofs.put(key, storageTrie.getValueWithProof(Hash.hash(key))));
     return storageProofs;
@@ -100,8 +102,23 @@ public class WorldStateProofProvider {
    */
   public List<Bytes> getAccountProofRelatedNodes(
       final Hash worldStateRoot, final Bytes32 accountHash) {
+    return getAccountProofRelatedNodes(worldStateRoot, accountHash, true);
+  }
+
+  /**
+   * Retrieves the proof-related nodes for an account in the specified world state.
+   *
+   * @param worldStateRoot The root hash of the world state.
+   * @param accountHash The hash of the account.
+   * @return A list of proof-related nodes for the account.
+   */
+  public List<Bytes> getAccountProofRelatedNodes(
+      final Hash worldStateRoot, final Bytes32 accountHash, final boolean includeLeafNodes) {
+    final MerkleTrie<Bytes, Bytes> trie = newAccountStateTrie(worldStateRoot);
     final Proof<Bytes> accountProof =
-        newAccountStateTrie(worldStateRoot).getValueWithProof(accountHash);
+        includeLeafNodes
+            ? trie.getValueWithProof(accountHash)
+            : trie.getProofWithoutValue(accountHash);
     return accountProof.getProofRelatedNodes();
   }
 
@@ -115,8 +132,29 @@ public class WorldStateProofProvider {
    */
   public List<Bytes> getStorageProofRelatedNodes(
       final Bytes32 storageRoot, final Bytes32 accountHash, final Bytes32 slotHash) {
+    return getStorageProofRelatedNodes(storageRoot, accountHash, slotHash, true);
+  }
+
+  /**
+   * Retrieves the proof-related nodes for a storage slot in the specified account storage trie.
+   *
+   * @param storageRoot The root hash of the account storage trie.
+   * @param accountHash The hash of the account.
+   * @param slotHash The hash of the storage slot.
+   * @param includeLeafNodes flag to indicate whether to return leaf nodes
+   * @return A list of proof-related nodes for the storage slot.
+   */
+  public List<Bytes> getStorageProofRelatedNodes(
+      final Bytes32 storageRoot,
+      final Bytes32 accountHash,
+      final Bytes32 slotHash,
+      final boolean includeLeafNodes) {
+    final MerkleTrie<Bytes32, Bytes> storageTrie =
+        newAccountStorageTrie(Hash.wrap(accountHash), storageRoot);
     final Proof<Bytes> storageProof =
-        newAccountStorageTrie(Hash.wrap(accountHash), storageRoot).getValueWithProof(slotHash);
+        includeLeafNodes
+            ? storageTrie.getValueWithProof(slotHash)
+            : storageTrie.getProofWithoutValue(slotHash);
     return storageProof.getProofRelatedNodes();
   }
 
@@ -153,7 +191,7 @@ public class WorldStateProofProvider {
       final SortedMap<Bytes32, Bytes> keys) {
 
     // check if it's monotonic increasing
-    if (!Ordering.natural().isOrdered(keys.keySet())) {
+    if (keys.size() > 1 && !Ordering.natural().isOrdered(keys.keySet())) {
       return false;
     }
 

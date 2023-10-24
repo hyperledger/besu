@@ -265,7 +265,7 @@ public class BonsaiWorldState
             if (updatedCode == null || updatedCode.isEmpty()) {
               bonsaiUpdater.removeCode(accountHash);
             } else {
-              bonsaiUpdater.putCode(accountHash, null, updatedCode);
+              bonsaiUpdater.putCode(accountHash, updatedCode);
             }
           }
         });

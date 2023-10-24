@@ -147,6 +147,12 @@ public class AccountRangeDataRequest extends SnapDataRequest {
     if (!accounts.isEmpty() || !proofs.isEmpty()) {
       if (!worldStateProofProvider.isValidRangeProof(
           startKeyHash, endKeyHash, getRootHash(), proofs, accounts)) {
+        // this happens on repivot and on bad proofs
+        LOG.atTrace()
+            .setMessage("invalid range proof received for account range {} {}")
+            .addArgument(accounts.firstKey())
+            .addArgument(accounts.lastKey())
+            .log();
         isProofValid = Optional.of(false);
       } else {
         stackTrie.addElement(startKeyHash, proofs, accounts);

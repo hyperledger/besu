@@ -43,12 +43,13 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -64,7 +65,8 @@ class MarkSweepPrunerTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
-  private final Map<Bytes, Optional<byte[]>> hashValueStore = spy(new HashMap<>());
+  private final NavigableMap<Bytes, Optional<byte[]>> hashValueStore =
+      spy(new TreeMap<>(Comparator.comparing(Bytes::toHexString)));
   private final InMemoryKeyValueStorage stateStorage = new TestInMemoryStorage(hashValueStore);
   private final WorldStateStorage worldStateStorage =
       spy(new ForestWorldStateKeyValueStorage(stateStorage));
@@ -286,7 +288,7 @@ class MarkSweepPrunerTest {
   // Proxy class so that we have access to the constructor that takes our own map
   private static class TestInMemoryStorage extends InMemoryKeyValueStorage {
 
-    public TestInMemoryStorage(final Map<Bytes, Optional<byte[]>> hashValueStore) {
+    public TestInMemoryStorage(final NavigableMap<Bytes, Optional<byte[]>> hashValueStore) {
       super(hashValueStore);
     }
   }

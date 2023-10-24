@@ -745,7 +745,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             Optional.empty());
 
     final Optional<SnapProtocolManager> maybeSnapProtocolManager =
-        createSnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive);
+        createSnapProtocolManager(protocolContext, peerValidators, ethPeers, snapMessages);
 
     final PivotBlockSelector pivotBlockSelector =
         createPivotSelector(
@@ -1086,12 +1086,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   private Optional<SnapProtocolManager> createSnapProtocolManager(
+      final ProtocolContext protocolContext,
       final List<PeerValidator> peerValidators,
       final EthPeers ethPeers,
-      final EthMessages snapMessages,
-      final WorldStateArchive worldStateArchive) {
+      final EthMessages snapMessages) {
     return Optional.of(
-        new SnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive));
+        new SnapProtocolManager(peerValidators, ethPeers, snapMessages, protocolContext));
   }
 
   WorldStateArchive createWorldStateArchive(

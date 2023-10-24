@@ -126,6 +126,13 @@ public class StorageRangeDataRequest extends SnapDataRequest {
           startKeyHash, endKeyHash, storageRoot, proofs, slots)) {
         // If the proof is invalid, it means that the storage will be a mix of several blocks.
         // Therefore, it will be necessary to heal the account's storage subsequently
+        LOG.atInfo()
+            .setMessage("invalid storage range proof received for account hash {} range {} {}")
+            .addArgument(() -> accountHash)
+            .addArgument(slots::firstKey)
+            .addArgument(slots::lastKey)
+            .log();
+
         downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
         // We will request the new storage root of the account because it is apparently no longer
         // valid with the new pivot block.

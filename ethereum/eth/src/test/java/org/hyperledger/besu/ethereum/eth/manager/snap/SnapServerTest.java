@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.hyperledger.besu.ethereum.eth.manager.snap.SnapServer.HASH_LAST;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -42,11 +43,13 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.Random;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_CONFIG;
@@ -68,7 +71,6 @@ public class SnapServerTest {
   }
 
   static final ObservableMetricsSystem noopMetrics = new NoOpMetricsSystem();
-  static final Hash HASH_LAST = Hash.wrap(Bytes32.leftPad(Bytes.fromHexString("FF"), (byte) 0xFF));
 
   final KeyValueStorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
   final BonsaiWorldStateKeyValueStorage inMemoryStorage =
@@ -96,7 +98,7 @@ public class SnapServerTest {
     insertTestAccounts(acct1, acct4);
 
     var rangeData =
-        getAndVerifyAcountRangeData(requestAccountRange(acct2.addressHash, acct3.addressHash), 1);
+        getAndVerifyAccountRangeData(requestAccountRange(acct2.addressHash, acct3.addressHash), 1);
 
     // expect to find only one value acct4, outside the requested range
     var outOfRangeVal = rangeData.accounts().entrySet().stream().findFirst();
@@ -108,26 +110,39 @@ public class SnapServerTest {
   }
 
   @Test
-  public void assertLimitRangeResponse() {
-    // When our final range request is empty, no next account is possible,
-    //      and we should return just a proof of exclusion of the right
-    insertTestAccounts(acct1, acct2, acct3, acct4);
+  public void assertAccountLimitRangeResponse() {
+    // assert we limit the range response according to size
+    final int acctCount = 2000;
+    final long acctRLPSize = 105;
+
+    List<Integer> randomLoad = IntStream.range(1, 4096).boxed().collect(Collectors.toList());
+    Collections.shuffle(randomLoad);
+    randomLoad.stream()
+        .forEach(
+            i ->
+                insertTestAccounts(
+                    createTestAccount(
+                        Bytes.concatenate(
+                                Bytes.fromHexString("0x40"),
+                                Bytes.fromHexStringLenient(Integer.toHexString(i * 256)))
+                            .toHexString())));
 
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
     tmp.writeBytes(storageTrie.getRootHash());
-    tmp.writeBytes(acct1.addressHash);
-    tmp.writeBytes(acct4.addressHash);
-    tmp.writeBigIntegerScalar(BigInteger.valueOf(256L));
+    tmp.writeBytes(Hash.ZERO);
+    tmp.writeBytes(HASH_LAST);
+    tmp.writeBigIntegerScalar(BigInteger.valueOf(acctRLPSize * acctCount));
     tmp.endList();
     var tinyRangeLimit = new GetAccountRangeMessage(tmp.encoded()).wrapMessageData(BigInteger.ONE);
 
     var rangeData =
-        getAndVerifyAcountRangeData(
-            (AccountRangeMessage) snapServer.constructGetAccountRangeResponse(tinyRangeLimit), 2);
+        getAndVerifyAccountRangeData(
+            (AccountRangeMessage) snapServer.constructGetAccountRangeResponse(tinyRangeLimit),
+            acctCount);
 
     // assert proofs are valid for the requested range
-    assertThat(assertIsValidAccountRangeProof(acct1.addressHash, rangeData)).isTrue();
+    assertThat(assertIsValidAccountRangeProof(Hash.ZERO, rangeData)).isTrue();
   }
 
   @Test
@@ -136,7 +151,7 @@ public class SnapServerTest {
     //      and we should return just a proof of exclusion of the right
     insertTestAccounts(acct1, acct2);
     var rangeData =
-        getAndVerifyAcountRangeData(requestAccountRange(acct3.addressHash, acct4.addressHash), 0);
+        getAndVerifyAccountRangeData(requestAccountRange(acct3.addressHash, acct4.addressHash), 0);
 
     // assert proofs are valid for the requested range
     assertThat(assertIsValidAccountRangeProof(acct3.addressHash, rangeData)).isTrue();
@@ -145,16 +160,16 @@ public class SnapServerTest {
   @Test
   public void assertAccountFoundAtStartHashProof() {
     // account found at startHash
-    insertTestAccounts(acct1, acct2, acct3, acct4);
+    insertTestAccounts(acct4, acct3, acct1, acct2);
     var rangeData =
-        getAndVerifyAcountRangeData(requestAccountRange(acct1.addressHash, acct4.addressHash), 4);
+        getAndVerifyAccountRangeData(requestAccountRange(acct1.addressHash, acct4.addressHash), 4);
 
     // assert proofs are valid for requested range
     assertThat(assertIsValidAccountRangeProof(acct1.addressHash, rangeData)).isTrue();
   }
 
   @Test
-  public void assertStorageForSingleAccount() {
+  public void assertCompleteStorageForSingleAccount() {
     insertTestAccounts(acct1, acct2, acct3, acct4);
     var rangeData = requestStorageRange(List.of(acct3.addressHash), Hash.ZERO, HASH_LAST);
     assertThat(rangeData).isNotNull();
@@ -164,12 +179,59 @@ public class SnapServerTest {
     assertThat(slotsData.slots().size()).isEqualTo(1);
     var firstAccountStorages = slotsData.slots().first();
     assertThat(firstAccountStorages.size()).isEqualTo(10);
+    // no proofs for complete storage range:
+    assertThat(slotsData.proofs().size()).isEqualTo(0);
 
-    // TODO: figure out why storage proofs are failing validation:
+    // TODO: fixme, prob a fixture issue with contract storage.
     // assertThat(
-    //         assertIsValidStorageProof(acct3, Hash.ZERO, firstAccountStorages,
+    //        assertIsValidStorageProof(acct3, Hash.ZERO, firstAccountStorages, slotsData.proofs()))
+    //    .isTrue();
+  }
+
+  @Test
+  public void assertStorageLimitRangeResponse() {
+    // assert we limit the range response according to bytessize
+    final int storageSlotSize = 70;
+    final int storageSlotCount = 16;
+    insertTestAccounts(acct1, acct2, acct3, acct4);
+
+    final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
+    tmp.startList();
+    tmp.writeBigIntegerScalar(BigInteger.ONE);
+    tmp.writeBytes(storageTrie.getRootHash());
+    tmp.writeList(
+        List.of(acct3.addressHash, acct4.addressHash),
+        (hash, rlpOutput) -> rlpOutput.writeBytes(hash));
+    tmp.writeBytes(Hash.ZERO);
+    tmp.writeBytes(HASH_LAST);
+    tmp.writeBigIntegerScalar(BigInteger.valueOf(storageSlotCount * storageSlotSize));
+    tmp.endList();
+    var tinyRangeLimit = new GetStorageRangeMessage(tmp.encoded());
+
+    var rangeData =
+        (StorageRangeMessage) snapServer.constructGetStorageRangeResponse(tinyRangeLimit);
+
+    // assert proofs are valid for the requested range
+    assertThat(rangeData).isNotNull();
+    var slotsData = rangeData.slotsData(false);
+    assertThat(slotsData).isNotNull();
+    assertThat(slotsData.slots()).isNotNull();
+    assertThat(slotsData.slots().size()).isEqualTo(2);
+    var firstAccountStorages = slotsData.slots().first();
+    // expecting to see complete 10 slot storage for acct3
+    assertThat(firstAccountStorages.size()).isEqualTo(10);
+    var secondAccountStorages = slotsData.slots().last();
+    // expecting to see only 6 since request was limited to 16 slots
+    assertThat(secondAccountStorages.size()).isEqualTo(6);
+    // proofs required for interrupted storage range:
+    assertThat(slotsData.proofs().size()).isNotEqualTo(0);
+
+    // TODO: fixme, prob a fixture issue with contract storage.
+    // assertThat(
+    //        assertIsValidStorageProof(acct4, Hash.ZERO, secondAccountStorages,
     // slotsData.proofs()))
-    //     .isTrue();
+    //    .isTrue();
+
   }
 
   @Test
@@ -279,8 +341,9 @@ public class SnapServerTest {
   boolean assertIsValidAccountRangeProof(
       final Hash startHash, final AccountRangeMessage.AccountRangeData accountRange) {
     Bytes32 lastKey =
-        accountRange.accounts().keySet().stream()
-            .reduce((first, second) -> second)
+        Optional.of(accountRange.accounts())
+            .filter(z -> z.size() > 0)
+            .map(NavigableMap::lastKey)
             .orElse(startHash);
 
     return proofProvider.isValidRangeProof(
@@ -297,13 +360,15 @@ public class SnapServerTest {
       final NavigableMap<Bytes32, Bytes> slotRangeData,
       final List<Bytes> proofs) {
 
+    Bytes32 lastKey =
+        Optional.of(slotRangeData)
+            .filter(z -> z.size() > 0)
+            .map(NavigableMap::lastKey)
+            .orElse(startHash);
+
     // this is only working for single account ranges for now
     return proofProvider.isValidRangeProof(
-        startHash,
-        slotRangeData.lastKey(),
-        account.accountValue.getStorageRoot(),
-        proofs,
-        slotRangeData);
+        startHash, lastKey, account.accountValue.getStorageRoot(), proofs, slotRangeData);
   }
 
   AccountRangeMessage requestAccountRange(final Hash startHash, final Hash limitHash) {
@@ -336,7 +401,7 @@ public class SnapServerTest {
             GetByteCodesMessage.create(codeHashes).wrapMessageData(BigInteger.ONE));
   }
 
-  AccountRangeMessage.AccountRangeData getAndVerifyAcountRangeData(
+  AccountRangeMessage.AccountRangeData getAndVerifyAccountRangeData(
       final AccountRangeMessage range, final int expectedSize) {
     assertThat(range).isNotNull();
     var accountData = range.accountData(false);

@@ -50,13 +50,13 @@ public final class StorageRangeMessage extends AbstractSnapMessageData {
   }
 
   public static StorageRangeMessage create(
-      final ArrayDeque<NavigableMap<Bytes32, Bytes>> slots, final List<Bytes> proof) {
+      final List<NavigableMap<Bytes32, Bytes>> slots, final List<Bytes> proof) {
     return create(Optional.empty(), slots, proof);
   }
 
   public static StorageRangeMessage create(
       final Optional<BigInteger> requestId,
-      final ArrayDeque<NavigableMap<Bytes32, Bytes>> slots,
+      final List<NavigableMap<Bytes32, Bytes>> slots,
       final List<Bytes> proof) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();

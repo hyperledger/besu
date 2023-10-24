@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
@@ -32,12 +33,12 @@ import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedBonsaiWorldView;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
@@ -70,19 +71,21 @@ class SnapServer {
   private static final ByteCodesMessage EMPTY_BYTE_CODES_MESSAGE =
       ByteCodesMessage.create(new ArrayDeque<>());
 
+  static final Hash HASH_LAST = Hash.wrap(Bytes32.leftPad(Bytes.fromHexString("FF"), (byte) 0xFF));
   private final EthMessages snapMessages;
   private final Function<Optional<Hash>, Optional<BonsaiWorldStateKeyValueStorage>>
       worldStateStorageProvider;
 
-  SnapServer(final EthMessages snapMessages, final WorldStateArchive archive) {
+  SnapServer(final EthMessages snapMessages, final ProtocolContext protocolContext) {
     this(
         snapMessages,
         rootHash ->
             // TODO remove dirty bonsai cast:
-            ((BonsaiWorldStateProvider) archive)
+            ((BonsaiWorldStateProvider) protocolContext.getWorldStateArchive())
                 .getCachedWorldStorageManager()
                 .getStorageByRootHash(rootHash)
                 .map(CachedBonsaiWorldView::getWorldStateStorage));
+    primeWorldStateArchive(protocolContext);
   }
 
   SnapServer(
@@ -92,6 +95,18 @@ class SnapServer {
     this.snapMessages = snapMessages;
     this.worldStateStorageProvider = worldStateStorageProvider;
     registerResponseConstructors();
+  }
+
+  private void primeWorldStateArchive(final ProtocolContext context) {
+
+    // prime bonsai latest 64 states:
+    var archive = context.getWorldStateArchive();
+    var blockchain = context.getBlockchain();
+
+    long head = blockchain.getChainHeadHeader().getNumber();
+    for (long i = head; i > Math.max(0, head - 64); i--) {
+      blockchain.getBlockHeader(i).ifPresent(header -> archive.getMutable(header, false));
+    }
   }
 
   private void registerResponseConstructors() {
@@ -110,52 +125,77 @@ class SnapServer {
     final GetAccountRangeMessage.Range range = getAccountRangeMessage.range(true);
     final int maxResponseBytes = Math.min(range.responseBytes().intValue(), MAX_RESPONSE_SIZE);
 
-    // TODO: drop to TRACE
     LOGGER
-        .atInfo()
+        .atTrace()
         .setMessage("Receive getAccountRangeMessage for {} from {} to {}")
         .addArgument(range.worldStateRootHash()::toHexString)
         .addArgument(range.startKeyHash()::toHexString)
         .addArgument(range.endKeyHash()::toHexString)
         .log();
+    try {
+      var worldStateHash = getAccountRangeMessage.range(true).worldStateRootHash();
 
-    var worldStateHash = getAccountRangeMessage.range(true).worldStateRootHash();
+      return worldStateStorageProvider
+          .apply(Optional.of(worldStateHash))
+          .map(
+              storage -> {
+                NavigableMap<Bytes32, Bytes> accounts =
+                    storage.streamFlatAccounts(
+                        range.startKeyHash(),
+                        range.endKeyHash(),
+                        new StatefulPredicate(
+                            "account",
+                            maxResponseBytes,
+                            (pair) -> {
+                              var rlpOutput = new BytesValueRLPOutput();
+                              rlpOutput.startList();
+                              rlpOutput.writeBytes(pair.getFirst());
+                              rlpOutput.writeRLPBytes(pair.getSecond());
+                              rlpOutput.endList();
+                              return rlpOutput.encodedSize();
+                            }));
 
-    return worldStateStorageProvider
-        .apply(Optional.of(worldStateHash))
-        .map(
-            storage -> {
-              NavigableMap<Bytes32, Bytes> accounts =
-                  storage.streamFlatAccounts(
-                      range.startKeyHash(),
-                      range.endKeyHash(),
-                      new StatefulPredicate(maxResponseBytes));
+                if (accounts.isEmpty()) {
+                  // fetch next account after range, if it exists
+                  LOGGER.debug(
+                      "found no accounts in range, taking first value starting from {}",
+                      range.endKeyHash().toHexString());
+                  accounts = storage.streamFlatAccounts(range.endKeyHash(), UInt256.MAX_VALUE, 1L);
+                }
 
-              if (accounts.isEmpty()) {
-                // fetch next account after range, if it exists
-                accounts = storage.streamFlatAccounts(range.endKeyHash(), UInt256.MAX_VALUE, 1L);
-              }
-
-              final var worldStateProof = new WorldStateProofProvider(storage);
-              final ArrayDeque<Bytes> proof =
-                  new ArrayDeque<>(
-                      worldStateProof.getAccountProofRelatedNodes(
-                          range.worldStateRootHash(), Hash.wrap(range.startKeyHash())));
-              if (!accounts.isEmpty()) {
-                proof.addAll(
+                final var worldStateProof = new WorldStateProofProvider(storage);
+                final List<Bytes> proof =
                     worldStateProof.getAccountProofRelatedNodes(
-                        range.worldStateRootHash(), Hash.wrap(accounts.lastKey())));
-              }
-              var resp = AccountRangeMessage.create(accounts, proof);
-              LOGGER.info(
-                  "returned message with {} accounts and {} proofs", accounts.size(), proof.size());
-              return resp;
-            })
-        .orElseGet(
-            () -> {
-              LOGGER.info("returned empty account range due to worldstate not present");
-              return EMPTY_ACCOUNT_RANGE;
-            });
+                        range.worldStateRootHash(), Hash.wrap(range.startKeyHash()), false);
+
+                if (!accounts.isEmpty()) {
+                  proof.addAll(
+                      worldStateProof.getAccountProofRelatedNodes(
+                          range.worldStateRootHash(), Hash.wrap(accounts.lastKey()), false));
+                }
+                var resp = AccountRangeMessage.create(accounts, proof);
+                // TODO: demote to debug
+                LOGGER.info(
+                    "returned account range message with {} accounts and {} proofs",
+                    accounts.size(),
+                    proof.size());
+                LOGGER.trace(
+                    "returned accounts {}",
+                    accounts.keySet().stream()
+                        .map(Bytes::toHexString)
+                        .collect(Collectors.joining("\t\n")));
+                return resp;
+              })
+          .orElseGet(
+              () -> {
+                // TODO: demote to debug
+                LOGGER.info("returned empty account range due to worldstate not present");
+                return EMPTY_ACCOUNT_RANGE;
+              });
+    } catch (Exception ex) {
+      LOGGER.error("something blew up", ex);
+    }
+    return EMPTY_ACCOUNT_RANGE;
   }
 
   MessageData constructGetStorageRangeResponse(final MessageData message) {
@@ -163,73 +203,108 @@ class SnapServer {
     final GetStorageRangeMessage.StorageRange range = getStorageRangeMessage.range(true);
     final int maxResponseBytes = Math.min(range.responseBytes().intValue(), MAX_RESPONSE_SIZE);
 
-    // TODO: drop to TRACE
     LOGGER
-        .atInfo()
-        .setMessage("Receive get storage range message from {} to {} for {}")
+        .atTrace()
+        .setMessage("Receive get storage range message size {} from {} to {} for {}")
+        .addArgument(message::getSize)
         .addArgument(() -> range.startKeyHash().toHexString())
-        .addArgument(() -> range.endKeyHash())
+        .addArgument(
+            () -> Optional.ofNullable(range.endKeyHash()).map(Hash::toHexString).orElse("''"))
         .addArgument(
             () ->
                 range.hashes().stream()
                     .map(Bytes32::toHexString)
                     .collect(Collectors.joining(",", "[", "]")))
         .log();
+    try {
+      return worldStateStorageProvider
+          .apply(Optional.of(range.worldStateRootHash()))
+          .map(
+              storage -> {
+                // reusable predicate to limit by rec count and bytes:
+                var statefulPredicate =
+                    new StatefulPredicate(
+                        "storage",
+                        maxResponseBytes,
+                        (pair) -> {
+                          var slotRlpOutput = new BytesValueRLPOutput();
+                          slotRlpOutput.startList();
+                          slotRlpOutput.writeBytes(pair.getFirst());
+                          slotRlpOutput.writeBytes(pair.getSecond());
+                          slotRlpOutput.endList();
+                          return slotRlpOutput.encodedSize();
+                        });
 
-    return worldStateStorageProvider
-        .apply(Optional.of(range.worldStateRootHash()))
-        .map(
-            storage -> {
-              // reusable predicate to limit by rec count and bytes:
-              var statefulPredicate = new StatefulPredicate(maxResponseBytes);
-              // for the first account, honor startHash
-              Bytes32 startKeyBytes = range.startKeyHash();
-              Bytes32 endKeyBytes = range.endKeyHash();
-
-              ArrayDeque<NavigableMap<Bytes32, Bytes>> collectedStorages = new ArrayDeque<>();
-              ArrayList<Bytes> collectedProofs = new ArrayList<>();
-              final var worldStateProof = new WorldStateProofProvider(storage);
-
-              for (var forAccountHash : range.hashes()) {
-                // start key proof
-                collectedProofs.addAll(
-                    worldStateProof.getStorageProofRelatedNodes(
-                        getAccountStorageRoot(forAccountHash, storage),
-                        forAccountHash,
-                        Hash.wrap(startKeyBytes)));
-
-                var accountStorages =
-                    storage.streamFlatStorages(
-                        Hash.wrap(forAccountHash), startKeyBytes, endKeyBytes, statefulPredicate);
-                collectedStorages.add(accountStorages);
-
-                // last key proof
-                collectedProofs.addAll(
-                    worldStateProof.getStorageProofRelatedNodes(
-                        getAccountStorageRoot(forAccountHash, storage),
-                        forAccountHash,
-                        Hash.wrap(accountStorages.lastKey())));
-
-                if (statefulPredicate.shouldGetMore()) {
-                  // reset startkeyBytes for subsequent accounts
+                // only honor start and end hash if request is for a single account's storage:
+                Bytes32 startKeyBytes, endKeyBytes;
+                if (range.hashes().size() > 1) {
                   startKeyBytes = Bytes32.ZERO;
+                  endKeyBytes = HASH_LAST;
                 } else {
-                  break;
+                  startKeyBytes = range.startKeyHash();
+                  endKeyBytes = range.endKeyHash();
                 }
-              }
 
-              return StorageRangeMessage.create(collectedStorages, collectedProofs);
-            })
-        .orElse(EMPTY_STORAGE_RANGE);
+                ArrayDeque<NavigableMap<Bytes32, Bytes>> collectedStorages = new ArrayDeque<>();
+                ArrayList<Bytes> lastKeyProofNodes = new ArrayList<>();
+                final var worldStateProof = new WorldStateProofProvider(storage);
+
+                if (range.hashes().size() > 0) {
+                  Iterator<Bytes32> accountHashes = range.hashes().iterator();
+                  Bytes32 forAccountHash = null;
+                  Optional<Hash> needsProofStorageSlot = Optional.empty();
+                  do {
+                    forAccountHash = accountHashes.next();
+                    var accountStorages =
+                        storage.streamFlatStorages(
+                            Hash.wrap(forAccountHash),
+                            startKeyBytes,
+                            endKeyBytes,
+                            statefulPredicate);
+                    collectedStorages.add(accountStorages);
+
+                    if (!statefulPredicate.shouldGetMore() && accountStorages.size() > 0) {
+                      // if we were interrupted in the middle of account storage, save last key
+                      needsProofStorageSlot =
+                          Optional.of(accountStorages.lastKey()).map(Hash::wrap);
+                    }
+                  } while (accountHashes.hasNext() && statefulPredicate.shouldGetMore());
+
+                  // only send a proof for storage ranges that were interrupted, and only for the
+                  // last key streamed (right side proof)
+                  final Bytes32 mayNeedProofAccountHash = forAccountHash;
+                  needsProofStorageSlot.ifPresent(
+                      stoppedAtSlot ->
+                          lastKeyProofNodes.addAll(
+                              worldStateProof.getStorageProofRelatedNodes(
+                                  getAccountStorageRoot(mayNeedProofAccountHash, storage),
+                                  mayNeedProofAccountHash,
+                                  Hash.wrap(stoppedAtSlot),
+                                  false)));
+                }
+                var resp = StorageRangeMessage.create(collectedStorages, lastKeyProofNodes);
+                LOGGER.info(
+                    "returned storage range message with {} storages and {} proofs",
+                    collectedStorages.size(),
+                    lastKeyProofNodes.size());
+                return resp;
+              })
+          .orElseGet(
+              () -> {
+                LOGGER.info("returned empty storage range due to missing worldstate");
+                return EMPTY_STORAGE_RANGE;
+              });
+    } catch (Exception ex) {
+      LOGGER.error("something blew up", ex);
+      return EMPTY_STORAGE_RANGE;
+    }
   }
 
   MessageData constructGetBytecodesResponse(final MessageData message) {
-    // TODO implement once code is stored by hash
     final GetByteCodesMessage getByteCodesMessage = GetByteCodesMessage.readFrom(message);
     final GetByteCodesMessage.CodeHashes codeHashes = getByteCodesMessage.codeHashes(true);
-    // TODO: drop to TRACE
     LOGGER
-        .atInfo()
+        .atTrace()
         .setMessage("Receive get bytecodes message for {} hashes")
         .addArgument(codeHashes.hashes()::size)
         .log();
@@ -238,61 +313,80 @@ class SnapServer {
     // can cause problems for self-destructed contracts pre-shanghai.  for now since this impl
     // is deferring to #5889, we can just get any flat code storage and know we are not deleting
     // code for now.
-    return worldStateStorageProvider
-        .apply(Optional.empty())
-        .map(
-            storage -> {
-              List<Bytes> codeBytes = new ArrayDeque<>();
-              for (Bytes32 codeHash : codeHashes.hashes()) {
-                storage.getCode(codeHash, null).ifPresent(codeBytes::add);
-              }
-              return ByteCodesMessage.create(codeBytes);
-            })
-        .orElse(EMPTY_BYTE_CODES_MESSAGE);
+    try {
+      return worldStateStorageProvider
+          .apply(Optional.empty())
+          .map(
+              storage -> {
+                List<Bytes> codeBytes = new ArrayDeque<>();
+                for (Bytes32 codeHash : codeHashes.hashes()) {
+                  storage.getCode(codeHash, null).ifPresent(codeBytes::add);
+                }
+                return ByteCodesMessage.create(codeBytes);
+              })
+          .orElseGet(
+              () -> {
+                LOGGER.info("returned empty byte codes message due to missing worldstate");
+                return EMPTY_BYTE_CODES_MESSAGE;
+              });
+    } catch (Exception ex) {
+      LOGGER.error("something blew up", ex);
+      return EMPTY_BYTE_CODES_MESSAGE;
+    }
   }
 
   MessageData constructGetTrieNodesResponse(final MessageData message) {
     final GetTrieNodesMessage getTrieNodesMessage = GetTrieNodesMessage.readFrom(message);
     final GetTrieNodesMessage.TrieNodesPaths triePaths = getTrieNodesMessage.paths(true);
-    // TODO: drop to TRACE
     LOGGER
-        .atInfo()
+        .atTrace()
         .setMessage("Receive get trie nodes message of size {}")
         .addArgument(() -> triePaths.paths().size())
         .log();
 
-    // TODO: implement limits
-    return worldStateStorageProvider
-        .apply(Optional.of(triePaths.worldStateRootHash()))
-        .map(
-            storage -> {
-              ArrayList<Bytes> trieNodes = new ArrayList<>();
-              for (var triePath : triePaths.paths()) {
-                // first element in paths is account
-                if (triePath.size() == 1) {
-                  // if there is only one path, presume it should be compact encoded account path
-                  storage
-                      .getTrieNodeUnsafe(CompactEncoding.decode(triePath.get(0)))
-                      .ifPresent(trieNodes::add);
-                } else {
-                  // otherwise the first element should be account hash, and subsequent paths
-                  // are compact encoded account storage paths
+    try {
+      // TODO: implement limits
+      return worldStateStorageProvider
+          .apply(Optional.of(triePaths.worldStateRootHash()))
+          .map(
+              storage -> {
+                ArrayList<Bytes> trieNodes = new ArrayList<>();
+                for (var triePath : triePaths.paths()) {
+                  // first element in paths is account
+                  if (triePath.size() == 1) {
+                    // if there is only one path, presume it should be compact encoded account path
+                    storage
+                        .getTrieNodeUnsafe(CompactEncoding.decode(triePath.get(0)))
+                        .ifPresent(trieNodes::add);
+                  } else {
+                    // otherwise the first element should be account hash, and subsequent paths
+                    // are compact encoded account storage paths
 
-                  final Bytes accountPrefix = triePath.get(0);
+                    final Bytes accountPrefix = triePath.get(0);
 
-                  triePath.subList(1, triePath.size()).stream()
-                      .forEach(
-                          path ->
-                              storage
-                                  .getTrieNodeUnsafe(
-                                      Bytes.concatenate(
-                                          accountPrefix, CompactEncoding.decode(path)))
-                                  .ifPresent(trieNodes::add));
+                    triePath.subList(1, triePath.size()).stream()
+                        .forEach(
+                            path ->
+                                storage
+                                    .getTrieNodeUnsafe(
+                                        Bytes.concatenate(
+                                            accountPrefix, CompactEncoding.decode(path)))
+                                    .ifPresent(trieNodes::add));
+                  }
                 }
-              }
-              return TrieNodesMessage.create(trieNodes);
-            })
-        .orElse(EMPTY_TRIE_NODES_MESSAGE);
+                var resp = TrieNodesMessage.create(trieNodes);
+                LOGGER.info("returned trie nodes message with {} entries", trieNodes.size());
+                return resp;
+              })
+          .orElseGet(
+              () -> {
+                LOGGER.info("returned empty trie nodes message due to missing worldstate");
+                return EMPTY_TRIE_NODES_MESSAGE;
+              });
+    } catch (Exception ex) {
+      LOGGER.error("something blew up", ex);
+      return EMPTY_TRIE_NODES_MESSAGE;
+    }
   }
 
   static class StatefulPredicate implements Predicate<Pair<Bytes32, Bytes>> {
@@ -300,10 +394,17 @@ class SnapServer {
     final AtomicInteger byteLimit = new AtomicInteger(0);
     final AtomicInteger recordLimit = new AtomicInteger(0);
     final AtomicBoolean shouldContinue = new AtomicBoolean(true);
+    final Function<Pair<Bytes32, Bytes>, Integer> encodingSizeAccumulator;
     final int maxResponseBytes;
+    final String forWhat;
 
-    StatefulPredicate(final int maxResponseBytes) {
+    StatefulPredicate(
+        final String forWhat,
+        final int maxResponseBytes,
+        final Function<Pair<Bytes32, Bytes>, Integer> encodingSizeAccumulator) {
       this.maxResponseBytes = maxResponseBytes;
+      this.forWhat = forWhat;
+      this.encodingSizeAccumulator = encodingSizeAccumulator;
     }
 
     public boolean shouldGetMore() {
@@ -312,23 +413,29 @@ class SnapServer {
 
     @Override
     public boolean test(final Pair<Bytes32, Bytes> pair) {
-      var underRecordLimit = recordLimit.addAndGet(1) < MAX_ENTRIES_PER_REQUEST;
+      LOGGER
+          .atTrace()
+          .setMessage("{} pre-accumulate limits, bytes: {} , stream count: {}")
+          .addArgument(() -> forWhat)
+          .addArgument(byteLimit::get)
+          .addArgument(recordLimit::get)
+          .log();
+
+      var underRecordLimit = recordLimit.addAndGet(1) <= MAX_ENTRIES_PER_REQUEST;
       var underByteLimit =
-          byteLimit.accumulateAndGet(
-                  0,
-                  (cur, __) -> {
-                    var rlpOutput = new BytesValueRLPOutput();
-                    rlpOutput.startList();
-                    rlpOutput.writeBytes(pair.getFirst());
-                    rlpOutput.writeRLPBytes(pair.getSecond());
-                    rlpOutput.endList();
-                    return cur + rlpOutput.encoded().size();
-                  })
-              < maxResponseBytes;
+          byteLimit.accumulateAndGet(0, (cur, __) -> cur + encodingSizeAccumulator.apply(pair))
+              < maxResponseBytes + 1;
       if (underRecordLimit && underByteLimit) {
         return true;
       } else {
         shouldContinue.set(false);
+        LOGGER
+            .atDebug()
+            .setMessage("{} post-accumulate limits, bytes: {} , stream count: {}")
+            .addArgument(() -> forWhat)
+            .addArgument(byteLimit::get)
+            .addArgument(recordLimit::get)
+            .log();
         return false;
       }
     }

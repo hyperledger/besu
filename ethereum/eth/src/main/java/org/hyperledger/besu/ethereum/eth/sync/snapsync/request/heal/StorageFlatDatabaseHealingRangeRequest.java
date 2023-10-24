@@ -123,7 +123,7 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       final NavigableMap<Bytes32, Bytes> slots,
       final ArrayDeque<Bytes> proofs) {
     if (!slots.isEmpty() && !proofs.isEmpty()) {
-      // very proof in order to check if the local flat database is valid or not
+      // verify proof in order to check if the local flat database is valid or not
       isProofValid =
           worldStateProofProvider.isValidRangeProof(
               startKeyHash, endKeyHash, storageRoot, proofs, slots);
