@@ -21,7 +21,7 @@ import java.util.Objects;
 
 /** The Percentage utility. */
 public class Percentage {
-
+  public static final Percentage ZERO = new Percentage(0);
   private final int value;
 
   private Percentage(final int value) {
