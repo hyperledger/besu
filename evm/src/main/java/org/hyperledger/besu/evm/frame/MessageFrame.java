@@ -662,7 +662,7 @@ public class MessageFrame {
    * @return The bytes in the specified range
    */
   public Bytes shadowReadMemory(final long offset, final long length) {
-    return memory.getBytes(offset, length, true);
+    return memory.getBytesWithoutGrowth(offset, length);
   }
 
   /**

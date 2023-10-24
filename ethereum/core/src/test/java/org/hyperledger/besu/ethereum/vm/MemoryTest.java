@@ -71,16 +71,13 @@ public class MemoryTest {
     memory.setBytes(0, value.size(), value);
     final int initialActiveWords = memory.getActiveWords();
 
-    assertThat(memory.getBytes(64, Bytes32.SIZE, true)).isEqualTo((Bytes32.ZERO));
+    assertThat(memory.getBytesWithoutGrowth(64, Bytes32.SIZE)).isEqualTo((Bytes32.ZERO));
     assertThat(memory.getActiveWords()).isEqualTo(initialActiveWords);
 
     assertThat(memory.getBytes(32, Bytes32.SIZE)).isEqualTo((WORD2));
     assertThat(memory.getActiveWords()).isEqualTo(initialActiveWords);
 
     assertThat(memory.getBytes(64, Bytes32.SIZE)).isEqualTo((Bytes32.ZERO));
-    assertThat(memory.getActiveWords()).isEqualTo(initialActiveWords + 1);
-
-    assertThat(memory.getBytes(64, Bytes32.SIZE, false)).isEqualTo((Bytes32.ZERO));
     assertThat(memory.getActiveWords()).isEqualTo(initialActiveWords + 1);
   }
 
