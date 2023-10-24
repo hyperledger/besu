@@ -66,7 +66,7 @@ public class MemoryTest {
   }
 
   @Test
-  public void shouldNotIncreaseActiveWordsIfShadowRead() {
+  public void shouldNotIncreaseActiveWordsIfGetBytesWithoutGrowth() {
     final Bytes value = Bytes.concatenate(WORD1, WORD2);
     memory.setBytes(0, value.size(), value);
     final int initialActiveWords = memory.getActiveWords();
