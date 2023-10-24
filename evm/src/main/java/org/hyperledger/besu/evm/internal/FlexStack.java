@@ -41,7 +41,7 @@ public class FlexStack<T> {
   private int top;
 
   /**
-   * Instantiates a new Fixed stack.
+   * Instantiates a new Flex stack.
    *
    * @param maxSize the max size
    * @param klass the klass
