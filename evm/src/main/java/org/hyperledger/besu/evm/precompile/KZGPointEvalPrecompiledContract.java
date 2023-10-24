@@ -28,10 +28,14 @@ import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** The KZGPointEval precompile contract. */
 public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
   private static final AtomicBoolean loaded = new AtomicBoolean(false);
+
+  private static final Logger LOG = LoggerFactory.getLogger(KZGPointEvalPrecompiledContract.class);
 
   private static Bytes successResult;
 
@@ -54,7 +58,9 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
   public static void init(final Path trustedSetupFile) {
     if (loaded.compareAndSet(false, true)) {
       init();
-      CKZG4844JNI.loadTrustedSetup(trustedSetupFile.toAbsolutePath().toString());
+      final String trustedSetupResourceName = trustedSetupFile.toAbsolutePath().toString();
+      LOG.info("Loading trusted setup from user-specified resource {}", trustedSetupResourceName);
+      CKZG4844JNI.loadTrustedSetup(trustedSetupResourceName);
     } else {
       throw new IllegalStateException("KZG trusted setup was already loaded");
     }
@@ -72,6 +78,8 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
       init();
       final String trustedSetupResourceName =
           "/kzg-trusted-setups/" + networkName.toLowerCase() + ".txt";
+      LOG.info(
+          "Loading network trusted setup from classpath resource {}", trustedSetupResourceName);
       CKZG4844JNI.loadTrustedSetupFromResource(
           trustedSetupResourceName, KZGPointEvalPrecompiledContract.class);
     } else {

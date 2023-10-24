@@ -271,9 +271,10 @@ public class TransactionPool implements BlockAddedObserver {
       }
     } else {
       LOG.atTrace()
-          .setMessage("Discard invalid transaction {}, reason {}")
+          .setMessage("Discard invalid transaction {}, reason {}, because {}")
           .addArgument(transaction::toTraceLog)
           .addArgument(validationResult.result::getInvalidReason)
+          .addArgument(validationResult.result::getErrorMessage)
           .log();
       metrics.incrementRejected(
           isLocal, hasPriority, validationResult.result.getInvalidReason(), "txpool");

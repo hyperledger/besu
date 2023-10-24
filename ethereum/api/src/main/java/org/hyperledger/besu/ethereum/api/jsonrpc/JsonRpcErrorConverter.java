@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
+import java.util.Optional;
+
 public class JsonRpcErrorConverter {
 
   public static RpcErrorType convertTransactionInvalidReason(
@@ -77,6 +79,8 @@ public class JsonRpcErrorConverter {
         return RpcErrorType.TX_POOL_DISABLED;
       case PLUGIN_TX_VALIDATOR:
         return RpcErrorType.PLUGIN_TX_VALIDATOR;
+      case INVALID_BLOBS:
+        return RpcErrorType.INVALID_BLOBS;
       default:
         return RpcErrorType.INTERNAL_ERROR;
     }
