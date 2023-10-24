@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -90,7 +91,8 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         blockchain,
         cachedMerkleTrieLoader,
         new NoOpMetricsSystem(),
-        null);
+        null,
+        TrieLogPruner.noOpTrieLogPruner());
   }
 
   public static MutableWorldState createInMemoryWorldState() {

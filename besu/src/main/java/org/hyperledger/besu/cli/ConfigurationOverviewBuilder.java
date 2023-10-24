@@ -49,6 +49,7 @@ public class ConfigurationOverviewBuilder {
   private Collection<String> engineApis;
   private String engineJwtFilePath;
   private boolean isHighSpec = false;
+  private boolean isTrieLogPruning = false;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
   private Map<String, String> environment;
   private BesuPluginContextImpl besuPluginContext;
@@ -170,6 +171,16 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets high spec enabled.
+   *
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setTrieLogPruningEnabled() {
+    isTrieLogPruning = true;
+    return this;
+  }
+
+  /**
    * Sets the txpool implementation in use.
    *
    * @param implementation the txpool implementation
@@ -257,6 +268,10 @@ public class ConfigurationOverviewBuilder {
     }
 
     lines.add("Using " + txPoolImplementation + " transaction pool implementation");
+
+    if (isTrieLogPruning) {
+      lines.add("Trie log pruning enabled");
+    }
 
     lines.add("");
     lines.add("Host:");

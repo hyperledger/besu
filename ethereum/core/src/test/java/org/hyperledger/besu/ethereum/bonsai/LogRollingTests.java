@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -132,7 +133,12 @@ class LogRollingTests {
         new CachedMerkleTrieLoader(new NoOpMetricsSystem());
     archive =
         new BonsaiWorldStateProvider(
-            provider, blockchain, cachedMerkleTrieLoader, new NoOpMetricsSystem(), null);
+            provider,
+            blockchain,
+            cachedMerkleTrieLoader,
+            new NoOpMetricsSystem(),
+            null,
+            TrieLogPruner.noOpTrieLogPruner());
     accountStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
     codeStorage = provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
@@ -152,7 +158,8 @@ class LogRollingTests {
             blockchain,
             secondOptimizedMerkleTrieLoader,
             new NoOpMetricsSystem(),
-            null);
+            null,
+            TrieLogPruner.noOpTrieLogPruner());
     secondAccountStorage =
         secondProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
     secondCodeStorage =

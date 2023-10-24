@@ -185,7 +185,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   static class NoOpTrieLogManager extends TrieLogManager {
 
     public NoOpTrieLogManager() {
-      super(null, null, 0, null);
+      super(null, null, 0, null, null);
     }
 
     @SuppressWarnings("UnsynchronizedOverridesSynchronized")

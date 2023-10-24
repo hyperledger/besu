@@ -34,6 +34,8 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogPruner;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogPrunerConfiguration;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
@@ -179,6 +181,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   private int maxRemotelyInitiatedPeers;
   /** The Chain pruner configuration. */
   protected ChainPrunerConfiguration chainPrunerConfiguration = ChainPrunerConfiguration.DEFAULT;
+
+  protected TrieLogPrunerConfiguration trieLogPrunerConfiguration =
+      TrieLogPrunerConfiguration.DEFAULT;
 
   private NetworkingConfiguration networkingConfiguration;
   private Boolean randomPeerPriority;
@@ -508,7 +513,19 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
-   * Chain pruning configuration besu controller builder.
+   * Trie log pruning configuration besu controller builder.
+   *
+   * @param trieLogPrunerConfiguration the trie log pruner configuration
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder trieLogPrunerConfiguration(
+      final TrieLogPrunerConfiguration trieLogPrunerConfiguration) {
+    this.trieLogPrunerConfiguration = trieLogPrunerConfiguration;
+    return this;
+  }
+
+  /**
+   * Cache last blocks configuration besu controller builder.
    *
    * @param numberOfBlocksToCache the number of blocks to cache
    * @return the besu controller builder
@@ -613,8 +630,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             .map(BesuComponent::getCachedMerkleTrieLoader)
             .orElseGet(() -> new CachedMerkleTrieLoader(metricsSystem));
 
+    final TrieLogPruner trieLogPruner =
+        trieLogPrunerConfiguration.getTrieLogPruningEnabled()
+            ? new TrieLogPruner((BonsaiWorldStateKeyValueStorage) worldStateStorage, blockchain)
+            : TrieLogPruner.noOpTrieLogPruner();
+
     final WorldStateArchive worldStateArchive =
-        createWorldStateArchive(worldStateStorage, blockchain, cachedMerkleTrieLoader);
+        createWorldStateArchive(
+            worldStateStorage, blockchain, cachedMerkleTrieLoader, trieLogPruner);
 
     if (blockchain.getChainHeadBlockNumber() < 1) {
       genesisState.writeStateTo(worldStateArchive.getMutable());
@@ -1070,7 +1093,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   WorldStateArchive createWorldStateArchive(
       final WorldStateStorage worldStateStorage,
       final Blockchain blockchain,
-      final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
+      final CachedMerkleTrieLoader cachedMerkleTrieLoader,
+      final TrieLogPruner trieLogPruner) {
     switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI:
         return new BonsaiWorldStateProvider(
@@ -1079,7 +1103,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
             cachedMerkleTrieLoader,
             metricsSystem,
-            besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null));
+            besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
+            trieLogPruner);
 
       case FOREST:
       default:

@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -73,7 +74,8 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
       final Blockchain blockchain,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
       final ObservableMetricsSystem metricsSystem,
-      final BesuContext pluginContext) {
+      final BesuContext pluginContext,
+      final TrieLogPruner trieLogPruner) {
     this(
         (BonsaiWorldStateKeyValueStorage)
             provider.createWorldStateStorage(DataStorageFormat.BONSAI),
@@ -81,7 +83,8 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
         Optional.empty(),
         cachedMerkleTrieLoader,
         metricsSystem,
-        pluginContext);
+        pluginContext,
+        trieLogPruner);
   }
 
   public BonsaiWorldStateProvider(
@@ -90,14 +93,19 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
       final Optional<Long> maxLayersToLoad,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
       final ObservableMetricsSystem metricsSystem,
-      final BesuContext pluginContext) {
+      final BesuContext pluginContext,
+      final TrieLogPruner trieLogPruner) {
 
     this.cachedWorldStorageManager =
         new CachedWorldStorageManager(this, worldStateStorage, metricsSystem);
     // TODO: de-dup constructors
     this.trieLogManager =
         new TrieLogManager(
-            blockchain, worldStateStorage, maxLayersToLoad.orElse(RETAINED_LAYERS), pluginContext);
+            blockchain,
+            worldStateStorage,
+            maxLayersToLoad.orElse(RETAINED_LAYERS),
+            pluginContext,
+            trieLogPruner);
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;

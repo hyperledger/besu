@@ -73,6 +73,7 @@ import org.hyperledger.besu.cli.options.unstable.PkiBlockCreationOptions;
 import org.hyperledger.besu.cli.options.unstable.PrivacyPluginOptions;
 import org.hyperledger.besu.cli.options.unstable.RPCOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
+import org.hyperledger.besu.cli.options.unstable.TrieLogPruningOptions;
 import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
 import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
@@ -295,6 +296,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final EvmOptions unstableEvmOptions = EvmOptions.create();
   private final IpcOptions unstableIpcOptions = IpcOptions.create();
   private final ChainPruningOptions unstableChainPruningOptions = ChainPruningOptions.create();
+  private final TrieLogPruningOptions unstableTrieLogPruningOptions =
+      TrieLogPruningOptions.create();
 
   // stable CLI options
   private final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
@@ -1591,6 +1594,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("EVM Options", unstableEvmOptions)
             .put("IPC Options", unstableIpcOptions)
             .put("Chain Data Pruning Options", unstableChainPruningOptions)
+            .put("Trie Log Pruning Options", unstableTrieLogPruningOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -2296,6 +2300,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .maxRemotelyInitiatedPeers(maxRemoteInitiatedPeers)
         .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
         .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
+        .trieLogPrunerConfiguration(unstableTrieLogPruningOptions.toDomainObject())
         .cacheLastBlocks(numberOfblocksToCache);
   }
 
@@ -3551,6 +3556,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (rocksDBPlugin.isHighSpecEnabled()) {
       builder.setHighSpecEnabled();
+    }
+
+    if (unstableTrieLogPruningOptions.getTrieLogPruningEnabled()) {
+      builder.setTrieLogPruningEnabled();
     }
 
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
