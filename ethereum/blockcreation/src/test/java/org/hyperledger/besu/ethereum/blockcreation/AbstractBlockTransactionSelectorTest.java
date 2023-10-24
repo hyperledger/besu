@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
+import static org.awaitility.Awaitility.await;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_TXS_SELECTION_MAX_TIME;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -754,7 +755,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
   public void subsetOfPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver(
       final boolean preProcessingTooLate,
       final boolean processingTooLate,
-      final boolean postProcessingTooLate) {
+      final boolean postProcessingTooLate)
+      throws InterruptedException {
 
     final Supplier<Answer<TransactionSelectionResult>> inTime =
         () -> invocation -> TransactionSelectionResult.SELECTED;
@@ -827,6 +829,11 @@ public abstract class AbstractBlockTransactionSelectorTest {
     // Ensure receipts have the correct cumulative gas
     assertThat(results.getReceipts().get(0).getCumulativeGasUsed()).isEqualTo(100_000);
     assertThat(results.getReceipts().get(1).getCumulativeGasUsed()).isEqualTo(200_000);
+
+    // given enough time we can check the not selected tx
+    await().until(() -> !results.getNotSelectedTransactions().isEmpty());
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(entry(lateTx, TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT));
   }
 
   private static Stream<Arguments>
@@ -927,15 +934,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
   protected void ensureTransactionIsValid(
       final Transaction tx, final long gasUsedByTransaction, final long gasRemaining) {
-    when(transactionProcessor.processTransaction(
-            any(), any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
-        .thenReturn(
-            TransactionProcessingResult.successful(
-                new ArrayList<>(),
-                gasUsedByTransaction,
-                gasRemaining,
-                Bytes.EMPTY,
-                ValidationResult.valid()));
+    ensureTransactionIsValid(tx, gasUsedByTransaction, gasRemaining, 0);
   }
 
   protected void ensureTransactionIsValid(
@@ -947,7 +946,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
             any(), any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
         .thenAnswer(
             invocation -> {
-              Thread.sleep(processingTime);
+              if (processingTime > 0) {
+                Thread.sleep(processingTime);
+              }
               return TransactionProcessingResult.successful(
                   new ArrayList<>(),
                   gasUsedByTransaction,

@@ -118,8 +118,4 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
       throw new UnsupportedOperationException("Specified target gas limit is invalid");
     }
   }
-
-  protected ExecutorService getMinerExecutorService() {
-    return executorService;
-  }
 }

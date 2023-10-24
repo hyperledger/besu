@@ -189,6 +189,7 @@ public class BlockTransactionSelector {
       }
       LOG.warn("Error during block transaction selection", e);
     } catch (TimeoutException e) {
+      // synchronize since we want to be sure that there is no concurrent state update
       synchronized (isTimeout) {
         isTimeout.set(true);
       }
@@ -346,6 +347,9 @@ public class BlockTransactionSelector {
 
     final boolean tooLate;
 
+    // only add this tx to the selected set if it is not too late,
+    // this need to be done synchronously to avoid that a concurrent timeout
+    // could start packing a block while we are updating the state here
     synchronized (isTimeout) {
       if (!isTimeout.get()) {
         txWorldStateUpdater.commit();
@@ -362,22 +366,26 @@ public class BlockTransactionSelector {
       }
     }
 
-    if (!tooLate) {
-      pluginTransactionSelector.onTransactionSelected(pendingTransaction, processingResult);
-      blockWorldStateUpdater = worldState.updater();
+    if (tooLate) {
+      // even if this tx passed all the checks, it is too late to include it in this block,
+      // so we need to treat it as not selected
       LOG.atTrace()
-          .setMessage("Selected {} for block creation")
+          .setMessage("{} processed too late for block creation")
           .addArgument(transaction::toTraceLog)
           .log();
-      return SELECTED;
+      // do not rely on the presence of this result, since by the time it is added, the code
+      // reading it could have been already executed by another thread
+      return handleTransactionNotSelected(
+          pendingTransaction, BLOCK_SELECTION_TIMEOUT, txWorldStateUpdater);
     }
 
-    pluginTransactionSelector.onTransactionNotSelected(pendingTransaction, BLOCK_SELECTION_TIMEOUT);
+    pluginTransactionSelector.onTransactionSelected(pendingTransaction, processingResult);
+    blockWorldStateUpdater = worldState.updater();
     LOG.atTrace()
-        .setMessage("{} processed too late for block creation")
+        .setMessage("Selected {} for block creation")
         .addArgument(transaction::toTraceLog)
         .log();
-    return BLOCK_SELECTION_TIMEOUT;
+    return SELECTED;
   }
 
   /**
