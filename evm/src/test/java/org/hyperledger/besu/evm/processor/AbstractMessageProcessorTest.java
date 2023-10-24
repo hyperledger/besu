@@ -16,8 +16,8 @@ package org.hyperledger.besu.evm.processor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.evm.processor.AbstractMessageProcessorTest.ContextTracer.TRACE_TYPE.CONTEXT_ENTER;
-import static org.hyperledger.besu.evm.processor.AbstractMessageProcessorTest.ContextTracer.TRACE_TYPE.CONTEXT_RE_ENTER;
 import static org.hyperledger.besu.evm.processor.AbstractMessageProcessorTest.ContextTracer.TRACE_TYPE.CONTEXT_EXIT;
+import static org.hyperledger.besu.evm.processor.AbstractMessageProcessorTest.ContextTracer.TRACE_TYPE.CONTEXT_RE_ENTER;
 import static org.hyperledger.besu.evm.processor.AbstractMessageProcessorTest.ContextTracer.TRACE_TYPE.POST_EXECUTION;
 import static org.hyperledger.besu.evm.processor.AbstractMessageProcessorTest.ContextTracer.TRACE_TYPE.PRE_EXECUTION;
 import static org.mockito.Mockito.times;
@@ -32,7 +32,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,8 +55,7 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
   @Test
   void shouldTraceExitForContext() {
     when(messageFrame.getWorldUpdater()).thenReturn(new ToyWorld());
-    when(messageFrame.getState())
-        .thenReturn(MessageFrame.State.COMPLETED_SUCCESS);
+    when(messageFrame.getState()).thenReturn(MessageFrame.State.COMPLETED_SUCCESS);
     when(messageFrame.getMessageFrameStack()).thenReturn(messageFrameStack);
 
     getAbstractMessageProcessor().process(messageFrame, operationTracer);
