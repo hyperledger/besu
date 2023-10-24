@@ -25,7 +25,7 @@ import java.util.Objects;
  * it expands past the top of the allocated stack, up to maxSize.
  *
  * <p>The operand stack is responsible for storing the current operands that the EVM can execute. It
- * is assumed to have a fixed size.
+ * is assumed to have a fixed maximum size but may have a smaller memory footprint.
  *
  * @param <T> the type parameter
  */
@@ -48,7 +48,7 @@ public class FlexStack<T> {
    */
   @SuppressWarnings("unchecked")
   public FlexStack(final int maxSize, final Class<T> klass) {
-    checkArgument(maxSize >= 0, "max size must be non-negative");
+    checkArgument(maxSize > 0, "max size must be positive");
 
     this.currentCapacity = Math.min(INCREMENT, maxSize);
     this.entries = (T[]) Array.newInstance(klass, currentCapacity);
