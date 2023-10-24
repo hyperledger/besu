@@ -27,7 +27,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -1116,7 +1115,7 @@ public final class EthProtocolManagerTest {
               TestClock.system(ZoneId.systemDefault()),
               metricsSystem,
               new SyncState(blockchain, ethManager.ethContext().getEthPeers()),
-              new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
+              MiningParameters.newDefault(),
               TransactionPoolConfiguration.DEFAULT,
               null)
           .setEnabled();
