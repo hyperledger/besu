@@ -124,6 +124,11 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
   }
 
   @Override
+  public void clear() {
+    setData(Bytes.EMPTY);
+  }
+
+  @Override
   public boolean isExpired(final SnapSyncProcessState snapSyncState) {
     return snapSyncState.isExpired(this);
   }
