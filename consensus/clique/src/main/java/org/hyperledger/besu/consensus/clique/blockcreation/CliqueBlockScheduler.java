@@ -53,7 +53,7 @@ public class CliqueBlockScheduler extends DefaultBlockScheduler {
         parentHeader ->
             (long)
                 forkSchedule
-                    .getFork(parentHeader.getNumber() + 1)
+                    .getFork(parentHeader.getNumber())
                     .getValue()
                     .getBlockPeriodSeconds(),
         0L,
