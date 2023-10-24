@@ -60,7 +60,8 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
 
     getAbstractMessageProcessor().process(messageFrame, operationTracer);
 
-    verify(operationTracer).traceContextExit(messageFrame);
+    verify(operationTracer, times(1)).traceContextEnter(messageFrame);
+    verify(operationTracer, times(1)).traceContextExit(messageFrame);
   }
 
   @Test
