@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.processor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.evm.processor.AbstractMessageProcessorTest.ContextTracer.TRACE_TYPE.CONTEXT_ENTER;
+import static org.hyperledger.besu.evm.processor.AbstractMessageProcessorTest.ContextTracer.TRACE_TYPE.CONTEXT_RE_ENTER;
 import static org.hyperledger.besu.evm.processor.AbstractMessageProcessorTest.ContextTracer.TRACE_TYPE.CONTEXT_EXIT;
 import static org.hyperledger.besu.evm.processor.AbstractMessageProcessorTest.ContextTracer.TRACE_TYPE.POST_EXECUTION;
 import static org.hyperledger.besu.evm.processor.AbstractMessageProcessorTest.ContextTracer.TRACE_TYPE.PRE_EXECUTION;
@@ -29,6 +30,7 @@ import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.fluent.EVMExecutor;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation;
+import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -45,34 +47,31 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> {
-
   @Mock MessageFrame messageFrame;
   @Mock OperationTracer operationTracer;
   @Mock Deque<MessageFrame> messageFrameStack;
-  @Mock WorldUpdater worldUpdater;
 
   protected abstract T getAbstractMessageProcessor();
 
   @Test
-  void shouldTraceEnterAndExitForContext() {
+  void shouldTraceExitForContext() {
+    when(messageFrame.getWorldUpdater()).thenReturn(new ToyWorld());
     when(messageFrame.getState())
-        .thenReturn(MessageFrame.State.COMPLETED_SUCCESS, MessageFrame.State.COMPLETED_FAILED);
+        .thenReturn(MessageFrame.State.COMPLETED_SUCCESS);
     when(messageFrame.getMessageFrameStack()).thenReturn(messageFrameStack);
 
     getAbstractMessageProcessor().process(messageFrame, operationTracer);
 
-    verify(operationTracer).traceContextEnter(messageFrame);
     verify(operationTracer).traceContextExit(messageFrame);
   }
 
   @Test
-  void shouldTraceContextEvenIfContextFailed() {
+  void shouldTraceExitEvenIfContextFailed() {
     when(messageFrame.getState()).thenReturn(MessageFrame.State.COMPLETED_FAILED);
     when(messageFrame.getMessageFrameStack()).thenReturn(messageFrameStack);
 
     getAbstractMessageProcessor().process(messageFrame, operationTracer);
 
-    verify(operationTracer, times(1)).traceContextEnter(messageFrame);
     verify(operationTracer, times(1)).traceContextExit(messageFrame);
   }
 
@@ -141,7 +140,7 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
             POST_EXECUTION, // STATICCALL
             CONTEXT_ENTER, // STATICCALL
             CONTEXT_EXIT, // STATICCALL
-            CONTEXT_ENTER, // Re-entry in root context
+            CONTEXT_RE_ENTER, // Re-entry in root context
             PRE_EXECUTION, // PUSH1
             POST_EXECUTION, // PUSH1
             PRE_EXECUTION, // RETURN
@@ -157,6 +156,7 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
       PRE_EXECUTION,
       POST_EXECUTION,
       CONTEXT_ENTER,
+      CONTEXT_RE_ENTER,
       CONTEXT_EXIT
     }
 
@@ -176,6 +176,11 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
     @Override
     public void traceContextEnter(final MessageFrame frame) {
       traceHistory.add(TRACE_TYPE.CONTEXT_ENTER);
+    }
+
+    @Override
+    public void traceContextReEnter(final MessageFrame frame) {
+      traceHistory.add(CONTEXT_RE_ENTER);
     }
 
     @Override

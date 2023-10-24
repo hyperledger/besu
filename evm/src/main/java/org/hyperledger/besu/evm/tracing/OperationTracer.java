@@ -102,6 +102,14 @@ public interface OperationTracer {
    */
   default void traceContextEnter(final MessageFrame frame) {}
 
+
+  /**
+   * Trace the re-entry in a context from a child context
+   *
+   * @param frame the frame
+   */
+  default void traceContextReEnter(final MessageFrame frame) {}
+
   /**
    * Trace the exiting of a context
    *

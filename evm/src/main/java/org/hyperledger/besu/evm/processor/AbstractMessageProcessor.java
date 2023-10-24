@@ -185,7 +185,11 @@ public abstract class AbstractMessageProcessor {
    */
   public void process(final MessageFrame frame, final OperationTracer operationTracer) {
     if (operationTracer != null) {
-      operationTracer.traceContextEnter(frame);
+      if (frame.getState() == MessageFrame.State.NOT_STARTED) {
+        operationTracer.traceContextEnter(frame);
+      } else {
+        operationTracer.traceContextReEnter(frame);
+      }
     }
 
     if (frame.getState() == MessageFrame.State.NOT_STARTED) {
