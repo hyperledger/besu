@@ -22,11 +22,9 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
-import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
-import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
@@ -52,16 +50,8 @@ public class RollingImport {
         new RollingFileReader((i, c) -> Path.of(String.format(arg[0] + "-%04d.rdat", i)), false);
 
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
-    final CachedMerkleTrieLoader cachedMerkleTrieLoader =
-        new CachedMerkleTrieLoader(new NoOpMetricsSystem());
     final BonsaiWorldStateProvider archive =
-        new BonsaiWorldStateProvider(
-            provider,
-            null,
-            cachedMerkleTrieLoader,
-            new NoOpMetricsSystem(),
-            null,
-            TrieLogPruner.noOpTrieLogPruner());
+        InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive(null);
     final BonsaiWorldState bonsaiState =
         new BonsaiWorldState(
             archive, new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()));

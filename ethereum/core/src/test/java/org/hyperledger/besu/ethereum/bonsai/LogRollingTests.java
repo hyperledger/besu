@@ -22,11 +22,9 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
-import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -129,16 +127,7 @@ class LogRollingTests {
   @BeforeEach
   void createStorage() {
     provider = new InMemoryKeyValueStorageProvider();
-    final CachedMerkleTrieLoader cachedMerkleTrieLoader =
-        new CachedMerkleTrieLoader(new NoOpMetricsSystem());
-    archive =
-        new BonsaiWorldStateProvider(
-            provider,
-            blockchain,
-            cachedMerkleTrieLoader,
-            new NoOpMetricsSystem(),
-            null,
-            TrieLogPruner.noOpTrieLogPruner());
+    archive = InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive(blockchain);
     accountStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
     codeStorage = provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
@@ -150,16 +139,8 @@ class LogRollingTests {
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
 
     secondProvider = new InMemoryKeyValueStorageProvider();
-    final CachedMerkleTrieLoader secondOptimizedMerkleTrieLoader =
-        new CachedMerkleTrieLoader(new NoOpMetricsSystem());
     secondArchive =
-        new BonsaiWorldStateProvider(
-            secondProvider,
-            blockchain,
-            secondOptimizedMerkleTrieLoader,
-            new NoOpMetricsSystem(),
-            null,
-            TrieLogPruner.noOpTrieLogPruner());
+        InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive(blockchain);
     secondAccountStorage =
         secondProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
     secondCodeStorage =
