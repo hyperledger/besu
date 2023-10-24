@@ -306,7 +306,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final org.hyperledger.besu.cli.options.stable.TransactionPoolOptions
       stableTransactionPoolOptions = TransactionPoolOptions.create();
 
-  @CommandLine.ArgGroup(validate = false, heading = "@|bold Miner Options|@%n")
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold Block Builder Options|@%n")
   final MiningOptions miningOptions = MiningOptions.create();
 
   private final RunnerBuilder runnerBuilder;
@@ -1429,7 +1429,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
-      miningParameters = getMiningParameters();
 
       validateOptions();
       configure();
@@ -3434,6 +3433,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
+
+    builder.setPluginContext(besuComponent.getBesuPluginContext());
 
     return builder.build();
   }

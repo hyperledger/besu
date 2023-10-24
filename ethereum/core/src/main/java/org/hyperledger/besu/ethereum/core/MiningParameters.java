@@ -30,10 +30,8 @@ import org.immutables.value.Value;
 public abstract class MiningParameters {
   public static final MiningParameters MINING_DISABLED =
       ImmutableMiningParameters.builder()
-          .updatableInitValues(
-              ImmutableMiningParameters.UpdatableInitValues.builder()
-                  .isMiningEnabled(false)
-                  .build())
+          .mutableInitValues(
+              ImmutableMiningParameters.MutableInitValues.builder().isMiningEnabled(false).build())
           .build();
 
   public static final MiningParameters newDefault() {
@@ -41,74 +39,74 @@ public abstract class MiningParameters {
   }
 
   public boolean isMiningEnabled() {
-    return getUpdatableRuntimeValues().miningEnabled;
+    return getMutableRuntimeValues().miningEnabled;
   }
 
   public MiningParameters setMiningEnabled(final boolean miningEnabled) {
-    getUpdatableRuntimeValues().miningEnabled = miningEnabled;
+    getMutableRuntimeValues().miningEnabled = miningEnabled;
     return this;
   }
 
   public Bytes getExtraData() {
-    return getUpdatableRuntimeValues().extraData;
+    return getMutableRuntimeValues().extraData;
   }
 
   public MiningParameters setExtraData(final Bytes extraData) {
-    getUpdatableRuntimeValues().extraData = extraData;
+    getMutableRuntimeValues().extraData = extraData;
     return this;
   }
 
   public Wei getMinTransactionGasPrice() {
-    return getUpdatableRuntimeValues().minTransactionGasPrice;
+    return getMutableRuntimeValues().minTransactionGasPrice;
   }
 
   public MiningParameters setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
-    getUpdatableRuntimeValues().minTransactionGasPrice = minTransactionGasPrice;
+    getMutableRuntimeValues().minTransactionGasPrice = minTransactionGasPrice;
     return this;
   }
 
   public Wei getMinPriorityFeePerGas() {
-    return getUpdatableRuntimeValues().minPriorityFeePerGas;
+    return getMutableRuntimeValues().minPriorityFeePerGas;
   }
 
   public MiningParameters setMinPriorityFeePerGas(final Wei minPriorityFeePerGas) {
-    getUpdatableRuntimeValues().minPriorityFeePerGas = minPriorityFeePerGas;
+    getMutableRuntimeValues().minPriorityFeePerGas = minPriorityFeePerGas;
     return this;
   }
 
   public Optional<Address> getCoinbase() {
-    return getUpdatableRuntimeValues().coinbase;
+    return getMutableRuntimeValues().coinbase;
   }
 
   public MiningParameters setCoinbase(final Address coinbase) {
-    getUpdatableRuntimeValues().coinbase = Optional.of(coinbase);
+    getMutableRuntimeValues().coinbase = Optional.of(coinbase);
     return this;
   }
 
   public OptionalLong getTargetGasLimit() {
-    return getUpdatableRuntimeValues().targetGasLimit;
+    return getMutableRuntimeValues().targetGasLimit;
   }
 
   public MiningParameters setTargetGasLimit(final long targetGasLimit) {
-    getUpdatableRuntimeValues().targetGasLimit = OptionalLong.of(targetGasLimit);
+    getMutableRuntimeValues().targetGasLimit = OptionalLong.of(targetGasLimit);
     return this;
   }
 
   public double getMinBlockOccupancyRatio() {
-    return getUpdatableRuntimeValues().minBlockOccupancyRatio;
+    return getMutableRuntimeValues().minBlockOccupancyRatio;
   }
 
   public MiningParameters setMinBlockOccupancyRatio(final double minBlockOccupancyRatio) {
-    getUpdatableRuntimeValues().minBlockOccupancyRatio = minBlockOccupancyRatio;
+    getMutableRuntimeValues().minBlockOccupancyRatio = minBlockOccupancyRatio;
     return this;
   }
 
   public Optional<Iterable<Long>> getNonceGenerator() {
-    return getUpdatableRuntimeValues().nonceGenerator;
+    return getMutableRuntimeValues().nonceGenerator;
   }
 
   public MiningParameters setNonceGenerator(final Iterable<Long> nonceGenerator) {
-    getUpdatableRuntimeValues().nonceGenerator = Optional.of(nonceGenerator);
+    getMutableRuntimeValues().nonceGenerator = Optional.of(nonceGenerator);
     return this;
   }
 
@@ -128,8 +126,8 @@ public abstract class MiningParameters {
   }
 
   @Value.Default
-  protected UpdatableRuntimeValues getUpdatableRuntimeValues() {
-    return new UpdatableRuntimeValues(getUpdatableInitValues());
+  protected MutableRuntimeValues getMutableRuntimeValues() {
+    return new MutableRuntimeValues(getMutableInitValues());
   }
 
   @Value.Default
@@ -138,18 +136,18 @@ public abstract class MiningParameters {
   }
 
   @Value.Default
-  public UpdatableInitValues getUpdatableInitValues() {
-    return UpdatableInitValues.DEFAULT;
+  public MutableInitValues getMutableInitValues() {
+    return MutableInitValues.DEFAULT;
   }
 
   @Value.Immutable
-  public interface UpdatableInitValues {
+  public interface MutableInitValues {
     Bytes DEFAULT_EXTRA_DATA = Bytes.EMPTY;
     Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
     Wei DEFAULT_MIN_PRIORITY_FEE_PER_GAS = Wei.ZERO;
     double DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
 
-    UpdatableInitValues DEFAULT = ImmutableMiningParameters.UpdatableInitValues.builder().build();
+    MutableInitValues DEFAULT = ImmutableMiningParameters.MutableInitValues.builder().build();
 
     @Value.Default
     default boolean isMiningEnabled() {
@@ -183,7 +181,7 @@ public abstract class MiningParameters {
     Optional<Iterable<Long>> nonceGenerator();
   }
 
-  static class UpdatableRuntimeValues {
+  static class MutableRuntimeValues {
     private volatile boolean miningEnabled;
     private volatile Bytes extraData;
     private volatile Wei minTransactionGasPrice;
@@ -193,7 +191,7 @@ public abstract class MiningParameters {
     private volatile OptionalLong targetGasLimit;
     private volatile Optional<Iterable<Long>> nonceGenerator;
 
-    private UpdatableRuntimeValues(final UpdatableInitValues initValues) {
+    private MutableRuntimeValues(final MutableInitValues initValues) {
       miningEnabled = initValues.isMiningEnabled();
       extraData = initValues.getExtraData();
       minTransactionGasPrice = initValues.getMinTransactionGasPrice();
@@ -208,7 +206,7 @@ public abstract class MiningParameters {
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-      final UpdatableRuntimeValues that = (UpdatableRuntimeValues) o;
+      final MutableRuntimeValues that = (MutableRuntimeValues) o;
       return miningEnabled == that.miningEnabled
           && Double.compare(minBlockOccupancyRatio, that.minBlockOccupancyRatio) == 0
           && Objects.equals(extraData, that.extraData)

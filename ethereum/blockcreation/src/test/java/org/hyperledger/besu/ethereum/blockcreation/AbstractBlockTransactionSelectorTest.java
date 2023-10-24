@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -151,10 +152,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
     miningParameters =
         ImmutableMiningParameters.builder()
-            .updatableInitValues(
-                ImmutableMiningParameters.UpdatableInitValues.builder()
-                    .minTransactionGasPrice(Wei.ONE)
-                    .build())
+            .mutableInitValues(MutableInitValues.builder().minTransactionGasPrice(Wei.ONE).build())
             .build();
 
     transactionPool = createTransactionPool();

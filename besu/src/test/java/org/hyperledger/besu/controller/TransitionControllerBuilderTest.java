@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.UpdatableInitValues;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -122,7 +122,7 @@ public class TransitionControllerBuilderTest {
   public void assertPowMiningPreMerge() {
     miningParameters =
         ImmutableMiningParameters.builder()
-            .updatableInitValues(UpdatableInitValues.builder().isMiningEnabled(true).build())
+            .mutableInitValues(MutableInitValues.builder().isMiningEnabled(true).build())
             .build();
     var transCoordinator = buildTransitionCoordinator(powBuilder, postMergeBuilder);
     assertThat(transCoordinator.isMiningBeforeMerge()).isTrue();
