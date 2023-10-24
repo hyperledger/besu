@@ -49,6 +49,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
@@ -81,7 +83,6 @@ import java.time.Clock;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -385,16 +386,24 @@ abstract class AbstractBlockCreatorTest {
             null);
     transactionPool.setEnabled();
 
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder()
+            .mutableInitValues(
+                MutableInitValues.builder()
+                    .extraData(Bytes.fromHexString("deadbeef"))
+                    .minTransactionGasPrice(Wei.ONE)
+                    .minBlockOccupancyRatio(0d)
+                    .coinbase(Address.ZERO)
+                    .build())
+            .build();
+
     return new TestBlockCreator(
-        Address.ZERO,
+        miningParameters,
         __ -> Address.ZERO,
-        () -> Optional.of(30_000_000L),
         __ -> Bytes.fromHexString("deadbeef"),
         transactionPool,
         executionContextTestFixture.getProtocolContext(),
         executionContextTestFixture.getProtocolSchedule(),
-        Wei.of(1L),
-        0d,
         blockchain.getChainHeadHeader(),
         depositContractAddress);
   }
@@ -402,27 +411,21 @@ abstract class AbstractBlockCreatorTest {
   static class TestBlockCreator extends AbstractBlockCreator {
 
     protected TestBlockCreator(
-        final Address coinbase,
+        final MiningParameters miningParameters,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-        final Supplier<Optional<Long>> targetGasLimitSupplier,
         final ExtraDataCalculator extraDataCalculator,
         final TransactionPool transactionPool,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
-        final Wei minTransactionGasPrice,
-        final Double minBlockOccupancyRatio,
         final BlockHeader parentHeader,
         final Optional<Address> depositContractAddress) {
       super(
-          coinbase,
+          miningParameters,
           miningBeneficiaryCalculator,
-          targetGasLimitSupplier,
           extraDataCalculator,
           transactionPool,
           protocolContext,
           protocolSchedule,
-          minTransactionGasPrice,
-          minBlockOccupancyRatio,
           parentHeader,
           depositContractAddress);
     }
