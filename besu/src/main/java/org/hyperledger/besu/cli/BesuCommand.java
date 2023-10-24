@@ -306,7 +306,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final org.hyperledger.besu.cli.options.stable.TransactionPoolOptions
       stableTransactionPoolOptions = TransactionPoolOptions.create();
 
-  @CommandLine.ArgGroup(validate = false, heading = "@|bold Miner Options|@%n")
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold Block Builder Options|@%n")
   final MiningOptions miningOptions = MiningOptions.create();
 
   private final RunnerBuilder runnerBuilder;
