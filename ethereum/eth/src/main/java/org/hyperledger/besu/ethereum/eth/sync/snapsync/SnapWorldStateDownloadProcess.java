@@ -231,6 +231,22 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
               "step",
               "action");
 
+      /*
+      The logic and intercommunication of different pipelines can be summarized as follows:
+
+      1. Account Data Pipeline (fetchAccountDataPipeline): This process starts with downloading the leaves of the account tree in ranges, with multiple ranges being processed simultaneously.
+         If the downloaded accounts are smart contracts, tasks are created in the storage pipeline to download the storage tree of the smart contract, and in the code download pipeline for the smart contract.
+
+      2. Storage Data Pipeline (fetchStorageDataPipeline): Running parallel to the account data pipeline, this pipeline downloads the storage of smart contracts.
+          If all slots cannot be downloaded at once, tasks are created in the fetchLargeStorageDataPipeline to download the storage by range, allowing parallelization of large account downloads.
+
+      3. Code Data Pipeline (fetchCodePipeline): This pipeline, running concurrently with the account and storage data pipelines, is responsible for downloading the code of the smart contracts.
+
+      4. Large Storage Data Pipeline (fetchLargeStorageDataPipeline): This pipeline is used when the storage data for a smart contract is too large to be downloaded at once.
+          It enables the storage data to be downloaded in ranges, similar to the account data.
+
+      5. Healing Phase: Initiated after all other pipelines have completed their tasks, this phase ensures the integrity and completeness of the downloaded data.
+      */
       final Pipeline<Task<SnapDataRequest>> completionPipeline =
           PipelineBuilder.<Task<SnapDataRequest>>createPipeline(
                   "requestDataAvailable", bufferCapacity, outputCounter, true, "node_data_request")
