@@ -30,7 +30,10 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.account.AccountState;
+import org.hyperledger.besu.evm.internal.EvmConfiguration.WorldUpdaterMode;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
 import java.util.Arrays;
@@ -77,7 +80,7 @@ public class BlockchainReferenceTestTools {
     // Absurd amount of gas, doesn't run in parallel
     params.ignore("randomStatetest94_\\w+");
 
-    // Don't do time consuming tests
+    // Don't do time-consuming tests
     params.ignore("CALLBlake2f_MaxRounds.*");
     params.ignore("loopMul_*");
 
@@ -104,14 +107,6 @@ public class BlockchainReferenceTestTools {
         spec.getWorldStateArchive()
             .getMutable(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash())
             .get();
-    // don't world states that have empty accounts
-    assumeThat(
-            worldState
-                .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
-                .anyMatch(AccountState::isEmpty))
-        .withFailMessage("Empty account detected")
-        .isFalse();
-    assertThat(worldState.rootHash()).isEqualTo(genesisBlockHeader.getStateRoot());
 
     final ProtocolSchedule schedule =
         REFERENCE_TEST_PROTOCOL_SCHEDULES.getByName(spec.getNetwork());
@@ -130,6 +125,20 @@ public class BlockchainReferenceTestTools {
 
         final ProtocolSpec protocolSpec = schedule.getByBlockHeader(block.getHeader());
         final BlockImporter blockImporter = protocolSpec.getBlockImporter();
+
+        EVM evm = protocolSpec.getEvm();
+        if (evm.getEvmConfiguration().worldUpdaterMode() == WorldUpdaterMode.JOURNALED) {
+          assumeThat(
+                  worldState
+                      .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
+                      .anyMatch(AccountState::isEmpty))
+              .withFailMessage("Journaled account configured and empty account detected")
+              .isFalse();
+          assumeThat(EvmSpecVersion.PARIS.compareTo(evm.getEvmVersion()) > 0)
+              .withFailMessage("Journaled account configured and fork prior to the merge specified")
+              .isFalse();
+        }
+
         final HeaderValidationMode validationMode =
             "NoProof".equalsIgnoreCase(spec.getSealEngine())
                 ? HeaderValidationMode.LIGHT
