@@ -161,10 +161,12 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     if (trieLogLayer.isPresent()) {
       return Optional.of(
           new BonsaiWorldState(
-              cachedWorldStorageManager.getArchive(),
               new BonsaiWorldStateLayerStorage(
                   new BonsaiWorldStateTrieLogStorage(
-                      blockchain, trieLogLayer.get(), persistedState.getWorldStateStorage()))));
+                      blockchain, trieLogLayer.get(), persistedState.getWorldStateStorage())),
+              Optional.empty(),
+              getCachedWorldStorageManager(),
+              trieLogManager));
     } else {
       LOG.warn("State cannot be found ({})", blockHeader.getBlockHash());
       return Optional.empty();

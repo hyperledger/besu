@@ -18,12 +18,13 @@ package org.hyperledger.besu.ethereum.bonsai.storage;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.bonsai.storage.flat.FullFlatDbStrategy;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -53,7 +54,8 @@ public class BonsaiWorldStateTrieLogStorage extends BonsaiWorldStateKeyValueStor
     super(
         FlatDbMode.FULL,
         new FullFlatDbStrategy(bonsaiWorldStateKeyValueStorage.metricsSystem),
-        new TrieLogKeyValueStorage(blockchain, trieLog),
+        new TrieLogKeyValueStorage(
+            blockchain, trieLog, bonsaiWorldStateKeyValueStorage.composedWorldStateStorage),
         bonsaiWorldStateKeyValueStorage.trieLogStorage,
         bonsaiWorldStateKeyValueStorage.metricsSystem);
   }
@@ -63,48 +65,72 @@ public class BonsaiWorldStateTrieLogStorage extends BonsaiWorldStateKeyValueStor
     private final Blockchain blockchain;
 
     private final TrieLog trieLog;
+    private final SegmentedKeyValueStorage composedWorldStateStorage;
 
     private final Map<Hash, Address> addressMapping;
 
-    public TrieLogKeyValueStorage(final Blockchain blockchain, final TrieLog trieLog) {
+    public TrieLogKeyValueStorage(
+        final Blockchain blockchain,
+        final TrieLog trieLog,
+        final SegmentedKeyValueStorage composedWorldStateStorage) {
       this.blockchain = blockchain;
       this.trieLog = trieLog;
+      this.composedWorldStateStorage = composedWorldStateStorage;
       this.addressMapping = new HashMap<>();
       this.trieLog
           .getAccountChanges()
           .forEach(
-              (address, accountValueLogTuple) -> addressMapping.put(Hash.hash(address), address));
+              (address, accountValueLogTuple) -> {
+                addressMapping.put(Hash.hash(address), address);
+              });
+      this.trieLog
+          .getStorageChanges()
+          .forEach(
+              (address, accountValueLogTuple) -> {
+                addressMapping.put(Hash.hash(address), address);
+              });
+      this.trieLog
+          .getCodeChanges()
+          .forEach(
+              (address, accountValueLogTuple) -> {
+                addressMapping.put(Hash.hash(address), address);
+              });
     }
 
     @Override
     public Optional<byte[]> get(final SegmentIdentifier segment, final byte[] key)
         throws StorageException {
       if (segment.equals(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE)) {
-        final Hash accountHash = Hash.wrap(Bytes32.wrap(key, Hash.SIZE));
+        final Hash accountHash = Hash.wrap(Bytes32.wrap(key));
         return trieLog
             .getPriorAccount(addressMapping.get(accountHash))
-            .map(BonsaiAccount.class::cast)
-            .map(BonsaiAccount::serializeAccount)
+            .map(StateTrieAccountValue.class::cast)
+            .map(account -> RLP.encode(account::writeTo))
             .map(Bytes::toArrayUnsafe);
       } else if (segment.equals(KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE)) {
-        final Hash accountHash = Hash.wrap(Bytes32.wrap(key, Hash.SIZE));
+        final Hash accountHash = Hash.wrap(Bytes32.wrap(key, 0));
         final Hash slotHash = Hash.wrap(Bytes32.wrap(key, Hash.SIZE));
         return trieLog
             .getPriorStorageByStorageSlotKey(
                 addressMapping.get(accountHash), new StorageSlotKey(slotHash, Optional.empty()))
             .map(Bytes::toArrayUnsafe);
       } else if (segment.equals(KeyValueSegmentIdentifier.CODE_STORAGE)) {
-        final Hash accountHash = Hash.wrap(Bytes32.wrap(key, Hash.SIZE));
-        return trieLog.getPriorCode(addressMapping.get(accountHash)).map(Bytes::toArrayUnsafe);
+        return composedWorldStateStorage.get(segment, key);
       } else if (segment.equals(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE)) {
         if (Arrays.equals(key, BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY)) {
           return blockchain
               .getBlockHeader(trieLog.getBlockHash())
+              .map(BlockHeader::getParentHash)
+              .flatMap(blockchain::getBlockHeader)
               .map(BlockHeader::getStateRoot)
               .map(Bytes::toArrayUnsafe);
         } else if (Arrays.equals(key, BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY)) {
-          return Optional.of(trieLog.getBlockHash()).map(Bytes::toArrayUnsafe);
+          return blockchain
+              .getBlockHeader(trieLog.getBlockHash())
+              .map(BlockHeader::getParentHash)
+              .map(Bytes::toArrayUnsafe);
         } else {
+          new Exception().printStackTrace(System.out);
           return Optional.empty();
         }
       }

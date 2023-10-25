@@ -69,7 +69,7 @@ public class BonsaiWorldState
 
   protected BonsaiWorldStateKeyValueStorage worldStateStorage;
 
-  protected final CachedMerkleTrieLoader cachedMerkleTrieLoader;
+  protected final Optional<CachedMerkleTrieLoader> maybeCachedMerkleTrieLoader;
   protected final CachedWorldStorageManager cachedWorldStorageManager;
   protected final TrieLogManager trieLogManager;
   private BonsaiWorldStateUpdateAccumulator accumulator;
@@ -83,14 +83,14 @@ public class BonsaiWorldState
       final BonsaiWorldStateKeyValueStorage worldStateStorage) {
     this(
         worldStateStorage,
-        archive.getCachedMerkleTrieLoader(),
+        Optional.of(archive.getCachedMerkleTrieLoader()),
         archive.getCachedWorldStorageManager(),
         archive.getTrieLogManager());
   }
 
-  protected BonsaiWorldState(
+  public BonsaiWorldState(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
-      final CachedMerkleTrieLoader cachedMerkleTrieLoader,
+      final Optional<CachedMerkleTrieLoader> maybeCachedMerkleTrieLoader,
       final CachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager) {
     this.worldStateStorage = worldStateStorage;
@@ -103,11 +103,16 @@ public class BonsaiWorldState
         new BonsaiWorldStateUpdateAccumulator(
             this,
             (addr, value) ->
-                cachedMerkleTrieLoader.preLoadAccount(
-                    getWorldStateStorage(), worldStateRootHash, addr),
+                maybeCachedMerkleTrieLoader.ifPresent(
+                    cachedMerkleTrieLoader ->
+                        cachedMerkleTrieLoader.preLoadAccount(
+                            getWorldStateStorage(), worldStateRootHash, addr)),
             (addr, value) ->
-                cachedMerkleTrieLoader.preLoadStorageSlot(getWorldStateStorage(), addr, value));
-    this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
+                maybeCachedMerkleTrieLoader.ifPresent(
+                    cachedMerkleTrieLoader ->
+                        cachedMerkleTrieLoader.preLoadStorageSlot(
+                            getWorldStateStorage(), addr, value)));
+    this.maybeCachedMerkleTrieLoader = maybeCachedMerkleTrieLoader;
     this.cachedWorldStorageManager = cachedWorldStorageManager;
     this.trieLogManager = trieLogManager;
   }
@@ -195,7 +200,10 @@ public class BonsaiWorldState
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         createTrie(
             (location, hash) ->
-                cachedMerkleTrieLoader.getAccountStateTrieNode(worldStateStorage, location, hash),
+                maybeCachedMerkleTrieLoader.flatMap(
+                    cachedMerkleTrieLoader ->
+                        cachedMerkleTrieLoader.getAccountStateTrieNode(
+                            worldStateStorage, location, hash)),
             worldStateRootHash);
 
     // for manicured tries and composting, collect branches here (not implemented)
@@ -281,8 +289,10 @@ public class BonsaiWorldState
       final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
           createTrie(
               (location, key) ->
-                  cachedMerkleTrieLoader.getAccountStorageTrieNode(
-                      worldStateStorage, updatedAddressHash, location, key),
+                  maybeCachedMerkleTrieLoader.flatMap(
+                      cachedWorldStorageManager ->
+                          cachedWorldStorageManager.getAccountStorageTrieNode(
+                              worldStateStorage, updatedAddressHash, location, key)),
               storageRoot);
 
       // for manicured tries and composting, collect branches here (not implemented)

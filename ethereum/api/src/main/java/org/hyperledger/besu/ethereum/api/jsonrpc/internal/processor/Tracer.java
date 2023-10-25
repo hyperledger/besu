@@ -44,7 +44,7 @@ public class Tracer {
       final Optional<BlockHeader> blockHeader,
       final Function<TraceableState, ? extends Optional<TRACE>> mapper) {
     return blockHeader
-        .map(BlockHeader::getParentHash)
+        .map(BlockHeader::getHash)
         .flatMap(
             parentHash ->
                 blockchainQueries.getAndMapWorldState(
