@@ -19,9 +19,11 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.bonsai.storage.flat.FullFlatDbStrategy;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -47,8 +49,8 @@ public class BonsaiWorldStateTrieLogStorage extends BonsaiWorldStateKeyValueStor
       final TrieLog trieLog,
       final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage) {
     super(
-        bonsaiWorldStateKeyValueStorage.flatDbMode,
-        bonsaiWorldStateKeyValueStorage.flatDbStrategy,
+        FlatDbMode.FULL,
+        new FullFlatDbStrategy(bonsaiWorldStateKeyValueStorage.metricsSystem),
         new TrieLogKeyValueStorage(blockchain, trieLog),
         bonsaiWorldStateKeyValueStorage.trieLogStorage,
         bonsaiWorldStateKeyValueStorage.metricsSystem);
