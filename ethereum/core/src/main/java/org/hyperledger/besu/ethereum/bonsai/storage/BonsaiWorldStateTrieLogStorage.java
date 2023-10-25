@@ -83,8 +83,6 @@ public class BonsaiWorldStateTrieLogStorage extends BonsaiWorldStateKeyValueStor
         return trieLog
             .getPriorStorageByStorageSlotKey(
                 address, new StorageSlotKey(slotHash, Optional.empty()))
-            .map(BonsaiAccount.class::cast)
-            .map(BonsaiAccount::serializeAccount)
             .map(Bytes::toArrayUnsafe);
       } else if (segment.equals(KeyValueSegmentIdentifier.CODE_STORAGE)) {
         final Address address = Address.wrap(Bytes.wrap(key, 0, Address.SIZE));
