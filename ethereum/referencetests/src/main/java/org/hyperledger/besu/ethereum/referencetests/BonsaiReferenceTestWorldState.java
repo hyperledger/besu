@@ -49,8 +49,6 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   private final BonsaiReferenceTestWorldStateStorage refTestStorage;
   private final BonsaiPreImageProxy preImageProxy;
 
-  private boolean disableRootHashVerification;
-
   protected BonsaiReferenceTestWorldState(
       final BonsaiReferenceTestWorldStateStorage worldStateStorage,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
@@ -78,20 +76,15 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   }
 
   /**
-   * If the supplied header has a non-zero state root, verify. Else we assume that stateroot is an
-   * output instead of an input for this reference test and we bypass the state root check.
-   *
-   * <p>Besu reference-test style test cases should supply a stateroot to verify to prevent bonsai
-   * regressions.
+   * For reference tests world state root validation is handled in the harness, this stubs out the
+   * behavior to always pass.
    *
    * @param calculatedStateRoot state root calculated during bonsai persist step.
    * @param header supplied reference test block header.
    */
   @Override
   protected void verifyWorldStateRoot(final Hash calculatedStateRoot, final BlockHeader header) {
-    if (!disableRootHashVerification) {
-      super.verifyWorldStateRoot(calculatedStateRoot, header);
-    }
+    // The test harness validates the root hash, no need to validate in-line for reference test
   }
 
   @JsonCreator
@@ -127,10 +120,6 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     return this.refTestStorage.streamAccounts(this, startKeyHash, limit);
   }
 
-  public void disableRootHashVerification() {
-    disableRootHashVerification = true;
-  }
-
   static class NoOpTrieLogManager implements TrieLogManager {
     private final Subscribers<TrieLogEvent.TrieLogObserver> trieLogObservers = Subscribers.create();
     private final TrieLogFactory trieLogFactory = new TrieLogFactoryImpl();
@@ -150,7 +139,9 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     public void addCachedLayer(
         final BlockHeader blockHeader,
         final Hash worldStateRootHash,
-        final BonsaiWorldState forWorldState) {}
+        final BonsaiWorldState forWorldState) {
+      // reference tests do not cache layers
+    }
 
     @Override
     public boolean containWorldStateStorage(final Hash blockHash) {
@@ -179,7 +170,9 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     }
 
     @Override
-    public void reset() {}
+    public void reset() {
+      // reference test world states are not re-used
+    }
 
     @Override
     public Optional<? extends TrieLog> getTrieLogLayer(final Hash blockHash) {
