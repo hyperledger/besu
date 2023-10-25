@@ -174,7 +174,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void callingBlockImportSubCommandHelpMustDisplayUsage() {
     parseCommand(BLOCK_SUBCOMMAND_NAME, BLOCK_IMPORT_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString(UTF_8)).isEqualTo(EXPECTED_BLOCK_IMPORT_USAGE);
+    assertThat(commandOutput.toString(UTF_8))
+        .isEqualToNormalizingNewlines(EXPECTED_BLOCK_IMPORT_USAGE);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 

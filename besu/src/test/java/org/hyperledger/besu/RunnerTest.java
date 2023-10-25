@@ -448,7 +448,7 @@ public final class RunnerTest {
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .dataDirectory(dataDir)
         .networkId(NETWORK_ID)
-        .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
+        .miningParameters(MiningParameters.newDefault())
         .nodeKey(nodeKey)
         .storageProvider(storageProvider)
         .metricsSystem(metricsSystem)
