@@ -634,6 +634,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         trieLogPrunerConfiguration.getTrieLogPruningEnabled()
             ? new TrieLogPruner((BonsaiWorldStateKeyValueStorage) worldStateStorage, blockchain)
             : TrieLogPruner.noOpTrieLogPruner();
+    trieLogPruner.initialise();
 
     final WorldStateArchive worldStateArchive =
         createWorldStateArchive(
