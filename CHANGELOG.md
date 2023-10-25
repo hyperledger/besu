@@ -5,6 +5,7 @@
 ### Deprecations
 
 ### Additions and Improvements
+- TraceService: Better error handling for internal errors in TransactionProcessor [#6086](https://github.com/hyperledger/besu/pull/6086)
 
 ### Bug Fixes
 
