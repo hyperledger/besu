@@ -15,7 +15,9 @@
 package org.hyperledger.besu.ethereum.blockcreation.txselection;
 
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.INTERNAL_ERROR;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVALUATION_TIMEOUT;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -96,9 +98,10 @@ public class BlockTransactionSelector {
   private final PluginTransactionSelector pluginTransactionSelector;
   private final OperationTracer pluginOperationTracer;
   private final EthScheduler ethScheduler;
-  private final AtomicBoolean isTimeout = new AtomicBoolean(false);
+  private final AtomicBoolean isBlockTimeout = new AtomicBoolean(false);
+  private final AtomicBoolean isTxTimeout = new AtomicBoolean(false);
   private final long txsSelectionMaxTime;
-  private final long txProcessingMaxTime;
+  private final long txEvaluationMaxTime;
   private WorldUpdater blockWorldStateUpdater;
 
   public BlockTransactionSelector(
@@ -141,7 +144,7 @@ public class BlockTransactionSelector {
     pluginOperationTracer = pluginTransactionSelector.getOperationTracer();
     blockWorldStateUpdater = worldState.updater();
     txsSelectionMaxTime = miningParameters.getUnstable().getTxsSelectionMaxTime();
-    txProcessingMaxTime = miningParameters.getUnstable().getTxsSelectionPerTxMaxTime();
+    txEvaluationMaxTime = miningParameters.getUnstable().getTxsSelectionPerTxMaxTime();
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(
@@ -176,24 +179,24 @@ public class BlockTransactionSelector {
   }
 
   private void timeLimitedSelection() {
-    final var txSelection =
+    final var selectionFuture =
         ethScheduler.scheduleBlockCreationTask(
             () ->
                 blockSelectionContext
                     .transactionPool()
-                    .selectTransactions(this::evaluateTransaction));
+                    .selectTransactions(this::timeLimitedEvaluateTransaction));
 
     try {
-      txSelection.get(txsSelectionMaxTime, TimeUnit.MILLISECONDS);
+      selectionFuture.get(txsSelectionMaxTime, TimeUnit.MILLISECONDS);
     } catch (InterruptedException | ExecutionException e) {
       if (isCancelled.get()) {
-        throw new CancellationException("Cancelled during transaction selection");
+        throw new CancellationException("Cancelled during transactions selection");
       }
-      LOG.warn("Error during block transaction selection", e);
+      LOG.warn("Error during block transactions selection", e);
     } catch (TimeoutException e) {
       // synchronize since we want to be sure that there is no concurrent state update
-      synchronized (isTimeout) {
-        isTimeout.set(true);
+      synchronized (isBlockTimeout) {
+        isBlockTimeout.set(true);
       }
       LOG.warn(
           "Interrupting transactions selection since it is taking more than the max configured time of "
@@ -218,6 +221,38 @@ public class BlockTransactionSelector {
     return transactionSelectionResults;
   }
 
+  private TransactionSelectionResult timeLimitedEvaluateTransaction(
+      final PendingTransaction pendingTransaction) {
+    final var evaluationFuture =
+        ethScheduler.scheduleBlockCreationTask(() -> evaluateTransaction(pendingTransaction));
+    try {
+      return evaluationFuture.get(txEvaluationMaxTime, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException | ExecutionException e) {
+      if (isCancelled.get()) {
+        throw new CancellationException("Cancelled during transaction evaluation");
+      }
+      LOG.warn(
+          "Error during transaction evaluation of tx with hash: "
+              + pendingTransaction.getHash()
+              + ", removing it from the pool",
+          e);
+      return INTERNAL_ERROR;
+    } catch (TimeoutException e) {
+      // synchronize since we want to be sure that there is no concurrent state update
+      synchronized (isTxTimeout) {
+        isTxTimeout.set(true);
+      }
+      LOG.warn(
+          "Interrupting transaction evaluation since it is taking more than the max configured time of "
+              + txEvaluationMaxTime
+              + "ms. Tx with hash: "
+              + pendingTransaction.getHash()
+              + " will be removed from the pool",
+          e);
+      return TX_EVALUATION_TIMEOUT;
+    }
+  }
+
   /**
    * Passed into the PendingTransactions, and is called on each transaction until sufficient
    * transactions are found which fill a block worth of gas. This function will continue to be
@@ -239,16 +274,23 @@ public class BlockTransactionSelector {
 
     final WorldUpdater txWorldStateUpdater = blockWorldStateUpdater.updater();
     final TransactionProcessingResult processingResult =
-        timeLimitedProcessTransaction(pendingTransaction, txWorldStateUpdater);
+        processTransaction(pendingTransaction, txWorldStateUpdater);
 
     var postProcessingSelectionResult =
         evaluatePostProcessing(pendingTransaction, processingResult);
 
-    if (postProcessingSelectionResult.selected()) {
-      return handleTransactionSelected(pendingTransaction, processingResult, txWorldStateUpdater);
+    synchronized (isTxTimeout) {
+      if (isTxTimeout.get()) {
+        isTxTimeout.set(false);
+        return handleTransactionNotSelected(
+            pendingTransaction, TX_EVALUATION_TIMEOUT, txWorldStateUpdater);
+      }
+      if (postProcessingSelectionResult.selected()) {
+        return handleTransactionSelected(pendingTransaction, processingResult, txWorldStateUpdater);
+      }
+      return handleTransactionNotSelected(
+          pendingTransaction, postProcessingSelectionResult, txWorldStateUpdater);
     }
-    return handleTransactionNotSelected(
-        pendingTransaction, postProcessingSelectionResult, txWorldStateUpdater);
   }
 
   /**
@@ -298,32 +340,6 @@ public class BlockTransactionSelector {
     }
     return pluginTransactionSelector.evaluateTransactionPostProcessing(
         pendingTransaction, processingResult);
-  }
-
-  private TransactionProcessingResult timeLimitedProcessTransaction(
-          final PendingTransaction pendingTransaction, final WorldUpdater worldStateUpdater) {
-    final var txProcess =
-            ethScheduler.scheduleBlockCreationTask(
-                    () -> processTransaction(pendingTransaction, worldStateUpdater));
-
-    try {
-      return txProcess.get(txProcessingMaxTime, TimeUnit.MILLISECONDS);
-    } catch (InterruptedException | ExecutionException e) {
-      if (isCancelled.get()) {
-        throw new CancellationException("Cancelled during transaction selection");
-      }
-      LOG.warn("Error during transaction processing", e);
-    } catch (TimeoutException e) {
-      synchronized (isTimeout) {
-        isTimeout.set(true);
-      }
-      LOG.warn(
-              "Interrupting transaction process since it is taking more than the max configured time of "
-                      + txProcessingMaxTime
-                      + "ms",
-              e);
-      return
-    }
   }
 
   /**
@@ -378,8 +394,8 @@ public class BlockTransactionSelector {
     // only add this tx to the selected set if it is not too late,
     // this need to be done synchronously to avoid that a concurrent timeout
     // could start packing a block while we are updating the state here
-    synchronized (isTimeout) {
-      if (!isTimeout.get()) {
+    synchronized (isBlockTimeout) {
+      if (!isBlockTimeout.get()) {
         txWorldStateUpdater.commit();
         blockWorldStateUpdater.commit();
         final TransactionReceipt receipt =

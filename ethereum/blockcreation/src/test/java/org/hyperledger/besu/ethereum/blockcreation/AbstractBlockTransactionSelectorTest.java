@@ -141,6 +141,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected EthContext ethContext;
 
   @BeforeEach
+  @SuppressWarnings("unchecked")
   public void setup() {
     genesisConfigFile = getGenesisConfigFile();
     protocolSchedule = createProtocolSchedule();
@@ -169,6 +170,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
     when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
     when(ethScheduler.scheduleBlockCreationTask(any(Runnable.class)))
         .thenAnswer(invocation -> CompletableFuture.runAsync(invocation.getArgument(0)));
+    when(ethScheduler.scheduleBlockCreationTask(any(Supplier.class)))
+        .thenAnswer(invocation -> CompletableFuture.supplyAsync(invocation.getArgument(0)));
   }
 
   protected abstract GenesisConfigFile getGenesisConfigFile();

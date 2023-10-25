@@ -174,11 +174,11 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
     private Long txsSelectionMaxTime = DEFAULT_TXS_SELECTION_MAX_TIME;
 
     @CommandLine.Option(
-            hidden = true,
-            names = {"--Xtxs-selection-per-tx-max-time"},
-            description =
-                    "Specifies the maximum time, in milliseconds, that could be spent selecting a single transaction to be included in the block."
-                            + " Must be positive and ≤ the value of --Xtxs-selection-max-time option (default: ${DEFAULT-VALUE} milliseconds)")
+        hidden = true,
+        names = {"--Xtxs-selection-per-tx-max-time"},
+        description =
+            "Specifies the maximum time, in milliseconds, that could be spent selecting a single transaction to be included in the block."
+                + " Must be positive and ≤ the value of --Xtxs-selection-max-time option (default: ${DEFAULT-VALUE} milliseconds)")
     private Long txsSelectionPerTxMaxTime = DEFAULT_TXS_SELECTION_PER_TX_MAX_TIME;
   }
 
@@ -268,10 +268,12 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
     }
 
     if (unstableOptions.txsSelectionPerTxMaxTime <= 0
-            || unstableOptions.txsSelectionPerTxMaxTime > unstableOptions.txsSelectionMaxTime) {
+        || unstableOptions.txsSelectionPerTxMaxTime > unstableOptions.txsSelectionMaxTime) {
       throw new ParameterException(
-              commandLine,
-              "--Xtxs-selection-max-time must be positive and ≤ " + unstableOptions.txsSelectionMaxTime + " (the value of --Xtxs-selection-max-time option)");
+          commandLine,
+          "--Xtxs-selection-max-time must be positive and ≤ "
+              + unstableOptions.txsSelectionMaxTime
+              + " (the value of --Xtxs-selection-max-time option)");
     }
   }
 
@@ -301,7 +303,8 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
         miningParameters.getUnstable().getPosBlockCreationRepetitionMinDuration();
     miningOptions.unstableOptions.txsSelectionMaxTime =
         miningParameters.getUnstable().getTxsSelectionMaxTime();
-    miningOptions.unstableOptions.txsSelectionPerTxMaxTime = miningParameters.getUnstable().getTxsSelectionPerTxMaxTime();
+    miningOptions.unstableOptions.txsSelectionPerTxMaxTime =
+        miningParameters.getUnstable().getTxsSelectionPerTxMaxTime();
 
     miningParameters.getCoinbase().ifPresent(coinbase -> miningOptions.coinbase = coinbase);
     miningParameters.getTargetGasLimit().ifPresent(tgl -> miningOptions.targetGasLimit = tgl);
@@ -342,7 +345,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
                     .posBlockCreationRepetitionMinDuration(
                         unstableOptions.posBlockCreationRepetitionMinDuration)
                     .txsSelectionMaxTime(unstableOptions.txsSelectionMaxTime)
-                        .txsSelectionPerTxMaxTime(unstableOptions.txsSelectionPerTxMaxTime)
+                    .txsSelectionPerTxMaxTime(unstableOptions.txsSelectionPerTxMaxTime)
                     .build());
 
     return miningParametersBuilder.build();

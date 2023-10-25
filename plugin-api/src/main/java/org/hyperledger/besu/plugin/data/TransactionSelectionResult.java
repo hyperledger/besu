@@ -29,8 +29,10 @@ public class TransactionSelectionResult {
     BLOCK_FULL(true, false),
     BLOCK_OCCUPANCY_ABOVE_THRESHOLD(true, false),
     BLOCK_SELECTION_TIMEOUT(true, false),
+    TX_EVALUATION_TIMEOUT(false, true),
     INVALID_TRANSIENT(false, false),
-    INVALID(false, true);
+    INVALID(false, true),
+    INTERNAL_ERROR(false, true);
 
     private final boolean stop;
     private final boolean discard;
@@ -57,11 +59,12 @@ public class TransactionSelectionResult {
   /** The transaction has not been selected since the block is full. */
   public static final TransactionSelectionResult BLOCK_FULL =
       new TransactionSelectionResult(Status.BLOCK_FULL);
-  /** There was no more time to add transaction to the block */
+  /** There was no more time to add more transactions to the block */
   public static final TransactionSelectionResult BLOCK_SELECTION_TIMEOUT =
       new TransactionSelectionResult(Status.BLOCK_SELECTION_TIMEOUT);
-  ;
-
+  /** The evaluation of this transaction was taking too much */
+  public static final TransactionSelectionResult TX_EVALUATION_TIMEOUT =
+      new TransactionSelectionResult(Status.TX_EVALUATION_TIMEOUT);
   /**
    * The transaction has not been selected since too large and the occupancy of the block is enough
    * to stop the selection.
@@ -86,6 +89,9 @@ public class TransactionSelectionResult {
    */
   public static final TransactionSelectionResult BLOB_PRICE_BELOW_CURRENT_MIN =
       TransactionSelectionResult.invalidTransient("BLOB_PRICE_BELOW_CURRENT_MIN");
+  /** The evaluation of the transaction caused an internal error */
+  public static final TransactionSelectionResult INTERNAL_ERROR =
+      new TransactionSelectionResult(Status.INTERNAL_ERROR);
 
   private final Status status;
   private final Optional<String> maybeInvalidReason;

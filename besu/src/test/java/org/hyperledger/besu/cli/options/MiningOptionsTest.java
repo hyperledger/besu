@@ -338,26 +338,28 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   @Test
   public void txsSelectionPerTxMaxTimeDefaultValue() {
     internalTestSuccess(
-            miningParams ->
-                    assertThat(miningParams.getUnstable().getTxsSelectionPerTxMaxTime())
-                            .isEqualTo(DEFAULT_TXS_SELECTION_PER_TX_MAX_TIME));
+        miningParams ->
+            assertThat(miningParams.getUnstable().getTxsSelectionPerTxMaxTime())
+                .isEqualTo(DEFAULT_TXS_SELECTION_PER_TX_MAX_TIME));
   }
 
   @Test
   public void txsSelectionPerTxMaxTimeOption() {
     internalTestSuccess(
-            miningParams ->
-                    assertThat(miningParams.getUnstable().getTxsSelectionPerTxMaxTime()).isEqualTo(700L),
-            "--Xtxs-selection-per-tx-max-time",
-            "700");
+        miningParams ->
+            assertThat(miningParams.getUnstable().getTxsSelectionPerTxMaxTime()).isEqualTo(700L),
+        "--Xtxs-selection-per-tx-max-time",
+        "700");
   }
 
   @Test
   public void txsSelectionPerTxMaxTimeOutOfAllowedRange() {
     internalTestFailure(
-            "--Xtxs-selection-max-time must be positive and ≤ 3000 (the value of --Xtxs-selection-max-time option)",
-            "--Xtxs-selection-max-time",
-            "3000", "--Xtxs-selection-per-tx-max-time", "4000");
+        "--Xtxs-selection-max-time must be positive and ≤ 3000 (the value of --Xtxs-selection-max-time option)",
+        "--Xtxs-selection-max-time",
+        "3000",
+        "--Xtxs-selection-per-tx-max-time",
+        "4000");
   }
 
   @Override

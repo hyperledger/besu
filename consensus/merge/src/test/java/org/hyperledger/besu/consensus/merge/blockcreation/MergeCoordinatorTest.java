@@ -91,6 +91,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -182,6 +183,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   private final BadBlockManager badBlockManager = spy(new BadBlockManager());
 
   @BeforeEach
+  @SuppressWarnings("unchecked")
   public void setUp() {
     when(mergeContext.as(MergeContext.class)).thenReturn(mergeContext);
     when(mergeContext.getTerminalTotalDifficulty())
@@ -206,7 +208,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
 
-    when(ethScheduler.scheduleBlockCreationTask(any()))
+    when(ethScheduler.scheduleBlockCreationTask(any(Runnable.class)))
         .thenAnswer(
             invocation -> {
               final Runnable runnable = invocation.getArgument(0);
@@ -216,6 +218,9 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
               blockCreationTask = CompletableFuture.runAsync(runnable);
               return blockCreationTask;
             });
+
+    when(ethScheduler.scheduleBlockCreationTask(any(Supplier.class)))
+        .thenAnswer(invocation -> CompletableFuture.supplyAsync(invocation.getArgument(0)));
 
     MergeConfigOptions.setMergeEnabled(true);
 
