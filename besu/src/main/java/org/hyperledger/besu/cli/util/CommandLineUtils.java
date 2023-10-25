@@ -178,9 +178,8 @@ public class CommandLineUtils {
           var optVal = field.get(currOptions);
           if (!Objects.equals(optVal, field.get(defaults))) {
             var optAnn = CommandLine.Option.class.cast(ann);
-            cliOpts.add(optAnn.names()[0]);
             final var optConverter = optAnn.converter();
-            cliOpts.add(formatValue(optConverter, optVal));
+            cliOpts.add(optAnn.names()[0] + "=" + formatValue(optConverter, optVal));
           }
         } catch (IllegalAccessException e) {
           throw new RuntimeException(e);

@@ -58,6 +58,7 @@ dependencies {
   implementation 'io.tmio:tuweni-bytes'
   implementation 'io.tmio:tuweni-units'
   implementation 'io.tmio:tuweni-rlp'
+  implementation 'org.rocksdb:rocksdbjni'
 
   annotationProcessor "org.immutables:value"
   implementation "org.immutables:value-annotations"
