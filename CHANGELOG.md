@@ -3,8 +3,10 @@
 ### Breaking Changes
 
 ### Deprecations
+- `--tx-pool-disable-locals` has been deprecated for removal in favor of `--tx-pool-no-local-priority`, no semantic change, only a renaming [#5959](https://github.com/hyperledger/besu/pull/5959)
 
 ### Additions and Improvements
+- Force tx replacement price bump to zero when zero base fee market is configured. This allows for easier tx replacement in networks where there is not gas price. [#6079](https://github.com/hyperledger/besu/pull/6079)
 
 ### Bug Fixes
 
