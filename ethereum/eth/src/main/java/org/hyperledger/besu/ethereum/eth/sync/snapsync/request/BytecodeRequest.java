@@ -88,6 +88,11 @@ public class BytecodeRequest extends SnapDataRequest {
     return accountHash;
   }
 
+  @Override
+  public void clear() {
+    setCode(Bytes.EMPTY);
+  }
+
   public Bytes32 getCodeHash() {
     return codeHash;
   }

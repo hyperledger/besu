@@ -77,6 +77,8 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -304,11 +306,14 @@ public class TestContextBuilder {
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
     final MiningParameters miningParams =
-        new MiningParameters.Builder()
-            .coinbase(AddressHelpers.ofValue(1))
-            .minTransactionGasPrice(Wei.ZERO)
-            .extraData(Bytes.wrap("Ibft Int tests".getBytes(UTF_8)))
-            .miningEnabled(true)
+        ImmutableMiningParameters.builder()
+            .mutableInitValues(
+                MutableInitValues.builder()
+                    .isMiningEnabled(true)
+                    .minTransactionGasPrice(Wei.ZERO)
+                    .extraData(Bytes.wrap("Ibft Int tests".getBytes(UTF_8)))
+                    .coinbase(AddressHelpers.ofValue(1))
+                    .build())
             .build();
 
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();

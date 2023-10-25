@@ -23,14 +23,13 @@ import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.cryptoservices.NodeKey;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -38,7 +37,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 
 import java.util.Optional;
-import java.util.function.Supplier;
 
 /** The Clique block creator. */
 public class CliqueBlockCreator extends AbstractBlockCreator {
@@ -49,40 +47,31 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
   /**
    * Instantiates a new Clique block creator.
    *
-   * @param coinbase the coinbase
-   * @param targetGasLimitSupplier the target gas limit supplier
+   * @param miningParameters the mining parameters
    * @param extraDataCalculator the extra data calculator
    * @param transactionPool the pending transactions
    * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
    * @param nodeKey the node key
-   * @param minTransactionGasPrice the min transaction gas price
-   * @param minBlockOccupancyRatio the min block occupancy ratio
    * @param parentHeader the parent header
    * @param epochManager the epoch manager
    */
   public CliqueBlockCreator(
-      final Address coinbase,
-      final Supplier<Optional<Long>> targetGasLimitSupplier,
+      final MiningParameters miningParameters,
       final ExtraDataCalculator extraDataCalculator,
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final NodeKey nodeKey,
-      final Wei minTransactionGasPrice,
-      final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader,
       final EpochManager epochManager) {
     super(
-        coinbase,
+        miningParameters,
         __ -> Util.publicKeyToAddress(nodeKey.getPublicKey()),
-        targetGasLimitSupplier,
         extraDataCalculator,
         transactionPool,
         protocolContext,
         protocolSchedule,
-        minTransactionGasPrice,
-        minBlockOccupancyRatio,
         parentHeader,
         Optional.empty());
     this.nodeKey = nodeKey;

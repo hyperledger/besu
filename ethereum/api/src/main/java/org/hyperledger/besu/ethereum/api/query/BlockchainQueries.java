@@ -969,7 +969,7 @@ public class BlockchainQueries {
         ? Optional.empty()
         : Optional.of(
             Math.max(
-                apiConfig.getGasPriceMin(),
+                apiConfig.getGasPriceMinSupplier().getAsLong(),
                 Math.min(
                     apiConfig.getGasPriceMax(),
                     gasCollection[
