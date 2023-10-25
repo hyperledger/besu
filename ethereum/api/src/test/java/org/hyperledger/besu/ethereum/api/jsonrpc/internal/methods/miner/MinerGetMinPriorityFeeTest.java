@@ -46,7 +46,7 @@ public class MinerGetMinPriorityFeeTest {
     when(miningParameters.getMinPriorityFeePerGas()).thenReturn(minPriorityFee);
 
     final JsonRpcResponse expected =
-        new JsonRpcSuccessResponse(request.getRequest().getId(), minPriorityFee);
+        new JsonRpcSuccessResponse(request.getRequest().getId(), minPriorityFee.getValue());
 
     final JsonRpcResponse actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
