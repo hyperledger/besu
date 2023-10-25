@@ -36,7 +36,8 @@ import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CAT
 import static org.hyperledger.besu.metrics.MetricsProtocol.PROMETHEUS;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
-import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
+import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME;
+import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAMESPACE;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.Runner;
@@ -1833,14 +1834,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings("ConstantConditions")
   private void validateNatParams() {
-    if (!(natMethod.equals(NatMethod.AUTO) || natMethod.equals(NatMethod.KUBERNETES))
-        && !unstableNatOptions
-            .getNatManagerServiceName()
-            .equals(DEFAULT_BESU_SERVICE_NAME_FILTER)) {
-      throw new ParameterException(
-          this.commandLine,
-          "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-name"
-              + " or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
+    if (!(natMethod.equals(NatMethod.AUTO) || natMethod.equals(NatMethod.KUBERNETES))) {
+      if (!unstableNatOptions.getNatManagerServiceName().equals(DEFAULT_BESU_SERVICE_NAME)) {
+        throw new ParameterException(
+            this.commandLine,
+            "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-name"
+                + " or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
+      }
+
+      if (!unstableNatOptions
+          .getNatManagerServiceNamespace()
+          .equals(DEFAULT_BESU_SERVICE_NAMESPACE)) {
+        throw new ParameterException(
+            this.commandLine,
+            "The `--Xnat-kube-service-namespace` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-namespace"
+                + " or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
+      }
     }
     if (natMethod.equals(NatMethod.AUTO) && !unstableNatOptions.getNatMethodFallbackEnabled()) {
       throw new ParameterException(
@@ -2863,6 +2872,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .p2pEnabled(p2pEnabled)
             .natMethod(natMethod)
             .natManagerServiceName(unstableNatOptions.getNatManagerServiceName())
+            .natManagerServiceNamespace(unstableNatOptions.getNatManagerServiceNamespace())
             .natMethodFallbackEnabled(unstableNatOptions.getNatMethodFallbackEnabled())
             .discovery(peerDiscoveryEnabled)
             .ethNetworkConfig(ethNetworkConfig)

@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
-import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
+import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME;
+import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAMESPACE;
 
 import picocli.CommandLine;
 
@@ -27,7 +28,15 @@ public class NatOptions {
       names = {"--Xnat-kube-service-name"},
       description =
           "Specify the name of the service that will be used by the nat manager in Kubernetes. (default: ${DEFAULT-VALUE})")
-  private String natManagerServiceName = DEFAULT_BESU_SERVICE_NAME_FILTER;
+  private String natManagerServiceName = DEFAULT_BESU_SERVICE_NAME;
+
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--Xnat-kube-service-namespace"},
+      description =
+          "Specify the namespace of the service that will be used by the nat manager in Kubernetes. (default: ${DEFAULT-VALUE})")
+  private String natManagerServiceNamespace = DEFAULT_BESU_SERVICE_NAMESPACE;
 
   @CommandLine.Option(
       hidden = true,
@@ -53,6 +62,15 @@ public class NatOptions {
    */
   public String getNatManagerServiceName() {
     return natManagerServiceName;
+  }
+
+  /**
+   * Gets nat manager service namespace.
+   *
+   * @return the nat manager service namespace
+   */
+  public String getNatManagerServiceNamespace() {
+    return natManagerServiceNamespace;
   }
 
   /**

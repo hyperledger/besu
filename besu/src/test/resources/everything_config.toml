@@ -25,6 +25,7 @@ identity="PegaSysEng"
 p2p-enabled=true
 nat-method="NONE"
 Xnat-kube-service-name="besu"
+Xnat-kube-service-namespace="besu"
 Xnat-method-fallback-enabled=true
 discovery-enabled=false
 bootnodes=[
