@@ -100,6 +100,11 @@ public class StateTestSubCommand implements Runnable {
       description = "Limit execution to one value variable.")
   private Integer valueIndex = null;
 
+  @Option(
+      names = {"--fork-index"},
+      description = "Limit execution to one fork.")
+  private String forkIndex = null;
+
   @ParentCommand private final EvmToolCommand parentCommand;
 
   // picocli does it magically
@@ -195,6 +200,9 @@ public class StateTestSubCommand implements Runnable {
         continue;
       }
       if (valueIndex != null && spec.getValueIndex() != valueIndex) {
+        continue;
+      }
+      if (forkIndex != null && !spec.getFork().equalsIgnoreCase(forkIndex)) {
         continue;
       }
 

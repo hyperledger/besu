@@ -85,7 +85,6 @@ public class BesuControllerBuilderTest {
   @Mock CheckpointConfigOptions checkpointConfigOptions;
   @Mock SynchronizerConfiguration synchronizerConfiguration;
   @Mock EthProtocolConfiguration ethProtocolConfiguration;
-  @Mock MiningParameters miningParameters;
   @Mock PrivacyParameters privacyParameters;
   @Mock Clock clock;
   @Mock StorageProvider storageProvider;
@@ -96,6 +95,8 @@ public class BesuControllerBuilderTest {
   @Mock WorldStatePreimageStorage worldStatePreimageStorage;
   private final TransactionPoolConfiguration poolConfiguration =
       TransactionPoolConfiguration.DEFAULT;
+  private final MiningParameters miningParameters = MiningParameters.newDefault();
+
   private final ObservableMetricsSystem observableMetricsSystem = new NoOpMetricsSystem();
 
   BigInteger networkId = BigInteger.ONE;

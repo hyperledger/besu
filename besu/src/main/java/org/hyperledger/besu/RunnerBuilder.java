@@ -768,7 +768,7 @@ public class RunnerBuilder {
                   powMiningCoordinator,
                   miningParameters.getStratumPort(),
                   miningParameters.getStratumNetworkInterface(),
-                  miningParameters.getStratumExtranonce(),
+                  miningParameters.getUnstable().getStratumExtranonce(),
                   metricsSystem));
       miningCoordinator.addEthHashObserver(stratumServer.get());
       LOG.debug("added ethash observer: {}", stratumServer.get());
