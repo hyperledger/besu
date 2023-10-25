@@ -90,8 +90,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -220,7 +220,15 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             });
 
     when(ethScheduler.scheduleBlockCreationTask(any(Supplier.class)))
-        .thenAnswer(invocation -> CompletableFuture.supplyAsync(invocation.getArgument(0)));
+        .thenAnswer(
+            invocation -> {
+              final Supplier<?> supplier = invocation.getArgument(0);
+              if (!invocation.toString().contains("MergeCoordinator")) {
+                return CompletableFuture.supplyAsync(supplier);
+              }
+              blockCreationTask = CompletableFuture.supplyAsync((Supplier<Void>) supplier);
+              return blockCreationTask;
+            });
 
     MergeConfigOptions.setMergeEnabled(true);
 
@@ -239,6 +247,10 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     this.transactionPool.setEnabled();
 
+    createMergeCoordinator(miningParameters);
+  }
+
+  private void createMergeCoordinator(final MiningParameters miningParameters) {
     this.coordinator =
         new MergeCoordinator(
             protocolContext,
@@ -563,6 +575,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             .from(miningParameters)
             .unstable(Unstable.builder().posBlockCreationMaxTime(100).build())
             .build();
+    createMergeCoordinator(miningParameters);
     doAnswer(
             invocation -> {
               retries.incrementAndGet();
@@ -757,15 +770,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             .mutableInitValues(MutableInitValues.builder().extraData(extraData).build())
             .build();
 
-    this.coordinator =
-        new MergeCoordinator(
-            protocolContext,
-            protocolSchedule,
-            ethScheduler,
-            transactionPool,
-            miningParameters,
-            backwardSyncContext,
-            Optional.empty());
+    createMergeCoordinator(miningParameters);
 
     final PayloadIdentifier payloadId =
         this.coordinator.preparePayload(
