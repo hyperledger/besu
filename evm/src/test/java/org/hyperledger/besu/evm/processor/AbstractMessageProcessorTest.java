@@ -60,6 +60,7 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
 
     getAbstractMessageProcessor().process(messageFrame, operationTracer);
 
+    // As the only MessageFrame state will be COMPLETED_SUCCESS, only a contextExit is expected
     verify(operationTracer, times(1)).traceContextExit(messageFrame);
   }
 
@@ -70,6 +71,7 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
 
     getAbstractMessageProcessor().process(messageFrame, operationTracer);
 
+    // As the only MessageFrame state will be COMPLETED_FAILED, only a contextExit is expected
     verify(operationTracer, times(1)).traceContextExit(messageFrame);
   }
 
@@ -138,7 +140,7 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
             POST_EXECUTION, // STATICCALL
             CONTEXT_ENTER, // STATICCALL
             CONTEXT_EXIT, // STATICCALL
-            CONTEXT_RE_ENTER, // Re-entry in root context
+            CONTEXT_RE_ENTER, // Re-entry in root context post-STATICALL
             PRE_EXECUTION, // PUSH1
             POST_EXECUTION, // PUSH1
             PRE_EXECUTION, // RETURN
