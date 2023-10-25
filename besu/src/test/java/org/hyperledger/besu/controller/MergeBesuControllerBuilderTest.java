@@ -75,6 +75,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -89,7 +90,10 @@ public class MergeBesuControllerBuilderTest {
   @Mock SynchronizerConfiguration synchronizerConfiguration;
   @Mock EthProtocolConfiguration ethProtocolConfiguration;
   @Mock CheckpointConfigOptions checkpointConfigOptions;
-  @Mock MiningParameters miningParameters;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  MiningParameters miningParameters;
+
   @Mock PrivacyParameters privacyParameters;
   @Mock Clock clock;
   @Mock StorageProvider storageProvider;
@@ -143,6 +147,7 @@ public class MergeBesuControllerBuilderTest {
     when(worldStatePreimageStorage.updater())
         .thenReturn(mock(WorldStatePreimageStorage.Updater.class));
     when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));
+    when(miningParameters.getTargetGasLimit()).thenReturn(OptionalLong.empty());
 
     besuControllerBuilder = visitWithMockConfigs(new MergeBesuControllerBuilder());
   }

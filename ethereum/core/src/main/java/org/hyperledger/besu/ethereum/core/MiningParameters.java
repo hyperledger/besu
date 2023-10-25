@@ -20,385 +20,283 @@ import org.hyperledger.besu.datatypes.Wei;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.immutables.value.Value;
 
-public class MiningParameters {
+@Value.Immutable
+@Value.Enclosing
+public abstract class MiningParameters {
+  public static final MiningParameters MINING_DISABLED =
+      ImmutableMiningParameters.builder()
+          .mutableInitValues(
+              ImmutableMiningParameters.MutableInitValues.builder().isMiningEnabled(false).build())
+          .build();
 
-  public static final int DEFAULT_REMOTE_SEALERS_LIMIT = 1000;
-
-  public static final long DEFAULT_REMOTE_SEALERS_TTL = Duration.ofMinutes(10).toMinutes();
-
-  public static final long DEFAULT_POW_JOB_TTL = Duration.ofMinutes(5).toMillis();
-
-  public static final int DEFAULT_MAX_OMMERS_DEPTH = 8;
-
-  public static final long DEFAULT_POS_BLOCK_CREATION_MAX_TIME = Duration.ofSeconds(12).toMillis();
-
-  public static final long DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION =
-      Duration.ofMillis(500).toMillis();
-
-  private final Optional<Address> coinbase;
-  private final Optional<AtomicLong> targetGasLimit;
-  private final Wei minTransactionGasPrice;
-  private final Bytes extraData;
-  private final boolean miningEnabled;
-  private final boolean stratumMiningEnabled;
-  private final String stratumNetworkInterface;
-  private final int stratumPort;
-  private final String stratumExtranonce;
-  private final Optional<Iterable<Long>> maybeNonceGenerator;
-  private final Double minBlockOccupancyRatio;
-  private final int remoteSealersLimit;
-  private final long remoteSealersTimeToLive;
-  private final long powJobTimeToLive;
-  private final int maxOmmerDepth;
-  private final long posBlockCreationMaxTime;
-  private final long posBlockCreationRepetitionMinDuration;
-
-  private MiningParameters(
-      final Address coinbase,
-      final Long targetGasLimit,
-      final Wei minTransactionGasPrice,
-      final Bytes extraData,
-      final boolean miningEnabled,
-      final boolean stratumMiningEnabled,
-      final String stratumNetworkInterface,
-      final int stratumPort,
-      final String stratumExtranonce,
-      final Optional<Iterable<Long>> maybeNonceGenerator,
-      final Double minBlockOccupancyRatio,
-      final int remoteSealersLimit,
-      final long remoteSealersTimeToLive,
-      final long powJobTimeToLive,
-      final int maxOmmerDepth,
-      final long posBlockCreationMaxTime,
-      final long posBlockCreationRepetitionMinDuration) {
-    this.coinbase = Optional.ofNullable(coinbase);
-    this.targetGasLimit = Optional.ofNullable(targetGasLimit).map(AtomicLong::new);
-    this.minTransactionGasPrice = minTransactionGasPrice;
-    this.extraData = extraData;
-    this.miningEnabled = miningEnabled;
-    this.stratumMiningEnabled = stratumMiningEnabled;
-    this.stratumNetworkInterface = stratumNetworkInterface;
-    this.stratumPort = stratumPort;
-    this.stratumExtranonce = stratumExtranonce;
-    this.maybeNonceGenerator = maybeNonceGenerator;
-    this.minBlockOccupancyRatio = minBlockOccupancyRatio;
-    this.remoteSealersLimit = remoteSealersLimit;
-    this.remoteSealersTimeToLive = remoteSealersTimeToLive;
-    this.powJobTimeToLive = powJobTimeToLive;
-    this.maxOmmerDepth = maxOmmerDepth;
-    this.posBlockCreationMaxTime = posBlockCreationMaxTime;
-    this.posBlockCreationRepetitionMinDuration = posBlockCreationRepetitionMinDuration;
-  }
-
-  public Optional<Address> getCoinbase() {
-    return coinbase;
-  }
-
-  public Optional<AtomicLong> getTargetGasLimit() {
-    return targetGasLimit;
-  }
-
-  public Wei getMinTransactionGasPrice() {
-    return minTransactionGasPrice;
-  }
-
-  public Bytes getExtraData() {
-    return extraData;
+  public static final MiningParameters newDefault() {
+    return ImmutableMiningParameters.builder().build();
   }
 
   public boolean isMiningEnabled() {
-    return miningEnabled;
+    return getMutableRuntimeValues().miningEnabled;
   }
 
-  public boolean isStratumMiningEnabled() {
-    return stratumMiningEnabled;
+  public MiningParameters setMiningEnabled(final boolean miningEnabled) {
+    getMutableRuntimeValues().miningEnabled = miningEnabled;
+    return this;
   }
 
-  public String getStratumNetworkInterface() {
-    return stratumNetworkInterface;
+  public Bytes getExtraData() {
+    return getMutableRuntimeValues().extraData;
   }
 
-  public int getStratumPort() {
-    return stratumPort;
+  public MiningParameters setExtraData(final Bytes extraData) {
+    getMutableRuntimeValues().extraData = extraData;
+    return this;
   }
 
-  public String getStratumExtranonce() {
-    return stratumExtranonce;
+  public Wei getMinTransactionGasPrice() {
+    return getMutableRuntimeValues().minTransactionGasPrice;
+  }
+
+  public MiningParameters setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
+    getMutableRuntimeValues().minTransactionGasPrice = minTransactionGasPrice;
+    return this;
+  }
+
+  public Wei getMinPriorityFeePerGas() {
+    return getMutableRuntimeValues().minPriorityFeePerGas;
+  }
+
+  public MiningParameters setMinPriorityFeePerGas(final Wei minPriorityFeePerGas) {
+    getMutableRuntimeValues().minPriorityFeePerGas = minPriorityFeePerGas;
+    return this;
+  }
+
+  public Optional<Address> getCoinbase() {
+    return getMutableRuntimeValues().coinbase;
+  }
+
+  public MiningParameters setCoinbase(final Address coinbase) {
+    getMutableRuntimeValues().coinbase = Optional.of(coinbase);
+    return this;
+  }
+
+  public OptionalLong getTargetGasLimit() {
+    return getMutableRuntimeValues().targetGasLimit;
+  }
+
+  public MiningParameters setTargetGasLimit(final long targetGasLimit) {
+    getMutableRuntimeValues().targetGasLimit = OptionalLong.of(targetGasLimit);
+    return this;
+  }
+
+  public double getMinBlockOccupancyRatio() {
+    return getMutableRuntimeValues().minBlockOccupancyRatio;
+  }
+
+  public MiningParameters setMinBlockOccupancyRatio(final double minBlockOccupancyRatio) {
+    getMutableRuntimeValues().minBlockOccupancyRatio = minBlockOccupancyRatio;
+    return this;
   }
 
   public Optional<Iterable<Long>> getNonceGenerator() {
-    return maybeNonceGenerator;
+    return getMutableRuntimeValues().nonceGenerator;
   }
 
-  public Double getMinBlockOccupancyRatio() {
-    return minBlockOccupancyRatio;
+  public MiningParameters setNonceGenerator(final Iterable<Long> nonceGenerator) {
+    getMutableRuntimeValues().nonceGenerator = Optional.of(nonceGenerator);
+    return this;
   }
 
-  public int getRemoteSealersLimit() {
-    return remoteSealersLimit;
+  @Value.Default
+  public boolean isStratumMiningEnabled() {
+    return false;
   }
 
-  public long getRemoteSealersTimeToLive() {
-    return remoteSealersTimeToLive;
+  @Value.Default
+  public String getStratumNetworkInterface() {
+    return "0.0.0.0";
   }
 
-  public long getPowJobTimeToLive() {
-    return powJobTimeToLive;
+  @Value.Default
+  public int getStratumPort() {
+    return 8008;
   }
 
-  public int getMaxOmmerDepth() {
-    return maxOmmerDepth;
+  @Value.Default
+  protected MutableRuntimeValues getMutableRuntimeValues() {
+    return new MutableRuntimeValues(getMutableInitValues());
   }
 
-  public long getPosBlockCreationMaxTime() {
-    return posBlockCreationMaxTime;
+  @Value.Default
+  public Unstable getUnstable() {
+    return Unstable.DEFAULT;
   }
 
-  public long getPosBlockCreationRepetitionMinDuration() {
-    return posBlockCreationRepetitionMinDuration;
+  @Value.Default
+  public MutableInitValues getMutableInitValues() {
+    return MutableInitValues.DEFAULT;
   }
 
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    MiningParameters that = (MiningParameters) o;
-    return stratumPort == that.stratumPort
-        && Objects.equals(coinbase, that.coinbase)
-        && Objects.equals(targetGasLimit, that.targetGasLimit)
-        && Objects.equals(minTransactionGasPrice, that.minTransactionGasPrice)
-        && Objects.equals(extraData, that.extraData)
-        && miningEnabled == that.miningEnabled
-        && stratumMiningEnabled == that.stratumMiningEnabled
-        && Objects.equals(stratumNetworkInterface, that.stratumNetworkInterface)
-        && Objects.equals(stratumExtranonce, that.stratumExtranonce)
-        && Objects.equals(minBlockOccupancyRatio, that.minBlockOccupancyRatio)
-        && remoteSealersTimeToLive == that.remoteSealersTimeToLive
-        && remoteSealersLimit == that.remoteSealersLimit
-        && powJobTimeToLive == that.powJobTimeToLive
-        && posBlockCreationMaxTime == that.posBlockCreationMaxTime
-        && posBlockCreationRepetitionMinDuration == that.posBlockCreationRepetitionMinDuration;
+  @Value.Immutable
+  public interface MutableInitValues {
+    Bytes DEFAULT_EXTRA_DATA = Bytes.EMPTY;
+    Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
+    Wei DEFAULT_MIN_PRIORITY_FEE_PER_GAS = Wei.ZERO;
+    double DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
+
+    MutableInitValues DEFAULT = ImmutableMiningParameters.MutableInitValues.builder().build();
+
+    @Value.Default
+    default boolean isMiningEnabled() {
+      return false;
+    }
+
+    @Value.Default
+    default Bytes getExtraData() {
+      return DEFAULT_EXTRA_DATA;
+    }
+
+    @Value.Default
+    default Wei getMinTransactionGasPrice() {
+      return DEFAULT_MIN_TRANSACTION_GAS_PRICE;
+    }
+
+    @Value.Default
+    default Wei getMinPriorityFeePerGas() {
+      return DEFAULT_MIN_PRIORITY_FEE_PER_GAS;
+    }
+
+    @Value.Default
+    default double getMinBlockOccupancyRatio() {
+      return DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
+    }
+
+    Optional<Address> getCoinbase();
+
+    OptionalLong getTargetGasLimit();
+
+    Optional<Iterable<Long>> nonceGenerator();
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(
-        coinbase,
-        targetGasLimit,
-        minTransactionGasPrice,
-        extraData,
-        miningEnabled,
-        stratumMiningEnabled,
-        stratumNetworkInterface,
-        stratumPort,
-        stratumExtranonce,
-        minBlockOccupancyRatio,
-        remoteSealersLimit,
-        remoteSealersTimeToLive,
-        powJobTimeToLive,
-        posBlockCreationMaxTime,
-        posBlockCreationRepetitionMinDuration);
-  }
+  static class MutableRuntimeValues {
+    private volatile boolean miningEnabled;
+    private volatile Bytes extraData;
+    private volatile Wei minTransactionGasPrice;
+    private volatile Wei minPriorityFeePerGas;
+    private volatile double minBlockOccupancyRatio;
+    private volatile Optional<Address> coinbase;
+    private volatile OptionalLong targetGasLimit;
+    private volatile Optional<Iterable<Long>> nonceGenerator;
 
-  @Override
-  public String toString() {
-    return "MiningParameters{"
-        + "coinbase="
-        + coinbase
-        + ", targetGasLimit="
-        + targetGasLimit.map(Object::toString).orElse("null")
-        + ", minTransactionGasPrice="
-        + minTransactionGasPrice
-        + ", extraData="
-        + extraData
-        + ", miningEnabled="
-        + miningEnabled
-        + ", stratumMiningEnabled="
-        + stratumMiningEnabled
-        + ", stratumNetworkInterface='"
-        + stratumNetworkInterface
-        + '\''
-        + ", stratumPort="
-        + stratumPort
-        + ", stratumExtranonce='"
-        + stratumExtranonce
-        + '\''
-        + ", maybeNonceGenerator="
-        + maybeNonceGenerator
-        + ", minBlockOccupancyRatio="
-        + minBlockOccupancyRatio
-        + ", remoteSealersLimit="
-        + remoteSealersLimit
-        + ", remoteSealersTimeToLive="
-        + remoteSealersTimeToLive
-        + ", powJobTimeToLive="
-        + powJobTimeToLive
-        + ", posBlockCreationMaxTime="
-        + posBlockCreationMaxTime
-        + ", posBlockCreationRepetitionMinDuration="
-        + posBlockCreationRepetitionMinDuration
-        + '}';
-  }
-
-  public static class Builder {
-
-    private Address coinbase = null;
-    private Long targetGasLimit = null;
-    private Wei minTransactionGasPrice = Wei.ZERO;
-    private Bytes extraData = Bytes.EMPTY;
-    private boolean miningEnabled = false;
-    private boolean stratumMiningEnabled = false;
-    private String stratumNetworkInterface = "0.0.0.0";
-    private int stratumPort = 8008;
-    private String stratumExtranonce = "080c";
-    private Iterable<Long> maybeNonceGenerator;
-    private Double minBlockOccupancyRatio = 0.8;
-    private int remoteSealersLimit = DEFAULT_REMOTE_SEALERS_LIMIT;
-    private long remoteSealersTimeToLive = DEFAULT_REMOTE_SEALERS_TTL;
-    private long powJobTimeToLive = DEFAULT_POW_JOB_TTL;
-    private int maxOmmerDepth = DEFAULT_MAX_OMMERS_DEPTH;
-    private long posBlockCreationMaxTime = DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
-
-    private long posBlockCreationRepetitionMinDuration =
-        DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
-
-    public Builder() {
-      // zero arg
+    private MutableRuntimeValues(final MutableInitValues initValues) {
+      miningEnabled = initValues.isMiningEnabled();
+      extraData = initValues.getExtraData();
+      minTransactionGasPrice = initValues.getMinTransactionGasPrice();
+      minPriorityFeePerGas = initValues.getMinPriorityFeePerGas();
+      minBlockOccupancyRatio = initValues.getMinBlockOccupancyRatio();
+      coinbase = initValues.getCoinbase();
+      targetGasLimit = initValues.getTargetGasLimit();
+      nonceGenerator = initValues.nonceGenerator();
     }
 
-    public Builder(final MiningParameters existing) {
-      existing.getCoinbase().ifPresent(cb -> this.coinbase = cb);
-      existing
-          .getTargetGasLimit()
-          .map(AtomicLong::longValue)
-          .ifPresent(gasLimit -> this.targetGasLimit = gasLimit);
-      this.minTransactionGasPrice = existing.getMinTransactionGasPrice();
-      this.extraData = existing.getExtraData();
-      this.miningEnabled = existing.isMiningEnabled();
-      this.stratumMiningEnabled = existing.isStratumMiningEnabled();
-      this.stratumNetworkInterface = existing.getStratumNetworkInterface();
-      this.stratumPort = existing.getStratumPort();
-      this.stratumExtranonce = existing.getStratumExtranonce();
-      existing.getNonceGenerator().ifPresent(ng -> this.maybeNonceGenerator = ng);
-      this.minBlockOccupancyRatio = existing.getMinBlockOccupancyRatio();
-      this.remoteSealersLimit = existing.getRemoteSealersLimit();
-      this.remoteSealersTimeToLive = existing.getRemoteSealersTimeToLive();
-      this.powJobTimeToLive = existing.getPowJobTimeToLive();
-      this.maxOmmerDepth = existing.getMaxOmmerDepth();
-      this.posBlockCreationMaxTime = existing.getPosBlockCreationMaxTime();
-      this.posBlockCreationRepetitionMinDuration =
-          existing.getPosBlockCreationRepetitionMinDuration();
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      final MutableRuntimeValues that = (MutableRuntimeValues) o;
+      return miningEnabled == that.miningEnabled
+          && Double.compare(minBlockOccupancyRatio, that.minBlockOccupancyRatio) == 0
+          && Objects.equals(extraData, that.extraData)
+          && Objects.equals(minTransactionGasPrice, that.minTransactionGasPrice)
+          && Objects.equals(coinbase, that.coinbase)
+          && Objects.equals(minPriorityFeePerGas, that.minPriorityFeePerGas)
+          && Objects.equals(targetGasLimit, that.targetGasLimit)
+          && Objects.equals(nonceGenerator, that.nonceGenerator);
     }
 
-    public Builder coinbase(final Address address) {
-      this.coinbase = address;
-      return this;
-    }
-
-    public Builder targetGasLimit(final Long targetGasLimit) {
-      this.targetGasLimit = targetGasLimit;
-      return this;
-    }
-
-    public Builder minTransactionGasPrice(final Wei minTransactionGasPrice) {
-      this.minTransactionGasPrice = minTransactionGasPrice;
-      return this;
-    }
-
-    public Builder extraData(final Bytes extraData) {
-      this.extraData = extraData;
-      return this;
-    }
-
-    public Builder miningEnabled(final boolean miningEnabled) {
-      this.miningEnabled = miningEnabled;
-      return this;
-    }
-
-    public Builder stratumMiningEnabled(final boolean stratumMiningEnabled) {
-      this.stratumMiningEnabled = stratumMiningEnabled;
-      return this;
-    }
-
-    public Builder stratumNetworkInterface(final String stratumNetworkInterface) {
-      this.stratumNetworkInterface = stratumNetworkInterface;
-      return this;
-    }
-
-    public Builder stratumPort(final int stratumPort) {
-      this.stratumPort = stratumPort;
-      return this;
-    }
-
-    public Builder stratumExtranonce(final String stratumExtranonce) {
-      this.stratumExtranonce = stratumExtranonce;
-      return this;
-    }
-
-    public Builder maybeNonceGenerator(final Iterable<Long> maybeNonceGenerator) {
-      this.maybeNonceGenerator = maybeNonceGenerator;
-      return this;
-    }
-
-    public Builder minBlockOccupancyRatio(final Double minBlockOccupancyRatio) {
-      this.minBlockOccupancyRatio = minBlockOccupancyRatio;
-      return this;
-    }
-
-    public Builder remoteSealersLimit(final int remoteSealersLimit) {
-      this.remoteSealersLimit = remoteSealersLimit;
-      return this;
-    }
-
-    public Builder remoteSealersTimeToLive(final long remoteSealersTimeToLive) {
-      this.remoteSealersTimeToLive = remoteSealersTimeToLive;
-      return this;
-    }
-
-    public Builder powJobTimeToLive(final long powJobTimeToLive) {
-      this.powJobTimeToLive = powJobTimeToLive;
-      return this;
-    }
-
-    public Builder maxOmmerDepth(final int maxOmmerDepth) {
-      this.maxOmmerDepth = maxOmmerDepth;
-      return this;
-    }
-
-    public Builder posBlockCreationMaxTime(final long posBlockCreationMaxTime) {
-      this.posBlockCreationMaxTime = posBlockCreationMaxTime;
-      return this;
-    }
-
-    public Builder posBlockCreationRepetitionMinDuration(
-        final long posBlockCreationRepetitionMinDuration) {
-      this.posBlockCreationRepetitionMinDuration = posBlockCreationRepetitionMinDuration;
-      return this;
-    }
-
-    public MiningParameters build() {
-      return new MiningParameters(
+    @Override
+    public int hashCode() {
+      return Objects.hash(
+          miningEnabled,
+          extraData,
+          minTransactionGasPrice,
+          minPriorityFeePerGas,
+          minBlockOccupancyRatio,
           coinbase,
           targetGasLimit,
-          minTransactionGasPrice,
-          extraData,
-          miningEnabled,
-          stratumMiningEnabled,
-          stratumNetworkInterface,
-          stratumPort,
-          stratumExtranonce,
-          Optional.ofNullable(maybeNonceGenerator),
-          minBlockOccupancyRatio,
-          remoteSealersLimit,
-          remoteSealersTimeToLive,
-          powJobTimeToLive,
-          maxOmmerDepth,
-          posBlockCreationMaxTime,
-          posBlockCreationRepetitionMinDuration);
+          nonceGenerator);
+    }
+
+    @Override
+    public String toString() {
+      return "UpdatableRuntimeValues{"
+          + "miningEnabled="
+          + miningEnabled
+          + ", extraData="
+          + extraData
+          + ", minTransactionGasPrice="
+          + minTransactionGasPrice
+          + ", minPriorityFeePerGas="
+          + minPriorityFeePerGas
+          + ", minBlockOccupancyRatio="
+          + minBlockOccupancyRatio
+          + ", coinbase="
+          + coinbase
+          + ", targetGasLimit="
+          + targetGasLimit
+          + ", nonceGenerator="
+          + nonceGenerator
+          + '}';
+    }
+  }
+
+  @Value.Immutable
+  public interface Unstable {
+    int DEFAULT_REMOTE_SEALERS_LIMIT = 1000;
+    long DEFAULT_REMOTE_SEALERS_TTL = Duration.ofMinutes(10).toMinutes();
+    long DEFAULT_POW_JOB_TTL = Duration.ofMinutes(5).toMillis();
+    int DEFAULT_MAX_OMMERS_DEPTH = 8;
+    long DEFAULT_POS_BLOCK_CREATION_MAX_TIME = Duration.ofSeconds(12).toMillis();
+    long DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION = Duration.ofMillis(500).toMillis();
+
+    MiningParameters.Unstable DEFAULT = ImmutableMiningParameters.Unstable.builder().build();
+
+    @Value.Default
+    default int getRemoteSealersLimit() {
+      return DEFAULT_REMOTE_SEALERS_LIMIT;
+    }
+
+    @Value.Default
+    default long getRemoteSealersTimeToLive() {
+      return DEFAULT_REMOTE_SEALERS_TTL;
+    }
+
+    @Value.Default
+    default long getPowJobTimeToLive() {
+      return DEFAULT_POW_JOB_TTL;
+    }
+
+    @Value.Default
+    default int getMaxOmmerDepth() {
+      return DEFAULT_MAX_OMMERS_DEPTH;
+    }
+
+    @Value.Default
+    default long getPosBlockCreationMaxTime() {
+      return DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
+    }
+
+    @Value.Default
+    default long getPosBlockCreationRepetitionMinDuration() {
+      return DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
+    }
+
+    @Value.Default
+    default String getStratumExtranonce() {
+      return "080c";
     }
   }
 }
