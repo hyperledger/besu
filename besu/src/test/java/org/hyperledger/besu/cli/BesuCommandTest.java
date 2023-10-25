@@ -35,7 +35,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
@@ -48,7 +47,6 @@ import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -72,6 +70,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -161,20 +161,6 @@ public class BesuCommandTest extends CommandTestAbstract {
       (new JsonObject()).put("config", new JsonObject().put("ecCurve", "secp256k1"));
   private static final String ENCLAVE_PUBLIC_KEY_PATH =
       BesuCommand.class.getResource("/orion_publickey.pub").getPath();
-  private static final JsonObject VALID_GENESIS_QBFT_POST_LONDON =
-      (new JsonObject())
-          .put(
-              "config",
-              new JsonObject()
-                  .put("londonBlock", 0)
-                  .put("qbft", new JsonObject().put("blockperiodseconds", 5)));
-  private static final JsonObject VALID_GENESIS_IBFT2_POST_LONDON =
-      (new JsonObject())
-          .put(
-              "config",
-              new JsonObject()
-                  .put("londonBlock", 0)
-                  .put("ibft2", new JsonObject().put("blockperiodseconds", 5)));
 
   private static final String[] VALID_ENODE_STRINGS = {
     "enode://" + VALID_NODE_ID + "@192.168.0.1:4567",
@@ -916,11 +902,11 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockControllerBuilder)
         .miningParameters(
-            new MiningParameters.Builder()
-                .coinbase(Address.fromHexString(expectedCoinbase))
-                .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
-                .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
-                .miningEnabled(false)
+            ImmutableMiningParameters.builder()
+                .mutableInitValues(
+                    MutableInitValues.builder()
+                        .coinbase(Address.fromHexString(expectedCoinbase))
+                        .build())
                 .build());
   }
 
@@ -933,11 +919,11 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockControllerBuilder)
         .miningParameters(
-            new MiningParameters.Builder()
-                .coinbase(Address.fromHexString(expectedCoinbase))
-                .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
-                .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
-                .miningEnabled(false)
+            ImmutableMiningParameters.builder()
+                .mutableInitValues(
+                    MutableInitValues.builder()
+                        .coinbase(Address.fromHexString(expectedCoinbase))
+                        .build())
                 .build());
   }
 
@@ -3653,261 +3639,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void besuDoesNotStartInMiningModeIfCoinbaseNotSet() {
-    parseCommand("--miner-enabled");
-
-    Mockito.verifyNoInteractions(mockControllerBuilder);
-  }
-
-  @Test
-  public void miningIsEnabledWhenSpecified() throws Exception {
-    final String coinbaseStr = String.format("%040x", 1);
-    parseCommand("--miner-enabled", "--miner-coinbase=" + coinbaseStr);
-
-    final ArgumentCaptor<MiningParameters> miningArg =
-        ArgumentCaptor.forClass(MiningParameters.class);
-
-    verify(mockControllerBuilder).miningParameters(miningArg.capture());
-    verify(mockControllerBuilder).build();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(miningArg.getValue().isMiningEnabled()).isTrue();
-    assertThat(miningArg.getValue().getCoinbase())
-        .isEqualTo(Optional.of(Address.fromHexString(coinbaseStr)));
-  }
-
-  @Test
-  public void stratumMiningIsEnabledWhenSpecified() throws Exception {
-    final String coinbaseStr = String.format("%040x", 1);
-    parseCommand("--miner-enabled", "--miner-coinbase=" + coinbaseStr, "--miner-stratum-enabled");
-
-    final ArgumentCaptor<MiningParameters> miningArg =
-        ArgumentCaptor.forClass(MiningParameters.class);
-
-    verify(mockControllerBuilder).miningParameters(miningArg.capture());
-    verify(mockControllerBuilder).build();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(miningArg.getValue().isMiningEnabled()).isTrue();
-    assertThat(miningArg.getValue().getCoinbase())
-        .isEqualTo(Optional.of(Address.fromHexString(coinbaseStr)));
-    assertThat(miningArg.getValue().isStratumMiningEnabled()).isTrue();
-  }
-
-  @Test
-  public void stratumMiningOptionsRequiresServiceToBeEnabled() {
-
-    parseCommand("--network", "dev", "--miner-stratum-enabled");
-
-    verifyOptionsConstraintLoggerCall("--miner-enabled", "--miner-stratum-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith(
-            "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)");
-  }
-
-  @Test
-  public void stratumMiningOptionsRequiresServiceToBeEnabledToml() throws IOException {
-    final Path toml = createTempFile("toml", "miner-stratum-enabled=true\n");
-
-    parseCommand("--network", "dev", "--config-file", toml.toString());
-
-    verifyOptionsConstraintLoggerCall("--miner-enabled", "--miner-stratum-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith(
-            "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)");
-  }
-
-  @Test
-  public void blockProducingOptionsWarnsMinerShouldBeEnabled() {
-
-    final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
-    parseCommand(
-        "--network",
-        "dev",
-        "--miner-coinbase",
-        requestedCoinbase.toString(),
-        "--min-gas-price",
-        "42",
-        "--miner-extra-data",
-        "0x1122334455667788990011223344556677889900112233445566778899001122");
-
-    verifyOptionsConstraintLoggerCall(
-        "--miner-enabled", "--miner-coinbase", "--min-gas-price", "--miner-extra-data");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void blockProducingOptionsWarnsMinerShouldBeEnabledToml() throws IOException {
-
-    final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
-
-    final Path toml =
-        createTempFile(
-            "toml",
-            "network=\"dev\"\n"
-                + "miner-coinbase=\""
-                + requestedCoinbase
-                + "\"\n"
-                + "min-gas-price=42\n"
-                + "miner-extra-data=\"0x1122334455667788990011223344556677889900112233445566778899001122\"\n");
-
-    parseCommand("--config-file", toml.toString());
-
-    verifyOptionsConstraintLoggerCall(
-        "--miner-enabled", "--miner-coinbase", "--min-gas-price", "--miner-extra-data");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void blockProducingOptionsDoNotWarnWhenPoA() throws IOException {
-
-    final Path genesisFileQBFT = createFakeGenesisFile(VALID_GENESIS_QBFT_POST_LONDON);
-    parseCommand(
-        "--genesis-file",
-        genesisFileQBFT.toString(),
-        "--min-gas-price",
-        "42",
-        "--miner-extra-data",
-        "0x1122334455667788990011223344556677889900112233445566778899001122");
-
-    verify(mockLogger, atMost(0))
-        .warn(
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
-    final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
-    parseCommand(
-        "--genesis-file",
-        genesisFileIBFT2.toString(),
-        "--min-gas-price",
-        "42",
-        "--miner-extra-data",
-        "0x1122334455667788990011223344556677889900112233445566778899001122");
-
-    verify(mockLogger, atMost(0))
-        .warn(
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void blockProducingOptionsDoNotWarnWhenMergeEnabled() {
-
-    final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
-    // TODO: once we have mainnet TTD, we can remove the TTD override parameter here
-    // https://github.com/hyperledger/besu/issues/3874
-    parseCommand(
-        "--override-genesis-config",
-        "terminalTotalDifficulty=1337",
-        "--miner-coinbase",
-        requestedCoinbase.toString(),
-        "--min-gas-price",
-        "42",
-        "--miner-extra-data",
-        "0x1122334455667788990011223344556677889900112233445566778899001122");
-
-    verify(mockLogger, atMost(0))
-        .warn(
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void minGasPriceRequiresMainOption() {
-    parseCommand("--min-gas-price", "0", "--network", "dev");
-
-    verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void minGasPriceRequiresMainOptionToml() throws IOException {
-    final Path toml = createTempFile("toml", "min-gas-price=0\nnetwork=\"dev\"\n");
-
-    parseCommand("--config-file", toml.toString());
-
-    verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void minGasPriceDoesNotRequireMainOptionWhenPoA() throws IOException {
-    final Path genesisFileQBFT = createFakeGenesisFile(VALID_GENESIS_QBFT_POST_LONDON);
-    parseCommand("--genesis-file", genesisFileQBFT.toString(), "--min-gas-price", "0");
-
-    verify(mockLogger, atMost(0))
-        .warn(
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
-    final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
-    parseCommand("--genesis-file", genesisFileIBFT2.toString(), "--min-gas-price", "0");
-
-    verify(mockLogger, atMost(0))
-        .warn(
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void miningParametersAreCaptured() {
-    final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
-    final String extraDataString =
-        "0x1122334455667788990011223344556677889900112233445566778899001122";
-    parseCommand(
-        "--miner-enabled",
-        "--miner-coinbase=" + requestedCoinbase.toString(),
-        "--min-gas-price=15",
-        "--miner-extra-data=" + extraDataString);
-
-    final ArgumentCaptor<MiningParameters> miningArg =
-        ArgumentCaptor.forClass(MiningParameters.class);
-
-    verify(mockControllerBuilder).miningParameters(miningArg.capture());
-    verify(mockControllerBuilder).build();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.of(requestedCoinbase));
-    assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(15));
-    assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.fromHexString(extraDataString));
-  }
-
-  @Test
   public void colorCanBeEnabledOrDisabledExplicitly() {
     Stream.of(true, false)
         .forEach(
@@ -4471,31 +4202,6 @@ public class BesuCommandTest extends CommandTestAbstract {
             "No Payload Provider has been provided. You must register one when enabling privacy plugin!");
   }
 
-  private Path createFakeGenesisFile(final JsonObject jsonGenesis) throws IOException {
-    final Path genesisFile = Files.createTempFile("genesisFile", "");
-    Files.write(genesisFile, encodeJsonGenesis(jsonGenesis).getBytes(UTF_8));
-    genesisFile.toFile().deleteOnExit();
-    return genesisFile;
-  }
-
-  private Path createTempFile(final String filename, final String contents) throws IOException {
-    final Path file = Files.createTempFile(filename, "");
-    Files.write(file, contents.getBytes(UTF_8));
-    file.toFile().deleteOnExit();
-    return file;
-  }
-
-  private Path createTempFile(final String filename, final byte[] contents) throws IOException {
-    final Path file = Files.createTempFile(filename, "");
-    Files.write(file, contents);
-    file.toFile().deleteOnExit();
-    return file;
-  }
-
-  private String encodeJsonGenesis(final JsonObject jsonGenesis) {
-    return jsonGenesis.encodePrettily();
-  }
-
   private static String escapeTomlString(final String s) {
     return StringEscapeUtils.escapeJava(s);
   }
@@ -4617,42 +4323,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Unknown options in TOML configuration file: invalid_option, invalid_option2");
-  }
-
-  @Test
-  public void targetGasLimitIsEnabledWhenSpecified() {
-    parseCommand("--target-gas-limit=10000000");
-
-    @SuppressWarnings("unchecked")
-    final ArgumentCaptor<MiningParameters> miningParametersArgumentCaptor =
-        ArgumentCaptor.forClass(MiningParameters.class);
-
-    verify(mockControllerBuilder).miningParameters(miningParametersArgumentCaptor.capture());
-    verify(mockControllerBuilder).build();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
-    assertThat(miningParametersArgumentCaptor.getValue().getTargetGasLimit().get().longValue())
-        .isEqualTo(10_000_000L);
-  }
-
-  @Test
-  public void targetGasLimitIsDisabledWhenNotSpecified() {
-    parseCommand();
-
-    @SuppressWarnings("unchecked")
-    final ArgumentCaptor<GasLimitCalculator> gasLimitCalculatorArgumentCaptor =
-        ArgumentCaptor.forClass(GasLimitCalculator.class);
-
-    verify(mockControllerBuilder).gasLimitCalculator(gasLimitCalculatorArgumentCaptor.capture());
-    verify(mockControllerBuilder).build();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
-    assertThat(gasLimitCalculatorArgumentCaptor.getValue())
-        .isEqualTo(GasLimitCalculator.constant());
   }
 
   @Test
@@ -5069,11 +4739,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void assertThatCheckPortClashRejectsAsExpectedForEngineApi() throws Exception {
     // use WS port for HTTP
     final int port = 8545;
-    // TODO: once we have mainnet TTD, we can remove the TTD override parameter here
-    // https://github.com/hyperledger/besu/issues/3874
     parseCommand(
-        "--override-genesis-config",
-        "terminalTotalDifficulty=1337",
         "--rpc-http-enabled",
         "--rpc-http-port",
         String.valueOf(port),
@@ -5273,37 +4939,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--sync-mode", "FULL", "--fast-sync-min-peers", "1");
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("--fast-sync-min-peers can't be used with FULL sync-mode");
-  }
-
-  @Test
-  public void posBlockCreationMaxTimeDefaultValue() {
-    parseCommand();
-    assertThat(getPosBlockCreationMaxTimeValue()).isEqualTo(DEFAULT_POS_BLOCK_CREATION_MAX_TIME);
-  }
-
-  @Test
-  public void posBlockCreationMaxTimeOption() {
-    parseCommand("--Xpos-block-creation-max-time", "7000");
-    assertThat(getPosBlockCreationMaxTimeValue()).isEqualTo(7000L);
-  }
-
-  private long getPosBlockCreationMaxTimeValue() {
-    final ArgumentCaptor<MiningParameters> miningArg =
-        ArgumentCaptor.forClass(MiningParameters.class);
-
-    verify(mockControllerBuilder).miningParameters(miningArg.capture());
-    verify(mockControllerBuilder).build();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    return miningArg.getValue().getPosBlockCreationMaxTime();
-  }
-
-  @Test
-  public void posBlockCreationMaxTimeOutOfAllowedRange() {
-    parseCommand("--Xpos-block-creation-max-time", "17000");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("--Xpos-block-creation-max-time must be positive and ≤ 12000");
   }
 
   @Test

@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlockSi
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.PriceTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.ProcessingResultTransactionSelector;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -75,7 +76,6 @@ import org.slf4j.LoggerFactory;
  */
 public class BlockTransactionSelector {
   private static final Logger LOG = LoggerFactory.getLogger(BlockTransactionSelector.class);
-
   private final Supplier<Boolean> isCancelled;
   private final MainnetTransactionProcessor transactionProcessor;
   private final Blockchain blockchain;
@@ -89,14 +89,13 @@ public class BlockTransactionSelector {
   private final OperationTracer pluginOperationTracer;
 
   public BlockTransactionSelector(
+      final MiningParameters miningParameters,
       final MainnetTransactionProcessor transactionProcessor,
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final TransactionPool transactionPool,
       final ProcessableBlockHeader processableBlockHeader,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
-      final Wei minTransactionGasPrice,
-      final Double minBlockOccupancyRatio,
       final Supplier<Boolean> isCancelled,
       final Address miningBeneficiary,
       final Wei blobGasPrice,
@@ -111,10 +110,9 @@ public class BlockTransactionSelector {
     this.isCancelled = isCancelled;
     this.blockSelectionContext =
         new BlockSelectionContext(
+            miningParameters,
             gasCalculator,
             gasLimitCalculator,
-            minTransactionGasPrice,
-            minBlockOccupancyRatio,
             processableBlockHeader,
             feeMarket,
             blobGasPrice,
@@ -170,7 +168,7 @@ public class BlockTransactionSelector {
    */
   public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
     transactions.forEach(
-        transaction -> evaluateTransaction(new PendingTransaction.Local(transaction)));
+        transaction -> evaluateTransaction(new PendingTransaction.Local.Priority(transaction)));
     return transactionSelectionResults;
   }
 

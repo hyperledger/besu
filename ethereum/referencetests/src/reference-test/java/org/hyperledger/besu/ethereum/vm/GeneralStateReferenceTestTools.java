@@ -107,9 +107,6 @@ public class GeneralStateReferenceTestTools {
     params.ignore("CALLBlake2f_MaxRounds.*");
     params.ignore("loopMul-.*");
 
-    // Reference Tests are old.  Max blob count is 6.
-    params.ignore("blobhashListBounds5");
-
     // EOF tests are written against an older version of the spec
     params.ignore("/stEOF/");
   }

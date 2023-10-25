@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
@@ -70,6 +71,7 @@ public class BonsaiWorldState
   protected BonsaiWorldStateKeyValueStorage worldStateStorage;
 
   protected final CachedMerkleTrieLoader cachedMerkleTrieLoader;
+  protected final CachedWorldStorageManager cachedWorldStorageManager;
   protected final TrieLogManager trieLogManager;
   private BonsaiWorldStateUpdateAccumulator accumulator;
 
@@ -84,6 +86,7 @@ public class BonsaiWorldState
     this(
         worldStateStorage,
         archive.getCachedMerkleTrieLoader(),
+        archive.getCachedWorldStorageManager(),
         archive.getTrieLogManager(),
         evmConfiguration);
   }
@@ -91,6 +94,7 @@ public class BonsaiWorldState
   protected BonsaiWorldState(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
+      final CachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
       final EvmConfiguration evmConfiguration) {
     this.worldStateStorage = worldStateStorage;
@@ -109,6 +113,7 @@ public class BonsaiWorldState
                 cachedMerkleTrieLoader.preLoadStorageSlot(getWorldStateStorage(), addr, value),
             evmConfiguration);
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
+    this.cachedWorldStorageManager = cachedWorldStorageManager;
     this.trieLogManager = trieLogManager;
   }
 
@@ -404,7 +409,7 @@ public class BonsaiWorldState
               trieLogManager.saveTrieLog(localCopy, newWorldStateRootHash, blockHeader, this);
               // not save a frozen state in the cache
               if (!isFrozen) {
-                trieLogManager.addCachedLayer(blockHeader, newWorldStateRootHash, this);
+                cachedWorldStorageManager.addCachedLayer(blockHeader, newWorldStateRootHash, this);
               }
             };
 

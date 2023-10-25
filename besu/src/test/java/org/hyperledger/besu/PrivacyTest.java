@@ -111,7 +111,7 @@ public class PrivacyTest {
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .networkId(BigInteger.ONE)
-        .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
+        .miningParameters(MiningParameters.newDefault())
         .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())
         .dataDirectory(dataDir)
