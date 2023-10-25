@@ -17,7 +17,7 @@ package org.hyperledger.besu.evm.internal;
 import java.util.Objects;
 
 /** The type Return stack. */
-public class ReturnStack extends FixedStack<ReturnStack.ReturnStackItem> {
+public class ReturnStack extends FlexStack<ReturnStack.ReturnStackItem> {
 
   /** The type Return stack item. */
   // Java17 convert to record
