@@ -193,6 +193,14 @@ public class CachedWorldStorageManager implements BonsaiStorageSubscriber {
             });
   }
 
+  public BonsaiWorldStateProvider getArchive() {
+    return archive;
+  }
+
+  public ObservableMetricsSystem getMetricsSystem() {
+    return metricsSystem;
+  }
+
   public boolean containWorldStateStorage(final Hash blockHash) {
     return cachedWorldStatesByHash.containsKey(blockHash);
   }

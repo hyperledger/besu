@@ -37,6 +37,8 @@ public interface WorldStateArchive extends Closeable {
 
   boolean isWorldStateAvailable(Hash rootHash, Hash blockHash);
 
+  Optional<MutableWorldState> getTracingState(BlockHeader blockHeader);
+
   Optional<MutableWorldState> getMutable(BlockHeader blockHeader, boolean isPersistingState);
 
   Optional<MutableWorldState> getMutable(Hash rootHash, Hash blockHash);

@@ -918,7 +918,7 @@ public class BlockchainQueries {
         .getBlockHeader(blockHash)
         .flatMap(
             blockHeader -> {
-              try (var ws = worldStateArchive.getMutable(blockHeader, false).orElse(null)) {
+              try (var ws = worldStateArchive.getTracingState(blockHeader).orElse(null)) {
                 if (ws != null) {
                   return mapper.apply(ws);
                 }

@@ -56,6 +56,11 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
+  public Optional<MutableWorldState> getTracingState(final BlockHeader blockHeader) {
+    return getMutable(blockHeader, false);
+  }
+
+  @Override
   public Optional<MutableWorldState> getMutable(
       final BlockHeader blockHeader, final boolean isPersistingState) {
     return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());

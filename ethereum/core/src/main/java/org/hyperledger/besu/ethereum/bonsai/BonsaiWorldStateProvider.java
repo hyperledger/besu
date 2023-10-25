@@ -23,6 +23,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateLayerStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateTrieLogStorage;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
@@ -151,6 +153,22 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     return cachedWorldStorageManager.containWorldStateStorage(blockHash)
         || persistedState.blockHash().equals(blockHash)
         || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
+  }
+
+  @Override
+  public Optional<MutableWorldState> getTracingState(final BlockHeader blockHeader) {
+    Optional<TrieLog> trieLogLayer = trieLogManager.getTrieLogLayer(blockHeader.getBlockHash());
+    if (trieLogLayer.isPresent()) {
+      return Optional.of(
+          new BonsaiWorldState(
+              cachedWorldStorageManager.getArchive(),
+              new BonsaiWorldStateLayerStorage(
+                  new BonsaiWorldStateTrieLogStorage(
+                      blockchain, trieLogLayer.get(), persistedState.getWorldStateStorage()))));
+    } else {
+      LOG.warn("State cannot be found ({})", blockHeader.getBlockHash());
+      return Optional.empty();
+    }
   }
 
   @Override
