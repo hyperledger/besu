@@ -35,7 +35,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -54,7 +53,6 @@ public class KZGPointEvalPrecompileContractTest {
     KZGPointEvalPrecompiledContract.tearDown();
   }
 
-  @Disabled("TODO: need new static test vectors")
   @ParameterizedTest(name = "{index}")
   @MethodSource("getPointEvaluationPrecompileTestVectors")
   public void testComputePrecompile(final PrecompileTestParameters parameters) {
