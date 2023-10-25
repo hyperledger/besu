@@ -500,7 +500,8 @@ public class MainnetTransactionProcessor {
       LOG.error("Critical Exception Processing Transaction", re);
       return TransactionProcessingResult.invalid(
           ValidationResult.invalid(
-              TransactionInvalidReason.INTERNAL_ERROR, "Internal Error in Besu - " + re));
+              TransactionInvalidReason.INTERNAL_ERROR,
+              "Internal Error in Besu - " + re + "\n" + printableStackTraceFromThrowable(re)));
     }
   }
 
@@ -524,5 +525,15 @@ public class MainnetTransactionProcessor {
         (transaction.getGasLimit() - gasRemaining) / gasCalculator.getMaxRefundQuotient();
     final long refundAllowance = Math.min(maxRefundAllowance, gasRefund);
     return gasRemaining + refundAllowance;
+  }
+
+  private String printableStackTraceFromThrowable(final RuntimeException re) {
+    final StringBuilder builder = new StringBuilder();
+
+    for (final StackTraceElement stackTraceElement : re.getStackTrace()) {
+      builder.append("\tat ").append(stackTraceElement.toString()).append("\n");
+    }
+
+    return builder.toString();
   }
 }
