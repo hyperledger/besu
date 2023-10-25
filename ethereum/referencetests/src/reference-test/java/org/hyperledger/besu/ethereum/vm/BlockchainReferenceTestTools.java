@@ -82,13 +82,6 @@ public class BlockchainReferenceTestTools {
     // Perfectly valid test pre-merge.
     params.ignore("UncleFromSideChain_(Merge|Shanghai|Cancun|Prague|Osaka|Bogota)");
 
-    // Reference Tests are old.  Max blob count is 6.
-    params.ignore("blobhashListBounds5");
-    params.ignore("blockWithAllTransactionTypes");
-
-    // EIP-4788 is still in flux and the current fill is not against the final address
-    params.ignore("\\[Cancun\\]");
-
     // EOF tests are written against an older version of the spec
     params.ignore("/stEOF/");
   }
