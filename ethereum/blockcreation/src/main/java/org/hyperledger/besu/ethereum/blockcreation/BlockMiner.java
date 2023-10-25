@@ -126,6 +126,10 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
     return blockCreator.createBlock(Optional.empty(), Optional.empty(), timestamp);
   }
 
+  protected boolean shouldImportBlock(final Block block) {
+    return true;
+  }
+
   protected boolean mineBlock() throws InterruptedException {
     // Ensure the block is allowed to be mined - i.e. the timestamp on the new block is sufficiently
     // ahead of the parent, and still within allowable clock tolerance.
@@ -139,6 +143,10 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
     LOG.trace(
         "Block created, importing to local chain, block includes {} transactions",
         block.getBody().getTransactions().size());
+
+    if (!shouldImportBlock(block)) {
+      return false;
+    }
 
     final BlockImporter importer =
         protocolSchedule.getByBlockHeader(block.getHeader()).getBlockImporter();

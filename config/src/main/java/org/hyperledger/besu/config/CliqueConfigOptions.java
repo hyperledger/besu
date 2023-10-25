@@ -28,6 +28,7 @@ public class CliqueConfigOptions {
 
   private static final long DEFAULT_EPOCH_LENGTH = 30_000;
   private static final int DEFAULT_BLOCK_PERIOD_SECONDS = 15;
+  private static final boolean DEFAULT_CREATE_EMPTY_BLOCKS = true;
 
   private final ObjectNode cliqueConfigRoot;
 
@@ -57,6 +58,10 @@ public class CliqueConfigOptions {
   public int getBlockPeriodSeconds() {
     return JsonUtil.getPositiveInt(
         cliqueConfigRoot, "blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
+  }
+
+  public boolean getCreateEmptyBlocks() {
+    return JsonUtil.getBoolean(cliqueConfigRoot, "createemptyblocks", DEFAULT_CREATE_EMPTY_BLOCKS);
   }
 
   /**
