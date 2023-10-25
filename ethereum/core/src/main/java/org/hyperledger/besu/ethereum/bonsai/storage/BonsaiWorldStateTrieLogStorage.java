@@ -32,6 +32,8 @@ import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -62,31 +64,38 @@ public class BonsaiWorldStateTrieLogStorage extends BonsaiWorldStateKeyValueStor
 
     private final TrieLog trieLog;
 
+    private final Map<Hash, Address> addressMapping;
+
     public TrieLogKeyValueStorage(final Blockchain blockchain, final TrieLog trieLog) {
       this.blockchain = blockchain;
       this.trieLog = trieLog;
+      this.addressMapping = new HashMap<>();
+      this.trieLog
+          .getAccountChanges()
+          .forEach(
+              (address, accountValueLogTuple) -> addressMapping.put(Hash.hash(address), address));
     }
 
     @Override
     public Optional<byte[]> get(final SegmentIdentifier segment, final byte[] key)
         throws StorageException {
       if (segment.equals(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE)) {
-        final Address address = Address.wrap(Bytes.wrap(key, 0, Address.SIZE));
+        final Hash accountHash = Hash.wrap(Bytes32.wrap(key, Hash.SIZE));
         return trieLog
-            .getPriorAccount(address)
+            .getPriorAccount(addressMapping.get(accountHash))
             .map(BonsaiAccount.class::cast)
             .map(BonsaiAccount::serializeAccount)
             .map(Bytes::toArrayUnsafe);
       } else if (segment.equals(KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE)) {
-        final Address address = Address.wrap(Bytes.wrap(key, 0, Address.SIZE));
-        final Hash slotHash = Hash.wrap(Bytes32.wrap(key, Address.SIZE));
+        final Hash accountHash = Hash.wrap(Bytes32.wrap(key, Hash.SIZE));
+        final Hash slotHash = Hash.wrap(Bytes32.wrap(key, Hash.SIZE));
         return trieLog
             .getPriorStorageByStorageSlotKey(
-                address, new StorageSlotKey(slotHash, Optional.empty()))
+                addressMapping.get(accountHash), new StorageSlotKey(slotHash, Optional.empty()))
             .map(Bytes::toArrayUnsafe);
       } else if (segment.equals(KeyValueSegmentIdentifier.CODE_STORAGE)) {
-        final Address address = Address.wrap(Bytes.wrap(key, 0, Address.SIZE));
-        return trieLog.getPriorCode(address).map(Bytes::toArrayUnsafe);
+        final Hash accountHash = Hash.wrap(Bytes32.wrap(key, Hash.SIZE));
+        return trieLog.getPriorCode(addressMapping.get(accountHash)).map(Bytes::toArrayUnsafe);
       } else if (segment.equals(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE)) {
         if (Arrays.equals(key, BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY)) {
           return blockchain
