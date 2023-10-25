@@ -181,7 +181,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   private int maxRemotelyInitiatedPeers;
   /** The Chain pruner configuration. */
   protected ChainPrunerConfiguration chainPrunerConfiguration = ChainPrunerConfiguration.DEFAULT;
-
+  /** The Trie log pruner configuration. */
   protected TrieLogPrunerConfiguration trieLogPrunerConfiguration =
       TrieLogPrunerConfiguration.DEFAULT;
 
