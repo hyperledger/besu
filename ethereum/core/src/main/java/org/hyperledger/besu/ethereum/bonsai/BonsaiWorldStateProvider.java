@@ -62,6 +62,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
 
   private final Blockchain blockchain;
 
+  private final CachedWorldStorageManager cachedWorldStorageManager;
   private final TrieLogManager trieLogManager;
   private final BonsaiWorldState persistedState;
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
@@ -91,15 +92,12 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
       final ObservableMetricsSystem metricsSystem,
       final BesuContext pluginContext) {
 
+    this.cachedWorldStorageManager =
+        new CachedWorldStorageManager(this, worldStateStorage, metricsSystem);
     // TODO: de-dup constructors
     this.trieLogManager =
-        new CachedWorldStorageManager(
-            this,
-            blockchain,
-            worldStateStorage,
-            metricsSystem,
-            maxLayersToLoad.orElse(RETAINED_LAYERS),
-            pluginContext);
+        new TrieLogManager(
+            blockchain, worldStateStorage, maxLayersToLoad.orElse(RETAINED_LAYERS), pluginContext);
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
@@ -108,16 +106,18 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
         .getBlockHeader(persistedState.getWorldStateBlockHash())
         .ifPresent(
             blockHeader ->
-                this.trieLogManager.addCachedLayer(
+                this.cachedWorldStorageManager.addCachedLayer(
                     blockHeader, persistedState.getWorldStateRootHash(), persistedState));
   }
 
   @VisibleForTesting
   BonsaiWorldStateProvider(
+      final CachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Blockchain blockchain,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
+    this.cachedWorldStorageManager = cachedWorldStorageManager;
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;
@@ -127,13 +127,13 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
         .getBlockHeader(persistedState.getWorldStateBlockHash())
         .ifPresent(
             blockHeader ->
-                this.trieLogManager.addCachedLayer(
+                this.cachedWorldStorageManager.addCachedLayer(
                     blockHeader, persistedState.getWorldStateRootHash(), persistedState));
   }
 
   @Override
   public Optional<WorldState> get(final Hash rootHash, final Hash blockHash) {
-    return trieLogManager
+    return cachedWorldStorageManager
         .getWorldState(blockHash)
         .or(
             () -> {
@@ -148,7 +148,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
 
   @Override
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
-    return trieLogManager.containWorldStateStorage(blockHash)
+    return cachedWorldStorageManager.containWorldStateStorage(blockHash)
         || persistedState.blockHash().equals(blockHash)
         || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
@@ -167,10 +167,10 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
             trieLogManager.getMaxLayersToLoad());
         return Optional.empty();
       }
-      return trieLogManager
+      return cachedWorldStorageManager
           .getWorldState(blockHeader.getHash())
-          .or(() -> trieLogManager.getNearestWorldState(blockHeader))
-          .or(() -> trieLogManager.getHeadWorldState(blockchain::getBlockHeader))
+          .or(() -> cachedWorldStorageManager.getNearestWorldState(blockHeader))
+          .or(() -> cachedWorldStorageManager.getHeadWorldState(blockchain::getBlockHeader))
           .flatMap(
               bonsaiWorldState ->
                   rollMutableStateToBlockHash(bonsaiWorldState, blockHeader.getHash()))
@@ -354,11 +354,15 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     return trieLogManager;
   }
 
+  public CachedWorldStorageManager getCachedWorldStorageManager() {
+    return cachedWorldStorageManager;
+  }
+
   @Override
   public void resetArchiveStateTo(final BlockHeader blockHeader) {
     persistedState.resetWorldStateTo(blockHeader);
-    this.trieLogManager.reset();
-    this.trieLogManager.addCachedLayer(
+    this.cachedWorldStorageManager.reset();
+    this.cachedWorldStorageManager.addCachedLayer(
         blockHeader, persistedState.getWorldStateRootHash(), persistedState);
   }
 
