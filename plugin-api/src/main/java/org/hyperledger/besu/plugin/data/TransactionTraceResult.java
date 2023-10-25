@@ -23,24 +23,20 @@ import java.util.Optional;
  * Represents the result of tracing a transaction, including its status and optional error message.
  */
 public class TransactionTraceResult {
-  /**
-   * Enumeration representing the status of the transaction trace.
-   */
+  /** Enumeration representing the status of the transaction trace. */
   public enum Status {
     /**
-     * The transaction was traced successfully. This might include transactions that have been reverted.
+     * The transaction was traced successfully. This might include transactions that have been
+     * reverted.
      */
     SUCCESS,
-    /**
-     * There was an internal error while generating the trace.
-     */
+    /** There was an internal error while generating the trace. */
     ERROR
   }
 
   private final Hash txHash;
   private final Status status;
   private final String errorMessage;
-
 
   private TransactionTraceResult(
       final Hash txHash, final Status status, final String errorMessage) {
@@ -60,7 +56,8 @@ public class TransactionTraceResult {
   }
 
   /**
-   * Creates a TransactionTraceResult with an error status, the given transaction hash, and an error message.
+   * Creates a TransactionTraceResult with an error status, the given transaction hash, and an error
+   * message.
    *
    * @param txHash The hash of the traced transaction.
    * @param errorMessage An error message describing the issue encountered during tracing.

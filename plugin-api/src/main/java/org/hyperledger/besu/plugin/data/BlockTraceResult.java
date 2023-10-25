@@ -28,7 +28,8 @@ public class BlockTraceResult {
   /**
    * Constructs a BlockTraceResult with the given list of transaction trace results.
    *
-   * @param transactionTraceResults The list of transaction trace results to be associated with this block.
+   * @param transactionTraceResults The list of transaction trace results to be associated with this
+   *     block.
    */
   public BlockTraceResult(final List<TransactionTraceResult> transactionTraceResults) {
     this.transactionTraceResults = transactionTraceResults;
@@ -95,9 +96,7 @@ public class BlockTraceResult {
     return new Builder();
   }
 
-  /**
-   * A builder class for constructing a BlockTraceResult.
-   */
+  /** A builder class for constructing a BlockTraceResult. */
   public static class Builder {
     List<TransactionTraceResult> transactionTraceResults = new ArrayList<>();
 
