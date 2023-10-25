@@ -83,7 +83,8 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory<QbftConfigOp
       // vote and validators will come from contract instead of block
       final BftExtraData extraData =
           new BftExtraData(
-              ConsensusHelpers.zeroLeftPad(vanityData, BftExtraDataCodec.EXTRA_VANITY_LENGTH),
+              ConsensusHelpers.zeroLeftPad(
+                  miningParameters.getExtraData(), BftExtraDataCodec.EXTRA_VANITY_LENGTH),
               Collections.emptyList(),
               Optional.empty(),
               round,
