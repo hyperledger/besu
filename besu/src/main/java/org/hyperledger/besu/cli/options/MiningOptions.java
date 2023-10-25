@@ -97,7 +97,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
   @Option(
       names = {"--min-priority-fee"},
       description =
-          "Minimum priority fee per gas (in Wei) offered by a transaction for it to be included in a mined "
+          "Minimum priority fee per gas (in Wei) offered by a transaction for it to be included in a "
               + "block (default: ${DEFAULT-VALUE})",
       arity = "1")
   private Wei minPriorityFeePerGas = DEFAULT_MIN_PRIORITY_FEE_PER_GAS;
@@ -106,7 +106,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
       names = {"--target-gas-limit"},
       description =
           "Sets target gas limit per block."
-              + " If set, each block's gas limit will approach this setting over time if the current gas limit is different.")
+              + " If set, each block's gas limit will approach this setting over time.")
   private Long targetGasLimit = null;
 
   @CommandLine.ArgGroup(validate = false)
