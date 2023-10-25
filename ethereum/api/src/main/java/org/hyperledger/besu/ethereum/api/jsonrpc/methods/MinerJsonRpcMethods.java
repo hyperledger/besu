@@ -17,19 +17,25 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerChangeTargetGasLimit;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerGetMinPriorityFee;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerSetCoinbase;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerSetEtherbase;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerSetMinPriorityFee;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerStart;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerStop;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 
 import java.util.Map;
 
 public class MinerJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final MiningCoordinator miningCoordinator;
+  private final MiningParameters miningParameters;
 
-  public MinerJsonRpcMethods(final MiningCoordinator miningCoordinator) {
+  public MinerJsonRpcMethods(
+      final MiningParameters miningParameters, final MiningCoordinator miningCoordinator) {
+    this.miningParameters = miningParameters;
     this.miningCoordinator = miningCoordinator;
   }
 
@@ -46,6 +52,8 @@ public class MinerJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new MinerStop(miningCoordinator),
         minerSetCoinbase,
         new MinerSetEtherbase(minerSetCoinbase),
-        new MinerChangeTargetGasLimit(miningCoordinator));
+        new MinerChangeTargetGasLimit(miningCoordinator),
+        new MinerGetMinPriorityFee(miningParameters),
+        new MinerSetMinPriorityFee(miningParameters));
   }
 }

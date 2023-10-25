@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -212,6 +213,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(ProtocolContext.class),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
+                    mock(MiningParameters.class),
                     mock(PoWMiningCoordinator.class),
                     new NoOpMetricsSystem(),
                     supportedCapabilities,
@@ -321,6 +323,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(ProtocolContext.class),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
+                    mock(MiningParameters.class),
                     mock(PoWMiningCoordinator.class),
                     new NoOpMetricsSystem(),
                     supportedCapabilities,
