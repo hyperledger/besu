@@ -42,6 +42,8 @@ import com.google.common.collect.Ordering;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The WorldStateProofProvider class is responsible for providing proofs for world state entries. It
@@ -50,6 +52,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class WorldStateProofProvider {
 
   private final WorldStateStorage worldStateStorage;
+  private static final Logger LOG = LoggerFactory.getLogger(WorldStateProofProvider.class);
 
   public WorldStateProofProvider(final WorldStateStorage worldStateStorage) {
     this.worldStateStorage = worldStateStorage;
@@ -195,15 +198,22 @@ public class WorldStateProofProvider {
       return false;
     }
 
-    // when proof is empty we need to have all the keys to reconstruct the trie
+    // when proof is empty and we requested the full range, we should
+    // have all the keys to reconstruct the trie
     if (proofs.isEmpty()) {
-      final MerkleTrie<Bytes, Bytes> trie = new SimpleMerklePatriciaTrie<>(Function.identity());
-      // add the received keys in the trie
-      for (Map.Entry<Bytes32, Bytes> key : keys.entrySet()) {
-        trie.put(key.getKey(), key.getValue());
+      if (startKeyHash.equals(Bytes32.ZERO)) {
+        final MerkleTrie<Bytes, Bytes> trie = new SimpleMerklePatriciaTrie<>(Function.identity());
+        // add the received keys in the trie
+        for (Map.Entry<Bytes32, Bytes> key : keys.entrySet()) {
+          trie.put(key.getKey(), key.getValue());
+        }
+        return rootHash.equals(trie.getRootHash());
+      } else {
+        // TODO: possibly accept a node loader so we can verify this with already
+        //  completed partial storage requests
+        LOG.info("failing proof due to incomplete range without proofs");
+        return false;
       }
-
-      return rootHash.equals(trie.getRootHash());
     }
 
     // reconstruct a part of the trie with the proof

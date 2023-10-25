@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
@@ -246,47 +245,50 @@ class SnapServer {
                 }
 
                 ArrayDeque<NavigableMap<Bytes32, Bytes>> collectedStorages = new ArrayDeque<>();
-                ArrayList<Bytes> lastKeyProofNodes = new ArrayList<>();
+                ArrayList<Bytes> proofNodes = new ArrayList<>();
                 final var worldStateProof = new WorldStateProofProvider(storage);
 
-                if (range.hashes().size() > 0) {
-                  Iterator<Bytes32> accountHashes = range.hashes().iterator();
-                  Bytes32 forAccountHash = null;
-                  Optional<Hash> needsProofStorageSlot = Optional.empty();
-                  do {
-                    forAccountHash = accountHashes.next();
-                    var accountStorages =
-                        storage.streamFlatStorages(
-                            Hash.wrap(forAccountHash),
-                            startKeyBytes,
-                            endKeyBytes,
-                            statefulPredicate);
-                    collectedStorages.add(accountStorages);
+                for (var forAccountHash : range.hashes()) {
 
-                    if (!statefulPredicate.shouldGetMore() && accountStorages.size() > 0) {
-                      // if we were interrupted in the middle of account storage, save last key
-                      needsProofStorageSlot =
-                          Optional.of(accountStorages.lastKey()).map(Hash::wrap);
-                    }
-                  } while (accountHashes.hasNext() && statefulPredicate.shouldGetMore());
+                  var accountStorages =
+                      storage.streamFlatStorages(
+                          Hash.wrap(forAccountHash), startKeyBytes, endKeyBytes, statefulPredicate);
+                  collectedStorages.add(accountStorages);
 
-                  // only send a proof for storage ranges that were interrupted, and only for the
-                  // last key streamed (right side proof)
-                  final Bytes32 mayNeedProofAccountHash = forAccountHash;
-                  needsProofStorageSlot.ifPresent(
-                      stoppedAtSlot ->
-                          lastKeyProofNodes.addAll(
-                              worldStateProof.getStorageProofRelatedNodes(
-                                  getAccountStorageRoot(mayNeedProofAccountHash, storage),
-                                  mayNeedProofAccountHash,
-                                  Hash.wrap(stoppedAtSlot),
-                                  false)));
+                  // if this was a partial range, send a proof for the left side:
+                  if (!startKeyBytes.equals(Hash.ZERO)) {
+                    proofNodes.addAll(
+                        worldStateProof.getStorageProofRelatedNodes(
+                            getAccountStorageRoot(forAccountHash, storage),
+                            forAccountHash,
+                            Hash.wrap(startKeyBytes)));
+                  }
+
+                  // if this was a partial ending range, send a proof for the right side:
+                  if (!startKeyBytes.equals(Hash.ZERO)) {
+                    proofNodes.addAll(
+                        worldStateProof.getStorageProofRelatedNodes(
+                            getAccountStorageRoot(forAccountHash, storage),
+                            forAccountHash,
+                            Hash.wrap(endKeyBytes)));
+                  }
+
+                  // add last key proof, in case it was partial storage
+                  if (!statefulPredicate.shouldGetMore() && accountStorages.size() > 0) {
+                    proofNodes.addAll(
+                        worldStateProof.getStorageProofRelatedNodes(
+                            getAccountStorageRoot(forAccountHash, storage),
+                            forAccountHash,
+                            Hash.wrap(accountStorages.lastKey())));
+                    break;
+                  }
                 }
-                var resp = StorageRangeMessage.create(collectedStorages, lastKeyProofNodes);
+
+                var resp = StorageRangeMessage.create(collectedStorages, proofNodes);
                 LOGGER.info(
                     "returned storage range message with {} storages and {} proofs",
                     collectedStorages.size(),
-                    lastKeyProofNodes.size());
+                    proofNodes.size());
                 return resp;
               })
           .orElseGet(
