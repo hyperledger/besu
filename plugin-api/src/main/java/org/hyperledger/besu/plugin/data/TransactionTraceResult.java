@@ -19,17 +19,28 @@ import org.hyperledger.besu.datatypes.Hash;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Represents the result of tracing a transaction, including its status and optional error message.
+ */
 public class TransactionTraceResult {
+  /**
+   * Enumeration representing the status of the transaction trace.
+   */
   public enum Status {
-    /* the transaction was traced successfully. This might include transactions that have been reverted */
+    /**
+     * The transaction was traced successfully. This might include transactions that have been reverted.
+     */
     SUCCESS,
-    /* there was an internal error while generating the trace */
+    /**
+     * There was an internal error while generating the trace.
+     */
     ERROR
   }
 
   private final Hash txHash;
   private final Status status;
   private final String errorMessage;
+
 
   private TransactionTraceResult(
       final Hash txHash, final Status status, final String errorMessage) {
@@ -38,22 +49,50 @@ public class TransactionTraceResult {
     this.errorMessage = errorMessage;
   }
 
+  /**
+   * Creates a TransactionTraceResult with a successful status and the given transaction hash.
+   *
+   * @param txHash The hash of the traced transaction.
+   * @return A successful TransactionTraceResult.
+   */
   public static TransactionTraceResult success(final Hash txHash) {
     return new TransactionTraceResult(txHash, Status.SUCCESS, null);
   }
 
+  /**
+   * Creates a TransactionTraceResult with an error status, the given transaction hash, and an error message.
+   *
+   * @param txHash The hash of the traced transaction.
+   * @param errorMessage An error message describing the issue encountered during tracing.
+   * @return An error TransactionTraceResult.
+   */
   public static TransactionTraceResult error(final Hash txHash, final String errorMessage) {
     return new TransactionTraceResult(txHash, Status.ERROR, errorMessage);
   }
 
+  /**
+   * Get the hash of the traced transaction.
+   *
+   * @return The hash of the transaction.
+   */
   public Hash getTxHash() {
     return txHash;
   }
 
+  /**
+   * Get the status of the transaction trace.
+   *
+   * @return The status of the transaction trace.
+   */
   public Status getStatus() {
     return status;
   }
 
+  /**
+   * Get an optional error message associated with the transaction trace.
+   *
+   * @return An optional error message, which may be empty if no error occurred.
+   */
   public Optional<String> errorMessage() {
     return Optional.ofNullable(errorMessage);
   }

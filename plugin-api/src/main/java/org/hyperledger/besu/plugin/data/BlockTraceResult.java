@@ -19,17 +19,35 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Represents the result of tracing a block, containing information about the transaction traces.
+ */
 public class BlockTraceResult {
   final List<TransactionTraceResult> transactionTraceResults;
 
+  /**
+   * Constructs a BlockTraceResult with the given list of transaction trace results.
+   *
+   * @param transactionTraceResults The list of transaction trace results to be associated with this block.
+   */
   public BlockTraceResult(final List<TransactionTraceResult> transactionTraceResults) {
     this.transactionTraceResults = transactionTraceResults;
   }
 
+  /**
+   * Creates an empty BlockTraceResult with no transaction trace results.
+   *
+   * @return An empty BlockTraceResult.
+   */
   public static BlockTraceResult empty() {
     return new BlockTraceResult(new ArrayList<>());
   }
 
+  /**
+   * Get the list of transaction trace results for this block.
+   *
+   * @return The list of transaction trace results.
+   */
   public List<TransactionTraceResult> transactionTraceResults() {
     return transactionTraceResults;
   }
@@ -68,19 +86,38 @@ public class BlockTraceResult {
     return builder.toString();
   }
 
+  /**
+   * Creates a new builder to construct a BlockTraceResult.
+   *
+   * @return A new BlockTraceResult.Builder instance.
+   */
   public static Builder builder() {
     return new Builder();
   }
 
+  /**
+   * A builder class for constructing a BlockTraceResult.
+   */
   public static class Builder {
     List<TransactionTraceResult> transactionTraceResults = new ArrayList<>();
 
+    /**
+     * Adds a transaction trace result to the builder.
+     *
+     * @param transactionTraceResult The transaction trace result to add to the builder.
+     * @return This builder instance, for method chaining.
+     */
     public Builder addTransactionTraceResult(final TransactionTraceResult transactionTraceResult) {
       transactionTraceResults.add(transactionTraceResult);
 
       return this;
     }
 
+    /**
+     * Constructs a BlockTraceResult using the transaction trace results added to the builder.
+     *
+     * @return A BlockTraceResult containing the added transaction trace results.
+     */
     public BlockTraceResult build() {
       return new BlockTraceResult(transactionTraceResults);
     }
