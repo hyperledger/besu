@@ -65,6 +65,15 @@ public abstract class MiningParameters {
     return this;
   }
 
+  public Wei getMinPriorityFeePerGas() {
+    return getMutableRuntimeValues().minPriorityFeePerGas;
+  }
+
+  public MiningParameters setMinPriorityFeePerGas(final Wei minPriorityFeePerGas) {
+    getMutableRuntimeValues().minPriorityFeePerGas = minPriorityFeePerGas;
+    return this;
+  }
+
   public Optional<Address> getCoinbase() {
     return getMutableRuntimeValues().coinbase;
   }
@@ -135,6 +144,7 @@ public abstract class MiningParameters {
   public interface MutableInitValues {
     Bytes DEFAULT_EXTRA_DATA = Bytes.EMPTY;
     Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
+    Wei DEFAULT_MIN_PRIORITY_FEE_PER_GAS = Wei.ZERO;
     double DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
 
     MutableInitValues DEFAULT = ImmutableMiningParameters.MutableInitValues.builder().build();
@@ -155,6 +165,11 @@ public abstract class MiningParameters {
     }
 
     @Value.Default
+    default Wei getMinPriorityFeePerGas() {
+      return DEFAULT_MIN_PRIORITY_FEE_PER_GAS;
+    }
+
+    @Value.Default
     default double getMinBlockOccupancyRatio() {
       return DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
     }
@@ -170,6 +185,7 @@ public abstract class MiningParameters {
     private volatile boolean miningEnabled;
     private volatile Bytes extraData;
     private volatile Wei minTransactionGasPrice;
+    private volatile Wei minPriorityFeePerGas;
     private volatile double minBlockOccupancyRatio;
     private volatile Optional<Address> coinbase;
     private volatile OptionalLong targetGasLimit;
@@ -179,6 +195,7 @@ public abstract class MiningParameters {
       miningEnabled = initValues.isMiningEnabled();
       extraData = initValues.getExtraData();
       minTransactionGasPrice = initValues.getMinTransactionGasPrice();
+      minPriorityFeePerGas = initValues.getMinPriorityFeePerGas();
       minBlockOccupancyRatio = initValues.getMinBlockOccupancyRatio();
       coinbase = initValues.getCoinbase();
       targetGasLimit = initValues.getTargetGasLimit();
@@ -195,6 +212,7 @@ public abstract class MiningParameters {
           && Objects.equals(extraData, that.extraData)
           && Objects.equals(minTransactionGasPrice, that.minTransactionGasPrice)
           && Objects.equals(coinbase, that.coinbase)
+          && Objects.equals(minPriorityFeePerGas, that.minPriorityFeePerGas)
           && Objects.equals(targetGasLimit, that.targetGasLimit)
           && Objects.equals(nonceGenerator, that.nonceGenerator);
     }
@@ -205,6 +223,7 @@ public abstract class MiningParameters {
           miningEnabled,
           extraData,
           minTransactionGasPrice,
+          minPriorityFeePerGas,
           minBlockOccupancyRatio,
           coinbase,
           targetGasLimit,
@@ -220,6 +239,8 @@ public abstract class MiningParameters {
           + extraData
           + ", minTransactionGasPrice="
           + minTransactionGasPrice
+          + ", minPriorityFeePerGas="
+          + minPriorityFeePerGas
           + ", minBlockOccupancyRatio="
           + minBlockOccupancyRatio
           + ", coinbase="
