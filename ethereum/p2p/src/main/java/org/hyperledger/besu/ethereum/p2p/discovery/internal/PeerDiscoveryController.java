@@ -264,6 +264,7 @@ public class PeerDiscoveryController {
               l.clear();
             });
     inflightInteractions.clear();
+    recursivePeerRefreshState.cancel();
     return CompletableFuture.completedFuture(null);
   }
 

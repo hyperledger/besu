@@ -103,6 +103,10 @@ public class RecursivePeerRefreshState {
   }
 
   private void bondingInitiateRound() {
+    if(!iterativeSearchInProgress){
+      // cancelled so we can ignore
+      return;
+    }
     currentRoundTimeout.ifPresent(RoundTimeout::cancelTimeout);
     final List<MetadataPeer> candidates = bondingRoundCandidates();
     if (candidates.isEmpty()) {
@@ -135,6 +139,10 @@ public class RecursivePeerRefreshState {
   }
 
   private void bondingCancelOutstandingRequests() {
+    if(!iterativeSearchInProgress){
+      // cancelled so we can ignore
+      return;
+    }
     LOG.debug("Bonding round timed out");
     for (final Map.Entry<Bytes, MetadataPeer> entry : oneTrueMap.entrySet()) {
       final MetadataPeer metadataPeer = entry.getValue();
@@ -147,6 +155,10 @@ public class RecursivePeerRefreshState {
   }
 
   private void neighboursInitiateRound() {
+    if(!iterativeSearchInProgress){
+      // cancelled so we can ignore
+      return;
+    }
     currentRoundTimeout.ifPresent(RoundTimeout::cancelTimeout);
     final List<MetadataPeer> candidates = neighboursRoundCandidates();
     if (candidates.isEmpty() || reachedMaximumNumberOfRounds()) {
@@ -170,6 +182,10 @@ public class RecursivePeerRefreshState {
   }
 
   private void neighboursCancelOutstandingRequests() {
+    if(!iterativeSearchInProgress){
+      // cancelled so we can ignore
+      return;
+    }
     LOG.debug("Neighbours round timed out");
     for (final Map.Entry<Bytes, MetadataPeer> entry : oneTrueMap.entrySet()) {
       final MetadataPeer metadataPeer = entry.getValue();
@@ -215,6 +231,10 @@ public class RecursivePeerRefreshState {
   }
 
   void onBondingComplete(final DiscoveryPeer peer) {
+    if(!iterativeSearchInProgress){
+      // cancelled so we can ignore
+      return;
+    }
     final MetadataPeer iterationParticipant = oneTrueMap.get(peer.getId());
     if (iterationParticipant == null) {
       return;
