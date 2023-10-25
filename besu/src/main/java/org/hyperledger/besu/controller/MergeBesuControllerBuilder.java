@@ -155,9 +155,6 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final EthScheduler ethScheduler) {
 
     this.syncState.set(syncState);
-    //
-    //    final ExecutorService blockBuilderExecutor =
-    //        MonitoredExecutors.newSingleThreadExecutor("PoS-Block-Builder", metricsSystem);
 
     final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
     final Optional<Address> depositContractAddress =

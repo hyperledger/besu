@@ -205,6 +205,12 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     return endKeyHash;
   }
 
+  @Override
+  public void clear() {
+    this.isProofValid = Optional.of(false);
+    this.stackTrie.removeElement(startKeyHash);
+  }
+
   @VisibleForTesting
   public void setProofValid(final boolean isProofValid) {
     this.isProofValid = Optional.of(isProofValid);

@@ -216,6 +216,12 @@ public class AccountRangeDataRequest extends SnapDataRequest {
     return stackTrie.getElement(startKeyHash).keys();
   }
 
+  @Override
+  public void clear() {
+    stackTrie.clear();
+    isProofValid = Optional.of(false);
+  }
+
   public Bytes serialize() {
     return RLP.encode(
         out -> {
