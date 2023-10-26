@@ -41,12 +41,14 @@ public class TrieLogPruner {
 
   private static final Logger LOG = LoggerFactory.getLogger(TrieLogPruner.class);
 
-  // Blocks != TrieLogLayers due to forks
-  private static final int DEFAULT_MAX_BLOCKS_TO_PRUNE = 1000;
+  private static final int DEFAULT_PRUNING_LIMIT = 1000;
+  private final int pruningLimit;
+  private final int loadingLimit;
   private final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
   private final Blockchain blockchain;
   private final long numBlocksToRetain;
-  private final int pruningWindowSize;
+  private static final Multimap<Long, byte[]> knownTrieLogKeysByDescendingBlockNumber =
+      TreeMultimap.create(Comparator.reverseOrder(), Comparator.comparingInt(Arrays::hashCode));
 
   public TrieLogPruner(
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage, final Blockchain blockchain) {
@@ -54,7 +56,7 @@ public class TrieLogPruner {
         rootWorldStateStorage,
         blockchain,
         CachedWorldStorageManager.RETAINED_LAYERS,
-        DEFAULT_MAX_BLOCKS_TO_PRUNE);
+        DEFAULT_PRUNING_LIMIT);
   }
 
   @VisibleForTesting
@@ -62,17 +64,24 @@ public class TrieLogPruner {
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
       final Blockchain blockchain,
       final long numBlocksToRetain,
-      final int pruningWindowSize) {
+      final int pruningLimit) {
     this.rootWorldStateStorage = rootWorldStateStorage;
     this.blockchain = blockchain;
     this.numBlocksToRetain = numBlocksToRetain;
-    this.pruningWindowSize = pruningWindowSize;
-    loadTrieLogs();
+    this.pruningLimit = pruningLimit;
+    this.loadingLimit = pruningLimit; // same as pruningLimit for now
   }
 
-  void loadTrieLogs() {
-    LOG.atInfo().log("Loading trie logs from database...");
-    final Stream<byte[]> trieLogs = rootWorldStateStorage.streamTrieLogs();
+  public void initialize() {
+    preloadCache();
+  }
+
+  private void preloadCache() {
+    LOG.atInfo()
+        .setMessage("Loading first {} trie logs from database...")
+        .addArgument(loadingLimit)
+        .log();
+    final Stream<byte[]> trieLogs = rootWorldStateStorage.streamTrieLogs(loadingLimit);
     final AtomicLong count = new AtomicLong();
     trieLogs.forEach(
         hashAsBytes -> {
@@ -85,9 +94,6 @@ public class TrieLogPruner {
         });
     LOG.atInfo().log("Loaded {} trie logs from database", count);
   }
-
-  private static final Multimap<Long, byte[]> knownTrieLogKeysByDescendingBlockNumber =
-      TreeMultimap.create(Comparator.reverseOrder(), Comparator.comparingInt(Arrays::hashCode));
 
   void cacheForLaterPruning(final long blockNumber, final byte[] trieLogKey) {
     knownTrieLogKeysByDescendingBlockNumber.put(blockNumber, trieLogKey);
@@ -105,7 +111,7 @@ public class TrieLogPruner {
     final var pruneWindowEntries =
         knownTrieLogKeysByDescendingBlockNumber.asMap().entrySet().stream()
             .dropWhile((e) -> e.getKey() > retainAboveThisBlock)
-            .limit(pruningWindowSize);
+            .limit(pruningLimit);
 
     final List<Long> blockNumbersToRemove = new ArrayList<>();
 
@@ -140,6 +146,11 @@ public class TrieLogPruner {
     private NoOpTrieLogPruner(
         final BonsaiWorldStateKeyValueStorage rootWorldStateStorage, final Blockchain blockchain) {
       super(rootWorldStateStorage, blockchain);
+    }
+
+    @Override
+    public void initialize() {
+      // no-op
     }
 
     @Override

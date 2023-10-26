@@ -204,8 +204,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return trieLogStorage.get(blockHash.toArrayUnsafe());
   }
 
-  public Stream<byte[]> streamTrieLogs() {
-    return trieLogStorage.streamKeys();
+  public Stream<byte[]> streamTrieLogs(final int limit) {
+    return trieLogStorage.streamKeys().limit(limit);
   }
 
   public Optional<Bytes> getStateTrieNode(final Bytes location) {
