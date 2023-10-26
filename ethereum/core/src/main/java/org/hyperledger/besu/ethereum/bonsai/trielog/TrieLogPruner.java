@@ -91,6 +91,9 @@ public class TrieLogPruner {
           if (header.isPresent()) {
             knownTrieLogKeysByDescendingBlockNumber.put(header.get().getNumber(), hashAsBytes);
             count.getAndIncrement();
+          } else {
+            // prune orphaned blocks (sometimes created during block production)
+            rootWorldStateStorage.pruneTrieLog(hashAsBytes);
           }
         });
     LOG.atInfo().log("Loaded {} trie logs from database", count);
