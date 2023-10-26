@@ -10,6 +10,18 @@
 
 ### Download Links
 
+## 23.10.2
+
+### Breaking Changes
+
+### Deprecations
+
+### Additions and Improvements
+
+### Bug fixes
+
+### Download Links
+
 ## 23.10.1
 - Cache last n blocks by using a new Besu flag --cache-last-blocks=n [#6009](https://github.com/hyperledger/besu/pull/6009)
 - Optimize performances of RPC method Eth_feeHistory [#6011](https://github.com/hyperledger/besu/pull/6011)
