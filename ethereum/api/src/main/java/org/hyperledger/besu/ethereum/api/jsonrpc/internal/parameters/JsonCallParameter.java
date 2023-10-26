@@ -40,6 +40,31 @@ public class JsonCallParameter extends CallParameter {
 
   private final Optional<Boolean> strict;
 
+  public JsonCallParameter(
+      @JsonProperty("from") final Address from,
+      @JsonProperty("to") final Address to,
+      @JsonDeserialize(using = HexLongDeserializer.class) @JsonProperty("gas") final Long gasLimit,
+      @JsonProperty("gasPrice") final Wei gasPrice,
+      @JsonProperty("maxPriorityFeePerGas") final Wei maxPriorityFeePerGas,
+      @JsonProperty("maxFeePerGas") final Wei maxFeePerGas,
+      @JsonProperty("value") final Wei value,
+      @JsonDeserialize(using = HexStringDeserializer.class) @JsonProperty("data") final Bytes data,
+      @JsonProperty("strict") final Boolean strict,
+      @JsonProperty("accessList") final List<AccessListEntry> accessList) {
+    this(
+        from,
+        to,
+        gasLimit,
+        gasPrice,
+        maxPriorityFeePerGas,
+        maxFeePerGas,
+        value,
+        data,
+        null,
+        strict,
+        accessList);
+  }
+
   @JsonCreator
   public JsonCallParameter(
       @JsonProperty("from") final Address from,
@@ -49,10 +74,12 @@ public class JsonCallParameter extends CallParameter {
       @JsonProperty("maxPriorityFeePerGas") final Wei maxPriorityFeePerGas,
       @JsonProperty("maxFeePerGas") final Wei maxFeePerGas,
       @JsonProperty("value") final Wei value,
-      @JsonDeserialize(using = HexStringDeserializer.class) @JsonProperty("data")
-          final Bytes payload,
+      @JsonDeserialize(using = HexStringDeserializer.class) @JsonProperty("input")
+          final Bytes input,
+      @JsonDeserialize(using = HexStringDeserializer.class) @JsonProperty("data") final Bytes data,
       @JsonProperty("strict") final Boolean strict,
       @JsonProperty("accessList") final List<AccessListEntry> accessList) {
+
     super(
         from,
         to,
@@ -61,8 +88,13 @@ public class JsonCallParameter extends CallParameter {
         Optional.ofNullable(maxPriorityFeePerGas),
         Optional.ofNullable(maxFeePerGas),
         value,
-        payload,
+        Optional.ofNullable(input != null ? input : data).orElse(null),
         Optional.ofNullable(accessList));
+
+    if (input != null && data != null) {
+      throw new IllegalArgumentException("Only one of 'input' or 'data' should be provided");
+    }
+
     this.strict = Optional.ofNullable(strict);
   }
 
