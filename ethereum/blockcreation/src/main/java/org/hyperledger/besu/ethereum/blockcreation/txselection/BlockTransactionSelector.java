@@ -279,18 +279,11 @@ public class BlockTransactionSelector {
     var postProcessingSelectionResult =
         evaluatePostProcessing(pendingTransaction, processingResult);
 
-    synchronized (isTxTimeout) {
-      if (isTxTimeout.get()) {
-        isTxTimeout.set(false);
-        return handleTransactionNotSelected(
-            pendingTransaction, TX_EVALUATION_TIMEOUT, txWorldStateUpdater);
-      }
-      if (postProcessingSelectionResult.selected()) {
-        return handleTransactionSelected(pendingTransaction, processingResult, txWorldStateUpdater);
-      }
-      return handleTransactionNotSelected(
-          pendingTransaction, postProcessingSelectionResult, txWorldStateUpdater);
+    if (postProcessingSelectionResult.selected()) {
+      return handleTransactionSelected(pendingTransaction, processingResult, txWorldStateUpdater);
     }
+    return handleTransactionNotSelected(
+        pendingTransaction, postProcessingSelectionResult, txWorldStateUpdater);
   }
 
   /**
@@ -389,38 +382,55 @@ public class BlockTransactionSelector {
     final long blobGasUsed =
         blockSelectionContext.gasCalculator().blobGasCost(transaction.getBlobCount());
 
-    final boolean tooLate;
+    final boolean blockTooLate;
+    final boolean txTooLate;
 
     // only add this tx to the selected set if it is not too late,
     // this need to be done synchronously to avoid that a concurrent timeout
     // could start packing a block while we are updating the state here
     synchronized (isBlockTimeout) {
-      if (!isBlockTimeout.get()) {
-        txWorldStateUpdater.commit();
-        blockWorldStateUpdater.commit();
-        final TransactionReceipt receipt =
-            transactionReceiptFactory.create(
-                transaction.getType(), processingResult, worldState, cumulativeGasUsed);
+      synchronized (isTxTimeout) {
+        if (!isBlockTimeout.get() && !isTxTimeout.get()) {
+          txWorldStateUpdater.commit();
+          blockWorldStateUpdater.commit();
+          final TransactionReceipt receipt =
+              transactionReceiptFactory.create(
+                  transaction.getType(), processingResult, worldState, cumulativeGasUsed);
 
-        transactionSelectionResults.updateSelected(
-            pendingTransaction.getTransaction(), receipt, gasUsedByTransaction, blobGasUsed);
-        tooLate = false;
-      } else {
-        tooLate = true;
+          transactionSelectionResults.updateSelected(
+              pendingTransaction.getTransaction(), receipt, gasUsedByTransaction, blobGasUsed);
+        }
+        blockTooLate = isBlockTimeout.get();
+        txTooLate = isTxTimeout.get();
       }
     }
 
-    if (tooLate) {
+    if (blockTooLate) {
       // even if this tx passed all the checks, it is too late to include it in this block,
       // so we need to treat it as not selected
       LOG.atTrace()
-          .setMessage("{} processed too late for block creation")
+          .setMessage(
+              "{} processed after a block selection timeout, and will not be included in the block")
           .addArgument(transaction::toTraceLog)
           .log();
       // do not rely on the presence of this result, since by the time it is added, the code
       // reading it could have been already executed by another thread
       return handleTransactionNotSelected(
           pendingTransaction, BLOCK_SELECTION_TIMEOUT, txWorldStateUpdater);
+    }
+
+    if (txTooLate) {
+      // this tx took much time to be evaluated and processed, and will not be included in the block
+      // and will be removed from the txpool, so we need to treat it as not selected
+      LOG.atTrace()
+          .setMessage(
+              "{} took too much to process, and will not be included in the block and will be removed from the txpool")
+          .addArgument(transaction::toTraceLog)
+          .log();
+      // do not rely on the presence of this result, since by the time it is added, the code
+      // reading it could have been already executed by another thread
+      return handleTransactionNotSelected(
+          pendingTransaction, TX_EVALUATION_TIMEOUT, txWorldStateUpdater);
     }
 
     pluginTransactionSelector.onTransactionSelected(pendingTransaction, processingResult);
