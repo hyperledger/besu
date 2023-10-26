@@ -17,7 +17,6 @@ package org.hyperledger.besu.cli.options;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_TXS_SELECTION_MAX_TIME;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_TXS_SELECTION_PER_TX_MAX_TIME;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.verify;
 
@@ -31,6 +30,8 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -337,10 +338,12 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
 
   @Test
   public void txsSelectionPerTxMaxTimeDefaultValue() {
+    // by default, it takes the value of --Xtxs-selection-max-time
     internalTestSuccess(
         miningParams ->
             assertThat(miningParams.getUnstable().getTxsSelectionPerTxMaxTime())
-                .isEqualTo(DEFAULT_TXS_SELECTION_PER_TX_MAX_TIME));
+                .isEqualTo(miningParams.getUnstable().getTxsSelectionMaxTime())
+                .isEqualTo(DEFAULT_TXS_SELECTION_MAX_TIME));
   }
 
   @Test
@@ -353,9 +356,21 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   }
 
   @Test
+  public void txsSelectionPerTxMaxTimeOptionGetsTheValueOfTxsSelectionMaxTimeIfNotConfigured() {
+    // by default, it takes the value of --Xtxs-selection-max-time
+    internalTestSuccess(
+        miningParams ->
+            assertThat(miningParams.getUnstable().getTxsSelectionPerTxMaxTime())
+                .isEqualTo(miningParams.getUnstable().getTxsSelectionMaxTime())
+                .isEqualTo(1000L),
+        "--Xtxs-selection-max-time",
+        "1000");
+  }
+
+  @Test
   public void txsSelectionPerTxMaxTimeOutOfAllowedRange() {
     internalTestFailure(
-        "--Xtxs-selection-max-time must be positive and ≤ 3000 (the value of --Xtxs-selection-max-time option)",
+        "--Xtxs-selection-per-tx-max-time must be positive and ≤ 3000 (the value of --Xtxs-selection-max-time option)",
         "--Xtxs-selection-max-time",
         "3000",
         "--Xtxs-selection-per-tx-max-time",
@@ -390,5 +405,10 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   @Override
   protected MiningOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
     return besuCommand.getMiningOptions();
+  }
+
+  @Override
+  protected List<String> getFieldsWithComputedDefaults() {
+    return Arrays.asList("unstableOptions.txsSelectionPerTxMaxTime");
   }
 }
