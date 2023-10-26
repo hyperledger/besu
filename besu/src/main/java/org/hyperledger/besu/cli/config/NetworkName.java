@@ -40,8 +40,10 @@ public enum NetworkName {
   CLASSIC("/classic.json", BigInteger.valueOf(1)),
   /** Mordor network name. */
   MORDOR("/mordor.json", BigInteger.valueOf(7)),
-  /** Linea l2 network name */
-  LINEA("/linea.json", BigInteger.valueOf(59140), false);
+  /** Linea Mainnet L2 network name */
+  LINEA("/linea.json", BigInteger.valueOf(59144), false),
+  /** Linea Goerli L2 network name */
+  LINEA_GOERLI("/linea_goerli.json", BigInteger.valueOf(59140), false);
 
   private final String genesisFile;
   private final BigInteger networkId;
