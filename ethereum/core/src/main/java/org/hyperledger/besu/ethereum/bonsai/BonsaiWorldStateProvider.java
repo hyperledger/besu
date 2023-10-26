@@ -158,19 +158,32 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
   @Override
   public Optional<MutableWorldState> getTracingState(final BlockHeader blockHeader) {
     Optional<TrieLog> trieLogLayer = trieLogManager.getTrieLogLayer(blockHeader.getBlockHash());
-    if (trieLogLayer.isPresent()) {
-      return Optional.of(
-          new BonsaiWorldState(
-              new BonsaiWorldStateLayerStorage(
-                  new BonsaiWorldStateTrieLogStorage(
-                      blockchain, trieLogLayer.get(), persistedState.getWorldStateStorage())),
-              Optional.empty(),
-              getCachedWorldStorageManager(),
-              trieLogManager));
-    } else {
-      LOG.warn("State cannot be found ({})", blockHeader.getBlockHash());
-      return Optional.empty();
+    final Optional<BlockHeader> parentBlockHeader =
+        blockchain.getBlockHeader(blockHeader.getParentHash());
+    if (trieLogLayer.isPresent() && parentBlockHeader.isPresent()) {
+      final BlockHeader chainHeadBlockHeader = blockchain.getChainHeadHeader();
+      if (chainHeadBlockHeader.getNumber() - parentBlockHeader.get().getNumber()
+          >= trieLogManager.getMaxLayersToLoad()) {
+        LOG.warn(
+            "Exceeded the limit of back layers that can be loaded ({})",
+            trieLogManager.getMaxLayersToLoad());
+        return Optional.empty();
+      }
+      return cachedWorldStorageManager
+          .getWorldState(parentBlockHeader.get().getHash())
+          .or(() -> cachedWorldStorageManager.getNearestWorldState(parentBlockHeader.get()))
+          .or(() -> cachedWorldStorageManager.getHeadWorldState(blockchain::getBlockHeader))
+          .flatMap(
+              bonsaiWorldState ->
+                  rollMutableStateToBlockHash(bonsaiWorldState, parentBlockHeader.get().getHash()))
+          .map(BonsaiWorldState.class::cast)
+          .map(
+              state ->
+                  state.wrapStorage(
+                      keyValueStorage ->
+                          new BonsaiWorldStateTrieLogStorage(trieLogLayer.get(), keyValueStorage)));
     }
+    return Optional.empty();
   }
 
   @Override
@@ -194,7 +207,8 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
           .flatMap(
               bonsaiWorldState ->
                   rollMutableStateToBlockHash(bonsaiWorldState, blockHeader.getHash()))
-          .map(MutableWorldState::freeze);
+          .map(BonsaiWorldState.class::cast)
+          .map(state -> state.wrapStorage(BonsaiWorldStateLayerStorage::new));
     }
   }
 

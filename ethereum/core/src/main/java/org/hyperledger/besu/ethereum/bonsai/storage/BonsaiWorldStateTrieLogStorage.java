@@ -18,21 +18,19 @@ package org.hyperledger.besu.ethereum.bonsai.storage;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.bonsai.storage.flat.FullFlatDbStrategy;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
-import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -45,37 +43,44 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class BonsaiWorldStateTrieLogStorage extends BonsaiWorldStateKeyValueStorage {
+public class BonsaiWorldStateTrieLogStorage extends BonsaiWorldStateLayerStorage {
 
   public BonsaiWorldStateTrieLogStorage(
-      final Blockchain blockchain,
-      final TrieLog trieLog,
-      final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage) {
+      final TrieLog trieLog, final BonsaiWorldStateKeyValueStorage parent) {
     super(
-        FlatDbMode.FULL,
-        new FullFlatDbStrategy(bonsaiWorldStateKeyValueStorage.metricsSystem),
-        new TrieLogKeyValueStorage(
-            blockchain, trieLog, bonsaiWorldStateKeyValueStorage.composedWorldStateStorage),
-        bonsaiWorldStateKeyValueStorage.trieLogStorage,
-        bonsaiWorldStateKeyValueStorage.metricsSystem);
+        new TrieLogKeyValueStorage(parent.composedWorldStateStorage, trieLog),
+        parent.trieLogStorage,
+        parent,
+        parent.metricsSystem);
   }
 
-  static class TrieLogKeyValueStorage implements SegmentedKeyValueStorage {
+  public BonsaiWorldStateTrieLogStorage(
+      final SnappedKeyValueStorage composedWorldStateStorage,
+      final KeyValueStorage trieLogStorage,
+      final BonsaiWorldStateKeyValueStorage parentWorldStateStorage,
+      final ObservableMetricsSystem metricsSystem) {
+    super(composedWorldStateStorage, trieLogStorage, parentWorldStateStorage, metricsSystem);
+  }
 
-    private final Blockchain blockchain;
+  @Override
+  public BonsaiWorldStateLayerStorage clone() {
+    return new BonsaiWorldStateTrieLogStorage(
+        ((TrieLogKeyValueStorage) composedWorldStateStorage).clone(),
+        trieLogStorage,
+        parentWorldStateStorage,
+        metricsSystem);
+  }
 
+  static class TrieLogKeyValueStorage implements SnappedKeyValueStorage {
+
+    private final SegmentedKeyValueStorage parent;
     private final TrieLog trieLog;
-    private final SegmentedKeyValueStorage composedWorldStateStorage;
 
     private final Map<Hash, Address> addressMapping;
 
-    public TrieLogKeyValueStorage(
-        final Blockchain blockchain,
-        final TrieLog trieLog,
-        final SegmentedKeyValueStorage composedWorldStateStorage) {
-      this.blockchain = blockchain;
+    public TrieLogKeyValueStorage(final SegmentedKeyValueStorage parent, final TrieLog trieLog) {
+      this.parent = parent;
       this.trieLog = trieLog;
-      this.composedWorldStateStorage = composedWorldStateStorage;
       this.addressMapping = new HashMap<>();
       this.trieLog
           .getAccountChanges()
@@ -101,40 +106,43 @@ public class BonsaiWorldStateTrieLogStorage extends BonsaiWorldStateKeyValueStor
     public Optional<byte[]> get(final SegmentIdentifier segment, final byte[] key)
         throws StorageException {
       if (segment.equals(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE)) {
-        final Hash accountHash = Hash.wrap(Bytes32.wrap(key));
-        return trieLog
-            .getPriorAccount(addressMapping.get(accountHash))
+        final Address address = addressMapping.get(Hash.wrap(Bytes32.wrap(key)));
+        return Optional.of(trieLog)
+            .filter(trieLog -> address != null)
+            .flatMap(trieLog -> trieLog.getPriorAccount(address))
             .map(StateTrieAccountValue.class::cast)
             .map(account -> RLP.encode(account::writeTo))
-            .map(Bytes::toArrayUnsafe);
+            .map(Bytes::toArrayUnsafe)
+            .or(() -> getFromParent(segment, key));
       } else if (segment.equals(KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE)) {
-        final Hash accountHash = Hash.wrap(Bytes32.wrap(key, 0));
+        final Address address = addressMapping.get(Hash.wrap(Bytes32.wrap(key, 0)));
         final Hash slotHash = Hash.wrap(Bytes32.wrap(key, Hash.SIZE));
-        return trieLog
-            .getPriorStorageByStorageSlotKey(
-                addressMapping.get(accountHash), new StorageSlotKey(slotHash, Optional.empty()))
+        return Optional.of(trieLog)
+            .filter(trieLog -> address != null)
+            .flatMap(
+                trieLog ->
+                    trieLog.getPriorStorageByStorageSlotKey(
+                        address, new StorageSlotKey(slotHash, Optional.empty())))
             .map(Bytes::toArrayUnsafe);
       } else if (segment.equals(KeyValueSegmentIdentifier.CODE_STORAGE)) {
-        return composedWorldStateStorage.get(segment, key);
-      } else if (segment.equals(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE)) {
-        if (Arrays.equals(key, BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY)) {
-          return blockchain
-              .getBlockHeader(trieLog.getBlockHash())
-              .map(BlockHeader::getParentHash)
-              .flatMap(blockchain::getBlockHeader)
-              .map(BlockHeader::getStateRoot)
-              .map(Bytes::toArrayUnsafe);
-        } else if (Arrays.equals(key, BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY)) {
-          return blockchain
-              .getBlockHeader(trieLog.getBlockHash())
-              .map(BlockHeader::getParentHash)
-              .map(Bytes::toArrayUnsafe);
-        } else {
-          new Exception().printStackTrace(System.out);
-          return Optional.empty();
-        }
+        final Address address = addressMapping.get(Hash.wrap(Bytes32.wrap(key, 0)));
+        return Optional.of(trieLog)
+            .filter(trieLog -> address != null)
+            .flatMap(trieLog -> trieLog.getPriorCode(address))
+            .map(Bytes::toArrayUnsafe)
+            .or(() -> getFromParent(segment, key));
       }
-      return Optional.empty();
+      return getFromParent(segment, key);
+    }
+
+    private Optional<byte[]> getFromParent(final SegmentIdentifier segment, final byte[] key)
+        throws StorageException {
+      return parent.get(segment, key);
+    }
+
+    @Override
+    public SnappedKeyValueStorage clone() {
+      return new TrieLogKeyValueStorage(parent, trieLog);
     }
 
     @Override
@@ -186,6 +194,11 @@ public class BonsaiWorldStateTrieLogStorage extends BonsaiWorldStateKeyValueStor
     public Set<byte[]> getAllValuesFromKeysThat(
         final SegmentIdentifier segmentIdentifier, final Predicate<byte[]> returnCondition) {
       throw new NotImplementedException("getAllValuesFromKeysThat not available for trieLog");
+    }
+
+    @Override
+    public SegmentedKeyValueStorageTransaction getSnapshotTransaction() {
+      throw new NotImplementedException("getSnapshotTransaction not available for trieLog");
     }
 
     @Override

@@ -27,9 +27,4 @@ public interface MutableWorldState extends WorldState, MutableWorldView {
    *     `null` should be passed in.
    */
   void persist(BlockHeader blockHeader);
-
-  default MutableWorldState freeze() {
-    // no op
-    throw new UnsupportedOperationException("cannot freeze");
-  }
 }

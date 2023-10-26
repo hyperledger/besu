@@ -46,9 +46,9 @@ public class Tracer {
     return blockHeader
         .map(BlockHeader::getHash)
         .flatMap(
-            parentHash ->
+            blockHash ->
                 blockchainQueries.getAndMapWorldState(
-                    parentHash,
+                    blockHash,
                     mutableWorldState -> mapper.apply(new TraceableState(mutableWorldState))));
   }
 

@@ -605,10 +605,10 @@ public class BonsaiWorldState
     return storageTrie.entriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
   }
 
-  @Override
-  public MutableWorldState freeze() {
+  public MutableWorldState wrapStorage(
+      final Function<BonsaiWorldStateKeyValueStorage, BonsaiWorldStateKeyValueStorage> wrapper) {
     this.isFrozen = true;
-    this.worldStateStorage = new BonsaiWorldStateLayerStorage(worldStateStorage);
+    this.worldStateStorage = wrapper.apply(worldStateStorage);
     return this;
   }
 
