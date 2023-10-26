@@ -11,22 +11,24 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.evm.internal;
 
-import org.apache.tuweni.bytes.Bytes;
-
-/** The Operand stack. */
-public class OperandStack extends FlexStack<Bytes> {
+/**
+ * Overflow exception for {@link FixedStack} and {@link FlexStack}. The main need for a separate
+ * class is to remove the stack trace generation as the exception is not used to signal a debuggable
+ * failure but instead an expected edge case the EVM should handle.
+ */
+public class OverflowException extends RuntimeException {
 
   /**
-   * Instantiates a new Operand stack.
+   * Overload the stack trace fill in so no stack is filled in. This is done for performance reasons
+   * as this exception signals an expected corner case not a debuggable failure.
    *
-   * @param maxSize the max size
+   * @return the exception, with no stack trace filled in.
    */
-  public OperandStack(final int maxSize) {
-    super(maxSize, Bytes.class);
+  @Override
+  public synchronized Throwable fillInStackTrace() {
+    return this;
   }
 }
