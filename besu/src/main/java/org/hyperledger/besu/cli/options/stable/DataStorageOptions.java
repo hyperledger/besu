@@ -17,6 +17,7 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -26,6 +27,7 @@ import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguratio
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 /** The Data storage CLI options. */
@@ -52,6 +54,18 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
       arity = "1")
   private final Long bonsaiMaxLayersToLoad = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
 
+  @CommandLine.ArgGroup(validate = false)
+  private final DataStorageOptions.Unstable unstableOptions = new Unstable();
+
+  static class Unstable {
+    @CommandLine.Option(
+        hidden = true,
+        names = {"--Xbonsai-trie-log-retention-threshold"},
+        description =
+            "The number of blocks for which to retain trie logs. 0 is unlimited. (default: ${DEFAULT-VALUE})")
+    private long bonsaiTrieLogRententionThreshold = DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
+  }
+
   /**
    * Create data storage options.
    *
@@ -66,6 +80,10 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     return ImmutableDataStorageConfiguration.builder()
         .dataStorageFormat(dataStorageFormat)
         .bonsaiMaxLayersToLoad(bonsaiMaxLayersToLoad)
+        .unstable(
+            ImmutableDataStorageConfiguration.Unstable.builder()
+                .bonsaiTrieLogRetentionThreshold(unstableOptions.bonsaiTrieLogRententionThreshold)
+                .build())
         .build();
   }
 

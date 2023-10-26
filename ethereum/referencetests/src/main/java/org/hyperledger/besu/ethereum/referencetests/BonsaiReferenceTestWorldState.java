@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogAddedEvent;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -178,7 +179,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   static class NoOpTrieLogManager extends TrieLogManager {
 
     public NoOpTrieLogManager() {
-      super(null, null, 0, null);
+      super(null, null, 0, null, TrieLogPruner.noOpTrieLogPruner());
     }
 
     @SuppressWarnings("UnsynchronizedOverridesSynchronized")

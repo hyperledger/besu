@@ -19,6 +19,7 @@ package org.hyperledger.besu.ethereum.worldstate;
 import org.immutables.value.Value;
 
 @Value.Immutable
+@Value.Enclosing
 public interface DataStorageConfiguration {
 
   long DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD = 512;
@@ -27,9 +28,29 @@ public interface DataStorageConfiguration {
       ImmutableDataStorageConfiguration.builder()
           .dataStorageFormat(DataStorageFormat.FOREST)
           .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+          .unstable(Unstable.DEFAULT)
           .build();
 
   DataStorageFormat getDataStorageFormat();
 
   Long getBonsaiMaxLayersToLoad();
+
+  @Value.Default
+  default Unstable getUnstable() {
+    return Unstable.DEFAULT;
+  }
+
+  @Value.Immutable
+  interface Unstable {
+
+    long DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD = 0;
+
+    DataStorageConfiguration.Unstable DEFAULT =
+        ImmutableDataStorageConfiguration.Unstable.builder().build();
+
+    @Value.Default
+    default long getBonsaiTrieLogRetentionThreshold() {
+      return DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
+    }
+  }
 }

@@ -3432,6 +3432,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setHighSpecEnabled();
     }
 
+    builder.setTrieLogRetentionThreshold(
+        dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogRetentionThreshold());
+
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
 
     builder.setPluginContext(besuComponent.getBesuPluginContext());

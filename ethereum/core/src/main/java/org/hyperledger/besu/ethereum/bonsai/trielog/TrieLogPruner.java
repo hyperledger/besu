@@ -16,7 +16,6 @@
 package org.hyperledger.besu.ethereum.bonsai.trielog;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -52,12 +51,10 @@ public class TrieLogPruner {
       TreeMultimap.create(Comparator.reverseOrder(), Comparator.comparingInt(Arrays::hashCode));
 
   public TrieLogPruner(
-      final BonsaiWorldStateKeyValueStorage rootWorldStateStorage, final Blockchain blockchain) {
-    this(
-        rootWorldStateStorage,
-        blockchain,
-        CachedWorldStorageManager.RETAINED_LAYERS,
-        DEFAULT_PRUNING_LIMIT);
+      final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
+      final Blockchain blockchain,
+      final long numBlocksToRetain) {
+    this(rootWorldStateStorage, blockchain, numBlocksToRetain, DEFAULT_PRUNING_LIMIT);
   }
 
   @VisibleForTesting
@@ -110,7 +107,7 @@ public class TrieLogPruner {
 
   void pruneFromCache() {
     final long retainAboveThisBlock = blockchain.getChainHeadBlockNumber() - numBlocksToRetain;
-    LOG.atDebug()
+    LOG.atTrace()
         .setMessage("(chainHeadNumber: {} - numBlocksToRetain: {}) = retainAboveThisBlock: {}")
         .addArgument(blockchain.getChainHeadBlockNumber())
         .addArgument(numBlocksToRetain)
@@ -148,13 +145,15 @@ public class TrieLogPruner {
   }
 
   public static TrieLogPruner noOpTrieLogPruner() {
-    return new NoOpTrieLogPruner(null, null);
+    return new NoOpTrieLogPruner(null, null, 0);
   }
 
   public static class NoOpTrieLogPruner extends TrieLogPruner {
     private NoOpTrieLogPruner(
-        final BonsaiWorldStateKeyValueStorage rootWorldStateStorage, final Blockchain blockchain) {
-      super(rootWorldStateStorage, blockchain);
+        final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
+        final Blockchain blockchain,
+        final long numBlocksToRetain) {
+      super(rootWorldStateStorage, blockchain, numBlocksToRetain);
     }
 
     @Override

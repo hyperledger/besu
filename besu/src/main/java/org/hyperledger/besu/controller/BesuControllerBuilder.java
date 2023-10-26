@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
@@ -1073,13 +1074,22 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI:
+        final TrieLogPruner trieLogPruner =
+            dataStorageConfiguration.getUnstable().getBonsaiTrieLogRetentionThreshold() > 0
+                ? new TrieLogPruner(
+                    (BonsaiWorldStateKeyValueStorage) worldStateStorage,
+                    blockchain,
+                    dataStorageConfiguration.getUnstable().getBonsaiTrieLogRetentionThreshold())
+                : TrieLogPruner.noOpTrieLogPruner();
+        trieLogPruner.initialize();
         return new BonsaiWorldStateProvider(
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
             blockchain,
             Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
             cachedMerkleTrieLoader,
             metricsSystem,
-            besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null));
+            besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
+            trieLogPruner);
 
       case FOREST:
       default:

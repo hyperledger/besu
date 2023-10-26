@@ -53,12 +53,13 @@ public class TrieLogManager {
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad,
-      final BesuContext pluginContext) {
+      final BesuContext pluginContext,
+      final TrieLogPruner trieLogPruner) {
     this.blockchain = blockchain;
     this.rootWorldStateStorage = worldStateStorage;
     this.maxLayersToLoad = maxLayersToLoad;
     this.trieLogFactory = setupTrieLogFactory(pluginContext);
-    this.trieLogPruner = TrieLogPruner.noOpTrieLogPruner();
+    this.trieLogPruner = trieLogPruner;
   }
 
   public synchronized void saveTrieLog(

@@ -49,6 +49,7 @@ public class ConfigurationOverviewBuilder {
   private Collection<String> engineApis;
   private String engineJwtFilePath;
   private boolean isHighSpec = false;
+  private long trieLogRetentionThreshold = 0;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
   private Map<String, String> environment;
   private BesuPluginContextImpl besuPluginContext;
@@ -170,6 +171,17 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets trie log retention threshold
+   *
+   * @param threshold the number of blocks to retain trie logs for
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setTrieLogRetentionThreshold(final long threshold) {
+    trieLogRetentionThreshold = threshold;
+    return this;
+  }
+
+  /**
    * Sets the txpool implementation in use.
    *
    * @param implementation the txpool implementation
@@ -252,11 +264,18 @@ public class ConfigurationOverviewBuilder {
       lines.add("Engine JWT: " + engineJwtFilePath);
     }
 
+    lines.add("Using " + txPoolImplementation + " transaction pool implementation");
+
     if (isHighSpec) {
       lines.add("Experimental high spec configuration enabled");
     }
 
-    lines.add("Using " + txPoolImplementation + " transaction pool implementation");
+    if (trieLogRetentionThreshold > 0) {
+      lines.add(
+          "Experimental trie log pruning enabled with retention threshold: "
+              + trieLogRetentionThreshold
+              + " blocks");
+    }
 
     lines.add("");
     lines.add("Host:");
