@@ -127,8 +127,9 @@ public class ForkIdsNetworkConfigTest {
                 new ForkId(Bytes.ofUnsignedInt(0xf42f5539L), 2520000L),
                 new ForkId(Bytes.ofUnsignedInt(0x66b5c286L), 3985893),
                 new ForkId(Bytes.ofUnsignedInt(0x92b323e0L), 5520000L),
-                new ForkId(Bytes.ofUnsignedInt(0x8c9b1797L), 0L),
-                new ForkId(Bytes.ofUnsignedInt(0x8c9b1797L), 0L))
+                new ForkId(Bytes.ofUnsignedInt(0x8c9b1797L), 9957000L),
+                new ForkId(Bytes.ofUnsignedInt(0x3a6b00d7L), 0L),
+                new ForkId(Bytes.ofUnsignedInt(0x3a6b00d7L), 0L))
           },
           new Object[] {
             NetworkName.CLASSIC,
