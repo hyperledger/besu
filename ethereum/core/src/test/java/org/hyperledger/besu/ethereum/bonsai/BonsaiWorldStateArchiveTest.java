@@ -32,6 +32,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
@@ -74,6 +75,7 @@ public class BonsaiWorldStateArchiveTest {
   @Mock SegmentedKeyValueStorageTransaction segmentedKeyValueStorageTransaction;
   BonsaiWorldStateProvider bonsaiWorldStateArchive;
 
+  @Mock CachedWorldStorageManager cachedWorldStorageManager;
   @Mock TrieLogManager trieLogManager;
 
   @BeforeEach
@@ -100,6 +102,7 @@ public class BonsaiWorldStateArchiveTest {
         .thenReturn(Optional.of(chainHead.getHash().toArrayUnsafe()));
     bonsaiWorldStateArchive =
         new BonsaiWorldStateProvider(
+            cachedWorldStorageManager,
             trieLogManager,
             new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()),
             blockchain,
@@ -123,7 +126,7 @@ public class BonsaiWorldStateArchiveTest {
     final BlockHeader chainHead = blockBuilder.number(512).buildHeader();
     when(blockchain.getChainHeadHeader()).thenReturn(chainHead);
     assertThat(bonsaiWorldStateArchive.getMutable(blockHeader, false)).isEmpty();
-    verify(trieLogManager, Mockito.never()).getWorldState(any(Hash.class));
+    verify(cachedWorldStorageManager, Mockito.never()).getWorldState(any(Hash.class));
   }
 
   @Test
@@ -131,6 +134,7 @@ public class BonsaiWorldStateArchiveTest {
 
     bonsaiWorldStateArchive =
         new BonsaiWorldStateProvider(
+            cachedWorldStorageManager,
             trieLogManager,
             new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()),
             blockchain,
@@ -142,7 +146,7 @@ public class BonsaiWorldStateArchiveTest {
     when(mockWorldState.freeze()).thenReturn(mockWorldState);
 
     when(trieLogManager.getMaxLayersToLoad()).thenReturn(Long.valueOf(512));
-    when(trieLogManager.getWorldState(blockHeader.getHash()))
+    when(cachedWorldStorageManager.getWorldState(blockHeader.getHash()))
         .thenReturn(Optional.of(mockWorldState));
     when(blockchain.getChainHeadHeader()).thenReturn(chainHead);
     assertThat(bonsaiWorldStateArchive.getMutable(blockHeader, false))
@@ -162,6 +166,7 @@ public class BonsaiWorldStateArchiveTest {
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateProvider(
+                cachedWorldStorageManager,
                 trieLogManager,
                 worldStateStorage,
                 blockchain,
@@ -186,6 +191,7 @@ public class BonsaiWorldStateArchiveTest {
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateProvider(
+                cachedWorldStorageManager,
                 trieLogManager,
                 worldStateStorage,
                 blockchain,
@@ -222,6 +228,7 @@ public class BonsaiWorldStateArchiveTest {
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateProvider(
+                cachedWorldStorageManager,
                 trieLogManager,
                 worldStateStorage,
                 blockchain,
@@ -261,6 +268,7 @@ public class BonsaiWorldStateArchiveTest {
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateProvider(
+                cachedWorldStorageManager,
                 trieLogManager,
                 new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()),
                 blockchain,
