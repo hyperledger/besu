@@ -66,18 +66,18 @@ public class TrieLogPrunerTest {
     final long block4 = 1004L;
     final long block5 = 1005L;
 
-    trieLogPruner.rememberTrieLogKeyForPruning(block0, key0); // older block outside prune window
-    trieLogPruner.rememberTrieLogKeyForPruning(block1, key1); // block inside the prune window
-    trieLogPruner.rememberTrieLogKeyForPruning(block1, key2); // same block number (fork)
-    trieLogPruner.rememberTrieLogKeyForPruning(block2, key3); // different block inside prune window
-    trieLogPruner.rememberTrieLogKeyForPruning(block3, key4); // retained block
-    trieLogPruner.rememberTrieLogKeyForPruning(block4, key5); // different retained block
-    trieLogPruner.rememberTrieLogKeyForPruning(block5, key6); // another retained block
+    trieLogPruner.cacheForLaterPruning(block0, key0); // older block outside prune window
+    trieLogPruner.cacheForLaterPruning(block1, key1); // block inside the prune window
+    trieLogPruner.cacheForLaterPruning(block1, key2); // same block number (fork)
+    trieLogPruner.cacheForLaterPruning(block2, key3); // different block inside prune window
+    trieLogPruner.cacheForLaterPruning(block3, key4); // retained block
+    trieLogPruner.cacheForLaterPruning(block4, key5); // different retained block
+    trieLogPruner.cacheForLaterPruning(block5, key6); // another retained block
 
     Mockito.when(blockchain.getChainHeadBlockNumber()).thenReturn(block5);
 
     // When
-    trieLogPruner.prune();
+    trieLogPruner.pruneFromCache();
 
     // Then
     InOrder inOrder = Mockito.inOrder(rootWorldStateStorage);
@@ -87,10 +87,10 @@ public class TrieLogPrunerTest {
 
     // Subsequent run should add one more block, then prune two oldest remaining keys
     long block6 = 1006L;
-    trieLogPruner.rememberTrieLogKeyForPruning(block6, new byte[] {1, 2, 3});
+    trieLogPruner.cacheForLaterPruning(block6, new byte[] {1, 2, 3});
     Mockito.when(blockchain.getChainHeadBlockNumber()).thenReturn(block6);
 
-    trieLogPruner.prune();
+    trieLogPruner.pruneFromCache();
 
     inOrder.verify(rootWorldStateStorage, times(1)).pruneTrieLog(key4);
     inOrder.verify(rootWorldStateStorage, times(1)).pruneTrieLog(key0);

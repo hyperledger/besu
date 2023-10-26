@@ -89,11 +89,11 @@ public class TrieLogPruner {
   private static final Multimap<Long, byte[]> knownTrieLogKeysByDescendingBlockNumber =
       TreeMultimap.create(Comparator.reverseOrder(), Comparator.comparingInt(Arrays::hashCode));
 
-  void rememberTrieLogKeyForPruning(final long blockNumber, final byte[] trieLogKey) {
+  void cacheForLaterPruning(final long blockNumber, final byte[] trieLogKey) {
     knownTrieLogKeysByDescendingBlockNumber.put(blockNumber, trieLogKey);
   }
 
-  void prune() {
+  void pruneFromCache() {
     final long retainAboveThisBlock = blockchain.getChainHeadBlockNumber() - numBlocksToRetain;
     LOG.atDebug()
         .setMessage("(chainHeadNumber: {} - numBlocksToRetain: {}) = retainAboveThisBlock: {}")
