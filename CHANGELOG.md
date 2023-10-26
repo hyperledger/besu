@@ -1,10 +1,13 @@
 # Changelog
 
+## Next release
 ### Breaking Changes
 
 ### Deprecations
 
 ### Additions and Improvements
+- New option `--min-priority-fee` that sets the minimum priority fee a transaction must meet to be selected for a block. [#6080](https://github.com/hyperledger/besu/pull/6080) [#6083](https://github.com/hyperledger/besu/pull/6083)
+- Implement new `miner_setMinPriorityFee` and `miner_getMinPriorityFee` RPC methods [#6080](https://github.com/hyperledger/besu/pull/6080)
 
 ### Bug Fixes
 
