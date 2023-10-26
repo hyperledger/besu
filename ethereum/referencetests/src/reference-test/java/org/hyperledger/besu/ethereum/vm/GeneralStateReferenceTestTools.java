@@ -136,7 +136,7 @@ public class GeneralStateReferenceTestTools {
                   .anyMatch(AccountState::isEmpty))
           .withFailMessage("Journaled account configured and empty account detected")
           .isFalse();
-      assumeThat(EvmSpecVersion.PARIS.compareTo(evm.getEvmVersion()) > 0)
+      assumeThat(EvmSpecVersion.SPURIOUS_DRAGON.compareTo(evm.getEvmVersion()) > 0)
           .withFailMessage("Journaled account configured and fork prior to the merge specified")
           .isFalse();
     }
