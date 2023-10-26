@@ -57,12 +57,26 @@ public class MinerSetMinPriorityFeeTest {
   }
 
   @Test
-  public void shouldChangeMinPriorityFee() {
+  public void shouldReturnInvalidParamsWhenParameterIsMissing() {
+    final var request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", method.getName(), new Object[] {}));
+    method.response(request);
+    final JsonRpcResponse expected =
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(),
+            new JsonRpcError(
+                RpcErrorType.INVALID_PARAMS, "Missing required json rpc parameter at index 0"));
+    final JsonRpcResponse actual = method.response(request);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+  }
+
+  @Test
+  public void shouldReturnTrueWhenChangeMinPriorityFee() {
     final String newMinPriorityFee = "0x10";
     final var request = request(newMinPriorityFee);
     method.response(request);
-    final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getRequest().getId(), true);
 
+    final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getRequest().getId(), true);
     final JsonRpcResponse actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     assertThat(miningParameters.getMinPriorityFeePerGas())
