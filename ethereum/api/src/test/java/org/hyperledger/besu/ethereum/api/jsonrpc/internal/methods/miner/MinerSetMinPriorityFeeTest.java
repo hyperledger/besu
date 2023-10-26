@@ -19,8 +19,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -37,12 +40,17 @@ public class MinerSetMinPriorityFeeTest {
 
   @Test
   public void shouldReturnFalseWhenParameterIsInvalid() {
-    final long newMinPriorityFee = -1;
-    final var request = request(newMinPriorityFee);
-
+    final String invalidMinPriorityFee =
+        "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+    final var request = request(invalidMinPriorityFee);
     method.response(request);
+
     final JsonRpcResponse expected =
-        new JsonRpcSuccessResponse(request.getRequest().getId(), false);
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(),
+            new JsonRpcError(
+                RpcErrorType.INVALID_PARAMS,
+                "Hex value is too large: expected at most 32 bytes but got 33"));
 
     final JsonRpcResponse actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
@@ -50,18 +58,19 @@ public class MinerSetMinPriorityFeeTest {
 
   @Test
   public void shouldChangeMinPriorityFee() {
-    final long newMinPriorityFee = 10;
+    final String newMinPriorityFee = "0x10";
     final var request = request(newMinPriorityFee);
     method.response(request);
     final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getRequest().getId(), true);
 
     final JsonRpcResponse actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
-    assertThat(miningParameters.getMinPriorityFeePerGas()).isEqualTo(Wei.of(newMinPriorityFee));
+    assertThat(miningParameters.getMinPriorityFeePerGas())
+        .isEqualTo(Wei.fromHexString(newMinPriorityFee));
   }
 
-  private JsonRpcRequestContext request(final long longParam) {
+  private JsonRpcRequestContext request(final String newMinPriorityFee) {
     return new JsonRpcRequestContext(
-        new JsonRpcRequest("2.0", method.getName(), new Object[] {String.valueOf(longParam)}));
+        new JsonRpcRequest("2.0", method.getName(), new Object[] {newMinPriorityFee}));
   }
 }

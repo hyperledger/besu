@@ -18,8 +18,11 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 
 import org.slf4j.Logger;
@@ -42,12 +45,15 @@ public class MinerSetMinPriorityFee implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     try {
-      final Wei minPriorityFeePerGas = Wei.of(requestContext.getRequiredParameter(0, Long.class));
+      final Wei minPriorityFeePerGas =
+          Wei.fromHexString(requestContext.getRequiredParameter(0, String.class));
       miningParameters.setMinPriorityFeePerGas(minPriorityFeePerGas);
       LOG.debug("min priority fee per gas changed to {}", minPriorityFeePerGas);
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
     } catch (final IllegalArgumentException invalidJsonRpcParameters) {
-      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), false);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(),
+          new JsonRpcError(RpcErrorType.INVALID_PARAMS, invalidJsonRpcParameters.getMessage()));
     }
   }
 }
