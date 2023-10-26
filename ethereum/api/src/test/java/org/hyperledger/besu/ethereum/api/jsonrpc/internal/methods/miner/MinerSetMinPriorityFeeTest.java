@@ -39,7 +39,7 @@ public class MinerSetMinPriorityFeeTest {
   }
 
   @Test
-  public void shouldReturnFalseWhenParameterIsInvalid() {
+  public void shouldReturnInvalidParamsWhenParameterIsInvalid() {
     final String invalidMinPriorityFee =
         "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
     final var request = request(invalidMinPriorityFee);
