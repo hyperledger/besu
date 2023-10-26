@@ -22,7 +22,6 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
@@ -128,11 +127,7 @@ class LogRollingTests {
   @BeforeEach
   void createStorage() {
     provider = new InMemoryKeyValueStorageProvider();
-    final CachedMerkleTrieLoader cachedMerkleTrieLoader =
-        new CachedMerkleTrieLoader(new NoOpMetricsSystem());
-    archive =
-        new BonsaiWorldStateProvider(
-            provider, blockchain, cachedMerkleTrieLoader, new NoOpMetricsSystem(), null);
+    archive = InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive(blockchain);
     accountStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
     codeStorage = provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
@@ -144,15 +139,8 @@ class LogRollingTests {
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
 
     secondProvider = new InMemoryKeyValueStorageProvider();
-    final CachedMerkleTrieLoader secondOptimizedMerkleTrieLoader =
-        new CachedMerkleTrieLoader(new NoOpMetricsSystem());
     secondArchive =
-        new BonsaiWorldStateProvider(
-            secondProvider,
-            blockchain,
-            secondOptimizedMerkleTrieLoader,
-            new NoOpMetricsSystem(),
-            null);
+        InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive(blockchain);
     secondAccountStorage =
         secondProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
     secondCodeStorage =
