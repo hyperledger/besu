@@ -20,7 +20,7 @@
 ### Additions and Improvements
 - Ethereum Classic Spiral network upgrade [#6078](https://github.com/hyperledger/besu/pull/6078)
 - Add a method to read from a `Memory` instance without altering its inner state [#6073](https://github.com/hyperledger/besu/pull/6073)
-
+- Add APIs to set and get the min gas price a transaction must pay for being selected during block creation [#6097](https://github.com/hyperledger/besu/pull/6097)
 ### Bug fixes
 
 - Upgrade netty to address CVE-2023-44487, CVE-2023-34462 [#6100](https://github.com/hyperledger/besu/pull/6100)
