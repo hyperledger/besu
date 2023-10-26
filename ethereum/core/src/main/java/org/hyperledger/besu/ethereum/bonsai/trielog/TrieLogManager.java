@@ -47,6 +47,7 @@ public class TrieLogManager {
   protected final Subscribers<TrieLogEvent.TrieLogObserver> trieLogObservers = Subscribers.create();
 
   protected final TrieLogFactory trieLogFactory;
+  private final TrieLogPruner trieLogPruner;
 
   public TrieLogManager(
       final Blockchain blockchain,
@@ -57,6 +58,7 @@ public class TrieLogManager {
     this.rootWorldStateStorage = worldStateStorage;
     this.maxLayersToLoad = maxLayersToLoad;
     this.trieLogFactory = setupTrieLogFactory(pluginContext);
+    this.trieLogPruner = TrieLogPruner.noOpTrieLogPruner();
   }
 
   public synchronized void saveTrieLog(
@@ -82,6 +84,9 @@ public class TrieLogManager {
       } finally {
         if (success) {
           stateUpdater.commit();
+          trieLogPruner.cacheForLaterPruning(
+              forBlockHeader.getNumber(), forBlockHeader.getBlockHash().toArrayUnsafe());
+          trieLogPruner.pruneFromCache();
         } else {
           stateUpdater.rollback();
         }

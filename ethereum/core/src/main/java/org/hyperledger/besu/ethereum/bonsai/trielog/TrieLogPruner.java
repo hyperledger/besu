@@ -131,4 +131,25 @@ public class TrieLogPruner {
         .addArgument(blockNumbersToRemove.size())
         .log();
   }
+
+  public static TrieLogPruner noOpTrieLogPruner() {
+    return new NoOpTrieLogPruner(null, null);
+  }
+
+  public static class NoOpTrieLogPruner extends TrieLogPruner {
+    private NoOpTrieLogPruner(
+        final BonsaiWorldStateKeyValueStorage rootWorldStateStorage, final Blockchain blockchain) {
+      super(rootWorldStateStorage, blockchain);
+    }
+
+    @Override
+    void cacheForLaterPruning(final long blockNumber, final byte[] trieLogKey) {
+      // no-op
+    }
+
+    @Override
+    void pruneFromCache() {
+      // no-op
+    }
+  }
 }
