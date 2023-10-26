@@ -291,7 +291,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   private boolean isMaxGasPriceBelowConfiguredMinGasPrice(final Transaction transaction) {
     return getMaxGasPrice(transaction)
-        .map(g -> g.lessThan(miningParameters.getMinTransactionGasPrice()))
+        .map(g -> g.lessThan(configuration.getMinGasPrice()))
         .orElse(true);
   }
 
@@ -509,11 +509,9 @@ public class TransactionPool implements BlockAddedObserver {
       }
     }
     if (hasPriority) {
-      // allow priority transactions to be below minGas as long as we are mining
-      // or at least gas price is above the configured floor
-      if ((!miningParameters.isMiningEnabled()
-              && isMaxGasPriceBelowConfiguredMinGasPrice(transaction))
-          || !feeMarket.satisfiesFloorTxFee(transaction)) {
+      // allow priority transactions to be below minGas as long as the gas price is above the
+      // configured floor
+      if (!feeMarket.satisfiesFloorTxFee(transaction)) {
         return TransactionInvalidReason.GAS_PRICE_TOO_LOW;
       }
     } else {
