@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,6 +97,11 @@ public class TrieLogPruner {
   }
 
   void cacheForLaterPruning(final long blockNumber, final byte[] trieLogKey) {
+    LOG.atTrace()
+        .setMessage("caching trie log for later pruning blockNumber {}; trieLogKey (blockHash) {}")
+        .addArgument(blockNumber)
+        .addArgument(Bytes.wrap(trieLogKey).toHexString())
+        .log();
     knownTrieLogKeysByDescendingBlockNumber.put(blockNumber, trieLogKey);
   }
 
