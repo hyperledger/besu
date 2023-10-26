@@ -32,10 +32,8 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -67,22 +65,6 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
   private final BonsaiWorldState persistedState;
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
   private final CachedMerkleTrieLoader cachedMerkleTrieLoader;
-
-  public BonsaiWorldStateProvider(
-      final StorageProvider provider,
-      final Blockchain blockchain,
-      final CachedMerkleTrieLoader cachedMerkleTrieLoader,
-      final ObservableMetricsSystem metricsSystem,
-      final BesuContext pluginContext) {
-    this(
-        (BonsaiWorldStateKeyValueStorage)
-            provider.createWorldStateStorage(DataStorageFormat.BONSAI),
-        blockchain,
-        Optional.empty(),
-        cachedMerkleTrieLoader,
-        metricsSystem,
-        pluginContext);
-  }
 
   public BonsaiWorldStateProvider(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
