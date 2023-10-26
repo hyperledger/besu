@@ -737,6 +737,37 @@ public abstract class AbstractBlockTransactionSelectorTest {
                     TransactionInvalidReason.NONCE_TOO_HIGH.name())));
   }
 
+  @Test
+  public void shouldNotSelectTransactionsWithPriorityFeeLessThanConfig() {
+    ProcessableBlockHeader blockHeader = createBlock(5_000_000, Wei.ONE);
+    miningParameters.setMinPriorityFeePerGas(Wei.of(7));
+    final Transaction tx1 = createTransaction(1, Wei.of(8), 100_000);
+    ensureTransactionIsValid(tx1);
+    final Transaction tx2 = createTransaction(2, Wei.of(9), 100_000);
+    ensureTransactionIsValid(tx2);
+    // transaction tx3 should not be selected
+    final Transaction tx3 = createTransaction(3, Wei.of(7), 100_000);
+    ensureTransactionIsValid(tx3);
+    transactionPool.addRemoteTransactions(List.of(tx1, tx2, tx3));
+
+    final BlockTransactionSelector selector =
+        createBlockSelector(
+            transactionProcessor,
+            blockHeader,
+            Wei.ZERO,
+            AddressHelpers.ofValue(1),
+            Wei.ZERO,
+            MIN_OCCUPANCY_100_PERCENT);
+
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
+
+    assertThat(transactionPool.getTransactionByHash(tx3.getHash())).isPresent();
+    assertThat(results.getSelectedTransactions()).containsOnly(tx1, tx2);
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(
+            entry(tx3, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN));
+  }
+
   protected BlockTransactionSelector createBlockSelector(
       final MainnetTransactionProcessor transactionProcessor,
       final ProcessableBlockHeader blockHeader,
