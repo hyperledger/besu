@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -35,6 +36,8 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
+
+import java.util.Optional;
 
 public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
 
@@ -93,8 +96,10 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
     final CachedMerkleTrieLoader cachedMerkleTrieLoader =
         new CachedMerkleTrieLoader(new NoOpMetricsSystem());
     return new BonsaiWorldStateProvider(
-        inMemoryKeyValueStorageProvider,
+        (BonsaiWorldStateKeyValueStorage)
+            inMemoryKeyValueStorageProvider.createWorldStateStorage(DataStorageFormat.BONSAI),
         blockchain,
+        Optional.empty(),
         cachedMerkleTrieLoader,
         new NoOpMetricsSystem(),
         null,
