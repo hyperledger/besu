@@ -69,10 +69,23 @@ class MessageFrameTest {
     messageFrame.writeMemory(0, value.size(), value);
     int initialActiveWords = messageFrame.memoryWordSize();
 
-    assertThat(messageFrame.shadowReadMemory(64, Bytes32.SIZE)).isEqualTo((Bytes32.ZERO));
+    // Fully in bounds read
+    assertThat(messageFrame.shadowReadMemory(64, Bytes32.SIZE)).isEqualTo(Bytes32.ZERO);
     assertThat(messageFrame.memoryWordSize()).isEqualTo(initialActiveWords);
 
-    assertThat(messageFrame.shadowReadMemory(32, Bytes32.SIZE)).isEqualTo((WORD2));
+    // Straddling read
+    final Bytes straddlingRead = messageFrame.shadowReadMemory(50, Bytes32.SIZE);
+    assertThat(messageFrame.memoryWordSize()).isEqualTo(initialActiveWords);
+    assertThat(straddlingRead.get(0)).isEqualTo((byte) 0x22); // Still in WORD2
+    assertThat(straddlingRead.get(13)).isEqualTo((byte) 0x22); // Just before uninitialized memory
+    assertThat(straddlingRead.get(14)).isEqualTo((byte) 0); // Just in uninitialized memory
+    assertThat(straddlingRead.get(20)).isEqualTo((byte) 0); // In uninitialized memory
+
+    // Fully out of bounds read
+    assertThat(messageFrame.shadowReadMemory(64, Bytes32.SIZE)).isEqualTo(Bytes32.ZERO);
+    assertThat(messageFrame.memoryWordSize()).isEqualTo(initialActiveWords);
+
+    assertThat(messageFrame.shadowReadMemory(32, Bytes32.SIZE)).isEqualTo(WORD2);
     assertThat(messageFrame.memoryWordSize()).isEqualTo(initialActiveWords);
   }
 }
