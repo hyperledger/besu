@@ -97,6 +97,11 @@ public class TrieLogPruner {
   }
 
   void cacheForLaterPruning(final long blockNumber, final byte[] trieLogKey) {
+    LOG.atTrace()
+        .setMessage("caching trie log for later pruning blockNumber {}; trieLogKey (blockHash) {}")
+        .addArgument(blockNumber)
+        .addArgument(Bytes32.wrap(trieLogKey).toHexString())
+        .log();
     knownTrieLogKeysByDescendingBlockNumber.put(blockNumber, trieLogKey);
   }
 
