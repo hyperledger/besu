@@ -52,6 +52,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,6 +76,8 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   private OptionalLong nextLayerOnDroppedListenerId = OptionalLong.empty();
   protected long spaceUsed = 0;
 
+  private final Cache blobCache;
+
   public AbstractTransactionsLayer(
       final TransactionPoolConfiguration poolConfig,
       final TransactionsLayer nextLayer,
@@ -87,6 +91,8 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     metrics.initSpaceUsed(this::getLayerSpaceUsed, name());
     metrics.initTransactionCount(pendingTransactions::size, name());
     metrics.initUniqueSenderCount(txsBySender::size, name());
+    //TODO: needs size limit, ttl policy and eviction on finalization policy
+    this.blobCache = Caffeine.newBuilder().build();
   }
 
   protected abstract boolean gapsAllowed();
@@ -361,6 +367,12 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       final Transaction transaction,
       final RemovalReason removalReason) {
     final PendingTransaction removedTx = pendingTransactions.remove(transaction.getHash());
+    if (removedTx.getTransaction().getBlobsWithCommitments().isPresent()
+        && CONFIRMED.equals(removalReason)) {
+      this.blobCache.put(
+          removedTx.getTransaction().getHash(),
+          removedTx.getTransaction().getBlobsWithCommitments().get());
+    }
     if (removedTx != null) {
       decreaseSpaceUsed(removedTx);
       metrics.incrementRemoved(removedTx, removalReason.label(), name());
