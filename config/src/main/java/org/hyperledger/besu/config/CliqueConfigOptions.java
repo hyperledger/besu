@@ -60,6 +60,11 @@ public class CliqueConfigOptions {
         cliqueConfigRoot, "blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
   }
 
+  /**
+   * Whether the creation of empty blocks is allowed.
+   *
+   * @return the create empty block status
+   */
   public boolean getCreateEmptyBlocks() {
     return JsonUtil.getBoolean(cliqueConfigRoot, "createemptyblocks", DEFAULT_CREATE_EMPTY_BLOCKS);
   }
@@ -71,6 +76,11 @@ public class CliqueConfigOptions {
    */
   Map<String, Object> asMap() {
     return ImmutableMap.of(
-        "epochLength", getEpochLength(), "blockPeriodSeconds", getBlockPeriodSeconds());
+        "epochLength",
+        getEpochLength(),
+        "blockPeriodSeconds",
+        getBlockPeriodSeconds(),
+        "createemptyblocks",
+        getCreateEmptyBlocks());
   }
 }
