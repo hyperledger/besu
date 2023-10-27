@@ -89,8 +89,6 @@ public class SnapServerTest {
   final SnapTestAccount acct3 = createTestContractAccount("30", inMemoryStorage);
   final SnapTestAccount acct4 = createTestContractAccount("40", inMemoryStorage);
 
-  // TODO: add requestID assertions (and implementations in their corresponding message parsing)
-
   @Test
   public void assertEmptyRangeLeftProofOfExclusionAndNextAccount() {
     // for a range request that returns empty, we should return just a proof of exclusion on the
@@ -182,10 +180,9 @@ public class SnapServerTest {
     // no proofs for complete storage range:
     assertThat(slotsData.proofs().size()).isEqualTo(0);
 
-    // TODO: fixme, prob a fixture issue with contract storage.
-    // assertThat(
-    //        assertIsValidStorageProof(acct3, Hash.ZERO, firstAccountStorages, slotsData.proofs()))
-    //    .isTrue();
+    assertThat(
+            assertIsValidStorageProof(acct3, Hash.ZERO, firstAccountStorages, slotsData.proofs()))
+        .isTrue();
   }
 
   @Test
@@ -226,12 +223,9 @@ public class SnapServerTest {
     // proofs required for interrupted storage range:
     assertThat(slotsData.proofs().size()).isNotEqualTo(0);
 
-    // TODO: fixme, prob a fixture issue with contract storage.
-    // assertThat(
-    //        assertIsValidStorageProof(acct4, Hash.ZERO, secondAccountStorages,
-    // slotsData.proofs()))
-    //    .isTrue();
-
+    assertThat(
+            assertIsValidStorageProof(acct4, Hash.ZERO, secondAccountStorages, slotsData.proofs()))
+        .isTrue();
   }
 
   @Test
@@ -247,6 +241,41 @@ public class SnapServerTest {
     List<Bytes> trieNodes = trieNodeRequest.nodes(false);
     assertThat(trieNodes).isNotNull();
     assertThat(trieNodes.size()).isEqualTo(2);
+  }
+
+  @Test
+  public void assertAccountTrieLimitRequest() {
+    insertTestAccounts(acct1, acct2, acct3, acct4);
+    final int accountNodeSize = 147;
+    final int accountNodeLimit = 3;
+
+    var partialPathToAcct1 = Bytes.fromHexString("0x01"); // first nibble is 1
+    var partialPathToAcct2 = CompactEncoding.bytesToPath(acct2.addressHash).slice(0, 1);
+    var partialPathToAcct3 = Bytes.fromHexString("0x03"); // first nibble is 1
+    var partialPathToAcct4 = Bytes.fromHexString("0x04"); // first nibble is 1
+    final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
+    tmp.startList();
+    tmp.writeBigIntegerScalar(BigInteger.ONE);
+    tmp.writeBytes(storageTrie.getRootHash());
+    tmp.writeList(
+        List.of(
+            List.of(partialPathToAcct4),
+            List.of(partialPathToAcct3),
+            List.of(partialPathToAcct2),
+            List.of(partialPathToAcct1)),
+        (path, rlpOutput) ->
+            rlpOutput.writeList(path, (b, subRlpOutput) -> subRlpOutput.writeBytes(b)));
+    tmp.writeBigIntegerScalar(BigInteger.valueOf(accountNodeLimit * accountNodeSize));
+    tmp.endList();
+
+    var trieNodeRequest =
+        (TrieNodesMessage)
+            snapServer.constructGetTrieNodesResponse(new GetTrieNodesMessage(tmp.encoded()));
+
+    assertThat(trieNodeRequest).isNotNull();
+    List<Bytes> trieNodes = trieNodeRequest.nodes(false);
+    assertThat(trieNodes).isNotNull();
+    assertThat(trieNodes.size()).isEqualTo(accountNodeLimit);
   }
 
   @Test
@@ -268,6 +297,39 @@ public class SnapServerTest {
   }
 
   @Test
+  public void assertStorageTrieLimitRequest() {
+    insertTestAccounts(acct1, acct2, acct3, acct4);
+    final int trieNodeSize = 69;
+    final int trieNodeLimit = 3;
+
+    var pathToSlot11 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0101"));
+    var pathToSlot12 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0102"));
+    var pathToSlot1a = CompactEncoding.encode(Bytes.fromHexStringLenient("0x010A")); // not present
+
+    final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
+    tmp.startList();
+    tmp.writeBigIntegerScalar(BigInteger.ONE);
+    tmp.writeBytes(storageTrie.getRootHash());
+    tmp.writeList(
+        List.of(
+            List.of(acct3.addressHash, pathToSlot11, pathToSlot12, pathToSlot1a),
+            List.of(acct4.addressHash, pathToSlot11, pathToSlot12, pathToSlot1a)),
+        (path, rlpOutput) ->
+            rlpOutput.writeList(path, (b, subRlpOutput) -> subRlpOutput.writeBytes(b)));
+    tmp.writeBigIntegerScalar(BigInteger.valueOf(trieNodeLimit * trieNodeSize));
+    tmp.endList();
+
+    var trieNodeRequest =
+        (TrieNodesMessage)
+            snapServer.constructGetTrieNodesResponse(new GetTrieNodesMessage(tmp.encoded()));
+
+    assertThat(trieNodeRequest).isNotNull();
+    List<Bytes> trieNodes = trieNodeRequest.nodes(false);
+    assertThat(trieNodes).isNotNull();
+    assertThat(trieNodes.size()).isEqualTo(trieNodeLimit);
+  }
+
+  @Test
   public void assertCodePresent() {
     insertTestAccounts(acct1, acct2, acct3, acct4);
     var codeRequest =
@@ -277,6 +339,31 @@ public class SnapServerTest {
     ByteCodesMessage.ByteCodes codes = codeRequest.bytecodes(false);
     assertThat(codes).isNotNull();
     assertThat(codes.codes().size()).isEqualTo(2);
+  }
+
+  @Test
+  public void assertCodeLimitRequest() {
+    insertTestAccounts(acct1, acct2, acct3, acct4);
+    final int codeSize = 32;
+    final int codeLimit = 2;
+
+    final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
+    tmp.startList();
+    tmp.writeBigIntegerScalar(BigInteger.ONE);
+    tmp.writeList(
+        List.of(acct3.accountValue.getCodeHash(), acct4.accountValue.getCodeHash()),
+        (hash, rlpOutput) -> rlpOutput.writeBytes(hash));
+    tmp.writeBigIntegerScalar(BigInteger.valueOf(codeSize * codeLimit));
+    tmp.endList();
+
+    var codeRequest =
+        (ByteCodesMessage)
+            snapServer.constructGetBytecodesResponse(new GetByteCodesMessage(tmp.encoded()));
+
+    assertThat(codeRequest).isNotNull();
+    ByteCodesMessage.ByteCodes codes = codeRequest.bytecodes(false);
+    assertThat(codes).isNotNull();
+    assertThat(codes.codes().size()).isEqualTo(codeLimit);
   }
 
   static SnapTestAccount createTestAccount(final String hexAddr) {
@@ -308,7 +395,9 @@ public class SnapServerTest {
         .forEach(
             i -> {
               Bytes32 mockBytes32 = Bytes32.rightPad(Bytes.fromHexString(i.toString()));
-              trie.put(mockBytes32, mockBytes32);
+              var rlpOut = new BytesValueRLPOutput();
+              rlpOut.writeBytes(mockBytes32);
+              trie.put(mockBytes32, rlpOut.encoded());
               flatdb.putFlatAccountStorageValueByStorageSlotHash(
                   updater.getWorldStateTransaction(),
                   acctHash,

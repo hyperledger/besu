@@ -199,7 +199,7 @@ public class CachedWorldStorageManager
             });
   }
 
-  public boolean containWorldStateStorage(final Hash blockHash) {
+  public boolean contains(final Hash blockHash) {
     return cachedWorldStatesByHash.containsKey(blockHash);
   }
 

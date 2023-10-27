@@ -305,6 +305,7 @@ class SnapServer {
   MessageData constructGetBytecodesResponse(final MessageData message) {
     final GetByteCodesMessage getByteCodesMessage = GetByteCodesMessage.readFrom(message);
     final GetByteCodesMessage.CodeHashes codeHashes = getByteCodesMessage.codeHashes(true);
+    final int maxResponseBytes = Math.min(codeHashes.responseBytes().intValue(), MAX_RESPONSE_SIZE);
     LOGGER
         .atTrace()
         .setMessage("Receive get bytecodes message for {} hashes")
@@ -322,7 +323,13 @@ class SnapServer {
               storage -> {
                 List<Bytes> codeBytes = new ArrayDeque<>();
                 for (Bytes32 codeHash : codeHashes.hashes()) {
-                  storage.getCode(codeHash, null).ifPresent(codeBytes::add);
+                  Optional<Bytes> optCode = storage.getCode(codeHash, null);
+                  if (optCode.isPresent()) {
+                    if (sumListBytes(codeBytes) + optCode.get().size() > maxResponseBytes) {
+                      break;
+                    }
+                    codeBytes.add(optCode.get());
+                  }
                 }
                 return ByteCodesMessage.create(codeBytes);
               })
@@ -340,6 +347,7 @@ class SnapServer {
   MessageData constructGetTrieNodesResponse(final MessageData message) {
     final GetTrieNodesMessage getTrieNodesMessage = GetTrieNodesMessage.readFrom(message);
     final GetTrieNodesMessage.TrieNodesPaths triePaths = getTrieNodesMessage.paths(true);
+    final int maxResponseBytes = Math.min(triePaths.responseBytes().intValue(), MAX_RESPONSE_SIZE);
     LOGGER
         .atTrace()
         .setMessage("Receive get trie nodes message of size {}")
@@ -357,23 +365,33 @@ class SnapServer {
                   // first element in paths is account
                   if (triePath.size() == 1) {
                     // if there is only one path, presume it should be compact encoded account path
-                    storage
-                        .getTrieNodeUnsafe(CompactEncoding.decode(triePath.get(0)))
-                        .ifPresent(trieNodes::add);
+                    var optStorage =
+                        storage.getTrieNodeUnsafe(CompactEncoding.decode(triePath.get(0)));
+                    if (optStorage.isPresent()) {
+                      if (sumListBytes(trieNodes) + optStorage.get().size() > maxResponseBytes) {
+                        break;
+                      }
+                      trieNodes.add(optStorage.get());
+                    }
+
                   } else {
                     // otherwise the first element should be account hash, and subsequent paths
                     // are compact encoded account storage paths
 
                     final Bytes accountPrefix = triePath.get(0);
 
-                    triePath.subList(1, triePath.size()).stream()
-                        .forEach(
-                            path ->
-                                storage
-                                    .getTrieNodeUnsafe(
-                                        Bytes.concatenate(
-                                            accountPrefix, CompactEncoding.decode(path)))
-                                    .ifPresent(trieNodes::add));
+                    List<Bytes> storagePaths = triePath.subList(1, triePath.size());
+                    for (var path : storagePaths) {
+                      var optStorage =
+                          storage.getTrieNodeUnsafe(
+                              Bytes.concatenate(accountPrefix, CompactEncoding.decode(path)));
+                      if (optStorage.isPresent()) {
+                        if (sumListBytes(trieNodes) + optStorage.get().size() > maxResponseBytes) {
+                          break;
+                        }
+                        trieNodes.add(optStorage.get());
+                      }
+                    }
                   }
                 }
                 var resp = TrieNodesMessage.create(trieNodes);
@@ -448,5 +466,9 @@ class SnapServer {
         .getTrieNodeUnsafe(Bytes.concatenate(accountHash, Bytes.EMPTY))
         .map(Hash::hash)
         .orElse(Hash.EMPTY_TRIE_HASH);
+  }
+
+  private int sumListBytes(final List<Bytes> listOfBytes) {
+    return listOfBytes.stream().map(Bytes::size).reduce((a, b) -> a + b).orElse(0);
   }
 }

@@ -57,10 +57,21 @@ public class SegmentedInMemoryKeyValueStorage
   /** protected access to the rw lock. */
   protected final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
+  /**
+   * Create a navigable segment map, with a compatible Bytes comparator
+   *
+   * @return segment map
+   */
   protected static NavigableMap<Bytes, Optional<byte[]>> newSegmentMap() {
     return newSegmentMap(Collections.emptyMap());
   }
 
+  /**
+   * Create and populate a navigable segment map, with a compatible Bytes comparator.
+   *
+   * @param sourceMap sourcemap to initialize the segmentmap with.
+   * @return populated segment map
+   */
   protected static NavigableMap<Bytes, Optional<byte[]>> newSegmentMap(
       final Map<Bytes, Optional<byte[]>> sourceMap) {
     // comparing by string to prevent Bytes comparator from collapsing zeroes

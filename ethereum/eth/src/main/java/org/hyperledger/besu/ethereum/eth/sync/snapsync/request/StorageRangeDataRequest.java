@@ -129,8 +129,8 @@ public class StorageRangeDataRequest extends SnapDataRequest {
         LOG.atInfo()
             .setMessage("invalid storage range proof received for account hash {} range {} {}")
             .addArgument(() -> accountHash)
-            .addArgument(slots::firstKey)
-            .addArgument(slots::lastKey)
+            .addArgument(() -> slots.isEmpty() ? "none" : slots.firstKey())
+            .addArgument(() -> slots.isEmpty() ? "none" : slots.lastKey())
             .log();
 
         downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));

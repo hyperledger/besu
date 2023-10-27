@@ -113,6 +113,7 @@ public abstract class FlatDbStrategy {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
+      // TODO: pr 5989
       return storage.get(CODE_STORAGE, /*accountHash*/ codeHash.toArrayUnsafe()).map(Bytes::wrap)
       // .filter(b -> Hash.hash(b).equals(codeHash))
       ;
@@ -176,7 +177,8 @@ public abstract class FlatDbStrategy {
       final Hash accountHash,
       final Bytes32 codeHash,
       final Bytes code) {
-    transaction.put(CODE_STORAGE, accountHash.toArrayUnsafe(), code.toArrayUnsafe());
+    // TODO: pr 5989
+    transaction.put(CODE_STORAGE, /*accountHash*/ codeHash.toArrayUnsafe(), code.toArrayUnsafe());
   }
 
   public void clearAll(final SegmentedKeyValueStorage storage) {
