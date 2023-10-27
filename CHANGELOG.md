@@ -5,6 +5,7 @@
 ### Deprecations
 
 ### Additions and Improvements
+- Clique option to not create empty blocks [#6082]
 
 ### Bug Fixes
 
