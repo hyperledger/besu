@@ -497,8 +497,6 @@ public abstract class AbstractTransactionPoolTest {
     assertThat(maybeBlob).isPresent();
     Transaction restoredBlob = maybeBlob.get();
     assertThat(restoredBlob).isEqualTo(transactionBlob);
-
-
   }
 
   @ParameterizedTest

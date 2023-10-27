@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedRes
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -58,6 +59,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,6 +96,8 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
   protected final TransactionPoolReplacementHandler transactionReplacementHandler;
   protected final Supplier<BlockHeader> chainHeadHeaderSupplier;
 
+  private final Cache<Hash, BlobsWithCommitments> blobCache;
+
   public AbstractPendingTransactionsSorter(
       final TransactionPoolConfiguration poolConfig,
       final Clock clock,
@@ -126,6 +131,8 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         "transactions",
         "Current size of the transaction pool",
         pendingTransactions::size);
+
+    this.blobCache = Caffeine.newBuilder().build();
   }
 
   @Override
@@ -393,6 +400,11 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         removePendingTransactionBySenderAndNonce(removedPendingTx);
         incrementTransactionRemovedCounter(
             removedPendingTx.isReceivedFromLocalSource(), addedToBlock);
+        if (removedPendingTx.getTransaction().getBlobsWithCommitments().isPresent()) {
+          this.blobCache.put(
+              removedPendingTx.getTransaction().getHash(),
+              removedPendingTx.getTransaction().getBlobsWithCommitments().get());
+        }
       }
     }
   }

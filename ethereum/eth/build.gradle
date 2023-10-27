@@ -59,6 +59,7 @@ dependencies {
   implementation 'io.tmio:tuweni-units'
   implementation 'io.tmio:tuweni-rlp'
   implementation 'org.rocksdb:rocksdbjni'
+  implementation 'com.github.ben-manes.caffeine:caffeine'
 
   annotationProcessor "org.immutables:value"
   implementation "org.immutables:value-annotations"

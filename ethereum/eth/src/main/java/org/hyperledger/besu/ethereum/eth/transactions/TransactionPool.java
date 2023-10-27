@@ -237,6 +237,7 @@ public class TransactionPool implements BlockAddedObserver {
       metrics.incrementRejected(isLocal, hasPriority, TRANSACTION_ALREADY_KNOWN, "txpool");
       return ValidationResult.invalid(TRANSACTION_ALREADY_KNOWN);
     }
+    //if adding a blob tx, and it is missing its blob, is a re-org and we should restore the blob from cache.
 
     final ValidationResultAndAccount validationResult =
         validateTransaction(transaction, isLocal, hasPriority);
