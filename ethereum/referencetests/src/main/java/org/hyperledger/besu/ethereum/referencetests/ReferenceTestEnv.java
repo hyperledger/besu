@@ -97,7 +97,7 @@ public class ReferenceTestEnv extends BlockHeader {
    */
   @JsonCreator
   public ReferenceTestEnv(
-      @JsonProperty("beaconRoot") final String beaconRoot,
+      @JsonProperty("parentBeaconBlockRoot") final String beaconRoot,
       @JsonProperty("blockHashes") final Map<String, String> blockHashes,
       @JsonProperty("ommers") final List<String> _ommers,
       @JsonProperty("previousHash") final String previousHash,
