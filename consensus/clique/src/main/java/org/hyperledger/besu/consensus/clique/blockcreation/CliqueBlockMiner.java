@@ -44,6 +44,7 @@ public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
    * @param scheduler the scheduler
    * @param parentHeader the parent header
    * @param localAddress the local address
+   * @param createEmptyBlocks whether clique should allow the creation of empty blocks.
    */
   public CliqueBlockMiner(
       final Function<BlockHeader, CliqueBlockCreator> blockCreator,

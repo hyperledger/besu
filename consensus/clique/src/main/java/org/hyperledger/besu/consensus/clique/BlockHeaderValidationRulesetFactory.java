@@ -52,6 +52,7 @@ public class BlockHeaderValidationRulesetFactory {
    * <p>Specifically the set of rules provided by this function are to be used for a Clique chain.
    *
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
+   * @param createEmptyBlocks whether clique should allow the creation of empty blocks.
    * @param epochManager an object which determines if a given block is an epoch block.
    * @param baseFeeMarket an {@link Optional} wrapping {@link BaseFeeMarket} class if appropriate.
    * @return the header validator.
@@ -73,6 +74,7 @@ public class BlockHeaderValidationRulesetFactory {
    * Clique block header validator. Visible for testing.
    *
    * @param secondsBetweenBlocks the seconds between blocks
+   * @param createEmptyBlocks whether clique should allow the creation of empty blocks.
    * @param epochManager the epoch manager
    * @param baseFeeMarket the base fee market
    * @param isMergeEnabled the is merge enabled

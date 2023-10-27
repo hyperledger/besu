@@ -59,6 +59,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
    * @param miningParams the mining params
    * @param blockScheduler the block scheduler
    * @param epochManager the epoch manager
+   * @param createEmptyBlocks whether clique should allow the creation of empty blocks.
    */
   public CliqueMinerExecutor(
       final ProtocolContext protocolContext,
