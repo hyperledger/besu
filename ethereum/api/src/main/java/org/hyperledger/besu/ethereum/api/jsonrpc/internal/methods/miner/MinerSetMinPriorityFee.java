@@ -48,7 +48,8 @@ public class MinerSetMinPriorityFee implements JsonRpcMethod {
       final Wei minPriorityFeePerGas =
           Wei.fromHexString(requestContext.getRequiredParameter(0, String.class));
       miningParameters.setMinPriorityFeePerGas(minPriorityFeePerGas);
-      LOG.debug("min priority fee per gas changed to {}", minPriorityFeePerGas);
+      LOG.debug(
+          "min priority fee per gas changed to {}", minPriorityFeePerGas.toHumanReadableString());
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
     } catch (final IllegalArgumentException invalidJsonRpcParameters) {
       return new JsonRpcErrorResponse(

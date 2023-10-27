@@ -37,6 +37,6 @@ public class MinerGetMinPriorityFee implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(),
-        miningParameters.getMinPriorityFeePerGas().toHexString());
+        miningParameters.getMinPriorityFeePerGas().toShortHexString());
   }
 }
