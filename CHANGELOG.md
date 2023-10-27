@@ -5,6 +5,7 @@
 ### Deprecations
 
 ### Additions and Improvements
+- TraceService: return results for transactions in block [#6086](https://github.com/hyperledger/besu/pull/6086)
 
 ### Bug Fixes
 
