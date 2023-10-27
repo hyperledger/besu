@@ -26,6 +26,8 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.worldstate.WorldView;
+import org.hyperledger.besu.plugin.data.BlockTraceResult;
+import org.hyperledger.besu.plugin.data.TransactionTraceResult;
 import org.hyperledger.besu.plugin.services.TraceService;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
@@ -115,7 +117,18 @@ class TraceServiceImplTest {
     final TxStartEndTracer txStartEndTracer = new TxStartEndTracer();
 
     // block contains 1 transaction
-    traceService.traceBlock(31, txStartEndTracer);
+    final BlockTraceResult blockTraceResult = traceService.traceBlock(31, txStartEndTracer);
+
+    assertThat(blockTraceResult).isNotNull();
+
+    final List<TransactionTraceResult> transactionTraceResults =
+        blockTraceResult.transactionTraceResults();
+    assertThat(transactionTraceResults.size()).isEqualTo(1);
+
+    assertThat(transactionTraceResults.get(0).getTxHash()).isNotNull();
+    assertThat(transactionTraceResults.get(0).getStatus())
+        .isEqualTo(TransactionTraceResult.Status.SUCCESS);
+    assertThat(transactionTraceResults.get(0).errorMessage()).isEmpty();
 
     assertThat(txStartEndTracer.txStartWorldView).isNotNull();
     assertThat(txStartEndTracer.txEndWorldView).isNotNull();
