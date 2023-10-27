@@ -105,7 +105,7 @@ public class BonsaiWorldStateUpdateAccumulator
 
   @Override
   public Account get(final Address address) {
-    return super.getAccount(address);
+    return super.get(address);
   }
 
   @Override
@@ -213,16 +213,6 @@ public class BonsaiWorldStateUpdateAccumulator
   @Override
   public Collection<Address> getDeletedAccountAddresses() {
     return getDeletedAccounts();
-  }
-
-  @Override
-  public void deleteAccount(final Address address) {
-    super.deleteAccount(address);
-    final BonsaiValue<BonsaiAccount> bonsaiAccountBonsaiValue = accountsToUpdate.get(address);
-    if (bonsaiAccountBonsaiValue != null) {
-      bonsaiAccountBonsaiValue.setUpdated(null);
-      accountsToUpdate.put(address, bonsaiAccountBonsaiValue);
-    }
   }
 
   @Override
