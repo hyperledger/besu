@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -35,31 +36,38 @@ import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
 import java.nio.file.Path;
+import java.util.Optional;
 
-import io.vertx.core.Vertx;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 public class LineaTest {
 
-  private final Vertx vertx = Vertx.vertx();
-
   @TempDir private static Path dataDir;
 
-  @AfterEach
-  public void cleanUp() {
-    vertx.close();
+  @Test
+  public void lineaTest() {
+    BesuController besuController = setUpController("/linea.json");
+    assertThat(besuController).isNotNull();
+
+    final Optional<BigInteger> maybeChainId = besuController.getProtocolSchedule().getChainId();
+    assertThat(maybeChainId.isPresent()).isTrue();
+    assertThat(maybeChainId.get()).isEqualTo(BigInteger.valueOf(59144));
   }
 
   @Test
-  public void smokeTest() {
-    setUpControllerWithLineaEnabled();
+  public void lineaGoerliTest() {
+    BesuController besuController = setUpController("/linea_goerli.json");
+    assertThat(besuController).isNotNull();
+
+    final Optional<BigInteger> maybeChainId = besuController.getProtocolSchedule().getChainId();
+    assertThat(maybeChainId.isPresent()).isTrue();
+    assertThat(maybeChainId.get()).isEqualTo(BigInteger.valueOf(59140));
   }
 
-  private BesuController setUpControllerWithLineaEnabled() {
+  private BesuController setUpController(final String genesisFile) {
     return new BesuController.Builder()
-        .fromGenesisConfig(GenesisConfigFile.genesisFileFromResources("/linea.json"), SyncMode.FULL)
+        .fromGenesisConfig(GenesisConfigFile.genesisFileFromResources(genesisFile), SyncMode.FULL)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())

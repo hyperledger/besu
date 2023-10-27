@@ -105,7 +105,7 @@ public class BonsaiWorldStateUpdateAccumulator
 
   @Override
   public Account get(final Address address) {
-    return super.get(address);
+    return super.getAccount(address);
   }
 
   @Override
