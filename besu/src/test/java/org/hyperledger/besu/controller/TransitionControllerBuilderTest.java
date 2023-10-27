@@ -199,7 +199,7 @@ public class TransitionControllerBuilderTest {
   public void assertCliqueDetachedHeaderValidationPreMerge() {
     BlockHeaderValidator cliqueValidator =
         BlockHeaderValidationRulesetFactory.cliqueBlockHeaderValidator(
-                5L, new EpochManager(5L), Optional.of(FeeMarket.london(1L)), true)
+                5L, false, new EpochManager(5L), Optional.of(FeeMarket.london(1L)), true)
             .build();
     assertDetachedRulesForPostMergeBlocks(cliqueValidator);
   }
