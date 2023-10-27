@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli.options;
 import static java.util.Arrays.asList;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.MutableInitValues.DEFAULT_EXTRA_DATA;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.MutableInitValues.DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.MutableInitValues.DEFAULT_MIN_PRIORITY_FEE_PER_GAS;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.MutableInitValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_MAX_OMMERS_DEPTH;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
@@ -94,9 +95,18 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
   private Wei minTransactionGasPrice = DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 
   @Option(
+      names = {"--min-priority-fee"},
+      description =
+          "Minimum priority fee per gas (in Wei) offered by a transaction for it to be included in a "
+              + "block (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private Wei minPriorityFeePerGas = DEFAULT_MIN_PRIORITY_FEE_PER_GAS;
+
+  @Option(
       names = {"--target-gas-limit"},
       description =
-          "Sets target gas limit per block. If set, each block's gas limit will approach this setting over time if the current gas limit is different.")
+          "Sets target gas limit per block."
+              + " If set, each block's gas limit will approach this setting over time.")
   private Long targetGasLimit = null;
 
   @CommandLine.ArgGroup(validate = false)
@@ -202,6 +212,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
           asList(
               "--miner-coinbase",
               "--min-gas-price",
+              "--min-priority-fee",
               "--min-block-occupancy-ratio",
               "--miner-extra-data"));
 
@@ -238,6 +249,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
     miningOptions.stratumPort = miningParameters.getStratumPort();
     miningOptions.extraData = miningParameters.getExtraData();
     miningOptions.minTransactionGasPrice = miningParameters.getMinTransactionGasPrice();
+    miningOptions.minPriorityFeePerGas = miningParameters.getMinPriorityFeePerGas();
     miningOptions.minBlockOccupancyRatio = miningParameters.getMinBlockOccupancyRatio();
     miningOptions.unstableOptions.remoteSealersLimit =
         miningParameters.getUnstable().getRemoteSealersLimit();
@@ -266,6 +278,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
             .isMiningEnabled(isMiningEnabled)
             .extraData(extraData)
             .minTransactionGasPrice(minTransactionGasPrice)
+            .minPriorityFeePerGas(minPriorityFeePerGas)
             .minBlockOccupancyRatio(minBlockOccupancyRatio);
 
     if (targetGasLimit != null) {
