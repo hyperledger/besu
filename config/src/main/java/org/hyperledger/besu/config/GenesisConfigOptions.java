@@ -431,6 +431,15 @@ public interface GenesisConfigOptions {
   OptionalLong getMystiqueBlockNumber();
 
   /**
+   * Block number to activate Spiral on Classic networks.
+   *
+   * @return block number of Spiral fork on Classic networks
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1109">https://ecips.ethereumclassic.org/ECIPs/ecip-1109</a>
+   */
+  OptionalLong getSpiralBlockNumber();
+
+  /**
    * Gets chain id.
    *
    * @return the chain id

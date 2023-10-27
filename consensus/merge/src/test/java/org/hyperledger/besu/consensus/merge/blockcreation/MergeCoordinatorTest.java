@@ -25,7 +25,6 @@ import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -57,6 +56,9 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.Unstable;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -98,7 +100,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -132,11 +133,13 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   @Mock ProposalBuilderExecutor proposalBuilderExecutor;
   private final Address coinbase = genesisAllocations(getPosGenesisConfigFile()).findFirst().get();
 
-  @Spy
   MiningParameters miningParameters =
-      new MiningParameters.Builder()
-          .coinbase(coinbase)
-          .posBlockCreationRepetitionMinDuration(REPETITION_MIN_DURATION)
+      ImmutableMiningParameters.builder()
+          .mutableInitValues(MutableInitValues.builder().coinbase(coinbase).build())
+          .unstable(
+              Unstable.builder()
+                  .posBlockCreationRepetitionMinDuration(REPETITION_MIN_DURATION)
+                  .build())
           .build();
 
   private MergeCoordinator coordinator;
@@ -278,14 +281,11 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
           MergeBlockCreator beingSpiedOn =
               spy(
                   new MergeBlockCreator(
-                      address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
-                      () -> Optional.of(30000000L),
+                      miningParameters,
                       parent -> Bytes.EMPTY,
                       transactionPool,
                       protocolContext,
                       protocolSchedule,
-                      this.miningParameters.getMinTransactionGasPrice(),
-                      address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                       parentHeader,
                       Optional.empty()));
 
@@ -548,7 +548,11 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   @Test
   public void shouldStopRetryBlockCreationIfTimeExpired() throws InterruptedException {
     final AtomicLong retries = new AtomicLong(0);
-    doReturn(100L).when(miningParameters).getPosBlockCreationMaxTime();
+    miningParameters =
+        ImmutableMiningParameters.builder()
+            .from(miningParameters)
+            .unstable(Unstable.builder().posBlockCreationMaxTime(100).build())
+            .build();
     doAnswer(
             invocation -> {
               retries.incrementAndGet();
@@ -738,7 +742,10 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void shouldUseExtraDataFromMiningParameters() {
     final Bytes extraData = Bytes.fromHexString("0x1234");
 
-    miningParameters = new MiningParameters.Builder().extraData(extraData).build();
+    miningParameters =
+        ImmutableMiningParameters.builder()
+            .mutableInitValues(MutableInitValues.builder().extraData(extraData).build())
+            .build();
 
     this.coordinator =
         new MergeCoordinator(
