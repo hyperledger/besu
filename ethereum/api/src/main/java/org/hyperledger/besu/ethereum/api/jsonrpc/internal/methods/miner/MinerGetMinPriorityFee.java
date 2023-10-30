@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 
 public class MinerGetMinPriorityFee implements JsonRpcMethod {
@@ -37,6 +38,6 @@ public class MinerGetMinPriorityFee implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(),
-        miningParameters.getMinPriorityFeePerGas().toShortHexString());
+        Quantity.create(miningParameters.getMinPriorityFeePerGas()));
   }
 }
