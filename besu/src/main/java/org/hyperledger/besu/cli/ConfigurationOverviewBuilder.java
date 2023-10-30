@@ -187,7 +187,7 @@ public class ConfigurationOverviewBuilder {
    * Sets the world state updater mode
    *
    * @param worldStateUpdateMode the world state updater mode
-   * @return the buikder
+   * @return the builder
    */
   public ConfigurationOverviewBuilder setWorldStateUpdateMode(
       final EvmConfiguration.WorldUpdaterMode worldStateUpdateMode) {

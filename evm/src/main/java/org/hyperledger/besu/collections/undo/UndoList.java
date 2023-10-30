@@ -142,7 +142,7 @@ public class UndoList<V> implements List<V>, Undoable {
 
   @Override
   public long lastUpdate() {
-    return undoLog.get(undoLog.size() - 1).level;
+    return undoLog.isEmpty() ? 0L : undoLog.get(undoLog.size() - 1).level;
   }
 
   @Override

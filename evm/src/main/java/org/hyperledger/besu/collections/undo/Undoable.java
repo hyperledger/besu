@@ -50,7 +50,7 @@ public interface Undoable {
 
   /**
    * The last time this object was updated. Any undo requrests greater than this mark will result in
-   * no chantes.
+   * no changes.
    *
    * @return The most recent mark.
    */

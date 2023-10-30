@@ -99,6 +99,21 @@ public class BigIntegerModularExponentiationPrecompiledContract
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
+    if (useNative) {
+      return computeNative(input);
+    } else {
+      return computeDefault(input);
+    }
+  }
+
+  /**
+   * Compute default precompile contract.
+   *
+   * @param input the input
+   * @return the precompile contract result
+   */
+  @Nonnull
+  public PrecompileContractResult computeDefault(final Bytes input) {
     final int baseLength = clampedToInt(baseLength(input));
     final int exponentLength = clampedToInt(exponentLength(input));
     final int modulusLength = clampedToInt(modulusLength(input));
@@ -113,31 +128,6 @@ public class BigIntegerModularExponentiationPrecompiledContract
     final BigInteger base = extractParameter(input, BASE_OFFSET, baseLength);
     final BigInteger exp = extractParameter(input, exponentOffset, exponentLength);
     final BigInteger mod = extractParameter(input, modulusOffset, modulusLength);
-
-    if (useNative && mod.getLowestSetBit() > 0) {
-      return computeNative(input, modulusLength);
-    } else {
-      return computeDefault(input, base, exp, mod, modulusLength);
-    }
-  }
-
-  /**
-   * Compute default precompile contract.
-   *
-   * @param input the input
-   * @param base base of the exponent
-   * @param exp the exponent
-   * @param mod the modulus
-   * @param modulusLength the length of the modulus, in bytes
-   * @return the precompile contract result
-   */
-  @Nonnull
-  public PrecompileContractResult computeDefault(
-      final Bytes input,
-      final BigInteger base,
-      final BigInteger exp,
-      final BigInteger mod,
-      final int modulusLength) {
 
     final Bytes modExp;
     // Result must be the length of the modulus.
@@ -255,11 +245,10 @@ public class BigIntegerModularExponentiationPrecompiledContract
    * Compute native precompile contract.
    *
    * @param input the input
-   * @param modulusLength length, in bytes, of the modulus
    * @return the precompile contract result
    */
-  public PrecompileContractResult computeNative(
-      final @Nonnull Bytes input, final int modulusLength) {
+  public PrecompileContractResult computeNative(final @Nonnull Bytes input) {
+    final int modulusLength = clampedToInt(modulusLength(input));
     final IntByReference o_len = new IntByReference(modulusLength);
 
     final byte[] result = new byte[modulusLength];
