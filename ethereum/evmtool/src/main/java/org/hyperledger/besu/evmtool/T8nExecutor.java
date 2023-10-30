@@ -240,7 +240,6 @@ public class T8nExecutor {
 
     final BonsaiReferenceTestWorldState worldState =
         (BonsaiReferenceTestWorldState) initialWorldState.copy();
-    worldState.disableRootHashVerification();
 
     final ProtocolSchedule protocolSchedule = referenceTestProtocolSchedules.getByName(fork);
     if (protocolSchedule == null) {

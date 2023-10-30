@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
@@ -61,7 +62,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
@@ -79,43 +79,33 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractBlockCreator.class);
 
-  protected final Address coinbase;
   private final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
-  protected final Supplier<Optional<Long>> targetGasLimitSupplier;
-
   private final ExtraDataCalculator extraDataCalculator;
   private final TransactionPool transactionPool;
+  protected final MiningParameters miningParameters;
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
   protected final BlockHeaderFunctions blockHeaderFunctions;
-  private final Wei minTransactionGasPrice;
-  private final Double minBlockOccupancyRatio;
   protected final BlockHeader parentHeader;
   private final Optional<Address> depositContractAddress;
 
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
 
   protected AbstractBlockCreator(
-      final Address coinbase,
+      final MiningParameters miningParameters,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final Wei minTransactionGasPrice,
-      final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader,
       final Optional<Address> depositContractAddress) {
-    this.coinbase = coinbase;
+    this.miningParameters = miningParameters;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
-    this.targetGasLimitSupplier = targetGasLimitSupplier;
     this.extraDataCalculator = extraDataCalculator;
     this.transactionPool = transactionPool;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
-    this.minTransactionGasPrice = minTransactionGasPrice;
-    this.minBlockOccupancyRatio = minBlockOccupancyRatio;
     this.parentHeader = parentHeader;
     this.depositContractAddress = depositContractAddress;
     blockHeaderFunctions = ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
@@ -341,14 +331,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
+            miningParameters,
             transactionProcessor,
             protocolContext.getBlockchain(),
             disposableWorldState,
             transactionPool,
             processableBlockHeader,
             transactionReceiptFactory,
-            minTransactionGasPrice,
-            minBlockOccupancyRatio,
             isCancelled::get,
             miningBeneficiary,
             blobGasPrice,
@@ -395,7 +384,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             .getGasLimitCalculator()
             .nextGasLimit(
                 parentHeader.getGasLimit(),
-                targetGasLimitSupplier.get().orElse(parentHeader.getGasLimit()),
+                miningParameters.getTargetGasLimit().orElse(parentHeader.getGasLimit()),
                 newBlockNumber);
 
     final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
@@ -419,7 +408,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     final Bytes32 parentBeaconBlockRoot = maybeParentBeaconBlockRoot.orElse(null);
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())
-        .coinbase(coinbase)
+        .coinbase(miningParameters.getCoinbase().orElseThrow())
         .difficulty(Difficulty.of(difficulty))
         .number(newBlockNumber)
         .gasLimit(gasLimit)

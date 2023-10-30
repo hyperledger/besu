@@ -132,7 +132,10 @@ public abstract class AbstractTransactionPoolTest {
   protected TransactionValidatorFactory transactionValidatorFactory;
 
   @Mock protected PendingTransactionAddedListener listener;
-  @Mock protected MiningParameters miningParameters;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  protected MiningParameters miningParameters;
+
   @Mock protected TransactionsMessageSender transactionsMessageSender;
   @Mock protected NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
   @Mock protected ProtocolSpec protocolSpec;
