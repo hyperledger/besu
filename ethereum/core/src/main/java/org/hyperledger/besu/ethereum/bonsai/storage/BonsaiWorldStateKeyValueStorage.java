@@ -21,6 +21,8 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiContext;
+import org.hyperledger.besu.ethereum.bonsai.storage.flat.ArchiveFlatDbStrategy;
 import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.bonsai.storage.flat.FullFlatDbStrategy;
 import org.hyperledger.besu.ethereum.bonsai.storage.flat.PartialFlatDbStrategy;
@@ -114,10 +116,21 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       this.flatDbMode = newFlatDbMode;
       if (flatDbMode == FlatDbMode.FULL) {
         this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem);
+      } else if (flatDbMode == FlatDbMode.ARCHIVE) {
+        this.flatDbStrategy = new ArchiveFlatDbStrategy(new BonsaiContext(), metricsSystem);
       } else {
         this.flatDbStrategy = new PartialFlatDbStrategy(metricsSystem);
       }
     }
+  }
+
+  public BonsaiWorldStateKeyValueStorage getContextSafeCopy() {
+    return new BonsaiWorldStateKeyValueStorage(
+        flatDbMode,
+        flatDbStrategy.contextSafeClone(),
+        composedWorldStateStorage,
+        trieLogStorage,
+        metricsSystem);
   }
 
   public FlatDbMode deriveFlatDbStrategy() {
@@ -126,9 +139,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
             composedWorldStateStorage
                 .get(TRIE_BRANCH_STORAGE, FLAT_DB_MODE)
                 .map(Bytes::wrap)
-                .orElse(FlatDbMode.PARTIAL.getVersion()));
+                // .orElse(FlatDbMode.PARTIAL.getVersion()));
+                // TODO: this is for archive testing only, remove me.
+                .orElse(FlatDbMode.ARCHIVE.getVersion()));
     LOG.info("Bonsai flat db mode found {}", flatDbMode);
-
     return flatDbMode;
   }
 
