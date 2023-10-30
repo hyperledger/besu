@@ -20,12 +20,9 @@ import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStor
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
@@ -41,12 +38,9 @@ public class TrieLogPruner {
 
   private static final Logger LOG = LoggerFactory.getLogger(TrieLogPruner.class);
 
-  private static final int DEFAULT_PRUNING_LIMIT = 1000;
-  private final int pruningLimit;
-  private final int loadingLimit;
+  private final long loadingLimit;
   private final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
   private final Blockchain blockchain;
-  private final long numBlocksToRetain;
   private static final Multimap<Long, byte[]> knownTrieLogKeysByDescendingBlockNumber =
       TreeMultimap.create(Comparator.reverseOrder(), Comparator.comparingInt(Arrays::hashCode));
 
@@ -54,7 +48,7 @@ public class TrieLogPruner {
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
       final Blockchain blockchain,
       final long numBlocksToRetain) {
-    this(rootWorldStateStorage, blockchain, numBlocksToRetain, DEFAULT_PRUNING_LIMIT);
+    this(rootWorldStateStorage, blockchain, numBlocksToRetain, numBlocksToRetain);
   }
 
   @VisibleForTesting
@@ -62,12 +56,10 @@ public class TrieLogPruner {
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
       final Blockchain blockchain,
       final long numBlocksToRetain,
-      final int pruningLimit) {
+      final long pruningLimit) {
     this.rootWorldStateStorage = rootWorldStateStorage;
     this.blockchain = blockchain;
-    this.numBlocksToRetain = numBlocksToRetain;
-    this.pruningLimit = pruningLimit;
-    this.loadingLimit = pruningLimit; // same as pruningLimit for now
+    this.loadingLimit = Math.max(numBlocksToRetain, pruningLimit); // same as pruningLimit for now
   }
 
   public void initialize() {
@@ -79,7 +71,7 @@ public class TrieLogPruner {
         .setMessage("Loading first {} trie logs from database...")
         .addArgument(loadingLimit)
         .log();
-    final Stream<byte[]> trieLogs = rootWorldStateStorage.streamTrieLogs(loadingLimit);
+    final Stream<byte[]> trieLogs = rootWorldStateStorage.streamTrieLogs((int) loadingLimit);
     final AtomicLong count = new AtomicLong();
     trieLogs.forEach(
         hashAsBytes -> {
@@ -94,6 +86,7 @@ public class TrieLogPruner {
           }
         });
     LOG.atInfo().log("Loaded {} trie logs from database", count);
+    printCache();
   }
 
   void cacheForLaterPruning(final long blockNumber, final byte[] trieLogKey) {
@@ -106,42 +99,22 @@ public class TrieLogPruner {
   }
 
   void pruneFromCache() {
-    final long retainAboveThisBlock = blockchain.getChainHeadBlockNumber() - numBlocksToRetain;
-    LOG.atTrace()
-        .setMessage("(chainHeadNumber: {} - numBlocksToRetain: {}) = retainAboveThisBlock: {}")
-        .addArgument(blockchain.getChainHeadBlockNumber())
-        .addArgument(numBlocksToRetain)
-        .addArgument(retainAboveThisBlock)
-        .log();
+    printCache();
+  }
 
-    final var pruneWindowEntries =
-        knownTrieLogKeysByDescendingBlockNumber.asMap().entrySet().stream()
-            .dropWhile((e) -> e.getKey() > retainAboveThisBlock)
-            .limit(pruningLimit);
-
-    final List<Long> blockNumbersToRemove = new ArrayList<>();
-
-    final AtomicInteger count = new AtomicInteger();
-    pruneWindowEntries.forEach(
-        (e) -> {
-          for (byte[] trieLogKey : e.getValue()) {
-            rootWorldStateStorage.pruneTrieLog(trieLogKey);
-            count.getAndIncrement();
-          }
-          blockNumbersToRemove.add(e.getKey());
-        });
-
-    blockNumbersToRemove.forEach(knownTrieLogKeysByDescendingBlockNumber::removeAll);
-    LOG.atTrace()
-        .setMessage("pruned {} trie logs for blocks {}")
-        .addArgument(count)
-        .addArgument(blockNumbersToRemove)
-        .log();
-    LOG.atDebug()
-        .setMessage("pruned {} trie logs from {} blocks")
-        .addArgument(count)
-        .addArgument(blockNumbersToRemove.size())
-        .log();
+  void printCache() {
+    LOG.atInfo().log(
+        () ->
+            knownTrieLogKeysByDescendingBlockNumber.entries().stream()
+                .map(
+                    entry -> {
+                      final Bytes32 hashBytes = Bytes32.wrap(entry.getValue());
+                      final Hash hash = Hash.wrap(hashBytes);
+                      return String.format(
+                          "\nblockNumber: %s, trieLogKey: %s", entry.getKey(), hash.toHexString());
+                    })
+                .reduce((a, b) -> a + b)
+                .orElse("empty"));
   }
 
   public static TrieLogPruner noOpTrieLogPruner() {
