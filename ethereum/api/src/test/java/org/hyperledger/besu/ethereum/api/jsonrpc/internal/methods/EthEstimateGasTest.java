@@ -436,6 +436,7 @@ public class EthEstimateGasTest {
         null,
         Wei.ZERO,
         Bytes.EMPTY,
+        null,
         isStrict,
         null);
   }
@@ -467,6 +468,7 @@ public class EthEstimateGasTest {
         Wei.fromHexString("0x10"),
         Wei.ZERO,
         Bytes.EMPTY,
+        null,
         false,
         null);
   }
