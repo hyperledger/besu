@@ -126,7 +126,7 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
     return blockCreator.createBlock(Optional.empty(), Optional.empty(), timestamp);
   }
 
-  protected boolean shouldImportBlock(final Block block) {
+  protected boolean shouldImportBlock(final Block block) throws InterruptedException {
     return true;
   }
 

@@ -27,9 +27,13 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** The Clique block miner. */
 public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
-  //  private static final Logger LOG = LoggerFactory.getLogger(CliqueBlockMiner.class);
+  private static final Logger LOG = LoggerFactory.getLogger(CliqueBlockMiner.class);
+  private static final int WAIT_BETWEEN_EMPTY_BUILD_ATTEMPTS = 1_000;
 
   private final Address localAddress;
   private final boolean createEmptyBlocks;
@@ -71,11 +75,16 @@ public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
   }
 
   @Override
-  protected boolean shouldImportBlock(final Block block) {
+  protected boolean shouldImportBlock(final Block block) throws InterruptedException {
     if (createEmptyBlocks) {
       return true;
     }
 
-    return !block.getBody().getTransactions().isEmpty();
+    final boolean isEmpty = block.getBody().getTransactions().isEmpty();
+    if (isEmpty) {
+      LOG.debug("Skipping empty block");
+      Thread.sleep(WAIT_BETWEEN_EMPTY_BUILD_ATTEMPTS);
+    }
+    return !isEmpty;
   }
 }
