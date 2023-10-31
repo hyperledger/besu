@@ -22,7 +22,7 @@ import java.util.function.BooleanSupplier;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-/** return true when termination condition is fullfilled and the full sync should stop */
+/** return true when termination condition is fulfilled and the full sync should stop */
 public interface SyncTerminationCondition extends BooleanSupplier {
 
   default boolean shouldContinueDownload() {
