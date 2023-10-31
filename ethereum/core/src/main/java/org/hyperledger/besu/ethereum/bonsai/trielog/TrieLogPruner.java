@@ -99,7 +99,7 @@ public class TrieLogPruner {
   }
 
   void pruneFromCache() {
-    printCache();
+    // no = op
   }
 
   void printCache() {
