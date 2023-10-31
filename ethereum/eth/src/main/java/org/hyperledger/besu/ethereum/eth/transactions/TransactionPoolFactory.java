@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
@@ -54,7 +53,6 @@ public class TransactionPoolFactory {
       final Clock clock,
       final MetricsSystem metricsSystem,
       final SyncState syncState,
-      final MiningParameters miningParameters,
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final PluginTransactionValidatorFactory pluginTransactionValidatorFactory) {
 
@@ -74,7 +72,6 @@ public class TransactionPoolFactory {
         clock,
         metrics,
         syncState,
-        miningParameters,
         transactionPoolConfiguration,
         transactionTracker,
         transactionsMessageSender,
@@ -89,7 +86,6 @@ public class TransactionPoolFactory {
       final Clock clock,
       final TransactionPoolMetrics metrics,
       final SyncState syncState,
-      final MiningParameters miningParameters,
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
@@ -113,7 +109,6 @@ public class TransactionPoolFactory {
                 transactionsMessageSender,
                 newPooledTransactionHashesMessageSender),
             ethContext,
-            miningParameters,
             metrics,
             transactionPoolConfiguration,
             pluginTransactionValidatorFactory);

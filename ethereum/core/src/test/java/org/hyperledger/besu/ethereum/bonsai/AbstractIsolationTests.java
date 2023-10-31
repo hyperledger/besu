@@ -161,7 +161,6 @@ public abstract class AbstractIsolationTests {
             protocolContext,
             mock(TransactionBroadcaster.class),
             ethContext,
-            mock(MiningParameters.class),
             txPoolMetrics,
             poolConfiguration,
             null);

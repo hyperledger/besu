@@ -723,7 +723,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             clock,
             metricsSystem,
             syncState,
-            miningParameters,
             transactionPoolConfiguration,
             pluginTransactionValidatorFactory);
 

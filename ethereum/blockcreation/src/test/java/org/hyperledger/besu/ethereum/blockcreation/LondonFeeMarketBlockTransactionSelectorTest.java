@@ -76,6 +76,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
         ImmutableTransactionPoolConfiguration.builder()
             .txPoolMaxSize(5)
             .txPoolLimitByAccountPercentage(Fraction.fromFloat(1f))
+            .minGasPrice(Wei.ONE)
             .build();
     final PendingTransactions pendingTransactions =
         new BaseFeePendingTransactionsSorter(
@@ -91,7 +92,6 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             protocolContext,
             mock(TransactionBroadcaster.class),
             ethContext,
-            miningParameters,
             new TransactionPoolMetrics(metricsSystem),
             poolConf,
             null);

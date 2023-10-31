@@ -233,7 +233,6 @@ public class CliqueBlockCreatorTest {
             protocolContext,
             mock(TransactionBroadcaster.class),
             ethContext,
-            mock(MiningParameters.class),
             new TransactionPoolMetrics(metricsSystem),
             conf,
             null);

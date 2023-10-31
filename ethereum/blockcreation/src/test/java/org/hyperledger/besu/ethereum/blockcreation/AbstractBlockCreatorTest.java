@@ -380,7 +380,6 @@ abstract class AbstractBlockCreatorTest {
             executionContextTestFixture.getProtocolContext(),
             mock(TransactionBroadcaster.class),
             ethContext,
-            mock(MiningParameters.class),
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
             poolConf,
             null);

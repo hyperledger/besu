@@ -290,7 +290,6 @@ public abstract class AbstractTransactionPoolTest {
             protocolContext,
             transactionBroadcaster,
             ethContext,
-            miningParameters,
             new TransactionPoolMetrics(metricsSystem),
             poolConfig,
             pluginTransactionValidatorFactory);

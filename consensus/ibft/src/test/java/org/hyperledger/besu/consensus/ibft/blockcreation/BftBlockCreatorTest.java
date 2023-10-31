@@ -145,7 +145,6 @@ public class BftBlockCreatorTest {
             protContext,
             mock(TransactionBroadcaster.class),
             ethContext,
-            mock(MiningParameters.class),
             new TransactionPoolMetrics(metricsSystem),
             poolConf,
             null);

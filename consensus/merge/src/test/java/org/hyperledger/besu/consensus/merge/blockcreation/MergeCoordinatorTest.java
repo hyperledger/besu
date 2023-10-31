@@ -223,7 +223,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             protocolContext,
             mock(TransactionBroadcaster.class),
             ethContext,
-            miningParameters,
             new TransactionPoolMetrics(metricsSystem),
             poolConf,
             null);

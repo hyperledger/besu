@@ -213,7 +213,6 @@ public class CliqueMinerExecutorTest {
             cliqueProtocolContext,
             mock(TransactionBroadcaster.class),
             cliqueEthContext,
-            mock(MiningParameters.class),
             new TransactionPoolMetrics(metricsSystem),
             conf,
             null);
