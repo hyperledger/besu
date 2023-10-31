@@ -26,6 +26,7 @@
 
 - Upgrade netty to address CVE-2023-44487, CVE-2023-34462 [#6100](https://github.com/hyperledger/besu/pull/6100)
 - Upgrade grpc to address CVE-2023-32731, CVE-2023-33953, CVE-2023-44487, CVE-2023-4785 [#6100](https://github.com/hyperledger/besu/pull/6100)
+- Fix blob gas calculation in reference tests [#6107](https://github.com/hyperledger/besu/pull/6107)
 
 ---
 
