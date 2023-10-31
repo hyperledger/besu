@@ -48,8 +48,6 @@ public class ChainDataPrunerTest {
             new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
             512,
             0,
-            () -> true, // Set to 'true' to indicate that the initial synchronization phase has
-            // completed
             new BlockingExecutor());
     Block genesisBlock = gen.genesisBlock();
     final MutableBlockchain blockchain =
@@ -88,8 +86,6 @@ public class ChainDataPrunerTest {
             new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
             512,
             0,
-            () -> true, // Set to 'true' to indicate that the initial synchronization phase has
-            // completed
             new BlockingExecutor());
     Block genesisBlock = gen.genesisBlock();
     final MutableBlockchain blockchain =
@@ -117,51 +113,6 @@ public class ChainDataPrunerTest {
       assertThat(blockchain.getBlockByHash(canonicalChain.get(index - 512).getHash())).isEmpty();
       assertThat(blockchain.getBlockByHash(canonicalChain.get(i - 511).getHash())).isPresent();
       assertThat(blockchain.getBlockByHash(canonicalChain.get(index - 512).getHash())).isEmpty();
-      assertThat(blockchain.getBlockByHash(forkChain.get(i - 511).getHash())).isPresent();
-    }
-  }
-
-  @Test
-  public void disablePruningWhenInitialSyncPhaseRunning() {
-    final BlockDataGenerator gen = new BlockDataGenerator();
-    final BlockchainStorage blockchainStorage =
-        new KeyValueStoragePrefixedKeyBlockchainStorage(
-            new InMemoryKeyValueStorage(),
-            new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
-            new MainnetBlockHeaderFunctions());
-    final ChainDataPruner chainDataPruner =
-        new ChainDataPruner(
-            blockchainStorage,
-            new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
-            512,
-            0,
-            () -> false, // Set to 'false' to indicate that the initial synchronization phase is
-            // running.
-            new BlockingExecutor());
-    Block genesisBlock = gen.genesisBlock();
-    final MutableBlockchain blockchain =
-        DefaultBlockchain.createMutable(
-            genesisBlock, blockchainStorage, new NoOpMetricsSystem(), 0);
-    blockchain.observeBlockAdded(chainDataPruner);
-
-    List<Block> canonicalChain = gen.blockSequence(genesisBlock, 1000);
-    List<Block> forkChain = gen.blockSequence(genesisBlock, 16);
-    for (Block blk : forkChain) {
-      blockchain.storeBlock(blk, gen.receipts(blk));
-    }
-    for (int i = 0; i < 512; i++) {
-      Block blk = canonicalChain.get(i);
-      blockchain.appendBlock(blk, gen.receipts(blk));
-    }
-    // No prune happened
-    assertThat(blockchain.getBlockByHash(canonicalChain.get(0).getHash())).isPresent();
-    assertThat(blockchain.getBlockByHash(forkChain.get(0).getHash())).isPresent();
-    for (int i = 512; i < 527; i++) {
-      Block blk = canonicalChain.get(i);
-      blockchain.appendBlock(blk, gen.receipts(blk));
-      assertThat(blockchain.getBlockByHash(canonicalChain.get(i - 512).getHash())).isPresent();
-      assertThat(blockchain.getBlockByHash(canonicalChain.get(i - 511).getHash())).isPresent();
-      assertThat(blockchain.getBlockByHash(canonicalChain.get(i - 512).getHash())).isPresent();
       assertThat(blockchain.getBlockByHash(forkChain.get(i - 511).getHash())).isPresent();
     }
   }

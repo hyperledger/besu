@@ -20,7 +20,6 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,29 +32,22 @@ public class ChainDataPruner implements BlockAddedObserver {
   private final long blocksToRetain;
   private final long pruningFrequency;
   private final ExecutorService pruningExecutor;
-  private final Supplier<Boolean> isInitialSyncPhaseDoneSupplier;
 
   public ChainDataPruner(
       final BlockchainStorage blockchainStorage,
       final ChainDataPrunerStorage prunerStorage,
       final long blocksToRetain,
       final long pruningFrequency,
-      final Supplier<Boolean> isInitialSyncPhaseDoneSupplier,
       final ExecutorService pruningExecutor) {
     this.blockchainStorage = blockchainStorage;
     this.prunerStorage = prunerStorage;
     this.blocksToRetain = blocksToRetain;
     this.pruningFrequency = pruningFrequency;
-    this.isInitialSyncPhaseDoneSupplier = isInitialSyncPhaseDoneSupplier;
     this.pruningExecutor = pruningExecutor;
   }
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
-    if (!isInitialSyncPhaseDoneSupplier.get()) {
-      // not run block pruning because the initial synchronization is still in progress.
-      return;
-    }
     final long blockNumber = event.getBlock().getHeader().getNumber();
     final long storedPruningMark = prunerStorage.getPruningMark().orElse(blockNumber);
     if (blockNumber < storedPruningMark) {
