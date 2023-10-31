@@ -18,11 +18,13 @@ package org.hyperledger.besu.evm.worldstate;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.collections.undo.UndoNavigableMap;
+import org.hyperledger.besu.collections.undo.UndoScalar;
+import org.hyperledger.besu.collections.undo.Undoable;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
-import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
@@ -43,49 +45,46 @@ import org.apache.tuweni.units.bigints.UInt256;
  * remind if those were modified or not (the reason being that any modification of an account imply
  * the underlying trie node will have to be updated, and so knowing if the nonce and balance where
  * updated or not doesn't matter, we just need their new value).
- *
- * @param <A> the type parameter
  */
-public class UpdateTrackingAccount<A extends Account> implements MutableAccount {
+public class JournaledAccount implements MutableAccount, Undoable {
   private final Address address;
   private final Hash addressHash;
 
-  @Nullable private A account; // null if this is a new account.
+  @Nullable private MutableAccount account;
 
-  private boolean immutable;
-
-  private long nonce;
-  private Wei balance;
-
-  @Nullable private Bytes updatedCode; // Null if the underlying code has not been updated.
-  private final Bytes oldCode;
-  @Nullable private Hash updatedCodeHash;
-  private final Hash oldCodeHash;
+  private long transactionBoundaryMark;
+  private final UndoScalar<Long> nonce;
+  private final UndoScalar<Wei> balance;
+  private final UndoScalar<Bytes> code;
+  private final UndoScalar<Hash> codeHash;
+  private final UndoScalar<Boolean> deleted;
 
   // Only contains updated storage entries, but may contain entry with a value of 0 to signify
   // deletion.
-  private final NavigableMap<UInt256, UInt256> updatedStorage;
+  private final UndoNavigableMap<UInt256, UInt256> updatedStorage;
   private boolean storageWasCleared = false;
-  private boolean transactionBoundary = false;
+
+  boolean immutable;
 
   /**
    * Instantiates a new Update tracking account.
    *
    * @param address the address
    */
-  UpdateTrackingAccount(final Address address) {
+  JournaledAccount(final Address address) {
     checkNotNull(address);
     this.address = address;
     this.addressHash = this.address.addressHash();
     this.account = null;
 
-    this.nonce = 0;
-    this.balance = Wei.ZERO;
+    this.nonce = UndoScalar.of(0L);
+    this.balance = UndoScalar.of(Wei.ZERO);
 
-    this.updatedCode = Bytes.EMPTY;
-    this.oldCode = Bytes.EMPTY;
-    this.oldCodeHash = Hash.EMPTY;
-    this.updatedStorage = new TreeMap<>();
+    this.code = UndoScalar.of(Bytes.EMPTY);
+    this.codeHash = UndoScalar.of(Hash.EMPTY);
+    this.deleted = UndoScalar.of(Boolean.FALSE);
+    this.updatedStorage = UndoNavigableMap.of(new TreeMap<>());
+    this.transactionBoundaryMark = mark();
   }
 
   /**
@@ -93,23 +92,38 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
    *
    * @param account the account
    */
-  public UpdateTrackingAccount(final A account) {
+  public JournaledAccount(final MutableAccount account) {
     checkNotNull(account);
 
     this.address = account.getAddress();
     this.addressHash =
-        (account instanceof UpdateTrackingAccount)
-            ? ((UpdateTrackingAccount<?>) account).addressHash
+        (account instanceof JournaledAccount journaledAccount)
+            ? journaledAccount.addressHash
             : this.address.addressHash();
     this.account = account;
 
-    this.nonce = account.getNonce();
-    this.balance = account.getBalance();
+    if (account instanceof JournaledAccount that) {
+      this.nonce = that.nonce;
+      this.balance = that.balance;
 
-    this.oldCode = account.getCode();
-    this.oldCodeHash = account.getCodeHash();
+      this.code = that.code;
+      this.codeHash = that.codeHash;
 
-    this.updatedStorage = new TreeMap<>();
+      this.deleted = that.deleted;
+
+      this.updatedStorage = that.updatedStorage;
+    } else {
+      this.nonce = UndoScalar.of(account.getNonce());
+      this.balance = UndoScalar.of(account.getBalance());
+
+      this.code = UndoScalar.of(account.getCode());
+      this.codeHash = UndoScalar.of(account.getCodeHash());
+
+      this.deleted = UndoScalar.of(Boolean.FALSE);
+
+      this.updatedStorage = UndoNavigableMap.of(new TreeMap<>());
+    }
+    transactionBoundaryMark = mark();
   }
 
   /**
@@ -118,7 +132,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
    * @return The original account over which this tracks updates, or {@code null} if this is a newly
    *     created account.
    */
-  public A getWrappedAccount() {
+  public MutableAccount getWrappedAccount() {
     return account;
   }
 
@@ -127,7 +141,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
    *
    * @param account the account
    */
-  public void setWrappedAccount(final A account) {
+  public void setWrappedAccount(final MutableAccount account) {
     if (this.account == null) {
       this.account = account;
       storageWasCleared = false;
@@ -142,7 +156,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
    * @return {@code true} if the code was updated.
    */
   public boolean codeWasUpdated() {
-    return updatedCode != null;
+    return code.lastUpdate() >= transactionBoundaryMark;
   }
 
   /**
@@ -157,6 +171,11 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
   }
 
   @Override
+  public void becomeImmutable() {
+    immutable = true;
+  }
+
+  @Override
   public Address getAddress() {
     return address;
   }
@@ -168,7 +187,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
 
   @Override
   public long getNonce() {
-    return nonce;
+    return nonce.get();
   }
 
   @Override
@@ -176,12 +195,12 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     if (immutable) {
       throw new ModificationNotAllowedException();
     }
-    this.nonce = value;
+    nonce.set(value);
   }
 
   @Override
   public Wei getBalance() {
-    return balance;
+    return balance.get();
   }
 
   @Override
@@ -189,34 +208,43 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     if (immutable) {
       throw new ModificationNotAllowedException();
     }
-    this.balance = value;
+    balance.set(value);
   }
 
   @Override
   public Bytes getCode() {
-    // Note that we set code for new account, so it's only null if account isn't.
-    return updatedCode == null ? oldCode : updatedCode;
+    return code.get();
   }
 
   @Override
   public Hash getCodeHash() {
-    if (updatedCode == null) {
-      // Note that we set code for new account, so it's only null if account isn't.
-      return oldCodeHash;
-    } else {
-      // Cache the hash of updated code to avoid DOS attacks which repeatedly request hash
-      // of updated code and cause us to regenerate it.
-      if (updatedCodeHash == null) {
-        updatedCodeHash = Hash.hash(updatedCode);
-      }
-      return updatedCodeHash;
-    }
+    return codeHash.get();
   }
 
   @Override
   public boolean hasCode() {
-    // Note that we set code for new account, so it's only null if account isn't.
-    return updatedCode == null ? !oldCode.isEmpty() : !updatedCode.isEmpty();
+    return !code.get().isEmpty();
+  }
+
+  /**
+   * Mark the account as deleted/not deleted
+   *
+   * @param accountDeleted delete or don't delete this account.
+   */
+  public void setDeleted(final boolean accountDeleted) {
+    if (immutable) {
+      throw new ModificationNotAllowedException();
+    }
+    deleted.set(accountDeleted);
+  }
+
+  /**
+   * Is the account marked as deleted?
+   *
+   * @return is the account deleted?
+   */
+  public Boolean getDeleted() {
+    return deleted.get();
   }
 
   @Override
@@ -224,13 +252,13 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     if (immutable) {
       throw new ModificationNotAllowedException();
     }
-    this.updatedCode = code;
-    this.updatedCodeHash = null;
+    this.code.set(code == null ? Bytes.EMPTY : code);
+    this.codeHash.set(code == null ? Hash.EMPTY : Hash.hash(code));
   }
 
   /** Mark transaction boundary. */
   void markTransactionBoundary() {
-    this.transactionBoundary = true;
+    transactionBoundaryMark = mark();
   }
 
   @Override
@@ -250,13 +278,10 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
 
   @Override
   public UInt256 getOriginalStorageValue(final UInt256 key) {
-    if (transactionBoundary) {
-      return getStorageValue(key);
-    } else if (storageWasCleared || account == null) {
-      return UInt256.ZERO;
-    } else {
-      return account.getOriginalStorageValue(key);
-    }
+    // if storage was cleared then it is because it was an empty account, hence zero storage
+    // if we have no backing account, it's a new account, hence zero storage
+    // otherwise ask outside of what we are journaling, journaled change may not be original value
+    return (storageWasCleared || account == null) ? UInt256.ZERO : account.getStorageValue(key);
   }
 
   @Override
@@ -296,11 +321,6 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     updatedStorage.clear();
   }
 
-  @Override
-  public void becomeImmutable() {
-    immutable = true;
-  }
-
   /**
    * Gets storage was cleared.
    *
@@ -316,6 +336,9 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
    * @param storageWasCleared the storage was cleared
    */
   public void setStorageWasCleared(final boolean storageWasCleared) {
+    if (immutable) {
+      throw new ModificationNotAllowedException();
+    }
     this.storageWasCleared = storageWasCleared;
   }
 
@@ -327,6 +350,48 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     }
     return String.format(
         "%s -> {nonce: %s, balance:%s, code:%s, storage:%s }",
-        address, nonce, balance, updatedCode == null ? "[not updated]" : updatedCode, storage);
+        address,
+        nonce,
+        balance,
+        code.mark() >= transactionBoundaryMark ? "[not updated]" : code.get(),
+        storage);
+  }
+
+  @Override
+  public long lastUpdate() {
+    return Math.max(
+        nonce.lastUpdate(),
+        Math.max(
+            balance.lastUpdate(),
+            Math.max(
+                code.lastUpdate(), Math.max(codeHash.lastUpdate(), updatedStorage.lastUpdate()))));
+  }
+
+  @Override
+  public void undo(final long mark) {
+    nonce.undo(mark);
+    balance.undo(mark);
+    code.undo(mark);
+    codeHash.undo(mark);
+    deleted.undo(mark);
+    updatedStorage.undo(mark);
+  }
+
+  /** Commit this journaled account entry to the parent, if it is not a journaled account. */
+  public void commit() {
+    if (!(account instanceof JournaledAccount)) {
+      if (nonce.updated()) {
+        account.setNonce(nonce.get());
+      }
+      if (balance.updated()) {
+        account.setBalance(balance.get());
+      }
+      if (code.updated()) {
+        account.setCode(code.get() == null ? Bytes.EMPTY : code.get());
+      }
+      if (updatedStorage.updated()) {
+        updatedStorage.forEach(account::setStorageValue);
+      }
+    }
   }
 }

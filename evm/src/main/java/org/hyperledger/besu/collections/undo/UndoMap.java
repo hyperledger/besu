@@ -34,11 +34,11 @@ import javax.annotation.Nonnull;
  *
  * @param <V> The type of the collection.
  */
-public class UndoMap<K, V> implements Map<K, V>, UndoableCollection {
+public class UndoMap<K, V> implements Map<K, V>, Undoable {
 
   record UndoEntry<K, V>(K key, V value, long level) {
     UndoEntry(final K key, final V value) {
-      this(key, value, UndoableCollection.incrementMarkStatic());
+      this(key, value, Undoable.incrementMarkStatic());
     }
   }
 
@@ -68,6 +68,20 @@ public class UndoMap<K, V> implements Map<K, V>, UndoableCollection {
       }
       pos--;
     }
+  }
+
+  @Override
+  public long lastUpdate() {
+    return undoLog.isEmpty() ? 0L : undoLog.get(undoLog.size() - 1).level;
+  }
+
+  /**
+   * Has the map been changed
+   *
+   * @return true if there are any undo entries in the log
+   */
+  public boolean updated() {
+    return !undoLog.isEmpty();
   }
 
   @Override

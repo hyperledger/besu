@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.NONCE_TOO_LOW;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -38,7 +38,7 @@ public abstract class AbstractLegacyTransactionPoolTest extends AbstractTransact
   public void shouldNotAddRemoteTransactionsWhenThereIsALowestInvalidNonceForTheSender() {
     givenTransactionIsValid(transaction1);
     when(transactionValidatorFactory.get().validate(eq(transaction0), any(Optional.class), any()))
-        .thenReturn(ValidationResult.invalid(NONCE_TOO_LOW));
+        .thenReturn(ValidationResult.invalid(TRANSACTION_ALREADY_KNOWN));
 
     transactionPool.addRemoteTransactions(asList(transaction0, transaction1));
 

@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evmtool.T8nExecutor.RejectedTransaction;
 import org.hyperledger.besu.util.LogConfigurator;
@@ -33,8 +34,10 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
@@ -114,50 +117,55 @@ public class T8nServerSubCommand implements Runnable {
 
       ReferenceTestEnv referenceTestEnv =
           objectMapper.convertValue(input.get("env"), ReferenceTestEnv.class);
-      ReferenceTestWorldState initialWorldState =
-          objectMapper.convertValue(input.get("alloc"), ReferenceTestWorldState.class);
-      initialWorldState.persist(null);
-      List<Transaction> transactions = new ArrayList<>();
-      List<RejectedTransaction> rejections = new ArrayList<>();
-      JsonNode txs = input.get("txs");
-      if (txs != null) {
-        if (txs instanceof ArrayNode txsArray) {
-          extractTransactions(
-              new PrintWriter(System.err, true, StandardCharsets.UTF_8),
-              txsArray.elements(),
-              transactions,
-              rejections);
-        } else if (txs instanceof TextNode txt) {
-          transactions =
-              extractTransactions(
-                  new PrintWriter(System.err, true, StandardCharsets.UTF_8),
-                  List.<JsonNode>of(txt).iterator(),
-                  transactions,
-                  rejections);
+      Map<String, ReferenceTestWorldState.AccountMock> accounts =
+          objectMapper.convertValue(input.get("alloc"), new TypeReference<>() {});
+
+      final T8nExecutor.T8nResult result;
+      try (ReferenceTestWorldState initialWorldState =
+          ReferenceTestWorldState.create(accounts, EvmConfiguration.DEFAULT)) {
+        initialWorldState.persist(null);
+        List<Transaction> transactions = new ArrayList<>();
+        List<RejectedTransaction> rejections = new ArrayList<>();
+        JsonNode txs = input.get("txs");
+        if (txs != null) {
+          if (txs instanceof ArrayNode txsArray) {
+            extractTransactions(
+                new PrintWriter(System.err, true, StandardCharsets.UTF_8),
+                txsArray.elements(),
+                transactions,
+                rejections);
+          } else if (txs instanceof TextNode txt) {
+            transactions =
+                extractTransactions(
+                    new PrintWriter(System.err, true, StandardCharsets.UTF_8),
+                    List.<JsonNode>of(txt).iterator(),
+                    transactions,
+                    rejections);
+          }
         }
+
+        result =
+            T8nExecutor.runTest(
+                chainId,
+                fork,
+                reward,
+                objectMapper,
+                referenceTestEnv,
+                initialWorldState,
+                transactions,
+                rejections,
+                new T8nExecutor.TracerManager() {
+                  @Override
+                  public OperationTracer getManagedTracer(final int txIndex, final Hash txHash) {
+                    return OperationTracer.NO_TRACING;
+                  }
+
+                  @Override
+                  public void disposeTracer(final OperationTracer tracer) {
+                    // No output streams to dispose of
+                  }
+                });
       }
-
-      final T8nExecutor.T8nResult result =
-          T8nExecutor.runTest(
-              chainId,
-              fork,
-              reward,
-              objectMapper,
-              referenceTestEnv,
-              initialWorldState,
-              transactions,
-              rejections,
-              new T8nExecutor.TracerManager() {
-                @Override
-                public OperationTracer getManagedTracer(final int txIndex, final Hash txHash) {
-                  return OperationTracer.NO_TRACING;
-                }
-
-                @Override
-                public void disposeTracer(final OperationTracer tracer) {
-                  // No output streams to dispose of
-                }
-              });
 
       ObjectNode outputObject = objectMapper.createObjectNode();
       outputObject.set("alloc", result.allocObject());
