@@ -86,7 +86,6 @@ public class TrieLogPruner {
           }
         });
     LOG.atInfo().log("Loaded {} trie logs from database", count);
-    printCache();
   }
 
   void cacheForLaterPruning(final long blockNumber, final byte[] trieLogKey) {
@@ -100,21 +99,6 @@ public class TrieLogPruner {
 
   void pruneFromCache() {
     // no = op
-  }
-
-  void printCache() {
-    LOG.atInfo().log(
-        () ->
-            knownTrieLogKeysByDescendingBlockNumber.entries().stream()
-                .map(
-                    entry -> {
-                      final Bytes32 hashBytes = Bytes32.wrap(entry.getValue());
-                      final Hash hash = Hash.wrap(hashBytes);
-                      return String.format(
-                          "\nblockNumber: %s, trieLogKey: %s", entry.getKey(), hash.toHexString());
-                    })
-                .reduce((a, b) -> a + b)
-                .orElse("empty"));
   }
 
   public static TrieLogPruner noOpTrieLogPruner() {
