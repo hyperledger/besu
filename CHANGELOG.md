@@ -1,16 +1,5 @@
 # Changelog
 
-### Breaking Changes
-
-### Deprecations
-
-### Additions and Improvements
-- Introduce the possibility to limit the time spent selecting pending transactions during block creation, using the new experimental option `Xtxs-selection-max-time` (by default set to 5000ms) [#6044](https://github.com/hyperledger/besu/pull/6044)
-
-### Bug Fixes
-
-### Download Links
-
 ## 23.10.2
 
 ### Breaking Changes
@@ -19,8 +8,19 @@
 
 ### Additions and Improvements
 - Ethereum Classic Spiral network upgrade [#6078](https://github.com/hyperledger/besu/pull/6078)
+- Add a method to read from a `Memory` instance without altering its inner state [#6073](https://github.com/hyperledger/besu/pull/6073)
+- Accept `input` and `data` field for the payload of transaction-related RPC methods [#6094](https://github.com/hyperledger/besu/pull/6094)
+- Add APIs to set and get the min gas price a transaction must pay for being selected during block creation [#6097](https://github.com/hyperledger/besu/pull/6097)
+- Introduce the possibility to limit the time spent selecting pending transactions during block creation, using the new experimental option `Xtxs-selection-max-time` (by default set to 5000ms) [#6044](https://github.com/hyperledger/besu/pull/6044)
+- TraceService: return results for transactions in block [#6086](https://github.com/hyperledger/besu/pull/6086) 
 
 ### Bug fixes
+
+- Upgrade netty to address CVE-2023-44487, CVE-2023-34462 [#6100](https://github.com/hyperledger/besu/pull/6100)
+- Upgrade grpc to address CVE-2023-32731, CVE-2023-33953, CVE-2023-44487, CVE-2023-4785 [#6100](https://github.com/hyperledger/besu/pull/6100)
+- Fix blob gas calculation in reference tests [#6107](https://github.com/hyperledger/besu/pull/6107)
+
+---
 
 ### Download Links
 

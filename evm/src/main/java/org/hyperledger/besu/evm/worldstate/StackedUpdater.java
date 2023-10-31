@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.worldstate;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,9 +34,11 @@ public class StackedUpdater<W extends WorldView, A extends Account>
    * Instantiates a new Stacked updater.
    *
    * @param world the world
+   * @param evmConfiguration the EVM Configuration parameters
    */
-  public StackedUpdater(final AbstractWorldUpdater<W, A> world) {
-    super(world);
+  public StackedUpdater(
+      final AbstractWorldUpdater<W, A> world, final EvmConfiguration evmConfiguration) {
+    super(world, evmConfiguration);
   }
 
   @Override
@@ -109,6 +112,7 @@ public class StackedUpdater<W extends WorldView, A extends Account>
   }
 
   /** Mark transaction boundary. */
+  @Override
   public void markTransactionBoundary() {
     getUpdatedAccounts().forEach(UpdateTrackingAccount::markTransactionBoundary);
   }

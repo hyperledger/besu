@@ -52,7 +52,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
 
   @Nullable private A account; // null if this is a new account.
 
-  private boolean mutable = true;
+  private boolean immutable;
 
   private long nonce;
   private Wei balance;
@@ -173,7 +173,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
 
   @Override
   public void setNonce(final long value) {
-    if (!mutable) {
+    if (immutable) {
       throw new ModificationNotAllowedException();
     }
     this.nonce = value;
@@ -186,7 +186,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
 
   @Override
   public void setBalance(final Wei value) {
-    if (!mutable) {
+    if (immutable) {
       throw new ModificationNotAllowedException();
     }
     this.balance = value;
@@ -221,7 +221,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
 
   @Override
   public void setCode(final Bytes code) {
-    if (!mutable) {
+    if (immutable) {
       throw new ModificationNotAllowedException();
     }
     this.updatedCode = code;
@@ -281,7 +281,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
 
   @Override
   public void setStorageValue(final UInt256 key, final UInt256 value) {
-    if (!mutable) {
+    if (immutable) {
       throw new ModificationNotAllowedException();
     }
     updatedStorage.put(key, value);
@@ -289,7 +289,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
 
   @Override
   public void clearStorage() {
-    if (!mutable) {
+    if (immutable) {
       throw new ModificationNotAllowedException();
     }
     storageWasCleared = true;
@@ -298,7 +298,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
 
   @Override
   public void becomeImmutable() {
-    mutable = false;
+    immutable = true;
   }
 
   /**

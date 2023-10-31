@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
-import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.io.File;
@@ -123,7 +122,7 @@ public class TransactionTracer {
                               .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
                               .orElse(BlobGas.ZERO));
               for (int i = 0; i < body.getTransactions().size(); i++) {
-                ((StackedUpdater<?, ?>) stackedUpdater).markTransactionBoundary();
+                stackedUpdater.markTransactionBoundary();
                 final Transaction transaction = body.getTransactions().get(i);
                 if (selectedHash.isEmpty()
                     || selectedHash.filter(isEqual(transaction.getHash())).isPresent()) {
