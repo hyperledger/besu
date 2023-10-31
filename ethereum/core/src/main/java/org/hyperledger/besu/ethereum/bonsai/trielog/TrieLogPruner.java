@@ -82,7 +82,7 @@ public class TrieLogPruner {
             count.getAndIncrement();
           } else {
             // prune orphaned blocks (sometimes created during block production)
-            rootWorldStateStorage.pruneTrieLog(hashAsBytes);
+            //            rootWorldStateStorage.pruneTrieLog(hashAsBytes);
           }
         });
     LOG.atInfo().log("Loaded {} trie logs from database", count);
