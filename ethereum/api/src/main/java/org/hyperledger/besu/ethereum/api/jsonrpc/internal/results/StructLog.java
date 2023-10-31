@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 
 import java.util.Arrays;
@@ -25,8 +24,8 @@ import java.util.TreeMap;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 @JsonPropertyOrder({"pc", "op", "gas", "gasCost", "depth", "stack", "memory", "storage"})
 public class StructLog {
@@ -55,7 +54,12 @@ public class StructLog {
     stack =
         traceFrame
             .getStack()
-            .map(a -> Arrays.stream(a).map(Bytes32::leftPad).map(Bytes::toUnprefixedHexString).toArray(String[]::new))
+            .map(
+                a ->
+                    Arrays.stream(a)
+                        .map(Bytes32::leftPad)
+                        .map(Bytes::toUnprefixedHexString)
+                        .toArray(String[]::new))
             .orElse(null);
     storage = traceFrame.getStorage().map(StructLog::formatStorage).orElse(null);
     reason = traceFrame.getRevertReason().map(Bytes::toShortHexString).orElse(null);
