@@ -405,6 +405,23 @@ public class BlockTransactionSelector {
       }
     }
 
+    if (txTooLate) {
+      // reset the timeout for the next tx
+      isTxTimeout.set(false);
+
+      // this tx took much time to be evaluated and processed, and will not be included in the block
+      // and will be removed from the txpool, so we need to treat it as not selected
+      LOG.atTrace()
+          .setMessage(
+              "{} took too much to process, and will not be included in the block and will be removed from the txpool")
+          .addArgument(transaction::toTraceLog)
+          .log();
+      // do not rely on the presence of this result, since by the time it is added, the code
+      // reading it could have been already executed by another thread
+      return handleTransactionNotSelected(
+          pendingTransaction, TX_EVALUATION_TIMEOUT, txWorldStateUpdater);
+    }
+
     if (blockTooLate) {
       // even if this tx passed all the checks, it is too late to include it in this block,
       // so we need to treat it as not selected
@@ -417,20 +434,6 @@ public class BlockTransactionSelector {
       // reading it could have been already executed by another thread
       return handleTransactionNotSelected(
           pendingTransaction, BLOCK_SELECTION_TIMEOUT, txWorldStateUpdater);
-    }
-
-    if (txTooLate) {
-      // this tx took much time to be evaluated and processed, and will not be included in the block
-      // and will be removed from the txpool, so we need to treat it as not selected
-      LOG.atTrace()
-          .setMessage(
-              "{} took too much to process, and will not be included in the block and will be removed from the txpool")
-          .addArgument(transaction::toTraceLog)
-          .log();
-      // do not rely on the presence of this result, since by the time it is added, the code
-      // reading it could have been already executed by another thread
-      return handleTransactionNotSelected(
-          pendingTransaction, TX_EVALUATION_TIMEOUT, txWorldStateUpdater);
     }
 
     pluginTransactionSelector.onTransactionSelected(pendingTransaction, processingResult);

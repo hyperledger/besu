@@ -907,7 +907,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
   @ParameterizedTest
   @MethodSource("longProcessingTask")
-  public void subsetOfPendingTransactionsIncludedWhenPerTxEvaluationAndTxsSelectiomMaxTimeIsOver(
+  public void subsetOfPendingTransactionsIncludedWhenPerTxEvaluationAndTxsSelectionMaxTimeIsOver(
       final boolean preProcessingTooLate,
       final boolean processingTooLate,
       final boolean postProcessingTooLate) {
@@ -916,13 +916,11 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
 
     final List<Transaction> txs = new ArrayList<>(4);
-    final List<Long> processingTimes = new ArrayList<>(4);
+    final List<Long> processingTimes = Arrays.asList(200L, 400L, 600L, 300L);
     for (int i = 0; i < 4; i++) {
       final Transaction tx = createTransaction(i, Wei.of(7), 100_000);
       txs.add(tx);
-      final long processingTime = 200L * (i + 1);
-      processingTimes.add(processingTime);
-      ensureTransactionIsValid(tx, 0, 0, processingTooLate ? processingTime : 0);
+      ensureTransactionIsValid(tx, 0, 0, processingTooLate ? processingTimes.get(i) : 0);
     }
 
     final Map<Transaction, Long> txsProcessingTime =
