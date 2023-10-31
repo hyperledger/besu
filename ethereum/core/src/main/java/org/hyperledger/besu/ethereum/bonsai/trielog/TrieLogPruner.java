@@ -41,7 +41,7 @@ public class TrieLogPruner {
 
   private static final Logger LOG = LoggerFactory.getLogger(TrieLogPruner.class);
 
-  private static final int DEFAULT_PRUNING_LIMIT = 1000;
+  private static final int DEFAULT_PRUNING_LIMIT = 30_000;
   private final int pruningLimit;
   private final int loadingLimit;
   private final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
