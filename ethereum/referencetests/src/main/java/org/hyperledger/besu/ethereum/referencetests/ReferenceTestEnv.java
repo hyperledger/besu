@@ -233,7 +233,7 @@ public class ReferenceTestEnv extends BlockHeader {
               protocolSpec
                   .getGasCalculator()
                   .computeExcessBlobGas(
-                      Long.decode(parentExcessBlobGas), Long.decode(parentGasUsed))));
+                      Long.decode(parentExcessBlobGas), Long.decode(parentBlobGasUsed))));
     }
 
     return builder.buildBlockHeader();
