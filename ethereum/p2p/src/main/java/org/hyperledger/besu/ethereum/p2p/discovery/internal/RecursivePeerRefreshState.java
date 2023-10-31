@@ -105,7 +105,7 @@ public class RecursivePeerRefreshState {
   }
 
   private void bondingInitiateRound() {
-    if(!iterativeSearchInProgress){
+    if (!iterativeSearchInProgress) {
       // cancelled so we can ignore
       return;
     }
@@ -141,7 +141,7 @@ public class RecursivePeerRefreshState {
   }
 
   private void bondingCancelOutstandingRequests() {
-    if(!iterativeSearchInProgress){
+    if (!iterativeSearchInProgress) {
       // cancelled so we can ignore
       return;
     }
@@ -157,7 +157,7 @@ public class RecursivePeerRefreshState {
   }
 
   private void neighboursInitiateRound() {
-    if(!iterativeSearchInProgress){
+    if (!iterativeSearchInProgress) {
       // cancelled so we can ignore
       return;
     }
@@ -184,7 +184,7 @@ public class RecursivePeerRefreshState {
   }
 
   private void neighboursCancelOutstandingRequests() {
-    if(!iterativeSearchInProgress){
+    if (!iterativeSearchInProgress) {
       // cancelled so we can ignore
       return;
     }
@@ -233,7 +233,7 @@ public class RecursivePeerRefreshState {
   }
 
   void onBondingComplete(final DiscoveryPeer peer) {
-    if(!iterativeSearchInProgress){
+    if (!iterativeSearchInProgress) {
       // cancelled so we can ignore
       return;
     }
