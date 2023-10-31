@@ -61,7 +61,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -102,6 +101,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -109,6 +109,8 @@ import org.junit.jupiter.api.condition.DisabledIf;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
@@ -132,9 +134,6 @@ public abstract class AbstractTransactionPoolTest {
   protected TransactionValidatorFactory transactionValidatorFactory;
 
   @Mock protected PendingTransactionAddedListener listener;
-
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  protected MiningParameters miningParameters;
 
   @Mock protected TransactionsMessageSender transactionsMessageSender;
   @Mock protected NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
@@ -253,11 +252,10 @@ public abstract class AbstractTransactionPoolTest {
 
     transactionPool = createTransactionPool();
     blockchain.observeBlockAdded(transactionPool);
-    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.of(2));
   }
 
   protected TransactionPool createTransactionPool() {
-    return createTransactionPool(b -> {});
+    return createTransactionPool(b -> b.minGasPrice(Wei.of(2)));
   }
 
   protected TransactionPool createTransactionPool(
@@ -617,7 +615,8 @@ public abstract class AbstractTransactionPoolTest {
   @ValueSource(booleans = {true, false})
   public void shouldNotNotifyBatchListenerWhenLocalTransactionDoesNotReplaceExisting(
       final boolean noLocalPriority) {
-    transactionPool = createTransactionPool(b -> b.noLocalPriority(noLocalPriority));
+    transactionPool =
+        createTransactionPool(b -> b.minGasPrice(Wei.of(2)).noLocalPriority(noLocalPriority));
     final Transaction transaction0a = createTransaction(0, Wei.of(10));
     final Transaction transaction0b = createTransaction(0, Wei.of(9));
 
@@ -786,58 +785,6 @@ public abstract class AbstractTransactionPoolTest {
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  public void shouldRejectZeroGasPriceLocalTransactionWhenNotMining(final boolean noLocalPriority) {
-    transactionPool = createTransactionPool(b -> b.noLocalPriority(noLocalPriority));
-    when(miningParameters.isMiningEnabled()).thenReturn(false);
-
-    final Transaction transaction = createTransaction(0, Wei.ZERO);
-
-    givenTransactionIsValid(transaction);
-
-    addAndAssertTransactionViaApiInvalid(transaction, GAS_PRICE_TOO_LOW);
-  }
-
-  @Test
-  @DisabledIf("isBaseFeeMarket")
-  public void shouldAcceptZeroGasPriceFrontierLocalPriorityTransactionsWhenMining() {
-    transactionPool = createTransactionPool(b -> b.noLocalPriority(false));
-    when(miningParameters.isMiningEnabled()).thenReturn(true);
-
-    final Transaction transaction = createTransaction(0, Wei.ZERO);
-
-    givenTransactionIsValid(transaction);
-
-    addAndAssertTransactionViaApiValid(transaction, false);
-  }
-
-  @ParameterizedTest
-  @ValueSource(booleans = {true, false})
-  public void shouldRejectZeroGasPriceRemoteTransactionWhenNotMining(final boolean hasPriority) {
-    final Transaction transaction = createTransaction(0, Wei.ZERO);
-    final Set<Address> prioritySenders = hasPriority ? Set.of(transaction.getSender()) : Set.of();
-    transactionPool = createTransactionPool(b -> b.prioritySenders(prioritySenders));
-    when(miningParameters.isMiningEnabled()).thenReturn(false);
-
-    givenTransactionIsValid(transaction);
-
-    addAndAssertRemoteTransactionInvalid(transaction);
-  }
-
-  @Test
-  @DisabledIf("isBaseFeeMarket")
-  public void shouldAcceptZeroGasPriceFrontierRemotePriorityTransactionsWhenMining() {
-    final Transaction transaction = createTransaction(0, Wei.ZERO);
-    transactionPool =
-        createTransactionPool(b -> b.prioritySenders(Set.of(transaction.getSender())));
-    when(miningParameters.isMiningEnabled()).thenReturn(true);
-
-    givenTransactionIsValid(transaction);
-
-    addAndAssertRemoteTransactionsValid(true, transaction);
-  }
-
-  @ParameterizedTest
-  @ValueSource(booleans = {true, false})
   public void transactionNotRejectedByPluginShouldBeAdded(final boolean noLocalPriority) {
     final PluginTransactionValidatorFactory pluginTransactionValidatorFactory =
         getPluginTransactionValidatorFactoryReturning(null); // null -> not rejecting !!
@@ -990,121 +937,145 @@ public abstract class AbstractTransactionPoolTest {
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
   @DisabledIf("isBaseFeeMarket")
-  public void shouldAcceptZeroGasPriceTransactionWhenMinGasPriceIsZero(
-      final boolean noLocalPriority) {
-    transactionPool = createTransactionPool(b -> b.noLocalPriority(noLocalPriority));
-    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
+  public void shouldAcceptZeroGasPriceFrontierPriorityTransactions(final boolean isLocal) {
+    final Transaction transaction = createFrontierTransaction(0, Wei.ZERO);
+    transactionPool =
+        createTransactionPool(b -> b.prioritySenders(List.of(transaction.getSender())));
+
+    givenTransactionIsValid(transaction);
+
+    if (isLocal) {
+      addAndAssertTransactionViaApiValid(transaction, false);
+    } else {
+      addAndAssertRemoteTransactionsValid(true, transaction);
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void shouldRejectZeroGasPriceNoPriorityTransaction(final boolean isLocal) {
+    final Transaction transaction = createTransaction(0, Wei.ZERO);
+    transactionPool = createTransactionPool(b -> b.noLocalPriority(true));
+
+    givenTransactionIsValid(transaction);
+
+    if (isLocal) {
+      addAndAssertTransactionViaApiInvalid(transaction, GAS_PRICE_TOO_LOW);
+    } else {
+      addAndAssertRemoteTransactionInvalid(transaction);
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  @DisabledIf("isBaseFeeMarket")
+  public void shouldAcceptZeroGasPriceNoPriorityTransactionWhenMinGasPriceIsZero(
+      final boolean isLocal) {
+    transactionPool = createTransactionPool(b -> b.minGasPrice(Wei.ZERO).noLocalPriority(true));
 
     final Transaction transaction = createTransaction(0, Wei.ZERO);
 
     givenTransactionIsValid(transaction);
 
-    addAndAssertTransactionViaApiValid(transaction, noLocalPriority);
+    if (isLocal) {
+      addAndAssertTransactionViaApiValid(transaction, true);
+    } else {
+      addAndAssertRemoteTransactionsValid(false, transaction);
+    }
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = {true, false})
+  @MethodSource("provideHasPriorityAndIsLocal")
   public void shouldAcceptZeroGasPriceFrontierTxsWhenMinGasPriceIsZeroAndLondonWithZeroBaseFee(
-      final boolean noLocalPriority) {
-    transactionPool = createTransactionPool(b -> b.noLocalPriority(noLocalPriority));
-    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
+      final boolean hasPriority, final boolean isLocal) {
+    final Transaction frontierTransaction = createFrontierTransaction(0, Wei.ZERO);
+    internalAcceptZeroGasPriceTxsWhenMinGasPriceIsZeroAndZeroBaseFee(
+        hasPriority, isLocal, frontierTransaction);
+  }
+
+  @ParameterizedTest
+  @MethodSource("provideHasPriorityAndIsLocal")
+  public void shouldAcceptZeroGasPrice1559TxsWhenMinGasPriceIsZeroAndLondonWithZeroBaseFee(
+      final boolean hasPriority, final boolean isLocal) {
+    final Transaction transaction = createTransactionBaseFeeMarket(0, Wei.ZERO);
+    internalAcceptZeroGasPriceTxsWhenMinGasPriceIsZeroAndZeroBaseFee(
+        hasPriority, isLocal, transaction);
+  }
+
+  private void internalAcceptZeroGasPriceTxsWhenMinGasPriceIsZeroAndZeroBaseFee(
+      final boolean hasPriority, final boolean isLocal, final Transaction transaction) {
+    transactionPool =
+        createTransactionPool(
+            b -> {
+              b.minGasPrice(Wei.ZERO);
+              if (hasPriority) {
+                b.prioritySenders(List.of(transaction.getSender()));
+              } else {
+                b.noLocalPriority(true);
+              }
+            });
+
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0, Optional.of(Wei.ZERO)));
     whenBlockBaseFeeIs(Wei.ZERO);
 
-    final Transaction frontierTransaction = createFrontierTransaction(0, Wei.ZERO);
+    givenTransactionIsValid(transaction);
+    if (isLocal) {
+      addAndAssertTransactionViaApiValid(transaction, !hasPriority);
+    } else {
+      addAndAssertRemoteTransactionsValid(hasPriority, transaction);
+    }
+  }
 
-    givenTransactionIsValid(frontierTransaction);
-    addAndAssertTransactionViaApiValid(frontierTransaction, noLocalPriority);
+  private static Stream<Arguments> provideHasPriorityAndIsLocal() {
+    return Stream.of(
+        Arguments.of(true, true),
+        Arguments.of(true, false),
+        Arguments.of(false, true),
+        Arguments.of(false, false));
   }
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  public void shouldAcceptZeroGasPrice1559TxsWhenMinGasPriceIsZeroAndLondonWithZeroBaseFee(
-      final boolean noLocalPriority) {
-    transactionPool = createTransactionPool(b -> b.noLocalPriority(noLocalPriority));
-    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
-    when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0, Optional.of(Wei.ZERO)));
-    whenBlockBaseFeeIs(Wei.ZERO);
-
-    final Transaction transaction = createTransaction(0, Wei.ZERO);
-
-    givenTransactionIsValid(transaction);
-    addAndAssertTransactionViaApiValid(transaction, noLocalPriority);
-  }
-
-  @Test
-  public void shouldAcceptBaseFeeFloorGasPriceFrontierLocalPriorityTransactionsWhenMining() {
-    transactionPool = createTransactionPool(b -> b.noLocalPriority(false));
-    final Transaction frontierTransaction = createFrontierTransaction(0, BASE_FEE_FLOOR);
-
-    givenTransactionIsValid(frontierTransaction);
-
-    addAndAssertTransactionViaApiValid(frontierTransaction, false);
-  }
-
-  @Test
-  public void shouldAcceptBaseFeeFloorGasPriceFrontierRemotePriorityTransactionsWhenMining() {
+  public void shouldAcceptBaseFeeFloorGasPriceFrontierPriorityTransactions(final boolean isLocal) {
     final Transaction frontierTransaction = createFrontierTransaction(0, BASE_FEE_FLOOR);
     transactionPool =
-        createTransactionPool(b -> b.prioritySenders(Set.of(frontierTransaction.getSender())));
+        createTransactionPool(b -> b.prioritySenders(List.of(frontierTransaction.getSender())));
 
     givenTransactionIsValid(frontierTransaction);
 
-    addAndAssertRemoteTransactionsValid(frontierTransaction);
+    if (isLocal) {
+      addAndAssertTransactionViaApiValid(frontierTransaction, false);
+    } else {
+      addAndAssertRemoteTransactionsValid(true, frontierTransaction);
+    }
   }
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  public void shouldRejectRemote1559TxsWhenMaxFeePerGasBelowMinGasPrice(final boolean hasPriority) {
+  public void shouldRejectNoPriorityTxsWhenMaxFeePerGasBelowMinGasPrice(final boolean isLocal) {
     final Wei genesisBaseFee = Wei.of(100L);
     final Wei minGasPrice = Wei.of(200L);
     final Wei lastBlockBaseFee = minGasPrice.add(50L);
     final Wei txMaxFeePerGas = minGasPrice.subtract(1L);
 
     assertThat(
-            add1559TxAndGetPendingTxsCount(
-                genesisBaseFee, minGasPrice, lastBlockBaseFee, txMaxFeePerGas, false, hasPriority))
+            addTxAndGetPendingTxsCount(
+                genesisBaseFee, minGasPrice, lastBlockBaseFee, txMaxFeePerGas, isLocal, false))
         .isEqualTo(0);
   }
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  public void shouldAcceptRemote1559TxsWhenMaxFeePerGasIsAtLeastEqualToMinGasPrice(
-      final boolean hasPriority) {
+  public void shouldAcceptNoPriorityTxsWhenMaxFeePerGasIsAtLeastEqualToMinGasPrice(
+      final boolean isLocal) {
     final Wei genesisBaseFee = Wei.of(100L);
     final Wei minGasPrice = Wei.of(200L);
     final Wei lastBlockBaseFee = minGasPrice.add(50L);
     final Wei txMaxFeePerGas = minGasPrice;
 
     assertThat(
-            add1559TxAndGetPendingTxsCount(
-                genesisBaseFee, minGasPrice, lastBlockBaseFee, txMaxFeePerGas, false, hasPriority))
-        .isEqualTo(1);
-  }
-
-  @Test
-  public void shouldRejectLocal1559TxsWhenMaxFeePerGasBelowMinGasPrice() {
-    final Wei genesisBaseFee = Wei.of(100L);
-    final Wei minGasPrice = Wei.of(200L);
-    final Wei lastBlockBaseFee = minGasPrice.add(50L);
-    final Wei txMaxFeePerGas = minGasPrice.subtract(1L);
-
-    assertThat(
-            add1559TxAndGetPendingTxsCount(
-                genesisBaseFee, minGasPrice, lastBlockBaseFee, txMaxFeePerGas, true, true))
-        .isEqualTo(0);
-  }
-
-  @Test
-  public void shouldAcceptLocal1559TxsWhenMaxFeePerGasIsAtLeastEqualToMinMinGasPrice() {
-    final Wei genesisBaseFee = Wei.of(100L);
-    final Wei minGasPrice = Wei.of(200L);
-    final Wei lastBlockBaseFee = minGasPrice.add(50L);
-    final Wei txMaxFeePerGas = minGasPrice;
-
-    assertThat(
-            add1559TxAndGetPendingTxsCount(
-                genesisBaseFee, minGasPrice, lastBlockBaseFee, txMaxFeePerGas, true, true))
+            addTxAndGetPendingTxsCount(
+                genesisBaseFee, minGasPrice, lastBlockBaseFee, txMaxFeePerGas, isLocal, false))
         .isEqualTo(1);
   }
 
@@ -1310,22 +1281,26 @@ public abstract class AbstractTransactionPoolTest {
         .createTransaction(KEY_PAIR1);
   }
 
-  protected int add1559TxAndGetPendingTxsCount(
+  protected int addTxAndGetPendingTxsCount(
       final Wei genesisBaseFee,
       final Wei minGasPrice,
       final Wei lastBlockBaseFee,
       final Wei txMaxFeePerGas,
       final boolean isLocal,
       final boolean hasPriority) {
-    when(miningParameters.getMinTransactionGasPrice()).thenReturn(minGasPrice);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0, Optional.of(genesisBaseFee)));
     whenBlockBaseFeeIs(lastBlockBaseFee);
 
     final Transaction transaction = createTransaction(0, txMaxFeePerGas);
     if (hasPriority) {
       transactionPool =
-          createTransactionPool(b -> b.prioritySenders(Set.of(transaction.getSender())));
+          createTransactionPool(
+              b -> b.minGasPrice(minGasPrice).prioritySenders(Set.of(transaction.getSender())));
+    } else {
+      transactionPool =
+          createTransactionPool(b -> b.minGasPrice(minGasPrice).noLocalPriority(true));
     }
+
     givenTransactionIsValid(transaction);
 
     if (isLocal) {
