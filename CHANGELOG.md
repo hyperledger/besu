@@ -21,6 +21,7 @@
 - Ethereum Classic Spiral network upgrade [#6078](https://github.com/hyperledger/besu/pull/6078)
 - Add a method to read from a `Memory` instance without altering its inner state [#6073](https://github.com/hyperledger/besu/pull/6073)
 - Accept `input` and `data` field for the payload of transaction-related RPC methods [#6094](https://github.com/hyperledger/besu/pull/6094)
+- Add APIs to set and get the min gas price a transaction must pay for being selected during block creation [#6097](https://github.com/hyperledger/besu/pull/6097)
 
 ### Bug fixes
 

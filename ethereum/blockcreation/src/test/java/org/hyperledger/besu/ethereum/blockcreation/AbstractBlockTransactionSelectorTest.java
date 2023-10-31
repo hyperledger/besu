@@ -737,6 +737,92 @@ public abstract class AbstractBlockTransactionSelectorTest {
                     TransactionInvalidReason.NONCE_TOO_HIGH.name())));
   }
 
+  @Test
+  public void increaseOfMinGasPriceAtRuntimeExcludeTxFromBeingSelected() {
+    final Transaction transaction = createTransaction(0, Wei.of(7L), 100_000);
+    transactionPool.addRemoteTransactions(List.of(transaction));
+
+    ensureTransactionIsValid(transaction, 0, 5);
+
+    final ProcessableBlockHeader blockHeader = createBlock(500_000);
+
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+
+    final BlockTransactionSelector selector =
+        createBlockSelector(
+            transactionProcessor,
+            blockHeader,
+            Wei.ZERO,
+            miningBeneficiary,
+            Wei.ZERO,
+            MIN_OCCUPANCY_80_PERCENT);
+
+    // raise the minGasPrice at runtime from 1 wei to 10 wei
+    miningParameters.setMinTransactionGasPrice(Wei.of(10));
+
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
+
+    // now the tx gasPrice is below the new minGasPrice, it is not selected but stays in the pool
+    assertThat(results.getSelectedTransactions()).isEmpty();
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(entry(transaction, TransactionSelectionResult.CURRENT_TX_PRICE_BELOW_MIN));
+    assertThat(transactionPool.getPendingTransactions())
+        .map(PendingTransaction::getTransaction)
+        .containsOnly(transaction);
+  }
+
+  @Test
+  public void decreaseOfMinGasPriceAtRuntimeIncludeTxThatWasPreviouslyNotSelected() {
+    final Transaction transaction = createTransaction(0, Wei.of(7L), 100_000);
+    transactionPool.addRemoteTransactions(List.of(transaction));
+
+    ensureTransactionIsValid(transaction, 0, 5);
+
+    final ProcessableBlockHeader blockHeader = createBlock(500_000);
+
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+
+    final BlockTransactionSelector selector1 =
+        createBlockSelector(
+            transactionProcessor,
+            blockHeader,
+            Wei.ZERO,
+            miningBeneficiary,
+            Wei.ZERO,
+            MIN_OCCUPANCY_80_PERCENT);
+
+    // raise the minGasPrice at runtime from 1 wei to 10 wei
+    miningParameters.setMinTransactionGasPrice(Wei.of(10));
+
+    final TransactionSelectionResults results1 = selector1.buildTransactionListForBlock();
+
+    // now the tx gasPrice is below the new minGasPrice, it is not selected but stays in the pool
+    assertThat(results1.getSelectedTransactions()).isEmpty();
+    assertThat(results1.getNotSelectedTransactions())
+        .containsOnly(entry(transaction, TransactionSelectionResult.CURRENT_TX_PRICE_BELOW_MIN));
+    assertThat(transactionPool.getPendingTransactions())
+        .map(PendingTransaction::getTransaction)
+        .containsOnly(transaction);
+
+    // decrease the minGasPrice at runtime from 10 wei to 5 wei
+    miningParameters.setMinTransactionGasPrice(Wei.of(5));
+
+    final BlockTransactionSelector selector2 =
+        createBlockSelector(
+            transactionProcessor,
+            blockHeader,
+            Wei.ZERO,
+            miningBeneficiary,
+            Wei.ZERO,
+            MIN_OCCUPANCY_80_PERCENT);
+
+    final TransactionSelectionResults results2 = selector2.buildTransactionListForBlock();
+
+    // now the tx gasPrice is above the new minGasPrice and it is selected
+    assertThat(results2.getSelectedTransactions()).contains(transaction);
+    assertThat(results2.getNotSelectedTransactions()).isEmpty();
+  }
+
   protected BlockTransactionSelector createBlockSelector(
       final MainnetTransactionProcessor transactionProcessor,
       final ProcessableBlockHeader blockHeader,
