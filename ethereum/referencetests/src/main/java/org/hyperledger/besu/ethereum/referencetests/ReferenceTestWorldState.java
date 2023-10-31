@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.HashMap;
@@ -92,6 +93,12 @@ public interface ReferenceTestWorldState extends MutableWorldState {
   @JsonCreator
   static ReferenceTestWorldState create(final Map<String, AccountMock> accounts) {
     // delegate to a Bonsai reference test world state:
-    return BonsaiReferenceTestWorldState.create(accounts);
+    return create(accounts, EvmConfiguration.DEFAULT);
+  }
+
+  static ReferenceTestWorldState create(
+      final Map<String, AccountMock> accounts, final EvmConfiguration evmConfiguration) {
+    // delegate to a Bonsai reference test world state:
+    return BonsaiReferenceTestWorldState.create(accounts, evmConfiguration);
   }
 }
