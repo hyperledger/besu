@@ -215,4 +215,47 @@ public class LondonFeeMarketBlockTransactionSelectorTest
         .containsExactly(txFrontier1, txLondon1, txFrontier2, txLondon2);
     assertThat(results.getNotSelectedTransactions()).isEmpty();
   }
+
+  @Test
+  @Override
+  public void shouldNotSelectTransactionsWithPriorityFeeLessThanConfig() {
+    ProcessableBlockHeader blockHeader = createBlock(5_000_000, Wei.ONE);
+    miningParameters.setMinPriorityFeePerGas(Wei.of(7));
+
+    final Transaction tx1 = createEIP1559Transaction(1, Wei.of(8), Wei.of(8), 100_000);
+    ensureTransactionIsValid(tx1);
+
+    // transaction tx2 should not be selected
+    final Transaction tx2 = createEIP1559Transaction(2, Wei.of(7), Wei.of(7), 100_000);
+    ensureTransactionIsValid(tx2);
+
+    // transaction tx3 should be selected
+    final Transaction tx3 = createEIP1559Transaction(3, Wei.of(8), Wei.of(8), 100_000);
+    ensureTransactionIsValid(tx3);
+
+    // transaction tx4 should be selected
+    final Transaction tx4 = createEIP1559Transaction(4, Wei.of(8), Wei.of(6), 100_000);
+    ensureTransactionIsValid(tx4);
+
+    transactionPool.addRemoteTransactions(List.of(tx1, tx2, tx3, tx4));
+
+    assertThat(transactionPool.getPendingTransactions().size()).isEqualTo(4);
+
+    final BlockTransactionSelector selector =
+        createBlockSelector(
+            transactionProcessor,
+            blockHeader,
+            Wei.ZERO,
+            AddressHelpers.ofValue(1),
+            Wei.ZERO,
+            MIN_OCCUPANCY_100_PERCENT);
+
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
+
+    assertThat(results.getSelectedTransactions()).containsOnly(tx1, tx3);
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(
+            entry(tx2, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN),
+            entry(tx4, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN));
+  }
 }
