@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,7 +64,8 @@ public class GenesisFileModule {
   ProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
       @Named("Fork") final Optional<String> fork,
-      @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
+      @Named("RevertReasonEnabled") final boolean revertReasonEnabled,
+      final EvmConfiguration evmConfiguration) {
     throw new RuntimeException("Abstract");
   }
 

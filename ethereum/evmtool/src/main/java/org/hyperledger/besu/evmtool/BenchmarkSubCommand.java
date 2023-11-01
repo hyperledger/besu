@@ -24,6 +24,7 @@ import org.hyperledger.besu.evmtool.benchmarks.BenchmarkExecutor;
 import org.hyperledger.besu.evmtool.benchmarks.ECRecoverBenchmark;
 import org.hyperledger.besu.evmtool.benchmarks.ModExpBenchmark;
 import org.hyperledger.besu.evmtool.benchmarks.Secp256k1Benchmark;
+import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.PrintStream;
 import java.util.EnumSet;
@@ -85,6 +86,7 @@ public class BenchmarkSubCommand implements Runnable {
 
   @Override
   public void run() {
+    LogConfigurator.setLevel("", "DEBUG");
     System.out.println(BesuInfo.version());
     var benchmarksToRun = benchmarks.isEmpty() ? EnumSet.allOf(Benchmark.class) : benchmarks;
     for (var benchmark : benchmarksToRun) {
