@@ -72,6 +72,16 @@ public class MinPriorityFeePerGasTransactionSelectorTest {
     assertSelection(transaction, TransactionSelectionResult.SELECTED);
   }
 
+  @Test
+  public void shouldSelectWhenPrioritySender() {
+    var prioritySenderTransaction = mockTransactionWithPriorityFee(minPriorityFeeParameter - 1);
+    assertSelection(
+        prioritySenderTransaction,
+        TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN);
+    when(prioritySenderTransaction.hasPriority()).thenReturn(true);
+    assertSelection(prioritySenderTransaction, TransactionSelectionResult.SELECTED);
+  }
+
   private void assertSelection(
       final PendingTransaction transaction, final TransactionSelectionResult expectedResult) {
     var actualResult = transactionSelector.evaluateTransactionPreProcessing(transaction, null);

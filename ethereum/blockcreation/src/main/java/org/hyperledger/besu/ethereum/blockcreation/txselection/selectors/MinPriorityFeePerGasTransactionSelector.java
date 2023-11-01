@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
@@ -47,7 +46,7 @@ public class MinPriorityFeePerGasTransactionSelector extends AbstractTransaction
   public TransactionSelectionResult evaluateTransactionPreProcessing(
       final PendingTransaction pendingTransaction,
       final TransactionSelectionResults transactionSelectionResults) {
-    if (isPriorityFeePriceBelowMinimum(pendingTransaction.getTransaction())) {
+    if (isPriorityFeePriceBelowMinimum(pendingTransaction)) {
       return TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN;
     }
     return TransactionSelectionResult.SELECTED;
@@ -56,13 +55,19 @@ public class MinPriorityFeePerGasTransactionSelector extends AbstractTransaction
   /**
    * Checks if the priority fee price is below the minimum.
    *
-   * @param transaction The transaction to check.
+   * @param pendingTransaction The transaction to check.
    * @return boolean. Returns true if the minimum priority fee price is below the minimum, false
    *     otherwise.
    */
-  private boolean isPriorityFeePriceBelowMinimum(final Transaction transaction) {
+  private boolean isPriorityFeePriceBelowMinimum(final PendingTransaction pendingTransaction) {
+    // Priority txs are exempt from this check
+    if (pendingTransaction.hasPriority()) {
+      return false;
+    }
     Wei priorityFeePerGas =
-        transaction.getEffectivePriorityFeePerGas(context.processableBlockHeader().getBaseFee());
+        pendingTransaction
+            .getTransaction()
+            .getEffectivePriorityFeePerGas(context.processableBlockHeader().getBaseFee());
     return priorityFeePerGas.lessThan(context.miningParameters().getMinPriorityFeePerGas());
   }
 
