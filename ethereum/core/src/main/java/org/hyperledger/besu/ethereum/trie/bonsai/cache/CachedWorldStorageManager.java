@@ -229,11 +229,20 @@ public class CachedWorldStorageManager
                   Optional.ofNullable(cachedWorldStatesByHash.get(header.getHash()))
                       .map(CachedBonsaiWorldView::getWorldStateStorage)
                       .or(
-                          () ->
-                              archive
-                                  .getMutable(header, false)
-                                  .map(BonsaiWorldState.class::cast)
-                                  .map(BonsaiWorldState::getWorldStateStorage)));
+                          () -> {
+                            // if not cached already, maybe fetch and cache this worldstate
+                            var maybeWorldState =
+                                archive
+                                    .getMutable(header, false)
+                                    .map(BonsaiWorldState.class::cast)
+                                    .map(BonsaiWorldState::getWorldStateStorage);
+                            if (maybeWorldState.isPresent()) {
+                              cachedWorldStatesByHash.put(
+                                  header.getHash(),
+                                  new CachedBonsaiWorldView(header, maybeWorldState.get()));
+                            }
+                            return maybeWorldState;
+                          }));
     } else {
       // if we did not supply a hash, return the head worldstate from cachedWorldStates
       return rootWorldStateStorage

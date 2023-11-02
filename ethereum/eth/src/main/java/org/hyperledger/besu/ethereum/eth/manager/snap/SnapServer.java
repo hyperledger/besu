@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
@@ -31,9 +32,10 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedBonsaiWorldView;
+import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
+import org.hyperledger.besu.ethereum.worldstate.FlatWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 
@@ -86,25 +88,30 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
     this(
         snapMessages,
         rootHash ->
-            // TODO remove dirty bonsai cast:
             ((BonsaiWorldStateProvider) protocolContext.getWorldStateArchive())
                 .getCachedWorldStorageManager()
-                .getStorageByRootHash(rootHash));
+                .flatMap(storageManager -> storageManager.getStorageByRootHash(rootHash)));
 
-    // prime state-root-to-blockhash cache
-    primeWorldStateArchive(protocolContext);
+    var archive = protocolContext.getWorldStateArchive();
+    if (archive.isFlatArchive()) {
+      var cachedStorageManager = ((FlatWorldStateArchive) archive).getCachedWorldStorageManager();
+      var blockchain = protocolContext.getBlockchain();
 
-    // subscribe to initial sync completed events to start/stop snap server:
-    protocolContext
-        .getSynchronizer()
-        .filter(z -> z instanceof DefaultSynchronizer)
-        .map(DefaultSynchronizer.class::cast)
-        .ifPresent(z -> this.listenerId.set(z.subscribeInitialSync(this)));
+      // prime state-root-to-blockhash cache
+      primeWorldStateArchive(cachedStorageManager, blockchain);
+
+      // subscribe to initial sync completed events to start/stop snap server:
+      protocolContext
+          .getSynchronizer()
+          .filter(z -> z instanceof DefaultSynchronizer)
+          .map(DefaultSynchronizer.class::cast)
+          .ifPresent(z -> this.listenerId.set(z.subscribeInitialSync(this)));
+    }
   }
 
   /**
    * Create a snap server without registering a listener for worldstate initial sync events or
-   * priming cached states.
+   * priming worldstates by root hash.
    */
   SnapServer(
       final EthMessages snapMessages,
@@ -125,22 +132,21 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
     stop();
   }
 
-  public void start() {
+  public SnapServer start() {
     isStarted.set(true);
+    return this;
   }
 
-  public void stop() {
+  public SnapServer stop() {
     isStarted.set(false);
+    return this;
   }
 
-  private void primeWorldStateArchive(final ProtocolContext protocolContext) {
-    // TODO remove dirty bonsai cast:
-    var storageManager =
-        ((BonsaiWorldStateProvider) protocolContext.getWorldStateArchive())
-            .getCachedWorldStorageManager();
-    var blockchain = protocolContext.getBlockchain();
-
-    storageManager.primeRootToBlockHashCache(blockchain, PRIME_STATE_ROOT_CACHE_LIMIT);
+  private void primeWorldStateArchive(
+      final Optional<CachedWorldStorageManager> storageManager, final Blockchain blockchain) {
+    // at startup, prime the latest worldstates' by roothash:
+    storageManager.ifPresent(
+        cache -> cache.primeRootToBlockHashCache(blockchain, PRIME_STATE_ROOT_CACHE_LIMIT));
   }
 
   private void registerResponseConstructors() {

@@ -16,6 +16,10 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.besu.ethereum.eth.manager.snap.SnapServer.HASH_LAST;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -81,13 +85,58 @@ public class SnapServerTest {
           inMemoryStorage::getAccountStateTrieNode, Function.identity(), Function.identity());
   final WorldStateProofProvider proofProvider = new WorldStateProofProvider(inMemoryStorage);
 
-  final SnapServer snapServer =
-      new SnapServer(new EthMessages(), __ -> Optional.of(inMemoryStorage));
+  final Function<Optional<Hash>, Optional<BonsaiWorldStateKeyValueStorage>> spyProvider =
+      spy(
+          new Function<Optional<Hash>, Optional<BonsaiWorldStateKeyValueStorage>>() {
+            // explicit non-final class is necessary for Mockito to spy:
+            @Override
+            public Optional<BonsaiWorldStateKeyValueStorage> apply(final Optional<Hash> hash) {
+              return Optional.of(inMemoryStorage);
+            }
+          });
+
+  final SnapServer snapServer = new SnapServer(new EthMessages(), spyProvider).start();
 
   final SnapTestAccount acct1 = createTestAccount("10");
   final SnapTestAccount acct2 = createTestAccount("20");
   final SnapTestAccount acct3 = createTestContractAccount("30", inMemoryStorage);
   final SnapTestAccount acct4 = createTestContractAccount("40", inMemoryStorage);
+
+  @Test
+  public void assertNoStartNoOp() {
+    // account found at startHash
+    insertTestAccounts(acct4, acct3, acct1, acct2);
+
+    // stop snap server so that we should not be processing snap requests
+    snapServer.stop();
+
+    var rangeData = requestAccountRange(acct1.addressHash, acct4.addressHash).accountData(false);
+
+    // assert empty account response and no attempt to fetch worldstate
+    assertThat(rangeData.accounts().isEmpty()).isTrue();
+    assertThat(rangeData.proofs().isEmpty()).isTrue();
+    verify(spyProvider, never()).apply(any());
+
+    // assert empty storage response and no attempt to fetch worldstate
+    var storageRange =
+        requestStorageRange(List.of(acct3.addressHash), Hash.ZERO, HASH_LAST).slotsData(false);
+    assertThat(storageRange.slots().isEmpty()).isTrue();
+    assertThat(storageRange.proofs().isEmpty()).isTrue();
+    verify(spyProvider, never()).apply(any());
+
+    // assert empty trie nodes response and no attempt to fetch worldstate
+    var trieNodes =
+        requestTrieNodes(storageTrie.getRootHash(), List.of(List.of(Bytes.fromHexString("0x01"))))
+            .nodes(false);
+    assertThat(trieNodes.isEmpty()).isTrue();
+    verify(spyProvider, never()).apply(any());
+
+    // assert empty code response and no attempt to fetch worldstate
+    var codes =
+        requestByteCodes(List.of(acct3.accountValue.getCodeHash())).bytecodes(false).codes();
+    assertThat(codes.isEmpty()).isTrue();
+    verify(spyProvider, never()).apply(any());
+  }
 
   @Test
   public void assertEmptyRangeLeftProofOfExclusionAndNextAccount() {
