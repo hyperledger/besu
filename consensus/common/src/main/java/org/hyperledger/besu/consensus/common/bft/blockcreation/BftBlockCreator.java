@@ -51,6 +51,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
    * @param protocolSchedule the protocol schedule
    * @param parentHeader the parent header
    * @param bftExtraDataCodec the bft extra data codec
+   * @param ethScheduler the scheduler for asynchronous block creation tasks
    */
   public BftBlockCreator(
       final MiningParameters miningParameters,
