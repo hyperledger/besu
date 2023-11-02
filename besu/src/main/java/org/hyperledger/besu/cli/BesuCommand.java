@@ -3438,6 +3438,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningLimit());
 
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
+    builder.setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode());
 
     builder.setPluginContext(besuComponent.getBesuPluginContext());
 

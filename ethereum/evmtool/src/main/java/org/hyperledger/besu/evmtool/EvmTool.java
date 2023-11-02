@@ -15,9 +15,12 @@
  */
 package org.hyperledger.besu.evmtool;
 
+import org.hyperledger.besu.util.LogConfigurator;
+
 public final class EvmTool {
 
   public static void main(final String... args) {
+    LogConfigurator.setLevel("", "DEBUG");
     final EvmToolCommand evmToolCommand = new EvmToolCommand();
 
     evmToolCommand.execute(args);

@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValue
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
@@ -80,11 +81,17 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
   public static DefaultWorldStateArchive createInMemoryWorldStateArchive() {
     return new DefaultWorldStateArchive(
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
-        new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
+        new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
+        EvmConfiguration.DEFAULT);
   }
 
   public static BonsaiWorldStateProvider createBonsaiInMemoryWorldStateArchive(
       final Blockchain blockchain) {
+    return createBonsaiInMemoryWorldStateArchive(blockchain, EvmConfiguration.DEFAULT);
+  }
+
+  public static BonsaiWorldStateProvider createBonsaiInMemoryWorldStateArchive(
+      final Blockchain blockchain, final EvmConfiguration evmConfiguration) {
     final InMemoryKeyValueStorageProvider inMemoryKeyValueStorageProvider =
         new InMemoryKeyValueStorageProvider();
     final CachedMerkleTrieLoader cachedMerkleTrieLoader =
@@ -97,6 +104,7 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         cachedMerkleTrieLoader,
         new NoOpMetricsSystem(),
         null,
+        evmConfiguration,
         TrieLogPruner.noOpTrieLogPruner());
   }
 
@@ -104,7 +112,8 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
     return new DefaultMutableWorldState(
         provider.createWorldStateStorage(DataStorageFormat.FOREST),
-        provider.createWorldStatePreimageStorage());
+        provider.createWorldStatePreimageStorage(),
+        EvmConfiguration.DEFAULT);
   }
 
   public static PrivateStateStorage createInMemoryPrivateStateStorage() {

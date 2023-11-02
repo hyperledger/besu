@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
-import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.List;
@@ -58,8 +57,8 @@ public class BlockTracer {
       // if we have no prior updater, it must be the first TX, so use the block's initial state
       if (chainedUpdater == null) {
         chainedUpdater = mutableWorldState.updater();
-      } else if (chainedUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
-        stackedUpdater.markTransactionBoundary();
+      } else {
+        chainedUpdater.markTransactionBoundary();
       }
       // create an updater for just this tx
       chainedUpdater = chainedUpdater.updater();
