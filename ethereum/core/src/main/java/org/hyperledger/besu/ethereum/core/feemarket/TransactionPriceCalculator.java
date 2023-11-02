@@ -37,9 +37,9 @@ public interface TransactionPriceCalculator {
       }
       final Wei maxPriorityFeePerGas = transaction.getMaxPriorityFeePerGas().orElseThrow();
       final Wei maxFeePerGas = transaction.getMaxFeePerGas().orElseThrow();
-      Wei price = maxPriorityFeePerGas.add(baseFee);
+      final Wei price = maxPriorityFeePerGas.add(baseFee);
       if (price.compareTo(maxFeePerGas) > 0) {
-        price = maxFeePerGas;
+        return maxFeePerGas;
       }
       return price;
     };

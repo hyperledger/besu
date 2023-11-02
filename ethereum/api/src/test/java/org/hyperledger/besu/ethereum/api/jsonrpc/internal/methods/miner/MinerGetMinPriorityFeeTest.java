@@ -39,14 +39,15 @@ public class MinerGetMinPriorityFeeTest {
 
   @Test
   public void shouldReturnMinPriorityFee() {
-    Wei minPriorityFee = Wei.of(70);
+    String minPriorityFee = "0x46";
+
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", method.getName(), new Object[] {}));
 
-    when(miningParameters.getMinPriorityFeePerGas()).thenReturn(minPriorityFee);
+    when(miningParameters.getMinPriorityFeePerGas()).thenReturn(Wei.fromHexString(minPriorityFee));
 
     final JsonRpcResponse expected =
-        new JsonRpcSuccessResponse(request.getRequest().getId(), minPriorityFee.getValue());
+        new JsonRpcSuccessResponse(request.getRequest().getId(), minPriorityFee);
 
     final JsonRpcResponse actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);

@@ -67,7 +67,7 @@ dependencyManagement {
       entry 'picocli-codegen'
     }
 
-    dependencySet(group: 'io.grpc', version: '1.53.0') {
+    dependencySet(group: 'io.grpc', version: '1.59.0') {
       entry 'grpc-all'
       entry 'grpc-core'
       entry 'grpc-netty'
@@ -76,11 +76,11 @@ dependencyManagement {
 
     dependency 'io.kubernetes:client-java:18.0.0'
 
-    dependency 'io.netty:netty-all:4.1.90.Final'
-    dependency 'io.netty:netty-tcnative-boringssl-static:2.0.59.Final'
-    dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.90.Final', classifier: 'linux-x86_64'
-    dependency group: 'io.netty', name: 'netty-transport-native-kqueue', version:'4.1.90.Final', classifier: 'osx-x86_64'
-    dependency 'io.netty:netty-transport-native-unix-common:4.1.90.Final'
+    dependency 'io.netty:netty-all:4.1.100.Final'
+    dependency 'io.netty:netty-tcnative-boringssl-static:2.0.62.Final'
+    dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.100.Final', classifier: 'linux-x86_64'
+    dependency group: 'io.netty', name: 'netty-transport-native-kqueue', version:'4.1.100.Final', classifier: 'osx-x86_64'
+    dependency 'io.netty:netty-transport-native-unix-common:4.1.100.Final'
 
     dependency 'io.opentelemetry:opentelemetry-api:1.24.0'
     dependency 'io.opentelemetry:opentelemetry-exporter-otlp:1.24.0'
