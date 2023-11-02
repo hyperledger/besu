@@ -56,6 +56,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
    * @param nodeKey the node key
    * @param parentHeader the parent header
    * @param epochManager the epoch manager
+   * @param ethScheduler the scheduler for asynchronous block creation tasks
    */
   public CliqueBlockCreator(
       final MiningParameters miningParameters,

@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -25,6 +25,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -111,8 +112,8 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             createMiningParameters(
                 Wei.of(6),
                 MIN_OCCUPANCY_80_PERCENT,
-                DEFAULT_TXS_SELECTION_MAX_TIME,
-                DEFAULT_TXS_SELECTION_MAX_TIME),
+                DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME,
+                DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -143,8 +144,8 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             createMiningParameters(
                 Wei.of(6),
                 MIN_OCCUPANCY_80_PERCENT,
-                DEFAULT_TXS_SELECTION_MAX_TIME,
-                DEFAULT_TXS_SELECTION_MAX_TIME),
+                DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME,
+                DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -174,8 +175,8 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             createMiningParameters(
                 Wei.of(6),
                 MIN_OCCUPANCY_80_PERCENT,
-                DEFAULT_TXS_SELECTION_MAX_TIME,
-                DEFAULT_TXS_SELECTION_MAX_TIME),
+                DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME,
+                DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -228,5 +229,53 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     assertThat(results.getSelectedTransactions())
         .containsExactly(txFrontier1, txLondon1, txFrontier2, txLondon2);
     assertThat(results.getNotSelectedTransactions()).isEmpty();
+  }
+
+  @Test
+  @Override
+  public void shouldNotSelectTransactionsWithPriorityFeeLessThanConfig() {
+    ProcessableBlockHeader blockHeader = createBlock(5_000_000, Wei.ONE);
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder().from(defaultTestMiningParameters).build();
+    miningParameters.setMinPriorityFeePerGas(Wei.of(7));
+
+    final Transaction txSelected1 = createEIP1559Transaction(1, Wei.of(8), Wei.of(8), 100_000);
+    ensureTransactionIsValid(txSelected1);
+
+    // transaction txNotSelected1 should not be selected
+    final Transaction txNotSelected1 = createEIP1559Transaction(2, Wei.of(7), Wei.of(7), 100_000);
+    ensureTransactionIsValid(txNotSelected1);
+
+    // transaction txSelected2 should be selected
+    final Transaction txSelected2 = createEIP1559Transaction(3, Wei.of(8), Wei.of(8), 100_000);
+    ensureTransactionIsValid(txSelected2);
+
+    // transaction txNotSelected2 should not be selected
+    final Transaction txNotSelected2 = createEIP1559Transaction(4, Wei.of(8), Wei.of(6), 100_000);
+    ensureTransactionIsValid(txNotSelected2);
+
+    final BlockTransactionSelector selector =
+        createBlockSelectorAndSetupTxPool(
+            miningParameters,
+            transactionProcessor,
+            blockHeader,
+            AddressHelpers.ofValue(1),
+            Wei.ZERO,
+            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
+
+    transactionPool.addRemoteTransactions(
+        List.of(txSelected1, txNotSelected1, txSelected2, txNotSelected2));
+
+    assertThat(transactionPool.getPendingTransactions().size()).isEqualTo(4);
+
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
+
+    assertThat(results.getSelectedTransactions()).containsOnly(txSelected1, txSelected2);
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(
+            entry(
+                txNotSelected1, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN),
+            entry(
+                txNotSelected2, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN));
   }
 }

@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.blockcreation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.awaitility.Awaitility.await;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
@@ -80,6 +80,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+import org.hyperledger.besu.util.number.Percentage;
 
 import java.math.BigInteger;
 import java.time.Instant;
@@ -136,8 +137,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
       createMiningParameters(
           Wei.ZERO,
           MIN_OCCUPANCY_80_PERCENT,
-          DEFAULT_TXS_SELECTION_MAX_TIME,
-          DEFAULT_TXS_SELECTION_MAX_TIME);
+          DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME,
+          DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME);
 
   private final Executor executor = Executors.newCachedThreadPool();
 
@@ -433,8 +434,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
             createMiningParameters(
                 Wei.ZERO,
                 MIN_OCCUPANCY_100_PERCENT,
-                DEFAULT_TXS_SELECTION_MAX_TIME,
-                DEFAULT_TXS_SELECTION_MAX_TIME),
+                DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME,
+                DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -495,8 +496,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
             createMiningParameters(
                 Wei.ZERO,
                 MIN_OCCUPANCY_100_PERCENT,
-                DEFAULT_TXS_SELECTION_MAX_TIME,
-                DEFAULT_TXS_SELECTION_MAX_TIME),
+                DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME,
+                DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -681,8 +682,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
             createMiningParameters(
                 Wei.ZERO,
                 MIN_OCCUPANCY_80_PERCENT,
-                DEFAULT_TXS_SELECTION_MAX_TIME,
-                DEFAULT_TXS_SELECTION_MAX_TIME),
+                DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME,
+                DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -774,33 +775,162 @@ public abstract class AbstractBlockTransactionSelectorTest {
                     TransactionInvalidReason.NONCE_TOO_HIGH.name())));
   }
 
-  private Answer<TransactionSelectionResult> processingTx(
-      final boolean isTooLate, final Map<Transaction, Long> txsProcessingTime) {
-    final Answer<TransactionSelectionResult> inTime =
-        invocation -> TransactionSelectionResult.SELECTED;
-    final Answer<TransactionSelectionResult> tooLate =
-        invocation -> {
-          final Transaction tx = ((PendingTransaction) invocation.getArgument(0)).getTransaction();
+  @Test
+  public void increaseOfMinGasPriceAtRuntimeExcludeTxFromBeingSelected() {
+    final Transaction transaction = createTransaction(0, Wei.of(7L), 100_000);
+    final ProcessableBlockHeader blockHeader = createBlock(500_000);
 
-          Thread.sleep(txsProcessingTime.get(tx));
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
 
-          return TransactionSelectionResult.SELECTED;
-        };
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder().from(defaultTestMiningParameters).build();
 
-    return isTooLate ? tooLate : inTime;
+    final BlockTransactionSelector selector =
+        createBlockSelectorAndSetupTxPool(
+            miningParameters,
+            transactionProcessor,
+            blockHeader,
+            miningBeneficiary,
+            Wei.ZERO,
+            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
+
+    transactionPool.addRemoteTransactions(List.of(transaction));
+
+    ensureTransactionIsValid(transaction, 0, 5);
+
+    // raise the minGasPrice at runtime from 1 wei to 10 wei
+    miningParameters.setMinTransactionGasPrice(Wei.of(10));
+
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
+
+    // now the tx gasPrice is below the new minGasPrice, it is not selected but stays in the pool
+    assertThat(results.getSelectedTransactions()).isEmpty();
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(entry(transaction, TransactionSelectionResult.CURRENT_TX_PRICE_BELOW_MIN));
+    assertThat(transactionPool.getPendingTransactions())
+        .map(PendingTransaction::getTransaction)
+        .containsOnly(transaction);
   }
+
+  @Test
+  public void decreaseOfMinGasPriceAtRuntimeIncludeTxThatWasPreviouslyNotSelected() {
+    final Transaction transaction = createTransaction(0, Wei.of(7L), 100_000);
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder().from(defaultTestMiningParameters).build();
+    final ProcessableBlockHeader blockHeader = createBlock(500_000);
+
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+
+    final BlockTransactionSelector selector1 =
+        createBlockSelectorAndSetupTxPool(
+            miningParameters,
+            transactionProcessor,
+            blockHeader,
+            miningBeneficiary,
+            Wei.ZERO,
+            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
+    transactionPool.addRemoteTransactions(List.of(transaction));
+
+    ensureTransactionIsValid(transaction, 0, 5);
+
+    // raise the minGasPrice at runtime from 1 wei to 10 wei
+    miningParameters.setMinTransactionGasPrice(Wei.of(10));
+
+    final TransactionSelectionResults results1 = selector1.buildTransactionListForBlock();
+
+    // now the tx gasPrice is below the new minGasPrice, it is not selected but stays in the pool
+    assertThat(results1.getSelectedTransactions()).isEmpty();
+    assertThat(results1.getNotSelectedTransactions())
+        .containsOnly(entry(transaction, TransactionSelectionResult.CURRENT_TX_PRICE_BELOW_MIN));
+    assertThat(transactionPool.getPendingTransactions())
+        .map(PendingTransaction::getTransaction)
+        .containsOnly(transaction);
+
+    // decrease the minGasPrice at runtime from 10 wei to 5 wei
+    miningParameters.setMinTransactionGasPrice(Wei.of(5));
+
+    final BlockTransactionSelector selector2 =
+        createBlockSelector(
+            miningParameters,
+            transactionProcessor,
+            blockHeader,
+            miningBeneficiary,
+            Wei.ZERO,
+            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
+
+    final TransactionSelectionResults results2 = selector2.buildTransactionListForBlock();
+
+    // now the tx gasPrice is above the new minGasPrice and it is selected
+    assertThat(results2.getSelectedTransactions()).contains(transaction);
+    assertThat(results2.getNotSelectedTransactions()).isEmpty();
+  }
+
+  @Test
+  public void shouldNotSelectTransactionsWithPriorityFeeLessThanConfig() {
+    ProcessableBlockHeader blockHeader = createBlock(5_000_000, Wei.ONE);
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder().from(defaultTestMiningParameters).build();
+    miningParameters.setMinPriorityFeePerGas(Wei.of(7));
+    final Transaction txSelected = createTransaction(1, Wei.of(8), 100_000);
+    ensureTransactionIsValid(txSelected);
+    // transaction txNotSelected should not be selected
+    final Transaction txNotSelected = createTransaction(2, Wei.of(7), 100_000);
+    ensureTransactionIsValid(txNotSelected);
+
+    final BlockTransactionSelector selector =
+        createBlockSelectorAndSetupTxPool(
+            miningParameters,
+            transactionProcessor,
+            blockHeader,
+            AddressHelpers.ofValue(1),
+            Wei.ZERO,
+            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
+
+    transactionPool.addRemoteTransactions(List.of(txSelected, txNotSelected));
+
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
+
+    assertThat(results.getSelectedTransactions()).containsOnly(txSelected);
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(
+            entry(
+                txNotSelected, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN));
+  }
+
+  // spotless:off
+  /**
+   * Txs selection and timeout timeline
+   *
+   * 0      300      600 700
+   * |       |        |   |
+   * --------0--------1---BT
+   *         |        |
+   * TS     (0)     (0,1)
+   *
+   * TS: Txs selected
+   * BT: Block timeout
+   *
+   * @param isPoa simulate a PoA network?
+   * @param preProcessingTooLate should the preProcessing step take too long?
+   * @param processingTooLate should the processing step take too long?
+   * @param postProcessingTooLate should the postProcessing step take too long?
+   */
+  // spotless:on
 
   @ParameterizedTest
   @MethodSource("longProcessingTask")
   public void subsetOfPendingTransactionsIncludedWhenTxsSelectionMaxTimeIsOver(
+      final boolean isPoa,
       final boolean preProcessingTooLate,
       final boolean processingTooLate,
       final boolean postProcessingTooLate) {
 
     final ProcessableBlockHeader blockHeader = createBlock(301_000);
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
-    final long txsSelectionMaxTime = 500;
-    final long txProcessingTime = 200;
+    final int poaMinBlockTime = 1;
+    final long blockTxsSelectionMaxTime = 750;
+    final long singleTxSelectionMaxTime = 700;
+    final long txProcessingTime = 300;
 
     final List<Transaction> txs = new ArrayList<>(3);
     for (int i = 0; i < 3; i++) {
@@ -825,8 +955,18 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
-            createMiningParameters(
-                Wei.ZERO, MIN_OCCUPANCY_100_PERCENT, txsSelectionMaxTime, txsSelectionMaxTime),
+            isPoa
+                ? createMiningParameters(
+                    Wei.ZERO,
+                    MIN_OCCUPANCY_100_PERCENT,
+                    poaMinBlockTime,
+                    Percentage.fromInt(75),
+                    singleTxSelectionMaxTime)
+                : createMiningParameters(
+                    Wei.ZERO,
+                    MIN_OCCUPANCY_100_PERCENT,
+                    blockTxsSelectionMaxTime,
+                    singleTxSelectionMaxTime),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -847,18 +987,39 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .containsOnly(entry(txs.get(2), TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT));
   }
 
+  // spotless:off
+  /**
+   * Txs selection and timeout timeline
+   *
+   * 0    200      600      1100
+   * |     |        |          |
+   * ------0--------1---------TT
+   *       |        |
+   * TS   (0)     (0,1)
+   *
+   * TS: Txs selected
+   * TT: Tx 3 timeout
+   *
+   * @param isPoa simulate a PoA network?
+   * @param preProcessingTooLate should the preProcessing step take too long?
+   * @param processingTooLate should the processing step take too long?
+   * @param postProcessingTooLate should the postProcessing step take too long?
+   */
+  // spotless:on
   @ParameterizedTest
   @MethodSource("longProcessingTask")
   public void subsetOfPendingTransactionsIncludedWhenPerTxEvaluationMaxTimeIsOver(
+      final boolean isPoa,
       final boolean preProcessingTooLate,
       final boolean processingTooLate,
       final boolean postProcessingTooLate) {
 
     final ProcessableBlockHeader blockHeader = createBlock(301_000);
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
-
+    final long singleTxSelectionMaxTime = 500;
     final List<Transaction> txs = new ArrayList<>(3);
     final List<Long> processingTimes = new ArrayList<>(3);
+
     for (int i = 0; i < 3; i++) {
       final Transaction tx = createTransaction(i, Wei.of(7), 100_000);
       txs.add(tx);
@@ -883,8 +1044,18 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
-            createMiningParameters(
-                Wei.ZERO, MIN_OCCUPANCY_100_PERCENT, DEFAULT_TXS_SELECTION_MAX_TIME, 500),
+            isPoa
+                ? createMiningParameters(
+                    Wei.ZERO,
+                    MIN_OCCUPANCY_100_PERCENT,
+                    5,
+                    Percentage.fromInt(75),
+                    singleTxSelectionMaxTime)
+                : createMiningParameters(
+                    Wei.ZERO,
+                    MIN_OCCUPANCY_100_PERCENT,
+                    DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME,
+                    singleTxSelectionMaxTime),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -905,18 +1076,43 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .containsOnly(entry(txs.get(2), TransactionSelectionResult.TX_EVALUATION_TIMEOUT));
   }
 
+  // spotless:off
+  /**
+   * Txs selection and timeout timeline
+   *
+   * 0    200      600      1100   1300
+   * |     |        |          |    |
+   * ------0--------1---------TT---BT
+   *       |        |
+   * TS   (0)     (0,1)
+   *
+   * TS: Txs selected
+   * TT: Tx 3 timeout
+   * BT: Block timeout
+   *
+   * @param isPoa simulate a PoA network?
+   * @param preProcessingTooLate should the preProcessing step take too long?
+   * @param processingTooLate should the processing step take too long?
+   * @param postProcessingTooLate should the postProcessing step take too long?
+   */
+  // spotless:on
+
   @ParameterizedTest
   @MethodSource("longProcessingTask")
   public void subsetOfPendingTransactionsIncludedWhenPerTxEvaluationAndTxsSelectionMaxTimeIsOver(
+      final boolean isPoa,
       final boolean preProcessingTooLate,
       final boolean processingTooLate,
       final boolean postProcessingTooLate) {
 
     final ProcessableBlockHeader blockHeader = createBlock(301_000);
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
-
+    final int poaMinBlockTime = 2;
+    final long blockTxsSelectionMaxTime = 1300;
+    final long singleTxSelectionMaxTime = 500;
     final List<Transaction> txs = new ArrayList<>(4);
     final List<Long> processingTimes = Arrays.asList(200L, 400L, 600L, 300L);
+
     for (int i = 0; i < 4; i++) {
       final Transaction tx = createTransaction(i, Wei.of(7), 100_000);
       txs.add(tx);
@@ -939,7 +1135,19 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
-            createMiningParameters(Wei.ZERO, MIN_OCCUPANCY_100_PERCENT, 1300, 500),
+            isPoa
+                ? createMiningParameters(
+                    Wei.ZERO,
+                    MIN_OCCUPANCY_100_PERCENT,
+                    poaMinBlockTime,
+                    Percentage.fromInt(65),
+                    singleTxSelectionMaxTime)
+                : createMiningParameters(
+                    Wei.ZERO,
+                    MIN_OCCUPANCY_100_PERCENT,
+                    blockTxsSelectionMaxTime,
+                    singleTxSelectionMaxTime),
+            //            createMiningParameters(Wei.ZERO, MIN_OCCUPANCY_100_PERCENT, 1300, 500),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -965,9 +1173,28 @@ public abstract class AbstractBlockTransactionSelectorTest {
   private static Stream<Arguments> longProcessingTask() {
 
     return Stream.of(
-        Arguments.of(true, false, false),
-        Arguments.of(false, true, false),
-        Arguments.of(false, false, true));
+        Arguments.of(false, true, false, false),
+        Arguments.of(false, false, true, false),
+        Arguments.of(false, false, false, true),
+        Arguments.of(true, true, false, false),
+        Arguments.of(true, false, true, false),
+        Arguments.of(true, false, false, true));
+  }
+
+  private Answer<TransactionSelectionResult> processingTx(
+      final boolean isTooLate, final Map<Transaction, Long> txsProcessingTime) {
+    final Answer<TransactionSelectionResult> inTime =
+        invocation -> TransactionSelectionResult.SELECTED;
+    final Answer<TransactionSelectionResult> tooLate =
+        invocation -> {
+          final Transaction tx = ((PendingTransaction) invocation.getArgument(0)).getTransaction();
+
+          Thread.sleep(txsProcessingTime.get(tx));
+
+          return TransactionSelectionResult.SELECTED;
+        };
+
+    return isTooLate ? tooLate : inTime;
   }
 
   protected BlockTransactionSelector createBlockSelectorAndSetupTxPool(
@@ -979,6 +1206,23 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final PluginTransactionSelectorFactory transactionSelectorFactory) {
 
     transactionPool = createTransactionPool(miningParameters);
+
+    return createBlockSelector(
+        miningParameters,
+        transactionProcessor,
+        blockHeader,
+        miningBeneficiary,
+        blobGasPrice,
+        transactionSelectorFactory);
+  }
+
+  protected BlockTransactionSelector createBlockSelector(
+      final MiningParameters miningParameters,
+      final MainnetTransactionProcessor transactionProcessor,
+      final ProcessableBlockHeader blockHeader,
+      final Address miningBeneficiary,
+      final Wei blobGasPrice,
+      final PluginTransactionSelectorFactory transactionSelectorFactory) {
 
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
@@ -1107,8 +1351,29 @@ public abstract class AbstractBlockTransactionSelectorTest {
                 .build())
         .unstable(
             Unstable.builder()
-                .txsSelectionMaxTime(txsSelectionMaxTime)
-                .txsSelectionPerTxMaxTime(txsSelectionPerTxMaxTime)
+                .nonPoaBlockTxsSelectionMaxTime(txsSelectionMaxTime)
+                .configuredTxsSelectionPerTxMaxTime(txsSelectionPerTxMaxTime)
+                .build())
+        .build();
+  }
+
+  protected MiningParameters createMiningParameters(
+      final Wei minGasPrice,
+      final double minBlockOccupancyRatio,
+      final int minBlockTime,
+      final Percentage minBlockTimePercentage,
+      final long txsSelectionPerTxMaxTime) {
+    return ImmutableMiningParameters.builder()
+        .mutableInitValues(
+            MutableInitValues.builder()
+                .minTransactionGasPrice(minGasPrice)
+                .minBlockOccupancyRatio(minBlockOccupancyRatio)
+                .build())
+        .unstable(
+            Unstable.builder()
+                .minBlockTime(minBlockTime)
+                .poaBlockTxsSelectionMaxTime(minBlockTimePercentage)
+                .configuredTxsSelectionPerTxMaxTime(txsSelectionPerTxMaxTime)
                 .build())
         .build();
   }

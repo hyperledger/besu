@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.Abstrac
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AllAcceptingTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlobPriceTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlockSizeTransactionSelector;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.MinPriorityFeePerGasTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.PriceTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.ProcessingResultTransactionSelector;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -143,7 +144,7 @@ public class BlockTransactionSelector {
             .orElse(AllAcceptingTransactionSelector.INSTANCE);
     pluginOperationTracer = pluginTransactionSelector.getOperationTracer();
     blockWorldStateUpdater = worldState.updater();
-    txsSelectionMaxTime = miningParameters.getUnstable().getTxsSelectionMaxTime();
+    txsSelectionMaxTime = miningParameters.getUnstable().getBlockTxsSelectionMaxTime();
     txEvaluationMaxTime = miningParameters.getUnstable().getTxsSelectionPerTxMaxTime();
   }
 
@@ -153,6 +154,7 @@ public class BlockTransactionSelector {
         new BlockSizeTransactionSelector(context),
         new PriceTransactionSelector(context),
         new BlobPriceTransactionSelector(context),
+        new MinPriorityFeePerGasTransactionSelector(context),
         new ProcessingResultTransactionSelector(context));
   }
 

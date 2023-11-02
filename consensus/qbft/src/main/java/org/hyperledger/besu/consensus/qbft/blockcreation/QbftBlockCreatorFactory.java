@@ -47,6 +47,7 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory<QbftConfigOp
    * @param miningParams the mining params
    * @param localAddress the local address
    * @param bftExtraDataCodec the bft extra data codec
+   * @param ethScheduler the scheduler for asynchronous block creation tasks
    */
   public QbftBlockCreatorFactory(
       final TransactionPool transactionPool,

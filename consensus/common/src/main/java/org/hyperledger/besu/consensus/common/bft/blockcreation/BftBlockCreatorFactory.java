@@ -62,7 +62,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
   protected final ProtocolSchedule protocolSchedule;
   /** The Bft extra data codec. */
   protected final BftExtraDataCodec bftExtraDataCodec;
-
+  /** The scheduler for asynchronous block creation tasks */
   protected final EthScheduler ethScheduler;
 
   private final Address localAddress;
@@ -77,6 +77,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
    * @param miningParams the mining params
    * @param localAddress the local address
    * @param bftExtraDataCodec the bft extra data codec
+   * @param ethScheduler the scheduler for asynchronous block creation tasks
    */
   public BftBlockCreatorFactory(
       final TransactionPool transactionPool,

@@ -84,7 +84,7 @@ public class TransactionSelectionResult {
   public static final TransactionSelectionResult CURRENT_TX_PRICE_BELOW_MIN =
       TransactionSelectionResult.invalidTransient("CURRENT_TX_PRICE_BELOW_MIN");
   /**
-   * The transaction has not been selected since its data price is below the current network data
+   * The transaction has not been selected since its blob price is below the current network blob
    * price, but the selection should continue.
    */
   public static final TransactionSelectionResult BLOB_PRICE_BELOW_CURRENT_MIN =
@@ -92,6 +92,13 @@ public class TransactionSelectionResult {
   /** The evaluation of the transaction caused an internal error */
   public static final TransactionSelectionResult INTERNAL_ERROR =
       new TransactionSelectionResult(Status.INTERNAL_ERROR);
+
+  /**
+   * The transaction has not been selected since its priority fee is below the configured min
+   * priority fee per gas, but the selection should continue.
+   */
+  public static final TransactionSelectionResult PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN =
+      TransactionSelectionResult.invalidTransient("PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN");
 
   private final Status status;
   private final Optional<String> maybeInvalidReason;

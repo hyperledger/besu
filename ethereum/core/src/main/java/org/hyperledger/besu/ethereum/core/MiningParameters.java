@@ -16,12 +16,16 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.util.number.Percentage;
 
 import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.OptionalLong;
+import java.util.concurrent.TimeUnit;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.immutables.value.Value;
 
@@ -34,6 +38,7 @@ public abstract class MiningParameters {
               ImmutableMiningParameters.MutableInitValues.builder().isMiningEnabled(false).build())
           .build();
 
+  @VisibleForTesting
   public static final MiningParameters newDefault() {
     return ImmutableMiningParameters.builder().build();
   }
@@ -261,7 +266,8 @@ public abstract class MiningParameters {
     int DEFAULT_MAX_OMMERS_DEPTH = 8;
     long DEFAULT_POS_BLOCK_CREATION_MAX_TIME = Duration.ofSeconds(12).toMillis();
     long DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION = Duration.ofMillis(500).toMillis();
-    long DEFAULT_TXS_SELECTION_MAX_TIME = Duration.ofSeconds(5).toMillis();
+    long DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME = Duration.ofSeconds(5).toMillis();
+    Percentage DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME = Percentage.fromInt(75);
 
     MiningParameters.Unstable DEFAULT = ImmutableMiningParameters.Unstable.builder().build();
 
@@ -301,13 +307,45 @@ public abstract class MiningParameters {
     }
 
     @Value.Default
-    default long getTxsSelectionMaxTime() {
-      return DEFAULT_TXS_SELECTION_MAX_TIME;
+    default long getNonPoaBlockTxsSelectionMaxTime() {
+      return DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
     }
 
     @Value.Default
+    default Percentage getPoaBlockTxsSelectionMaxTime() {
+      return DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+    }
+
+    OptionalInt getMinBlockTime();
+
+    @Value.Derived
+    default long getBlockTxsSelectionMaxTime() {
+      if (getMinBlockTime().isPresent()) {
+        return (TimeUnit.SECONDS.toMillis(getMinBlockTime().getAsInt())
+                * getPoaBlockTxsSelectionMaxTime().getValue())
+            / 100;
+      }
+      return getNonPoaBlockTxsSelectionMaxTime();
+    }
+
+    OptionalLong getConfiguredTxsSelectionPerTxMaxTime();
+
+    @Value.Derived
     default long getTxsSelectionPerTxMaxTime() {
-      return getTxsSelectionMaxTime();
+      if (getConfiguredTxsSelectionPerTxMaxTime().isPresent()) {
+        final long configuredMaxTime = getConfiguredTxsSelectionPerTxMaxTime().getAsLong();
+        if (configuredMaxTime > getBlockTxsSelectionMaxTime()) {
+          throw new IllegalArgumentException(
+              "txsSelectionPerTxMaxTime ("
+                  + configuredMaxTime
+                  + ") is greater than the blockTxsSelectionMaxTime ("
+                  + getBlockTxsSelectionMaxTime()
+                  + ")");
+        }
+        return configuredMaxTime;
+      }
+      // by default, a tx is allowed to consume all the time allocated for a block
+      return getBlockTxsSelectionMaxTime();
     }
   }
 }
