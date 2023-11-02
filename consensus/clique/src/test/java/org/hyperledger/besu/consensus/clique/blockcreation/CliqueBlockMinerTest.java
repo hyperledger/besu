@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,18 +12,25 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.blockcreation;
+
+package org.hyperledger.besu.consensus.clique.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.clique.CliqueContext;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
+import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -31,6 +38,8 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -39,119 +48,40 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import com.google.common.collect.Lists;
 import org.junit.jupiter.api.Test;
 
-public class BlockMinerTest {
+class CliqueBlockMinerTest {
 
   @Test
-  public void blockCreatedIsAddedToBlockChain() throws InterruptedException {
+  void doesNotMineBlockIfNoTransactionsWhenEmptyBlocksNotAllowed() throws InterruptedException {
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
     final Block blockToCreate =
         new Block(
             headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
 
-    final ProtocolContext protocolContext = new ProtocolContext(null, null, null, Optional.empty());
+    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(List.of(Address.ZERO));
 
-    final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
-    final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
+    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, null);
+    final ProtocolContext protocolContext =
+        new ProtocolContext(null, null, cliqueContext, Optional.empty());
+
+    final CliqueBlockCreator blockCreator = mock(CliqueBlockCreator.class);
+    final Function<BlockHeader, CliqueBlockCreator> blockCreatorSupplier =
         (parentHeader) -> blockCreator;
     when(blockCreator.createBlock(anyLong()))
-        .thenReturn(new BlockCreationResult(blockToCreate, new TransactionSelectionResults()));
-
-    final BlockImporter blockImporter = mock(BlockImporter.class);
-    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
-
-    final ProtocolSchedule protocolSchedule = singleSpecSchedule(protocolSpec);
-
-    when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
-    when(blockImporter.importBlock(any(), any(), any())).thenReturn(new BlockImportResult(true));
-
-    final MinedBlockObserver observer = mock(MinedBlockObserver.class);
-    final DefaultBlockScheduler scheduler = mock(DefaultBlockScheduler.class);
-    when(scheduler.waitUntilNextBlockCanBeMined(any())).thenReturn(5L);
-    final BlockMiner<PoWBlockCreator> miner =
-        new PoWBlockMiner(
-            blockCreatorSupplier,
-            protocolSchedule,
-            protocolContext,
-            subscribersContaining(observer),
-            scheduler,
-            headerBuilder.buildHeader()); // parent header is arbitrary for the test.
-
-    miner.run();
-    verify(blockImporter).importBlock(protocolContext, blockToCreate, HeaderValidationMode.FULL);
-    verify(observer, times(1)).blockMined(blockToCreate);
-  }
-
-  @Test
-  public void failureToImportDoesNotTriggerObservers() throws InterruptedException {
-    final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
-
-    final Block blockToCreate =
-        new Block(
-            headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
-
-    final ProtocolContext protocolContext = new ProtocolContext(null, null, null, Optional.empty());
-
-    final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
-    final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
-        (parentHeader) -> blockCreator;
-    when(blockCreator.createBlock(anyLong()))
-        .thenReturn(new BlockCreationResult(blockToCreate, new TransactionSelectionResults()));
-
-    final BlockImporter blockImporter = mock(BlockImporter.class);
-    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
-    final ProtocolSchedule protocolSchedule = singleSpecSchedule(protocolSpec);
-
-    when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
-    when(blockImporter.importBlock(any(), any(), any()))
         .thenReturn(
-            new BlockImportResult(false),
-            new BlockImportResult(false),
-            new BlockImportResult(true));
-
-    final MinedBlockObserver observer = mock(MinedBlockObserver.class);
-    final DefaultBlockScheduler scheduler = mock(DefaultBlockScheduler.class);
-    when(scheduler.waitUntilNextBlockCanBeMined(any())).thenReturn(5L);
-    final BlockMiner<PoWBlockCreator> miner =
-        new PoWBlockMiner(
-            blockCreatorSupplier,
-            protocolSchedule,
-            protocolContext,
-            subscribersContaining(observer),
-            scheduler,
-            headerBuilder.buildHeader()); // parent header is arbitrary for the test.
-
-    miner.run();
-    verify(blockImporter, times(3))
-        .importBlock(protocolContext, blockToCreate, HeaderValidationMode.FULL);
-    verify(observer, times(1)).blockMined(blockToCreate);
-  }
-
-  @Test
-  public void blockValidationFailureBeforeImportDoesNotImportBlock() throws InterruptedException {
-    final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
-
-    final Block blockToCreate =
-        new Block(
-            headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
-
-    final ProtocolContext protocolContext = new ProtocolContext(null, null, null, Optional.empty());
-
-    final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
-    final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
-        (parentHeader) -> blockCreator;
-    when(blockCreator.createBlock(anyLong()))
-        .thenReturn(new BlockCreationResult(blockToCreate, new TransactionSelectionResults()));
+            new BlockCreator.BlockCreationResult(blockToCreate, new TransactionSelectionResults()));
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
+
     final ProtocolSchedule protocolSchedule = singleSpecSchedule(protocolSpec);
 
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
@@ -160,26 +90,76 @@ public class BlockMinerTest {
     final MinedBlockObserver observer = mock(MinedBlockObserver.class);
     final DefaultBlockScheduler scheduler = mock(DefaultBlockScheduler.class);
     when(scheduler.waitUntilNextBlockCanBeMined(any())).thenReturn(5L);
-    final AtomicInteger importValidationCount = new AtomicInteger();
-    final BlockMiner<PoWBlockCreator> miner =
-        new BlockMiner<>(
+    final CliqueBlockMiner miner =
+        new CliqueBlockMiner(
             blockCreatorSupplier,
             protocolSchedule,
             protocolContext,
             subscribersContaining(observer),
             scheduler,
-            headerBuilder.buildHeader()) {
-          @Override
-          protected boolean shouldImportBlock(final Block block) {
-            return importValidationCount.getAndIncrement() > 0;
-          }
-        };
+            headerBuilder.buildHeader(),
+            Address.ZERO,
+            false); // parent header is arbitrary for the test.
 
-    miner.run();
-    assertThat(importValidationCount.get()).isEqualTo(2);
-    verify(blockImporter, times(1))
+    final boolean result = miner.mineBlock();
+    assertThat(result).isFalse();
+    verify(blockImporter, never())
         .importBlock(protocolContext, blockToCreate, HeaderValidationMode.FULL);
-    verify(observer, times(1)).blockMined(blockToCreate);
+    verify(observer, never()).blockMined(blockToCreate);
+  }
+
+  @Test
+  void minesBlockIfHasTransactionsWhenEmptyBlocksNotAllowed() throws InterruptedException {
+    final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
+
+    final TransactionTestFixture transactionTestFixture = new TransactionTestFixture();
+    final KeyPair keyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
+    final Transaction transaction = transactionTestFixture.createTransaction(keyPair);
+
+    final Block blockToCreate =
+        new Block(
+            headerBuilder.buildHeader(), new BlockBody(List.of(transaction), Lists.newArrayList()));
+
+    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(List.of(Address.ZERO));
+
+    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, null);
+    final ProtocolContext protocolContext =
+        new ProtocolContext(null, null, cliqueContext, Optional.empty());
+
+    final CliqueBlockCreator blockCreator = mock(CliqueBlockCreator.class);
+    final Function<BlockHeader, CliqueBlockCreator> blockCreatorSupplier =
+        (parentHeader) -> blockCreator;
+    when(blockCreator.createBlock(anyLong()))
+        .thenReturn(
+            new BlockCreator.BlockCreationResult(blockToCreate, new TransactionSelectionResults()));
+
+    final BlockImporter blockImporter = mock(BlockImporter.class);
+    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
+
+    final ProtocolSchedule protocolSchedule = singleSpecSchedule(protocolSpec);
+
+    when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
+    when(blockImporter.importBlock(any(), any(), any())).thenReturn(new BlockImportResult(true));
+
+    final MinedBlockObserver observer = mock(MinedBlockObserver.class);
+    final DefaultBlockScheduler scheduler = mock(DefaultBlockScheduler.class);
+    when(scheduler.waitUntilNextBlockCanBeMined(any())).thenReturn(5L);
+    final CliqueBlockMiner miner =
+        new CliqueBlockMiner(
+            blockCreatorSupplier,
+            protocolSchedule,
+            protocolContext,
+            subscribersContaining(observer),
+            scheduler,
+            headerBuilder.buildHeader(),
+            Address.ZERO,
+            false); // parent header is arbitrary for the test.
+
+    final boolean result = miner.mineBlock();
+    assertThat(result).isTrue();
+    verify(blockImporter).importBlock(protocolContext, blockToCreate, HeaderValidationMode.FULL);
+    verify(observer).blockMined(blockToCreate);
   }
 
   private static Subscribers<MinedBlockObserver> subscribersContaining(
