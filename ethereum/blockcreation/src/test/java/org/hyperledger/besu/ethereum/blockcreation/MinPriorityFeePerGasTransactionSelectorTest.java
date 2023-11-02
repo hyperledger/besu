@@ -57,32 +57,33 @@ public class MinPriorityFeePerGasTransactionSelectorTest {
   @Test
   public void shouldNotSelectWhen_PriorityFeePerGas_IsLessThan_MinPriorityFeePerGas() {
     var transaction = mockTransactionWithPriorityFee(minPriorityFeeParameter - 1);
-    assertSelection(transaction, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN);
+    assertSelectionResult(
+        transaction, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN);
   }
 
   @Test
   public void shouldSelectWhen_PriorityFeePerGas_IsEqual_MinPriorityFeePerGas() {
     var transaction = mockTransactionWithPriorityFee(minPriorityFeeParameter);
-    assertSelection(transaction, TransactionSelectionResult.SELECTED);
+    assertSelectionResult(transaction, TransactionSelectionResult.SELECTED);
   }
 
   @Test
   public void shouldSelectWhen_PriorityFeePerGas_IsGreaterThan_MinPriorityFeePerGas() {
     var transaction = mockTransactionWithPriorityFee(minPriorityFeeParameter + 1);
-    assertSelection(transaction, TransactionSelectionResult.SELECTED);
+    assertSelectionResult(transaction, TransactionSelectionResult.SELECTED);
   }
 
   @Test
   public void shouldSelectWhenPrioritySender() {
     var prioritySenderTransaction = mockTransactionWithPriorityFee(minPriorityFeeParameter - 1);
-    assertSelection(
+    assertSelectionResult(
         prioritySenderTransaction,
         TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN);
     when(prioritySenderTransaction.hasPriority()).thenReturn(true);
-    assertSelection(prioritySenderTransaction, TransactionSelectionResult.SELECTED);
+    assertSelectionResult(prioritySenderTransaction, TransactionSelectionResult.SELECTED);
   }
 
-  private void assertSelection(
+  private void assertSelectionResult(
       final PendingTransaction transaction, final TransactionSelectionResult expectedResult) {
     var actualResult = transactionSelector.evaluateTransactionPreProcessing(transaction, null);
     assertThat(actualResult).isEqualTo(expectedResult);

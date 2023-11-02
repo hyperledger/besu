@@ -827,12 +827,12 @@ public abstract class AbstractBlockTransactionSelectorTest {
   public void shouldNotSelectTransactionsWithPriorityFeeLessThanConfig() {
     ProcessableBlockHeader blockHeader = createBlock(5_000_000, Wei.ONE);
     miningParameters.setMinPriorityFeePerGas(Wei.of(7));
-    final Transaction tx1 = createTransaction(1, Wei.of(8), 100_000);
-    ensureTransactionIsValid(tx1);
-    // transaction tx2 should not be selected
-    final Transaction tx2 = createTransaction(2, Wei.of(7), 100_000);
-    ensureTransactionIsValid(tx2);
-    transactionPool.addRemoteTransactions(List.of(tx1, tx2));
+    final Transaction txSelected = createTransaction(1, Wei.of(8), 100_000);
+    ensureTransactionIsValid(txSelected);
+    // transaction txNotSelected should not be selected
+    final Transaction txNotSelected = createTransaction(2, Wei.of(7), 100_000);
+    ensureTransactionIsValid(txNotSelected);
+    transactionPool.addRemoteTransactions(List.of(txSelected, txNotSelected));
 
     final BlockTransactionSelector selector =
         createBlockSelector(
@@ -845,10 +845,11 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
-    assertThat(results.getSelectedTransactions()).containsOnly(tx1);
+    assertThat(results.getSelectedTransactions()).containsOnly(txSelected);
     assertThat(results.getNotSelectedTransactions())
         .containsOnly(
-            entry(tx2, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN));
+            entry(
+                txNotSelected, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN));
   }
 
   protected BlockTransactionSelector createBlockSelector(

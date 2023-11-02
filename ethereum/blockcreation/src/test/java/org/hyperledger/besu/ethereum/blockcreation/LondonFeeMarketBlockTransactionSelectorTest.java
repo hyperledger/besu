@@ -222,22 +222,23 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     ProcessableBlockHeader blockHeader = createBlock(5_000_000, Wei.ONE);
     miningParameters.setMinPriorityFeePerGas(Wei.of(7));
 
-    final Transaction tx1 = createEIP1559Transaction(1, Wei.of(8), Wei.of(8), 100_000);
-    ensureTransactionIsValid(tx1);
+    final Transaction txSelected1 = createEIP1559Transaction(1, Wei.of(8), Wei.of(8), 100_000);
+    ensureTransactionIsValid(txSelected1);
 
-    // transaction tx2 should not be selected
-    final Transaction tx2 = createEIP1559Transaction(2, Wei.of(7), Wei.of(7), 100_000);
-    ensureTransactionIsValid(tx2);
+    // transaction txNotSelected1 should not be selected
+    final Transaction txNotSelected1 = createEIP1559Transaction(2, Wei.of(7), Wei.of(7), 100_000);
+    ensureTransactionIsValid(txNotSelected1);
 
-    // transaction tx3 should be selected
-    final Transaction tx3 = createEIP1559Transaction(3, Wei.of(8), Wei.of(8), 100_000);
-    ensureTransactionIsValid(tx3);
+    // transaction txSelected2 should be selected
+    final Transaction txSelected2 = createEIP1559Transaction(3, Wei.of(8), Wei.of(8), 100_000);
+    ensureTransactionIsValid(txSelected2);
 
-    // transaction tx4 should not be selected
-    final Transaction tx4 = createEIP1559Transaction(4, Wei.of(8), Wei.of(6), 100_000);
-    ensureTransactionIsValid(tx4);
+    // transaction txNotSelected2 should not be selected
+    final Transaction txNotSelected2 = createEIP1559Transaction(4, Wei.of(8), Wei.of(6), 100_000);
+    ensureTransactionIsValid(txNotSelected2);
 
-    transactionPool.addRemoteTransactions(List.of(tx1, tx2, tx3, tx4));
+    transactionPool.addRemoteTransactions(
+        List.of(txSelected1, txNotSelected1, txSelected2, txNotSelected2));
 
     assertThat(transactionPool.getPendingTransactions().size()).isEqualTo(4);
 
@@ -252,10 +253,12 @@ public class LondonFeeMarketBlockTransactionSelectorTest
 
     final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
-    assertThat(results.getSelectedTransactions()).containsOnly(tx1, tx3);
+    assertThat(results.getSelectedTransactions()).containsOnly(txSelected1, txSelected2);
     assertThat(results.getNotSelectedTransactions())
         .containsOnly(
-            entry(tx2, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN),
-            entry(tx4, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN));
+            entry(
+                txNotSelected1, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN),
+            entry(
+                txNotSelected2, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN));
   }
 }
