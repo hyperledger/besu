@@ -43,8 +43,8 @@ import java.util.concurrent.CompletionException;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Rule;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /** Tests for {@link RlpBlockImporter}. */
