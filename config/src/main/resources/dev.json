@@ -2,7 +2,7 @@
   "config": {
     "chainId": 1337,
     "londonBlock": 0,
-    "lacchainpqblock": 0,
+    "falcon512block": 0,
     "contractSizeLimit": 2147483647,
     "ethash": {
       "fixeddifficulty": 100

@@ -210,8 +210,8 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration);
   }
 
-  public ProtocolSpecBuilder lacchainDefinition() {
-    return LacchainProtocolSpecs.postQuantumDefinition(
+  public ProtocolSpecBuilder falcon512Definition() {
+    return Falcon512ProtocolSpecs.postQuantumDefinition(
         chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled);
   }
 

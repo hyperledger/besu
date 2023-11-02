@@ -1,5 +1,5 @@
 /*
- * Copyright IADB.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -23,7 +23,7 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.OptionalInt;
 
-public class LacchainProtocolSpecs {
+public class Falcon512ProtocolSpecs {
   public static ProtocolSpecBuilder postQuantumDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
@@ -37,13 +37,13 @@ public class LacchainProtocolSpecs {
             EvmConfiguration.DEFAULT)
         .precompileContractRegistryBuilder(
             precompiledContractConfiguration -> {
-              PrecompileContractRegistry lacchainContractsRegistry =
+              PrecompileContractRegistry falcon512ContractsRegistry =
                   MainnetPrecompiledContractRegistries.istanbul(precompiledContractConfiguration);
-              lacchainContractsRegistry.put(
-                  Address.LACCHAIN_FALCON,
+              falcon512ContractsRegistry.put(
+                  Address.FALCON512,
                   new FalconPrecompiledContract(
                       precompiledContractConfiguration.getGasCalculator()));
-              return lacchainContractsRegistry;
+              return falcon512ContractsRegistry;
             });
   }
 }

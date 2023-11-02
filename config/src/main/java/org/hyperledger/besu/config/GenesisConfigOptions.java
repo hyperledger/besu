@@ -406,7 +406,7 @@ public interface GenesisConfigOptions {
    *
    * @return block number of falcon signature precompiled verifier
    */
-  OptionalLong getLacchainPostQuantumBlockNumber();
+  OptionalLong getFalcon512BlockNumber();
 
   /**
    * Block number to activate Magneto on Classic networks.
