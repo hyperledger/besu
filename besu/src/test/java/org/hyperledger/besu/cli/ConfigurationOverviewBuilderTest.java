@@ -151,19 +151,18 @@ class ConfigurationOverviewBuilderTest {
   @Test
   void setTrieLogRetentionThreshold() {
     final String noTrieLogRetentionThresholdSet = builder.build();
-    assertThat(noTrieLogRetentionThresholdSet)
-        .doesNotContain("Experimental trie log pruning enabled");
+    assertThat(noTrieLogRetentionThresholdSet).doesNotContain("Trie log pruning enabled");
 
     builder.setTrieLogRetentionThreshold(42);
     String trieLogRetentionThresholdSet = builder.build();
     assertThat(trieLogRetentionThresholdSet)
-        .contains("Experimental trie log pruning enabled with retention threshold: 42 blocks");
-    assertThat(trieLogRetentionThresholdSet).doesNotContain("Experimental trie log pruning limit");
+        .contains("Trie log pruning enabled")
+        .contains("retention threshold: 42 blocks");
+    assertThat(trieLogRetentionThresholdSet).doesNotContain("prune limit");
 
     builder.setTrieLogPruningLimit(1000);
     trieLogRetentionThresholdSet = builder.build();
-    assertThat(trieLogRetentionThresholdSet)
-        .contains("Experimental trie log pruning limit: 1000 blocks");
+    assertThat(trieLogRetentionThresholdSet).contains("prune limit: 1000 blocks");
   }
 
   @Test
