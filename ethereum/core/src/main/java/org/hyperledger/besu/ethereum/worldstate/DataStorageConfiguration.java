@@ -56,6 +56,10 @@ public interface DataStorageConfiguration {
       return DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
     }
 
+    default boolean isTrieLogPruningEnabled() {
+      return getBonsaiTrieLogRetentionThreshold() > 0;
+    }
+
     @Value.Default
     default int getBonsaiTrieLogPruningLimit() {
       return DEFAULT_BONSAI_TRIE_LOG_PRUNE_LIMIT;

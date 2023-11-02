@@ -1067,7 +1067,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI -> {
         final TrieLogPruner trieLogPruner =
-            dataStorageConfiguration.getUnstable().getBonsaiTrieLogRetentionThreshold() > 0
+            dataStorageConfiguration.getUnstable().isTrieLogPruningEnabled()
                 ? new TrieLogPruner(
                     (BonsaiWorldStateKeyValueStorage) worldStateStorage,
                     blockchain,
