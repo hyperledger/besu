@@ -21,6 +21,7 @@ import org.hyperledger.besu.util.number.Percentage;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
 
@@ -315,12 +316,12 @@ public abstract class MiningParameters {
       return DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
     }
 
-    OptionalLong getMinBlockTime();
+    OptionalInt getMinBlockTime();
 
     @Value.Derived
     default long getBlockTxsSelectionMaxTime() {
       if (getMinBlockTime().isPresent()) {
-        return (TimeUnit.SECONDS.toMillis(getMinBlockTime().getAsLong())
+        return (TimeUnit.SECONDS.toMillis(getMinBlockTime().getAsInt())
                 * getPoaBlockTxsSelectionMaxTime().getValue())
             / 100;
       }

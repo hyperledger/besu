@@ -174,7 +174,7 @@ public class BlockTransactionSelector {
   }
 
   private void timeLimitedSelection() {
-    final long txSelectionMaxTime =
+    final long blockTxsSelectionMaxTime =
         blockSelectionContext.miningParameters().getUnstable().getBlockTxsSelectionMaxTime();
     final var txSelection =
         ethScheduler.scheduleBlockCreationTask(
@@ -184,7 +184,7 @@ public class BlockTransactionSelector {
                     .selectTransactions(this::evaluateTransaction));
 
     try {
-      txSelection.get(txSelectionMaxTime, TimeUnit.MILLISECONDS);
+      txSelection.get(blockTxsSelectionMaxTime, TimeUnit.MILLISECONDS);
     } catch (InterruptedException | ExecutionException e) {
       if (isCancelled.get()) {
         throw new CancellationException("Cancelled during transaction selection");
@@ -197,7 +197,7 @@ public class BlockTransactionSelector {
       }
       LOG.warn(
           "Interrupting transaction selection since it is taking more than the max configured time of "
-              + txSelectionMaxTime
+              + blockTxsSelectionMaxTime
               + "ms",
           e);
     }

@@ -80,6 +80,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+import org.hyperledger.besu.util.number.Percentage;
 
 import java.math.BigInteger;
 import java.time.Instant;
@@ -876,10 +877,10 @@ public abstract class AbstractBlockTransactionSelectorTest {
   @ParameterizedTest
   @MethodSource("subsetOfPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver")
   public void subsetOfPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver(
+      final boolean isPoa,
       final boolean preProcessingTooLate,
       final boolean processingTooLate,
-      final boolean postProcessingTooLate)
-      throws InterruptedException {
+      final boolean postProcessingTooLate) {
 
     final Supplier<Answer<TransactionSelectionResult>> inTime =
         () -> invocation -> TransactionSelectionResult.SELECTED;
@@ -894,8 +895,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final ProcessableBlockHeader blockHeader = createBlock(301_000);
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
-    final long txSelectionMaxTime = 100;
-    final long longProcessingTxTime = 50;
+    final int poaMinBlockTime = 1;
+    final long blockTxsSelectionMaxTime = 750;
+    final long longProcessingTxTime = 500;
 
     final List<Transaction> transactionsToInject = new ArrayList<>(3);
     for (int i = 0; i < 2; i++) {
@@ -907,20 +909,20 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final Transaction lateTx = createTransaction(2, Wei.of(7), 100_000);
     transactionsToInject.add(lateTx);
     ensureTransactionIsValid(
-        lateTx, 0, 0, processingTooLate ? txSelectionMaxTime + longProcessingTxTime : 0);
+        lateTx, 0, 0, processingTooLate ? blockTxsSelectionMaxTime + longProcessingTxTime : 0);
 
     PluginTransactionSelector transactionSelector = mock(PluginTransactionSelector.class);
     when(transactionSelector.evaluateTransactionPreProcessing(any()))
         .thenAnswer(
             preProcessingTooLate
                 ? inTime.get()
-                : tooLate.apply(lateTx, txSelectionMaxTime + longProcessingTxTime));
+                : tooLate.apply(lateTx, blockTxsSelectionMaxTime + longProcessingTxTime));
 
     when(transactionSelector.evaluateTransactionPostProcessing(any(), any()))
         .thenAnswer(
             postProcessingTooLate
                 ? inTime.get()
-                : tooLate.apply(lateTx, txSelectionMaxTime + longProcessingTxTime));
+                : tooLate.apply(lateTx, blockTxsSelectionMaxTime + longProcessingTxTime));
 
     final PluginTransactionSelectorFactory transactionSelectorFactory =
         mock(PluginTransactionSelectorFactory.class);
@@ -928,7 +930,11 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
-            createMiningParameters(Wei.ZERO, MIN_OCCUPANCY_100_PERCENT, txSelectionMaxTime),
+            isPoa
+                ? createMiningParameters(
+                    Wei.ZERO, MIN_OCCUPANCY_100_PERCENT, poaMinBlockTime, Percentage.fromInt(75))
+                : createMiningParameters(
+                    Wei.ZERO, MIN_OCCUPANCY_100_PERCENT, blockTxsSelectionMaxTime),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -963,9 +969,12 @@ public abstract class AbstractBlockTransactionSelectorTest {
       subsetOfPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver() {
 
     return Stream.of(
-        Arguments.of(true, false, false),
-        Arguments.of(false, true, false),
-        Arguments.of(false, false, true));
+        Arguments.of(false, true, false, false),
+        Arguments.of(false, false, true, false),
+        Arguments.of(false, false, false, true),
+        Arguments.of(true, true, false, false),
+        Arguments.of(true, false, true, false),
+        Arguments.of(true, false, false, true));
   }
 
   protected BlockTransactionSelector createBlockSelectorAndSetupTxPool(
@@ -1118,6 +1127,25 @@ public abstract class AbstractBlockTransactionSelectorTest {
                 .minBlockOccupancyRatio(minBlockOccupancyRatio)
                 .build())
         .unstable(Unstable.builder().nonPoaBlockTxsSelectionMaxTime(txsSelectionMaxTime).build())
+        .build();
+  }
+
+  protected MiningParameters createMiningParameters(
+      final Wei minGasPrice,
+      final double minBlockOccupancyRatio,
+      final int minBlockTime,
+      final Percentage minBlockTimePercentage) {
+    return ImmutableMiningParameters.builder()
+        .mutableInitValues(
+            MutableInitValues.builder()
+                .minTransactionGasPrice(minGasPrice)
+                .minBlockOccupancyRatio(minBlockOccupancyRatio)
+                .build())
+        .unstable(
+            Unstable.builder()
+                .minBlockTime(minBlockTime)
+                .poaBlockTxsSelectionMaxTime(minBlockTimePercentage)
+                .build())
         .build();
   }
 }
