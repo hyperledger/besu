@@ -296,15 +296,13 @@ public class ConfigurationOverviewBuilder {
       lines.add("Experimental high spec configuration enabled");
     }
 
-    lines.add("Using " + txPoolImplementation + " transaction pool implementation");
     lines.add("Using " + worldStateUpdateMode + " worldstate update mode");
+
     if (trieLogRetentionThreshold > 0) {
-      lines.add(
-          "Experimental trie log pruning enabled with retention threshold: "
-              + trieLogRetentionThreshold
-              + " blocks");
+      lines.add("Trie log pruning enabled:");
+      lines.add("  - retention threshold: " + trieLogRetentionThreshold + " blocks");
       if (trieLogPruningLimit != null) {
-        lines.add("Experimental trie log pruning limit: " + trieLogPruningLimit + " blocks");
+        lines.add("  - prune limit: " + trieLogPruningLimit + " blocks");
       }
     }
 
