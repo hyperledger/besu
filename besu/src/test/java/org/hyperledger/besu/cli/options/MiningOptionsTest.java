@@ -15,7 +15,7 @@
 package org.hyperledger.besu.cli.options;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_BLOCK_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.verify;
@@ -314,7 +314,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
     internalTestSuccess(
         miningParams ->
             assertThat(miningParams.getUnstable().getBlockTxsSelectionMaxTime())
-                .isEqualTo(DEFAULT_BLOCK_TXS_SELECTION_MAX_TIME));
+                .isEqualTo(DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME));
   }
 
   @Test

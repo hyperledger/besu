@@ -122,6 +122,7 @@ import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -1811,8 +1812,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateMiningParams() {
-    miningOptions.validate(
-        commandLine, logger, isMergeEnabled(), getActualGenesisConfigOptions().isEthHash());
+    miningOptions.validate(commandLine, getActualGenesisConfigOptions(), isMergeEnabled(), logger);
   }
 
   /**
@@ -2821,9 +2821,34 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private MiningParameters getMiningParameters() {
     if (miningParameters == null) {
-      miningParameters = miningOptions.toDomainObject();
+      final var miningParametersBuilder =
+          ImmutableMiningParameters.builder().from(miningOptions.toDomainObject());
+      final var actualGenesisOptions = getActualGenesisConfigOptions();
+      if (actualGenesisOptions.isPoa()) {
+        miningParametersBuilder.unstable(
+            ImmutableMiningParameters.Unstable.builder()
+                .minBlockTime(getMinBlockTime(actualGenesisOptions))
+                .build());
+      }
+      miningParameters = miningParametersBuilder.build();
     }
     return miningParameters;
+  }
+
+  private int getMinBlockTime(final GenesisConfigOptions genesisConfigOptions) {
+    if (genesisConfigOptions.isClique()) {
+      return genesisConfigOptions.getCliqueConfigOptions().getBlockPeriodSeconds();
+    }
+
+    if (genesisConfigOptions.isIbft2()) {
+      return genesisConfigOptions.getBftConfigOptions().getBlockPeriodSeconds();
+    }
+
+    if (genesisConfigOptions.isQbft()) {
+      return genesisConfigOptions.getQbftConfigOptions().getBlockPeriodSeconds();
+    }
+
+    throw new IllegalArgumentException("Should only be called for a PoA network");
   }
 
   private boolean isPruningEnabled() {
