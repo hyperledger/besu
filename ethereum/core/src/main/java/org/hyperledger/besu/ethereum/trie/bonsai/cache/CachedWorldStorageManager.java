@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.bonsai.cache;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
@@ -44,7 +45,7 @@ public class CachedWorldStorageManager
   private static final Logger LOG = LoggerFactory.getLogger(CachedWorldStorageManager.class);
   private final BonsaiWorldStateProvider archive;
   private final EvmConfiguration evmConfiguration;
-  private final Cache<Hash, Hash> stateRootToBlockHashCache =
+  private final Cache<Hash, BlockHeader> stateRootToBlockHeaderCache =
       Caffeine.newBuilder().maximumSize(512).expireAfterWrite(100, TimeUnit.MINUTES).build();
 
   private final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
@@ -110,7 +111,7 @@ public class CachedWorldStorageManager
                 ((BonsaiWorldStateLayerStorage) forWorldState.getWorldStateStorage()).clone()));
       }
       // add stateroot -> blockHeader cache entry
-      stateRootToBlockHashCache.put(blockHeader.getStateRoot(), blockHeader.getBlockHash());
+      stateRootToBlockHeaderCache.put(blockHeader.getStateRoot(), blockHeader);
     }
     scrubCachedLayers(blockHeader.getNumber());
   }
@@ -207,15 +208,38 @@ public class CachedWorldStorageManager
     this.cachedWorldStatesByHash.clear();
   }
 
-  public Optional<CachedBonsaiWorldView> getStorageByRootHash(final Optional<Hash> rootHash) {
+  public void primeRootToBlockHashCache(final Blockchain blockchain, final int numEntries) {
+    // prime the stateroot-to-blockhash cache
+    long head = blockchain.getChainHeadHeader().getNumber();
+    for (long i = head; i > Math.max(0, head - numEntries); i--) {
+      blockchain
+          .getBlockHeader(i)
+          .ifPresent(header -> stateRootToBlockHeaderCache.put(header.getStateRoot(), header));
+    }
+  }
+
+  public Optional<BonsaiWorldStateKeyValueStorage> getStorageByRootHash(
+      final Optional<Hash> rootHash) {
     if (rootHash.isPresent()) {
       // if we supplied a hash, return the worldstate for that hash if it is available:
       return rootHash
-          .map(stateRootToBlockHashCache::getIfPresent)
-          .map(cachedWorldStatesByHash::get);
+          .map(stateRootToBlockHeaderCache::getIfPresent)
+          .flatMap(
+              header ->
+                  Optional.ofNullable(cachedWorldStatesByHash.get(header.getHash()))
+                      .map(CachedBonsaiWorldView::getWorldStateStorage)
+                      .or(
+                          () ->
+                              archive
+                                  .getMutable(header, false)
+                                  .map(BonsaiWorldState.class::cast)
+                                  .map(BonsaiWorldState::getWorldStateStorage)));
     } else {
       // if we did not supply a hash, return the head worldstate from cachedWorldStates
-      return rootWorldStateStorage.getWorldStateBlockHash().map(cachedWorldStatesByHash::get);
+      return rootWorldStateStorage
+          .getWorldStateBlockHash()
+          .map(cachedWorldStatesByHash::get)
+          .map(CachedBonsaiWorldView::getWorldStateStorage);
     }
   }
 

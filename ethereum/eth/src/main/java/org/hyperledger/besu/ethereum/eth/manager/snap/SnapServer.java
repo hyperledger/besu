@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.eth.messages.snap.GetTrieNodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
 import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.TrieNodesMessage;
+import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -34,6 +35,7 @@ import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedBonsaiWorldView;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.plugin.services.BesuEvents;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,6 +45,7 @@ import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -57,8 +60,9 @@ import org.slf4j.LoggerFactory;
 
 /** See https://github.com/ethereum/devp2p/blob/master/caps/snap.md */
 @SuppressWarnings("unused")
-class SnapServer {
+class SnapServer implements BesuEvents.InitialSyncCompletionListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(SnapServer.class);
+  private static final int PRIME_STATE_ROOT_CACHE_LIMIT = 128;
   private static final int MAX_ENTRIES_PER_REQUEST = 100000;
   private static final int MAX_RESPONSE_SIZE = 2 * 1024 * 1024;
   private static final AccountRangeMessage EMPTY_ACCOUNT_RANGE =
@@ -71,6 +75,9 @@ class SnapServer {
       ByteCodesMessage.create(new ArrayDeque<>());
 
   static final Hash HASH_LAST = Hash.wrap(Bytes32.leftPad(Bytes.fromHexString("FF"), (byte) 0xFF));
+
+  private final AtomicBoolean isStarted = new AtomicBoolean(false);
+  private final AtomicLong listenerId = new AtomicLong();
   private final EthMessages snapMessages;
   private final Function<Optional<Hash>, Optional<BonsaiWorldStateKeyValueStorage>>
       worldStateStorageProvider;
@@ -82,11 +89,23 @@ class SnapServer {
             // TODO remove dirty bonsai cast:
             ((BonsaiWorldStateProvider) protocolContext.getWorldStateArchive())
                 .getCachedWorldStorageManager()
-                .getStorageByRootHash(rootHash)
-                .map(CachedBonsaiWorldView::getWorldStateStorage));
+                .getStorageByRootHash(rootHash));
+
+    // prime state-root-to-blockhash cache
     primeWorldStateArchive(protocolContext);
+
+    // subscribe to initial sync completed events to start/stop snap server:
+    protocolContext
+        .getSynchronizer()
+        .filter(z -> z instanceof DefaultSynchronizer)
+        .map(DefaultSynchronizer.class::cast)
+        .ifPresent(z -> this.listenerId.set(z.subscribeInitialSync(this)));
   }
 
+  /**
+   * Create a snap server without registering a listener for worldstate initial sync events or
+   * priming cached states.
+   */
   SnapServer(
       final EthMessages snapMessages,
       final Function<Optional<Hash>, Optional<BonsaiWorldStateKeyValueStorage>>
@@ -96,16 +115,32 @@ class SnapServer {
     registerResponseConstructors();
   }
 
-  private void primeWorldStateArchive(final ProtocolContext context) {
+  @Override
+  public void onInitialSyncCompleted() {
+    start();
+  }
 
-    // prime bonsai latest 64 states:
-    var archive = context.getWorldStateArchive();
-    var blockchain = context.getBlockchain();
+  @Override
+  public void onInitialSyncRestart() {
+    stop();
+  }
 
-    long head = blockchain.getChainHeadHeader().getNumber();
-    for (long i = head; i > Math.max(0, head - 64); i--) {
-      blockchain.getBlockHeader(i).ifPresent(header -> archive.getMutable(header, false));
-    }
+  public void start() {
+    isStarted.set(true);
+  }
+
+  public void stop() {
+    isStarted.set(false);
+  }
+
+  private void primeWorldStateArchive(final ProtocolContext protocolContext) {
+    // TODO remove dirty bonsai cast:
+    var storageManager =
+        ((BonsaiWorldStateProvider) protocolContext.getWorldStateArchive())
+            .getCachedWorldStorageManager();
+    var blockchain = protocolContext.getBlockchain();
+
+    storageManager.primeRootToBlockHashCache(blockchain, PRIME_STATE_ROOT_CACHE_LIMIT);
   }
 
   private void registerResponseConstructors() {
@@ -120,6 +155,11 @@ class SnapServer {
   }
 
   MessageData constructGetAccountRangeResponse(final MessageData message) {
+
+    if (!isStarted.get()) {
+      return EMPTY_ACCOUNT_RANGE;
+    }
+
     final GetAccountRangeMessage getAccountRangeMessage = GetAccountRangeMessage.readFrom(message);
     final GetAccountRangeMessage.Range range = getAccountRangeMessage.range(true);
     final int maxResponseBytes = Math.min(range.responseBytes().intValue(), MAX_RESPONSE_SIZE);
@@ -198,6 +238,10 @@ class SnapServer {
   }
 
   MessageData constructGetStorageRangeResponse(final MessageData message) {
+    if (!isStarted.get()) {
+      return EMPTY_STORAGE_RANGE;
+    }
+
     final GetStorageRangeMessage getStorageRangeMessage = GetStorageRangeMessage.readFrom(message);
     final GetStorageRangeMessage.StorageRange range = getStorageRangeMessage.range(true);
     final int maxResponseBytes = Math.min(range.responseBytes().intValue(), MAX_RESPONSE_SIZE);
@@ -303,6 +347,11 @@ class SnapServer {
   }
 
   MessageData constructGetBytecodesResponse(final MessageData message) {
+
+    if (!isStarted.get()) {
+      return EMPTY_BYTE_CODES_MESSAGE;
+    }
+
     final GetByteCodesMessage getByteCodesMessage = GetByteCodesMessage.readFrom(message);
     final GetByteCodesMessage.CodeHashes codeHashes = getByteCodesMessage.codeHashes(true);
     final int maxResponseBytes = Math.min(codeHashes.responseBytes().intValue(), MAX_RESPONSE_SIZE);
@@ -345,6 +394,11 @@ class SnapServer {
   }
 
   MessageData constructGetTrieNodesResponse(final MessageData message) {
+
+    if (!isStarted.get()) {
+      return EMPTY_TRIE_NODES_MESSAGE;
+    }
+
     final GetTrieNodesMessage getTrieNodesMessage = GetTrieNodesMessage.readFrom(message);
     final GetTrieNodesMessage.TrieNodesPaths triePaths = getTrieNodesMessage.paths(true);
     final int maxResponseBytes = Math.min(triePaths.responseBytes().intValue(), MAX_RESPONSE_SIZE);
