@@ -32,10 +32,16 @@ public class DeterministicEthScheduler extends EthScheduler {
   private final List<MockExecutorService> executors;
   private final List<PendingTimeout<?>> pendingTimeouts = new ArrayList<>();
 
+  /** Create a new deterministic scheduler that never timeouts */
   public DeterministicEthScheduler() {
     this(TimeoutPolicy.NEVER_TIMEOUT);
   }
 
+  /**
+   * Create a new deterministic scheduler with the provided timeout policy
+   *
+   * @param timeoutPolicy the timeout policy
+   */
   public DeterministicEthScheduler(final TimeoutPolicy timeoutPolicy) {
     super(
         new MockExecutorService(),
@@ -56,37 +62,64 @@ public class DeterministicEthScheduler extends EthScheduler {
             (MockExecutorService) this.blockCreationExecutor);
   }
 
-  // Test utility for running pending futures
+  /** Test utility for manually running pending futures, when autorun is disabled */
   public void runPendingFutures() {
     executors.forEach(MockExecutorService::runPendingFutures);
   }
 
+  /**
+   * Get the count of pending tasks
+   *
+   * @return the count of pending tasks
+   */
   public long getPendingFuturesCount() {
     return executors.stream().mapToLong(MockExecutorService::getPendingFuturesCount).sum();
   }
 
+  /** Expire all pending timeouts */
   public void expirePendingTimeouts() {
     final List<PendingTimeout<?>> toExpire = new ArrayList<>(pendingTimeouts);
     pendingTimeouts.clear();
     toExpire.forEach(PendingTimeout::expire);
   }
 
+  /** Do not automatically run submitted tasks. Tasks can be later run using runPendingFutures */
   public void disableAutoRun() {
     executors.forEach(e -> e.setAutoRun(false));
   }
 
+  /**
+   * Get the sync worker mock executor
+   *
+   * @return the mock executor
+   */
   public MockExecutorService mockSyncWorkerExecutor() {
     return (MockExecutorService) syncWorkerExecutor;
   }
 
+  /**
+   * Get the scheduled mock executor
+   *
+   * @return the mock executor
+   */
   public MockScheduledExecutor mockScheduledExecutor() {
     return (MockScheduledExecutor) scheduler;
   }
 
+  /**
+   * Get the service mock executor
+   *
+   * @return the mock executor
+   */
   public MockExecutorService mockServiceExecutor() {
     return (MockExecutorService) servicesExecutor;
   }
 
+  /**
+   * Get the block creation mock executor
+   *
+   * @return the mock executor
+   */
   public MockExecutorService mockBlockCreationExecutor() {
     return (MockExecutorService) blockCreationExecutor;
   }
@@ -101,13 +134,27 @@ public class DeterministicEthScheduler extends EthScheduler {
     }
   }
 
+  /** Used to define the timeout behavior of the scheduler */
   @FunctionalInterface
   public interface TimeoutPolicy {
+    /** A policy that never timeouts */
     TimeoutPolicy NEVER_TIMEOUT = () -> false;
+    /** A policy that timeouts on every task */
     TimeoutPolicy ALWAYS_TIMEOUT = () -> true;
 
+    /**
+     * If it should simulate a timeout when called
+     *
+     * @return true if the scheduler should timeouts
+     */
     boolean shouldTimeout();
 
+    /**
+     * Create a timeout policy that timeouts x times
+     *
+     * @param times the number of timeouts
+     * @return the timeout policy
+     */
     static TimeoutPolicy timeoutXTimes(final int times) {
       final AtomicInteger timeouts = new AtomicInteger(times);
       return () -> {

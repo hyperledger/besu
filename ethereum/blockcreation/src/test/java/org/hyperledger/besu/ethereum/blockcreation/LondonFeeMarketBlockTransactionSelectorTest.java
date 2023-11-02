@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -109,7 +109,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
             createMiningParameters(
-                Wei.of(6), MIN_OCCUPANCY_80_PERCENT, DEFAULT_TXS_SELECTION_MAX_TIME),
+                Wei.of(6), MIN_OCCUPANCY_80_PERCENT, DEFAULT_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -138,7 +138,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
             createMiningParameters(
-                Wei.of(6), MIN_OCCUPANCY_80_PERCENT, DEFAULT_TXS_SELECTION_MAX_TIME),
+                Wei.of(6), MIN_OCCUPANCY_80_PERCENT, DEFAULT_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -166,7 +166,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
             createMiningParameters(
-                Wei.of(6), MIN_OCCUPANCY_80_PERCENT, DEFAULT_TXS_SELECTION_MAX_TIME),
+                Wei.of(6), MIN_OCCUPANCY_80_PERCENT, DEFAULT_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
