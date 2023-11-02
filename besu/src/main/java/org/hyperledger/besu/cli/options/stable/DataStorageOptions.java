@@ -17,6 +17,7 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNE_LIMIT;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
@@ -64,6 +65,13 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         description =
             "The number of blocks for which to retain trie logs. 0 is unlimited. (default: ${DEFAULT-VALUE})")
     private long bonsaiTrieLogRententionThreshold = DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
+
+    @CommandLine.Option(
+        hidden = true,
+        names = {"--Xbonsai-trie-log-prune-limit"},
+        description =
+            "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
+    private int bonsaiTrieLogPruneLimit = DEFAULT_BONSAI_TRIE_LOG_PRUNE_LIMIT;
   }
 
   /**
@@ -83,6 +91,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         .unstable(
             ImmutableDataStorageConfiguration.Unstable.builder()
                 .bonsaiTrieLogRetentionThreshold(unstableOptions.bonsaiTrieLogRententionThreshold)
+                .bonsaiTrieLogPruningLimit(unstableOptions.bonsaiTrieLogPruneLimit)
                 .build())
         .build();
   }

@@ -3434,6 +3434,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     builder.setTrieLogRetentionThreshold(
         dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogRetentionThreshold());
+    builder.setTrieLogPruningLimit(
+        dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningLimit());
 
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
 

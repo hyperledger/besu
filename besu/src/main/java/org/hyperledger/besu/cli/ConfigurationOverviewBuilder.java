@@ -50,6 +50,7 @@ public class ConfigurationOverviewBuilder {
   private String engineJwtFilePath;
   private boolean isHighSpec = false;
   private long trieLogRetentionThreshold = 0;
+  private Integer trieLogPruningLimit = null;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
   private Map<String, String> environment;
   private BesuPluginContextImpl besuPluginContext;
@@ -182,6 +183,17 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets trie log pruning limit
+   *
+   * @param limit the max number of blocks to load and prune trie logs for at startup
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setTrieLogPruningLimit(final int limit) {
+    trieLogPruningLimit = limit;
+    return this;
+  }
+
+  /**
    * Sets the txpool implementation in use.
    *
    * @param implementation the txpool implementation
@@ -275,6 +287,9 @@ public class ConfigurationOverviewBuilder {
           "Experimental trie log pruning enabled with retention threshold: "
               + trieLogRetentionThreshold
               + " blocks");
+      if (trieLogPruningLimit != null) {
+        lines.add("Experimental trie log pruning limit: " + trieLogPruningLimit + " blocks");
+      }
     }
 
     lines.add("");

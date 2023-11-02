@@ -29,7 +29,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
 import org.apache.tuweni.bytes.Bytes;
@@ -41,7 +40,9 @@ public class TrieLogPruner {
 
   private static final Logger LOG = LoggerFactory.getLogger(TrieLogPruner.class);
 
-  private static final int DEFAULT_PRUNING_LIMIT = 30_000;
+  public static final long DEFAULT_RETENTION_THRESHOLD = 0L;
+  public static int DEFAULT_PRUNING_LIMIT = 30_000;
+
   private final int pruningLimit;
   private final int loadingLimit;
   private final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
@@ -51,14 +52,6 @@ public class TrieLogPruner {
       TreeMultimap.create(Comparator.reverseOrder(), Comparator.comparingInt(Arrays::hashCode));
 
   public TrieLogPruner(
-      final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
-      final Blockchain blockchain,
-      final long numBlocksToRetain) {
-    this(rootWorldStateStorage, blockchain, numBlocksToRetain, DEFAULT_PRUNING_LIMIT);
-  }
-
-  @VisibleForTesting
-  TrieLogPruner(
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
       final Blockchain blockchain,
       final long numBlocksToRetain,
@@ -145,15 +138,16 @@ public class TrieLogPruner {
   }
 
   public static TrieLogPruner noOpTrieLogPruner() {
-    return new NoOpTrieLogPruner(null, null, 0);
+    return new NoOpTrieLogPruner(null, null, 0, 0);
   }
 
   public static class NoOpTrieLogPruner extends TrieLogPruner {
     private NoOpTrieLogPruner(
         final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
         final Blockchain blockchain,
-        final long numBlocksToRetain) {
-      super(rootWorldStateStorage, blockchain, numBlocksToRetain);
+        final long numBlocksToRetain,
+        final int pruningLimit) {
+      super(rootWorldStateStorage, blockchain, numBlocksToRetain, pruningLimit);
     }
 
     @Override
