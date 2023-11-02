@@ -841,6 +841,38 @@ public abstract class AbstractBlockTransactionSelectorTest {
     assertThat(results2.getNotSelectedTransactions()).isEmpty();
   }
 
+  @Test
+  public void shouldNotSelectTransactionsWithPriorityFeeLessThanConfig() {
+    ProcessableBlockHeader blockHeader = createBlock(5_000_000, Wei.ONE);
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder().from(defaultTestMiningParameters).build();
+    miningParameters.setMinPriorityFeePerGas(Wei.of(7));
+    final Transaction txSelected = createTransaction(1, Wei.of(8), 100_000);
+    ensureTransactionIsValid(txSelected);
+    // transaction txNotSelected should not be selected
+    final Transaction txNotSelected = createTransaction(2, Wei.of(7), 100_000);
+    ensureTransactionIsValid(txNotSelected);
+
+    final BlockTransactionSelector selector =
+        createBlockSelectorAndSetupTxPool(
+            miningParameters,
+            transactionProcessor,
+            blockHeader,
+            AddressHelpers.ofValue(1),
+            Wei.ZERO,
+            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
+
+    transactionPool.addRemoteTransactions(List.of(txSelected, txNotSelected));
+
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
+
+    assertThat(results.getSelectedTransactions()).containsOnly(txSelected);
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(
+            entry(
+                txNotSelected, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN));
+  }
+
   @ParameterizedTest
   @MethodSource("subsetOfPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver")
   public void subsetOfPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver(
