@@ -53,7 +53,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   private Address localAddress;
   private EpochManager epochManager;
   private long secondsBetweenBlocks;
-  private boolean createEmptyBlocks;
+  private boolean createEmptyBlocks = true;
   private final BlockInterface blockInterface = new CliqueBlockInterface();
 
   @Override

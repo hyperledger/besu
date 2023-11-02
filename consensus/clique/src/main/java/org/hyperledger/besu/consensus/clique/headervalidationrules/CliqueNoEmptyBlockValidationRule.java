@@ -40,7 +40,7 @@ public class CliqueNoEmptyBlockValidationRule implements DetachedBlockHeaderVali
     if (!hasTransactions) {
       LOG.info(
           "Invalid block header: {} has no transactions but create empty blocks is not enabled",
-          header.getNumber());
+          header.toLogString());
     }
     return hasTransactions;
   }

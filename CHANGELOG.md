@@ -12,7 +12,7 @@
 - Accept `input` and `data` field for the payload of transaction-related RPC methods [#6094](https://github.com/hyperledger/besu/pull/6094)
 - Add APIs to set and get the min gas price a transaction must pay for being selected during block creation [#6097](https://github.com/hyperledger/besu/pull/6097)
 - TraceService: return results for transactions in block [#6086](https://github.com/hyperledger/besu/pull/6086)
-- Clique option to not create empty blocks [#6082]
+- Clique option `createemptyblocks` to not create empty blocks [#6082]
 
 ### Bug fixes
 

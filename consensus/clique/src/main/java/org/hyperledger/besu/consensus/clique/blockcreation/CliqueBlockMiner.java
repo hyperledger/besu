@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 /** The Clique block miner. */
 public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
   private static final Logger LOG = LoggerFactory.getLogger(CliqueBlockMiner.class);
-  private static final int WAIT_BETWEEN_EMPTY_BUILD_ATTEMPTS = 1_000;
+  private static final int WAIT_IN_MS_BETWEEN_EMPTY_BUILD_ATTEMPTS = 1_000;
 
   private final Address localAddress;
   private final boolean createEmptyBlocks;
@@ -82,8 +82,8 @@ public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
 
     final boolean isEmpty = block.getBody().getTransactions().isEmpty();
     if (isEmpty) {
-      LOG.debug("Skipping empty block");
-      Thread.sleep(WAIT_BETWEEN_EMPTY_BUILD_ATTEMPTS);
+      LOG.debug("Skipping creating empty block {}", block.toLogString());
+      Thread.sleep(WAIT_IN_MS_BETWEEN_EMPTY_BUILD_ATTEMPTS);
     }
     return !isEmpty;
   }

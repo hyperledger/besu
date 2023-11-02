@@ -135,7 +135,7 @@ public class BlockMinerTest {
   }
 
   @Test
-  public void preImportValidationFailureDoesNotImportBlock() throws InterruptedException {
+  public void blockValidationFailureBeforeImportDoesNotImportBlock() throws InterruptedException {
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
     final Block blockToCreate =
