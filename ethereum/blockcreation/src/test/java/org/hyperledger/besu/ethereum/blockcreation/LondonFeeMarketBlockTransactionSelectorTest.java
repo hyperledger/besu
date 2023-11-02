@@ -233,7 +233,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     final Transaction tx3 = createEIP1559Transaction(3, Wei.of(8), Wei.of(8), 100_000);
     ensureTransactionIsValid(tx3);
 
-    // transaction tx4 should be selected
+    // transaction tx4 should not be selected
     final Transaction tx4 = createEIP1559Transaction(4, Wei.of(8), Wei.of(6), 100_000);
     ensureTransactionIsValid(tx4);
 
