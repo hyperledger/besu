@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValue
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldState.StreamableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -56,7 +57,7 @@ class DefaultMutableWorldStateTest {
   private static MutableWorldState createEmpty(final WorldStateKeyValueStorage storage) {
     final WorldStatePreimageKeyValueStorage preimageStorage =
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
-    return new DefaultMutableWorldState(storage, preimageStorage);
+    return new DefaultMutableWorldState(storage, preimageStorage, EvmConfiguration.DEFAULT);
   }
 
   private static MutableWorldState createEmpty() {
@@ -276,7 +277,8 @@ class DefaultMutableWorldStateTest {
         new DefaultMutableWorldState(
             expectedRootHash,
             new WorldStateKeyValueStorage(storage),
-            new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
+            new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
+            EvmConfiguration.DEFAULT);
     assertThat(newWorldState.rootHash()).isEqualTo(expectedRootHash);
     assertThat(newWorldState.get(ADDRESS)).isNotNull();
     assertThat(newWorldState.get(ADDRESS).getBalance()).isEqualTo(newBalance);

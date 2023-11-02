@@ -17,12 +17,11 @@ package org.hyperledger.besu.evm.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
-import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
-
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class OperandStackTest {
 
@@ -100,6 +99,14 @@ class OperandStackTest {
   }
 
   @Test
+  void set_IndexGreaterThanCurrentSize() {
+    final OperandStack stack = new OperandStack(1024);
+    stack.push(UInt256.fromHexString("0x01"));
+    final Bytes32 operand = Bytes32.fromHexString("0x01");
+    assertThatThrownBy(() -> stack.set(2, operand)).isInstanceOf(OverflowException.class);
+  }
+
+  @Test
   void set() {
     final OperandStack stack = new OperandStack(3);
     stack.push(UInt256.fromHexString("0x01"));
@@ -164,5 +171,15 @@ class OperandStackTest {
 
     assertThatThrownBy(() -> stack.preserveTop(5, 1)).isInstanceOf(UnderflowException.class);
     assertThatThrownBy(() -> stack.preserveTop(1, 5)).isInstanceOf(UnderflowException.class);
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {5, 31, 32, 33, 1023, 1024, 1025})
+  void largeOverflows(final int n) {
+    final OperandStack stack = new OperandStack(n);
+    for (int i = 0; i < n; i++) {
+      stack.push(UInt256.ONE);
+    }
+    assertThatThrownBy(() -> stack.push(UInt256.ONE)).isInstanceOf(OverflowException.class);
   }
 }

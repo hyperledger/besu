@@ -20,6 +20,7 @@ import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPa
 
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 
@@ -101,5 +102,35 @@ public class EvmToolCommandOptionsModule {
   @Singleton
   BlockParameter provideBlockParameter() {
     return blockParameter;
+  }
+
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
+  @CommandLine.Option(
+      names = {"--Xevm-jumpdest-cache-weight-kb"},
+      description =
+          "size in kilobytes to allow the cache "
+              + "of valid jump destinations to grow to before evicting the least recently used entry",
+      fallbackValue = "32000",
+      defaultValue = "32000",
+      hidden = true,
+      arity = "1")
+  private Long jumpDestCacheWeightKilobytes =
+      32_000L; // 10k contracts, (25k max contract size / 8 bit) + 32byte hash
+
+  @CommandLine.Option(
+      names = {"--Xevm-worldstate-update-mode"},
+      description = "How to handle worldstate updates within a transaction",
+      fallbackValue = "STACKED",
+      defaultValue = "STACKED",
+      hidden = true,
+      arity = "1")
+  private EvmConfiguration.WorldUpdaterMode worldstateUpdateMode =
+      EvmConfiguration.WorldUpdaterMode
+          .STACKED; // Stacked Updater.  Years of battle tested correctness.
+
+  @Provides
+  @Singleton
+  EvmConfiguration provideEvmConfiguration() {
+    return new EvmConfiguration(jumpDestCacheWeightKilobytes, worldstateUpdateMode);
   }
 }
