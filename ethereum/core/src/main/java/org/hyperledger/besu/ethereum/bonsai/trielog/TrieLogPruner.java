@@ -88,6 +88,7 @@ public class TrieLogPruner {
           }
         });
     LOG.atInfo().log("Loaded {} trie logs from database", count);
+    pruneFromCache();
   }
 
   void cacheForLaterPruning(final long blockNumber, final byte[] trieLogKey) {
