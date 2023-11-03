@@ -402,7 +402,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
         miningParams ->
             assertThat(miningParams.getUnstable().getBlockTxsSelectionPerTxMaxTime())
                 .isEqualTo(700L),
-        "--Xtxs-selection-per-tx-max-time",
+        "--Xblock-txs-selection-per-tx-max-time",
         "700");
   }
 
@@ -421,10 +421,10 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   @Test
   public void txsSelectionPerTxMaxTimeOutOfAllowedRange() {
     internalTestFailure(
-        "txsSelectionPerTxMaxTime (4000) is greater than the blockTxsSelectionMaxTime (3000)",
+        "blockTxsSelectionPerTxMaxTime (4000) is greater than the blockTxsSelectionMaxTime (3000)",
         "--Xblock-txs-selection-max-time",
         "3000",
-        "--Xtxs-selection-per-tx-max-time",
+        "--Xblock-txs-selection-per-tx-max-time",
         "4000");
   }
 
@@ -460,6 +460,6 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
 
   @Override
   protected List<String> getFieldsWithComputedDefaults() {
-    return Arrays.asList("unstableOptions.txsSelectionPerTxMaxTime");
+    return Arrays.asList("unstableOptions.blockTxsSelectionPerTxMaxTime");
   }
 }

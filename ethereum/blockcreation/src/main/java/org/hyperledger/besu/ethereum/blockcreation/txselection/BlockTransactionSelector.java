@@ -400,7 +400,7 @@ public class BlockTransactionSelector {
                   transaction.getType(), processingResult, worldState, cumulativeGasUsed);
 
           transactionSelectionResults.updateSelected(
-              pendingTransaction.getTransaction(), receipt, gasUsedByTransaction, blobGasUsed);
+              transaction, receipt, gasUsedByTransaction, blobGasUsed);
         }
         blockTooLate = isBlockTimeout.get();
         txTooLate = isTxTimeout.get();
