@@ -53,6 +53,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   private Address localAddress;
   private EpochManager epochManager;
   private long secondsBetweenBlocks;
+  private boolean createEmptyBlocks = true;
   private final BlockInterface blockInterface = new CliqueBlockInterface();
 
   @Override
@@ -61,6 +62,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
     final CliqueConfigOptions cliqueConfig = configOptionsSupplier.get().getCliqueConfigOptions();
     final long blocksPerEpoch = cliqueConfig.getEpochLength();
     secondsBetweenBlocks = cliqueConfig.getBlockPeriodSeconds();
+    createEmptyBlocks = cliqueConfig.getCreateEmptyBlocks();
 
     epochManager = new EpochManager(blocksPerEpoch);
   }
@@ -92,6 +94,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
                 localAddress,
                 secondsBetweenBlocks),
             epochManager,
+            createEmptyBlocks,
             ethProtocolManager.ethContext().getScheduler());
     final CliqueMiningCoordinator miningCoordinator =
         new CliqueMiningCoordinator(
