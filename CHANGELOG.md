@@ -14,6 +14,7 @@
 - TraceService: return results for transactions in block [#6086](https://github.com/hyperledger/besu/pull/6086)
 - New option `--min-priority-fee` that sets the minimum priority fee a transaction must meet to be selected for a block. [#6080](https://github.com/hyperledger/besu/pull/6080) [#6083](https://github.com/hyperledger/besu/pull/6083)
 - Implement new `miner_setMinPriorityFee` and `miner_getMinPriorityFee` RPC methods [#6080](https://github.com/hyperledger/besu/pull/6080)
+- Clique config option `createemptyblocks` to not create empty blocks [#6082](https://github.com/hyperledger/besu/pull/6082)
 - Introduce the possibility to limit the time spent selecting pending transactions during block creation, using the new experimental option `Xtxs-selection-max-time` (by default set to 5000ms) [#6044](https://github.com/hyperledger/besu/pull/6044)
 
 ### Bug fixes

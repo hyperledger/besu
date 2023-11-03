@@ -48,6 +48,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
   private final Address localAddress;
   private final NodeKey nodeKey;
   private final EpochManager epochManager;
+  private final boolean createEmptyBlocks;
 
   /**
    * Instantiates a new Clique miner executor.
@@ -59,6 +60,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
    * @param miningParams the mining params
    * @param blockScheduler the block scheduler
    * @param epochManager the epoch manager
+   * @param createEmptyBlocks whether clique should allow the creation of empty blocks.
    * @param ethScheduler the scheduler for asynchronous block creation tasks
    */
   public CliqueMinerExecutor(
@@ -69,6 +71,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
       final EpochManager epochManager,
+      final boolean createEmptyBlocks,
       final EthScheduler ethScheduler) {
     super(
         protocolContext,
@@ -80,6 +83,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
     this.nodeKey = nodeKey;
     this.localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     this.epochManager = epochManager;
+    this.createEmptyBlocks = createEmptyBlocks;
     miningParams.setCoinbase(localAddress);
   }
 
@@ -108,7 +112,8 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
         observers,
         blockScheduler,
         parentHeader,
-        localAddress);
+        localAddress,
+        createEmptyBlocks);
   }
 
   @Override
