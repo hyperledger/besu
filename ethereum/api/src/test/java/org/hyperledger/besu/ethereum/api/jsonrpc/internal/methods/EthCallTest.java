@@ -80,9 +80,11 @@ public class EthCallTest {
 
   @Captor ArgumentCaptor<PreCloseStateHandler<Optional<JsonRpcResponse>>> mapperCaptor;
 
+  private static final long GASCAP = 50_000_000L;
+
   @BeforeEach
   public void setUp() {
-    method = new EthCall(blockchainQueries, transactionSimulator);
+    method = new EthCall(blockchainQueries, transactionSimulator, Optional.of(GASCAP));
     blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
   }
@@ -164,6 +166,36 @@ public class EthCallTest {
 
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(transactionSimulator).process(eq(callParameter()), any(), any(), any(), any());
+    verify(blockchainQueries, atLeastOnce()).getBlockchain();
+    verifyNoMoreInteractions(blockchainQueries);
+  }
+
+  @Test
+  public void shouldCapGasIfTxGasIsHigherThanRpcGasCap() {
+    final JsonRpcRequestContext request = ethCallRequest(callParameterWithMaxGasLimit(), "latest");
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(null, Bytes.of(1).toString());
+    mockTransactionProcessorSuccessResult(expectedResponse);
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchain.getChainHead()).thenReturn(chainHead);
+
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ZERO));
+    when(chainHead.getBlockHeader()).thenReturn(blockHeader);
+
+    final JsonRpcResponse response = method.response(request);
+
+    final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
+    when(result.isSuccessful()).thenReturn(true);
+    when(result.getValidationResult()).thenReturn(ValidationResult.valid());
+    when(result.getOutput()).thenReturn(Bytes.of(1));
+    verify(transactionSimulator).process(any(), any(), any(), mapperCaptor.capture(), any());
+    assertThat(mapperCaptor.getValue().apply(mock(MutableWorldState.class), Optional.of(result)))
+        .isEqualTo(Optional.of(expectedResponse));
+
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+    verify(transactionSimulator)
+        .process(eq(cappedCallParameterWithMaxGasLimit()), any(), any(), any(), any());
     verify(blockchainQueries, atLeastOnce()).getBlockchain();
     verifyNoMoreInteractions(blockchainQueries);
   }
@@ -456,6 +488,34 @@ public class EthCallTest {
         null,
         null,
         null);
+  }
+
+  private JsonCallParameter callParameterWithMaxGasLimit() {
+    return new JsonCallParameter(
+        Address.fromHexString("0x0"),
+        Address.fromHexString("0x0"),
+        Long.MAX_VALUE,
+        Wei.ZERO,
+        null,
+        null,
+        Wei.ZERO,
+        Bytes.EMPTY,
+        null,
+        null,
+        null);
+  }
+
+  private CallParameter cappedCallParameterWithMaxGasLimit() {
+    return new CallParameter(
+        Address.fromHexString("0x0"),
+        Address.fromHexString("0x0"),
+        GASCAP,
+        Wei.ZERO,
+        Optional.empty(),
+        Optional.empty(),
+        Wei.ZERO,
+        Bytes.EMPTY,
+        Optional.empty());
   }
 
   private JsonRpcRequestContext ethCallRequest(
