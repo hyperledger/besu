@@ -78,6 +78,7 @@ public class CliqueProtocolSchedule {
                     applyCliqueSpecificModifications(
                         epochManager,
                         cliqueConfig.getBlockPeriodSeconds(),
+                        cliqueConfig.getCreateEmptyBlocks(),
                         localNodeAddress,
                         builder)),
             privacyParameters,
@@ -107,16 +108,19 @@ public class CliqueProtocolSchedule {
   private static ProtocolSpecBuilder applyCliqueSpecificModifications(
       final EpochManager epochManager,
       final long secondsBetweenBlocks,
+      final boolean createEmptyBlocks,
       final Address localNodeAddress,
       final ProtocolSpecBuilder specBuilder) {
 
     return specBuilder
         .blockHeaderValidatorBuilder(
             baseFeeMarket ->
-                getBlockHeaderValidator(epochManager, secondsBetweenBlocks, baseFeeMarket))
+                getBlockHeaderValidator(
+                    epochManager, secondsBetweenBlocks, createEmptyBlocks, baseFeeMarket))
         .ommerHeaderValidatorBuilder(
             baseFeeMarket ->
-                getBlockHeaderValidator(epochManager, secondsBetweenBlocks, baseFeeMarket))
+                getBlockHeaderValidator(
+                    epochManager, secondsBetweenBlocks, createEmptyBlocks, baseFeeMarket))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
         .blockImporterBuilder(MainnetBlockImporter::new)
@@ -128,11 +132,14 @@ public class CliqueProtocolSchedule {
   }
 
   private static BlockHeaderValidator.Builder getBlockHeaderValidator(
-      final EpochManager epochManager, final long secondsBetweenBlocks, final FeeMarket feeMarket) {
+      final EpochManager epochManager,
+      final long secondsBetweenBlocks,
+      final boolean createEmptyBlocks,
+      final FeeMarket feeMarket) {
     Optional<BaseFeeMarket> baseFeeMarket =
         Optional.of(feeMarket).filter(FeeMarket::implementsBaseFee).map(BaseFeeMarket.class::cast);
 
     return BlockHeaderValidationRulesetFactory.cliqueBlockHeaderValidator(
-        secondsBetweenBlocks, epochManager, baseFeeMarket);
+        secondsBetweenBlocks, createEmptyBlocks, epochManager, baseFeeMarket);
   }
 }
