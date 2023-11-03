@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -33,6 +34,7 @@ import org.apache.tuweni.bytes.Bytes;
   "to",
   "type",
   "value",
+  "yParity",
   "v",
   "r",
   "s"
@@ -47,11 +49,13 @@ public class PendingTransactionDetailResult implements JsonRpcResult {
   private final String to;
   private final String type;
   private final String value;
+  private final String yParity;
   private final String v;
   private final String r;
   private final String s;
 
   public PendingTransactionDetailResult(final Transaction tx) {
+    TransactionType transactionType = tx.getType();
     this.from = tx.getSender().toString();
     this.gas = Quantity.create(tx.getGasLimit());
     this.gasPrice = tx.getGasPrice().map(Quantity::create).orElse(null);
@@ -59,12 +63,17 @@ public class PendingTransactionDetailResult implements JsonRpcResult {
     this.input = tx.getPayload().toString();
     this.nonce = Quantity.create(tx.getNonce());
     this.to = tx.getTo().map(Bytes::toHexString).orElse(null);
-    this.type =
-        tx.getType().equals(TransactionType.FRONTIER)
-            ? Quantity.create(0)
-            : Quantity.create(tx.getType().getSerializedType());
+    if (transactionType.equals(TransactionType.FRONTIER)) {
+      this.type = Quantity.create(0);
+      this.yParity = null;
+      this.v = Quantity.create(tx.getV());
+
+    } else {
+      this.type = Quantity.create(transactionType.getSerializedType());
+      this.yParity = Quantity.create(tx.getYParity());
+      this.v = null;
+    }
     this.value = Quantity.create(tx.getValue());
-    this.v = Quantity.create(tx.getV());
     this.r = Quantity.create(tx.getR());
     this.s = Quantity.create(tx.getS());
   }
@@ -114,6 +123,13 @@ public class PendingTransactionDetailResult implements JsonRpcResult {
     return value;
   }
 
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  @JsonGetter(value = "yParity")
+  public String getyParity() {
+    return yParity;
+  }
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonGetter(value = "v")
   public String getV() {
     return v;

@@ -46,6 +46,7 @@ import org.apache.tuweni.bytes.Bytes;
   "transactionIndex",
   "type",
   "value",
+  "yParity",
   "v",
   "r",
   "s",
@@ -82,6 +83,7 @@ public class TransactionCompleteResult implements TransactionResult {
   private final String transactionIndex;
   private final String type;
   private final String value;
+  private final String yParity;
   private final String v;
   private final String r;
   private final String s;
@@ -114,12 +116,17 @@ public class TransactionCompleteResult implements TransactionResult {
     this.nonce = Quantity.create(transaction.getNonce());
     this.to = transaction.getTo().map(Bytes::toHexString).orElse(null);
     this.transactionIndex = Quantity.create(tx.getTransactionIndex().get());
-    this.type =
-        transactionType.equals(TransactionType.FRONTIER)
-            ? Quantity.create(0)
-            : Quantity.create(transactionType.getSerializedType());
+    if (transactionType.equals(TransactionType.FRONTIER)) {
+      this.type = Quantity.create(0);
+      this.yParity = null;
+      this.v = Quantity.create(transaction.getV());
+
+    } else {
+      this.type = Quantity.create(transactionType.getSerializedType());
+      this.yParity = Quantity.create(transaction.getYParity());
+      this.v = null;
+    }
     this.value = Quantity.create(transaction.getValue());
-    this.v = Quantity.create(transaction.getV());
     this.r = Quantity.create(transaction.getR());
     this.s = Quantity.create(transaction.getS());
     this.versionedHashes = transaction.getVersionedHashes().orElse(null);
@@ -210,6 +217,13 @@ public class TransactionCompleteResult implements TransactionResult {
     return value;
   }
 
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  @JsonGetter(value = "yParity")
+  public String getYParity() {
+    return yParity;
+  }
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonGetter(value = "v")
   public String getV() {
     return v;
