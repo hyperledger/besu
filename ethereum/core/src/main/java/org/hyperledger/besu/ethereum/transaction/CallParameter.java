@@ -24,9 +24,13 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // Represents parameters for a eth_call or eth_estimateGas JSON-RPC methods.
 public class CallParameter {
+
+  private static final Logger LOG = LoggerFactory.getLogger(CallParameter.class);
 
   private final Address from;
 
@@ -157,5 +161,23 @@ public class CallParameter {
         Wei.fromQuantity(tx.getValue()),
         tx.getPayload(),
         tx.getAccessList());
+  }
+
+  public static CallParameter applyGasCap(
+      final CallParameter callParams, final Optional<Long> gasCap) {
+    if (gasCap.isPresent() && gasCap.get() < callParams.getGasLimit()) {
+      LOG.info("Capping gas limit to " + gasCap.get());
+      return new CallParameter(
+          callParams.getFrom(),
+          callParams.getTo(),
+          gasCap.get(),
+          callParams.getGasPrice(),
+          callParams.getMaxPriorityFeePerGas(),
+          callParams.getMaxFeePerGas(),
+          callParams.getValue(),
+          callParams.getPayload(),
+          callParams.getAccessList());
+    }
+    return callParams;
   }
 }
