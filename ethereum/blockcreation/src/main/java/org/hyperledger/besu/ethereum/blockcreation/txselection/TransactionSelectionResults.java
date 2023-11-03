@@ -36,7 +36,7 @@ public class TransactionSelectionResults {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionSelectionResults.class);
 
   private final List<Transaction> selectedTransactions = Lists.newArrayList();
-  private final Map<TransactionType, List<Transaction>> transactionsByType =
+  private final Map<TransactionType, List<Transaction>> selectedTransactionsByType =
       new EnumMap<>(TransactionType.class);
   private final List<TransactionReceipt> receipts = Lists.newArrayList();
   /**
@@ -55,7 +55,7 @@ public class TransactionSelectionResults {
       final long gasUsed,
       final long blobGasUsed) {
     selectedTransactions.add(transaction);
-    transactionsByType
+    selectedTransactionsByType
         .computeIfAbsent(transaction.getType(), type -> new ArrayList<>())
         .add(transaction);
     receipts.add(receipt);
@@ -81,7 +81,7 @@ public class TransactionSelectionResults {
   }
 
   public List<Transaction> getTransactionsByType(final TransactionType type) {
-    return transactionsByType.getOrDefault(type, List.of());
+    return selectedTransactionsByType.getOrDefault(type, List.of());
   }
 
   public List<TransactionReceipt> getReceipts() {
