@@ -328,15 +328,15 @@ public abstract class MiningParameters {
       return getNonPoaBlockTxsSelectionMaxTime();
     }
 
-    OptionalLong getConfiguredTxsSelectionPerTxMaxTime();
+    OptionalLong getConfiguredBlockTxsSelectionPerTxMaxTime();
 
     @Value.Derived
-    default long getTxsSelectionPerTxMaxTime() {
-      if (getConfiguredTxsSelectionPerTxMaxTime().isPresent()) {
-        final long configuredMaxTime = getConfiguredTxsSelectionPerTxMaxTime().getAsLong();
+    default long getBlockTxsSelectionPerTxMaxTime() {
+      if (getConfiguredBlockTxsSelectionPerTxMaxTime().isPresent()) {
+        final long configuredMaxTime = getConfiguredBlockTxsSelectionPerTxMaxTime().getAsLong();
         if (configuredMaxTime > getBlockTxsSelectionMaxTime()) {
           throw new IllegalArgumentException(
-              "txsSelectionPerTxMaxTime ("
+              "blockTxsSelectionPerTxMaxTime ("
                   + configuredMaxTime
                   + ") is greater than the blockTxsSelectionMaxTime ("
                   + getBlockTxsSelectionMaxTime()

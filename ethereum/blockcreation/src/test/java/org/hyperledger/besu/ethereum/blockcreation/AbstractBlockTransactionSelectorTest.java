@@ -903,7 +903,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
    *
    * 0      300      600 700
    * |       |        |   |
-   * --------0--------1---BT
+   * 000000000111111111222BT
    *         |        |
    * TS     (0)     (0,1)
    *
@@ -993,7 +993,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
    *
    * 0    200      600      1100
    * |     |        |          |
-   * ------0--------1---------TT
+   * 0000000111111111222222222TT
    *       |        |
    * TS   (0)     (0,1)
    *
@@ -1082,7 +1082,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
    *
    * 0    200      600      1100   1300
    * |     |        |          |    |
-   * ------0--------1---------TT---BT
+   * 00000001111111112222222222TT333BT
    *       |        |
    * TS   (0)     (0,1)
    *
@@ -1096,7 +1096,6 @@ public abstract class AbstractBlockTransactionSelectorTest {
    * @param postProcessingTooLate should the postProcessing step take too long?
    */
   // spotless:on
-
   @ParameterizedTest
   @MethodSource("longProcessingTask")
   public void subsetOfPendingTransactionsIncludedWhenPerTxEvaluationAndTxsSelectionMaxTimeIsOver(
@@ -1147,7 +1146,6 @@ public abstract class AbstractBlockTransactionSelectorTest {
                     MIN_OCCUPANCY_100_PERCENT,
                     blockTxsSelectionMaxTime,
                     singleTxSelectionMaxTime),
-            //            createMiningParameters(Wei.ZERO, MIN_OCCUPANCY_100_PERCENT, 1300, 500),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -1168,6 +1166,87 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .containsOnly(
             entry(txs.get(2), TransactionSelectionResult.TX_EVALUATION_TIMEOUT),
             entry(txs.get(3), TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT));
+  }
+
+  // spotless:off
+  /**
+   * Txs selection and timeout timeline
+   *
+   * 0    200
+   * |     |
+   * 000000BTT
+   *
+   * BTT: Block and Tx timeout at the same time
+   *
+   * @param isPoa simulate a PoA network?
+   * @param preProcessingTooLate should the preProcessing step take too long?
+   * @param processingTooLate should the processing step take too long?
+   * @param postProcessingTooLate should the postProcessing step take too long?
+   */
+  // spotless:on
+  @ParameterizedTest
+  @MethodSource("longProcessingTask")
+  public void perTxEvaluationTimeoutIsProcessedBeforeBlockTxsSelectionTimeout(
+      final boolean isPoa,
+      final boolean preProcessingTooLate,
+      final boolean processingTooLate,
+      final boolean postProcessingTooLate) {
+
+    final ProcessableBlockHeader blockHeader = createBlock(301_000);
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+    final int poaMinBlockTime = 1;
+    final long blockTxsSelectionMaxTime = 200;
+    final long singleTxSelectionMaxTime = 200;
+    final long actualTxSelectionTime = 300;
+
+    final Transaction tx = createTransaction(0, Wei.of(7), 100_000);
+    ensureTransactionIsValid(tx, 0, 0, processingTooLate ? actualTxSelectionTime : 0);
+
+    final Map<Transaction, Long> txsProcessingTime = Map.of(tx, actualTxSelectionTime);
+
+    PluginTransactionSelector transactionSelector = mock(PluginTransactionSelector.class);
+    when(transactionSelector.evaluateTransactionPreProcessing(any()))
+        .thenAnswer(processingTx(preProcessingTooLate, txsProcessingTime));
+
+    when(transactionSelector.evaluateTransactionPostProcessing(any(), any()))
+        .thenAnswer(processingTx(postProcessingTooLate, txsProcessingTime));
+
+    final PluginTransactionSelectorFactory transactionSelectorFactory =
+        mock(PluginTransactionSelectorFactory.class);
+    when(transactionSelectorFactory.create()).thenReturn(transactionSelector);
+
+    final BlockTransactionSelector selector =
+        createBlockSelectorAndSetupTxPool(
+            isPoa
+                ? createMiningParameters(
+                    Wei.ZERO,
+                    MIN_OCCUPANCY_100_PERCENT,
+                    poaMinBlockTime,
+                    Percentage.fromInt(20),
+                    singleTxSelectionMaxTime)
+                : createMiningParameters(
+                    Wei.ZERO,
+                    MIN_OCCUPANCY_100_PERCENT,
+                    blockTxsSelectionMaxTime,
+                    singleTxSelectionMaxTime),
+            transactionProcessor,
+            blockHeader,
+            miningBeneficiary,
+            Wei.ZERO,
+            transactionSelectorFactory);
+
+    transactionPool.addRemoteTransactions(txsProcessingTime.keySet());
+
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
+
+    // tx is not selected, even if it could fit in the block,
+    // since it took too long to process
+    assertThat(results.getSelectedTransactions()).isEmpty();
+
+    // given enough time we can check the not selected tx
+    await().until(() -> !results.getNotSelectedTransactions().isEmpty());
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(entry(tx, TransactionSelectionResult.TX_EVALUATION_TIMEOUT));
   }
 
   private static Stream<Arguments> longProcessingTask() {
@@ -1352,7 +1431,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .unstable(
             Unstable.builder()
                 .nonPoaBlockTxsSelectionMaxTime(txsSelectionMaxTime)
-                .configuredTxsSelectionPerTxMaxTime(txsSelectionPerTxMaxTime)
+                .configuredBlockTxsSelectionPerTxMaxTime(txsSelectionPerTxMaxTime)
                 .build())
         .build();
   }
@@ -1373,7 +1452,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             Unstable.builder()
                 .minBlockTime(minBlockTime)
                 .poaBlockTxsSelectionMaxTime(minBlockTimePercentage)
-                .configuredTxsSelectionPerTxMaxTime(txsSelectionPerTxMaxTime)
+                .configuredBlockTxsSelectionPerTxMaxTime(txsSelectionPerTxMaxTime)
                 .build())
         .build();
   }

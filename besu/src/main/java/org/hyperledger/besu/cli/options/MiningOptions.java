@@ -190,12 +190,12 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
 
     @CommandLine.Option(
         hidden = true,
-        names = {"--Xtxs-selection-per-tx-max-time"},
+        names = {"--Xblock-txs-selection-per-tx-max-time"},
         description =
             "Specifies the maximum time, in milliseconds, that could be spent selecting a single transaction to be included in the block."
                 + " Must be positive and ≤ the max time allocated for the block txs selection."
                 + " (default: will get the block txs selection max time as specified by --Xblock-txs-selection-max-time or --Xpoa-block-txs-selection-max-time)")
-    private Long txsSelectionPerTxMaxTime;
+    private Long blockTxsSelectionPerTxMaxTime;
   }
 
   private MiningOptions() {}
@@ -335,8 +335,8 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
     miningParameters.getTargetGasLimit().ifPresent(tgl -> miningOptions.targetGasLimit = tgl);
     miningParameters
         .getUnstable()
-        .getConfiguredTxsSelectionPerTxMaxTime()
-        .ifPresent(value -> miningOptions.unstableOptions.txsSelectionPerTxMaxTime = value);
+        .getConfiguredBlockTxsSelectionPerTxMaxTime()
+        .ifPresent(value -> miningOptions.unstableOptions.blockTxsSelectionPerTxMaxTime = value);
 
     return miningOptions;
   }
@@ -371,9 +371,9 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
             .nonPoaBlockTxsSelectionMaxTime(unstableOptions.nonPoaBlockTxsSelectionMaxTime)
             .poaBlockTxsSelectionMaxTime(unstableOptions.poaBlockTxsSelectionMaxTime);
 
-    if (unstableOptions.txsSelectionPerTxMaxTime != null) {
-      unstableParametersBuilder.configuredTxsSelectionPerTxMaxTime(
-          unstableOptions.txsSelectionPerTxMaxTime);
+    if (unstableOptions.blockTxsSelectionPerTxMaxTime != null) {
+      unstableParametersBuilder.configuredBlockTxsSelectionPerTxMaxTime(
+          unstableOptions.blockTxsSelectionPerTxMaxTime);
     }
 
     final var miningParametersBuilder =

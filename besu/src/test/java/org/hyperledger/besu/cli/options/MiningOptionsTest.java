@@ -391,7 +391,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
     // by default, it takes the value of the block txs selection max time
     internalTestSuccess(
         miningParams ->
-            assertThat(miningParams.getUnstable().getTxsSelectionPerTxMaxTime())
+            assertThat(miningParams.getUnstable().getBlockTxsSelectionPerTxMaxTime())
                 .isEqualTo(miningParams.getUnstable().getBlockTxsSelectionMaxTime())
                 .isEqualTo(DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME));
   }
@@ -400,7 +400,8 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   public void txsSelectionPerTxMaxTimeOption() {
     internalTestSuccess(
         miningParams ->
-            assertThat(miningParams.getUnstable().getTxsSelectionPerTxMaxTime()).isEqualTo(700L),
+            assertThat(miningParams.getUnstable().getBlockTxsSelectionPerTxMaxTime())
+                .isEqualTo(700L),
         "--Xtxs-selection-per-tx-max-time",
         "700");
   }
@@ -410,7 +411,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
     // by default, it takes the value of the block txs selection max time
     internalTestSuccess(
         miningParams ->
-            assertThat(miningParams.getUnstable().getTxsSelectionPerTxMaxTime())
+            assertThat(miningParams.getUnstable().getBlockTxsSelectionPerTxMaxTime())
                 .isEqualTo(miningParams.getUnstable().getBlockTxsSelectionMaxTime())
                 .isEqualTo(1000L),
         "--Xblock-txs-selection-max-time",

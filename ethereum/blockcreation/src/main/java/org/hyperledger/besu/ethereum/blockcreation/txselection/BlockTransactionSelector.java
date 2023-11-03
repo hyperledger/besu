@@ -145,7 +145,7 @@ public class BlockTransactionSelector {
     pluginOperationTracer = pluginTransactionSelector.getOperationTracer();
     blockWorldStateUpdater = worldState.updater();
     txsSelectionMaxTime = miningParameters.getUnstable().getBlockTxsSelectionMaxTime();
-    txEvaluationMaxTime = miningParameters.getUnstable().getTxsSelectionPerTxMaxTime();
+    txEvaluationMaxTime = miningParameters.getUnstable().getBlockTxsSelectionPerTxMaxTime();
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(
