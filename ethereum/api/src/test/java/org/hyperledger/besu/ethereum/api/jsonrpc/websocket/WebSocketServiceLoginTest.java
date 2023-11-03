@@ -192,6 +192,7 @@ public class WebSocketServiceLoginTest {
                     mock(EthPeers.class),
                     vertx,
                     Optional.empty(),
+                    Optional.empty(),
                     Optional.empty()));
 
     websocketMethods.putAll(rpcMethods);

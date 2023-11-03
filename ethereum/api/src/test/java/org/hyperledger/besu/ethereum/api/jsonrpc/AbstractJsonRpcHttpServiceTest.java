@@ -192,6 +192,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             mock(EthPeers.class),
             syncVertx,
             Optional.empty(),
+            Optional.empty(),
             Optional.empty());
   }
 

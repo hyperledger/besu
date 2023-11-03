@@ -230,7 +230,8 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(EthPeers.class),
                     vertx,
                     Optional.empty(),
-                    Optional.empty()));
+                    Optional.empty(),
+                    Optional.of(50_000_000L)));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
@@ -339,6 +340,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     folder,
                     mock(EthPeers.class),
                     vertx,
+                    Optional.empty(),
                     Optional.empty(),
                     Optional.empty()));
     final JsonRpcHttpService jsonRpcHttpService =
