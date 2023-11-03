@@ -96,7 +96,7 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new DebugMetrics(metricsSystem),
         new DebugResyncWorldstate(protocolSchedule, protocolContext.getBlockchain(), synchronizer),
         new DebugTraceBlock(
-            () -> new BlockTracer(blockReplay),
+            protocolSchedule,
             ScheduleBasedBlockHeaderFunctions.create(protocolSchedule),
             blockchainQueries),
         new DebugSetHead(blockchainQueries, protocolContext),
