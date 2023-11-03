@@ -46,7 +46,10 @@ public class CachedWorldStorageManager
   private final BonsaiWorldStateProvider archive;
   private final EvmConfiguration evmConfiguration;
   private final Cache<Hash, BlockHeader> stateRootToBlockHeaderCache =
-      Caffeine.newBuilder().maximumSize(512).expireAfterWrite(100, TimeUnit.MINUTES).build();
+      Caffeine.newBuilder()
+          .maximumSize(RETAINED_LAYERS)
+          .expireAfterWrite(100, TimeUnit.MINUTES)
+          .build();
 
   private final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
   private final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash;
@@ -232,16 +235,10 @@ public class CachedWorldStorageManager
                           () -> {
                             // if not cached already, maybe fetch and cache this worldstate
                             var maybeWorldState =
-                                archive
-                                    .getMutable(header, false)
-                                    .map(BonsaiWorldState.class::cast)
-                                    .map(BonsaiWorldState::getWorldStateStorage);
-                            if (maybeWorldState.isPresent()) {
-                              cachedWorldStatesByHash.put(
-                                  header.getHash(),
-                                  new CachedBonsaiWorldView(header, maybeWorldState.get()));
-                            }
-                            return maybeWorldState;
+                                archive.getMutable(header, false).map(BonsaiWorldState.class::cast);
+                            maybeWorldState.ifPresent(
+                                ws -> addCachedLayer(header, header.getStateRoot(), ws));
+                            return maybeWorldState.map(BonsaiWorldState::getWorldStateStorage);
                           }));
     } else {
       // if we did not supply a hash, return the head worldstate from cachedWorldStates

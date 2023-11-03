@@ -42,9 +42,11 @@ import org.hyperledger.besu.plugin.services.BesuEvents;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -105,7 +107,9 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
           .getSynchronizer()
           .filter(z -> z instanceof DefaultSynchronizer)
           .map(DefaultSynchronizer.class::cast)
-          .ifPresent(z -> this.listenerId.set(z.subscribeInitialSync(this)));
+          .ifPresentOrElse(
+              z -> this.listenerId.set(z.subscribeInitialSync(this)),
+              () -> LOGGER.warn("SnapServer created without reference to sync status"));
     }
   }
 
@@ -144,7 +148,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
 
   private void primeWorldStateArchive(
       final Optional<CachedWorldStorageManager> storageManager, final Blockchain blockchain) {
-    // at startup, prime the latest worldstates' by roothash:
+    // at startup, prime the latest worldstates by roothash:
     storageManager.ifPresent(
         cache -> cache.primeRootToBlockHashCache(blockchain, PRIME_STATE_ROOT_CACHE_LIMIT));
   }
@@ -211,16 +215,22 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                 final var worldStateProof = new WorldStateProofProvider(storage);
                 final List<Bytes> proof =
                     worldStateProof.getAccountProofRelatedNodes(
-                        range.worldStateRootHash(), Hash.wrap(range.startKeyHash()), false);
+                        range.worldStateRootHash(), Hash.wrap(range.startKeyHash()));
 
                 if (!accounts.isEmpty()) {
                   proof.addAll(
                       worldStateProof.getAccountProofRelatedNodes(
-                          range.worldStateRootHash(), Hash.wrap(accounts.lastKey()), false));
+                          range.worldStateRootHash(), Hash.wrap(accounts.lastKey())));
                 }
                 var resp = AccountRangeMessage.create(accounts, proof);
-                // TODO: demote to debug
-                LOGGER.info(
+                if (accounts.isEmpty()) {
+                  LOGGER.warn(
+                      "returned empty account range message for {} to  {}, proof count {}",
+                      range.startKeyHash(),
+                      range.endKeyHash(),
+                      proof.size());
+                }
+                LOGGER.debug(
                     "returned account range message with {} accounts and {} proofs",
                     accounts.size(),
                     proof.size());
@@ -238,7 +248,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                 return EMPTY_ACCOUNT_RANGE;
               });
     } catch (Exception ex) {
-      LOGGER.error("something blew up", ex);
+      LOGGER.error("Unexpected exception serving account range request", ex);
     }
     return EMPTY_ACCOUNT_RANGE;
   }
@@ -295,7 +305,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                 }
 
                 ArrayDeque<NavigableMap<Bytes32, Bytes>> collectedStorages = new ArrayDeque<>();
-                ArrayList<Bytes> proofNodes = new ArrayList<>();
+                Set<Bytes> proofNodes = new LinkedHashSet<>();
                 final var worldStateProof = new WorldStateProofProvider(storage);
 
                 for (var forAccountHash : range.hashes()) {
@@ -303,39 +313,37 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                   var accountStorages =
                       storage.streamFlatStorages(
                           Hash.wrap(forAccountHash), startKeyBytes, endKeyBytes, statefulPredicate);
-                  collectedStorages.add(accountStorages);
+                  // don't send empty storage ranges
+                  if (accountStorages.size() > 0) {
+                    collectedStorages.add(accountStorages);
+                  }
 
-                  // if this was a partial range, send a proof for the left side:
-                  if (!startKeyBytes.equals(Hash.ZERO)) {
+                  // if this a partial storage range was requested, or we interrupted storage due
+                  // to request limits, send proofs:
+                  if (!(startKeyBytes.equals(Hash.ZERO) && endKeyBytes.equals(HASH_LAST))
+                      || !statefulPredicate.shouldGetMore()) {
+                    // send a proof for the left side
                     proofNodes.addAll(
                         worldStateProof.getStorageProofRelatedNodes(
                             getAccountStorageRoot(forAccountHash, storage),
                             forAccountHash,
                             Hash.wrap(startKeyBytes)));
-                  }
-
-                  // if this was a partial ending range, send a proof for the right side:
-                  if (!startKeyBytes.equals(Hash.ZERO)) {
-                    proofNodes.addAll(
-                        worldStateProof.getStorageProofRelatedNodes(
-                            getAccountStorageRoot(forAccountHash, storage),
-                            forAccountHash,
-                            Hash.wrap(endKeyBytes)));
-                  }
-
-                  // add last key proof, in case it was partial storage
-                  if (!statefulPredicate.shouldGetMore() && accountStorages.size() > 0) {
-                    proofNodes.addAll(
-                        worldStateProof.getStorageProofRelatedNodes(
-                            getAccountStorageRoot(forAccountHash, storage),
-                            forAccountHash,
-                            Hash.wrap(accountStorages.lastKey())));
+                    // and last account, if we have keys:
+                    if (!accountStorages.isEmpty()) {
+                      proofNodes.addAll(
+                          worldStateProof.getStorageProofRelatedNodes(
+                              getAccountStorageRoot(forAccountHash, storage),
+                              forAccountHash,
+                              Hash.wrap(accountStorages.lastKey())));
+                    }
                     break;
                   }
                 }
 
-                var resp = StorageRangeMessage.create(collectedStorages, proofNodes);
-                LOGGER.info(
+                var resp =
+                    StorageRangeMessage.create(collectedStorages, proofNodes.stream().toList());
+
+                LOGGER.debug(
                     "returned storage range message with {} storages and {} proofs",
                     collectedStorages.size(),
                     proofNodes.size());
@@ -347,7 +355,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                 return EMPTY_STORAGE_RANGE;
               });
     } catch (Exception ex) {
-      LOGGER.error("something blew up", ex);
+      LOGGER.error("Unexpected exception serving storage range request", ex);
       return EMPTY_STORAGE_RANGE;
     }
   }
@@ -394,7 +402,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                 return EMPTY_BYTE_CODES_MESSAGE;
               });
     } catch (Exception ex) {
-      LOGGER.error("something blew up", ex);
+      LOGGER.error("Unexpected exception serving bytecodes request", ex);
       return EMPTY_BYTE_CODES_MESSAGE;
     }
   }
@@ -464,7 +472,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                 return EMPTY_TRIE_NODES_MESSAGE;
               });
     } catch (Exception ex) {
-      LOGGER.error("something blew up", ex);
+      LOGGER.error("Unexpected exception serving trienodes request", ex);
       return EMPTY_TRIE_NODES_MESSAGE;
     }
   }

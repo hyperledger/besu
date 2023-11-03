@@ -19,7 +19,6 @@ import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 
 import org.hyperledger.besu.ethereum.trie.patricia.DefaultNodeFactory;
-import org.hyperledger.besu.ethereum.trie.patricia.LeafNode;
 
 import java.util.List;
 import java.util.Map;
@@ -74,19 +73,6 @@ public abstract class SimpleMerkleTrie<K extends Bytes, V> implements MerkleTrie
     final Optional<V> value = root.accept(proofVisitor, bytesToPath(key)).getValue();
     final List<Bytes> proof =
         proofVisitor.getProof().stream().map(Node::getEncodedBytes).collect(Collectors.toList());
-    return new Proof<>(value, proof);
-  }
-
-  @Override
-  public Proof<V> getProofWithoutValue(final K key) {
-    checkNotNull(key);
-    final ProofVisitor<V> proofVisitor = new ProofVisitor<>(root);
-    final Optional<V> value = root.accept(proofVisitor, bytesToPath(key)).getValue();
-    final List<Bytes> proof =
-        proofVisitor.getProof().stream()
-            .filter(node -> !(node instanceof LeafNode))
-            .map(Node::getEncodedBytes)
-            .collect(Collectors.toList());
     return new Proof<>(value, proof);
   }
 

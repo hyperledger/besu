@@ -59,14 +59,6 @@ public interface MerkleTrie<K, V> {
   Proof<V> getValueWithProof(K key);
 
   /**
-   * Returns ordered proof-related nodes mapped to the hash if it exists; otherwise empty.
-   *
-   * @param key The key for the value.
-   * @return value and ordered proof-related nodes
-   */
-  Proof<V> getProofWithoutValue(K key);
-
-  /**
    * Updates the value mapped to the specified key, creating the mapping if one does not already
    * exist.
    *

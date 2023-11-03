@@ -105,23 +105,8 @@ public class WorldStateProofProvider {
    */
   public List<Bytes> getAccountProofRelatedNodes(
       final Hash worldStateRoot, final Bytes32 accountHash) {
-    return getAccountProofRelatedNodes(worldStateRoot, accountHash, true);
-  }
-
-  /**
-   * Retrieves the proof-related nodes for an account in the specified world state.
-   *
-   * @param worldStateRoot The root hash of the world state.
-   * @param accountHash The hash of the account.
-   * @return A list of proof-related nodes for the account.
-   */
-  public List<Bytes> getAccountProofRelatedNodes(
-      final Hash worldStateRoot, final Bytes32 accountHash, final boolean includeLeafNodes) {
-    final MerkleTrie<Bytes, Bytes> trie = newAccountStateTrie(worldStateRoot);
     final Proof<Bytes> accountProof =
-        includeLeafNodes
-            ? trie.getValueWithProof(accountHash)
-            : trie.getProofWithoutValue(accountHash);
+        newAccountStateTrie(worldStateRoot).getValueWithProof(accountHash);
     return accountProof.getProofRelatedNodes();
   }
 
@@ -135,29 +120,8 @@ public class WorldStateProofProvider {
    */
   public List<Bytes> getStorageProofRelatedNodes(
       final Bytes32 storageRoot, final Bytes32 accountHash, final Bytes32 slotHash) {
-    return getStorageProofRelatedNodes(storageRoot, accountHash, slotHash, true);
-  }
-
-  /**
-   * Retrieves the proof-related nodes for a storage slot in the specified account storage trie.
-   *
-   * @param storageRoot The root hash of the account storage trie.
-   * @param accountHash The hash of the account.
-   * @param slotHash The hash of the storage slot.
-   * @param includeLeafNodes flag to indicate whether to return leaf nodes
-   * @return A list of proof-related nodes for the storage slot.
-   */
-  public List<Bytes> getStorageProofRelatedNodes(
-      final Bytes32 storageRoot,
-      final Bytes32 accountHash,
-      final Bytes32 slotHash,
-      final boolean includeLeafNodes) {
-    final MerkleTrie<Bytes32, Bytes> storageTrie =
-        newAccountStorageTrie(Hash.wrap(accountHash), storageRoot);
     final Proof<Bytes> storageProof =
-        includeLeafNodes
-            ? storageTrie.getValueWithProof(slotHash)
-            : storageTrie.getProofWithoutValue(slotHash);
+        newAccountStorageTrie(Hash.wrap(accountHash), storageRoot).getValueWithProof(slotHash);
     return storageProof.getProofRelatedNodes();
   }
 
