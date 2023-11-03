@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -159,7 +160,9 @@ class LogRollingTests {
 
     final BonsaiWorldState worldState =
         new BonsaiWorldState(
-            archive, new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()));
+            archive,
+            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
+            EvmConfiguration.DEFAULT);
     final WorldUpdater updater = worldState.updater();
 
     final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
@@ -171,7 +174,8 @@ class LogRollingTests {
     final BonsaiWorldState secondWorldState =
         new BonsaiWorldState(
             secondArchive,
-            new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()));
+            new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()),
+            EvmConfiguration.DEFAULT);
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
 
@@ -200,7 +204,9 @@ class LogRollingTests {
   void rollForwardTwice() {
     final BonsaiWorldState worldState =
         new BonsaiWorldState(
-            archive, new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()));
+            archive,
+            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
+            EvmConfiguration.DEFAULT);
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
@@ -220,7 +226,8 @@ class LogRollingTests {
     final BonsaiWorldState secondWorldState =
         new BonsaiWorldState(
             secondArchive,
-            new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()));
+            new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()),
+            EvmConfiguration.DEFAULT);
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
 
@@ -250,7 +257,9 @@ class LogRollingTests {
   void rollBackOnce() {
     final BonsaiWorldState worldState =
         new BonsaiWorldState(
-            archive, new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()));
+            archive,
+            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
+            EvmConfiguration.DEFAULT);
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
@@ -277,7 +286,8 @@ class LogRollingTests {
     final BonsaiWorldState secondWorldState =
         new BonsaiWorldState(
             secondArchive,
-            new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()));
+            new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()),
+            EvmConfiguration.DEFAULT);
 
     final WorldUpdater secondUpdater = secondWorldState.updater();
     final MutableAccount secondMutableAccount =
