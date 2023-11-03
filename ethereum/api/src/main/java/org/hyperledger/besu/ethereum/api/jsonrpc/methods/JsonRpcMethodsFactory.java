@@ -80,7 +80,8 @@ public class JsonRpcMethodsFactory {
       final EthPeers ethPeers,
       final Vertx consensusEngineServer,
       final Optional<Long> maxLogRange,
-      final Optional<EnodeDnsConfiguration> enodeDnsConfiguration) {
+      final Optional<EnodeDnsConfiguration> enodeDnsConfiguration,
+      final Optional<Long> rpcGasCap) {
     final Map<String, JsonRpcMethod> enabled = new HashMap<>();
     if (!rpcApis.isEmpty()) {
       final JsonRpcMethod modules = new RpcModules(rpcApis);
@@ -121,7 +122,8 @@ public class JsonRpcMethodsFactory {
                   transactionPool,
                   miningCoordinator,
                   supportedCapabilities,
-                  maxLogRange),
+                  maxLogRange,
+                  rpcGasCap),
               new NetJsonRpcMethods(
                   p2pNetwork,
                   networkId,

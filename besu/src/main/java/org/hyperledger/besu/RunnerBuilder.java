@@ -192,6 +192,7 @@ public class RunnerBuilder {
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private boolean legacyForkIdEnabled;
   private Optional<Long> rpcMaxLogsRange;
+  private Optional<Long> rpcGasCap;
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
 
   /**
@@ -583,6 +584,16 @@ public class RunnerBuilder {
    */
   public RunnerBuilder rpcMaxLogsRange(final Long rpcMaxLogsRange) {
     this.rpcMaxLogsRange = rpcMaxLogsRange > 0 ? Optional.of(rpcMaxLogsRange) : Optional.empty();
+    return this;
+  }
+  /**
+   * Add Rpc gas cap.
+   *
+   * @param rpcGasCap the max gas tx simulator methods can use
+   * @return the runner builder
+   */
+  public RunnerBuilder rpcGasCap(final Long rpcGasCap) {
+    this.rpcGasCap = rpcGasCap > 0 ? Optional.of(rpcGasCap) : Optional.empty();
     return this;
   }
 
@@ -1240,7 +1251,8 @@ public class RunnerBuilder {
                 besuController.getProtocolManager().ethContext().getEthPeers(),
                 consensusEngineServer,
                 rpcMaxLogsRange,
-                enodeDnsConfiguration);
+                enodeDnsConfiguration,
+                    rpcGasCap);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
 
     final var pluginMethods =

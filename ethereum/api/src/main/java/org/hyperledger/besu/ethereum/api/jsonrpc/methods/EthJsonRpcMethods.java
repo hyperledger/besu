@@ -88,6 +88,8 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final Set<Capability> supportedCapabilities;
   private final Optional<Long> maxLogRange;
 
+  private final Optional<Long> rpcGasCap;
+
   public EthJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final Synchronizer synchronizer,
@@ -96,7 +98,8 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
       final Set<Capability> supportedCapabilities,
-      final Optional<Long> maxLogRange) {
+      final Optional<Long> maxLogRange,
+      final Optional<Long> rpcGasCap) {
     this.blockchainQueries = blockchainQueries;
     this.synchronizer = synchronizer;
     this.protocolSchedule = protocolSchedule;
@@ -105,6 +108,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.miningCoordinator = miningCoordinator;
     this.supportedCapabilities = supportedCapabilities;
     this.maxLogRange = maxLogRange;
+    this.rpcGasCap = rpcGasCap;
   }
 
   @Override
@@ -128,7 +132,8 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule)),
+                protocolSchedule),
+                rpcGasCap),
         new EthFeeHistory(protocolSchedule, blockchainQueries.getBlockchain()),
         new EthGetCode(blockchainQueries),
         new EthGetLogs(blockchainQueries, maxLogRange),
@@ -157,7 +162,8 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule)),
+                protocolSchedule),
+                rpcGasCap),
         new EthCreateAccessList(
             blockchainQueries,
             new TransactionSimulator(

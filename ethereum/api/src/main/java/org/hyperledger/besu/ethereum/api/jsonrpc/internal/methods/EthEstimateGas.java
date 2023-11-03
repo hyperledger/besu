@@ -32,11 +32,19 @@ import org.hyperledger.besu.evm.tracing.EstimateGasOperationTracer;
 
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class EthEstimateGas extends AbstractEstimateGas {
+  private static final Logger LOG = LoggerFactory.getLogger(EthEstimateGas.class);
+  private final Optional<Long> rpcGasCap;
 
   public EthEstimateGas(
-      final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
+      final BlockchainQueries blockchainQueries,
+      final TransactionSimulator transactionSimulator,
+      final Optional<Long> rpcGasCap) {
     super(blockchainQueries, transactionSimulator);
+    this.rpcGasCap = rpcGasCap;
   }
 
   @Override
@@ -58,8 +66,14 @@ public class EthEstimateGas extends AbstractEstimateGas {
       return errorResponse(requestContext, RpcErrorType.WORLD_STATE_UNAVAILABLE);
     }
 
-    final CallParameter modifiedCallParams =
-        overrideGasLimitAndPrice(callParams, blockHeader.getGasLimit());
+    // gasLimit == -1 means no gasLimit was specified in the callParams
+    // so we apply the lowest between blockheader gasLimit and gasCap
+    long minGasCap =
+        rpcGasCap
+            .map(gasCap -> Math.min(gasCap, blockHeader.getGasLimit()))
+            .orElseGet(blockHeader::getGasLimit);
+    LOG.info("Capping gas limit to " + minGasCap);
+    final CallParameter modifiedCallParams = overrideGasLimitAndPrice(callParams, minGasCap);
 
     final boolean isAllowExceedingBalance = !callParams.isMaybeStrict().orElse(Boolean.FALSE);
 

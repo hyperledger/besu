@@ -35,18 +35,25 @@ import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParam
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
+import java.util.Optional;
+
 public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   private final TransactionSimulator transactionSimulator;
+  private final Optional<Long> rpcGasCap;
 
   public EthCall(
-      final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
+      final BlockchainQueries blockchainQueries,
+      final TransactionSimulator transactionSimulator,
+      final Optional<Long> rpcGasCap) {
     super(blockchainQueries);
     this.transactionSimulator = transactionSimulator;
+    this.rpcGasCap = rpcGasCap;
   }
 
   @Override
@@ -75,9 +82,12 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
       final JsonRpcRequestContext request, final BlockHeader header) {
     JsonCallParameter callParams = JsonCallParameterUtil.validateAndGetCallParams(request);
 
+    // if gasCap has been set and is lower than the current gasLimit we cap it.
+    final CallParameter modifiedCallParameters = CallParameter.applyGasCap(callParams, rpcGasCap);
+
     return transactionSimulator
         .process(
-            callParams,
+            modifiedCallParameters,
             buildTransactionValidationParams(header, callParams),
             OperationTracer.NO_TRACING,
             (mutableWorldState, transactionSimulatorResult) ->

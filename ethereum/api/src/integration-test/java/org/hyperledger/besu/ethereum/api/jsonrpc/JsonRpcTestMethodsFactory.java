@@ -188,6 +188,7 @@ public class JsonRpcTestMethodsFactory {
             ethPeers,
             Vertx.vertx(new VertxOptions().setWorkerPoolSize(1)),
             Optional.empty(),
+            Optional.empty(),
             Optional.empty());
   }
 }

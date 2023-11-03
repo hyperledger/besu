@@ -1234,6 +1234,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Long rpcMaxLogsRange = 5000L;
 
   @CommandLine.Option(
+      names = {"--rpc-gas-cap"},
+      description =
+          "Specifies the maximum number of blocks to retrieve logs from via RPC. Must be >=0. 0 specifies no limit  (default: ${DEFAULT-VALUE})")
+  private final Long rpcGasCap = 50_000_000L;
+
+  @CommandLine.Option(
       names = {"--cache-last-blocks"},
       description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
   private final Integer numberOfblocksToCache = 0;
@@ -2892,6 +2898,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .rpcEndpointService(rpcEndpointServiceImpl)
             .rpcMaxLogsRange(rpcMaxLogsRange)
+            .rpcGasCap(rpcGasCap)
             .enodeDnsConfiguration(getEnodeDnsConfiguration())
             .build();
 
