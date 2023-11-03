@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,18 +73,18 @@ public class TrieLogPruner {
         .setMessage("Loading first {} trie logs from database...")
         .addArgument(loadingLimit)
         .log();
-    final Stream<byte[]> trieLogs = rootWorldStateStorage.streamTrieLogKeys(loadingLimit);
+    final Stream<byte[]> trieLogKeys = rootWorldStateStorage.streamTrieLogKeys(loadingLimit);
     final AtomicLong count = new AtomicLong();
-    trieLogs.forEach(
-        hashAsBytes -> {
-          Hash hash = Hash.wrap(Bytes32.wrap(hashAsBytes));
+    trieLogKeys.forEach(
+        blockHashAsBytes -> {
+          Hash hash = Hash.wrap(Bytes32.wrap(blockHashAsBytes));
           final Optional<BlockHeader> header = blockchain.getBlockHeader(hash);
           if (header.isPresent()) {
-            knownTrieLogKeysByDescendingBlockNumber.put(header.get().getNumber(), hashAsBytes);
+            knownTrieLogKeysByDescendingBlockNumber.put(header.get().getNumber(), blockHashAsBytes);
             count.getAndIncrement();
           } else {
             // prune orphaned blocks (sometimes created during block production)
-            rootWorldStateStorage.pruneTrieLog(hashAsBytes);
+            rootWorldStateStorage.pruneTrieLog(blockHashAsBytes);
           }
         });
     LOG.atInfo().log("Loaded {} trie logs from database", count);
@@ -99,17 +100,34 @@ public class TrieLogPruner {
   }
 
   void pruneFromCache() {
+
     final long retainAboveThisBlock = blockchain.getChainHeadBlockNumber() - numBlocksToRetain;
+    final long retainAboveThisBlockOrFinalized =
+        blockchain
+            .getFinalized()
+            .flatMap(blockchain::getBlockHeader)
+            .map(ProcessableBlockHeader::getNumber)
+            .map(finalizedBlock -> Math.min(finalizedBlock, retainAboveThisBlock))
+            .orElse(retainAboveThisBlock);
+
     LOG.atTrace()
-        .setMessage("(chainHeadNumber: {} - numBlocksToRetain: {}) = retainAboveThisBlock: {}")
+        .setMessage(
+            "min((chainHeadNumber: {} - numBlocksToRetain: {}), finalized: {})) = retainAboveThisBlockOrFinalized: {}")
         .addArgument(blockchain.getChainHeadBlockNumber())
         .addArgument(numBlocksToRetain)
-        .addArgument(retainAboveThisBlock)
+        .addArgument(
+            () ->
+                blockchain
+                    .getFinalized()
+                    .flatMap(blockchain::getBlockHeader)
+                    .map(ProcessableBlockHeader::getNumber)
+                    .orElse(null))
+        .addArgument(retainAboveThisBlockOrFinalized)
         .log();
 
     final var pruneWindowEntries =
         knownTrieLogKeysByDescendingBlockNumber.asMap().entrySet().stream()
-            .dropWhile((e) -> e.getKey() > retainAboveThisBlock)
+            .dropWhile((e) -> e.getKey() > retainAboveThisBlockOrFinalized)
             .limit(pruningLimit);
 
     final List<Long> blockNumbersToRemove = new ArrayList<>();
