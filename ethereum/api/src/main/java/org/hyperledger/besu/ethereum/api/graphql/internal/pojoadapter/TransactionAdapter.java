@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -233,6 +234,22 @@ public class TransactionAdapter extends AdapterBase {
       }
     }
     return results;
+  }
+
+  public BigInteger getR() {
+    return transactionWithMetadata.getTransaction().getR();
+  }
+
+  public BigInteger getS() {
+    return transactionWithMetadata.getTransaction().getS();
+  }
+
+  public Optional<BigInteger> getV() {
+    return Optional.ofNullable(transactionWithMetadata.getTransaction().getV());
+  }
+
+  public Optional<BigInteger> getYParity() {
+    return Optional.ofNullable(transactionWithMetadata.getTransaction().getYParity());
   }
 
   public List<AccessListEntryAdapter> getAccessList() {
