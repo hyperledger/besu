@@ -106,15 +106,18 @@ public class TransactionPendingResult implements TransactionResult {
         TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.POOLED_TRANSACTION)
             .toString();
     this.to = transaction.getTo().map(Address::toHexString).orElse(null);
-    if (transactionType.equals(TransactionType.FRONTIER)) {
+    if (transactionType == TransactionType.FRONTIER) {
       this.type = Quantity.create(0);
       this.yParity = null;
       this.v = Quantity.create(transaction.getV());
-
     } else {
       this.type = Quantity.create(transactionType.getSerializedType());
       this.yParity = Quantity.create(transaction.getYParity());
-      this.v = null;
+      this.v =
+              (transactionType == TransactionType.ACCESS_LIST
+                      || transactionType == TransactionType.EIP1559)
+                      ? this.yParity
+                      : null;
     }
     this.value = Quantity.create(transaction.getValue());
     this.r = Quantity.create(transaction.getR());

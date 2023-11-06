@@ -63,15 +63,18 @@ public class PendingTransactionDetailResult implements JsonRpcResult {
     this.input = tx.getPayload().toString();
     this.nonce = Quantity.create(tx.getNonce());
     this.to = tx.getTo().map(Bytes::toHexString).orElse(null);
-    if (transactionType.equals(TransactionType.FRONTIER)) {
+    if (transactionType == TransactionType.FRONTIER) {
       this.type = Quantity.create(0);
       this.yParity = null;
       this.v = Quantity.create(tx.getV());
-
     } else {
       this.type = Quantity.create(transactionType.getSerializedType());
       this.yParity = Quantity.create(tx.getYParity());
-      this.v = null;
+      this.v =
+          (transactionType == TransactionType.ACCESS_LIST
+                  || transactionType == TransactionType.EIP1559)
+              ? this.yParity
+              : null;
     }
     this.value = Quantity.create(tx.getValue());
     this.r = Quantity.create(tx.getR());

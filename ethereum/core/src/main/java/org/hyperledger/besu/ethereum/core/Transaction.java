@@ -487,17 +487,14 @@ public class Transaction
 
   @Override
   public BigInteger getV() {
-    final BigInteger recId = BigInteger.valueOf(signature.getRecId());
-    // Java21 - this can be a switch with a null case, java 17 doesn't support it.
-    if (transactionType == null || transactionType == TransactionType.FRONTIER) {
+    if (transactionType != null && transactionType != TransactionType.FRONTIER) {
+      // EIP-2718 typed transaction, use yParity:
+      return null;
+    } else {
+      final BigInteger recId = BigInteger.valueOf(signature.getRecId());
       return chainId
           .map(bigInteger -> recId.add(REPLAY_PROTECTED_V_BASE).add(TWO.multiply(bigInteger)))
           .orElseGet(() -> recId.add(REPLAY_UNPROTECTED_V_BASE));
-    } else if (transactionType == TransactionType.ACCESS_LIST || transactionType == TransactionType.EIP1559) {
-      return recId;
-    } else {
-      // covers TransactionType.BLOB and future types
-      return null;
     }
   }
 

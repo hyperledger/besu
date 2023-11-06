@@ -116,15 +116,18 @@ public class TransactionCompleteResult implements TransactionResult {
     this.nonce = Quantity.create(transaction.getNonce());
     this.to = transaction.getTo().map(Bytes::toHexString).orElse(null);
     this.transactionIndex = Quantity.create(tx.getTransactionIndex().get());
-    if (transactionType.equals(TransactionType.FRONTIER)) {
+    if (transactionType == TransactionType.FRONTIER) {
       this.type = Quantity.create(0);
       this.yParity = null;
       this.v = Quantity.create(transaction.getV());
-
     } else {
       this.type = Quantity.create(transactionType.getSerializedType());
       this.yParity = Quantity.create(transaction.getYParity());
-      this.v = null;
+      this.v =
+          (transactionType == TransactionType.ACCESS_LIST
+                  || transactionType == TransactionType.EIP1559)
+              ? this.yParity
+              : null;
     }
     this.value = Quantity.create(transaction.getValue());
     this.r = Quantity.create(transaction.getR());
