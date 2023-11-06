@@ -114,7 +114,7 @@ public class TrieLogPruner {
     LOG.atTrace()
         .setMessage(
             "min((chainHeadNumber: {} - numBlocksToRetain: {}), finalized: {})) = retainAboveThisBlockOrFinalized: {}")
-        .addArgument(blockchain.getChainHeadBlockNumber())
+        .addArgument(blockchain::getChainHeadBlockNumber)
         .addArgument(numBlocksToRetain)
         .addArgument(
             () ->
@@ -152,7 +152,7 @@ public class TrieLogPruner {
     LOG.atDebug()
         .setMessage("pruned {} trie logs from {} blocks")
         .addArgument(count)
-        .addArgument(blockNumbersToRemove.size())
+        .addArgument(blockNumbersToRemove::size)
         .log();
   }
 
