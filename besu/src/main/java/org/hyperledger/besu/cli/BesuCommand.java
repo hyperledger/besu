@@ -296,7 +296,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final ChainPruningOptions unstableChainPruningOptions = ChainPruningOptions.create();
 
   // stable CLI options
-  private final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
+  final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
   private final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
   private final NodePrivateKeyFileOption nodePrivateKeyFileOption =
       NodePrivateKeyFileOption.create();
@@ -1789,12 +1789,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateChainDataPruningParams();
     validatePostMergeCheckpointBlockRequirements();
     validateTransactionPoolOptions();
+    validateDataStorageOptions();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
     pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
   }
 
   private void validateTransactionPoolOptions() {
     stableTransactionPoolOptions.validate(commandLine);
+  }
+
+  private void validateDataStorageOptions() {
+    dataStorageOptions.validate(commandLine);
   }
 
   private void validateRequiredOptions() {
@@ -3432,10 +3437,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setHighSpecEnabled();
     }
 
-    builder.setTrieLogRetentionThreshold(
-        dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogRetentionThreshold());
-    builder.setTrieLogPruningLimit(
-        dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningLimit());
+    if (dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningEnabled()) {
+      builder.setTrieLogPruningEnabled();
+      builder.setTrieLogRetentionThreshold(
+          dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogRetentionThreshold());
+      builder.setTrieLogPruningLimit(
+          dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningLimit());
+    }
 
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
     builder.setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode());

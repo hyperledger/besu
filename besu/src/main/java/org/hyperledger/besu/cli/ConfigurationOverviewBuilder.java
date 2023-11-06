@@ -50,6 +50,7 @@ public class ConfigurationOverviewBuilder {
   private Collection<String> engineApis;
   private String engineJwtFilePath;
   private boolean isHighSpec = false;
+  private boolean isTrieLogPruningEnabled = false;
   private long trieLogRetentionThreshold = 0;
   private Integer trieLogPruningLimit = null;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
@@ -170,6 +171,16 @@ public class ConfigurationOverviewBuilder {
    */
   public ConfigurationOverviewBuilder setHighSpecEnabled() {
     isHighSpec = true;
+    return this;
+  }
+
+  /**
+   * Sets trie log pruning enabled
+   *
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setTrieLogPruningEnabled() {
+    isTrieLogPruningEnabled = true;
     return this;
   }
 
@@ -298,7 +309,7 @@ public class ConfigurationOverviewBuilder {
 
     lines.add("Using " + worldStateUpdateMode + " worldstate update mode");
 
-    if (trieLogRetentionThreshold > 0) {
+    if (isTrieLogPruningEnabled) {
       lines.add("Trie log pruning enabled:");
       lines.add("  - retention threshold: " + trieLogRetentionThreshold + " blocks");
       if (trieLogPruningLimit != null) {
