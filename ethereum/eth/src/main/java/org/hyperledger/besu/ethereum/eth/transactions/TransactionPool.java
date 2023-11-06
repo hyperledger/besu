@@ -229,6 +229,9 @@ public class TransactionPool implements BlockAddedObserver {
     final boolean hasPriority = isPriorityTransaction(transaction, isLocal);
 
     if (pendingTransactions.containsTransaction(transaction)) {
+      if(transaction.getType().supportsBlob()) {
+        pendingTransactions.restoreBlob(transaction);
+      }
       LOG.atTrace()
           .setMessage("Discard already present transaction {}")
           .addArgument(transaction::toTraceLog)
@@ -239,6 +242,7 @@ public class TransactionPool implements BlockAddedObserver {
     }
     // if adding a blob tx, and it is missing its blob, is a re-org and we should restore the blob
     // from cache.
+
 
     final ValidationResultAndAccount validationResult =
         validateTransaction(transaction, isLocal, hasPriority);
