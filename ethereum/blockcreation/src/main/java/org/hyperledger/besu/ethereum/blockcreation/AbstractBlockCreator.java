@@ -172,10 +172,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               timestamp, maybePrevRandao, maybeParentBeaconBlockRoot, newProtocolSpec);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.getMiningBeneficiary(processableBlockHeader.getNumber());
-      Wei blobGasPrice =
-          newProtocolSpec
-              .getFeeMarket()
-              .blobGasPricePerGas(calculateExcessBlobGasForParent(newProtocolSpec, parentHeader));
 
       throwIfStopped();
 
@@ -193,7 +189,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               disposableWorldState,
               maybeTransactions,
               miningBeneficiary,
-              blobGasPrice,
               newProtocolSpec);
 
       transactionResults.logSelectionStats();
@@ -321,13 +316,17 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final MutableWorldState disposableWorldState,
       final Optional<List<Transaction>> transactions,
       final Address miningBeneficiary,
-      final Wei blobGasPrice,
       final ProtocolSpec protocolSpec)
       throws RuntimeException {
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
 
     final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
         protocolSpec.getTransactionReceiptFactory();
+
+    Wei blobGasPrice =
+        protocolSpec
+            .getFeeMarket()
+            .blobGasPricePerGas(calculateExcessBlobGasForParent(protocolSpec, parentHeader));
 
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
