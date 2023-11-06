@@ -1236,7 +1236,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @CommandLine.Option(
       names = {"--rpc-gas-cap"},
       description =
-          "Specifies the maximum number of blocks to retrieve logs from via RPC. Must be >=0. 0 specifies no limit  (default: ${DEFAULT-VALUE})")
+          "Caps the max gas limit the methods eth_call and eth_estimateGas can use. Must be >=0. 0 specifies no limit  (default: ${DEFAULT-VALUE})")
   private final Long rpcGasCap = 50_000_000L;
 
   @CommandLine.Option(

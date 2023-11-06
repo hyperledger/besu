@@ -1556,7 +1556,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void maxpeersOptionMustBeUsed() {
+  public void maxPeersOptionMustBeUsed() {
 
     final int maxPeers = 123;
     parseCommand("--max-peers", String.valueOf(maxPeers));
@@ -1579,6 +1579,20 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).build();
 
     assertThat(longArgumentCaptor.getValue()).isEqualTo(rpcMaxLogsRange);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcGasCapOptionMustBeUsed() {
+    final long rpcGasCap = 150L;
+    parseCommand("--rpc-gas-cap", Long.toString(rpcGasCap));
+
+    verify(mockRunnerBuilder).rpcGasCap(longArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(longArgumentCaptor.getValue()).isEqualTo(rpcGasCap);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
