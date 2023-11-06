@@ -39,6 +39,7 @@ public class StructLog {
   private final String[] stack;
   private final Object storage;
   private final String reason;
+  static final String bytes32ZeroString = Bytes32.ZERO.toUnprefixedHexString();
 
   public StructLog(final TraceFrame traceFrame) {
     depth = traceFrame.getDepth() + 1;
@@ -57,12 +58,20 @@ public class StructLog {
             .map(
                 a ->
                     Arrays.stream(a)
-                        .map(Bytes32::leftPad)
                         .map(Bytes::toUnprefixedHexString)
+                        .map(this::stringLeftPadTo64)
                         .toArray(String[]::new))
             .orElse(null);
+
     storage = traceFrame.getStorage().map(StructLog::formatStorage).orElse(null);
     reason = traceFrame.getRevertReason().map(Bytes::toShortHexString).orElse(null);
+  }
+
+  private String stringLeftPadTo64(final String unPaddedHexString) {
+    StringBuilder sb = new StringBuilder(64);
+    sb.append(bytes32ZeroString, 0, 64 - unPaddedHexString.length());
+    sb.append(unPaddedHexString);
+    return sb.toString();
   }
 
   private static Map<String, String> formatStorage(final Map<UInt256, UInt256> storage) {
