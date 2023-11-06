@@ -114,10 +114,10 @@ public class TransactionPendingResult implements TransactionResult {
       this.type = Quantity.create(transactionType.getSerializedType());
       this.yParity = Quantity.create(transaction.getYParity());
       this.v =
-              (transactionType == TransactionType.ACCESS_LIST
-                      || transactionType == TransactionType.EIP1559)
-                      ? this.yParity
-                      : null;
+          (transactionType == TransactionType.ACCESS_LIST
+                  || transactionType == TransactionType.EIP1559)
+              ? this.yParity
+              : null;
     }
     this.value = Quantity.create(transaction.getValue());
     this.r = Quantity.create(transaction.getR());
