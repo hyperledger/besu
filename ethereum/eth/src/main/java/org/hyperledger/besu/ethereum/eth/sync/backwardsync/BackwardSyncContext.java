@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
+import static org.hyperledger.besu.ethereum.chain.BadBlockManager.MAX_BAD_BLOCKS_SIZE;
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -368,7 +369,9 @@ public class BackwardSyncContext {
 
     Optional<Hash> descendant = backwardChain.getDescendant(badBlock.getHash());
 
-    while (descendant.isPresent()) {
+    while (descendant.isPresent()
+        && badBlockDescendants.size() <= MAX_BAD_BLOCKS_SIZE
+        && badBlockHeaderDescendants.size() <= MAX_BAD_BLOCKS_SIZE) {
       final Optional<Block> block = backwardChain.getBlock(descendant.get());
       if (block.isPresent()) {
         badBlockDescendants.add(block.get());
