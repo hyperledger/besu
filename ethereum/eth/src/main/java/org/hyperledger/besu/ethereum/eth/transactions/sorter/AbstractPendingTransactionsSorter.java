@@ -131,7 +131,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         "transactions",
         "Current size of the transaction pool",
         pendingTransactions::size);
-    //TODO: needs size limit, ttl policy and eviction on finalization policy
+    // TODO: needs size limit, ttl policy and eviction on finalization policy
     this.blobCache = Caffeine.newBuilder().build();
   }
 

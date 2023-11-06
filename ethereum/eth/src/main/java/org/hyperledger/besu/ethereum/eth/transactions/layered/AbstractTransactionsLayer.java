@@ -91,7 +91,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     metrics.initSpaceUsed(this::getLayerSpaceUsed, name());
     metrics.initTransactionCount(pendingTransactions::size, name());
     metrics.initUniqueSenderCount(txsBySender::size, name());
-    //TODO: needs size limit, ttl policy and eviction on finalization policy
+    // TODO: needs size limit, ttl policy and eviction on finalization policy
     this.blobCache = Caffeine.newBuilder().build();
   }
 
