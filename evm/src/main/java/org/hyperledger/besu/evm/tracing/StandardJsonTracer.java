@@ -18,13 +18,9 @@ package org.hyperledger.besu.evm.tracing;
 
 import static com.google.common.base.Strings.padStart;
 
-import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.internal.Words;
-import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.Operation;
-import org.hyperledger.besu.evm.worldstate.WorldView;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -255,26 +251,5 @@ public class StandardJsonTracer implements OperationTracer {
   public void traceAccountCreationResult(
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {
     // precompile calls are not part of the standard trace
-  }
-
-  @Override
-  public void traceEndTransaction(
-      final WorldView _worldView,
-      final Transaction _tx,
-      final boolean _status,
-      final Bytes output,
-      final List<Log> _logs,
-      final long gasUsed,
-      final long timeNs) {
-    final StringBuilder sb = new StringBuilder(1024);
-    sb.append("{");
-    if (!output.isEmpty()) {
-      sb.append("\"output\":\"").append(output.toShortHexString()).append("\",");
-    } else {
-      sb.append("\"output\":\"\",");
-    }
-    sb.append("\"gasUsed\":\"").append(Words.longBytes(gasUsed).toShortHexString()).append("\",");
-    sb.append("\"time\":").append(timeNs).append("}");
-    out.println(sb);
   }
 }
