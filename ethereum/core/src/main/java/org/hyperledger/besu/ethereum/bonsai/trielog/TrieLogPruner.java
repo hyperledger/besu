@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -32,7 +31,6 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,8 +48,9 @@ public class TrieLogPruner {
   private final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
   private final Blockchain blockchain;
   private final long numBlocksToRetain;
-  private static final Multimap<Long, byte[]> knownTrieLogKeysByDescendingBlockNumber =
-      TreeMultimap.create(Comparator.reverseOrder(), Comparator.comparingInt(Arrays::hashCode));
+
+  private static final Multimap<Long, Hash> trieLogBlocksAndForksByDescendingBlockNumber =
+      TreeMultimap.create(Comparator.reverseOrder(), Comparator.naturalOrder());
 
   public TrieLogPruner(
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
@@ -78,27 +77,27 @@ public class TrieLogPruner {
     final AtomicLong count = new AtomicLong();
     trieLogKeys.forEach(
         blockHashAsBytes -> {
-          Hash hash = Hash.wrap(Bytes32.wrap(blockHashAsBytes));
-          final Optional<BlockHeader> header = blockchain.getBlockHeader(hash);
+          Hash blockHash = Hash.wrap(Bytes32.wrap(blockHashAsBytes));
+          final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);
           if (header.isPresent()) {
-            knownTrieLogKeysByDescendingBlockNumber.put(header.get().getNumber(), blockHashAsBytes);
+            trieLogBlocksAndForksByDescendingBlockNumber.put(header.get().getNumber(), blockHash);
             count.getAndIncrement();
           } else {
             // prune orphaned blocks (sometimes created during block production)
-            rootWorldStateStorage.pruneTrieLog(blockHashAsBytes);
+            rootWorldStateStorage.pruneTrieLog(blockHash);
           }
         });
     LOG.atInfo().log("Loaded {} trie logs from database", count);
     pruneFromCache();
   }
 
-  void cacheForLaterPruning(final long blockNumber, final byte[] trieLogKey) {
+  void cacheForLaterPruning(final long blockNumber, final Hash blockHash) {
     LOG.atTrace()
-        .setMessage("caching trie log for later pruning blockNumber {}; trieLogKey (blockHash) {}")
+        .setMessage("caching trie log for later pruning blockNumber {}; blockHash {}")
         .addArgument(blockNumber)
-        .addArgument(Bytes.wrap(trieLogKey).toHexString())
+        .addArgument(blockHash)
         .log();
-    knownTrieLogKeysByDescendingBlockNumber.put(blockNumber, trieLogKey);
+    trieLogBlocksAndForksByDescendingBlockNumber.put(blockNumber, blockHash);
   }
 
   void pruneFromCache() {
@@ -114,9 +113,10 @@ public class TrieLogPruner {
 
     LOG.atTrace()
         .setMessage(
-            "min((chainHeadNumber: {} - numBlocksToRetain: {}), finalized: {})) = retainAboveThisBlockOrFinalized: {}")
+            "min((chainHeadNumber: {} - numBlocksToRetain: {}) = {}, finalized: {})) = retainAboveThisBlockOrFinalized: {}")
         .addArgument(blockchain::getChainHeadBlockNumber)
         .addArgument(numBlocksToRetain)
+        .addArgument(retainAboveThisBlock)
         .addArgument(
             () ->
                 blockchain
@@ -128,7 +128,7 @@ public class TrieLogPruner {
         .log();
 
     final var pruneWindowEntries =
-        knownTrieLogKeysByDescendingBlockNumber.asMap().entrySet().stream()
+        trieLogBlocksAndForksByDescendingBlockNumber.asMap().entrySet().stream()
             .dropWhile((e) -> e.getKey() > retainAboveThisBlockOrFinalized)
             .limit(pruningLimit);
 
@@ -137,14 +137,15 @@ public class TrieLogPruner {
     final AtomicInteger count = new AtomicInteger();
     pruneWindowEntries.forEach(
         (e) -> {
-          for (byte[] trieLogKey : e.getValue()) {
-            rootWorldStateStorage.pruneTrieLog(trieLogKey);
+          for (Hash blockHash : e.getValue()) {
+            rootWorldStateStorage.pruneTrieLog(blockHash);
             count.getAndIncrement();
           }
           blockNumbersToRemove.add(e.getKey());
         });
 
-    blockNumbersToRemove.forEach(knownTrieLogKeysByDescendingBlockNumber::removeAll);
+    // TODO SLD could just remove each key inline?
+    blockNumbersToRemove.forEach(trieLogBlocksAndForksByDescendingBlockNumber::removeAll);
     LOG.atTrace()
         .setMessage("pruned {} trie logs for blocks {}")
         .addArgument(count)
@@ -176,7 +177,7 @@ public class TrieLogPruner {
     }
 
     @Override
-    void cacheForLaterPruning(final long blockNumber, final byte[] trieLogKey) {
+    void cacheForLaterPruning(final long blockNumber, final Hash blockHash) {
       // no-op
     }
 

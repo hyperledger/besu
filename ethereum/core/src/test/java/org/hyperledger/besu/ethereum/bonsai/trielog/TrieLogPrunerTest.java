@@ -20,6 +20,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -31,6 +32,7 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
@@ -47,6 +49,27 @@ public class TrieLogPrunerTest {
     blockchain = Mockito.mock(Blockchain.class);
   }
 
+  @Test
+  public void initialize_preloads_cache_and_prunes_orphaned_blocks() {
+    // Given
+    int loadingLimit = 2;
+    final BlockDataGenerator generator = new BlockDataGenerator();
+    final BlockHeader header1 = generator.header(1);
+    final BlockHeader header2 = generator.header(2);
+    when(worldState.streamTrieLogKeys(loadingLimit))
+        .thenReturn(Stream.of(header1.getBlockHash().toArray(), header2.getBlockHash().toArray()));
+    when(blockchain.getBlockHeader(header1.getBlockHash())).thenReturn(Optional.of(header1));
+    when(blockchain.getBlockHeader(header2.getBlockHash())).thenReturn(Optional.empty());
+
+    // When
+    TrieLogPruner trieLogPruner = new TrieLogPruner(worldState, blockchain, 3, loadingLimit);
+    trieLogPruner.initialize();
+
+    // Then
+    verify(worldState, times(1)).streamTrieLogKeys(2);
+    verify(worldState, times(1)).pruneTrieLog(header2.getBlockHash());
+  }
+
   @SuppressWarnings("BannedMethod")
   @Test
   public void trieLogs_pruned_in_reverse_order_within_pruning_window() {
@@ -57,51 +80,35 @@ public class TrieLogPrunerTest {
     // pruning window is below numBlocksToRetain and inside the pruningWindowSize offset.
     final long blocksToRetain = 3;
     final int pruningWindowSize = 2;
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(5L);
     TrieLogPruner trieLogPruner =
         new TrieLogPruner(worldState, blockchain, blocksToRetain, pruningWindowSize);
 
-    final byte[] key0 = new byte[] {1, 2, 3}; // older block outside the prune window
-    final byte[] key1 = new byte[] {1, 2, 3}; // block inside the prune window
-    final byte[] key2 = new byte[] {4, 5, 6}; // same block (fork)
-    final byte[] key3 = new byte[] {7, 8, 9}; // different block inside the prune window
-    final byte[] key4 = new byte[] {10, 11, 12}; // retained block
-    final byte[] key5 = new byte[] {13, 14, 15}; // different retained block
-    final byte[] key6 = new byte[] {7, 8, 9}; // another retained block
-    final long block0 = 1000L;
-    final long block1 = 1001L;
-    final long block2 = 1002L;
-    final long block3 = 1003L;
-    final long block4 = 1004L;
-    final long block5 = 1005L;
-
-    trieLogPruner.cacheForLaterPruning(block0, key0); // older block outside prune window
-    trieLogPruner.cacheForLaterPruning(block1, key1); // block inside the prune window
-    trieLogPruner.cacheForLaterPruning(block1, key2); // same block number (fork)
-    trieLogPruner.cacheForLaterPruning(block2, key3); // different block inside prune window
-    trieLogPruner.cacheForLaterPruning(block3, key4); // retained block
-    trieLogPruner.cacheForLaterPruning(block4, key5); // different retained block
-    trieLogPruner.cacheForLaterPruning(block5, key6); // another retained block
-
-    when(blockchain.getChainHeadBlockNumber()).thenReturn(block5);
+    trieLogPruner.cacheForLaterPruning(0, key(0)); // older block outside prune window
+    trieLogPruner.cacheForLaterPruning(1, key(1)); // block inside the prune window
+    trieLogPruner.cacheForLaterPruning(1, key(2)); // same block number (fork)
+    trieLogPruner.cacheForLaterPruning(2, key(3)); // different block inside prune window
+    trieLogPruner.cacheForLaterPruning(3, key(4)); // retained block
+    trieLogPruner.cacheForLaterPruning(4, key(5)); // different retained block
+    trieLogPruner.cacheForLaterPruning(5, key(6)); // another retained block
 
     // When
     trieLogPruner.pruneFromCache();
 
     // Then
     InOrder inOrder = Mockito.inOrder(worldState);
-    inOrder.verify(worldState, times(1)).pruneTrieLog(key3);
-    inOrder.verify(worldState, times(1)).pruneTrieLog(key1);
-    inOrder.verify(worldState, times(1)).pruneTrieLog(key2);
+    inOrder.verify(worldState, times(1)).pruneTrieLog(key(3));
+    inOrder.verify(worldState, times(1)).pruneTrieLog(key(1)); // forks in order
+    inOrder.verify(worldState, times(1)).pruneTrieLog(key(2));
 
     // Subsequent run should add one more block, then prune two oldest remaining keys
-    long block6 = 1006L;
-    trieLogPruner.cacheForLaterPruning(block6, new byte[] {1, 2, 3});
-    when(blockchain.getChainHeadBlockNumber()).thenReturn(block6);
+    trieLogPruner.cacheForLaterPruning(6, key(6));
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(6L);
 
     trieLogPruner.pruneFromCache();
 
-    inOrder.verify(worldState, times(1)).pruneTrieLog(key4);
-    inOrder.verify(worldState, times(1)).pruneTrieLog(key0);
+    inOrder.verify(worldState, times(1)).pruneTrieLog(key(4));
+    inOrder.verify(worldState, times(1)).pruneTrieLog(key(0));
   }
 
   @SuppressWarnings("BannedMethod")
@@ -200,28 +207,7 @@ public class TrieLogPrunerTest {
     return trieLogPruner;
   }
 
-  @Test
-  public void initialize_preloads_cache_and_prunes_orphaned_blocks() {
-    // Given
-    int loadingLimit = 2;
-    final BlockDataGenerator generator = new BlockDataGenerator();
-    final BlockHeader header1 = generator.header(1);
-    final BlockHeader header2 = generator.header(2);
-    when(worldState.streamTrieLogKeys(loadingLimit))
-        .thenReturn(Stream.of(header1.getBlockHash().toArray(), header2.getBlockHash().toArray()));
-    when(blockchain.getBlockHeader(header1.getBlockHash())).thenReturn(Optional.of(header1));
-    when(blockchain.getBlockHeader(header2.getBlockHash())).thenReturn(Optional.empty());
-
-    // When
-    TrieLogPruner trieLogPruner = new TrieLogPruner(worldState, blockchain, 3, loadingLimit);
-    trieLogPruner.initialize();
-
-    // Then
-    verify(worldState, times(1)).streamTrieLogKeys(2);
-    verify(worldState, times(1)).pruneTrieLog(header2.getBlockHash().toArray());
-  }
-
-  private byte[] key(final int k) {
-    return new byte[] {(byte) k};
+  private Hash key(final int k) {
+    return Hash.hash(Bytes.of(k));
   }
 }
