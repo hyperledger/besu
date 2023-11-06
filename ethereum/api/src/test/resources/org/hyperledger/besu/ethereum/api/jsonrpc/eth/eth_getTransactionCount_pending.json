@@ -11,7 +11,7 @@
   "response": {
     "jsonrpc": "2.0",
     "id": 488,
-    "result": "0x20"
+    "result": "0x22"
   },
   "statusCode": 200
 }
