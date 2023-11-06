@@ -29,22 +29,22 @@ public class DataStorageOptionsTest
     extends AbstractCLIOptionsTest<DataStorageConfiguration, DataStorageOptions> {
 
   @Test
-  public void bonsaiTrieLogPruneLimitOption() {
+  public void bonsaiTrieLogPruningLimitOption() {
     internalTestSuccess(
         dataStorageConfiguration ->
             assertThat(dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningLimit())
                 .isEqualTo(1),
         "--Xbonsai-trie-log-pruning-enabled",
-        "--Xbonsai-trie-log-prune-limit",
+        "--Xbonsai-trie-log-pruning-limit",
         "1");
   }
 
   @Test
-  public void bonsaiTrieLogPruneLimitShouldBePositive() {
+  public void bonsaiTrieLogPruningLimitShouldBePositive() {
     internalTestFailure(
-        "--Xbonsai-trie-log-prune-limit=0 must be greater than 0",
+        "--Xbonsai-trie-log-pruning-limit=0 must be greater than 0",
         "--Xbonsai-trie-log-pruning-enabled",
-        "--Xbonsai-trie-log-prune-limit",
+        "--Xbonsai-trie-log-pruning-limit",
         "0");
   }
 

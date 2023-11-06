@@ -17,8 +17,8 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNE_LIMIT;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_ENABLED;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_LIMIT;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
 
@@ -78,10 +78,10 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
 
     @CommandLine.Option(
         hidden = true,
-        names = {"--Xbonsai-trie-log-prune-limit"},
+        names = {"--Xbonsai-trie-log-pruning-limit"},
         description =
             "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
-    private int bonsaiTrieLogPruneLimit = DEFAULT_BONSAI_TRIE_LOG_PRUNE_LIMIT;
+    private int bonsaiTrieLogPruningLimit = DEFAULT_BONSAI_TRIE_LOG_PRUNING_LIMIT;
   }
   /**
    * Create data storage options.
@@ -107,12 +107,12 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
                 "--Xbonsai-trie-log-retention-threshold minimum value is %d",
                 MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD));
       }
-      if (unstableOptions.bonsaiTrieLogPruneLimit <= 0) {
+      if (unstableOptions.bonsaiTrieLogPruningLimit <= 0) {
         throw new CommandLine.ParameterException(
             commandLine,
             String.format(
-                "--Xbonsai-trie-log-prune-limit=%d must be greater than 0",
-                unstableOptions.bonsaiTrieLogPruneLimit));
+                "--Xbonsai-trie-log-pruning-limit=%d must be greater than 0",
+                unstableOptions.bonsaiTrieLogPruningLimit));
       }
     }
   }
@@ -125,7 +125,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         domainObject.getUnstable().getBonsaiTrieLogPruningEnabled();
     dataStorageOptions.unstableOptions.bonsaiTrieLogRetentionThreshold =
         domainObject.getUnstable().getBonsaiTrieLogRetentionThreshold();
-    dataStorageOptions.unstableOptions.bonsaiTrieLogPruneLimit =
+    dataStorageOptions.unstableOptions.bonsaiTrieLogPruningLimit =
         domainObject.getUnstable().getBonsaiTrieLogPruningLimit();
 
     return dataStorageOptions;
@@ -140,7 +140,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
             ImmutableDataStorageConfiguration.Unstable.builder()
                 .bonsaiTrieLogPruningEnabled(unstableOptions.bonsaiTrieLogPruningEnabled)
                 .bonsaiTrieLogRetentionThreshold(unstableOptions.bonsaiTrieLogRetentionThreshold)
-                .bonsaiTrieLogPruningLimit(unstableOptions.bonsaiTrieLogPruneLimit)
+                .bonsaiTrieLogPruningLimit(unstableOptions.bonsaiTrieLogPruningLimit)
                 .build())
         .build();
   }

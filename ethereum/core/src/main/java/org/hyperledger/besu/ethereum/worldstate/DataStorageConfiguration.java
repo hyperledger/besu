@@ -48,7 +48,7 @@ public interface DataStorageConfiguration {
     boolean DEFAULT_BONSAI_TRIE_LOG_PRUNING_ENABLED = false;
     long DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD = TrieLogPruner.DEFAULT_RETENTION_THRESHOLD;
     long MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD = TrieLogPruner.MINIMUM_RETENTION_THRESHOLD;
-    int DEFAULT_BONSAI_TRIE_LOG_PRUNE_LIMIT = TrieLogPruner.DEFAULT_PRUNING_LIMIT;
+    int DEFAULT_BONSAI_TRIE_LOG_PRUNING_LIMIT = TrieLogPruner.DEFAULT_PRUNING_LIMIT;
 
     DataStorageConfiguration.Unstable DEFAULT =
         ImmutableDataStorageConfiguration.Unstable.builder().build();
@@ -65,7 +65,7 @@ public interface DataStorageConfiguration {
 
     @Value.Default
     default int getBonsaiTrieLogPruningLimit() {
-      return DEFAULT_BONSAI_TRIE_LOG_PRUNE_LIMIT;
+      return DEFAULT_BONSAI_TRIE_LOG_PRUNING_LIMIT;
     }
   }
 }
