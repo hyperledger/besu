@@ -182,7 +182,7 @@ class EthGetTransactionByHashTest {
     assertThat(result.getTo()).isNotNull();
     assertThat(result.getValue()).isNotNull();
     assertThat(result.getYParity()).isNotNull();
-    assertThat(result.getV()).isNull();
+    assertThat(result.getV()).isNotNull();
     assertThat(result.getR()).isNotNull();
     assertThat(result.getS()).isNotNull();
   }
