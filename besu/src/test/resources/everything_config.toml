@@ -89,7 +89,7 @@ rpc-http-max-request-content-length = 5242880
 rpc-max-logs-range=100
 json-pretty-print-enabled=false
 cache-last-blocks=512
-gas-cap = 50000000
+rpc-gas-cap = 50000000
 
 # PRIVACY TLS
 privacy-tls-enabled=false

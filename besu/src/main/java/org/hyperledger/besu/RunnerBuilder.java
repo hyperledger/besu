@@ -1252,7 +1252,7 @@ public class RunnerBuilder {
                 consensusEngineServer,
                 rpcMaxLogsRange,
                 enodeDnsConfiguration,
-                    rpcGasCap);
+                rpcGasCap);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
 
     final var pluginMethods =

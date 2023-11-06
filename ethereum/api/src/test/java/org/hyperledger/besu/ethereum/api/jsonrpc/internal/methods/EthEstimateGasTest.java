@@ -72,7 +72,7 @@ public class EthEstimateGasTest {
   @Mock private TransactionSimulator transactionSimulator;
   @Mock private WorldStateArchive worldStateArchive;
 
-  private static final long GASCAP = 500;
+  private static final long GASCAP = 500L;
 
   @BeforeEach
   public void setUp() {
@@ -505,7 +505,7 @@ public class EthEstimateGasTest {
         Wei.ZERO,
         Optional.of(Wei.fromHexString("0x10")),
         Optional.of(Wei.fromHexString("0x10")),
-        Wei.ONE,
+        Wei.ZERO,
         Bytes.EMPTY,
         Optional.empty());
   }
