@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -63,7 +64,7 @@ import org.mockito.quality.Strictness;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class BonsaiWorldStateArchiveTest {
+class BonsaiWorldStateArchiveTest {
   final BlockHeaderTestFixture blockBuilder = new BlockHeaderTestFixture();
 
   @Mock Blockchain blockchain;
@@ -89,7 +90,7 @@ public class BonsaiWorldStateArchiveTest {
   }
 
   @Test
-  public void testGetMutableReturnPersistedStateWhenNeeded() {
+  void testGetMutableReturnPersistedStateWhenNeeded() {
     final BlockHeader chainHead = blockBuilder.number(0).buildHeader();
 
     when(segmentedKeyValueStorage.get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY))
@@ -106,14 +107,15 @@ public class BonsaiWorldStateArchiveTest {
             trieLogManager,
             new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()),
             blockchain,
-            new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
+            new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
+            EvmConfiguration.DEFAULT);
 
     assertThat(bonsaiWorldStateArchive.getMutable(chainHead, true))
         .containsInstanceOf(BonsaiWorldState.class);
   }
 
   @Test
-  public void testGetMutableReturnEmptyWhenLoadMoreThanLimitLayersBack() {
+  void testGetMutableReturnEmptyWhenLoadMoreThanLimitLayersBack() {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateProvider(
             new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()),
@@ -121,7 +123,8 @@ public class BonsaiWorldStateArchiveTest {
             Optional.of(512L),
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
             new NoOpMetricsSystem(),
-            null);
+            null,
+            EvmConfiguration.DEFAULT);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(512).buildHeader();
     when(blockchain.getChainHeadHeader()).thenReturn(chainHead);
@@ -130,7 +133,7 @@ public class BonsaiWorldStateArchiveTest {
   }
 
   @Test
-  public void testGetMutableWhenLoadLessThanLimitLayersBack() {
+  void testGetMutableWhenLoadLessThanLimitLayersBack() {
 
     bonsaiWorldStateArchive =
         new BonsaiWorldStateProvider(
@@ -138,7 +141,8 @@ public class BonsaiWorldStateArchiveTest {
             trieLogManager,
             new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()),
             blockchain,
-            new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
+            new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
+            EvmConfiguration.DEFAULT);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(511).buildHeader();
     final BonsaiWorldState mockWorldState = mock(BonsaiWorldState.class);
@@ -153,9 +157,8 @@ public class BonsaiWorldStateArchiveTest {
         .containsInstanceOf(BonsaiWorldState.class);
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
   @Test
-  public void testGetMutableWithStorageInconsistencyRollbackTheState() {
+  void testGetMutableWithStorageInconsistencyRollbackTheState() {
 
     doAnswer(__ -> Optional.of(mock(TrieLogLayer.class)))
         .when(trieLogManager)
@@ -170,10 +173,11 @@ public class BonsaiWorldStateArchiveTest {
                 trieLogManager,
                 worldStateStorage,
                 blockchain,
-                new CachedMerkleTrieLoader(new NoOpMetricsSystem())));
+                new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
+                EvmConfiguration.DEFAULT));
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
 
-    when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
+    when(blockchain.getBlockHeader(blockHeader.getHash())).thenReturn(Optional.of(blockHeader));
 
     assertThat(bonsaiWorldStateArchive.getMutable(null, blockHeader.getHash()))
         .containsInstanceOf(BonsaiWorldState.class);
@@ -184,7 +188,7 @@ public class BonsaiWorldStateArchiveTest {
 
   //    @SuppressWarnings({"unchecked", "rawtypes"})
   @Test
-  public void testGetMutableWithStorageConsistencyNotRollbackTheState() {
+  void testGetMutableWithStorageConsistencyNotRollbackTheState() {
 
     var worldStateStorage =
         new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
@@ -195,12 +199,13 @@ public class BonsaiWorldStateArchiveTest {
                 trieLogManager,
                 worldStateStorage,
                 blockchain,
-                new CachedMerkleTrieLoader(new NoOpMetricsSystem())));
+                new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
+                EvmConfiguration.DEFAULT));
 
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
 
-    when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
-    when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.of(blockHeader));
+    when(blockchain.getBlockHeader(blockHeader.getHash())).thenReturn(Optional.of(blockHeader));
+    when(blockchain.getBlockHeader(Hash.ZERO)).thenReturn(Optional.of(blockHeader));
 
     assertThat(bonsaiWorldStateArchive.getMutable(null, blockHeader.getHash()))
         .containsInstanceOf(BonsaiWorldState.class);
@@ -209,9 +214,8 @@ public class BonsaiWorldStateArchiveTest {
     verify(trieLogManager, Mockito.never()).getTrieLogLayer(any());
   }
 
-  @SuppressWarnings({"unchecked"})
   @Test
-  public void testGetMutableWithStorageConsistencyToRollbackAndRollForwardTheState() {
+  void testGetMutableWithStorageConsistencyToRollbackAndRollForwardTheState() {
     final BlockHeader genesis = blockBuilder.number(0).buildHeader();
     final BlockHeader blockHeaderChainA =
         blockBuilder.number(1).timestamp(1).parentHash(genesis.getHash()).buildHeader();
@@ -232,27 +236,27 @@ public class BonsaiWorldStateArchiveTest {
                 trieLogManager,
                 worldStateStorage,
                 blockchain,
-                new CachedMerkleTrieLoader(new NoOpMetricsSystem())));
+                new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
+                EvmConfiguration.DEFAULT));
 
     // initial persisted state hash key
-    when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.of(blockHeaderChainA));
-    when(blockchain.getBlockHeader(eq(blockHeaderChainB.getHash())))
+    when(blockchain.getBlockHeader(Hash.ZERO)).thenReturn(Optional.of(blockHeaderChainA));
+    when(blockchain.getBlockHeader(blockHeaderChainB.getHash()))
         .thenReturn(Optional.of(blockHeaderChainB));
-    when(blockchain.getBlockHeader(eq(genesis.getHash()))).thenReturn(Optional.of(genesis));
+    when(blockchain.getBlockHeader(genesis.getHash())).thenReturn(Optional.of(genesis));
 
     assertThat(bonsaiWorldStateArchive.getMutable(null, blockHeaderChainB.getHash()))
         .containsInstanceOf(BonsaiWorldState.class);
 
     // verify is trying to get the trie log layers to rollback and roll forward
-    verify(trieLogManager).getTrieLogLayer(eq(blockHeaderChainA.getHash()));
-    verify(trieLogManager).getTrieLogLayer(eq(blockHeaderChainB.getHash()));
+    verify(trieLogManager).getTrieLogLayer(blockHeaderChainA.getHash());
+    verify(trieLogManager).getTrieLogLayer(blockHeaderChainB.getHash());
   }
 
-  @SuppressWarnings({"unchecked"})
   @Test
   // TODO: refactor to test original intent
   @Disabled("needs refactor, getMutable(hash, hash) cannot trigger saveTrieLog")
-  public void testGetMutableWithRollbackNotOverrideTrieLogLayer() {
+  void testGetMutableWithRollbackNotOverrideTrieLogLayer() {
     when(segmentedKeyValueStorage.startTransaction())
         .thenReturn(segmentedKeyValueStorageTransaction);
     final BlockHeader genesis = blockBuilder.number(0).buildHeader();
@@ -272,10 +276,11 @@ public class BonsaiWorldStateArchiveTest {
                 trieLogManager,
                 new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()),
                 blockchain,
-                new CachedMerkleTrieLoader(new NoOpMetricsSystem())));
+                new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
+                EvmConfiguration.DEFAULT));
 
     // initial persisted state hash key
-    when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.of(blockHeaderChainA));
+    when(blockchain.getBlockHeader(Hash.ZERO)).thenReturn(Optional.of(blockHeaderChainA));
     // fake trie log layer
     final BytesValueRLPOutput rlpLogBlockB = new BytesValueRLPOutput();
     final TrieLogLayer trieLogLayerBlockB = new TrieLogLayer();
@@ -284,9 +289,9 @@ public class BonsaiWorldStateArchiveTest {
     when(segmentedKeyValueStorage.get(BLOCKCHAIN, blockHeaderChainB.getHash().toArrayUnsafe()))
         .thenReturn(Optional.of(rlpLogBlockB.encoded().toArrayUnsafe()));
 
-    when(blockchain.getBlockHeader(eq(blockHeaderChainB.getHash())))
+    when(blockchain.getBlockHeader(blockHeaderChainB.getHash()))
         .thenReturn(Optional.of(blockHeaderChainB));
-    when(blockchain.getBlockHeader(eq(genesis.getHash()))).thenReturn(Optional.of(genesis));
+    when(blockchain.getBlockHeader(genesis.getHash())).thenReturn(Optional.of(genesis));
 
     assertThat(bonsaiWorldStateArchive.getMutable(null, blockHeaderChainB.getHash()))
         .containsInstanceOf(BonsaiWorldState.class);

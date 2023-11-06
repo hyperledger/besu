@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldView;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -31,8 +32,9 @@ public class BonsaiReferenceTestUpdateAccumulator extends BonsaiWorldStateUpdate
       final BonsaiWorldView world,
       final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader,
-      final BonsaiPreImageProxy preImageProxy) {
-    super(world, accountPreloader, storagePreloader);
+      final BonsaiPreImageProxy preImageProxy,
+      final EvmConfiguration evmConfiguration) {
+    super(world, accountPreloader, storagePreloader, evmConfiguration);
     this.preImageProxy = preImageProxy;
   }
 

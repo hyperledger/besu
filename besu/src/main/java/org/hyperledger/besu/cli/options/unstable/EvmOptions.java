@@ -18,7 +18,6 @@ package org.hyperledger.besu.cli.options.unstable;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
-import java.util.Arrays;
 import java.util.List;
 
 import picocli.CommandLine;
@@ -28,6 +27,9 @@ public class EvmOptions implements CLIOptions<EvmConfiguration> {
 
   /** The constant JUMPDEST_CACHE_WEIGHT. */
   public static final String JUMPDEST_CACHE_WEIGHT = "--Xevm-jumpdest-cache-weight-kb";
+
+  /** The constant WORLDSTATE_UPDATE_MODE. */
+  public static final String WORLDSTATE_UPDATE_MODE = "--Xevm-worldstate-update-mode";
 
   /**
    * Create evm options.
@@ -51,13 +53,24 @@ public class EvmOptions implements CLIOptions<EvmConfiguration> {
   private Long jumpDestCacheWeightKilobytes =
       32_000L; // 10k contracts, (25k max contract size / 8 bit) + 32byte hash
 
+  @CommandLine.Option(
+      names = {WORLDSTATE_UPDATE_MODE},
+      description = "How to handle worldstate updates within a transaction",
+      fallbackValue = "STACKED",
+      defaultValue = "STACKED",
+      hidden = true,
+      arity = "1")
+  private EvmConfiguration.WorldUpdaterMode worldstateUpdateMode =
+      EvmConfiguration.WorldUpdaterMode
+          .STACKED; // Stacked Updater.  Years of battle tested correctness.
+
   @Override
   public EvmConfiguration toDomainObject() {
-    return new EvmConfiguration(jumpDestCacheWeightKilobytes);
+    return new EvmConfiguration(jumpDestCacheWeightKilobytes, worldstateUpdateMode);
   }
 
   @Override
   public List<String> getCLIOptions() {
-    return Arrays.asList(JUMPDEST_CACHE_WEIGHT);
+    return List.of(JUMPDEST_CACHE_WEIGHT, WORLDSTATE_UPDATE_MODE);
   }
 }
