@@ -16,6 +16,7 @@
 - Implement new `miner_setMinPriorityFee` and `miner_getMinPriorityFee` RPC methods [#6080](https://github.com/hyperledger/besu/pull/6080)
 - Clique config option `createemptyblocks` to not create empty blocks [#6082](https://github.com/hyperledger/besu/pull/6082)
 - Upgrade EVM Reference Tests to v13 (Cancun) [#6114](https://github.com/hyperledger/besu/pull/6114)
+- Add `rpc-gas-cap` to allow users to set gas limit to the RPC methods `eth_call` and `eth_getEstimateGas`[#6130](https://github.com/hyperledger/besu/pull/6130)
 
 ### Bug fixes
 
