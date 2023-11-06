@@ -80,13 +80,6 @@ public interface ProcessableBlockHeader {
   long getTimestamp();
 
   /**
-   * Returns the mixHash before merge, and the prevRandao value after.
-   *
-   * @return the mixHash before merge, and the prevRandao value after
-   */
-  Bytes32 getMixHashOrPrevRandao();
-
-  /**
    * Optional 32 bytes of prevRandao data.
    *
    * @return Optional prevRandao bytes from this header.

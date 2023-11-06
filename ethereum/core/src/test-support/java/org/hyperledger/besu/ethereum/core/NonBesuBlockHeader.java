@@ -95,11 +95,6 @@ public class NonBesuBlockHeader implements BlockHeader {
   }
 
   @Override
-  public Bytes32 getMixHashOrPrevRandao() {
-    return Bytes32.ZERO;
-  }
-
-  @Override
   public Bytes getExtraData() {
     return extraData;
   }
