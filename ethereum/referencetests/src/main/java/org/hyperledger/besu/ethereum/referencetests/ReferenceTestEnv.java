@@ -227,13 +227,13 @@ public class ReferenceTestEnv extends BlockHeader {
                           .buildBlockHeader(),
                       null)));
     }
-    if (excessBlobGas.isEmpty() && parentExcessBlobGas != null && parentBlobGasUsed != null) {
+    if (parentExcessBlobGas != null && parentBlobGasUsed != null) {
       builder.excessBlobGas(
           BlobGas.of(
               protocolSpec
                   .getGasCalculator()
                   .computeExcessBlobGas(
-                      Long.decode(parentExcessBlobGas), Long.decode(parentGasUsed))));
+                      Long.decode(parentExcessBlobGas), Long.decode(parentBlobGasUsed))));
     }
 
     return builder.buildBlockHeader();

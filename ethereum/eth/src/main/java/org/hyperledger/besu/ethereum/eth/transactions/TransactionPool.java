@@ -55,6 +55,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.IntSummaryStatistics;
@@ -93,6 +94,8 @@ import org.slf4j.LoggerFactory;
 public class TransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
   private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
+  private static final List<TransactionInvalidReason> INVALID_TX_CACHE_IGNORED_ERRORS =
+      new ArrayList<>(Arrays.asList(TransactionInvalidReason.NONCE_TOO_LOW));
   private final Supplier<PendingTransactions> pendingTransactionsSupplier;
   private final PluginTransactionValidator pluginTransactionValidator;
   private volatile PendingTransactions pendingTransactions;
@@ -277,7 +280,9 @@ public class TransactionPool implements BlockAddedObserver {
           .log();
       metrics.incrementRejected(
           isLocal, hasPriority, validationResult.result.getInvalidReason(), "txpool");
-      if (!isLocal) {
+      if (!isLocal
+          && !INVALID_TX_CACHE_IGNORED_ERRORS.contains(
+              validationResult.result.getInvalidReason())) {
         pendingTransactions.signalInvalidAndRemoveDependentTransactions(transaction);
       }
     }

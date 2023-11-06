@@ -37,7 +37,7 @@ public class ToyAccount implements MutableAccount {
 
   private final Account parent;
 
-  private boolean mutable = true;
+  private boolean immutable = false;
 
   private Address address;
   private final Supplier<Hash> addressHash =
@@ -120,7 +120,7 @@ public class ToyAccount implements MutableAccount {
 
   @Override
   public void setNonce(final long value) {
-    if (!mutable) {
+    if (immutable) {
       throw new ModificationNotAllowedException();
     }
     nonce = value;
@@ -128,7 +128,7 @@ public class ToyAccount implements MutableAccount {
 
   @Override
   public void setBalance(final Wei value) {
-    if (!mutable) {
+    if (immutable) {
       throw new ModificationNotAllowedException();
     }
     balance = value;
@@ -136,7 +136,7 @@ public class ToyAccount implements MutableAccount {
 
   @Override
   public void setCode(final Bytes code) {
-    if (!mutable) {
+    if (immutable) {
       throw new ModificationNotAllowedException();
     }
     this.code = code;
@@ -145,7 +145,7 @@ public class ToyAccount implements MutableAccount {
 
   @Override
   public void setStorageValue(final UInt256 key, final UInt256 value) {
-    if (!mutable) {
+    if (immutable) {
       throw new ModificationNotAllowedException();
     }
     storage.put(key, value);
@@ -153,7 +153,7 @@ public class ToyAccount implements MutableAccount {
 
   @Override
   public void clearStorage() {
-    if (!mutable) {
+    if (immutable) {
       throw new ModificationNotAllowedException();
     }
     storage.clear();
@@ -166,6 +166,6 @@ public class ToyAccount implements MutableAccount {
 
   @Override
   public void becomeImmutable() {
-    mutable = false;
+    immutable = true;
   }
 }
