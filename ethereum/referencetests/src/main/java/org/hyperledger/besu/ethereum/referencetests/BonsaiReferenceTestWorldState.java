@@ -26,11 +26,11 @@ import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
-import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
 
 import java.util.Map;
 import java.util.Optional;
@@ -46,16 +46,24 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
 
   private final BonsaiReferenceTestWorldStateStorage refTestStorage;
   private final BonsaiPreImageProxy preImageProxy;
+  private final EvmConfiguration evmConfiguration;
 
   protected BonsaiReferenceTestWorldState(
       final BonsaiReferenceTestWorldStateStorage worldStateStorage,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
       final CachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
-      final BonsaiPreImageProxy preImageProxy) {
-    super(worldStateStorage, cachedMerkleTrieLoader, cachedWorldStorageManager, trieLogManager);
+      final BonsaiPreImageProxy preImageProxy,
+      final EvmConfiguration evmConfiguration) {
+    super(
+        worldStateStorage,
+        cachedMerkleTrieLoader,
+        cachedWorldStorageManager,
+        trieLogManager,
+        evmConfiguration);
     this.refTestStorage = worldStateStorage;
     this.preImageProxy = preImageProxy;
+    this.evmConfiguration = evmConfiguration;
     setAccumulator(
         new BonsaiReferenceTestUpdateAccumulator(
             this,
@@ -64,7 +72,8 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
                     getWorldStateStorage(), worldStateRootHash, addr),
             (addr, value) ->
                 cachedMerkleTrieLoader.preLoadStorageSlot(getWorldStateStorage(), addr, value),
-            preImageProxy));
+            preImageProxy,
+            evmConfiguration));
   }
 
   @Override
@@ -75,7 +84,8 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
         cachedMerkleTrieLoader,
         cachedWorldStorageManager,
         trieLogManager,
-        preImageProxy);
+        preImageProxy,
+        evmConfiguration);
   }
 
   /**
@@ -93,6 +103,13 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   @JsonCreator
   public static BonsaiReferenceTestWorldState create(
       final Map<String, ReferenceTestWorldState.AccountMock> accounts) {
+    return create(accounts, EvmConfiguration.DEFAULT);
+  }
+
+  @JsonCreator
+  public static BonsaiReferenceTestWorldState create(
+      final Map<String, ReferenceTestWorldState.AccountMock> accounts,
+      final EvmConfiguration evmConfiguration) {
     final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
     final CachedMerkleTrieLoader cachedMerkleTrieLoader = new CachedMerkleTrieLoader(metricsSystem);
     final TrieLogManager trieLogManager = new NoOpTrieLogManager();
@@ -114,7 +131,8 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
             cachedMerkleTrieLoader,
             noOpCachedWorldStorageManager,
             trieLogManager,
-            preImageProxy);
+            preImageProxy,
+            evmConfiguration);
 
     final WorldUpdater updater = worldState.updater();
     for (final Map.Entry<String, ReferenceTestWorldState.AccountMock> entry : accounts.entrySet()) {
@@ -140,12 +158,13 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
           new NoOpMetricsSystem());
     }
 
+    @SuppressWarnings({"UnsynchronizedOverridesSynchronized", "squid:S3551"})
     @Override
     public void addCachedLayer(
         final BlockHeader blockHeader,
         final Hash worldStateRootHash,
         final BonsaiWorldState forWorldState) {
-      // reference tests do not cache layers
+      // reference test world states are not cached
     }
 
     @Override
@@ -181,7 +200,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
       super(null, null, 0, null);
     }
 
-    @SuppressWarnings("UnsynchronizedOverridesSynchronized")
+    @SuppressWarnings({"UnsynchronizedOverridesSynchronized", "squid:S3551"})
     @Override
     public void saveTrieLog(
         final BonsaiWorldStateUpdateAccumulator localUpdater,
@@ -201,16 +220,6 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     @Override
     public Optional<TrieLog> getTrieLogLayer(final Hash blockHash) {
       return Optional.empty();
-    }
-
-    @Override
-    public synchronized long subscribe(final TrieLogEvent.TrieLogObserver sub) {
-      return trieLogObservers.subscribe(sub);
-    }
-
-    @Override
-    public synchronized void unsubscribe(final long id) {
-      trieLogObservers.unsubscribe(id);
     }
   }
 

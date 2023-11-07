@@ -132,7 +132,7 @@ public interface KeyValueStorage extends Closeable {
   /**
    * Begins a fresh transaction, for sequencing operations for later atomic execution.
    *
-   * @return transaciton to sequence key-value operations.
+   * @return transaction to sequence key-value operations.
    * @throws StorageException problem encountered when starting a new transaction.
    */
   KeyValueStorageTransaction startTransaction() throws StorageException;

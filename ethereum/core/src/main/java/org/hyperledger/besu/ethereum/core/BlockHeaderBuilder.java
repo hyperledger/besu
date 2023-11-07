@@ -194,8 +194,6 @@ public class BlockHeaderBuilder {
         timestamp,
         baseFee,
         mixHashOrPrevRandao,
-        blobGasUsed,
-        excessBlobGas,
         parentBeaconBlockRoot);
   }
 
@@ -261,8 +259,6 @@ public class BlockHeaderBuilder {
     timestamp(processableBlockHeader.getTimestamp());
     baseFee(processableBlockHeader.getBaseFee().orElse(null));
     processableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
-    processableBlockHeader.getBlobGasUsed().ifPresent(this::blobGasUsed);
-    processableBlockHeader.getExcessBlobGas().ifPresent(this::excessBlobGas);
     processableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
     return this;
   }
