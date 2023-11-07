@@ -150,7 +150,7 @@ public abstract class AbstractTransactionPoolTest {
   protected PendingTransactions transactions;
   protected final Transaction transaction0 = createTransaction(0);
   protected final Transaction transaction1 = createTransaction(1);
-  protected final Transaction transactionBlob = createBlobTransaction(0);
+  protected final Transaction transactionBlob = createBlobTransaction(2);
 
   protected final Transaction transactionOtherSender = createTransaction(1, KEY_PAIR2);
   private ExecutionContextTestFixture executionContext;
@@ -326,7 +326,7 @@ public abstract class AbstractTransactionPoolTest {
 
     assertThat(transactions.size()).isEqualTo(3);
     assertThat(transactions.getLocalTransactions()).contains(localTransaction2);
-    assertThat(transactions.getPriorityTransactions().size()).isEqualTo(noLocalPriority ? 0 : 1);
+    assertThat(transactions.getPriorityTransactions()).hasSize(noLocalPriority ? 0 : 1);
   }
 
   @Test
@@ -469,7 +469,7 @@ public abstract class AbstractTransactionPoolTest {
 
     addAndAssertRemoteTransactionsValid(transaction0);
     addAndAssertRemoteTransactionsValid(transaction1);
-    addAndAssertRemoteTransactionInvalid(transactionBlob);
+    addAndAssertRemoteTransactionsValid(transactionBlob);
 
     final BlockHeader commonParent = getHeaderForCurrentChainHead();
     final Block originalFork1 = appendBlock(Difficulty.of(1000), commonParent, transaction0);
@@ -1222,7 +1222,7 @@ public abstract class AbstractTransactionPoolTest {
     assertThat(
             add1559TxAndGetPendingTxsCount(
                 genesisBaseFee, minGasPrice, lastBlockBaseFee, txMaxFeePerGas, false, hasPriority))
-        .isEqualTo(0);
+        .isZero();
   }
 
   @ParameterizedTest
@@ -1250,7 +1250,7 @@ public abstract class AbstractTransactionPoolTest {
     assertThat(
             add1559TxAndGetPendingTxsCount(
                 genesisBaseFee, minGasPrice, lastBlockBaseFee, txMaxFeePerGas, true, true))
-        .isEqualTo(0);
+        .isZero();
   }
 
   @Test
