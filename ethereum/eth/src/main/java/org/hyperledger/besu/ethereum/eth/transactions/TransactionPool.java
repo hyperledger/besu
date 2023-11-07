@@ -273,7 +273,7 @@ public class TransactionPool implements BlockAddedObserver {
         return ValidationResult.invalid(rejectReason);
       }
     } else {
-      LOG.atWarn()
+      LOG.atTrace()
           .setMessage("Discard invalid transaction {}, reason {}")
           .addArgument(transaction::toTraceLog)
           .addArgument(validationResult.result::getInvalidReason)
@@ -420,7 +420,7 @@ public class TransactionPool implements BlockAddedObserver {
 
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader().orElse(null);
     if (chainHeadBlockHeader == null) {
-      LOG.atWarn()
+      LOG.atTrace()
           .setMessage("rejecting transaction {} due to chain head not available yet")
           .addArgument(transaction::getHash)
           .log();
