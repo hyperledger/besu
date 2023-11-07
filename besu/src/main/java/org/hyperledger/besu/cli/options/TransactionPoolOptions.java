@@ -330,4 +330,14 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   public List<String> getCLIOptions() {
     return CommandLineUtils.getCLIOptions(this, new TransactionPoolOptions());
   }
+
+  /**
+   * Is price bump option set?
+   *
+   * @param commandLine the command line
+   * @return true is tx-pool-price-bump is set
+   */
+  public boolean isPriceBumpSet(final CommandLine commandLine) {
+    return CommandLineUtils.isOptionSet(commandLine, TransactionPoolOptions.TX_POOL_PRICE_BUMP);
+  }
 }
