@@ -44,13 +44,13 @@ import org.hyperledger.besu.testutil.BlockTestUtil.ChainResources;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 
 public class BlockchainSetupUtil {
@@ -113,6 +113,10 @@ public class BlockchainSetupUtil {
     return createForEthashChain(BlockTestUtil.getTestChainResources(), storageFormat);
   }
 
+  public static BlockchainSetupUtil forHiveTesting(final DataStorageFormat storageFormat) {
+    return createForEthashChain(BlockTestUtil.getHiveTestChainResources(), storageFormat);
+  }
+
   public static BlockchainSetupUtil forMainnet() {
     return createForEthashChain(BlockTestUtil.getMainnetResources(), DataStorageFormat.FOREST);
   }
@@ -162,7 +166,8 @@ public class BlockchainSetupUtil {
       final ProtocolContextProvider protocolContextProvider,
       final EthScheduler scheduler) {
     try {
-      final String genesisJson = Resources.toString(chainResources.getGenesisURL(), Charsets.UTF_8);
+      final String genesisJson =
+          Resources.toString(chainResources.getGenesisURL(), StandardCharsets.UTF_8);
 
       final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisJson);
       final ProtocolSchedule protocolSchedule = protocolScheduleProvider.get(genesisConfigFile);

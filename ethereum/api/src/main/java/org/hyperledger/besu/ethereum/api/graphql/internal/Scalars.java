@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.graphql.internal;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 
+import java.math.BigInteger;
 import java.util.Locale;
 
 import graphql.GraphQLContext;
@@ -118,6 +119,8 @@ public class Scalars {
             return convertImpl(stringValue.getValue());
           } else if (input instanceof IntValue intValue) {
             return UInt256.valueOf(intValue.getValue()).toShortHexString();
+          } else if (input instanceof BigInteger bigInteger) {
+            return "0x" + bigInteger.toString(16);
           } else {
             return null;
           }
