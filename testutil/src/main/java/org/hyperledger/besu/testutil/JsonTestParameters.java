@@ -235,7 +235,13 @@ public class JsonTestParameters<S, T> {
     return generate(getFilteredFiles(paths));
   }
 
-  private Collection<Object[]> generate(final Collection<File> filteredFiles) {
+  /**
+   * Generate collection.
+   *
+   * @param filteredFiles the filtered files
+   * @return the collection
+   */
+  public Collection<Object[]> generate(final Collection<File> filteredFiles) {
     checkState(generator != null, "Missing generator function");
 
     final Collector<T> collector =
