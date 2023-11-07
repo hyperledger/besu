@@ -144,7 +144,6 @@ public class TrieLogPruner {
           blockNumbersToRemove.add(e.getKey());
         });
 
-    // TODO SLD could just remove each key inline?
     blockNumbersToRemove.forEach(trieLogBlocksAndForksByDescendingBlockNumber::removeAll);
     LOG.atTrace()
         .setMessage("pruned {} trie logs for blocks {}")
