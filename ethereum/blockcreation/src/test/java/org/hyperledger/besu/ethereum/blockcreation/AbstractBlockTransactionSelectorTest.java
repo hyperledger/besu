@@ -115,7 +115,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected static final double MIN_OCCUPANCY_80_PERCENT = 0.8;
   protected static final double MIN_OCCUPANCY_100_PERCENT = 1;
   protected static final PluginTransactionSelectorFactory NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY =
-      null;
+      () -> AllAcceptingTransactionSelector.INSTANCE;
   protected static final BigInteger CHAIN_ID = BigInteger.valueOf(42L);
   protected static final KeyPair keyPair =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
@@ -1019,7 +1019,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             getFeeMarket(),
             new LondonGasCalculator(),
             GasLimitCalculator.constant(),
-            Optional.ofNullable(transactionSelectorFactory),
+            transactionSelectorFactory.create(),
             ethScheduler);
 
     return selector;

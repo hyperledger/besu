@@ -115,7 +115,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             blockHeader,
             miningBeneficiary,
             Wei.ZERO,
-            null);
+            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
 
     // tx is willing to pay max 7 wei for gas, but current network condition (baseFee == 1)
     // result in it paying 2 wei, that is below the minimum accepted by the node, so it is skipped
@@ -144,7 +144,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             blockHeader,
             miningBeneficiary,
             Wei.ZERO,
-            null);
+            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
 
     // tx is willing to pay max 7 wei for gas, and current network condition (baseFee == 5)
     // result in it paying the max, that is >= the minimum accepted by the node, so it is selected
@@ -172,7 +172,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             blockHeader,
             miningBeneficiary,
             Wei.ZERO,
-            null);
+            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
 
     // tx is willing to pay max 7 wei for gas, but current network condition (baseFee == 1)
     // result in it paying 2 wei, that is below the minimum accepted by the node, but since it is
@@ -211,7 +211,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             blockHeader,
             miningBeneficiary,
             Wei.ZERO,
-            null);
+            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
 
     transactionPool.addRemoteTransactions(List.of(txFrontier1, txLondon1, txFrontier2, txLondon2));
 

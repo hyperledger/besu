@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AbstractTransactionSelector;
-import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AllAcceptingTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlobPriceTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlockSizeTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.MinPriorityFeePerGasTransactionSelector;
@@ -44,14 +43,12 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
-import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -95,7 +92,7 @@ public class BlockTransactionSelector {
       new TransactionSelectionResults();
   private final List<AbstractTransactionSelector> transactionSelectors;
   private final PluginTransactionSelector pluginTransactionSelector;
-  private final OperationTracer pluginOperationTracer;
+  private final BlockAwareOperationTracer pluginOperationTracer;
   private final EthScheduler ethScheduler;
   private final AtomicBoolean isTimeout = new AtomicBoolean(false);
   private WorldUpdater blockWorldStateUpdater;
@@ -114,7 +111,7 @@ public class BlockTransactionSelector {
       final FeeMarket feeMarket,
       final GasCalculator gasCalculator,
       final GasLimitCalculator gasLimitCalculator,
-      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory,
+      final PluginTransactionSelector pluginTransactionSelector,
       final EthScheduler ethScheduler) {
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
@@ -133,11 +130,8 @@ public class BlockTransactionSelector {
             miningBeneficiary,
             transactionPool);
     transactionSelectors = createTransactionSelectors(blockSelectionContext);
-    pluginTransactionSelector =
-        transactionSelectorFactory
-            .map(PluginTransactionSelectorFactory::create)
-            .orElse(AllAcceptingTransactionSelector.INSTANCE);
-    pluginOperationTracer = pluginTransactionSelector.getOperationTracer();
+    this.pluginTransactionSelector = pluginTransactionSelector;
+    this.pluginOperationTracer = pluginTransactionSelector.getOperationTracer();
     blockWorldStateUpdater = worldState.updater();
   }
 
