@@ -25,6 +25,7 @@ jar {
       'Implementation-Version': calculateVersion()
       )
   }
+  from(sourceSets.testSupport.output)
 }
 
 dependencies {
