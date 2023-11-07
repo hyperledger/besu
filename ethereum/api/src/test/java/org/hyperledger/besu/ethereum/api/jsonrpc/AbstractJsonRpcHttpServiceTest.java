@@ -104,7 +104,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
   }
 
   protected BlockchainSetupUtil getBlockchainSetupUtil(final DataStorageFormat storageFormat) {
-    return BlockchainSetupUtil.forTesting(storageFormat);
+    return BlockchainSetupUtil.forHiveTesting(storageFormat);
   }
 
   protected BlockchainSetupUtil createBlockchainSetupUtil(
@@ -122,8 +122,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     setupBlockchain();
   }
 
-  protected BlockchainSetupUtil startServiceWithEmptyChain(final DataStorageFormat storageFormat)
-      throws Exception {
+  protected BlockchainSetupUtil startServiceWithEmptyChain(final DataStorageFormat storageFormat) {
     final BlockchainSetupUtil emptySetupUtil = getBlockchainSetupUtil(storageFormat);
     startService(emptySetupUtil);
     return emptySetupUtil;
@@ -201,7 +200,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     startService(blockchainSetupUtil);
   }
 
-  private void startService(final BlockchainSetupUtil blockchainSetupUtil) throws Exception {
+  private void startService(final BlockchainSetupUtil blockchainSetupUtil) {
 
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     final Map<String, JsonRpcMethod> methods = getRpcMethods(config, blockchainSetupUtil);
