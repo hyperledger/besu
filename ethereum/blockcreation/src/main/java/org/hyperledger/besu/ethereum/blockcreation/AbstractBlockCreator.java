@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AllAcceptingTransactionSelector;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -56,6 +57,9 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -183,13 +187,26 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   disposableWorldState.updater(), timestamp, bytes32));
 
       throwIfStopped();
+
+      final PluginTransactionSelector pluginTransactionSelector =
+          protocolContext
+              .getTransactionSelectorFactory()
+              .map(PluginTransactionSelectorFactory::create)
+              .orElseGet(() -> AllAcceptingTransactionSelector.INSTANCE);
+
+      final BlockAwareOperationTracer operationTracer =
+          pluginTransactionSelector.getOperationTracer();
+
+      operationTracer.traceStartBlock(processableBlockHeader);
+
       final TransactionSelectionResults transactionResults =
           selectTransactions(
               processableBlockHeader,
               disposableWorldState,
               maybeTransactions,
               miningBeneficiary,
-              newProtocolSpec);
+              newProtocolSpec,
+              pluginTransactionSelector);
 
       transactionResults.logSelectionStats();
 
@@ -261,14 +278,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       final Optional<List<Withdrawal>> withdrawals =
           withdrawalsCanBeProcessed ? maybeWithdrawals : Optional.empty();
-      final Block block =
-          new Block(
-              blockHeader,
-              new BlockBody(
-                  transactionResults.getSelectedTransactions(),
-                  ommers,
-                  withdrawals,
-                  maybeDeposits));
+      final BlockBody blockBody =
+          new BlockBody(
+              transactionResults.getSelectedTransactions(), ommers, withdrawals, maybeDeposits);
+      final Block block = new Block(blockHeader, blockBody);
+
+      operationTracer.traceEndBlock(blockHeader, blockBody);
+
       return new BlockCreationResult(block, transactionResults);
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);
@@ -316,7 +332,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final MutableWorldState disposableWorldState,
       final Optional<List<Transaction>> transactions,
       final Address miningBeneficiary,
-      final ProtocolSpec protocolSpec)
+      final ProtocolSpec protocolSpec,
+      final PluginTransactionSelector pluginTransactionSelector)
       throws RuntimeException {
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
 
@@ -343,7 +360,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             protocolSpec.getFeeMarket(),
             protocolSpec.getGasCalculator(),
             protocolSpec.getGasLimitCalculator(),
-            protocolContext.getTransactionSelectorFactory());
+            pluginTransactionSelector);
 
     if (transactions.isPresent()) {
       return selector.evaluateTransactions(transactions.get());
