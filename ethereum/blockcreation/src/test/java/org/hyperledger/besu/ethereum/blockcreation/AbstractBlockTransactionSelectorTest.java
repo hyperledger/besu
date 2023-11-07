@@ -876,7 +876,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             getFeeMarket(),
             new LondonGasCalculator(),
             GasLimitCalculator.constant(),
-            Optional.empty());
+            AllAcceptingTransactionSelector.INSTANCE);
 
     return selector;
   }
@@ -902,7 +902,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             getFeeMarket(),
             new LondonGasCalculator(),
             GasLimitCalculator.constant(),
-            Optional.of(transactionSelectorFactory));
+            transactionSelectorFactory.create());
 
     return selector;
   }
