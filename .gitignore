@@ -10,6 +10,7 @@
 .externalToolBuilders/
 .gradle/
 .idea/
+.vscode/
 .loadpath
 .metadata
 .prefs
