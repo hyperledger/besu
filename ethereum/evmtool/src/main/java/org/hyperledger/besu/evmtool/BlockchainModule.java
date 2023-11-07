@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValue
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -59,14 +60,17 @@ public class BlockchainModule {
       final WorldStateStorage worldStateStorage,
       final WorldStatePreimageStorage worldStatePreimageStorage,
       final GenesisState genesisState,
-      @Named("KeyValueStorageName") final String keyValueStorageName) {
+      @Named("KeyValueStorageName") final String keyValueStorageName,
+      final EvmConfiguration evmConfiguration) {
     if ("memory".equals(keyValueStorageName)) {
       final MutableWorldState mutableWorldState =
-          new DefaultMutableWorldState(worldStateStorage, worldStatePreimageStorage);
+          new DefaultMutableWorldState(
+              worldStateStorage, worldStatePreimageStorage, evmConfiguration);
       genesisState.writeStateTo(mutableWorldState);
       return mutableWorldState;
     } else {
-      return new DefaultMutableWorldState(stateRoot, worldStateStorage, worldStatePreimageStorage);
+      return new DefaultMutableWorldState(
+          stateRoot, worldStateStorage, worldStatePreimageStorage, evmConfiguration);
     }
   }
 

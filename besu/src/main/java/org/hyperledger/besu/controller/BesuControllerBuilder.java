@@ -632,10 +632,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     if (chainPrunerConfiguration.getChainPruningEnabled()) {
       protocolContext
           .safeConsensusContext(MergeContext.class)
-          .ifPresent(
-              mergeContext -> {
-                mergeContext.setIsChainPruningEnabled(true);
-              });
+          .ifPresent(mergeContext -> mergeContext.setIsChainPruningEnabled(true));
       final ChainDataPruner chainDataPruner = createChainPruner(blockchainStorage);
       blockchain.observeBlockAdded(chainDataPruner);
       LOG.info(
@@ -776,7 +773,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final SubProtocolConfiguration subProtocolConfiguration =
         createSubProtocolConfiguration(ethProtocolManager, maybeSnapProtocolManager);
-    ;
 
     final JsonRpcMethods additionalJsonRpcMethodFactory =
         createAdditionalJsonRpcMethodFactory(protocolContext);
@@ -831,24 +827,21 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final EthProtocolManager ethProtocolManager,
       final PivotBlockSelector pivotBlockSelector) {
 
-    final DefaultSynchronizer toUse =
-        new DefaultSynchronizer(
-            syncConfig,
-            protocolSchedule,
-            protocolContext,
-            worldStateStorage,
-            ethProtocolManager.getBlockBroadcaster(),
-            maybePruner,
-            ethContext,
-            syncState,
-            dataDirectory,
-            storageProvider,
-            clock,
-            metricsSystem,
-            getFullSyncTerminationCondition(protocolContext.getBlockchain()),
-            pivotBlockSelector);
-
-    return toUse;
+    return new DefaultSynchronizer(
+        syncConfig,
+        protocolSchedule,
+        protocolContext,
+        worldStateStorage,
+        ethProtocolManager.getBlockBroadcaster(),
+        maybePruner,
+        ethContext,
+        syncState,
+        dataDirectory,
+        storageProvider,
+        clock,
+        metricsSystem,
+        getFullSyncTerminationCondition(protocolContext.getBlockchain()),
+        pivotBlockSelector);
   }
 
   private PivotBlockSelector createPivotSelector(
@@ -930,9 +923,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final SubProtocolConfiguration subProtocolConfiguration =
         new SubProtocolConfiguration().withSubProtocol(EthProtocol.get(), ethProtocolManager);
     maybeSnapProtocolManager.ifPresent(
-        snapProtocolManager -> {
-          subProtocolConfiguration.withSubProtocol(SnapProtocol.get(), snapProtocolManager);
-        });
+        snapProtocolManager ->
+            subProtocolConfiguration.withSubProtocol(SnapProtocol.get(), snapProtocolManager));
     return subProtocolConfiguration;
   }
 
@@ -1071,22 +1063,21 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final WorldStateStorage worldStateStorage,
       final Blockchain blockchain,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
-    switch (dataStorageConfiguration.getDataStorageFormat()) {
-      case BONSAI:
-        return new BonsaiWorldStateProvider(
-            (BonsaiWorldStateKeyValueStorage) worldStateStorage,
-            blockchain,
-            Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
-            cachedMerkleTrieLoader,
-            metricsSystem,
-            besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null));
-
-      case FOREST:
-      default:
+    return switch (dataStorageConfiguration.getDataStorageFormat()) {
+      case BONSAI -> new BonsaiWorldStateProvider(
+          (BonsaiWorldStateKeyValueStorage) worldStateStorage,
+          blockchain,
+          Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
+          cachedMerkleTrieLoader,
+          metricsSystem,
+          besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
+          evmConfiguration);
+      case FOREST -> {
         final WorldStatePreimageStorage preimageStorage =
             storageProvider.createWorldStatePreimageStorage();
-        return new DefaultWorldStateArchive(worldStateStorage, preimageStorage);
-    }
+        yield new DefaultWorldStateArchive(worldStateStorage, preimageStorage, evmConfiguration);
+      }
+    };
   }
 
   private ChainDataPruner createChainPruner(final BlockchainStorage blockchainStorage) {

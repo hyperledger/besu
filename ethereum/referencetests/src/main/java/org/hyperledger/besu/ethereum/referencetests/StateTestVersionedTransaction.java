@@ -171,7 +171,7 @@ public class StateTestVersionedTransaction {
               ? null
               : blobVersionedHashes.stream().map(VersionedHash::fromHexString).toList());
     } catch (IllegalArgumentException iae) {
-      // versioned hash string was bad, so this is an invalid transaciton
+      // versioned hash string was bad, so this is an invalid transaction
       return null;
     }
 

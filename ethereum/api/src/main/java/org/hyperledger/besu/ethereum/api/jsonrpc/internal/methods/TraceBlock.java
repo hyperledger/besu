@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
-import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -208,8 +207,8 @@ public class TraceBlock extends AbstractBlockParameterMethod {
       // if we have no prior updater, it must be the first TX, so use the block's initial state
       if (updater == null) {
         updater = worldState.updater();
-      } else if (updater instanceof StackedUpdater) {
-        ((StackedUpdater) updater).markTransactionBoundary();
+      } else {
+        updater.markTransactionBoundary();
       }
       updater = updater.updater();
       return updater;

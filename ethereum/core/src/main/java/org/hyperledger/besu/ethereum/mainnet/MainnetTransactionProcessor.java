@@ -355,6 +355,8 @@ public class MainnetTransactionProcessor {
         contextVariablesBuilder.put(KEY_PRIVATE_METADATA_UPDATER, privateMetadataUpdater);
       }
 
+      operationTracer.traceStartTransaction(worldUpdater, transaction);
+
       final MessageFrame.Builder commonMessageFrameBuilder =
           MessageFrame.builder()
               .maxStackSize(maxStackSize)
@@ -451,6 +453,15 @@ public class MainnetTransactionProcessor {
           .log();
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
 
+      operationTracer.traceEndTransaction(
+          worldUpdater,
+          transaction,
+          initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS,
+          initialFrame.getOutputData(),
+          initialFrame.getLogs(),
+          gasUsedByTransaction,
+          0L);
+
       // update the coinbase
       final var coinbase = worldState.getOrCreate(miningBeneficiary);
       final long usedGas = transaction.getGasLimit() - refundedGas;
@@ -500,7 +511,8 @@ public class MainnetTransactionProcessor {
       LOG.error("Critical Exception Processing Transaction", re);
       return TransactionProcessingResult.invalid(
           ValidationResult.invalid(
-              TransactionInvalidReason.INTERNAL_ERROR, "Internal Error in Besu - " + re));
+              TransactionInvalidReason.INTERNAL_ERROR,
+              "Internal Error in Besu - " + re + "\n" + printableStackTraceFromThrowable(re)));
     }
   }
 
@@ -524,5 +536,15 @@ public class MainnetTransactionProcessor {
         (transaction.getGasLimit() - gasRemaining) / gasCalculator.getMaxRefundQuotient();
     final long refundAllowance = Math.min(maxRefundAllowance, gasRefund);
     return gasRemaining + refundAllowance;
+  }
+
+  private String printableStackTraceFromThrowable(final RuntimeException re) {
+    final StringBuilder builder = new StringBuilder();
+
+    for (final StackTraceElement stackTraceElement : re.getStackTrace()) {
+      builder.append("\tat ").append(stackTraceElement.toString()).append("\n");
+    }
+
+    return builder.toString();
   }
 }
