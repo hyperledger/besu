@@ -229,9 +229,6 @@ public class TransactionPool implements BlockAddedObserver {
     final boolean hasPriority = isPriorityTransaction(transaction, isLocal);
 
     if (pendingTransactions.containsTransaction(transaction)) {
-      if (transaction.getType().supportsBlob()) {
-        pendingTransactions.restoreBlob(transaction);
-      }
       LOG.atTrace()
           .setMessage("Discard already present transaction {}")
           .addArgument(transaction::toTraceLog)
@@ -240,22 +237,29 @@ public class TransactionPool implements BlockAddedObserver {
       metrics.incrementRejected(isLocal, hasPriority, TRANSACTION_ALREADY_KNOWN, "txpool");
       return ValidationResult.invalid(TRANSACTION_ALREADY_KNOWN);
     }
+    Transaction toAdd = transaction;
     // if adding a blob tx, and it is missing its blob, is a re-org and we should restore the blob
     // from cache.
+    if (transaction.getType().supportsBlob() && transaction.getBlobsWithCommitments().isEmpty()) {
+      final Optional<Transaction> maybeCachedBlob = pendingTransactions.restoreBlob(transaction);
+      if(maybeCachedBlob.isPresent()) {
+        toAdd = maybeCachedBlob.get();
+      }
+    }
 
     final ValidationResultAndAccount validationResult =
-        validateTransaction(transaction, isLocal, hasPriority);
+        validateTransaction(toAdd, isLocal, hasPriority);
 
     if (validationResult.result.isValid()) {
       final TransactionAddedResult status =
           pendingTransactions.addTransaction(
-              PendingTransaction.newPendingTransaction(transaction, isLocal, hasPriority),
+              PendingTransaction.newPendingTransaction(toAdd, isLocal, hasPriority),
               validationResult.maybeAccount);
       if (status.isSuccess()) {
         LOG.atTrace()
             .setMessage("Added {} transaction {}")
             .addArgument(() -> isLocal ? "local" : "remote")
-            .addArgument(transaction::toTraceLog)
+            .addArgument(toAdd::toTraceLog)
             .log();
       } else {
         final var rejectReason =
@@ -268,7 +272,7 @@ public class TransactionPool implements BlockAddedObserver {
                     });
         LOG.atTrace()
             .setMessage("Transaction {} rejected reason {}")
-            .addArgument(transaction::toTraceLog)
+            .addArgument(toAdd::toTraceLog)
             .addArgument(rejectReason)
             .log();
         metrics.incrementRejected(isLocal, hasPriority, rejectReason, "txpool");
@@ -277,7 +281,7 @@ public class TransactionPool implements BlockAddedObserver {
     } else {
       LOG.atTrace()
           .setMessage("Discard invalid transaction {}, reason {}")
-          .addArgument(transaction::toTraceLog)
+          .addArgument(toAdd::toTraceLog)
           .addArgument(validationResult.result::getInvalidReason)
           .log();
       metrics.incrementRejected(

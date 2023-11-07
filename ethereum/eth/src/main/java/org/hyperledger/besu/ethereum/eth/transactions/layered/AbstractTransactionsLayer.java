@@ -25,6 +25,8 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.REPLACED;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Blob;
+import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -76,7 +78,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   private OptionalLong nextLayerOnDroppedListenerId = OptionalLong.empty();
   protected long spaceUsed = 0;
 
-  private final Cache blobCache;
+  private final Cache<Hash, BlobsWithCommitments> blobCache;
 
   public AbstractTransactionsLayer(
       final TransactionPoolConfiguration poolConfig,
@@ -610,4 +612,8 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
 
   protected abstract void internalConsistencyCheck(
       final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender);
+
+  public Cache<Hash, BlobsWithCommitments> getBlobCache() {
+    return blobCache;
+  }
 }

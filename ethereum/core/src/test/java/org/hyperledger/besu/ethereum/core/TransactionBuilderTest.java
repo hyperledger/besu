@@ -17,8 +17,12 @@ package org.hyperledger.besu.ethereum.core;
 
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.DelegatingBytes;
+import org.apache.tuweni.bytes.MutableBytes;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -34,6 +38,8 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.google.common.base.Suppliers;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.junit.jupiter.api.Test;
 
 public class TransactionBuilderTest {
@@ -75,5 +81,21 @@ public class TransactionBuilderTest {
     } catch (IllegalArgumentException iea) {
       assertThat(iea).hasMessage("Blob transaction must have at least one versioned hash");
     }
+  }
+
+  @Test
+  @SuppressWarnings("ReferenceEquality")
+  public void copyFromIsIdentical() {
+    final TransactionTestFixture fixture = new TransactionTestFixture();
+    final Transaction transaction = fixture.createTransaction(senderKeys);
+    final Transaction.Builder builder = Transaction.builder();
+    final Transaction copy = builder.copiedFrom(transaction).build();
+    assertThat(copy).isEqualTo(transaction);
+    assertThat(copy == transaction).isFalse();
+    BytesValueRLPOutput sourceRLP = new BytesValueRLPOutput();
+    transaction.writeTo(sourceRLP);
+    BytesValueRLPOutput copyRLP = new BytesValueRLPOutput();
+    copy.writeTo(copyRLP);
+    assertEquals(sourceRLP.encoded(), copyRLP.encoded());
   }
 }

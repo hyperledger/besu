@@ -498,4 +498,16 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
       return sb.toString();
     }
   }
+    @Override
+    public Optional<Transaction> restoreBlob(final Transaction transaction) {
+        Transaction.Builder txBuilder = Transaction.builder();
+        txBuilder.copiedFrom(transaction);
+        final BlobsWithCommitments bwc = blobCache.getIfPresent(transaction.getHash());
+        if(bwc != null) {
+            txBuilder.blobsWithCommitments(bwc);
+            return Optional.of(txBuilder.build());
+        } else {
+            return Optional.empty();
+        }
+    }
 }

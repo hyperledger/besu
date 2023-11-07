@@ -72,7 +72,7 @@ public interface PendingTransactions {
 
   String logStats();
 
-  void restoreBlob(Transaction transaction);
+  Optional<Transaction> restoreBlob(Transaction transaction);
 
   @FunctionalInterface
   interface TransactionSelector {

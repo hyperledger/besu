@@ -490,9 +490,10 @@ public abstract class AbstractTransactionPoolTest {
     final Block reorgFork3 = appendBlock(Difficulty.of(3000), reorgFork2.getHeader());
     verifyChainHeadIs(reorgFork3);
 
-    assertTransactionPending(transactionBlob);
     assertTransactionPending(transaction0);
     assertTransactionPending(transaction1);
+    assertTransactionPending(transactionBlob);
+
     Optional<Transaction> maybeBlob = transactions.getTransactionByHash(transactionBlob.getHash());
     assertThat(maybeBlob).isPresent();
     Transaction restoredBlob = maybeBlob.get();
