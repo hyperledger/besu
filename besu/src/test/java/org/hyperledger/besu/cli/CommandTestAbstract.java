@@ -32,12 +32,12 @@ import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.options.MiningOptions;
+import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
-import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
@@ -560,17 +560,12 @@ public abstract class CommandTestAbstract {
       return unstableEthProtocolOptions;
     }
 
-    public org.hyperledger.besu.cli.options.stable.TransactionPoolOptions
-        getStableTransactionPoolOptions() {
-      return stableTransactionPoolOptions;
-    }
-
     public MiningOptions getMiningOptions() {
       return miningOptions;
     }
 
-    public TransactionPoolOptions getUnstableTransactionPoolOptions() {
-      return unstableTransactionPoolOptions;
+    public TransactionPoolOptions getTransactionPoolOptions() {
+      return transactionPoolOptions;
     }
 
     public MetricsCLIOptions getMetricsCLIOptions() {

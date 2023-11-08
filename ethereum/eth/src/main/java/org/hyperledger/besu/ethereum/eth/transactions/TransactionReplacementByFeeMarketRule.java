@@ -49,11 +49,6 @@ public class TransactionReplacementByFeeMarketRule implements TransactionPoolRep
     Wei newEffPriority =
         newPendingTransaction.getTransaction().getEffectivePriorityFeePerGas(maybeBaseFee);
 
-    // bail early if price is not strictly positive
-    if (newEffPrice.equals(Wei.ZERO)) {
-      return false;
-    }
-
     Wei curEffPrice = priceOf(existingPendingTransaction.getTransaction(), maybeBaseFee);
     Wei curEffPriority =
         existingPendingTransaction.getTransaction().getEffectivePriorityFeePerGas(maybeBaseFee);
@@ -77,6 +72,6 @@ public class TransactionReplacementByFeeMarketRule implements TransactionPoolRep
   }
 
   private boolean isBumpedBy(final Wei val, final Wei bumpVal, final Percentage percent) {
-    return val.multiply(percent.getValue() + 100L).compareTo(bumpVal.multiply(100L)) < 0;
+    return val.multiply(percent.getValue() + 100L).compareTo(bumpVal.multiply(100L)) <= 0;
   }
 }
