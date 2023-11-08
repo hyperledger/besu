@@ -355,6 +355,8 @@ public class MainnetTransactionProcessor {
         contextVariablesBuilder.put(KEY_PRIVATE_METADATA_UPDATER, privateMetadataUpdater);
       }
 
+      operationTracer.traceStartTransaction(worldUpdater, transaction);
+
       final MessageFrame.Builder commonMessageFrameBuilder =
           MessageFrame.builder()
               .maxStackSize(maxStackSize)
@@ -450,6 +452,15 @@ public class MainnetTransactionProcessor {
           .addArgument(sender.getBalance())
           .log();
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
+
+      operationTracer.traceEndTransaction(
+          worldUpdater,
+          transaction,
+          initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS,
+          initialFrame.getOutputData(),
+          initialFrame.getLogs(),
+          gasUsedByTransaction,
+          0L);
 
       // update the coinbase
       final var coinbase = worldState.getOrCreate(miningBeneficiary);

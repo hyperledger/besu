@@ -37,11 +37,11 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
  *
  * @param <V> The type of the collection.
  */
-public class UndoTable<R, C, V> implements Table<R, C, V>, UndoableCollection {
+public class UndoTable<R, C, V> implements Table<R, C, V>, Undoable {
 
   record UndoEntry<R, C, V>(R row, C column, V value, long level) {
     UndoEntry(final R row, final C column, final V value) {
-      this(row, column, value, UndoableCollection.incrementMarkStatic());
+      this(row, column, value, Undoable.incrementMarkStatic());
     }
   }
 
@@ -84,6 +84,11 @@ public class UndoTable<R, C, V> implements Table<R, C, V>, UndoableCollection {
       }
       pos--;
     }
+  }
+
+  @Override
+  public long lastUpdate() {
+    return undoLog.isEmpty() ? 0L : undoLog.get(undoLog.size() - 1).level;
   }
 
   @Override
