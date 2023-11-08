@@ -21,10 +21,10 @@ import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -39,8 +39,13 @@ public class TransactionSelectionResults {
   private final Map<TransactionType, List<Transaction>> transactionsByType =
       new EnumMap<>(TransactionType.class);
   private final List<TransactionReceipt> receipts = Lists.newArrayList();
+  /**
+   * Access to this field needs to be guarded, since it is possible to read it while another
+   * processing thread is writing, when the selection time is over.
+   */
   private final Map<Transaction, TransactionSelectionResult> notSelectedTransactions =
-      new HashMap<>();
+      new ConcurrentHashMap<>();
+
   private long cumulativeGasUsed = 0;
   private long cumulativeBlobGasUsed = 0;
 
@@ -92,18 +97,19 @@ public class TransactionSelectionResults {
   }
 
   public Map<Transaction, TransactionSelectionResult> getNotSelectedTransactions() {
-    return notSelectedTransactions;
+    return Map.copyOf(notSelectedTransactions);
   }
 
   public void logSelectionStats() {
     if (LOG.isDebugEnabled()) {
+      final var notSelectedTxs = getNotSelectedTransactions();
       final Map<TransactionSelectionResult, Long> notSelectedStats =
-          notSelectedTransactions.values().stream()
+          notSelectedTxs.values().stream()
               .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
       LOG.debug(
           "Selection stats: Totals[Evaluated={}, Selected={}, NotSelected={}, Discarded={}]; Detailed[{}]",
-          selectedTransactions.size() + notSelectedTransactions.size(),
+          selectedTransactions.size() + notSelectedTxs.size(),
           selectedTransactions.size(),
           notSelectedStats.size(),
           notSelectedStats.entrySet().stream()
