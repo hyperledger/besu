@@ -76,6 +76,20 @@ public class TransactionPoolOptionsTest
         "-1");
   }
 
+  @Test
+  public void disableSenderTXGroupingOn() {
+    internalTestSuccess(
+        config -> assertThat(config.getDisableSenderTXGrouping()).isTrue(),
+        "--Xtx-pool-disable-sender-grouping=true");
+  }
+
+  @Test
+  public void disableSenderTXGroupingOff() {
+    internalTestSuccess(
+        config -> assertThat(config.getDisableSenderTXGrouping()).isFalse(),
+        "--Xtx-pool-disable-sender-grouping=false");
+  }
+
   @Override
   protected TransactionPoolConfiguration.Unstable createDefaultDomainObject() {
     return TransactionPoolConfiguration.Unstable.DEFAULT;

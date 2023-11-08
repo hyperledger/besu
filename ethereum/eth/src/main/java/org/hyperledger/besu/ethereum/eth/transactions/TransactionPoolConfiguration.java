@@ -60,7 +60,6 @@ public interface TransactionPoolConfiguration {
   }
 
   String DEFAULT_SAVE_FILE_NAME = "txpool.dump";
-
   int DEFAULT_MAX_PENDING_TRANSACTIONS = 4096;
   Fraction DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE = Fraction.fromFloat(0.001f); // 0.1%
   int DEFAULT_TX_RETENTION_HOURS = 13;

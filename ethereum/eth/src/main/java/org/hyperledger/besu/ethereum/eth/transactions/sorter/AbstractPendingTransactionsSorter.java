@@ -272,7 +272,6 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
           }
         }
       }
-
       transactionsToRemove.forEach(this::removeTransaction);
     }
   }

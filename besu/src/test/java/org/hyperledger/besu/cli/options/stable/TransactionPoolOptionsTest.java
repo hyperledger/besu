@@ -148,20 +148,6 @@ public class TransactionPoolOptionsTest
   }
 
   @Test
-  public void disableSenderTXGroupingOn() {
-    internalTestSuccess(
-        config -> assertThat(config.getDisableSenderTXGrouping()).isTrue(),
-        "--tx-pool-disable-sender-grouping=true");
-  }
-
-  @Test
-  public void disableSenderTXGroupingOff() {
-    internalTestSuccess(
-        config -> assertThat(config.getDisableSenderTXGrouping()).isFalse(),
-        "--tx-pool-disable-sender-grouping=false");
-  }
-
-  @Test
   public void invalidPriceBumpShouldFail() {
     internalTestFailure(
         "Invalid value: 101, should be a number between 0 and 100 inclusive",
