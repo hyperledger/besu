@@ -40,7 +40,6 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
       new TreeSet<>(
           comparing(PendingTransaction::hasPriority)
               .thenComparing(PendingTransaction::getGasPrice)
-              .thenComparing(PendingTransaction::getAddedAt, Comparator.reverseOrder())
               .thenComparing(PendingTransaction::getSequence, Comparator.reverseOrder())
               .reversed());
 
