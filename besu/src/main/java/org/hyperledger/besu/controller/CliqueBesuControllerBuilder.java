@@ -94,7 +94,8 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
                 localAddress,
                 secondsBetweenBlocks),
             epochManager,
-            createEmptyBlocks);
+            createEmptyBlocks,
+            ethProtocolManager.ethContext().getScheduler());
     final CliqueMiningCoordinator miningCoordinator =
         new CliqueMiningCoordinator(
             protocolContext.getBlockchain(),
