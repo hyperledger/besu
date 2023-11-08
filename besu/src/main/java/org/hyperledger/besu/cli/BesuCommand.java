@@ -1848,7 +1848,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         throw new ParameterException(
             this.commandLine,
             "The `--Xnat-kube-service-namespace` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-namespace"
-                + " or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
+                + " or select the KUBERNETES mode (via --nat-method=KUBERNETES)");
       }
     }
     if (natMethod.equals(NatMethod.AUTO) && !unstableNatOptions.getNatMethodFallbackEnabled()) {
