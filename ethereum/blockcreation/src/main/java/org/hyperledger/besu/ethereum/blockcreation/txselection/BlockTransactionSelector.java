@@ -188,7 +188,7 @@ public class BlockTransactionSelector {
       LOG.warn("Error during block transactions selection", e);
     } catch (TimeoutException e) {
       // synchronize since we want to be sure that there is no concurrent state update
-      synchronized (isBlockTimeout) {
+      synchronized (transactionSelectionResults) {
         isBlockTimeout.set(true);
       }
       LOG.warn(
@@ -220,6 +220,15 @@ public class BlockTransactionSelector {
 
   private TransactionSelectionResult timeLimitedEvaluateTransaction(
       final PendingTransaction pendingTransaction) {
+    if (isBlockTimeout.get()) {
+      LOG.atTrace()
+          .setMessage(
+              "Skipping evaluation of tx {}, since there was already a block selection timeout")
+          .addArgument(pendingTransaction::toTraceLog)
+          .log();
+      return BLOCK_SELECTION_TIMEOUT;
+    }
+
     final var txEvaluationState = new TxEvaluationState(worldState);
     final var evaluationFuture =
         ethScheduler.scheduleBlockCreationTask(
@@ -239,7 +248,7 @@ public class BlockTransactionSelector {
       return INTERNAL_ERROR;
     } catch (TimeoutException e) {
       // synchronize since we want to be sure that there is no concurrent state update
-      synchronized (txEvaluationState) {
+      synchronized (transactionSelectionResults) {
         // in the meantime the tx could have been evaluated, in that case the selection result is
         // present
         if (txEvaluationState.hasSelectionResult()) {
@@ -392,27 +401,25 @@ public class BlockTransactionSelector {
     // only add this tx to the selected set if it is not too late,
     // this need to be done synchronously to avoid that a concurrent timeout
     // could start packing a block while we are updating the state here
-    synchronized (isBlockTimeout) {
-      synchronized (txEvaluationState) {
-        blockTooLate = isBlockTimeout.get();
-        txTooLate = txEvaluationState.isTimeout();
+    synchronized (transactionSelectionResults) {
+      blockTooLate = isBlockTimeout.get();
+      txTooLate = txEvaluationState.isTimeout();
 
-        if (blockTooLate || txTooLate) {
-          LOG.atTrace()
-              .setMessage("Timeout block={}, tx={}, when processing {}")
-              .addArgument(blockTooLate)
-              .addArgument(txTooLate)
-              .addArgument(transaction::toTraceLog)
-              .log();
-        } else {
-          txEvaluationState.commit();
-          final TransactionReceipt receipt =
-              transactionReceiptFactory.create(
-                  transaction.getType(), processingResult, worldState, cumulativeGasUsed);
+      if (blockTooLate || txTooLate) {
+        LOG.atTrace()
+            .setMessage("Timeout block={}, tx={}, when processing {}")
+            .addArgument(blockTooLate)
+            .addArgument(txTooLate)
+            .addArgument(transaction::toTraceLog)
+            .log();
+      } else {
+        txEvaluationState.commit();
+        final TransactionReceipt receipt =
+            transactionReceiptFactory.create(
+                transaction.getType(), processingResult, worldState, cumulativeGasUsed);
 
-          transactionSelectionResults.updateSelected(
-              transaction, receipt, gasUsedByTransaction, blobGasUsed);
-        }
+        transactionSelectionResults.updateSelected(
+            transaction, receipt, gasUsedByTransaction, blobGasUsed);
       }
     }
 
