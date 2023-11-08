@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.plugin.data.SyncStatus;
-import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.nio.file.Path;
 import java.util.Collections;
@@ -74,9 +73,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
 
   @BeforeAll
   public static void setupConstants() {
-    blockchainSetupUtil =
-        BlockchainSetupUtil.createForEthashChain(
-            BlockTestUtil.getHiveTestChainResources(), DataStorageFormat.BONSAI);
+    blockchainSetupUtil = BlockchainSetupUtil.forHiveTesting(DataStorageFormat.BONSAI);
     blockchainSetupUtil.importAllBlocks();
   }
 

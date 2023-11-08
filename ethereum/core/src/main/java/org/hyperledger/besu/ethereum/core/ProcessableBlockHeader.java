@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.frame.BlockValues;
@@ -26,7 +25,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** A block header capable of being processed. */
-public class ProcessableBlockHeader implements BlockValues {
+public class ProcessableBlockHeader
+    implements BlockValues, org.hyperledger.besu.plugin.data.ProcessableBlockHeader {
 
   protected final Hash parentHash;
 
@@ -44,10 +44,6 @@ public class ProcessableBlockHeader implements BlockValues {
   protected final Wei baseFee;
   // prevRandao is included for post-merge blocks
   protected final Bytes32 mixHashOrPrevRandao;
-  // blobGasUsed is included for Cancun
-  protected final Optional<Long> blobGasUsed;
-  // excessBlogGas is included for Cancun
-  protected final Optional<BlobGas> excessBlobGas;
   // parentBeaconBlockRoot is included for Cancun
   protected final Bytes32 parentBeaconBlockRoot;
 
@@ -60,8 +56,6 @@ public class ProcessableBlockHeader implements BlockValues {
       final long timestamp,
       final Wei baseFee,
       final Bytes32 mixHashOrPrevRandao,
-      final Long blobGasUsed,
-      final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot) {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
@@ -71,8 +65,6 @@ public class ProcessableBlockHeader implements BlockValues {
     this.timestamp = timestamp;
     this.baseFee = baseFee;
     this.mixHashOrPrevRandao = mixHashOrPrevRandao;
-    this.blobGasUsed = Optional.ofNullable(blobGasUsed);
-    this.excessBlobGas = Optional.ofNullable(excessBlobGas);
     this.parentBeaconBlockRoot = parentBeaconBlockRoot;
   }
 
@@ -81,6 +73,7 @@ public class ProcessableBlockHeader implements BlockValues {
    *
    * @return the block parent block hash
    */
+  @Override
   public Hash getParentHash() {
     return parentHash;
   }
@@ -90,6 +83,7 @@ public class ProcessableBlockHeader implements BlockValues {
    *
    * @return the block coinbase address
    */
+  @Override
   public Address getCoinbase() {
     return coinbase;
   }
@@ -99,6 +93,7 @@ public class ProcessableBlockHeader implements BlockValues {
    *
    * @return the block difficulty
    */
+  @Override
   public Difficulty getDifficulty() {
     return difficulty;
   }
@@ -168,18 +163,17 @@ public class ProcessableBlockHeader implements BlockValues {
    *
    * @return the raw bytes of the prevRandao field
    */
+  @Override
   public Optional<Bytes32> getPrevRandao() {
     return Optional.ofNullable(mixHashOrPrevRandao);
   }
 
-  public Optional<BlobGas> getExcessBlobGas() {
-    return excessBlobGas;
-  }
-
-  public Optional<Long> getBlobGasUsed() {
-    return blobGasUsed;
-  }
-
+  /**
+   * Returns the parent beacon block root.
+   *
+   * @return the parent beacon block root.
+   */
+  @Override
   public Optional<Bytes32> getParentBeaconBlockRoot() {
     return Optional.ofNullable(parentBeaconBlockRoot);
   }
