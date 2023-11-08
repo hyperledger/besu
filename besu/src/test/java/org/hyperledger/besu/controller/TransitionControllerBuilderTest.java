@@ -49,12 +49,14 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -71,7 +73,10 @@ public class TransitionControllerBuilderTest {
   @Mock MutableBlockchain mockBlockchain;
   @Mock TransactionPool transactionPool;
   @Mock SyncState syncState;
-  @Mock EthProtocolManager ethProtocolManager;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  EthProtocolManager ethProtocolManager;
+
   @Mock PostMergeContext mergeContext;
   StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
@@ -101,6 +106,8 @@ public class TransitionControllerBuilderTest {
         .thenReturn(mock(CliqueContext.class));
     when(protocolContext.getConsensusContext(PostMergeContext.class)).thenReturn(mergeContext);
     when(protocolContext.getConsensusContext(MergeContext.class)).thenReturn(mergeContext);
+    when(ethProtocolManager.ethContext().getScheduler())
+        .thenReturn(new DeterministicEthScheduler());
     miningParameters = MiningParameters.newDefault();
   }
 
