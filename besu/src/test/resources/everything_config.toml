@@ -180,7 +180,6 @@ tx-pool-no-local-priority=false
 tx-pool-priority-senders=["0xABC0000000000000000000000000000000001234","0xDEF0000000000000000000000000000000001234"]
 tx-pool-enable-save-restore=true
 tx-pool-save-file="txpool.dump"
-tx-pool-disable-sender-grouping=false
 ## Layered
 tx-pool-layer-max-capacity=12345678
 tx-pool-max-prioritized=9876
@@ -189,6 +188,8 @@ tx-pool-max-future-by-sender=321
 tx-pool-retention-hours=999
 tx-pool-max-size=1234
 tx-pool-limit-by-account-percentage=0.017
+## Experimental
+Xtx-pool-disable-sender-grouping=false
 
 # Revert Reason
 revert-reason-enabled=false

@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NavigableSet;
-import java.util.Optional;
 import java.util.TreeSet;
 import java.util.stream.Stream;
 
@@ -68,17 +67,5 @@ public class AccountTransactionOrder {
       transactionsForSender.remove(transaction);
     }
     return transactionsToApply;
-  }
-
-  public Optional<PendingTransaction> getHighestPriorityDeferredTransaction() {
-    Optional<PendingTransaction> transactionToApply = Optional.empty();
-    if (!deferredTransactions.isEmpty()
-        && !transactionsForSender.isEmpty()
-        && deferredTransactions.first().equals(transactionsForSender.first())) {
-      transactionToApply = Optional.of(deferredTransactions.first());
-      deferredTransactions.remove(transactionToApply.get());
-      transactionsForSender.remove(transactionToApply.get());
-    }
-    return transactionToApply;
   }
 }

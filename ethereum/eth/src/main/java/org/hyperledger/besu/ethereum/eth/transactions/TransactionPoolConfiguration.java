@@ -47,6 +47,11 @@ public interface TransactionPoolConfiguration {
     default int getTxMessageKeepAliveSeconds() {
       return DEFAULT_TX_MSG_KEEP_ALIVE;
     }
+
+    @Value.Default
+    default Boolean getDisableSenderTXGrouping() {
+      return DEFAULT_DISABLE_SENDER_TX_GROUPING;
+    }
   }
 
   enum Implementation {

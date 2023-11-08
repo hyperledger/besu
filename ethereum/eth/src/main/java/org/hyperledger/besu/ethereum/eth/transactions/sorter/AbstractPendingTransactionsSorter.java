@@ -256,7 +256,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         for (final PendingTransaction transactionToProcess :
             accountTransactionOrder.transactionsToProcess(
                 highestPriorityPendingTransaction,
-                poolConfig.getDisableSenderTXGrouping() ? 1 : Integer.MAX_VALUE)) {
+                poolConfig.getUnstable().getDisableSenderTXGrouping() ? 1 : Integer.MAX_VALUE)) {
           final TransactionSelectionResult result =
               selector.evaluateTransaction(transactionToProcess);
 
@@ -273,50 +273,6 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         }
       }
 
-      if (poolConfig.getDisableSenderTXGrouping()) {
-        // If sender grouping of transactions is disabled, there will potentially
-        // be transactions left for the sender accounts we have selected at least 1 TX for already.
-
-        // Iterate over the remaining accounts that have at least 1 deferred transaction until there
-        // aren't any left.
-        while (accountTransactions.size() > 0) {
-
-          // List the current accounts with deferred transactions
-          List<Map.Entry<Address, AccountTransactionOrder>> accounts =
-              accountTransactions.entrySet().stream().toList();
-
-          for (Map.Entry<Address, AccountTransactionOrder> nextEntry : accounts) {
-            // Get the address and account transaction order
-            Address addr = nextEntry.getKey();
-            AccountTransactionOrder nextAccount = nextEntry.getValue();
-
-            // Get the highest priority deferred transaction and evaluate it
-            Optional<PendingTransaction> nextTransactionForSender =
-                nextAccount.getHighestPriorityDeferredTransaction();
-
-            if (nextTransactionForSender.isPresent()) {
-              PendingTransaction transactionToEvaluate = nextTransactionForSender.get();
-              final TransactionSelectionResult result =
-                  selector.evaluateTransaction(transactionToEvaluate);
-
-              if (result.discard()) {
-                transactionsToRemove.add(transactionToEvaluate.getTransaction());
-                transactionsToRemove.addAll(
-                    signalInvalidAndGetDependentTransactions(
-                        transactionToEvaluate.getTransaction()));
-              }
-
-              if (result.stop()) {
-                transactionsToRemove.forEach(this::removeTransaction);
-                return;
-              }
-            } else {
-              // This account is empty - remove from the list
-              accountTransactions.remove(addr);
-            }
-          }
-        }
-      }
       transactionsToRemove.forEach(this::removeTransaction);
     }
   }
