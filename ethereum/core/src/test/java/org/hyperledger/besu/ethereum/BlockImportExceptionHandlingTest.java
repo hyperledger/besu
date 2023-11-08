@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
@@ -55,7 +56,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-public class BlockImportExceptionHandlingTest {
+class BlockImportExceptionHandlingTest {
 
   private final MainnetTransactionProcessor transactionProcessor =
       mock(MainnetTransactionProcessor.class);
@@ -90,7 +91,8 @@ public class BlockImportExceptionHandlingTest {
       spy(
           new BonsaiWorldState(
               (BonsaiWorldStateProvider) worldStateArchive,
-              (BonsaiWorldStateKeyValueStorage) worldStateStorage));
+              (BonsaiWorldStateKeyValueStorage) worldStateStorage,
+              EvmConfiguration.DEFAULT));
 
   private final BadBlockManager badBlockManager = new BadBlockManager();
 
@@ -107,7 +109,7 @@ public class BlockImportExceptionHandlingTest {
   }
 
   @Test
-  public void shouldNotBadBlockWhenInternalErrorDuringPersisting() {
+  void shouldNotBadBlockWhenInternalErrorDuringPersisting() {
 
     Mockito.doThrow(new StorageException("database problem")).when(persisted).persist(any());
     Mockito.doReturn(persisted).when(worldStateArchive).getMutable();
@@ -147,7 +149,7 @@ public class BlockImportExceptionHandlingTest {
   }
 
   @Test
-  public void shouldNotBadBlockWhenInternalErrorOnBlockLookup() {
+  void shouldNotBadBlockWhenInternalErrorOnBlockLookup() {
 
     Block goodBlock =
         new BlockDataGenerator()
@@ -173,7 +175,7 @@ public class BlockImportExceptionHandlingTest {
             any(),
             eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
-    assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
+    assertThat(badBlockManager.getBadBlocks()).isEmpty();
     mainnetBlockValidator.validateAndProcessBlock(
         protocolContext,
         goodBlock,
@@ -183,7 +185,7 @@ public class BlockImportExceptionHandlingTest {
   }
 
   @Test
-  public void shouldNotBadBlockWhenInternalErrorDuringValidateHeader() {
+  void shouldNotBadBlockWhenInternalErrorDuringValidateHeader() {
 
     Block goodBlock =
         new BlockDataGenerator()
@@ -212,7 +214,7 @@ public class BlockImportExceptionHandlingTest {
   }
 
   @Test
-  public void shouldNotBadBlockWhenInternalErrorDuringValidateBody() {
+  void shouldNotBadBlockWhenInternalErrorDuringValidateBody() {
     Mockito.doNothing().when(persisted).persist(any());
     Mockito.doReturn(persisted).when(worldStateArchive).getMutable();
     Mockito.doReturn(Optional.of(persisted)).when(worldStateArchive).getMutable(any(), any());

@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecificatio
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueDifficultyValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueExtraDataValidationRule;
+import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueNoEmptyBlockValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CoinbaseHeaderValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.SignerRateLimitValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.VoteValidationRule;
@@ -51,22 +52,29 @@ public class BlockHeaderValidationRulesetFactory {
    * <p>Specifically the set of rules provided by this function are to be used for a Clique chain.
    *
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
+   * @param createEmptyBlocks whether clique should allow the creation of empty blocks.
    * @param epochManager an object which determines if a given block is an epoch block.
    * @param baseFeeMarket an {@link Optional} wrapping {@link BaseFeeMarket} class if appropriate.
    * @return the header validator.
    */
   public static BlockHeaderValidator.Builder cliqueBlockHeaderValidator(
       final long secondsBetweenBlocks,
+      final boolean createEmptyBlocks,
       final EpochManager epochManager,
       final Optional<BaseFeeMarket> baseFeeMarket) {
     return cliqueBlockHeaderValidator(
-        secondsBetweenBlocks, epochManager, baseFeeMarket, MergeConfigOptions.isMergeEnabled());
+        secondsBetweenBlocks,
+        createEmptyBlocks,
+        epochManager,
+        baseFeeMarket,
+        MergeConfigOptions.isMergeEnabled());
   }
 
   /**
    * Clique block header validator. Visible for testing.
    *
    * @param secondsBetweenBlocks the seconds between blocks
+   * @param createEmptyBlocks whether clique should allow the creation of empty blocks.
    * @param epochManager the epoch manager
    * @param baseFeeMarket the base fee market
    * @param isMergeEnabled the is merge enabled
@@ -75,6 +83,7 @@ public class BlockHeaderValidationRulesetFactory {
   @VisibleForTesting
   public static BlockHeaderValidator.Builder cliqueBlockHeaderValidator(
       final long secondsBetweenBlocks,
+      final boolean createEmptyBlocks,
       final EpochManager epochManager,
       final Optional<BaseFeeMarket> baseFeeMarket,
       final boolean isMergeEnabled) {
@@ -97,6 +106,10 @@ public class BlockHeaderValidationRulesetFactory {
 
     if (baseFeeMarket.isPresent()) {
       builder.addRule(new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket.get()));
+    }
+
+    if (!createEmptyBlocks) {
+      builder.addRule(new CliqueNoEmptyBlockValidationRule());
     }
 
     var mixHashRule =
