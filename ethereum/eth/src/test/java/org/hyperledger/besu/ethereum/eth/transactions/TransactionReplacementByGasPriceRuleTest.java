@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,11 +17,8 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static java.util.Arrays.asList;
 import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.util.Collection;
@@ -30,12 +27,12 @@ import java.util.Optional;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-public class TransactionReplacementRulesTest extends AbstractTransactionReplacementTest {
+public class TransactionReplacementByGasPriceRuleTest extends AbstractTransactionReplacementTest {
 
   public static Collection<Object[]> data() {
     return asList(
         new Object[][] {
-          // TransactionReplacementByGasPriceRule
+
           //   basefee absent
           {frontierTx(5L), frontierTx(6L), empty(), 0, true},
           {frontierTx(5L), frontierTx(5L), empty(), 0, true},
@@ -50,33 +47,26 @@ public class TransactionReplacementRulesTest extends AbstractTransactionReplacem
           {frontierTx(100L), frontierTx(105L), Optional.of(Wei.of(3L)), 10, false},
           {frontierTx(100L), frontierTx(110L), Optional.of(Wei.of(3L)), 10, true},
           {frontierTx(100L), frontierTx(111L), Optional.of(Wei.of(3L)), 10, true},
-          // TransactionReplacementByFeeMarketRule
           //  eip1559 replacing frontier
           {frontierTx(5L), eip1559Tx(3L, 6L), Optional.of(Wei.of(1L)), 0, false},
-          {frontierTx(5L), eip1559Tx(3L, 5L), Optional.of(Wei.of(3L)), 0, true},
-          {frontierTx(5L), eip1559Tx(3L, 6L), Optional.of(Wei.of(3L)), 0, true},
+          {frontierTx(5L), eip1559Tx(3L, 5L), Optional.of(Wei.of(3L)), 0, false},
+          {frontierTx(5L), eip1559Tx(3L, 6L), Optional.of(Wei.of(3L)), 0, false},
           //  frontier replacing 1559
-          {eip1559Tx(3L, 8L), frontierTx(6L), Optional.of(Wei.of(4L)), 0, false},
-          {eip1559Tx(3L, 8L), frontierTx(7L), Optional.of(Wei.of(4L)), 0, true},
-          {eip1559Tx(3L, 8L), frontierTx(8L), Optional.of(Wei.of(4L)), 0, true},
+          {eip1559Tx(3L, 8L), frontierTx(7L), Optional.of(Wei.of(4L)), 0, false},
+          {eip1559Tx(3L, 8L), frontierTx(8L), Optional.of(Wei.of(4L)), 0, false},
           //  eip1559 replacing eip1559
-          {eip1559Tx(3L, 6L), eip1559Tx(3L, 6L), Optional.of(Wei.of(3L)), 0, true},
-          {eip1559Tx(3L, 6L), eip1559Tx(3L, 7L), Optional.of(Wei.of(3L)), 0, true},
-          {eip1559Tx(3L, 6L), eip1559Tx(3L, 7L), Optional.of(Wei.of(4L)), 0, true},
+          {eip1559Tx(3L, 6L), eip1559Tx(3L, 6L), Optional.of(Wei.of(3L)), 0, false},
+          {eip1559Tx(3L, 6L), eip1559Tx(3L, 7L), Optional.of(Wei.of(3L)), 0, false},
+          {eip1559Tx(3L, 6L), eip1559Tx(3L, 7L), Optional.of(Wei.of(4L)), 0, false},
           {eip1559Tx(10L, 200L), eip1559Tx(10L, 200L), Optional.of(Wei.of(90L)), 10, false},
           {eip1559Tx(10L, 200L), eip1559Tx(15L, 200L), Optional.of(Wei.of(90L)), 10, false},
-          {eip1559Tx(10L, 200L), eip1559Tx(21L, 200L), Optional.of(Wei.of(90L)), 10, true},
+          {eip1559Tx(10L, 200L), eip1559Tx(21L, 200L), Optional.of(Wei.of(90L)), 10, false},
           //  pathological, priority fee > max fee
-          {eip1559Tx(8L, 6L), eip1559Tx(3L, 7L), Optional.of(Wei.of(3L)), 0, true},
-          {eip1559Tx(8L, 6L), eip1559Tx(3L, 7L), Optional.of(Wei.of(4L)), 0, true},
+          {eip1559Tx(8L, 6L), eip1559Tx(3L, 7L), Optional.of(Wei.of(3L)), 0, false},
+          {eip1559Tx(8L, 6L), eip1559Tx(3L, 7L), Optional.of(Wei.of(4L)), 0, false},
           //  pathological, eip1559 without basefee
           {eip1559Tx(8L, 6L), eip1559Tx(3L, 7L), Optional.empty(), 0, false},
           {eip1559Tx(8L, 6L), eip1559Tx(3L, 7L), Optional.empty(), 0, false},
-          // zero base fee market
-          {frontierTx(0L), frontierTx(0L), Optional.of(Wei.ZERO), 0, true},
-          {eip1559Tx(0L, 0L), frontierTx(0L), Optional.of(Wei.ZERO), 0, true},
-          {frontierTx(0L), eip1559Tx(0L, 0L), Optional.of(Wei.ZERO), 0, true},
-          {eip1559Tx(0L, 0L), eip1559Tx(0L, 0L), Optional.of(Wei.ZERO), 0, true},
         });
   }
 
@@ -88,12 +78,10 @@ public class TransactionReplacementRulesTest extends AbstractTransactionReplacem
       final Optional<Wei> baseFee,
       final int priceBump,
       final boolean expected) {
-    BlockHeader mockHeader = mock(BlockHeader.class);
-    when(mockHeader.getBaseFee()).thenReturn(baseFee);
 
     assertThat(
-            new TransactionPoolReplacementHandler(Percentage.fromInt(priceBump))
-                .shouldReplace(oldTx, newTx, mockHeader))
+            new TransactionReplacementByGasPriceRule(Percentage.fromInt(priceBump))
+                .shouldReplace(oldTx, newTx, baseFee))
         .isEqualTo(expected);
   }
 }
