@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 import static java.util.Comparator.comparing;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -26,7 +25,6 @@ import java.time.Clock;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NavigableSet;
-import java.util.Optional;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
@@ -59,7 +57,6 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
     prioritizedTransactions.clear();
   }
 
-
   @Override
   public void manageBlockAdded(final BlockHeader blockHeader) {
     // nothing to do
@@ -84,5 +81,4 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
   protected PendingTransaction getLeastPriorityTransaction() {
     return prioritizedTransactions.last();
   }
-
 }

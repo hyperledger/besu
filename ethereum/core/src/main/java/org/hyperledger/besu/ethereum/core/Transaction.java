@@ -1097,23 +1097,23 @@ public class Transaction
     private BlobsWithCommitments blobsWithCommitments;
 
     public Builder copiedFrom(final Transaction toCopy) {
-        this.transactionType = toCopy.transactionType;
-        this.nonce = toCopy.nonce;
-        this.gasPrice = toCopy.gasPrice.orElse(null);
-        this.maxPriorityFeePerGas = toCopy.maxPriorityFeePerGas.orElse(null);
-        this.maxFeePerGas = toCopy.maxFeePerGas.orElse(null);
-        this.maxFeePerBlobGas = toCopy.maxFeePerBlobGas.orElse(null);
-        this.gasLimit = toCopy.gasLimit;
-        this.to = toCopy.to;
-        this.value = toCopy.value;
-        this.signature = toCopy.signature;
-        this.payload = toCopy.payload;
-        this.accessList = toCopy.maybeAccessList;
-        this.sender = toCopy.sender;
-        this.chainId = toCopy.chainId;
-        this.versionedHashes = toCopy.versionedHashes.orElse(null);
-        this.blobsWithCommitments = toCopy.blobsWithCommitments.orElse(null);
-        return this;
+      this.transactionType = toCopy.transactionType;
+      this.nonce = toCopy.nonce;
+      this.gasPrice = toCopy.gasPrice.orElse(null);
+      this.maxPriorityFeePerGas = toCopy.maxPriorityFeePerGas.orElse(null);
+      this.maxFeePerGas = toCopy.maxFeePerGas.orElse(null);
+      this.maxFeePerBlobGas = toCopy.maxFeePerBlobGas.orElse(null);
+      this.gasLimit = toCopy.gasLimit;
+      this.to = toCopy.to;
+      this.value = toCopy.value;
+      this.signature = toCopy.signature;
+      this.payload = toCopy.payload;
+      this.accessList = toCopy.maybeAccessList;
+      this.sender = toCopy.sender;
+      this.chainId = toCopy.chainId;
+      this.versionedHashes = toCopy.versionedHashes.orElse(null);
+      this.blobsWithCommitments = toCopy.blobsWithCommitments.orElse(null);
+      return this;
     }
 
     public Builder type(final TransactionType transactionType) {

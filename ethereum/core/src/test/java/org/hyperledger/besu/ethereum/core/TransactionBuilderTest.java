@@ -20,15 +20,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.DelegatingBytes;
-import org.apache.tuweni.bytes.MutableBytes;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -38,8 +36,6 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.google.common.base.Suppliers;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.junit.jupiter.api.Test;
 
 public class TransactionBuilderTest {

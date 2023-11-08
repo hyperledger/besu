@@ -242,7 +242,7 @@ public class TransactionPool implements BlockAddedObserver {
     // from cache.
     if (transaction.getType().supportsBlob() && transaction.getBlobsWithCommitments().isEmpty()) {
       final Optional<Transaction> maybeCachedBlob = pendingTransactions.restoreBlob(transaction);
-      if(maybeCachedBlob.isPresent()) {
+      if (maybeCachedBlob.isPresent()) {
         toAdd = maybeCachedBlob.get();
       }
     }

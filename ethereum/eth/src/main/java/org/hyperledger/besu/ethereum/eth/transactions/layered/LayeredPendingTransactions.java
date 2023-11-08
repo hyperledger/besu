@@ -541,8 +541,9 @@ public class LayeredPendingTransactions implements PendingTransactions {
   public Optional<Transaction> restoreBlob(final Transaction transaction) {
     Transaction.Builder txBuilder = Transaction.builder();
     txBuilder.copiedFrom(transaction);
-    final BlobsWithCommitments bwc = prioritizedTransactions.getBlobCache().getIfPresent(transaction.getHash());
-    if(bwc != null) {
+    final BlobsWithCommitments bwc =
+        prioritizedTransactions.getBlobCache().getIfPresent(transaction.getHash());
+    if (bwc != null) {
       txBuilder.blobsWithCommitments(bwc);
       return Optional.of(txBuilder.build());
     } else {

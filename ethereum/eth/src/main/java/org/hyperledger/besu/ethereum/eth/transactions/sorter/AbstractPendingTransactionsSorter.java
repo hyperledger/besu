@@ -503,7 +503,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         Transaction.Builder txBuilder = Transaction.builder();
         txBuilder.copiedFrom(transaction);
         final BlobsWithCommitments bwc = blobCache.getIfPresent(transaction.getHash());
-        if(bwc != null) {
+        if (bwc != null) {
             txBuilder.blobsWithCommitments(bwc);
             return Optional.of(txBuilder.build());
         } else {
