@@ -248,4 +248,17 @@ public class CommandLineUtils {
       return false;
     }
   }
+
+  /**
+   * Is the option with that name set on the command line?
+   *
+   * @param commandLine the command line
+   * @param optionName the option name to check
+   * @return true if set
+   */
+  public static boolean isOptionSet(final CommandLine commandLine, final String optionName) {
+    return commandLine.getCommandSpec().options().stream()
+        .filter(optionSpec -> Arrays.stream(optionSpec.names()).anyMatch(optionName::equals))
+        .anyMatch(CommandLineUtils::isOptionSet);
+  }
 }
