@@ -34,6 +34,8 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -99,7 +101,7 @@ public class TransitionControllerBuilderTest {
         .thenReturn(mock(CliqueContext.class));
     when(protocolContext.getConsensusContext(PostMergeContext.class)).thenReturn(mergeContext);
     when(protocolContext.getConsensusContext(MergeContext.class)).thenReturn(mergeContext);
-    miningParameters = new MiningParameters.Builder().miningEnabled(false).build();
+    miningParameters = MiningParameters.newDefault();
   }
 
   @Test
@@ -118,7 +120,10 @@ public class TransitionControllerBuilderTest {
 
   @Test
   public void assertPowMiningPreMerge() {
-    miningParameters = new MiningParameters.Builder().miningEnabled(true).build();
+    miningParameters =
+        ImmutableMiningParameters.builder()
+            .mutableInitValues(MutableInitValues.builder().isMiningEnabled(true).build())
+            .build();
     var transCoordinator = buildTransitionCoordinator(powBuilder, postMergeBuilder);
     assertThat(transCoordinator.isMiningBeforeMerge()).isTrue();
   }
@@ -194,7 +199,7 @@ public class TransitionControllerBuilderTest {
   public void assertCliqueDetachedHeaderValidationPreMerge() {
     BlockHeaderValidator cliqueValidator =
         BlockHeaderValidationRulesetFactory.cliqueBlockHeaderValidator(
-                5L, new EpochManager(5L), Optional.of(FeeMarket.london(1L)), true)
+                5L, true, new EpochManager(5L), Optional.of(FeeMarket.london(1L)), true)
             .build();
     assertDetachedRulesForPostMergeBlocks(cliqueValidator);
   }

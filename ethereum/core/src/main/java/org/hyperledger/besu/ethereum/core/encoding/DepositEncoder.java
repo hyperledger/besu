@@ -24,7 +24,7 @@ public class DepositEncoder {
 
   public static void encode(final Deposit deposit, final RLPOutput rlpOutput) {
     rlpOutput.startList();
-    rlpOutput.writeBytes(deposit.getPublicKey());
+    rlpOutput.writeBytes(deposit.getPubkey());
     rlpOutput.writeBytes(deposit.getWithdrawalCredentials());
     rlpOutput.writeUInt64Scalar(deposit.getAmount());
     rlpOutput.writeBytes(deposit.getSignature());

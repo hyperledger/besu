@@ -18,7 +18,9 @@ package org.hyperledger.besu.plugin.services.txvalidator;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.plugin.Unstable;
 
-/** Interface for the transaction validator */
+import java.util.Optional;
+
+/** Interface for the transaction validator plugin */
 @Unstable
 public interface PluginTransactionValidator {
 
@@ -26,7 +28,8 @@ public interface PluginTransactionValidator {
    * Method called to decide whether a transaction can be added to the transaction pool.
    *
    * @param transaction candidate transaction
-   * @return true if the transaction can be added, false otherwise
+   * @return Optional.empty() if the transaction is valid, an Optional containing an error message,
+   *     if not
    */
-  boolean validateTransaction(final Transaction transaction);
+  Optional<String> validateTransaction(final Transaction transaction);
 }

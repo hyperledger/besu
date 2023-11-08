@@ -77,6 +77,8 @@ public class JsonRpcErrorConverter {
         return RpcErrorType.TOTAL_BLOB_GAS_TOO_HIGH;
       case TX_POOL_DISABLED:
         return RpcErrorType.TX_POOL_DISABLED;
+      case PLUGIN_TX_VALIDATOR:
+        return RpcErrorType.PLUGIN_TX_VALIDATOR;
       default:
         return RpcErrorType.INTERNAL_ERROR;
     }

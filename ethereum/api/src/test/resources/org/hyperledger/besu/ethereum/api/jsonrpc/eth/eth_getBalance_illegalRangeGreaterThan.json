@@ -5,7 +5,7 @@
     "method": "eth_getBalance",
     "params": [
       "0x8888f1f195afa192cfee860698584c030f4c9db1",
-      "0x21"
+      "0x120"
     ]
   },
   "response": {

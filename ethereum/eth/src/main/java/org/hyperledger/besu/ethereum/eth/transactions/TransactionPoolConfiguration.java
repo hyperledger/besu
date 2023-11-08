@@ -14,12 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.io.File;
 import java.time.Duration;
+import java.util.Set;
 
 import org.immutables.value.Value;
 
@@ -60,15 +62,15 @@ public interface TransactionPoolConfiguration {
   boolean DEFAULT_STRICT_TX_REPLAY_PROTECTION_ENABLED = false;
   Percentage DEFAULT_PRICE_BUMP = Percentage.fromInt(10);
   Wei DEFAULT_RPC_TX_FEE_CAP = Wei.fromEth(1);
-  boolean DEFAULT_DISABLE_LOCAL_TXS = false;
+  boolean DEFAULT_NO_LOCAL_PRIORITY = false;
   boolean DEFAULT_ENABLE_SAVE_RESTORE = false;
   boolean DEFAULT_DISABLE_SENDER_TX_GROUPING = false;
-
   File DEFAULT_SAVE_FILE = new File(DEFAULT_SAVE_FILE_NAME);
   long DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES = 12_500_000L;
   int DEFAULT_MAX_PRIORITIZED_TRANSACTIONS = 2000;
   int DEFAULT_MAX_FUTURE_BY_SENDER = 200;
   Implementation DEFAULT_TX_POOL_IMPLEMENTATION = Implementation.LAYERED;
+  Set<Address> DEFAULT_PRIORITY_SENDERS = Set.of();
 
   TransactionPoolConfiguration DEFAULT = ImmutableTransactionPoolConfiguration.builder().build();
 
@@ -108,8 +110,8 @@ public interface TransactionPoolConfiguration {
   }
 
   @Value.Default
-  default Boolean getDisableLocalTransactions() {
-    return DEFAULT_DISABLE_LOCAL_TXS;
+  default Boolean getNoLocalPriority() {
+    return DEFAULT_NO_LOCAL_PRIORITY;
   }
 
   @Value.Default
@@ -120,11 +122,6 @@ public interface TransactionPoolConfiguration {
   @Value.Default
   default File getSaveFile() {
     return DEFAULT_SAVE_FILE;
-  }
-
-  @Value.Default
-  default Boolean getDisableSenderTXGrouping() {
-    return DEFAULT_DISABLE_SENDER_TX_GROUPING;
   }
 
   @Value.Default
@@ -145,6 +142,11 @@ public interface TransactionPoolConfiguration {
   @Value.Default
   default int getMaxFutureBySender() {
     return DEFAULT_MAX_FUTURE_BY_SENDER;
+  }
+
+  @Value.Default
+  default Set<Address> getPrioritySenders() {
+    return DEFAULT_PRIORITY_SENDERS;
   }
 
   @Value.Default

@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 public class InMemoryPrivacyStorageProvider implements PrivacyStorageProvider {
@@ -33,13 +34,16 @@ public class InMemoryPrivacyStorageProvider implements PrivacyStorageProvider {
   public static WorldStateArchive createInMemoryWorldStateArchive() {
     return new DefaultWorldStateArchive(
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
-        new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
+        new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
+        EvmConfiguration.DEFAULT);
   }
 
   public static MutableWorldState createInMemoryWorldState() {
     final InMemoryPrivacyStorageProvider provider = new InMemoryPrivacyStorageProvider();
     return new DefaultMutableWorldState(
-        provider.createWorldStateStorage(), provider.createWorldStatePreimageStorage());
+        provider.createWorldStateStorage(),
+        provider.createWorldStatePreimageStorage(),
+        EvmConfiguration.DEFAULT);
   }
 
   @Override
@@ -68,5 +72,7 @@ public class InMemoryPrivacyStorageProvider implements PrivacyStorageProvider {
   }
 
   @Override
-  public void close() {}
+  public void close() {
+    // no cleanup for in-memory data storage
+  }
 }

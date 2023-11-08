@@ -18,12 +18,13 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AbstractTransactionSelector;
-import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AllAcceptingTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlobPriceTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlockSizeTransactionSelector;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.MinPriorityFeePerGasTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.PriceTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.ProcessingResultTransactionSelector;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -40,11 +41,10 @@ import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelector;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
@@ -74,7 +74,6 @@ import org.slf4j.LoggerFactory;
  */
 public class BlockTransactionSelector {
   private static final Logger LOG = LoggerFactory.getLogger(BlockTransactionSelector.class);
-
   private final Supplier<Boolean> isCancelled;
   private final MainnetTransactionProcessor transactionProcessor;
   private final Blockchain blockchain;
@@ -84,24 +83,24 @@ public class BlockTransactionSelector {
   private final TransactionSelectionResults transactionSelectionResults =
       new TransactionSelectionResults();
   private final List<AbstractTransactionSelector> transactionSelectors;
-  private final TransactionSelector externalTransactionSelector;
+  private final PluginTransactionSelector pluginTransactionSelector;
+  private final BlockAwareOperationTracer pluginOperationTracer;
 
   public BlockTransactionSelector(
+      final MiningParameters miningParameters,
       final MainnetTransactionProcessor transactionProcessor,
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final TransactionPool transactionPool,
       final ProcessableBlockHeader processableBlockHeader,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
-      final Wei minTransactionGasPrice,
-      final Double minBlockOccupancyRatio,
       final Supplier<Boolean> isCancelled,
       final Address miningBeneficiary,
       final Wei blobGasPrice,
       final FeeMarket feeMarket,
       final GasCalculator gasCalculator,
       final GasLimitCalculator gasLimitCalculator,
-      final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
+      final PluginTransactionSelector pluginTransactionSelector) {
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
     this.worldState = worldState;
@@ -109,20 +108,17 @@ public class BlockTransactionSelector {
     this.isCancelled = isCancelled;
     this.blockSelectionContext =
         new BlockSelectionContext(
+            miningParameters,
             gasCalculator,
             gasLimitCalculator,
-            minTransactionGasPrice,
-            minBlockOccupancyRatio,
             processableBlockHeader,
             feeMarket,
             blobGasPrice,
             miningBeneficiary,
             transactionPool);
     transactionSelectors = createTransactionSelectors(blockSelectionContext);
-    externalTransactionSelector =
-        transactionSelectorFactory
-            .map(TransactionSelectorFactory::create)
-            .orElse(AllAcceptingTransactionSelector.INSTANCE);
+    this.pluginTransactionSelector = pluginTransactionSelector;
+    this.pluginOperationTracer = pluginTransactionSelector.getOperationTracer();
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(
@@ -131,6 +127,7 @@ public class BlockTransactionSelector {
         new BlockSizeTransactionSelector(context),
         new PriceTransactionSelector(context),
         new BlobPriceTransactionSelector(context),
+        new MinPriorityFeePerGasTransactionSelector(context),
         new ProcessingResultTransactionSelector(context));
   }
 
@@ -148,7 +145,9 @@ public class BlockTransactionSelector {
         .setMessage("Transaction pool stats {}")
         .addArgument(blockSelectionContext.transactionPool().logStats())
         .log();
+
     blockSelectionContext.transactionPool().selectTransactions(this::evaluateTransaction);
+
     LOG.atTrace()
         .setMessage("Transaction selection result {}")
         .addArgument(transactionSelectionResults::toTraceLog)
@@ -167,7 +166,7 @@ public class BlockTransactionSelector {
    */
   public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
     transactions.forEach(
-        transaction -> evaluateTransaction(new PendingTransaction.Local(transaction)));
+        transaction -> evaluateTransaction(new PendingTransaction.Local.Priority(transaction)));
     return transactionSelectionResults;
   }
 
@@ -223,7 +222,7 @@ public class BlockTransactionSelector {
         return result;
       }
     }
-    return externalTransactionSelector.evaluateTransactionPreProcessing(pendingTransaction);
+    return pluginTransactionSelector.evaluateTransactionPreProcessing(pendingTransaction);
   }
 
   /**
@@ -248,7 +247,7 @@ public class BlockTransactionSelector {
         return result;
       }
     }
-    return externalTransactionSelector.evaluateTransactionPostProcessing(
+    return pluginTransactionSelector.evaluateTransactionPostProcessing(
         pendingTransaction, processingResult);
   }
 
@@ -269,6 +268,7 @@ public class BlockTransactionSelector {
         blockSelectionContext.processableBlockHeader(),
         pendingTransaction.getTransaction(),
         blockSelectionContext.miningBeneficiary(),
+        pluginOperationTracer,
         blockHashLookup,
         false,
         TransactionValidationParams.mining(),
@@ -307,7 +307,7 @@ public class BlockTransactionSelector {
 
     transactionSelectionResults.updateSelected(
         pendingTransaction.getTransaction(), receipt, gasUsedByTransaction, blobGasUsed);
-    externalTransactionSelector.onTransactionSelected(pendingTransaction);
+    pluginTransactionSelector.onTransactionSelected(pendingTransaction, processingResult);
 
     return TransactionSelectionResult.SELECTED;
   }
@@ -326,7 +326,7 @@ public class BlockTransactionSelector {
       final TransactionSelectionResult selectionResult) {
     transactionSelectionResults.updateNotSelected(
         pendingTransaction.getTransaction(), selectionResult);
-    externalTransactionSelector.onTransactionNotSelected(pendingTransaction, selectionResult);
+    pluginTransactionSelector.onTransactionNotSelected(pendingTransaction, selectionResult);
     return selectionResult;
   }
 

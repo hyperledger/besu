@@ -155,7 +155,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
   }
 
   @Test
-  public void eip1559LocalTransactionCurrentGasPriceLessThanMinimumIsSelected() {
+  public void eip1559PriorityTransactionCurrentGasPriceLessThanMinimumIsSelected() {
     final ProcessableBlockHeader blockHeader = createBlock(301_000, Wei.ONE);
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
@@ -214,5 +214,51 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     assertThat(results.getSelectedTransactions())
         .containsExactly(txFrontier1, txLondon1, txFrontier2, txLondon2);
     assertThat(results.getNotSelectedTransactions()).isEmpty();
+  }
+
+  @Test
+  @Override
+  public void shouldNotSelectTransactionsWithPriorityFeeLessThanConfig() {
+    ProcessableBlockHeader blockHeader = createBlock(5_000_000, Wei.ONE);
+    miningParameters.setMinPriorityFeePerGas(Wei.of(7));
+
+    final Transaction txSelected1 = createEIP1559Transaction(1, Wei.of(8), Wei.of(8), 100_000);
+    ensureTransactionIsValid(txSelected1);
+
+    // transaction txNotSelected1 should not be selected
+    final Transaction txNotSelected1 = createEIP1559Transaction(2, Wei.of(7), Wei.of(7), 100_000);
+    ensureTransactionIsValid(txNotSelected1);
+
+    // transaction txSelected2 should be selected
+    final Transaction txSelected2 = createEIP1559Transaction(3, Wei.of(8), Wei.of(8), 100_000);
+    ensureTransactionIsValid(txSelected2);
+
+    // transaction txNotSelected2 should not be selected
+    final Transaction txNotSelected2 = createEIP1559Transaction(4, Wei.of(8), Wei.of(6), 100_000);
+    ensureTransactionIsValid(txNotSelected2);
+
+    transactionPool.addRemoteTransactions(
+        List.of(txSelected1, txNotSelected1, txSelected2, txNotSelected2));
+
+    assertThat(transactionPool.getPendingTransactions().size()).isEqualTo(4);
+
+    final BlockTransactionSelector selector =
+        createBlockSelector(
+            transactionProcessor,
+            blockHeader,
+            Wei.ZERO,
+            AddressHelpers.ofValue(1),
+            Wei.ZERO,
+            MIN_OCCUPANCY_100_PERCENT);
+
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
+
+    assertThat(results.getSelectedTransactions()).containsOnly(txSelected1, txSelected2);
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(
+            entry(
+                txNotSelected1, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN),
+            entry(
+                txNotSelected2, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN));
   }
 }

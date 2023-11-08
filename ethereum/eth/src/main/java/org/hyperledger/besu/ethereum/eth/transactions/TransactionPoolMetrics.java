@@ -56,6 +56,7 @@ public class TransactionPoolMetrics {
             ADDED_COUNTER_NAME,
             "Count of transactions added to the transaction pool",
             "source",
+            "priority",
             "layer");
 
     removedCounter =
@@ -64,6 +65,7 @@ public class TransactionPoolMetrics {
             REMOVED_COUNTER_NAME,
             "Count of transactions removed from the transaction pool",
             "source",
+            "priority",
             "operation",
             "layer");
 
@@ -73,6 +75,7 @@ public class TransactionPoolMetrics {
             REJECTED_COUNTER_NAME,
             "Count of transactions not accepted to the transaction pool",
             "source",
+            "priority",
             "reason",
             "layer");
 
@@ -143,20 +146,46 @@ public class TransactionPoolMetrics {
             SKIPPED_MESSAGES_LOGGING_THRESHOLD));
   }
 
-  public void incrementAdded(final boolean receivedFromLocalSource, final String layer) {
-    addedCounter.labels(location(receivedFromLocalSource), layer).inc();
+  public void incrementAdded(final PendingTransaction pendingTransaction, final String layer) {
+    addedCounter
+        .labels(
+            location(pendingTransaction.isReceivedFromLocalSource()),
+            priority(pendingTransaction.hasPriority()),
+            layer)
+        .inc();
   }
 
   public void incrementRemoved(
-      final boolean receivedFromLocalSource, final String operation, final String layer) {
-    removedCounter.labels(location(receivedFromLocalSource), operation, layer).inc();
+      final PendingTransaction pendingTransaction, final String operation, final String layer) {
+    removedCounter
+        .labels(
+            location(pendingTransaction.isReceivedFromLocalSource()),
+            priority(pendingTransaction.hasPriority()),
+            operation,
+            layer)
+        .inc();
+  }
+
+  public void incrementRejected(
+      final PendingTransaction pendingTransaction,
+      final TransactionInvalidReason rejectReason,
+      final String layer) {
+    incrementRejected(
+        pendingTransaction.isReceivedFromLocalSource(),
+        pendingTransaction.hasPriority(),
+        rejectReason,
+        layer);
   }
 
   public void incrementRejected(
       final boolean receivedFromLocalSource,
+      final boolean hasPriority,
       final TransactionInvalidReason rejectReason,
       final String layer) {
-    rejectedCounter.labels(location(receivedFromLocalSource), rejectReason.name(), layer).inc();
+    rejectedCounter
+        .labels(
+            location(receivedFromLocalSource), priority(hasPriority), rejectReason.name(), layer)
+        .inc();
   }
 
   public void incrementExpiredMessages(final String message) {
@@ -169,5 +198,9 @@ public class TransactionPoolMetrics {
 
   private String location(final boolean receivedFromLocalSource) {
     return receivedFromLocalSource ? "local" : "remote";
+  }
+
+  private String priority(final boolean hasPriority) {
+    return hasPriority ? "yes" : "no";
   }
 }

@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
@@ -130,13 +131,13 @@ public abstract class AbstractPendingTransactionsTestBase {
   @Test
   public void shouldReturnExclusivelyLocalTransactionsWhenAppropriate() {
     final Transaction localTransaction0 = createTransaction(0);
-    transactions.addLocalTransaction(localTransaction0, Optional.empty());
+    transactions.addTransaction(createLocalPendingTransaction(localTransaction0), Optional.empty());
     assertThat(transactions.size()).isEqualTo(1);
 
-    transactions.addRemoteTransaction(transaction1, Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction1), Optional.empty());
     assertThat(transactions.size()).isEqualTo(2);
 
-    transactions.addRemoteTransaction(transaction2, Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction2), Optional.empty());
     assertThat(transactions.size()).isEqualTo(3);
 
     final List<Transaction> localTransactions = transactions.getLocalTransactions();
@@ -145,11 +146,11 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void shouldAddATransaction() {
-    transactions.addRemoteTransaction(transaction1, Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction1), Optional.empty());
     assertThat(transactions.size()).isEqualTo(1);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(1);
 
-    transactions.addRemoteTransaction(transaction2, Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction2), Optional.empty());
     assertThat(transactions.size()).isEqualTo(2);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(2);
   }
@@ -161,7 +162,7 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void shouldGetTransactionByHash() {
-    transactions.addRemoteTransaction(transaction1, Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction1), Optional.empty());
     assertTransactionPending(transaction1);
   }
 
@@ -171,13 +172,15 @@ public abstract class AbstractPendingTransactionsTestBase {
         transactionWithNonceSenderAndGasPrice(0, SIGNATURE_ALGORITHM.get().generateKeyPair(), 10L);
     final Account oldestSender = mock(Account.class);
     when(oldestSender.getNonce()).thenReturn(0L);
-    senderLimitedTransactions.addRemoteTransaction(oldestTransaction, Optional.of(oldestSender));
+    senderLimitedTransactions.addTransaction(
+        createRemotePendingTransaction(oldestTransaction), Optional.of(oldestSender));
     for (int i = 1; i < MAX_TRANSACTIONS; i++) {
       final Account sender = mock(Account.class);
       when(sender.getNonce()).thenReturn((long) i);
-      senderLimitedTransactions.addRemoteTransaction(
-          transactionWithNonceSenderAndGasPrice(
-              i, SIGNATURE_ALGORITHM.get().generateKeyPair(), 10L),
+      senderLimitedTransactions.addTransaction(
+          createRemotePendingTransaction(
+              transactionWithNonceSenderAndGasPrice(
+                  i, SIGNATURE_ALGORITHM.get().generateKeyPair(), 10L)),
           Optional.of(sender));
     }
     assertThat(senderLimitedTransactions.size()).isEqualTo(MAX_TRANSACTIONS);
@@ -185,8 +188,9 @@ public abstract class AbstractPendingTransactionsTestBase {
 
     final Account lastSender = mock(Account.class);
     when(lastSender.getNonce()).thenReturn(6L);
-    senderLimitedTransactions.addRemoteTransaction(
-        createTransaction(MAX_TRANSACTIONS + 1), Optional.of(lastSender));
+    senderLimitedTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(MAX_TRANSACTIONS + 1)),
+        Optional.of(lastSender));
     assertThat(senderLimitedTransactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertTransactionNotPending(oldestTransaction);
     assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
@@ -197,7 +201,8 @@ public abstract class AbstractPendingTransactionsTestBase {
     Transaction furthestFutureTransaction = null;
     for (int i = 0; i < MAX_TRANSACTIONS; i++) {
       furthestFutureTransaction = transactionWithNonceSenderAndGasPrice(i, KEYS1, 10L);
-      senderLimitedTransactions.addRemoteTransaction(furthestFutureTransaction, Optional.empty());
+      senderLimitedTransactions.addTransaction(
+          createRemotePendingTransaction(furthestFutureTransaction), Optional.empty());
     }
     assertThat(senderLimitedTransactions.size())
         .isEqualTo(senderLimitedConfig.getTxPoolMaxFutureTransactionByAccount());
@@ -208,26 +213,32 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void shouldHandleMaximumTransactionLimitCorrectlyWhenSameTransactionAddedMultipleTimes() {
-    transactions.addRemoteTransaction(createTransaction(0), Optional.empty());
-    transactions.addRemoteTransaction(createTransaction(0), Optional.empty());
+    transactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(0)), Optional.empty());
+    transactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(0)), Optional.empty());
 
     for (int i = 1; i < MAX_TRANSACTIONS; i++) {
-      transactions.addRemoteTransaction(createTransaction(i), Optional.empty());
+      transactions.addTransaction(
+          createRemotePendingTransaction(createTransaction(i)), Optional.empty());
     }
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
 
-    transactions.addRemoteTransaction(createTransaction(MAX_TRANSACTIONS + 1), Optional.empty());
-    transactions.addRemoteTransaction(createTransaction(MAX_TRANSACTIONS + 2), Optional.empty());
+    transactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(MAX_TRANSACTIONS + 1)), Optional.empty());
+    transactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(MAX_TRANSACTIONS + 2)), Optional.empty());
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
   }
 
   @Test
   public void shouldPrioritizeLocalTransaction() {
     final Transaction localTransaction = createTransaction(0);
-    transactions.addLocalTransaction(localTransaction, Optional.empty());
+    transactions.addTransaction(createLocalPendingTransaction(localTransaction), Optional.empty());
 
     for (int i = 1; i <= MAX_TRANSACTIONS; i++) {
-      transactions.addRemoteTransaction(createTransaction(i), Optional.empty());
+      transactions.addTransaction(
+          createRemotePendingTransaction(createTransaction(i)), Optional.empty());
     }
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertTransactionPending(localTransaction);
@@ -239,7 +250,8 @@ public abstract class AbstractPendingTransactionsTestBase {
 
     for (int i = 0; i <= MAX_TRANSACTIONS; i++) {
       lastLocalTransactionForSender = createTransaction(i);
-      transactions.addLocalTransaction(lastLocalTransactionForSender, Optional.empty());
+      transactions.addTransaction(
+          createLocalPendingTransaction(lastLocalTransactionForSender), Optional.empty());
     }
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertTransactionNotPending(lastLocalTransactionForSender);
@@ -249,7 +261,7 @@ public abstract class AbstractPendingTransactionsTestBase {
   public void shouldNotifyListenerWhenRemoteTransactionAdded() {
     transactions.subscribePendingTransactions(listener);
 
-    transactions.addRemoteTransaction(transaction1, Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction1), Optional.empty());
 
     verify(listener).onTransactionAdded(transaction1);
   }
@@ -258,13 +270,13 @@ public abstract class AbstractPendingTransactionsTestBase {
   public void shouldNotNotifyListenerAfterUnsubscribe() {
     final long id = transactions.subscribePendingTransactions(listener);
 
-    transactions.addRemoteTransaction(transaction1, Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction1), Optional.empty());
 
     verify(listener).onTransactionAdded(transaction1);
 
     transactions.unsubscribePendingTransactions(id);
 
-    transactions.addRemoteTransaction(transaction2, Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction2), Optional.empty());
 
     verifyNoMoreInteractions(listener);
   }
@@ -273,14 +285,14 @@ public abstract class AbstractPendingTransactionsTestBase {
   public void shouldNotifyListenerWhenLocalTransactionAdded() {
     transactions.subscribePendingTransactions(listener);
 
-    transactions.addLocalTransaction(transaction1, Optional.empty());
+    transactions.addTransaction(createLocalPendingTransaction(transaction1), Optional.empty());
 
     verify(listener).onTransactionAdded(transaction1);
   }
 
   @Test
   public void shouldNotifyDroppedListenerWhenRemoteTransactionDropped() {
-    transactions.addRemoteTransaction(transaction1, Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction1), Optional.empty());
 
     transactions.subscribeDroppedTransactions(droppedListener);
 
@@ -291,8 +303,8 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void shouldNotNotifyDroppedListenerAfterUnsubscribe() {
-    transactions.addRemoteTransaction(transaction1, Optional.empty());
-    transactions.addRemoteTransaction(transaction2, Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction1), Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction2), Optional.empty());
 
     final long id = transactions.subscribeDroppedTransactions(droppedListener);
 
@@ -309,7 +321,7 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void shouldNotifyDroppedListenerWhenLocalTransactionDropped() {
-    transactions.addLocalTransaction(transaction1, Optional.empty());
+    transactions.addTransaction(createLocalPendingTransaction(transaction1), Optional.empty());
 
     transactions.subscribeDroppedTransactions(droppedListener);
 
@@ -320,7 +332,7 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void shouldNotNotifyDroppedListenerWhenTransactionAddedToBlock() {
-    transactions.addRemoteTransaction(transaction1, Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction1), Optional.empty());
 
     transactions.subscribeDroppedTransactions(droppedListener);
 
@@ -332,28 +344,28 @@ public abstract class AbstractPendingTransactionsTestBase {
   @Test
   public void selectTransactionsInDefaultOrder() {
     assertThat(transactionsLarge.addRemoteTransaction(transaction1, Optional.empty()))
-        .isEqualTo(ADDED);
+            .isEqualTo(ADDED);
     assertThat(transactionsLarge.addRemoteTransaction(transaction2, Optional.empty()))
-        .isEqualTo(ADDED);
+            .isEqualTo(ADDED);
     assertThat(transactionsLarge.addRemoteTransaction(transaction1Sdr2, Optional.empty()))
-        .isEqualTo(ADDED);
+            .isEqualTo(ADDED);
     assertThat(transactionsLarge.addRemoteTransaction(transaction2Sdr2, Optional.empty()))
-        .isEqualTo(ADDED);
+            .isEqualTo(ADDED);
     assertThat(transactionsLarge.addRemoteTransaction(transaction3Sdr2, Optional.empty()))
-        .isEqualTo(ADDED);
+            .isEqualTo(ADDED);
     assertThat(transactionsLarge.addRemoteTransaction(transaction3, Optional.empty()))
-        .isEqualTo(ADDED);
+            .isEqualTo(ADDED);
 
     final List<Transaction> parsedTransactions = Lists.newArrayList();
     transactionsLarge.selectTransactions(
-        pendingTx -> {
-          parsedTransactions.add(pendingTx.getTransaction());
+            pendingTx -> {
+              parsedTransactions.add(pendingTx.getTransaction());
 
-          if (parsedTransactions.size() == 6) {
-            return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
-          }
-          return SELECTED;
-        });
+              if (parsedTransactions.size() == 6) {
+                return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
+              }
+              return SELECTED;
+            });
 
     assertThat(parsedTransactions.size()).isEqualTo(6);
 
@@ -361,47 +373,47 @@ public abstract class AbstractPendingTransactionsTestBase {
     assertThat(parsedTransactions.get(1)).isEqualTo(transaction2Sdr2);
     assertThat(parsedTransactions.get(2)).isEqualTo(transaction3Sdr2);
     assertThat(parsedTransactions.get(3))
-        .isEqualTo(transaction2); // Transaction 2 is actually the lowest nonce for this sender
+            .isEqualTo(transaction2); // Transaction 2 is actually the lowest nonce for this sender
     assertThat(parsedTransactions.get(4))
-        .isEqualTo(transaction1); // Transaction 1 is the next nonce for the sender
+            .isEqualTo(transaction1); // Transaction 1 is the next nonce for the sender
     assertThat(parsedTransactions.get(5))
-        .isEqualTo(transaction3); // Transaction 3 is the next nonce for the sender
+            .isEqualTo(transaction3); // Transaction 3 is the next nonce for the sender
   }
 
   @Test
   public void selectTransactionsInOrderNoGroupBySender() {
     assertThat(
             transactionsLargeNoSenderGrouping.addRemoteTransaction(transaction2, Optional.empty()))
-        .isEqualTo(ADDED);
+            .isEqualTo(ADDED);
     assertThat(
             transactionsLargeNoSenderGrouping.addRemoteTransaction(
-                transaction1Sdr2, Optional.empty()))
-        .isEqualTo(ADDED);
+                    transaction1Sdr2, Optional.empty()))
+            .isEqualTo(ADDED);
     assertThat(
             transactionsLargeNoSenderGrouping.addRemoteTransaction(
-                transaction2Sdr2, Optional.empty()))
-        .isEqualTo(ADDED);
+                    transaction2Sdr2, Optional.empty()))
+            .isEqualTo(ADDED);
     assertThat(
             transactionsLargeNoSenderGrouping.addRemoteTransaction(transaction1, Optional.empty()))
-        .isEqualTo(ADDED);
+            .isEqualTo(ADDED);
     assertThat(
             transactionsLargeNoSenderGrouping.addRemoteTransaction(
-                transaction3Sdr2, Optional.empty()))
-        .isEqualTo(ADDED);
+                    transaction3Sdr2, Optional.empty()))
+            .isEqualTo(ADDED);
     assertThat(
             transactionsLargeNoSenderGrouping.addRemoteTransaction(transaction3, Optional.empty()))
-        .isEqualTo(ADDED);
+            .isEqualTo(ADDED);
 
     final List<Transaction> parsedTransactions = Lists.newArrayList();
     transactionsLargeNoSenderGrouping.selectTransactions(
-        pendingTx -> {
-          parsedTransactions.add(pendingTx.getTransaction());
+            pendingTx -> {
+              parsedTransactions.add(pendingTx.getTransaction());
 
-          if (parsedTransactions.size() == 6) {
-            return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
-          }
-          return SELECTED;
-        });
+              if (parsedTransactions.size() == 6) {
+                return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
+              }
+              return SELECTED;
+            });
 
     assertThat(parsedTransactions.size()).isEqualTo(6);
 
@@ -413,9 +425,25 @@ public abstract class AbstractPendingTransactionsTestBase {
   }
 
   @Test
+  public void selectTransactionsUntilSelectorRequestsNoMore() {
+    transactions.addTransaction(createRemotePendingTransaction(transaction1), Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction2), Optional.empty());
+
+    final List<Transaction> parsedTransactions = Lists.newArrayList();
+    transactions.selectTransactions(
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
+          return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
+        });
+
+    assertThat(parsedTransactions.size()).isEqualTo(1);
+    assertThat(parsedTransactions.get(0)).isEqualTo(transaction2);
+  }
+
+  @Test
   public void selectTransactionsUntilPendingIsEmpty() {
-    transactions.addRemoteTransaction(transaction1, Optional.empty());
-    transactions.addRemoteTransaction(transaction2, Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction1), Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction2), Optional.empty());
 
     final List<Transaction> parsedTransactions = Lists.newArrayList();
     transactions.selectTransactions(
@@ -434,8 +462,8 @@ public abstract class AbstractPendingTransactionsTestBase {
     final Transaction transaction1 = transactionWithNonceSenderAndGasPrice(1, KEYS1, 1);
     final Transaction transaction2 = transactionWithNonceSenderAndGasPrice(1, KEYS1, 2);
 
-    transactions.addRemoteTransaction(transaction1, Optional.empty());
-    transactions.addRemoteTransaction(transaction2, Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction1), Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction2), Optional.empty());
 
     final List<Transaction> parsedTransactions = Lists.newArrayList();
     transactions.selectTransactions(
@@ -449,8 +477,8 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void invalidTransactionIsDeletedFromPendingTransactions() {
-    transactions.addRemoteTransaction(transaction1, Optional.empty());
-    transactions.addRemoteTransaction(transaction2, Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction1), Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction2), Optional.empty());
 
     final List<Transaction> parsedTransactions = Lists.newArrayList();
     transactions.selectTransactions(
@@ -475,7 +503,7 @@ public abstract class AbstractPendingTransactionsTestBase {
   @Test
   public void shouldReturnEmptyOptionalAsMaximumNonceWhenLastTransactionForSenderRemoved() {
     final Transaction transaction = transactionWithNonceAndSender(1, KEYS1);
-    transactions.addRemoteTransaction(transaction, Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction), Optional.empty());
     transactions.removeTransaction(transaction);
     assertThat(transactions.getNextNonceForSender(SENDER1)).isEmpty();
   }
@@ -485,9 +513,18 @@ public abstract class AbstractPendingTransactionsTestBase {
     final Transaction transaction1 = transactionWithNonceSenderAndGasPrice(1, KEYS1, 1);
     final Transaction transaction1b = transactionWithNonceSenderAndGasPrice(1, KEYS1, 2);
     final Transaction transaction2 = transactionWithNonceSenderAndGasPrice(2, KEYS1, 1);
-    assertThat(transactions.addRemoteTransaction(transaction1, Optional.empty())).isEqualTo(ADDED);
-    assertThat(transactions.addRemoteTransaction(transaction2, Optional.empty())).isEqualTo(ADDED);
-    assertThat(transactions.addRemoteTransaction(transaction1b, Optional.empty())).isEqualTo(ADDED);
+    assertThat(
+            transactions.addTransaction(
+                createRemotePendingTransaction(transaction1), Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactions.addTransaction(
+                createRemotePendingTransaction(transaction2), Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactions.addTransaction(
+                createRemotePendingTransaction(transaction1b), Optional.empty()))
+        .isEqualTo(ADDED);
 
     assertTransactionNotPending(transaction1);
     assertTransactionPending(transaction1b);
@@ -504,12 +541,17 @@ public abstract class AbstractPendingTransactionsTestBase {
     for (int i = 0; i < replacedTxCount; i++) {
       final Transaction duplicateTx = transactionWithNonceSenderAndGasPrice(1, KEYS1, i + 1);
       replacedTransactions.add(duplicateTx);
-      transactions.addRemoteTransaction(duplicateTx, Optional.empty());
+      transactions.addTransaction(createRemotePendingTransaction(duplicateTx), Optional.empty());
     }
     final Transaction finalReplacingTx = transactionWithNonceSenderAndGasPrice(1, KEYS1, 100);
     final Transaction independentTx = transactionWithNonceSenderAndGasPrice(2, KEYS1, 1);
-    assertThat(transactions.addRemoteTransaction(independentTx, Optional.empty())).isEqualTo(ADDED);
-    assertThat(transactions.addRemoteTransaction(finalReplacingTx, Optional.empty()))
+    assertThat(
+            transactions.addTransaction(
+                createRemotePendingTransaction(independentTx), Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactions.addTransaction(
+                createRemotePendingTransaction(finalReplacingTx), Optional.empty()))
         .isEqualTo(ADDED);
 
     // All tx's except the last duplicate should be removed
@@ -535,15 +577,21 @@ public abstract class AbstractPendingTransactionsTestBase {
           transactionWithNonceSenderAndGasPrice(1, KEYS1, (i * 110 / 100) + 1);
       replacedTransactions.add(duplicateTx);
       if (i % 2 == 0) {
-        transactions.addRemoteTransaction(duplicateTx, Optional.empty());
+        transactions.addTransaction(createRemotePendingTransaction(duplicateTx), Optional.empty());
         remoteDuplicateCount++;
       } else {
-        transactions.addLocalTransaction(duplicateTx, Optional.empty());
+        transactions.addTransaction(createLocalPendingTransaction(duplicateTx), Optional.empty());
       }
     }
     final Transaction finalReplacingTx = transactionWithNonceSenderAndGasPrice(1, KEYS1, 100);
     final Transaction independentTx = transactionWithNonceSenderAndGasPrice(2, KEYS1, 1);
-    assertThat(transactions.addLocalTransaction(finalReplacingTx, Optional.empty()))
+    assertThat(
+            transactions.addTransaction(
+                createLocalPendingTransaction(finalReplacingTx), Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactions.addTransaction(
+                createRemotePendingTransaction(independentTx), Optional.empty()))
         .isEqualTo(ADDED);
     assertThat(transactions.addRemoteTransaction(independentTx, Optional.empty())).isEqualTo(ADDED);
 
@@ -569,8 +617,14 @@ public abstract class AbstractPendingTransactionsTestBase {
   public void shouldReplaceOnlyTransactionFromSenderWhenItHasTheSameNonce() {
     final Transaction transaction1 = transactionWithNonceSenderAndGasPrice(1, KEYS1, 1);
     final Transaction transaction1b = transactionWithNonceSenderAndGasPrice(1, KEYS1, 2);
-    assertThat(transactions.addRemoteTransaction(transaction1, Optional.empty())).isEqualTo(ADDED);
-    assertThat(transactions.addRemoteTransaction(transaction1b, Optional.empty())).isEqualTo(ADDED);
+    assertThat(
+            transactions.addTransaction(
+                createRemotePendingTransaction(transaction1), Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactions.addTransaction(
+                createRemotePendingTransaction(transaction1b), Optional.empty()))
+        .isEqualTo(ADDED);
 
     assertTransactionNotPending(transaction1);
     assertTransactionPending(transaction1b);
@@ -583,10 +637,15 @@ public abstract class AbstractPendingTransactionsTestBase {
   public void shouldNotReplaceTransactionWithSameSenderAndNonceWhenGasPriceIsLower() {
     final Transaction transaction1 = transactionWithNonceSenderAndGasPrice(1, KEYS1, 2);
     final Transaction transaction1b = transactionWithNonceSenderAndGasPrice(1, KEYS1, 1);
-    assertThat(transactions.addRemoteTransaction(transaction1, Optional.empty())).isEqualTo(ADDED);
+    assertThat(
+            transactions.addTransaction(
+                createRemotePendingTransaction(transaction1), Optional.empty()))
+        .isEqualTo(ADDED);
 
     transactions.subscribePendingTransactions(listener);
-    assertThat(transactions.addRemoteTransaction(transaction1b, Optional.empty()))
+    assertThat(
+            transactions.addTransaction(
+                createRemotePendingTransaction(transaction1b), Optional.empty()))
         .isEqualTo(REJECTED_UNDERPRICED_REPLACEMENT);
 
     assertTransactionNotPending(transaction1b);
@@ -597,16 +656,20 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void shouldTrackMaximumNonceForEachSender() {
-    transactions.addRemoteTransaction(transactionWithNonceAndSender(0, KEYS1), Optional.empty());
+    transactions.addTransaction(
+        createRemotePendingTransaction(transactionWithNonceAndSender(0, KEYS1)), Optional.empty());
     assertMaximumNonceForSender(SENDER1, 1);
 
-    transactions.addRemoteTransaction(transactionWithNonceAndSender(1, KEYS1), Optional.empty());
+    transactions.addTransaction(
+        createRemotePendingTransaction(transactionWithNonceAndSender(1, KEYS1)), Optional.empty());
     assertMaximumNonceForSender(SENDER1, 2);
 
-    transactions.addRemoteTransaction(transactionWithNonceAndSender(2, KEYS1), Optional.empty());
+    transactions.addTransaction(
+        createRemotePendingTransaction(transactionWithNonceAndSender(2, KEYS1)), Optional.empty());
     assertMaximumNonceForSender(SENDER1, 3);
 
-    transactions.addRemoteTransaction(transactionWithNonceAndSender(4, KEYS2), Optional.empty());
+    transactions.addTransaction(
+        createRemotePendingTransaction(transactionWithNonceAndSender(4, KEYS2)), Optional.empty());
     assertMaximumNonceForSender(SENDER2, 5);
     assertMaximumNonceForSender(SENDER1, 3);
   }
@@ -617,9 +680,9 @@ public abstract class AbstractPendingTransactionsTestBase {
     final Transaction transaction2 = transactionWithNonceAndSender(1, KEYS1);
     final Transaction transaction3 = transactionWithNonceAndSender(2, KEYS1);
 
-    transactions.addLocalTransaction(transaction1, Optional.empty());
-    transactions.addLocalTransaction(transaction2, Optional.empty());
-    transactions.addLocalTransaction(transaction3, Optional.empty());
+    transactions.addTransaction(createLocalPendingTransaction(transaction1), Optional.empty());
+    transactions.addTransaction(createLocalPendingTransaction(transaction2), Optional.empty());
+    transactions.addTransaction(createLocalPendingTransaction(transaction3), Optional.empty());
 
     final List<Transaction> iterationOrder = new ArrayList<>();
     transactions.selectTransactions(
@@ -636,8 +699,8 @@ public abstract class AbstractPendingTransactionsTestBase {
     final Transaction transaction1 = transactionWithNonceAndSender(0, KEYS1);
     final Transaction transaction2 = transactionWithNonceAndSender(1, KEYS2);
 
-    transactions.addLocalTransaction(transaction1, Optional.empty());
-    transactions.addLocalTransaction(transaction2, Optional.empty());
+    transactions.addTransaction(createLocalPendingTransaction(transaction1), Optional.empty());
+    transactions.addTransaction(createLocalPendingTransaction(transaction2), Optional.empty());
 
     final List<Transaction> iterationOrder = new ArrayList<>();
     transactions.selectTransactions(
@@ -656,10 +719,10 @@ public abstract class AbstractPendingTransactionsTestBase {
     final Transaction transaction3 = transactionWithNonceAndSender(2, KEYS1);
     final Transaction transaction4 = transactionWithNonceAndSender(4, KEYS2);
 
-    transactions.addLocalTransaction(transaction1, Optional.empty());
-    transactions.addLocalTransaction(transaction4, Optional.empty());
-    transactions.addLocalTransaction(transaction2, Optional.empty());
-    transactions.addLocalTransaction(transaction3, Optional.empty());
+    transactions.addTransaction(createLocalPendingTransaction(transaction1), Optional.empty());
+    transactions.addTransaction(createLocalPendingTransaction(transaction4), Optional.empty());
+    transactions.addTransaction(createLocalPendingTransaction(transaction2), Optional.empty());
+    transactions.addTransaction(createLocalPendingTransaction(transaction3), Optional.empty());
 
     final List<Transaction> iterationOrder = new ArrayList<>();
     transactions.selectTransactions(
@@ -707,10 +770,23 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   protected Transaction createTransactionSender2(final long transactionNumber) {
     return new TransactionTestFixture()
-        .value(Wei.of(transactionNumber))
-        .nonce(transactionNumber)
-        .gasPrice(Wei.of(0))
-        .createTransaction(KEYS2);
+            .value(Wei.of(transactionNumber))
+            .nonce(transactionNumber)
+            .gasPrice(Wei.of(0))
+            .createTransaction(KEYS2);
+  }
+
+  private PendingTransaction createRemotePendingTransaction(
+      final Transaction transaction, final long addedAt) {
+    return PendingTransaction.newPendingTransaction(transaction, false, false, addedAt);
+  }
+
+  private PendingTransaction createRemotePendingTransaction(final Transaction transaction) {
+    return PendingTransaction.newPendingTransaction(transaction, false, false);
+  }
+
+  private PendingTransaction createLocalPendingTransaction(final Transaction transaction) {
+    return PendingTransaction.newPendingTransaction(transaction, true, true);
   }
 
   @Test
@@ -725,9 +801,9 @@ public abstract class AbstractPendingTransactionsTestBase {
                 .build(),
             Optional.of(clock));
 
-    transactions.addRemoteTransaction(transaction1, Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction1), Optional.empty());
     assertThat(transactions.size()).isEqualTo(1);
-    transactions.addRemoteTransaction(transaction2, Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction2), Optional.empty());
     assertThat(transactions.size()).isEqualTo(2);
 
     clock.step(2L, ChronoUnit.HOURS);
@@ -746,7 +822,8 @@ public abstract class AbstractPendingTransactionsTestBase {
                 .txPoolLimitByAccountPercentage(Fraction.fromFloat(1.0f))
                 .build(),
             Optional.of(clock));
-    evictSingleTransactions.addRemoteTransaction(transaction1, Optional.empty());
+    evictSingleTransactions.addTransaction(
+        createRemotePendingTransaction(transaction1), Optional.empty());
     assertThat(evictSingleTransactions.size()).isEqualTo(1);
     clock.step(2L, ChronoUnit.HOURS);
     evictSingleTransactions.evictOldTransactions();
@@ -765,10 +842,12 @@ public abstract class AbstractPendingTransactionsTestBase {
                 .build(),
             Optional.of(clock));
 
-    twoHourEvictionTransactionPool.addRemoteTransaction(transaction1, Optional.empty());
+    twoHourEvictionTransactionPool.addTransaction(
+        createRemotePendingTransaction(transaction1, clock.millis()), Optional.empty());
     assertThat(twoHourEvictionTransactionPool.size()).isEqualTo(1);
     clock.step(3L, ChronoUnit.HOURS);
-    twoHourEvictionTransactionPool.addRemoteTransaction(transaction2, Optional.empty());
+    twoHourEvictionTransactionPool.addTransaction(
+        createRemotePendingTransaction(transaction2, clock.millis()), Optional.empty());
     assertThat(twoHourEvictionTransactionPool.size()).isEqualTo(2);
     twoHourEvictionTransactionPool.evictOldTransactions();
     assertThat(twoHourEvictionTransactionPool.size()).isEqualTo(1);
@@ -777,12 +856,14 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void shouldNotIncrementAddedCounterWhenRemoteTransactionAlreadyPresent() {
-    transactions.addLocalTransaction(transaction1, Optional.empty());
+    transactions.addTransaction(createLocalPendingTransaction(transaction1), Optional.empty());
     assertThat(transactions.size()).isEqualTo(1);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL)).isEqualTo(1);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(0);
 
-    assertThat(transactions.addRemoteTransaction(transaction1, Optional.empty()))
+    assertThat(
+            transactions.addTransaction(
+                createRemotePendingTransaction(transaction1), Optional.empty()))
         .isEqualTo(ALREADY_KNOWN);
     assertThat(transactions.size()).isEqualTo(1);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL)).isEqualTo(1);
@@ -791,12 +872,14 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void shouldNotIncrementAddedCounterWhenLocalTransactionAlreadyPresent() {
-    transactions.addRemoteTransaction(transaction1, Optional.empty());
+    transactions.addTransaction(createRemotePendingTransaction(transaction1), Optional.empty());
     assertThat(transactions.size()).isEqualTo(1);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL)).isEqualTo(0);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(1);
 
-    assertThat(transactions.addLocalTransaction(transaction1, Optional.empty()))
+    assertThat(
+            transactions.addTransaction(
+                createLocalPendingTransaction(transaction1), Optional.empty()))
         .isEqualTo(ALREADY_KNOWN);
     assertThat(transactions.size()).isEqualTo(1);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL)).isEqualTo(0);
@@ -871,7 +954,8 @@ public abstract class AbstractPendingTransactionsTestBase {
     for (final long nonce : nonces) {
       final Account sender = mock(Account.class);
       when(sender.getNonce()).thenReturn(1L);
-      sorter.addLocalTransaction(createTransaction(nonce), Optional.of(sender));
+      sorter.addTransaction(
+          createLocalPendingTransaction(createTransaction(nonce)), Optional.of(sender));
     }
   }
 
@@ -895,7 +979,8 @@ public abstract class AbstractPendingTransactionsTestBase {
                   final Transaction lowPriceTx =
                       transactionWithNonceSenderAndGasPrice(
                           0, SIGNATURE_ALGORITHM.get().generateKeyPair(), 10);
-                  transactions.addRemoteTransaction(lowPriceTx, Optional.of(randomSender));
+                  transactions.addTransaction(
+                      createRemotePendingTransaction(lowPriceTx), Optional.of(randomSender));
                   return lowPriceTx;
                 })
             .collect(Collectors.toUnmodifiableList());
@@ -904,7 +989,8 @@ public abstract class AbstractPendingTransactionsTestBase {
     final Account highPriceSender = mock(Account.class);
     final Transaction highGasPriceTransaction =
         transactionWithNonceSenderAndGasPrice(0, KEYS1, 100);
-    transactions.addRemoteTransaction(highGasPriceTransaction, Optional.of(highPriceSender));
+    transactions.addTransaction(
+        createRemotePendingTransaction(highGasPriceTransaction), Optional.of(highPriceSender));
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
 
     assertTransactionPending(highGasPriceTransaction);

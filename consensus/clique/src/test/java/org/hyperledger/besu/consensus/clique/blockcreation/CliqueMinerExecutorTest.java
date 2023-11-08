@@ -37,6 +37,8 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -101,20 +103,18 @@ public class CliqueMinerExecutorTest {
   public void extraDataCreatedOnEpochBlocksContainsValidators() {
     final Bytes vanityData = generateRandomVanityData();
 
+    final MiningParameters miningParameters = createMiningParameters(vanityData);
+
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
             cliqueProtocolSchedule,
             createTransactionPool(),
             proposerNodeKey,
-            new MiningParameters.Builder()
-                .coinbase(AddressHelpers.ofValue(1))
-                .minTransactionGasPrice(Wei.ZERO)
-                .extraData(vanityData)
-                .miningEnabled(false)
-                .build(),
+            miningParameters,
             mock(CliqueBlockScheduler.class),
-            new EpochManager(EPOCH_LENGTH));
+            new EpochManager(EPOCH_LENGTH),
+            true);
 
     // NOTE: Passing in the *parent* block, so must be 1 less than EPOCH
     final BlockHeader header = blockHeaderBuilder.number(EPOCH_LENGTH - 1).buildHeader();
@@ -138,20 +138,18 @@ public class CliqueMinerExecutorTest {
   public void extraDataForNonEpochBlocksDoesNotContainValidaors() {
     final Bytes vanityData = generateRandomVanityData();
 
+    final MiningParameters miningParameters = createMiningParameters(vanityData);
+
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
             cliqueProtocolSchedule,
             createTransactionPool(),
             proposerNodeKey,
-            new MiningParameters.Builder()
-                .coinbase(AddressHelpers.ofValue(1))
-                .minTransactionGasPrice(Wei.ZERO)
-                .extraData(vanityData)
-                .miningEnabled(false)
-                .build(),
+            miningParameters,
             mock(CliqueBlockScheduler.class),
-            new EpochManager(EPOCH_LENGTH));
+            new EpochManager(EPOCH_LENGTH),
+            true);
 
     // Parent block was epoch, so the next block should contain no validators.
     final BlockHeader header = blockHeaderBuilder.number(EPOCH_LENGTH).buildHeader();
@@ -175,20 +173,18 @@ public class CliqueMinerExecutorTest {
     final Bytes initialVanityData = generateRandomVanityData();
     final Bytes modifiedVanityData = generateRandomVanityData();
 
+    final MiningParameters miningParameters = createMiningParameters(initialVanityData);
+
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
             cliqueProtocolSchedule,
             createTransactionPool(),
             proposerNodeKey,
-            new MiningParameters.Builder()
-                .coinbase(AddressHelpers.ofValue(1))
-                .minTransactionGasPrice(Wei.ZERO)
-                .extraData(initialVanityData)
-                .miningEnabled(false)
-                .build(),
+            miningParameters,
             mock(CliqueBlockScheduler.class),
-            new EpochManager(EPOCH_LENGTH));
+            new EpochManager(EPOCH_LENGTH),
+            true);
 
     executor.setExtraData(modifiedVanityData);
     final Bytes extraDataBytes = executor.calculateExtraData(blockHeaderBuilder.buildHeader());
@@ -239,5 +235,16 @@ public class CliqueMinerExecutorTest {
     final byte[] vanityData = new byte[32];
     random.nextBytes(vanityData);
     return Bytes.wrap(vanityData);
+  }
+
+  private static MiningParameters createMiningParameters(final Bytes vanityData) {
+    return ImmutableMiningParameters.builder()
+        .mutableInitValues(
+            MutableInitValues.builder()
+                .extraData(vanityData)
+                .minTransactionGasPrice(Wei.ZERO)
+                .coinbase(AddressHelpers.ofValue(1))
+                .build())
+        .build();
   }
 }

@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * This allows for tracking of only one undo marker across multiple collections and rolling back
  * multiple collections to a consistent point with only one number.
  */
-public interface UndoableCollection {
+public interface Undoable {
   /** The global mark clock for registering marks in undoable collections. */
   AtomicLong markState = new AtomicLong();
 
@@ -47,6 +47,14 @@ public interface UndoableCollection {
   static long incrementMarkStatic() {
     return markState.incrementAndGet();
   }
+
+  /**
+   * The last time this object was updated. Any undo requrests greater than this mark will result in
+   * no changes.
+   *
+   * @return The most recent mark.
+   */
+  long lastUpdate();
 
   /**
    * Returns the state of the collection to the state it was in when the mark was retrieved.

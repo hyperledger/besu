@@ -12,21 +12,30 @@
     "jsonrpc": "2.0",
     "id": 484,
     "result": {
-      "blockHash": "0x71d59849ddd98543bdfbe8548f5eed559b07b8aaf196369f39134500eab68e53",
-      "blockNumber": "0x20",
+      "accessList": [],
+      "blockHash": "0x4859ea10d276f6df988eabd48a02e0696cfd3deb769d2a5e0e416a5f3191028a",
+      "blockNumber": "0x22",
+      "chainId": "0x1",
       "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
-      "gas": "0x4cb2f",
-      "gasPrice": "0x1",
-      "hash": "0xcef53f2311d7c80e9086d661e69ac11a5f3d081e28e02a9ba9b66749407ac310",
-      "input": "0x9dc2c8f5",
-      "nonce": "0x1f",
+      "gas": "0xc350",
+      "gasPrice": "0x6fd1ca4a",
+      "maxPriorityFeePerGas": "0x3b9aca00",
+      "maxFeePerGas": "0xb2d05e00",
+      "maxFeePerBlobGas": "0x3b9aca00",
+      "hash": "0x7c80f35a47f1d432d46add30f262c45f9578e2b1352dbaca0256af1ff3235532",
+      "input": "0x12a7b914",
+      "nonce": "0x21",
       "to": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
       "transactionIndex": "0x0",
-      "type" : "0x0",
-      "value": "0xa",
-      "v": "0x1b",
-      "r": "0x705b002a7df60707d33812e0298411721be20ea5a2f533707295140d89263b79",
-      "s": "0x78024390784f24160739533b3ceea2698289a02afd9cc768581b4aa3d5f4b105"
+      "type": "0x3",
+      "value": "0x0",
+      "yParity": "0x0",
+      "r": "0x6ae0612cfda43a9b464b10b4881c6fc2e4c24533cf89bbe07934da65c3ae49ce",
+      "s": "0x125387aeb222ec51130cf99cbdabf24bd4a881914faed69f254e4a3f4bc507fc",
+      "blobVersionedHashes": [
+        "0x0100000000000000000000000000000000000000000000000000000000000000",
+        "0x0102000000000000000000000000000000000000000000000000000000000000"
+      ]
     }
   },
   "statusCode": 200

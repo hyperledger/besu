@@ -35,7 +35,6 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -48,6 +47,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
   private final Address localAddress;
   private final NodeKey nodeKey;
   private final EpochManager epochManager;
+  private final boolean createEmptyBlocks;
 
   /**
    * Instantiates a new Clique miner executor.
@@ -59,6 +59,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
    * @param miningParams the mining params
    * @param blockScheduler the block scheduler
    * @param epochManager the epoch manager
+   * @param createEmptyBlocks whether clique should allow the creation of empty blocks.
    */
   public CliqueMinerExecutor(
       final ProtocolContext protocolContext,
@@ -67,11 +68,14 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
       final NodeKey nodeKey,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
-      final EpochManager epochManager) {
+      final EpochManager epochManager,
+      final boolean createEmptyBlocks) {
     super(protocolContext, protocolSchedule, transactionPool, miningParams, blockScheduler);
     this.nodeKey = nodeKey;
     this.localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     this.epochManager = epochManager;
+    this.createEmptyBlocks = createEmptyBlocks;
+    miningParams.setCoinbase(localAddress);
   }
 
   @Override
@@ -82,15 +86,12 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
     final Function<BlockHeader, CliqueBlockCreator> blockCreator =
         (header) ->
             new CliqueBlockCreator(
-                localAddress, // TOOD(tmm): This can be removed (used for voting not coinbase).
-                () -> targetGasLimit.map(AtomicLong::longValue),
+                miningParameters,
                 this::calculateExtraData,
                 transactionPool,
                 protocolContext,
                 protocolSchedule,
                 nodeKey,
-                minTransactionGasPrice,
-                minBlockOccupancyRatio,
                 header,
                 epochManager);
 
@@ -101,12 +102,13 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
         observers,
         blockScheduler,
         parentHeader,
-        localAddress);
+        localAddress,
+        createEmptyBlocks);
   }
 
   @Override
   public Optional<Address> getCoinbase() {
-    return Optional.of(localAddress);
+    return miningParameters.getCoinbase();
   }
 
   /**
@@ -120,7 +122,8 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
     final List<Address> validators = Lists.newArrayList();
 
     final Bytes vanityDataToInsert =
-        ConsensusHelpers.zeroLeftPad(extraData, CliqueExtraData.EXTRA_VANITY_LENGTH);
+        ConsensusHelpers.zeroLeftPad(
+            miningParameters.getExtraData(), CliqueExtraData.EXTRA_VANITY_LENGTH);
     // Building ON TOP of canonical head, if the next block is epoch, include validators.
     if (epochManager.isEpochBlock(parentHeader.getNumber() + 1)) {
 

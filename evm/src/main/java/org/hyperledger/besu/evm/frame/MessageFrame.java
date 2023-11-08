@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.frame;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.emptySet;
 
+import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.collections.undo.UndoSet;
 import org.hyperledger.besu.collections.undo.UndoTable;
 import org.hyperledger.besu.datatypes.Address;
@@ -25,11 +26,11 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.code.CodeSection;
-import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
 import org.hyperledger.besu.evm.internal.OperandStack;
 import org.hyperledger.besu.evm.internal.ReturnStack;
 import org.hyperledger.besu.evm.internal.StorageEntry;
+import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -38,7 +39,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -652,6 +652,17 @@ public class MessageFrame {
    */
   public MutableBytes readMutableMemory(final long offset, final long length) {
     return readMutableMemory(offset, length, false);
+  }
+
+  /**
+   * Read bytes in memory without expanding the word capacity.
+   *
+   * @param offset The offset in memory
+   * @param length The length of the bytes to read
+   * @return The bytes in the specified range
+   */
+  public Bytes shadowReadMemory(final long offset, final long length) {
+    return memory.getBytesWithoutGrowth(offset, length);
   }
 
   /**
@@ -1707,7 +1718,7 @@ public class MessageFrame {
             new TxValues(
                 blockHashLookup,
                 maxStackSize,
-                UndoSet.of(new HashSet<>()),
+                UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
                 UndoTable.of(HashBasedTable.create()),
                 originator,
                 gasPrice,
@@ -1717,8 +1728,8 @@ public class MessageFrame {
                 miningBeneficiary,
                 versionedHashes,
                 UndoTable.of(HashBasedTable.create()),
-                UndoSet.of(new HashSet<>()),
-                UndoSet.of(new HashSet<>()));
+                UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
+                UndoSet.of(new BytesTrieSet<>(Address.SIZE)));
         updater = worldUpdater;
         newStatic = isStatic;
       } else {
