@@ -416,7 +416,7 @@ public class TransactionPool implements BlockAddedObserver {
 
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader().orElse(null);
     if (chainHeadBlockHeader == null) {
-      LOG.atTrace()
+      LOG.atWarn()
           .setMessage("rejecting transaction {} due to chain head not available yet")
           .addArgument(transaction::getHash)
           .log();

@@ -109,7 +109,15 @@ public interface Transaction {
   Quantity getValue();
 
   /**
-   * Value corresponding to the 'V' component of the signature of the transaction.
+   * Value corresponding to the 'yParity' component of non-legacy signatures.
+   *
+   * @return the 'yParity' component of the signature
+   */
+  BigInteger getYParity();
+
+  /**
+   * Value corresponding to the 'v' component of legacy signatures, which encodes chainId and
+   * yParity.
    *
    * @return the 'V' component of the signature
    */

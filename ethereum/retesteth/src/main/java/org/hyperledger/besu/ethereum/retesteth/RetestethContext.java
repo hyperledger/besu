@@ -167,7 +167,8 @@ public class RetestethContext {
     final WorldStateArchive worldStateArchive =
         new DefaultWorldStateArchive(
             new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
-            new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
+            new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
+            EvmConfiguration.DEFAULT);
     final MutableWorldState worldState = worldStateArchive.getMutable();
     genesisState.writeStateTo(worldState);
 

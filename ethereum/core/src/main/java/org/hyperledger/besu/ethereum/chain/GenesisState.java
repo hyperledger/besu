@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -138,7 +139,7 @@ public final class GenesisState {
     final WorldStatePreimageKeyValueStorage preimageStorage =
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
     final MutableWorldState worldState =
-        new DefaultMutableWorldState(stateStorage, preimageStorage);
+        new DefaultMutableWorldState(stateStorage, preimageStorage, EvmConfiguration.DEFAULT);
     writeAccountsTo(worldState, genesisAccounts, null);
     return worldState.rootHash();
   }
