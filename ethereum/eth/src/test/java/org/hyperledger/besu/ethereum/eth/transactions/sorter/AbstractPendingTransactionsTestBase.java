@@ -101,12 +101,16 @@ public abstract class AbstractPendingTransactionsTestBase {
               .txPoolLimitByAccountPercentage(Fraction.fromFloat(1.0f))
               .build(),
           Optional.empty());
+
   protected AbstractPendingTransactionsSorter transactionsLargeNoSenderGrouping =
       getPendingTransactions(
           ImmutableTransactionPoolConfiguration.builder()
               .txPoolMaxSize(MAX_TRANSACTIONS_LARGE_POOL)
-              .disableSenderTXGrouping(true)
               .txPoolLimitByAccountPercentage(Fraction.fromFloat(1.0f))
+              .unstable(
+                  ImmutableTransactionPoolConfiguration.Unstable.builder()
+                      .disableSenderTXGrouping(true)
+                      .build())
               .build(),
           Optional.empty());
 
@@ -130,6 +134,7 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void shouldReturnExclusivelyLocalTransactionsWhenAppropriate() {
+
     final Transaction localTransaction0 = createTransaction(0);
     transactions.addTransaction(createLocalPendingTransaction(localTransaction0), Optional.empty());
     assertThat(transactions.size()).isEqualTo(1);
@@ -343,29 +348,41 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void selectTransactionsInDefaultOrder() {
-    assertThat(transactionsLarge.addRemoteTransaction(transaction1, Optional.empty()))
-            .isEqualTo(ADDED);
-    assertThat(transactionsLarge.addRemoteTransaction(transaction2, Optional.empty()))
-            .isEqualTo(ADDED);
-    assertThat(transactionsLarge.addRemoteTransaction(transaction1Sdr2, Optional.empty()))
-            .isEqualTo(ADDED);
-    assertThat(transactionsLarge.addRemoteTransaction(transaction2Sdr2, Optional.empty()))
-            .isEqualTo(ADDED);
-    assertThat(transactionsLarge.addRemoteTransaction(transaction3Sdr2, Optional.empty()))
-            .isEqualTo(ADDED);
-    assertThat(transactionsLarge.addRemoteTransaction(transaction3, Optional.empty()))
-            .isEqualTo(ADDED);
+    assertThat(
+            transactionsLarge.addTransaction(
+                createRemotePendingTransaction(transaction1), Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactionsLarge.addTransaction(
+                createRemotePendingTransaction(transaction2), Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactionsLarge.addTransaction(
+                createRemotePendingTransaction(transaction1Sdr2), Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactionsLarge.addTransaction(
+                createRemotePendingTransaction(transaction2Sdr2), Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactionsLarge.addTransaction(
+                createRemotePendingTransaction(transaction3Sdr2), Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactionsLarge.addTransaction(
+                createRemotePendingTransaction(transaction3), Optional.empty()))
+        .isEqualTo(ADDED);
 
     final List<Transaction> parsedTransactions = Lists.newArrayList();
     transactionsLarge.selectTransactions(
-            pendingTx -> {
-              parsedTransactions.add(pendingTx.getTransaction());
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
 
-              if (parsedTransactions.size() == 6) {
-                return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
-              }
-              return SELECTED;
-            });
+          if (parsedTransactions.size() == 6) {
+            return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
+          }
+          return SELECTED;
+        });
 
     assertThat(parsedTransactions.size()).isEqualTo(6);
 
@@ -373,47 +390,50 @@ public abstract class AbstractPendingTransactionsTestBase {
     assertThat(parsedTransactions.get(1)).isEqualTo(transaction2Sdr2);
     assertThat(parsedTransactions.get(2)).isEqualTo(transaction3Sdr2);
     assertThat(parsedTransactions.get(3))
-            .isEqualTo(transaction2); // Transaction 2 is actually the lowest nonce for this sender
+        .isEqualTo(transaction2); // Transaction 2 is actually the lowest nonce for this sender
     assertThat(parsedTransactions.get(4))
-            .isEqualTo(transaction1); // Transaction 1 is the next nonce for the sender
+        .isEqualTo(transaction1); // Transaction 1 is the next nonce for the sender
     assertThat(parsedTransactions.get(5))
-            .isEqualTo(transaction3); // Transaction 3 is the next nonce for the sender
+        .isEqualTo(transaction3); // Transaction 3 is the next nonce for the sender
   }
 
   @Test
   public void selectTransactionsInOrderNoGroupBySender() {
     assertThat(
-            transactionsLargeNoSenderGrouping.addRemoteTransaction(transaction2, Optional.empty()))
-            .isEqualTo(ADDED);
+            transactionsLargeNoSenderGrouping.addTransaction(
+                createRemotePendingTransaction(transaction2), Optional.empty()))
+        .isEqualTo(ADDED);
     assertThat(
-            transactionsLargeNoSenderGrouping.addRemoteTransaction(
-                    transaction1Sdr2, Optional.empty()))
-            .isEqualTo(ADDED);
+            transactionsLargeNoSenderGrouping.addTransaction(
+                createRemotePendingTransaction(transaction1Sdr2), Optional.empty()))
+        .isEqualTo(ADDED);
     assertThat(
-            transactionsLargeNoSenderGrouping.addRemoteTransaction(
-                    transaction2Sdr2, Optional.empty()))
-            .isEqualTo(ADDED);
+            transactionsLargeNoSenderGrouping.addTransaction(
+                createRemotePendingTransaction(transaction2Sdr2), Optional.empty()))
+        .isEqualTo(ADDED);
     assertThat(
-            transactionsLargeNoSenderGrouping.addRemoteTransaction(transaction1, Optional.empty()))
-            .isEqualTo(ADDED);
+            transactionsLargeNoSenderGrouping.addTransaction(
+                createRemotePendingTransaction(transaction1), Optional.empty()))
+        .isEqualTo(ADDED);
     assertThat(
-            transactionsLargeNoSenderGrouping.addRemoteTransaction(
-                    transaction3Sdr2, Optional.empty()))
-            .isEqualTo(ADDED);
+            transactionsLargeNoSenderGrouping.addTransaction(
+                createRemotePendingTransaction(transaction3Sdr2), Optional.empty()))
+        .isEqualTo(ADDED);
     assertThat(
-            transactionsLargeNoSenderGrouping.addRemoteTransaction(transaction3, Optional.empty()))
-            .isEqualTo(ADDED);
+            transactionsLargeNoSenderGrouping.addTransaction(
+                createRemotePendingTransaction(transaction3), Optional.empty()))
+        .isEqualTo(ADDED);
 
     final List<Transaction> parsedTransactions = Lists.newArrayList();
     transactionsLargeNoSenderGrouping.selectTransactions(
-            pendingTx -> {
-              parsedTransactions.add(pendingTx.getTransaction());
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
 
-              if (parsedTransactions.size() == 6) {
-                return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
-              }
-              return SELECTED;
-            });
+          if (parsedTransactions.size() == 6) {
+            return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
+          }
+          return SELECTED;
+        });
 
     assertThat(parsedTransactions.size()).isEqualTo(6);
 
@@ -593,7 +613,10 @@ public abstract class AbstractPendingTransactionsTestBase {
             transactions.addTransaction(
                 createRemotePendingTransaction(independentTx), Optional.empty()))
         .isEqualTo(ADDED);
-    assertThat(transactions.addRemoteTransaction(independentTx, Optional.empty())).isEqualTo(ADDED);
+    assertThat(
+            transactions.addTransaction(
+                createRemotePendingTransaction(independentTx), Optional.empty()))
+        .isEqualTo(ADDED);
 
     // All tx's except the last duplicate should be removed
     replacedTransactions.forEach(this::assertTransactionNotPending);
@@ -770,10 +793,10 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   protected Transaction createTransactionSender2(final long transactionNumber) {
     return new TransactionTestFixture()
-            .value(Wei.of(transactionNumber))
-            .nonce(transactionNumber)
-            .gasPrice(Wei.of(0))
-            .createTransaction(KEYS2);
+        .value(Wei.of(transactionNumber))
+        .nonce(transactionNumber)
+        .gasPrice(Wei.of(0))
+        .createTransaction(KEYS2);
   }
 
   private PendingTransaction createRemotePendingTransaction(
