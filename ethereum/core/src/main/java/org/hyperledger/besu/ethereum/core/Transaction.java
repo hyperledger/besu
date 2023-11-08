@@ -226,10 +226,6 @@ public class Transaction
     this.chainId = chainId;
     this.versionedHashes = versionedHashes;
     this.blobsWithCommitments = blobsWithCommitments;
-
-    if (!forCopy && isUpfrontGasCostTooHigh()) {
-      throw new IllegalArgumentException("Upfront gas cost exceeds UInt256");
-    }
   }
 
   /**
@@ -567,15 +563,6 @@ public class Transaction
   }
 
   /**
-   * Check if the upfront gas cost is over the max allowed
-   *
-   * @return true is upfront data cost overflow uint256 max value
-   */
-  private boolean isUpfrontGasCostTooHigh() {
-    return calculateUpfrontGasCost(getMaxGasPrice(), Wei.ZERO, 0L).bitLength() > 256;
-  }
-
-  /**
    * Calculates the up-front cost for the gas and blob gas the transaction can use.
    *
    * @param gasPrice the gas price to use
@@ -619,7 +606,9 @@ public class Transaction
    * @return the up-front gas cost for the transaction
    */
   public Wei getUpfrontCost(final long totalBlobGas) {
-    return getMaxUpfrontGasCost(totalBlobGas).addExact(getValue());
+    Wei maxUpfrontGasCost = getMaxUpfrontGasCost(totalBlobGas);
+    Wei result = maxUpfrontGasCost.add(getValue());
+    return (maxUpfrontGasCost.compareTo(result) > 0) ? Wei.MAX_WEI : result;
   }
 
   /**
