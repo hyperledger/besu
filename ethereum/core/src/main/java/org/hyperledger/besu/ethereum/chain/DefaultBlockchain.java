@@ -288,12 +288,12 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
-  public Optional<BlockHeader> getBlockHeader(final long blockNumber) {
+  public synchronized Optional<BlockHeader> getBlockHeader(final long blockNumber) {
     return blockchainStorage.getBlockHash(blockNumber).flatMap(this::getBlockHeader);
   }
 
   @Override
-  public Optional<BlockHeader> getBlockHeader(final Hash blockHeaderHash) {
+  public synchronized Optional<BlockHeader> getBlockHeader(final Hash blockHeaderHash) {
     return blockHeadersCache
         .map(
             cache ->
