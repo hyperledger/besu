@@ -72,7 +72,8 @@ class EthGetTransactionByHashTest {
 
   @Test
   void shouldReturnErrorResponseIfMissingRequiredParameter() {
-    final JsonRpcRequest request = new JsonRpcRequest(JSON_RPC_VERSION, method.getName(), new Object[] {});
+    final JsonRpcRequest request =
+        new JsonRpcRequest(JSON_RPC_VERSION, method.getName(), new Object[] {});
     final JsonRpcRequestContext context = new JsonRpcRequestContext(request);
 
     final JsonRpcErrorResponse expectedResponse =
@@ -116,7 +117,7 @@ class EthGetTransactionByHashTest {
 
     final JsonRpcRequest request =
         new JsonRpcRequest(
-                JSON_RPC_VERSION, method.getName(), new Object[] {transaction.getHash().toHexString()});
+            JSON_RPC_VERSION, method.getName(), new Object[] {transaction.getHash().toHexString()});
     final JsonRpcRequestContext context = new JsonRpcRequestContext(request);
 
     final JsonRpcSuccessResponse expectedResponse =
@@ -142,7 +143,7 @@ class EthGetTransactionByHashTest {
 
     final JsonRpcRequest request =
         new JsonRpcRequest(
-                JSON_RPC_VERSION, method.getName(), new Object[] {transaction.getHash().toHexString()});
+            JSON_RPC_VERSION, method.getName(), new Object[] {transaction.getHash().toHexString()});
     final JsonRpcRequestContext context = new JsonRpcRequestContext(request);
 
     final JsonRpcSuccessResponse expectedResponse =
