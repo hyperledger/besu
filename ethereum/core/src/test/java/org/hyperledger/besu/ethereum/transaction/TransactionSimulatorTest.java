@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParam
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Status;
@@ -75,6 +76,8 @@ public class TransactionSimulatorTest {
 
   private static final Address DEFAULT_FROM =
       Address.fromHexString("0x0000000000000000000000000000000000000000");
+
+  private static final Optional<Long> GASCAP = Optional.of(500L);
 
   private TransactionSimulator transactionSimulator;
 
@@ -163,7 +166,8 @@ public class TransactionSimulatorTest {
         callParameter,
         ImmutableTransactionValidationParams.builder().isAllowExceedingBalance(true).build(),
         OperationTracer.NO_TRACING,
-        1L);
+        1L,
+        Optional.empty());
 
     verifyTransactionWasProcessed(expectedTransaction);
   }
@@ -198,7 +202,8 @@ public class TransactionSimulatorTest {
         callParameter,
         ImmutableTransactionValidationParams.builder().isAllowExceedingBalance(true).build(),
         OperationTracer.NO_TRACING,
-        1L);
+        1L,
+        Optional.empty());
 
     verifyTransactionWasProcessed(expectedTransaction);
   }
@@ -232,7 +237,8 @@ public class TransactionSimulatorTest {
         callParameter,
         ImmutableTransactionValidationParams.builder().isAllowExceedingBalance(false).build(),
         OperationTracer.NO_TRACING,
-        1L);
+        1L,
+        Optional.empty());
 
     verifyTransactionWasProcessed(expectedTransaction);
   }
@@ -267,7 +273,8 @@ public class TransactionSimulatorTest {
         callParameter,
         ImmutableTransactionValidationParams.builder().isAllowExceedingBalance(false).build(),
         OperationTracer.NO_TRACING,
-        1L);
+        1L,
+        Optional.empty());
 
     verifyTransactionWasProcessed(expectedTransaction);
   }
@@ -523,6 +530,43 @@ public class TransactionSimulatorTest {
     verifyTransactionWasProcessed(expectedTransaction);
   }
 
+  @Test
+  public void shouldCapGasLimitWhenRpcGasCapIsDefined() {
+    final CallParameter callParameter = eip1559TransactionCallParameter();
+
+    final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE);
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .chainId(BigInteger.ONE)
+            .nonce(1L)
+            .gasLimit(GASCAP.get())
+            .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
+            .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
+            .to(callParameter.getTo())
+            .sender(callParameter.getFrom())
+            .value(callParameter.getValue())
+            .payload(callParameter.getPayload())
+            .signature(FAKE_SIGNATURE)
+            .build();
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
+
+    final Optional<TransactionSimulatorResult> result =
+        transactionSimulator.process(
+            callParameter,
+            TransactionValidationParams.transactionSimulator(),
+            OperationTracer.NO_TRACING,
+            1L,
+            GASCAP);
+
+    assertThat(result.get().isSuccessful()).isTrue();
+    verifyTransactionWasProcessed(expectedTransaction);
+  }
+
   private void mockWorldStateForAccount(
       final BlockHeader blockHeader, final Address address, final long nonce) {
     final Account account = mock(Account.class);
@@ -631,7 +675,7 @@ public class TransactionSimulatorTest {
     return new CallParameter(
         Address.fromHexString("0x0"),
         Address.fromHexString("0x0"),
-        0,
+        50000,
         Wei.of(0),
         Optional.of(maxFeePerGas),
         Optional.of(maxPriorityFeePerGas),

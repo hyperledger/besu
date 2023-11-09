@@ -23,6 +23,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import com.google.common.net.InetAddresses;
@@ -51,8 +52,9 @@ public class NodeSmartContractV2PermissioningController
   public NodeSmartContractV2PermissioningController(
       final Address contractAddress,
       final TransactionSimulator transactionSimulator,
-      final MetricsSystem metricsSystem) {
-    super(contractAddress, transactionSimulator, metricsSystem);
+      final MetricsSystem metricsSystem,
+      final Optional<Long> gasCap) {
+    super(contractAddress, transactionSimulator, metricsSystem, gasCap);
   }
 
   @Override
@@ -78,7 +80,7 @@ public class NodeSmartContractV2PermissioningController
   @Nonnull
   private Boolean getCallResult(final EnodeURL enode) {
     return transactionSimulator
-        .processAtHead(buildCallParameters(createPayload(enode)))
+        .processAtHead(buildCallParameters(createPayload(enode)), gasCap)
         .map(this::parseResult)
         .orElse(false);
   }

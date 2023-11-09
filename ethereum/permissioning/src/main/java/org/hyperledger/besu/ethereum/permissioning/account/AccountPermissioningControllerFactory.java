@@ -43,7 +43,8 @@ public class AccountPermissioningControllerFactory {
   public static Optional<AccountPermissioningController> create(
       final PermissioningConfiguration permissioningConfiguration,
       final TransactionSimulator transactionSimulator,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Optional<Long> gasCap) {
 
     if (permissioningConfiguration == null) {
       return Optional.empty();
@@ -56,7 +57,7 @@ public class AccountPermissioningControllerFactory {
     final Optional<TransactionSmartContractPermissioningController>
         transactionSmartContractPermissioningController =
             buildSmartContractPermissioningController(
-                permissioningConfiguration, transactionSimulator, metricsSystem);
+                permissioningConfiguration, transactionSimulator, metricsSystem, gasCap);
 
     if (accountLocalConfigPermissioningController.isPresent()
         || transactionSmartContractPermissioningController.isPresent()) {
@@ -76,7 +77,8 @@ public class AccountPermissioningControllerFactory {
       buildSmartContractPermissioningController(
           final PermissioningConfiguration permissioningConfiguration,
           final TransactionSimulator transactionSimulator,
-          final MetricsSystem metricsSystem) {
+          final MetricsSystem metricsSystem,
+          final Optional<Long> gasCap) {
 
     if (permissioningConfiguration.getSmartContractConfig().isPresent()) {
       final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
@@ -90,7 +92,7 @@ public class AccountPermissioningControllerFactory {
             transactionSmartContractPermissioningController =
                 Optional.of(
                     new TransactionSmartContractPermissioningController(
-                        accountSmartContractAddress, transactionSimulator, metricsSystem));
+                        accountSmartContractAddress, transactionSimulator, metricsSystem, gasCap));
         validatePermissioningContract(transactionSmartContractPermissioningController.get());
 
         return transactionSmartContractPermissioningController;

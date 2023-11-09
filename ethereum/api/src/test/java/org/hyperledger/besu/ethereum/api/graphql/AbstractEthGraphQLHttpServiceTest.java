@@ -85,7 +85,6 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     final Synchronizer synchronizerMock = Mockito.mock(Synchronizer.class);
     final SyncStatus status = new DefaultSyncStatus(1, 2, 3, Optional.of(4L), Optional.of(5L));
     when(synchronizerMock.getSyncStatus()).thenReturn(Optional.of(status));
-
     final PoWMiningCoordinator miningCoordinatorMock = Mockito.mock(PoWMiningCoordinator.class);
     when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(Wei.of(16));
 
@@ -146,7 +145,9 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
                 GraphQLContextType.MINING_COORDINATOR,
                 miningCoordinatorMock,
                 GraphQLContextType.SYNCHRONIZER,
-                synchronizerMock),
+                synchronizerMock,
+                GraphQLContextType.GAS_CAP,
+                Optional.empty()),
             Mockito.mock(EthScheduler.class));
     service.start().join();
 

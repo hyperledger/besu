@@ -98,7 +98,11 @@ public class ValidatorContractController {
             .isAllowExceedingBalance(true)
             .build();
     return transactionSimulator.process(
-        callParams, transactionValidationParams, OperationTracer.NO_TRACING, blockNumber);
+        callParams,
+        transactionValidationParams,
+        OperationTracer.NO_TRACING,
+        blockNumber,
+        Optional.empty());
   }
 
   @SuppressWarnings("rawtypes")

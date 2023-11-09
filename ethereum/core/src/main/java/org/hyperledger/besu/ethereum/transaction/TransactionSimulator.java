@@ -90,17 +90,20 @@ public class TransactionSimulator {
       final CallParameter callParams,
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
-      final long blockNumber) {
+      final long blockNumber,
+      final Optional<Long> gasCap) {
     final BlockHeader header = blockchain.getBlockHeader(blockNumber).orElse(null);
     return process(
         callParams,
         transactionValidationParams,
         operationTracer,
         (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
-        header);
+        header,
+        gasCap);
   }
 
-  public Optional<TransactionSimulatorResult> processAtHead(final CallParameter callParams) {
+  public Optional<TransactionSimulatorResult> processAtHead(
+      final CallParameter callParams, final Optional<Long> gasCap) {
     return process(
         callParams,
         ImmutableTransactionValidationParams.builder()
@@ -109,7 +112,8 @@ public class TransactionSimulator {
             .build(),
         OperationTracer.NO_TRACING,
         (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
-        blockchain.getChainHeadHeader());
+        blockchain.getChainHeadHeader(),
+        Optional.empty());
   }
 
   /**
@@ -121,6 +125,7 @@ public class TransactionSimulator {
    * @param operationTracer The tracer for capturing operations during processing.
    * @param preWorldStateCloseGuard The pre-worldstate close guard for executing pre-close actions.
    * @param header The block header.
+   * @param gasCap The gasCap set for all transaction simulation calls
    * @return An Optional containing the result of the processing.
    */
   public <U> Optional<U> process(
@@ -128,7 +133,8 @@ public class TransactionSimulator {
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
       final PreCloseStateHandler<U> preWorldStateCloseGuard,
-      final BlockHeader header) {
+      final BlockHeader header,
+      final Optional<Long> gasCap) {
     if (header == null) {
       return Optional.empty();
     }
@@ -146,7 +152,7 @@ public class TransactionSimulator {
       return preWorldStateCloseGuard.apply(
           ws,
           processWithWorldUpdater(
-              callParams, transactionValidationParams, operationTracer, header, updater));
+              callParams, transactionValidationParams, operationTracer, header, updater, gasCap));
 
     } catch (final Exception e) {
       return Optional.empty();
@@ -161,7 +167,8 @@ public class TransactionSimulator {
         TransactionValidationParams.transactionSimulator(),
         OperationTracer.NO_TRACING,
         (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
-        header);
+        header,
+        Optional.empty());
   }
 
   public Optional<TransactionSimulatorResult> process(
@@ -170,7 +177,8 @@ public class TransactionSimulator {
         callParams,
         TransactionValidationParams.transactionSimulator(),
         OperationTracer.NO_TRACING,
-        blockNumber);
+        blockNumber,
+        Optional.empty());
   }
 
   private MutableWorldState getWorldState(final BlockHeader header) {
@@ -188,7 +196,8 @@ public class TransactionSimulator {
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
       final BlockHeader header,
-      final WorldUpdater updater) {
+      final WorldUpdater updater,
+      final Optional<Long> gasCap) {
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
 
     final Address senderAddress =
@@ -207,10 +216,13 @@ public class TransactionSimulator {
     final Account sender = updater.get(senderAddress);
     final long nonce = sender != null ? sender.getNonce() : 0L;
 
-    final long gasLimit =
+    long gasLimit =
         callParams.getGasLimit() >= 0
             ? callParams.getGasLimit()
             : blockHeaderToProcess.getGasLimit();
+    if (gasCap.isPresent()) {
+      gasLimit = Math.min(gasLimit, gasCap.get());
+    }
     final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
     final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
 

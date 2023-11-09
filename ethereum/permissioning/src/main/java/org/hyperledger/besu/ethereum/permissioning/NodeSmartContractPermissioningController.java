@@ -58,8 +58,9 @@ public class NodeSmartContractPermissioningController
   public NodeSmartContractPermissioningController(
       final Address contractAddress,
       final TransactionSimulator transactionSimulator,
-      final MetricsSystem metricsSystem) {
-    super(contractAddress, transactionSimulator, metricsSystem);
+      final MetricsSystem metricsSystem,
+      final Optional<Long> gasCap) {
+    super(contractAddress, transactionSimulator, metricsSystem, gasCap);
   }
 
   @Override
@@ -68,7 +69,7 @@ public class NodeSmartContractPermissioningController
     final CallParameter callParams = buildCallParameters(payload);
 
     final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.processAtHead(callParams);
+        transactionSimulator.processAtHead(callParams, gasCap);
 
     if (result.isPresent()) {
       switch (result.get().getResult().getStatus()) {

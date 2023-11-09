@@ -68,6 +68,7 @@ import okhttp3.OkHttpClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mockito;
 
 public abstract class AbstractJsonRpcHttpServiceTest {
   @TempDir private Path folder;
@@ -91,6 +92,9 @@ public abstract class AbstractJsonRpcHttpServiceTest {
   protected String baseUrl;
   protected final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
   protected FilterManager filterManager;
+
+  @SuppressWarnings("unchecked")
+  protected Optional<Long> rpcGasCap = Mockito.mock(Optional.class);
 
   protected void setupBlockchain() {
     blockchainSetupUtil = getBlockchainSetupUtil(DataStorageFormat.FOREST);

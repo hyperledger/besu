@@ -32,6 +32,7 @@ public abstract class AbstractNodeSmartContractPermissioningController
 
   protected final Address contractAddress;
   protected final TransactionSimulator transactionSimulator;
+  protected final Optional<Long> gasCap;
 
   private final Counter checkCounter;
   private final Counter checkCounterPermitted;
@@ -47,9 +48,11 @@ public abstract class AbstractNodeSmartContractPermissioningController
   protected AbstractNodeSmartContractPermissioningController(
       final Address contractAddress,
       final TransactionSimulator transactionSimulator,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Optional<Long> gasCap) {
     this.contractAddress = contractAddress;
     this.transactionSimulator = transactionSimulator;
+    this.gasCap = gasCap;
 
     this.checkCounter =
         metricsSystem.createCounter(

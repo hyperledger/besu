@@ -48,6 +48,7 @@ public class TransactionSmartContractPermissioningController
 
   private final Address contractAddress;
   private final TransactionSimulator transactionSimulator;
+  private final Optional<Long> gasCap;
 
   // full function signature for connection allowed call
   private static final String FUNCTION_SIGNATURE =
@@ -80,9 +81,11 @@ public class TransactionSmartContractPermissioningController
   public TransactionSmartContractPermissioningController(
       final Address contractAddress,
       final TransactionSimulator transactionSimulator,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Optional<Long> gasCap) {
     this.contractAddress = contractAddress;
     this.transactionSimulator = transactionSimulator;
+    this.gasCap = gasCap;
 
     this.checkCounter =
         metricsSystem.createCounter(
@@ -131,7 +134,7 @@ public class TransactionSmartContractPermissioningController
     }
 
     final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.processAtHead(callParams);
+        transactionSimulator.processAtHead(callParams, gasCap);
 
     if (result.isPresent()) {
       switch (result.get().getResult().getStatus()) {

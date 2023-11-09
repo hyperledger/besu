@@ -64,15 +64,11 @@ import org.mockito.quality.Strictness;
 public class EthEstimateGasTest {
 
   private EthEstimateGas method;
-  private EthEstimateGas methodWithGasCap;
-
   @Mock private BlockHeader blockHeader;
   @Mock private Blockchain blockchain;
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private TransactionSimulator transactionSimulator;
   @Mock private WorldStateArchive worldStateArchive;
-
-  private static final long GASCAP = 500L;
 
   @BeforeEach
   public void setUp() {
@@ -85,8 +81,6 @@ public class EthEstimateGasTest {
     when(worldStateArchive.isWorldStateAvailable(any(), any())).thenReturn(true);
 
     method = new EthEstimateGas(blockchainQueries, transactionSimulator, Optional.empty());
-    methodWithGasCap =
-        new EthEstimateGas(blockchainQueries, transactionSimulator, Optional.of(GASCAP));
   }
 
   @Test
@@ -102,7 +96,8 @@ public class EthEstimateGasTest {
             eq(modifiedLegacyTransactionCallParameter(Wei.ZERO)),
             any(TransactionValidationParams.class),
             any(OperationTracer.class),
-            eq(1L)))
+            eq(1L),
+            eq(Optional.empty())))
         .thenReturn(Optional.empty());
 
     final JsonRpcResponse expectedResponse =
@@ -120,7 +115,8 @@ public class EthEstimateGasTest {
             eq(modifiedEip1559TransactionCallParameter()),
             any(TransactionValidationParams.class),
             any(OperationTracer.class),
-            eq(1L)))
+            eq(1L),
+            eq(Optional.empty())))
         .thenReturn(Optional.empty());
 
     final JsonRpcResponse expectedResponse =
@@ -346,7 +342,8 @@ public class EthEstimateGasTest {
                     .isAllowExceedingBalance(true)
                     .build()),
             any(OperationTracer.class),
-            eq(1L));
+            eq(1L),
+            eq(Optional.empty()));
   }
 
   @Test
@@ -366,26 +363,8 @@ public class EthEstimateGasTest {
                     .isAllowExceedingBalance(false)
                     .build()),
             any(OperationTracer.class),
-            eq(1L));
-  }
-
-  @Test
-  public void shouldCapGasWhenCapIsDefinedAndLowerThanOriginalGasRequest() {
-    final JsonRpcRequestContext request = ethEstimateGasRequest(transferTransactionCallParameter());
-    mockTransientProcessorResultGasEstimate(21000L, true, false);
-
-    methodWithGasCap.response(request);
-
-    verify(transactionSimulator)
-        .process(
-            eq(modifiedTransferTransactionCallParameter()),
-            eq(
-                ImmutableTransactionValidationParams.builder()
-                    .from(TransactionValidationParams.transactionSimulator())
-                    .isAllowExceedingBalance(true)
-                    .build()),
-            any(OperationTracer.class),
-            eq(1L));
+            eq(1L),
+            eq(Optional.empty()));
   }
 
   private void mockTransientProcessorResultTxInvalidReason(final TransactionInvalidReason reason) {
@@ -427,13 +406,15 @@ public class EthEstimateGasTest {
             eq(modifiedLegacyTransactionCallParameter(gasPrice)),
             any(TransactionValidationParams.class),
             any(OperationTracer.class),
-            eq(1L)))
+            eq(1L),
+            eq(Optional.empty())))
         .thenReturn(Optional.of(mockTxSimResult));
     when(transactionSimulator.process(
             eq(modifiedEip1559TransactionCallParameter()),
             any(TransactionValidationParams.class),
             any(OperationTracer.class),
-            eq(1L)))
+            eq(1L),
+            eq(Optional.empty())))
         .thenReturn(Optional.of(mockTxSimResult));
 
     final TransactionProcessingResult mockResult = mock(TransactionProcessingResult.class);
@@ -506,34 +487,6 @@ public class EthEstimateGasTest {
         Optional.of(Wei.fromHexString("0x10")),
         Optional.of(Wei.fromHexString("0x10")),
         Wei.ZERO,
-        Bytes.EMPTY,
-        Optional.empty());
-  }
-
-  private JsonCallParameter transferTransactionCallParameter() {
-    return new JsonCallParameter(
-        Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
-        Address.fromHexString("0x8888f1f195afa192cfee860698584c030f4c9db1"),
-        Long.MAX_VALUE,
-        Wei.ONE,
-        null,
-        null,
-        Wei.ONE,
-        Bytes.EMPTY,
-        null,
-        false,
-        null);
-  }
-
-  private CallParameter modifiedTransferTransactionCallParameter() {
-    return new CallParameter(
-        Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
-        Address.fromHexString("0x8888f1f195afa192cfee860698584c030f4c9db1"),
-        GASCAP,
-        Wei.ONE,
-        Optional.empty(),
-        Optional.empty(),
-        Wei.ONE,
         Bytes.EMPTY,
         Optional.empty());
   }

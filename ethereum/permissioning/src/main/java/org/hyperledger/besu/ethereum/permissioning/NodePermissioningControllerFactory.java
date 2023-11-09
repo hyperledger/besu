@@ -48,7 +48,8 @@ public class NodePermissioningControllerFactory {
       final TransactionSimulator transactionSimulator,
       final MetricsSystem metricsSystem,
       final Blockchain blockchain,
-      final List<NodeConnectionPermissioningProvider> pluginProviders) {
+      final List<NodeConnectionPermissioningProvider> pluginProviders,
+      final Optional<Long> gasCap) {
 
     ArrayList<NodeConnectionPermissioningProvider> providers = Lists.newArrayList(pluginProviders);
 
@@ -75,7 +76,7 @@ public class NodePermissioningControllerFactory {
             .isSmartContractNodeAllowlistEnabled()) {
 
       configureNodePermissioningSmartContractProvider(
-          permissioningConfiguration, transactionSimulator, metricsSystem, providers);
+          permissioningConfiguration, transactionSimulator, metricsSystem, providers, gasCap);
 
       if (fixedNodes.isEmpty()) {
         syncStatusProviderOptional = Optional.empty();
@@ -109,7 +110,8 @@ public class NodePermissioningControllerFactory {
       final PermissioningConfiguration permissioningConfiguration,
       final TransactionSimulator transactionSimulator,
       final MetricsSystem metricsSystem,
-      final List<NodeConnectionPermissioningProvider> providers) {
+      final List<NodeConnectionPermissioningProvider> providers,
+      final Optional<Long> gasCap) {
     final SmartContractPermissioningConfiguration smartContractPermissioningConfig =
         permissioningConfiguration.getSmartContractConfig().get();
     final Address nodePermissioningSmartContractAddress =
@@ -121,14 +123,20 @@ public class NodePermissioningControllerFactory {
         {
           smartContractProvider =
               new NodeSmartContractPermissioningController(
-                  nodePermissioningSmartContractAddress, transactionSimulator, metricsSystem);
+                  nodePermissioningSmartContractAddress,
+                  transactionSimulator,
+                  metricsSystem,
+                  gasCap);
           break;
         }
       case 2:
         {
           smartContractProvider =
               new NodeSmartContractV2PermissioningController(
-                  nodePermissioningSmartContractAddress, transactionSimulator, metricsSystem);
+                  nodePermissioningSmartContractAddress,
+                  transactionSimulator,
+                  metricsSystem,
+                  gasCap);
           break;
         }
       default:
