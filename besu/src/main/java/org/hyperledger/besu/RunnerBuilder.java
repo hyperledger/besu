@@ -1116,7 +1116,8 @@ public class RunnerBuilder {
                   transactionSimulator,
                   metricsSystem,
                   blockchain,
-                  permissioningService.getConnectionPermissioningProviders());
+                  permissioningService.getConnectionPermissioningProviders(),
+                  rpcGasCap);
 
       return Optional.of(nodePermissioningController);
     } else if (permissioningService.getConnectionPermissioningProviders().size() > 0) {
@@ -1130,7 +1131,8 @@ public class RunnerBuilder {
                   transactionSimulator,
                   metricsSystem,
                   blockchain,
-                  permissioningService.getConnectionPermissioningProviders());
+                  permissioningService.getConnectionPermissioningProviders(),
+                  rpcGasCap);
 
       return Optional.of(nodePermissioningController);
     } else {
@@ -1146,7 +1148,7 @@ public class RunnerBuilder {
     if (permissioningConfiguration.isPresent()) {
       final Optional<AccountPermissioningController> accountPermissioningController =
           AccountPermissioningControllerFactory.create(
-              permissioningConfiguration.get(), transactionSimulator, metricsSystem);
+              permissioningConfiguration.get(), transactionSimulator, metricsSystem, rpcGasCap);
 
       accountPermissioningController.ifPresent(
           permissioningController ->
