@@ -17,14 +17,15 @@
 - Clique config option `createemptyblocks` to not create empty blocks [#6082](https://github.com/hyperledger/besu/pull/6082)
 - Upgrade EVM Reference Tests to v13 (Cancun) [#6114](https://github.com/hyperledger/besu/pull/6114)
 - Add `yParity` to GraphQL and JSON-RPC for relevant querise. [6119](https://github.com/hyperledger/besu/pull/6119)
+- Force tx replacement price bump to zero when zero base fee market is configured or `--min-gas-price` is set to 0. This allows for easier tx replacement in networks where there is not gas price. [#6079](https://github.com/hyperledger/besu/pull/6079)
 - Introduce the possibility to limit the time spent selecting pending transactions during block creation, using the new experimental option `Xblock-txs-selection-max-time` on PoS and PoW networks (by default set to 5000ms) or `Xpoa-block-txs-selection-max-time` on PoA networks (by default 75% of the min block time) [#6044](https://github.com/hyperledger/besu/pull/6044)
 - Introduce the possibility to limit the time spent evaluating a single pending transactions during block creation, using the new experimental option `Xblock-txs-selection-per-tx-max-time` (by default set to the value of block txs selection max time for your network) [#6089](https://github.com/hyperledger/besu/pull/6089)
 
 ### Bug fixes
-
 - Upgrade netty to address CVE-2023-44487, CVE-2023-34462 [#6100](https://github.com/hyperledger/besu/pull/6100)
 - Upgrade grpc to address CVE-2023-32731, CVE-2023-33953, CVE-2023-44487, CVE-2023-4785 [#6100](https://github.com/hyperledger/besu/pull/6100)
 - Fix blob gas calculation in reference tests [#6107](https://github.com/hyperledger/besu/pull/6107)
+- Limit memory used in handling invalid blocks [#6138](https://github.com/hyperledger/besu/pull/6138)
 
 ---
 
