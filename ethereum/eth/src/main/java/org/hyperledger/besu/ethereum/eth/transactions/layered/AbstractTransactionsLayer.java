@@ -25,10 +25,10 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.REPLACED;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
@@ -53,8 +53,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +75,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   private OptionalLong nextLayerOnDroppedListenerId = OptionalLong.empty();
   protected long spaceUsed = 0;
 
-  private final Cache<Hash, BlobsWithCommitments> blobCache;
+  private final BlobCache blobCache;
 
   public AbstractTransactionsLayer(
       final TransactionPoolConfiguration poolConfig,
@@ -93,7 +91,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     metrics.initTransactionCount(pendingTransactions::size, name());
     metrics.initUniqueSenderCount(txsBySender::size, name());
     // TODO: needs size limit, ttl policy and eviction on finalization policy
-    this.blobCache = Caffeine.newBuilder().build();
+    this.blobCache = new BlobCache();
   }
 
   protected abstract boolean gapsAllowed();
@@ -370,9 +368,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     final PendingTransaction removedTx = pendingTransactions.remove(transaction.getHash());
     if (removedTx.getTransaction().getBlobsWithCommitments().isPresent()
         && CONFIRMED.equals(removalReason)) {
-      this.blobCache.put(
-          removedTx.getTransaction().getHash(),
-          removedTx.getTransaction().getBlobsWithCommitments().get());
+      this.blobCache.cacheBlobs(removedTx.getTransaction());
     }
     if (removedTx != null) {
       decreaseSpaceUsed(removedTx);
@@ -612,7 +608,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   protected abstract void internalConsistencyCheck(
       final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender);
 
-  public Cache<Hash, BlobsWithCommitments> getBlobCache() {
+  public BlobCache getBlobCache() {
     return blobCache;
   }
 }

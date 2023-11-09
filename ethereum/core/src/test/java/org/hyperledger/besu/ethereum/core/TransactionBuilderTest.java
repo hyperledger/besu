@@ -88,6 +88,7 @@ public class TransactionBuilderTest {
     final Transaction copy = builder.copiedFrom(transaction).build();
     assertThat(copy).isEqualTo(transaction);
     assertThat(copy == transaction).isFalse();
+    assertThat(copy.getHash()).isEqualTo(transaction.getHash());
     BytesValueRLPOutput sourceRLP = new BytesValueRLPOutput();
     transaction.writeTo(sourceRLP);
     BytesValueRLPOutput copyRLP = new BytesValueRLPOutput();

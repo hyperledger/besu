@@ -20,10 +20,10 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedRes
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
@@ -59,8 +59,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,7 +94,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
   protected final TransactionPoolReplacementHandler transactionReplacementHandler;
   protected final Supplier<BlockHeader> chainHeadHeaderSupplier;
 
-  private final Cache<Hash, BlobsWithCommitments> blobCache;
+  private final BlobCache blobCache;
 
   public AbstractPendingTransactionsSorter(
       final TransactionPoolConfiguration poolConfig,
@@ -131,8 +129,8 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         "transactions",
         "Current size of the transaction pool",
         pendingTransactions::size);
-    // TODO: needs size limit, ttl policy and eviction on finalization policy
-    this.blobCache = Caffeine.newBuilder().build();
+
+    this.blobCache = new BlobCache();
   }
 
   @Override
@@ -402,9 +400,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
             removedPendingTx.isReceivedFromLocalSource(), addedToBlock);
         if (removedPendingTx.getTransaction().getBlobsWithCommitments().isPresent()
             && addedToBlock) {
-          this.blobCache.put(
-              removedPendingTx.getTransaction().getHash(),
-              removedPendingTx.getTransaction().getBlobsWithCommitments().get());
+          this.blobCache.cacheBlobs(removedPendingTx.getTransaction());
         }
       }
     }
@@ -498,16 +494,13 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
       return sb.toString();
     }
   }
+    /**
+     * @param transaction to restore blobs onto
+     * @return an optional copy of the supplied transaction, but with the BlobsWithCommitments
+     *     restored. If none could be restored, empty.
+     */
     @Override
     public Optional<Transaction> restoreBlob(final Transaction transaction) {
-        Transaction.Builder txBuilder = Transaction.builder();
-        txBuilder.copiedFrom(transaction);
-        final BlobsWithCommitments bwc = blobCache.getIfPresent(transaction.getHash());
-        if (bwc != null) {
-            txBuilder.blobsWithCommitments(bwc);
-            return Optional.of(txBuilder.build());
-        } else {
-            return Optional.empty();
-        }
+        return blobCache.restoreBlob(transaction);
     }
 }

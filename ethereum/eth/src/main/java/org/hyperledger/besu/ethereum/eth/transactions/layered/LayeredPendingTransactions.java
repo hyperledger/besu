@@ -24,7 +24,6 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.RECONCILED;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -539,15 +538,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
   @Override
   public Optional<Transaction> restoreBlob(final Transaction transaction) {
-    Transaction.Builder txBuilder = Transaction.builder();
-    txBuilder.copiedFrom(transaction);
-    final BlobsWithCommitments bwc =
-        prioritizedTransactions.getBlobCache().getIfPresent(transaction.getHash());
-    if (bwc != null) {
-      txBuilder.blobsWithCommitments(bwc);
-      return Optional.of(txBuilder.build());
-    } else {
-      return Optional.empty();
-    }
+    return prioritizedTransactions.getBlobCache().restoreBlob(transaction);
   }
 }
