@@ -94,7 +94,8 @@ public class ValidatorContractControllerTest {
             callParameter,
             ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS,
             OperationTracer.NO_TRACING,
-            1))
+            1,
+            Optional.empty()))
         .thenReturn(Optional.of(result));
 
     final ValidatorContractController validatorContractController =
@@ -116,7 +117,8 @@ public class ValidatorContractControllerTest {
             callParameter,
             ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS,
             OperationTracer.NO_TRACING,
-            1))
+            1,
+            Optional.empty()))
         .thenReturn(Optional.of(result));
 
     final ValidatorContractController validatorContractController =
@@ -141,7 +143,8 @@ public class ValidatorContractControllerTest {
             callParameter,
             ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS,
             OperationTracer.NO_TRACING,
-            1))
+            1,
+            Optional.empty()))
         .thenReturn(Optional.of(result));
 
     final ValidatorContractController validatorContractController =
@@ -163,7 +166,8 @@ public class ValidatorContractControllerTest {
             callParameter,
             ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS,
             OperationTracer.NO_TRACING,
-            1))
+            1,
+            Optional.empty()))
         .thenReturn(Optional.of(result));
 
     final ValidatorContractController validatorContractController =
@@ -180,7 +184,8 @@ public class ValidatorContractControllerTest {
             callParameter,
             ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS,
             OperationTracer.NO_TRACING,
-            1))
+            1,
+            Optional.empty()))
         .thenReturn(Optional.empty());
 
     final ValidatorContractController validatorContractController =

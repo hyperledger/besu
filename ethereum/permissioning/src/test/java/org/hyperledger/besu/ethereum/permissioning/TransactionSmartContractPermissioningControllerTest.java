@@ -71,7 +71,7 @@ public class TransactionSmartContractPermissioningControllerTest {
     genesisState.writeStateTo(worldArchive.getMutable());
 
     final TransactionSimulator ts =
-        new TransactionSimulator(blockchain, worldArchive, protocolSchedule);
+        new TransactionSimulator(blockchain, worldArchive, protocolSchedule, rpcGasCap);
     final Address contractAddress = Address.fromHexString(contractAddressString);
 
     when(metricsSystem.createCounter(

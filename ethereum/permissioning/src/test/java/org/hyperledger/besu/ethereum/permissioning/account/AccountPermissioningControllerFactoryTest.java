@@ -127,7 +127,8 @@ public class AccountPermissioningControllerFactoryTest {
     PermissioningConfiguration permissioningConfiguration =
         new PermissioningConfiguration(Optional.empty(), Optional.of(onchainConfig));
 
-    when(transactionSimulator.processAtHead(any())).thenThrow(new RuntimeException());
+    when(transactionSimulator.processAtHead(any(), Optional.empty()))
+        .thenThrow(new RuntimeException());
 
     final Throwable thrown =
         catchThrowable(
