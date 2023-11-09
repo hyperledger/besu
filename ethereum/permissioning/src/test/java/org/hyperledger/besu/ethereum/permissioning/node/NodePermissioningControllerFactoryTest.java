@@ -266,7 +266,7 @@ public class NodePermissioningControllerFactoryTest {
         new PermissioningConfiguration(
             Optional.empty(), Optional.of(smartContractPermissioningConfiguration));
 
-    when(transactionSimulator.processAtHead(any(), Optional.empty()))
+    when(transactionSimulator.processAtHead(any(), any()))
         .thenThrow(new RuntimeException());
 
     final Throwable thrown =

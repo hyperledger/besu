@@ -90,7 +90,7 @@ public class NodeSmartContractV2PermissioningControllerTest {
         transactionSimulatorResult(Bytes.random(10), ValidationResult.valid());
 
     when(transactionSimulator.processAtHead(
-            eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP)), Optional.empty()))
+            eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP)), any()))
         .thenReturn(Optional.of(txSimulatorResult));
 
     assertThatIllegalStateException()
@@ -107,7 +107,7 @@ public class NodeSmartContractV2PermissioningControllerTest {
             NodeSmartContractV2PermissioningController.FALSE_RESPONSE, ValidationResult.valid());
 
     when(transactionSimulator.processAtHead(
-            eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP)), Optional.empty()))
+            eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP)), any()))
         .thenReturn(Optional.of(txSimulatorResult));
 
     boolean isPermitted =
@@ -123,7 +123,7 @@ public class NodeSmartContractV2PermissioningControllerTest {
             ValidationResult.invalid(TransactionInvalidReason.INTERNAL_ERROR));
 
     when(transactionSimulator.processAtHead(
-            eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP)), Optional.empty()))
+            eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP)), any()))
         .thenReturn(Optional.of(txSimulatorResult));
 
     boolean isPermitted =
@@ -138,17 +138,17 @@ public class NodeSmartContractV2PermissioningControllerTest {
             NodeSmartContractV2PermissioningController.TRUE_RESPONSE, ValidationResult.valid());
 
     when(transactionSimulator.processAtHead(
-            eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP)), Optional.empty()))
+            eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP)), any()))
         .thenReturn(Optional.of(txSimulatorResult));
     when(transactionSimulator.processAtHead(
-            eq(callParams(DESTINATION_ENODE_EXPECTED_PAYLOAD_IP)), Optional.empty()))
+            eq(callParams(DESTINATION_ENODE_EXPECTED_PAYLOAD_IP)), any()))
         .thenReturn(Optional.of(txSimulatorResult));
 
     boolean isPermitted =
         permissioningController.checkSmartContractRules(SOURCE_ENODE_IPV4, DESTINATION_ENODE_IPV4);
     assertThat(isPermitted).isTrue();
 
-    verify(transactionSimulator, times(2)).processAtHead(any(), Optional.empty());
+    verify(transactionSimulator, times(2)).processAtHead(any(), any());
   }
 
   @Test
@@ -158,17 +158,17 @@ public class NodeSmartContractV2PermissioningControllerTest {
             NodeSmartContractV2PermissioningController.TRUE_RESPONSE, ValidationResult.valid());
 
     when(transactionSimulator.processAtHead(
-            eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP)), Optional.empty()))
+            eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP)), any()))
         .thenReturn(Optional.of(txSimulatorResult));
     when(transactionSimulator.processAtHead(
-            eq(callParams(DESTINATION_ENODE_EXPECTED_PAYLOAD_IP)), Optional.empty()))
+            eq(callParams(DESTINATION_ENODE_EXPECTED_PAYLOAD_IP)), any()))
         .thenReturn(Optional.of(txSimulatorResult));
 
     boolean isPermitted =
         permissioningController.checkSmartContractRules(SOURCE_ENODE_IPV6, DESTINATION_ENODE_IPV6);
     assertThat(isPermitted).isTrue();
 
-    verify(transactionSimulator, times(2)).processAtHead(any(), Optional.empty());
+    verify(transactionSimulator, times(2)).processAtHead(any(), any());
   }
 
   @Test
@@ -183,26 +183,26 @@ public class NodeSmartContractV2PermissioningControllerTest {
             NodeSmartContractV2PermissioningController.TRUE_RESPONSE, ValidationResult.valid());
 
     when(transactionSimulator.processAtHead(
-            eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP)), Optional.empty()))
+            eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP)), any()))
         .thenReturn(Optional.of(txSimulatorResultFalse));
     when(transactionSimulator.processAtHead(
-            eq(callParams(DESTINATION_ENODE_EXPECTED_PAYLOAD_IP)), Optional.empty()))
+            eq(callParams(DESTINATION_ENODE_EXPECTED_PAYLOAD_IP)), any()))
         .thenReturn(Optional.of(txSimulatorResultFalse));
 
     var sourcePayload = sourceEnodeExpectedPayloadDns();
     when(transactionSimulator.processAtHead(
-            eq(callParams(Bytes.fromHexString(sourcePayload))), Optional.empty()))
+            eq(callParams(Bytes.fromHexString(sourcePayload))), any()))
         .thenReturn(Optional.of(txSimulatorResultTrue));
     var destinationPayload = destinationEnodeExpectedPayloadDns();
     when(transactionSimulator.processAtHead(
-            eq(callParams(Bytes.fromHexString(destinationPayload))), Optional.empty()))
+            eq(callParams(Bytes.fromHexString(destinationPayload))), any()))
         .thenReturn(Optional.of(txSimulatorResultTrue));
 
     boolean isPermitted =
         permissioningController.checkSmartContractRules(SOURCE_ENODE_IPV4, DESTINATION_ENODE_IPV4);
     assertThat(isPermitted).isTrue();
 
-    verify(transactionSimulator, times(4)).processAtHead(any(), Optional.empty());
+    verify(transactionSimulator, times(4)).processAtHead(any(), any());
   }
 
   private CallParameter callParams(final Bytes payload) {
