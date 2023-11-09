@@ -498,6 +498,8 @@ public abstract class AbstractTransactionPoolTest {
     assertThat(maybeBlob).isPresent();
     Transaction restoredBlob = maybeBlob.get();
     assertThat(restoredBlob).isEqualTo(transactionBlob);
+    assertThat(restoredBlob.getBlobsWithCommitments().get().getBlobQuads())
+        .isEqualTo(transactionBlob.getBlobsWithCommitments().get().getBlobQuads());
   }
 
   @ParameterizedTest
@@ -1465,7 +1467,7 @@ public abstract class AbstractTransactionPoolTest {
         .maxFeePerGas(Optional.of(Wei.of(5000L)))
         .maxPriorityFeePerGas(Optional.of(Wei.of(1000L)))
         .type(TransactionType.BLOB)
-        .blobsWithCommitments(Optional.of(new BlobTestFixture().createBlobsWithCommitments(1)))
+        .blobsWithCommitments(Optional.of(new BlobTestFixture().createBlobsWithCommitments(6)))
         .createTransaction(KEY_PAIR1);
   }
 

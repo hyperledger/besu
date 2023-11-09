@@ -17,13 +17,34 @@ package org.hyperledger.besu.datatypes;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /** A class to hold the blobs, commitments, proofs and versioned hashes for a set of blobs. */
 public class BlobsWithCommitments {
 
+  /**
+   * A record to hold the blob, commitment, proof and versioned hash for a blob.
+   */
   public record BlobQuad(
-      Blob blob, KZGCommitment kzgCommitment, KZGProof kzgProof, VersionedHash versionedHash) {}
+      Blob blob, KZGCommitment kzgCommitment, KZGProof kzgProof, VersionedHash versionedHash) {
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      BlobQuad blobQuad = (BlobQuad) o;
+      return Objects.equals(blob, blobQuad.blob)
+          && Objects.equals(kzgCommitment, blobQuad.kzgCommitment)
+          && Objects.equals(kzgProof, blobQuad.kzgProof)
+          && Objects.equals(versionedHash, blobQuad.versionedHash);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(blob, kzgCommitment, kzgProof, versionedHash);
+    }
+  }
   ;
 
   private final List<BlobQuad> blobQuads;
@@ -60,6 +81,10 @@ public class BlobsWithCommitments {
     this.blobQuads = toBuild;
   }
 
+  /**
+   * Construct the class from a list of BlobQuads.
+   * @param quads the list of blob quads to be attached to the transaction
+   */
   public BlobsWithCommitments(final List<BlobQuad> quads) {
     this.blobQuads = quads;
   }
@@ -100,7 +125,25 @@ public class BlobsWithCommitments {
     return blobQuads.stream().map(BlobQuad::versionedHash).collect(Collectors.toList());
   }
 
+  /**
+   * Get the list of BlobQuads.
+   *
+   * @return blob quads
+   */
   public List<BlobQuad> getBlobQuads() {
     return blobQuads;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    BlobsWithCommitments that = (BlobsWithCommitments) o;
+    return Objects.equals(getBlobQuads(), that.getBlobQuads());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getBlobQuads());
   }
 }
