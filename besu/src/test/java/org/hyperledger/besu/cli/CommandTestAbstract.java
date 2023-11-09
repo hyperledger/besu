@@ -259,7 +259,6 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.transactionSelectorFactory(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.pluginTransactionValidatorFactory(any()))
         .thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.lineaParameters(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.besuComponent(any(BesuComponent.class)))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.cacheLastBlocks(any())).thenReturn(mockControllerBuilder);

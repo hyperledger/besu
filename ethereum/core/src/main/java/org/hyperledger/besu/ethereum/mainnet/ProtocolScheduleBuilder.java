@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -41,7 +40,6 @@ public class ProtocolScheduleBuilder {
   private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
   private final EvmConfiguration evmConfiguration;
-  private final LineaParameters lineaParameters;
   private final BadBlockManager badBlockManager = new BadBlockManager();
 
   private DefaultProtocolSchedule protocolSchedule;
@@ -59,26 +57,7 @@ public class ProtocolScheduleBuilder {
         protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
-        evmConfiguration,
-        LineaParameters.DEFAULT);
-  }
-
-  public ProtocolScheduleBuilder(
-      final GenesisConfigOptions config,
-      final BigInteger defaultChainId,
-      final ProtocolSpecAdapters protocolSpecAdapters,
-      final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled,
-      final EvmConfiguration evmConfiguration,
-      final LineaParameters lineaParameters) {
-    this(
-        config,
-        Optional.of(defaultChainId),
-        protocolSpecAdapters,
-        privacyParameters,
-        isRevertReasonEnabled,
-        evmConfiguration,
-        lineaParameters);
+        evmConfiguration);
   }
 
   public ProtocolScheduleBuilder(
@@ -89,28 +68,11 @@ public class ProtocolScheduleBuilder {
       final EvmConfiguration evmConfiguration) {
     this(
         config,
-        protocolSpecAdapters,
-        privacyParameters,
-        isRevertReasonEnabled,
-        evmConfiguration,
-        LineaParameters.DEFAULT);
-  }
-
-  public ProtocolScheduleBuilder(
-      final GenesisConfigOptions config,
-      final ProtocolSpecAdapters protocolSpecAdapters,
-      final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled,
-      final EvmConfiguration evmConfiguration,
-      final LineaParameters lineaParameters) {
-    this(
-        config,
         Optional.empty(),
         protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
-        evmConfiguration,
-        lineaParameters);
+        evmConfiguration);
   }
 
   private ProtocolScheduleBuilder(
@@ -119,15 +81,13 @@ public class ProtocolScheduleBuilder {
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final EvmConfiguration evmConfiguration,
-      final LineaParameters lineaParameters) {
+      final EvmConfiguration evmConfiguration) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
     this.privacyParameters = privacyParameters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.evmConfiguration = evmConfiguration;
     this.defaultChainId = defaultChainId;
-    this.lineaParameters = lineaParameters;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
@@ -403,14 +363,9 @@ public class ProtocolScheduleBuilder {
         blockNumberMilestone(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()),
         blockNumberMilestone(config.getSpiralBlockNumber(), specFactory.spiralDefinition()),
 
-        // Linea Milestones
-        blockNumberMilestone(
-            config.getLineaBlockNumber(), specFactory.lineaDefinition(config, lineaParameters)),
-
         // Linea with the evm opcodes changes
         blockNumberMilestone(
-            config.getLineaOpcodesBlockNumber(),
-            specFactory.lineaOpCodesDefinition(config, lineaParameters)));
+            config.getLineaOpcodesBlockNumber(), specFactory.lineaOpCodesDefinition(config)));
   }
 
   private Optional<BuilderMapEntry> timestampMilestone(

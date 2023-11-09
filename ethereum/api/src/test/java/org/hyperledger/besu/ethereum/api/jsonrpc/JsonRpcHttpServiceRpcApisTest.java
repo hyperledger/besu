@@ -42,7 +42,6 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
@@ -231,8 +230,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(EthPeers.class),
                     vertx,
                     Optional.empty(),
-                    Optional.empty(),
-                    LineaParameters.DEFAULT));
+                    Optional.empty()));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
@@ -342,8 +340,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(EthPeers.class),
                     vertx,
                     Optional.empty(),
-                    Optional.empty(),
-                    LineaParameters.DEFAULT));
+                    Optional.empty()));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,

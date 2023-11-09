@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.linea.CalldataLimits;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.FlexiblePrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
@@ -82,7 +81,6 @@ public class ProtocolSpecBuilder {
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
   private boolean isPoS = false;
   private boolean isReplayProtectionSupported = false;
-  private CalldataLimits calldataLimits = CalldataLimits.NO_LIMITS;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -278,11 +276,6 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder calldataLimits(final CalldataLimits calldataLimits) {
-    this.calldataLimits = calldataLimits;
-    return this;
-  }
-
   public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculatorBuilder, "Missing gasLimitCalculatorBuilder");
@@ -393,8 +386,7 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(withdrawalsProcessor),
         depositsValidator,
         isPoS,
-        isReplayProtectionSupported,
-        calldataLimits);
+        isReplayProtectionSupported);
   }
 
   private PrivateTransactionProcessor createPrivateTransactionProcessor(

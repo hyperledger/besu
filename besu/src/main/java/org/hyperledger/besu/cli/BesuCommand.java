@@ -65,7 +65,6 @@ import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EvmOptions;
 import org.hyperledger.besu.cli.options.unstable.IpcOptions;
-import org.hyperledger.besu.cli.options.unstable.LineaOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.NatOptions;
 import org.hyperledger.besu.cli.options.unstable.NativeLibraryOptions;
@@ -302,7 +301,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final NodePrivateKeyFileOption nodePrivateKeyFileOption =
       NodePrivateKeyFileOption.create();
   private final LoggingLevelOption loggingLevelOption = LoggingLevelOption.create();
-  private final LineaOptions unstableLineaOptions = LineaOptions.create();
 
   @CommandLine.ArgGroup(validate = false, heading = "@|bold Tx Pool Common Options|@%n")
   final org.hyperledger.besu.cli.options.stable.TransactionPoolOptions
@@ -1533,7 +1531,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("EVM Options", unstableEvmOptions)
             .put("IPC Options", unstableIpcOptions)
             .put("Chain Data Pruning Options", unstableChainPruningOptions)
-            .put("Linea Options", unstableLineaOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -2169,8 +2166,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .maxRemotelyInitiatedPeers(maxRemoteInitiatedPeers)
         .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
         .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
-        .cacheLastBlocks(numberOfblocksToCache)
-        .lineaParameters(unstableLineaOptions.toDomainObject());
+        .cacheLastBlocks(numberOfblocksToCache);
   }
 
   @NotNull

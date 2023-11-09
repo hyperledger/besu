@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -78,7 +77,6 @@ public class BesuController implements java.io.Closeable {
   private final SyncState syncState;
   private final EthPeers ethPeers;
   private final StorageProvider storageProvider;
-  private final LineaParameters lineaParameters;
 
   /**
    * Instantiates a new Besu controller.
@@ -116,8 +114,7 @@ public class BesuController implements java.io.Closeable {
       final List<Closeable> closeables,
       final PluginServiceFactory additionalPluginServices,
       final EthPeers ethPeers,
-      final StorageProvider storageProvider,
-      final LineaParameters lineaParameters) {
+      final StorageProvider storageProvider) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -135,7 +132,6 @@ public class BesuController implements java.io.Closeable {
     this.additionalPluginServices = additionalPluginServices;
     this.ethPeers = ethPeers;
     this.storageProvider = storageProvider;
-    this.lineaParameters = lineaParameters;
   }
 
   /**
@@ -295,15 +291,6 @@ public class BesuController implements java.io.Closeable {
    */
   public PluginServiceFactory getAdditionalPluginServices() {
     return additionalPluginServices;
-  }
-
-  /**
-   * Gets linea-specific parameters
-   *
-   * @return configured LineaParameters
-   */
-  public LineaParameters getLineaParameters() {
-    return lineaParameters;
   }
 
   /** The type Builder. */

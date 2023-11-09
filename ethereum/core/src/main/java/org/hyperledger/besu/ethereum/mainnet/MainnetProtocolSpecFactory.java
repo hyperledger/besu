@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -302,27 +301,15 @@ public class MainnetProtocolSpecFactory {
   ////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Linea Protocol Specs
-  public ProtocolSpecBuilder lineaDefinition(
-      final GenesisConfigOptions genesisConfigOptions, final LineaParameters lineaParameters) {
-    return LineaProtocolSpecs.lineaDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        genesisConfigOptions,
-        evmConfiguration,
-        lineaParameters);
-  }
 
   public ProtocolSpecBuilder lineaOpCodesDefinition(
-      final GenesisConfigOptions genesisConfigOptions, final LineaParameters lineaParameters) {
+      final GenesisConfigOptions genesisConfigOptions) {
     return LineaProtocolSpecs.lineaOpCodesDefinition(
         chainId,
         contractSizeLimit,
         evmStackSize,
         isRevertReasonEnabled,
         genesisConfigOptions,
-        evmConfiguration,
-        lineaParameters);
+        evmConfiguration);
   }
 }
