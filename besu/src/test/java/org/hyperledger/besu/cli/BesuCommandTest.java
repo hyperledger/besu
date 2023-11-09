@@ -5249,6 +5249,23 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void txpoolForceTxPoolMinGasPriceToZeroWhenMinGasPriceZero() {
+    parseCommand("--min-gas-price", "0");
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+
+    final Wei txPoolMinGasPrice = transactionPoolConfigCaptor.getValue().getMinGasPrice();
+    assertThat(txPoolMinGasPrice).isEqualTo(Wei.ZERO);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    verify(mockLogger, atLeast(1))
+        .warn(
+            contains(
+                "Forcing tx-pool-min-gas-price=0, since it could not be greater than the value of min-gas-price"));
+  }
+
+  @Test
   public void snapsyncHealingOptionShouldBeDisabledByDefault() {
     final TestBesuCommand besuCommand = parseCommand();
     assertThat(besuCommand.unstableSynchronizerOptions.isSnapsyncFlatDbHealingEnabled()).isFalse();
