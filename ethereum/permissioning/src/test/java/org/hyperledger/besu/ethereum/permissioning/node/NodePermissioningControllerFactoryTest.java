@@ -81,7 +81,8 @@ public class NodePermissioningControllerFactoryTest {
             transactionSimulator,
             new NoOpMetricsSystem(),
             blockchain,
-            Collections.emptyList());
+            Collections.emptyList(),
+            Optional.empty());
 
     List<NodeConnectionPermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(0);
@@ -108,7 +109,8 @@ public class NodePermissioningControllerFactoryTest {
             transactionSimulator,
             new NoOpMetricsSystem(),
             blockchain,
-            Collections.emptyList());
+            Collections.emptyList(),
+            Optional.empty());
 
     List<NodeConnectionPermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(1);
@@ -136,7 +138,8 @@ public class NodePermissioningControllerFactoryTest {
             transactionSimulator,
             new NoOpMetricsSystem(),
             blockchain,
-            Collections.emptyList());
+            Collections.emptyList(),
+            Optional.empty());
 
     List<NodeConnectionPermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(1);
@@ -172,7 +175,8 @@ public class NodePermissioningControllerFactoryTest {
             transactionSimulator,
             new NoOpMetricsSystem(),
             blockchain,
-            Collections.emptyList());
+            Collections.emptyList(),
+            Optional.empty());
 
     List<NodeConnectionPermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(1);
@@ -207,7 +211,8 @@ public class NodePermissioningControllerFactoryTest {
             transactionSimulator,
             new NoOpMetricsSystem(),
             blockchain,
-            Collections.emptyList());
+            Collections.emptyList(),
+            Optional.empty());
 
     List<NodeConnectionPermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(2);
@@ -245,7 +250,8 @@ public class NodePermissioningControllerFactoryTest {
             transactionSimulator,
             new NoOpMetricsSystem(),
             blockchain,
-            Collections.emptyList());
+            Collections.emptyList(),
+            Optional.empty());
 
     assertThat(controller.getSyncStatusNodePermissioningProvider()).isPresent();
   }
@@ -275,7 +281,8 @@ public class NodePermissioningControllerFactoryTest {
                         transactionSimulator,
                         new NoOpMetricsSystem(),
                         blockchain,
-                        Collections.emptyList()));
+                        Collections.emptyList(),
+                        Optional.empty()));
 
     assertThat(thrown)
         .isInstanceOf(IllegalStateException.class)

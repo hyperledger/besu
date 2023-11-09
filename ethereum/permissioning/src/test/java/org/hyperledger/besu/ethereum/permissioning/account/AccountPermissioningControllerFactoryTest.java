@@ -49,7 +49,8 @@ public class AccountPermissioningControllerFactoryTest {
   @Test
   public void createWithNullPermissioningConfigShouldReturnEmpty() {
     Optional<AccountPermissioningController> controller =
-        AccountPermissioningControllerFactory.create(null, transactionSimulator, metricsSystem);
+        AccountPermissioningControllerFactory.create(
+            null, transactionSimulator, metricsSystem, Optional.empty());
 
     Assertions.assertThat(controller).isEmpty();
   }
@@ -64,7 +65,7 @@ public class AccountPermissioningControllerFactoryTest {
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
-            permissioningConfiguration, transactionSimulator, metricsSystem);
+            permissioningConfiguration, transactionSimulator, metricsSystem, Optional.empty());
 
     Assertions.assertThat(controller).isEmpty();
   }
@@ -79,7 +80,7 @@ public class AccountPermissioningControllerFactoryTest {
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
-            permissioningConfiguration, transactionSimulator, metricsSystem);
+            permissioningConfiguration, transactionSimulator, metricsSystem, Optional.empty());
 
     Assertions.assertThat(controller).isNotEmpty();
     assertThat(controller.get().getAccountLocalConfigPermissioningController()).isNotEmpty();
@@ -97,7 +98,7 @@ public class AccountPermissioningControllerFactoryTest {
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
-            permissioningConfiguration, transactionSimulator, metricsSystem);
+            permissioningConfiguration, transactionSimulator, metricsSystem, Optional.empty());
 
     Assertions.assertThat(controller).isEmpty();
   }
@@ -112,7 +113,7 @@ public class AccountPermissioningControllerFactoryTest {
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
-            permissioningConfiguration, transactionSimulator, metricsSystem);
+            permissioningConfiguration, transactionSimulator, metricsSystem, Optional.empty());
 
     Assertions.assertThat(controller).isNotEmpty();
     assertThat(controller.get().getAccountLocalConfigPermissioningController()).isEmpty();
@@ -134,7 +135,10 @@ public class AccountPermissioningControllerFactoryTest {
         catchThrowable(
             () ->
                 AccountPermissioningControllerFactory.create(
-                    permissioningConfiguration, transactionSimulator, metricsSystem));
+                    permissioningConfiguration,
+                    transactionSimulator,
+                    metricsSystem,
+                    Optional.empty()));
 
     assertThat(thrown)
         .isInstanceOf(IllegalStateException.class)
@@ -154,7 +158,7 @@ public class AccountPermissioningControllerFactoryTest {
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
-            permissioningConfiguration, transactionSimulator, metricsSystem);
+            permissioningConfiguration, transactionSimulator, metricsSystem, Optional.empty());
 
     Assertions.assertThat(controller).isNotEmpty();
     assertThat(controller.get().getAccountLocalConfigPermissioningController()).isNotEmpty();

@@ -38,6 +38,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Resources;
@@ -91,7 +92,8 @@ public class NodeSmartContractPermissioningControllerTest {
             "Number of times the node smart contract permissioning provider has been checked and returned unpermitted"))
         .thenReturn(checkUnpermittedCounter);
 
-    return new NodeSmartContractPermissioningController(contractAddress, ts, metricsSystem);
+    return new NodeSmartContractPermissioningController(
+        contractAddress, ts, metricsSystem, Optional.empty());
   }
 
   private void verifyCountersUntouched() {

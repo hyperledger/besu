@@ -41,6 +41,7 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Optional;
 
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
@@ -71,7 +72,7 @@ public class TransactionSmartContractPermissioningControllerTest {
     genesisState.writeStateTo(worldArchive.getMutable());
 
     final TransactionSimulator ts =
-        new TransactionSimulator(blockchain, worldArchive, protocolSchedule, rpcGasCap);
+        new TransactionSimulator(blockchain, worldArchive, protocolSchedule);
     final Address contractAddress = Address.fromHexString(contractAddressString);
 
     when(metricsSystem.createCounter(
@@ -92,7 +93,8 @@ public class TransactionSmartContractPermissioningControllerTest {
             "Number of times the transaction smart contract permissioning provider has been checked and returned unpermitted"))
         .thenReturn(checkUnpermittedCounter);
 
-    return new TransactionSmartContractPermissioningController(contractAddress, ts, metricsSystem);
+    return new TransactionSmartContractPermissioningController(
+        contractAddress, ts, metricsSystem, Optional.empty());
   }
 
   private Transaction transactionForAccount(final Address address) {

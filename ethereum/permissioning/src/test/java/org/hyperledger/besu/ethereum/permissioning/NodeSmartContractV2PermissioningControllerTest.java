@@ -81,7 +81,7 @@ public class NodeSmartContractV2PermissioningControllerTest {
   public void beforeEach() {
     permissioningController =
         new NodeSmartContractV2PermissioningController(
-            contractAddress, transactionSimulator, metricsSystem);
+            contractAddress, transactionSimulator, metricsSystem, Optional.empty());
   }
 
   @Test
