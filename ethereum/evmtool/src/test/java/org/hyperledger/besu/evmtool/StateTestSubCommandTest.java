@@ -27,10 +27,10 @@ import java.io.PrintWriter;
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
 
-class StateTestSubCommandTest {
+public class StateTestSubCommandTest {
 
   @Test
-  void shouldDetectUnsupportedFork() {
+  public void shouldDetectUnsupportedFork() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     EvmToolCommand parentCommand =
         new EvmToolCommand(System.in, new PrintWriter(baos, true, UTF_8));
@@ -44,7 +44,7 @@ class StateTestSubCommandTest {
   }
 
   @Test
-  void shouldWorkWithValidStateTest() {
+  public void shouldWorkWithValidStateTest() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     EvmToolCommand parentCommand =
         new EvmToolCommand(System.in, new PrintWriter(baos, true, UTF_8));
@@ -55,7 +55,7 @@ class StateTestSubCommandTest {
   }
 
   @Test
-  void shouldWorkWithValidAccessListStateTest() {
+  public void shouldWorkWithValidAccessListStateTest() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     EvmToolCommand parentCommand =
         new EvmToolCommand(System.in, new PrintWriter(baos, true, UTF_8));
@@ -66,7 +66,7 @@ class StateTestSubCommandTest {
   }
 
   @Test
-  void noJsonTracer() {
+  public void noJsonTracer() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     EvmToolCommand parentCommand =
         new EvmToolCommand(System.in, new PrintWriter(baos, true, UTF_8));
@@ -80,7 +80,7 @@ class StateTestSubCommandTest {
   }
 
   @Test
-  void testsInvalidTransactions() {
+  public void testsInvalidTransactions() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais =
         new ByteArrayInputStream(
@@ -91,11 +91,11 @@ class StateTestSubCommandTest {
     final StateTestSubCommand stateTestSubCommand =
         new StateTestSubCommand(new EvmToolCommand(bais, new PrintWriter(baos, true, UTF_8)));
     stateTestSubCommand.run();
-    assertThat(baos.toString(UTF_8)).contains("exceeds transaction sender account balance");
+    assertThat(baos.toString(UTF_8)).contains("Transaction had out-of-bounds parameters");
   }
 
   @Test
-  void shouldStreamTests() {
+  public void shouldStreamTests() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais =
         new ByteArrayInputStream(
@@ -110,7 +110,7 @@ class StateTestSubCommandTest {
   }
 
   @Test
-  void failStreamMissingFile() {
+  public void failStreamMissingFile() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais =
         new ByteArrayInputStream("./file-dose-not-exist.json".getBytes(UTF_8));
@@ -121,7 +121,7 @@ class StateTestSubCommandTest {
   }
 
   @Test
-  void failStreamBadFile() {
+  public void failStreamBadFile() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais =
         new ByteArrayInputStream(
