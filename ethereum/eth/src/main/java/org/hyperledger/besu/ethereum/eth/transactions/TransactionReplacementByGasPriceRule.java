@@ -41,6 +41,6 @@ public class TransactionReplacementByGasPriceRule implements TransactionPoolRepl
 
     final Wei replacementThreshold =
         existingPendingTransaction.getGasPrice().multiply(100 + priceBump.getValue()).divide(100);
-    return newPendingTransaction.getGasPrice().compareTo(replacementThreshold) > 0;
+    return newPendingTransaction.getGasPrice().compareTo(replacementThreshold) >= 0;
   }
 }

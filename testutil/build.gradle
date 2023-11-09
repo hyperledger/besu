@@ -28,6 +28,7 @@ jar {
 }
 
 dependencies {
+  implementation project(':ethereum:eth')
   implementation project(':plugin-api')
   implementation project(':util')
 

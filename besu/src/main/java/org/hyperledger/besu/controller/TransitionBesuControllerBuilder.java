@@ -144,7 +144,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transitionMiningParameters,
                 syncState,
                 transitionBackwardsSyncContext,
-                metricsSystem));
+                ethProtocolManager.ethContext().getScheduler()));
     initTransitionWatcher(protocolContext, composedCoordinator);
     return composedCoordinator;
   }
