@@ -109,7 +109,7 @@ public abstract class AbstractPendingTransactionsTestBase {
               .txPoolLimitByAccountPercentage(Fraction.fromFloat(1.0f))
               .unstable(
                   ImmutableTransactionPoolConfiguration.Unstable.builder()
-                      .disableSenderTXGrouping(true)
+                      .disableSenderTxGrouping(true)
                       .build())
               .build(),
           Optional.empty());

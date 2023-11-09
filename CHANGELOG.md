@@ -6,7 +6,6 @@
 
 ### Additions and Improvements
 
-- Add option to avoid grouping transactions from a single sender when selecting candidate transactions for a block [#6022](https://github.com/hyperledger/besu/pull/6022)
 
 ### Bug Fixes
 
@@ -30,6 +29,7 @@
 - Upgrade EVM Reference Tests to v13 (Cancun) [#6114](https://github.com/hyperledger/besu/pull/6114)
 - Add `yParity` to GraphQL and JSON-RPC for relevant querise. [6119](https://github.com/hyperledger/besu/pull/6119)
 - Force tx replacement price bump to zero when zero base fee market is configured or `--min-gas-price` is set to 0. This allows for easier tx replacement in networks where there is not gas price. [#6079](https://github.com/hyperledger/besu/pull/6079)
+- Add `--Xtx-pool-disable-sender-grouping` option to avoid grouping transactions from a single sender when selecting candidate transactions for a block [#6022](https://github.com/hyperledger/besu/pull/6022)
 
 ### Bug fixes
 - Upgrade netty to address CVE-2023-44487, CVE-2023-34462 [#6100](https://github.com/hyperledger/besu/pull/6100)

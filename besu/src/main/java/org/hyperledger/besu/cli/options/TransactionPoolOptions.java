@@ -239,7 +239,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         description =
             "Disable sender grouping of transactions during selection. (default: ${DEFAULT-VALUE})",
         arity = "0..1")
-    private Boolean disableSenderTXGrouping =
+    private Boolean disableSenderTxGrouping =
         TransactionPoolConfiguration.DEFAULT_DISABLE_SENDER_TX_GROUPING;
   }
 
@@ -282,8 +282,8 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         config.getUnstable().getTxMessageKeepAliveSeconds();
     options.unstableOptions.eth65TrxAnnouncedBufferingPeriod =
         config.getUnstable().getEth65TrxAnnouncedBufferingPeriod();
-    options.unstableOptions.disableSenderTXGrouping =
-        config.getUnstable().getDisableSenderTXGrouping();
+    options.unstableOptions.disableSenderTxGrouping =
+        config.getUnstable().getDisableSenderTxGrouping();
 
     return options;
   }
@@ -337,7 +337,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
             ImmutableTransactionPoolConfiguration.Unstable.builder()
                 .txMessageKeepAliveSeconds(unstableOptions.txMessageKeepAliveSeconds)
                 .eth65TrxAnnouncedBufferingPeriod(unstableOptions.eth65TrxAnnouncedBufferingPeriod)
-                .disableSenderTXGrouping(unstableOptions.disableSenderTXGrouping)
+                .disableSenderTxGrouping(unstableOptions.disableSenderTxGrouping)
                 .build())
         .build();
   }

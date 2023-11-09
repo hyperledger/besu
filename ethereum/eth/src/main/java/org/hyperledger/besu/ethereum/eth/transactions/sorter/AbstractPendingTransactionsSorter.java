@@ -256,7 +256,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         for (final PendingTransaction transactionToProcess :
             accountTransactionOrder.transactionsToProcess(
                 highestPriorityPendingTransaction,
-                poolConfig.getUnstable().getDisableSenderTXGrouping() ? 1 : Integer.MAX_VALUE)) {
+                poolConfig.getUnstable().getDisableSenderTxGrouping() ? 1 : Integer.MAX_VALUE)) {
           final TransactionSelectionResult result =
               selector.evaluateTransaction(transactionToProcess);
 

@@ -318,16 +318,16 @@ public class TransactionPoolOptionsTest
   }
 
   @Test
-  public void disableSenderTXGroupingOn() {
+  public void disableSenderTxGroupingOn() {
     internalTestSuccess(
-        config -> assertThat(config.getUnstable().getDisableSenderTXGrouping()).isTrue(),
+        config -> assertThat(config.getUnstable().getDisableSenderTxGrouping()).isTrue(),
         "--Xtx-pool-disable-sender-grouping=true");
   }
 
   @Test
-  public void disableSenderTXGroupingOff() {
+  public void disableSenderTxGroupingOff() {
     internalTestSuccess(
-        config -> assertThat(config.getUnstable().getDisableSenderTXGrouping()).isFalse(),
+        config -> assertThat(config.getUnstable().getDisableSenderTxGrouping()).isFalse(),
         "--Xtx-pool-disable-sender-grouping=false");
   }
 

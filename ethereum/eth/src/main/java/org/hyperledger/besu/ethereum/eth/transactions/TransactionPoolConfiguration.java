@@ -49,7 +49,7 @@ public interface TransactionPoolConfiguration {
     }
 
     @Value.Default
-    default Boolean getDisableSenderTXGrouping() {
+    default Boolean getDisableSenderTxGrouping() {
       return DEFAULT_DISABLE_SENDER_TX_GROUPING;
     }
   }
