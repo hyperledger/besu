@@ -122,7 +122,6 @@ import org.mockito.junit.jupiter.MockitoSettings;
 @MockitoSettings(strictness = LENIENT)
 public abstract class AbstractTransactionPoolTest {
 
-  protected static final int MAX_TRANSACTIONS = 5;
   protected static final KeyPair KEY_PAIR1 =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private static final KeyPair KEY_PAIR2 =

@@ -18,14 +18,11 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /** A class to hold the blobs, commitments, proofs and versioned hashes for a set of blobs. */
 public class BlobsWithCommitments {
 
-  /**
-   * A record to hold the blob, commitment, proof and versioned hash for a blob.
-   */
+  /** A record to hold the blob, commitment, proof and versioned hash for a blob. */
   public record BlobQuad(
       Blob blob, KZGCommitment kzgCommitment, KZGProof kzgProof, VersionedHash versionedHash) {
 
@@ -45,7 +42,6 @@ public class BlobsWithCommitments {
       return Objects.hash(blob, kzgCommitment, kzgProof, versionedHash);
     }
   }
-  ;
 
   private final List<BlobQuad> blobQuads;
 
@@ -62,7 +58,7 @@ public class BlobsWithCommitments {
       final List<Blob> blobs,
       final List<KZGProof> kzgProofs,
       final List<VersionedHash> versionedHashes) {
-    if (blobs.size() == 0) {
+    if (blobs.isEmpty()) {
       throw new InvalidParameterException(
           "There needs to be a minimum of one blob in a blob transaction with commitments");
     }
@@ -83,6 +79,7 @@ public class BlobsWithCommitments {
 
   /**
    * Construct the class from a list of BlobQuads.
+   *
    * @param quads the list of blob quads to be attached to the transaction
    */
   public BlobsWithCommitments(final List<BlobQuad> quads) {
@@ -95,7 +92,7 @@ public class BlobsWithCommitments {
    * @return the blobs
    */
   public List<Blob> getBlobs() {
-    return blobQuads.stream().map(BlobQuad::blob).collect(Collectors.toList());
+    return blobQuads.stream().map(BlobQuad::blob).toList();
   }
 
   /**
@@ -104,7 +101,7 @@ public class BlobsWithCommitments {
    * @return the commitments
    */
   public List<KZGCommitment> getKzgCommitments() {
-    return blobQuads.stream().map(BlobQuad::kzgCommitment).collect(Collectors.toList());
+    return blobQuads.stream().map(BlobQuad::kzgCommitment).toList();
   }
 
   /**
@@ -113,7 +110,7 @@ public class BlobsWithCommitments {
    * @return the proofs
    */
   public List<KZGProof> getKzgProofs() {
-    return blobQuads.stream().map(BlobQuad::kzgProof).collect(Collectors.toList());
+    return blobQuads.stream().map(BlobQuad::kzgProof).toList();
   }
 
   /**
@@ -122,7 +119,7 @@ public class BlobsWithCommitments {
    * @return the hashes
    */
   public List<VersionedHash> getVersionedHashes() {
-    return blobQuads.stream().map(BlobQuad::versionedHash).collect(Collectors.toList());
+    return blobQuads.stream().map(BlobQuad::versionedHash).toList();
   }
 
   /**

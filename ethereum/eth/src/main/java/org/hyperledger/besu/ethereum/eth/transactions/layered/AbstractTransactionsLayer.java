@@ -77,7 +77,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
 
   private final BlobCache blobCache;
 
-  public AbstractTransactionsLayer(
+  protected AbstractTransactionsLayer(
       final TransactionPoolConfiguration poolConfig,
       final TransactionsLayer nextLayer,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
@@ -90,7 +90,6 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     metrics.initSpaceUsed(this::getLayerSpaceUsed, name());
     metrics.initTransactionCount(pendingTransactions::size, name());
     metrics.initUniqueSenderCount(txsBySender::size, name());
-    // TODO: needs size limit, ttl policy and eviction on finalization policy
     this.blobCache = new BlobCache();
   }
 
@@ -366,11 +365,12 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       final Transaction transaction,
       final RemovalReason removalReason) {
     final PendingTransaction removedTx = pendingTransactions.remove(transaction.getHash());
-    if (removedTx.getTransaction().getBlobsWithCommitments().isPresent()
-        && CONFIRMED.equals(removalReason)) {
-      this.blobCache.cacheBlobs(removedTx.getTransaction());
-    }
+
     if (removedTx != null) {
+      if (removedTx.getTransaction().getBlobsWithCommitments().isPresent()
+          && CONFIRMED.equals(removalReason)) {
+        this.blobCache.cacheBlobs(removedTx.getTransaction());
+      }
       decreaseSpaceUsed(removedTx);
       metrics.incrementRemoved(removedTx, removalReason.label(), name());
       internalRemove(senderTxs, removedTx, removalReason);

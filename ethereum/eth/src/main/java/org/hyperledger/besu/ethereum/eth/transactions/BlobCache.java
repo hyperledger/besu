@@ -32,10 +32,10 @@ public class BlobCache {
   private static final Logger LOG = LoggerFactory.getLogger(BlobCache.class);
 
   public BlobCache() {
-    // TODO: needs size limit, ttl policy and eviction on finalization policy - cache size should
-    // max out around 6 * blocks since final
-
-    this.cache = Caffeine.newBuilder().build();
+    this.cache =
+        Caffeine.newBuilder()
+            .maximumSize(6 * 32 * 3l)
+            .build(); // 6 blobs max per 32 slots per 3 epochs
   }
 
   public void cacheBlobs(final Transaction t) {
@@ -63,7 +63,7 @@ public class BlobCache {
           if (blobQuads.stream()
               .map(BlobsWithCommitments.BlobQuad::versionedHash)
               .toList()
-              .containsAll(transaction.getVersionedHashes().get())) {
+              .containsAll(maybeHashes.get())) {
             txBuilder.blobsWithCommitments(bwc);
             return Optional.of(txBuilder.build());
           } else {
@@ -81,7 +81,7 @@ public class BlobCache {
 
     } else {
       LOG.debug(
-          "can't restore blobs for non-blob transaction of type " + transaction.getType().name());
+          "can't restore blobs for non-blob transaction of type {}", transaction.getType().name());
       return Optional.empty();
     }
   }
