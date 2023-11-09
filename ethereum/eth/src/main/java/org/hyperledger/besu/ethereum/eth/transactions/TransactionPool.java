@@ -238,14 +238,6 @@ public class TransactionPool implements BlockAddedObserver {
       return ValidationResult.invalid(TRANSACTION_ALREADY_KNOWN);
     }
     Transaction toAdd = transaction;
-    // if adding a blob tx, and it is missing its blob, is a re-org and we should restore the blob
-    // from cache.
-    if (transaction.getType().supportsBlob() && transaction.getBlobsWithCommitments().isEmpty()) {
-      final Optional<Transaction> maybeCachedBlob = pendingTransactions.restoreBlob(transaction);
-      if (maybeCachedBlob.isPresent()) {
-        toAdd = maybeCachedBlob.get();
-      }
-    }
 
     final ValidationResultAndAccount validationResult =
         validateTransaction(toAdd, isLocal, hasPriority);
@@ -381,8 +373,14 @@ public class TransactionPool implements BlockAddedObserver {
 
   private void reAddTransactions(final List<Transaction> reAddTransactions) {
     if (!reAddTransactions.isEmpty()) {
-      var txsByOrigin =
+      // if adding a blob tx, and it is missing its blob, is a re-org and we should restore the blob
+      // from cache.
+      List<Transaction> restoredTransactions =
           reAddTransactions.stream()
+              .map(t -> pendingTransactions.restoreBlob(t).orElse(t))
+              .toList();
+      var txsByOrigin =
+          restoredTransactions.stream()
               .collect(Collectors.partitioningBy(tx -> isLocalSender(tx.getSender())));
       var reAddLocalTxs = txsByOrigin.get(true);
       var reAddRemoteTxs = txsByOrigin.get(false);

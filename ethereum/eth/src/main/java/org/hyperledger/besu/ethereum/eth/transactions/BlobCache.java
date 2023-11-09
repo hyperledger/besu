@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -34,8 +35,9 @@ public class BlobCache {
   public BlobCache() {
     this.cache =
         Caffeine.newBuilder()
-            .maximumSize(6 * 32 * 3L)
-            .build(); // 6 blobs max per 32 slots per 3 epochs
+            .maximumSize(6 * 32 * 3L) // 6 blobs max per 32 slots per 3 epochs
+            .expireAfterWrite(3*32*12L, TimeUnit.SECONDS) //3 epochs of 32 slots which take 12 seconds each.
+            .build();
   }
 
   public void cacheBlobs(final Transaction t) {

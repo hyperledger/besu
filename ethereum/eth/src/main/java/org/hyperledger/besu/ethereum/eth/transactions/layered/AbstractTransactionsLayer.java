@@ -82,7 +82,8 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       final TransactionsLayer nextLayer,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
-      final TransactionPoolMetrics metrics) {
+      final TransactionPoolMetrics metrics,
+      final BlobCache blobCache) {
     this.poolConfig = poolConfig;
     this.nextLayer = nextLayer;
     this.transactionReplacementTester = transactionReplacementTester;
@@ -90,7 +91,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     metrics.initSpaceUsed(this::getLayerSpaceUsed, name());
     metrics.initTransactionCount(pendingTransactions::size, name());
     metrics.initUniqueSenderCount(txsBySender::size, name());
-    this.blobCache = new BlobCache();
+    this.blobCache = blobCache;
   }
 
   protected abstract boolean gapsAllowed();
@@ -367,10 +368,6 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     final PendingTransaction removedTx = pendingTransactions.remove(transaction.getHash());
 
     if (removedTx != null) {
-      if (removedTx.getTransaction().getBlobsWithCommitments().isPresent()
-          && CONFIRMED.equals(removalReason)) {
-        this.blobCache.cacheBlobs(removedTx.getTransaction());
-      }
       decreaseSpaceUsed(removedTx);
       metrics.incrementRemoved(removedTx, removalReason.label(), name());
       internalRemove(senderTxs, removedTx, removalReason);
@@ -437,6 +434,9 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       while (itConfirmedTxs.hasNext()) {
         final var confirmedTx = itConfirmedTxs.next();
         itConfirmedTxs.remove();
+        if (confirmedTx.getTransaction().getBlobsWithCommitments().isPresent()) {
+          this.blobCache.cacheBlobs(confirmedTx.getTransaction());
+        }
         processRemove(senderTxs, confirmedTx.getTransaction(), CONFIRMED);
 
         metrics.incrementRemoved(confirmedTx, "confirmed", name());

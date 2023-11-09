@@ -40,6 +40,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
@@ -113,11 +114,19 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final SparseTransactions sparseTransactions =
         new SparseTransactions(
-            poolConfig, evictCollector, txPoolMetrics, transactionReplacementTester);
+            poolConfig,
+            evictCollector,
+            txPoolMetrics,
+            transactionReplacementTester,
+            new BlobCache());
 
     final ReadyTransactions readyTransactions =
         new ReadyTransactions(
-            poolConfig, sparseTransactions, txPoolMetrics, transactionReplacementTester);
+            poolConfig,
+            sparseTransactions,
+            txPoolMetrics,
+            transactionReplacementTester,
+            new BlobCache());
 
     final BaseFeePrioritizedTransactions prioritizedTransactions =
         new BaseFeePrioritizedTransactions(
@@ -126,7 +135,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
             readyTransactions,
             txPoolMetrics,
             transactionReplacementTester,
-            FeeMarket.london(0L));
+            FeeMarket.london(0L),
+            new BlobCache());
     return new CreatedLayers(
         prioritizedTransactions, readyTransactions, sparseTransactions, evictCollector);
   }
