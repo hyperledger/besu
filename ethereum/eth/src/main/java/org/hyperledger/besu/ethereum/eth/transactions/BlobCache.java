@@ -34,7 +34,7 @@ public class BlobCache {
   public BlobCache() {
     this.cache =
         Caffeine.newBuilder()
-            .maximumSize(6 * 32 * 3l)
+            .maximumSize(6 * 32 * 3L)
             .build(); // 6 blobs max per 32 slots per 3 epochs
   }
 
