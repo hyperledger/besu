@@ -141,7 +141,7 @@ public class JsonRpcMethodsFactory {
               new PrivxJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new Web3JsonRpcMethods(clientVersion),
-              new TraceJsonRpcMethods(blockchainQueries, protocolSchedule),
+              new TraceJsonRpcMethods(blockchainQueries, protocolSchedule, rpcGasCap),
               new TxPoolJsonRpcMethods(transactionPool),
               new PluginsJsonRpcMethods(namedPlugins));
 

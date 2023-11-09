@@ -35,16 +35,19 @@ import org.hyperledger.besu.evm.tracing.EstimateGasOperationTracer;
 import java.util.Optional;
 
 public abstract class AbstractEstimateGas implements JsonRpcMethod {
-
   private static final double SUB_CALL_REMAINING_GAS_RATIO = 65D / 64D;
 
   protected final BlockchainQueries blockchainQueries;
   protected final TransactionSimulator transactionSimulator;
+  protected final Optional<Long> rpcGasCap;
 
   public AbstractEstimateGas(
-      final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
+      final BlockchainQueries blockchainQueries,
+      final TransactionSimulator transactionSimulator,
+      final Optional<Long> rpcGasCap) {
     this.blockchainQueries = blockchainQueries;
     this.transactionSimulator = transactionSimulator;
+    this.rpcGasCap = rpcGasCap;
   }
 
   protected BlockHeader blockHeader() {

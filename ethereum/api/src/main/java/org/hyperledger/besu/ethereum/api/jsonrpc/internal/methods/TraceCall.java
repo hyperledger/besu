@@ -38,12 +38,15 @@ import org.slf4j.LoggerFactory;
 
 public class TraceCall extends AbstractTraceByBlock implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(TraceCall.class);
+  protected final Optional<Long> rpcGasCap;
 
   public TraceCall(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
-      final TransactionSimulator transactionSimulator) {
+      final TransactionSimulator transactionSimulator,
+      final Optional<Long> rpcGasCap) {
     super(blockchainQueries, protocolSchedule, transactionSimulator);
+    this.rpcGasCap = rpcGasCap;
   }
 
   @Override
@@ -56,6 +59,7 @@ public class TraceCall extends AbstractTraceByBlock implements JsonRpcMethod {
       final JsonRpcRequestContext requestContext, final long blockNumber) {
     final JsonCallParameter callParams =
         JsonCallParameterUtil.validateAndGetCallParams(requestContext);
+
     final TraceTypeParameter traceTypeParameter =
         requestContext.getRequiredParameter(1, TraceTypeParameter.class);
     final String blockNumberString = String.valueOf(blockNumber);
@@ -101,7 +105,8 @@ public class TraceCall extends AbstractTraceByBlock implements JsonRpcMethod {
                       return getTraceCallResult(
                           protocolSchedule, traceTypes, result, transactionTrace, block);
                     }),
-            maybeBlockHeader.get())
+            maybeBlockHeader.get(),
+            rpcGasCap)
         .orElse(new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
   }
 }

@@ -40,8 +40,10 @@ import java.util.function.Function;
 public class EthCreateAccessList extends AbstractEstimateGas {
 
   public EthCreateAccessList(
-      final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
-    super(blockchainQueries, transactionSimulator);
+      final BlockchainQueries blockchainQueries,
+      final TransactionSimulator transactionSimulator,
+      final Optional<Long> rpcGasCap) {
+    super(blockchainQueries, transactionSimulator, rpcGasCap);
   }
 
   @Override
@@ -57,6 +59,7 @@ public class EthCreateAccessList extends AbstractEstimateGas {
     if (jsonRpcError.isPresent()) {
       return errorResponse(requestContext, jsonRpcError.get());
     }
+
     final AccessListSimulatorResult maybeResult =
         processTransaction(jsonCallParameter, blockHeader);
     // if the call accessList is different from the simulation result, calculate gas and return
@@ -132,12 +135,12 @@ public class EthCreateAccessList extends AbstractEstimateGas {
         transactionValidationParams(!jsonCallParameter.isMaybeStrict().orElse(Boolean.FALSE));
 
     final CallParameter callParams =
-        overrideGasLimitAndPrice(jsonCallParameter, blockHeader.getGasLimit());
+        overrideGasLimitAndPrice(jsonCallParameter, blockHeader().getGasLimit());
 
     final AccessListOperationTracer tracer = AccessListOperationTracer.create();
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.process(
-            callParams, transactionValidationParams, tracer, blockHeader.getNumber());
+            callParams, transactionValidationParams, tracer, blockHeader.getNumber(), rpcGasCap);
     return new AccessListSimulatorResult(result, tracer);
   }
 
@@ -154,7 +157,7 @@ public class EthCreateAccessList extends AbstractEstimateGas {
 
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.process(
-            callParameter, transactionValidationParams, tracer, blockHeader.getNumber());
+            callParameter, transactionValidationParams, tracer, blockHeader.getNumber(), rpcGasCap);
     return new AccessListSimulatorResult(result, tracer);
   }
 

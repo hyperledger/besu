@@ -52,8 +52,9 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
   public TraceCallMany(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
-      final TransactionSimulator transactionSimulator) {
-    super(blockchainQueries, protocolSchedule, transactionSimulator);
+      final TransactionSimulator transactionSimulator,
+      final Optional<Long> rpcGasCap) {
+    super(blockchainQueries, protocolSchedule, transactionSimulator, rpcGasCap);
   }
 
   @Override
@@ -154,9 +155,15 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
       final WorldUpdater worldUpdater) {
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
     final DebugOperationTracer tracer = new DebugOperationTracer(buildTraceOptions(traceTypes));
+
     final Optional<TransactionSimulatorResult> maybeSimulatorResult =
         transactionSimulator.processWithWorldUpdater(
-            callParameter, buildTransactionValidationParams(), tracer, header, worldUpdater);
+            callParameter,
+            buildTransactionValidationParams(),
+            tracer,
+            header,
+            worldUpdater,
+            rpcGasCap);
 
     LOG.trace("Executing {} call for transaction {}", traceTypeParameter, callParameter);
     if (maybeSimulatorResult.isEmpty()) {

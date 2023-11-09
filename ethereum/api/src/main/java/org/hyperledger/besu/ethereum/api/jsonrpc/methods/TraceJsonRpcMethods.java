@@ -31,16 +31,21 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 
 import java.util.Map;
+import java.util.Optional;
 
 public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockchainQueries blockchainQueries;
   private final ProtocolSchedule protocolSchedule;
+  private final Optional<Long> rpcGasCap;
 
   TraceJsonRpcMethods(
-      final BlockchainQueries blockchainQueries, final ProtocolSchedule protocolSchedule) {
+      final BlockchainQueries blockchainQueries,
+      final ProtocolSchedule protocolSchedule,
+      final Optional<Long> rpcGasCap) {
     this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;
+    this.rpcGasCap = rpcGasCap;
   }
 
   @Override
@@ -65,14 +70,16 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule)),
+                protocolSchedule),
+            rpcGasCap),
         new TraceCallMany(
             blockchainQueries,
             protocolSchedule,
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule)),
+                protocolSchedule),
+            rpcGasCap),
         new TraceRawTransaction(
             protocolSchedule,
             blockchainQueries,

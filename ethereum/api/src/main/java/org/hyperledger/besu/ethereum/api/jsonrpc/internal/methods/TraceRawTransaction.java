@@ -121,7 +121,8 @@ public class TraceRawTransaction extends AbstractTraceByBlock implements JsonRpc
                       return new JsonRpcSuccessResponse(
                           requestContext.getRequest().getId(), response);
                     }),
-            headBlock)
+            headBlock,
+            Optional.empty())
         .orElse(new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
   }
 }

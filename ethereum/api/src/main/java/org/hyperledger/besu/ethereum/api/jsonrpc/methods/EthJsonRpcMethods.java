@@ -169,7 +169,8 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule)),
+                protocolSchedule),
+            rpcGasCap),
         new EthMining(miningCoordinator),
         new EthCoinbase(miningCoordinator),
         new EthProtocolVersion(supportedCapabilities),
