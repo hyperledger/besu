@@ -273,7 +273,7 @@ public class TransactionPool implements BlockAddedObserver {
         return ValidationResult.invalid(rejectReason);
       }
     } else {
-      LOG.atWarn()
+      LOG.atTrace()
           .setMessage("Discard invalid transaction {}, reason {}")
           .addArgument(transaction::toTraceLog)
           .addArgument(validationResult.result::getInvalidReason)

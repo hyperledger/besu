@@ -153,7 +153,8 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
             forksSchedule,
             miningParameters,
             localAddress,
-            bftExtraDataCodec().get());
+            bftExtraDataCodec().get(),
+            ethProtocolManager.ethContext().getScheduler());
 
     final ValidatorProvider validatorProvider =
         protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();
