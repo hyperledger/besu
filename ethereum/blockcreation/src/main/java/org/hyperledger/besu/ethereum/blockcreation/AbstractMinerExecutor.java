@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -41,12 +42,14 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractMinerExecutor.class);
 
-  private final ExecutorService executorService = Executors.newCachedThreadPool();
+  private final ExecutorService executorService =
+      Executors.newCachedThreadPool(r -> new Thread(r, "MinerExecutor"));
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
   protected final TransactionPool transactionPool;
   protected final AbstractBlockScheduler blockScheduler;
   protected final MiningParameters miningParameters;
+  protected final EthScheduler ethScheduler;
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
   protected AbstractMinerExecutor(
@@ -54,12 +57,14 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
       final ProtocolSchedule protocolSchedule,
       final TransactionPool transactionPool,
       final MiningParameters miningParams,
-      final AbstractBlockScheduler blockScheduler) {
+      final AbstractBlockScheduler blockScheduler,
+      final EthScheduler ethScheduler) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.transactionPool = transactionPool;
     this.blockScheduler = blockScheduler;
     this.miningParameters = miningParams;
+    this.ethScheduler = ethScheduler;
   }
 
   public Optional<M> startAsyncMining(

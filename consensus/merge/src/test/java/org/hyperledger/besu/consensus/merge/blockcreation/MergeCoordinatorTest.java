@@ -35,7 +35,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PayloadWrapper;
-import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator.ProposalBuilderExecutor;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
@@ -62,6 +61,7 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.Unstable;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -130,10 +130,11 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   EthContext ethContext;
 
-  @Mock ProposalBuilderExecutor proposalBuilderExecutor;
+  @Mock EthScheduler ethScheduler;
+
   private final Address coinbase = genesisAllocations(getPosGenesisConfigFile()).findFirst().get();
 
-  MiningParameters miningParameters =
+  private MiningParameters miningParameters =
       ImmutableMiningParameters.builder()
           .mutableInitValues(MutableInitValues.builder().coinbase(coinbase).build())
           .unstable(
@@ -205,10 +206,13 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
 
-    when(proposalBuilderExecutor.buildProposal(any()))
+    when(ethScheduler.scheduleBlockCreationTask(any()))
         .thenAnswer(
             invocation -> {
               final Runnable runnable = invocation.getArgument(0);
+              if (!invocation.toString().contains("MergeCoordinator")) {
+                return CompletableFuture.runAsync(runnable);
+              }
               blockCreationTask = CompletableFuture.runAsync(runnable);
               return blockCreationTask;
             });
@@ -233,7 +237,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         new MergeCoordinator(
             protocolContext,
             protocolSchedule,
-            proposalBuilderExecutor,
+            ethScheduler,
             transactionPool,
             miningParameters,
             backwardSyncContext,
@@ -286,7 +290,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                       protocolContext,
                       protocolSchedule,
                       parentHeader,
-                      Optional.empty()));
+                      Optional.empty(),
+                      ethScheduler));
 
           doCallRealMethod()
               .doCallRealMethod()
@@ -303,7 +308,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             new MergeCoordinator(
                 protocolContext,
                 protocolSchedule,
-                proposalBuilderExecutor,
+                ethScheduler,
                 miningParameters,
                 backwardSyncContext,
                 mergeBlockCreatorFactory));
@@ -645,7 +650,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     doAnswer(
             invocation -> {
               if (retries.getAndIncrement() < 5) {
-                // a new transaction every time a block is built
+                // add a new transaction every time a block is built
                 transactions.addTransaction(
                     createLocalTransaction(retries.get() - 1), Optional.empty());
               } else {
@@ -750,7 +755,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         new MergeCoordinator(
             protocolContext,
             protocolSchedule,
-            proposalBuilderExecutor,
+            ethScheduler,
             transactionPool,
             miningParameters,
             backwardSyncContext,
