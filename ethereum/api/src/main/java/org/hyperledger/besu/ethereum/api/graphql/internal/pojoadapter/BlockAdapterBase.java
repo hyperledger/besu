@@ -208,12 +208,11 @@ public class BlockAdapterBase extends AdapterBase {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final ProtocolSchedule protocolSchedule =
         environment.getGraphQlContext().get(GraphQLContextType.PROTOCOL_SCHEDULE);
-    final long bn = header.getNumber();
 
     final TransactionSimulator transactionSimulator =
         new TransactionSimulator(
             query.getBlockchain(), query.getWorldStateArchive(), protocolSchedule);
-
+    final Optional<Long> gasCap = environment.getGraphQlContext().get(GraphQLContextType.GAS_CAP);
     long gasParam = -1;
     Wei gasPriceParam = null;
     Wei valueParam = null;
@@ -256,7 +255,8 @@ public class BlockAdapterBase extends AdapterBase {
                   }
                   return new CallResult(status, result.getGasEstimate(), result.getOutput());
                 }),
-        header);
+        header,
+        gasCap);
   }
 
   Bytes getRawHeader() {
