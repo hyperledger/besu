@@ -68,7 +68,7 @@ public class BlobsWithCommitments {
       throw new InvalidParameterException(
           "There must be an equal number of blobs, commitments, proofs, and versioned hashes");
     }
-    ArrayList<BlobQuad> toBuild = new ArrayList<>();
+    List<BlobQuad> toBuild = new ArrayList<>(blobs.size());
     for (int i = 0; i < blobs.size(); i++) {
       toBuild.add(
           new BlobQuad(
