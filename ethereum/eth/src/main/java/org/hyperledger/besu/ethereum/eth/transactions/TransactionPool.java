@@ -418,13 +418,19 @@ public class TransactionPool implements BlockAddedObserver {
   private ValidationResultAndAccount validateTransaction(
       final Transaction transaction, final boolean isLocal, final boolean hasPriority) {
 
-    final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader().orElse(null);
+    // Optimistically get the chain head. getChainHeadBlockHeader() doesn't take any locks,
+    // which might mean that the latest block is still being committed to storage. If this
+    // call fails try the synchronized alternative, and if that fails give up.
+    BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader().orElse(null);
     if (chainHeadBlockHeader == null) {
-      LOG.atWarn()
-          .setMessage("rejecting transaction {} due to chain head not available yet")
-          .addArgument(transaction::getHash)
-          .log();
-      return ValidationResultAndAccount.invalid(CHAIN_HEAD_NOT_AVAILABLE);
+      chainHeadBlockHeader = getChainHeadBlockHeaderSafe().orElse(null);
+      if (chainHeadBlockHeader == null) {
+        LOG.atWarn()
+            .setMessage("rejecting transaction {} due to chain head not available yet")
+            .addArgument(transaction::getHash)
+            .log();
+        return ValidationResultAndAccount.invalid(CHAIN_HEAD_NOT_AVAILABLE);
+      }
     }
 
     final FeeMarket feeMarket =
@@ -552,6 +558,11 @@ public class TransactionPool implements BlockAddedObserver {
   private Optional<BlockHeader> getChainHeadBlockHeader() {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
     return blockchain.getBlockHeader(blockchain.getChainHeadHash());
+  }
+
+  private Optional<BlockHeader> getChainHeadBlockHeaderSafe() {
+    final MutableBlockchain blockchain = protocolContext.getBlockchain();
+    return blockchain.getBlockHeaderSafe(blockchain.getChainHeadHash());
   }
 
   private boolean isLocalSender(final Address sender) {
