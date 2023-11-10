@@ -221,7 +221,14 @@ public class CachedWorldStorageManager
     }
   }
 
-  public Optional<BonsaiWorldStateKeyValueStorage> getStorageByRootHash(
+  /**
+   * Returns the worldstate for the supplied root hash, or the head worldstate if no root hash is
+   * supplied. synchronized to prevent concurrent adds to the cache of the same root hash.
+   *
+   * @param rootHash optional rootHash to supply worldstate storage for
+   * @return Optional worldstate storage
+   */
+  public synchronized Optional<BonsaiWorldStateKeyValueStorage> getStorageByRootHash(
       final Optional<Hash> rootHash) {
     if (rootHash.isPresent()) {
       // if we supplied a hash, return the worldstate for that hash if it is available:
