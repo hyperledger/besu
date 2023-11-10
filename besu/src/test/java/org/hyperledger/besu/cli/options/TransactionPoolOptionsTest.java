@@ -317,20 +317,6 @@ public class TransactionPoolOptionsTest
         "-1");
   }
 
-  @Test
-  public void disableSenderTxGroupingOn() {
-    internalTestSuccess(
-        config -> assertThat(config.getUnstable().getDisableSenderTxGrouping()).isTrue(),
-        "--Xtx-pool-disable-sender-grouping=true");
-  }
-
-  @Test
-  public void disableSenderTxGroupingOff() {
-    internalTestSuccess(
-        config -> assertThat(config.getUnstable().getDisableSenderTxGrouping()).isFalse(),
-        "--Xtx-pool-disable-sender-grouping=false");
-  }
-
   @Override
   protected TransactionPoolConfiguration createDefaultDomainObject() {
     return TransactionPoolConfiguration.DEFAULT;

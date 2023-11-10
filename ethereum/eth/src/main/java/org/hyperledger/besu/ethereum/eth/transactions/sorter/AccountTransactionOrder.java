@@ -50,17 +50,11 @@ public class AccountTransactionOrder {
    */
   public Iterable<PendingTransaction> transactionsToProcess(
       final PendingTransaction nextTransactionInPriorityOrder) {
-    return transactionsToProcess(nextTransactionInPriorityOrder, Integer.MAX_VALUE);
-  }
-
-  public Iterable<PendingTransaction> transactionsToProcess(
-      final PendingTransaction nextTransactionInPriorityOrder, final int maxTransactionsToReturn) {
     deferredTransactions.add(nextTransactionInPriorityOrder);
     final List<PendingTransaction> transactionsToApply = new ArrayList<>();
     while (!deferredTransactions.isEmpty()
         && !transactionsForSender.isEmpty()
-        && deferredTransactions.first().equals(transactionsForSender.first())
-        && transactionsToApply.size() < maxTransactionsToReturn) {
+        && deferredTransactions.first().equals(transactionsForSender.first())) {
       final PendingTransaction transaction = deferredTransactions.first();
       transactionsToApply.add(transaction);
       deferredTransactions.remove(transaction);

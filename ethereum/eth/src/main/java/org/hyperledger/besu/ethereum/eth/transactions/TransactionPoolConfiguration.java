@@ -47,11 +47,6 @@ public interface TransactionPoolConfiguration {
     default int getTxMessageKeepAliveSeconds() {
       return DEFAULT_TX_MSG_KEEP_ALIVE;
     }
-
-    @Value.Default
-    default Boolean getDisableSenderTxGrouping() {
-      return DEFAULT_DISABLE_SENDER_TX_GROUPING;
-    }
   }
 
   enum Implementation {
@@ -68,7 +63,6 @@ public interface TransactionPoolConfiguration {
   Wei DEFAULT_RPC_TX_FEE_CAP = Wei.fromEth(1);
   boolean DEFAULT_NO_LOCAL_PRIORITY = false;
   boolean DEFAULT_ENABLE_SAVE_RESTORE = false;
-  boolean DEFAULT_DISABLE_SENDER_TX_GROUPING = false;
   File DEFAULT_SAVE_FILE = new File(DEFAULT_SAVE_FILE_NAME);
   long DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES = 12_500_000L;
   int DEFAULT_MAX_PRIORITIZED_TRANSACTIONS = 2000;

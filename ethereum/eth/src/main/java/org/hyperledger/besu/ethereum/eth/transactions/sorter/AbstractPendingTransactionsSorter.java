@@ -246,7 +246,6 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
       final Set<Transaction> transactionsToRemove = new HashSet<>();
       final Map<Address, AccountTransactionOrder> accountTransactions = new HashMap<>();
       final Iterator<PendingTransaction> prioritizedTransactions = prioritizedTransactions();
-
       while (prioritizedTransactions.hasNext()) {
         final PendingTransaction highestPriorityPendingTransaction = prioritizedTransactions.next();
         final AccountTransactionOrder accountTransactionOrder =
@@ -254,9 +253,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
                 highestPriorityPendingTransaction.getSender(), this::createSenderTransactionOrder);
 
         for (final PendingTransaction transactionToProcess :
-            accountTransactionOrder.transactionsToProcess(
-                highestPriorityPendingTransaction,
-                poolConfig.getUnstable().getDisableSenderTxGrouping() ? 1 : Integer.MAX_VALUE)) {
+            accountTransactionOrder.transactionsToProcess(highestPriorityPendingTransaction)) {
           final TransactionSelectionResult result =
               selector.evaluateTransaction(transactionToProcess);
 

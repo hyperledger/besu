@@ -188,8 +188,6 @@ tx-pool-max-future-by-sender=321
 tx-pool-retention-hours=999
 tx-pool-max-size=1234
 tx-pool-limit-by-account-percentage=0.017
-## Experimental
-Xtx-pool-disable-sender-grouping=false
 
 # Revert Reason
 revert-reason-enabled=false

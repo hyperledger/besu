@@ -20,7 +20,6 @@
 - Add `yParity` to GraphQL and JSON-RPC for relevant querise. [6119](https://github.com/hyperledger/besu/pull/6119)
 - Force tx replacement price bump to zero when zero base fee market is configured or `--min-gas-price` is set to 0. This allows for easier tx replacement in networks where there is not gas price. [#6079](https://github.com/hyperledger/besu/pull/6079)
 - Introduce the possibility to limit the time spent selecting pending transactions during block creation, using the new experimental option `Xblock-txs-selection-max-time` on PoS and PoW networks (by default set to 5000ms) or `Xpoa-block-txs-selection-max-time` on PoA networks (by default 75% of the min block time) [#6044](https://github.com/hyperledger/besu/pull/6044)
-- Add `--Xtx-pool-disable-sender-grouping` option to avoid grouping transactions from a single sender when selecting candidate transactions for a block [#6022](https://github.com/hyperledger/besu/pull/6022)
 
 ### Bug fixes
 - Upgrade netty to address CVE-2023-44487, CVE-2023-34462 [#6100](https://github.com/hyperledger/besu/pull/6100)
@@ -37,8 +36,8 @@
 ### Additions and Improvements
 - New option `--tx-pool-priority-senders` to specify a list of senders, that has the effect to prioritize any transactions sent by these senders from any source [#5959](https://github.com/hyperledger/besu/pull/5959)
 - Cache last n blocks by using a new Besu flag `--cache-last-blocks=n` [#6009](https://github.com/hyperledger/besu/pull/6009)
-- Optimize performances of RPC method `eth_feeHistory` [#6011](https://github.com/hyperledger/besu/pull/6011) [#6035](https://github.com/hyperledger/besu/pull/6035) 
-- Logging summary of plugins at Info as part of the config overview [#5964](https://github.com/hyperledger/besu/pull/5964) [#6049](https://github.com/hyperledger/besu/pull/6049) 
+- Optimize performances of RPC method `eth_feeHistory` [#6011](https://github.com/hyperledger/besu/pull/6011) [#6035](https://github.com/hyperledger/besu/pull/6035)
+- Logging summary of plugins at Info as part of the config overview [#5964](https://github.com/hyperledger/besu/pull/5964) [#6049](https://github.com/hyperledger/besu/pull/6049)
 - Layered tx pool memory improvements [#5985](https://github.com/hyperledger/besu/pull/5985) [#5974](https://github.com/hyperledger/besu/pull/5974)
 - Update Bouncy Castle to 1.76, and force the use of the `jdk18on` variant [#5748](https://github.com/hyperledger/besu/pull/5748)
 - Add GraphQL support for new fields in Cancun [#5923](https://github.com/hyperledger/besu/pull/5923) [#5975](https://github.com/hyperledger/besu/pull/5975)

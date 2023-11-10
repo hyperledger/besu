@@ -208,9 +208,6 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     private static final String ETH65_TX_ANNOUNCED_BUFFERING_PERIOD_FLAG =
         "--Xeth65-tx-announced-buffering-period-milliseconds";
 
-    private static final String TX_POOL_DISABLE_SENDER_GROUPING =
-        "--Xtx-pool-disable-sender-grouping";
-
     @CommandLine.Option(
         names = {TX_MESSAGE_KEEP_ALIVE_SEC_FLAG},
         paramLabel = "<INTEGER>",
@@ -231,16 +228,6 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         arity = "1")
     private Duration eth65TrxAnnouncedBufferingPeriod =
         TransactionPoolConfiguration.Unstable.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD;
-
-    @CommandLine.Option(
-        names = {TX_POOL_DISABLE_SENDER_GROUPING},
-        paramLabel = "<Boolean>",
-        hidden = true,
-        description =
-            "Disable sender grouping of transactions during selection. (default: ${DEFAULT-VALUE})",
-        arity = "0..1")
-    private Boolean disableSenderTxGrouping =
-        TransactionPoolConfiguration.DEFAULT_DISABLE_SENDER_TX_GROUPING;
   }
 
   private TransactionPoolOptions() {}
@@ -282,8 +269,6 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         config.getUnstable().getTxMessageKeepAliveSeconds();
     options.unstableOptions.eth65TrxAnnouncedBufferingPeriod =
         config.getUnstable().getEth65TrxAnnouncedBufferingPeriod();
-    options.unstableOptions.disableSenderTxGrouping =
-        config.getUnstable().getDisableSenderTxGrouping();
 
     return options;
   }
@@ -337,7 +322,6 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
             ImmutableTransactionPoolConfiguration.Unstable.builder()
                 .txMessageKeepAliveSeconds(unstableOptions.txMessageKeepAliveSeconds)
                 .eth65TrxAnnouncedBufferingPeriod(unstableOptions.eth65TrxAnnouncedBufferingPeriod)
-                .disableSenderTxGrouping(unstableOptions.disableSenderTxGrouping)
                 .build())
         .build();
   }
