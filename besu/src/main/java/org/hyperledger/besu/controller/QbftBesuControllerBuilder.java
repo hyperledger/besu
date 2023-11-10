@@ -366,7 +366,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
             blockchain, epochManager, bftBlockInterface().get(), validatorOverrides);
 
     final TransactionSimulator transactionSimulator =
-        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
+        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, Optional.empty());
     transactionValidatorProvider =
         new TransactionValidatorProvider(
             blockchain, new ValidatorContractController(transactionSimulator), qbftForksSchedule);
