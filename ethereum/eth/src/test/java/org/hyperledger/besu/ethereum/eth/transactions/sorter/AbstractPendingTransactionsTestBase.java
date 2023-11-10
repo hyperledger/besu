@@ -853,6 +853,7 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void shouldPrioritizeGasPriceThenTimeAddedToPool() {
+    // Make sure the 100 gas price TX isn't dropped
     transactions.subscribeDroppedTransactions(
         transaction -> assertThat(transaction.getGasPrice().get().toLong()).isLessThan(100));
 
@@ -871,7 +872,7 @@ public abstract class AbstractPendingTransactionsTestBase {
                 })
             .collect(Collectors.toUnmodifiableList());
 
-    // This should kick the oldest tx with the low gas price out, namely the first one we added
+    // This should kick the highest-sequence tx with the low gas price out, namely the most-recent one we added
     final Account highPriceSender = mock(Account.class);
     final Transaction highGasPriceTransaction =
         transactionWithNonceSenderAndGasPrice(0, KEYS1, 100);
@@ -880,7 +881,7 @@ public abstract class AbstractPendingTransactionsTestBase {
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
 
     assertTransactionPending(highGasPriceTransaction);
-    assertTransactionNotPending(lowGasPriceTransactions.get(0));
-    lowGasPriceTransactions.stream().skip(1).forEach(this::assertTransactionPending);
+    assertTransactionNotPending(lowGasPriceTransactions.get(lowGasPriceTransactions.size()-1));
+    lowGasPriceTransactions.stream().limit(lowGasPriceTransactions.size()-1).forEach(this::assertTransactionPending);
   }
 }
