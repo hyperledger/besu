@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParam
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Status;
@@ -75,8 +76,10 @@ public class TransactionSimulatorTest {
 
   private static final Address DEFAULT_FROM =
       Address.fromHexString("0x0000000000000000000000000000000000000000");
+  private static final Optional<Long> GASCAP = Optional.of(500L);
 
   private TransactionSimulator transactionSimulator;
+  private TransactionSimulator cappedTransactionSimulator;
 
   @Mock private Blockchain blockchain;
   @Mock private WorldStateArchive worldStateArchive;
@@ -84,13 +87,14 @@ public class TransactionSimulatorTest {
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private MainnetTransactionProcessor transactionProcessor;
-
   private final BlockHeaderTestFixture blockHeaderTestFixture = new BlockHeaderTestFixture();
 
   @BeforeEach
   public void setUp() {
     this.transactionSimulator =
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, Optional.empty());
+  this.cappedTransactionSimulator =
+        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, GASCAP);
   }
 
   @Test
@@ -523,6 +527,78 @@ public class TransactionSimulatorTest {
     verifyTransactionWasProcessed(expectedTransaction);
   }
 
+  @Test
+  public void shouldCapGasLimitWhenRpcGasCapIsDefined() {
+    final CallParameter callParameter = eip1559TransactionCallParameter(Wei.ZERO,Wei.ZERO,5000L);
+
+    final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE);
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
+
+    final Transaction expectedTransaction =
+            Transaction.builder()
+                    .type(TransactionType.EIP1559)
+                    .chainId(BigInteger.ONE)
+                    .nonce(1L)
+                    .gasLimit(GASCAP.get())
+                    .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
+                    .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
+                    .to(callParameter.getTo())
+                    .sender(callParameter.getFrom())
+                    .value(callParameter.getValue())
+                    .payload(callParameter.getPayload())
+                    .signature(FAKE_SIGNATURE)
+                    .build();
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
+
+    final Optional<TransactionSimulatorResult> result =
+            cappedTransactionSimulator.process(
+                    callParameter,
+                    TransactionValidationParams.transactionSimulator(),
+                    OperationTracer.NO_TRACING,
+                    1L);
+
+    assertThat(result.get().isSuccessful()).isTrue();
+    verifyTransactionWasProcessed(expectedTransaction);
+  }
+
+  @Test
+  public void shouldKeepOriginalGasLimitWhenCapIsHigherThanOriginalValue() {
+    final CallParameter callParameter = eip1559TransactionCallParameter(Wei.ZERO,Wei.ZERO,200L);
+
+    final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE);
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
+
+    final Transaction expectedTransaction =
+            Transaction.builder()
+                    .type(TransactionType.EIP1559)
+                    .chainId(BigInteger.ONE)
+                    .nonce(1L)
+                    .gasLimit(callParameter.getGasLimit())
+                    .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
+                    .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
+                    .to(callParameter.getTo())
+                    .sender(callParameter.getFrom())
+                    .value(callParameter.getValue())
+                    .payload(callParameter.getPayload())
+                    .signature(FAKE_SIGNATURE)
+                    .build();
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
+
+    final Optional<TransactionSimulatorResult> result =
+            cappedTransactionSimulator.process(
+                    callParameter,
+                    TransactionValidationParams.transactionSimulator(),
+                    OperationTracer.NO_TRACING,
+                    1L);
+
+    assertThat(result.get().isSuccessful()).isTrue();
+    verifyTransactionWasProcessed(expectedTransaction);
+  }
+
   private void mockWorldStateForAccount(
       final BlockHeader blockHeader, final Address address, final long nonce) {
     final Account account = mock(Account.class);
@@ -627,11 +703,15 @@ public class TransactionSimulatorTest {
   }
 
   private CallParameter eip1559TransactionCallParameter(
-      final Wei maxFeePerGas, final Wei maxPriorityFeePerGas) {
+          final Wei maxFeePerGas, final Wei maxPriorityFeePerGas){
+    return eip1559TransactionCallParameter(maxFeePerGas, maxPriorityFeePerGas, 0L);
+  }
+  private CallParameter eip1559TransactionCallParameter(
+      final Wei maxFeePerGas, final Wei maxPriorityFeePerGas, final long gasLimit) {
     return new CallParameter(
         Address.fromHexString("0x0"),
         Address.fromHexString("0x0"),
-        0,
+        gasLimit,
         Wei.of(0),
         Optional.of(maxFeePerGas),
         Optional.of(maxPriorityFeePerGas),
