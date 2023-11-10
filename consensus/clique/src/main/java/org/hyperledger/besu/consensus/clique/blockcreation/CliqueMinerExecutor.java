@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
@@ -60,6 +61,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
    * @param blockScheduler the block scheduler
    * @param epochManager the epoch manager
    * @param createEmptyBlocks whether clique should allow the creation of empty blocks.
+   * @param ethScheduler the scheduler for asynchronous block creation tasks
    */
   public CliqueMinerExecutor(
       final ProtocolContext protocolContext,
@@ -69,8 +71,15 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
       final EpochManager epochManager,
-      final boolean createEmptyBlocks) {
-    super(protocolContext, protocolSchedule, transactionPool, miningParams, blockScheduler);
+      final boolean createEmptyBlocks,
+      final EthScheduler ethScheduler) {
+    super(
+        protocolContext,
+        protocolSchedule,
+        transactionPool,
+        miningParams,
+        blockScheduler,
+        ethScheduler);
     this.nodeKey = nodeKey;
     this.localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     this.epochManager = epochManager;
@@ -93,7 +102,8 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
                 protocolSchedule,
                 nodeKey,
                 header,
-                epochManager);
+                epochManager,
+                ethScheduler);
 
     return new CliqueBlockMiner(
         blockCreator,

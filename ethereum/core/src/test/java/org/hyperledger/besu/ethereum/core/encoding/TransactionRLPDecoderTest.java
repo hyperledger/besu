@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -32,7 +33,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 class TransactionRLPDecoderTest {
 
@@ -82,15 +82,22 @@ class TransactionRLPDecoderTest {
   private static Collection<Object[]> dataTransactionSize() {
     return Arrays.asList(
         new Object[][] {
-          {FRONTIER_TX_RLP, "FRONTIER_TX_RLP"},
-          {EIP1559_TX_RLP, "EIP1559_TX_RLP"},
-          {NONCE_64_BIT_MAX_MINUS_2_TX_RLP, "NONCE_64_BIT_MAX_MINUS_2_TX_RLP"}
+          {FRONTIER_TX_RLP, "FRONTIER_TX_RLP", true},
+          {EIP1559_TX_RLP, "EIP1559_TX_RLP", true},
+          {NONCE_64_BIT_MAX_MINUS_2_TX_RLP, "NONCE_64_BIT_MAX_MINUS_2_TX_RLP", true},
+          {
+            "01f89a0130308263309430303030303030303030303030303030303030303030f838f7943030303030303030303030303030303030303030e0a0303030303030303030303030303030303030303030303030303030303030303001a03130303130303031313031313031303130303030323030323030323030313030a03030303030303030303030303030303030303030303030303030303030303030",
+            "EIP1559 list too small",
+            false
+          }
         });
   }
 
   @ParameterizedTest(name = "[{index}] {1}")
   @MethodSource("dataTransactionSize")
-  void shouldCalculateCorrectTransactionSize(final String rlp_tx, final String ignoredName) {
+  void shouldCalculateCorrectTransactionSize(
+      final String rlp_tx, final String ignoredName, final boolean valid) {
+    assumeTrue(valid);
     // Create bytes from String
     final Bytes bytes = Bytes.fromHexString(rlp_tx);
     // Decode bytes into a transaction
@@ -101,11 +108,25 @@ class TransactionRLPDecoderTest {
     assertThat(transaction.getSize()).isEqualTo(transactionBytes.size());
   }
 
-  @ParameterizedTest
-  @ValueSource(strings = {FRONTIER_TX_RLP, EIP1559_TX_RLP, NONCE_64_BIT_MAX_MINUS_2_TX_RLP})
-  void shouldReturnCorrectEncodedBytes(final String txRlp) {
+  @ParameterizedTest(name = "[{index}] {1}")
+  @MethodSource("dataTransactionSize")
+  void shouldReturnCorrectEncodedBytes(
+      final String txRlp, final String ignoredName, final boolean valid) {
+    assumeTrue(valid);
     final Transaction transaction = decodeRLP(RLP.input(Bytes.fromHexString(txRlp)));
     assertThat(transaction.encoded()).isEqualTo(Bytes.fromHexString(txRlp));
+  }
+
+  @ParameterizedTest(name = "[{index}] {1}")
+  @MethodSource("dataTransactionSize")
+  void shouldDecodeRLP(final String txRlp, final String ignoredName, final boolean valid) {
+    if (valid) {
+      // thrown exceptions will break test
+      decodeRLP(RLP.input(Bytes.fromHexString(txRlp)));
+    } else {
+      assertThatThrownBy(() -> decodeRLP(RLP.input(Bytes.fromHexString(txRlp))))
+          .isInstanceOf(RLPException.class);
+    }
   }
 
   private Transaction decodeRLP(final RLPInput input) {

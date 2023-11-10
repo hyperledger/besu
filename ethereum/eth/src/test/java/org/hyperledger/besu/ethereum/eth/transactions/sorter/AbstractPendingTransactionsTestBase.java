@@ -591,8 +591,8 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void shouldNotForceNonceOrderWhenSendersDiffer() {
-    final Transaction transaction1 = transactionWithNonceAndSender(0, KEYS1);
-    final Transaction transaction2 = transactionWithNonceAndSender(1, KEYS2);
+    final Transaction transaction1 = transactionWithNonceAndSender(1, KEYS2);
+    final Transaction transaction2 = transactionWithNonceAndSender(0, KEYS1);
 
     transactions.addTransaction(createLocalPendingTransaction(transaction1), Optional.empty());
     transactions.addTransaction(createLocalPendingTransaction(transaction2), Optional.empty());
@@ -604,7 +604,7 @@ public abstract class AbstractPendingTransactionsTestBase {
           return SELECTED;
         });
 
-    assertThat(iterationOrder).containsExactly(transaction2, transaction1);
+    assertThat(iterationOrder).containsExactly(transaction1, transaction2);
   }
 
   @Test
@@ -614,10 +614,10 @@ public abstract class AbstractPendingTransactionsTestBase {
     final Transaction transaction3 = transactionWithNonceAndSender(2, KEYS1);
     final Transaction transaction4 = transactionWithNonceAndSender(4, KEYS2);
 
-    transactions.addTransaction(createLocalPendingTransaction(transaction1), Optional.empty());
+    transactions.addTransaction(createLocalPendingTransaction(transaction3), Optional.empty());
     transactions.addTransaction(createLocalPendingTransaction(transaction4), Optional.empty());
     transactions.addTransaction(createLocalPendingTransaction(transaction2), Optional.empty());
-    transactions.addTransaction(createLocalPendingTransaction(transaction3), Optional.empty());
+    transactions.addTransaction(createLocalPendingTransaction(transaction1), Optional.empty());
 
     final List<Transaction> iterationOrder = new ArrayList<>();
     transactions.selectTransactions(
@@ -626,7 +626,7 @@ public abstract class AbstractPendingTransactionsTestBase {
           return SELECTED;
         });
 
-    // Ignoring nonces, the order would be 3, 2, 4, 1 but we have to delay 3 and 2 until after 1.
+    // Ignoring nonces, the order would be 3, 4, 2, 1 but we have to delay 3 and 2 until after 1.
     assertThat(iterationOrder)
         .containsExactly(transaction4, transaction1, transaction2, transaction3);
   }
@@ -853,6 +853,7 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void shouldPrioritizeGasPriceThenTimeAddedToPool() {
+    // Make sure the 100 gas price TX isn't dropped
     transactions.subscribeDroppedTransactions(
         transaction -> assertThat(transaction.getGasPrice().get().toLong()).isLessThan(100));
 
@@ -871,7 +872,8 @@ public abstract class AbstractPendingTransactionsTestBase {
                 })
             .collect(Collectors.toUnmodifiableList());
 
-    // This should kick the oldest tx with the low gas price out, namely the first one we added
+    // This should kick the highest-sequence tx with the low gas price out, namely the most-recent
+    // one we added
     final Account highPriceSender = mock(Account.class);
     final Transaction highGasPriceTransaction =
         transactionWithNonceSenderAndGasPrice(0, KEYS1, 100);
@@ -880,7 +882,9 @@ public abstract class AbstractPendingTransactionsTestBase {
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
 
     assertTransactionPending(highGasPriceTransaction);
-    assertTransactionNotPending(lowGasPriceTransactions.get(0));
-    lowGasPriceTransactions.stream().skip(1).forEach(this::assertTransactionPending);
+    assertTransactionNotPending(lowGasPriceTransactions.get(lowGasPriceTransactions.size() - 1));
+    lowGasPriceTransactions.stream()
+        .limit(lowGasPriceTransactions.size() - 1)
+        .forEach(this::assertTransactionPending);
   }
 }

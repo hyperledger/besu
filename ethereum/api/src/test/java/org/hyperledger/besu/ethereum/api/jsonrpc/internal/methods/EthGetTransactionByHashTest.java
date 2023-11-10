@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -71,7 +72,8 @@ class EthGetTransactionByHashTest {
 
   @Test
   void shouldReturnErrorResponseIfMissingRequiredParameter() {
-    final JsonRpcRequest request = new JsonRpcRequest("2.0", method.getName(), new Object[] {});
+    final JsonRpcRequest request =
+        new JsonRpcRequest(JSON_RPC_VERSION, method.getName(), new Object[] {});
     final JsonRpcRequestContext context = new JsonRpcRequestContext(request);
 
     final JsonRpcErrorResponse expectedResponse =
@@ -92,7 +94,7 @@ class EthGetTransactionByHashTest {
         .thenReturn(Optional.empty());
 
     final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", method.getName(), new Object[] {transactionHash});
+        new JsonRpcRequest(JSON_RPC_VERSION, method.getName(), new Object[] {transactionHash});
     final JsonRpcRequestContext context = new JsonRpcRequestContext(request);
 
     final JsonRpcSuccessResponse expectedResponse =
@@ -115,7 +117,7 @@ class EthGetTransactionByHashTest {
 
     final JsonRpcRequest request =
         new JsonRpcRequest(
-            "2.0", method.getName(), new Object[] {transaction.getHash().toHexString()});
+            JSON_RPC_VERSION, method.getName(), new Object[] {transaction.getHash().toHexString()});
     final JsonRpcRequestContext context = new JsonRpcRequestContext(request);
 
     final JsonRpcSuccessResponse expectedResponse =
@@ -141,7 +143,7 @@ class EthGetTransactionByHashTest {
 
     final JsonRpcRequest request =
         new JsonRpcRequest(
-            "2.0", method.getName(), new Object[] {transaction.getHash().toHexString()});
+            JSON_RPC_VERSION, method.getName(), new Object[] {transaction.getHash().toHexString()});
     final JsonRpcRequestContext context = new JsonRpcRequestContext(request);
 
     final JsonRpcSuccessResponse expectedResponse =
@@ -181,8 +183,23 @@ class EthGetTransactionByHashTest {
     assertThat(result.getRaw()).isNotNull();
     assertThat(result.getTo()).isNotNull();
     assertThat(result.getValue()).isNotNull();
-    assertThat(result.getYParity()).isNotNull();
-    assertThat(result.getV()).isNotNull();
+    switch (result.getType()) {
+      case "0x0":
+        assertThat(result.getYParity()).isNull();
+        assertThat(result.getV()).isNotNull();
+        break;
+      case "0x1":
+      case "0x2":
+        assertThat(result.getYParity()).isNotNull();
+        assertThat(result.getV()).isNotNull();
+        break;
+      case "0x3":
+        assertThat(result.getYParity()).isNotNull();
+        assertThat(result.getV()).isNull();
+        break;
+      default:
+        fail("unknownType " + result.getType());
+    }
     assertThat(result.getR()).isNotNull();
     assertThat(result.getS()).isNotNull();
   }

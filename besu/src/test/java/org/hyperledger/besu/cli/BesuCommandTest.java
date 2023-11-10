@@ -183,6 +183,9 @@ public class BesuCommandTest extends CommandTestAbstract {
   private static final JsonObject GENESIS_WITH_DATA_BLOBS_ENABLED =
       new JsonObject().put("config", new JsonObject().put("cancunTime", 1L));
 
+  private static final JsonObject GENESIS_WITH_ZERO_BASE_FEE_MARKET =
+      new JsonObject().put("config", new JsonObject().put("zeroBaseFee", true));
+
   static {
     DEFAULT_JSON_RPC_CONFIGURATION = JsonRpcConfiguration.createDefault();
     DEFAULT_GRAPH_QL_CONFIGURATION = GraphQLConfiguration.createDefault();
@@ -5204,6 +5207,56 @@ public class BesuCommandTest extends CommandTestAbstract {
     final File configuredSaveFile = transactionPoolConfigCaptor.getValue().getSaveFile();
     assertThat(configuredSaveFile).isEqualTo(saveFile);
     assertThat(configuredSaveFile.toPath().getParent()).isNotEqualTo(dataDir);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void txpoolForcePriceBumpToZeroWhenZeroBaseFeeMarket() throws IOException {
+    final Path genesisFile = createFakeGenesisFile(GENESIS_WITH_ZERO_BASE_FEE_MARKET);
+    parseCommand("--genesis-file", genesisFile.toString());
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+
+    final Percentage priceBump = transactionPoolConfigCaptor.getValue().getPriceBump();
+    assertThat(priceBump).isEqualTo(Percentage.ZERO);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void txpoolPriceBumpOptionIncompatibleWithZeroWhenZeroBaseFeeMarket() throws IOException {
+    final Path genesisFile = createFakeGenesisFile(GENESIS_WITH_ZERO_BASE_FEE_MARKET);
+    parseCommand("--genesis-file", genesisFile.toString(), "--tx-pool-price-bump", "5");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Price bump option is not compatible with zero base fee market");
+  }
+
+  @Test
+  public void txpoolForcePriceBumpToZeroWhenMinGasPriceZero() {
+    parseCommand("--min-gas-price", "0");
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+
+    final Percentage priceBump = transactionPoolConfigCaptor.getValue().getPriceBump();
+    assertThat(priceBump).isEqualTo(Percentage.ZERO);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void txpoolPriceBumpKeepItsValueIfSetEvenWhenMinGasPriceZero() {
+    parseCommand("--min-gas-price", "0", "--tx-pool-price-bump", "1");
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+
+    final Percentage priceBump = transactionPoolConfigCaptor.getValue().getPriceBump();
+    assertThat(priceBump).isEqualTo(Percentage.fromInt(1));
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();

@@ -147,17 +147,16 @@ abstract class AbstractRLPInput implements RLPInput {
   }
 
   private void validateCurrentItem() {
-    if (currentKind == RLPDecodingHelpers.Kind.SHORT_ELEMENT) {
-      // Validate that a single byte SHORT_ELEMENT payload is not <= 0x7F. If it is, is should have
-      // been written as a BYTE_ELEMENT.
-      if (currentPayloadSize == 1
-          && currentPayloadOffset < size
-          && (payloadByte(0) & 0xFF) <= 0x7F) {
-        throwMalformed(
-            "Malformed RLP item: single byte value 0x%s should have been "
-                + "written without a prefix",
-            hex(currentPayloadOffset, currentPayloadOffset + 1));
-      }
+    // Validate that a single byte SHORT_ELEMENT payload is not <= 0x7F. If it is, is should have
+    // been written as a BYTE_ELEMENT.
+    if (currentKind == RLPDecodingHelpers.Kind.SHORT_ELEMENT
+        && currentPayloadSize == 1
+        && currentPayloadOffset < size
+        && (payloadByte(0) & 0xFF) <= 0x7F) {
+      throwMalformed(
+          "Malformed RLP item: single byte value 0x%s should have been "
+              + "written without a prefix",
+          hex(currentPayloadOffset, currentPayloadOffset + 1));
     }
 
     if (currentPayloadSize > 0 && currentPayloadOffset >= size) {
@@ -186,9 +185,9 @@ abstract class AbstractRLPInput implements RLPInput {
 
   private String hex(final long start, final long taintedEnd) {
     final long end = Math.min(taintedEnd, size);
-    final long size = end - start;
-    if (size < 10) {
-      return inputHex(start, Math.toIntExact(size));
+    final long length = end - start;
+    if (length < 10) {
+      return inputHex(start, Math.toIntExact(length));
     } else {
       return String.format("%s...%s", inputHex(start, 4), inputHex(end - 4, 4));
     }
@@ -244,6 +243,9 @@ abstract class AbstractRLPInput implements RLPInput {
   private void checkElt(final String what) {
     if (currentItem >= size) {
       throw error("Cannot read a %s, input is fully consumed", what);
+    }
+    if (depth > 0 && currentPayloadOffset + currentPayloadSize > endOfListOffset[depth - 1]) {
+      throw error("Cannot read a %s, too large for enclosing list", what);
     }
     if (isEndOfCurrentList()) {
       throw error("Cannot read a %s, reached end of current list", what);
