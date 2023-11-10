@@ -192,6 +192,7 @@ public class RunnerBuilder {
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private boolean legacyForkIdEnabled;
   private Optional<Long> rpcMaxLogsRange;
+  private Optional<Long> rpcGasCap;
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
 
   /**
@@ -585,6 +586,16 @@ public class RunnerBuilder {
     this.rpcMaxLogsRange = rpcMaxLogsRange > 0 ? Optional.of(rpcMaxLogsRange) : Optional.empty();
     return this;
   }
+  /**
+   * Add Rpc gasLimit cap .
+   *
+   * @param rpcGasCap the rpc max logs range
+   * @return the runner builder
+   */
+  public RunnerBuilder rpcGasCap(final Long rpcGasCap) {
+    this.rpcGasCap = rpcGasCap > 0 ? Optional.of(rpcGasCap) : Optional.empty();
+    return this;
+  }
 
   /**
    * Add enode DNS configuration
@@ -661,7 +672,7 @@ public class RunnerBuilder {
 
     final TransactionSimulator transactionSimulator =
         new TransactionSimulator(
-            context.getBlockchain(), context.getWorldStateArchive(), protocolSchedule);
+            context.getBlockchain(), context.getWorldStateArchive(), protocolSchedule, rpcGasCap);
 
     final Bytes localNodeId = nodeKey.getPublicKey().getEncodedBytes();
     final Optional<NodePermissioningController> nodePermissioningController =
@@ -910,6 +921,7 @@ public class RunnerBuilder {
       graphQlContextMap.putIfAbsent(GraphQLContextType.SYNCHRONIZER, synchronizer);
       graphQlContextMap.putIfAbsent(
           GraphQLContextType.CHAIN_ID, protocolSchedule.getChainId().map(UInt256::valueOf));
+      graphQlContextMap.putIfAbsent(GraphQLContextType.GAS_CAP, rpcGasCap);
       final GraphQL graphQL;
       try {
         graphQL = GraphQLProvider.buildGraphQL(fetchers);
@@ -1240,7 +1252,8 @@ public class RunnerBuilder {
                 besuController.getProtocolManager().ethContext().getEthPeers(),
                 consensusEngineServer,
                 rpcMaxLogsRange,
-                enodeDnsConfiguration);
+                enodeDnsConfiguration,
+                rpcGasCap);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
 
     final var pluginMethods =
