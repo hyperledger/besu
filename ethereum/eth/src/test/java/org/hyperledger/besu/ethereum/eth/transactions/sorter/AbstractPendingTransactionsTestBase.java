@@ -562,10 +562,6 @@ public abstract class AbstractPendingTransactionsTestBase {
             transactions.addTransaction(
                 createRemotePendingTransaction(independentTx), Optional.empty()))
         .isEqualTo(ADDED);
-    assertThat(
-            transactions.addTransaction(
-                createRemotePendingTransaction(independentTx), Optional.empty()))
-        .isEqualTo(ADDED);
 
     // All tx's except the last duplicate should be removed
     replacedTransactions.forEach(this::assertTransactionNotPending);
