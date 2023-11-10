@@ -290,6 +290,14 @@ public class RetestethContext {
     return protocolContext;
   }
 
+  public EthScheduler getEthScheduler() {
+    return ethScheduler;
+  }
+
+  public void setEthScheduler(final EthScheduler ethScheduler) {
+    this.ethScheduler = ethScheduler;
+  }
+
   public long getBlockHeight() {
     return blockchain.getChainHeadBlockNumber();
   }

@@ -53,6 +53,7 @@ public class EthScheduler {
   protected final ExecutorService txWorkerExecutor;
   protected final ExecutorService servicesExecutor;
   protected final ExecutorService computationExecutor;
+  protected final ExecutorService blockCreationExecutor;
 
   private final Collection<CompletableFuture<?>> pendingFutures = new ConcurrentLinkedDeque<>();
 
@@ -87,7 +88,9 @@ public class EthScheduler {
             EthScheduler.class.getSimpleName() + "-Computation",
             1,
             computationWorkerCount,
-            metricsSystem));
+            metricsSystem),
+        MonitoredExecutors.newCachedThreadPool(
+            EthScheduler.class.getSimpleName() + "-BlockCreation", metricsSystem));
   }
 
   protected EthScheduler(
@@ -95,12 +98,14 @@ public class EthScheduler {
       final ScheduledExecutorService scheduler,
       final ExecutorService txWorkerExecutor,
       final ExecutorService servicesExecutor,
-      final ExecutorService computationExecutor) {
+      final ExecutorService computationExecutor,
+      final ExecutorService blockCreationExecutor) {
     this.syncWorkerExecutor = syncWorkerExecutor;
     this.scheduler = scheduler;
     this.txWorkerExecutor = txWorkerExecutor;
     this.servicesExecutor = servicesExecutor;
     this.computationExecutor = computationExecutor;
+    this.blockCreationExecutor = blockCreationExecutor;
   }
 
   public <T> CompletableFuture<T> scheduleSyncWorkerTask(
@@ -200,6 +205,10 @@ public class EthScheduler {
           }
         });
     return promise;
+  }
+
+  public CompletableFuture<Void> scheduleBlockCreationTask(final Runnable task) {
+    return CompletableFuture.runAsync(task, blockCreationExecutor);
   }
 
   public <T> CompletableFuture<T> timeout(final EthTask<T> task) {
