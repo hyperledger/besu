@@ -76,14 +76,17 @@ public class TransactionSimulator {
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
   private final ProtocolSchedule protocolSchedule;
+  private final Optional<Long> rpcGasCap;
 
   public TransactionSimulator(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule protocolSchedule) {
+      final ProtocolSchedule protocolSchedule,
+      final Optional<Long> rpcGasCap) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
+    this.rpcGasCap = rpcGasCap;
   }
 
   public Optional<TransactionSimulatorResult> process(
@@ -207,10 +210,13 @@ public class TransactionSimulator {
     final Account sender = updater.get(senderAddress);
     final long nonce = sender != null ? sender.getNonce() : 0L;
 
-    final long gasLimit =
+    long gasLimit =
         callParams.getGasLimit() >= 0
             ? callParams.getGasLimit()
             : blockHeaderToProcess.getGasLimit();
+    if (rpcGasCap.isPresent()) {
+      gasLimit = Math.min(gasLimit, rpcGasCap.get());
+    }
     final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
     final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
 
