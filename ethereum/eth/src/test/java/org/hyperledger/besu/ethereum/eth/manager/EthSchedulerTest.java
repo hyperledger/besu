@@ -21,7 +21,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.MockExecutorService;
+import org.hyperledger.besu.testutil.MockScheduledExecutor;
 
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;

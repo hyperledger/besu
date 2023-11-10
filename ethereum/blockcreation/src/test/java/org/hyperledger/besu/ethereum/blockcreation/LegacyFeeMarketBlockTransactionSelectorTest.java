@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -61,7 +62,7 @@ public class LegacyFeeMarketBlockTransactionSelectorTest
   }
 
   @Override
-  protected TransactionPool createTransactionPool() {
+  protected TransactionPool createTransactionPool(final MiningParameters miningParameters) {
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder()
             .txPoolMaxSize(5)

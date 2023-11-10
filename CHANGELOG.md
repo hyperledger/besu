@@ -1,19 +1,9 @@
 # Changelog
 
-## 24.1.0
-
-### Breaking Changes
-
-### Additions and Improvements
-
-
-### Bug Fixes
-
-### Download Links
-
 ## 23.10.2
 
 ### Breaking Changes
+- TX pool eviction in the legacy TX pool now favours keeping oldest transactions (more likely to evict higher nonces, less likely to introduce nonce gaps) [#6106](https://github.com/hyperledger/besu/pull/6106) and [#6146](https://github.com/hyperledger/besu/pull/6146)
 
 ### Deprecations
 
@@ -29,12 +19,14 @@
 - Upgrade EVM Reference Tests to v13 (Cancun) [#6114](https://github.com/hyperledger/besu/pull/6114)
 - Add `yParity` to GraphQL and JSON-RPC for relevant querise. [6119](https://github.com/hyperledger/besu/pull/6119)
 - Force tx replacement price bump to zero when zero base fee market is configured or `--min-gas-price` is set to 0. This allows for easier tx replacement in networks where there is not gas price. [#6079](https://github.com/hyperledger/besu/pull/6079)
+- Introduce the possibility to limit the time spent selecting pending transactions during block creation, using the new experimental option `Xblock-txs-selection-max-time` on PoS and PoW networks (by default set to 5000ms) or `Xpoa-block-txs-selection-max-time` on PoA networks (by default 75% of the min block time) [#6044](https://github.com/hyperledger/besu/pull/6044)
 - Add `--Xtx-pool-disable-sender-grouping` option to avoid grouping transactions from a single sender when selecting candidate transactions for a block [#6022](https://github.com/hyperledger/besu/pull/6022)
 
 ### Bug fixes
 - Upgrade netty to address CVE-2023-44487, CVE-2023-34462 [#6100](https://github.com/hyperledger/besu/pull/6100)
 - Upgrade grpc to address CVE-2023-32731, CVE-2023-33953, CVE-2023-44487, CVE-2023-4785 [#6100](https://github.com/hyperledger/besu/pull/6100)
 - Fix blob gas calculation in reference tests [#6107](https://github.com/hyperledger/besu/pull/6107)
+- Limit memory used in handling invalid blocks [#6138](https://github.com/hyperledger/besu/pull/6138)
 
 ---
 

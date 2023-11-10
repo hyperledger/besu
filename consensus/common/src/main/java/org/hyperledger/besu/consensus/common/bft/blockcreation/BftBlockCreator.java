@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
@@ -50,6 +51,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
    * @param protocolSchedule the protocol schedule
    * @param parentHeader the parent header
    * @param bftExtraDataCodec the bft extra data codec
+   * @param ethScheduler the scheduler for asynchronous block creation tasks
    */
   public BftBlockCreator(
       final MiningParameters miningParameters,
@@ -60,7 +62,8 @@ public class BftBlockCreator extends AbstractBlockCreator {
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final BlockHeader parentHeader,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final BftExtraDataCodec bftExtraDataCodec,
+      final EthScheduler ethScheduler) {
     super(
         miningParameters.setCoinbase(localAddress),
         miningBeneficiaryCalculator(localAddress, forksSchedule),
@@ -69,7 +72,8 @@ public class BftBlockCreator extends AbstractBlockCreator {
         protocolContext,
         protocolSchedule,
         parentHeader,
-        Optional.empty());
+        Optional.empty(),
+        ethScheduler);
     this.bftExtraDataCodec = bftExtraDataCodec;
   }
 

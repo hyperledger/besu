@@ -49,6 +49,7 @@ import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
@@ -72,6 +73,7 @@ import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -92,6 +94,7 @@ public abstract class AbstractIsolationTests {
   protected BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorage;
   protected ProtocolContext protocolContext;
   protected EthContext ethContext;
+  protected EthScheduler ethScheduler = new DeterministicEthScheduler();
   final Function<String, KeyPair> asKeyPair =
       key ->
           SignatureAlgorithmFactory.getInstance()
@@ -214,7 +217,8 @@ public abstract class AbstractIsolationTests {
         final TransactionPool transactionPool,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
-        final BlockHeader parentHeader) {
+        final BlockHeader parentHeader,
+        final EthScheduler ethScheduler) {
       super(
           miningParameters,
           miningBeneficiaryCalculator,
@@ -223,14 +227,16 @@ public abstract class AbstractIsolationTests {
           protocolContext,
           protocolSchedule,
           parentHeader,
-          Optional.empty());
+          Optional.empty(),
+          ethScheduler);
     }
 
     static TestBlockCreator forHeader(
         final BlockHeader parentHeader,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
-        final TransactionPool transactionPool) {
+        final TransactionPool transactionPool,
+        final EthScheduler ethScheduler) {
 
       final MiningParameters miningParameters =
           ImmutableMiningParameters.builder()
@@ -251,7 +257,8 @@ public abstract class AbstractIsolationTests {
           transactionPool,
           protocolContext,
           protocolSchedule,
-          parentHeader);
+          parentHeader,
+          ethScheduler);
     }
 
     @Override
@@ -282,7 +289,8 @@ public abstract class AbstractIsolationTests {
 
   protected Block forTransactions(
       final List<Transaction> transactions, final BlockHeader forHeader) {
-    return TestBlockCreator.forHeader(forHeader, protocolContext, protocolSchedule, transactionPool)
+    return TestBlockCreator.forHeader(
+            forHeader, protocolContext, protocolSchedule, transactionPool, ethScheduler)
         .createBlock(transactions, Collections.emptyList(), System.currentTimeMillis())
         .getBlock();
   }
