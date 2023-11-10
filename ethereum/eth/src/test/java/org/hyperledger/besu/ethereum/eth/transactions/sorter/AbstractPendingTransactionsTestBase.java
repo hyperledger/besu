@@ -102,25 +102,16 @@ public abstract class AbstractPendingTransactionsTestBase {
               .build(),
           Optional.empty());
 
-  protected AbstractPendingTransactionsSorter transactionsLargeNoSenderGrouping =
-      getPendingTransactions(
-          ImmutableTransactionPoolConfiguration.builder()
-              .txPoolMaxSize(MAX_TRANSACTIONS_LARGE_POOL)
-              .txPoolLimitByAccountPercentage(Fraction.fromFloat(1.0f))
-              .unstable(
-                  ImmutableTransactionPoolConfiguration.Unstable.builder()
-                      .disableSenderTxGrouping(true)
-                      .build())
-              .build(),
-          Optional.empty());
-
   protected final Transaction transaction1 = createTransaction(2);
   protected final Transaction transaction2 = createTransaction(1);
   protected final Transaction transaction3 = createTransaction(3);
 
-  protected final Transaction transaction1Sdr2 = createTransactionSender2(1);
-  protected final Transaction transaction2Sdr2 = createTransactionSender2(2);
-  protected final Transaction transaction3Sdr2 = createTransactionSender2(3);
+  protected final Transaction zeroGasPriceTX1Sdr1 = createZeroGasPriceTransactionSender1(1);
+  protected final Transaction zeroGasPriceTX2Sdr1 = createZeroGasPriceTransactionSender1(2);
+  protected final Transaction zeroGasPriceTX3Sdr1 = createZeroGasPriceTransactionSender1(3);
+  protected final Transaction zeroGasPriceTX1Sdr2 = createZeroGasPriceTransactionSender2(1);
+  protected final Transaction zeroGasPriceTX2Sdr2 = createZeroGasPriceTransactionSender2(2);
+  protected final Transaction zeroGasPriceTX3Sdr2 = createZeroGasPriceTransactionSender2(3);
 
   protected final PendingTransactionAddedListener listener =
       mock(PendingTransactionAddedListener.class);
@@ -347,30 +338,30 @@ public abstract class AbstractPendingTransactionsTestBase {
   }
 
   @Test
-  public void selectTransactionsInDefaultOrder() {
+  public void selectTransactionsInCorrectOrder() {
     assertThat(
             transactionsLarge.addTransaction(
-                createRemotePendingTransaction(transaction1), Optional.empty()))
+                createRemotePendingTransaction(zeroGasPriceTX2Sdr1), Optional.empty()))
         .isEqualTo(ADDED);
     assertThat(
             transactionsLarge.addTransaction(
-                createRemotePendingTransaction(transaction2), Optional.empty()))
+                createRemotePendingTransaction(zeroGasPriceTX3Sdr1), Optional.empty()))
         .isEqualTo(ADDED);
     assertThat(
             transactionsLarge.addTransaction(
-                createRemotePendingTransaction(transaction1Sdr2), Optional.empty()))
+                createRemotePendingTransaction(zeroGasPriceTX1Sdr2), Optional.empty()))
         .isEqualTo(ADDED);
     assertThat(
             transactionsLarge.addTransaction(
-                createRemotePendingTransaction(transaction2Sdr2), Optional.empty()))
+                createRemotePendingTransaction(zeroGasPriceTX1Sdr1), Optional.empty()))
         .isEqualTo(ADDED);
     assertThat(
             transactionsLarge.addTransaction(
-                createRemotePendingTransaction(transaction3Sdr2), Optional.empty()))
+                createRemotePendingTransaction(zeroGasPriceTX2Sdr2), Optional.empty()))
         .isEqualTo(ADDED);
     assertThat(
             transactionsLarge.addTransaction(
-                createRemotePendingTransaction(transaction3), Optional.empty()))
+                createRemotePendingTransaction(zeroGasPriceTX3Sdr2), Optional.empty()))
         .isEqualTo(ADDED);
 
     final List<Transaction> parsedTransactions = Lists.newArrayList();
@@ -384,64 +375,22 @@ public abstract class AbstractPendingTransactionsTestBase {
           return SELECTED;
         });
 
+    // All 6 transactions should have been selected
     assertThat(parsedTransactions.size()).isEqualTo(6);
 
-    assertThat(parsedTransactions.get(0)).isEqualTo(transaction1Sdr2);
-    assertThat(parsedTransactions.get(1)).isEqualTo(transaction2Sdr2);
-    assertThat(parsedTransactions.get(2)).isEqualTo(transaction3Sdr2);
-    assertThat(parsedTransactions.get(3))
-        .isEqualTo(transaction2); // Transaction 2 is actually the lowest nonce for this sender
-    assertThat(parsedTransactions.get(4))
-        .isEqualTo(transaction1); // Transaction 1 is the next nonce for the sender
-    assertThat(parsedTransactions.get(5))
-        .isEqualTo(transaction3); // Transaction 3 is the next nonce for the sender
-  }
-
-  @Test
-  public void selectTransactionsInOrderNoGroupBySender() {
-    assertThat(
-            transactionsLargeNoSenderGrouping.addTransaction(
-                createRemotePendingTransaction(transaction2), Optional.empty()))
-        .isEqualTo(ADDED);
-    assertThat(
-            transactionsLargeNoSenderGrouping.addTransaction(
-                createRemotePendingTransaction(transaction1Sdr2), Optional.empty()))
-        .isEqualTo(ADDED);
-    assertThat(
-            transactionsLargeNoSenderGrouping.addTransaction(
-                createRemotePendingTransaction(transaction2Sdr2), Optional.empty()))
-        .isEqualTo(ADDED);
-    assertThat(
-            transactionsLargeNoSenderGrouping.addTransaction(
-                createRemotePendingTransaction(transaction1), Optional.empty()))
-        .isEqualTo(ADDED);
-    assertThat(
-            transactionsLargeNoSenderGrouping.addTransaction(
-                createRemotePendingTransaction(transaction3Sdr2), Optional.empty()))
-        .isEqualTo(ADDED);
-    assertThat(
-            transactionsLargeNoSenderGrouping.addTransaction(
-                createRemotePendingTransaction(transaction3), Optional.empty()))
-        .isEqualTo(ADDED);
-
-    final List<Transaction> parsedTransactions = Lists.newArrayList();
-    transactionsLargeNoSenderGrouping.selectTransactions(
-        pendingTx -> {
-          parsedTransactions.add(pendingTx.getTransaction());
-
-          if (parsedTransactions.size() == 6) {
-            return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
-          }
-          return SELECTED;
-        });
-
-    assertThat(parsedTransactions.size()).isEqualTo(6);
-
-    // Check that by setting --tx-pool-disable-sender-grouping=true then sdr 1 hasn't monopolized
-    // the pool selection just because its transaction (transaction 3) is the first one to be parsed
-    // by the selector
-    assertThat(parsedTransactions.get(0)).isEqualTo(transaction1Sdr2);
-    assertThat(parsedTransactions.get(1)).isEqualTo(transaction2);
+    // The order should be:
+    // sender 2, nonce 1
+    // sender 1, nonce 1
+    // sender 1, nonce 2
+    // sender 1, nonce 3
+    // sender 2, nonce 2
+    // sender 2, nonce 3
+    assertThat(parsedTransactions.get(0)).isEqualTo(zeroGasPriceTX1Sdr2);
+    assertThat(parsedTransactions.get(1)).isEqualTo(zeroGasPriceTX1Sdr1);
+    assertThat(parsedTransactions.get(2)).isEqualTo(zeroGasPriceTX2Sdr1);
+    assertThat(parsedTransactions.get(3)).isEqualTo(zeroGasPriceTX3Sdr1);
+    assertThat(parsedTransactions.get(4)).isEqualTo(zeroGasPriceTX2Sdr2);
+    assertThat(parsedTransactions.get(5)).isEqualTo(zeroGasPriceTX3Sdr2);
   }
 
   @Test
@@ -791,11 +740,23 @@ public abstract class AbstractPendingTransactionsTestBase {
         .createTransaction(KEYS1);
   }
 
-  protected Transaction createTransactionSender2(final long transactionNumber) {
+  protected Transaction createZeroGasPriceTransactionSender1(final long transactionNumber) {
     return new TransactionTestFixture()
         .value(Wei.of(transactionNumber))
         .nonce(transactionNumber)
         .gasPrice(Wei.of(0))
+        .maxFeePerGas(Optional.of(Wei.of(0)))
+        .maxPriorityFeePerGas(Optional.of(Wei.of(0)))
+        .createTransaction(KEYS1);
+  }
+
+  protected Transaction createZeroGasPriceTransactionSender2(final long transactionNumber) {
+    return new TransactionTestFixture()
+        .value(Wei.of(transactionNumber))
+        .nonce(transactionNumber)
+        .gasPrice(Wei.of(0))
+        .maxFeePerGas(Optional.of(Wei.of(0)))
+        .maxPriorityFeePerGas(Optional.of(Wei.of(0)))
         .createTransaction(KEYS2);
   }
 
