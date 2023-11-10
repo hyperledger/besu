@@ -49,7 +49,7 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
    * Configure a new ECRecover precompile with a specific signature algorith and gas.
    *
    * @param gasCalculator the gas calculator
-   * @param signatureAlgorithm the algoritm (such as secp256k1 or secp256r1)
+   * @param signatureAlgorithm the algorithm (such as secp256k1 or secp256r1)
    */
   public ECRECPrecompiledContract(
       final GasCalculator gasCalculator, final SignatureAlgorithm signatureAlgorithm) {

@@ -45,6 +45,10 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
 
   protected final Hash depositsRoot;
 
+  protected final Long blobGasUsed;
+
+  protected final BlobGas excessBlobGas;
+
   protected SealableBlockHeader(
       final Hash parentHash,
       final Hash ommersHash,
@@ -75,8 +79,6 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
         timestamp,
         baseFee,
         mixHashOrPrevRandao,
-        blobGasUsed,
-        excessBlobGas,
         parentBeaconBlockRoot);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
@@ -87,6 +89,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
     this.logsBloom = logsBloom;
     this.gasUsed = gasUsed;
     this.extraData = extraData;
+    this.blobGasUsed = blobGasUsed;
+    this.excessBlobGas = excessBlobGas;
   }
 
   /**
@@ -168,5 +172,23 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    */
   public Optional<Hash> getDepositsRoot() {
     return Optional.ofNullable(depositsRoot);
+  }
+
+  /**
+   * Returns the blob gas used if available.
+   *
+   * @return the blob gas used if available.
+   */
+  public Optional<Long> getBlobGasUsed() {
+    return Optional.ofNullable(blobGasUsed);
+  }
+
+  /**
+   * Returns the excess blob gas used if available.
+   *
+   * @return the excess blob gas used if available.
+   */
+  public Optional<BlobGas> getExcessBlobGas() {
+    return Optional.ofNullable(excessBlobGas);
   }
 }

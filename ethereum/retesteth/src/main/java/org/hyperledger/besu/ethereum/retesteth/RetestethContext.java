@@ -24,7 +24,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.IncrementingNonceGenerator;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -32,6 +31,9 @@ import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.Unstable;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -99,7 +101,7 @@ public class RetestethContext {
   private HeaderValidationMode headerValidationMode;
   private BlockReplay blockReplay;
   private RetestethClock retestethClock;
-
+  private MiningParameters miningParameters;
   private TransactionPool transactionPool;
   private EthScheduler ethScheduler;
   private PoWSolver poWSolver;
@@ -165,7 +167,8 @@ public class RetestethContext {
     final WorldStateArchive worldStateArchive =
         new DefaultWorldStateArchive(
             new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
-            new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
+            new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
+            EvmConfiguration.DEFAULT);
     final MutableWorldState worldState = worldStateArchive.getMutable();
     genesisState.writeStateTo(worldState);
 
@@ -180,25 +183,33 @@ public class RetestethContext {
             ? HeaderValidationMode.LIGHT
             : HeaderValidationMode.FULL;
 
-    final Iterable<Long> nonceGenerator = new IncrementingNonceGenerator(0);
+    miningParameters =
+        ImmutableMiningParameters.builder()
+            .mutableInitValues(
+                MutableInitValues.builder()
+                    .coinbase(coinbase)
+                    .extraData(extraData)
+                    .targetGasLimit(blockchain.getChainHeadHeader().getGasLimit())
+                    .minBlockOccupancyRatio(0.0)
+                    .minTransactionGasPrice(Wei.ZERO)
+                    .build())
+            .unstable(Unstable.builder().powJobTimeToLive(1000).maxOmmerDepth(8).build())
+            .build();
+    miningParameters.setMinTransactionGasPrice(Wei.ZERO);
     poWSolver =
         ("NoProof".equals(sealengine) || "NoReward".equals(sealEngine))
             ? new PoWSolver(
-                nonceGenerator,
+                miningParameters,
                 NO_WORK_HASHER,
                 false,
                 Subscribers.none(),
-                new EpochCalculator.DefaultEpochCalculator(),
-                1000,
-                8)
+                new EpochCalculator.DefaultEpochCalculator())
             : new PoWSolver(
-                nonceGenerator,
+                miningParameters,
                 PoWHasher.ETHASH_LIGHT,
                 false,
                 Subscribers.none(),
-                new EpochCalculator.DefaultEpochCalculator(),
-                1000,
-                8);
+                new EpochCalculator.DefaultEpochCalculator());
 
     blockReplay = new BlockReplay(protocolSchedule, blockchainQueries.getBlockchain());
 
@@ -239,7 +250,7 @@ public class RetestethContext {
             retestethClock,
             metricsSystem,
             syncState,
-            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
+            miningParameters,
             transactionPoolConfiguration,
             null);
 
@@ -279,6 +290,14 @@ public class RetestethContext {
     return protocolContext;
   }
 
+  public EthScheduler getEthScheduler() {
+    return ethScheduler;
+  }
+
+  public void setEthScheduler(final EthScheduler ethScheduler) {
+    this.ethScheduler = ethScheduler;
+  }
+
   public long getBlockHeight() {
     return blockchain.getChainHeadBlockNumber();
   }
@@ -307,12 +326,8 @@ public class RetestethContext {
     return transactionPool;
   }
 
-  public Address getCoinbase() {
-    return coinbase;
-  }
-
-  public Bytes getExtraData() {
-    return extraData;
+  public MiningParameters getMiningParameters() {
+    return miningParameters;
   }
 
   public MutableBlockchain getBlockchain() {

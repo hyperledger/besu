@@ -19,15 +19,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -39,7 +37,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class TrieLogManagerTests {
+class TrieLogManagerTests {
 
   BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
 
@@ -48,27 +46,21 @@ public class TrieLogManagerTests {
 
   @Mock BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage;
   @Mock BonsaiWorldState worldState;
-  @Mock BonsaiWorldStateProvider archive;
   @Mock Blockchain blockchain;
   BonsaiWorldStateUpdateAccumulator bonsaiUpdater =
-      spy(new BonsaiWorldStateUpdateAccumulator(worldState, (__, ___) -> {}, (__, ___) -> {}));
+      spy(
+          new BonsaiWorldStateUpdateAccumulator(
+              worldState, (__, ___) -> {}, (__, ___) -> {}, EvmConfiguration.DEFAULT));
 
   TrieLogManager trieLogManager;
 
   @BeforeEach
   public void setup() {
-    trieLogManager =
-        new CachedWorldStorageManager(
-            archive,
-            blockchain,
-            bonsaiWorldStateKeyValueStorage,
-            new NoOpMetricsSystem(),
-            512,
-            null);
+    trieLogManager = new TrieLogManager(blockchain, bonsaiWorldStateKeyValueStorage, 512, null);
   }
 
   @Test
-  public void testSaveTrieLogEvent() {
+  void testSaveTrieLogEvent() {
     AtomicBoolean eventFired = new AtomicBoolean(false);
     trieLogManager.subscribe(
         layer -> {

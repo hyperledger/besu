@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.fluent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -80,7 +81,7 @@ public class EVMExecutor {
       List.of(MaxCodeSizeRule.of(0x6000), PrefixCodeRule.of());
   private long initialNonce = 1;
   private Collection<Address> forceCommitAddresses = List.of(Address.fromHexString("0x03"));
-  private Set<Address> accessListWarmAddresses = new HashSet<>();
+  private Set<Address> accessListWarmAddresses = new BytesTrieSet<>(Address.SIZE);
   private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
   private MessageCallProcessor messageCallProcessor = null;
   private ContractCreationProcessor contractCreationProcessor = null;

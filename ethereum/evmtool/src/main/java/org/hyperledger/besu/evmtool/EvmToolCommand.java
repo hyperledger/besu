@@ -126,13 +126,25 @@ public class EvmToolCommand implements Runnable {
       names = {"--sender"},
       paramLabel = "<address>",
       description = "Calling address for this invocation.")
-  private final Address sender = Address.fromHexString("0x00");
+  private final Address sender = Address.ZERO;
 
   @Option(
       names = {"--receiver"},
       paramLabel = "<address>",
       description = "Receiving address for this invocation.")
-  private final Address receiver = Address.fromHexString("0x00");
+  private final Address receiver = Address.ZERO;
+
+  @Option(
+      names = {"--contract"},
+      paramLabel = "<address>",
+      description = "The address holding the contract code.")
+  private final Address contract = Address.ZERO;
+
+  @Option(
+      names = {"--coinbase"},
+      paramLabel = "<address>",
+      description = "Coinbase for this invocation.")
+  private final Address coinbase = Address.ZERO;
 
   @Option(
       names = {"--coinbase"},
@@ -383,11 +395,13 @@ public class EvmToolCommand implements Runnable {
         WorldUpdater updater = component.getWorldUpdater();
         updater.getOrCreate(sender);
         updater.getOrCreate(receiver);
+        var contractAccount = updater.getOrCreate(contract);
+        contractAccount.setCode(codeBytes);
 
         MessageFrame initialMessageFrame =
             MessageFrame.builder()
                 .type(MessageFrame.Type.MESSAGE_CALL)
-                .worldUpdater(updater)
+                .worldUpdater(updater.updater())
                 .initialGas(txGas)
                 .contract(Address.ZERO)
                 .address(receiver)

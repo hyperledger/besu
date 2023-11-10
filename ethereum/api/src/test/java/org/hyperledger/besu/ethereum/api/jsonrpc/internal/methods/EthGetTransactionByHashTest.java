@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -48,7 +48,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class EthGetTransactionByHashTest {
+class EthGetTransactionByHashTest {
 
   private static final String VALID_TRANSACTION =
       "0xf86d0485174876e800830222e0945aae326516b4f8fe08074b7e972e40a713048d62880de0b6b3a7640000801ba05d4e7998757264daab67df2ce6f7e7a0ae36910778a406ca73898c9899a32b9ea0674700d5c3d1d27f2e6b4469957dfd1a1c49bf92383d80717afc84eb05695d5b";
@@ -66,13 +66,14 @@ public class EthGetTransactionByHashTest {
   }
 
   @Test
-  public void returnsCorrectMethodName() {
+  void returnsCorrectMethodName() {
     assertThat(method.getName()).isEqualTo(ETH_METHOD);
   }
 
   @Test
-  public void shouldReturnErrorResponseIfMissingRequiredParameter() {
-    final JsonRpcRequest request = new JsonRpcRequest("2.0", method.getName(), new Object[] {});
+  void shouldReturnErrorResponseIfMissingRequiredParameter() {
+    final JsonRpcRequest request =
+        new JsonRpcRequest(JSON_RPC_VERSION, method.getName(), new Object[] {});
     final JsonRpcRequestContext context = new JsonRpcRequestContext(request);
 
     final JsonRpcErrorResponse expectedResponse =
@@ -84,16 +85,16 @@ public class EthGetTransactionByHashTest {
   }
 
   @Test
-  public void shouldReturnNullResultWhenTransactionDoesNotExist() {
+  void shouldReturnNullResultWhenTransactionDoesNotExist() {
     final String transactionHash =
         "0xf9ef5f0cf02685711cdf687b72d4754901729b942f4ea7f956e7fb206cae2f9e";
-    when(transactionPool.getTransactionByHash(eq(Hash.fromHexString(transactionHash))))
+    when(transactionPool.getTransactionByHash(Hash.fromHexString(transactionHash)))
         .thenReturn(Optional.empty());
-    when(blockchainQueries.transactionByHash(eq(Hash.fromHexString(transactionHash))))
+    when(blockchainQueries.transactionByHash(Hash.fromHexString(transactionHash)))
         .thenReturn(Optional.empty());
 
     final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", method.getName(), new Object[] {transactionHash});
+        new JsonRpcRequest(JSON_RPC_VERSION, method.getName(), new Object[] {transactionHash});
     final JsonRpcRequestContext context = new JsonRpcRequestContext(request);
 
     final JsonRpcSuccessResponse expectedResponse =
@@ -105,18 +106,18 @@ public class EthGetTransactionByHashTest {
   }
 
   @Test
-  public void shouldReturnPendingTransactionWhenTransactionExistsAndIsPending() {
+  void shouldReturnPendingTransactionWhenTransactionExistsAndIsPending() {
     final org.hyperledger.besu.ethereum.core.Transaction transaction =
         org.hyperledger.besu.ethereum.core.Transaction.readFrom(
             Bytes.fromHexString(VALID_TRANSACTION));
 
-    when(transactionPool.getTransactionByHash(eq(transaction.getHash())))
+    when(transactionPool.getTransactionByHash(transaction.getHash()))
         .thenReturn(Optional.of(transaction));
     verifyNoInteractions(blockchainQueries);
 
     final JsonRpcRequest request =
         new JsonRpcRequest(
-            "2.0", method.getName(), new Object[] {transaction.getHash().toHexString()});
+            JSON_RPC_VERSION, method.getName(), new Object[] {transaction.getHash().toHexString()});
     final JsonRpcRequestContext context = new JsonRpcRequestContext(request);
 
     final JsonRpcSuccessResponse expectedResponse =
@@ -128,22 +129,21 @@ public class EthGetTransactionByHashTest {
   }
 
   @Test
-  public void shouldReturnCompleteTransactionWhenTransactionExistsInBlockchain() {
+  void shouldReturnCompleteTransactionWhenTransactionExistsInBlockchain() {
     final org.hyperledger.besu.ethereum.core.Transaction transaction =
         org.hyperledger.besu.ethereum.core.Transaction.readFrom(
             Bytes.fromHexString(VALID_TRANSACTION));
     final TransactionWithMetadata transactionWithMetadata =
         new TransactionWithMetadata(transaction, 1, Optional.empty(), Hash.ZERO, 0);
 
-    when(transactionPool.getTransactionByHash(eq(transaction.getHash())))
-        .thenReturn(Optional.empty());
+    when(transactionPool.getTransactionByHash(transaction.getHash())).thenReturn(Optional.empty());
     verifyNoMoreInteractions(transactionPool);
-    when(blockchainQueries.transactionByHash(eq(transaction.getHash())))
+    when(blockchainQueries.transactionByHash(transaction.getHash()))
         .thenReturn(Optional.of(transactionWithMetadata));
 
     final JsonRpcRequest request =
         new JsonRpcRequest(
-            "2.0", method.getName(), new Object[] {transaction.getHash().toHexString()});
+            JSON_RPC_VERSION, method.getName(), new Object[] {transaction.getHash().toHexString()});
     final JsonRpcRequestContext context = new JsonRpcRequestContext(request);
 
     final JsonRpcSuccessResponse expectedResponse =
@@ -156,7 +156,7 @@ public class EthGetTransactionByHashTest {
   }
 
   @Test
-  public void validateResultSpec() {
+  void validateResultSpec() {
 
     PendingTransaction pendingTx = getTransactionPool().stream().findFirst().get();
     Hash hash = pendingTx.getHash();
@@ -183,7 +183,23 @@ public class EthGetTransactionByHashTest {
     assertThat(result.getRaw()).isNotNull();
     assertThat(result.getTo()).isNotNull();
     assertThat(result.getValue()).isNotNull();
-    assertThat(result.getV()).isNotNull();
+    switch (result.getType()) {
+      case "0x0":
+        assertThat(result.getYParity()).isNull();
+        assertThat(result.getV()).isNotNull();
+        break;
+      case "0x1":
+      case "0x2":
+        assertThat(result.getYParity()).isNotNull();
+        assertThat(result.getV()).isNotNull();
+        break;
+      case "0x3":
+        assertThat(result.getYParity()).isNotNull();
+        assertThat(result.getV()).isNull();
+        break;
+      default:
+        fail("unknownType " + result.getType());
+    }
     assertThat(result.getR()).isNotNull();
     assertThat(result.getS()).isNotNull();
   }
@@ -194,7 +210,7 @@ public class EthGetTransactionByHashTest {
     Transaction pendingTransaction = gen.transaction();
     System.out.println(pendingTransaction.getHash());
     return gen.transactionsWithAllTypes(4).stream()
-        .map(transaction -> new PendingTransaction.Local(transaction))
+        .map(PendingTransaction.Local::new)
         .collect(Collectors.toUnmodifiableSet());
   }
 }

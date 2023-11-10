@@ -71,26 +71,27 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
    */
   private boolean transactionCurrentPriceBelowMin(final PendingTransaction pendingTransaction) {
     final Transaction transaction = pendingTransaction.getTransaction();
-    // Here we only care about EIP1159 since for Frontier and local transactions the checks
-    // that we do when accepting them in the pool are enough
-    if (transaction.getType().supports1559FeeMarket() && !pendingTransaction.hasPriority()) {
-
-      // For EIP1559 transactions, the price is dynamic and depends on network conditions, so we can
-      // only calculate at this time the current minimum price the transaction is willing to pay
-      // and if it is above the minimum accepted by the node.
-      // If below we do not delete the transaction, since when we added the transaction to the pool,
-      // we assured sure that the maxFeePerGas is >= of the minimum price accepted by the node
-      // and so the price of the transaction could satisfy this rule in the future
-      final Wei currentMinTransactionGasPriceInBlock =
+    // Priority txs are exempt from this check
+    if (!pendingTransaction.hasPriority()) {
+      // since the minGasPrice can change at runtime, we need to recheck it everytime
+      final Wei transactionGasPriceInBlock =
           context
               .feeMarket()
               .getTransactionPriceCalculator()
               .price(transaction, context.processableBlockHeader().getBaseFee());
-      if (context.minTransactionGasPrice().compareTo(currentMinTransactionGasPriceInBlock) > 0) {
-        LOG.trace(
-            "Current gas fee of {} is lower than configured minimum {}, skipping",
-            pendingTransaction,
-            context.minTransactionGasPrice());
+
+      if (context
+              .miningParameters()
+              .getMinTransactionGasPrice()
+              .compareTo(transactionGasPriceInBlock)
+          > 0) {
+        LOG.atTrace()
+            .setMessage(
+                "Current gas price of {} is {} and lower than the configured minimum {}, skipping")
+            .addArgument(pendingTransaction::toTraceLog)
+            .addArgument(transactionGasPriceInBlock)
+            .addArgument(context.miningParameters()::getMinTransactionGasPrice)
+            .log();
         return true;
       }
     }

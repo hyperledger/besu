@@ -178,9 +178,8 @@ public class CommandLineUtils {
           var optVal = field.get(currOptions);
           if (!Objects.equals(optVal, field.get(defaults))) {
             var optAnn = CommandLine.Option.class.cast(ann);
-            cliOpts.add(optAnn.names()[0]);
             final var optConverter = optAnn.converter();
-            cliOpts.add(formatValue(optConverter, optVal));
+            cliOpts.add(optAnn.names()[0] + "=" + formatValue(optConverter, optVal));
           }
         } catch (IllegalAccessException e) {
           throw new RuntimeException(e);
@@ -248,5 +247,18 @@ public class CommandLineUtils {
     } catch (final Exception e) {
       return false;
     }
+  }
+
+  /**
+   * Is the option with that name set on the command line?
+   *
+   * @param commandLine the command line
+   * @param optionName the option name to check
+   * @return true if set
+   */
+  public static boolean isOptionSet(final CommandLine commandLine, final String optionName) {
+    return commandLine.getCommandSpec().options().stream()
+        .filter(optionSpec -> Arrays.stream(optionSpec.names()).anyMatch(optionName::equals))
+        .anyMatch(CommandLineUtils::isOptionSet);
   }
 }

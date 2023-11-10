@@ -26,7 +26,6 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -163,7 +162,7 @@ public class TestNode implements Closeable {
             TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
             syncState,
-            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
+            MiningParameters.newDefault(),
             TransactionPoolConfiguration.DEFAULT,
             null);
 

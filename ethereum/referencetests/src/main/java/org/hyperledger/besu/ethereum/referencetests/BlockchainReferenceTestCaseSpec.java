@@ -232,6 +232,7 @@ public class BlockchainReferenceTestCaseSpec {
     "expectExceptionHomestead",
     "expectExceptionALL",
     "hasBigInt",
+    "rlp_decoded",
     "transactionSequence"
   })
   public static class CandidateBlock {
