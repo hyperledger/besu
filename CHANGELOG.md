@@ -3,6 +3,7 @@
 ## 23.10.2
 
 ### Breaking Changes
+- TX pool eviction in the legacy TX pool now favours keeping oldest transactions (more likely to evict higher nonces, less likely to introduce nonce gaps) [#6106](https://github.com/hyperledger/besu/pull/6106) and [#6146](https://github.com/hyperledger/besu/pull/6146)
 
 ### Deprecations
 
