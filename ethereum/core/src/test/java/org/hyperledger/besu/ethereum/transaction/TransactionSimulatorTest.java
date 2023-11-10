@@ -90,7 +90,7 @@ public class TransactionSimulatorTest {
   @BeforeEach
   public void setUp() {
     this.transactionSimulator =
-        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
+        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, Optional.empty());
   }
 
   @Test

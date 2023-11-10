@@ -192,7 +192,8 @@ public final class RunnerTest {
             .permissioningService(new PermissioningServiceImpl())
             .staticNodes(emptySet())
             .storageProvider(new InMemoryKeyValueStorageProvider())
-            .rpcEndpointService(new RpcEndpointServiceImpl());
+            .rpcEndpointService(new RpcEndpointServiceImpl())
+            .rpcGasCap(50_000_000L);
 
     Runner runnerBehind = null;
     final Runner runnerAhead =
