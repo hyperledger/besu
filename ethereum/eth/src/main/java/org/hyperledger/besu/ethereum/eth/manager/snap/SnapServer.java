@@ -296,12 +296,15 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
 
                 // only honor start and end hash if request is for a single account's storage:
                 Bytes32 startKeyBytes, endKeyBytes;
+                boolean isPartialRange = false;
                 if (range.hashes().size() > 1) {
                   startKeyBytes = Bytes32.ZERO;
                   endKeyBytes = HASH_LAST;
                 } else {
                   startKeyBytes = range.startKeyHash();
                   endKeyBytes = range.endKeyHash();
+                  isPartialRange =
+                      !(startKeyBytes.equals(Hash.ZERO) && endKeyBytes.equals(HASH_LAST));
                 }
 
                 ArrayDeque<NavigableMap<Bytes32, Bytes>> collectedStorages = new ArrayDeque<>();
@@ -313,31 +316,43 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                       storage.streamFlatStorages(
                           Hash.wrap(forAccountHash), startKeyBytes, endKeyBytes, statefulPredicate);
 
+                  //// address partial range queries that return empty
+                  if (accountStorages.isEmpty() && isPartialRange) {
+                    // fetch next slot after range, if it exists
+                    LOGGER.debug(
+                        "found no slots in range, taking first value starting from {}",
+                        range.endKeyHash().toHexString());
+                    accountStorages =
+                        storage.streamFlatStorages(
+                            Hash.wrap(forAccountHash), range.endKeyHash(), UInt256.MAX_VALUE, 1L);
+                  }
+
                   // don't send empty storage ranges
                   if (!accountStorages.isEmpty()) {
                     collectedStorages.add(accountStorages);
 
                     // if a partial storage range was requested, or we interrupted storage due to
                     // request limits, send proofs:
-                    if (!(startKeyBytes.equals(Hash.ZERO) && endKeyBytes.equals(HASH_LAST))
-                        || !statefulPredicate.shouldGetMore()) {
+                    if (isPartialRange || !statefulPredicate.shouldGetMore()) {
                       // send a proof for the left side range origin
                       proofNodes.addAll(
                           worldStateProof.getStorageProofRelatedNodes(
                               getAccountStorageRoot(forAccountHash, storage),
                               forAccountHash,
                               Hash.wrap(startKeyBytes)));
-                      // send a proof for the last key on the right
-                      proofNodes.addAll(
-                          worldStateProof.getStorageProofRelatedNodes(
-                              getAccountStorageRoot(forAccountHash, storage),
-                              forAccountHash,
-                              Hash.wrap(accountStorages.lastKey())));
+                      if (!accountStorages.isEmpty()) {
+                        // send a proof for the last key on the right
+                        proofNodes.addAll(
+                            worldStateProof.getStorageProofRelatedNodes(
+                                getAccountStorageRoot(forAccountHash, storage),
+                                forAccountHash,
+                                Hash.wrap(accountStorages.lastKey())));
+                      }
                     }
-                  }
 
-                  if (!statefulPredicate.shouldGetMore()) {
-                    break;
+                    if (!statefulPredicate.shouldGetMore()) {
+                      break;
+                    }
                   }
                 }
 
