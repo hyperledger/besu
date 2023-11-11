@@ -16,15 +16,19 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.api.graphql.GraphQLContextType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -46,12 +50,15 @@ public class TransactionAdapter extends AdapterBase {
       final DataFetchingEnvironment environment) {
     if (transactionReceiptWithMetadata == null) {
       final BlockchainQueries query = getBlockchainQueries(environment);
+      final ProtocolSchedule protocolSchedule =
+          environment.getGraphQlContext().get(GraphQLContextType.PROTOCOL_SCHEDULE);
+
       final Transaction transaction = transactionWithMetadata.getTransaction();
       if (transaction == null) {
         transactionReceiptWithMetadata = Optional.empty();
       } else {
         transactionReceiptWithMetadata =
-            query.transactionReceiptByTransactionHash(transaction.getHash());
+            query.transactionReceiptByTransactionHash(transaction.getHash(), protocolSchedule);
       }
     }
     return transactionReceiptWithMetadata;
@@ -114,17 +121,16 @@ public class TransactionAdapter extends AdapterBase {
     return transactionWithMetadata.getTransaction().getGasPrice().orElse(Wei.ZERO);
   }
 
-  public Optional<Wei> getMaxPriorityFeePerGas() {
-    return transactionWithMetadata.getTransaction().getMaxPriorityFeePerGas();
-  }
-
   public Optional<Wei> getMaxFeePerGas() {
     return transactionWithMetadata.getTransaction().getMaxFeePerGas();
   }
 
-  public Optional<Wei> getEffectiveGasPrice(final DataFetchingEnvironment environment) {
-    return getReceipt(environment)
-        .map(rwm -> rwm.getTransaction().getEffectiveGasPrice(rwm.getBaseFee()));
+  public Optional<Wei> getMaxPriorityFeePerGas() {
+    return transactionWithMetadata.getTransaction().getMaxPriorityFeePerGas();
+  }
+
+  public Optional<Wei> getMaxFeePerBlobGas() {
+    return transactionWithMetadata.getTransaction().getMaxFeePerBlobGas();
   }
 
   public Optional<Wei> getEffectiveTip(final DataFetchingEnvironment environment) {
@@ -165,6 +171,19 @@ public class TransactionAdapter extends AdapterBase {
     return getReceipt(environment).map(rpt -> rpt.getReceipt().getCumulativeGasUsed());
   }
 
+  public Optional<Wei> getEffectiveGasPrice(final DataFetchingEnvironment environment) {
+    return getReceipt(environment)
+        .map(rwm -> rwm.getTransaction().getEffectiveGasPrice(rwm.getBaseFee()));
+  }
+
+  public Optional<Long> getBlobGasUsed(final DataFetchingEnvironment environment) {
+    return getReceipt(environment).flatMap(TransactionReceiptWithMetadata::getBlobGasUsed);
+  }
+
+  public Optional<Wei> getBlobGasPrice(final DataFetchingEnvironment environment) {
+    return getReceipt(environment).flatMap(TransactionReceiptWithMetadata::getBlobGasPrice);
+  }
+
   public Optional<AccountAdapter> getCreatedContract(final DataFetchingEnvironment environment) {
     final boolean contractCreated = transactionWithMetadata.getTransaction().isContractCreation();
     if (contractCreated) {
@@ -187,6 +206,9 @@ public class TransactionAdapter extends AdapterBase {
 
   public List<LogAdapter> getLogs(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
+    final ProtocolSchedule protocolSchedule =
+        environment.getGraphQlContext().get(GraphQLContextType.PROTOCOL_SCHEDULE);
+
     final Hash hash = transactionWithMetadata.getTransaction().getHash();
 
     final Optional<BlockHeader> maybeBlockHeader =
@@ -201,7 +223,7 @@ public class TransactionAdapter extends AdapterBase {
     }
 
     final Optional<TransactionReceiptWithMetadata> maybeTransactionReceiptWithMetadata =
-        query.transactionReceiptByTransactionHash(hash);
+        query.transactionReceiptByTransactionHash(hash, protocolSchedule);
     final List<LogAdapter> results = new ArrayList<>();
     if (maybeTransactionReceiptWithMetadata.isPresent()) {
       final List<LogWithMetadata> logs =
@@ -212,6 +234,22 @@ public class TransactionAdapter extends AdapterBase {
       }
     }
     return results;
+  }
+
+  public BigInteger getR() {
+    return transactionWithMetadata.getTransaction().getR();
+  }
+
+  public BigInteger getS() {
+    return transactionWithMetadata.getTransaction().getS();
+  }
+
+  public Optional<BigInteger> getV() {
+    return Optional.ofNullable(transactionWithMetadata.getTransaction().getV());
+  }
+
+  public Optional<BigInteger> getYParity() {
+    return Optional.ofNullable(transactionWithMetadata.getTransaction().getYParity());
   }
 
   public List<AccessListEntryAdapter> getAccessList() {
@@ -236,5 +274,9 @@ public class TransactionAdapter extends AdapterBase {
               receipt.getReceipt().writeTo(rlpOutput);
               return rlpOutput.encoded();
             });
+  }
+
+  public List<VersionedHash> getBlobVersionedHashes() {
+    return transactionWithMetadata.getTransaction().getVersionedHashes().orElse(List.of());
   }
 }

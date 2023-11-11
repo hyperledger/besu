@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -86,7 +86,7 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
         .map(header -> resultByBlockHash(request, header.getBlockHash()))
         .orElseGet(
             () ->
-                new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.UNKNOWN_BLOCK));
+                new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.UNKNOWN_BLOCK));
   }
 
   protected Object handleParamTypes(final JsonRpcRequestContext requestContext) {
@@ -106,10 +106,10 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
       final OptionalLong blockNumber = blockParameterOrBlockHash.getNumber();
       if (blockNumber.isEmpty() || blockNumber.getAsLong() < 0) {
         return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+            requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
       } else if (blockNumber.getAsLong() > getBlockchainQueries().headBlockNumber()) {
         return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), JsonRpcError.BLOCK_NOT_FOUND);
+            requestContext.getRequest().getId(), RpcErrorType.BLOCK_NOT_FOUND);
       }
 
       result =
@@ -123,7 +123,7 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
       Optional<Hash> blockHash = blockParameterOrBlockHash.getHash();
       if (blockHash.isEmpty()) {
         return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+            requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
       }
 
       // return error if block hash does not find a block
@@ -131,13 +131,13 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
           getBlockchainQueries().getBlockHeaderByHash(blockHash.get());
       if (maybeBlockHeader.isEmpty()) {
         return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), JsonRpcError.BLOCK_NOT_FOUND);
+            requestContext.getRequest().getId(), RpcErrorType.BLOCK_NOT_FOUND);
       }
 
       if (Boolean.TRUE.equals(blockParameterOrBlockHash.getRequireCanonical())
           && !getBlockchainQueries().blockIsOnCanonicalChain(blockHash.get())) {
         return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), JsonRpcError.JSON_RPC_NOT_CANONICAL_ERROR);
+            requestContext.getRequest().getId(), RpcErrorType.JSON_RPC_NOT_CANONICAL_ERROR);
       }
 
       result = resultByBlockHash(requestContext, blockHash.get());

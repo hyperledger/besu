@@ -34,14 +34,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePrepareP
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EnginePreparePayloadDebugTest {
   private static final Vertx vertx = Vertx.vertx();
   EnginePreparePayloadDebug method;
@@ -55,7 +55,7 @@ public class EnginePreparePayloadDebugTest {
 
   @Mock private EnginePreparePayloadParameter param;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(protocolContext.safeConsensusContext(MergeContext.class))
         .thenReturn(Optional.of(mergeContext));

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.evm.AccessListEntry;
+import org.hyperledger.besu.datatypes.AccessListEntry;
 
 import java.util.Collection;
 import java.util.List;

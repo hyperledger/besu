@@ -1,7 +1,8 @@
 {
   "config": {
     "chainId": 999,
-    "petersburgBlock": 0,
+    "londonBlock": 0,
+    "zeroBaseFee": true,
     "ibft2": {
       "blockperiodseconds": 5,
       "epochlength": 30000,

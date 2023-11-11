@@ -147,6 +147,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public boolean isPoa() {
+    return isQbft() || isClique() || isIbft2() || isIbftLegacy();
+  }
+
+  @Override
   public BftConfigOptions getBftConfigOptions() {
     final String fieldKey = isIbft2() ? IBFT2_CONFIG_KEY : QBFT_CONFIG_KEY;
     return JsonUtil.getObjectNode(configRoot, fieldKey)
@@ -376,6 +381,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getSpiralBlockNumber() {
+    return getOptionalLong("spiralblock");
+  }
+
+  @Override
   public Optional<BigInteger> getChainId() {
     return getOptionalBigInteger("chainid");
   }
@@ -393,16 +403,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getEcip1017EraRounds() {
     return getOptionalLong("ecip1017erarounds");
-  }
-
-  @Override
-  public boolean isQuorum() {
-    return getOptionalBoolean("isquorum").orElse(false);
-  }
-
-  @Override
-  public OptionalLong getQip714BlockNumber() {
-    return getOptionalLong("qip714block");
   }
 
   @Override
@@ -465,6 +465,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
     getMagnetoBlockNumber().ifPresent(l -> builder.put("magnetoBlock", l));
     getMystiqueBlockNumber().ifPresent(l -> builder.put("mystiqueBlock", l));
+    getSpiralBlockNumber().ifPresent(l -> builder.put("spiralBlock", l));
 
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
@@ -483,11 +484,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     }
     if (isQbft()) {
       builder.put("qbft", getQbftConfigOptions().asMap());
-    }
-
-    if (isQuorum()) {
-      builder.put("isQuorum", true);
-      getQip714BlockNumber().ifPresent(blockNumber -> builder.put("qip714block", blockNumber));
     }
 
     if (isZeroBaseFee()) {
@@ -577,7 +573,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getPhoenixBlockNumber(),
             getThanosBlockNumber(),
             getMagnetoBlockNumber(),
-            getMystiqueBlockNumber());
+            getMystiqueBlockNumber(),
+            getSpiralBlockNumber());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
 
     return forkBlockNumbers

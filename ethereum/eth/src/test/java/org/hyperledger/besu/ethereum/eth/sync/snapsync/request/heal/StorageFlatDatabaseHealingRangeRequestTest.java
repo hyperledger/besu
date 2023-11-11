@@ -48,15 +48,15 @@ import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
-public class StorageFlatDatabaseHealingRangeRequestTest {
+@ExtendWith(MockitoExtension.class)
+class StorageFlatDatabaseHealingRangeRequestTest {
 
   @Mock private SnapWorldDownloadState downloadState;
   @Mock private SnapSyncProcessState snapSyncState;
@@ -74,7 +74,7 @@ public class StorageFlatDatabaseHealingRangeRequestTest {
   private Hash account0Hash;
   private Hash account0StorageRoot;
 
-  @Before
+  @BeforeEach
   public void setup() {
     final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
     worldStateStorage =
@@ -82,8 +82,9 @@ public class StorageFlatDatabaseHealingRangeRequestTest {
     proofProvider = new WorldStateProofProvider(worldStateStorage);
     trie =
         TrieGenerator.generateTrie(
-            worldStateStorage, accounts.stream().map(Hash::hash).collect(Collectors.toList()));
-    account0Hash = Hash.hash(accounts.get(0));
+            worldStateStorage,
+            accounts.stream().map(Address::addressHash).collect(Collectors.toList()));
+    account0Hash = accounts.get(0).addressHash();
     account0StorageRoot =
         trie.get(account0Hash)
             .map(RLP::input)
@@ -93,7 +94,7 @@ public class StorageFlatDatabaseHealingRangeRequestTest {
   }
 
   @Test
-  public void shouldReturnChildRequests() {
+  void shouldReturnChildRequests() {
 
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
@@ -150,7 +151,7 @@ public class StorageFlatDatabaseHealingRangeRequestTest {
   }
 
   @Test
-  public void shouldNotReturnChildRequestsWhenNoMoreSlots() {
+  void shouldNotReturnChildRequestsWhenNoMoreSlots() {
 
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
@@ -191,7 +192,7 @@ public class StorageFlatDatabaseHealingRangeRequestTest {
   }
 
   @Test
-  public void doNotPersistWhenProofIsValid() {
+  void doNotPersistWhenProofIsValid() {
 
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
@@ -248,7 +249,7 @@ public class StorageFlatDatabaseHealingRangeRequestTest {
   }
 
   @Test
-  public void doHealAndPersistWhenProofIsInvalid() {
+  void doHealAndPersistWhenProofIsInvalid() {
 
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(

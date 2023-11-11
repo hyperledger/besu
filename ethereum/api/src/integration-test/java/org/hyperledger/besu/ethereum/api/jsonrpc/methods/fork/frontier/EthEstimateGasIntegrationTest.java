@@ -24,10 +24,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.util.Map;
@@ -64,7 +64,7 @@ public class EthEstimateGasIntegrationTest {
   @Test
   public void shouldReturnExpectedValueForEmptyCallParameter() {
     final JsonCallParameter callParameter =
-        new JsonCallParameter(null, null, null, null, null, null, null, null, null, null);
+        new JsonCallParameter(null, null, null, null, null, null, null, null, null, null, null);
     final JsonRpcRequestContext request = requestWithParams(callParameter);
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x5208");
 
@@ -84,6 +84,7 @@ public class EthEstimateGasIntegrationTest {
             null,
             null,
             Wei.ONE,
+            null,
             null,
             null,
             null);
@@ -109,6 +110,7 @@ public class EthEstimateGasIntegrationTest {
             Bytes.fromHexString(
                 "0x608060405234801561001057600080fd5b50610157806100206000396000f30060806040526004361061004c576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680633bdab8bf146100515780639ae97baa14610068575b600080fd5b34801561005d57600080fd5b5061006661007f565b005b34801561007457600080fd5b5061007d6100b9565b005b7fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60016040518082815260200191505060405180910390a1565b7fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60026040518082815260200191505060405180910390a17fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60036040518082815260200191505060405180910390a15600a165627a7a7230582010ddaa52e73a98c06dbcd22b234b97206c1d7ed64a7c048e10c2043a3d2309cb0029"),
             null,
+            null,
             null);
     final JsonRpcRequestContext request = requestWithParams(callParameter);
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x1b551");
@@ -131,6 +133,7 @@ public class EthEstimateGasIntegrationTest {
             null,
             Bytes.fromHexString(
                 "0x608060405234801561001057600080fd5b50610157806100206000396000f30060806040526004361061004c576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680633bdab8bf146100515780639ae97baa14610068575b600080fd5b34801561005d57600080fd5b5061006661007f565b005b34801561007457600080fd5b5061007d6100b9565b005b7fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60016040518082815260200191505060405180910390a1565b7fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60026040518082815260200191505060405180910390a17fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60036040518082815260200191505060405180910390a15600a165627a7a7230582010ddaa52e73a98c06dbcd22b234b97206c1d7ed64a7c048e10c2043a3d2309cb0029"),
+            null,
             false,
             null);
     final JsonRpcRequestContext request = requestWithParams(callParameter);
@@ -154,11 +157,12 @@ public class EthEstimateGasIntegrationTest {
             null,
             Bytes.fromHexString(
                 "0x608060405234801561001057600080fd5b50610157806100206000396000f30060806040526004361061004c576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680633bdab8bf146100515780639ae97baa14610068575b600080fd5b34801561005d57600080fd5b5061006661007f565b005b34801561007457600080fd5b5061007d6100b9565b005b7fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60016040518082815260200191505060405180910390a1565b7fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60026040518082815260200191505060405180910390a17fa53887c1eed04528e23301f55ad49a91634ef5021aa83a97d07fd16ed71c039a60036040518082815260200191505060405180910390a15600a165627a7a7230582010ddaa52e73a98c06dbcd22b234b97206c1d7ed64a7c048e10c2043a3d2309cb0029"),
+            null,
             true,
             null);
     final JsonRpcRequestContext request = requestWithParams(callParameter);
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
+        new JsonRpcErrorResponse(null, RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
@@ -167,7 +171,7 @@ public class EthEstimateGasIntegrationTest {
   @Test
   public void shouldReturnExpectedValueForInsufficientGas() {
     final JsonCallParameter callParameter =
-        new JsonCallParameter(null, null, 1L, null, null, null, null, null, null, null);
+        new JsonCallParameter(null, null, 1L, null, null, null, null, null, null, null, null);
     final JsonRpcRequestContext request = requestWithParams(callParameter);
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x5208");
 

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.query;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -33,6 +34,8 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -612,7 +615,7 @@ public class BlockchainQueries {
    * @return The transaction receipt associated with the referenced transaction.
    */
   public Optional<TransactionReceiptWithMetadata> transactionReceiptByTransactionHash(
-      final Hash transactionHash) {
+      final Hash transactionHash, final ProtocolSchedule protocolSchedule) {
     final Optional<TransactionLocation> maybeLocation =
         blockchain.getTransactionLocation(transactionHash);
     if (maybeLocation.isEmpty()) {
@@ -639,6 +642,12 @@ public class BlockchainQueries {
               - transactionReceipts.get(location.getTransactionIndex() - 1).getCumulativeGasUsed();
     }
 
+    Optional<Long> maybeBlobGasUsed =
+        getBlobGasUsed(transaction, protocolSchedule.getByBlockHeader(header));
+
+    Optional<Wei> maybeBlobGasPrice =
+        getBlobGasPrice(transaction, header, protocolSchedule.getByBlockHeader(header));
+
     return Optional.of(
         TransactionReceiptWithMetadata.create(
             transactionReceipt,
@@ -648,7 +657,48 @@ public class BlockchainQueries {
             gasUsed,
             header.getBaseFee(),
             blockhash,
-            header.getNumber()));
+            header.getNumber(),
+            maybeBlobGasUsed,
+            maybeBlobGasPrice));
+  }
+
+  /**
+   * Calculates the blob gas used for data in a transaction.
+   *
+   * @param transaction the transaction to calculate the gas for
+   * @param protocolSpec the protocol specification to use for gas calculation
+   * @return an Optional containing the blob gas used for data if the transaction type supports
+   *     blobs, otherwise returns an empty Optional
+   */
+  private Optional<Long> getBlobGasUsed(
+      final Transaction transaction, final ProtocolSpec protocolSpec) {
+    return transaction.getType().supportsBlob()
+        ? Optional.of(protocolSpec.getGasCalculator().blobGasCost(transaction.getBlobCount()))
+        : Optional.empty();
+  }
+
+  /**
+   * Calculates the blob gas price for data in a transaction.
+   *
+   * @param transaction the transaction to calculate the gas price for
+   * @param header the block header of the current block
+   * @param protocolSpec the protocol specification to use for gas price calculation
+   * @return an Optional containing the blob gas price for data if the transaction type supports
+   *     blobs, otherwise returns an empty Optional
+   */
+  private Optional<Wei> getBlobGasPrice(
+      final Transaction transaction, final BlockHeader header, final ProtocolSpec protocolSpec) {
+    if (transaction.getType().supportsBlob()) {
+      return blockchain
+          .getBlockHeader(header.getParentHash())
+          .map(
+              parentHeader ->
+                  protocolSpec
+                      .getFeeMarket()
+                      .blobGasPricePerGas(
+                          calculateExcessBlobGasForParent(protocolSpec, parentHeader)));
+    }
+    return Optional.empty();
   }
 
   /**
@@ -919,7 +969,7 @@ public class BlockchainQueries {
         ? Optional.empty()
         : Optional.of(
             Math.max(
-                apiConfig.getGasPriceMin(),
+                apiConfig.getGasPriceMinSupplier().getAsLong(),
                 Math.min(
                     apiConfig.getGasPriceMax(),
                     gasCollection[

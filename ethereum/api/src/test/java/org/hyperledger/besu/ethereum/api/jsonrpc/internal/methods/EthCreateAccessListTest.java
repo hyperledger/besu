@@ -23,6 +23,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -33,6 +34,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CreateAccessListResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -42,7 +44,6 @@ import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.tracing.AccessListOperationTracer;
 
 import java.util.ArrayList;
@@ -52,15 +53,18 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class EthCreateAccessListTest {
 
   private final String METHOD = "eth_createAccessList";
@@ -72,7 +76,7 @@ public class EthCreateAccessListTest {
   @Mock private TransactionSimulator transactionSimulator;
   @Mock private WorldStateArchive worldStateArchive;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(blockchainQueries.headBlockNumber()).thenReturn(1L);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
@@ -143,7 +147,7 @@ public class EthCreateAccessListTest {
     mockTransactionSimulatorResult(false, false, 1L);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.WORLD_STATE_UNAVAILABLE);
+        new JsonRpcErrorResponse(null, RpcErrorType.WORLD_STATE_UNAVAILABLE);
 
     Assertions.assertThat(method.response(request))
         .usingRecursiveComparison()
@@ -156,8 +160,9 @@ public class EthCreateAccessListTest {
         ethCreateAccessListRequest(legacyTransactionCallParameter(Wei.ZERO));
     mockTransactionSimulatorResult(false, true, 1L);
 
+    final String errorReason = "0x00";
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.REVERT_ERROR);
+        new JsonRpcErrorResponse(null, new JsonRpcError(RpcErrorType.REVERT_ERROR, errorReason));
 
     Assertions.assertThat(method.response(request))
         .usingRecursiveComparison()
@@ -303,6 +308,7 @@ public class EthCreateAccessListTest {
         null,
         Wei.ZERO,
         Bytes.EMPTY,
+        null,
         false,
         null);
   }
@@ -331,6 +337,7 @@ public class EthCreateAccessListTest {
         Wei.fromHexString("0x10"),
         Wei.ZERO,
         Bytes.EMPTY,
+        null,
         false,
         accessListEntries);
   }

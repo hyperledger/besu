@@ -27,7 +27,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -99,8 +98,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionFactory;
 import org.awaitility.core.ConditionTimeoutException;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 // NullPointerExceptions on optional.get() will result in test failures anyway
@@ -114,7 +113,7 @@ public final class EthProtocolManagerTest {
   private static ProtocolContext protocolContext;
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
-  @BeforeClass
+  @BeforeAll
   public static void setup() {
     gen = new BlockDataGenerator(0);
     final BlockchainSetupUtil blockchainSetupUtil =
@@ -1089,8 +1088,9 @@ public final class EthProtocolManagerTest {
     final ExecutorService transactions = mock(ExecutorService.class);
     final ExecutorService services = mock(ExecutorService.class);
     final ExecutorService computations = mock(ExecutorService.class);
+    final ExecutorService blockCreation = mock(ExecutorService.class);
     final EthScheduler ethScheduler =
-        new EthScheduler(worker, scheduled, transactions, services, computations);
+        new EthScheduler(worker, scheduled, transactions, services, computations, blockCreation);
 
     // Create the fake TransactionMessage to feed to the EthManager.
     final BlockDataGenerator gen = new BlockDataGenerator(1);
@@ -1116,8 +1116,9 @@ public final class EthProtocolManagerTest {
               TestClock.system(ZoneId.systemDefault()),
               metricsSystem,
               new SyncState(blockchain, ethManager.ethContext().getEthPeers()),
-              new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
-              TransactionPoolConfiguration.DEFAULT)
+              MiningParameters.newDefault(),
+              TransactionPoolConfiguration.DEFAULT,
+              null)
           .setEnabled();
 
       // Send just a transaction message.

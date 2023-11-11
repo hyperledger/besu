@@ -18,16 +18,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Arrays;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PooledTransactionsMessageTest {
 

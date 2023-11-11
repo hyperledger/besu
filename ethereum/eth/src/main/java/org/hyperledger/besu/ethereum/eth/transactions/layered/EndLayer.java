@@ -77,8 +77,7 @@ public class EndLayer implements TransactionsLayer {
   @Override
   public TransactionAddedResult add(final PendingTransaction pendingTransaction, final int gap) {
     notifyTransactionDropped(pendingTransaction);
-    metrics.incrementRemoved(
-        pendingTransaction.isReceivedFromLocalSource(), DROPPED.label(), name());
+    metrics.incrementRemoved(pendingTransaction, DROPPED.label(), name());
     ++droppedCount;
     return TransactionAddedResult.DROPPED;
   }
@@ -100,6 +99,11 @@ public class EndLayer implements TransactionsLayer {
   }
 
   @Override
+  public List<Transaction> getAllPriority() {
+    return List.of();
+  }
+
+  @Override
   public int count() {
     return 0;
   }
@@ -115,8 +119,11 @@ public class EndLayer implements TransactionsLayer {
   }
 
   @Override
-  public PendingTransaction promote(final Predicate<PendingTransaction> promotionFilter) {
-    return null;
+  public List<PendingTransaction> promote(
+      final Predicate<PendingTransaction> promotionFilter,
+      final long freeSpace,
+      final int freeSlots) {
+    return List.of();
   }
 
   @Override

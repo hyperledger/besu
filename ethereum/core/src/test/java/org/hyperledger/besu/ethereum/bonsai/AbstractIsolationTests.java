@@ -16,6 +16,10 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -37,13 +41,20 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
@@ -56,14 +67,14 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
@@ -71,19 +82,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.io.TempDir;
 
 public abstract class AbstractIsolationTests {
   protected BonsaiWorldStateProvider archive;
   protected BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorage;
   protected ProtocolContext protocolContext;
+  protected EthContext ethContext;
+  protected EthScheduler ethScheduler = new DeterministicEthScheduler();
   final Function<String, KeyPair> asKeyPair =
       key ->
           SignatureAlgorithmFactory.getInstance()
@@ -125,10 +136,11 @@ public abstract class AbstractIsolationTests {
           .collect(Collectors.toList());
 
   KeyPair sender1 = asKeyPair.apply(accounts.get(0).getPrivateKey().get());
+  TransactionPool transactionPool;
 
-  @Rule public final TemporaryFolder tempData = new TemporaryFolder();
+  @TempDir private Path tempData;
 
-  @Before
+  @BeforeEach
   public void createStorage() {
     bonsaiWorldStateStorage =
         (BonsaiWorldStateKeyValueStorage)
@@ -140,96 +152,113 @@ public abstract class AbstractIsolationTests {
             Optional.of(16L),
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
             new NoOpMetricsSystem(),
-            null);
+            null,
+            EvmConfiguration.DEFAULT);
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
     protocolContext = new ProtocolContext(blockchain, archive, null, Optional.empty());
+    ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
+    when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
+    transactionPool =
+        new TransactionPool(
+            () -> sorter,
+            protocolSchedule,
+            protocolContext,
+            mock(TransactionBroadcaster.class),
+            ethContext,
+            mock(MiningParameters.class),
+            txPoolMetrics,
+            poolConfiguration,
+            null);
+    transactionPool.setEnabled();
   }
 
   // storage provider which uses a temporary directory based rocksdb
   protected StorageProvider createKeyValueStorageProvider() {
-    try {
-      tempData.create();
-      return new KeyValueStorageProviderBuilder()
-          .withStorageFactory(
-              new RocksDBKeyValueStorageFactory(
-                  () ->
-                      new RocksDBFactoryConfiguration(
-                          1024 /* MAX_OPEN_FILES*/,
-                          4 /*BACKGROUND_THREAD_COUNT*/,
-                          8388608 /*CACHE_CAPACITY*/,
-                          false),
-                  Arrays.asList(KeyValueSegmentIdentifier.values()),
-                  2,
-                  RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
-          .withCommonConfiguration(
-              new BesuConfiguration() {
+    return new KeyValueStorageProviderBuilder()
+        .withStorageFactory(
+            new RocksDBKeyValueStorageFactory(
+                () ->
+                    new RocksDBFactoryConfiguration(
+                        1024 /* MAX_OPEN_FILES*/,
+                        4 /*BACKGROUND_THREAD_COUNT*/,
+                        8388608 /*CACHE_CAPACITY*/,
+                        false),
+                Arrays.asList(KeyValueSegmentIdentifier.values()),
+                2,
+                RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
+        .withCommonConfiguration(
+            new BesuConfiguration() {
 
-                @Override
-                public Path getStoragePath() {
-                  return new File(tempData.getRoot().toString() + File.pathSeparator + "database")
-                      .toPath();
-                }
+              @Override
+              public Path getStoragePath() {
+                return tempData.resolve("database");
+              }
 
-                @Override
-                public Path getDataPath() {
-                  return tempData.getRoot().toPath();
-                }
+              @Override
+              public Path getDataPath() {
+                return tempData;
+              }
 
-                @Override
-                public int getDatabaseVersion() {
-                  return 2;
-                }
-              })
-          .withMetricsSystem(new NoOpMetricsSystem())
-          .build();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+              @Override
+              public int getDatabaseVersion() {
+                return 2;
+              }
+            })
+        .withMetricsSystem(new NoOpMetricsSystem())
+        .build();
   }
 
   static class TestBlockCreator extends AbstractBlockCreator {
     private TestBlockCreator(
-        final Address coinbase,
+        final MiningParameters miningParameters,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-        final Supplier<Optional<Long>> targetGasLimitSupplier,
         final ExtraDataCalculator extraDataCalculator,
-        final PendingTransactions pendingTransactions,
+        final TransactionPool transactionPool,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
-        final Wei minTransactionGasPrice,
-        final Double minBlockOccupancyRatio,
-        final BlockHeader parentHeader) {
+        final BlockHeader parentHeader,
+        final EthScheduler ethScheduler) {
       super(
-          coinbase,
+          miningParameters,
           miningBeneficiaryCalculator,
-          targetGasLimitSupplier,
           extraDataCalculator,
-          pendingTransactions,
+          transactionPool,
           protocolContext,
           protocolSchedule,
-          minTransactionGasPrice,
-          minBlockOccupancyRatio,
           parentHeader,
-          Optional.empty());
+          Optional.empty(),
+          ethScheduler);
     }
 
     static TestBlockCreator forHeader(
         final BlockHeader parentHeader,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
-        final PendingTransactions sorter) {
+        final TransactionPool transactionPool,
+        final EthScheduler ethScheduler) {
+
+      final MiningParameters miningParameters =
+          ImmutableMiningParameters.builder()
+              .mutableInitValues(
+                  MutableInitValues.builder()
+                      .extraData(Bytes.fromHexString("deadbeef"))
+                      .targetGasLimit(30_000_000L)
+                      .minTransactionGasPrice(Wei.ONE)
+                      .minBlockOccupancyRatio(0d)
+                      .coinbase(Address.ZERO)
+                      .build())
+              .build();
+
       return new TestBlockCreator(
-          Address.ZERO,
+          miningParameters,
           __ -> Address.ZERO,
-          () -> Optional.of(30_000_000L),
           __ -> Bytes.fromHexString("deadbeef"),
-          sorter,
+          transactionPool,
           protocolContext,
           protocolSchedule,
-          Wei.of(1L),
-          0d,
-          parentHeader);
+          parentHeader,
+          ethScheduler);
     }
 
     @Override
@@ -260,7 +289,8 @@ public abstract class AbstractIsolationTests {
 
   protected Block forTransactions(
       final List<Transaction> transactions, final BlockHeader forHeader) {
-    return TestBlockCreator.forHeader(forHeader, protocolContext, protocolSchedule, sorter)
+    return TestBlockCreator.forHeader(
+            forHeader, protocolContext, protocolSchedule, transactionPool, ethScheduler)
         .createBlock(transactions, Collections.emptyList(), System.currentTimeMillis())
         .getBlock();
   }

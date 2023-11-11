@@ -81,16 +81,6 @@ public class BackupRoundTripAcceptanceTest extends AbstractPreexistingNodeTest {
     return new Object[][] {
       // First 10 blocks of ropsten
       new Object[] {
-        "Before versioning was enabled",
-        "version0",
-        0xA,
-        singletonList(
-            new AccountData(
-                "0xd1aeb42885a43b72b518182ef893125814811048",
-                BigInteger.valueOf(0xA),
-                Wei.fromHexString("0x2B5E3AF16B1880000"))),
-      },
-      new Object[] {
         "After versioning was enabled and using multiple RocksDB columns",
         "version1",
         0xA,

@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class FilterIdGeneratorTest {
 

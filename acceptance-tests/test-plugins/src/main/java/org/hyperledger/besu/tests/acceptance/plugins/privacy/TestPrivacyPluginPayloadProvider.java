@@ -18,9 +18,9 @@ package org.hyperledger.besu.tests.acceptance.plugins.privacy;
 import static org.hyperledger.besu.ethereum.privacy.PrivateTransaction.readFrom;
 import static org.hyperledger.besu.ethereum.privacy.PrivateTransaction.serialize;
 
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.plugin.data.PrivateTransaction;
-import org.hyperledger.besu.plugin.data.Transaction;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyPluginPayloadProvider;
 
 import java.util.Optional;

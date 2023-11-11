@@ -75,8 +75,8 @@ import io.netty.channel.EventLoop;
 import io.netty.handler.codec.DecoderException;
 import io.netty.util.concurrent.ScheduledFuture;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 public class DeFramerTest {
@@ -108,7 +108,7 @@ public class DeFramerTest {
 
   private final DeFramer deFramer = createDeFramer(null, Optional.empty());
 
-  @Before
+  @BeforeEach
   @SuppressWarnings("unchecked")
   public void setup() {
     when(ctx.channel()).thenReturn(channel);

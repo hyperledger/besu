@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
@@ -57,7 +57,7 @@ public interface FeeMarket {
     return new LegacyFeeMarket();
   }
 
-  default Wei dataPrice(final DataGas excessDataGas) {
+  default Wei blobGasPricePerGas(final BlobGas excessBlobGas) {
     return Wei.ZERO;
   }
 }

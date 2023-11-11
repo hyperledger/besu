@@ -21,7 +21,8 @@ import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
@@ -32,7 +33,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -42,33 +42,29 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractMinerExecutor.class);
 
-  private final ExecutorService executorService = Executors.newCachedThreadPool();
+  private final ExecutorService executorService =
+      Executors.newCachedThreadPool(r -> new Thread(r, "MinerExecutor"));
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
-  protected final PendingTransactions pendingTransactions;
+  protected final TransactionPool transactionPool;
   protected final AbstractBlockScheduler blockScheduler;
-
-  protected volatile Bytes extraData;
-  protected volatile Wei minTransactionGasPrice;
-  protected volatile Double minBlockOccupancyRatio;
-  protected volatile Optional<AtomicLong> targetGasLimit;
-
+  protected final MiningParameters miningParameters;
+  protected final EthScheduler ethScheduler;
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
   protected AbstractMinerExecutor(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final PendingTransactions pendingTransactions,
+      final TransactionPool transactionPool,
       final MiningParameters miningParams,
-      final AbstractBlockScheduler blockScheduler) {
+      final AbstractBlockScheduler blockScheduler,
+      final EthScheduler ethScheduler) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
-    this.pendingTransactions = pendingTransactions;
-    this.extraData = miningParams.getExtraData();
-    this.minTransactionGasPrice = miningParams.getMinTransactionGasPrice();
+    this.transactionPool = transactionPool;
     this.blockScheduler = blockScheduler;
-    this.minBlockOccupancyRatio = miningParams.getMinBlockOccupancyRatio();
-    this.targetGasLimit = miningParams.getTargetGasLimit();
+    this.miningParameters = miningParams;
+    this.ethScheduler = ethScheduler;
   }
 
   public Optional<M> startAsyncMining(
@@ -103,24 +99,21 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
       final BlockHeader parentHeader);
 
   public void setExtraData(final Bytes extraData) {
-    this.extraData = extraData.copy();
+    miningParameters.setExtraData(extraData.copy());
   }
 
   public void setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
-    this.minTransactionGasPrice = minTransactionGasPrice;
+    miningParameters.setMinTransactionGasPrice(minTransactionGasPrice);
   }
 
   public Wei getMinTransactionGasPrice() {
-    return minTransactionGasPrice;
+    return miningParameters.getMinTransactionGasPrice();
   }
 
   public abstract Optional<Address> getCoinbase();
 
   public void changeTargetGasLimit(final Long newTargetGasLimit) {
     if (AbstractGasLimitSpecification.isValidTargetGasLimit(newTargetGasLimit)) {
-      this.targetGasLimit.ifPresentOrElse(
-          existing -> existing.set(newTargetGasLimit),
-          () -> this.targetGasLimit = Optional.of(new AtomicLong(newTargetGasLimit)));
     } else {
       throw new UnsupportedOperationException("Specified target gas limit is invalid");
     }

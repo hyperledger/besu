@@ -15,172 +15,188 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockTransactionSelector;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
-import org.hyperledger.besu.plugin.data.TransactionType;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.testutil.TestClock;
+import org.hyperledger.besu.util.number.Fraction;
 
-import java.math.BigInteger;
 import java.time.ZoneId;
-import java.util.Optional;
+import java.util.List;
+import java.util.function.Function;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class LondonFeeMarketBlockTransactionSelectorTest
     extends AbstractBlockTransactionSelectorTest {
 
   @Override
-  protected PendingTransactions createPendingTransactions() {
-    return new BaseFeePendingTransactionsSorter(
+  protected GenesisConfigFile getGenesisConfigFile() {
+    return GenesisConfigFile.genesisFileFromResources(
+        "/block-transaction-selector/london-genesis.json");
+  }
+
+  @Override
+  protected ProtocolSchedule createProtocolSchedule() {
+    return new ProtocolScheduleBuilder(
+            genesisConfigFile.getConfigOptions(),
+            CHAIN_ID,
+            ProtocolSpecAdapters.create(0, Function.identity()),
+            new PrivacyParameters(),
+            false,
+            EvmConfiguration.DEFAULT)
+        .createProtocolSchedule();
+  }
+
+  @Override
+  protected TransactionPool createTransactionPool(final MiningParameters miningParameters) {
+    final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder()
             .txPoolMaxSize(5)
-            .txPoolLimitByAccountPercentage(1)
-            .build(),
-        TestClock.system(ZoneId.systemDefault()),
-        metricsSystem,
-        LondonFeeMarketBlockTransactionSelectorTest::mockBlockHeader);
-  }
+            .txPoolLimitByAccountPercentage(Fraction.fromFloat(1f))
+            .build();
+    final PendingTransactions pendingTransactions =
+        new BaseFeePendingTransactionsSorter(
+            poolConf,
+            TestClock.system(ZoneId.systemDefault()),
+            metricsSystem,
+            blockchain::getChainHeadHeader);
 
-  @Override
-  protected GasCalculator getGasCalculator() {
-    return new LondonGasCalculator();
-  }
-
-  private static BlockHeader mockBlockHeader() {
-    final BlockHeader blockHeader = mock(BlockHeader.class);
-    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ONE));
-    return blockHeader;
-  }
-
-  @Override
-  protected FeeMarket getFeeMarket() {
-    return FeeMarket.london(0L);
+    final TransactionPool transactionPool =
+        new TransactionPool(
+            () -> pendingTransactions,
+            protocolSchedule,
+            protocolContext,
+            mock(TransactionBroadcaster.class),
+            ethContext,
+            miningParameters,
+            new TransactionPoolMetrics(metricsSystem),
+            poolConf,
+            null);
+    transactionPool.setEnabled();
+    return transactionPool;
   }
 
   @Test
   public void eip1559TransactionCurrentGasPriceLessThanMinimumIsSkippedAndKeptInThePool() {
-    final ProcessableBlockHeader blockHeader = createBlock(301, Wei.ONE);
+    final ProcessableBlockHeader blockHeader = createBlock(301_000, Wei.ONE);
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
-        createBlockSelector(
+        createBlockSelectorAndSetupTxPool(
+            createMiningParameters(
+                Wei.of(6), MIN_OCCUPANCY_80_PERCENT, DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
-            Wei.of(6),
             miningBeneficiary,
             Wei.ZERO,
-            MIN_OCCUPANCY_80_PERCENT);
+            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
 
-    // tx is willing to pay max 6 wei for gas, but current network condition (baseFee == 1)
+    // tx is willing to pay max 7 wei for gas, but current network condition (baseFee == 1)
     // result in it paying 2 wei, that is below the minimum accepted by the node, so it is skipped
-    final Transaction tx = createEIP1559Transaction(1, Wei.of(6L), Wei.ONE);
-    pendingTransactions.addRemoteTransaction(tx, Optional.empty());
+    final Transaction tx = createEIP1559Transaction(1, Wei.of(7L), Wei.ONE, 100_000);
+    final var addResults = transactionPool.addRemoteTransactions(List.of(tx));
+    assertThat(addResults).extractingByKey(tx.getHash()).isEqualTo(ValidationResult.valid());
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions().size()).isEqualTo(0);
-    assertThat(pendingTransactions.size()).isEqualTo(1);
+    assertThat(results.getSelectedTransactions()).isEmpty();
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(entry(tx, TransactionSelectionResult.CURRENT_TX_PRICE_BELOW_MIN));
+    assertThat(transactionPool.count()).isEqualTo(1);
   }
 
   @Test
   public void eip1559TransactionCurrentGasPriceGreaterThanMinimumIsSelected() {
-    final ProcessableBlockHeader blockHeader = createBlock(301, Wei.of(5));
+    final ProcessableBlockHeader blockHeader = createBlock(301_000, Wei.of(5));
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
-        createBlockSelector(
+        createBlockSelectorAndSetupTxPool(
+            createMiningParameters(
+                Wei.of(6), MIN_OCCUPANCY_80_PERCENT, DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
-            Wei.of(6),
             miningBeneficiary,
             Wei.ZERO,
-            MIN_OCCUPANCY_80_PERCENT);
+            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
 
-    // tx is willing to pay max 6 wei for gas, and current network condition (baseFee == 5)
+    // tx is willing to pay max 7 wei for gas, and current network condition (baseFee == 5)
     // result in it paying the max, that is >= the minimum accepted by the node, so it is selected
-    final Transaction tx = createEIP1559Transaction(1, Wei.of(6), Wei.ONE);
-    pendingTransactions.addRemoteTransaction(tx, Optional.empty());
+    final Transaction tx = createEIP1559Transaction(1, Wei.of(7), Wei.ONE, 100_000);
+    transactionPool.addRemoteTransactions(List.of(tx));
 
     ensureTransactionIsValid(tx);
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions().size()).isEqualTo(1);
-    assertThat(pendingTransactions.size()).isEqualTo(1);
+    assertThat(results.getSelectedTransactions()).containsExactly(tx);
+    assertThat(results.getNotSelectedTransactions()).isEmpty();
   }
 
   @Test
-  public void eip1559LocalTransactionCurrentGasPriceLessThanMinimumIsSelected() {
-    final ProcessableBlockHeader blockHeader = createBlock(301, Wei.ONE);
+  public void eip1559PriorityTransactionCurrentGasPriceLessThanMinimumIsSelected() {
+    final ProcessableBlockHeader blockHeader = createBlock(301_000, Wei.ONE);
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
-        createBlockSelector(
+        createBlockSelectorAndSetupTxPool(
+            createMiningParameters(
+                Wei.of(6), MIN_OCCUPANCY_80_PERCENT, DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
-            Wei.of(6),
             miningBeneficiary,
             Wei.ZERO,
-            MIN_OCCUPANCY_80_PERCENT);
+            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
 
-    // tx is willing to pay max 6 wei for gas, but current network condition (baseFee == 1)
+    // tx is willing to pay max 7 wei for gas, but current network condition (baseFee == 1)
     // result in it paying 2 wei, that is below the minimum accepted by the node, but since it is
     // a local sender it is accepted anyway
-    final Transaction tx = createEIP1559Transaction(1, Wei.of(6L), Wei.ONE);
-    pendingTransactions.addLocalTransaction(tx, Optional.empty());
+    final Transaction tx = createEIP1559Transaction(1, Wei.of(7L), Wei.ONE, 100_000);
+    final var addResult = transactionPool.addTransactionViaApi(tx);
+    assertThat(addResult.isValid()).isTrue();
 
     ensureTransactionIsValid(tx);
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions().size()).isEqualTo(1);
-    assertThat(pendingTransactions.size()).isEqualTo(1);
+    assertThat(results.getSelectedTransactions()).containsExactly(tx);
+    assertThat(results.getNotSelectedTransactions()).isEmpty();
   }
 
   @Test
   public void transactionFromSameSenderWithMixedTypes() {
-    final ProcessableBlockHeader blockHeader = createBlock(5000);
+    final ProcessableBlockHeader blockHeader = createBlock(5_000_000);
 
-    final TransactionTestFixture txTestFixture = new TransactionTestFixture();
-    final Transaction txFrontier1 =
-        txTestFixture
-            .type(TransactionType.FRONTIER)
-            .nonce(0)
-            .gasLimit(1)
-            .gasPrice(Wei.ONE)
-            .createTransaction(keyPair);
-    final Transaction txLondon1 = createEIP1559Transaction(1, Wei.ONE, Wei.ONE);
-    final Transaction txFrontier2 =
-        txTestFixture
-            .type(TransactionType.FRONTIER)
-            .nonce(2)
-            .gasLimit(1)
-            .gasPrice(Wei.ONE)
-            .createTransaction(keyPair);
-    final Transaction txLondon2 = createEIP1559Transaction(3, Wei.ONE, Wei.ONE);
-
-    pendingTransactions.addRemoteTransaction(txFrontier1, Optional.empty());
-    pendingTransactions.addRemoteTransaction(txLondon1, Optional.empty());
-    pendingTransactions.addRemoteTransaction(txFrontier2, Optional.empty());
-    pendingTransactions.addRemoteTransaction(txLondon2, Optional.empty());
+    final Transaction txFrontier1 = createTransaction(0, Wei.of(7L), 100_000);
+    final Transaction txLondon1 = createEIP1559Transaction(1, Wei.ONE, Wei.ONE, 100_000);
+    final Transaction txFrontier2 = createTransaction(2, Wei.of(7L), 100_000);
+    final Transaction txLondon2 = createEIP1559Transaction(3, Wei.ONE, Wei.ONE, 100_000);
 
     ensureTransactionIsValid(txFrontier1);
     ensureTransactionIsValid(txLondon1);
@@ -189,35 +205,68 @@ public class LondonFeeMarketBlockTransactionSelectorTest
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
-        createBlockSelector(
+        createBlockSelectorAndSetupTxPool(
+            defaultTestMiningParameters,
             transactionProcessor,
             blockHeader,
-            Wei.ZERO,
             miningBeneficiary,
             Wei.ZERO,
-            MIN_OCCUPANCY_80_PERCENT);
+            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    transactionPool.addRemoteTransactions(List.of(txFrontier1, txLondon1, txFrontier2, txLondon2));
 
-    assertThat(results.getTransactions())
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
+
+    assertThat(results.getSelectedTransactions())
         .containsExactly(txFrontier1, txLondon1, txFrontier2, txLondon2);
+    assertThat(results.getNotSelectedTransactions()).isEmpty();
   }
 
-  private Transaction createEIP1559Transaction(
-      final int transactionNumber, final Wei maxFeePerGas, final Wei maxPriorityFeePerGas) {
-    return Transaction.builder()
-        .type(TransactionType.EIP1559)
-        .gasLimit(100)
-        .maxFeePerGas(maxFeePerGas)
-        .maxPriorityFeePerGas(maxPriorityFeePerGas)
-        .nonce(transactionNumber)
-        .payload(Bytes.EMPTY)
-        .to(Address.ID)
-        .value(Wei.of(transactionNumber))
-        .sender(Address.ID)
-        .chainId(BigInteger.ONE)
-        .guessType()
-        .signAndBuild(keyPair);
+  @Test
+  @Override
+  public void shouldNotSelectTransactionsWithPriorityFeeLessThanConfig() {
+    ProcessableBlockHeader blockHeader = createBlock(5_000_000, Wei.ONE);
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder().from(defaultTestMiningParameters).build();
+    miningParameters.setMinPriorityFeePerGas(Wei.of(7));
+
+    final Transaction txSelected1 = createEIP1559Transaction(1, Wei.of(8), Wei.of(8), 100_000);
+    ensureTransactionIsValid(txSelected1);
+
+    // transaction txNotSelected1 should not be selected
+    final Transaction txNotSelected1 = createEIP1559Transaction(2, Wei.of(7), Wei.of(7), 100_000);
+    ensureTransactionIsValid(txNotSelected1);
+
+    // transaction txSelected2 should be selected
+    final Transaction txSelected2 = createEIP1559Transaction(3, Wei.of(8), Wei.of(8), 100_000);
+    ensureTransactionIsValid(txSelected2);
+
+    // transaction txNotSelected2 should not be selected
+    final Transaction txNotSelected2 = createEIP1559Transaction(4, Wei.of(8), Wei.of(6), 100_000);
+    ensureTransactionIsValid(txNotSelected2);
+
+    final BlockTransactionSelector selector =
+        createBlockSelectorAndSetupTxPool(
+            miningParameters,
+            transactionProcessor,
+            blockHeader,
+            AddressHelpers.ofValue(1),
+            Wei.ZERO,
+            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
+
+    transactionPool.addRemoteTransactions(
+        List.of(txSelected1, txNotSelected1, txSelected2, txNotSelected2));
+
+    assertThat(transactionPool.getPendingTransactions().size()).isEqualTo(4);
+
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
+
+    assertThat(results.getSelectedTransactions()).containsOnly(txSelected1, txSelected2);
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(
+            entry(
+                txNotSelected1, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN),
+            entry(
+                txNotSelected2, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN));
   }
 }

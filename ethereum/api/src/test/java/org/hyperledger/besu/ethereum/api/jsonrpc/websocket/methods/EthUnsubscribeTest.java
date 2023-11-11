@@ -22,9 +22,9 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionNotFoundException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.InvalidSubscriptionRequestException;
@@ -32,8 +32,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.UnsubscribeRequest;
 
 import io.vertx.core.json.Json;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EthUnsubscribeTest {
 
@@ -42,7 +42,7 @@ public class EthUnsubscribeTest {
   private SubscriptionRequestMapper mapperMock;
   private final String CONNECTION_ID = "test-connection-id";
 
-  @Before
+  @BeforeEach
   public void before() {
     subscriptionManagerMock = mock(SubscriptionManager.class);
     mapperMock = mock(SubscriptionRequestMapper.class);
@@ -74,7 +74,7 @@ public class EthUnsubscribeTest {
         .thenThrow(new InvalidSubscriptionRequestException());
 
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_REQUEST);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_REQUEST);
 
     assertThat(ethUnsubscribe.response(request)).isEqualTo(expectedResponse);
   }
@@ -87,7 +87,7 @@ public class EthUnsubscribeTest {
         .thenThrow(new SubscriptionNotFoundException(1L));
 
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.SUBSCRIPTION_NOT_FOUND);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.SUBSCRIPTION_NOT_FOUND);
 
     assertThat(ethUnsubscribe.response(request)).isEqualTo(expectedResponse);
   }
@@ -99,7 +99,7 @@ public class EthUnsubscribeTest {
     when(subscriptionManagerMock.unsubscribe(any())).thenThrow(new RuntimeException());
 
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INTERNAL_ERROR);
 
     assertThat(ethUnsubscribe.response(request)).isEqualTo(expectedResponse);
   }

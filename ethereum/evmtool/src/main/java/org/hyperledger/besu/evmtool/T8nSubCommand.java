@@ -19,14 +19,16 @@ package org.hyperledger.besu.evmtool;
 import static org.hyperledger.besu.evmtool.T8nSubCommand.COMMAND_ALIAS;
 import static org.hyperledger.besu.evmtool.T8nSubCommand.COMMAND_NAME;
 
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evmtool.T8nExecutor.RejectedTransaction;
+import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -44,6 +46,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
@@ -167,10 +170,13 @@ public class T8nSubCommand implements Runnable {
 
   @Override
   public void run() {
+    LogConfigurator.setLevel("", "OFF");
+    // presume ethereum mainnet for reference and state tests
+    SignatureAlgorithmFactory.setDefaultInstance();
     final ObjectMapper objectMapper = JsonUtils.createObjectMapper();
     final ObjectReader t8nReader = objectMapper.reader();
 
-    MutableWorldState initialWorldState;
+    ReferenceTestWorldState initialWorldState;
     ReferenceTestEnv referenceTestEnv;
     List<Transaction> transactions = new ArrayList<>();
     List<RejectedTransaction> rejections = new ArrayList<>();
@@ -202,8 +208,9 @@ public class T8nSubCommand implements Runnable {
       }
 
       referenceTestEnv = objectMapper.convertValue(config.get("env"), ReferenceTestEnv.class);
-      initialWorldState =
-          objectMapper.convertValue(config.get("alloc"), ReferenceTestWorldState.class);
+      Map<String, ReferenceTestWorldState.AccountMock> accounts =
+          objectMapper.convertValue(config.get("alloc"), new TypeReference<>() {});
+      initialWorldState = ReferenceTestWorldState.create(accounts, EvmConfiguration.DEFAULT);
       initialWorldState.persist(null);
       var node = config.get("txs");
       Iterator<JsonNode> it;
@@ -250,7 +257,8 @@ public class T8nSubCommand implements Runnable {
                       new PrintStream(traceDest),
                       parentCommand.showMemory,
                       !parentCommand.hideStack,
-                      parentCommand.showReturnData);
+                      parentCommand.showReturnData,
+                      parentCommand.showStorage);
               outputStreams.put(jsonTracer, traceDest);
               return jsonTracer;
             }
@@ -319,7 +327,7 @@ public class T8nSubCommand implements Runnable {
         }
       }
 
-      if (outputObject.size() > 0) {
+      if (!outputObject.isEmpty()) {
         parentCommand.out.println(writer.writeValueAsString(outputObject));
       }
     } catch (IOException ioe) {

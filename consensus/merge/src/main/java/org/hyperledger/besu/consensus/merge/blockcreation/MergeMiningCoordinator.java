@@ -41,6 +41,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
    * @param prevRandao the prev randao
    * @param feeRecipient the fee recipient
    * @param withdrawals the optional list of withdrawals
+   * @param parentBeaconBlockRoot optional root hash of the parent beacon block
    * @return the payload identifier
    */
   PayloadIdentifier preparePayload(
@@ -48,7 +49,8 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
       final Long timestamp,
       final Bytes32 prevRandao,
       final Address feeRecipient,
-      final Optional<List<Withdrawal>> withdrawals);
+      final Optional<List<Withdrawal>> withdrawals,
+      final Optional<Bytes32> parentBeaconBlockRoot);
 
   @Override
   default boolean isCompatibleWithEngineApi() {
@@ -99,19 +101,11 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
   Optional<Hash> getLatestValidAncestor(BlockHeader blockheader);
 
   /**
-   * Check if latest valid ancestor descends from terminal.
-   *
-   * @param blockHeader the block header
-   * @return the boolean
-   */
-  boolean latestValidAncestorDescendsFromTerminal(final BlockHeader blockHeader);
-
-  /**
-   * Is descendant of.
+   * Checks if a block descends from another
    *
    * @param ancestorBlock the ancestor block
-   * @param newBlock the new block
-   * @return the boolean
+   * @param newBlock the block we want to check if it is descendant
+   * @return true if newBlock is a descendant of ancestorBlock
    */
   boolean isDescendantOf(final BlockHeader ancestorBlock, final BlockHeader newBlock);
 

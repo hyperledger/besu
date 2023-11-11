@@ -115,8 +115,9 @@ public abstract class AbstractMessageProcessor {
     frame.getWorldUpdater().commit();
 
     frame.clearLogs();
-    frame.clearSelfDestructs();
     frame.clearGasRefund();
+
+    frame.rollback();
   }
 
   /**
@@ -148,7 +149,6 @@ public abstract class AbstractMessageProcessor {
    */
   private void completedSuccess(final MessageFrame frame) {
     frame.getWorldUpdater().commit();
-    frame.commitTransientStorage();
     frame.getMessageFrameStack().removeFirst();
     frame.notifyCompletion();
   }
@@ -184,6 +184,14 @@ public abstract class AbstractMessageProcessor {
    * @param operationTracer the operation tracer
    */
   public void process(final MessageFrame frame, final OperationTracer operationTracer) {
+    if (operationTracer != null) {
+      if (frame.getState() == MessageFrame.State.NOT_STARTED) {
+        operationTracer.traceContextEnter(frame);
+      } else {
+        operationTracer.traceContextReEnter(frame);
+      }
+    }
+
     if (frame.getState() == MessageFrame.State.NOT_STARTED) {
       start(frame, operationTracer);
     }
@@ -209,10 +217,15 @@ public abstract class AbstractMessageProcessor {
     }
 
     if (frame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+      if (operationTracer != null) {
+        operationTracer.traceContextExit(frame);
+      }
       completedSuccess(frame);
     }
-
     if (frame.getState() == MessageFrame.State.COMPLETED_FAILED) {
+      if (operationTracer != null) {
+        operationTracer.traceContextExit(frame);
+      }
       completedFailed(frame);
     }
   }

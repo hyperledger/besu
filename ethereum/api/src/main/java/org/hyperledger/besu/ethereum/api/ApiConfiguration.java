@@ -16,6 +16,8 @@
 
 package org.hyperledger.besu.ethereum.api;
 
+import java.util.function.LongSupplier;
+
 import org.immutables.value.Value;
 
 @Value.Immutable
@@ -33,8 +35,8 @@ public abstract class ApiConfiguration {
   }
 
   @Value.Default
-  public long getGasPriceMin() {
-    return 1_000_000_000L; // 1 GWei
+  public LongSupplier getGasPriceMinSupplier() {
+    return () -> 1_000_000_000L; // 1 GWei
   }
 
   @Value.Default

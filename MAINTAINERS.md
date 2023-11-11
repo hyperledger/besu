@@ -15,8 +15,8 @@
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
 | Diego López León | diega            | diega            |
 | Fabio Di Fabio   | fab-10           | fab-10           |
-| Gary Schulte     | garyschulte      | GarySchulte      | 
 | Gabriel Trintinalia | gabriel-trintinalia | gabrieltrintinalia |
+| Gary Schulte     | garyschulte      | GarySchulte      | 
 | Jiri Peinlich    | gezero           | JiriPeinlich     |
 | Gabriel Fukushima| gfukushima       | gfukushima       |
 | Justin Florentine| jflo             | RoboCopsGoneMad  |
@@ -24,14 +24,13 @@
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |
 | Sally MacFarlane | macfarla         | macfarla         |
-| Mark Terry       | mark-terry       | m.terry          |
 | Karim Taam       | matkt            | matkt            |
+| Matthew Whitehead| matthew1001      | matthew.whitehead      |
 | Meredith Baxter  | mbaxter          | mbaxter          |
 | Stefan Pingel    | pinges           | pinges           |
 | Danno Ferrin     | shemnon          | shemnon          |
 | Simon Dudley     | siladu           | siladu           |
 | Usman Saleem     | usmansaleem      | usmansaleem      |
-| Zhenyang Shi     | wcgcyx           | wcgcyx           |
 
 
 ## Emeritus Maintainers
@@ -47,6 +46,7 @@
 | Frank Li         | frankisawesome   | frankliawesome   |
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
 | Madeline Murray  | MadelineMurray   | madelinemurray   |
+| Mark Terry       | mark-terry       | m.terry          |
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
 | Trent Mohay      | rain-on          | trent.mohay      |
 | Rai Sur          | RatanRSur        | ratanraisur      |
@@ -55,6 +55,7 @@
 | Taccat Isid      | taccatisid       | taccatisid       |
 | Tim Beiko        | timbeiko         | timbeiko         |
 | Vijay Michalik   | vmichalik        | VijayMichalik    |
+| Zhenyang Shi     | wcgcyx           | wcgcyx           |
 
 ## Becoming a Maintainer
 

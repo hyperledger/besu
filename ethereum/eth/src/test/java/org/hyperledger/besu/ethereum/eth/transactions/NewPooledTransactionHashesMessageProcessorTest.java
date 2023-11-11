@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.encoding.TransactionAnnouncementDecoder.getDecoder;
 import static org.hyperledger.besu.ethereum.eth.encoding.TransactionAnnouncementEncoder.getEncoder;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -30,6 +31,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -43,7 +45,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.NewPooledTransactionHashes
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -53,17 +54,23 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class NewPooledTransactionHashesMessageProcessorTest {
 
   @Mock private TransactionPool transactionPool;
-  @Mock private TransactionPoolConfiguration transactionPoolConfiguration;
+
+  @Mock(answer = RETURNS_DEEP_STUBS)
+  private TransactionPoolConfiguration transactionPoolConfiguration;
+
   @Mock private PeerTransactionTracker transactionTracker;
   @Mock private EthPeer peer1;
   @Mock private EthContext ethContext;
@@ -82,10 +89,10 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   private NewPooledTransactionHashesMessageProcessor messageHandler;
   private StubMetricsSystem metricsSystem;
 
-  @Before
+  @BeforeEach
   public void setup() {
     metricsSystem = new StubMetricsSystem();
-    when(transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod())
+    when(transactionPoolConfiguration.getUnstable().getEth65TrxAnnouncedBufferingPeriod())
         .thenReturn(Duration.ofMillis(500));
     messageHandler =
         new NewPooledTransactionHashesMessageProcessor(

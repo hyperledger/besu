@@ -53,6 +53,8 @@ public interface TransactionsLayer {
 
   List<Transaction> getAllLocal();
 
+  List<Transaction> getAllPriority();
+
   int count();
 
   OptionalLong getNextNonceFor(Address sender);
@@ -66,7 +68,8 @@ public interface TransactionsLayer {
    */
   OptionalLong getCurrentNonceFor(Address sender);
 
-  PendingTransaction promote(Predicate<PendingTransaction> promotionFilter);
+  List<PendingTransaction> promote(
+      Predicate<PendingTransaction> promotionFilter, final long freeSpace, final int freeSlots);
 
   long subscribeToAdded(PendingTransactionAddedListener listener);
 
@@ -97,7 +100,8 @@ public interface TransactionsLayer {
     INVALIDATED,
     PROMOTED,
     REPLACED,
-    RECONCILED;
+    RECONCILED,
+    BELOW_BASE_FEE;
 
     private final String label;
 

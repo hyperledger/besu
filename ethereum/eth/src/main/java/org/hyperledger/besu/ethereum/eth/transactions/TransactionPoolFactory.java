@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
+
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -31,9 +33,10 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTran
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 
 import java.time.Clock;
 import java.util.function.BiFunction;
@@ -52,7 +55,8 @@ public class TransactionPoolFactory {
       final MetricsSystem metricsSystem,
       final SyncState syncState,
       final MiningParameters miningParameters,
-      final TransactionPoolConfiguration transactionPoolConfiguration) {
+      final TransactionPoolConfiguration transactionPoolConfiguration,
+      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory) {
 
     final TransactionPoolMetrics metrics = new TransactionPoolMetrics(metricsSystem);
 
@@ -74,7 +78,8 @@ public class TransactionPoolFactory {
         transactionPoolConfiguration,
         transactionTracker,
         transactionsMessageSender,
-        newPooledTransactionHashesMessageSender);
+        newPooledTransactionHashesMessageSender,
+        pluginTransactionValidatorFactory);
   }
 
   static TransactionPool createTransactionPool(
@@ -88,7 +93,8 @@ public class TransactionPoolFactory {
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
-      final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender) {
+      final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender,
+      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory) {
 
     final TransactionPool transactionPool =
         new TransactionPool(
@@ -109,13 +115,14 @@ public class TransactionPoolFactory {
             ethContext,
             miningParameters,
             metrics,
-            transactionPoolConfiguration);
+            transactionPoolConfiguration,
+            pluginTransactionValidatorFactory);
 
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(
             ethContext.getScheduler(),
             new TransactionsMessageProcessor(transactionTracker, transactionPool, metrics),
-            transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
+            transactionPoolConfiguration.getUnstable().getTxMessageKeepAliveSeconds());
 
     final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler =
         new NewPooledTransactionHashesMessageHandler(
@@ -126,7 +133,7 @@ public class TransactionPoolFactory {
                 transactionPoolConfiguration,
                 ethContext,
                 metrics),
-            transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
+            transactionPoolConfiguration.getUnstable().getTxMessageKeepAliveSeconds());
 
     subscribeTransactionHandlers(
         protocolContext,
@@ -194,8 +201,7 @@ public class TransactionPoolFactory {
         protocolSchedule.anyMatch(
             scheduledSpec -> scheduledSpec.spec().getFeeMarket().implementsBaseFee());
 
-    if (transactionPoolConfiguration.getLayeredTxPoolEnabled()) {
-      LOG.info("Using layered transaction pool");
+    if (transactionPoolConfiguration.getTxPoolImplementation().equals(LAYERED)) {
       return createLayeredPendingTransactions(
           protocolSchedule,
           protocolContext,
@@ -263,11 +269,10 @@ public class TransactionPoolFactory {
 
     final AbstractPrioritizedTransactions pendingTransactionsSorter;
     if (isFeeMarketImplementBaseFee) {
-      final BaseFeeMarket baseFeeMarket =
-          (BaseFeeMarket)
-              protocolSchedule
-                  .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
-                  .getFeeMarket();
+      final FeeMarket feeMarket =
+          protocolSchedule
+              .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
+              .getFeeMarket();
 
       pendingTransactionsSorter =
           new BaseFeePrioritizedTransactions(
@@ -276,7 +281,7 @@ public class TransactionPoolFactory {
               readyTransactions,
               metrics,
               transactionReplacementTester,
-              baseFeeMarket);
+              feeMarket);
     } else {
       pendingTransactionsSorter =
           new GasPricePrioritizedTransactions(

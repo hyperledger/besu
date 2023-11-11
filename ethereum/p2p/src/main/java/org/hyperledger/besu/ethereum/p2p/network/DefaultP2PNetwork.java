@@ -148,6 +148,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   private final CountDownLatch shutdownLatch = new CountDownLatch(2);
   private final Duration shutdownTimeout = Duration.ofSeconds(15);
+  private final Vertx vertx;
   private DNSDaemon dnsDaemon;
   private final AtomicLong numBondedPeers = new AtomicLong();
   private final AtomicLong numTrying = new AtomicLong();
@@ -168,7 +169,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
    * @param maintainedPeers A collection of peers for which we are expected to maintain connections
    * @param reputationManager An object that inspect disconnections for misbehaving peers that can
    *     then be blacklisted.
-   * @param metricsSystem The metrics system
+   * @param vertx the Vert.x instance managing network resources
    */
   DefaultP2PNetwork(
       final MutableLocalNode localNode,
@@ -180,7 +181,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final NatService natService,
       final MaintainedPeers maintainedPeers,
       final PeerDenylistManager reputationManager,
-      final MetricsSystem metricsSystem) {
+      final Vertx vertx) {
     this.localNode = localNode;
     this.peerDiscoveryAgent = peerDiscoveryAgent;
     this.rlpxAgent = rlpxAgent;
@@ -190,6 +191,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     this.nodeId = nodeKey.getPublicKey().getEncodedBytes();
     this.peerPermissions = peerPermissions;
+    this.vertx = vertx;
 
     // set the requirement here that the number of peers be greater than the lower bound
     final int peerLowerBound = rlpxAgent.getPeerLowerBound();
@@ -248,7 +250,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
                       createDaemonListener(),
                       0L,
                       600000L,
-                      config.getDnsDiscoveryServerOverride().orElse(null));
+                      config.getDnsDiscoveryServerOverride().orElse(null),
+                      vertx);
               dnsDaemon.start();
             });
 
@@ -560,7 +563,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
           natService,
           maintainedPeers,
           reputationManager,
-          metricsSystem);
+          vertx);
     }
 
     private void validate() {

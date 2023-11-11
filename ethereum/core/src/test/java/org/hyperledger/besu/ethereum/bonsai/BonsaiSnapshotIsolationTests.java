@@ -24,11 +24,11 @@ import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.List;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
 
   @Test
@@ -61,8 +61,11 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
     assertThat(res.isSuccessful()).isTrue();
     assertThat(res2.isSuccessful()).isTrue();
 
-    assertThat(archive.getTrieLogManager().containWorldStateStorage(firstBlock.getHash())).isTrue();
-    assertThat(archive.getTrieLogManager().containWorldStateStorage(secondBlock.getHash()))
+    assertThat(
+            archive.getCachedWorldStorageManager().containWorldStateStorage(firstBlock.getHash()))
+        .isTrue();
+    assertThat(
+            archive.getCachedWorldStorageManager().containWorldStateStorage(secondBlock.getHash()))
         .isTrue();
 
     assertThat(archive.getMutable().get(testAddress)).isNotNull();

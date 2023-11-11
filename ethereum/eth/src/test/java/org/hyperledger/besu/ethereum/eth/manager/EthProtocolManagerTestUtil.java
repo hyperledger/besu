@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler.TimeoutPolicy;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -39,6 +38,8 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler.TimeoutPolicy;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;

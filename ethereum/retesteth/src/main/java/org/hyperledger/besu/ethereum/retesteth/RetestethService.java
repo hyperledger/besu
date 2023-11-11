@@ -80,7 +80,7 @@ public class RetestethService {
             new EthGetBlockByHash(retestethContext::getBlockchainQueries, blockResult, true),
             new EthGetCode(retestethContext::getBlockchainQueries),
             new EthGetTransactionCount(
-                retestethContext::getBlockchainQueries, retestethContext::getPendingTransactions),
+                retestethContext::getBlockchainQueries, retestethContext::getTransactionPool),
             new DebugStorageRangeAt(
                 retestethContext::getBlockchainQueries, retestethContext::getBlockReplay, true),
             new TestModifyTimestamp(retestethContext),

@@ -22,10 +22,12 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -34,14 +36,18 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   private final WorldStateStorage worldStateStorage;
   private final WorldStatePreimageStorage preimageStorage;
   private final WorldStateProofProvider worldStateProof;
+  private final EvmConfiguration evmConfiguration;
 
   private static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
   public DefaultWorldStateArchive(
-      final WorldStateStorage worldStateStorage, final WorldStatePreimageStorage preimageStorage) {
+      final WorldStateStorage worldStateStorage,
+      final WorldStatePreimageStorage preimageStorage,
+      final EvmConfiguration evmConfiguration) {
     this.worldStateStorage = worldStateStorage;
     this.preimageStorage = preimageStorage;
     this.worldStateProof = new WorldStateProofProvider(worldStateStorage);
+    this.evmConfiguration = evmConfiguration;
   }
 
   @Override
@@ -65,7 +71,9 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
     if (!worldStateStorage.isWorldStateAvailable(rootHash, blockHash)) {
       return Optional.empty();
     }
-    return Optional.of(new DefaultMutableWorldState(rootHash, worldStateStorage, preimageStorage));
+    return Optional.of(
+        new DefaultMutableWorldState(
+            rootHash, worldStateStorage, preimageStorage, evmConfiguration));
   }
 
   @Override
@@ -89,11 +97,14 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public Optional<WorldStateProof> getAccountProof(
-      final Hash worldStateRoot,
+  public <U> Optional<U> getAccountProof(
+      final BlockHeader blockHeader,
       final Address accountAddress,
-      final List<UInt256> accountStorageKeys) {
-    return worldStateProof.getAccountProof(worldStateRoot, accountAddress, accountStorageKeys);
+      final List<UInt256> accountStorageKeys,
+      final Function<Optional<WorldStateProof>, ? extends Optional<U>> mapper) {
+    return mapper.apply(
+        worldStateProof.getAccountProof(
+            blockHeader.getStateRoot(), accountAddress, accountStorageKeys));
   }
 
   @Override

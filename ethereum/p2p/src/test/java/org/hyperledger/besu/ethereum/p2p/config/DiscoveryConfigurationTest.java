@@ -22,7 +22,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.Collections;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class DiscoveryConfigurationTest {
 

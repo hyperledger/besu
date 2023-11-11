@@ -20,25 +20,25 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class BaseFeeBlockBodyValidatorTest {
 
   private static final KeyPair keyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
@@ -50,7 +50,7 @@ public class BaseFeeBlockBodyValidatorTest {
 
   BaseFeeBlockBodyValidator blockBodyValidator;
 
-  @Before
+  @BeforeEach
   public void setup() {
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0L));
 

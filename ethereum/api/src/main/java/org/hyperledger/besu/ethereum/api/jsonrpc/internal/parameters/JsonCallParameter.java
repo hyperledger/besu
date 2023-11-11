@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.json.HexLongDeserializer;
 import org.hyperledger.besu.ethereum.core.json.HexStringDeserializer;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
-import org.hyperledger.besu.evm.AccessListEntry;
 
 import java.util.List;
 import java.util.Optional;
@@ -49,10 +49,12 @@ public class JsonCallParameter extends CallParameter {
       @JsonProperty("maxPriorityFeePerGas") final Wei maxPriorityFeePerGas,
       @JsonProperty("maxFeePerGas") final Wei maxFeePerGas,
       @JsonProperty("value") final Wei value,
-      @JsonDeserialize(using = HexStringDeserializer.class) @JsonProperty("data")
-          final Bytes payload,
+      @JsonDeserialize(using = HexStringDeserializer.class) @JsonProperty("data") final Bytes data,
+      @JsonDeserialize(using = HexStringDeserializer.class) @JsonProperty("input")
+          final Bytes input,
       @JsonProperty("strict") final Boolean strict,
       @JsonProperty("accessList") final List<AccessListEntry> accessList) {
+
     super(
         from,
         to,
@@ -61,8 +63,13 @@ public class JsonCallParameter extends CallParameter {
         Optional.ofNullable(maxPriorityFeePerGas),
         Optional.ofNullable(maxFeePerGas),
         value,
-        payload,
+        Optional.ofNullable(input != null ? input : data).orElse(null),
         Optional.ofNullable(accessList));
+
+    if (input != null && data != null) {
+      throw new IllegalArgumentException("Only one of 'input' or 'data' should be provided");
+    }
+
     this.strict = Optional.ofNullable(strict);
   }
 

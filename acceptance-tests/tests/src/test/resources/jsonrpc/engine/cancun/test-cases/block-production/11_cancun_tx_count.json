@@ -1,0 +1,18 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "txpool_besuStatistics",
+    "params": [],
+    "id": 1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+      "maxSize": -1,
+      "localCount": 7,
+      "remoteCount": 0
+    }
+  },
+  "statusCode": 200
+}

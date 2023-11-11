@@ -20,12 +20,12 @@ import org.hyperledger.besu.util.number.Percentage;
 import picocli.CommandLine;
 
 /** The Percentage Cli type converter. */
-public class PercentageConverter implements CommandLine.ITypeConverter<Integer> {
+public class PercentageConverter implements CommandLine.ITypeConverter<Percentage> {
 
   @Override
-  public Integer convert(final String value) throws PercentageConversionException {
+  public Percentage convert(final String value) throws PercentageConversionException {
     try {
-      return Percentage.fromString(value).getValue();
+      return Percentage.fromString(value);
     } catch (NullPointerException | IllegalArgumentException e) {
       throw new PercentageConversionException(value);
     }

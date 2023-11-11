@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -41,19 +40,23 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
-public class MainnetTransactionProcessorTest {
+@ExtendWith(MockitoExtension.class)
+class MainnetTransactionProcessorTest {
 
   private static final int MAX_STACK_SIZE = 1024;
 
   private final GasCalculator gasCalculator = new LondonGasCalculator();
-  @Mock private TransactionValidator transactionValidator;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private TransactionValidatorFactory transactionValidatorFactory;
+
   @Mock private AbstractMessageProcessor contractCreationProcessor;
   @Mock private AbstractMessageProcessor messageCallProcessor;
 
@@ -63,13 +66,12 @@ public class MainnetTransactionProcessorTest {
   @Mock private Transaction transaction;
   @Mock private BlockHashLookup blockHashLookup;
 
-  @Mock private EvmAccount senderAccount;
-  @Mock private MutableAccount mutableSenderAccount;
+  @Mock private MutableAccount senderAccount;
 
   MainnetTransactionProcessor createTransactionProcessor(final boolean warmCoinbase) {
     return new MainnetTransactionProcessor(
         gasCalculator,
-        transactionValidator,
+        transactionValidatorFactory,
         contractCreationProcessor,
         messageCallProcessor,
         false,
@@ -80,20 +82,20 @@ public class MainnetTransactionProcessorTest {
   }
 
   @Test
-  public void shouldWarmCoinbaseIfRequested() {
+  void shouldWarmCoinbaseIfRequested() {
     Optional<Address> toAddresss =
         Optional.of(Address.fromHexString("0x2222222222222222222222222222222222222222"));
     when(transaction.getTo()).thenReturn(toAddresss);
     Address senderAddress = Address.fromHexString("0x5555555555555555555555555555555555555555");
     Address coinbaseAddress = Address.fromHexString("0x4242424242424242424242424242424242424242");
 
-    when(senderAccount.getMutable()).thenReturn(mutableSenderAccount);
     when(transaction.getHash()).thenReturn(Hash.EMPTY);
     when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
     when(transaction.getSender()).thenReturn(senderAddress);
     when(transaction.getValue()).thenReturn(Wei.ZERO);
-    when(transactionValidator.validate(any(), any(), any())).thenReturn(ValidationResult.valid());
-    when(transactionValidator.validateForSender(any(), any(), any()))
+    when(transactionValidatorFactory.get().validate(any(), any(), any()))
+        .thenReturn(ValidationResult.valid());
+    when(transactionValidatorFactory.get().validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
     when(worldState.getOrCreate(any())).thenReturn(senderAccount);
     when(worldState.getOrCreateSenderAccount(any())).thenReturn(senderAccount);
@@ -140,7 +142,7 @@ public class MainnetTransactionProcessorTest {
   }
 
   @Test
-  public void shouldCallTransactionValidatorWithExpectedTransactionValidationParams() {
+  void shouldCallTransactionValidatorWithExpectedTransactionValidationParams() {
     final ArgumentCaptor<TransactionValidationParams> txValidationParamCaptor =
         transactionValidationParamCaptor();
 
@@ -168,9 +170,12 @@ public class MainnetTransactionProcessorTest {
   private ArgumentCaptor<TransactionValidationParams> transactionValidationParamCaptor() {
     final ArgumentCaptor<TransactionValidationParams> txValidationParamCaptor =
         ArgumentCaptor.forClass(TransactionValidationParams.class);
-    when(transactionValidator.validate(any(), any(), any())).thenReturn(ValidationResult.valid());
+    when(transactionValidatorFactory.get().validate(any(), any(), any()))
+        .thenReturn(ValidationResult.valid());
     // returning invalid transaction to halt method execution
-    when(transactionValidator.validateForSender(any(), any(), txValidationParamCaptor.capture()))
+    when(transactionValidatorFactory
+            .get()
+            .validateForSender(any(), any(), txValidationParamCaptor.capture()))
         .thenReturn(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_HIGH));
     return txValidationParamCaptor;
   }

@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
@@ -32,7 +33,8 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
@@ -50,7 +52,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
@@ -61,7 +63,6 @@ import org.hyperledger.besu.plugin.data.AddedBlockContext;
 import org.hyperledger.besu.plugin.data.LogWithMetadata;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.data.SyncStatus;
-import org.hyperledger.besu.plugin.data.Transaction;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -79,6 +80,7 @@ import com.google.common.base.Suppliers;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -99,7 +101,10 @@ public class BesuEventsImplTest {
   @Mock private EthContext mockEthContext;
   @Mock private EthMessages mockEthMessages;
   @Mock private EthScheduler mockEthScheduler;
-  @Mock private TransactionValidator mockTransactionValidator;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private TransactionValidatorFactory mockTransactionValidatorFactory;
+
   @Mock private ProtocolSpec mockProtocolSpec;
   @Mock private WorldStateArchive mockWorldStateArchive;
   @Mock private MutableWorldState mockWorldState;
@@ -128,11 +133,12 @@ public class BesuEventsImplTest {
     when(mockProtocolContext.getBlockchain()).thenReturn(blockchain);
     when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
     when(mockProtocolSchedule.getByBlockHeader(any())).thenReturn(mockProtocolSpec);
-    when(mockProtocolSpec.getTransactionValidator()).thenReturn(mockTransactionValidator);
+    when(mockProtocolSpec.getTransactionValidatorFactory())
+        .thenReturn(mockTransactionValidatorFactory);
     when(mockProtocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0L));
-    when(mockTransactionValidator.validate(any(), any(Optional.class), any()))
+    when(mockTransactionValidatorFactory.get().validate(any(), any(Optional.class), any()))
         .thenReturn(ValidationResult.valid());
-    when(mockTransactionValidator.validateForSender(any(), any(), any()))
+    when(mockTransactionValidatorFactory.get().validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
     when(mockWorldStateArchive.getMutable(any(), anyBoolean()))
         .thenReturn(Optional.of(mockWorldState));
@@ -150,8 +156,12 @@ public class BesuEventsImplTest {
             TestClock.system(ZoneId.systemDefault()),
             new NoOpMetricsSystem(),
             syncState,
-            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
-            txPoolConfig);
+            ImmutableMiningParameters.builder()
+                .mutableInitValues(
+                    MutableInitValues.builder().minTransactionGasPrice(Wei.ZERO).build())
+                .build(),
+            txPoolConfig,
+            null);
 
     serviceImpl = new BesuEventsImpl(blockchain, blockBroadcaster, transactionPool, syncState);
   }
@@ -195,7 +205,7 @@ public class BesuEventsImplTest {
         mock(EthPeer.class),
         new org.hyperledger.besu.ethereum.core.BlockHeader(
             null, null, null, null, null, null, null, null, 1, 1, 1, 1, null, null, null, 1, null,
-            null, null, null));
+            null, null, null, null, null));
   }
 
   private void clearSyncTarget() {

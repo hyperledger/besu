@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import static org.apache.tuweni.bytes.Bytes32.leftPad;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
@@ -36,7 +34,6 @@ import java.util.OptionalLong;
 import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class DebugOperationTracer implements OperationTracer {
@@ -45,10 +42,11 @@ public class DebugOperationTracer implements OperationTracer {
   private List<TraceFrame> traceFrames = new ArrayList<>();
   private TraceFrame lastFrame;
 
-  private Optional<Bytes32[]> preExecutionStack;
+  private Optional<Bytes[]> preExecutionStack;
   private long gasRemaining;
   private Bytes inputData;
   private int pc;
+  private int depth;
 
   public DebugOperationTracer(final TraceOptions options) {
     this.options = options;
@@ -58,21 +56,21 @@ public class DebugOperationTracer implements OperationTracer {
   public void tracePreExecution(final MessageFrame frame) {
     preExecutionStack = captureStack(frame);
     gasRemaining = frame.getRemainingGas();
-    if (lastFrame != null && frame.getMessageStackDepth() > lastFrame.getDepth())
+    if (lastFrame != null && frame.getDepth() > lastFrame.getDepth())
       inputData = frame.getInputData().copy();
     else inputData = frame.getInputData();
     pc = frame.getPC();
+    depth = frame.getDepth();
   }
 
   @Override
   public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
     final Operation currentOperation = frame.getCurrentOperation();
-    final int depth = frame.getMessageStackDepth();
     final String opcode = currentOperation.getName();
     final WorldUpdater worldUpdater = frame.getWorldUpdater();
     final Bytes outputData = frame.getOutputData();
     final Optional<Bytes[]> memory = captureMemory(frame);
-    final Optional<Bytes32[]> stackPostExecution = captureStack(frame);
+    final Optional<Bytes[]> stackPostExecution = captureStack(frame);
 
     if (lastFrame != null) {
       lastFrame.setGasRemainingPostExecution(gasRemaining);
@@ -122,7 +120,7 @@ public class DebugOperationTracer implements OperationTracer {
               frame.getRemainingGas(),
               OptionalLong.empty(),
               frame.getGasRefund(),
-              frame.getMessageStackDepth(),
+              frame.getDepth(),
               Optional.empty(),
               frame.getRecipientAddress(),
               frame.getValue(),
@@ -168,7 +166,7 @@ public class DebugOperationTracer implements OperationTracer {
                     frame.getRemainingGas(),
                     OptionalLong.empty(),
                     frame.getGasRefund(),
-                    frame.getMessageStackDepth(),
+                    frame.getDepth(),
                     Optional.of(exceptionalHaltReason),
                     frame.getRecipientAddress(),
                     frame.getValue(),
@@ -198,11 +196,8 @@ public class DebugOperationTracer implements OperationTracer {
     try {
       final Map<UInt256, UInt256> storageContents =
           new TreeMap<>(
-              frame
-                  .getWorldUpdater()
-                  .getAccount(frame.getRecipientAddress())
-                  .getMutable()
-                  .getUpdatedStorage());
+              frame.getWorldUpdater().getAccount(frame.getRecipientAddress()).getUpdatedStorage());
+
       return Optional.of(storageContents);
     } catch (final ModificationNotAllowedException e) {
       return Optional.of(new TreeMap<>());
@@ -220,15 +215,15 @@ public class DebugOperationTracer implements OperationTracer {
     return Optional.of(memoryContents);
   }
 
-  private Optional<Bytes32[]> captureStack(final MessageFrame frame) {
+  private Optional<Bytes[]> captureStack(final MessageFrame frame) {
     if (!options.isStackEnabled()) {
       return Optional.empty();
     }
 
-    final Bytes32[] stackContents = new Bytes32[frame.stackSize()];
+    final Bytes[] stackContents = new Bytes[frame.stackSize()];
     for (int i = 0; i < stackContents.length; i++) {
       // Record stack contents in reverse
-      stackContents[i] = leftPad(frame.getStackItem(stackContents.length - i - 1));
+      stackContents[i] = frame.getStackItem(stackContents.length - i - 1);
     }
     return Optional.of(stackContents);
   }

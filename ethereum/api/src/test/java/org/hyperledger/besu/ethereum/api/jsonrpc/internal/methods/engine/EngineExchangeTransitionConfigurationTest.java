@@ -50,14 +50,14 @@ import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EngineExchangeTransitionConfigurationTest {
   private EngineExchangeTransitionConfiguration method;
   private static final Vertx vertx = Vertx.vertx();
@@ -68,7 +68,7 @@ public class EngineExchangeTransitionConfigurationTest {
 
   @Mock private EngineCallListener engineCallListener;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
 
@@ -249,6 +249,8 @@ public class EngineExchangeTransitionConfigurationTest {
         Wei.ZERO,
         Bytes32.ZERO,
         0,
+        null,
+        null,
         null,
         null,
         null,

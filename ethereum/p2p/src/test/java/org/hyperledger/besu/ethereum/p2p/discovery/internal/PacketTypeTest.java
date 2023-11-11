@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PacketTypeTest {
 

@@ -22,12 +22,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineE
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineExchangeTransitionConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV2;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV3;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByHashV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByRangeV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV2;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV3;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV6110;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV2;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV3;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV6110;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EnginePreparePayloadDebug;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineQosTimer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
@@ -35,6 +40,9 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -74,56 +82,105 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
   @Override
   protected Map<String, JsonRpcMethod> create() {
     final EngineQosTimer engineQosTimer = new EngineQosTimer(consensusEngineServer);
-
     if (mergeCoordinator.isPresent()) {
-      return mapOf(
-          new EngineGetPayloadV1(
-              consensusEngineServer,
-              protocolContext,
-              mergeCoordinator.get(),
-              blockResultFactory,
-              engineQosTimer),
-          new EngineGetPayloadV2(
-              consensusEngineServer,
-              protocolContext,
-              mergeCoordinator.get(),
-              blockResultFactory,
-              engineQosTimer),
-          new EngineNewPayloadV1(
-              consensusEngineServer,
-              protocolSchedule,
-              protocolContext,
-              mergeCoordinator.get(),
-              ethPeers,
-              engineQosTimer),
-          new EngineNewPayloadV2(
-              consensusEngineServer,
-              protocolSchedule,
-              protocolContext,
-              mergeCoordinator.get(),
-              ethPeers,
-              engineQosTimer),
-          new EngineForkchoiceUpdatedV1(
-              consensusEngineServer,
-              protocolSchedule,
-              protocolContext,
-              mergeCoordinator.get(),
-              engineQosTimer),
-          new EngineForkchoiceUpdatedV2(
-              consensusEngineServer,
-              protocolSchedule,
-              protocolContext,
-              mergeCoordinator.get(),
-              engineQosTimer),
-          new EngineExchangeTransitionConfiguration(
-              consensusEngineServer, protocolContext, engineQosTimer),
-          new EngineGetPayloadBodiesByHashV1(
-              consensusEngineServer, protocolContext, blockResultFactory, engineQosTimer),
-          new EngineGetPayloadBodiesByRangeV1(
-              consensusEngineServer, protocolContext, blockResultFactory, engineQosTimer),
-          new EngineExchangeCapabilities(consensusEngineServer, protocolContext, engineQosTimer),
-          new EnginePreparePayloadDebug(
-              consensusEngineServer, protocolContext, engineQosTimer, mergeCoordinator.get()));
+      List<JsonRpcMethod> executionEngineApisSupported = new ArrayList<>();
+      executionEngineApisSupported.addAll(
+          Arrays.asList(
+              new EngineGetPayloadV1(
+                  consensusEngineServer,
+                  protocolContext,
+                  mergeCoordinator.get(),
+                  blockResultFactory,
+                  engineQosTimer),
+              new EngineGetPayloadV2(
+                  consensusEngineServer,
+                  protocolContext,
+                  mergeCoordinator.get(),
+                  blockResultFactory,
+                  engineQosTimer,
+                  protocolSchedule),
+              new EngineNewPayloadV1(
+                  consensusEngineServer,
+                  protocolSchedule,
+                  protocolContext,
+                  mergeCoordinator.get(),
+                  ethPeers,
+                  engineQosTimer),
+              new EngineNewPayloadV2(
+                  consensusEngineServer,
+                  protocolSchedule,
+                  protocolContext,
+                  mergeCoordinator.get(),
+                  ethPeers,
+                  engineQosTimer),
+              new EngineNewPayloadV3(
+                  consensusEngineServer,
+                  protocolSchedule,
+                  protocolContext,
+                  mergeCoordinator.get(),
+                  ethPeers,
+                  engineQosTimer),
+              new EngineForkchoiceUpdatedV1(
+                  consensusEngineServer,
+                  protocolSchedule,
+                  protocolContext,
+                  mergeCoordinator.get(),
+                  engineQosTimer),
+              new EngineForkchoiceUpdatedV2(
+                  consensusEngineServer,
+                  protocolSchedule,
+                  protocolContext,
+                  mergeCoordinator.get(),
+                  engineQosTimer),
+              new EngineForkchoiceUpdatedV3(
+                  consensusEngineServer,
+                  protocolSchedule,
+                  protocolContext,
+                  mergeCoordinator.get(),
+                  engineQosTimer),
+              new EngineExchangeTransitionConfiguration(
+                  consensusEngineServer, protocolContext, engineQosTimer),
+              new EngineGetPayloadBodiesByHashV1(
+                  consensusEngineServer, protocolContext, blockResultFactory, engineQosTimer),
+              new EngineGetPayloadBodiesByRangeV1(
+                  consensusEngineServer, protocolContext, blockResultFactory, engineQosTimer),
+              new EngineExchangeCapabilities(
+                  consensusEngineServer, protocolContext, engineQosTimer),
+              new EnginePreparePayloadDebug(
+                  consensusEngineServer, protocolContext, engineQosTimer, mergeCoordinator.get())));
+
+      if (protocolSchedule.anyMatch(p -> p.spec().getName().equalsIgnoreCase("cancun"))) {
+        executionEngineApisSupported.add(
+            new EngineGetPayloadV3(
+                consensusEngineServer,
+                protocolContext,
+                mergeCoordinator.get(),
+                blockResultFactory,
+                engineQosTimer,
+                protocolSchedule));
+      }
+
+      if (protocolSchedule.anyMatch(p -> p.spec().getName().equalsIgnoreCase("ExperimentalEips"))) {
+        executionEngineApisSupported.add(
+            new EngineGetPayloadV6110(
+                consensusEngineServer,
+                protocolContext,
+                mergeCoordinator.get(),
+                blockResultFactory,
+                engineQosTimer,
+                protocolSchedule));
+
+        executionEngineApisSupported.add(
+            new EngineNewPayloadV6110(
+                consensusEngineServer,
+                protocolSchedule,
+                protocolContext,
+                mergeCoordinator.get(),
+                ethPeers,
+                engineQosTimer));
+      }
+
+      return mapOf(executionEngineApisSupported);
     } else {
       return mapOf(
           new EngineExchangeTransitionConfiguration(

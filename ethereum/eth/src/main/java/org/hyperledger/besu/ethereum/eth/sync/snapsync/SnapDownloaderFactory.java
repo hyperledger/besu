@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -84,8 +83,8 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
           .getAccountToRepair()
           .ifPresent(
               address ->
-                  snapContext.addAccountsToBeRepaired(
-                      CompactEncoding.bytesToPath(Hash.hash(address))));
+                  snapContext.addAccountToHealingList(
+                      CompactEncoding.bytesToPath(address.addressHash())));
     } else if (fastSyncState.getPivotBlockHeader().isEmpty()
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
             != BlockHeader.GENESIS_BLOCK_NUMBER) {

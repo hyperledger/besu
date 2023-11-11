@@ -15,19 +15,24 @@
  */
 package org.hyperledger.besu.evmtool;
 
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
 import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules.shouldClearEmptyAccounts;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
@@ -36,21 +41,20 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.referencetests.BonsaiReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
+import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
-import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -77,7 +81,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class T8nExecutor {
 
-  record RejectedTransaction(int index, String error) {}
+  public record RejectedTransaction(int index, String error) {}
 
   protected static List<Transaction> extractTransactions(
       final PrintWriter out,
@@ -104,6 +108,9 @@ public class T8nExecutor {
           } else {
             Transaction.Builder builder = Transaction.builder();
             int type = Bytes.fromHexStringLenient(txNode.get("type").textValue()).toInt();
+            BigInteger chainId =
+                Bytes.fromHexStringLenient(txNode.get("chainId").textValue())
+                    .toUnsignedBigInteger();
             TransactionType transactionType = TransactionType.of(type == 0 ? 0xf8 : type);
             builder.type(transactionType);
             builder.nonce(Bytes.fromHexStringLenient(txNode.get("nonce").textValue()).toLong());
@@ -121,24 +128,19 @@ public class T8nExecutor {
             if (txNode.has("maxFeePerGas")) {
               builder.maxFeePerGas(Wei.fromHexString(txNode.get("maxFeePerGas").textValue()));
             }
-            if (txNode.has("maxFeePerDataGas")) {
-              builder.maxFeePerDataGas(
-                  Wei.fromHexString(txNode.get("maxFeePerDataGas").textValue()));
+            if (txNode.has("maxFeePerBlobGas")) {
+              builder.maxFeePerBlobGas(
+                  Wei.fromHexString(txNode.get("maxFeePerBlobGas").textValue()));
             }
 
             if (txNode.has("to")) {
               builder.to(Address.fromHexString(txNode.get("to").textValue()));
             }
-
-            if (transactionType.requiresChainId()
-                || !txNode.has("protected")
-                || txNode.get("protected").booleanValue()) {
+            BigInteger v =
+                Bytes.fromHexStringLenient(txNode.get("v").textValue()).toUnsignedBigInteger();
+            if (transactionType.requiresChainId() || (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0)) {
               // chainid if protected
-              builder.chainId(
-                  new BigInteger(
-                      1,
-                      Bytes.fromHexStringLenient(txNode.get("chainId").textValue())
-                          .toArrayUnsafe()));
+              builder.chainId(chainId);
             }
 
             if (txNode.has("accessList")) {
@@ -172,13 +174,13 @@ public class T8nExecutor {
                     txNode);
                 continue;
               }
-              // FUTURE: placeholder code until 4844 PR merges
-              // List<VersionedHash> entries = new ArrayList<>(blobVersionedHashes.size());
-              // for (JsonNode versionedHashNode : blobVersionedHashes) {
-              //   entries.add(
-              //       new VersionedHash(Bytes32.fromHexString(versionedHashNode.textValue())));
-              // }
-              // builder.versionedHashes(entries);
+
+              List<VersionedHash> entries = new ArrayList<>(blobVersionedHashes.size());
+              for (JsonNode versionedHashNode : blobVersionedHashes) {
+                entries.add(
+                    new VersionedHash(Bytes32.fromHexString(versionedHashNode.textValue())));
+              }
+              builder.versionedHashes(entries);
             }
 
             if (txNode.has("secretKey")) {
@@ -190,12 +192,14 @@ public class T8nExecutor {
 
               transactions.add(builder.signAndBuild(keys));
             } else {
-              BigInteger v =
-                  Bytes.fromHexStringLenient(txNode.get("v").textValue()).toUnsignedBigInteger();
-              if (v.compareTo(BigInteger.valueOf(35)) >= 0) {
-                v = v.subtract(BigInteger.valueOf(35)).mod(BigInteger.TWO);
-              } else if (v.compareTo(BigInteger.valueOf(27)) >= 0) {
-                v = v.subtract(BigInteger.valueOf(27)).mod(BigInteger.TWO);
+              if (transactionType == TransactionType.FRONTIER) {
+                if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
+                  v =
+                      v.subtract(REPLAY_PROTECTED_V_BASE)
+                          .subtract(chainId.multiply(BigInteger.TWO));
+                } else {
+                  v = v.subtract(REPLAY_UNPROTECTED_V_BASE);
+                }
               }
               builder.signature(
                   SignatureAlgorithmFactory.getInstance()
@@ -225,7 +229,7 @@ public class T8nExecutor {
       final String rewardString,
       final ObjectMapper objectMapper,
       final ReferenceTestEnv referenceTestEnv,
-      final MutableWorldState initialWorldState,
+      final ReferenceTestWorldState initialWorldState,
       final List<Transaction> transactions,
       final List<RejectedTransaction> rejections,
       final TracerManager tracerManager) {
@@ -234,7 +238,8 @@ public class T8nExecutor {
         ReferenceTestProtocolSchedules.create(
             new StubGenesisConfigOptions().chainId(BigInteger.valueOf(chainId)));
 
-    final MutableWorldState worldState = new DefaultMutableWorldState(initialWorldState);
+    final BonsaiReferenceTestWorldState worldState =
+        (BonsaiReferenceTestWorldState) initialWorldState.copy();
 
     final ProtocolSchedule protocolSchedule = referenceTestProtocolSchedules.getByName(fork);
     if (protocolSchedule == null) {
@@ -247,8 +252,10 @@ public class T8nExecutor {
     final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
     final WorldUpdater worldStateUpdater = worldState.updater();
     final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
-    // Todo: EIP-4844 use the excessDataGas of the parent instead of DataGas.ZERO
-    final Wei dataGasPrice = protocolSpec.getFeeMarket().dataPrice(DataGas.ZERO);
+    final Wei blobGasPrice =
+        protocolSpec
+            .getFeeMarket()
+            .blobGasPricePerGas(blockHeader.getExcessBlobGas().orElse(BlobGas.ZERO));
 
     List<TransactionReceipt> receipts = new ArrayList<>();
     List<RejectedTransaction> invalidTransactions = new ArrayList<>(rejections);
@@ -264,6 +271,7 @@ public class T8nExecutor {
       final TransactionProcessingResult result;
       try {
         tracer = tracerManager.getManagedTracer(i, transaction.getHash());
+        tracer.traceStartTransaction(worldStateUpdater, transaction);
         result =
             processor.processTransaction(
                 blockchain,
@@ -275,7 +283,7 @@ public class T8nExecutor {
                 false,
                 TransactionValidationParams.processingBlock(),
                 tracer,
-                dataGasPrice);
+                blobGasPrice);
         tracerManager.disposeTracer(tracer);
       } catch (Exception e) {
         throw new RuntimeException(e);
@@ -306,12 +314,18 @@ public class T8nExecutor {
                 .getGasCalculator()
                 .transactionIntrinsicGasCost(
                     transaction.getPayload(), transaction.getTo().isEmpty());
-        tracer.traceEndTransaction(
-            result.getOutput(), gasUsed - intrinsicGas, timer.elapsed(TimeUnit.NANOSECONDS));
         TransactionReceipt receipt =
             protocolSpec
                 .getTransactionReceiptFactory()
                 .create(transaction.getType(), result, worldState, gasUsed);
+        tracer.traceEndTransaction(
+            worldStateUpdater,
+            transaction,
+            result.isSuccessful(),
+            result.getOutput(),
+            result.getLogs(),
+            gasUsed - intrinsicGas,
+            timer.elapsed(TimeUnit.NANOSECONDS));
         Bytes gasUsedInTransaction = Bytes.ofUnsignedLong(transactionGasUsed);
         receipts.add(receipt);
         ObjectNode receiptObject = receiptsArray.addObject();
@@ -348,7 +362,6 @@ public class T8nExecutor {
               : Wei.of(Long.decode(rewardString));
       worldStateUpdater
           .getOrCreateSenderAccount(blockHeader.getCoinbase())
-          .getMutable()
           .incrementBalance(reward);
     }
 
@@ -387,7 +400,7 @@ public class T8nExecutor {
 
     resultObject.put(
         "currentDifficulty",
-        blockHeader.getDifficultyBytes().trimLeadingZeros().size() > 0
+        !blockHeader.getDifficultyBytes().trimLeadingZeros().isEmpty()
             ? blockHeader.getDifficultyBytes().toShortHexString()
             : null);
     resultObject.put("gasUsed", Bytes.ofUnsignedLong(gasUsed).toQuantityHexString());
@@ -397,6 +410,17 @@ public class T8nExecutor {
     blockHeader
         .getWithdrawalsRoot()
         .ifPresent(wr -> resultObject.put("withdrawalsRoot", wr.toHexString()));
+    blockHeader
+        .getBlobGasUsed()
+        .ifPresentOrElse(
+            bgu -> resultObject.put("blobGasUsed", Bytes.ofUnsignedLong(bgu).toQuantityHexString()),
+            () ->
+                blockHeader
+                    .getExcessBlobGas()
+                    .ifPresent(ebg -> resultObject.put("blobGasUsed", "0x0")));
+    blockHeader
+        .getExcessBlobGas()
+        .ifPresent(ebg -> resultObject.put("currentExcessBlobGas", ebg.toShortHexString()));
 
     ObjectNode allocObject = objectMapper.createObjectNode();
     worldState
@@ -407,7 +431,7 @@ public class T8nExecutor {
               ObjectNode accountObject =
                   allocObject.putObject(
                       account.getAddress().map(Address::toHexString).orElse("0x"));
-              if (account.getCode() != null && account.getCode().size() > 0) {
+              if (account.getCode() != null && !account.getCode().isEmpty()) {
                 accountObject.put("code", account.getCode().toHexString());
               }
               NavigableMap<Bytes32, AccountStorageEntry> storageEntries =

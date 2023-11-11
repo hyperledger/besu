@@ -48,13 +48,22 @@ public class GenesisConfigOptionsTest {
   public void shouldUseIbft2WhenIbft2InConfig() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("ibft2", emptyMap()));
     assertThat(config.isIbft2()).isTrue();
+    assertThat(config.isPoa()).isTrue();
     assertThat(config.getConsensusEngine()).isEqualTo("ibft2");
+  }
+
+  public void shouldUseQbftWhenQbftInConfig() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("qbft", emptyMap()));
+    assertThat(config.isQbft()).isTrue();
+    assertThat(config.isPoa()).isTrue();
+    assertThat(config.getConsensusEngine()).isEqualTo("qbft");
   }
 
   @Test
   public void shouldUseCliqueWhenCliqueInConfig() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("clique", emptyMap()));
     assertThat(config.isClique()).isTrue();
+    assertThat(config.isPoa()).isTrue();
     assertThat(config.getCliqueConfigOptions()).isNotSameAs(CliqueConfigOptions.DEFAULT);
     assertThat(config.getConsensusEngine()).isEqualTo("clique");
   }
@@ -63,6 +72,7 @@ public class GenesisConfigOptionsTest {
   public void shouldNotUseCliqueIfCliqueNotPresent() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.isClique()).isFalse();
+    assertThat(config.isPoa()).isFalse();
     assertThat(config.getCliqueConfigOptions()).isSameAs(CliqueConfigOptions.DEFAULT);
   }
 
@@ -230,6 +240,7 @@ public class GenesisConfigOptionsTest {
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig("{}").getConfigOptions();
     assertThat(config.isEthHash()).isFalse();
     assertThat(config.isClique()).isFalse();
+    assertThat(config.isPoa()).isFalse();
     assertThat(config.getHomesteadBlockNumber()).isEmpty();
   }
 
@@ -253,23 +264,6 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getTerminalTotalDifficulty()).isNotPresent();
     // stubJsonGenesis
     assertThat(new StubGenesisConfigOptions().getTerminalTotalDifficulty()).isNotPresent();
-  }
-
-  @Test
-  public void isQuorumShouldDefaultToFalse() {
-    final GenesisConfigOptions config = GenesisConfigFile.fromConfig("{}").getConfigOptions();
-
-    assertThat(config.isQuorum()).isFalse();
-    assertThat(config.getQip714BlockNumber()).isEmpty();
-  }
-
-  @Test
-  public void isQuorumConfigParsedCorrectly() {
-    final GenesisConfigOptions config =
-        fromConfigOptions(Map.of("isQuorum", true, "qip714block", 99999L));
-
-    assertThat(config.isQuorum()).isTrue();
-    assertThat(config.getQip714BlockNumber()).hasValue(99999L);
   }
 
   @Test

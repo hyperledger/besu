@@ -28,10 +28,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivGetFilterLogs;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
@@ -41,13 +41,13 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PrivGetFilterLogsTest {
 
   private final String FILTER_ID = "0xdbdb02abb65a2ba57a1cc0336c17ef75";
@@ -59,7 +59,7 @@ public class PrivGetFilterLogsTest {
 
   private PrivGetFilterLogs method;
 
-  @Before
+  @BeforeEach
   public void before() {
     method = new PrivGetFilterLogs(filterManager, privacyController, privacyIdProvider);
   }
@@ -127,7 +127,7 @@ public class PrivGetFilterLogsTest {
     when(filterManager.logs(eq(FILTER_ID))).thenReturn(null);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.LOGS_FILTER_NOT_FOUND);
+        new JsonRpcErrorResponse(null, RpcErrorType.LOGS_FILTER_NOT_FOUND);
 
     final JsonRpcRequestContext request = privGetFilterLogsRequest(PRIVACY_GROUP_ID, FILTER_ID);
     final JsonRpcResponse response = method.response(request);

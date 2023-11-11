@@ -72,6 +72,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.HashMap;
@@ -146,13 +147,14 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
     final BftProtocolSchedule bftProtocolSchedule = (BftProtocolSchedule) protocolSchedule;
     final BftBlockCreatorFactory<?> blockCreatorFactory =
         new BftBlockCreatorFactory<>(
-            transactionPool.getPendingTransactions(),
+            transactionPool,
             protocolContext,
             bftProtocolSchedule,
             forksSchedule,
             miningParameters,
             localAddress,
-            bftExtraDataCodec().get());
+            bftExtraDataCodec().get(),
+            ethProtocolManager.ethContext().getScheduler());
 
     final ValidatorProvider validatorProvider =
         protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();
@@ -231,7 +233,30 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
             blockCreatorFactory,
             blockchain,
             bftEventQueue);
-    ibftMiningCoordinator.enable();
+
+    if (syncState.isInitialSyncPhaseDone()) {
+      LOG.info("Starting IBFT mining coordinator");
+      ibftMiningCoordinator.enable();
+      ibftMiningCoordinator.start();
+    } else {
+      LOG.info("IBFT mining coordinator not starting while initial sync in progress");
+    }
+
+    syncState.subscribeCompletionReached(
+        new BesuEvents.InitialSyncCompletionListener() {
+          @Override
+          public void onInitialSyncCompleted() {
+            LOG.info("Starting IBFT mining coordinator following initial sync");
+            ibftMiningCoordinator.enable();
+            ibftMiningCoordinator.start();
+          }
+
+          @Override
+          public void onInitialSyncRestart() {
+            // Nothing to do. The mining coordinator won't be started until
+            // sync has completed.
+          }
+        });
 
     return ibftMiningCoordinator;
   }
@@ -310,7 +335,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
                 block.getHeader().getCoinbase().equals(localAddress) ? "Produced" : "Imported",
                 block.getHeader().getNumber(),
                 block.getBody().getTransactions().size(),
-                transactionPool.getPendingTransactions().size(),
+                transactionPool.count(),
                 block.getHeader().getGasUsed(),
                 (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
                 block.getHash().toHexString()));

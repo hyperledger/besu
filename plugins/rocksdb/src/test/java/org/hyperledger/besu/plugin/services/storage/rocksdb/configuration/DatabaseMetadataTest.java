@@ -21,22 +21,21 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-public class DatabaseMetadataTest {
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+class DatabaseMetadataTest {
+  @TempDir public Path temporaryFolder;
 
   @Test
-  public void getVersion() {
+  void getVersion() {
     final DatabaseMetadata databaseMetadata = new DatabaseMetadata(42);
     assertThat(databaseMetadata).isNotNull();
     assertThat(databaseMetadata.getVersion()).isEqualTo(42);
   }
 
   @Test
-  public void metaFileShouldMayContain() throws Exception {
+  void metaFileShouldMayContain() throws Exception {
     final Path tempDataDir =
         createAndWrite(
             "data", "DATABASE_METADATA.json", "{\"version\":42 , \"privacyVersion\":55}");
@@ -49,7 +48,7 @@ public class DatabaseMetadataTest {
   }
 
   @Test
-  public void metaFileShouldBeSoughtIntoDataDirFirst() throws Exception {
+  void metaFileShouldBeSoughtIntoDataDirFirst() throws Exception {
     final Path tempDataDir = createAndWrite("data", "DATABASE_METADATA.json", "{\"version\":42}");
     final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
     assertThat(databaseMetadata).isNotNull();
@@ -62,12 +61,9 @@ public class DatabaseMetadataTest {
   }
 
   private Path createAndWrite(
-      final TemporaryFolder temporaryFolder,
-      final String dir,
-      final String file,
-      final String content)
+      final Path temporaryFolder, final String dir, final String file, final String content)
       throws IOException {
-    final Path tmpDir = temporaryFolder.newFolder().toPath().resolve(dir);
+    final Path tmpDir = temporaryFolder.resolve(dir);
     Files.createDirectories(tmpDir);
     createAndWrite(tmpDir.resolve(file), content);
     return tmpDir;

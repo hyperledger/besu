@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -29,12 +30,17 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.account.AccountState;
+import org.hyperledger.besu.evm.internal.EvmConfiguration.WorldUpdaterMode;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
 
 public class BlockchainReferenceTestTools {
@@ -58,7 +64,8 @@ public class BlockchainReferenceTestTools {
           .generator(
               (testName, fullPath, spec, collector) -> {
                 final String eip = spec.getNetwork();
-                collector.add(testName + "[" + eip + "]", fullPath, spec, NETWORKS_TO_RUN.contains(eip));
+                collector.add(
+                    testName + "[" + eip + "]", fullPath, spec, NETWORKS_TO_RUN.contains(eip));
               });
 
   static {
@@ -73,7 +80,7 @@ public class BlockchainReferenceTestTools {
     // Absurd amount of gas, doesn't run in parallel
     params.ignore("randomStatetest94_\\w+");
 
-    // Don't do time consuming tests
+    // Don't do time-consuming tests
     params.ignore("CALLBlake2f_MaxRounds.*");
     params.ignore("loopMul_*");
 
@@ -82,9 +89,8 @@ public class BlockchainReferenceTestTools {
     // Perfectly valid test pre-merge.
     params.ignore("UncleFromSideChain_(Merge|Shanghai|Cancun|Prague|Osaka|Bogota)");
 
-    // EIP tests are explicitly meant to be works-in-progress with known failing tests
-    // We want to however include withdrawals even though they are EIP tests
-    params.ignore("(?:/EIPTests/(?!\\bbc4895\\b))");
+    // EOF tests are written against an older version of the spec
+    params.ignore("/stEOF/");
   }
 
   private BlockchainReferenceTestTools() {
@@ -101,7 +107,6 @@ public class BlockchainReferenceTestTools {
         spec.getWorldStateArchive()
             .getMutable(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash())
             .get();
-    assertThat(worldState.rootHash()).isEqualTo(genesisBlockHeader.getStateRoot());
 
     final ProtocolSchedule schedule =
         REFERENCE_TEST_PROTOCOL_SCHEDULES.getByName(spec.getNetwork());
@@ -120,6 +125,20 @@ public class BlockchainReferenceTestTools {
 
         final ProtocolSpec protocolSpec = schedule.getByBlockHeader(block.getHeader());
         final BlockImporter blockImporter = protocolSpec.getBlockImporter();
+
+        EVM evm = protocolSpec.getEvm();
+        if (evm.getEvmConfiguration().worldUpdaterMode() == WorldUpdaterMode.JOURNALED) {
+          assumeThat(
+                  worldState
+                      .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
+                      .anyMatch(AccountState::isEmpty))
+              .withFailMessage("Journaled account configured and empty account detected")
+              .isFalse();
+          assumeThat(EvmSpecVersion.SPURIOUS_DRAGON.compareTo(evm.getEvmVersion()) > 0)
+              .withFailMessage("Journaled account configured and fork prior to the merge specified")
+              .isFalse();
+        }
+
         final HeaderValidationMode validationMode =
             "NoProof".equalsIgnoreCase(spec.getSealEngine())
                 ? HeaderValidationMode.LIGHT

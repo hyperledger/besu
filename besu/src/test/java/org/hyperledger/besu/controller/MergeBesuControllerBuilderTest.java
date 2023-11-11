@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -58,6 +57,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
@@ -75,6 +75,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -89,11 +90,12 @@ public class MergeBesuControllerBuilderTest {
   @Mock SynchronizerConfiguration synchronizerConfiguration;
   @Mock EthProtocolConfiguration ethProtocolConfiguration;
   @Mock CheckpointConfigOptions checkpointConfigOptions;
-  @Mock MiningParameters miningParameters;
-  @Mock ObservableMetricsSystem observableMetricsSystem;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  MiningParameters miningParameters;
+
   @Mock PrivacyParameters privacyParameters;
   @Mock Clock clock;
-  @Mock TransactionPoolConfiguration poolConfiguration;
   @Mock StorageProvider storageProvider;
   @Mock GasLimitCalculator gasLimitCalculator;
   @Mock WorldStateStorage worldStateStorage;
@@ -102,6 +104,9 @@ public class MergeBesuControllerBuilderTest {
   BigInteger networkId = BigInteger.ONE;
   private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();
   private final BaseFeeMarket feeMarket = new LondonFeeMarket(0, Optional.of(Wei.of(42)));
+  private final TransactionPoolConfiguration poolConfiguration =
+      TransactionPoolConfiguration.DEFAULT;
+  private final ObservableMetricsSystem observableMetricsSystem = new NoOpMetricsSystem();
 
   @Rule public final TemporaryFolder tempDirRule = new TemporaryFolder();
 
@@ -134,10 +139,6 @@ public class MergeBesuControllerBuilderTest {
 
     when(synchronizerConfiguration.getBlockPropagationRange()).thenReturn(Range.closed(1L, 2L));
 
-    when(observableMetricsSystem.createLabelledCounter(
-            any(), anyString(), anyString(), anyString()))
-        .thenReturn(labels -> null);
-
     when(storageProvider.createWorldStateStorage(DataStorageFormat.FOREST))
         .thenReturn(worldStateStorage);
     when(storageProvider.createWorldStatePreimageStorage()).thenReturn(worldStatePreimageStorage);
@@ -146,6 +147,7 @@ public class MergeBesuControllerBuilderTest {
     when(worldStatePreimageStorage.updater())
         .thenReturn(mock(WorldStatePreimageStorage.Updater.class));
     when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));
+    when(miningParameters.getTargetGasLimit()).thenReturn(OptionalLong.empty());
 
     besuControllerBuilder = visitWithMockConfigs(new MergeBesuControllerBuilder());
   }

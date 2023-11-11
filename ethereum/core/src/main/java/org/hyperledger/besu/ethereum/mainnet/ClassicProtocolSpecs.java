@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.powHasher;
 
 import org.hyperledger.besu.config.PowAlgorithm;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
@@ -31,13 +31,13 @@ import org.hyperledger.besu.evm.gascalculator.DieHardGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.worldstate.WorldState;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -74,9 +74,9 @@ public class ClassicProtocolSpecs {
             contractSizeLimit, configStackSizeLimit, evmConfiguration)
         .isReplayProtectionSupported(true)
         .gasCalculator(TangerineWhistleGasCalculator::new)
-        .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(gasCalculator, gasLimitCalculator, true, chainId))
+        .transactionValidatorFactoryBuilder(
+            (gasCalculator, gasLimitCalculator, feeMarket) ->
+                new TransactionValidatorFactory(gasCalculator, gasLimitCalculator, true, chainId))
         .name("ClassicTangerineWhistle");
   }
 
@@ -128,9 +128,9 @@ public class ClassicProtocolSpecs {
     return gothamDefinition(
             chainId, contractSizeLimit, configStackSizeLimit, ecip1017EraRounds, evmConfiguration)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
-        .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(gasCalculator, gasLimitCalculator, true, chainId))
+        .transactionValidatorFactoryBuilder(
+            (gasCalculator, gasLimitCalculator, feeMarket) ->
+                new TransactionValidatorFactory(gasCalculator, gasLimitCalculator, true, chainId))
         .name("DefuseDifficultyBomb");
   }
 
@@ -171,18 +171,19 @@ public class ClassicProtocolSpecs {
                     1))
         .transactionProcessorBuilder(
             (gasCalculator,
-                transactionValidator,
+                feeMarket,
+                transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor) ->
                 new MainnetTransactionProcessor(
                     gasCalculator,
-                    transactionValidator,
+                    transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
                     true,
                     false,
                     stackSizeLimit,
-                    FeeMarket.legacy(),
+                    feeMarket,
                     CoinbaseFeePriceCalculator.frontier()))
         .name("Atlantis");
   }
@@ -291,9 +292,9 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             evmConfiguration)
         .gasCalculator(BerlinGasCalculator::new)
-        .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(
+        .transactionValidatorFactoryBuilder(
+            (gasCalculator, gasLimitCalculator, feeMarket) ->
+                new TransactionValidatorFactory(
                     gasCalculator,
                     gasLimitCalculator,
                     true,
@@ -332,5 +333,47 @@ public class ClassicProtocolSpecs {
                     List.of(MaxCodeSizeRule.of(contractSizeLimit), PrefixCodeRule.of()),
                     1))
         .name("Mystique");
+  }
+
+  public static ProtocolSpecBuilder spiralDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final OptionalLong ecip1017EraRounds,
+      final EvmConfiguration evmConfiguration) {
+    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
+    return mystiqueDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            ecip1017EraRounds,
+            evmConfiguration)
+        // EIP-3860
+        .gasCalculator(ShanghaiGasCalculator::new)
+        // EIP-3855
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.shanghai(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        // EIP-3651
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                feeMarket,
+                transactionValidatorFactory,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidatorFactory,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    true,
+                    true,
+                    stackSizeLimit,
+                    feeMarket,
+                    CoinbaseFeePriceCalculator.frontier()))
+        .name("Spiral");
   }
 }

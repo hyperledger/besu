@@ -23,18 +23,18 @@ import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.impl.UserImpl;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PrivDeletePrivacyGroupTest {
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
@@ -46,7 +46,7 @@ public class PrivDeletePrivacyGroupTest {
   private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
   private JsonRpcRequestContext request;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     request =
         new JsonRpcRequestContext(
@@ -79,7 +79,7 @@ public class PrivDeletePrivacyGroupTest {
 
     final JsonRpcErrorResponse response =
         (JsonRpcErrorResponse) privDeletePrivacyGroup.response(request);
-    assertThat(response.getError()).isEqualTo(JsonRpcError.DELETE_PRIVACY_GROUP_ERROR);
+    assertThat(response.getErrorType()).isEqualTo(RpcErrorType.DELETE_PRIVACY_GROUP_ERROR);
     verify(privacyController).deletePrivacyGroup(PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY);
   }
 
@@ -93,7 +93,7 @@ public class PrivDeletePrivacyGroupTest {
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.DELETE_PRIVACY_GROUP_ERROR);
+            request.getRequest().getId(), RpcErrorType.DELETE_PRIVACY_GROUP_ERROR);
 
     final JsonRpcResponse response = privDeletePrivacyGroup.response(request);
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);

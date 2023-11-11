@@ -14,15 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import static org.hyperledger.besu.datatypes.TransactionType.BLOB;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.toTransactionList;
-import static org.hyperledger.besu.plugin.data.TransactionType.BLOB;
 
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
 import java.util.Collection;

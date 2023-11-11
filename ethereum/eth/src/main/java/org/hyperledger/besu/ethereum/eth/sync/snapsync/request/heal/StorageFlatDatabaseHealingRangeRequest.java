@@ -152,7 +152,7 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
               Function.identity(),
               Function.identity());
 
-      Map<Bytes32, Bytes> remainingKeys = new TreeMap<>(slots);
+      Map<Bytes32, Bytes> flatDbSlots = new TreeMap<>(slots);
 
       // Retrieve the data from the trie in order to know what needs to be fixed in the flat
       // database
@@ -172,18 +172,23 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
                       RangeStorageEntriesCollector.collectEntries(
                           collector, visitor, root, startKeyHash));
 
-      // Perform the fix by updating the flat database
+      // Process each slot
       slots.forEach(
           (key, value) -> {
-            if (remainingKeys.containsKey(key)) {
-              remainingKeys.remove(key);
-            } else {
+            // Remove the key from the flat db and get its associated value
+            final Bytes flatDbEntry = flatDbSlots.remove(key);
+            // If the key was not in flat db and its associated value is different from the
+            // current value
+            if (!value.equals(flatDbEntry)) {
+              // Update the storage value
               bonsaiUpdater.putStorageValueBySlotHash(
                   accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
             }
           });
-      remainingKeys.forEach(
-          (key, value) -> bonsaiUpdater.removeStorageValueBySlotHash(accountHash, Hash.wrap(key)));
+      // For each remaining key, remove the storage value
+      flatDbSlots
+          .keySet()
+          .forEach(key -> bonsaiUpdater.removeStorageValueBySlotHash(accountHash, Hash.wrap(key)));
     }
     return slots.size();
   }

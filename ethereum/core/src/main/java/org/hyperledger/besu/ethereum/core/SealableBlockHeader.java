@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -45,6 +45,10 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
 
   protected final Hash depositsRoot;
 
+  protected final Long blobGasUsed;
+
+  protected final BlobGas excessBlobGas;
+
   protected SealableBlockHeader(
       final Hash parentHash,
       final Hash ommersHash,
@@ -62,7 +66,9 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final Wei baseFee,
       final Bytes32 mixHashOrPrevRandao,
       final Hash withdrawalsRoot,
-      final DataGas excessDataGas,
+      final Long blobGasUsed,
+      final BlobGas excessBlobGas,
+      final Bytes32 parentBeaconBlockRoot,
       final Hash depositsRoot) {
     super(
         parentHash,
@@ -73,7 +79,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
         timestamp,
         baseFee,
         mixHashOrPrevRandao,
-        excessDataGas);
+        parentBeaconBlockRoot);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
     this.transactionsRoot = transactionsRoot;
@@ -83,6 +89,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
     this.logsBloom = logsBloom;
     this.gasUsed = gasUsed;
     this.extraData = extraData;
+    this.blobGasUsed = blobGasUsed;
+    this.excessBlobGas = excessBlobGas;
   }
 
   /**
@@ -164,5 +172,23 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    */
   public Optional<Hash> getDepositsRoot() {
     return Optional.ofNullable(depositsRoot);
+  }
+
+  /**
+   * Returns the blob gas used if available.
+   *
+   * @return the blob gas used if available.
+   */
+  public Optional<Long> getBlobGasUsed() {
+    return Optional.ofNullable(blobGasUsed);
+  }
+
+  /**
+   * Returns the excess blob gas used if available.
+   *
+   * @return the excess blob gas used if available.
+   */
+  public Optional<BlobGas> getExcessBlobGas() {
+    return Optional.ofNullable(excessBlobGas);
   }
 }

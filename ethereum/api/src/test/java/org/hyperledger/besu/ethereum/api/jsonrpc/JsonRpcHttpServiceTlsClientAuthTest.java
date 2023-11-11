@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.SelfSignedP12Certificate;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -71,14 +72,13 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class JsonRpcHttpServiceTlsClientAuthTest {
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir private static Path folder;
 
   protected static final Vertx vertx = Vertx.vertx();
 
@@ -99,7 +99,7 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
   private final FileBasedPasswordProvider fileBasedPasswordProvider =
       new FileBasedPasswordProvider(createPasswordFile(besuCertificate));
 
-  @Before
+  @BeforeEach
   public void initServer() throws Exception {
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
@@ -124,6 +124,7 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
                     mock(ProtocolContext.class),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
+                    mock(MiningParameters.class),
                     mock(PoWMiningCoordinator.class),
                     new NoOpMetricsSystem(),
                     supportedCapabilities,
@@ -136,7 +137,7 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
                     mock(MetricsConfiguration.class),
                     natService,
                     Collections.emptyMap(),
-                    folder.getRoot().toPath(),
+                    folder,
                     mock(EthPeers.class),
                     vertx,
                     Optional.empty(),
@@ -155,7 +156,7 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
       throws Exception {
     return new JsonRpcHttpService(
         vertx,
-        folder.newFolder().toPath(),
+        folder,
         jsonRpcConfig,
         new NoOpMetricsSystem(),
         natService,
@@ -217,13 +218,13 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
 
   private Path createTempFile() {
     try {
-      return folder.newFile().toPath();
+      return Files.createTempFile(folder, "newFile", "");
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
   }
 
-  @After
+  @AfterEach
   public void shutdownServer() {
     System.clearProperty("javax.net.ssl.trustStore");
     System.clearProperty("javax.net.ssl.trustStorePassword");

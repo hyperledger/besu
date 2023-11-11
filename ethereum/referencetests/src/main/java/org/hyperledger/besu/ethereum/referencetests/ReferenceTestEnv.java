@@ -19,7 +19,7 @@ package org.hyperledger.besu.ethereum.referencetests;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -78,9 +78,11 @@ public class ReferenceTestEnv extends BlockHeader {
 
   private final Map<Long, Hash> blockHashes;
 
-  private final String parentExcessDataGas;
+  private final String parentExcessBlobGas;
 
-  private final String parentDataGasUsed;
+  private final String parentBlobGasUsed;
+
+  private final Bytes32 beaconRoot;
 
   /**
    * Public constructor.
@@ -95,32 +97,40 @@ public class ReferenceTestEnv extends BlockHeader {
    */
   @JsonCreator
   public ReferenceTestEnv(
+      @JsonProperty("parentBeaconBlockRoot") final String beaconRoot,
+      @JsonProperty("blockHashes") final Map<String, String> blockHashes,
+      @JsonProperty("ommers") final List<String> _ommers,
+      @JsonProperty("previousHash") final String previousHash,
+      @JsonProperty("withdrawals") final List<EnvWithdrawal> withdrawals,
+      @JsonProperty("currentBaseFee") final String baseFee,
+      @JsonProperty("currentBeaconRoot") final String currentBeaconRoot,
+      @JsonProperty("currentBlobGasUsed") final String currentBlobGasUsed,
       @JsonProperty("currentCoinbase") final String coinbase,
+      @JsonProperty("currentDataGasUsed") final String currentDataGasUsed,
       @JsonProperty("currentDifficulty") final String difficulty,
+      @JsonProperty("currentExcessBlobGas") final String currentExcessBlobGas,
+      @JsonProperty("currentExcessDataGas") final String currentExcessDataGas,
       @JsonProperty("currentGasLimit") final String gasLimit,
       @JsonProperty("currentNumber") final String number,
-      @JsonProperty("currentBaseFee") final String baseFee,
-      @JsonProperty("currentTimestamp") final String timestamp,
       @JsonProperty("currentRandom") final String random,
-      @JsonProperty("previousHash") final String previousHash,
-      @JsonProperty("parentDifficulty") final String parentDifficulty,
+      @JsonProperty("currentStateRoot") final String stateRoot,
+      @JsonProperty("currentTimestamp") final String timestamp,
+      @JsonProperty("currentWithdrawalsRoot") final String currentWithdrawalsRoot,
       @JsonProperty("parentBaseFee") final String parentBaseFee,
-      @JsonProperty("parentGasUsed") final String parentGasUsed,
-      @JsonProperty("parentGasLimit") final String parentGasLimit,
-      @JsonProperty("parentTimestamp") final String parentTimestamp,
-      @JsonProperty("ommers") final List<String> _ommers,
-      @JsonProperty("parentUncleHash") final String _parentUncleHash,
-      @JsonProperty("withdrawals") final List<EnvWithdrawal> withdrawals,
-      @JsonProperty("blockHashes") final Map<String, String> blockHashes,
-      @JsonProperty("currentExcessDataGas") final String currentExcessDataGas,
-      @JsonProperty("currentDataGasUsed") final String currentDataGasUsed,
+      @JsonProperty("parentBlobGasUsed") final String parentBlobGasUsed,
+      @JsonProperty("parentDataGasUsed") final String parentDataGasUsed,
+      @JsonProperty("parentDifficulty") final String parentDifficulty,
+      @JsonProperty("parentExcessBlobGas") final String parentExcessBlobGas,
       @JsonProperty("parentExcessDataGas") final String parentExcessDataGas,
-      @JsonProperty("parentDataGasUsed") final String parentDataGasUsed) {
+      @JsonProperty("parentGasLimit") final String parentGasLimit,
+      @JsonProperty("parentGasUsed") final String parentGasUsed,
+      @JsonProperty("parentTimestamp") final String parentTimestamp,
+      @JsonProperty("parentUncleHash") final String _parentUncleHash) {
     super(
         generateTestBlockHash(previousHash, number),
         Hash.EMPTY_LIST_HASH, // ommersHash
         Address.fromHexString(coinbase),
-        Hash.EMPTY, // stateRoot
+        Optional.ofNullable(stateRoot).map(Hash::fromHexString).orElse(Hash.EMPTY), // stateRoot
         Hash.EMPTY, // transactionsRoot
         Hash.EMPTY, // receiptsRoot
         new LogsBloomFilter(),
@@ -133,8 +143,14 @@ public class ReferenceTestEnv extends BlockHeader {
         Optional.ofNullable(baseFee).map(Wei::fromHexString).orElse(null),
         Optional.ofNullable(random).map(Difficulty::fromHexString).orElse(Difficulty.ZERO),
         0L,
-        null, // withdrawalsRoot
-        currentExcessDataGas == null ? null : DataGas.fromHexString(currentExcessDataGas),
+        currentWithdrawalsRoot == null ? null : Hash.fromHexString(currentWithdrawalsRoot),
+        currentBlobGasUsed == null
+            ? currentDataGasUsed == null ? null : Long.decode(currentDataGasUsed)
+            : Long.decode(currentBlobGasUsed),
+        currentExcessBlobGas == null
+            ? currentExcessDataGas == null ? null : BlobGas.fromHexString(currentExcessDataGas)
+            : BlobGas.fromHexString(currentExcessBlobGas),
+        beaconRoot == null ? null : Bytes32.fromHexString(beaconRoot),
         null, // depositsRoot
         new MainnetBlockHeaderFunctions());
     this.parentDifficulty = parentDifficulty;
@@ -142,8 +158,9 @@ public class ReferenceTestEnv extends BlockHeader {
     this.parentGasUsed = parentGasUsed;
     this.parentGasLimit = parentGasLimit;
     this.parentTimestamp = parentTimestamp;
-    this.parentExcessDataGas = parentExcessDataGas;
-    this.parentDataGasUsed = parentDataGasUsed;
+    this.parentExcessBlobGas =
+        parentExcessBlobGas == null ? parentExcessDataGas : parentExcessBlobGas;
+    this.parentBlobGasUsed = parentBlobGasUsed == null ? parentDataGasUsed : parentBlobGasUsed;
     this.withdrawals =
         withdrawals == null
             ? List.of()
@@ -157,6 +174,10 @@ public class ReferenceTestEnv extends BlockHeader {
                         Map.entry(
                             Long.decode(entry.getKey()), Hash.fromHexString(entry.getValue())))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    this.beaconRoot =
+        beaconRoot == null
+            ? (currentBeaconRoot == null ? null : Hash.fromHexString(currentBeaconRoot))
+            : Hash.fromHexString(beaconRoot);
   }
 
   @Override
@@ -206,6 +227,14 @@ public class ReferenceTestEnv extends BlockHeader {
                           .buildBlockHeader(),
                       null)));
     }
+    if (parentExcessBlobGas != null && parentBlobGasUsed != null) {
+      builder.excessBlobGas(
+          BlobGas.of(
+              protocolSpec
+                  .getGasCalculator()
+                  .computeExcessBlobGas(
+                      Long.decode(parentExcessBlobGas), Long.decode(parentBlobGasUsed))));
+    }
 
     return builder.buildBlockHeader();
   }
@@ -228,9 +257,10 @@ public class ReferenceTestEnv extends BlockHeader {
         && Objects.equals(parentGasUsed, that.parentGasUsed)
         && Objects.equals(parentGasLimit, that.parentGasLimit)
         && Objects.equals(parentTimestamp, that.parentTimestamp)
-        && Objects.equals(parentDataGasUsed, that.parentDataGasUsed)
-        && Objects.equals(parentExcessDataGas, that.parentExcessDataGas)
-        && Objects.equals(withdrawals, that.withdrawals);
+        && Objects.equals(parentBlobGasUsed, that.parentBlobGasUsed)
+        && Objects.equals(parentExcessBlobGas, that.parentExcessBlobGas)
+        && Objects.equals(withdrawals, that.withdrawals)
+        && Objects.equals(beaconRoot, that.beaconRoot);
   }
 
   @Override
@@ -242,8 +272,9 @@ public class ReferenceTestEnv extends BlockHeader {
         parentGasUsed,
         parentGasLimit,
         parentTimestamp,
-        parentDataGasUsed,
-        parentExcessDataGas,
-        withdrawals);
+        parentBlobGasUsed,
+        parentExcessBlobGas,
+        withdrawals,
+        beaconRoot);
   }
 }
