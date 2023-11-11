@@ -16,6 +16,7 @@ package org.hyperledger.besu.controller;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -1091,7 +1092,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final EthPeers ethPeers,
       final EthMessages snapMessages) {
     return Optional.of(
-        new SnapProtocolManager(peerValidators, ethPeers, snapMessages, protocolContext));
+            new SnapProtocolManager(peerValidators, ethPeers, snapMessages, protocolContext))
+        // TODO: revisit this as part of #6157
+        .filter(__ -> SynchronizerOptions.create().isSnapsyncFlatDbHealingEnabled());
   }
 
   WorldStateArchive createWorldStateArchive(
