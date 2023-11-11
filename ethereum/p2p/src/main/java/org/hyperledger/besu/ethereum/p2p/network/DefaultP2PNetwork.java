@@ -199,17 +199,17 @@ public class DefaultP2PNetwork implements P2PNetwork {
     peerDiscoveryAgent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= peerLowerBound);
     subscribeDisconnect(reputationManager);
 
-    metricsSystem.createLongGauge(
-        BesuMetricCategory.PEERS,
-        "bonded_peers_streamed_from_peer_table",
-        "Bonded peers streamed from PeerTable to try to connect to",
-        numBondedPeers::get);
-
-    metricsSystem.createLongGauge(
-        BesuMetricCategory.PEERS,
-        "bonded_peers_streamed_actually_trying_to_connect",
-        "Bonded peers streamed from PeerTable we are actually trying to connect to",
-        numTrying::get);
+//    metricsSystem.createLongGauge(
+//        BesuMetricCategory.PEERS,
+//        "bonded_peers_streamed_from_peer_table",
+//        "Bonded peers streamed from PeerTable to try to connect to",
+//        numBondedPeers::get);
+//
+//    metricsSystem.createLongGauge(
+//        BesuMetricCategory.PEERS,
+//        "bonded_peers_streamed_actually_trying_to_connect",
+//        "Bonded peers streamed from PeerTable we are actually trying to connect to",
+//        numTrying::get);
   }
 
   public static Builder builder() {
