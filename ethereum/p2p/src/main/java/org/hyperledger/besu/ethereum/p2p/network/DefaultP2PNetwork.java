@@ -47,7 +47,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.NatManager;
@@ -199,17 +198,17 @@ public class DefaultP2PNetwork implements P2PNetwork {
     peerDiscoveryAgent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= peerLowerBound);
     subscribeDisconnect(reputationManager);
 
-//    metricsSystem.createLongGauge(
-//        BesuMetricCategory.PEERS,
-//        "bonded_peers_streamed_from_peer_table",
-//        "Bonded peers streamed from PeerTable to try to connect to",
-//        numBondedPeers::get);
-//
-//    metricsSystem.createLongGauge(
-//        BesuMetricCategory.PEERS,
-//        "bonded_peers_streamed_actually_trying_to_connect",
-//        "Bonded peers streamed from PeerTable we are actually trying to connect to",
-//        numTrying::get);
+    //    metricsSystem.createLongGauge(
+    //        BesuMetricCategory.PEERS,
+    //        "bonded_peers_streamed_from_peer_table",
+    //        "Bonded peers streamed from PeerTable to try to connect to",
+    //        numBondedPeers::get);
+    //
+    //    metricsSystem.createLongGauge(
+    //        BesuMetricCategory.PEERS,
+    //        "bonded_peers_streamed_actually_trying_to_connect",
+    //        "Bonded peers streamed from PeerTable we are actually trying to connect to",
+    //        numTrying::get);
   }
 
   public static Builder builder() {
