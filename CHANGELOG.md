@@ -1,5 +1,14 @@
 # Changelog
 
+## 23.10.3
+
+### Breaking Changes
+
+### Deprecations
+
+### Additions and Improvements
+- Implement debug_traceCall [#5885](https://github.com/hyperledger/besu/pull/5885)
+
 ## 23.10.2
 
 ### Breaking Changes
