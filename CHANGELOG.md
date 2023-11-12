@@ -1,5 +1,13 @@
 # Changelog
 
+## 23.10.3
+
+### Breaking Changes
+
+### Deprecations
+
+### Additions and Improvements
+
 ## 23.10.2
 
 ### Breaking Changes
