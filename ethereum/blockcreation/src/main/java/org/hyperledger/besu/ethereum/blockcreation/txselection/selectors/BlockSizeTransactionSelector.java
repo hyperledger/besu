@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
@@ -39,19 +40,20 @@ public class BlockSizeTransactionSelector extends AbstractTransactionSelector {
    * Evaluates a transaction considering other transactions in the same block. If the transaction is
    * too large for the block returns a selection result based on block occupancy.
    *
-   * @param transaction The transaction to be evaluated.
+   * @param pendingTransaction The transaction to be evaluated.
    * @param transactionSelectionResults The results of other transaction evaluations in the same
    *     block.
    * @return The result of the transaction selection.
    */
   @Override
   public TransactionSelectionResult evaluateTransactionPreProcessing(
-      final Transaction transaction,
+      final PendingTransaction pendingTransaction,
       final TransactionSelectionResults transactionSelectionResults) {
-    if (transactionTooLargeForBlock(transaction, transactionSelectionResults)) {
+    if (transactionTooLargeForBlock(
+        pendingTransaction.getTransaction(), transactionSelectionResults)) {
       LOG.atTrace()
           .setMessage("Transaction {} too large to select for block creation")
-          .addArgument(transaction::toTraceLog)
+          .addArgument(pendingTransaction::toTraceLog)
           .log();
       if (blockOccupancyAboveThreshold(transactionSelectionResults)) {
         LOG.trace("Block occupancy above threshold, completing operation");
@@ -68,7 +70,7 @@ public class BlockSizeTransactionSelector extends AbstractTransactionSelector {
 
   @Override
   public TransactionSelectionResult evaluateTransactionPostProcessing(
-      final Transaction transaction,
+      final PendingTransaction pendingTransaction,
       final TransactionSelectionResults blockTransactionResults,
       final TransactionProcessingResult processingResult) {
     // All necessary checks were done in the pre-processing method, so nothing to do here.
@@ -116,13 +118,13 @@ public class BlockSizeTransactionSelector extends AbstractTransactionSelector {
 
     LOG.trace(
         "Min block occupancy ratio {}, gas used {}, available {}, remaining {}, used/available {}",
-        context.minBlockOccupancyRatio(),
+        context.miningParameters().getMinBlockOccupancyRatio(),
         gasUsed,
         gasAvailable,
         gasRemaining,
         occupancyRatio);
 
-    return occupancyRatio >= context.minBlockOccupancyRatio();
+    return occupancyRatio >= context.miningParameters().getMinBlockOccupancyRatio();
   }
 
   /**

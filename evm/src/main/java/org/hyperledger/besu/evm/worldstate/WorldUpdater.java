@@ -38,7 +38,7 @@ public interface WorldUpdater extends MutableWorldView {
    * Creates a new account, or reset it (that is, act as if it was deleted and created anew) if it
    * already exists.
    *
-   * <p>After this call, the account will exists and will have the provided nonce and balance. His
+   * <p>After this call, the account will exists and will have the provided nonce and balance. The
    * code and storage will be empty.
    *
    * @param address the address of the account to create (or reset).
@@ -150,5 +150,10 @@ public interface WorldUpdater extends MutableWorldView {
   default void clearAccountsThatAreEmpty() {
     new ArrayList<>(getTouchedAccounts())
         .stream().filter(Account::isEmpty).forEach(a -> deleteAccount(a.getAddress()));
+  }
+
+  /** Mark transaction boundary. */
+  default void markTransactionBoundary() {
+    // default is to ignore
   }
 }

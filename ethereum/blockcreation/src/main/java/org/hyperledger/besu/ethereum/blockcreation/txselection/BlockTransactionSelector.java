@@ -14,19 +14,26 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation.txselection;
 
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AbstractTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlobPriceTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlockSizeTransactionSelector;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.MinPriorityFeePerGasTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.PriceTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.ProcessingResultTransactionSelector;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -38,14 +45,16 @@ import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelector;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,44 +91,58 @@ public class BlockTransactionSelector {
   private final TransactionSelectionResults transactionSelectionResults =
       new TransactionSelectionResults();
   private final List<AbstractTransactionSelector> transactionSelectors;
-  private final List<TransactionSelector> externalTransactionSelectors;
+  private final PluginTransactionSelector pluginTransactionSelector;
+  private final BlockAwareOperationTracer pluginOperationTracer;
+  private final EthScheduler ethScheduler;
+  private final AtomicBoolean isTimeout = new AtomicBoolean(false);
+  private WorldUpdater blockWorldStateUpdater;
 
   public BlockTransactionSelector(
+      final MiningParameters miningParameters,
       final MainnetTransactionProcessor transactionProcessor,
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final TransactionPool transactionPool,
       final ProcessableBlockHeader processableBlockHeader,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
-      final Wei minTransactionGasPrice,
-      final Double minBlockOccupancyRatio,
       final Supplier<Boolean> isCancelled,
       final Address miningBeneficiary,
       final Wei blobGasPrice,
       final FeeMarket feeMarket,
       final GasCalculator gasCalculator,
       final GasLimitCalculator gasLimitCalculator,
-      final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
+      final PluginTransactionSelector pluginTransactionSelector,
+      final EthScheduler ethScheduler) {
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
     this.worldState = worldState;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.isCancelled = isCancelled;
+    this.ethScheduler = ethScheduler;
     this.blockSelectionContext =
         new BlockSelectionContext(
+            miningParameters,
             gasCalculator,
             gasLimitCalculator,
-            minTransactionGasPrice,
-            minBlockOccupancyRatio,
             processableBlockHeader,
             feeMarket,
             blobGasPrice,
             miningBeneficiary,
             transactionPool);
     transactionSelectors = createTransactionSelectors(blockSelectionContext);
-    externalTransactionSelectors =
-        createExternalTransactionSelectors(
-            transactionSelectorFactory.map(List::of).orElseGet(List::of));
+    this.pluginTransactionSelector = pluginTransactionSelector;
+    this.pluginOperationTracer = pluginTransactionSelector.getOperationTracer();
+    blockWorldStateUpdater = worldState.updater();
+  }
+
+  private List<AbstractTransactionSelector> createTransactionSelectors(
+      final BlockSelectionContext context) {
+    return List.of(
+        new BlockSizeTransactionSelector(context),
+        new PriceTransactionSelector(context),
+        new BlobPriceTransactionSelector(context),
+        new MinPriorityFeePerGasTransactionSelector(context),
+        new ProcessingResultTransactionSelector(context));
   }
 
   /**
@@ -136,21 +159,42 @@ public class BlockTransactionSelector {
         .setMessage("Transaction pool stats {}")
         .addArgument(blockSelectionContext.transactionPool().logStats())
         .log();
-    blockSelectionContext
-        .transactionPool()
-        .selectTransactions(
-            pendingTransaction -> {
-              final var res = evaluateTransaction(pendingTransaction);
-              if (!res.selected()) {
-                transactionSelectionResults.updateNotSelected(pendingTransaction, res);
-              }
-              return res;
-            });
+    timeLimitedSelection();
     LOG.atTrace()
         .setMessage("Transaction selection result {}")
         .addArgument(transactionSelectionResults::toTraceLog)
         .log();
     return transactionSelectionResults;
+  }
+
+  private void timeLimitedSelection() {
+    final long blockTxsSelectionMaxTime =
+        blockSelectionContext.miningParameters().getUnstable().getBlockTxsSelectionMaxTime();
+    final var txSelection =
+        ethScheduler.scheduleBlockCreationTask(
+            () ->
+                blockSelectionContext
+                    .transactionPool()
+                    .selectTransactions(this::evaluateTransaction));
+
+    try {
+      txSelection.get(blockTxsSelectionMaxTime, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException | ExecutionException e) {
+      if (isCancelled.get()) {
+        throw new CancellationException("Cancelled during transaction selection");
+      }
+      LOG.warn("Error during block transaction selection", e);
+    } catch (TimeoutException e) {
+      // synchronize since we want to be sure that there is no concurrent state update
+      synchronized (isTimeout) {
+        isTimeout.set(true);
+      }
+      LOG.warn(
+          "Interrupting transaction selection since it is taking more than the max configured time of "
+              + blockTxsSelectionMaxTime
+              + "ms",
+          e);
+    }
   }
 
   /**
@@ -164,77 +208,41 @@ public class BlockTransactionSelector {
    */
   public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
     transactions.forEach(
-        transaction -> {
-          final var res = evaluateTransaction(transaction);
-          if (!res.selected()) {
-            transactionSelectionResults.updateNotSelected(transaction, res);
-          }
-        });
+        transaction -> evaluateTransaction(new PendingTransaction.Local.Priority(transaction)));
     return transactionSelectionResults;
   }
 
-  /*
+  /**
    * Passed into the PendingTransactions, and is called on each transaction until sufficient
-   * transactions are found which fill a block worth of gas.
+   * transactions are found which fill a block worth of gas. This function will continue to be
+   * called until the block under construction is suitably full (in terms of gasLimit) and the
+   * provided transaction's gasLimit does not fit within the space remaining in the block.
    *
-   * This function will continue to be called until the block under construction is suitably
-   * full (in terms of gasLimit) and the provided transaction's gasLimit does not fit within
-   * the space remaining in the block.
-   *
+   * @param pendingTransaction The transaction to be evaluated.
+   * @return The result of the transaction evaluation process.
+   * @throws CancellationException if the transaction selection process is cancelled.
    */
-  private TransactionSelectionResult evaluateTransaction(final Transaction transaction) {
-    if (isCancelled.get()) {
-      throw new CancellationException("Cancelled during transaction selection.");
-    }
+  private TransactionSelectionResult evaluateTransaction(
+      final PendingTransaction pendingTransaction) {
+    checkCancellation();
 
-    TransactionSelectionResult selectionResult = evaluateTransactionPreProcessing(transaction);
+    TransactionSelectionResult selectionResult = evaluatePreProcessing(pendingTransaction);
     if (!selectionResult.selected()) {
-      return selectionResult;
+      return handleTransactionNotSelected(pendingTransaction, selectionResult);
     }
 
-    final WorldUpdater worldStateUpdater = worldState.updater();
-    final BlockHashLookup blockHashLookup =
-        new CachingBlockHashLookup(blockSelectionContext.processableBlockHeader(), blockchain);
+    final WorldUpdater txWorldStateUpdater = blockWorldStateUpdater.updater();
+    final TransactionProcessingResult processingResult =
+        processTransaction(pendingTransaction, txWorldStateUpdater);
 
-    final TransactionProcessingResult effectiveResult =
-        transactionProcessor.processTransaction(
-            blockchain,
-            worldStateUpdater,
-            blockSelectionContext.processableBlockHeader(),
-            transaction,
-            blockSelectionContext.miningBeneficiary(),
-            blockHashLookup,
-            false,
-            TransactionValidationParams.mining(),
-            blockSelectionContext.blobGasPrice());
+    var postProcessingSelectionResult =
+        evaluatePostProcessing(pendingTransaction, processingResult);
 
-    var transactionWithProcessingContextResult =
-        evaluateTransactionPostProcessing(transaction, effectiveResult);
-    if (!transactionWithProcessingContextResult.selected()) {
-      return transactionWithProcessingContextResult;
+    if (postProcessingSelectionResult.selected()) {
+      return handleTransactionSelected(pendingTransaction, processingResult, txWorldStateUpdater);
     }
-
-    final long gasUsedByTransaction = transaction.getGasLimit() - effectiveResult.getGasRemaining();
-    final long cumulativeGasUsed =
-        transactionSelectionResults.getCumulativeGasUsed() + gasUsedByTransaction;
-
-    worldStateUpdater.commit();
-    final TransactionReceipt receipt =
-        transactionReceiptFactory.create(
-            transaction.getType(), effectiveResult, worldState, cumulativeGasUsed);
-
-    final long blobGasUsed =
-        blockSelectionContext.gasCalculator().blobGasCost(transaction.getBlobCount());
-
-    transactionSelectionResults.updateSelected(
-        transaction, receipt, gasUsedByTransaction, blobGasUsed);
-
-    LOG.atTrace()
-        .setMessage("Selected {} for block creation")
-        .addArgument(transaction::toTraceLog)
-        .log();
-
-    return TransactionSelectionResult.SELECTED;
+    return handleTransactionNotSelected(
+        pendingTransaction, postProcessingSelectionResult, txWorldStateUpdater);
   }
 
   /**
@@ -243,32 +251,21 @@ public class BlockTransactionSelector {
    * it then processes it through external selectors. If the transaction is selected by all
    * selectors, it returns SELECTED.
    *
-   * @param transaction The transaction to be evaluated.
+   * @param pendingTransaction The transaction to be evaluated.
    * @return The result of the transaction selection process.
    */
-  private TransactionSelectionResult evaluateTransactionPreProcessing(
-      final Transaction transaction) {
+  private TransactionSelectionResult evaluatePreProcessing(
+      final PendingTransaction pendingTransaction) {
 
-    // Process the transaction through internal selectors
     for (var selector : transactionSelectors) {
       TransactionSelectionResult result =
-          selector.evaluateTransactionPreProcessing(transaction, transactionSelectionResults);
-      // If the transaction is not selected by any internal selector, return the result
-      if (!result.equals(TransactionSelectionResult.SELECTED)) {
+          selector.evaluateTransactionPreProcessing(
+              pendingTransaction, transactionSelectionResults);
+      if (!result.equals(SELECTED)) {
         return result;
       }
     }
-
-    // Process the transaction through external selectors
-    for (var selector : externalTransactionSelectors) {
-      TransactionSelectionResult result = selector.evaluateTransactionPreProcessing(transaction);
-      // If the transaction is not selected by any external selector, return the result
-      if (!result.equals(TransactionSelectionResult.SELECTED)) {
-        return result;
-      }
-    }
-    // If the transaction is selected by all selectors, return SELECTED
-    return TransactionSelectionResult.SELECTED;
+    return pluginTransactionSelector.evaluateTransactionPreProcessing(pendingTransaction);
   }
 
   /**
@@ -277,44 +274,146 @@ public class BlockTransactionSelector {
    * whether the transaction should be included in a block. If the transaction is selected by all
    * selectors, it returns SELECTED.
    *
-   * @param transaction The transaction to be evaluated.
+   * @param pendingTransaction The transaction to be evaluated.
    * @param processingResult The result of the transaction processing.
    * @return The result of the transaction selection process.
    */
-  private TransactionSelectionResult evaluateTransactionPostProcessing(
-      final Transaction transaction, final TransactionProcessingResult processingResult) {
+  private TransactionSelectionResult evaluatePostProcessing(
+      final PendingTransaction pendingTransaction,
+      final TransactionProcessingResult processingResult) {
 
-    // Process the transaction through internal selectors
     for (var selector : transactionSelectors) {
       TransactionSelectionResult result =
           selector.evaluateTransactionPostProcessing(
-              transaction, transactionSelectionResults, processingResult);
-      // If the transaction is not selected by any selector, return the result
-      if (!result.equals(TransactionSelectionResult.SELECTED)) {
+              pendingTransaction, transactionSelectionResults, processingResult);
+      if (!result.equals(SELECTED)) {
         return result;
       }
     }
-
-    // TODO: External selectors are not used here because TransactionProcessingResult is not
-    //  exposed to the Plugin API yet.
-
-    // If the transaction is selected by all selectors, return SELECTED
-    return TransactionSelectionResult.SELECTED;
+    return pluginTransactionSelector.evaluateTransactionPostProcessing(
+        pendingTransaction, processingResult);
   }
 
-  private List<AbstractTransactionSelector> createTransactionSelectors(
-      final BlockSelectionContext context) {
-    return List.of(
-        new BlockSizeTransactionSelector(context),
-        new PriceTransactionSelector(context),
-        new BlobPriceTransactionSelector(context),
-        new ProcessingResultTransactionSelector(context));
+  /**
+   * Processes a transaction
+   *
+   * @param pendingTransaction The transaction to be processed.
+   * @param worldStateUpdater The world state updater.
+   * @return The result of the transaction processing.
+   */
+  private TransactionProcessingResult processTransaction(
+      final PendingTransaction pendingTransaction, final WorldUpdater worldStateUpdater) {
+    final BlockHashLookup blockHashLookup =
+        new CachingBlockHashLookup(blockSelectionContext.processableBlockHeader(), blockchain);
+    return transactionProcessor.processTransaction(
+        blockchain,
+        worldStateUpdater,
+        blockSelectionContext.processableBlockHeader(),
+        pendingTransaction.getTransaction(),
+        blockSelectionContext.miningBeneficiary(),
+        pluginOperationTracer,
+        blockHashLookup,
+        false,
+        TransactionValidationParams.mining(),
+        blockSelectionContext.blobGasPrice());
   }
 
-  private List<TransactionSelector> createExternalTransactionSelectors(
-      final List<TransactionSelectorFactory> transactionSelectorFactory) {
-    return transactionSelectorFactory.stream()
-        .map(TransactionSelectorFactory::create)
-        .collect(Collectors.toList());
+  /**
+   * Handles a selected transaction by committing the world state updates, creating a transaction
+   * receipt, updating the TransactionSelectionResults with the selected transaction, and notifying
+   * the external transaction selector.
+   *
+   * @param pendingTransaction The pending transaction.
+   * @param processingResult The result of the transaction processing.
+   * @param txWorldStateUpdater The world state updater.
+   * @return The result of the transaction selection process.
+   */
+  private TransactionSelectionResult handleTransactionSelected(
+      final PendingTransaction pendingTransaction,
+      final TransactionProcessingResult processingResult,
+      final WorldUpdater txWorldStateUpdater) {
+    final Transaction transaction = pendingTransaction.getTransaction();
+
+    final long gasUsedByTransaction =
+        transaction.getGasLimit() - processingResult.getGasRemaining();
+    final long cumulativeGasUsed =
+        transactionSelectionResults.getCumulativeGasUsed() + gasUsedByTransaction;
+    final long blobGasUsed =
+        blockSelectionContext.gasCalculator().blobGasCost(transaction.getBlobCount());
+
+    final boolean tooLate;
+
+    // only add this tx to the selected set if it is not too late,
+    // this need to be done synchronously to avoid that a concurrent timeout
+    // could start packing a block while we are updating the state here
+    synchronized (isTimeout) {
+      if (!isTimeout.get()) {
+        txWorldStateUpdater.commit();
+        blockWorldStateUpdater.commit();
+        final TransactionReceipt receipt =
+            transactionReceiptFactory.create(
+                transaction.getType(), processingResult, worldState, cumulativeGasUsed);
+
+        transactionSelectionResults.updateSelected(
+            pendingTransaction.getTransaction(), receipt, gasUsedByTransaction, blobGasUsed);
+        tooLate = false;
+      } else {
+        tooLate = true;
+      }
+    }
+
+    if (tooLate) {
+      // even if this tx passed all the checks, it is too late to include it in this block,
+      // so we need to treat it as not selected
+      LOG.atTrace()
+          .setMessage("{} processed too late for block creation")
+          .addArgument(transaction::toTraceLog)
+          .log();
+      // do not rely on the presence of this result, since by the time it is added, the code
+      // reading it could have been already executed by another thread
+      return handleTransactionNotSelected(
+          pendingTransaction, BLOCK_SELECTION_TIMEOUT, txWorldStateUpdater);
+    }
+
+    pluginTransactionSelector.onTransactionSelected(pendingTransaction, processingResult);
+    blockWorldStateUpdater = worldState.updater();
+    LOG.atTrace()
+        .setMessage("Selected {} for block creation")
+        .addArgument(transaction::toTraceLog)
+        .log();
+    return SELECTED;
+  }
+
+  /**
+   * Handles the scenario when a transaction is not selected. It updates the
+   * TransactionSelectionResults with the unselected transaction, and notifies the external
+   * transaction selector.
+   *
+   * @param pendingTransaction The unselected pending transaction.
+   * @param selectionResult The result of the transaction selection process.
+   * @return The result of the transaction selection process.
+   */
+  private TransactionSelectionResult handleTransactionNotSelected(
+      final PendingTransaction pendingTransaction,
+      final TransactionSelectionResult selectionResult) {
+
+    transactionSelectionResults.updateNotSelected(
+        pendingTransaction.getTransaction(), selectionResult);
+    pluginTransactionSelector.onTransactionNotSelected(pendingTransaction, selectionResult);
+    return selectionResult;
+  }
+
+  private TransactionSelectionResult handleTransactionNotSelected(
+      final PendingTransaction pendingTransaction,
+      final TransactionSelectionResult selectionResult,
+      final WorldUpdater txWorldStateUpdater) {
+    txWorldStateUpdater.revert();
+    return handleTransactionNotSelected(pendingTransaction, selectionResult);
+  }
+
+  private void checkCancellation() {
+    if (isCancelled.get()) {
+      throw new CancellationException("Cancelled during transaction selection.");
+    }
   }
 }

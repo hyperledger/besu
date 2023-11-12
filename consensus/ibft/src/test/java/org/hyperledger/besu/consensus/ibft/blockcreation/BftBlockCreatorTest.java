@@ -41,6 +41,8 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -57,6 +59,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.ZoneId;
@@ -150,11 +153,28 @@ public class BftBlockCreatorTest {
 
     transactionPool.setEnabled();
 
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder()
+            .mutableInitValues(
+                MutableInitValues.builder()
+                    .extraData(
+                        bftExtraDataEncoder.encode(
+                            new BftExtraData(
+                                Bytes.wrap(new byte[32]),
+                                Collections.emptyList(),
+                                Optional.empty(),
+                                0,
+                                initialValidatorList)))
+                    .minTransactionGasPrice(Wei.ZERO)
+                    .coinbase(AddressHelpers.ofValue(1))
+                    .build())
+            .build();
+
     final BftBlockCreator blockCreator =
         new BftBlockCreator(
+            miningParameters,
             forksSchedule,
             initialValidatorList.get(0),
-            () -> Optional.of(10_000_000L),
             parent ->
                 bftExtraDataEncoder.encode(
                     new BftExtraData(
@@ -166,10 +186,9 @@ public class BftBlockCreatorTest {
             transactionPool,
             protContext,
             protocolSchedule,
-            Wei.ZERO,
-            0.8,
             parentHeader,
-            bftExtraDataEncoder);
+            bftExtraDataEncoder,
+            new DeterministicEthScheduler());
 
     final int secondsBetweenBlocks = 1;
     final Block block = blockCreator.createBlock(parentHeader.getTimestamp() + 1).getBlock();

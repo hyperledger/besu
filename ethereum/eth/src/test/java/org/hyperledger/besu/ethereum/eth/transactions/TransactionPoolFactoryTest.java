@@ -27,7 +27,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -241,7 +240,7 @@ public class TransactionPoolFactoryTest {
             TestClock.fixed(),
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
             syncState,
-            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
+            MiningParameters.newDefault(),
             ImmutableTransactionPoolConfiguration.builder()
                 .txPoolMaxSize(1)
                 .pendingTxRetentionPeriod(1)
@@ -350,7 +349,7 @@ public class TransactionPoolFactoryTest {
             TestClock.fixed(),
             new NoOpMetricsSystem(),
             syncState,
-            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
+            MiningParameters.newDefault(),
             ImmutableTransactionPoolConfiguration.builder()
                 .txPoolImplementation(implementation)
                 .txPoolMaxSize(1)

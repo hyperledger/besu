@@ -109,7 +109,15 @@ public interface Transaction {
   Quantity getValue();
 
   /**
-   * Value corresponding to the 'V' component of the signature of the transaction.
+   * Value corresponding to the 'yParity' component of non-legacy signatures.
+   *
+   * @return the 'yParity' component of the signature
+   */
+  BigInteger getYParity();
+
+  /**
+   * Value corresponding to the 'v' component of legacy signatures, which encodes chainId and
+   * yParity.
    *
    * @return the 'V' component of the signature
    */
@@ -219,4 +227,11 @@ public interface Transaction {
    * @return the encoded transaction as Bytes
    */
   Bytes encoded();
+
+  /**
+   * Returns the size in bytes of the encoded transaction.
+   *
+   * @return the size in bytes of the encoded transaction.
+   */
+  int getSize();
 }

@@ -27,7 +27,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -1089,8 +1088,9 @@ public final class EthProtocolManagerTest {
     final ExecutorService transactions = mock(ExecutorService.class);
     final ExecutorService services = mock(ExecutorService.class);
     final ExecutorService computations = mock(ExecutorService.class);
+    final ExecutorService blockCreation = mock(ExecutorService.class);
     final EthScheduler ethScheduler =
-        new EthScheduler(worker, scheduled, transactions, services, computations);
+        new EthScheduler(worker, scheduled, transactions, services, computations, blockCreation);
 
     // Create the fake TransactionMessage to feed to the EthManager.
     final BlockDataGenerator gen = new BlockDataGenerator(1);
@@ -1116,7 +1116,7 @@ public final class EthProtocolManagerTest {
               TestClock.system(ZoneId.systemDefault()),
               metricsSystem,
               new SyncState(blockchain, ethManager.ethContext().getEthPeers()),
-              new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
+              MiningParameters.newDefault(),
               TransactionPoolConfiguration.DEFAULT,
               null)
           .setEnabled();

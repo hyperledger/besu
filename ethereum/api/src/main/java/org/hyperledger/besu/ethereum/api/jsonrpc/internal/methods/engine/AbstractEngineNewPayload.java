@@ -267,7 +267,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     }
 
     if (maybeParentHeader.isPresent()
-        && (blockParam.getTimestamp() <= maybeParentHeader.get().getTimestamp())) {
+        && (Long.compareUnsigned(maybeParentHeader.get().getTimestamp(), blockParam.getTimestamp())
+            >= 0)) {
       return respondWithInvalid(
           reqId,
           blockParam,
@@ -444,6 +445,13 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             RpcErrorType.INVALID_PARAMS,
             "Payload BlobGasUsed does not match calculated BlobGasUsed");
       }
+    }
+
+    if (protocolSpec.getGasCalculator().blobGasCost(transactionVersionedHashes.size())
+        > protocolSpec.getGasLimitCalculator().currentBlobGasLimit()) {
+      return ValidationResult.invalid(
+          RpcErrorType.INVALID_PARAMS,
+          String.format("Invalid Blob Count: %d", transactionVersionedHashes.size()));
     }
     return ValidationResult.valid();
   }

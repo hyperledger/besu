@@ -67,7 +67,7 @@ public class EthGasPriceTest {
                 null,
                 Optional.empty(),
                 Optional.empty(),
-                ImmutableApiConfiguration.builder().gasPriceMin(100).build()),
+                ImmutableApiConfiguration.builder().gasPriceMinSupplier(() -> 100).build()),
             miningCoordinator);
   }
 
@@ -169,17 +169,12 @@ public class EthGasPriceTest {
                 null),
             new BlockBody(
                 List.of(
-                    new Transaction(
-                        0,
-                        Wei.of(height * 1000000L),
-                        0,
-                        Optional.empty(),
-                        Wei.ZERO,
-                        null,
-                        Bytes.EMPTY,
-                        Address.ZERO,
-                        Optional.empty(),
-                        Optional.empty())),
+                    new Transaction.Builder()
+                        .nonce(0)
+                        .gasPrice(Wei.of(height * 1000000L))
+                        .gasLimit(0)
+                        .value(Wei.ZERO)
+                        .build()),
                 List.of())));
   }
 

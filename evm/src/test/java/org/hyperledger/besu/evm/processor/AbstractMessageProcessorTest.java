@@ -17,21 +17,21 @@ package org.hyperledger.besu.evm.processor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.evm.processor.AbstractMessageProcessorTest.ContextTracer.TRACE_TYPE.CONTEXT_ENTER;
 import static org.hyperledger.besu.evm.processor.AbstractMessageProcessorTest.ContextTracer.TRACE_TYPE.CONTEXT_EXIT;
+import static org.hyperledger.besu.evm.processor.AbstractMessageProcessorTest.ContextTracer.TRACE_TYPE.CONTEXT_RE_ENTER;
 import static org.hyperledger.besu.evm.processor.AbstractMessageProcessorTest.ContextTracer.TRACE_TYPE.POST_EXECUTION;
 import static org.hyperledger.besu.evm.processor.AbstractMessageProcessorTest.ContextTracer.TRACE_TYPE.PRE_EXECUTION;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.fluent.EVMExecutor;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.operation.Operation;
+import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,65 +41,43 @@ import java.util.List;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> {
-
   @Mock MessageFrame messageFrame;
   @Mock OperationTracer operationTracer;
   @Mock Deque<MessageFrame> messageFrameStack;
-  @Mock WorldUpdater worldUpdater;
 
   protected abstract T getAbstractMessageProcessor();
 
-  @ParameterizedTest
-  @ValueSource(ints = {0, 1})
-  void shouldNotTraceContextIfStackSizeIsZero(final int stackSize) {
-    when(messageFrame.getMessageStackSize()).thenReturn(stackSize);
-    when(messageFrame.getState())
-        .thenReturn(MessageFrame.State.COMPLETED_SUCCESS, MessageFrame.State.COMPLETED_FAILED);
-    when(messageFrame.getMessageFrameStack()).thenReturn(messageFrameStack);
-
-    getAbstractMessageProcessor().process(messageFrame, operationTracer);
-
-    verify(operationTracer, never()).traceContextEnter(messageFrame);
-    verify(operationTracer, never()).traceContextExit(messageFrame);
-  }
-
-  @ParameterizedTest
-  @ValueSource(ints = {2, 3, 5, 15, Integer.MAX_VALUE})
-  void shouldTraceContextIfStackSizeIsGreaterZeroAndSuccess(final int stackSize) {
-    when(messageFrame.getMessageStackSize()).thenReturn(stackSize);
+  @Test
+  void shouldTraceExitForContext() {
+    when(messageFrame.getWorldUpdater()).thenReturn(new ToyWorld());
     when(messageFrame.getState()).thenReturn(MessageFrame.State.COMPLETED_SUCCESS);
     when(messageFrame.getMessageFrameStack()).thenReturn(messageFrameStack);
-    when(messageFrame.getWorldUpdater()).thenReturn(worldUpdater);
 
     getAbstractMessageProcessor().process(messageFrame, operationTracer);
 
-    verify(operationTracer, times(1)).traceContextEnter(messageFrame);
+    // As the only MessageFrame state will be COMPLETED_SUCCESS, only a contextExit is expected
     verify(operationTracer, times(1)).traceContextExit(messageFrame);
   }
 
-  @ParameterizedTest
-  @ValueSource(ints = {2, 3, 5, 15, Integer.MAX_VALUE})
-  void shouldTraceContextIfStackSizeIsGreaterZeroAndFailure(final int stackSize) {
-    when(messageFrame.getMessageStackSize()).thenReturn(stackSize);
+  @Test
+  void shouldTraceExitEvenIfContextFailed() {
     when(messageFrame.getState()).thenReturn(MessageFrame.State.COMPLETED_FAILED);
     when(messageFrame.getMessageFrameStack()).thenReturn(messageFrameStack);
 
     getAbstractMessageProcessor().process(messageFrame, operationTracer);
 
-    verify(operationTracer, times(1)).traceContextEnter(messageFrame);
+    // As the only MessageFrame state will be COMPLETED_FAILED, only a contextExit is expected
     verify(operationTracer, times(1)).traceContextExit(messageFrame);
   }
 
   @Test
   void shouldTraceContextEnterExitForEip3155Test() {
-    final EVMExecutor executor = EVMExecutor.shanghai(EvmConfiguration.DEFAULT);
+    final EVMExecutor executor = EVMExecutor.evm(EvmSpecVersion.SHANGHAI);
     final ContextTracer contextTracer = new ContextTracer();
 
     executor.tracer(contextTracer);
@@ -133,6 +111,7 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
 
     final List<ContextTracer.TRACE_TYPE> expectedTraces =
         Arrays.asList(
+            CONTEXT_ENTER, // Entry in root context
             PRE_EXECUTION, // PUSH1
             POST_EXECUTION, // PUSH1
             PRE_EXECUTION, // DUP1
@@ -161,10 +140,12 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
             POST_EXECUTION, // STATICCALL
             CONTEXT_ENTER, // STATICCALL
             CONTEXT_EXIT, // STATICCALL
+            CONTEXT_RE_ENTER, // Re-entry in root context post-STATICALL
             PRE_EXECUTION, // PUSH1
             POST_EXECUTION, // PUSH1
             PRE_EXECUTION, // RETURN
-            POST_EXECUTION // RETURN
+            POST_EXECUTION, // RETURN
+            CONTEXT_EXIT // Exiting root context
             );
 
     assertThat(contextTracer.traceHistory()).isEqualTo(expectedTraces);
@@ -175,6 +156,7 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
       PRE_EXECUTION,
       POST_EXECUTION,
       CONTEXT_ENTER,
+      CONTEXT_RE_ENTER,
       CONTEXT_EXIT
     }
 
@@ -194,6 +176,11 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
     @Override
     public void traceContextEnter(final MessageFrame frame) {
       traceHistory.add(TRACE_TYPE.CONTEXT_ENTER);
+    }
+
+    @Override
+    public void traceContextReEnter(final MessageFrame frame) {
+      traceHistory.add(CONTEXT_RE_ENTER);
     }
 
     @Override

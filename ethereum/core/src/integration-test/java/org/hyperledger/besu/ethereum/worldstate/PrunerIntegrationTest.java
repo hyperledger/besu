@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValue
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.Pruner.PruningPhase;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -59,7 +60,9 @@ public class PrunerIntegrationTest {
   private final WorldStateStorage worldStateStorage = new WorldStateKeyValueStorage(stateStorage);
   private final WorldStateArchive worldStateArchive =
       new DefaultWorldStateArchive(
-          worldStateStorage, new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
+          worldStateStorage,
+          new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
+          EvmConfiguration.DEFAULT);
   private final InMemoryKeyValueStorage markStorage = new InMemoryKeyValueStorage();
   private final Block genesisBlock = gen.genesisBlock();
   private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisBlock);
@@ -226,7 +229,7 @@ public class PrunerIntegrationTest {
   private void collectTrieNodes(final MerkleTrie<Bytes32, Bytes> trie, final Set<Bytes> collector) {
     final Bytes32 rootHash = trie.getRootHash();
     trie.visitAll(
-        (node) -> {
+        node -> {
           if (node.isReferencedByHash() || node.getHash().equals(rootHash)) {
             collector.add(node.getEncodedBytes());
           }

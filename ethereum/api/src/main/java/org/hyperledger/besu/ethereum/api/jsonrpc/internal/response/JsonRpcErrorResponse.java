@@ -107,7 +107,7 @@ public class JsonRpcErrorResponse implements JsonRpcResponse {
     return Arrays.stream(RpcErrorType.values())
         .filter(e -> e.getCode() == code && message.startsWith(e.getMessage()))
         .findFirst()
-        .get();
+        .orElse(RpcErrorType.UNKNOWN);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})

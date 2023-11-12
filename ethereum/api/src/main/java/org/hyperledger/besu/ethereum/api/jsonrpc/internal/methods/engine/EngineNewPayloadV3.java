@@ -57,7 +57,7 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
       final Optional<String> maybeBeaconBlockRootParam) {
     if (payloadParameter.getBlobGasUsed() == null || payloadParameter.getExcessBlobGas() == null) {
       return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing blob gas fields");
-    } else if (maybeVersionedHashParam == null) {
+    } else if (maybeVersionedHashParam == null || maybeVersionedHashParam.isEmpty()) {
       return ValidationResult.invalid(
           RpcErrorType.INVALID_PARAMS, "Missing versioned hashes field");
     } else if (maybeBeaconBlockRootParam.isEmpty()) {
@@ -71,7 +71,8 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
     if (protocolSchedule.isPresent()) {
-      if (cancun.isPresent() && blockTimestamp >= cancun.get().milestone()) {
+      if (cancun.isPresent()
+          && Long.compareUnsigned(blockTimestamp, cancun.get().milestone()) >= 0) {
         return ValidationResult.valid();
       } else {
         return ValidationResult.invalid(
