@@ -1092,9 +1092,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final EthPeers ethPeers,
       final EthMessages snapMessages) {
     return Optional.of(
-            new SnapProtocolManager(peerValidators, ethPeers, snapMessages, protocolContext))
-        // TODO: revisit this as part of #6157
-        .filter(__ -> SynchronizerOptions.create().isSnapsyncFlatDbHealingEnabled());
+        new SnapProtocolManager(
+            peerValidators,
+            ethPeers,
+            snapMessages,
+            protocolContext,
+            // TODO: revisit this as part of #6157
+            () -> SynchronizerOptions.create().isSnapsyncFlatDbHealingEnabled()));
   }
 
   WorldStateArchive createWorldStateArchive(

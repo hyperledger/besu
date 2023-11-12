@@ -84,17 +84,21 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
   private final EthMessages snapMessages;
   private final Function<Optional<Hash>, Optional<BonsaiWorldStateKeyValueStorage>>
       worldStateStorageProvider;
+  private boolean isEnabled = true;
 
-  SnapServer(final EthMessages snapMessages, final ProtocolContext protocolContext) {
+  SnapServer(
+      final EthMessages snapMessages,
+      final ProtocolContext protocolContext,
+      final boolean isEnabled) {
     this(
         snapMessages,
         rootHash ->
             ((BonsaiWorldStateProvider) protocolContext.getWorldStateArchive())
                 .getCachedWorldStorageManager()
                 .flatMap(storageManager -> storageManager.getStorageByRootHash(rootHash)));
-
+    this.isEnabled = isEnabled;
     var archive = protocolContext.getWorldStateArchive();
-    if (archive.isFlatArchive()) {
+    if (isEnabled && archive.isFlatArchive()) {
       var cachedStorageManager = ((FlatWorldStateArchive) archive).getCachedWorldStorageManager();
       var blockchain = protocolContext.getBlockchain();
 
@@ -349,10 +353,9 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                                 Hash.wrap(accountStorages.lastKey())));
                       }
                     }
-
-                    if (!statefulPredicate.shouldGetMore()) {
-                      break;
-                    }
+                  }
+                  if (!statefulPredicate.shouldGetMore()) {
+                    break;
                   }
                 }
 
@@ -527,7 +530,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
         final int maxResponseBytes,
         final Function<Pair<Bytes32, Bytes>, Integer> encodingSizeAccumulator) {
       this.maxResponseBytes = maxResponseBytes;
-      this.maxResponseBytesFudgeFactor = maxResponseBytes * 95 / 100;
+      this.maxResponseBytesFudgeFactor = maxResponseBytes * 90 / 100;
       this.forWhat = forWhat;
       this.encodingSizeAccumulator = encodingSizeAccumulator;
     }
@@ -575,6 +578,6 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
 
   private int sumListBytes(final List<Bytes> listOfBytes) {
     // TODO: remove hack,  5% is a fudge factor to account for the overhead of rlp encoding
-    return listOfBytes.stream().map(Bytes::size).reduce((a, b) -> a + b).orElse(0) * 105 / 100;
+    return listOfBytes.stream().map(Bytes::size).reduce((a, b) -> a + b).orElse(0) * 110 / 100;
   }
 }

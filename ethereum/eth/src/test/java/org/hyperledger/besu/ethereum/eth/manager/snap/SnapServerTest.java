@@ -187,7 +187,7 @@ public class SnapServerTest {
         getAndVerifyAccountRangeData(
             (AccountRangeMessage) snapServer.constructGetAccountRangeResponse(tinyRangeLimit),
             // TODO: after sorting out the request fudge factor, adjust this assertion to match
-            acctCount * 95 / 100 - 1);
+            acctCount * 90 / 100 - 1);
 
     // assert proofs are valid for the requested range
     assertThat(assertIsValidAccountRangeProof(Hash.ZERO, rangeData)).isTrue();
@@ -245,9 +245,10 @@ public class SnapServerTest {
     var slotsData = rangeData.slotsData(false);
     assertThat(slotsData).isNotNull();
     assertThat(slotsData.slots()).isNotNull();
-    assertThat(slotsData.slots().size()).isEqualTo(0);
-    // no proofs for empty storage range:
-    assertThat(slotsData.proofs().size()).isEqualTo(0);
+    // expect 1 slot PAST the requested empty range
+    assertThat(slotsData.slots().size()).isEqualTo(1);
+    // expect left and right proofs for empty storage range:
+    assertThat(slotsData.proofs().size()).isGreaterThan(0);
   }
 
   @Test
@@ -285,7 +286,7 @@ public class SnapServerTest {
     var secondAccountStorages = slotsData.slots().last();
     // expecting to see only 6 since request was limited to 16 slots
     // TODO: after sorting out the request fudge factor, adjust this assertion to match
-    assertThat(secondAccountStorages.size()).isEqualTo(6 * 95 / 100);
+    assertThat(secondAccountStorages.size()).isEqualTo(6 * 90 / 100 - 1);
     // proofs required for interrupted storage range:
     assertThat(slotsData.proofs().size()).isNotEqualTo(0);
 
@@ -342,7 +343,7 @@ public class SnapServerTest {
     List<Bytes> trieNodes = trieNodeRequest.nodes(false);
     assertThat(trieNodes).isNotNull();
     // TODO: adjust this assertion after sorting out the request fudge factor
-    assertThat(trieNodes.size()).isEqualTo(accountNodeLimit * 95 / 100);
+    assertThat(trieNodes.size()).isEqualTo(accountNodeLimit * 90 / 100);
   }
 
   @Test
@@ -394,7 +395,7 @@ public class SnapServerTest {
     List<Bytes> trieNodes = trieNodeRequest.nodes(false);
     assertThat(trieNodes).isNotNull();
     // TODO: adjust this assertion after sorting out the request fudge factor
-    assertThat(trieNodes.size()).isEqualTo(trieNodeLimit * 95 / 100);
+    assertThat(trieNodes.size()).isEqualTo(trieNodeLimit * 90 / 100);
   }
 
   @Test
@@ -432,7 +433,7 @@ public class SnapServerTest {
     ByteCodesMessage.ByteCodes codes = codeRequest.bytecodes(false);
     assertThat(codes).isNotNull();
     // TODO adjust this assertion after sorting out the request fudge factor
-    assertThat(codes.codes().size()).isEqualTo(codeLimit * 95 / 100);
+    assertThat(codes.codes().size()).isEqualTo(codeLimit * 90 / 100);
   }
 
   static SnapTestAccount createTestAccount(final String hexAddr) {
