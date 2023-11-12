@@ -7,6 +7,7 @@
 ### Deprecations
 
 ### Additions and Improvements
+- Implement debug_traceCall [#5885](https://github.com/hyperledger/besu/pull/5885)
 
 ## 23.10.2
 
