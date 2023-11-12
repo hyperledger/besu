@@ -34,6 +34,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.P
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetTransactionCount;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetTransactionReceipt;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivNewFilter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivTraceTransaction;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor.PrivateBlockReplay;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor.PrivateBlockTracer;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -68,6 +71,9 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       final PrivacyIdProvider privacyIdProvider,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
 
+    final PrivateBlockReplay blockReplay =
+        new PrivateBlockReplay(
+            getProtocolSchedule(), getBlockchainQueries().getBlockchain(), privacyController);
     final Map<String, JsonRpcMethod> RPC_METHODS =
         mapOf(
             new PrivCall(getBlockchainQueries(), privacyController, privacyIdProvider),
@@ -89,7 +95,15 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
             new PrivGetFilterLogs(filterManager, privacyController, privacyIdProvider),
             new PrivGetFilterChanges(filterManager, privacyController, privacyIdProvider),
             new PrivNewFilter(filterManager, privacyController, privacyIdProvider),
-            new PrivUninstallFilter(filterManager, privacyController, privacyIdProvider));
+            new PrivUninstallFilter(filterManager, privacyController, privacyIdProvider),
+            new PrivTraceTransaction(
+                () -> new PrivateBlockTracer(blockReplay),
+                getBlockchainQueries(),
+                getProtocolSchedule(),
+                getPrivacyQueries(),
+                privacyController,
+                getPrivacyParameters(),
+                privacyIdProvider));
 
     if (!getPrivacyParameters().isFlexiblePrivacyGroupsEnabled()) {
       final Map<String, JsonRpcMethod> OFFCHAIN_METHODS =

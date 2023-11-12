@@ -614,7 +614,7 @@ public class FlatTraceGenerator {
         .collect(Collectors.toList());
   }
 
-  private static void addAdditionalTransactionInformationToFlatTrace(
+  protected static void addAdditionalTransactionInformationToFlatTrace(
       final FlatTrace.Builder builder, final TransactionTrace transactionTrace, final Block block) {
     // add block information (hash and number)
     builder.blockHash(block.getHash().toHexString()).blockNumber(block.getHeader().getNumber());
