@@ -249,6 +249,36 @@ public class SnapServerTest {
     assertThat(slotsData.slots().size()).isEqualTo(1);
     // expect left and right proofs for empty storage range:
     assertThat(slotsData.proofs().size()).isGreaterThan(0);
+    // assert proofs are valid for the requested range
+    assertThat(
+            assertIsValidStorageProof(
+                acct3, Hash.ZERO, slotsData.slots().first(), slotsData.proofs()))
+        .isTrue();
+  }
+
+  @Test
+  public void assertLastEmptyPartialStorageForSingleAccount() {
+    // When our final range request is empty, no next account is possible,
+    //      and we should return just a proof of exclusion of the right
+
+    insertTestAccounts(acct3);
+    var rangeData = requestStorageRange(List.of(acct3.addressHash), HASH_LAST, HASH_LAST);
+    assertThat(rangeData).isNotNull();
+    var slotsData = rangeData.slotsData(false);
+    assertThat(slotsData).isNotNull();
+    assertThat(slotsData.slots()).isNotNull();
+    // expect no slots PAST the requested empty range
+    assertThat(slotsData.slots().size()).isEqualTo(0);
+    // expect left and right proofs for empty storage range:
+    assertThat(slotsData.proofs().size()).isGreaterThan(0);
+    // assert proofs are valid for the requested range
+    assertThat(
+            assertIsValidStorageProof(
+                acct3,
+                Hash.fromHexStringLenient("0xFF"),
+                Collections.emptyNavigableMap(),
+                slotsData.proofs()))
+        .isTrue();
   }
 
   @Test

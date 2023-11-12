@@ -334,26 +334,27 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                   // don't send empty storage ranges
                   if (!accountStorages.isEmpty()) {
                     collectedStorages.add(accountStorages);
+                  }
 
-                    // if a partial storage range was requested, or we interrupted storage due to
-                    // request limits, send proofs:
-                    if (isPartialRange || !statefulPredicate.shouldGetMore()) {
-                      // send a proof for the left side range origin
+                  // if a partial storage range was requested, or we interrupted storage due to
+                  // request limits, send proofs:
+                  if (isPartialRange || !statefulPredicate.shouldGetMore()) {
+                    // send a proof for the left side range origin
+                    proofNodes.addAll(
+                        worldStateProof.getStorageProofRelatedNodes(
+                            getAccountStorageRoot(forAccountHash, storage),
+                            forAccountHash,
+                            Hash.wrap(startKeyBytes)));
+                    if (!accountStorages.isEmpty()) {
+                      // send a proof for the last key on the right
                       proofNodes.addAll(
                           worldStateProof.getStorageProofRelatedNodes(
                               getAccountStorageRoot(forAccountHash, storage),
                               forAccountHash,
-                              Hash.wrap(startKeyBytes)));
-                      if (!accountStorages.isEmpty()) {
-                        // send a proof for the last key on the right
-                        proofNodes.addAll(
-                            worldStateProof.getStorageProofRelatedNodes(
-                                getAccountStorageRoot(forAccountHash, storage),
-                                forAccountHash,
-                                Hash.wrap(accountStorages.lastKey())));
-                      }
+                              Hash.wrap(accountStorages.lastKey())));
                     }
                   }
+
                   if (!statefulPredicate.shouldGetMore()) {
                     break;
                   }
