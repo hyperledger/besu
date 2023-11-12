@@ -418,7 +418,7 @@ public class TransactionPool implements BlockAddedObserver {
   private ValidationResultAndAccount validateTransaction(
       final Transaction transaction, final boolean isLocal, final boolean hasPriority) {
 
-    BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader().orElse(null);
+    final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader().orElse(null);
     if (chainHeadBlockHeader == null) {
       LOG.atWarn()
           .setMessage("rejecting transaction {} due to chain head not available yet")
