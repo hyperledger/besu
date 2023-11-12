@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor.PrivateTransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 
@@ -191,6 +192,22 @@ public class Action {
       return builder;
     }
 
+    public static Builder from(final PrivateTransactionTrace trace) {
+      final Builder builder =
+          new Builder()
+              .from(trace.getPrivateTransaction().getSender().toHexString())
+              .value(Quantity.create(trace.getPrivateTransaction().getValue()));
+      if (!trace.getTraceFrames().isEmpty()) {
+        final TraceFrame traceFrame = trace.getTraceFrames().get(0);
+        builder.gas(
+            "0x"
+                + Long.toHexString(
+                    traceFrame.getGasRemaining()
+                        + (traceFrame.getPrecompiledGasCost().orElse(0L))));
+      }
+      return builder;
+    }
+
     public Builder creationMethod(final String creationMethod) {
       this.creationMethod = creationMethod;
       return this;
@@ -263,7 +280,7 @@ public class Action {
       return this;
     }
 
-    Builder refundAddress(final String refundAddress) {
+    public Builder refundAddress(final String refundAddress) {
       this.refundAddress = refundAddress;
       return this;
     }
