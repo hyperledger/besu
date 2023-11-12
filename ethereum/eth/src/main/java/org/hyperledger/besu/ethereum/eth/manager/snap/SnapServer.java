@@ -180,16 +180,16 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
     LOGGER
         .atTrace()
         .setMessage("Receive getAccountRangeMessage for {} from {} to {}")
-        .addArgument(range.worldStateRootHash()::toHexString)
-        .addArgument(range.startKeyHash()::toHexString)
-        .addArgument(range.endKeyHash()::toHexString)
+        .addArgument(() -> asLogHash(range.worldStateRootHash()))
+        .addArgument(() -> asLogHash(range.startKeyHash()))
+        .addArgument(() -> asLogHash(range.endKeyHash()))
         .log();
     try {
       return worldStateStorageProvider
           .apply(Optional.of(range.worldStateRootHash()))
           .map(
               storage -> {
-                LOGGER.debug("obtained worldstate in {}", stopWatch);
+                LOGGER.trace("obtained worldstate in {}", stopWatch);
                 NavigableMap<Bytes32, Bytes> accounts =
                     storage.streamFlatAccounts(
                         range.startKeyHash(),
@@ -210,7 +210,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                   // fetch next account after range, if it exists
                   LOGGER.debug(
                       "found no accounts in range, taking first value starting from {}",
-                      range.endKeyHash().toHexString());
+                      asLogHash(range.endKeyHash()));
                   accounts = storage.streamFlatAccounts(range.endKeyHash(), UInt256.MAX_VALUE, 1L);
                 }
 
@@ -226,17 +226,17 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                 }
                 var resp = AccountRangeMessage.create(accounts, proof);
                 if (accounts.isEmpty()) {
-                  LOGGER.warn(
+                  LOGGER.debug(
                       "returned empty account range message for {} to  {}, proof count {}",
-                      range.startKeyHash(),
-                      range.endKeyHash(),
+                      asLogHash(range.startKeyHash()),
+                      asLogHash(range.endKeyHash()),
                       proof.size());
                 }
                 LOGGER.debug(
                     "returned in {} account range {} to {} with {} accounts and {} proofs, resp size {} of max {}",
                     stopWatch,
-                    range.startKeyHash().toHexString().substring(0, 8),
-                    range.endKeyHash().toHexString().substring(0, 8),
+                    asLogHash(range.startKeyHash()),
+                    asLogHash(range.endKeyHash()),
                     accounts.size(),
                     proof.size(),
                     resp.getSize(),
@@ -245,8 +245,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
               })
           .orElseGet(
               () -> {
-                // TODO: demote to debug
-                LOGGER.info("returned empty account range due to worldstate not present");
+                LOGGER.debug("returned empty account range due to worldstate not present");
                 return EMPTY_ACCOUNT_RANGE;
               });
     } catch (Exception ex) {
@@ -269,13 +268,13 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
         .atTrace()
         .setMessage("Receive get storage range message size {} from {} to {} for {}")
         .addArgument(message::getSize)
-        .addArgument(() -> range.startKeyHash().toHexString())
+        .addArgument(() -> asLogHash(range.startKeyHash()))
         .addArgument(
-            () -> Optional.ofNullable(range.endKeyHash()).map(Hash::toHexString).orElse("''"))
+            () -> Optional.ofNullable(range.endKeyHash()).map(SnapServer::asLogHash).orElse("''"))
         .addArgument(
             () ->
                 range.hashes().stream()
-                    .map(Bytes32::toHexString)
+                    .map(SnapServer::asLogHash)
                     .collect(Collectors.joining(",", "[", "]")))
         .log();
     try {
@@ -283,7 +282,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
           .apply(Optional.of(range.worldStateRootHash()))
           .map(
               storage -> {
-                LOGGER.debug("obtained worldstate in {}", stopWatch);
+                LOGGER.trace("obtained worldstate in {}", stopWatch);
                 // reusable predicate to limit by rec count and bytes:
                 var statefulPredicate =
                     new StatefulPredicate(
@@ -325,7 +324,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                     // fetch next slot after range, if it exists
                     LOGGER.debug(
                         "found no slots in range, taking first value starting from {}",
-                        range.endKeyHash().toHexString());
+                        asLogHash(range.endKeyHash()));
                     accountStorages =
                         storage.streamFlatStorages(
                             Hash.wrap(forAccountHash), range.endKeyHash(), UInt256.MAX_VALUE, 1L);
@@ -364,10 +363,10 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                 LOGGER.debug(
                     "returned in {} storage {} to {} range {} to {} with {} storages and {} proofs, resp size {} of max {}",
                     stopWatch,
-                    range.hashes().first().toHexString().substring(0, 8),
-                    range.hashes().last().toHexString().substring(0, 8),
-                    range.startKeyHash().toHexString().substring(0, 8),
-                    range.endKeyHash().toHexString().substring(0, 8),
+                    asLogHash(range.hashes().first()),
+                    asLogHash(range.hashes().last()),
+                    asLogHash(range.startKeyHash()),
+                    asLogHash(range.endKeyHash()),
                     collectedStorages.size(),
                     proofNodes.size(),
                     resp.getSize(),
@@ -376,7 +375,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
               })
           .orElseGet(
               () -> {
-                LOGGER.info("returned empty storage range due to missing worldstate");
+                LOGGER.debug("returned empty storage range due to missing worldstate");
                 return EMPTY_STORAGE_RANGE;
               });
     } catch (Exception ex) {
@@ -409,7 +408,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
           .apply(Optional.empty())
           .map(
               storage -> {
-                LOGGER.debug("obtained worldstate in {}", stopWatch);
+                LOGGER.trace("obtained worldstate in {}", stopWatch);
                 List<Bytes> codeBytes = new ArrayDeque<>();
                 for (Bytes32 codeHash : codeHashes.hashes()) {
                   Optional<Bytes> optCode = storage.getCode(codeHash, null);
@@ -431,7 +430,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
               })
           .orElseGet(
               () -> {
-                LOGGER.info("returned empty byte codes message due to missing worldstate");
+                LOGGER.debug("returned empty byte codes message due to missing worldstate");
                 return EMPTY_BYTE_CODES_MESSAGE;
               });
     } catch (Exception ex) {
@@ -460,7 +459,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
           .apply(Optional.of(triePaths.worldStateRootHash()))
           .map(
               storage -> {
-                LOGGER.debug("obtained worldstate in {}", stopWatch);
+                LOGGER.trace("obtained worldstate in {}", stopWatch);
                 ArrayList<Bytes> trieNodes = new ArrayList<>();
                 for (var triePath : triePaths.paths()) {
                   // first element in paths is account
@@ -506,7 +505,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
               })
           .orElseGet(
               () -> {
-                LOGGER.info("returned empty trie nodes message due to missing worldstate");
+                LOGGER.debug("returned empty trie nodes message due to missing worldstate");
                 return EMPTY_TRIE_NODES_MESSAGE;
               });
     } catch (Exception ex) {
@@ -522,7 +521,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
     final AtomicBoolean shouldContinue = new AtomicBoolean(true);
     final Function<Pair<Bytes32, Bytes>, Integer> encodingSizeAccumulator;
     final int maxResponseBytes;
-    // TODO: remove this hack,  5% is a fudge factor to account for the proof node size
+    // TODO: remove this hack,  10% is a fudge factor to account for the proof node size
     final int maxResponseBytesFudgeFactor;
     final String forWhat;
 
@@ -531,7 +530,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
         final int maxResponseBytes,
         final Function<Pair<Bytes32, Bytes>, Integer> encodingSizeAccumulator) {
       this.maxResponseBytes = maxResponseBytes;
-      this.maxResponseBytesFudgeFactor = maxResponseBytes * 90 / 100;
+      this.maxResponseBytesFudgeFactor = maxResponseBytes * 9 / 10;
       this.forWhat = forWhat;
       this.encodingSizeAccumulator = encodingSizeAccumulator;
     }
@@ -577,8 +576,13 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
         .orElse(Hash.EMPTY_TRIE_HASH);
   }
 
-  private int sumListBytes(final List<Bytes> listOfBytes) {
-    // TODO: remove hack,  5% is a fudge factor to account for the overhead of rlp encoding
-    return listOfBytes.stream().map(Bytes::size).reduce((a, b) -> a + b).orElse(0) * 110 / 100;
+  private static int sumListBytes(final List<Bytes> listOfBytes) {
+    // TODO: remove hack, 10% is a fudge factor to account for the overhead of rlp encoding
+    return listOfBytes.stream().map(Bytes::size).reduce((a, b) -> a + b).orElse(0) * 11 / 10;
+  }
+
+  private static String asLogHash(final Bytes32 hash) {
+    var str = hash.toHexString();
+    return str.substring(0, 4) + ".." + str.substring(59, 63);
   }
 }
