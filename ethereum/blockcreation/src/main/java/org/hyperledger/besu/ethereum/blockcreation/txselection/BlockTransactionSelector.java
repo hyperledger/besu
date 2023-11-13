@@ -97,7 +97,6 @@ public class BlockTransactionSelector {
   private final EthScheduler ethScheduler;
   private final AtomicBoolean isTimeout = new AtomicBoolean(false);
   private final long blockTxsSelectionMaxTime;
-  private final long txEvaluationMaxTime;
   private WorldUpdater blockWorldStateUpdater;
 
   public BlockTransactionSelector(
@@ -137,7 +136,6 @@ public class BlockTransactionSelector {
     this.pluginOperationTracer = pluginTransactionSelector.getOperationTracer();
     blockWorldStateUpdater = worldState.updater();
     blockTxsSelectionMaxTime = miningParameters.getUnstable().getBlockTxsSelectionMaxTime();
-    txEvaluationMaxTime = 10;
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(
@@ -378,14 +376,14 @@ public class BlockTransactionSelector {
 
       // check if this tx took too much to evaluate, and in case remove it from the pool
       final TransactionSelectionResult timeoutSelectionResult;
-      if (evaluationTime > txEvaluationMaxTime) {
+      if (evaluationTime > blockTxsSelectionMaxTime) {
         LOG.atWarn()
             .setMessage(
                 "Transaction {} is too late for inclusion, evaluated in {}ms that is over the max limit of {}"
                     + ", removing it from the pool")
             .addArgument(transaction::toTraceLog)
             .addArgument(evaluationTime)
-            .addArgument(txEvaluationMaxTime)
+            .addArgument(blockTxsSelectionMaxTime)
             .log();
         timeoutSelectionResult = TX_EVALUATION_TOO_LONG;
       } else {
@@ -447,8 +445,7 @@ public class BlockTransactionSelector {
       final WorldUpdater txWorldStateUpdater,
       final long evaluationStartedAt) {
     txWorldStateUpdater.revert();
-    return handleTransactionNotSelected(
-        pendingTransaction, selectionResult, txWorldStateUpdater, evaluationStartedAt);
+    return handleTransactionNotSelected(pendingTransaction, selectionResult, evaluationStartedAt);
   }
 
   private void checkCancellation() {
