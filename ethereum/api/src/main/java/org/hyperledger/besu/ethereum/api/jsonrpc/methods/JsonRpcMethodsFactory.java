@@ -105,7 +105,8 @@ public class JsonRpcMethodsFactory {
                   metricsSystem,
                   transactionPool,
                   synchronizer,
-                  dataDir),
+                  dataDir,
+                  gasCap),
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new ExecutionEngineJsonRpcMethods(
