@@ -48,6 +48,8 @@ import javax.annotation.Nonnull;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*
  * Used to process transactions for eth_call and eth_estimateGas.
@@ -56,6 +58,7 @@ import org.apache.tuweni.bytes.Bytes;
  * blockchain or to estimate the transaction gas cost.
  */
 public class TransactionSimulator {
+  private static final Logger LOG = LoggerFactory.getLogger(TransactionSimulator.class);
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
@@ -215,7 +218,11 @@ public class TransactionSimulator {
             ? callParams.getGasLimit()
             : blockHeaderToProcess.getGasLimit();
     if (rpcGasCap.isPresent()) {
-      gasLimit = Math.min(gasLimit, rpcGasCap.get());
+      final long gasCap = rpcGasCap.get();
+      if (gasCap < gasLimit) {
+        gasLimit = gasCap;
+        LOG.info("Capping gasLimit to " + gasCap);
+      }
     }
     final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
     final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
