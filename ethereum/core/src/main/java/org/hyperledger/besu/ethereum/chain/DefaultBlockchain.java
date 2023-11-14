@@ -303,6 +303,16 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public synchronized Optional<BlockHeader> getBlockHeaderSafe(final Hash blockHeaderHash) {
+    return blockHeadersCache
+        .map(
+            cache ->
+                Optional.ofNullable(cache.getIfPresent(blockHeaderHash))
+                    .or(() -> blockchainStorage.getBlockHeader(blockHeaderHash)))
+        .orElseGet(() -> blockchainStorage.getBlockHeader(blockHeaderHash));
+  }
+
+  @Override
   public Optional<BlockBody> getBlockBody(final Hash blockHeaderHash) {
     return blockBodiesCache
         .map(

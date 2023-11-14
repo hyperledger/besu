@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,10 +15,12 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.bonsai;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.AbstractJsonRpcHttpBySpecTest;
+import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 
 import org.junit.jupiter.api.BeforeEach;
 
-public class DebugJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
+public class DebugTraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
 
   @Override
   @BeforeEach
@@ -27,10 +29,13 @@ public class DebugJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
     startService();
   }
 
+  @Override
+  protected BlockchainSetupUtil getBlockchainSetupUtil(final DataStorageFormat storageFormat) {
+    return createBlockchainSetupUtil(
+        "trace/chain-data/genesis.json", "trace/chain-data/blocks.bin", storageFormat);
+  }
+
   public static Object[][] specs() {
-    return AbstractJsonRpcHttpBySpecTest.findSpecFiles(
-        new String[] {
-          "debug/account-at", "debug/batch-send-raw-transaction", "debug/trace-transaction"
-        }); // storageRange and accountRange are not working with bonsai trie
+    return AbstractJsonRpcHttpBySpecTest.findSpecFiles(new String[] {"debug/trace-call"});
   }
 }
