@@ -241,7 +241,7 @@ jobs:
       - capture_test_logs
 
   acceptanceTestsCliqueBft:
-    executor: besu_executor_med
+    executor: besu_executor_xl
     steps:
       - prepare
       - attach_workspace:
@@ -255,7 +255,7 @@ jobs:
       - capture_test_logs
 
   acceptanceTestsPrivacy:
-    executor: besu_executor_med
+    executor: besu_executor_xl
     steps:
       - prepare
       - attach_workspace:
@@ -269,7 +269,7 @@ jobs:
       - capture_test_logs
 
   acceptanceTestsPermissioning:
-    executor: besu_executor_med
+    executor: besu_executor_xl
     steps:
       - prepare
       - attach_workspace:
