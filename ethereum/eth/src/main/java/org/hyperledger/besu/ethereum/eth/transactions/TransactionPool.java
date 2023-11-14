@@ -551,7 +551,14 @@ public class TransactionPool implements BlockAddedObserver {
 
   private Optional<BlockHeader> getChainHeadBlockHeader() {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
-    return blockchain.getBlockHeader(blockchain.getChainHeadHash());
+
+    // Optimistically get the block header for the chain head without taking a lock,
+    // but revert to the safe implementation if it returns an empty optional. (It's
+    // possible the chain head has been updated but the block is still being persisted
+    // to storage/cache under the lock).
+    return blockchain
+        .getBlockHeader(blockchain.getChainHeadHash())
+        .or(() -> blockchain.getBlockHeaderSafe(blockchain.getChainHeadHash()));
   }
 
   private boolean isLocalSender(final Address sender) {
