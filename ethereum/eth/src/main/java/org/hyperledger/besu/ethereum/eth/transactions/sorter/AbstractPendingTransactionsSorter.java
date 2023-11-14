@@ -494,13 +494,13 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
       return sb.toString();
     }
   }
-    /**
-     * @param transaction to restore blobs onto
-     * @return an optional copy of the supplied transaction, but with the BlobsWithCommitments
-     *     restored. If none could be restored, empty.
-     */
-    @Override
-    public Optional<Transaction> restoreBlob(final Transaction transaction) {
-        return blobCache.restoreBlob(transaction);
-    }
+  /**
+   * @param transaction to restore blobs onto
+   * @return an optional copy of the supplied transaction, but with the BlobsWithCommitments
+   *     restored. If none could be restored, empty.
+   */
+  @Override
+  public Optional<Transaction> restoreBlob(final Transaction transaction) {
+    return blobCache.restoreBlob(transaction);
+  }
 }
