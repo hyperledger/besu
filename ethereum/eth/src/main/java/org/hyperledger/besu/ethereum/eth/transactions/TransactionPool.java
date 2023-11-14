@@ -55,7 +55,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.IntSummaryStatistics;
@@ -94,8 +93,6 @@ import org.slf4j.LoggerFactory;
 public class TransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
   private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
-  private static final List<TransactionInvalidReason> INVALID_TX_CACHE_IGNORED_ERRORS =
-      new ArrayList<>(Arrays.asList(TransactionInvalidReason.NONCE_TOO_LOW));
   private final Supplier<PendingTransactions> pendingTransactionsSupplier;
   private final PluginTransactionValidator pluginTransactionValidator;
   private volatile PendingTransactions pendingTransactions;
@@ -280,11 +277,6 @@ public class TransactionPool implements BlockAddedObserver {
           .log();
       metrics.incrementRejected(
           isLocal, hasPriority, validationResult.result.getInvalidReason(), "txpool");
-      if (!isLocal
-          && !INVALID_TX_CACHE_IGNORED_ERRORS.contains(
-              validationResult.result.getInvalidReason())) {
-        pendingTransactions.signalInvalidAndRemoveDependentTransactions(transaction);
-      }
     }
 
     return validationResult.result;
@@ -551,7 +543,14 @@ public class TransactionPool implements BlockAddedObserver {
 
   private Optional<BlockHeader> getChainHeadBlockHeader() {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
-    return blockchain.getBlockHeader(blockchain.getChainHeadHash());
+
+    // Optimistically get the block header for the chain head without taking a lock,
+    // but revert to the safe implementation if it returns an empty optional. (It's
+    // possible the chain head has been updated but the block is still being persisted
+    // to storage/cache under the lock).
+    return blockchain
+        .getBlockHeader(blockchain.getChainHeadHash())
+        .or(() -> blockchain.getBlockHeaderSafe(blockchain.getChainHeadHash()));
   }
 
   private boolean isLocalSender(final Address sender) {
