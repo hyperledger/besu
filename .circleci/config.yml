@@ -408,9 +408,6 @@ workflows:
       - acceptanceTestsCliqueBft:
           requires:
             - assemble
-      - acceptanceTestsPrivacy:
-          requires:
-            - assemble
       - acceptanceTestsPermissioning:
           requires:
             - assemble
@@ -485,3 +482,6 @@ workflows:
     jobs:
       - assemble
       - dockerScan
+      - acceptanceTestsPrivacy:
+          requires:
+            - assemble
