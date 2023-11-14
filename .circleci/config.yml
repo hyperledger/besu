@@ -4,14 +4,6 @@ orbs:
   win: circleci/windows@5.0
 
 executors:
-  besu_executor_small:
-    docker:
-      - image: cimg/openjdk:17.0
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
-
   besu_executor_med: # 2cpu, 4G ram
     docker:
       - image: cimg/openjdk:17.0
