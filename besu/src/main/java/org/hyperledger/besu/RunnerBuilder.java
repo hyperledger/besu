@@ -589,7 +589,7 @@ public class RunnerBuilder {
   /**
    * Add Rpc gasLimit cap .
    *
-   * @param rpcGasCap the rpc max logs range
+   * @param rpcGasCap the rpc gas limit cap for transaction simulation methods
    * @return the runner builder
    */
   public RunnerBuilder rpcGasCap(final Long rpcGasCap) {
