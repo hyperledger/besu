@@ -76,8 +76,7 @@ public class TransactionSimulatorTest {
 
   private static final Address DEFAULT_FROM =
       Address.fromHexString("0x0000000000000000000000000000000000000000");
-  private static final Optional<Long> GASCAP = Optional.of(500L);
-
+  private static final long GASCAP = 500L;
   private TransactionSimulator transactionSimulator;
   private TransactionSimulator cappedTransactionSimulator;
 
@@ -94,7 +93,8 @@ public class TransactionSimulatorTest {
     this.transactionSimulator =
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, Optional.empty());
     this.cappedTransactionSimulator =
-        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, GASCAP);
+        new TransactionSimulator(
+            blockchain, worldStateArchive, protocolSchedule, Optional.of(GASCAP));
   }
 
   @Test
@@ -518,18 +518,19 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.FAILED);
 
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.process(callParameter, 1L);
 
-    assertThat(result.get().isSuccessful()).isTrue();
+    assertThat(result.get().isSuccessful()).isFalse();
     verifyTransactionWasProcessed(expectedTransaction);
   }
 
   @Test
-  public void shouldCapGasLimitWhenRpcGasCapIsDefined() {
-    final CallParameter callParameter = eip1559TransactionCallParameter(Wei.ZERO, Wei.ZERO, 5000L);
+  public void shouldCapGasLimitWhenOriginalTransactionExceedsGasCap() {
+    final CallParameter callParameter =
+        eip1559TransactionCallParameter(Wei.ZERO, Wei.ZERO, GASCAP + 1);
 
     final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE);
 
@@ -541,7 +542,7 @@ public class TransactionSimulatorTest {
             .type(TransactionType.EIP1559)
             .chainId(BigInteger.ONE)
             .nonce(1L)
-            .gasLimit(GASCAP.get())
+            .gasLimit(GASCAP)
             .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
             .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
             .to(callParameter.getTo())
@@ -550,7 +551,7 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.FAILED);
 
     final Optional<TransactionSimulatorResult> result =
         cappedTransactionSimulator.process(
@@ -559,13 +560,14 @@ public class TransactionSimulatorTest {
             OperationTracer.NO_TRACING,
             1L);
 
-    assertThat(result.get().isSuccessful()).isTrue();
+    assertThat(result.get().isSuccessful()).isFalse();
     verifyTransactionWasProcessed(expectedTransaction);
   }
 
   @Test
-  public void shouldKeepOriginalGasLimitWhenCapIsHigherThanOriginalValue() {
-    final CallParameter callParameter = eip1559TransactionCallParameter(Wei.ZERO, Wei.ZERO, 200L);
+  public void shouldApplyGasCapWhenOriginalGasLimitIsLowerThanGasCap() {
+    final CallParameter callParameter =
+        eip1559TransactionCallParameter(Wei.ZERO, Wei.ZERO, GASCAP - 1);
 
     final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE);
 
