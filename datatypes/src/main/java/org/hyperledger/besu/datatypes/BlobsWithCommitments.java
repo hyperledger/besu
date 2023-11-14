@@ -25,22 +25,7 @@ public class BlobsWithCommitments {
   /** A record to hold the blob, commitment, proof and versioned hash for a blob. */
   public record BlobQuad(
       Blob blob, KZGCommitment kzgCommitment, KZGProof kzgProof, VersionedHash versionedHash) {
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      BlobQuad blobQuad = (BlobQuad) o;
-      return Objects.equals(blob, blobQuad.blob)
-          && Objects.equals(kzgCommitment, blobQuad.kzgCommitment)
-          && Objects.equals(kzgProof, blobQuad.kzgProof)
-          && Objects.equals(versionedHash, blobQuad.versionedHash);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(blob, kzgCommitment, kzgProof, versionedHash);
-    }
+    
   }
 
   private final List<BlobQuad> blobQuads;
