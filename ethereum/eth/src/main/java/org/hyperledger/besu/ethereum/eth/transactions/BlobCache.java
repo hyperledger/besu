@@ -74,11 +74,11 @@ public class BlobCache {
             return Optional.empty();
           }
         } else {
-          LOG.debug("can't restore blobs for transaction with empty list of versioned hashes");
+          LOG.warn("can't restore blobs for transaction with empty list of versioned hashes");
           return Optional.empty();
         }
       } else {
-        LOG.debug("can't restore blobs for transaction without list of versioned hashes");
+        LOG.warn("can't restore blobs for transaction without list of versioned hashes");
         return Optional.empty();
       }
 

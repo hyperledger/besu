@@ -25,7 +25,7 @@ public class BlobsWithCommitments {
   /** A record to hold the blob, commitment, proof and versioned hash for a blob. */
   public record BlobQuad(
       Blob blob, KZGCommitment kzgCommitment, KZGProof kzgProof, VersionedHash versionedHash) {
-    
+
   }
 
   private final List<BlobQuad> blobQuads;
