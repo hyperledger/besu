@@ -189,7 +189,7 @@ jobs:
       - capture_test_results
 
   integrationTests:
-    executor: besu_executor_xl
+    executor: xl_machine_executor # needs the machine executor since privacy test uses container tests (docker)
     steps:
       - prepare
       - attach_workspace:
@@ -219,7 +219,7 @@ jobs:
       - capture_test_results
 
   acceptanceTests:
-    executor: besu_executor_xl
+    executor: xl_machine_executor # needs the machine executor since privacy test uses container tests (docker)
     steps:
       - prepare
       - attach_workspace:
