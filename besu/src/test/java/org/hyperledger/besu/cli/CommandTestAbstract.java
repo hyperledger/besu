@@ -196,7 +196,6 @@ public abstract class CommandTestAbstract {
   @Captor protected ArgumentCaptor<String> stringArgumentCaptor;
   @Captor protected ArgumentCaptor<Integer> intArgumentCaptor;
   @Captor protected ArgumentCaptor<Long> longArgumentCaptor;
-  @Captor protected ArgumentCaptor<Float> floatCaptor;
   @Captor protected ArgumentCaptor<EthNetworkConfig> ethNetworkConfigArgumentCaptor;
   @Captor protected ArgumentCaptor<SynchronizerConfiguration> syncConfigurationCaptor;
   @Captor protected ArgumentCaptor<JsonRpcConfiguration> jsonRpcConfigArgumentCaptor;
