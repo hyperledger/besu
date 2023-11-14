@@ -237,21 +237,20 @@ public class TransactionPool implements BlockAddedObserver {
       metrics.incrementRejected(isLocal, hasPriority, TRANSACTION_ALREADY_KNOWN, "txpool");
       return ValidationResult.invalid(TRANSACTION_ALREADY_KNOWN);
     }
-    Transaction toAdd = transaction;
 
     final ValidationResultAndAccount validationResult =
-        validateTransaction(toAdd, isLocal, hasPriority);
+        validateTransaction(transaction, isLocal, hasPriority);
 
     if (validationResult.result.isValid()) {
       final TransactionAddedResult status =
           pendingTransactions.addTransaction(
-              PendingTransaction.newPendingTransaction(toAdd, isLocal, hasPriority),
+              PendingTransaction.newPendingTransaction(transaction, isLocal, hasPriority),
               validationResult.maybeAccount);
       if (status.isSuccess()) {
         LOG.atTrace()
             .setMessage("Added {} transaction {}")
             .addArgument(() -> isLocal ? "local" : "remote")
-            .addArgument(toAdd::toTraceLog)
+            .addArgument(transaction::toTraceLog)
             .log();
       } else {
         final var rejectReason =
@@ -264,7 +263,7 @@ public class TransactionPool implements BlockAddedObserver {
                     });
         LOG.atTrace()
             .setMessage("Transaction {} rejected reason {}")
-            .addArgument(toAdd::toTraceLog)
+            .addArgument(transaction::toTraceLog)
             .addArgument(rejectReason)
             .log();
         metrics.incrementRejected(isLocal, hasPriority, rejectReason, "txpool");
@@ -273,7 +272,7 @@ public class TransactionPool implements BlockAddedObserver {
     } else {
       LOG.atTrace()
           .setMessage("Discard invalid transaction {}, reason {}")
-          .addArgument(toAdd::toTraceLog)
+          .addArgument(transaction::toTraceLog)
           .addArgument(validationResult.result::getInvalidReason)
           .log();
       metrics.incrementRejected(
@@ -375,12 +374,9 @@ public class TransactionPool implements BlockAddedObserver {
     if (!reAddTransactions.isEmpty()) {
       // if adding a blob tx, and it is missing its blob, is a re-org and we should restore the blob
       // from cache.
-      List<Transaction> restoredTransactions =
-          reAddTransactions.stream()
-              .map(t -> pendingTransactions.restoreBlob(t).orElse(t))
-              .toList();
       var txsByOrigin =
-          restoredTransactions.stream()
+              reAddTransactions.stream()
+                      .map(t -> pendingTransactions.restoreBlob(t).orElse(t))
               .collect(Collectors.partitioningBy(tx -> isLocalSender(tx.getSender())));
       var reAddLocalTxs = txsByOrigin.get(true);
       var reAddRemoteTxs = txsByOrigin.get(false);
