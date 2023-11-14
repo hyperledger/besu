@@ -71,8 +71,6 @@ public class JsonRpcErrorConverter {
         return RpcErrorType.ETH_SEND_TX_REPLACEMENT_UNDERPRICED;
       case NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER:
         return RpcErrorType.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
-      case LOWER_NONCE_INVALID_TRANSACTION_EXISTS:
-        return RpcErrorType.LOWER_NONCE_INVALID_TRANSACTION_EXISTS;
       case TOTAL_BLOB_GAS_TOO_HIGH:
         return RpcErrorType.TOTAL_BLOB_GAS_TOO_HIGH;
       case TX_POOL_DISABLED:

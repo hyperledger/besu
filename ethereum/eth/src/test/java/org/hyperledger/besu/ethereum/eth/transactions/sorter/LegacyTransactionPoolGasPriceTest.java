@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.eth.transactions.AbstractTransactionPoolTest;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -30,7 +31,7 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.time.ZoneId;
 import java.util.function.BiFunction;
 
-public class LegacyTransactionPoolGasPriceTest extends AbstractLegacyTransactionPoolTest {
+public class LegacyTransactionPoolGasPriceTest extends AbstractTransactionPoolTest {
 
   @Override
   protected PendingTransactions createPendingTransactions(
