@@ -70,22 +70,26 @@ public class TrieLogPruner {
         .setMessage("Loading first {} trie logs from database...")
         .addArgument(loadingLimit)
         .log();
-    final Stream<byte[]> trieLogKeys = rootWorldStateStorage.streamTrieLogKeys(loadingLimit);
-    final AtomicLong count = new AtomicLong();
-    trieLogKeys.forEach(
-        blockHashAsBytes -> {
-          final Hash blockHash = Hash.wrap(Bytes32.wrap(blockHashAsBytes));
-          final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);
-          if (header.isPresent()) {
-            trieLogBlocksAndForksByDescendingBlockNumber.put(header.get().getNumber(), blockHash);
-            count.getAndIncrement();
-          } else {
-            // prune orphaned blocks (sometimes created during block production)
-            rootWorldStateStorage.pruneTrieLog(blockHash);
-          }
-        });
-    LOG.atInfo().log("Loaded {} trie logs from database", count);
-    pruneFromCache();
+    try {
+      final Stream<byte[]> trieLogKeys = rootWorldStateStorage.streamTrieLogKeys(loadingLimit);
+      final AtomicLong count = new AtomicLong();
+      trieLogKeys.forEach(
+          blockHashAsBytes -> {
+            final Hash blockHash = Hash.wrap(Bytes32.wrap(blockHashAsBytes));
+            final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);
+            if (header.isPresent()) {
+              trieLogBlocksAndForksByDescendingBlockNumber.put(header.get().getNumber(), blockHash);
+              count.getAndIncrement();
+            } else {
+              // prune orphaned blocks (sometimes created during block production)
+              rootWorldStateStorage.pruneTrieLog(blockHash);
+            }
+          });
+      LOG.atInfo().log("Loaded {} trie logs from database", count);
+      pruneFromCache();
+    } catch (Exception e) {
+      LOG.error("Error loading trie logs from database, nothing pruned", e);
+    }
   }
 
   void cacheForLaterPruning(final long blockNumber, final Hash blockHash) {
