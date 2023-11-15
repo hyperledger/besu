@@ -15,6 +15,8 @@
 
 package org.hyperledger.besu.ethereum.bonsai.trielog;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -49,6 +51,7 @@ public class TrieLogPrunerTest {
     Configurator.setLevel(LogManager.getLogger(TrieLogPruner.class).getName(), Level.TRACE);
     worldState = Mockito.mock(BonsaiWorldStateKeyValueStorage.class);
     blockchain = Mockito.mock(Blockchain.class);
+    when(worldState.pruneTrieLog(any(Hash.class))).thenReturn(true);
   }
 
   @Test
@@ -80,6 +83,7 @@ public class TrieLogPrunerTest {
     final long blocksToRetain = 3;
     final int pruningWindowSize = 2;
     when(blockchain.getChainHeadBlockNumber()).thenReturn(5L);
+    when(worldState.pruneTrieLog(any(Hash.class))).thenReturn(true);
     // requireFinalizedBlock = false means this is not a PoS chain
     TrieLogPruner trieLogPruner =
         new TrieLogPruner(worldState, blockchain, blocksToRetain, pruningWindowSize, false);
@@ -93,9 +97,10 @@ public class TrieLogPrunerTest {
     trieLogPruner.cacheForLaterPruning(5, key(6)); // another retained block
 
     // When
-    trieLogPruner.pruneFromCache();
+    int wasPruned = trieLogPruner.pruneFromCache();
 
     // Then
+    assertThat(wasPruned).isEqualTo(3);
     InOrder inOrder = Mockito.inOrder(worldState);
     inOrder.verify(worldState, times(1)).pruneTrieLog(key(3));
     inOrder.verify(worldState, times(1)).pruneTrieLog(key(1)); // forks in order
@@ -105,8 +110,9 @@ public class TrieLogPrunerTest {
     trieLogPruner.cacheForLaterPruning(6, key(6));
     when(blockchain.getChainHeadBlockNumber()).thenReturn(6L);
 
-    trieLogPruner.pruneFromCache();
+    wasPruned = trieLogPruner.pruneFromCache();
 
+    assertThat(wasPruned).isEqualTo(2);
     inOrder.verify(worldState, times(1)).pruneTrieLog(key(4));
     inOrder.verify(worldState, times(1)).pruneTrieLog(key(0));
   }
@@ -121,9 +127,10 @@ public class TrieLogPrunerTest {
         setupPrunerAndFinalizedBlock(configuredRetainHeight, finalizedBlockHeight);
 
     // When
-    trieLogPruner.pruneFromCache();
+    final int wasPruned = trieLogPruner.pruneFromCache();
 
     // Then
+    assertThat(wasPruned).isEqualTo(1);
     verify(worldState, times(1)).pruneTrieLog(key(1)); // should prune (finalized)
     verify(worldState, never()).pruneTrieLog(key(2)); // would prune but (NOT finalized)
     verify(worldState, never()).pruneTrieLog(key(3)); // would prune but (NOT finalized)
@@ -141,9 +148,10 @@ public class TrieLogPrunerTest {
         setupPrunerAndFinalizedBlock(configuredRetainHeight, finalizedBlockHeight);
 
     // When
-    trieLogPruner.pruneFromCache();
+    final int wasPruned = trieLogPruner.pruneFromCache();
 
     // Then
+    assertThat(wasPruned).isEqualTo(1);
     verify(worldState, times(1)).pruneTrieLog(key(1)); // should prune (finalized)
     verify(worldState, never()).pruneTrieLog(key(2)); // retained block (finalized)
     verify(worldState, never()).pruneTrieLog(key(3)); // retained block (NOT finalized)
@@ -161,9 +169,10 @@ public class TrieLogPrunerTest {
         setupPrunerAndFinalizedBlock(configuredRetainHeight, finalizedBlockHeight);
 
     // When
-    trieLogPruner.pruneFromCache();
+    final int wasPruned = trieLogPruner.pruneFromCache();
 
     // Then
+    assertThat(wasPruned).isEqualTo(2);
     final InOrder inOrder = Mockito.inOrder(worldState);
     inOrder.verify(worldState, times(1)).pruneTrieLog(key(2)); // should prune (finalized)
     inOrder.verify(worldState, times(1)).pruneTrieLog(key(1)); // should prune (finalized)
@@ -191,11 +200,32 @@ public class TrieLogPrunerTest {
     trieLogPruner.cacheForLaterPruning(2, key(2));
 
     // When
-    trieLogPruner.pruneFromCache();
+    final int wasPruned = trieLogPruner.pruneFromCache();
 
     // Then
+    assertThat(wasPruned).isEqualTo(0);
     verify(worldState, never()).pruneTrieLog(key(1)); // not finalized
     verify(worldState, never()).pruneTrieLog(key(2)); // not finalized
+  }
+
+  @Test
+  public void do_not_count_trieLog_when_prune_fails_first_attempt() {
+    // Given
+    when(worldState.pruneTrieLog(key(2))).thenReturn(false);
+    final long finalizedBlockHeight = 4;
+    final long configuredRetainHeight = 4;
+    final TrieLogPruner trieLogPruner =
+        setupPrunerAndFinalizedBlock(configuredRetainHeight, finalizedBlockHeight);
+
+    // When
+    final int wasPruned = trieLogPruner.pruneFromCache();
+
+    // Then
+    assertThat(wasPruned).isEqualTo(2);
+
+    // Subsequent run should prune previously skipped trieLog
+    when(worldState.pruneTrieLog(key(2))).thenReturn(true);
+    assertThat(trieLogPruner.pruneFromCache()).isEqualTo(1);
   }
 
   private TrieLogPruner setupPrunerAndFinalizedBlock(

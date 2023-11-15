@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
 import java.util.Comparator;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
@@ -45,7 +44,7 @@ public class TrieLogPruner {
   private final long numBlocksToRetain;
   private final boolean requireFinalizedBlock;
 
-  private static final Multimap<Long, Hash> trieLogBlocksAndForksByDescendingBlockNumber =
+  private final Multimap<Long, Hash> trieLogBlocksAndForksByDescendingBlockNumber =
       TreeMultimap.create(Comparator.reverseOrder(), Comparator.naturalOrder());
 
   public TrieLogPruner(
@@ -98,12 +97,12 @@ public class TrieLogPruner {
     trieLogBlocksAndForksByDescendingBlockNumber.put(blockNumber, blockHash);
   }
 
-  void pruneFromCache() {
+  int pruneFromCache() {
     final long retainAboveThisBlock = blockchain.getChainHeadBlockNumber() - numBlocksToRetain;
     final Optional<Hash> finalized = blockchain.getFinalized();
     if (requireFinalizedBlock && finalized.isEmpty()) {
       LOG.debug("No finalized block present, skipping pruning");
-      return;
+      return 0;
     }
 
     final long retainAboveThisBlockOrFinalized =
@@ -133,30 +132,31 @@ public class TrieLogPruner {
             .dropWhile((e) -> e.getKey() > retainAboveThisBlockOrFinalized)
             .limit(pruningLimit);
 
-    final Multimap<Long, Hash> toRemove = ArrayListMultimap.create();
+    final Multimap<Long, Hash> wasPruned = ArrayListMultimap.create();
 
-    final AtomicInteger count = new AtomicInteger();
     pruneWindowEntries.forEach(
         (e) -> {
           for (Hash blockHash : e.getValue()) {
-            rootWorldStateStorage.pruneTrieLog(blockHash);
-            count.getAndIncrement();
-            toRemove.put(e.getKey(), blockHash);
+            if (rootWorldStateStorage.pruneTrieLog(blockHash)) {
+              wasPruned.put(e.getKey(), blockHash);
+            }
           }
         });
 
-    toRemove.keySet().forEach(trieLogBlocksAndForksByDescendingBlockNumber::removeAll);
+    wasPruned.keySet().forEach(trieLogBlocksAndForksByDescendingBlockNumber::removeAll);
 
     LOG.atTrace()
         .setMessage("pruned {} trie logs for blocks {}")
-        .addArgument(count)
-        .addArgument(toRemove)
+        .addArgument(wasPruned::size)
+        .addArgument(wasPruned)
         .log();
     LOG.atDebug()
         .setMessage("pruned {} trie logs from {} blocks")
-        .addArgument(count)
-        .addArgument(toRemove::size)
+        .addArgument(wasPruned::size)
+        .addArgument(() -> wasPruned.keySet().size())
         .log();
+
+    return wasPruned.size();
   }
 
   public static TrieLogPruner noOpTrieLogPruner() {
@@ -183,8 +183,9 @@ public class TrieLogPruner {
     }
 
     @Override
-    void pruneFromCache() {
+    int pruneFromCache() {
       // no-op
+      return -1;
     }
   }
 }

@@ -341,7 +341,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public boolean pruneTrieLog(final Hash blockHash) {
-    return trieLogStorage.tryDelete(blockHash.toArrayUnsafe());
+    try {
+      return trieLogStorage.tryDelete(blockHash.toArrayUnsafe());
+    } catch (Exception e) {
+      LOG.error("Error pruning trie log for block hash {}", blockHash, e);
+      return false;
+    }
   }
 
   @Override
