@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -34,15 +35,27 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FeeHistory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHistory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHistoryResult;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -102,6 +115,69 @@ public class EthFeeHistoryTest {
                     .gasUsedRatio(List.of(0.9999999992132459))
                     .reward(List.of(List.of(Wei.of(1524763764L))))
                     .build()));
+  }
+
+  @Test
+  public void shouldComputeRewardsCorrectly() {
+    // Define the percentiles of rewards we want to compute
+    List<Double> rewardPercentiles =
+        Arrays.asList(0.0, 5.0, 10.0, 30.0, 31.0, 59.0, 60.0, 61.0, 100.0);
+
+    // Define the expected rewards for each percentile
+    // The expected rewards match the fees of the transactions at each percentile in the
+    // rewardPercentiles list
+    List<Wei> expectedRewards = Stream.of(1, 1, 2, 5, 5, 6, 6, 7, 7).map(Wei::of).toList();
+
+    // Define a list of gas used and fee pairs. Each pair represents a transaction in the block.
+    // The first number is the gas used by the transaction, and the second number the fee.
+    // The comments indicate the cumulative gas used up as a percentage of the total gas limit.
+
+    List<Object[]> gasUsedAndFee = new ArrayList<>();
+    gasUsedAndFee.add(new Object[] {100, 1L}); // 5%
+    gasUsedAndFee.add(new Object[] {150, 2L}); // 12.5%
+    gasUsedAndFee.add(new Object[] {200, 3L}); // 22.5%
+    gasUsedAndFee.add(new Object[] {100, 4L}); // 27.5%
+    gasUsedAndFee.add(new Object[] {200, 5L}); // 37.5%
+    gasUsedAndFee.add(new Object[] {450, 6L}); // 60.0%
+    gasUsedAndFee.add(new Object[] {800, 7L}); // 100.0%
+    Collections.shuffle(gasUsedAndFee);
+
+    Block block = mock(Block.class);
+    Blockchain blockchain = mockBlockchainTransactionsWithPriorityFee(gasUsedAndFee, block);
+    EthFeeHistory ethFeeHistory = new EthFeeHistory(null, blockchain);
+
+    List<Wei> rewards = ethFeeHistory.computeRewards(rewardPercentiles, block);
+
+    // Check that the number of computed rewards is equal to the number of requested percentiles
+    assertThat(rewards.size()).isEqualTo(rewardPercentiles.size());
+    assertThat(rewards).isEqualTo(expectedRewards);
+  }
+
+  private Blockchain mockBlockchainTransactionsWithPriorityFee(
+      final List<Object[]> gasUsedAndFee, final Block block) {
+    final Blockchain blockchain = mock(Blockchain.class);
+
+    when(block.getHash()).thenReturn(Hash.wrap(Bytes32.wrap(Bytes.random(32))));
+    BlockBody body = mock(BlockBody.class);
+    BlockHeader blockHeader = mock(BlockHeader.class);
+    when(block.getHeader()).thenReturn(blockHeader);
+    when(block.getBody()).thenReturn(body);
+    long cumulativeGasUsed = 0;
+    List<Transaction> transactions = new ArrayList<>();
+    List<TransactionReceipt> receipts = new ArrayList<>();
+    for (Object[] objects : gasUsedAndFee) {
+      Transaction transaction = mock(Transaction.class);
+      when(transaction.getEffectivePriorityFeePerGas(any())).thenReturn(Wei.of((Long) objects[1]));
+      cumulativeGasUsed += (int) objects[0];
+      transactions.add(transaction);
+      TransactionReceipt receipt = mock(TransactionReceipt.class);
+      when(receipt.getCumulativeGasUsed()).thenReturn(cumulativeGasUsed);
+      receipts.add(receipt);
+    }
+    when(blockHeader.getGasUsed()).thenReturn(cumulativeGasUsed);
+    when(blockchain.getTxReceipts(any())).thenReturn(Optional.of(receipts));
+    when(body.getTransactions()).thenReturn(transactions);
+    return blockchain;
   }
 
   @Test
