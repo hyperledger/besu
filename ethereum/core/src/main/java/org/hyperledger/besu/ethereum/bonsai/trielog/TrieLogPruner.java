@@ -21,14 +21,13 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
 import org.apache.tuweni.bytes.Bytes32;
@@ -48,6 +47,7 @@ public class TrieLogPruner {
   private final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
   private final Blockchain blockchain;
   private final long numBlocksToRetain;
+  private final boolean requireFinalizedBlock;
 
   private static final Multimap<Long, Hash> trieLogBlocksAndForksByDescendingBlockNumber =
       TreeMultimap.create(Comparator.reverseOrder(), Comparator.naturalOrder());
@@ -56,12 +56,14 @@ public class TrieLogPruner {
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
       final Blockchain blockchain,
       final long numBlocksToRetain,
-      final int pruningLimit) {
+      final int pruningLimit,
+      final boolean requireFinalizedBlock) {
     this.rootWorldStateStorage = rootWorldStateStorage;
     this.blockchain = blockchain;
     this.numBlocksToRetain = numBlocksToRetain;
     this.pruningLimit = pruningLimit;
     this.loadingLimit = pruningLimit; // same as pruningLimit for now
+    this.requireFinalizedBlock = requireFinalizedBlock;
   }
 
   public void initialize() {
@@ -101,11 +103,15 @@ public class TrieLogPruner {
   }
 
   void pruneFromCache() {
-
     final long retainAboveThisBlock = blockchain.getChainHeadBlockNumber() - numBlocksToRetain;
+    final Optional<Hash> finalized = blockchain.getFinalized();
+    if (requireFinalizedBlock && finalized.isEmpty()) {
+      LOG.debug("No finalized block present, skipping pruning");
+      return;
+    }
+
     final long retainAboveThisBlockOrFinalized =
-        blockchain
-            .getFinalized()
+        finalized
             .flatMap(blockchain::getBlockHeader)
             .map(ProcessableBlockHeader::getNumber)
             .map(finalizedBlock -> Math.min(finalizedBlock, retainAboveThisBlock))
@@ -119,8 +125,7 @@ public class TrieLogPruner {
         .addArgument(retainAboveThisBlock)
         .addArgument(
             () ->
-                blockchain
-                    .getFinalized()
+                finalized
                     .flatMap(blockchain::getBlockHeader)
                     .map(ProcessableBlockHeader::getNumber)
                     .orElse(null))
@@ -132,7 +137,7 @@ public class TrieLogPruner {
             .dropWhile((e) -> e.getKey() > retainAboveThisBlockOrFinalized)
             .limit(pruningLimit);
 
-    final List<Long> blockNumbersToRemove = new ArrayList<>();
+    final Multimap<Long, Hash> toRemove = ArrayListMultimap.create();
 
     final AtomicInteger count = new AtomicInteger();
     pruneWindowEntries.forEach(
@@ -140,20 +145,21 @@ public class TrieLogPruner {
           for (Hash blockHash : e.getValue()) {
             rootWorldStateStorage.pruneTrieLog(blockHash);
             count.getAndIncrement();
+            toRemove.put(e.getKey(), blockHash);
           }
-          blockNumbersToRemove.add(e.getKey());
         });
 
-    blockNumbersToRemove.forEach(trieLogBlocksAndForksByDescendingBlockNumber::removeAll);
+    toRemove.keySet().forEach(trieLogBlocksAndForksByDescendingBlockNumber::removeAll);
+
     LOG.atTrace()
         .setMessage("pruned {} trie logs for blocks {}")
         .addArgument(count)
-        .addArgument(blockNumbersToRemove)
+        .addArgument(toRemove)
         .log();
     LOG.atDebug()
         .setMessage("pruned {} trie logs from {} blocks")
         .addArgument(count)
-        .addArgument(blockNumbersToRemove::size)
+        .addArgument(toRemove::size)
         .log();
   }
 
@@ -167,7 +173,7 @@ public class TrieLogPruner {
         final Blockchain blockchain,
         final long numBlocksToRetain,
         final int pruningLimit) {
-      super(rootWorldStateStorage, blockchain, numBlocksToRetain, pruningLimit);
+      super(rootWorldStateStorage, blockchain, numBlocksToRetain, pruningLimit, true);
     }
 
     @Override

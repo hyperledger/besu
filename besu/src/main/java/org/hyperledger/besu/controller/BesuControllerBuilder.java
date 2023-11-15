@@ -1066,13 +1066,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI -> {
+        final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
+        final boolean isProofOfStake =
+            genesisConfigOptions.getTerminalTotalDifficulty().isPresent();
         final TrieLogPruner trieLogPruner =
             dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningEnabled()
                 ? new TrieLogPruner(
                     (BonsaiWorldStateKeyValueStorage) worldStateStorage,
                     blockchain,
                     dataStorageConfiguration.getUnstable().getBonsaiTrieLogRetentionThreshold(),
-                    dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningLimit())
+                    dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningLimit(),
+                    isProofOfStake)
                 : TrieLogPruner.noOpTrieLogPruner();
         trieLogPruner.initialize();
         yield new BonsaiWorldStateProvider(

@@ -43,8 +43,10 @@ public class TrieLogPrunerTest {
   private BonsaiWorldStateKeyValueStorage worldState;
   private Blockchain blockchain;
 
+  @SuppressWarnings("BannedMethod")
   @BeforeEach
   public void setup() {
+    Configurator.setLevel(LogManager.getLogger(TrieLogPruner.class).getName(), Level.TRACE);
     worldState = Mockito.mock(BonsaiWorldStateKeyValueStorage.class);
     blockchain = Mockito.mock(Blockchain.class);
   }
@@ -62,7 +64,7 @@ public class TrieLogPrunerTest {
     when(blockchain.getBlockHeader(header2.getBlockHash())).thenReturn(Optional.empty());
 
     // When
-    TrieLogPruner trieLogPruner = new TrieLogPruner(worldState, blockchain, 3, loadingLimit);
+    TrieLogPruner trieLogPruner = new TrieLogPruner(worldState, blockchain, 3, loadingLimit, false);
     trieLogPruner.initialize();
 
     // Then
@@ -70,19 +72,17 @@ public class TrieLogPrunerTest {
     verify(worldState, times(1)).pruneTrieLog(header2.getBlockHash());
   }
 
-  @SuppressWarnings("BannedMethod")
   @Test
   public void trieLogs_pruned_in_reverse_order_within_pruning_window() {
-    Configurator.setLevel(LogManager.getLogger(TrieLogPruner.class).getName(), Level.TRACE);
-
     // Given
 
     // pruning window is below numBlocksToRetain and inside the pruningWindowSize offset.
     final long blocksToRetain = 3;
     final int pruningWindowSize = 2;
     when(blockchain.getChainHeadBlockNumber()).thenReturn(5L);
+    // requireFinalizedBlock = false means this is not a PoS chain
     TrieLogPruner trieLogPruner =
-        new TrieLogPruner(worldState, blockchain, blocksToRetain, pruningWindowSize);
+        new TrieLogPruner(worldState, blockchain, blocksToRetain, pruningWindowSize, false);
 
     trieLogPruner.cacheForLaterPruning(0, key(0)); // older block outside prune window
     trieLogPruner.cacheForLaterPruning(1, key(1)); // block inside the prune window
@@ -111,11 +111,8 @@ public class TrieLogPrunerTest {
     inOrder.verify(worldState, times(1)).pruneTrieLog(key(0));
   }
 
-  @SuppressWarnings("BannedMethod")
   @Test
   public void retain_non_finalized_blocks() {
-    Configurator.setLevel(LogManager.getLogger(TrieLogPruner.class).getName(), Level.TRACE);
-
     // Given
     // finalizedBlockHeight < configuredRetainHeight
     final long finalizedBlockHeight = 1;
@@ -134,16 +131,12 @@ public class TrieLogPrunerTest {
     verify(worldState, never()).pruneTrieLog(key(5)); // chain height (NOT finalized)
   }
 
-  @SuppressWarnings("BannedMethod")
   @Test
   public void boundary_test_when_configured_retain_equals_finalized_block() {
-    Configurator.setLevel(LogManager.getLogger(TrieLogPruner.class).getName(), Level.TRACE);
-
     // Given
     // finalizedBlockHeight == configuredRetainHeight
     final long finalizedBlockHeight = 2;
     final long configuredRetainHeight = 2;
-
     TrieLogPruner trieLogPruner =
         setupPrunerAndFinalizedBlock(configuredRetainHeight, finalizedBlockHeight);
 
@@ -158,16 +151,12 @@ public class TrieLogPrunerTest {
     verify(worldState, never()).pruneTrieLog(key(5)); // chain height (NOT finalized)
   }
 
-  @SuppressWarnings("BannedMethod")
   @Test
   public void use_configured_retain_when_finalized_block_is_higher() {
-    Configurator.setLevel(LogManager.getLogger(TrieLogPruner.class).getName(), Level.TRACE);
-
     // Given
     // finalizedBlockHeight > configuredRetainHeight
     final long finalizedBlockHeight = 4;
     final long configuredRetainHeight = 3;
-
     final TrieLogPruner trieLogPruner =
         setupPrunerAndFinalizedBlock(configuredRetainHeight, finalizedBlockHeight);
 
@@ -183,6 +172,32 @@ public class TrieLogPrunerTest {
     verify(worldState, never()).pruneTrieLog(key(5)); // chain height (NOT finalized)
   }
 
+  @Test
+  public void skip_pruning_when_finalized_block_required_but_not_present() {
+    // This can occur at the start of PoS chains
+
+    // Given
+    when(blockchain.getFinalized()).thenReturn(Optional.empty());
+    final long configuredRetainHeight = 2;
+    final long chainHeight = 2;
+    final long configuredRetainAboveHeight = configuredRetainHeight - 1;
+    final long blocksToRetain = chainHeight - configuredRetainAboveHeight;
+    final int pruningWindowSize = (int) chainHeight;
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(chainHeight);
+    TrieLogPruner trieLogPruner =
+        new TrieLogPruner(worldState, blockchain, blocksToRetain, pruningWindowSize, true);
+
+    trieLogPruner.cacheForLaterPruning(1, key(1));
+    trieLogPruner.cacheForLaterPruning(2, key(2));
+
+    // When
+    trieLogPruner.pruneFromCache();
+
+    // Then
+    verify(worldState, never()).pruneTrieLog(key(1)); // not finalized
+    verify(worldState, never()).pruneTrieLog(key(2)); // not finalized
+  }
+
   private TrieLogPruner setupPrunerAndFinalizedBlock(
       final long configuredRetainHeight, final long finalizedBlockHeight) {
     final long chainHeight = 5;
@@ -196,7 +211,7 @@ public class TrieLogPrunerTest {
         .thenReturn(Optional.of(finalizedHeader));
     when(blockchain.getChainHeadBlockNumber()).thenReturn(chainHeight);
     TrieLogPruner trieLogPruner =
-        new TrieLogPruner(worldState, blockchain, blocksToRetain, pruningWindowSize);
+        new TrieLogPruner(worldState, blockchain, blocksToRetain, pruningWindowSize, true);
 
     trieLogPruner.cacheForLaterPruning(1, key(1));
     trieLogPruner.cacheForLaterPruning(2, key(2));
