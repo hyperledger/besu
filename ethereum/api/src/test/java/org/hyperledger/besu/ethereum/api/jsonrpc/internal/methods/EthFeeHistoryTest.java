@@ -131,7 +131,6 @@ public class EthFeeHistoryTest {
     // Define a list of gas used and fee pairs. Each pair represents a transaction in the block.
     // The first number is the gas used by the transaction, and the second number the fee.
     // The comments indicate the cumulative gas used up as a percentage of the total gas limit.
-
     List<Object[]> gasUsedAndFee = new ArrayList<>();
     gasUsedAndFee.add(new Object[] {100, 1L}); // 5%
     gasUsedAndFee.add(new Object[] {150, 2L}); // 12.5%

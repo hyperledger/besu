@@ -226,29 +226,23 @@ public class EthFeeHistory implements JsonRpcMethod {
             .sorted(Comparator.comparing(TransactionInfo::effectivePriorityFeePerGas))
             .collect(toUnmodifiableList());
 
-    // We need to weight the percentile of rewards by the gas used in the transaction.
-    // That's why we're keeping track of the cumulative gas used and checking to see which
-    // percentile markers we've passed
     final ArrayList<Wei> rewards = new ArrayList<>();
     // Start with the gas used by the first transaction
-    cumulativeGasUsed = transactionsAndGasUsedAscendingEffectiveGasFee.get(0).gasUsed();
+    double totalGasUsed = transactionsAndGasUsedAscendingEffectiveGasFee.get(0).gasUsed();
     var transactionIndex = 0;
-    // Iterate over each reward percentile
     for (var rewardPercentile : rewardPercentiles) {
-      // Calculate the threshold gas used for the current reward percentile
-      // This is the amount of gas that needs to be used to reach this percentile
+      // Calculate the threshold gas used for the current reward percentile. This is the amount of
+      // gas that needs to be used to reach this percentile
       var thresholdGasUsed = rewardPercentile * block.getHeader().getGasUsed() / 100;
 
-      // Update cumulativeGasUsed by adding the gas used by each transaction
-      // Stop when cumulativeGasUsed reaches the threshold or there are no more transactions
-      while (cumulativeGasUsed < thresholdGasUsed
+      // Stop when totalGasUsed reaches the threshold or there are no more transactions
+      while (totalGasUsed < thresholdGasUsed
           && transactionIndex < transactionsAndGasUsedAscendingEffectiveGasFee.size() - 1) {
         transactionIndex++;
-        cumulativeGasUsed +=
+        totalGasUsed +=
             transactionsAndGasUsedAscendingEffectiveGasFee.get(transactionIndex).gasUsed();
       }
-      // Add the effective priority fee per gas of the transaction that reached the percentile to
-      // the rewards list
+      // Add the effective priority fee per gas of the transaction that reached the percentile value
       rewards.add(
           transactionsAndGasUsedAscendingEffectiveGasFee.get(transactionIndex)
               .effectivePriorityFeePerGas);
