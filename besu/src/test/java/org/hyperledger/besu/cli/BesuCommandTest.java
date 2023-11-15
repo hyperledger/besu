@@ -5249,7 +5249,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void txpoolForceTxPoolMinGasPriceToZeroWhenMinGasPriceZero() {
+  public void txpoolWhenNotSetForceTxPoolMinGasPriceToZeroWhenMinGasPriceZero() {
     parseCommand("--min-gas-price", "0");
     verify(mockControllerBuilder)
         .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
@@ -5263,6 +5263,14 @@ public class BesuCommandTest extends CommandTestAbstract {
         .warn(
             contains(
                 "Forcing tx-pool-min-gas-price=0, since it could not be greater than the value of min-gas-price"));
+  }
+
+  @Test
+  public void txpoolTxPoolMinGasPriceMustNotBeGreaterThanMinGasPriceZero() {
+    parseCommand("--min-gas-price", "100", "--tx-pool-min-gas-price", "101");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("tx-pool-min-gas-price could not be greater than the value of min-gas-price");
   }
 
   @Test

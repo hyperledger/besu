@@ -127,8 +127,8 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
       names = {TX_POOL_MIN_GAS_PRICE},
       paramLabel = "<Wei>",
       description =
-          "Minimum price (in Wei) offered by a transaction to be added to the txpool (not to be confused with min-gas-price,"
-              + " that is applied on block creation) (default: ${DEFAULT-VALUE})",
+          "Transactions with gas price (in Wei) lower than this minimum will not be accepted into the txpool"
+              + "(not to be confused with min-gas-price, that is applied on block creation) (default: ${DEFAULT-VALUE})",
       arity = "1")
   private Wei minGasPrice = TransactionPoolConfiguration.DEFAULT_TX_POOL_MIN_GAS_PRICE;
 
@@ -351,5 +351,15 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
    */
   public boolean isPriceBumpSet(final CommandLine commandLine) {
     return CommandLineUtils.isOptionSet(commandLine, TransactionPoolOptions.TX_POOL_PRICE_BUMP);
+  }
+
+  /**
+   * Is min gas price option set?
+   *
+   * @param commandLine the command line
+   * @return true is tx-pool-min-gas-price is set
+   */
+  public boolean isMinGasPriceSet(final CommandLine commandLine) {
+    return CommandLineUtils.isOptionSet(commandLine, TransactionPoolOptions.TX_POOL_MIN_GAS_PRICE);
   }
 }
