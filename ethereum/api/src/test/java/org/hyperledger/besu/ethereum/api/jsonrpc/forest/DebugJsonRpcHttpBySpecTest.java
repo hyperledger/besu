@@ -28,6 +28,13 @@ public class DebugJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
   }
 
   public static Object[][] specs() {
-    return findSpecFiles(new String[] {"debug"});
+    return AbstractJsonRpcHttpBySpecTest.findSpecFiles(
+        new String[] {
+          "debug/account-at",
+          "debug/batch-send-raw-transaction",
+          "debug/trace-transaction",
+          "debug/account-range",
+          "debug/storage-range"
+        });
   }
 }

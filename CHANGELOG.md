@@ -1,8 +1,20 @@
 # Changelog
 
+## 23.10.3
+
+### Breaking Changes
+
+### Deprecations
+
+### Additions and Improvements
+- Implement debug_traceCall [#5885](https://github.com/hyperledger/besu/pull/5885)
+- Transactions that takes too long to evaluate, during block creation, are dropped from the txpool [#6163](https://github.com/hyperledger/besu/pull/6163)
+- New option `tx-pool-min-gas-price` to set a lower bound when accepting txs to the pool [#6098](https://github.com/hyperledger/besu/pull/6098)
+
 ## 23.10.2
 
 ### Breaking Changes
+- TX pool eviction in the legacy TX pool now favours keeping oldest transactions (more likely to evict higher nonces, less likely to introduce nonce gaps) [#6106](https://github.com/hyperledger/besu/pull/6106) and [#6146](https://github.com/hyperledger/besu/pull/6146)
 
 ### Deprecations
 
@@ -11,7 +23,6 @@
 - Add a method to read from a `Memory` instance without altering its inner state [#6073](https://github.com/hyperledger/besu/pull/6073)
 - Accept `input` and `data` field for the payload of transaction-related RPC methods [#6094](https://github.com/hyperledger/besu/pull/6094)
 - Add APIs to set and get the min gas price a transaction must pay for being selected during block creation [#6097](https://github.com/hyperledger/besu/pull/6097)
-- New option `tx-pool-min-gas-price` to set a lower bound when accepting txs to the pool [#6098](https://github.com/hyperledger/besu/pull/6098)
 - TraceService: return results for transactions in block [#6086](https://github.com/hyperledger/besu/pull/6086)
 - New option `--min-priority-fee` that sets the minimum priority fee a transaction must meet to be selected for a block. [#6080](https://github.com/hyperledger/besu/pull/6080) [#6083](https://github.com/hyperledger/besu/pull/6083)
 - Implement new `miner_setMinPriorityFee` and `miner_getMinPriorityFee` RPC methods [#6080](https://github.com/hyperledger/besu/pull/6080)
@@ -20,6 +31,7 @@
 - Add `yParity` to GraphQL and JSON-RPC for relevant querise. [6119](https://github.com/hyperledger/besu/pull/6119)
 - Force tx replacement price bump to zero when zero base fee market is configured or `--min-gas-price` is set to 0. This allows for easier tx replacement in networks where there is not gas price. [#6079](https://github.com/hyperledger/besu/pull/6079)
 - Introduce the possibility to limit the time spent selecting pending transactions during block creation, using the new experimental option `Xblock-txs-selection-max-time` on PoS and PoW networks (by default set to 5000ms) or `Xpoa-block-txs-selection-max-time` on PoA networks (by default 75% of the min block time) [#6044](https://github.com/hyperledger/besu/pull/6044)
+- Remove LowestInvalidNonceCache from `legacy` transaction pool to make it more private networks friendly [#6148](https://github.com/hyperledger/besu/pull/6148)
 
 ### Bug fixes
 - Upgrade netty to address CVE-2023-44487, CVE-2023-34462 [#6100](https://github.com/hyperledger/besu/pull/6100)
