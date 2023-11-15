@@ -55,7 +55,7 @@ public class TrieLogPrunerTest {
   }
 
   @Test
-  public void initialize_preloads_cache_and_prunes_orphaned_blocks() {
+  public void initialize_preloads_queue_and_prunes_orphaned_blocks() {
     // Given
     int loadingLimit = 2;
     final BlockDataGenerator generator = new BlockDataGenerator();
@@ -88,16 +88,16 @@ public class TrieLogPrunerTest {
     TrieLogPruner trieLogPruner =
         new TrieLogPruner(worldState, blockchain, blocksToRetain, pruningWindowSize, false);
 
-    trieLogPruner.cacheForLaterPruning(0, key(0)); // older block outside prune window
-    trieLogPruner.cacheForLaterPruning(1, key(1)); // block inside the prune window
-    trieLogPruner.cacheForLaterPruning(1, key(2)); // same block number (fork)
-    trieLogPruner.cacheForLaterPruning(2, key(3)); // different block inside prune window
-    trieLogPruner.cacheForLaterPruning(3, key(4)); // retained block
-    trieLogPruner.cacheForLaterPruning(4, key(5)); // different retained block
-    trieLogPruner.cacheForLaterPruning(5, key(6)); // another retained block
+    trieLogPruner.addToPruneQueue(0, key(0)); // older block outside prune window
+    trieLogPruner.addToPruneQueue(1, key(1)); // block inside the prune window
+    trieLogPruner.addToPruneQueue(1, key(2)); // same block number (fork)
+    trieLogPruner.addToPruneQueue(2, key(3)); // different block inside prune window
+    trieLogPruner.addToPruneQueue(3, key(4)); // retained block
+    trieLogPruner.addToPruneQueue(4, key(5)); // different retained block
+    trieLogPruner.addToPruneQueue(5, key(6)); // another retained block
 
     // When
-    int wasPruned = trieLogPruner.pruneFromCache();
+    int wasPruned = trieLogPruner.pruneFromQueue();
 
     // Then
     assertThat(wasPruned).isEqualTo(3);
@@ -107,10 +107,10 @@ public class TrieLogPrunerTest {
     inOrder.verify(worldState, times(1)).pruneTrieLog(key(2));
 
     // Subsequent run should add one more block, then prune two oldest remaining keys
-    trieLogPruner.cacheForLaterPruning(6, key(6));
+    trieLogPruner.addToPruneQueue(6, key(6));
     when(blockchain.getChainHeadBlockNumber()).thenReturn(6L);
 
-    wasPruned = trieLogPruner.pruneFromCache();
+    wasPruned = trieLogPruner.pruneFromQueue();
 
     assertThat(wasPruned).isEqualTo(2);
     inOrder.verify(worldState, times(1)).pruneTrieLog(key(4));
@@ -127,7 +127,7 @@ public class TrieLogPrunerTest {
         setupPrunerAndFinalizedBlock(configuredRetainHeight, finalizedBlockHeight);
 
     // When
-    final int wasPruned = trieLogPruner.pruneFromCache();
+    final int wasPruned = trieLogPruner.pruneFromQueue();
 
     // Then
     assertThat(wasPruned).isEqualTo(1);
@@ -148,7 +148,7 @@ public class TrieLogPrunerTest {
         setupPrunerAndFinalizedBlock(configuredRetainHeight, finalizedBlockHeight);
 
     // When
-    final int wasPruned = trieLogPruner.pruneFromCache();
+    final int wasPruned = trieLogPruner.pruneFromQueue();
 
     // Then
     assertThat(wasPruned).isEqualTo(1);
@@ -169,7 +169,7 @@ public class TrieLogPrunerTest {
         setupPrunerAndFinalizedBlock(configuredRetainHeight, finalizedBlockHeight);
 
     // When
-    final int wasPruned = trieLogPruner.pruneFromCache();
+    final int wasPruned = trieLogPruner.pruneFromQueue();
 
     // Then
     assertThat(wasPruned).isEqualTo(2);
@@ -196,11 +196,11 @@ public class TrieLogPrunerTest {
     TrieLogPruner trieLogPruner =
         new TrieLogPruner(worldState, blockchain, blocksToRetain, pruningWindowSize, true);
 
-    trieLogPruner.cacheForLaterPruning(1, key(1));
-    trieLogPruner.cacheForLaterPruning(2, key(2));
+    trieLogPruner.addToPruneQueue(1, key(1));
+    trieLogPruner.addToPruneQueue(2, key(2));
 
     // When
-    final int wasPruned = trieLogPruner.pruneFromCache();
+    final int wasPruned = trieLogPruner.pruneFromQueue();
 
     // Then
     assertThat(wasPruned).isEqualTo(0);
@@ -218,14 +218,14 @@ public class TrieLogPrunerTest {
         setupPrunerAndFinalizedBlock(configuredRetainHeight, finalizedBlockHeight);
 
     // When
-    final int wasPruned = trieLogPruner.pruneFromCache();
+    final int wasPruned = trieLogPruner.pruneFromQueue();
 
     // Then
     assertThat(wasPruned).isEqualTo(2);
 
     // Subsequent run should prune previously skipped trieLog
     when(worldState.pruneTrieLog(key(2))).thenReturn(true);
-    assertThat(trieLogPruner.pruneFromCache()).isEqualTo(1);
+    assertThat(trieLogPruner.pruneFromQueue()).isEqualTo(1);
   }
 
   private TrieLogPruner setupPrunerAndFinalizedBlock(
@@ -243,11 +243,11 @@ public class TrieLogPrunerTest {
     TrieLogPruner trieLogPruner =
         new TrieLogPruner(worldState, blockchain, blocksToRetain, pruningWindowSize, true);
 
-    trieLogPruner.cacheForLaterPruning(1, key(1));
-    trieLogPruner.cacheForLaterPruning(2, key(2));
-    trieLogPruner.cacheForLaterPruning(3, key(3));
-    trieLogPruner.cacheForLaterPruning(4, key(4));
-    trieLogPruner.cacheForLaterPruning(5, key(5));
+    trieLogPruner.addToPruneQueue(1, key(1));
+    trieLogPruner.addToPruneQueue(2, key(2));
+    trieLogPruner.addToPruneQueue(3, key(3));
+    trieLogPruner.addToPruneQueue(4, key(4));
+    trieLogPruner.addToPruneQueue(5, key(5));
 
     return trieLogPruner;
   }

@@ -62,10 +62,10 @@ public class TrieLogPruner {
   }
 
   public void initialize() {
-    preloadCache();
+    preloadQueue();
   }
 
-  private void preloadCache() {
+  private void preloadQueue() {
     LOG.atInfo()
         .setMessage("Loading first {} trie logs from database...")
         .addArgument(loadingLimit)
@@ -86,22 +86,22 @@ public class TrieLogPruner {
             }
           });
       LOG.atInfo().log("Loaded {} trie logs from database", count);
-      pruneFromCache();
+      pruneFromQueue();
     } catch (Exception e) {
       LOG.error("Error loading trie logs from database, nothing pruned", e);
     }
   }
 
-  void cacheForLaterPruning(final long blockNumber, final Hash blockHash) {
+  void addToPruneQueue(final long blockNumber, final Hash blockHash) {
     LOG.atTrace()
-        .setMessage("caching trie log for later pruning blockNumber {}; blockHash {}")
+        .setMessage("adding trie log to queue for later pruning blockNumber {}; blockHash {}")
         .addArgument(blockNumber)
         .addArgument(blockHash)
         .log();
     trieLogBlocksAndForksByDescendingBlockNumber.put(blockNumber, blockHash);
   }
 
-  int pruneFromCache() {
+  int pruneFromQueue() {
     final long retainAboveThisBlock = blockchain.getChainHeadBlockNumber() - numBlocksToRetain;
     final Optional<Hash> finalized = blockchain.getFinalized();
     if (requireFinalizedBlock && finalized.isEmpty()) {
@@ -182,12 +182,12 @@ public class TrieLogPruner {
     }
 
     @Override
-    void cacheForLaterPruning(final long blockNumber, final Hash blockHash) {
+    void addToPruneQueue(final long blockNumber, final Hash blockHash) {
       // no-op
     }
 
     @Override
-    int pruneFromCache() {
+    int pruneFromQueue() {
       // no-op
       return -1;
     }

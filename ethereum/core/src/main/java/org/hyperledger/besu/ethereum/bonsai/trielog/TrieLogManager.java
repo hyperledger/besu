@@ -85,9 +85,8 @@ public class TrieLogManager {
       } finally {
         if (success) {
           stateUpdater.commit();
-          trieLogPruner.cacheForLaterPruning(
-              forBlockHeader.getNumber(), forBlockHeader.getBlockHash());
-          trieLogPruner.pruneFromCache();
+          trieLogPruner.addToPruneQueue(forBlockHeader.getNumber(), forBlockHeader.getBlockHash());
+          trieLogPruner.pruneFromQueue();
         } else {
           stateUpdater.rollback();
         }
