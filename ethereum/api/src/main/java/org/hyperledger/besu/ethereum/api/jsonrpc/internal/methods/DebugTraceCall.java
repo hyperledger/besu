@@ -18,26 +18,28 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErr
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
-import java.util.Set;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TraceCall extends AbstractTraceCall {
-  private static final Logger LOG = LoggerFactory.getLogger(TraceCall.class);
+public class DebugTraceCall extends AbstractTraceCall {
+  private static final Logger LOG = LoggerFactory.getLogger(DebugTraceCall.class);
 
-  public TraceCall(
+  public DebugTraceCall(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final TransactionSimulator transactionSimulator) {
@@ -46,17 +48,23 @@ public class TraceCall extends AbstractTraceCall {
 
   @Override
   public String getName() {
-    return transactionSimulator != null ? RpcMethod.TRACE_CALL.getMethodName() : null;
+    return RpcMethod.DEBUG_TRACE_CALL.getMethodName();
   }
 
   @Override
   protected TraceOptions getTraceOptions(final JsonRpcRequestContext requestContext) {
-    return buildTraceOptions(getTraceTypes(requestContext));
+    return requestContext
+        .getOptionalParameter(2, TransactionTraceParams.class)
+        .map(TransactionTraceParams::traceOptions)
+        .orElse(TraceOptions.DEFAULT);
   }
 
-  private Set<TraceTypeParameter.TraceType> getTraceTypes(
-      final JsonRpcRequestContext requestContext) {
-    return requestContext.getRequiredParameter(1, TraceTypeParameter.class).getTraceTypes();
+  @Override
+  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
+    final Optional<BlockParameter> maybeBlockParameter =
+        request.getOptionalParameter(1, BlockParameter.class);
+
+    return maybeBlockParameter.orElse(BlockParameter.LATEST);
   }
 
   @Override
@@ -67,18 +75,17 @@ public class TraceCall extends AbstractTraceCall {
             result -> {
               if (result.isInvalid()) {
                 LOG.error("Invalid simulator result {}", result);
-                return new JsonRpcErrorResponse(
-                    requestContext.getRequest().getId(), INTERNAL_ERROR);
+                final JsonRpcError error =
+                    new JsonRpcError(
+                        INTERNAL_ERROR, result.getValidationResult().getErrorMessage());
+                return new JsonRpcErrorResponse(requestContext.getRequest().getId(), error);
               }
 
               final TransactionTrace transactionTrace =
                   new TransactionTrace(
                       result.getTransaction(), result.getResult(), tracer.getTraceFrames());
 
-              final Block block =
-                  blockchainQueriesSupplier.get().getBlockchain().getChainHeadBlock();
-              return getTraceCallResult(
-                  protocolSchedule, getTraceTypes(requestContext), result, transactionTrace, block);
+              return new DebugTraceTransactionResult(transactionTrace);
             });
   }
 }
