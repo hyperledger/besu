@@ -70,8 +70,7 @@ public class TrieLogPruner {
         .setMessage("Loading first {} trie logs from database...")
         .addArgument(loadingLimit)
         .log();
-    try {
-      final Stream<byte[]> trieLogKeys = rootWorldStateStorage.streamTrieLogKeys(loadingLimit);
+    try (final Stream<byte[]> trieLogKeys = rootWorldStateStorage.streamTrieLogKeys(loadingLimit)) {
       final AtomicLong count = new AtomicLong();
       trieLogKeys.forEach(
           blockHashAsBytes -> {
