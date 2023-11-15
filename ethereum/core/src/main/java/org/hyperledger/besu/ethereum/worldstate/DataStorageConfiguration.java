@@ -16,8 +16,6 @@
 
 package org.hyperledger.besu.ethereum.worldstate;
 
-import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogPruner;
-
 import org.immutables.value.Value;
 
 @Value.Immutable
@@ -46,9 +44,9 @@ public interface DataStorageConfiguration {
   interface Unstable {
 
     boolean DEFAULT_BONSAI_TRIE_LOG_PRUNING_ENABLED = false;
-    long DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD = TrieLogPruner.DEFAULT_RETENTION_THRESHOLD;
-    long MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD = TrieLogPruner.MINIMUM_RETENTION_THRESHOLD;
-    int DEFAULT_BONSAI_TRIE_LOG_PRUNING_LIMIT = TrieLogPruner.DEFAULT_PRUNING_LIMIT;
+    long DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD = 512L;
+    long MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD = DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
+    int DEFAULT_BONSAI_TRIE_LOG_PRUNING_LIMIT = 30_000;
 
     DataStorageConfiguration.Unstable DEFAULT =
         ImmutableDataStorageConfiguration.Unstable.builder().build();

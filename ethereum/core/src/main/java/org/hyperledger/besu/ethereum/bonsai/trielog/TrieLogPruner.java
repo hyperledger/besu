@@ -38,10 +38,6 @@ public class TrieLogPruner {
 
   private static final Logger LOG = LoggerFactory.getLogger(TrieLogPruner.class);
 
-  public static final long DEFAULT_RETENTION_THRESHOLD = 512L;
-  public static final long MINIMUM_RETENTION_THRESHOLD = DEFAULT_RETENTION_THRESHOLD;
-  public static int DEFAULT_PRUNING_LIMIT = 30_000;
-
   private final int pruningLimit;
   private final int loadingLimit;
   private final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
