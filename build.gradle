@@ -131,7 +131,6 @@ allprojects {
       content { includeGroupByRegex('com\\.splunk\\..*') }
     }
     mavenCentral()
-    mavenLocal()
 
     // ethereum execution spec tests fixtures. Exclusively for ethereum submodule to run ref tests
     def ethExecSpecTestsRepo = ivy {
@@ -625,7 +624,8 @@ task autocomplete(type: JavaExec) {
   }
 }
 
-installDist { dependsOn checkLicenses, untunedStartScripts, evmToolStartScripts }
+installDist {
+  dependsOn checkLicenses, untunedStartScripts, evmToolStartScripts }
 
 distTar {
   dependsOn checkLicenses, autocomplete, untunedStartScripts, evmToolStartScripts

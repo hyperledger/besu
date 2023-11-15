@@ -39,10 +39,8 @@ dependencies {
   implementation 'io.tmio:tuweni-bytes'
   implementation 'io.tmio:tuweni-units'
   implementation 'org.bouncycastle:bcprov-jdk18on'
-  implementation 'org.hyperledger.besu:ipa-multipoint'
 
-  implementation ('org.hyperledger.besu:besu-verkle-trie:0.0.1-SNAPSHOT-KT') {
-    exclude group: 'org.hyperledger.besu'
+  implementation ('org.hyperledger.besu:besu-verkle-trie') {
     exclude group: 'org.hyperledger.besu.internal'
     exclude group: 'org.apache.tuweni'
   }
