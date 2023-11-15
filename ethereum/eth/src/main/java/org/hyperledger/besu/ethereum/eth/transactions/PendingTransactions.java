@@ -72,6 +72,8 @@ public interface PendingTransactions {
 
   String logStats();
 
+  Optional<Transaction> restoreBlob(Transaction transaction);
+
   @FunctionalInterface
   interface TransactionSelector {
     TransactionSelectionResult evaluateTransaction(PendingTransaction pendingTransaction);

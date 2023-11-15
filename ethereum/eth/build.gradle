@@ -59,6 +59,9 @@ dependencies {
   implementation 'io.tmio:tuweni-units'
   implementation 'io.tmio:tuweni-rlp'
   implementation 'org.rocksdb:rocksdbjni'
+  implementation 'com.github.ben-manes.caffeine:caffeine'
+  implementation 'com.google.dagger:dagger'
+  annotationProcessor 'com.google.dagger:dagger-compiler'
 
   annotationProcessor "org.immutables:value"
   implementation "org.immutables:value-annotations"

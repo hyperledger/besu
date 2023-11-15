@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
@@ -93,6 +94,8 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
   protected final TransactionPoolReplacementHandler transactionReplacementHandler;
   protected final Supplier<BlockHeader> chainHeadHeaderSupplier;
 
+  private final BlobCache blobCache;
+
   public AbstractPendingTransactionsSorter(
       final TransactionPoolConfiguration poolConfig,
       final Clock clock,
@@ -126,6 +129,8 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         "transactions",
         "Current size of the transaction pool",
         pendingTransactions::size);
+
+    this.blobCache = new BlobCache();
   }
 
   @Override
@@ -393,6 +398,10 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         removePendingTransactionBySenderAndNonce(removedPendingTx);
         incrementTransactionRemovedCounter(
             removedPendingTx.isReceivedFromLocalSource(), addedToBlock);
+        if (removedPendingTx.getTransaction().getBlobsWithCommitments().isPresent()
+            && addedToBlock) {
+          this.blobCache.cacheBlobs(removedPendingTx.getTransaction());
+        }
       }
     }
   }
@@ -484,5 +493,14 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
 
       return sb.toString();
     }
+  }
+  /**
+   * @param transaction to restore blobs onto
+   * @return an optional copy of the supplied transaction, but with the BlobsWithCommitments
+   *     restored. If none could be restored, empty.
+   */
+  @Override
+  public Optional<Transaction> restoreBlob(final Transaction transaction) {
+    return blobCache.restoreBlob(transaction);
   }
 }

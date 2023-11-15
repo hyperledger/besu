@@ -116,4 +116,9 @@ public class DisabledPendingTransactions implements PendingTransactions {
   public String logStats() {
     return "Disabled";
   }
+
+  @Override
+  public Optional<Transaction> restoreBlob(final Transaction transaction) {
+    return Optional.empty();
+  }
 }

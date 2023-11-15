@@ -50,6 +50,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
@@ -127,7 +128,8 @@ public abstract class AbstractIsolationTests {
               poolConfiguration,
               new EndLayer(txPoolMetrics),
               txPoolMetrics,
-              transactionReplacementTester));
+              transactionReplacementTester,
+              new BlobCache()));
 
   protected final List<GenesisAllocation> accounts =
       GenesisConfigFile.development()
