@@ -79,7 +79,7 @@ public class TrieLogPruner {
     final AtomicLong count = new AtomicLong();
     trieLogKeys.forEach(
         blockHashAsBytes -> {
-          Hash blockHash = Hash.wrap(Bytes32.wrap(blockHashAsBytes));
+          final Hash blockHash = Hash.wrap(Bytes32.wrap(blockHashAsBytes));
           final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);
           if (header.isPresent()) {
             trieLogBlocksAndForksByDescendingBlockNumber.put(header.get().getNumber(), blockHash);

@@ -310,11 +310,14 @@ public class ConfigurationOverviewBuilder {
     lines.add("Using " + worldStateUpdateMode + " worldstate update mode");
 
     if (isTrieLogPruningEnabled) {
-      lines.add("Trie log pruning enabled:");
-      lines.add("  - retention threshold: " + trieLogRetentionThreshold + " blocks");
+      final StringBuilder trieLogPruningString = new StringBuilder();
+      trieLogPruningString
+          .append("Trie log pruning enabled: retention: ")
+          .append(trieLogRetentionThreshold);
       if (trieLogPruningLimit != null) {
-        lines.add("  - prune limit: " + trieLogPruningLimit + " blocks");
+        trieLogPruningString.append("; prune limit: ").append(trieLogPruningLimit);
       }
+      lines.add(trieLogPruningString.toString());
     }
 
     lines.add("");
