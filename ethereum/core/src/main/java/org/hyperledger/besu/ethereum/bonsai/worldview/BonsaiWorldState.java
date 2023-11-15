@@ -409,7 +409,8 @@ public class BonsaiWorldState
               trieLogManager.saveTrieLog(localCopy, newWorldStateRootHash, blockHeader, this);
               // not save a frozen state in the cache
               if (!isFrozen) {
-                cachedWorldStorageManager.addCachedLayer(blockHeader, newWorldStateRootHash, this);
+                cachedWorldStorageManager.addCachedLayer(
+                    blockHeader, newWorldStateRootHash, null); // TODO FIX THAT LATER
               }
             };
 
