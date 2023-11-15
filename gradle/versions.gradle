@@ -162,11 +162,14 @@ dependencyManagement {
 
     dependencySet(group: 'org.hyperledger.besu', version: '0.8.2') {
       entry 'arithmetic'
-      entry 'ipa-multipoint'
       entry 'bls12-381'
       entry 'secp256k1'
       entry 'secp256r1'
       entry 'blake2bf'
+    }
+
+    dependencySet(group: 'org.hyperledger.besu', version: '0.8.3-SNAPSHOT') {
+      entry 'ipa-multipoint'
     }
 
     dependencySet(group: 'org.immutables', version: '2.9.3') {

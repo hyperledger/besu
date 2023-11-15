@@ -77,6 +77,7 @@ public class TrieLogFactoryImpl implements TrieLogFactory {
           continue;
         }
 
+        System.out.println(val.getPrior() + " " + val.getUpdated());
         layer.addStorageChange(address, slotUpdate.getKey(), val.getPrior(), val.getUpdated());
       }
     }
@@ -129,8 +130,12 @@ public class TrieLogFactoryImpl implements TrieLogFactory {
             storageChanges.entrySet()) {
           output.startList();
           // do not write slotKey, it is not used in mainnet bonsai trielogs
-          output.writeBytes(storageChangeEntry.getKey().getSlotHash());
-          writeInnerRlp(storageChangeEntry.getValue(), output, RLPOutput::writeUInt256Scalar);
+          StorageSlotKey storageSlotKey = storageChangeEntry.getKey();
+          output.writeBytes(storageSlotKey.getSlotHash());
+          writeInnerRlp(storageChangeEntry.getValue(), output, RLPOutput::writeBytes);
+          if (storageSlotKey.getSlotKey().isPresent()) {
+            output.writeUInt256Scalar(storageSlotKey.getSlotKey().get());
+          }
           output.endList();
         }
         output.endList();
@@ -184,12 +189,20 @@ public class TrieLogFactoryImpl implements TrieLogFactory {
         final Map<StorageSlotKey, BonsaiValue<UInt256>> storageChanges = new TreeMap<>();
         input.enterList();
         while (!input.isEndOfCurrentList()) {
-          input.enterList();
+          int storageElementlistSize = input.enterList();
           final Hash slotHash = Hash.wrap(input.readBytes32());
-          final StorageSlotKey storageSlotKey = new StorageSlotKey(slotHash, Optional.empty());
-          final UInt256 oldValue = nullOrValue(input, RLPInput::readUInt256Scalar);
-          final UInt256 newValue = nullOrValue(input, RLPInput::readUInt256Scalar);
+          final UInt256 oldValue =
+              nullOrValue(input, rlpInput -> UInt256.fromBytes(rlpInput.readBytes()));
+          final UInt256 newValue =
+              nullOrValue(input, rlpInput -> UInt256.fromBytes(rlpInput.readBytes()));
           final boolean isCleared = getOptionalIsCleared(input);
+          final Optional<UInt256> slotKey =
+              Optional.of(storageElementlistSize)
+                  .filter(listSize -> listSize == 5)
+                  .map(__ -> input.readUInt256Scalar())
+                  .or(Optional::empty);
+
+          final StorageSlotKey storageSlotKey = new StorageSlotKey(slotHash, slotKey);
           storageChanges.put(storageSlotKey, new BonsaiValue<>(oldValue, newValue, isCleared));
           input.leaveList();
         }

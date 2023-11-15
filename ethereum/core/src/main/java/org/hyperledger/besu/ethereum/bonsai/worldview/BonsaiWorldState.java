@@ -100,7 +100,7 @@ public class BonsaiWorldState
     this.worldStateStorage = worldStateStorage;
     this.worldStateRootHash =
         Hash.wrap(
-            Bytes32.wrap(worldStateStorage.getWorldStateRootHash().orElse(Hash.EMPTY_TRIE_HASH)));
+            Bytes32.wrap(worldStateStorage.getWorldStateRootHash().orElse(getEmptyTrieHash())));
     this.worldStateBlockHash =
         Hash.wrap(Bytes32.wrap(worldStateStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
     this.accumulator =
@@ -174,7 +174,7 @@ public class BonsaiWorldState
     return worldStateStorage;
   }
 
-  private Hash calculateRootHash(
+  protected Hash calculateRootHash(
       final Optional<BonsaiWorldStateKeyValueStorage.BonsaiUpdater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
 
@@ -542,7 +542,7 @@ public class BonsaiWorldState
     return worldStateStorage.getAccountStateTrieNode(location, nodeHash);
   }
 
-  private void writeTrieNode(
+  protected void writeTrieNode(
       final SegmentIdentifier segmentId,
       final SegmentedKeyValueStorageTransaction tx,
       final Bytes location,
@@ -642,5 +642,9 @@ public class BonsaiWorldState
   protected Hash hashAndSavePreImage(final Bytes value) {
     // by default do not save has preImages
     return Hash.hash(value);
+  }
+
+  protected Hash getEmptyTrieHash() {
+    return Hash.EMPTY_TRIE_HASH;
   }
 }

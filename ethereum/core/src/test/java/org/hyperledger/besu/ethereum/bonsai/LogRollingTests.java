@@ -25,10 +25,11 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
-import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiVerkleWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -46,17 +47,20 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+@SuppressWarnings("unused")
 @ExtendWith(MockitoExtension.class)
 class LogRollingTests {
 
   private BonsaiWorldStateProvider archive;
 
+  private static final BlockHeaderTestFixture blockHeaderTestFixture = new BlockHeaderTestFixture();
   private InMemoryKeyValueStorageProvider provider;
   private KeyValueStorage accountStorage;
   private KeyValueStorage codeStorage;
@@ -81,7 +85,7 @@ class LogRollingTests {
           Hash.ZERO,
           Hash.EMPTY_LIST_HASH,
           Address.ZERO,
-          Hash.fromHexString("0x0ecfa454ddfe6b740f4af7b7f4c61b5c6bac2854efd2b07b27b1f53dba9bb46c"),
+          Hash.fromHexString("0xaead6ffd4fc26ea597ca7dcbcca04687784b0e11b09902b2df8fa06576f4cf0e"),
           Hash.EMPTY_TRIE_HASH,
           Hash.EMPTY_LIST_HASH,
           LogsBloomFilter.builder().build(),
@@ -105,12 +109,61 @@ class LogRollingTests {
           headerOne.getHash(),
           Hash.EMPTY_LIST_HASH,
           Address.ZERO,
-          Hash.fromHexString("0x5b675f79cd11ba67266161d79a8d5be3ac330dfbb76300a4f15d76b610b18193"),
+          Hash.fromHexString("0x56fcc2032e18de961f8034d243976c40d78a098fa2a80632ac3eb1f47c9c0d01"),
           Hash.EMPTY_TRIE_HASH,
           Hash.EMPTY_LIST_HASH,
           LogsBloomFilter.builder().build(),
           Difficulty.ONE,
-          1,
+          2,
+          0,
+          0,
+          0,
+          Bytes.EMPTY,
+          Wei.ZERO,
+          Hash.ZERO,
+          0,
+          null,
+          null, // blobGasUsed
+          null,
+          null,
+          null,
+          new MainnetBlockHeaderFunctions());
+  private static final BlockHeader headerThree =
+      new BlockHeader(
+          headerOne.getHash(),
+          Hash.EMPTY_LIST_HASH,
+          Address.ZERO,
+          Hash.fromHexString("0x82fca7e7284530d1126899b8629c2e303ed1f5712d24f535c475fe2033930f1b"),
+          Hash.EMPTY_TRIE_HASH,
+          Hash.EMPTY_LIST_HASH,
+          LogsBloomFilter.builder().build(),
+          Difficulty.ONE,
+          3,
+          0,
+          0,
+          0,
+          Bytes.EMPTY,
+          Wei.ZERO,
+          Hash.ZERO,
+          0,
+          null,
+          null, // blobGasUsed
+          null,
+          null,
+          null,
+          new MainnetBlockHeaderFunctions());
+
+  private static final BlockHeader headerFour =
+      new BlockHeader(
+          headerOne.getHash(),
+          Hash.EMPTY_LIST_HASH,
+          Address.ZERO,
+          Hash.fromHexString("0xaead6ffd4fc26ea597ca7dcbcca04687784b0e11b09902b2df8fa06576f4cf0e"),
+          Hash.EMPTY_TRIE_HASH,
+          Hash.EMPTY_LIST_HASH,
+          LogsBloomFilter.builder().build(),
+          Difficulty.ONE,
+          3,
           0,
           0,
           0,
@@ -156,10 +209,58 @@ class LogRollingTests {
   }
 
   @Test
+  void simpleRollForwardTest1() {
+
+    final BonsaiVerkleWorldState worldState =
+        new BonsaiVerkleWorldState(
+            archive,
+            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
+            EvmConfiguration.DEFAULT);
+    final WorldUpdater updater = worldState.updater();
+
+    final MutableAccount mutableAccount =
+        updater.createAccount(
+            Address.fromHexString("0xb247faa497c752519917402cd79414727222f792"), 1, Wei.of(1L));
+    mutableAccount.setCode(
+        Bytes.fromHexString(
+            "608060405234801561000f575f80fd5b5060043610610034575f3560e01c80632e64cec1146100385780636057361d14610056575b5f80fd5b610040610072565b60405161004d919061029a565b60405180910390f35b610070600480360381019061006b91906102e1565b61019c565b005b5f8060405161008090610275565b604051809103905ff080158015610099573d5f803e3d5ffd5b5090505f60015f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16632e64cec16040518163ffffffff1660e01b8152600401602060405180830381865afa158015610107573d5f803e3d5ffd5b505050506040513d601f19601f8201168201806040525081019061012b9190610320565b90508173ffffffffffffffffffffffffffffffffffffffff16636057361d826040518263ffffffff1660e01b8152600401610166919061029a565b5f604051808303815f87803b15801561017d575f80fd5b505af115801561018f573d5f803e3d5ffd5b505050505f549250505090565b805f819055505f6040516101af90610275565b604051809103905ff0801580156101c8573d5f803e3d5ffd5b5090508073ffffffffffffffffffffffffffffffffffffffff16636057361d836040518263ffffffff1660e01b8152600401610204919061029a565b5f604051808303815f87803b15801561021b575f80fd5b505af115801561022d573d5f803e3d5ffd5b505050508060015f6101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055505050565b6101e38061034c83390190565b5f819050919050565b61029481610282565b82525050565b5f6020820190506102ad5f83018461028b565b92915050565b5f80fd5b6102c081610282565b81146102ca575f80fd5b50565b5f813590506102db816102b7565b92915050565b5f602082840312156102f6576102f56102b3565b5b5f610303848285016102cd565b91505092915050565b5f8151905061031a816102b7565b92915050565b5f60208284031215610335576103346102b3565b5b5f6103428482850161030c565b9150509291505056fe608060405234801561000f575f80fd5b506101c68061001d5f395ff3fe60806040526004361061003e575f3560e01c80632711432d146100425780632e64cec11461006c5780636057361d14610096578063d64c8ca4146100be575b5f80fd5b34801561004d575f80fd5b506100566100c8565b604051610063919061011e565b60405180910390f35b348015610077575f80fd5b506100806100d1565b60405161008d919061011e565b60405180910390f35b3480156100a1575f80fd5b506100bc60048036038101906100b79190610165565b6100d9565b005b6100c66100e9565b005b5f600154905090565b5f8054905090565b805f819055508060018190555050565b5f3390508073ffffffffffffffffffffffffffffffffffffffff16ff5b5f819050919050565b61011881610106565b82525050565b5f6020820190506101315f83018461010f565b92915050565b5f80fd5b61014481610106565b811461014e575f80fd5b50565b5f8135905061015f8161013b565b92915050565b5f6020828403121561017a57610179610137565b5b5f61018784828501610151565b9150509291505056fea2646970667358221220dc349a9524617af5742ac60346440c0d09b175e4d9c4d95e378a9652cb9acbb064736f6c63430008160033a264697066735822122079744fe4f745783dffcec2415a6b99b8b7b340bcf4a768d5563f00d2ec1f916b64736f6c63430008160033"));
+    updater.commit();
+    worldState.persist(headerOne);
+
+    final BonsaiVerkleWorldState secondWorldState =
+        new BonsaiVerkleWorldState(
+            secondArchive,
+            new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()),
+            EvmConfiguration.DEFAULT);
+    final BonsaiWorldStateUpdateAccumulator secondUpdater =
+        (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
+
+    final Optional<byte[]> value = trieLogStorage.get(headerOne.getHash().toArrayUnsafe());
+
+    final TrieLogLayer layer =
+        TrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(value.get()), false));
+
+    secondUpdater.rollForward(layer);
+    secondUpdater.commit();
+    secondWorldState.persist(null);
+
+    assertKeyValueStorageEqual(accountStorage, secondAccountStorage);
+    assertKeyValueStorageEqual(codeStorage, secondCodeStorage);
+    assertKeyValueStorageEqual(storageStorage, secondStorageStorage);
+    final KeyValueStorageTransaction tx = trieBranchStorage.startTransaction();
+    tx.remove(BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY);
+    tx.commit();
+    assertKeyValueStorageEqual(trieBranchStorage, secondTrieBranchStorage);
+    // trie logs won't be the same, we shouldn't generate logs on rolls.
+    assertKeyValueSubset(trieLogStorage, secondTrieLogStorage);
+    assertThat(secondWorldState.rootHash()).isEqualByComparingTo(worldState.rootHash());
+  }
+
+  @Test
   void simpleRollForwardTest() {
 
-    final BonsaiWorldState worldState =
-        new BonsaiWorldState(
+    final BonsaiVerkleWorldState worldState =
+        new BonsaiVerkleWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT);
@@ -171,8 +272,8 @@ class LogRollingTests {
     updater.commit();
     worldState.persist(headerOne);
 
-    final BonsaiWorldState secondWorldState =
-        new BonsaiWorldState(
+    final BonsaiVerkleWorldState secondWorldState =
+        new BonsaiVerkleWorldState(
             secondArchive,
             new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT);
@@ -202,8 +303,8 @@ class LogRollingTests {
 
   @Test
   void rollForwardTwice() {
-    final BonsaiWorldState worldState =
-        new BonsaiWorldState(
+    final BonsaiVerkleWorldState worldState =
+        new BonsaiVerkleWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT);
@@ -223,8 +324,8 @@ class LogRollingTests {
 
     worldState.persist(headerTwo);
 
-    final BonsaiWorldState secondWorldState =
-        new BonsaiWorldState(
+    final BonsaiVerkleWorldState secondWorldState =
+        new BonsaiVerkleWorldState(
             secondArchive,
             new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT);
@@ -255,8 +356,8 @@ class LogRollingTests {
 
   @Test
   void rollBackOnce() {
-    final BonsaiWorldState worldState =
-        new BonsaiWorldState(
+    final BonsaiVerkleWorldState worldState =
+        new BonsaiVerkleWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT);
@@ -283,8 +384,8 @@ class LogRollingTests {
 
     worldState.persist(headerOne);
 
-    final BonsaiWorldState secondWorldState =
-        new BonsaiWorldState(
+    final BonsaiVerkleWorldState secondWorldState =
+        new BonsaiVerkleWorldState(
             secondArchive,
             new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT);
@@ -308,6 +409,162 @@ class LogRollingTests {
     // trie logs won't be the same, we don't delete the roll back log
     assertKeyValueSubset(trieLogStorage, secondTrieLogStorage);
     assertThat(secondWorldState.rootHash()).isEqualByComparingTo(worldState.rootHash());
+  }
+
+  @Test
+  void rollBackTwice() {
+    final BonsaiVerkleWorldState worldState =
+        new BonsaiVerkleWorldState(
+            archive,
+            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
+            EvmConfiguration.DEFAULT);
+
+    final WorldUpdater updater = worldState.updater();
+    final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
+    mutableAccount.setCode(Bytes.of(0, 1, 2));
+    mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
+    updater.commit();
+
+    worldState.persist(headerOne);
+    final TrieLogLayer layerOne = getTrieLogLayer(trieLogStorage, headerOne.getHash());
+
+    final WorldUpdater updater2 = worldState.updater();
+    final MutableAccount mutableAccount2 = updater2.getAccount(addressOne);
+    mutableAccount2.setStorageValue(UInt256.ONE, UInt256.valueOf(2));
+    updater2.commit();
+
+    worldState.persist(headerTwo);
+    final BonsaiWorldStateUpdateAccumulator firstRollbackUpdater =
+        (BonsaiWorldStateUpdateAccumulator) worldState.updater();
+
+    final TrieLogLayer layerTwo = getTrieLogLayer(trieLogStorage, headerTwo.getHash());
+    firstRollbackUpdater.rollBack(layerTwo);
+
+    worldState.persist(headerOne);
+
+    final BonsaiWorldStateUpdateAccumulator secondRollbackUpdater =
+        (BonsaiWorldStateUpdateAccumulator) worldState.updater();
+    secondRollbackUpdater.rollBack(layerOne);
+
+    worldState.persist(null);
+
+    assertThat(worldState.rootHash()).isEqualTo(Bytes32.ZERO);
+  }
+
+  @Test
+  void rollBackFourTimes() {
+    final BonsaiVerkleWorldState worldState =
+        new BonsaiVerkleWorldState(
+            archive,
+            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
+            EvmConfiguration.DEFAULT);
+
+    final WorldUpdater updater = worldState.updater();
+    final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
+    mutableAccount.setCode(Bytes.of(0, 1, 2));
+    mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
+    updater.commit();
+
+    worldState.persist(headerOne);
+    final TrieLogLayer layerOne = getTrieLogLayer(trieLogStorage, headerOne.getHash());
+
+    final WorldUpdater updater2 = worldState.updater();
+    final MutableAccount mutableAccount2 = updater2.getAccount(addressOne);
+    mutableAccount2.setStorageValue(UInt256.ONE, UInt256.valueOf(2));
+    updater2.commit();
+
+    worldState.persist(headerTwo);
+    final TrieLogLayer layerTwo = getTrieLogLayer(trieLogStorage, headerTwo.getHash());
+
+    final WorldUpdater updater3 = worldState.updater();
+    final MutableAccount mutableAccount3 = updater3.getAccount(addressOne);
+    mutableAccount3.setStorageValue(UInt256.ONE, UInt256.valueOf(0));
+    updater3.commit();
+
+    worldState.persist(headerThree);
+    final TrieLogLayer layerThree = getTrieLogLayer(trieLogStorage, headerThree.getHash());
+
+    final WorldUpdater updater4 = worldState.updater();
+    final MutableAccount mutableAccount4 = updater4.getAccount(addressOne);
+    mutableAccount4.setStorageValue(UInt256.ONE, UInt256.valueOf(1));
+    updater4.commit();
+
+    worldState.persist(headerFour);
+    final TrieLogLayer layerFour = getTrieLogLayer(trieLogStorage, headerFour.getHash());
+
+    final BonsaiWorldStateUpdateAccumulator firstRollbackUpdater =
+        (BonsaiWorldStateUpdateAccumulator) worldState.updater();
+
+    firstRollbackUpdater.rollBack(layerFour);
+
+    System.out.println(layerFour.dump());
+    worldState.persist(headerThree);
+
+    final BonsaiWorldStateUpdateAccumulator secondRollbackUpdater =
+        (BonsaiWorldStateUpdateAccumulator) worldState.updater();
+    secondRollbackUpdater.rollBack(layerThree);
+
+    worldState.persist(headerTwo);
+
+    final BonsaiWorldStateUpdateAccumulator thirdRollbackUpdater =
+        (BonsaiWorldStateUpdateAccumulator) worldState.updater();
+    thirdRollbackUpdater.rollBack(layerTwo);
+
+    worldState.persist(headerOne);
+
+    final BonsaiWorldStateUpdateAccumulator fourRollbackUpdater =
+        (BonsaiWorldStateUpdateAccumulator) worldState.updater();
+    fourRollbackUpdater.rollBack(layerOne);
+
+    worldState.persist(null);
+
+    assertThat(worldState.rootHash()).isEqualTo(Bytes32.ZERO);
+  }
+
+  @Test
+  void rollingWithRemovedStorageValue() {
+    final BonsaiVerkleWorldState worldState =
+        new BonsaiVerkleWorldState(
+            archive,
+            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
+            EvmConfiguration.DEFAULT);
+
+    final WorldUpdater updater = worldState.updater();
+    final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
+    mutableAccount.setCode(Bytes.of(0, 1, 2));
+    mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
+    updater.commit();
+
+    worldState.persist(headerOne);
+
+    /*final WorldUpdater updater2 = worldState.updater();
+    final MutableAccount mutableAccount2 = updater2.getAccount(addressOne);
+    mutableAccount2.setStorageValue(UInt256.ONE, UInt256.ZERO);
+    updater2.commit();
+
+    blockHeaderTestFixture.stateRoot(Hash.fromHexString("0x1879f69465e8ef937ce1f13cb5b328437239a2764982cea5e337cd5d217a2866"));
+    blockHeaderTestFixture.number(2);
+    final BlockHeader blockHeaderTwo = blockHeaderTestFixture.buildHeader();
+    worldState.persist(blockHeaderTwo);
+
+    final BonsaiWorldStateUpdateAccumulator firstRollbackUpdater =
+            (BonsaiWorldStateUpdateAccumulator) worldState.updater();
+
+    final TrieLogLayer layerTwo = getTrieLogLayer(trieLogStorage, blockHeaderTwo.getBlockHash());
+    firstRollbackUpdater.rollBack(layerTwo);
+    System.out.println("rollback");
+
+    worldState.persist(null);
+    assertThat(worldState.rootHash()).isEqualTo(blockHeaderOne.getStateRoot());*/
+
+    final BonsaiWorldStateUpdateAccumulator secondRollbackUpdater =
+        (BonsaiWorldStateUpdateAccumulator) worldState.updater();
+
+    final TrieLogLayer layerOne = getTrieLogLayer(trieLogStorage, headerOne.getBlockHash());
+    secondRollbackUpdater.rollBack(layerOne);
+
+    worldState.persist(null);
+    assertThat(worldState.rootHash()).isEqualTo(Bytes32.ZERO);
   }
 
   private TrieLogLayer getTrieLogLayer(final KeyValueStorage storage, final Bytes key) {

@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStor
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiVerkleWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -145,7 +146,7 @@ class BonsaiWorldStateArchiveTest {
             EvmConfiguration.DEFAULT);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(511).buildHeader();
-    final BonsaiWorldState mockWorldState = mock(BonsaiWorldState.class);
+    final BonsaiVerkleWorldState mockWorldState = mock(BonsaiVerkleWorldState.class);
     when(mockWorldState.blockHash()).thenReturn(blockHeader.getHash());
     when(mockWorldState.freeze()).thenReturn(mockWorldState);
 
@@ -154,7 +155,7 @@ class BonsaiWorldStateArchiveTest {
         .thenReturn(Optional.of(mockWorldState));
     when(blockchain.getChainHeadHeader()).thenReturn(chainHead);
     assertThat(bonsaiWorldStateArchive.getMutable(blockHeader, false))
-        .containsInstanceOf(BonsaiWorldState.class);
+        .containsInstanceOf(BonsaiVerkleWorldState.class);
   }
 
   @Test

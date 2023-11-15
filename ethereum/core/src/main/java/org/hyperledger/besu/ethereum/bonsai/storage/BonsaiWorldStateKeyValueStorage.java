@@ -174,8 +174,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     } else {
       return composedWorldStateStorage
           .get(TRIE_BRANCH_STORAGE, location.toArrayUnsafe())
-          .map(Bytes::wrap)
-          .filter(b -> Hash.hash(b).equals(nodeHash));
+          .map(Bytes::wrap);
+      // .filter(b -> Hash.hash(b).equals(nodeHash));
     }
   }
 
@@ -187,8 +187,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     } else {
       return composedWorldStateStorage
           .get(TRIE_BRANCH_STORAGE, Bytes.concatenate(accountHash, location).toArrayUnsafe())
-          .map(Bytes::wrap)
-          .filter(b -> Hash.hash(b).equals(nodeHash));
+          .map(Bytes::wrap);
+      // .filter(b -> Hash.hash(b).equals(nodeHash));
     }
   }
 

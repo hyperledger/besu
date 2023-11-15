@@ -60,18 +60,18 @@ public class BonsaiWorldStateUpdateAccumulator
     implements BonsaiWorldView, TrieLogAccumulator {
   private static final Logger LOG =
       LoggerFactory.getLogger(BonsaiWorldStateUpdateAccumulator.class);
-  private final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader;
-  private final Consumer<StorageSlotKey> storagePreloader;
+  protected final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader;
+  protected final Consumer<StorageSlotKey> storagePreloader;
 
-  private final AccountConsumingMap<BonsaiValue<BonsaiAccount>> accountsToUpdate;
-  private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
-  private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
-  private final EvmConfiguration evmConfiguration;
+  protected final AccountConsumingMap<BonsaiValue<BonsaiAccount>> accountsToUpdate;
+  protected final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
+  protected final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
+  protected final EvmConfiguration evmConfiguration;
 
   // storage sub mapped by _hashed_ key.  This is because in self_destruct calls we need to
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the
   // alternative was to keep a giant pre-image cache of the entire trie.
-  private final Map<Address, StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>>
+  protected final Map<Address, StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>>
       storageToUpdate = new ConcurrentHashMap<>();
 
   private boolean isAccumulatorStateChanged;
@@ -556,10 +556,10 @@ public class BonsaiWorldStateUpdateAccumulator
       final Address address,
       final AccountValue expectedValue,
       final AccountValue replacementValue) {
-    if (Objects.equals(expectedValue, replacementValue)) {
+    /*if (Objects.equals(expectedValue, replacementValue)) {
       // non-change, a cached read.
       return;
-    }
+    }*/
     BonsaiValue<BonsaiAccount> accountValue = accountsToUpdate.get(address);
     if (accountValue == null) {
       accountValue = loadAccountFromParent(address, accountValue);
@@ -670,7 +670,7 @@ public class BonsaiWorldStateUpdateAccumulator
     }
   }
 
-  private Map<StorageSlotKey, BonsaiValue<UInt256>> maybeCreateStorageMap(
+  protected Map<StorageSlotKey, BonsaiValue<UInt256>> maybeCreateStorageMap(
       final Map<StorageSlotKey, BonsaiValue<UInt256>> storageMap, final Address address) {
     if (storageMap == null) {
       final StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>> newMap =
@@ -682,7 +682,7 @@ public class BonsaiWorldStateUpdateAccumulator
     }
   }
 
-  private void rollStorageChange(
+  protected void rollStorageChange(
       final Address address,
       final StorageSlotKey storageSlotKey,
       final UInt256 expectedValue,
@@ -752,7 +752,7 @@ public class BonsaiWorldStateUpdateAccumulator
     }
   }
 
-  private boolean isSlotEquals(final UInt256 expectedValue, final UInt256 existingSlotValue) {
+  protected boolean isSlotEquals(final UInt256 expectedValue, final UInt256 existingSlotValue) {
     final UInt256 sanitizedExpectedValue = (expectedValue == null) ? UInt256.ZERO : expectedValue;
     final UInt256 sanitizedExistingSlotValue =
         (existingSlotValue == null) ? UInt256.ZERO : existingSlotValue;

@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiSnapshotWorldStateKeyV
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateLayerStorage;
-import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiVerkleWorldState;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -76,7 +76,7 @@ public class CachedWorldStorageManager implements BonsaiStorageSubscriber {
   public synchronized void addCachedLayer(
       final BlockHeader blockHeader,
       final Hash worldStateRootHash,
-      final BonsaiWorldState forWorldState) {
+      final BonsaiVerkleWorldState forWorldState) {
     final Optional<CachedBonsaiWorldView> cachedBonsaiWorldView =
         Optional.ofNullable(this.cachedWorldStatesByHash.get(blockHeader.getBlockHash()));
     if (cachedBonsaiWorldView.isPresent()) {
@@ -134,13 +134,13 @@ public class CachedWorldStorageManager implements BonsaiStorageSubscriber {
     }
   }
 
-  public Optional<BonsaiWorldState> getWorldState(final Hash blockHash) {
+  public Optional<BonsaiVerkleWorldState> getWorldState(final Hash blockHash) {
     if (cachedWorldStatesByHash.containsKey(blockHash)) {
       // return a new worldstate using worldstate storage and an isolated copy of the updater
       return Optional.ofNullable(cachedWorldStatesByHash.get(blockHash))
           .map(
               cached ->
-                  new BonsaiWorldState(
+                  new BonsaiVerkleWorldState(
                       archive,
                       new BonsaiWorldStateLayerStorage(cached.getWorldStateStorage()),
                       evmConfiguration));
@@ -153,7 +153,7 @@ public class CachedWorldStorageManager implements BonsaiStorageSubscriber {
     return Optional.empty();
   }
 
-  public Optional<BonsaiWorldState> getNearestWorldState(final BlockHeader blockHeader) {
+  public Optional<BonsaiVerkleWorldState> getNearestWorldState(final BlockHeader blockHeader) {
     LOG.atDebug()
         .setMessage("getting nearest worldstate for {}")
         .addArgument(blockHeader.toLogString())
@@ -181,11 +181,11 @@ public class CachedWorldStorageManager implements BonsaiStorageSubscriber {
             })
         .map(
             storage ->
-                new BonsaiWorldState( // wrap the state in a layered worldstate
+                new BonsaiVerkleWorldState( // wrap the state in a layered worldstate
                     archive, new BonsaiWorldStateLayerStorage(storage), evmConfiguration));
   }
 
-  public Optional<BonsaiWorldState> getHeadWorldState(
+  public Optional<BonsaiVerkleWorldState> getHeadWorldState(
       final Function<Hash, Optional<BlockHeader>> hashBlockHeaderFunction) {
 
     LOG.atDebug().setMessage("getting head worldstate").log();
@@ -199,7 +199,7 @@ public class CachedWorldStorageManager implements BonsaiStorageSubscriber {
               addCachedLayer(
                   blockHeader,
                   blockHeader.getStateRoot(),
-                  new BonsaiWorldState(archive, rootWorldStateStorage, evmConfiguration));
+                  new BonsaiVerkleWorldState(archive, rootWorldStateStorage, evmConfiguration));
               return getWorldState(blockHeader.getHash());
             });
   }
