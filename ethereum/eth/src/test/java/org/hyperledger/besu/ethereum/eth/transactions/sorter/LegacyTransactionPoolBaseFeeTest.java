@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.eth.transactions.AbstractTransactionPoolTest;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -31,7 +32,7 @@ import java.time.ZoneId;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
-public class LegacyTransactionPoolBaseFeeTest extends AbstractLegacyTransactionPoolTest {
+public class LegacyTransactionPoolBaseFeeTest extends AbstractTransactionPoolTest {
 
   @Override
   protected PendingTransactions createPendingTransactions(
