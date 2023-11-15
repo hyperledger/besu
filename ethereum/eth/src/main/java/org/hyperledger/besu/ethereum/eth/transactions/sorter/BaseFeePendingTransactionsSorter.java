@@ -73,8 +73,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                           .orElse(Wei.ZERO)
                           .getAsBigInteger()
                           .longValue())
-              .thenComparing(PendingTransaction::getAddedAt)
-              .thenComparing(PendingTransaction::getSequence)
+              .thenComparing(PendingTransaction::getSequence, Comparator.reverseOrder())
               .reversed());
 
   private final NavigableSet<PendingTransaction> prioritizedTransactionsDynamicRange =
@@ -87,8 +86,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                           .getMaxFeePerGas()
                           .map(maxFeePerGas -> maxFeePerGas.getAsBigInteger().longValue())
                           .orElse(pendingTx.getGasPrice().toLong()))
-              .thenComparing(PendingTransaction::getAddedAt)
-              .thenComparing(PendingTransaction::getSequence)
+              .thenComparing(PendingTransaction::getSequence, Comparator.reverseOrder())
               .reversed());
 
   @Override

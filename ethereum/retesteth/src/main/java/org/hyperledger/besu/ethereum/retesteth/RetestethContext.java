@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -252,7 +253,8 @@ public class RetestethContext {
             syncState,
             miningParameters,
             transactionPoolConfiguration,
-            null);
+            null,
+            new BlobCache());
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("Genesis Block {} ", genesisState.getBlock());
@@ -288,6 +290,14 @@ public class RetestethContext {
 
   public ProtocolContext getProtocolContext() {
     return protocolContext;
+  }
+
+  public EthScheduler getEthScheduler() {
+    return ethScheduler;
+  }
+
+  public void setEthScheduler(final EthScheduler ethScheduler) {
+    this.ethScheduler = ethScheduler;
   }
 
   public long getBlockHeight() {

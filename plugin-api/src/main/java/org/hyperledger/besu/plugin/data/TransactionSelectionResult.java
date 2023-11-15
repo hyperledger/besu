@@ -28,6 +28,8 @@ public class TransactionSelectionResult {
     SELECTED,
     BLOCK_FULL(true, false),
     BLOCK_OCCUPANCY_ABOVE_THRESHOLD(true, false),
+    BLOCK_SELECTION_TIMEOUT(true, false),
+    TX_EVALUATION_TOO_LONG(false, true),
     INVALID_TRANSIENT(false, false),
     INVALID(false, true);
 
@@ -56,6 +58,12 @@ public class TransactionSelectionResult {
   /** The transaction has not been selected since the block is full. */
   public static final TransactionSelectionResult BLOCK_FULL =
       new TransactionSelectionResult(Status.BLOCK_FULL);
+  /** There was no more time to add transaction to the block */
+  public static final TransactionSelectionResult BLOCK_SELECTION_TIMEOUT =
+      new TransactionSelectionResult(Status.BLOCK_SELECTION_TIMEOUT);
+  /** Transaction took too much to evaluate */
+  public static final TransactionSelectionResult TX_EVALUATION_TOO_LONG =
+      new TransactionSelectionResult(Status.TX_EVALUATION_TOO_LONG);
   /**
    * The transaction has not been selected since too large and the occupancy of the block is enough
    * to stop the selection.
@@ -75,11 +83,18 @@ public class TransactionSelectionResult {
   public static final TransactionSelectionResult CURRENT_TX_PRICE_BELOW_MIN =
       TransactionSelectionResult.invalidTransient("CURRENT_TX_PRICE_BELOW_MIN");
   /**
-   * The transaction has not been selected since its data price is below the current network data
+   * The transaction has not been selected since its blob price is below the current network blob
    * price, but the selection should continue.
    */
   public static final TransactionSelectionResult BLOB_PRICE_BELOW_CURRENT_MIN =
       TransactionSelectionResult.invalidTransient("BLOB_PRICE_BELOW_CURRENT_MIN");
+
+  /**
+   * The transaction has not been selected since its priority fee is below the configured min
+   * priority fee per gas, but the selection should continue.
+   */
+  public static final TransactionSelectionResult PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN =
+      TransactionSelectionResult.invalidTransient("PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN");
 
   private final Status status;
   private final Optional<String> maybeInvalidReason;

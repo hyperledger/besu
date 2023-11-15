@@ -60,6 +60,7 @@ import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
@@ -1088,8 +1089,9 @@ public final class EthProtocolManagerTest {
     final ExecutorService transactions = mock(ExecutorService.class);
     final ExecutorService services = mock(ExecutorService.class);
     final ExecutorService computations = mock(ExecutorService.class);
+    final ExecutorService blockCreation = mock(ExecutorService.class);
     final EthScheduler ethScheduler =
-        new EthScheduler(worker, scheduled, transactions, services, computations);
+        new EthScheduler(worker, scheduled, transactions, services, computations, blockCreation);
 
     // Create the fake TransactionMessage to feed to the EthManager.
     final BlockDataGenerator gen = new BlockDataGenerator(1);
@@ -1117,7 +1119,8 @@ public final class EthProtocolManagerTest {
               new SyncState(blockchain, ethManager.ethContext().getEthPeers()),
               MiningParameters.newDefault(),
               TransactionPoolConfiguration.DEFAULT,
-              null)
+              null,
+              new BlobCache())
           .setEnabled();
 
       // Send just a transaction message.

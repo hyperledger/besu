@@ -19,7 +19,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.hyperledger.besu.ethereum.mainnet.ValidationResult.valid;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_TOO_LOW;
@@ -91,6 +90,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidator;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
+import org.hyperledger.besu.util.number.Percentage;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -106,6 +106,7 @@ import java.util.function.Supplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIf;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -121,7 +122,6 @@ import org.mockito.junit.jupiter.MockitoSettings;
 @MockitoSettings(strictness = LENIENT)
 public abstract class AbstractTransactionPoolTest {
 
-  protected static final int MAX_TRANSACTIONS = 5;
   protected static final KeyPair KEY_PAIR1 =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private static final KeyPair KEY_PAIR2 =
@@ -149,7 +149,7 @@ public abstract class AbstractTransactionPoolTest {
   protected PendingTransactions transactions;
   protected final Transaction transaction0 = createTransaction(0);
   protected final Transaction transaction1 = createTransaction(1);
-  protected final Transaction transactionBlob = createBlobTransaction(0);
+  protected final Transaction transactionBlob = createBlobTransaction(2);
 
   protected final Transaction transactionOtherSender = createTransaction(1, KEY_PAIR2);
   private ExecutionContextTestFixture executionContext;
@@ -325,7 +325,7 @@ public abstract class AbstractTransactionPoolTest {
 
     assertThat(transactions.size()).isEqualTo(3);
     assertThat(transactions.getLocalTransactions()).contains(localTransaction2);
-    assertThat(transactions.getPriorityTransactions().size()).isEqualTo(noLocalPriority ? 0 : 1);
+    assertThat(transactions.getPriorityTransactions()).hasSize(noLocalPriority ? 0 : 1);
   }
 
   @Test
@@ -461,14 +461,14 @@ public abstract class AbstractTransactionPoolTest {
   }
 
   @Test
-  public void shouldNotReAddBlobTxsWhenReorgHappens() {
+  public void shouldReAddBlobTxsWhenReorgHappens() {
     givenTransactionIsValid(transaction0);
     givenTransactionIsValid(transaction1);
     givenTransactionIsValid(transactionBlob);
 
     addAndAssertRemoteTransactionsValid(transaction0);
     addAndAssertRemoteTransactionsValid(transaction1);
-    addAndAssertRemoteTransactionInvalid(transactionBlob);
+    addAndAssertRemoteTransactionsValid(transactionBlob);
 
     final BlockHeader commonParent = getHeaderForCurrentChainHead();
     final Block originalFork1 = appendBlock(Difficulty.of(1000), commonParent, transaction0);
@@ -489,9 +489,16 @@ public abstract class AbstractTransactionPoolTest {
     final Block reorgFork3 = appendBlock(Difficulty.of(3000), reorgFork2.getHeader());
     verifyChainHeadIs(reorgFork3);
 
-    assertTransactionNotPending(transactionBlob);
     assertTransactionPending(transaction0);
     assertTransactionPending(transaction1);
+    assertTransactionPending(transactionBlob);
+
+    Optional<Transaction> maybeBlob = transactions.getTransactionByHash(transactionBlob.getHash());
+    assertThat(maybeBlob).isPresent();
+    Transaction restoredBlob = maybeBlob.get();
+    assertThat(restoredBlob).isEqualTo(transactionBlob);
+    assertThat(restoredBlob.getBlobsWithCommitments().get().getBlobQuads())
+        .isEqualTo(transactionBlob.getBlobsWithCommitments().get().getBlobQuads());
   }
 
   @ParameterizedTest
@@ -1033,6 +1040,157 @@ public abstract class AbstractTransactionPoolTest {
     addAndAssertTransactionViaApiValid(transaction, noLocalPriority);
   }
 
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void samePriceTxReplacementWhenPriceBumpIsZeroFrontier(final boolean noLocalPriority) {
+    transactionPool =
+        createTransactionPool(b -> b.priceBump(Percentage.ZERO).noLocalPriority(noLocalPriority));
+    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
+
+    final Transaction transaction1a =
+        createBaseTransactionGasPriceMarket(0)
+            .gasPrice(Wei.ZERO)
+            .to(Optional.of(Address.ALTBN128_ADD))
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction1a);
+
+    transactionPool.addRemoteTransactions(List.of(transaction1a));
+
+    assertThat(transactionPool.getPendingTransactions())
+        .map(PendingTransaction::getTransaction)
+        .containsOnly(transaction1a);
+
+    final Transaction transaction1b =
+        createBaseTransactionGasPriceMarket(0)
+            .gasPrice(Wei.ZERO)
+            .to(Optional.of(Address.KZG_POINT_EVAL))
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction1b);
+
+    transactionPool.addRemoteTransactions(List.of(transaction1b));
+
+    assertThat(transactionPool.getPendingTransactions())
+        .map(PendingTransaction::getTransaction)
+        .containsOnly(transaction1b);
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  @EnabledIf("isBaseFeeMarket")
+  public void replaceSamePriceTxWhenPriceBumpIsZeroLondon(final boolean noLocalPriority) {
+    transactionPool =
+        createTransactionPool(b -> b.priceBump(Percentage.ZERO).noLocalPriority(noLocalPriority));
+    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
+
+    final Transaction transaction1a =
+        createBaseTransactionBaseFeeMarket(0)
+            .maxFeePerGas(Optional.of(Wei.ZERO))
+            .maxPriorityFeePerGas(Optional.of(Wei.ZERO))
+            .to(Optional.of(Address.ALTBN128_ADD))
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction1a);
+
+    transactionPool.addRemoteTransactions(List.of(transaction1a));
+
+    assertThat(transactionPool.getPendingTransactions())
+        .map(PendingTransaction::getTransaction)
+        .containsOnly(transaction1a);
+
+    final Transaction transaction1b =
+        createBaseTransactionBaseFeeMarket(0)
+            .maxFeePerGas(Optional.of(Wei.ZERO))
+            .maxPriorityFeePerGas(Optional.of(Wei.ZERO))
+            .to(Optional.of(Address.KZG_POINT_EVAL))
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction1b);
+
+    transactionPool.addRemoteTransactions(List.of(transaction1b));
+
+    assertThat(transactionPool.getPendingTransactions())
+        .map(PendingTransaction::getTransaction)
+        .containsOnly(transaction1b);
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  @EnabledIf("isBaseFeeMarket")
+  public void replaceSamePriceTxWhenPriceBumpIsZeroLondonToFrontier(final boolean noLocalPriority) {
+    transactionPool =
+        createTransactionPool(b -> b.priceBump(Percentage.ZERO).noLocalPriority(noLocalPriority));
+    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
+
+    final Transaction transaction1a =
+        createBaseTransactionBaseFeeMarket(0)
+            .maxFeePerGas(Optional.of(Wei.ZERO))
+            .maxPriorityFeePerGas(Optional.of(Wei.ZERO))
+            .to(Optional.of(Address.ALTBN128_ADD))
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction1a);
+
+    transactionPool.addRemoteTransactions(List.of(transaction1a));
+
+    assertThat(transactionPool.getPendingTransactions())
+        .map(PendingTransaction::getTransaction)
+        .containsOnly(transaction1a);
+
+    final Transaction transaction1b =
+        createBaseTransactionGasPriceMarket(0)
+            .gasPrice(Wei.ZERO)
+            .to(Optional.of(Address.KZG_POINT_EVAL))
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction1b);
+
+    transactionPool.addRemoteTransactions(List.of(transaction1b));
+
+    assertThat(transactionPool.getPendingTransactions())
+        .map(PendingTransaction::getTransaction)
+        .containsOnly(transaction1b);
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  @EnabledIf("isBaseFeeMarket")
+  public void replaceSamePriceTxWhenPriceBumpIsZeroFrontierToLondon(final boolean noLocalPriority) {
+    transactionPool =
+        createTransactionPool(b -> b.priceBump(Percentage.ZERO).noLocalPriority(noLocalPriority));
+    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
+
+    final Transaction transaction1a =
+        createBaseTransactionGasPriceMarket(0)
+            .gasPrice(Wei.ZERO)
+            .to(Optional.of(Address.KZG_POINT_EVAL))
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction1a);
+
+    transactionPool.addRemoteTransactions(List.of(transaction1a));
+
+    assertThat(transactionPool.getPendingTransactions())
+        .map(PendingTransaction::getTransaction)
+        .containsOnly(transaction1a);
+
+    final Transaction transaction1b =
+        createBaseTransactionBaseFeeMarket(0)
+            .maxFeePerGas(Optional.of(Wei.ZERO))
+            .maxPriorityFeePerGas(Optional.of(Wei.ZERO))
+            .to(Optional.of(Address.ALTBN128_ADD))
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction1b);
+
+    transactionPool.addRemoteTransactions(List.of(transaction1b));
+
+    assertThat(transactionPool.getPendingTransactions())
+        .map(PendingTransaction::getTransaction)
+        .containsOnly(transaction1b);
+  }
+
   @Test
   public void shouldAcceptBaseFeeFloorGasPriceFrontierLocalPriorityTransactionsWhenMining() {
     transactionPool = createTransactionPool(b -> b.noLocalPriority(false));
@@ -1065,7 +1223,7 @@ public abstract class AbstractTransactionPoolTest {
     assertThat(
             add1559TxAndGetPendingTxsCount(
                 genesisBaseFee, minGasPrice, lastBlockBaseFee, txMaxFeePerGas, false, hasPriority))
-        .isEqualTo(0);
+        .isZero();
   }
 
   @ParameterizedTest
@@ -1093,7 +1251,7 @@ public abstract class AbstractTransactionPoolTest {
     assertThat(
             add1559TxAndGetPendingTxsCount(
                 genesisBaseFee, minGasPrice, lastBlockBaseFee, txMaxFeePerGas, true, true))
-        .isEqualTo(0);
+        .isZero();
   }
 
   @Test
@@ -1112,20 +1270,21 @@ public abstract class AbstractTransactionPoolTest {
   @Test
   public void addRemoteTransactionsShouldAllowDuplicates() {
     final Transaction transaction1 = createTransaction(1, Wei.of(7L));
-    final Transaction transaction2 = createTransaction(2, Wei.of(7L));
-    final Transaction transaction3 = createTransaction(2, Wei.of(7L));
-    final Transaction transaction4 = createTransaction(3, Wei.of(7L));
+    final Transaction transaction2a = createTransaction(2, Wei.of(7L));
+    final Transaction transaction2b = createTransaction(2, Wei.of(7L));
+    final Transaction transaction3 = createTransaction(3, Wei.of(7L));
 
     givenTransactionIsValid(transaction1);
-    givenTransactionIsValid(transaction2);
+    givenTransactionIsValid(transaction2a);
+    givenTransactionIsValid(transaction2b);
     givenTransactionIsValid(transaction3);
-    givenTransactionIsValid(transaction4);
 
-    assertThatCode(
-            () ->
-                transactionPool.addRemoteTransactions(
-                    List.of(transaction1, transaction2, transaction3, transaction4)))
-        .doesNotThrowAnyException();
+    transactionPool.addRemoteTransactions(
+        List.of(transaction1, transaction2a, transaction2b, transaction3));
+
+    assertThat(transactionPool.getPendingTransactions())
+        .map(PendingTransaction::getTransaction)
+        .containsExactlyInAnyOrder(transaction1, transaction2a, transaction3);
   }
 
   private static PluginTransactionValidatorFactory getPluginTransactionValidatorFactoryReturning(
@@ -1307,7 +1466,7 @@ public abstract class AbstractTransactionPoolTest {
         .maxFeePerGas(Optional.of(Wei.of(5000L)))
         .maxPriorityFeePerGas(Optional.of(Wei.of(1000L)))
         .type(TransactionType.BLOB)
-        .blobsWithCommitments(Optional.of(new BlobTestFixture().createBlobsWithCommitments(1)))
+        .blobsWithCommitments(Optional.of(new BlobTestFixture().createBlobsWithCommitments(6)))
         .createTransaction(KEY_PAIR1);
   }
 
