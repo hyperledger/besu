@@ -83,10 +83,10 @@ public class ExecutionEngineCancunBlockBuildingAcceptanceTest extends AbstractJs
       assertThat(blobsBundle.get("blobs").getNodeType()).isEqualTo(JsonNodeType.ARRAY);
       final ArrayNode blobs = (ArrayNode) blobsBundle.get("blobs");
       final ArrayNode proofs = (ArrayNode) blobsBundle.get("proofs");
-      assertThat(2).isEqualTo(transactions.size());
-      assertThat(6).isEqualTo(commitments.size());
-      assertThat(6).isEqualTo(blobs.size());
-      assertThat(6).isEqualTo(proofs.size());
+      assertThat(3).isEqualTo(transactions.size());
+      assertThat(3).isEqualTo(commitments.size());
+      assertThat(3).isEqualTo(blobs.size());
+      assertThat(3).isEqualTo(proofs.size());
     }
   }
 
