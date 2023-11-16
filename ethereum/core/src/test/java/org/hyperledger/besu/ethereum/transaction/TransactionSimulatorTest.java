@@ -160,7 +160,6 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     transactionSimulator.process(
@@ -264,7 +263,6 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     transactionSimulator.process(
@@ -551,21 +549,23 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(expectedTransaction, Status.FAILED);
 
-    final Optional<TransactionSimulatorResult> result =
-        cappedTransactionSimulator.process(
-            callParameter,
-            TransactionValidationParams.transactionSimulator(),
-            OperationTracer.NO_TRACING,
-            1L);
+    mockProtocolSpecForProcessWithWorldUpdater();
 
-    assertThat(result.get().isSuccessful()).isFalse();
+    // call process with original transaction
+    cappedTransactionSimulator.process(
+        callParameter,
+        TransactionValidationParams.transactionSimulator(),
+        OperationTracer.NO_TRACING,
+        1L);
+
+    // expect overwritten transaction to be processed
     verifyTransactionWasProcessed(expectedTransaction);
   }
 
   @Test
-  public void shouldApplyGasCapWhenOriginalGasLimitIsLowerThanGasCap() {
+  public void shouldKeepOriginalGasLimitWhenCapIsHigherThanOriginalValue() {
+    // generate a transaction with a gas limit that is lower than the gas cap
     final CallParameter callParameter =
         eip1559TransactionCallParameter(Wei.ZERO, Wei.ZERO, GASCAP - 1);
 
@@ -573,6 +573,7 @@ public class TransactionSimulatorTest {
 
     mockBlockchainForBlockHeader(blockHeader);
     mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
+    mockProtocolSpecForProcessWithWorldUpdater();
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -588,16 +589,15 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
-    final Optional<TransactionSimulatorResult> result =
-        cappedTransactionSimulator.process(
-            callParameter,
-            TransactionValidationParams.transactionSimulator(),
-            OperationTracer.NO_TRACING,
-            1L);
+    // call process with original transaction
+    cappedTransactionSimulator.process(
+        callParameter,
+        TransactionValidationParams.transactionSimulator(),
+        OperationTracer.NO_TRACING,
+        1L);
 
-    assertThat(result.get().isSuccessful()).isTrue();
+    // expect transaction with the original gas limit to be processed
     verifyTransactionWasProcessed(expectedTransaction);
   }
 
@@ -636,8 +636,7 @@ public class TransactionSimulatorTest {
         .thenReturn(Optional.of(blockHeader));
   }
 
-  private void mockProcessorStatusForTransaction(
-      final Transaction transaction, final Status status) {
+  private void mockProtocolSpecForProcessWithWorldUpdater() {
     final BlockHeaderFunctions blockHeaderFunctions = mock(BlockHeaderFunctions.class);
     when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.ONE));
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
@@ -645,7 +644,11 @@ public class TransactionSimulatorTest {
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);
     when(protocolSpec.getBlockHeaderFunctions()).thenReturn(blockHeaderFunctions);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0));
+  }
 
+  private void mockProcessorStatusForTransaction(
+      final Transaction transaction, final Status status) {
+    mockProtocolSpecForProcessWithWorldUpdater();
     final TransactionProcessingResult result = mock(TransactionProcessingResult.class);
     switch (status) {
       case SUCCESSFUL:
