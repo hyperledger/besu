@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStor
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiVerkleWorldState;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -76,7 +77,7 @@ public class CachedWorldStorageManager implements BonsaiStorageSubscriber {
   public synchronized void addCachedLayer(
       final BlockHeader blockHeader,
       final Hash worldStateRootHash,
-      final BonsaiVerkleWorldState forWorldState) {
+      final BonsaiWorldState forWorldState) {
     final Optional<CachedBonsaiWorldView> cachedBonsaiWorldView =
         Optional.ofNullable(this.cachedWorldStatesByHash.get(blockHeader.getBlockHash()));
     if (cachedBonsaiWorldView.isPresent()) {

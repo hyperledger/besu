@@ -410,7 +410,7 @@ public class BonsaiWorldState
               // not save a frozen state in the cache
               if (!isFrozen) {
                 cachedWorldStorageManager.addCachedLayer(
-                    blockHeader, newWorldStateRootHash, null); // TODO FIX THAT LATER
+                    blockHeader, newWorldStateRootHash, this); // TODO FIX THAT LATER
               }
             };
 

@@ -164,7 +164,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     public void addCachedLayer(
         final BlockHeader blockHeader,
         final Hash worldStateRootHash,
-        final BonsaiVerkleWorldState forWorldState) {
+        final BonsaiWorldState forWorldState) {
       // reference test world states are not cached
     }
 
