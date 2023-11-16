@@ -382,11 +382,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     if (peer.getForkId().map(forkId -> forkIdManager.peerCheck(forkId)).orElse(true)) {
       LOG.trace("ForkId OK or not available");
       if (ethPeers.shouldConnect(peer, incoming)) {
-        LOG.trace("EthPeers should connect is TRUE");
+        LOG.trace("EthPeers should connect is TRUE for peer {}", peer.getId());
         return true;
       }
     }
-    LOG.trace("Should connect in EthProtocolManager returns false");
+    LOG.trace("EthPeers should connect is FALSE for peer {}", peer.getId());
     return false;
   }
 

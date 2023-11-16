@@ -245,7 +245,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
         + hashCode()
         + " with peer "
         + this.peer.getId()
-        + " inboundInitiated "
+        + " inboundInitiated? "
         + inboundInitiated
         + " initAt "
         + initiatedAt
