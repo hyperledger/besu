@@ -210,12 +210,15 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public void recordRequestTimeout(final int requestCode) {
-    LOG.debug("Timed out while waiting for response from peer {}", this);
+    LOG.debug("Timed out while waiting for response from peer {}", this.getShortNodeId());
     reputation.recordRequestTimeout(requestCode).ifPresent(this::disconnect);
   }
 
   public void recordUselessResponse(final String requestType) {
-    LOG.debug("Received useless response for request type {} from peer {}", requestType, this);
+    LOG.debug(
+        "Received useless response for request type {} from peer {}",
+        requestType,
+        this.getShortNodeId());
     reputation.recordUselessResponse(System.currentTimeMillis()).ifPresent(this::disconnect);
   }
 
@@ -253,14 +256,16 @@ public class EthPeer implements Comparable<EthPeer> {
       throws PeerNotConnected {
     if (connectionToUse.getAgreedCapabilities().stream()
         .noneMatch(capability -> capability.getName().equalsIgnoreCase(protocolName))) {
-      LOG.debug("Protocol {} unavailable for this peer {}", protocolName, this);
+      LOG.debug("Protocol {} unavailable for this peer {}", protocolName, this.getShortNodeId());
       return null;
     }
     if (permissioningProviders.stream()
         .anyMatch(
             p -> !p.isMessagePermitted(connectionToUse.getRemoteEnode(), messageData.getCode()))) {
       LOG.info(
-          "Permissioning blocked sending of message code {} to {}", messageData.getCode(), this);
+          "Permissioning blocked sending of message code {} to {}",
+          messageData.getCode(),
+          this.getShortNodeId());
       if (LOG.isDebugEnabled()) {
         LOG.debug(
             "Permissioning blocked by providers {}",
@@ -593,8 +598,8 @@ public class EthPeer implements Comparable<EthPeer> {
   @Override
   public String toString() {
     return String.format(
-        "PeerId: %s, %s, validated? %s, disconnected? %s, client: %s, %s, %s",
-        getId().slice(0, 16),
+        "PeerId: %s..., %s, validated? %s, disconnected? %s, client: %s, %s, %s",
+        getShortNodeId(),
         reputation,
         isFullyValidated(),
         isDisconnected(),
