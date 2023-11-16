@@ -41,6 +41,9 @@
 ---
 
 ### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.10.2/besu-23.10.2.zip / sha256: 597ab71898d379180106baf24878239ed49acefea5772344fd359b0ff13fe19f
+
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.10.2/besu-23.10.2.tar.gz / sha256: 255818a5c6067a38aa8b565d8f32a49a172a7536a1d370673bbb75f548263c2c
 
 ## 23.10.1
 
