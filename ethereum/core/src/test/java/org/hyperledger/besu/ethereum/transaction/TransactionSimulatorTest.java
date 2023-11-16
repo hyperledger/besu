@@ -516,12 +516,12 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(expectedTransaction, Status.FAILED);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.process(callParameter, 1L);
 
-    assertThat(result.get().isSuccessful()).isFalse();
+    assertThat(result.get().isSuccessful()).isTrue();
     verifyTransactionWasProcessed(expectedTransaction);
   }
 
