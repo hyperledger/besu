@@ -243,8 +243,6 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   public String toString() {
     return "[Connection with hashCode "
         + hashCode()
-        + " with peer "
-        + this.peer.getId()
         + " inboundInitiated? "
         + inboundInitiated
         + " initAt "
