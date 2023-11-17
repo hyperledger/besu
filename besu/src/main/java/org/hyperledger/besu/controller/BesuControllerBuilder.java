@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
@@ -1066,14 +1067,30 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final Blockchain blockchain,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
-      case BONSAI -> new BonsaiWorldStateProvider(
-          (BonsaiWorldStateKeyValueStorage) worldStateStorage,
-          blockchain,
-          Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
-          cachedMerkleTrieLoader,
-          metricsSystem,
-          besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
-          evmConfiguration);
+      case BONSAI -> {
+        final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
+        final boolean isProofOfStake =
+            genesisConfigOptions.getTerminalTotalDifficulty().isPresent();
+        final TrieLogPruner trieLogPruner =
+            dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningEnabled()
+                ? new TrieLogPruner(
+                    (BonsaiWorldStateKeyValueStorage) worldStateStorage,
+                    blockchain,
+                    dataStorageConfiguration.getUnstable().getBonsaiTrieLogRetentionThreshold(),
+                    dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningLimit(),
+                    isProofOfStake)
+                : TrieLogPruner.noOpTrieLogPruner();
+        trieLogPruner.initialize();
+        yield new BonsaiWorldStateProvider(
+            (BonsaiWorldStateKeyValueStorage) worldStateStorage,
+            blockchain,
+            Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
+            cachedMerkleTrieLoader,
+            metricsSystem,
+            besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
+            evmConfiguration,
+            trieLogPruner);
+      }
       case FOREST -> {
         final WorldStatePreimageStorage preimageStorage =
             storageProvider.createWorldStatePreimageStorage();
