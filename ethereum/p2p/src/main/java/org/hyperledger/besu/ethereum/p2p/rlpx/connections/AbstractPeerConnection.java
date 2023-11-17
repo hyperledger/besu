@@ -176,7 +176,11 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     if (disconnected.compareAndSet(false, true)) {
       connectionEventDispatcher.dispatchDisconnect(this, reason, false);
       doSend(null, DisconnectMessage.create(reason));
-      LOG.debug("Disconnecting connection {}, reason {}", System.identityHashCode(this), reason);
+      LOG.debug(
+          "Disconnecting connection {}, peer {}... reason {}",
+          System.identityHashCode(this),
+          peer.getId().slice(0, 16),
+          reason);
       closeConnection();
     }
   }

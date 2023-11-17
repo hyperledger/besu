@@ -198,6 +198,7 @@ public class EthPeers {
         peer.handleDisconnect();
         abortPendingRequestsAssignedToDisconnectedPeers();
         LOG.debug("Disconnected EthPeer {}", peer.getShortNodeId());
+        LOG.trace("Disconnected EthPeer {}", peer);
       }
     }
     reattemptPendingPeerRequests();

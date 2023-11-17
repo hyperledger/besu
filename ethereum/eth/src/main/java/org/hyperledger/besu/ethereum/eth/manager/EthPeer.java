@@ -211,6 +211,7 @@ public class EthPeer implements Comparable<EthPeer> {
 
   public void recordRequestTimeout(final int requestCode) {
     LOG.debug("Timed out while waiting for response from peer {}", this.getShortNodeId());
+    LOG.trace("Timed out while waiting for response from peer {}", this);
     reputation.recordRequestTimeout(requestCode).ifPresent(this::disconnect);
   }
 
