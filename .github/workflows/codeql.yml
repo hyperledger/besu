@@ -12,15 +12,7 @@
 name: "CodeQL"
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-    paths-ignore:
-      - '**/*.json'
-      - '**/*.md'
-      - '**/*.properties'
-      - '**/*.txt'
+  workflow_call:
 jobs:
   analyze:
     name: Analyze
@@ -60,7 +52,6 @@ jobs:
     # Autobuild failed (OOM)
     # Hence, supply memory args for gradle build
     - run: |
-        JAVA_OPTS="-Xmx1000M" ./gradlew --no-scan compileJava
-
+        JAVA_OPTS="-Xmx2048M" ./gradlew --no-scan compileJava
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
