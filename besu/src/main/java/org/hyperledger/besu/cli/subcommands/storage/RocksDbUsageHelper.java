@@ -25,6 +25,7 @@ import org.rocksdb.ColumnFamilyMetaData;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 
+/** RocksDB Usage subcommand helper methods for formatting and printing. */
 public class RocksDbUsageHelper {
 
   static void printUsageForColumnFamily(
@@ -83,7 +84,7 @@ public class RocksDbUsageHelper {
     }
   }
 
-  public static String getNameById(final byte[] id) {
+  private static String getNameById(final byte[] id) {
     for (KeyValueSegmentIdentifier segment : KeyValueSegmentIdentifier.values()) {
       if (Arrays.areEqual(segment.getId(), id)) {
         return segment.getName();
