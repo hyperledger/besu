@@ -64,7 +64,7 @@ public abstract class AbstractGetHeadersFromPeerTask
   protected Optional<List<BlockHeader>> processResponse(
       final boolean streamClosed, final MessageData message, final EthPeer peer) {
     if (streamClosed) {
-      // All outstanding requests have been responded to and we still haven't found the response
+      // All outstanding requests have been responded to, and we still haven't found the response
       // we wanted. It must have been empty or contain data that didn't match.
       peer.recordUselessResponse("headers");
       return Optional.of(Collections.emptyList());
@@ -74,19 +74,19 @@ public abstract class AbstractGetHeadersFromPeerTask
     final List<BlockHeader> headers = headersMessage.getHeaders(protocolSchedule);
     if (headers.isEmpty()) {
       // Message contains no data - nothing to do
-      LOG.debug("headers.isEmpty. Peer: {}", peer);
+      LOG.debug("headers.isEmpty. Peer: {}", peer.getShortNodeId());
       return Optional.empty();
     }
     if (headers.size() > count) {
       // Too many headers - this isn't our response
-      LOG.debug("headers.size()>count. Peer: {}", peer);
+      LOG.debug("headers.size()>count. Peer: {}", peer.getShortNodeId());
       return Optional.empty();
     }
 
     final BlockHeader firstHeader = headers.get(0);
     if (!matchesFirstHeader(firstHeader)) {
       // This isn't our message - nothing to do
-      LOG.debug("!matchesFirstHeader. Peer: {}", peer);
+      LOG.debug("!matchesFirstHeader. Peer: {}", peer.getShortNodeId());
       return Optional.empty();
     }
 
@@ -100,7 +100,7 @@ public abstract class AbstractGetHeadersFromPeerTask
       header = headers.get(i);
       if (header.getNumber() != prevBlockHeader.getNumber() + expectedDelta) {
         // Skip doesn't match, this isn't our data
-        LOG.debug("header not matching the expected number. Peer: {}", peer);
+        LOG.debug("header not matching the expected number. Peer: {}", peer.getShortNodeId());
         return Optional.empty();
       }
       // if headers are supposed to be sequential check if a chain is formed
@@ -110,7 +110,7 @@ public abstract class AbstractGetHeadersFromPeerTask
         if (!parent.getHash().equals(child.getParentHash())) {
           LOG.debug(
               "Sequential headers must form a chain through hashes (BREACH_OF_PROTOCOL), disconnecting peer: {}",
-              peer);
+              peer.getShortNodeId());
           peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
           return Optional.empty();
         }
@@ -125,7 +125,11 @@ public abstract class AbstractGetHeadersFromPeerTask
       updatePeerChainState(peer, header);
     }
 
-    LOG.debug("Received {} of {} headers requested from peer {}", headersList.size(), count, peer);
+    LOG.debug(
+        "Received {} of {} headers requested from peer {}",
+        headersList.size(),
+        count,
+        peer.getShortNodeId());
     return Optional.of(headersList);
   }
 

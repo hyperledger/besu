@@ -27,7 +27,7 @@ dependencyManagement {
       entry 'jackson-datatype-jdk8'
     }
 
-    dependency 'com.github.ben-manes.caffeine:caffeine:3.1.5'
+    dependency 'com.github.ben-manes.caffeine:caffeine:3.1.8'
 
     dependencySet(group: 'com.github.tomakehurst', version: '2.35.0') {
       entry'wiremock-jre8-standalone'

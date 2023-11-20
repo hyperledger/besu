@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
@@ -38,7 +39,7 @@ public class LayeredTransactionPoolGasPriceTest extends AbstractLayeredTransacti
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester) {
     return new GasPricePrioritizedTransactions(
-        poolConfig, nextLayer, txPoolMetrics, transactionReplacementTester);
+        poolConfig, nextLayer, txPoolMetrics, transactionReplacementTester, new BlobCache());
   }
 
   @Override

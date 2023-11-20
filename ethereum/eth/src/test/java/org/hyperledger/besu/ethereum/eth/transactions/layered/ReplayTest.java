@@ -25,6 +25,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
@@ -187,10 +188,12 @@ public class ReplayTest {
     final BiFunction<PendingTransaction, PendingTransaction, Boolean> txReplacementTester =
         (tx1, tx2) -> transactionReplacementTester(poolConfig, tx1, tx2);
     final SparseTransactions sparseTransactions =
-        new SparseTransactions(poolConfig, evictCollector, txPoolMetrics, txReplacementTester);
+        new SparseTransactions(
+            poolConfig, evictCollector, txPoolMetrics, txReplacementTester, new BlobCache());
 
     final ReadyTransactions readyTransactions =
-        new ReadyTransactions(poolConfig, sparseTransactions, txPoolMetrics, txReplacementTester);
+        new ReadyTransactions(
+            poolConfig, sparseTransactions, txPoolMetrics, txReplacementTester, new BlobCache());
 
     return new BaseFeePrioritizedTransactions(
         poolConfig,
@@ -198,7 +201,8 @@ public class ReplayTest {
         readyTransactions,
         txPoolMetrics,
         txReplacementTester,
-        baseFeeMarket);
+        baseFeeMarket,
+        new BlobCache());
   }
 
   // ToDo: commented since not always working, needs fix

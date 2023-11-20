@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.FOLLOW_INVALIDATED;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
@@ -36,8 +37,9 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
       final TransactionsLayer nextLayer,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
-      final TransactionPoolMetrics metrics) {
-    super(poolConfig, nextLayer, transactionReplacementTester, metrics);
+      final TransactionPoolMetrics metrics,
+      final BlobCache blobCache) {
+    super(poolConfig, nextLayer, transactionReplacementTester, metrics, blobCache);
   }
 
   @Override
