@@ -59,6 +59,7 @@ import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
@@ -1116,7 +1117,8 @@ public final class EthProtocolManagerTest {
               metricsSystem,
               new SyncState(blockchain, ethManager.ethContext().getEthPeers()),
               TransactionPoolConfiguration.DEFAULT,
-              null)
+              null,
+              new BlobCache())
           .setEnabled();
 
       // Send just a transaction message.

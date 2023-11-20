@@ -162,7 +162,8 @@ public class TestNode implements Closeable {
             metricsSystem,
             syncState,
             TransactionPoolConfiguration.DEFAULT,
-            null);
+            null,
+            new BlobCache());
 
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(

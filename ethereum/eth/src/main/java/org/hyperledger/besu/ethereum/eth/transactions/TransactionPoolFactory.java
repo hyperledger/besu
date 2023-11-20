@@ -54,7 +54,8 @@ public class TransactionPoolFactory {
       final MetricsSystem metricsSystem,
       final SyncState syncState,
       final TransactionPoolConfiguration transactionPoolConfiguration,
-      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory) {
+      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory,
+      final BlobCache blobCache) {
 
     final TransactionPoolMetrics metrics = new TransactionPoolMetrics(metricsSystem);
 
@@ -76,7 +77,8 @@ public class TransactionPoolFactory {
         transactionTracker,
         transactionsMessageSender,
         newPooledTransactionHashesMessageSender,
-        pluginTransactionValidatorFactory);
+        pluginTransactionValidatorFactory,
+        blobCache);
   }
 
   static TransactionPool createTransactionPool(
@@ -90,7 +92,8 @@ public class TransactionPoolFactory {
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
       final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender,
-      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory) {
+      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory,
+      final BlobCache blobCache) {
 
     final TransactionPool transactionPool =
         new TransactionPool(
@@ -100,7 +103,8 @@ public class TransactionPoolFactory {
                     protocolContext,
                     clock,
                     metrics,
-                    transactionPoolConfiguration),
+                    transactionPoolConfiguration,
+                    blobCache),
             protocolSchedule,
             protocolContext,
             new TransactionBroadcaster(
@@ -190,7 +194,8 @@ public class TransactionPoolFactory {
       final ProtocolContext protocolContext,
       final Clock clock,
       final TransactionPoolMetrics metrics,
-      final TransactionPoolConfiguration transactionPoolConfiguration) {
+      final TransactionPoolConfiguration transactionPoolConfiguration,
+      final BlobCache blobCache) {
 
     boolean isFeeMarketImplementBaseFee =
         protocolSchedule.anyMatch(
@@ -202,7 +207,8 @@ public class TransactionPoolFactory {
           protocolContext,
           metrics,
           transactionPoolConfiguration,
-          isFeeMarketImplementBaseFee);
+          isFeeMarketImplementBaseFee,
+          blobCache);
     } else {
       return createPendingTransactionSorter(
           protocolContext,
@@ -239,7 +245,8 @@ public class TransactionPoolFactory {
       final ProtocolContext protocolContext,
       final TransactionPoolMetrics metrics,
       final TransactionPoolConfiguration transactionPoolConfiguration,
-      final boolean isFeeMarketImplementBaseFee) {
+      final boolean isFeeMarketImplementBaseFee,
+      final BlobCache blobCache) {
 
     final TransactionPoolReplacementHandler transactionReplacementHandler =
         new TransactionPoolReplacementHandler(transactionPoolConfiguration.getPriceBump());
@@ -253,14 +260,19 @@ public class TransactionPoolFactory {
 
     final SparseTransactions sparseTransactions =
         new SparseTransactions(
-            transactionPoolConfiguration, endLayer, metrics, transactionReplacementTester);
+            transactionPoolConfiguration,
+            endLayer,
+            metrics,
+            transactionReplacementTester,
+            blobCache);
 
     final ReadyTransactions readyTransactions =
         new ReadyTransactions(
             transactionPoolConfiguration,
             sparseTransactions,
             metrics,
-            transactionReplacementTester);
+            transactionReplacementTester,
+            blobCache);
 
     final AbstractPrioritizedTransactions pendingTransactionsSorter;
     if (isFeeMarketImplementBaseFee) {
@@ -276,14 +288,16 @@ public class TransactionPoolFactory {
               readyTransactions,
               metrics,
               transactionReplacementTester,
-              feeMarket);
+              feeMarket,
+              blobCache);
     } else {
       pendingTransactionsSorter =
           new GasPricePrioritizedTransactions(
               transactionPoolConfiguration,
               readyTransactions,
               metrics,
-              transactionReplacementTester);
+              transactionReplacementTester,
+              blobCache);
     }
 
     return new LayeredPendingTransactions(transactionPoolConfiguration, pendingTransactionsSorter);

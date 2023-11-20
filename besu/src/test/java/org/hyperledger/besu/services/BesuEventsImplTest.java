@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -158,7 +159,8 @@ public class BesuEventsImplTest {
             new NoOpMetricsSystem(),
             syncState,
             txPoolConfig,
-            null);
+            null,
+            new BlobCache());
 
     serviceImpl = new BesuEventsImpl(blockchain, blockBroadcaster, transactionPool, syncState);
   }

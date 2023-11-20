@@ -17,6 +17,8 @@ package org.hyperledger.besu.datatypes;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.util.Objects;
+
 import org.apache.tuweni.bytes.Bytes48;
 
 /** This class contains the data for a KZG proof for a KZG commitment. */
@@ -59,5 +61,18 @@ public class KZGProof {
    */
   public Bytes48 getData() {
     return data;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    KZGProof kzgProof = (KZGProof) o;
+    return Objects.equals(getData(), kzgProof.getData());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getData());
   }
 }

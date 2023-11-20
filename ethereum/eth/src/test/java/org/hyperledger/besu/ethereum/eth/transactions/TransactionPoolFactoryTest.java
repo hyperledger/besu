@@ -250,7 +250,8 @@ public class TransactionPoolFactoryTest {
             peerTransactionTracker,
             transactionsMessageSender,
             newPooledTransactionHashesMessageSender,
-            null);
+            null,
+            new BlobCache());
 
     ethProtocolManager =
         new EthProtocolManager(
@@ -356,7 +357,8 @@ public class TransactionPoolFactoryTest {
                         .txMessageKeepAliveSeconds(1)
                         .build())
                 .build(),
-            null);
+            null,
+            new BlobCache());
 
     txPool.setEnabled();
     return txPool;

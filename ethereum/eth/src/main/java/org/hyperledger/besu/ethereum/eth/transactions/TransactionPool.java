@@ -369,8 +369,11 @@ public class TransactionPool implements BlockAddedObserver {
 
   private void reAddTransactions(final List<Transaction> reAddTransactions) {
     if (!reAddTransactions.isEmpty()) {
+      // if adding a blob tx, and it is missing its blob, is a re-org and we should restore the blob
+      // from cache.
       var txsByOrigin =
           reAddTransactions.stream()
+              .map(t -> pendingTransactions.restoreBlob(t).orElse(t))
               .collect(Collectors.partitioningBy(tx -> isLocalSender(tx.getSender())));
       var reAddLocalTxs = txsByOrigin.get(true);
       var reAddRemoteTxs = txsByOrigin.get(false);

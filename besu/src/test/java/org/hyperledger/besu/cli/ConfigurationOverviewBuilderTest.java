@@ -149,6 +149,24 @@ class ConfigurationOverviewBuilderTest {
   }
 
   @Test
+  void setTrieLogPruningEnabled() {
+    final String noTrieLogRetentionThresholdSet = builder.build();
+    assertThat(noTrieLogRetentionThresholdSet).doesNotContain("Trie log pruning enabled");
+
+    builder.setTrieLogPruningEnabled();
+    builder.setTrieLogRetentionThreshold(42);
+    String trieLogRetentionThresholdSet = builder.build();
+    assertThat(trieLogRetentionThresholdSet)
+        .contains("Trie log pruning enabled")
+        .contains("retention: 42");
+    assertThat(trieLogRetentionThresholdSet).doesNotContain("prune limit");
+
+    builder.setTrieLogPruningLimit(1000);
+    trieLogRetentionThresholdSet = builder.build();
+    assertThat(trieLogRetentionThresholdSet).contains("prune limit: 1000");
+  }
+
+  @Test
   void setTxPoolImplementationLayered() {
     builder.setTxPoolImplementation(LAYERED);
     final String layeredTxPoolSelected = builder.build();
