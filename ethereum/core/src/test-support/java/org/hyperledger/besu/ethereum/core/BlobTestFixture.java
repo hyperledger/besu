@@ -45,7 +45,7 @@ public class BlobTestFixture {
       // and ignore errors in case no trusted setup was already loaded
     }
     try {
-      CKZG4844JNI.loadNativeLibrary(CKZG4844JNI.Preset.MAINNET);
+      CKZG4844JNI.loadNativeLibrary();
       CKZG4844JNI.loadTrustedSetupFromResource(
           "/kzg-trusted-setups/mainnet.txt", BlobTestFixture.class);
 

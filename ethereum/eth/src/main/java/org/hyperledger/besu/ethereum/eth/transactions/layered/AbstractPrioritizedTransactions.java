@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -41,8 +42,9 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
       final TransactionsLayer prioritizedTransactions,
       final TransactionPoolMetrics metrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
-          transactionReplacementTester) {
-    super(poolConfig, prioritizedTransactions, transactionReplacementTester, metrics);
+          transactionReplacementTester,
+      final BlobCache blobCache) {
+    super(poolConfig, prioritizedTransactions, transactionReplacementTester, metrics, blobCache);
     this.orderByFee = new TreeSet<>(this::compareByFee);
   }
 

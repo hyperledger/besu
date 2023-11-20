@@ -206,8 +206,7 @@ public class TraceTransactionIntegrationTest {
     assertThat(frame.getGasCost()).isEqualTo(OptionalLong.of(3L));
     assertThat(frame.getOpcode()).isEqualTo("PUSH1");
     assertThat(frame.getPc()).isEqualTo(2);
-    assertStackContainsExactly(
-        frame, "0000000000000000000000000000000000000000000000000000000000000080");
+    assertStackContainsExactly(frame, "0x80");
     assertMemoryContainsExactly(frame);
     assertStorageContainsExactly(frame);
 
@@ -217,10 +216,7 @@ public class TraceTransactionIntegrationTest {
     assertThat(frame.getGasCost()).isEqualTo(OptionalLong.of(12L));
     assertThat(frame.getOpcode()).isEqualTo("MSTORE");
     assertThat(frame.getPc()).isEqualTo(4);
-    assertStackContainsExactly(
-        frame,
-        "0000000000000000000000000000000000000000000000000000000000000080",
-        "0000000000000000000000000000000000000000000000000000000000000040");
+    assertStackContainsExactly(frame, "80", "40");
     assertMemoryContainsExactly(
         frame,
         "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -251,8 +247,8 @@ public class TraceTransactionIntegrationTest {
   private void assertStackContainsExactly(
       final TraceFrame frame, final String... stackEntriesAsHex) {
     assertThat(frame.getStack()).isPresent();
-    final Bytes32[] stackEntries =
-        Stream.of(stackEntriesAsHex).map(Bytes32::fromHexString).toArray(Bytes32[]::new);
+    final Bytes[] stackEntries =
+        Stream.of(stackEntriesAsHex).map(Bytes::fromHexString).toArray(Bytes[]::new);
     assertThat(frame.getStack().get()).containsExactly(stackEntries);
   }
 

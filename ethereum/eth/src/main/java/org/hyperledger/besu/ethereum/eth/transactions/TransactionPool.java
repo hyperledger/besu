@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -55,7 +54,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.IntSummaryStatistics;
@@ -94,8 +92,6 @@ import org.slf4j.LoggerFactory;
 public class TransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
   private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
-  private static final List<TransactionInvalidReason> INVALID_TX_CACHE_IGNORED_ERRORS =
-      new ArrayList<>(Arrays.asList(TransactionInvalidReason.NONCE_TOO_LOW));
   private final Supplier<PendingTransactions> pendingTransactionsSupplier;
   private final PluginTransactionValidator pluginTransactionValidator;
   private volatile PendingTransactions pendingTransactions;
@@ -103,7 +99,6 @@ public class TransactionPool implements BlockAddedObserver {
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final TransactionBroadcaster transactionBroadcaster;
-  private final MiningParameters miningParameters;
   private final TransactionPoolMetrics metrics;
   private final TransactionPoolConfiguration configuration;
   private final AtomicBoolean isPoolEnabled = new AtomicBoolean(false);
@@ -121,7 +116,6 @@ public class TransactionPool implements BlockAddedObserver {
       final ProtocolContext protocolContext,
       final TransactionBroadcaster transactionBroadcaster,
       final EthContext ethContext,
-      final MiningParameters miningParameters,
       final TransactionPoolMetrics metrics,
       final TransactionPoolConfiguration configuration,
       final PluginTransactionValidatorFactory pluginTransactionValidatorFactory) {
@@ -130,7 +124,6 @@ public class TransactionPool implements BlockAddedObserver {
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.transactionBroadcaster = transactionBroadcaster;
-    this.miningParameters = miningParameters;
     this.metrics = metrics;
     this.configuration = configuration;
     this.pluginTransactionValidator =
@@ -274,17 +267,13 @@ public class TransactionPool implements BlockAddedObserver {
       }
     } else {
       LOG.atTrace()
-          .setMessage("Discard invalid transaction {}, reason {}")
+          .setMessage("Discard invalid transaction {}, reason {}, because {}")
           .addArgument(transaction::toTraceLog)
           .addArgument(validationResult.result::getInvalidReason)
+          .addArgument(validationResult.result::getErrorMessage)
           .log();
       metrics.incrementRejected(
           isLocal, hasPriority, validationResult.result.getInvalidReason(), "txpool");
-      if (!isLocal
-          && !INVALID_TX_CACHE_IGNORED_ERRORS.contains(
-              validationResult.result.getInvalidReason())) {
-        pendingTransactions.signalInvalidAndRemoveDependentTransactions(transaction);
-      }
     }
 
     return validationResult.result;
@@ -296,7 +285,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   private boolean isMaxGasPriceBelowConfiguredMinGasPrice(final Transaction transaction) {
     return getMaxGasPrice(transaction)
-        .map(g -> g.lessThan(miningParameters.getMinTransactionGasPrice()))
+        .map(g -> g.lessThan(configuration.getMinGasPrice()))
         .orElse(true);
   }
 
@@ -380,8 +369,11 @@ public class TransactionPool implements BlockAddedObserver {
 
   private void reAddTransactions(final List<Transaction> reAddTransactions) {
     if (!reAddTransactions.isEmpty()) {
+      // if adding a blob tx, and it is missing its blob, is a re-org and we should restore the blob
+      // from cache.
       var txsByOrigin =
           reAddTransactions.stream()
+              .map(t -> pendingTransactions.restoreBlob(t).orElse(t))
               .collect(Collectors.partitioningBy(tx -> isLocalSender(tx.getSender())));
       var reAddLocalTxs = txsByOrigin.get(true);
       var reAddRemoteTxs = txsByOrigin.get(false);
@@ -514,11 +506,9 @@ public class TransactionPool implements BlockAddedObserver {
       }
     }
     if (hasPriority) {
-      // allow priority transactions to be below minGas as long as we are mining
-      // or at least gas price is above the configured floor
-      if ((!miningParameters.isMiningEnabled()
-              && isMaxGasPriceBelowConfiguredMinGasPrice(transaction))
-          || !feeMarket.satisfiesFloorTxFee(transaction)) {
+      // allow priority transactions to be below minGas as long as the gas price is above the
+      // configured floor
+      if (!feeMarket.satisfiesFloorTxFee(transaction)) {
         return TransactionInvalidReason.GAS_PRICE_TOO_LOW;
       }
     } else {
@@ -526,7 +516,7 @@ public class TransactionPool implements BlockAddedObserver {
         LOG.atTrace()
             .setMessage("Discard transaction {} below min gas price {}")
             .addArgument(transaction::toTraceLog)
-            .addArgument(miningParameters::getMinTransactionGasPrice)
+            .addArgument(configuration::getMinGasPrice)
             .log();
         return TransactionInvalidReason.GAS_PRICE_TOO_LOW;
       }
@@ -551,7 +541,14 @@ public class TransactionPool implements BlockAddedObserver {
 
   private Optional<BlockHeader> getChainHeadBlockHeader() {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
-    return blockchain.getBlockHeader(blockchain.getChainHeadHash());
+
+    // Optimistically get the block header for the chain head without taking a lock,
+    // but revert to the safe implementation if it returns an empty optional. (It's
+    // possible the chain head has been updated but the block is still being persisted
+    // to storage/cache under the lock).
+    return blockchain
+        .getBlockHeader(blockchain.getChainHeadHash())
+        .or(() -> blockchain.getBlockHeaderSafe(blockchain.getChainHeadHash()));
   }
 
   private boolean isLocalSender(final Address sender) {
