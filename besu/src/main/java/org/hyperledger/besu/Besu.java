@@ -88,7 +88,7 @@ public final class Besu {
   private static Thread.UncaughtExceptionHandler slf4jExceptionHandler(final Logger logger) {
     return (thread, error) -> {
       if (logger.isErrorEnabled()) {
-        logger.error(String.format("test test Uncaught exception in thread \"%s\"", thread.getName()), error);
+        logger.error(String.format("Uncaught  exception in thread \"%s\"", thread.getName()), error);
       }
     };
   }
