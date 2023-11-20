@@ -37,7 +37,7 @@ public class PeerReputation implements Comparable<PeerReputation> {
   static final int DEFAULT_MAX_SCORE = 200;
   // how much above the initial score you need to be to not get disconnected for timeouts/useless
   // responses
-  static final int HAS_BEEN_USEFUL_SCORE_INCREASE = 10;
+  private final int hasBeenUsefulThreshold;
   static final int DEFAULT_INITIAL_SCORE = 100;
   private static final Logger LOG = LoggerFactory.getLogger(PeerReputation.class);
   private static final int TIMEOUT_THRESHOLD = 5;
@@ -49,8 +49,6 @@ public class PeerReputation implements Comparable<PeerReputation> {
 
   private static final int SMALL_ADJUSTMENT = 1;
   private static final int LARGE_ADJUSTMENT = 5;
-
-  private final int initialScore;
   private int score;
 
   private final int maxScore;
@@ -63,7 +61,7 @@ public class PeerReputation implements Comparable<PeerReputation> {
     checkArgument(
         initialScore <= maxScore, "Initial score must be less than or equal to max score");
     this.maxScore = maxScore;
-    this.initialScore = initialScore;
+    this.hasBeenUsefulThreshold = Math.min(maxScore, initialScore + 10);
     this.score = initialScore;
   }
 
@@ -93,7 +91,7 @@ public class PeerReputation implements Comparable<PeerReputation> {
   }
 
   private boolean peerHasNotBeenUseful() {
-    return score - initialScore < HAS_BEEN_USEFUL_SCORE_INCREASE;
+    return score < hasBeenUsefulThreshold;
   }
 
   public void resetTimeoutCount(final int requestCode) {
