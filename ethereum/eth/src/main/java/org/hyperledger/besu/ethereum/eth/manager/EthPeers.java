@@ -391,7 +391,7 @@ public class EthPeers {
             peer -> {
               LOG.atDebug()
                   .setMessage(
-                      "disconnecting peer {}.... Waiting for better peers. Current {} of max {}")
+                      "disconnecting peer {}... Waiting for better peers. Current {} of max {}")
                   .addArgument(peer::getShortNodeId)
                   .addArgument(this::peerCount)
                   .addArgument(this::getMaxPeers)
