@@ -111,7 +111,7 @@ public class TransactionSelectionResults {
           "Selection stats: Totals[Evaluated={}, Selected={}, NotSelected={}, Discarded={}]; Detailed[{}]",
           selectedTransactions.size() + notSelectedTxs.size(),
           selectedTransactions.size(),
-          notSelectedStats.size(),
+          notSelectedTxs.size(),
           notSelectedStats.entrySet().stream()
               .filter(e -> e.getKey().discard())
               .map(Map.Entry::getValue)

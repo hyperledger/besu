@@ -89,8 +89,9 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
             .setMessage(
                 "Current gas price of {} is {} and lower than the configured minimum {}, skipping")
             .addArgument(pendingTransaction::toTraceLog)
-            .addArgument(transactionGasPriceInBlock)
-            .addArgument(context.miningParameters()::getMinTransactionGasPrice)
+            .addArgument(transactionGasPriceInBlock::toHumanReadableString)
+            .addArgument(
+                context.miningParameters().getMinTransactionGasPrice()::toHumanReadableString)
             .log();
         return true;
       }
