@@ -77,6 +77,7 @@ dependencies {
   implementation 'org.springframework.security:spring-security-crypto'
   implementation 'org.xerial.snappy:snappy-java'
   implementation 'tech.pegasys:jc-kzg-4844'
+  implementation 'org.rocksdb:rocksdbjni'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-jul'
   runtimeOnly 'com.splunk.logging:splunk-library-javalogging'
