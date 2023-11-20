@@ -1,5 +1,5 @@
 
-FROM ubuntu:rolling
+FROM ubuntu:23.10
 ARG VERSION="dev"
 
 RUN apt-get update && \
