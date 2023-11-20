@@ -50,7 +50,7 @@ public class TrieLogHelper {
     printCount(out, count);
     out.println();
 
-    final long layersToRetain = config.getUnstable().getBonsaiTrieLogRetentionThreshold();
+    final int layersToRetain = (int) config.getUnstable().getBonsaiTrieLogRetentionThreshold();
     final int batchSize = config.getUnstable().getBonsaiTrieLogPruningLimit();
     final boolean isProofOfStake =
         besuController.getGenesisConfigOptions().getTerminalTotalDifficulty().isPresent();
@@ -58,7 +58,7 @@ public class TrieLogHelper {
         new TrieLogPruner(
             rootWorldStateStorage, blockchain, layersToRetain, batchSize, isProofOfStake);
 
-    final long totalToPrune = count.total() - layersToRetain;
+    final int totalToPrune = count.total() - layersToRetain;
     out.printf(
         """
         Total to prune = %d (total) - %d (retention threshold) =
