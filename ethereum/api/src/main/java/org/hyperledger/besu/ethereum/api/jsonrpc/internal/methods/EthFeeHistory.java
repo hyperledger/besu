@@ -47,6 +47,7 @@ import java.util.stream.Stream;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
 
 public class EthFeeHistory implements JsonRpcMethod {
@@ -187,7 +188,8 @@ public class EthFeeHistory implements JsonRpcMethod {
                 .build()));
   }
 
-  private List<Wei> computeRewards(final List<Double> rewardPercentiles, final Block block) {
+  @VisibleForTesting
+  public List<Wei> computeRewards(final List<Double> rewardPercentiles, final Block block) {
     final List<Transaction> transactions = block.getBody().getTransactions();
     if (transactions.isEmpty()) {
       // all 0's for empty block
@@ -201,13 +203,11 @@ public class EthFeeHistory implements JsonRpcMethod {
     // we need to get the gas used for the individual transactions and can't use the cumulative gas
     // used because we're going to be reordering the transactions
     final List<Long> transactionsGasUsed = new ArrayList<>();
+    long cumulativeGasUsed = 0L;
     for (final TransactionReceipt transactionReceipt :
         blockchain.getTxReceipts(block.getHash()).get()) {
-      transactionsGasUsed.add(
-          transactionsGasUsed.isEmpty()
-              ? transactionReceipt.getCumulativeGasUsed()
-              : transactionReceipt.getCumulativeGasUsed()
-                  - transactionsGasUsed.get(transactionsGasUsed.size() - 1));
+      transactionsGasUsed.add(transactionReceipt.getCumulativeGasUsed() - cumulativeGasUsed);
+      cumulativeGasUsed = transactionReceipt.getCumulativeGasUsed();
     }
 
     record TransactionInfo(Transaction transaction, Long gasUsed, Wei effectivePriorityFeePerGas) {}
@@ -226,23 +226,26 @@ public class EthFeeHistory implements JsonRpcMethod {
             .sorted(Comparator.comparing(TransactionInfo::effectivePriorityFeePerGas))
             .collect(toUnmodifiableList());
 
-    // We need to weight the percentile of rewards by the gas used in the transaction.
-    // That's why we're keeping track of the cumulative gas used and checking to see which
-    // percentile markers we've passed
     final ArrayList<Wei> rewards = new ArrayList<>();
-    int rewardPercentileIndex = 0;
-    long gasUsed = 0;
-    for (final TransactionInfo transactionAndGasUsed :
-        transactionsAndGasUsedAscendingEffectiveGasFee) {
+    // Start with the gas used by the first transaction
+    double totalGasUsed = transactionsAndGasUsedAscendingEffectiveGasFee.get(0).gasUsed();
+    var transactionIndex = 0;
+    for (var rewardPercentile : rewardPercentiles) {
+      // Calculate the threshold gas used for the current reward percentile. This is the amount of
+      // gas that needs to be used to reach this percentile
+      var thresholdGasUsed = rewardPercentile * block.getHeader().getGasUsed() / 100;
 
-      gasUsed += transactionAndGasUsed.gasUsed();
-
-      while (rewardPercentileIndex < rewardPercentiles.size()
-          && 100.0 * gasUsed / block.getHeader().getGasUsed()
-              >= rewardPercentiles.get(rewardPercentileIndex)) {
-        rewards.add(transactionAndGasUsed.effectivePriorityFeePerGas);
-        rewardPercentileIndex++;
+      // Stop when totalGasUsed reaches the threshold or there are no more transactions
+      while (totalGasUsed < thresholdGasUsed
+          && transactionIndex < transactionsAndGasUsedAscendingEffectiveGasFee.size() - 1) {
+        transactionIndex++;
+        totalGasUsed +=
+            transactionsAndGasUsedAscendingEffectiveGasFee.get(transactionIndex).gasUsed();
       }
+      // Add the effective priority fee per gas of the transaction that reached the percentile value
+      rewards.add(
+          transactionsAndGasUsedAscendingEffectiveGasFee.get(transactionIndex)
+              .effectivePriorityFeePerGas);
     }
     // Put the computed rewards in the cache
     cache.put(new RewardCacheKey(block.getHeader().getBlockHash(), rewardPercentiles), rewards);
