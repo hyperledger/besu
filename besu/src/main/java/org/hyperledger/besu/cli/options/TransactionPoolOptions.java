@@ -357,7 +357,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
    * Is min gas price option set?
    *
    * @param commandLine the command line
-   * @return true is tx-pool-min-gas-price is set
+   * @return true if tx-pool-min-gas-price is set
    */
   public boolean isMinGasPriceSet(final CommandLine commandLine) {
     return CommandLineUtils.isOptionSet(commandLine, TransactionPoolOptions.TX_POOL_MIN_GAS_PRICE);

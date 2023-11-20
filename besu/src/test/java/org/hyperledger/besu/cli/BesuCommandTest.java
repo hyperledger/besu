@@ -5262,7 +5262,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockLogger, atLeast(1))
         .warn(
             contains(
-                "Forcing tx-pool-min-gas-price=0, since it could not be greater than the value of min-gas-price"));
+                "Forcing tx-pool-min-gas-price=0, since it cannot be greater than the value of min-gas-price"));
   }
 
   @Test
@@ -5270,7 +5270,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--min-gas-price", "100", "--tx-pool-min-gas-price", "101");
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("tx-pool-min-gas-price could not be greater than the value of min-gas-price");
+        .contains("tx-pool-min-gas-price cannot be greater than the value of min-gas-price");
   }
 
   @Test

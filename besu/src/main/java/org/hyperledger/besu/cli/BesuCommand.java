@@ -2829,7 +2829,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (transactionPoolOptions.isMinGasPriceSet(commandLine)) {
         throw new ParameterException(
             commandLine,
-            "tx-pool-min-gas-price could not be greater than the value of min-gas-price");
+            "tx-pool-min-gas-price cannot be greater than the value of min-gas-price");
 
       } else {
         // for backward compatibility, if tx-pool-min-gas-price is not set, we adjust its value
@@ -2838,7 +2838,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger.warn(
             "Forcing tx-pool-min-gas-price="
                 + getMiningParameters().getMinTransactionGasPrice().toDecimalString()
-                + ", since it could not be greater than the value of min-gas-price");
+                + ", since it cannot be greater than the value of min-gas-price");
         txPoolConfBuilder.minGasPrice(getMiningParameters().getMinTransactionGasPrice());
       }
     }
