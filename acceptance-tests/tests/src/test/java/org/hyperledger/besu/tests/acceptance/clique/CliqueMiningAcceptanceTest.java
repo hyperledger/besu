@@ -43,6 +43,14 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
+  public void shouldNotMineBlocksIfNoTransactionsOnSingleNode() throws IOException {
+    final BesuNode minerNode = besu.createCliqueNoEmptyBlockNode("miner1");
+    cluster.start(minerNode);
+
+    cluster.verify(clique.noNewBlockCreated(minerNode));
+  }
+
+  @Test
   public void shouldMineTransactionsOnMultipleNodes() throws IOException {
     final BesuNode minerNode1 = besu.createCliqueNode("miner1");
     final BesuNode minerNode2 = besu.createCliqueNode("miner2");

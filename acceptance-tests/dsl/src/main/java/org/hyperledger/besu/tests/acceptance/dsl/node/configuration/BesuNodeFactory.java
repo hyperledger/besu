@@ -379,6 +379,19 @@ public class BesuNodeFactory {
             .build());
   }
 
+  public BesuNode createCliqueNoEmptyBlockNode(final String name) throws IOException {
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .miningEnabled()
+            .jsonRpcConfiguration(node.createJsonRpcWithCliqueEnabledConfig())
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .devMode(false)
+            .genesisConfigProvider(
+                GenesisConfigurationFactory::createCliqueNoEmptyBlocksGenesisConfig)
+            .build());
+  }
+
   public BesuNode createIbft2NonValidatorBootnode(final String name, final String genesisFile)
       throws IOException {
     return create(

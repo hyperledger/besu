@@ -51,6 +51,13 @@ public class GenesisConfigurationFactory {
         validators, template, CliqueExtraData::createGenesisExtraDataString);
   }
 
+  public static Optional<String> createCliqueNoEmptyBlocksGenesisConfig(
+      final Collection<? extends RunnableNode> validators) {
+    final String template = readGenesisFile("/clique/clique-no-empty-blocks.json");
+    return updateGenesisExtraData(
+        validators, template, CliqueExtraData::createGenesisExtraDataString);
+  }
+
   public static Optional<String> createIbft2GenesisConfig(
       final Collection<? extends RunnableNode> validators) {
     return createIbft2GenesisConfig(validators, "/ibft/ibft.json");
