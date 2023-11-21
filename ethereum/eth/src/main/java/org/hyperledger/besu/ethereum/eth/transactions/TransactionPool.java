@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -100,7 +99,6 @@ public class TransactionPool implements BlockAddedObserver {
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final TransactionBroadcaster transactionBroadcaster;
-  private final MiningParameters miningParameters;
   private final TransactionPoolMetrics metrics;
   private final TransactionPoolConfiguration configuration;
   private final AtomicBoolean isPoolEnabled = new AtomicBoolean(false);
@@ -118,7 +116,6 @@ public class TransactionPool implements BlockAddedObserver {
       final ProtocolContext protocolContext,
       final TransactionBroadcaster transactionBroadcaster,
       final EthContext ethContext,
-      final MiningParameters miningParameters,
       final TransactionPoolMetrics metrics,
       final TransactionPoolConfiguration configuration,
       final PluginTransactionValidatorFactory pluginTransactionValidatorFactory) {
@@ -127,7 +124,6 @@ public class TransactionPool implements BlockAddedObserver {
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.transactionBroadcaster = transactionBroadcaster;
-    this.miningParameters = miningParameters;
     this.metrics = metrics;
     this.configuration = configuration;
     this.pluginTransactionValidator =
@@ -289,7 +285,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   private boolean isMaxGasPriceBelowConfiguredMinGasPrice(final Transaction transaction) {
     return getMaxGasPrice(transaction)
-        .map(g -> g.lessThan(miningParameters.getMinTransactionGasPrice()))
+        .map(g -> g.lessThan(configuration.getMinGasPrice()))
         .orElse(true);
   }
 
@@ -510,11 +506,9 @@ public class TransactionPool implements BlockAddedObserver {
       }
     }
     if (hasPriority) {
-      // allow priority transactions to be below minGas as long as we are mining
-      // or at least gas price is above the configured floor
-      if ((!miningParameters.isMiningEnabled()
-              && isMaxGasPriceBelowConfiguredMinGasPrice(transaction))
-          || !feeMarket.satisfiesFloorTxFee(transaction)) {
+      // allow priority transactions to be below minGas as long as the gas price is above the
+      // configured floor
+      if (!feeMarket.satisfiesFloorTxFee(transaction)) {
         return TransactionInvalidReason.GAS_PRICE_TOO_LOW;
       }
     } else {
@@ -522,7 +516,7 @@ public class TransactionPool implements BlockAddedObserver {
         LOG.atTrace()
             .setMessage("Discard transaction {} below min gas price {}")
             .addArgument(transaction::toTraceLog)
-            .addArgument(miningParameters::getMinTransactionGasPrice)
+            .addArgument(configuration::getMinGasPrice)
             .log();
         return TransactionInvalidReason.GAS_PRICE_TOO_LOW;
       }

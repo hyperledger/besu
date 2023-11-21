@@ -33,6 +33,7 @@ import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.options.MiningOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
+import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
@@ -566,6 +567,10 @@ public abstract class CommandTestAbstract {
 
     public TransactionPoolOptions getTransactionPoolOptions() {
       return transactionPoolOptions;
+    }
+
+    public DataStorageOptions getDataStorageOptions() {
+      return dataStorageOptions;
     }
 
     public MetricsCLIOptions getMetricsCLIOptions() {

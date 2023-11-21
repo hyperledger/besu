@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -162,7 +161,6 @@ public class TestNode implements Closeable {
             TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
             syncState,
-            MiningParameters.newDefault(),
             TransactionPoolConfiguration.DEFAULT,
             null,
             new BlobCache());
