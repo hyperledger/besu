@@ -146,7 +146,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
                 LOG.atDebug()
                     .setMessage(
                         "Refresh peers disconnecting peer {}. Waiting for better peers. Current {} of max {}")
-                    .addArgument(peer)
+                    .addArgument(peer::getShortNodeId)
                     .addArgument(peers::peerCount)
                     .addArgument(peers::getMaxPeers)
                     .log();

@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
@@ -44,7 +45,8 @@ public class LayeredTransactionPoolBaseFeeTest extends AbstractLayeredTransactio
         nextLayer,
         txPoolMetrics,
         transactionReplacementTester,
-        FeeMarket.london(0L));
+        FeeMarket.london(0L),
+        new BlobCache());
   }
 
   @Override

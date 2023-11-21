@@ -4,14 +4,6 @@ orbs:
   win: circleci/windows@5.0
 
 executors:
-  besu_executor_small:
-    docker:
-      - image: cimg/openjdk:17.0
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
-
   besu_executor_med: # 2cpu, 4G ram
     docker:
       - image: cimg/openjdk:17.0
@@ -189,7 +181,7 @@ jobs:
       - capture_test_results
 
   integrationTests:
-    executor: xl_machine_executor
+    executor: xl_machine_executor # needs the machine executor since privacy test uses container tests (docker)
     steps:
       - prepare
       - attach_workspace:
@@ -219,8 +211,8 @@ jobs:
       - capture_test_results
 
   acceptanceTests:
-    parallelism: 4
-    executor: xl_machine_executor
+    parallelism: 2
+    executor: xl_machine_executor # needs the machine executor since privacy test uses container tests (docker)
     steps:
       - prepare
       - attach_workspace:
@@ -241,8 +233,7 @@ jobs:
       - capture_test_logs
 
   acceptanceTestsCliqueBft:
-    parallelism: 6
-    executor: xl_machine_executor
+    executor: besu_executor_xl
     steps:
       - prepare
       - attach_workspace:
@@ -251,20 +242,13 @@ jobs:
           name: AcceptanceTests (Non-Mainnet)
           no_output_timeout: 20m
           command: |
-            CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
-              | sed 's@.*/src/test/java/@@' \
-              | sed 's@/@.@g' \
-              | sed 's/.\{5\}$//' \
-              | circleci tests split --split-by=timings --timings-type=classname)
-            # Format the arguments to "./gradlew test"
-            GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
-            ./gradlew --no-daemon acceptanceTestCliqueBft $GRADLE_ARGS
+            ./gradlew --no-daemon acceptanceTestCliqueBft
       - capture_test_results
       - capture_test_logs
 
   acceptanceTestsPrivacy:
-    parallelism: 6
-    executor: xl_machine_executor
+    parallelism: 4
+    executor: xl_machine_executor # needs the machine executor since it uses container tests (docker)
     steps:
       - prepare
       - attach_workspace:
@@ -285,8 +269,7 @@ jobs:
       - capture_test_logs
 
   acceptanceTestsPermissioning:
-    parallelism: 6
-    executor: xl_machine_executor
+    executor: besu_executor_xl
     steps:
       - prepare
       - attach_workspace:
@@ -295,14 +278,7 @@ jobs:
           name: AcceptanceTests (Non-Mainnet)
           no_output_timeout: 20m
           command: |
-            CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
-              | sed 's@.*/src/test/java/@@' \
-              | sed 's@/@.@g' \
-              | sed 's/.\{5\}$//' \
-              | circleci tests split --split-by=timings --timings-type=classname)
-            # Format the arguments to "./gradlew test"
-            GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
-            ./gradlew --no-daemon acceptanceTestPermissioning $GRADLE_ARGS
+            ./gradlew --no-daemon acceptanceTestPermissioning
       - capture_test_results
       - capture_test_logs
 
@@ -448,9 +424,6 @@ workflows:
       - acceptanceTestsCliqueBft:
           requires:
             - assemble
-      - acceptanceTestsPrivacy:
-          requires:
-            - assemble
       - acceptanceTestsPermissioning:
           requires:
             - assemble
@@ -525,3 +498,6 @@ workflows:
     jobs:
       - assemble
       - dockerScan
+      - acceptanceTestsPrivacy:
+          requires:
+            - assemble

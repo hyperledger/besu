@@ -332,7 +332,6 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             executionContextTestFixture.getProtocolContext(),
             mock(TransactionBroadcaster.class),
             ethContext,
-            mock(MiningParameters.class),
             new TransactionPoolMetrics(metricsSystem),
             poolConf,
             null);

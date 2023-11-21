@@ -44,7 +44,7 @@ public class KZGPointEvalPrecompileContractTest {
 
   @BeforeAll
   public static void init() {
-    KZGPointEvalPrecompiledContract.init("foo");
+    KZGPointEvalPrecompiledContract.init("mainnet");
     contract = new KZGPointEvalPrecompiledContract();
   }
 
