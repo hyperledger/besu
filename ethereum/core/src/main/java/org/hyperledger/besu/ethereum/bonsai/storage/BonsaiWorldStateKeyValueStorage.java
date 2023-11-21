@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbStrategy;
@@ -30,7 +31,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.strategy.BonsaiWorldStateStorageStrategy;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -45,7 +46,6 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -54,7 +54,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("unused")
-public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoCloseable {
+public class BonsaiWorldStateKeyValueStorage
+    implements BonsaiWorldStateStorageStrategy, AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateKeyValueStorage.class);
 
   // 0x776f726c64526f6f74
@@ -158,12 +159,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     }
   }
 
-  public Optional<Bytes> getAccount(final Hash accountHash) {
+  public Optional<Bytes> getAccount(final Address address) {
     return getFlatDbStrategy()
         .getFlatAccount(
             this::getWorldStateRootHash,
             this::getAccountStateTrieNode,
-            accountHash,
+            address,
             composedWorldStateStorage);
   }
 
@@ -221,29 +222,29 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public Optional<Bytes> getStorageValueByStorageSlotKey(
-      final Hash accountHash, final StorageSlotKey storageSlotKey) {
+      final Address address, final StorageSlotKey storageSlotKey) {
     return getStorageValueByStorageSlotKey(
         () ->
-            getAccount(accountHash)
+            getAccount(address)
                 .map(
                     b ->
                         StateTrieAccountValue.readFrom(
                                 org.hyperledger.besu.ethereum.rlp.RLP.input(b))
                             .getStorageRoot()),
-        accountHash,
+        address,
         storageSlotKey);
   }
 
   public Optional<Bytes> getStorageValueByStorageSlotKey(
       final Supplier<Optional<Hash>> storageRootSupplier,
-      final Hash accountHash,
+      final Address address,
       final StorageSlotKey storageSlotKey) {
     return getFlatDbStrategy()
         .getFlatStorageValueByStorageSlotKey(
             this::getWorldStateRootHash,
             storageRootSupplier,
-            (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
-            accountHash,
+            (location, hash) -> getAccountStorageTrieNode(address.addressHash(), location, hash),
+            address,
             storageSlotKey,
             composedWorldStateStorage);
   }
@@ -269,11 +270,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   @Override
-  public Optional<Bytes> getNodeData(final Bytes location, final Bytes32 hash) {
-    return Optional.empty();
-  }
-
-  @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
     return composedWorldStateStorage
         .get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY)
@@ -282,6 +278,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         .orElse(false);
   }
 
+  @Override
   public void upgradeToFullFlatDbMode() {
     final SegmentedKeyValueStorageTransaction transaction =
         composedWorldStateStorage.startTransaction();
@@ -330,22 +327,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         flatDbStrategy);
   }
 
-  @Override
-  public long prune(final Predicate<byte[]> inUseCheck) {
-    throw new RuntimeException("Bonsai Tries do not work with pruning.");
-  }
-
-  @Override
-  public long addNodeAddedListener(final NodesAddedListener listener) {
-    throw new RuntimeException("addNodeAddedListener not available");
-  }
-
-  @Override
-  public void removeNodeAddedListener(final long id) {
-    throw new RuntimeException("removeNodeAddedListener not available");
-  }
-
-  public interface BonsaiUpdater extends WorldStateStorage.Updater {
+  public interface BonsaiUpdater extends BonsaiWorldStateStorageStrategy.Updater {
     BonsaiUpdater removeCode(final Hash accountHash);
 
     BonsaiUpdater removeAccountInfoState(final Hash accountHash);
@@ -411,7 +393,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     }
 
     @Override
-    public WorldStateStorage.Updater saveWorldState(
+    public BonsaiUpdater saveWorldState(
         final Bytes blockHash, final Bytes32 nodeHash, final Bytes node) {
       composedWorldStateTransaction.put(
           TRIE_BRANCH_STORAGE, Bytes.EMPTY.toArrayUnsafe(), node.toArrayUnsafe());
@@ -435,7 +417,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     }
 
     @Override
-    public BonsaiUpdater removeAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
+    public BonsaiUpdater removeAccountStateTrieNode(final Bytes location) {
       composedWorldStateTransaction.remove(TRIE_BRANCH_STORAGE, location.toArrayUnsafe());
       return this;
     }

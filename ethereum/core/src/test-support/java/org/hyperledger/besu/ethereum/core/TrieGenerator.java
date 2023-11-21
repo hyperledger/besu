@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator.applyForStrategy;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -21,7 +23,8 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.strategy.WorldStateStorageStrategy;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,7 +37,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class TrieGenerator {
 
   public static MerkleTrie<Bytes, Bytes> generateTrie(
-      final WorldStateStorage worldStateStorage, final int nbAccounts) {
+      final WorldStateStorageCoordinator worldStateStorage, final int nbAccounts) {
     return generateTrie(
         worldStateStorage,
         IntStream.range(0, nbAccounts)
@@ -43,11 +46,11 @@ public class TrieGenerator {
   }
 
   public static MerkleTrie<Bytes, Bytes> generateTrie(
-      final WorldStateStorage worldStateStorage, final List<Hash> accounts) {
+      final WorldStateStorageCoordinator worldStateStorage, final List<Hash> accounts) {
     final MerkleTrie<Bytes, Bytes> accountStateTrie = emptyAccountStateTrie(worldStateStorage);
     // Add some storage values
     for (int i = 0; i < accounts.size(); i++) {
-      final WorldStateStorage.Updater updater = worldStateStorage.updater();
+      final WorldStateStorageStrategy.Updater updater = worldStateStorage.updater();
       final MerkleTrie<Bytes, Bytes> storageTrie =
           emptyStorageTrie(worldStateStorage, accounts.get(i));
       writeStorageValue(updater, storageTrie, accounts.get(i), UInt256.ONE, UInt256.valueOf(2L));
@@ -57,20 +60,37 @@ public class TrieGenerator {
           updater, storageTrie, accounts.get(i), UInt256.valueOf(3L), UInt256.valueOf(6L));
       int accountIndex = i;
       storageTrie.commit(
-          (location, hash, value) ->
-              updater.putAccountStorageTrieNode(accounts.get(accountIndex), location, hash, value));
+          (location, hash, value) -> {
+            applyForStrategy(
+                updater,
+                onBonsai -> {
+                  onBonsai.putAccountStorageTrieNode(
+                      accounts.get(accountIndex), location, hash, value);
+                },
+                onForest -> {
+                  onForest.putAccountStorageTrieNode(hash, value);
+                });
+          });
       final Bytes code = Bytes32.leftPad(Bytes.of(i + 10));
       final Hash codeHash = Hash.hash(code);
       final StateTrieAccountValue accountValue =
           new StateTrieAccountValue(1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash);
       accountStateTrie.put(accounts.get(i), RLP.encode(accountValue::writeTo));
-      if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
-        ((BonsaiWorldStateKeyValueStorage.Updater) updater)
-            .putAccountInfoState(accounts.get(i), RLP.encode(accountValue::writeTo));
-        updater.putCode(accounts.get(i), code);
-      }
-      accountStateTrie.commit(updater::putAccountStateTrieNode);
-      updater.putCode(codeHash, code);
+      int finalI = i;
+      applyForStrategy(
+          updater,
+          onBonsai -> {
+            ((BonsaiWorldStateKeyValueStorage.BonsaiUpdater) onBonsai)
+                .putAccountInfoState(accounts.get(finalI), RLP.encode(accountValue::writeTo));
+            accountStateTrie.commit(onBonsai::putAccountStateTrieNode);
+            onBonsai.putCode(accounts.get(finalI), codeHash, code);
+          },
+          onForest -> {
+            accountStateTrie.commit(
+                (location, hash, value) -> onForest.putAccountStateTrieNode(hash, value));
+            onForest.putCode(code);
+          });
+
       // Persist updates
       updater.commit();
     }
@@ -78,7 +98,7 @@ public class TrieGenerator {
   }
 
   private static void writeStorageValue(
-      final WorldStateStorage.Updater updater,
+      final WorldStateStorageStrategy.Updater updater,
       final MerkleTrie<Bytes, Bytes> storageTrie,
       final Hash hash,
       final UInt256 key,
@@ -101,7 +121,7 @@ public class TrieGenerator {
   }
 
   public static MerkleTrie<Bytes, Bytes> emptyStorageTrie(
-      final WorldStateStorage worldStateStorage, final Hash accountHash) {
+      final WorldStateStorageCoordinator worldStateStorage, final Hash accountHash) {
     return new StoredMerklePatriciaTrie<>(
         (location, hash) ->
             worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash),
@@ -110,7 +130,7 @@ public class TrieGenerator {
   }
 
   public static MerkleTrie<Bytes, Bytes> emptyAccountStateTrie(
-      final WorldStateStorage worldStateStorage) {
+      final WorldStateStorageCoordinator worldStateStorage) {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStateTrieNode, b -> b, b -> b);
   }

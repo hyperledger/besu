@@ -18,12 +18,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
+import org.hyperledger.besu.ethereum.forest.storage.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.HashMap;
@@ -117,7 +117,7 @@ public final class RangeManagerTest {
   @Test
   public void testFindNewBeginElement() {
 
-    final WorldStateStorage worldStateStorage =
+    final WorldStateStorageCoordinator worldStateStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
@@ -156,7 +156,7 @@ public final class RangeManagerTest {
   @Test
   public void testFindNewBeginElementWhenNothingIsMissing() {
 
-    final WorldStateStorage worldStateStorage =
+    final WorldStateStorageCoordinator worldStateStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
     final MerkleTrie<Bytes, Bytes> accountStateTrie =

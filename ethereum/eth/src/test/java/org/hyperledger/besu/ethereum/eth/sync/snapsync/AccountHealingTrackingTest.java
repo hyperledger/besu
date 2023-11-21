@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.List;
@@ -56,7 +56,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class AccountHealingTrackingTest {
 
   private final List<Address> accounts = List.of(Address.fromHexString("0xdeadbeef"));
-  private final WorldStateStorage worldStateStorage =
+  private final WorldStateStorageCoordinator worldStateStorage =
       new BonsaiWorldStateKeyValueStorage(
           new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
 

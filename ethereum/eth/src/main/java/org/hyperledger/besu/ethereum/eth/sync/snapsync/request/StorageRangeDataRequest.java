@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findN
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.getRangeCount;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie.FlatDatabaseUpdater.noop;
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator.applyForStrategy;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -32,14 +33,15 @@ import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.strategy.WorldStateStorageStrategy;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -86,8 +88,8 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
   @Override
   protected int doPersist(
-      final WorldStateStorage worldStateStorage,
-      final Updater updater,
+      final WorldStateStorageCoordinator worldStateStorage,
+      final WorldStateStorageStrategy.Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncProcessState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration) {
@@ -96,20 +98,31 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     final AtomicInteger nbNodesSaved = new AtomicInteger();
     final NodeUpdater nodeUpdater =
         (location, hash, value) -> {
-          updater.putAccountStorageTrieNode(accountHash, location, hash, value);
+          applyForStrategy(
+              updater,
+              onBonsai -> {
+                onBonsai.putAccountStorageTrieNode(accountHash, location, hash, value);
+              },
+              onForest -> {
+                onForest.putAccountStorageTrieNode(hash, value);
+              });
         };
 
-    StackTrie.FlatDatabaseUpdater flatDatabaseUpdater = noop();
-    if (worldStateStorage.getFlatDbMode().equals(FlatDbMode.FULL)) {
-      // we have a flat DB only with Bonsai
-      flatDatabaseUpdater =
-          (key, value) ->
-              ((BonsaiWorldStateKeyValueStorage.Updater) updater)
-                  .putStorageValueBySlotHash(
-                      accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
-    }
+    final AtomicReference<StackTrie.FlatDatabaseUpdater> flatDatabaseUpdater =
+        new AtomicReference<>(noop());
 
-    stackTrie.commit(flatDatabaseUpdater, nodeUpdater);
+    // we have a flat DB only with Bonsai
+    worldStateStorage.applyOnMatchingFlatMode(
+        FlatDbMode.FULL,
+        bonsaiWorldStateStorageStrategy -> {
+          flatDatabaseUpdater.set(
+              (key, value) ->
+                  ((BonsaiWorldStateKeyValueStorage.Updater) updater)
+                      .putStorageValueBySlotHash(
+                          accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value))));
+        });
+
+    stackTrie.commit(flatDatabaseUpdater.get(), nodeUpdater);
 
     downloadState.getMetricsManager().notifySlotsDownloaded(stackTrie.getElementsCount().get());
 
@@ -153,7 +166,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   @Override
   public Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final SnapSyncProcessState snapSyncState) {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
 

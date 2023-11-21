@@ -17,7 +17,8 @@ package org.hyperledger.besu.ethereum.storage.keyvalue;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage.Updater;
+import org.hyperledger.besu.ethereum.forest.storage.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.forest.storage.WorldStateKeyValueStorage.Updater;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 

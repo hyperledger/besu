@@ -24,7 +24,8 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.patricia.TrieNodeDecoder;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.strategy.WorldStateStorageStrategy;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
 import java.util.ArrayList;
@@ -54,8 +55,8 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
 
   @Override
   public int persist(
-      final WorldStateStorage worldStateStorage,
-      final WorldStateStorage.Updater updater,
+      final WorldStateStorageCoordinator worldStateStorage,
+      final WorldStateStorageStrategy.Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncProcessState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration) {
@@ -83,7 +84,7 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
   @Override
   public Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final SnapSyncProcessState snapSyncState) {
     if (!isResponseReceived()) {
       // If this node hasn't been downloaded yet, we can't return any child data
@@ -172,19 +173,21 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
   }
 
   public abstract Optional<Bytes> getExistingData(
-      final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage);
+      final SnapWorldDownloadState downloadState,
+      final WorldStateStorageCoordinator worldStateStorage);
 
   public abstract List<Bytes> getTrieNodePath();
 
   protected abstract SnapDataRequest createChildNodeDataRequest(
       final Hash childHash, final Bytes location);
 
-  public Stream<SnapDataRequest> getRootStorageRequests(final WorldStateStorage worldStateStorage) {
+  public Stream<SnapDataRequest> getRootStorageRequests(
+      final WorldStateStorageCoordinator worldStateStorage) {
     return Stream.empty();
   }
 
   protected abstract Stream<SnapDataRequest> getRequestsFromTrieNodeValue(
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final SnapWorldDownloadState downloadState,
       final Bytes location,
       final Bytes path,

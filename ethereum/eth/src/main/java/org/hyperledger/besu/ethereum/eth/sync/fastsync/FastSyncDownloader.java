@@ -22,7 +22,8 @@ import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.strategy.BonsaiWorldStateStorageStrategy;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 import org.hyperledger.besu.util.ExceptionUtils;
 
@@ -45,7 +46,7 @@ public class FastSyncDownloader<REQUEST> {
   private static final Duration FAST_SYNC_RETRY_DELAY = Duration.ofSeconds(5);
 
   private static final Logger LOG = LoggerFactory.getLogger(FastSyncDownloader.class);
-  private final WorldStateStorage worldStateStorage;
+  private final WorldStateStorageCoordinator worldStateStorage;
   private final WorldStateDownloader worldStateDownloader;
   private final TaskCollection<REQUEST> taskCollection;
   private final Path fastSyncDataDirectory;
@@ -58,7 +59,7 @@ public class FastSyncDownloader<REQUEST> {
 
   public FastSyncDownloader(
       final FastSyncActions fastSyncActions,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final WorldStateDownloader worldStateDownloader,
       final FastSyncStateStorage fastSyncStateStorage,
       final TaskCollection<REQUEST> taskCollection,
@@ -82,11 +83,15 @@ public class FastSyncDownloader<REQUEST> {
   }
 
   protected CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
-    if (worldStateStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
-      LOG.info("Clearing bonsai flat account db");
-      worldStateStorage.clearFlatDatabase();
-      worldStateStorage.clearTrieLog();
-    }
+    worldStateStorage.applyOnMatchingStrategy(
+        DataStorageFormat.BONSAI,
+        worldStateStorageStrategy -> {
+          BonsaiWorldStateStorageStrategy onBonsai =
+              (BonsaiWorldStateStorageStrategy) worldStateStorageStrategy;
+          LOG.info("Clearing bonsai flat account db");
+          onBonsai.clearFlatDatabase();
+          onBonsai.clearTrieLog();
+        });
     LOG.debug("Start sync with initial sync state {}", fastSyncState);
     return findPivotBlock(fastSyncState, fss -> downloadChainAndWorldState(fastSyncActions, fss));
   }

@@ -14,13 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator.applyForStrategy;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
-import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.strategy.WorldStateStorageStrategy;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -40,13 +41,23 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
   }
 
   @Override
-  protected void doPersist(final Updater updater) {
-    updater.putAccountStorageTrieNode(
-        accountHash.orElse(Hash.EMPTY), getLocation().orElse(Bytes.EMPTY), getHash(), getData());
+  protected void doPersist(final WorldStateStorageStrategy.Updater updater) {
+    applyForStrategy(
+        updater,
+        onBonsai -> {
+          onBonsai.putAccountStorageTrieNode(
+              accountHash.orElse(Hash.EMPTY),
+              getLocation().orElse(Bytes.EMPTY),
+              getHash(),
+              getData());
+        },
+        onForest -> {
+          onForest.putAccountStorageTrieNode(getHash(), getData());
+        });
   }
 
   @Override
-  public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
+  public Optional<Bytes> getExistingData(final WorldStateStorageCoordinator worldStateStorage) {
     return getAccountHash()
         .flatMap(
             accountHash ->
@@ -66,18 +77,20 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final Optional<Bytes> location,
       final Bytes path,
       final Bytes value) {
-    if (!worldStateStorage.getFlatDbMode().equals(FlatDbMode.NO_FLATTENED)) {
-      ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
-          .putStorageValueBySlotHash(
-              accountHash.get(),
-              getSlotHash(location, path),
-              Bytes32.leftPad(RLP.decodeValue(value)))
-          .commit();
-    }
+
+    worldStateStorage.applyWhenFlatModeEnabled(
+        worldStateStorageStrategy -> {
+          ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorageStrategy.updater())
+              .putStorageValueBySlotHash(
+                  accountHash.get(),
+                  getSlotHash(location, path),
+                  Bytes32.leftPad(RLP.decodeValue(value)))
+              .commit();
+        });
 
     return Stream.empty();
   }

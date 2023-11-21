@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.patricia.TrieNodeDecoder;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
 import java.util.List;
 import java.util.Objects;
@@ -34,7 +34,8 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
   }
 
   @Override
-  public Stream<NodeDataRequest> getChildRequests(final WorldStateStorage worldStateStorage) {
+  public Stream<NodeDataRequest> getChildRequests(
+      final WorldStateStorageCoordinator worldStateStorage) {
     if (getData() == null) {
       // If this node hasn't been downloaded yet, we can't return any child data
       return Stream.empty();
@@ -68,7 +69,7 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
       final Hash childHash, final Optional<Bytes> location);
 
   protected abstract Stream<NodeDataRequest> getRequestsFromTrieNodeValue(
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final Optional<Bytes> location,
       final Bytes path,
       final Bytes value);

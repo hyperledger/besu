@@ -18,11 +18,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.metrics.noop.NoOpMetricsSystem.NO_OP_COUNTER;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.pipeline.Pipe;
 import org.hyperledger.besu.services.tasks.Task;
@@ -38,8 +37,10 @@ public class LoadLocalDataStepTest {
 
   private static final Bytes DATA = Bytes.of(1, 2, 3);
   private static final Hash HASH = Hash.hash(DATA);
-  private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
-  private final WorldStateStorage.Updater updater = mock(WorldStateStorage.Updater.class);
+  private final WorldStateStorageCoordinator worldStateStorage =
+      mock(WorldStateStorageCoordinator.class);
+  private final WorldStateStorageCoordinator.Updater updater =
+      mock(WorldStateStorageCoordinator.Updater.class);
 
   private final CodeNodeDataRequest request =
       NodeDataRequest.createCodeRequest(HASH, Optional.empty());

@@ -20,7 +20,8 @@ import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.get
 
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.strategy.WorldStateStorageStrategy;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -38,7 +39,7 @@ import org.slf4j.LoggerFactory;
 public class LoadLocalDataStep {
 
   private static final Logger LOG = LoggerFactory.getLogger(LoadLocalDataStep.class);
-  private final WorldStateStorage worldStateStorage;
+  private final WorldStateStorageCoordinator worldStateStorage;
   private final SnapWorldDownloadState downloadState;
   private final SnapSyncProcessState snapSyncState;
 
@@ -46,7 +47,7 @@ public class LoadLocalDataStep {
   private final Counter existingNodeCounter;
 
   public LoadLocalDataStep(
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final SnapWorldDownloadState downloadState,
       final SnapSyncConfiguration snapSyncConfiguration,
       final MetricsSystem metricsSystem,
@@ -73,7 +74,7 @@ public class LoadLocalDataStep {
           existingNodeCounter.inc();
           request.setData(existingData.get());
           request.setRequiresPersisting(false);
-          final WorldStateStorage.Updater updater = worldStateStorage.updater();
+          final WorldStateStorageStrategy.Updater updater = worldStateStorage.updater();
           request.persist(
               worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration);
           updater.commit();

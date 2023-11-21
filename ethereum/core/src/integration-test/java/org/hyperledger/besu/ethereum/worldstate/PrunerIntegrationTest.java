@@ -25,12 +25,16 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.forest.pruner.MarkSweepPruner;
+import org.hyperledger.besu.ethereum.forest.pruner.Pruner;
+import org.hyperledger.besu.ethereum.forest.pruner.Pruner.PruningPhase;
+import org.hyperledger.besu.ethereum.forest.pruner.PrunerConfiguration;
+import org.hyperledger.besu.ethereum.forest.storage.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.Pruner.PruningPhase;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -57,10 +61,11 @@ public class PrunerIntegrationTest {
   private final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final Map<Bytes, Optional<byte[]>> hashValueStore = new HashMap<>();
   private final InMemoryKeyValueStorage stateStorage = new TestInMemoryStorage(hashValueStore);
-  private final WorldStateStorage worldStateStorage = new WorldStateKeyValueStorage(stateStorage);
+  private final WorldStateKeyValueStorage worldStateStorage =
+      new WorldStateKeyValueStorage(stateStorage);
   private final WorldStateArchive worldStateArchive =
-      new DefaultWorldStateArchive(
-          worldStateStorage,
+      new ForestWorldStateArchive(
+          new WorldStateStorageCoordinator(worldStateStorage),
           new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
           EvmConfiguration.DEFAULT);
   private final InMemoryKeyValueStorage markStorage = new InMemoryKeyValueStorage();
@@ -238,7 +243,7 @@ public class PrunerIntegrationTest {
 
   private MerkleTrie<Bytes32, Bytes> createStateTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStateTrieNode,
+        (location, hash) -> worldStateStorage.getAccountStateTrieNode(hash),
         rootHash,
         Function.identity(),
         Function.identity());
@@ -246,7 +251,7 @@ public class PrunerIntegrationTest {
 
   private MerkleTrie<Bytes32, Bytes> createStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        (location, hash) -> worldStateStorage.getAccountStorageTrieNode(null, location, hash),
+        (location, hash) -> worldStateStorage.getAccountStorageTrieNode(hash),
         rootHash,
         Function.identity(),
         Function.identity());

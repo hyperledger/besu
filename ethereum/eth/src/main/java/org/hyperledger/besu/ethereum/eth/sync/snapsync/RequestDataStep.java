@@ -31,7 +31,8 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountFlatD
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageFlatDatabaseHealingRangeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.Task;
 
@@ -50,7 +51,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class RequestDataStep {
 
-  private final WorldStateStorage worldStateStorage;
+  private final WorldStateStorageCoordinator worldStateStorage;
   private final SnapSyncProcessState fastSyncState;
   private final SnapWorldDownloadState downloadState;
   private final SnapSyncConfiguration snapSyncConfiguration;
@@ -60,7 +61,7 @@ public class RequestDataStep {
 
   public RequestDataStep(
       final EthContext ethContext,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final SnapSyncProcessState fastSyncState,
       final SnapWorldDownloadState downloadState,
       final SnapSyncConfiguration snapSyncConfiguration,
@@ -230,12 +231,18 @@ public class RequestDataStep {
     final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
 
     // retrieve accounts from flat database
-    final TreeMap<Bytes32, Bytes> accounts =
-        (TreeMap<Bytes32, Bytes>)
-            worldStateStorage.streamFlatAccounts(
-                accountDataRequest.getStartKeyHash(),
-                accountDataRequest.getEndKeyHash(),
-                snapSyncConfiguration.getLocalFlatAccountCountToHealPerRequest());
+    final TreeMap<Bytes32, Bytes> accounts = new TreeMap<>();
+
+    worldStateStorage.applyOnMatchingFlatMode(
+        FlatDbMode.FULL,
+        onBonsai -> {
+          accounts.putAll(
+              onBonsai.streamFlatAccounts(
+                  accountDataRequest.getStartKeyHash(),
+                  accountDataRequest.getEndKeyHash(),
+                  snapSyncConfiguration.getLocalFlatAccountCountToHealPerRequest()));
+        });
+
     final List<Bytes> proofs = new ArrayList<>();
     if (!accounts.isEmpty()) {
       // generate range proof if accounts are present
@@ -270,13 +277,18 @@ public class RequestDataStep {
     storageDataRequest.setRootHash(blockHeader.getStateRoot());
 
     // retrieve slots from flat database
-    final TreeMap<Bytes32, Bytes> slots =
-        (TreeMap<Bytes32, Bytes>)
-            worldStateStorage.streamFlatStorages(
-                storageDataRequest.getAccountHash(),
-                storageDataRequest.getStartKeyHash(),
-                storageDataRequest.getEndKeyHash(),
-                snapSyncConfiguration.getLocalFlatStorageCountToHealPerRequest());
+    final TreeMap<Bytes32, Bytes> slots = new TreeMap<>();
+    worldStateStorage.applyOnMatchingFlatMode(
+        FlatDbMode.FULL,
+        onBonsai -> {
+          slots.putAll(
+              onBonsai.streamFlatStorages(
+                  storageDataRequest.getAccountHash(),
+                  storageDataRequest.getStartKeyHash(),
+                  storageDataRequest.getEndKeyHash(),
+                  snapSyncConfiguration.getLocalFlatStorageCountToHealPerRequest()));
+        });
+
     final List<Bytes> proofs = new ArrayList<>();
     if (!slots.isEmpty()) {
       // generate range proof if slots are present

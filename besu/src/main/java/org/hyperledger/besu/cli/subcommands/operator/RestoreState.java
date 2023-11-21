@@ -30,15 +30,16 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.PersistVisitor;
 import org.hyperledger.besu.ethereum.trie.RestoreVisitor;
-import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.strategy.ForestWorldStateStorageStrategy;
 import org.hyperledger.besu.util.io.RollingFileReader;
 
 import java.io.IOException;
@@ -83,7 +84,7 @@ public class RestoreState implements Runnable {
   private long trieNodeCount;
   private boolean compressed;
   private BesuController besuController;
-  private WorldStateStorage.Updater updater;
+  private ForestWorldStateStorageStrategy.Updater updater;
 
   private Path accountFileName(final int fileNumber, final boolean compressed) {
     return StateBackupService.accountFileName(backupDir, targetBlock, fileNumber, compressed);
@@ -249,10 +250,10 @@ public class RestoreState implements Runnable {
     if (updater != null) {
       updater.commit();
     }
-    final WorldStateStorage worldStateStorage =
-        ((DefaultWorldStateArchive) besuController.getProtocolContext().getWorldStateArchive())
+    final WorldStateStorageCoordinator worldStateStorage =
+        ((ForestWorldStateArchive) besuController.getProtocolContext().getWorldStateArchive())
             .getWorldStateStorage();
-    updater = worldStateStorage.updater();
+    updater = (ForestWorldStateStorageStrategy.Updater) worldStateStorage.updater();
   }
 
   private void maybeCommitUpdater() {
@@ -269,14 +270,14 @@ public class RestoreState implements Runnable {
   private void updateAccountState(final Bytes32 key, final Bytes value) {
     maybeCommitUpdater();
     // restore by path not supported
-    updater.putAccountStateTrieNode(null, key, value);
+    updater.putAccountStateTrieNode(key, value);
     trieNodeCount++;
   }
 
   private void updateAccountStorage(final Bytes32 key, final Bytes value) {
     maybeCommitUpdater();
     // restore by path not supported
-    updater.putAccountStorageTrieNode(null, null, key, value);
+    updater.putAccountStorageTrieNode(key, value);
     trieNodeCount++;
   }
 

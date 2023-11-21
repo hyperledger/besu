@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
@@ -29,7 +28,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
@@ -59,7 +58,7 @@ public class FastDownloaderFactory {
       final ProtocolContext protocolContext,
       final MetricsSystem metricsSystem,
       final EthContext ethContext,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final SyncState syncState,
       final Clock clock) {
 
@@ -90,16 +89,18 @@ public class FastDownloaderFactory {
       return Optional.empty();
     }
 
-    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
-      worldStateStorage.clearFlatDatabase();
-    } else {
-      final Path queueDataDir = fastSyncDataDirectory.resolve("statequeue");
-      if (queueDataDir.toFile().exists()) {
-        LOG.warn(
-            "Fast sync is picking up after old fast sync version. Pruning the world state and starting from scratch.");
-        clearOldFastSyncWorldStateData(worldStateStorage, queueDataDir);
-      }
-    }
+    worldStateStorage.consumeForStrategy(
+        onBonsai -> {
+          onBonsai.clearFlatDatabase();
+        },
+        onForest -> {
+          final Path queueDataDir = fastSyncDataDirectory.resolve("statequeue");
+          if (queueDataDir.toFile().exists()) {
+            LOG.warn(
+                "Fast sync is picking up after old fast sync version. Pruning the world state and starting from scratch.");
+            clearOldFastSyncWorldStateData(worldStateStorage, queueDataDir);
+          }
+        });
     final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
         createWorldStateDownloaderTaskCollection(
             metricsSystem, syncConfig.getWorldStateTaskCacheSize());
@@ -136,7 +137,7 @@ public class FastDownloaderFactory {
   }
 
   private static void clearOldFastSyncWorldStateData(
-      final WorldStateStorage worldStateStorage, final Path queueDataDir) {
+      final WorldStateStorageCoordinator worldStateStorage, final Path queueDataDir) {
     worldStateStorage.clear();
     try (final Stream<Path> stream = Files.list(queueDataDir); ) {
       stream.forEach(FastDownloaderFactory::deleteFile);

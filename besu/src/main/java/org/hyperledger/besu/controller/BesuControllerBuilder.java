@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
@@ -76,6 +75,10 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
+import org.hyperledger.besu.ethereum.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.forest.pruner.MarkSweepPruner;
+import org.hyperledger.besu.ethereum.forest.pruner.Pruner;
+import org.hyperledger.besu.ethereum.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -84,13 +87,10 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
-import org.hyperledger.besu.ethereum.worldstate.MarkSweepPruner;
-import org.hyperledger.besu.ethereum.worldstate.Pruner;
-import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.strategy.ForestWorldStateStorageStrategy;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -593,7 +593,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
 
-    final WorldStateStorage worldStateStorage =
+    final WorldStateStorageCoordinator worldStateStorage =
         storageProvider.createWorldStateStorage(dataStorageConfiguration.getDataStorageFormat());
 
     final BlockchainStorage blockchainStorage =
@@ -655,7 +655,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             Optional.of(
                 new Pruner(
                     new MarkSweepPruner(
-                        ((DefaultWorldStateArchive) worldStateArchive).getWorldStateStorage(),
+                        ((ForestWorldStateArchive) worldStateArchive)
+                            .getWorldStateStorage()
+                            .getStrategy(ForestWorldStateStorageStrategy.class),
                         blockchain,
                         storageProvider.getStorageBySegmentIdentifier(
                             KeyValueSegmentIdentifier.PRUNING_STATE),
@@ -819,7 +821,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    */
   protected Synchronizer createSynchronizer(
       final ProtocolSchedule protocolSchedule,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final ProtocolContext protocolContext,
       final Optional<Pruner> maybePruner,
       final EthContext ethContext,
@@ -1060,12 +1062,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   WorldStateArchive createWorldStateArchive(
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final Blockchain blockchain,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI -> new BonsaiWorldStateProvider(
-          (BonsaiWorldStateKeyValueStorage) worldStateStorage,
+          worldStateStorage,
           blockchain,
           Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
           cachedMerkleTrieLoader,
@@ -1075,7 +1077,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       case FOREST -> {
         final WorldStatePreimageStorage preimageStorage =
             storageProvider.createWorldStatePreimageStorage();
-        yield new DefaultWorldStateArchive(worldStateStorage, preimageStorage, evmConfiguration);
+        yield new ForestWorldStateArchive(worldStateStorage, preimageStorage, evmConfiguration);
       }
     };
   }

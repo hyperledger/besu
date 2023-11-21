@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.forest.storage.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -27,7 +27,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-public class DefaultReferenceTestWorldState extends DefaultMutableWorldState
+public class DefaultReferenceTestWorldState extends ForestMutableWorldState
     implements ReferenceTestWorldState {
 
   DefaultReferenceTestWorldState() {

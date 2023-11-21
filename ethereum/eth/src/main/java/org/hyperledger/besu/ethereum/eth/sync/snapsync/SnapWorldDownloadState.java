@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountFlatHealingRangeRequest;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator.applyForStrategy;
 
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -28,8 +29,11 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataR
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountFlatDatabaseHealingRangeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageFlatDatabaseHealingRangeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.strategy.BonsaiWorldStateStorageStrategy;
+import org.hyperledger.besu.ethereum.worldstate.strategy.WorldStateStorageStrategy;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
@@ -86,7 +90,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   private final SnapsyncMetricsManager metricsManager;
 
   public SnapWorldDownloadState(
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final SnapSyncStatePersistenceManager snapContext,
       final Blockchain blockchain,
       final SnapSyncProcessState snapSyncState,
@@ -190,16 +194,28 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         blockObserverId.ifPresent(blockchain::removeObserver);
         // If the flat database healing process is not in progress and the flat database mode is
         // FULL
-        if (!snapSyncState.isHealFlatDatabaseInProgress()
-            && worldStateStorage.getFlatDbMode().equals(FlatDbMode.FULL)) {
-          // Start the flat database healing process
-          startFlatDatabaseHeal(header);
+        if (!snapSyncState.isHealFlatDatabaseInProgress()) {
+          worldStateStorage.applyOnMatchingFlatMode(
+              FlatDbMode.FULL,
+              bonsaiWorldStateStorageStrategy -> {
+                // Start the flat database healing process
+                startFlatDatabaseHeal(header);
+              });
         }
+
         // If the flat database healing process is in progress or the flat database mode is not FULL
         else {
-          final WorldStateStorage.Updater updater = worldStateStorage.updater();
-          updater.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
+          final WorldStateStorageStrategy.Updater updater = worldStateStorage.updater();
+          applyForStrategy(
+              updater,
+              onBonsai -> {
+                onBonsai.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
+              },
+              onForest -> {
+                onForest.saveWorldState(header.getStateRoot(), rootNodeData);
+              });
           updater.commit();
+
           // Notify that the snap sync has completed
           metricsManager.notifySnapSyncCompleted();
           // Clear the snap context
@@ -242,8 +258,14 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   /** Method to reload the healing process of the trie */
   public synchronized void reloadTrieHeal() {
     // Clear the flat database and trie log from the world state storage if needed
-    worldStateStorage.clearFlatDatabase();
-    worldStateStorage.clearTrieLog();
+    worldStateStorage.applyOnMatchingStrategy(
+        DataStorageFormat.BONSAI,
+        worldStateStorageStrategy -> {
+          final BonsaiWorldStateStorageStrategy strategy =
+              worldStateStorage.getStrategy(BonsaiWorldStateStorageStrategy.class);
+          strategy.clearFlatDatabase();
+          strategy.clearTrieLog();
+        });
     // Clear pending trie node and code requests
     pendingTrieNodeRequests.clear();
     pendingCodeRequests.clear();

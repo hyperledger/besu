@@ -11,24 +11,29 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.privacy.storage;
+package org.hyperledger.besu.ethereum.worldstate.strategy;
 
-import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 
-import java.io.Closeable;
+import java.util.Collection;
 
-public interface PrivacyStorageProvider extends Closeable {
+import org.apache.tuweni.bytes.Bytes32;
 
-  WorldStateStorageCoordinator createWorldStateStorage();
+public interface WorldStateStorageStrategy {
 
-  WorldStatePreimageStorage createWorldStatePreimageStorage();
+  DataStorageFormat getDataStorageFormat();
 
-  PrivateStateStorage createPrivateStateStorage();
+  Updater updater();
 
-  @Deprecated
-  LegacyPrivateStateStorage createLegacyPrivateStateStorage();
+  void clear();
 
-  int getFactoryVersion();
+  interface NodesAddedListener {
+    void onNodesAdded(Collection<Bytes32> nodeHash);
+  }
+
+  interface Updater {
+    void commit();
+  }
 }

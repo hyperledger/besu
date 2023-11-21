@@ -41,7 +41,8 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.strategy.BonsaiWorldStateStorageStrategy;
+import org.hyperledger.besu.ethereum.worldstate.strategy.WorldStateStorageStrategy;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -150,7 +151,7 @@ public class BonsaiWorldState
     return isPersisted(worldStateStorage);
   }
 
-  private boolean isPersisted(final WorldStateStorage worldStateStorage) {
+  private boolean isPersisted(final WorldStateStorageStrategy worldStateStorage) {
     return !(worldStateStorage instanceof BonsaiSnapshotWorldStateKeyValueStorage);
   }
 
@@ -343,7 +344,7 @@ public class BonsaiWorldState
             // because we are clearing persisted values we need the account root as persisted
             final BonsaiAccount oldAccount =
                 worldStateStorage
-                    .getAccount(address.addressHash())
+                    .getAccount(address)
                     .map(bytes -> fromRLP(BonsaiWorldState.this, address, bytes, true))
                     .orElse(null);
             if (oldAccount == null) {
@@ -534,7 +535,7 @@ public class BonsaiWorldState
   @Override
   public Account get(final Address address) {
     return worldStateStorage
-        .getAccount(address.addressHash())
+        .getAccount(address)
         .map(bytes -> fromRLP(accumulator, address, bytes, true))
         .orElse(null);
   }
@@ -557,7 +558,7 @@ public class BonsaiWorldState
   }
 
   private void writeStorageTrieNode(
-      final WorldStateStorage.Updater stateUpdater,
+      final BonsaiWorldStateStorageStrategy.Updater stateUpdater,
       final Hash accountHash,
       final Bytes location,
       final Bytes32 nodeHash,
@@ -575,7 +576,7 @@ public class BonsaiWorldState
   public Optional<UInt256> getStorageValueByStorageSlotKey(
       final Address address, final StorageSlotKey storageSlotKey) {
     return worldStateStorage
-        .getStorageValueByStorageSlotKey(address.addressHash(), storageSlotKey)
+        .getStorageValueByStorageSlotKey(address, storageSlotKey)
         .map(UInt256::fromBytes);
   }
 
@@ -584,7 +585,7 @@ public class BonsaiWorldState
       final Address address,
       final StorageSlotKey storageSlotKey) {
     return worldStateStorage
-        .getStorageValueByStorageSlotKey(storageRootSupplier, address.addressHash(), storageSlotKey)
+        .getStorageValueByStorageSlotKey(storageRootSupplier, address, storageSlotKey)
         .map(UInt256::fromBytes);
   }
 

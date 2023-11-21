@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
@@ -88,7 +89,7 @@ public abstract class FlatDbStrategy {
   public abstract Optional<Bytes> getFlatAccount(
       Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       NodeLoader nodeLoader,
-      Hash accountHash,
+      Address address,
       SegmentedKeyValueStorage storage);
 
   /*
@@ -99,7 +100,7 @@ public abstract class FlatDbStrategy {
       Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       Supplier<Optional<Hash>> storageRootSupplier,
       NodeLoader nodeLoader,
-      Hash accountHash,
+      Address address,
       StorageSlotKey storageSlotKey,
       SegmentedKeyValueStorage storageStorage);
 

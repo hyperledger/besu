@@ -16,12 +16,12 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
+import org.hyperledger.besu.ethereum.forest.storage.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
@@ -41,10 +41,10 @@ public class StackTrieTest {
 
     final int nbAccounts = 15;
 
-    final WorldStateStorage worldStateStorage =
+    final WorldStateStorageCoordinator worldStateStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
-    final WorldStateStorage recreatedWorldStateStorage =
+    final WorldStateStorageCoordinator recreatedWorldStateStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
@@ -78,7 +78,7 @@ public class StackTrieTest {
 
     stackTrie.addElement(Bytes32.random(), proofs, accounts);
 
-    final WorldStateStorage.Updater updater = recreatedWorldStateStorage.updater();
+    final WorldStateStorageCoordinator.Updater updater = recreatedWorldStateStorage.updater();
     stackTrie.commit(updater::putAccountStateTrieNode);
     updater.commit();
 
@@ -93,10 +93,10 @@ public class StackTrieTest {
 
     final int nbAccounts = 15;
 
-    final WorldStateStorage worldStateStorage =
+    final WorldStateStorageCoordinator worldStateStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
-    final WorldStateStorage recreatedWorldStateStorage =
+    final WorldStateStorageCoordinator recreatedWorldStateStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
@@ -131,7 +131,7 @@ public class StackTrieTest {
 
       stackTrie.addElement(Bytes32.random(), proofs, accounts);
 
-      final WorldStateStorage.Updater updater = recreatedWorldStateStorage.updater();
+      final WorldStateStorageCoordinator.Updater updater = recreatedWorldStateStorage.updater();
       stackTrie.commit(updater::putAccountStateTrieNode);
       updater.commit();
     }

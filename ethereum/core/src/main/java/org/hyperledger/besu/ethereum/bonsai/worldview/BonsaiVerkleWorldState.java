@@ -39,9 +39,12 @@ import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BonsaiVerkleWorldState extends BonsaiWorldState {
 
+  private static final Logger LOG = LoggerFactory.getLogger(BonsaiVerkleWorldState.class);
   private final VerkleTrieKeyValueGenerator verkleTrieKeyValueGenerator =
       new VerkleTrieKeyValueGenerator();
 
@@ -85,6 +88,7 @@ public class BonsaiVerkleWorldState extends BonsaiWorldState {
     // for manicured tries and composting, collect branches here (not implemented)
     updateTheAccounts(maybeStateUpdater, worldStateUpdater, stateTrie);
 
+    LOG.info("start commit ");
     maybeStateUpdater.ifPresent(
         bonsaiUpdater ->
             stateTrie.commit(
@@ -96,7 +100,10 @@ public class BonsaiVerkleWorldState extends BonsaiWorldState {
                       value);
                 }));
 
+    LOG.info("end commit ");
     final Bytes32 rootHash = stateTrie.getRootHash();
+
+    LOG.info("end commit ");
     return Hash.wrap(rootHash);
   }
 
@@ -106,15 +113,14 @@ public class BonsaiVerkleWorldState extends BonsaiWorldState {
       final VerkleTrie stateTrie) {
     for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> accountUpdate :
         worldStateUpdater.getAccountsToUpdate().entrySet()) {
-      final Bytes accountKey = accountUpdate.getKey();
+      final Address accountKey = accountUpdate.getKey();
       final BonsaiValue<BonsaiAccount> bonsaiValue = accountUpdate.getValue();
       final BonsaiAccount priorAccount = bonsaiValue.getPrior();
       final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
       if (updatedAccount == null) {
         final Hash addressHash = hashAndSavePreImage(accountKey);
-        final Bytes32 address32 = Bytes32.leftPad(accountKey);
         verkleTrieKeyValueGenerator
-            .generateKeysForAccount(address32)
+            .generateKeysForAccount(accountKey)
             .forEach(
                 bytes -> {
                   System.out.println("remove " + bytes);
@@ -123,13 +129,12 @@ public class BonsaiVerkleWorldState extends BonsaiWorldState {
         maybeStateUpdater.ifPresent(
             bonsaiUpdater -> bonsaiUpdater.removeAccountInfoState(addressHash));
       } else {
-        final Bytes32 address32 = Bytes32.leftPad(accountKey);
         final Bytes priorValue = priorAccount == null ? null : priorAccount.serializeAccount();
         final Bytes accountValue = updatedAccount.serializeAccount();
         if (!accountValue.equals(priorValue)) {
           verkleTrieKeyValueGenerator
               .generateKeyValuesForAccount(
-                  address32, updatedAccount.getNonce(), updatedAccount.getBalance())
+                  accountKey, updatedAccount.getNonce(), updatedAccount.getBalance())
               .forEach(
                   (bytes, bytes2) -> {
                     System.out.println("add " + bytes + " " + bytes2);
@@ -153,11 +158,11 @@ public class BonsaiVerkleWorldState extends BonsaiWorldState {
               worldStateUpdater.getCodeToUpdate().entrySet()) {
             final Bytes previousCode = codeUpdate.getValue().getPrior();
             final Bytes updatedCode = codeUpdate.getValue().getUpdated();
-            final Hash accountHash = codeUpdate.getKey().addressHash();
-            final Bytes32 address32 = Bytes32.leftPad(codeUpdate.getKey());
+            final Address address = codeUpdate.getKey();
+            final Hash accountHash = address.addressHash();
             if (updatedCode == null) {
               verkleTrieKeyValueGenerator
-                  .generateKeysForCode(address32, previousCode)
+                  .generateKeysForCode(address, previousCode)
                   .forEach(
                       bytes -> {
                         System.out.println("remove code " + bytes);
@@ -168,17 +173,17 @@ public class BonsaiVerkleWorldState extends BonsaiWorldState {
               if (updatedCode.isEmpty()) {
                 final Hash codeHash = updatedCode.size() == 0 ? Hash.EMPTY : Hash.hash(updatedCode);
                 verkleTrieKeyValueGenerator
-                    .generateKeyValuesForCode(address32, codeHash, updatedCode)
+                    .generateKeyValuesForCode(address, codeHash, updatedCode)
                     .forEach(
                         (bytes, bytes2) -> {
-                          System.out.println("add code " + bytes + " " + bytes2);
+                          // System.out.println("add code " + bytes + " " + bytes2);
                           stateTrie.put(bytes, bytes2);
                         });
                 bonsaiUpdater.removeCode(accountHash);
               } else {
                 final Hash codeHash = updatedCode.size() == 0 ? Hash.EMPTY : Hash.hash(updatedCode);
                 verkleTrieKeyValueGenerator
-                    .generateKeyValuesForCode(address32, codeHash, updatedCode)
+                    .generateKeyValuesForCode(address, codeHash, updatedCode)
                     .forEach(
                         (bytes, bytes2) -> {
                           System.out.println("add code " + bytes + " " + bytes2);
@@ -199,7 +204,6 @@ public class BonsaiVerkleWorldState extends BonsaiWorldState {
           storageAccountUpdate) {
     final Address updatedAddress = storageAccountUpdate.getKey();
     final Hash updatedAddressHash = updatedAddress.addressHash();
-    final Bytes32 updatedAddress32 = Bytes32.leftPad(updatedAddress);
     if (worldStateUpdater.getAccountsToUpdate().containsKey(updatedAddress)) {
 
       // for manicured tries and composting, collect branches here (not implemented)
@@ -209,7 +213,7 @@ public class BonsaiVerkleWorldState extends BonsaiWorldState {
         final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
         if (updatedStorage == null) {
           verkleTrieKeyValueGenerator
-              .generateKeysForStorage(updatedAddress32, storageUpdate.getKey())
+              .generateKeysForStorage(updatedAddress, storageUpdate.getKey())
               .forEach(
                   bytes -> {
                     System.out.println("remove storage" + bytes);
@@ -221,7 +225,7 @@ public class BonsaiVerkleWorldState extends BonsaiWorldState {
         } else {
           final Pair<Bytes, Bytes> storage =
               verkleTrieKeyValueGenerator.generateKeyValuesForStorage(
-                  updatedAddress32, storageUpdate.getKey(), updatedStorage);
+                  updatedAddress, storageUpdate.getKey(), updatedStorage);
           System.out.println("add storage " + storage.getFirst() + " " + storage.getSecond());
           stateTrie
               .put(storage.getFirst(), storage.getSecond())

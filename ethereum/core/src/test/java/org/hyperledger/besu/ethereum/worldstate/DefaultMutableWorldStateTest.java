@@ -21,7 +21,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.forest.storage.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
@@ -57,7 +58,7 @@ class DefaultMutableWorldStateTest {
   private static MutableWorldState createEmpty(final WorldStateKeyValueStorage storage) {
     final WorldStatePreimageKeyValueStorage preimageStorage =
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
-    return new DefaultMutableWorldState(storage, preimageStorage, EvmConfiguration.DEFAULT);
+    return new ForestMutableWorldState(storage, preimageStorage, EvmConfiguration.DEFAULT);
   }
 
   private static MutableWorldState createEmpty() {
@@ -274,7 +275,7 @@ class DefaultMutableWorldStateTest {
 
     // Create new world state and check that it can access modified address
     final MutableWorldState newWorldState =
-        new DefaultMutableWorldState(
+        new ForestMutableWorldState(
             expectedRootHash,
             new WorldStateKeyValueStorage(storage),
             new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),

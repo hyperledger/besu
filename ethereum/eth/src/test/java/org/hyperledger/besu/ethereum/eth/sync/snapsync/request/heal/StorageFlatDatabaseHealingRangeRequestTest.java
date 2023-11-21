@@ -34,7 +34,7 @@ import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Iterator;
@@ -238,7 +238,7 @@ class StorageFlatDatabaseHealingRangeRequestTest {
     // Add local data to the request
     request.addLocalData(proofProvider, slots, new ArrayDeque<>(proofs));
 
-    WorldStateStorage.Updater updater = Mockito.spy(worldStateStorage.updater());
+    WorldStateStorageCoordinator.Updater updater = Mockito.spy(worldStateStorage.updater());
     request.doPersist(
         worldStateStorage,
         updater,

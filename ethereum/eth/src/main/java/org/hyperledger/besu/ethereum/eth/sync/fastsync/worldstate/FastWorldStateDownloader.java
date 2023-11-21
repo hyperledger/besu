@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
@@ -48,7 +48,7 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
   private final int hashCountPerRequest;
   private final int maxOutstandingRequests;
   private final int maxNodeRequestsWithoutProgress;
-  private final WorldStateStorage worldStateStorage;
+  private final WorldStateStorageCoordinator worldStateStorage;
 
   private final AtomicReference<FastWorldDownloadState> downloadState = new AtomicReference<>();
 
@@ -56,7 +56,7 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
 
   public FastWorldStateDownloader(
       final EthContext ethContext,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection,
       final int hashCountPerRequest,
       final int maxOutstandingRequests,

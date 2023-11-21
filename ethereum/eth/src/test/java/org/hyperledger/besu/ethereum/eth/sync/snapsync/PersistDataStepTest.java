@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.services.tasks.Task;
 
 import java.util.List;
@@ -38,7 +38,7 @@ import org.junit.jupiter.api.Test;
 
 public class PersistDataStepTest {
 
-  private final WorldStateStorage worldStateStorage =
+  private final WorldStateStorageCoordinator worldStateStorage =
       new InMemoryKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.FOREST);
   private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
   private final SnapWorldDownloadState downloadState = mock(SnapWorldDownloadState.class);

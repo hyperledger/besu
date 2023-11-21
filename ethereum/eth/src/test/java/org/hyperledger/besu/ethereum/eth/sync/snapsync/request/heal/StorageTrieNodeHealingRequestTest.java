@@ -20,13 +20,13 @@ import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStor
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
+import org.hyperledger.besu.ethereum.forest.storage.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -56,7 +56,7 @@ class StorageTrieNodeHealingRequestTest {
           Address.fromHexString("0xdeadbeea"),
           Address.fromHexString("0xdeadbeeb"));
 
-  private WorldStateStorage worldStateStorage;
+  private WorldStateStorageCoordinator worldStateStorage;
   private Hash account0Hash;
   private Hash account0StorageRoot;
 
@@ -70,11 +70,14 @@ class StorageTrieNodeHealingRequestTest {
 
   public void setup(final DataStorageFormat storageFormat) {
     if (storageFormat.equals(DataStorageFormat.FOREST)) {
-      worldStateStorage = new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+      worldStateStorage =
+          new WorldStateStorageCoordinator(
+              new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()));
     } else {
       final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
       worldStateStorage =
-          new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
+          new WorldStateStorageCoordinator(
+              new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()));
     }
     final MerkleTrie<Bytes, Bytes> trie =
         TrieGenerator.generateTrie(

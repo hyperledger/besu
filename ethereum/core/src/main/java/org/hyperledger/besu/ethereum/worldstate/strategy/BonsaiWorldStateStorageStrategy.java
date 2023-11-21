@@ -11,21 +11,23 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.worldstate;
+package org.hyperledger.besu.ethereum.worldstate.strategy;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public interface WorldStateStorage {
+public interface BonsaiWorldStateStorageStrategy extends WorldStateStorageStrategy {
+
+  boolean isWorldStateAvailable(Bytes32 rootHash, Hash blockHash);
 
   Optional<Bytes> getCode(Bytes32 codeHash, Hash accountHash);
 
@@ -42,16 +44,7 @@ public interface WorldStateStorage {
    */
   Optional<Bytes> getTrieNodeUnsafe(Bytes key);
 
-  Optional<Bytes> getNodeData(Bytes location, Bytes32 hash);
-
   FlatDbMode getFlatDbMode();
-
-  boolean isWorldStateAvailable(Bytes32 rootHash, Hash blockHash);
-
-  default boolean contains(final Bytes32 hash) {
-    // we don't have location info
-    return getNodeData(null, hash).isPresent();
-  }
 
   /**
    * Streams flat accounts within a specified range.
@@ -80,47 +73,32 @@ public interface WorldStateStorage {
     return Collections.emptyMap();
   }
 
-  DataStorageFormat getDataStorageFormat();
-
+  @Override
   void clear();
 
   void clearTrieLog();
 
   void clearFlatDatabase();
 
-  Updater updater();
+  void upgradeToFullFlatDbMode();
 
-  long prune(Predicate<byte[]> inUseCheck);
+  interface Updater extends WorldStateStorageStrategy.Updater {
 
-  long addNodeAddedListener(NodesAddedListener listener);
+    WorldStateStorageStrategy.Updater putCode(Hash accountHash, Bytes32 codeHash, Bytes code);
 
-  void removeNodeAddedListener(long id);
+    WorldStateStorageStrategy.Updater saveWorldState(Bytes blockHash, Bytes32 nodeHash, Bytes node);
 
-  interface Updater {
+    WorldStateStorageStrategy.Updater putAccountStateTrieNode(
+        Bytes location, Bytes32 nodeHash, Bytes node);
 
-    Updater putCode(Hash accountHash, Bytes32 nodeHash, Bytes code);
+    WorldStateStorageStrategy.Updater removeAccountStateTrieNode(Bytes location);
 
-    default Updater putCode(final Hash accountHash, final Bytes code) {
-      // Skip the hash calculation for empty code
-      final Hash codeHash = code.size() == 0 ? Hash.EMPTY : Hash.hash(code);
-      return putCode(accountHash, codeHash, code);
-    }
-
-    Updater saveWorldState(Bytes blockHash, Bytes32 nodeHash, Bytes node);
-
-    Updater putAccountStateTrieNode(Bytes location, Bytes32 nodeHash, Bytes node);
-
-    Updater removeAccountStateTrieNode(Bytes location, Bytes32 nodeHash);
-
-    Updater putAccountStorageTrieNode(
+    WorldStateStorageStrategy.Updater putAccountStorageTrieNode(
         Hash accountHash, Bytes location, Bytes32 nodeHash, Bytes node);
 
+    @Override
     void commit();
 
     void rollback();
-  }
-
-  interface NodesAddedListener {
-    void onNodesAdded(Collection<Bytes32> nodeHash);
   }
 }
