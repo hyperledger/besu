@@ -10,6 +10,7 @@
 - Implement debug_traceCall [#5885](https://github.com/hyperledger/besu/pull/5885)
 - Transactions that takes too long to evaluate, during block creation, are dropped from the txpool [#6163](https://github.com/hyperledger/besu/pull/6163)
 - New option `tx-pool-min-gas-price` to set a lower bound when accepting txs to the pool [#6098](https://github.com/hyperledger/besu/pull/6098)
+-  Allow a transaction selection plugin to specify custom selection results [#6190](https://github.com/hyperledger/besu/pull/6190)
 
 ## 23.10.2
 

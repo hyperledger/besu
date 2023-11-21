@@ -9,6 +9,7 @@
 .DS_Store
 .externalToolBuilders/
 .gradle/
+.vscode/
 .idea/
 .loadpath
 .metadata

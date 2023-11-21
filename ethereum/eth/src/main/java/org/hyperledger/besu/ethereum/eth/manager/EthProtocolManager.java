@@ -398,7 +398,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           "Disconnect - {} - {} - {}... - {} peers left\n{}",
           initiatedByPeer ? "Inbound" : "Outbound",
           reason,
-          connection.getPeer().getId().slice(0, 16),
+          connection.getPeer().getId().slice(0, 8),
           ethPeers.peerCount(),
           ethPeers);
     }
