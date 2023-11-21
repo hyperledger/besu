@@ -54,4 +54,9 @@ public abstract class ApiConfiguration {
   public Long getMaxLogsRange() {
     return 5000L;
   }
+
+  @Value.Default
+  public Long getGasCap() {
+    return 0L;
+  }
 }

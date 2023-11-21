@@ -231,7 +231,6 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(EthPeers.class),
                     vertx,
                     mock(ApiConfiguration.class),
-                    Optional.empty(),
                     Optional.empty()));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
@@ -342,7 +341,6 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(EthPeers.class),
                     vertx,
                     mock(ApiConfiguration.class),
-                    Optional.empty(),
                     Optional.empty()));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(

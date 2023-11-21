@@ -129,7 +129,6 @@ public class JsonRpcHttpServiceHostAllowlistTest {
                     mock(EthPeers.class),
                     vertx,
                     mock(ApiConfiguration.class),
-                    Optional.empty(),
                     Optional.empty()));
     service = createJsonRpcHttpService();
     service.start().join();

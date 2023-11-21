@@ -1599,10 +1599,11 @@ public class BesuCommandTest extends CommandTestAbstract {
     final long rpcGasCap = 150L;
     parseCommand("--rpc-gas-cap", Long.toString(rpcGasCap));
 
-    verify(mockRunnerBuilder).rpcGasCap(longArgumentCaptor.capture());
+    verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(longArgumentCaptor.getValue()).isEqualTo(rpcGasCap);
+    assertThat(apiConfigurationCaptor.getValue())
+        .isEqualTo(ImmutableApiConfiguration.builder().gasCap((rpcGasCap)).build());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();

@@ -73,7 +73,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
@@ -88,7 +87,6 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final MiningCoordinator miningCoordinator;
   private final Set<Capability> supportedCapabilities;
   private final ApiConfiguration apiConfiguration;
-  private final Optional<Long> gasCap;
 
   public EthJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
@@ -98,8 +96,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
       final Set<Capability> supportedCapabilities,
-      final ApiConfiguration apiConfiguration,
-      final Optional<Long> gasCap) {
+      final ApiConfiguration apiConfiguration) {
     this.blockchainQueries = blockchainQueries;
     this.synchronizer = synchronizer;
     this.protocolSchedule = protocolSchedule;
@@ -108,7 +105,6 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.miningCoordinator = miningCoordinator;
     this.supportedCapabilities = supportedCapabilities;
     this.apiConfiguration = apiConfiguration;
-    this.gasCap = gasCap;
   }
 
   @Override
@@ -133,10 +129,10 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
                 protocolSchedule,
-                gasCap)),
+                apiConfiguration.getGasCap())),
         new EthFeeHistory(protocolSchedule, blockchainQueries.getBlockchain()),
         new EthGetCode(blockchainQueries),
-        new EthGetLogs(blockchainQueries, apiConfiguration),
+        new EthGetLogs(blockchainQueries, apiConfiguration.getMaxLogsRange()),
         new EthGetProof(blockchainQueries),
         new EthGetUncleCountByBlockHash(blockchainQueries),
         new EthGetUncleCountByBlockNumber(blockchainQueries),
@@ -163,14 +159,14 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
                 protocolSchedule,
-                gasCap)),
+                apiConfiguration.getGasCap())),
         new EthCreateAccessList(
             blockchainQueries,
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
                 protocolSchedule,
-                gasCap)),
+                apiConfiguration.getGasCap())),
         new EthMining(miningCoordinator),
         new EthCoinbase(miningCoordinator),
         new EthProtocolVersion(supportedCapabilities),

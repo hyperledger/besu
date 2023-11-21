@@ -91,10 +91,9 @@ public class TransactionSimulatorTest {
   @BeforeEach
   public void setUp() {
     this.transactionSimulator =
-        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, Optional.empty());
+        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, 0);
     this.cappedTransactionSimulator =
-        new TransactionSimulator(
-            blockchain, worldStateArchive, protocolSchedule, Optional.of(GASCAP));
+        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, GASCAP);
   }
 
   @Test
