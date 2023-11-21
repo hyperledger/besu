@@ -41,7 +41,7 @@ dependencies {
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':testutil')
 
-  testImplementation 'junit:junit'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
