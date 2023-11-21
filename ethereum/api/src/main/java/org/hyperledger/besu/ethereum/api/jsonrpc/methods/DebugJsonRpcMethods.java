@@ -51,6 +51,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 
 public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
@@ -64,6 +65,8 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final Synchronizer synchronizer;
   private final Path dataDir;
 
+  private final Optional<Long> gasCap;
+
   DebugJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final ProtocolContext protocolContext,
@@ -71,7 +74,8 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final ObservableMetricsSystem metricsSystem,
       final TransactionPool transactionPool,
       final Synchronizer synchronizer,
-      final Path dataDir) {
+      final Path dataDir,
+      final Optional<Long> gasCap) {
     this.blockchainQueries = blockchainQueries;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
@@ -79,6 +83,7 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.transactionPool = transactionPool;
     this.synchronizer = synchronizer;
     this.dataDir = dataDir;
+    this.gasCap = gasCap;
   }
 
   @Override
@@ -122,6 +127,7 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule)));
+                protocolSchedule,
+                gasCap)));
   }
 }

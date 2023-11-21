@@ -143,7 +143,9 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
                 GraphQLContextType.MINING_COORDINATOR,
                 miningCoordinatorMock,
                 GraphQLContextType.SYNCHRONIZER,
-                synchronizerMock),
+                synchronizerMock,
+                GraphQLContextType.GAS_CAP,
+                Optional.empty()),
             Mockito.mock(EthScheduler.class));
     service.start().join();
 

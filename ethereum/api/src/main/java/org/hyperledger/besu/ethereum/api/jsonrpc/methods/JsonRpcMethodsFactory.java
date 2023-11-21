@@ -80,7 +80,8 @@ public class JsonRpcMethodsFactory {
       final EthPeers ethPeers,
       final Vertx consensusEngineServer,
       final Optional<Long> maxLogRange,
-      final Optional<EnodeDnsConfiguration> enodeDnsConfiguration) {
+      final Optional<EnodeDnsConfiguration> enodeDnsConfiguration,
+      final Optional<Long> gasCap) {
     final Map<String, JsonRpcMethod> enabled = new HashMap<>();
     if (!rpcApis.isEmpty()) {
       final JsonRpcMethod modules = new RpcModules(rpcApis);
@@ -104,7 +105,8 @@ public class JsonRpcMethodsFactory {
                   metricsSystem,
                   transactionPool,
                   synchronizer,
-                  dataDir),
+                  dataDir,
+                  gasCap),
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new ExecutionEngineJsonRpcMethods(
@@ -121,7 +123,8 @@ public class JsonRpcMethodsFactory {
                   transactionPool,
                   miningCoordinator,
                   supportedCapabilities,
-                  maxLogRange),
+                  maxLogRange,
+                  gasCap),
               new NetJsonRpcMethods(
                   p2pNetwork,
                   networkId,
@@ -139,7 +142,7 @@ public class JsonRpcMethodsFactory {
               new PrivxJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new Web3JsonRpcMethods(clientVersion),
-              new TraceJsonRpcMethods(blockchainQueries, protocolSchedule),
+              new TraceJsonRpcMethods(blockchainQueries, protocolSchedule, gasCap),
               new TxPoolJsonRpcMethods(transactionPool),
               new PluginsJsonRpcMethods(namedPlugins));
 

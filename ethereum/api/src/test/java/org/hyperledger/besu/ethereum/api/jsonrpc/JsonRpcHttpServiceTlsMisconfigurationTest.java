@@ -130,6 +130,7 @@ class JsonRpcHttpServiceTlsMisconfigurationTest {
                     mock(EthPeers.class),
                     vertx,
                     Optional.empty(),
+                    Optional.empty(),
                     Optional.empty()));
   }
 
