@@ -37,7 +37,7 @@ public abstract class ApiConfiguration {
   @Value.Default
   @Value.Auxiliary
   public LongSupplier getGasPriceMinSupplier() {
-    return () -> 1_000_000_000L; // 1 GWei;
+    return () -> 1_000_000_000L; // 1 GWei
   }
 
   @Value.Default
