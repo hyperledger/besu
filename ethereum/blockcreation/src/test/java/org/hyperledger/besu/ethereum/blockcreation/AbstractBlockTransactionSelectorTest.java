@@ -583,9 +583,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
               public TransactionSelectionResult evaluateTransactionPreProcessing(
                   final PendingTransaction pendingTransaction) {
                 if (pendingTransaction.getTransaction().equals(notSelectedTransient))
-                  return TransactionSelectionResult.invalidTransient("transient");
+                  return PluginTransactionSelectionResult.GENERIC_PLUGIN_INVALID_TRANSIENT;
                 if (pendingTransaction.getTransaction().equals(notSelectedInvalid))
-                  return TransactionSelectionResult.invalid("invalid");
+                  return PluginTransactionSelectionResult.GENERIC_PLUGIN_INVALID;
                 return SELECTED;
               }
 
@@ -618,8 +618,10 @@ public abstract class AbstractBlockTransactionSelectorTest {
     assertThat(transactionSelectionResults.getSelectedTransactions()).containsOnly(selected);
     assertThat(transactionSelectionResults.getNotSelectedTransactions())
         .containsOnly(
-            entry(notSelectedTransient, TransactionSelectionResult.invalidTransient("transient")),
-            entry(notSelectedInvalid, TransactionSelectionResult.invalid("invalid")));
+            entry(
+                notSelectedTransient,
+                PluginTransactionSelectionResult.GENERIC_PLUGIN_INVALID_TRANSIENT),
+            entry(notSelectedInvalid, PluginTransactionSelectionResult.GENERIC_PLUGIN_INVALID));
   }
 
   @Test
@@ -654,7 +656,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
                       processingResult) {
                 // the transaction with max gas +1 should fail
                 if (processingResult.getEstimateGasUsedByTransaction() > maxGasUsedByTransaction) {
-                  return TransactionSelectionResult.invalidTransient("Invalid");
+                  return PluginTransactionSelectionResult.GENERIC_PLUGIN_INVALID_TRANSIENT;
                 }
                 return SELECTED;
               }
@@ -678,7 +680,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     assertThat(transactionSelectionResults.getSelectedTransactions()).contains(selected, selected3);
     assertThat(transactionSelectionResults.getNotSelectedTransactions())
-        .containsOnly(entry(notSelected, TransactionSelectionResult.invalidTransient("Invalid")));
+        .containsOnly(
+            entry(notSelected, PluginTransactionSelectionResult.GENERIC_PLUGIN_INVALID_TRANSIENT));
   }
 
   @Test
@@ -1188,5 +1191,49 @@ public abstract class AbstractBlockTransactionSelectorTest {
                 .poaBlockTxsSelectionMaxTime(minBlockTimePercentage)
                 .build())
         .build();
+  }
+
+  private static class PluginTransactionSelectionResult extends TransactionSelectionResult {
+    private enum PluginStatus implements Status {
+      PLUGIN_INVALID(false, true),
+      PLUGIN_INVALID_TRANSIENT(false, false);
+
+      private final boolean stop;
+      private final boolean discard;
+
+      PluginStatus(final boolean stop, final boolean discard) {
+        this.stop = stop;
+        this.discard = discard;
+      }
+
+      @Override
+      public boolean stop() {
+        return stop;
+      }
+
+      @Override
+      public boolean discard() {
+        return discard;
+      }
+    }
+
+    public static final TransactionSelectionResult GENERIC_PLUGIN_INVALID_TRANSIENT =
+        invalidTransient("GENERIC_PLUGIN_INVALID_TRANSIENT");
+
+    public static final TransactionSelectionResult GENERIC_PLUGIN_INVALID =
+        invalid("GENERIC_PLUGIN_INVALID");
+
+    private PluginTransactionSelectionResult(final Status status, final String invalidReason) {
+      super(status, invalidReason);
+    }
+
+    public static TransactionSelectionResult invalidTransient(final String invalidReason) {
+      return new PluginTransactionSelectionResult(
+          PluginStatus.PLUGIN_INVALID_TRANSIENT, invalidReason);
+    }
+
+    public static TransactionSelectionResult invalid(final String invalidReason) {
+      return new PluginTransactionSelectionResult(PluginStatus.PLUGIN_INVALID, invalidReason);
+    }
   }
 }
