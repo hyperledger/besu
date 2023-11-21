@@ -128,7 +128,7 @@ tasks.register('dockerUpload', Exec) {
   dependsOn distDocker
   String dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
   def dockerOrgName = project.hasProperty('dockerOrgName') ? project.getProperty("dockerOrgName") : "hyperledger"
-  def dockerArtifactName = project.hasProperty("dockerArtifactName") ? project.getProperty("dockerArtifactName") : "besu-evmtool"
+  def dockerArtifactName = project.hasProperty("dockerArtifactName") ? "${project.getProperty("dockerArtifactName")}-evmtool" : "besu-evmtool"
   def imageName = "${dockerOrgName}/${dockerArtifactName}"
   def image = "${imageName}:${dockerBuildVersion}"
   def cmd = "docker push '${image}'"
