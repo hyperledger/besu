@@ -167,6 +167,7 @@ public final class RunnerBuilderTest {
             .dataDir(dataDir.getRoot())
             .storageProvider(mock(KeyValueStorageProvider.class, RETURNS_DEEP_STUBS))
             .rpcEndpointService(new RpcEndpointServiceImpl())
+            .rpcGasCap(50_000_000L)
             .build();
     runner.startEthereumMainLoop();
 
@@ -211,6 +212,7 @@ public final class RunnerBuilderTest {
             .dataDir(dataDir.getRoot())
             .storageProvider(storageProvider)
             .rpcEndpointService(new RpcEndpointServiceImpl())
+            .rpcGasCap(50_000_000L)
             .build();
     runner.startEthereumMainLoop();
 
@@ -270,6 +272,7 @@ public final class RunnerBuilderTest {
             .storageProvider(mock(KeyValueStorageProvider.class, RETURNS_DEEP_STUBS))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
+            .rpcGasCap(50_000_000L)
             .build();
 
     assertThat(runner.getJsonRpcPort()).isPresent();
@@ -312,6 +315,7 @@ public final class RunnerBuilderTest {
             .storageProvider(mock(KeyValueStorageProvider.class, RETURNS_DEEP_STUBS))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
+            .rpcGasCap(50_000_000L)
             .build();
 
     assertThat(runner.getEngineJsonRpcPort()).isPresent();
@@ -353,6 +357,7 @@ public final class RunnerBuilderTest {
             .storageProvider(mock(KeyValueStorageProvider.class, RETURNS_DEEP_STUBS))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
+            .rpcGasCap(50_000_000L)
             .build();
 
     assertThat(runner.getEngineJsonRpcPort()).isPresent();
@@ -396,6 +401,7 @@ public final class RunnerBuilderTest {
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
             .networkingConfiguration(NetworkingConfiguration.create())
+            .rpcGasCap(50_000_000L)
             .build();
 
     assertThat(runner.getJsonRpcPort()).isPresent();
