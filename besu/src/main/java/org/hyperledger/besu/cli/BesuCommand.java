@@ -2485,6 +2485,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .gasPriceMinSupplier(
             getMiningParameters().getMinTransactionGasPrice().getAsBigInteger()::longValueExact)
         .gasPriceMax(apiGasPriceMax)
+        .maxLogsRange((rpcMaxLogsRange))
         .build();
   }
 
@@ -2930,7 +2931,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .ethstatsOptions(ethstatsOptions)
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .rpcEndpointService(rpcEndpointServiceImpl)
-            .rpcMaxLogsRange(rpcMaxLogsRange)
             .enodeDnsConfiguration(getEnodeDnsConfiguration())
             .build();
 

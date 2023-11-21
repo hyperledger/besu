@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
@@ -27,7 +28,6 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
@@ -38,11 +38,11 @@ public class EthGetLogs implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(EthGetLogs.class);
 
   private final BlockchainQueries blockchain;
-  private final Optional<Long> maxLogRange;
+  private final ApiConfiguration apiConfiguration;
 
-  public EthGetLogs(final BlockchainQueries blockchain, final Optional<Long> maxLogRange) {
+  public EthGetLogs(final BlockchainQueries blockchain, final ApiConfiguration apiConfiguration) {
     this.blockchain = blockchain;
-    this.maxLogRange = maxLogRange;
+    this.apiConfiguration = apiConfiguration;
   }
 
   @Override
@@ -86,8 +86,8 @@ public class EthGetLogs implements JsonRpcMethod {
                             .getBlockNumber(blockchain)
                             .orElseThrow(
                                 () -> new Exception("toBlock not found: " + filter.getToBlock()));
-                    if (maxLogRange.isPresent()
-                        && (toBlockNumber - fromBlockNumber) > maxLogRange.get()) {
+                    if (apiConfiguration.getMaxLogsRange() > 0
+                        && (toBlockNumber - fromBlockNumber) > apiConfiguration.getMaxLogsRange()) {
                       throw new IllegalArgumentException(
                           "Requested range exceeds maximum range limit");
                     }
