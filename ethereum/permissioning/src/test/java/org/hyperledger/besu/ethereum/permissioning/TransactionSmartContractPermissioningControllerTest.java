@@ -41,6 +41,7 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Optional;
 
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
@@ -71,7 +72,7 @@ public class TransactionSmartContractPermissioningControllerTest {
     genesisState.writeStateTo(worldArchive.getMutable());
 
     final TransactionSimulator ts =
-        new TransactionSimulator(blockchain, worldArchive, protocolSchedule);
+        new TransactionSimulator(blockchain, worldArchive, protocolSchedule, Optional.empty());
     final Address contractAddress = Address.fromHexString(contractAddressString);
 
     when(metricsSystem.createCounter(

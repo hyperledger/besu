@@ -142,6 +142,7 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
                     mock(EthPeers.class),
                     vertx,
                     mock(ApiConfiguration.class),
+                    Optional.empty(),
                     Optional.empty()));
 
     System.setProperty("javax.net.ssl.trustStore", CLIENT_AS_CA_CERT.getKeyStoreFile().toString());

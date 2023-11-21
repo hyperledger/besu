@@ -34,10 +34,13 @@ import org.slf4j.LoggerFactory;
 public class PeerReputation implements Comparable<PeerReputation> {
   static final long USELESS_RESPONSE_WINDOW_IN_MILLIS =
       TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
-  static final int DEFAULT_MAX_SCORE = 150;
+  static final int DEFAULT_MAX_SCORE = 200;
+  // how much above the initial score you need to be to not get disconnected for timeouts/useless
+  // responses
+  private final int hasBeenUsefulThreshold;
   static final int DEFAULT_INITIAL_SCORE = 100;
   private static final Logger LOG = LoggerFactory.getLogger(PeerReputation.class);
-  private static final int TIMEOUT_THRESHOLD = 3;
+  private static final int TIMEOUT_THRESHOLD = 5;
   private static final int USELESS_RESPONSE_THRESHOLD = 5;
 
   private final ConcurrentMap<Integer, AtomicInteger> timeoutCountByRequestType =
@@ -45,8 +48,7 @@ public class PeerReputation implements Comparable<PeerReputation> {
   private final Queue<Long> uselessResponseTimes = new ConcurrentLinkedQueue<>();
 
   private static final int SMALL_ADJUSTMENT = 1;
-  private static final int LARGE_ADJUSTMENT = 10;
-
+  private static final int LARGE_ADJUSTMENT = 5;
   private int score;
 
   private final int maxScore;
@@ -59,22 +61,37 @@ public class PeerReputation implements Comparable<PeerReputation> {
     checkArgument(
         initialScore <= maxScore, "Initial score must be less than or equal to max score");
     this.maxScore = maxScore;
+    this.hasBeenUsefulThreshold = Math.min(maxScore, initialScore + 10);
     this.score = initialScore;
   }
 
   public Optional<DisconnectReason> recordRequestTimeout(final int requestCode) {
     final int newTimeoutCount = getOrCreateTimeoutCount(requestCode).incrementAndGet();
     if (newTimeoutCount >= TIMEOUT_THRESHOLD) {
-      LOG.debug(
-          "Disconnection triggered by {} repeated timeouts for requestCode {}",
-          newTimeoutCount,
-          requestCode);
       score -= LARGE_ADJUSTMENT;
-      return Optional.of(DisconnectReason.TIMEOUT);
+      // don't trigger disconnect if this peer has a sufficiently high reputation score
+      if (peerHasNotBeenUseful()) {
+        LOG.debug(
+            "Disconnection triggered by {} repeated timeouts for requestCode {}, peer score {}",
+            newTimeoutCount,
+            requestCode,
+            score);
+        return Optional.of(DisconnectReason.TIMEOUT);
+      }
+
+      LOG.trace(
+          "Not triggering disconnect for {} repeated timeouts for requestCode {} because peer has high score {}",
+          newTimeoutCount,
+          requestCode,
+          score);
     } else {
       score -= SMALL_ADJUSTMENT;
-      return Optional.empty();
     }
+    return Optional.empty();
+  }
+
+  private boolean peerHasNotBeenUseful() {
+    return score < hasBeenUsefulThreshold;
   }
 
   public void resetTimeoutCount(final int requestCode) {
@@ -96,12 +113,19 @@ public class PeerReputation implements Comparable<PeerReputation> {
     }
     if (uselessResponseTimes.size() >= USELESS_RESPONSE_THRESHOLD) {
       score -= LARGE_ADJUSTMENT;
-      LOG.debug("Disconnection triggered by exceeding useless response threshold");
-      return Optional.of(DisconnectReason.USELESS_PEER);
+      // don't trigger disconnect if this peer has a sufficiently high reputation score
+      if (peerHasNotBeenUseful()) {
+        LOG.debug(
+            "Disconnection triggered by exceeding useless response threshold, score {}", score);
+        return Optional.of(DisconnectReason.USELESS_PEER);
+      }
+      LOG.trace(
+          "Not triggering disconnect for exceeding useless response threshold because peer has high score {}",
+          score);
     } else {
       score -= SMALL_ADJUSTMENT;
-      return Optional.empty();
     }
+    return Optional.empty();
   }
 
   public void recordUsefulResponse() {

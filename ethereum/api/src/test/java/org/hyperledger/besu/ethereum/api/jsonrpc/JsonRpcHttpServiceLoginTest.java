@@ -158,6 +158,7 @@ public class JsonRpcHttpServiceLoginTest {
                     mock(EthPeers.class),
                     vertx,
                     mock(ApiConfiguration.class),
+                    Optional.empty(),
                     Optional.empty()));
     service = createJsonRpcHttpService();
     jwtAuth = service.authenticationService.get().getJwtAuthProvider();

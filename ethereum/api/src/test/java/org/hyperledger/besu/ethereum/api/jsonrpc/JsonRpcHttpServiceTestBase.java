@@ -137,6 +137,7 @@ public class JsonRpcHttpServiceTestBase {
                     ethPeersMock,
                     vertx,
                     mock(ApiConfiguration.class),
+                    Optional.empty(),
                     Optional.empty()));
     service = createJsonRpcHttpService(createLimitedJsonRpcConfig());
     service.start().join();

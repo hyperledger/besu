@@ -722,7 +722,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             clock,
             metricsSystem,
             syncState,
-            miningParameters,
             transactionPoolConfiguration,
             pluginTransactionValidatorFactory,
             besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()));

@@ -48,6 +48,8 @@ import javax.annotation.Nonnull;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*
  * Used to process transactions for eth_call and eth_estimateGas.
@@ -56,6 +58,7 @@ import org.apache.tuweni.bytes.Bytes;
  * blockchain or to estimate the transaction gas cost.
  */
 public class TransactionSimulator {
+  private static final Logger LOG = LoggerFactory.getLogger(TransactionSimulator.class);
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
@@ -76,14 +79,17 @@ public class TransactionSimulator {
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
   private final ProtocolSchedule protocolSchedule;
+  private final Optional<Long> rpcGasCap;
 
   public TransactionSimulator(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule protocolSchedule) {
+      final ProtocolSchedule protocolSchedule,
+      final Optional<Long> rpcGasCap) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
+    this.rpcGasCap = rpcGasCap;
   }
 
   public Optional<TransactionSimulatorResult> process(
@@ -207,10 +213,17 @@ public class TransactionSimulator {
     final Account sender = updater.get(senderAddress);
     final long nonce = sender != null ? sender.getNonce() : 0L;
 
-    final long gasLimit =
+    long gasLimit =
         callParams.getGasLimit() >= 0
             ? callParams.getGasLimit()
             : blockHeaderToProcess.getGasLimit();
+    if (rpcGasCap.isPresent()) {
+      final long gasCap = rpcGasCap.get();
+      if (gasCap < gasLimit) {
+        gasLimit = gasCap;
+        LOG.info("Capping gasLimit to " + gasCap);
+      }
+    }
     final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
     final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
 

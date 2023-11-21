@@ -251,7 +251,6 @@ public class RetestethContext {
             retestethClock,
             metricsSystem,
             syncState,
-            miningParameters,
             transactionPoolConfiguration,
             null,
             new BlobCache());

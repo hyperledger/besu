@@ -191,6 +191,7 @@ public class RunnerBuilder {
   private RpcEndpointServiceImpl rpcEndpointServiceImpl;
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private boolean legacyForkIdEnabled;
+  private Optional<Long> rpcGasCap;
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
 
   /**
@@ -575,6 +576,17 @@ public class RunnerBuilder {
   }
 
   /**
+   * Add Rpc gasLimit cap .
+   *
+   * @param rpcGasCap the rpc gas limit cap for transaction simulation methods
+   * @return the runner builder
+   */
+  public RunnerBuilder rpcGasCap(final Long rpcGasCap) {
+    this.rpcGasCap = rpcGasCap > 0 ? Optional.of(rpcGasCap) : Optional.empty();
+    return this;
+  }
+
+  /**
    * Add enode DNS configuration
    *
    * @param enodeDnsConfiguration the DNS configuration for enodes
@@ -649,7 +661,7 @@ public class RunnerBuilder {
 
     final TransactionSimulator transactionSimulator =
         new TransactionSimulator(
-            context.getBlockchain(), context.getWorldStateArchive(), protocolSchedule);
+            context.getBlockchain(), context.getWorldStateArchive(), protocolSchedule, rpcGasCap);
 
     final Bytes localNodeId = nodeKey.getPublicKey().getEncodedBytes();
     final Optional<NodePermissioningController> nodePermissioningController =
@@ -898,6 +910,7 @@ public class RunnerBuilder {
       graphQlContextMap.putIfAbsent(GraphQLContextType.SYNCHRONIZER, synchronizer);
       graphQlContextMap.putIfAbsent(
           GraphQLContextType.CHAIN_ID, protocolSchedule.getChainId().map(UInt256::valueOf));
+      graphQlContextMap.putIfAbsent(GraphQLContextType.GAS_CAP, rpcGasCap);
       final GraphQL graphQL;
       try {
         graphQL = GraphQLProvider.buildGraphQL(fetchers);
@@ -1228,7 +1241,8 @@ public class RunnerBuilder {
                 besuController.getProtocolManager().ethContext().getEthPeers(),
                 consensusEngineServer,
                 apiConfiguration,
-                enodeDnsConfiguration);
+                enodeDnsConfiguration,
+                rpcGasCap);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
 
     final var pluginMethods =

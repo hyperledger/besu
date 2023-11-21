@@ -1,9 +1,9 @@
 
-FROM ubuntu:22.04
+FROM ubuntu:23.10
 ARG VERSION="dev"
 
 RUN apt-get update && \
- apt-get install --no-install-recommends -q --assume-yes openjdk-19-jre-headless=19* libjemalloc-dev=5.* && \
+ apt-get install --no-install-recommends -q --assume-yes openjdk-21-jre-headless=21* libjemalloc-dev=5.* adduser=3* && \
  apt-get clean  && \
  rm -rf /var/lib/apt/lists/*  && \
  adduser --disabled-password --gecos "" --home /opt/besu besu && \
