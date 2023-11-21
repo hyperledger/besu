@@ -181,7 +181,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
   protected abstract ProtocolSchedule createProtocolSchedule();
 
-  protected abstract TransactionPool createTransactionPool(final MiningParameters miningParameters);
+  protected abstract TransactionPool createTransactionPool();
 
   private Boolean isCancelled() {
     return false;
@@ -1026,7 +1026,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final Wei blobGasPrice,
       final PluginTransactionSelectorFactory transactionSelectorFactory) {
 
-    transactionPool = createTransactionPool(miningParameters);
+    transactionPool = createTransactionPool();
 
     return createBlockSelector(
         miningParameters,

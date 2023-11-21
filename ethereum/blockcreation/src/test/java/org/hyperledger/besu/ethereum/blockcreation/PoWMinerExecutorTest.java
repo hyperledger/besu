@@ -52,7 +52,7 @@ public class PoWMinerExecutorTest {
   public void startingMiningWithoutCoinbaseThrowsException() {
     final MiningParameters miningParameters = MiningParameters.newDefault();
 
-    final TransactionPool transactionPool = createTransactionPool(miningParameters);
+    final TransactionPool transactionPool = createTransactionPool();
 
     final PoWMinerExecutor executor =
         new PoWMinerExecutor(
@@ -73,7 +73,7 @@ public class PoWMinerExecutorTest {
   public void settingCoinbaseToNullThrowsException() {
     final MiningParameters miningParameters = MiningParameters.newDefault();
 
-    final TransactionPool transactionPool = createTransactionPool(miningParameters);
+    final TransactionPool transactionPool = createTransactionPool();
 
     final PoWMinerExecutor executor =
         new PoWMinerExecutor(
@@ -96,7 +96,7 @@ public class PoWMinerExecutorTest {
     return blockHeader;
   }
 
-  private TransactionPool createTransactionPool(final MiningParameters miningParameters) {
+  private TransactionPool createTransactionPool() {
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();
     final GasPricePendingTransactionsSorter pendingTransactions =
@@ -116,7 +116,6 @@ public class PoWMinerExecutorTest {
             mock(ProtocolContext.class),
             mock(TransactionBroadcaster.class),
             ethContext,
-            miningParameters,
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
             poolConf,
             null);
