@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.getRa
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
@@ -29,8 +30,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
-import org.hyperledger.besu.ethereum.worldstate.strategy.WorldStateStorageStrategy;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -76,7 +76,7 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
   @Override
   public Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
-      final WorldStateStorageCoordinator worldStateStorage,
+      final WorldStateStorageFormatCoordinator worldStateStorage,
       final SnapSyncProcessState snapSyncState) {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
     if (!slots.isEmpty()) {
@@ -133,8 +133,8 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
   @Override
   protected int doPersist(
-      final WorldStateStorageCoordinator worldStateStorage,
-      final WorldStateStorageStrategy.Updater updater,
+      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncProcessState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration) {

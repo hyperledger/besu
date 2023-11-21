@@ -14,14 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
-import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator.applyForStrategy;
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator.applyForStrategy;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
-import org.hyperledger.besu.ethereum.worldstate.strategy.WorldStateStorageStrategy;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -41,7 +40,7 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
   }
 
   @Override
-  protected void doPersist(final WorldStateStorageStrategy.Updater updater) {
+  protected void doPersist(final WorldStateKeyValueStorage.Updater updater) {
     applyForStrategy(
         updater,
         onBonsai -> {
@@ -57,7 +56,8 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
   }
 
   @Override
-  public Optional<Bytes> getExistingData(final WorldStateStorageCoordinator worldStateStorage) {
+  public Optional<Bytes> getExistingData(
+      final WorldStateStorageFormatCoordinator worldStateStorage) {
     return getAccountHash()
         .flatMap(
             accountHash ->
@@ -77,14 +77,15 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(
-      final WorldStateStorageCoordinator worldStateStorage,
+      final WorldStateStorageFormatCoordinator worldStateStorage,
       final Optional<Bytes> location,
       final Bytes path,
       final Bytes value) {
 
     worldStateStorage.applyWhenFlatModeEnabled(
-        worldStateStorageStrategy -> {
-          ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorageStrategy.updater())
+        worldStateKeyValueStorage -> {
+          worldStateKeyValueStorage
+              .updater()
               .putStorageValueBySlotHash(
                   accountHash.get(),
                   getSlotHash(location, path),

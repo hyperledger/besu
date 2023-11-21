@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.Node;
@@ -33,7 +34,6 @@ import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.TrieIterator.State;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.strategy.ForestWorldStateStorageStrategy;
 import org.hyperledger.besu.util.io.RollingFileWriter;
 
 import java.io.IOException;
@@ -73,7 +73,7 @@ public class StateBackupService {
   private final Lock submissionLock = new ReentrantLock();
   private final EthScheduler scheduler;
   private final Blockchain blockchain;
-  private final ForestWorldStateStorageStrategy worldStateStorage;
+  private final ForestWorldStateKeyValueStorage worldStateStorage;
   private final BackupStatus backupStatus = new BackupStatus();
 
   private Path backupDir;
@@ -84,7 +84,7 @@ public class StateBackupService {
       final Blockchain blockchain,
       final Path backupDir,
       final EthScheduler scheduler,
-      final ForestWorldStateStorageStrategy worldStateStorage) {
+      final ForestWorldStateKeyValueStorage worldStateStorage) {
     this.besuVersion = besuVersion;
     this.blockchain = blockchain;
     this.backupDir = backupDir;

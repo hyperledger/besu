@@ -18,10 +18,10 @@ import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.can
 import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.errorCountAtThreshold;
 import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.getRetryableErrorCounter;
 
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
-import org.hyperledger.besu.ethereum.worldstate.strategy.WorldStateStorageStrategy;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.services.tasks.Task;
 
@@ -34,9 +34,9 @@ public class PersistDataStep {
 
   private static final Logger LOG = LoggerFactory.getLogger(PersistDataStep.class);
 
-  private final WorldStateStorageCoordinator worldStateStorage;
+  private final WorldStateStorageFormatCoordinator worldStateStorage;
 
-  public PersistDataStep(final WorldStateStorageCoordinator worldStateStorage) {
+  public PersistDataStep(final WorldStateStorageFormatCoordinator worldStateStorage) {
     this.worldStateStorage = worldStateStorage;
   }
 
@@ -45,7 +45,7 @@ public class PersistDataStep {
       final BlockHeader blockHeader,
       final WorldDownloadState<NodeDataRequest> downloadState) {
     try {
-      final WorldStateStorageStrategy.Updater updater = worldStateStorage.updater();
+      final WorldStateKeyValueStorage.Updater updater = worldStateStorage.updater();
       tasks.stream()
           .map(
               task -> {

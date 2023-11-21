@@ -18,11 +18,11 @@ import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.can
 import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.errorCountAtThreshold;
 import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.getRetryableErrorCounter;
 
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
-import org.hyperledger.besu.ethereum.worldstate.strategy.WorldStateStorageStrategy;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.services.tasks.Task;
 
@@ -36,14 +36,14 @@ public class PersistDataStep {
   private static final Logger LOG = LoggerFactory.getLogger(PersistDataStep.class);
 
   private final SnapSyncProcessState snapSyncState;
-  private final WorldStateStorageCoordinator worldStateStorage;
+  private final WorldStateStorageFormatCoordinator worldStateStorage;
   private final SnapWorldDownloadState downloadState;
 
   private final SnapSyncConfiguration snapSyncConfiguration;
 
   public PersistDataStep(
       final SnapSyncProcessState snapSyncState,
-      final WorldStateStorageCoordinator worldStateStorage,
+      final WorldStateStorageFormatCoordinator worldStateStorage,
       final SnapWorldDownloadState downloadState,
       final SnapSyncConfiguration snapSyncConfiguration) {
     this.snapSyncState = snapSyncState;
@@ -54,7 +54,7 @@ public class PersistDataStep {
 
   public List<Task<SnapDataRequest>> persist(final List<Task<SnapDataRequest>> tasks) {
     try {
-      final WorldStateStorageStrategy.Updater updater = worldStateStorage.updater();
+      final WorldStateKeyValueStorage.Updater updater = worldStateStorage.updater();
       for (Task<SnapDataRequest> task : tasks) {
         if (task.getData().isResponseReceived()) {
           // enqueue child requests

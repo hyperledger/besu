@@ -23,11 +23,11 @@ import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.forest.storage.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -57,7 +57,7 @@ public class BlockchainModule {
   @Singleton
   MutableWorldState getMutableWorldState(
       @Named("StateRoot") final Bytes32 stateRoot,
-      final WorldStateStorageCoordinator worldStateStorage,
+      final WorldStateStorageFormatCoordinator worldStateStorage,
       final WorldStatePreimageStorage worldStatePreimageStorage,
       final GenesisState genesisState,
       @Named("KeyValueStorageName") final String keyValueStorageName,
@@ -65,7 +65,7 @@ public class BlockchainModule {
     if ("memory".equals(keyValueStorageName)) {
       final MutableWorldState mutableWorldState =
           new ForestMutableWorldState(
-              worldStateStorage.worldStateStorageStrategy(),
+              worldStateStorage.worldStateKeyValueStorage(),
               worldStatePreimageStorage,
               evmConfiguration);
       genesisState.writeStateTo(mutableWorldState);
@@ -73,7 +73,7 @@ public class BlockchainModule {
     } else {
       return new ForestMutableWorldState(
           stateRoot,
-          worldStateStorage.worldStateStorageStrategy(),
+          worldStateStorage.worldStateKeyValueStorage(),
           worldStatePreimageStorage,
           evmConfiguration);
     }
@@ -81,9 +81,10 @@ public class BlockchainModule {
 
   @Provides
   @Singleton
-  WorldStateStorageCoordinator provideWorldStateStorage(
+  WorldStateStorageFormatCoordinator provideWorldStateStorage(
       @Named("worldState") final KeyValueStorage keyValueStorage) {
-    return new WorldStateStorageCoordinator(new WorldStateKeyValueStorage(keyValueStorage));
+    return new WorldStateStorageFormatCoordinator(
+        new ForestWorldStateKeyValueStorage(keyValueStorage));
   }
 
   @Provides

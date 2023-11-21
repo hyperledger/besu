@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.concurrent.CompletableFuture;
@@ -52,8 +52,8 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 public class FastSyncChainDownloaderTest {
 
-  private final WorldStateStorageCoordinator worldStateStorage =
-      mock(WorldStateStorageCoordinator.class);
+  private final WorldStateStorageFormatCoordinator worldStateStorage =
+      mock(WorldStateStorageFormatCoordinator.class);
 
   protected ProtocolSchedule protocolSchedule;
   protected EthProtocolManager ethProtocolManager;

@@ -17,11 +17,11 @@ package org.hyperledger.besu.ethereum.forest.pruner;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.strategy.ForestWorldStateStorageStrategy;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -58,7 +58,7 @@ public class MarkSweepPruner {
   private static final int MAX_MARKING_THREAD_POOL_SIZE = 2;
 
   private final int operationsPerTransaction;
-  private final ForestWorldStateStorageStrategy worldStateStorageStrategy;
+  private final ForestWorldStateKeyValueStorage worldStateKeyValueStorage;
   private final MutableBlockchain blockchain;
   private final KeyValueStorage markStorage;
   private final Counter markedNodesCounter;
@@ -71,12 +71,12 @@ public class MarkSweepPruner {
   private final Set<Bytes32> pendingMarks = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   public MarkSweepPruner(
-      final ForestWorldStateStorageStrategy worldStateStorageStrategy,
+      final ForestWorldStateKeyValueStorage worldStateKeyValueStorage,
       final MutableBlockchain blockchain,
       final KeyValueStorage markStorage,
       final ObservableMetricsSystem metricsSystem) {
     this(
-        worldStateStorageStrategy,
+        worldStateKeyValueStorage,
         blockchain,
         markStorage,
         metricsSystem,
@@ -84,12 +84,12 @@ public class MarkSweepPruner {
   }
 
   public MarkSweepPruner(
-      final ForestWorldStateStorageStrategy worldStateStorageStrategy,
+      final ForestWorldStateKeyValueStorage worldStateKeyValueStorage,
       final MutableBlockchain blockchain,
       final KeyValueStorage markStorage,
       final ObservableMetricsSystem metricsSystem,
       final int operationsPerTransaction) {
-    this.worldStateStorageStrategy = worldStateStorageStrategy;
+    this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.markStorage = markStorage;
     this.blockchain = blockchain;
     this.operationsPerTransaction = operationsPerTransaction;
@@ -130,7 +130,7 @@ public class MarkSweepPruner {
     // last time, causing the first sweep to be smaller than it needs to be.
     clearMarks();
 
-    nodeAddedListenerId = worldStateStorageStrategy.addNodeAddedListener(this::markNodes);
+    nodeAddedListenerId = worldStateKeyValueStorage.addNodeAddedListener(this::markNodes);
   }
 
   /**
@@ -201,12 +201,11 @@ public class MarkSweepPruner {
     // Sweep state roots first, walking backwards until we get to a state root that isn't in the
     // storage
     long prunedNodeCount = 0;
-    ForestWorldStateStorageStrategy.Updater updater =
-        (ForestWorldStateStorageStrategy.Updater) worldStateStorageStrategy.updater();
+    ForestWorldStateKeyValueStorage.Updater updater = worldStateKeyValueStorage.updater();
     for (long blockNumber = markedBlockNumber - 1; blockNumber >= 0; blockNumber--) {
       final BlockHeader blockHeader = blockchain.getBlockHeader(blockNumber).get();
       final Hash candidateStateRootHash = blockHeader.getStateRoot();
-      if (!worldStateStorageStrategy.isWorldStateAvailable(candidateStateRootHash)) {
+      if (!worldStateKeyValueStorage.isWorldStateAvailable(candidateStateRootHash)) {
         break;
       }
 
@@ -215,21 +214,21 @@ public class MarkSweepPruner {
         prunedNodeCount++;
         if (prunedNodeCount % operationsPerTransaction == 0) {
           updater.commit();
-          updater = (ForestWorldStateStorageStrategy.Updater) worldStateStorageStrategy.updater();
+          updater = worldStateKeyValueStorage.updater();
         }
       }
     }
 
     updater.commit();
     // Sweep non-state-root nodes
-    prunedNodeCount += worldStateStorageStrategy.prune(this::isMarked);
+    prunedNodeCount += worldStateKeyValueStorage.prune(this::isMarked);
     sweptNodesCounter.inc(prunedNodeCount);
     clearMarks();
     LOG.debug("Completed sweeping unused nodes");
   }
 
   public void cleanup() {
-    worldStateStorageStrategy.removeNodeAddedListener(nodeAddedListenerId);
+    worldStateKeyValueStorage.removeNodeAddedListener(nodeAddedListenerId);
     clearMarks();
   }
 
@@ -248,7 +247,7 @@ public class MarkSweepPruner {
 
   private MerkleTrie<Bytes32, Bytes> createStateTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        (location, hash) -> worldStateStorageStrategy.getAccountStateTrieNode(hash),
+        (location, hash) -> worldStateKeyValueStorage.getAccountStateTrieNode(hash),
         rootHash,
         Function.identity(),
         Function.identity());
@@ -256,7 +255,7 @@ public class MarkSweepPruner {
 
   private MerkleTrie<Bytes32, Bytes> createStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        (location, hash) -> worldStateStorageStrategy.getAccountStorageTrieNode(hash),
+        (location, hash) -> worldStateKeyValueStorage.getAccountStorageTrieNode(hash),
         rootHash,
         Function.identity(),
         Function.identity());

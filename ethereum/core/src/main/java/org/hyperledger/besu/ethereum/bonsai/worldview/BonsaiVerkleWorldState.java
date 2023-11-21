@@ -62,7 +62,7 @@ public class BonsaiVerkleWorldState extends BonsaiWorldState {
 
   @Override
   protected Hash calculateRootHash(
-      final Optional<BonsaiWorldStateKeyValueStorage.BonsaiUpdater> maybeStateUpdater,
+      final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
 
     final VerkleTrie stateTrie =
@@ -108,7 +108,7 @@ public class BonsaiVerkleWorldState extends BonsaiWorldState {
   }
 
   private void updateTheAccounts(
-      final Optional<BonsaiWorldStateKeyValueStorage.BonsaiUpdater> maybeStateUpdater,
+      final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater,
       final VerkleTrie stateTrie) {
     for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> accountUpdate :
@@ -150,7 +150,7 @@ public class BonsaiVerkleWorldState extends BonsaiWorldState {
 
   private void updateCode(
       final VerkleTrie stateTrie,
-      final Optional<BonsaiWorldStateKeyValueStorage.BonsaiUpdater> maybeStateUpdater,
+      final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
     maybeStateUpdater.ifPresent(
         bonsaiUpdater -> {
@@ -198,7 +198,7 @@ public class BonsaiVerkleWorldState extends BonsaiWorldState {
 
   private void updateAccountStorageState(
       final VerkleTrie stateTrie,
-      final Optional<BonsaiWorldStateKeyValueStorage.BonsaiUpdater> maybeStateUpdater,
+      final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater,
       final Map.Entry<Address, StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>>
           storageAccountUpdate) {

@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
 import org.hyperledger.besu.services.tasks.Task;
 
 import java.nio.charset.StandardCharsets;
@@ -39,7 +39,7 @@ import org.junit.jupiter.api.Test;
 
 public class PersistDataStepTest {
 
-  private final WorldStateStorageCoordinator worldStateStorage =
+  private final WorldStateStorageFormatCoordinator worldStateStorage =
       new InMemoryKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.FOREST);
   private final FastWorldDownloadState downloadState = mock(FastWorldDownloadState.class);
 

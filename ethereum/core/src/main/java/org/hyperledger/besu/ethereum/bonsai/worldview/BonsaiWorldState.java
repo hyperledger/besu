@@ -24,6 +24,7 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
@@ -41,8 +42,6 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.strategy.BonsaiWorldStateStorageStrategy;
-import org.hyperledger.besu.ethereum.worldstate.strategy.WorldStateStorageStrategy;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -151,7 +150,7 @@ public class BonsaiWorldState
     return isPersisted(worldStateStorage);
   }
 
-  private boolean isPersisted(final WorldStateStorageStrategy worldStateStorage) {
+  private boolean isPersisted(final WorldStateKeyValueStorage worldStateStorage) {
     return !(worldStateStorage instanceof BonsaiSnapshotWorldStateKeyValueStorage);
   }
 
@@ -176,7 +175,7 @@ public class BonsaiWorldState
   }
 
   protected Hash calculateRootHash(
-      final Optional<BonsaiWorldStateKeyValueStorage.BonsaiUpdater> maybeStateUpdater,
+      final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
 
     clearStorage(maybeStateUpdater, worldStateUpdater);
@@ -223,7 +222,7 @@ public class BonsaiWorldState
   }
 
   private void updateTheAccounts(
-      final Optional<BonsaiWorldStateKeyValueStorage.BonsaiUpdater> maybeStateUpdater,
+      final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater,
       final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie) {
     for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> accountUpdate :
@@ -254,7 +253,7 @@ public class BonsaiWorldState
   }
 
   private void updateCode(
-      final Optional<BonsaiWorldStateKeyValueStorage.BonsaiUpdater> maybeStateUpdater,
+      final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
     maybeStateUpdater.ifPresent(
         bonsaiUpdater -> {
@@ -272,7 +271,7 @@ public class BonsaiWorldState
   }
 
   private void updateAccountStorageState(
-      final Optional<BonsaiWorldStateKeyValueStorage.BonsaiUpdater> maybeStateUpdater,
+      final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater,
       final Map.Entry<Address, StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>>
           storageAccountUpdate) {
@@ -335,7 +334,7 @@ public class BonsaiWorldState
   }
 
   private void clearStorage(
-      final Optional<BonsaiWorldStateKeyValueStorage.BonsaiUpdater> maybeStateUpdater,
+      final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
 
     maybeStateUpdater.ifPresent(
@@ -344,7 +343,7 @@ public class BonsaiWorldState
             // because we are clearing persisted values we need the account root as persisted
             final BonsaiAccount oldAccount =
                 worldStateStorage
-                    .getAccount(address)
+                    .getAccount(address.addressHash())
                     .map(bytes -> fromRLP(BonsaiWorldState.this, address, bytes, true))
                     .orElse(null);
             if (oldAccount == null) {
@@ -394,7 +393,7 @@ public class BonsaiWorldState
 
     boolean success = false;
 
-    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater = worldStateStorage.updater();
+    final BonsaiWorldStateKeyValueStorage.Updater stateUpdater = worldStateStorage.updater();
     Runnable saveTrieLog = () -> {};
 
     try {
@@ -535,7 +534,7 @@ public class BonsaiWorldState
   @Override
   public Account get(final Address address) {
     return worldStateStorage
-        .getAccount(address)
+        .getAccount(address.addressHash())
         .map(bytes -> fromRLP(accumulator, address, bytes, true))
         .orElse(null);
   }
@@ -558,7 +557,7 @@ public class BonsaiWorldState
   }
 
   private void writeStorageTrieNode(
-      final BonsaiWorldStateStorageStrategy.Updater stateUpdater,
+      final BonsaiWorldStateKeyValueStorage.Updater stateUpdater,
       final Hash accountHash,
       final Bytes location,
       final Bytes32 nodeHash,
@@ -576,7 +575,7 @@ public class BonsaiWorldState
   public Optional<UInt256> getStorageValueByStorageSlotKey(
       final Address address, final StorageSlotKey storageSlotKey) {
     return worldStateStorage
-        .getStorageValueByStorageSlotKey(address, storageSlotKey)
+        .getStorageValueByStorageSlotKey(address.addressHash(), storageSlotKey)
         .map(UInt256::fromBytes);
   }
 
@@ -585,7 +584,7 @@ public class BonsaiWorldState
       final Address address,
       final StorageSlotKey storageSlotKey) {
     return worldStateStorage
-        .getStorageValueByStorageSlotKey(storageRootSupplier, address, storageSlotKey)
+        .getStorageValueByStorageSlotKey(storageRootSupplier, address.addressHash(), storageSlotKey)
         .map(UInt256::fromBytes);
   }
 

@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.trie.patricia.RemoveVisitor;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
 
 import java.util.HashMap;
 import java.util.List;
@@ -48,9 +48,9 @@ import org.apache.tuweni.units.bigints.UInt256;
  */
 public class WorldStateProofProvider {
 
-  private final WorldStateStorageCoordinator worldStateStorage;
+  private final WorldStateStorageFormatCoordinator worldStateStorage;
 
-  public WorldStateProofProvider(final WorldStateStorageCoordinator worldStateStorage) {
+  public WorldStateProofProvider(final WorldStateStorageFormatCoordinator worldStateStorage) {
     this.worldStateStorage = worldStateStorage;
   }
 

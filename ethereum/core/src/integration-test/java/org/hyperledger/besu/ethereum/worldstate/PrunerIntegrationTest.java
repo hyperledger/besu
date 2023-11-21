@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.forest.pruner.MarkSweepPruner;
 import org.hyperledger.besu.ethereum.forest.pruner.Pruner;
 import org.hyperledger.besu.ethereum.forest.pruner.Pruner.PruningPhase;
 import org.hyperledger.besu.ethereum.forest.pruner.PrunerConfiguration;
-import org.hyperledger.besu.ethereum.forest.storage.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
@@ -61,11 +61,11 @@ public class PrunerIntegrationTest {
   private final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final Map<Bytes, Optional<byte[]>> hashValueStore = new HashMap<>();
   private final InMemoryKeyValueStorage stateStorage = new TestInMemoryStorage(hashValueStore);
-  private final WorldStateKeyValueStorage worldStateStorage =
-      new WorldStateKeyValueStorage(stateStorage);
+  private final ForestWorldStateKeyValueStorage worldStateStorage =
+      new ForestWorldStateKeyValueStorage(stateStorage);
   private final WorldStateArchive worldStateArchive =
       new ForestWorldStateArchive(
-          new WorldStateStorageCoordinator(worldStateStorage),
+          new WorldStateStorageFormatCoordinator(worldStateStorage),
           new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
           EvmConfiguration.DEFAULT);
   private final InMemoryKeyValueStorage markStorage = new InMemoryKeyValueStorage();

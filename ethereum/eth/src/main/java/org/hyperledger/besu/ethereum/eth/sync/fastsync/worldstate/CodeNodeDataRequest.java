@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
-import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator.applyForStrategy;
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator.applyForStrategy;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
-import org.hyperledger.besu.ethereum.worldstate.strategy.WorldStateStorageStrategy;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -36,7 +36,7 @@ class CodeNodeDataRequest extends NodeDataRequest {
   }
 
   @Override
-  protected void doPersist(final WorldStateStorageStrategy.Updater updater) {
+  protected void doPersist(final WorldStateKeyValueStorage.Updater updater) {
     applyForStrategy(
         updater,
         onBonsai -> {
@@ -49,13 +49,14 @@ class CodeNodeDataRequest extends NodeDataRequest {
 
   @Override
   public Stream<NodeDataRequest> getChildRequests(
-      final WorldStateStorageCoordinator worldStateStorage) {
+      final WorldStateStorageFormatCoordinator worldStateStorage) {
     // Code nodes have nothing further to download
     return Stream.empty();
   }
 
   @Override
-  public Optional<Bytes> getExistingData(final WorldStateStorageCoordinator worldStateStorage) {
+  public Optional<Bytes> getExistingData(
+      final WorldStateStorageFormatCoordinator worldStateStorage) {
     return worldStateStorage.applyForStrategy(
         onBonsai -> {
           return onBonsai

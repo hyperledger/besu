@@ -36,6 +36,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -49,7 +50,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKey
 import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -84,7 +85,7 @@ public class QbftBesuControllerBuilderTest {
   @Mock private Clock clock;
   @Mock private StorageProvider storageProvider;
   @Mock private GasLimitCalculator gasLimitCalculator;
-  @Mock private WorldStateStorageCoordinator worldStateStorage;
+  @Mock private WorldStateStorageFormatCoordinator worldStateStorage;
   @Mock private WorldStatePreimageStorage worldStatePreimageStorage;
   private static final BigInteger networkId = BigInteger.ONE;
   private static final NodeKey nodeKey = NodeKeyUtils.generate();
@@ -114,7 +115,7 @@ public class QbftBesuControllerBuilderTest {
     when(storageProvider.createWorldStateStorage(DataStorageFormat.FOREST))
         .thenReturn(worldStateStorage);
     when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
-    when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorageCoordinator.Updater.class));
+    when(worldStateStorage.updater()).thenReturn(mock(WorldStateKeyValueStorage.Updater.class));
     when(worldStatePreimageStorage.updater())
         .thenReturn(mock(WorldStatePreimageStorage.Updater.class));
     when(storageProvider.createWorldStatePreimageStorage()).thenReturn(worldStatePreimageStorage);

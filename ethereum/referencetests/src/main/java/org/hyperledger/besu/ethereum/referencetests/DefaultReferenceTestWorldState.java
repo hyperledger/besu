@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.forest.storage.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -32,7 +32,7 @@ public class DefaultReferenceTestWorldState extends ForestMutableWorldState
 
   DefaultReferenceTestWorldState() {
     super(
-        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
+        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
         EvmConfiguration.DEFAULT);
   }

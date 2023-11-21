@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 import static org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataRequest.MAX_CHILDREN;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
@@ -27,8 +28,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageFlatD
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageTrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderException;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
-import org.hyperledger.besu.ethereum.worldstate.strategy.WorldStateStorageStrategy;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
 import java.util.HashSet;
@@ -116,8 +116,8 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   }
 
   public int persist(
-      final WorldStateStorageCoordinator worldStateStorage,
-      final WorldStateStorageStrategy.Updater updater,
+      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncProcessState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration) {
@@ -126,8 +126,8 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   }
 
   protected abstract int doPersist(
-      final WorldStateStorageCoordinator worldStateStorage,
-      final WorldStateStorageStrategy.Updater updater,
+      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncProcessState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration);
@@ -140,7 +140,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
 
   public abstract Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
-      final WorldStateStorageCoordinator worldStateStorage,
+      final WorldStateStorageFormatCoordinator worldStateStorage,
       final SnapSyncProcessState snapSyncState);
 
   public void registerParent(final TrieNodeHealingRequest parent) {
@@ -157,8 +157,8 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   }
 
   protected int saveParent(
-      final WorldStateStorageCoordinator worldStateStorage,
-      final WorldStateStorageStrategy.Updater updater,
+      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncProcessState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration) {

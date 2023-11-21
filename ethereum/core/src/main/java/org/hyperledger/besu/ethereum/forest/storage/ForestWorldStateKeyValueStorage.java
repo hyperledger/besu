@@ -15,10 +15,9 @@
 package org.hyperledger.besu.ethereum.forest.storage;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.strategy.ForestWorldStateStorageStrategy;
-import org.hyperledger.besu.ethereum.worldstate.strategy.WorldStateStorageStrategy;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.util.Subscribers;
@@ -35,14 +34,14 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class WorldStateKeyValueStorage implements ForestWorldStateStorageStrategy {
+public class ForestWorldStateKeyValueStorage implements WorldStateKeyValueStorage {
 
-  private final Subscribers<WorldStateStorageStrategy.NodesAddedListener> nodeAddedListeners =
+  private final Subscribers<WorldStateKeyValueStorage.NodesAddedListener> nodeAddedListeners =
       Subscribers.create();
   private final KeyValueStorage keyValueStorage;
   private final ReentrantLock lock = new ReentrantLock();
 
-  public WorldStateKeyValueStorage(final KeyValueStorage keyValueStorage) {
+  public ForestWorldStateKeyValueStorage(final KeyValueStorage keyValueStorage) {
     this.keyValueStorage = keyValueStorage;
   }
 
@@ -51,7 +50,6 @@ public class WorldStateKeyValueStorage implements ForestWorldStateStorageStrateg
     return DataStorageFormat.FOREST;
   }
 
-  @Override
   public Optional<Bytes> getCode(final Bytes32 codeHash) {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
@@ -60,12 +58,10 @@ public class WorldStateKeyValueStorage implements ForestWorldStateStorageStrateg
     }
   }
 
-  @Override
   public Optional<Bytes> getAccountStateTrieNode(final Bytes32 nodeHash) {
     return getTrieNode(nodeHash);
   }
 
-  @Override
   public Optional<Bytes> getAccountStorageTrieNode(final Bytes32 nodeHash) {
     return getTrieNode(nodeHash);
   }
@@ -78,7 +74,6 @@ public class WorldStateKeyValueStorage implements ForestWorldStateStorageStrateg
     }
   }
 
-  @Override
   public Optional<Bytes> getNodeData(final Bytes32 hash) {
     if (hash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
@@ -89,7 +84,6 @@ public class WorldStateKeyValueStorage implements ForestWorldStateStorageStrateg
     }
   }
 
-  @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash) {
     return getAccountStateTrieNode(rootHash).isPresent();
   }
@@ -104,7 +98,6 @@ public class WorldStateKeyValueStorage implements ForestWorldStateStorageStrateg
     return new Updater(lock, keyValueStorage.startTransaction(), nodeAddedListeners);
   }
 
-  @Override
   public long prune(final Predicate<byte[]> inUseCheck) {
     final AtomicInteger prunedKeys = new AtomicInteger(0);
     try (final Stream<byte[]> entry = keyValueStorage.streamKeys()) {
@@ -124,17 +117,15 @@ public class WorldStateKeyValueStorage implements ForestWorldStateStorageStrateg
     return prunedKeys.get();
   }
 
-  @Override
   public long addNodeAddedListener(final NodesAddedListener listener) {
     return nodeAddedListeners.subscribe(listener);
   }
 
-  @Override
   public void removeNodeAddedListener(final long id) {
     nodeAddedListeners.unsubscribe(id);
   }
 
-  public static class Updater implements ForestWorldStateStorageStrategy.Updater {
+  public static class Updater implements WorldStateKeyValueStorage.Updater {
 
     private final KeyValueStorageTransaction transaction;
     private final Subscribers<NodesAddedListener> nodeAddedListeners;
@@ -150,8 +141,14 @@ public class WorldStateKeyValueStorage implements ForestWorldStateStorageStrateg
       this.nodeAddedListeners = nodeAddedListeners;
     }
 
-    @Override
-    public WorldStateStorageStrategy.Updater putCode(final Bytes32 codeHash, final Bytes code) {
+    public ForestWorldStateKeyValueStorage.Updater putCode(final Bytes code) {
+      // Skip the hash calculation for empty code
+      final Hash codeHash = code.size() == 0 ? Hash.EMPTY : Hash.hash(code);
+      return putCode(codeHash, code);
+    }
+
+    public ForestWorldStateKeyValueStorage.Updater putCode(
+        final Bytes32 codeHash, final Bytes code) {
       if (code.size() == 0) {
         // Don't save empty values
         return this;
@@ -162,14 +159,12 @@ public class WorldStateKeyValueStorage implements ForestWorldStateStorageStrateg
       return this;
     }
 
-    @Override
-    public WorldStateStorageStrategy.Updater saveWorldState(
+    public ForestWorldStateKeyValueStorage.Updater saveWorldState(
         final Bytes32 nodeHash, final Bytes node) {
       return putAccountStateTrieNode(nodeHash, node);
     }
 
-    @Override
-    public WorldStateStorageStrategy.Updater putAccountStateTrieNode(
+    public ForestWorldStateKeyValueStorage.Updater putAccountStateTrieNode(
         final Bytes32 nodeHash, final Bytes node) {
       if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
         // Don't save empty nodes
@@ -180,13 +175,11 @@ public class WorldStateKeyValueStorage implements ForestWorldStateStorageStrateg
       return this;
     }
 
-    @Override
-    public WorldStateStorageStrategy.Updater removeAccountStateTrieNode(final Bytes32 nodeHash) {
+    public WorldStateKeyValueStorage.Updater removeAccountStateTrieNode(final Bytes32 nodeHash) {
       transaction.remove(nodeHash.toArrayUnsafe());
       return this;
     }
 
-    @Override
     public Updater putAccountStorageTrieNode(final Bytes32 nodeHash, final Bytes node) {
       if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
         // Don't save empty nodes
@@ -208,7 +201,6 @@ public class WorldStateKeyValueStorage implements ForestWorldStateStorageStrateg
       }
     }
 
-    @Override
     public void rollback() {
       addedNodes.clear();
       transaction.rollback();

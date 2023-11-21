@@ -18,14 +18,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.TRIE_NODE;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.patricia.TrieNodeDecoder;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
-import org.hyperledger.besu.ethereum.worldstate.strategy.WorldStateStorageStrategy;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
 import java.util.ArrayList;
@@ -55,8 +55,8 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
 
   @Override
   public int persist(
-      final WorldStateStorageCoordinator worldStateStorage,
-      final WorldStateStorageStrategy.Updater updater,
+      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncProcessState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration) {
@@ -84,7 +84,7 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
   @Override
   public Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
-      final WorldStateStorageCoordinator worldStateStorage,
+      final WorldStateStorageFormatCoordinator worldStateStorage,
       final SnapSyncProcessState snapSyncState) {
     if (!isResponseReceived()) {
       // If this node hasn't been downloaded yet, we can't return any child data
@@ -174,7 +174,7 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
 
   public abstract Optional<Bytes> getExistingData(
       final SnapWorldDownloadState downloadState,
-      final WorldStateStorageCoordinator worldStateStorage);
+      final WorldStateStorageFormatCoordinator worldStateStorage);
 
   public abstract List<Bytes> getTrieNodePath();
 
@@ -182,12 +182,12 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
       final Hash childHash, final Bytes location);
 
   public Stream<SnapDataRequest> getRootStorageRequests(
-      final WorldStateStorageCoordinator worldStateStorage) {
+      final WorldStateStorageFormatCoordinator worldStateStorage) {
     return Stream.empty();
   }
 
   protected abstract Stream<SnapDataRequest> getRequestsFromTrieNodeValue(
-      final WorldStateStorageCoordinator worldStateStorage,
+      final WorldStateStorageFormatCoordinator worldStateStorage,
       final SnapWorldDownloadState downloadState,
       final Bytes location,
       final Bytes path,

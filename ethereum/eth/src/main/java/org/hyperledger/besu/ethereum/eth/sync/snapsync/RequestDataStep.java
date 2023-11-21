@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageFlatD
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.Task;
 
@@ -51,7 +51,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class RequestDataStep {
 
-  private final WorldStateStorageCoordinator worldStateStorage;
+  private final WorldStateStorageFormatCoordinator worldStateStorage;
   private final SnapSyncProcessState fastSyncState;
   private final SnapWorldDownloadState downloadState;
   private final SnapSyncConfiguration snapSyncConfiguration;
@@ -61,7 +61,7 @@ public class RequestDataStep {
 
   public RequestDataStep(
       final EthContext ethContext,
-      final WorldStateStorageCoordinator worldStateStorage,
+      final WorldStateStorageFormatCoordinator worldStateStorage,
       final SnapSyncProcessState fastSyncState,
       final SnapWorldDownloadState downloadState,
       final SnapSyncConfiguration snapSyncConfiguration,

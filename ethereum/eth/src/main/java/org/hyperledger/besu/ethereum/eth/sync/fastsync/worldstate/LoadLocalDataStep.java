@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
-import org.hyperledger.besu.ethereum.worldstate.strategy.WorldStateStorageStrategy;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -29,11 +29,12 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class LoadLocalDataStep {
 
-  private final WorldStateStorageCoordinator worldStateStorage;
+  private final WorldStateStorageFormatCoordinator worldStateStorage;
   private final Counter existingNodeCounter;
 
   public LoadLocalDataStep(
-      final WorldStateStorageCoordinator worldStateStorage, final MetricsSystem metricsSystem) {
+      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final MetricsSystem metricsSystem) {
     this.worldStateStorage = worldStateStorage;
     existingNodeCounter =
         metricsSystem.createCounter(
@@ -50,7 +51,7 @@ public class LoadLocalDataStep {
       existingNodeCounter.inc();
       request.setData(existingData.get());
       request.setRequiresPersisting(false);
-      final WorldStateStorageStrategy.Updater updater = worldStateStorage.updater();
+      final WorldStateKeyValueStorage.Updater updater = worldStateStorage.updater();
       request.persist(updater);
       updater.commit();
 

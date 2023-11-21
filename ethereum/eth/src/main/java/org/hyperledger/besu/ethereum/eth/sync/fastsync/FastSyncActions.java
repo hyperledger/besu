@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -43,7 +43,7 @@ public class FastSyncActions {
 
   private static final Logger LOG = LoggerFactory.getLogger(FastSyncActions.class);
   protected final SynchronizerConfiguration syncConfig;
-  protected final WorldStateStorageCoordinator worldStateStorage;
+  protected final WorldStateStorageFormatCoordinator worldStateStorage;
   protected final ProtocolSchedule protocolSchedule;
   protected final ProtocolContext protocolContext;
   protected final EthContext ethContext;
@@ -55,7 +55,7 @@ public class FastSyncActions {
 
   public FastSyncActions(
       final SynchronizerConfiguration syncConfig,
-      final WorldStateStorageCoordinator worldStateStorage,
+      final WorldStateStorageFormatCoordinator worldStateStorage,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,

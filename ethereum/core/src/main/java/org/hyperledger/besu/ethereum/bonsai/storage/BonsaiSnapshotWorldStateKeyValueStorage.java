@@ -15,7 +15,6 @@
  */
 package org.hyperledger.besu.ethereum.bonsai.storage;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
@@ -75,7 +74,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
-  public BonsaiUpdater updater() {
+  public Updater updater() {
     return new Updater(
         ((SnappedKeyValueStorage) composedWorldStateStorage).getSnapshotTransaction(),
         trieLogStorage.startTransaction(),
@@ -83,8 +82,8 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
-  public Optional<Bytes> getAccount(final Address address) {
-    return isClosedGet() ? Optional.empty() : super.getAccount(address);
+  public Optional<Bytes> getAccount(final Hash accountHash) {
+    return isClosedGet() ? Optional.empty() : super.getAccount(accountHash);
   }
 
   @Override
@@ -132,20 +131,20 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
 
   @Override
   public Optional<Bytes> getStorageValueByStorageSlotKey(
-      final Address address, final StorageSlotKey storageSlotKey) {
+      final Hash accountHash, final StorageSlotKey storageSlotKey) {
     return isClosedGet()
         ? Optional.empty()
-        : super.getStorageValueByStorageSlotKey(address, storageSlotKey);
+        : super.getStorageValueByStorageSlotKey(accountHash, storageSlotKey);
   }
 
   @Override
   public Optional<Bytes> getStorageValueByStorageSlotKey(
       final Supplier<Optional<Hash>> storageRootSupplier,
-      final Address address,
+      final Hash accountHash,
       final StorageSlotKey storageSlotKey) {
     return isClosedGet()
         ? Optional.empty()
-        : super.getStorageValueByStorageSlotKey(storageRootSupplier, address, storageSlotKey);
+        : super.getStorageValueByStorageSlotKey(storageRootSupplier, accountHash, storageSlotKey);
   }
 
   @Override

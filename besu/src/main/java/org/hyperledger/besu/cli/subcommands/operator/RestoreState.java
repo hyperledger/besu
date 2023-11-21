@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -38,8 +39,7 @@ import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.PersistVisitor;
 import org.hyperledger.besu.ethereum.trie.RestoreVisitor;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
-import org.hyperledger.besu.ethereum.worldstate.strategy.ForestWorldStateStorageStrategy;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
 import org.hyperledger.besu.util.io.RollingFileReader;
 
 import java.io.IOException;
@@ -84,7 +84,7 @@ public class RestoreState implements Runnable {
   private long trieNodeCount;
   private boolean compressed;
   private BesuController besuController;
-  private ForestWorldStateStorageStrategy.Updater updater;
+  private ForestWorldStateKeyValueStorage.Updater updater;
 
   private Path accountFileName(final int fileNumber, final boolean compressed) {
     return StateBackupService.accountFileName(backupDir, targetBlock, fileNumber, compressed);
@@ -250,10 +250,10 @@ public class RestoreState implements Runnable {
     if (updater != null) {
       updater.commit();
     }
-    final WorldStateStorageCoordinator worldStateStorage =
+    final WorldStateStorageFormatCoordinator worldStateStorage =
         ((ForestWorldStateArchive) besuController.getProtocolContext().getWorldStateArchive())
             .getWorldStateStorage();
-    updater = (ForestWorldStateStorageStrategy.Updater) worldStateStorage.updater();
+    updater = (ForestWorldStateKeyValueStorage.Updater) worldStateStorage.updater();
   }
 
   private void maybeCommitUpdater() {

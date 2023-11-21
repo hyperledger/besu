@@ -16,8 +16,10 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountFlatHealingRangeRequest;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
-import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator.applyForStrategy;
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator.applyForStrategy;
 
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -31,9 +33,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageFlatD
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
-import org.hyperledger.besu.ethereum.worldstate.strategy.BonsaiWorldStateStorageStrategy;
-import org.hyperledger.besu.ethereum.worldstate.strategy.WorldStateStorageStrategy;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
@@ -90,7 +90,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   private final SnapsyncMetricsManager metricsManager;
 
   public SnapWorldDownloadState(
-      final WorldStateStorageCoordinator worldStateStorage,
+      final WorldStateStorageFormatCoordinator worldStateStorage,
       final SnapSyncStatePersistenceManager snapContext,
       final Blockchain blockchain,
       final SnapSyncProcessState snapSyncState,
@@ -205,7 +205,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
         // If the flat database healing process is in progress or the flat database mode is not FULL
         else {
-          final WorldStateStorageStrategy.Updater updater = worldStateStorage.updater();
+          final WorldStateKeyValueStorage.Updater updater = worldStateStorage.updater();
           applyForStrategy(
               updater,
               onBonsai -> {
@@ -260,9 +260,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     // Clear the flat database and trie log from the world state storage if needed
     worldStateStorage.applyOnMatchingStrategy(
         DataStorageFormat.BONSAI,
-        worldStateStorageStrategy -> {
-          final BonsaiWorldStateStorageStrategy strategy =
-              worldStateStorage.getStrategy(BonsaiWorldStateStorageStrategy.class);
+        worldStateKeyValueStorage -> {
+          final BonsaiWorldStateKeyValueStorage strategy =
+              worldStateStorage.getStrategy(BonsaiWorldStateKeyValueStorage.class);
           strategy.clearFlatDatabase();
           strategy.clearTrieLog();
         });

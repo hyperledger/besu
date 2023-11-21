@@ -45,7 +45,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -79,8 +79,8 @@ class BlockImportExceptionHandlingTest {
   protected final MutableBlockchain blockchain = mock(MutableBlockchain.class);
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
-  private final WorldStateStorageCoordinator worldStateStorage =
-      new WorldStateStorageCoordinator(
+  private final WorldStateStorageFormatCoordinator worldStateStorage =
+      new WorldStateStorageFormatCoordinator(
           new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()));
 
   private final WorldStateArchive worldStateArchive =
@@ -92,7 +92,7 @@ class BlockImportExceptionHandlingTest {
       spy(
           new BonsaiWorldState(
               (BonsaiWorldStateProvider) worldStateArchive,
-              (BonsaiWorldStateKeyValueStorage) worldStateStorage.worldStateStorageStrategy(),
+              (BonsaiWorldStateKeyValueStorage) worldStateStorage.worldStateKeyValueStorage(),
               EvmConfiguration.DEFAULT));
 
   private final BadBlockManager badBlockManager = new BadBlockManager();

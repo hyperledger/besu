@@ -19,14 +19,14 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
-import org.hyperledger.besu.ethereum.worldstate.strategy.ForestWorldStateStorageStrategy;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
@@ -38,7 +38,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class ForestWorldStateArchive implements WorldStateArchive {
-  private final ForestWorldStateStorageStrategy worldStateStorageStrategy;
+  private final ForestWorldStateKeyValueStorage worldStateKeyValueStorage;
   private final WorldStatePreimageStorage preimageStorage;
   private final WorldStateProofProvider worldStateProof;
   private final EvmConfiguration evmConfiguration;
@@ -46,11 +46,11 @@ public class ForestWorldStateArchive implements WorldStateArchive {
   private static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
   public ForestWorldStateArchive(
-      final WorldStateStorageCoordinator worldStateStorage,
+      final WorldStateStorageFormatCoordinator worldStateStorage,
       final WorldStatePreimageStorage preimageStorage,
       final EvmConfiguration evmConfiguration) {
-    this.worldStateStorageStrategy =
-        worldStateStorage.getStrategy(ForestWorldStateStorageStrategy.class);
+    this.worldStateKeyValueStorage =
+        worldStateStorage.getStrategy(ForestWorldStateKeyValueStorage.class);
     this.preimageStorage = preimageStorage;
     this.worldStateProof = new WorldStateProofProvider(worldStateStorage);
     this.evmConfiguration = evmConfiguration;
@@ -63,7 +63,7 @@ public class ForestWorldStateArchive implements WorldStateArchive {
 
   @Override
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
-    return worldStateStorageStrategy.isWorldStateAvailable(rootHash);
+    return worldStateKeyValueStorage.isWorldStateAvailable(rootHash);
   }
 
   @Override
@@ -74,12 +74,12 @@ public class ForestWorldStateArchive implements WorldStateArchive {
 
   @Override
   public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
-    if (!worldStateStorageStrategy.isWorldStateAvailable(rootHash)) {
+    if (!worldStateKeyValueStorage.isWorldStateAvailable(rootHash)) {
       return Optional.empty();
     }
     return Optional.of(
         new ForestMutableWorldState(
-            rootHash, worldStateStorageStrategy, preimageStorage, evmConfiguration));
+            rootHash, worldStateKeyValueStorage, preimageStorage, evmConfiguration));
   }
 
   @Override
@@ -95,11 +95,11 @@ public class ForestWorldStateArchive implements WorldStateArchive {
   @Override
   public Optional<Bytes> getNodeData(final Hash hash) {
     // query by location is not supported, only query by content
-    return worldStateStorageStrategy.getNodeData(hash);
+    return worldStateKeyValueStorage.getNodeData(hash);
   }
 
-  public WorldStateStorageCoordinator getWorldStateStorage() {
-    return new WorldStateStorageCoordinator(worldStateStorageStrategy);
+  public WorldStateStorageFormatCoordinator getWorldStateStorage() {
+    return new WorldStateStorageFormatCoordinator(worldStateKeyValueStorage);
   }
 
   @Override

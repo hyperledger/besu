@@ -18,7 +18,6 @@ package org.hyperledger.besu.ethereum.bonsai.storage.flat;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
@@ -84,11 +83,11 @@ public class PartialFlatDbStrategy extends FlatDbStrategy {
   public Optional<Bytes> getFlatAccount(
       final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       final NodeLoader nodeLoader,
-      final Address address,
+      final Hash accountHash,
       final SegmentedKeyValueStorage storage) {
     getAccountCounter.inc();
     Optional<Bytes> response =
-        storage.get(ACCOUNT_INFO_STATE, address.addressHash().toArrayUnsafe()).map(Bytes::wrap);
+        storage.get(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe()).map(Bytes::wrap);
     if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
       final Optional<Bytes> worldStateRootHash = worldStateRootHashSupplier.get();
@@ -97,7 +96,7 @@ public class PartialFlatDbStrategy extends FlatDbStrategy {
             new StoredMerklePatriciaTrie<>(
                     new StoredNodeFactory<>(nodeLoader, Function.identity(), Function.identity()),
                     Bytes32.wrap(worldStateRootHash.get()))
-                .get(address.addressHash());
+                .get(accountHash);
         if (response.isEmpty()) {
           getAccountMissingMerkleTrieCounter.inc();
         } else {
@@ -116,7 +115,7 @@ public class PartialFlatDbStrategy extends FlatDbStrategy {
       final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       final Supplier<Optional<Hash>> storageRootSupplier,
       final NodeLoader nodeLoader,
-      final Address address,
+      final Hash accountHash,
       final StorageSlotKey storageSlotKey,
       final SegmentedKeyValueStorage storage) {
     getStorageValueCounter.inc();
@@ -124,8 +123,7 @@ public class PartialFlatDbStrategy extends FlatDbStrategy {
         storage
             .get(
                 ACCOUNT_STORAGE_STORAGE,
-                Bytes.concatenate(address.addressHash(), storageSlotKey.getSlotHash())
-                    .toArrayUnsafe())
+                Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
             .map(Bytes::wrap);
     if (response.isEmpty()) {
       final Optional<Hash> storageRoot = storageRootSupplier.get();

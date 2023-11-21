@@ -13,7 +13,7 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.ethereum.worldstate.strategy;
+package org.hyperledger.besu.ethereum;
 
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 
@@ -21,7 +21,7 @@ import java.util.Collection;
 
 import org.apache.tuweni.bytes.Bytes32;
 
-public interface WorldStateStorageStrategy {
+public interface WorldStateKeyValueStorage {
 
   DataStorageFormat getDataStorageFormat();
 

@@ -15,10 +15,9 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.strategy.BonsaiWorldStateStorageStrategy;
-import org.hyperledger.besu.ethereum.worldstate.strategy.ForestWorldStateStorageStrategy;
-import org.hyperledger.besu.ethereum.worldstate.strategy.WorldStateStorageStrategy;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -27,10 +26,11 @@ import java.util.function.Function;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public record WorldStateStorageCoordinator(WorldStateStorageStrategy worldStateStorageStrategy) {
+public record WorldStateStorageFormatCoordinator(
+    WorldStateKeyValueStorage worldStateKeyValueStorage) {
 
   public DataStorageFormat getDataStorageFormat() {
-    return worldStateStorageStrategy.getDataStorageFormat();
+    return worldStateKeyValueStorage.getDataStorageFormat();
   }
 
   public boolean isWorldStateAvailable(final Bytes32 nodeHash, final Hash blockHash) {
@@ -59,30 +59,30 @@ public record WorldStateStorageCoordinator(WorldStateStorageStrategy worldStateS
   }
 
   @SuppressWarnings("unchecked")
-  public <STRATEGY extends WorldStateStorageStrategy> STRATEGY getStrategy(
+  public <STRATEGY extends WorldStateKeyValueStorage> STRATEGY getStrategy(
       final Class<STRATEGY> strategyClass) {
-    return (STRATEGY) worldStateStorageStrategy;
+    return (STRATEGY) worldStateKeyValueStorage;
   }
 
   public void applyOnMatchingFlatMode(
-      final FlatDbMode flatDbMode, final Consumer<BonsaiWorldStateStorageStrategy> onStrategy) {
+      final FlatDbMode flatDbMode, final Consumer<BonsaiWorldStateKeyValueStorage> onStrategy) {
     applyOnMatchingStrategy(
         DataStorageFormat.BONSAI,
-        worldStateStorageStrategy -> {
-          final BonsaiWorldStateStorageStrategy bonsaiWorldStateStorageStrategy =
-              (BonsaiWorldStateStorageStrategy) worldStateStorageStrategy();
+        worldStateKeyValueStorage -> {
+          final BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorageStrategy =
+              (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage();
           if (bonsaiWorldStateStorageStrategy.getFlatDbMode().equals(flatDbMode)) {
             onStrategy.accept(bonsaiWorldStateStorageStrategy);
           }
         });
   }
 
-  public void applyWhenFlatModeEnabled(final Consumer<BonsaiWorldStateStorageStrategy> onStrategy) {
+  public void applyWhenFlatModeEnabled(final Consumer<BonsaiWorldStateKeyValueStorage> onStrategy) {
     applyOnMatchingStrategy(
         DataStorageFormat.BONSAI,
-        worldStateStorageStrategy -> {
-          final BonsaiWorldStateStorageStrategy bonsaiWorldStateStorageStrategy =
-              (BonsaiWorldStateStorageStrategy) worldStateStorageStrategy();
+        worldStateKeyValueStorage -> {
+          final BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorageStrategy =
+              (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage();
           if (!bonsaiWorldStateStorageStrategy.getFlatDbMode().equals(FlatDbMode.NO_FLATTENED)) {
             onStrategy.accept(bonsaiWorldStateStorageStrategy);
           }
@@ -91,48 +91,48 @@ public record WorldStateStorageCoordinator(WorldStateStorageStrategy worldStateS
 
   public void applyOnMatchingStrategy(
       final DataStorageFormat dataStorageFormat,
-      final Consumer<WorldStateStorageStrategy> onStrategy) {
+      final Consumer<WorldStateKeyValueStorage> onStrategy) {
     if (getDataStorageFormat().equals(dataStorageFormat)) {
-      onStrategy.accept(worldStateStorageStrategy());
+      onStrategy.accept(worldStateKeyValueStorage());
     }
   }
 
   public <RESPONSE> RESPONSE applyForStrategy(
-      final Function<BonsaiWorldStateStorageStrategy, RESPONSE> onBonsai,
-      final Function<ForestWorldStateStorageStrategy, RESPONSE> onForest) {
+      final Function<BonsaiWorldStateKeyValueStorage, RESPONSE> onBonsai,
+      final Function<ForestWorldStateKeyValueStorage, RESPONSE> onForest) {
     if (getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
-      return onBonsai.apply(((BonsaiWorldStateStorageStrategy) worldStateStorageStrategy()));
+      return onBonsai.apply(((BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage()));
     } else {
-      return onForest.apply(((ForestWorldStateStorageStrategy) worldStateStorageStrategy()));
+      return onForest.apply(((ForestWorldStateKeyValueStorage) worldStateKeyValueStorage()));
     }
   }
 
   public void consumeForStrategy(
-      final Consumer<BonsaiWorldStateStorageStrategy> onBonsai,
-      final Consumer<ForestWorldStateStorageStrategy> onForest) {
+      final Consumer<BonsaiWorldStateKeyValueStorage> onBonsai,
+      final Consumer<ForestWorldStateKeyValueStorage> onForest) {
     if (getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
-      onBonsai.accept(((BonsaiWorldStateStorageStrategy) worldStateStorageStrategy()));
+      onBonsai.accept(((BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage()));
     } else {
-      onForest.accept(((ForestWorldStateStorageStrategy) worldStateStorageStrategy()));
+      onForest.accept(((ForestWorldStateKeyValueStorage) worldStateKeyValueStorage()));
     }
   }
 
   public static void applyForStrategy(
-      final WorldStateStorageStrategy.Updater updater,
-      final Consumer<BonsaiWorldStateStorageStrategy.Updater> onBonsai,
-      final Consumer<ForestWorldStateStorageStrategy.Updater> onForest) {
+      final WorldStateKeyValueStorage.Updater updater,
+      final Consumer<BonsaiWorldStateKeyValueStorage.Updater> onBonsai,
+      final Consumer<ForestWorldStateKeyValueStorage.Updater> onForest) {
     if (updater instanceof BonsaiWorldStateKeyValueStorage.Updater) {
-      onBonsai.accept(((BonsaiWorldStateStorageStrategy.Updater) updater));
-    } else if (updater instanceof ForestWorldStateStorageStrategy.Updater) {
-      onForest.accept(((ForestWorldStateStorageStrategy.Updater) updater));
+      onBonsai.accept(((BonsaiWorldStateKeyValueStorage.Updater) updater));
+    } else if (updater instanceof ForestWorldStateKeyValueStorage.Updater) {
+      onForest.accept(((ForestWorldStateKeyValueStorage.Updater) updater));
     }
   }
 
-  public WorldStateStorageStrategy.Updater updater() {
-    return worldStateStorageStrategy().updater();
+  public WorldStateKeyValueStorage.Updater updater() {
+    return worldStateKeyValueStorage().updater();
   }
 
   public void clear() {
-    worldStateStorageStrategy.clear();
+    worldStateKeyValueStorage.clear();
   }
 }

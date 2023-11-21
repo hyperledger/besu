@@ -21,7 +21,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.forest.storage.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
@@ -55,7 +55,7 @@ class DefaultMutableWorldStateTest {
   private static final Address ADDRESS =
       Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b");
 
-  private static MutableWorldState createEmpty(final WorldStateKeyValueStorage storage) {
+  private static MutableWorldState createEmpty(final ForestWorldStateKeyValueStorage storage) {
     final WorldStatePreimageKeyValueStorage preimageStorage =
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
     return new ForestMutableWorldState(storage, preimageStorage, EvmConfiguration.DEFAULT);
@@ -244,7 +244,8 @@ class DefaultMutableWorldStateTest {
   @Test
   void commitAndPersist() {
     final KeyValueStorage storage = new InMemoryKeyValueStorage();
-    final WorldStateKeyValueStorage kvWorldStateStorage = new WorldStateKeyValueStorage(storage);
+    final ForestWorldStateKeyValueStorage kvWorldStateStorage =
+        new ForestWorldStateKeyValueStorage(storage);
     final MutableWorldState worldState = createEmpty(kvWorldStateStorage);
     final WorldUpdater updater = worldState.updater();
     final Wei newBalance = Wei.of(100000);
@@ -263,12 +264,12 @@ class DefaultMutableWorldStateTest {
     assertThat(worldState.get(ADDRESS).getBalance()).isEqualTo(newBalance);
 
     // Check that storage is empty before persisting
-    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash(), null)).isFalse();
+    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isFalse();
 
     // Persist and re-run assertions
     worldState.persist(null);
 
-    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash(), null)).isTrue();
+    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isTrue();
     assertThat(worldState.rootHash()).isEqualTo(expectedRootHash);
     assertThat(worldState.get(ADDRESS)).isNotNull();
     assertThat(worldState.get(ADDRESS).getBalance()).isEqualTo(newBalance);
@@ -277,7 +278,7 @@ class DefaultMutableWorldStateTest {
     final MutableWorldState newWorldState =
         new ForestMutableWorldState(
             expectedRootHash,
-            new WorldStateKeyValueStorage(storage),
+            new ForestWorldStateKeyValueStorage(storage),
             new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
             EvmConfiguration.DEFAULT);
     assertThat(newWorldState.rootHash()).isEqualTo(expectedRootHash);
