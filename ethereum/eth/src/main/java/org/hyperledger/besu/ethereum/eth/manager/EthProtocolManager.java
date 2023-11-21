@@ -382,11 +382,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     if (peer.getForkId().map(forkId -> forkIdManager.peerCheck(forkId)).orElse(true)) {
       LOG.trace("ForkId OK or not available");
       if (ethPeers.shouldConnect(peer, incoming)) {
-        LOG.trace("EthPeers should connect is TRUE");
         return true;
       }
     }
-    LOG.trace("Should connect in EthProtocolManager returns false");
     return false;
   }
 
@@ -397,10 +395,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final boolean initiatedByPeer) {
     if (ethPeers.registerDisconnect(connection)) {
       LOG.debug(
-          "Disconnect - {} - {} - {} - {} peers left\n{}",
+          "Disconnect - {} - {} - {}... - {} peers left\n{}",
           initiatedByPeer ? "Inbound" : "Outbound",
           reason,
-          connection.getPeer().getId(),
+          connection.getPeer().getId().slice(0, 8),
           ethPeers.peerCount(),
           ethPeers);
     }
