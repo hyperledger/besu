@@ -117,11 +117,14 @@ public final class RangeManagerTest {
   @Test
   public void testFindNewBeginElement() {
 
-    final WorldStateStorageFormatCoordinator worldStateStorage =
+    final ForestWorldStateKeyValueStorage worldStateStorage =
         new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
+    final WorldStateStorageFormatCoordinator worldStateStorageFormatCoordinator =
+        new WorldStateStorageFormatCoordinator(worldStateStorage);
+
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
-        TrieGenerator.generateTrie(worldStateStorage, 15);
+        TrieGenerator.generateTrie(worldStateStorageFormatCoordinator, 15);
 
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
@@ -135,7 +138,7 @@ public final class RangeManagerTest {
                         collector, visitor, root, Hash.ZERO));
 
     final WorldStateProofProvider worldStateProofProvider =
-        new WorldStateProofProvider(worldStateStorage);
+        new WorldStateProofProvider(worldStateStorageFormatCoordinator);
 
     // generate the proof
     final List<Bytes> proofs =
@@ -156,11 +159,13 @@ public final class RangeManagerTest {
   @Test
   public void testFindNewBeginElementWhenNothingIsMissing() {
 
-    final WorldStateStorageFormatCoordinator worldStateStorage =
+    final ForestWorldStateKeyValueStorage worldStateStorage =
         new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+    final WorldStateStorageFormatCoordinator worldStateStorageFormatCoordinator =
+        new WorldStateStorageFormatCoordinator(worldStateStorage);
 
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
-        TrieGenerator.generateTrie(worldStateStorage, 15);
+        TrieGenerator.generateTrie(worldStateStorageFormatCoordinator, 15);
 
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
@@ -174,7 +179,7 @@ public final class RangeManagerTest {
                         collector, visitor, root, Hash.ZERO));
 
     final WorldStateProofProvider worldStateProofProvider =
-        new WorldStateProofProvider(worldStateStorage);
+        new WorldStateProofProvider(worldStateStorageFormatCoordinator);
 
     // generate the proof
     final List<Bytes> proofs =

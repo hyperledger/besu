@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
-import org.hyperledger.besu.ethereum.worldstate.strategy.ForestWorldStateStorageStrategy;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.ArrayList;
@@ -73,7 +72,7 @@ public class WorldStateProofProviderTest {
     final MerkleTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie();
     final MerkleTrie<Bytes32, Bytes> storageTrie = emptyStorageTrie();
 
-    final ForestWorldStateStorageStrategy.Updater updater = worldStateStorage.updater();
+    final ForestWorldStateKeyValueStorage.Updater updater = worldStateStorage.updater();
 
     // Add some storage values
     writeStorageValue(storageTrie, UInt256.ONE, UInt256.valueOf(2L));

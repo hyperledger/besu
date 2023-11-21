@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
@@ -71,7 +72,9 @@ public class SnapWorldDownloadStateTest {
   private static final int MAX_REQUESTS_WITHOUT_PROGRESS = 10;
   private static final long MIN_MILLIS_BEFORE_STALLING = 50_000;
 
-  private WorldStateStorageFormatCoordinator worldStateStorage;
+  private WorldStateKeyValueStorage worldStateStorage;
+
+  private WorldStateStorageFormatCoordinator worldStateStorageFormatCoordinator;
   private final BlockHeader header =
       new BlockHeaderTestFixture().stateRoot(ROOT_NODE_HASH).buildHeader();
   private final InMemoryTasksPriorityQueues<SnapDataRequest> pendingRequests =
@@ -112,9 +115,11 @@ public class SnapWorldDownloadStateTest {
     } else {
       worldStateStorage = new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     }
+    worldStateStorageFormatCoordinator = new WorldStateStorageFormatCoordinator(worldStateStorage);
+
     downloadState =
         new SnapWorldDownloadState(
-            worldStateStorage,
+            worldStateStorageFormatCoordinator,
             snapContext,
             blockchain,
             snapSyncState,
