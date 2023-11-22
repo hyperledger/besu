@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.DebugReplayBlock;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugAccountAt;
@@ -51,7 +52,6 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Optional;
 
 public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
@@ -64,8 +64,7 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final TransactionPool transactionPool;
   private final Synchronizer synchronizer;
   private final Path dataDir;
-
-  private final Optional<Long> gasCap;
+  private final ApiConfiguration apiConfiguration;
 
   DebugJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
@@ -75,7 +74,7 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final TransactionPool transactionPool,
       final Synchronizer synchronizer,
       final Path dataDir,
-      final Optional<Long> gasCap) {
+      final ApiConfiguration apiConfiguration) {
     this.blockchainQueries = blockchainQueries;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
@@ -83,7 +82,7 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.transactionPool = transactionPool;
     this.synchronizer = synchronizer;
     this.dataDir = dataDir;
-    this.gasCap = gasCap;
+    this.apiConfiguration = apiConfiguration;
   }
 
   @Override
@@ -128,6 +127,6 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
                 protocolSchedule,
-                gasCap)));
+                apiConfiguration.getGasCap())));
   }
 }

@@ -79,13 +79,13 @@ public class TransactionSimulator {
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
   private final ProtocolSchedule protocolSchedule;
-  private final Optional<Long> rpcGasCap;
+  private final long rpcGasCap;
 
   public TransactionSimulator(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
-      final Optional<Long> rpcGasCap) {
+      final long rpcGasCap) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
@@ -217,8 +217,8 @@ public class TransactionSimulator {
         callParams.getGasLimit() >= 0
             ? callParams.getGasLimit()
             : blockHeaderToProcess.getGasLimit();
-    if (rpcGasCap.isPresent()) {
-      final long gasCap = rpcGasCap.get();
+    if (rpcGasCap > 0) {
+      final long gasCap = rpcGasCap;
       if (gasCap < gasLimit) {
         gasLimit = gasCap;
         LOG.info("Capping gasLimit to " + gasCap);

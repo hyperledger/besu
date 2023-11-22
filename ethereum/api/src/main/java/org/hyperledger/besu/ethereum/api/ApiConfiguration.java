@@ -35,6 +35,7 @@ public abstract class ApiConfiguration {
   }
 
   @Value.Default
+  @Value.Auxiliary
   public LongSupplier getGasPriceMinSupplier() {
     return () -> 1_000_000_000L; // 1 GWei
   }
@@ -47,5 +48,15 @@ public abstract class ApiConfiguration {
   @Value.Derived
   public double getGasPriceFraction() {
     return getGasPricePercentile() / 100.0;
+  }
+
+  @Value.Default
+  public Long getMaxLogsRange() {
+    return 5000L;
+  }
+
+  @Value.Default
+  public Long getGasCap() {
+    return 0L;
   }
 }

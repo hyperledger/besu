@@ -25,6 +25,7 @@ import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -140,8 +141,7 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
                     folder,
                     mock(EthPeers.class),
                     vertx,
-                    Optional.empty(),
-                    Optional.empty(),
+                    mock(ApiConfiguration.class),
                     Optional.empty()));
 
     System.setProperty("javax.net.ssl.trustStore", CLIENT_AS_CA_CERT.getKeyStoreFile().toString());
