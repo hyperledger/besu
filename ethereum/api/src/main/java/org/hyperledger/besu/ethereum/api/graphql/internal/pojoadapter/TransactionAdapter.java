@@ -87,13 +87,12 @@ public class TransactionAdapter extends AdapterBase {
             .or(() -> transactionWithMetadata.getBlockNumber())
             .orElseGet(query::headBlockNumber);
 
-    final Address senderAddress = transactionWithMetadata.getTransaction().getSender();
+    final Address addr = transactionWithMetadata.getTransaction().getSender();
     return query
         .getAndMapWorldState(
             blockNumber,
-            mutableWorldState ->
-                Optional.of(new AccountAdapter(mutableWorldState.get(senderAddress))))
-        .orElse(new EmptyAccountAdapter(senderAddress));
+            mutableWorldState -> Optional.of(new AccountAdapter(mutableWorldState.get(addr))))
+        .orElse(new EmptyAccountAdapter(addr));
   }
 
   public Optional<AccountAdapter> getTo(final DataFetchingEnvironment environment) {
@@ -199,8 +198,10 @@ public class TransactionAdapter extends AdapterBase {
           return Optional.empty();
         }
         final long blockNumber = bn.orElseGet(txBlockNumber::get);
-        return query.getAndMapWorldState(
-            blockNumber, ws -> Optional.of(new AccountAdapter(ws.get(addr.get()))));
+        return query
+            .getAndMapWorldState(
+                blockNumber, ws -> Optional.of(new AccountAdapter(ws.get(addr.get()))))
+            .or(() -> Optional.of(new EmptyAccountAdapter(addr.get())));
       }
     }
     return Optional.empty();

@@ -13,7 +13,7 @@
 - Update OpenJDK latest Docker image to use Java 21 [#6189](https://github.com/hyperledger/besu/pull/6189)
 - Allow a transaction selection plugin to specify custom selection results [#6190](https://github.com/hyperledger/besu/pull/6190)
 - Add `rpc-gas-cap` to allow users to set gas limit to the RPC methods used to simulate transactions[#6156](https://github.com/hyperledger/besu/pull/6156)
-- Fix the unavailability of `address` in `from` and `to` fields of a `Transaction` and `account` field in `Log` on GraphQL in case of unreachable world state [#6198](https://github.com/hyperledger/besu/pull/6198)
+- Fix the unavailability of `address` field when returning an `Account` entity on GraphQL in case of unreachable world state [#6198](https://github.com/hyperledger/besu/pull/6198)
 
 ### Bug fixes
 - Fix Docker image name clash between Besu and evmtool [#6194](https://github.com/hyperledger/besu/pull/6194)
