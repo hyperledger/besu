@@ -1610,6 +1610,18 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void apiPriorityFeeLimitingEnabledOptionMustBeUsed() {
+    parseCommand("--api-priority-fee-limiting-enabled");
+    verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
+    verify(mockRunnerBuilder).build();
+    assertThat(apiConfigurationCaptor.getValue())
+        .isEqualTo(ImmutableApiConfiguration.builder().isPriorityFeeLimitingEnabled(true).build());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void apiPriorityFeeLowerBoundCoefficientOptionMustBeUsed() {
     final long lowerBound = 150L;
     parseCommand("--api-priority-fee-lower-bound-coefficient", Long.toString(lowerBound));

@@ -1218,10 +1218,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Long apiGasPriceMax = 500_000_000_000L;
 
   @CommandLine.Option(
-      names = {"--api-priority-fee-boundary-enabled"},
+      names = {"--api-priority-fee-limiting-enabled"},
       hidden = true,
-      description = "Set to enable rewards boundary in eth_feeHistory (default: ${DEFAULT-VALUE})")
-  private final boolean apiPriorityFeeLimitingEnabled = false;
+      description = "Set to enable rewards limit in eth_feeHistory (default: ${DEFAULT-VALUE})")
+  private final Boolean apiPriorityFeeLimitingEnabled = false;
 
   @CommandLine.Option(
       names = {"--api-priority-fee-lower-bound-coefficient"},
