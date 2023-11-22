@@ -34,7 +34,7 @@ import org.hyperledger.besu.ethereum.trie.StorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Arrays;
@@ -187,8 +187,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     setUp(flatDbMode);
     Assumptions.assumeTrue(flatDbMode == FlatDbMode.FULL);
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
-    final WorldStateStorageFormatCoordinator coordinator =
-        new WorldStateStorageFormatCoordinator(storage);
+    final WorldStateStorageCoordinator coordinator = new WorldStateStorageCoordinator(storage);
     final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(coordinator, 1);
 
     final TreeMap<Bytes32, Bytes> accounts =
@@ -220,8 +219,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     setUp(flatDbMode);
     Assumptions.assumeTrue(flatDbMode == FlatDbMode.PARTIAL);
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
-    final WorldStateStorageFormatCoordinator coordinator =
-        new WorldStateStorageFormatCoordinator(storage);
+    final WorldStateStorageCoordinator coordinator = new WorldStateStorageCoordinator(storage);
     final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(coordinator, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
@@ -251,8 +249,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     setUp(flatDbMode);
     Assumptions.assumeTrue(flatDbMode == FlatDbMode.PARTIAL);
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
-    final WorldStateStorageFormatCoordinator coordinator =
-        new WorldStateStorageFormatCoordinator(storage);
+    final WorldStateStorageCoordinator coordinator = new WorldStateStorageCoordinator(storage);
     final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(coordinator, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
@@ -284,8 +281,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     setUp(flatDbMode);
     Assumptions.assumeTrue(flatDbMode == FlatDbMode.PARTIAL);
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
-    final WorldStateStorageFormatCoordinator coordinator =
-        new WorldStateStorageFormatCoordinator(storage);
+    final WorldStateStorageCoordinator coordinator = new WorldStateStorageCoordinator(storage);
     final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(coordinator, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
@@ -336,8 +332,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     Assumptions.assumeTrue(flatDbMode == FlatDbMode.FULL);
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
     storage.upgradeToFullFlatDbMode();
-    final WorldStateStorageFormatCoordinator coordinator =
-        new WorldStateStorageFormatCoordinator(storage);
+    final WorldStateStorageCoordinator coordinator = new WorldStateStorageCoordinator(storage);
     final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(coordinator, 1);
 
     // save world state root hash

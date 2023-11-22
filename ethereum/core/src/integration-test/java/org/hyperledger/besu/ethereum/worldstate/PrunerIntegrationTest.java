@@ -65,7 +65,7 @@ public class PrunerIntegrationTest {
       new ForestWorldStateKeyValueStorage(stateStorage);
   private final WorldStateArchive worldStateArchive =
       new ForestWorldStateArchive(
-          new WorldStateStorageFormatCoordinator(worldStateStorage),
+          new WorldStateStorageCoordinator(worldStateStorage),
           new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
           EvmConfiguration.DEFAULT);
   private final InMemoryKeyValueStorage markStorage = new InMemoryKeyValueStorage();

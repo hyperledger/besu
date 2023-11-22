@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -75,8 +75,8 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
   public void shouldReturnChildRequests() {
     final ForestWorldStateKeyValueStorage worldStateStorage =
         new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStateStorageFormatCoordinator worldStateStorageCoordinator =
-        new WorldStateStorageFormatCoordinator(worldStateStorage);
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateStorage);
     final WorldStateProofProvider proofProvider =
         new WorldStateProofProvider(worldStateStorageCoordinator);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
@@ -147,8 +147,8 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
   public void shouldNotReturnChildRequestsWhenNoMoreAccounts() {
     final ForestWorldStateKeyValueStorage worldStateStorage =
         new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStateStorageFormatCoordinator worldStateStorageCoordinator =
-        new WorldStateStorageFormatCoordinator(worldStateStorage);
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateStorage);
     final WorldStateProofProvider proofProvider =
         new WorldStateProofProvider(worldStateStorageCoordinator);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
@@ -191,8 +191,8 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
 
     final BonsaiWorldStateKeyValueStorage worldStateStorage =
         new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
-    final WorldStateStorageFormatCoordinator worldStateStorageCoordinator =
-        new WorldStateStorageFormatCoordinator(worldStateStorage);
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateStorage);
     final WorldStateProofProvider proofProvider =
         new WorldStateProofProvider(worldStateStorageCoordinator);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
@@ -248,8 +248,8 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
 
     final BonsaiWorldStateKeyValueStorage worldStateStorage =
         new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
-    final WorldStateStorageFormatCoordinator worldStateStorageCoordinator =
-        new WorldStateStorageFormatCoordinator(worldStateStorage);
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateStorage);
     final WorldStateProofProvider proofProvider =
         new WorldStateProofProvider(worldStateStorageCoordinator);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
@@ -302,8 +302,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
     // an ArrayDeque
     request.addLocalData(proofProvider, accounts, new ArrayDeque<>(proofs));
 
-    BonsaiWorldStateKeyValueStorage.Updater updater =
-        (BonsaiWorldStateKeyValueStorage.Updater) Mockito.spy(worldStateStorage.updater());
+    BonsaiWorldStateKeyValueStorage.Updater updater = Mockito.spy(worldStateStorage.updater());
     request.doPersist(
         worldStateStorageCoordinator,
         updater,

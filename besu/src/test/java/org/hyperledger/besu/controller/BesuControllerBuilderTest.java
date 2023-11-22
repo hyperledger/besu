@@ -52,7 +52,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -89,7 +89,7 @@ public class BesuControllerBuilderTest {
   @Mock Clock clock;
   @Mock StorageProvider storageProvider;
   @Mock GasLimitCalculator gasLimitCalculator;
-  @Mock WorldStateStorageFormatCoordinator worldStateStorage;
+  @Mock WorldStateStorageCoordinator worldStateStorage;
   @Mock WorldStateArchive worldStateArchive;
   @Mock BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorage;
   @Mock WorldStatePreimageStorage worldStatePreimageStorage;
@@ -166,13 +166,13 @@ public class BesuControllerBuilderTest {
     doReturn(worldStateArchive)
         .when(besuControllerBuilder)
         .createWorldStateArchive(
-            any(WorldStateStorageFormatCoordinator.class),
+            any(WorldStateStorageCoordinator.class),
             any(Blockchain.class),
             any(CachedMerkleTrieLoader.class));
     doReturn(mockWorldState).when(worldStateArchive).getMutable();
 
     when(storageProvider.createWorldStateStorage(DataStorageFormat.BONSAI))
-        .thenReturn(new WorldStateStorageFormatCoordinator(bonsaiWorldStateStorage));
+        .thenReturn(new WorldStateStorageCoordinator(bonsaiWorldStateStorage));
     besuControllerBuilder
         .isPruningEnabled(true)
         .dataStorageConfiguration(

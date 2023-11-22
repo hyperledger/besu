@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator.applyForStrategy;
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator.applyForStrategy;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,7 +37,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class TrieGenerator {
 
   public static MerkleTrie<Bytes, Bytes> generateTrie(
-      final WorldStateStorageFormatCoordinator worldStateStorage, final int nbAccounts) {
+      final WorldStateStorageCoordinator worldStateStorage, final int nbAccounts) {
     return generateTrie(
         worldStateStorage,
         IntStream.range(0, nbAccounts)
@@ -46,7 +46,7 @@ public class TrieGenerator {
   }
 
   public static MerkleTrie<Bytes, Bytes> generateTrie(
-      final WorldStateStorageFormatCoordinator worldStateStorage, final List<Hash> accounts) {
+      final WorldStateStorageCoordinator worldStateStorage, final List<Hash> accounts) {
     final MerkleTrie<Bytes, Bytes> accountStateTrie = emptyAccountStateTrie(worldStateStorage);
     // Add some storage values
     for (int i = 0; i < accounts.size(); i++) {
@@ -120,7 +120,7 @@ public class TrieGenerator {
   }
 
   public static MerkleTrie<Bytes, Bytes> emptyStorageTrie(
-      final WorldStateStorageFormatCoordinator worldStateStorage, final Hash accountHash) {
+      final WorldStateStorageCoordinator worldStateStorage, final Hash accountHash) {
     return new StoredMerklePatriciaTrie<>(
         (location, hash) ->
             worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash),
@@ -129,7 +129,7 @@ public class TrieGenerator {
   }
 
   public static MerkleTrie<Bytes, Bytes> emptyAccountStateTrie(
-      final WorldStateStorageFormatCoordinator worldStateStorage) {
+      final WorldStateStorageCoordinator worldStateStorage) {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStateTrieNode, b -> b, b -> b);
   }

@@ -15,21 +15,21 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.tasks.Task;
 
 import java.util.List;
@@ -43,13 +43,16 @@ public class TaskGenerator {
 
   public static List<Task<SnapDataRequest>> createAccountRequest(final boolean withData) {
 
-    final WorldStateStorageFormatCoordinator worldStateStorage =
-        new InMemoryKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.FOREST);
+    final ForestWorldStateKeyValueStorage worldStateStorage =
+        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateStorage);
 
     final WorldStateProofProvider worldStateProofProvider =
-        new WorldStateProofProvider(worldStateStorage);
+        new WorldStateProofProvider(worldStateStorageCoordinator);
 
-    final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(worldStateStorage, 1);
+    final MerkleTrie<Bytes, Bytes> trie =
+        TrieGenerator.generateTrie(worldStateStorageCoordinator, 1);
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
             Bytes32.ZERO, RangeManager.MAX_RANGE, 1, Integer.MAX_VALUE);
@@ -77,7 +80,7 @@ public class TaskGenerator {
     final StorageRangeDataRequest storageRangeDataRequest =
         createStorageRangeDataRequest(
             worldStateProofProvider,
-            worldStateStorage,
+            worldStateStorageCoordinator,
             rootHash,
             accountHash,
             stateTrieAccountValue.getStorageRoot(),
@@ -98,7 +101,7 @@ public class TaskGenerator {
 
   private static StorageRangeDataRequest createStorageRangeDataRequest(
       final WorldStateProofProvider worldStateProofProvider,
-      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final Hash rootHash,
       final Hash accountHash,
       final Bytes32 storageRoot,
@@ -134,7 +137,7 @@ public class TaskGenerator {
   }
 
   private static BytecodeRequest createBytecodeDataRequest(
-      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final ForestWorldStateKeyValueStorage worldStateStorage,
       final Hash rootHash,
       final Hash accountHash,
       final Hash codeHash,
@@ -142,7 +145,7 @@ public class TaskGenerator {
     final BytecodeRequest request =
         SnapDataRequest.createBytecodeRequest(accountHash, rootHash, codeHash);
     if (withData) {
-      request.setCode(worldStateStorage.getCode(codeHash, accountHash).get());
+      request.setCode(worldStateStorage.getCode(codeHash).get());
     }
     return request;
   }

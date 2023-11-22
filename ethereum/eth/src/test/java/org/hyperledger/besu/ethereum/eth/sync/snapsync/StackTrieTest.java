@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
@@ -43,16 +43,14 @@ public class StackTrieTest {
 
     final ForestWorldStateKeyValueStorage worldStateStorage =
         new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStateStorageFormatCoordinator worldStateStorageFormatCoordinator =
-        new WorldStateStorageFormatCoordinator(worldStateStorage);
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateStorage);
 
     final ForestWorldStateKeyValueStorage recreatedWorldStateStorage =
         new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStateStorageFormatCoordinator recreatedWorldStateStorageFormatCoordinator =
-        new WorldStateStorageFormatCoordinator(recreatedWorldStateStorage);
 
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
-        TrieGenerator.generateTrie(worldStateStorageFormatCoordinator, nbAccounts);
+        TrieGenerator.generateTrie(worldStateStorageCoordinator, nbAccounts);
 
     final StackTrie stackTrie =
         new StackTrie(Hash.wrap(accountStateTrie.getRootHash()), 0, 256, lastAccount);
@@ -70,7 +68,7 @@ public class StackTrieTest {
                         collector, visitor, root, lastAccount));
 
     final WorldStateProofProvider worldStateProofProvider =
-        new WorldStateProofProvider(worldStateStorageFormatCoordinator);
+        new WorldStateProofProvider(worldStateStorageCoordinator);
 
     // generate the proof
     final List<Bytes> proofs =
@@ -98,16 +96,14 @@ public class StackTrieTest {
 
     final ForestWorldStateKeyValueStorage worldStateStorage =
         new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStateStorageFormatCoordinator worldStateStorageFormatCoordinator =
-        new WorldStateStorageFormatCoordinator(worldStateStorage);
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateStorage);
 
     final ForestWorldStateKeyValueStorage recreatedWorldStateStorage =
         new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStateStorageFormatCoordinator recreatedWorldStateStorageFormatCoordinator =
-        new WorldStateStorageFormatCoordinator(recreatedWorldStateStorage);
 
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
-        TrieGenerator.generateTrie(worldStateStorageFormatCoordinator, nbAccounts);
+        TrieGenerator.generateTrie(worldStateStorageCoordinator, nbAccounts);
 
     final StackTrie stackTrie =
         new StackTrie(Hash.wrap(accountStateTrie.getRootHash()), 0, 256, lastAccount);
@@ -126,7 +122,7 @@ public class StackTrieTest {
                           collector, visitor, root, lastAccount));
 
       final WorldStateProofProvider worldStateProofProvider =
-          new WorldStateProofProvider(worldStateStorageFormatCoordinator);
+          new WorldStateProofProvider(worldStateStorageCoordinator);
 
       // generate the proof
       final List<Bytes> proofs =

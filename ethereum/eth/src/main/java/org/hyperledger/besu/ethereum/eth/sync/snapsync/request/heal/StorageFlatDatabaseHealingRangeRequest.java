@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -76,7 +76,7 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
   @Override
   public Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
-      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final SnapSyncProcessState snapSyncState) {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
     if (!slots.isEmpty()) {
@@ -133,7 +133,7 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
   @Override
   protected int doPersist(
-      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncProcessState snapSyncState,

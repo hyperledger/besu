@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -29,12 +29,11 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class LoadLocalDataStep {
 
-  private final WorldStateStorageFormatCoordinator worldStateStorage;
+  private final WorldStateStorageCoordinator worldStateStorage;
   private final Counter existingNodeCounter;
 
   public LoadLocalDataStep(
-      final WorldStateStorageFormatCoordinator worldStateStorage,
-      final MetricsSystem metricsSystem) {
+      final WorldStateStorageCoordinator worldStateStorage, final MetricsSystem metricsSystem) {
     this.worldStateStorage = worldStateStorage;
     existingNodeCounter =
         metricsSystem.createCounter(

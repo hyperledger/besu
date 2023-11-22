@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal;
 
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
-import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator.applyForStrategy;
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator.applyForStrategy;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -56,7 +56,7 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
   @Override
   protected int doPersist(
-      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncProcessState snapSyncState,
@@ -78,7 +78,7 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
   @Override
   public Optional<Bytes> getExistingData(
       final SnapWorldDownloadState downloadState,
-      final WorldStateStorageFormatCoordinator worldStateStorage) {
+      final WorldStateStorageCoordinator worldStateStorage) {
     return worldStateStorage
         .getAccountStateTrieNode(getLocation(), getNodeHash())
         .filter(data -> !getLocation().isEmpty());
@@ -102,7 +102,7 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
   @Override
   public Stream<SnapDataRequest> getRootStorageRequests(
-      final WorldStateStorageFormatCoordinator worldStateStorage) {
+      final WorldStateStorageCoordinator worldStateStorage) {
     final List<SnapDataRequest> requests = new ArrayList<>();
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(
@@ -146,7 +146,7 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
   @Override
   protected Stream<SnapDataRequest> getRequestsFromTrieNodeValue(
-      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final SnapWorldDownloadState downloadState,
       final Bytes location,
       final Bytes path,

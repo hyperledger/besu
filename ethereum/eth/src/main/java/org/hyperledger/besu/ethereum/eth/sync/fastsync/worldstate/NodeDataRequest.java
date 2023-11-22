@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderException;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
 import java.util.Optional;
@@ -131,10 +131,10 @@ public abstract class NodeDataRequest implements TasksPriorityProvider {
   protected abstract void doPersist(final WorldStateKeyValueStorage.Updater updater);
 
   public abstract Stream<NodeDataRequest> getChildRequests(
-      WorldStateStorageFormatCoordinator worldStateStorage);
+      WorldStateStorageCoordinator worldStateStorage);
 
   public abstract Optional<Bytes> getExistingData(
-      final WorldStateStorageFormatCoordinator worldStateStorage);
+      final WorldStateStorageCoordinator worldStateStorage);
 
   protected void registerParent(final NodeDataRequest parent) {
     if (this.possibleParent.isPresent()) {

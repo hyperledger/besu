@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 
 import java.io.IOException;
@@ -47,8 +47,8 @@ public class PrivacyKeyValueStorageProvider implements PrivacyStorageProvider {
   }
 
   @Override
-  public WorldStateStorageFormatCoordinator createWorldStateStorage() {
-    return new WorldStateStorageFormatCoordinator(
+  public WorldStateStorageCoordinator createWorldStateStorage() {
+    return new WorldStateStorageCoordinator(
         new ForestWorldStateKeyValueStorage(privateWorldStateKeyValueStorage));
   }
 

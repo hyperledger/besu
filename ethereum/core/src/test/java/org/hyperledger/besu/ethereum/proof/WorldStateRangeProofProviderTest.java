@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStor
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.ArrayList;
@@ -43,12 +43,12 @@ public class WorldStateRangeProofProviderTest {
   private static final ForestWorldStateKeyValueStorage worldStateStorage =
       new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
-  private WorldStateStorageFormatCoordinator worldStateStorageCoordinator;
+  private WorldStateStorageCoordinator worldStateStorageCoordinator;
   private static WorldStateProofProvider worldStateProofProvider;
 
   @BeforeEach
   public void setup() {
-    worldStateStorageCoordinator = new WorldStateStorageFormatCoordinator(worldStateStorage);
+    worldStateStorageCoordinator = new WorldStateStorageCoordinator(worldStateStorage);
     worldStateProofProvider = new WorldStateProofProvider(worldStateStorageCoordinator);
   }
 

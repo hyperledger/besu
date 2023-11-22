@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
-import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator.applyForStrategy;
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator.applyForStrategy;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -50,8 +50,7 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
   }
 
   @Override
-  public Optional<Bytes> getExistingData(
-      final WorldStateStorageFormatCoordinator worldStateStorage) {
+  public Optional<Bytes> getExistingData(final WorldStateStorageCoordinator worldStateStorage) {
     return getLocation()
         .flatMap(
             location ->
@@ -68,7 +67,7 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(
-      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final Optional<Bytes> location,
       final Bytes path,
       final Bytes value) {

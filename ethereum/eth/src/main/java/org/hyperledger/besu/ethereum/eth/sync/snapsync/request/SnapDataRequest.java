@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageFlatD
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageTrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderException;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
 import java.util.HashSet;
@@ -116,7 +116,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   }
 
   public int persist(
-      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncProcessState snapSyncState,
@@ -126,7 +126,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   }
 
   protected abstract int doPersist(
-      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncProcessState snapSyncState,
@@ -140,7 +140,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
 
   public abstract Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
-      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final SnapSyncProcessState snapSyncState);
 
   public void registerParent(final TrieNodeHealingRequest parent) {
@@ -157,7 +157,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   }
 
   protected int saveParent(
-      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncProcessState snapSyncState,

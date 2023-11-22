@@ -26,8 +26,7 @@ import java.util.function.Function;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public record WorldStateStorageFormatCoordinator(
-    WorldStateKeyValueStorage worldStateKeyValueStorage) {
+public record WorldStateStorageCoordinator(WorldStateKeyValueStorage worldStateKeyValueStorage) {
 
   public DataStorageFormat getDataStorageFormat() {
     return worldStateKeyValueStorage.getDataStorageFormat();

@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.HashMap;
@@ -120,11 +120,11 @@ public final class RangeManagerTest {
     final ForestWorldStateKeyValueStorage worldStateStorage =
         new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
-    final WorldStateStorageFormatCoordinator worldStateStorageFormatCoordinator =
-        new WorldStateStorageFormatCoordinator(worldStateStorage);
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateStorage);
 
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
-        TrieGenerator.generateTrie(worldStateStorageFormatCoordinator, 15);
+        TrieGenerator.generateTrie(worldStateStorageCoordinator, 15);
 
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
@@ -138,7 +138,7 @@ public final class RangeManagerTest {
                         collector, visitor, root, Hash.ZERO));
 
     final WorldStateProofProvider worldStateProofProvider =
-        new WorldStateProofProvider(worldStateStorageFormatCoordinator);
+        new WorldStateProofProvider(worldStateStorageCoordinator);
 
     // generate the proof
     final List<Bytes> proofs =
@@ -161,11 +161,11 @@ public final class RangeManagerTest {
 
     final ForestWorldStateKeyValueStorage worldStateStorage =
         new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStateStorageFormatCoordinator worldStateStorageFormatCoordinator =
-        new WorldStateStorageFormatCoordinator(worldStateStorage);
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateStorage);
 
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
-        TrieGenerator.generateTrie(worldStateStorageFormatCoordinator, 15);
+        TrieGenerator.generateTrie(worldStateStorageCoordinator, 15);
 
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
@@ -179,7 +179,7 @@ public final class RangeManagerTest {
                         collector, visitor, root, Hash.ZERO));
 
     final WorldStateProofProvider worldStateProofProvider =
-        new WorldStateProofProvider(worldStateStorageFormatCoordinator);
+        new WorldStateProofProvider(worldStateStorageCoordinator);
 
     // generate the proof
     final List<Bytes> proofs =

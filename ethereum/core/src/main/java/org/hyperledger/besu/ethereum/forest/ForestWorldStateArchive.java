@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
@@ -46,7 +46,7 @@ public class ForestWorldStateArchive implements WorldStateArchive {
   private static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
   public ForestWorldStateArchive(
-      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final WorldStatePreimageStorage preimageStorage,
       final EvmConfiguration evmConfiguration) {
     this.worldStateKeyValueStorage =
@@ -98,8 +98,8 @@ public class ForestWorldStateArchive implements WorldStateArchive {
     return worldStateKeyValueStorage.getNodeData(hash);
   }
 
-  public WorldStateStorageFormatCoordinator getWorldStateStorage() {
-    return new WorldStateStorageFormatCoordinator(worldStateKeyValueStorage);
+  public WorldStateStorageCoordinator getWorldStateStorage() {
+    return new WorldStateStorageCoordinator(worldStateKeyValueStorage);
   }
 
   @Override

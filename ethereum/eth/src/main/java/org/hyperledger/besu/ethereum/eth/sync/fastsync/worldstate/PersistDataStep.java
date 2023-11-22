@@ -21,7 +21,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.get
 import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.services.tasks.Task;
 
@@ -34,9 +34,9 @@ public class PersistDataStep {
 
   private static final Logger LOG = LoggerFactory.getLogger(PersistDataStep.class);
 
-  private final WorldStateStorageFormatCoordinator worldStateStorage;
+  private final WorldStateStorageCoordinator worldStateStorage;
 
-  public PersistDataStep(final WorldStateStorageFormatCoordinator worldStateStorage) {
+  public PersistDataStep(final WorldStateStorageCoordinator worldStateStorage) {
     this.worldStateStorage = worldStateStorage;
   }
 

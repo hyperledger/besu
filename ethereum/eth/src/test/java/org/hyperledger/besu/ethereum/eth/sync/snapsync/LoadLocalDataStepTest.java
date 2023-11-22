@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountTrieNodeHealingRequest;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.pipeline.Pipe;
 import org.hyperledger.besu.services.tasks.Task;
@@ -59,8 +59,8 @@ public class LoadLocalDataStepTest {
 
   private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
   private final SnapWorldDownloadState downloadState = mock(SnapWorldDownloadState.class);
-  private final WorldStateStorageFormatCoordinator worldStateStorage =
-      mock(WorldStateStorageFormatCoordinator.class);
+  private final WorldStateStorageCoordinator worldStateStorage =
+      mock(WorldStateStorageCoordinator.class);
   private final WorldStateKeyValueStorage.Updater updater =
       mock(WorldStateKeyValueStorage.Updater.class);
 

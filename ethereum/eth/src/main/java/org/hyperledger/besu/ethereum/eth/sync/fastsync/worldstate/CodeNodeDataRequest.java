@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
-import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator.applyForStrategy;
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator.applyForStrategy;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -49,14 +49,13 @@ class CodeNodeDataRequest extends NodeDataRequest {
 
   @Override
   public Stream<NodeDataRequest> getChildRequests(
-      final WorldStateStorageFormatCoordinator worldStateStorage) {
+      final WorldStateStorageCoordinator worldStateStorage) {
     // Code nodes have nothing further to download
     return Stream.empty();
   }
 
   @Override
-  public Optional<Bytes> getExistingData(
-      final WorldStateStorageFormatCoordinator worldStateStorage) {
+  public Optional<Bytes> getExistingData(final WorldStateStorageCoordinator worldStateStorage) {
     return worldStateStorage.applyForStrategy(
         onBonsai -> {
           return onBonsai

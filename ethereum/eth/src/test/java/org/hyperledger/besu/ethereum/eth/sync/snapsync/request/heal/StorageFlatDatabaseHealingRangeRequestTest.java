@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Iterator;
@@ -71,7 +71,7 @@ class StorageFlatDatabaseHealingRangeRequestTest {
 
   private MerkleTrie<Bytes, Bytes> trie;
 
-  private WorldStateStorageFormatCoordinator worldStateStorageCoordinator;
+  private WorldStateStorageCoordinator worldStateStorageCoordinator;
   private BonsaiWorldStateKeyValueStorage worldStateStorage;
   private WorldStateProofProvider proofProvider;
   private Hash account0Hash;
@@ -82,7 +82,7 @@ class StorageFlatDatabaseHealingRangeRequestTest {
     final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
     worldStateStorage =
         new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
-    worldStateStorageCoordinator = new WorldStateStorageFormatCoordinator(worldStateStorage);
+    worldStateStorageCoordinator = new WorldStateStorageCoordinator(worldStateStorage);
     proofProvider = new WorldStateProofProvider(worldStateStorageCoordinator);
     trie =
         TrieGenerator.generateTrie(
@@ -314,8 +314,7 @@ class StorageFlatDatabaseHealingRangeRequestTest {
     // Add local data to the request
     request.addLocalData(proofProvider, slots, new ArrayDeque<>(proofs));
 
-    BonsaiWorldStateKeyValueStorage.Updater updater =
-        (BonsaiWorldStateKeyValueStorage.Updater) Mockito.spy(worldStateStorage.updater());
+    BonsaiWorldStateKeyValueStorage.Updater updater = Mockito.spy(worldStateStorage.updater());
     request.doPersist(
         worldStateStorageCoordinator,
         updater,

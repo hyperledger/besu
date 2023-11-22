@@ -23,11 +23,11 @@ import static org.mockito.Mockito.verify;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.tasks.Task;
 
 import java.nio.charset.StandardCharsets;
@@ -39,15 +39,17 @@ import org.junit.jupiter.api.Test;
 
 public class PersistDataStepTest {
 
-  private final WorldStateStorageFormatCoordinator worldStateStorage =
-      new InMemoryKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.FOREST);
+  final ForestWorldStateKeyValueStorage worldStateStorage =
+      new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+  private final WorldStateStorageCoordinator worldStateStorageCoordinator =
+      new WorldStateStorageCoordinator(worldStateStorage);
   private final FastWorldDownloadState downloadState = mock(FastWorldDownloadState.class);
 
   private final Bytes rootNodeData = Bytes.of(1, 1, 1, 1);
   private final BlockHeader blockHeader =
       new BlockHeaderTestFixture().stateRoot(Hash.hash(rootNodeData)).buildHeader();
 
-  private final PersistDataStep persistDataStep = new PersistDataStep(worldStateStorage);
+  private final PersistDataStep persistDataStep = new PersistDataStep(worldStateStorageCoordinator);
 
   @Test
   public void shouldPersistDataWhenPresentWithoutChildren() {
@@ -119,7 +121,7 @@ public class PersistDataStepTest {
   private void assertDataPersisted(final List<Task<NodeDataRequest>> tasks) {
     tasks.forEach(
         task ->
-            assertThat(worldStateStorage.getNodeData(null, task.getData().getHash()))
+            assertThat(worldStateStorage.getNodeData(task.getData().getHash()))
                 .isEqualTo(Optional.of(task.getData().getData())));
   }
 }

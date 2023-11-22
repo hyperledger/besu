@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import org.hyperledger.besu.services.tasks.Task;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
@@ -53,11 +53,11 @@ public abstract class WorldDownloadState<REQUEST extends TasksPriorityProvider> 
   private volatile long timestampOfLastProgress;
   protected Bytes rootNodeData;
 
-  protected final WorldStateStorageFormatCoordinator worldStateStorage;
+  protected final WorldStateStorageCoordinator worldStateStorage;
   protected WorldStateDownloadProcess worldStateDownloadProcess;
 
   public WorldDownloadState(
-      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final InMemoryTasksPriorityQueues<REQUEST> pendingRequests,
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,

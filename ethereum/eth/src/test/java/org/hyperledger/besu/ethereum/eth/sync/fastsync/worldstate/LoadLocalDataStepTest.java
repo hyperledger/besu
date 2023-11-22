@@ -18,10 +18,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.metrics.noop.NoOpMetricsSystem.NO_OP_COUNTER;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.pipeline.Pipe;
 import org.hyperledger.besu.services.tasks.Task;
@@ -37,10 +39,10 @@ public class LoadLocalDataStepTest {
 
   private static final Bytes DATA = Bytes.of(1, 2, 3);
   private static final Hash HASH = Hash.hash(DATA);
-  private final WorldStateStorageFormatCoordinator worldStateStorage =
-      mock(WorldStateStorageFormatCoordinator.class);
-  private final WorldStateStorageFormatCoordinator.Updater updater =
-      mock(WorldStateStorageFormatCoordinator.Updater.class);
+  private final BonsaiWorldStateKeyValueStorage worldStateStorage =
+      mock(BonsaiWorldStateKeyValueStorage.class);
+  private final BonsaiWorldStateKeyValueStorage.Updater updater =
+      mock(BonsaiWorldStateKeyValueStorage.Updater.class);
 
   private final CodeNodeDataRequest request =
       NodeDataRequest.createCodeRequest(HASH, Optional.empty());
@@ -49,7 +51,8 @@ public class LoadLocalDataStepTest {
   private final Pipe<Task<NodeDataRequest>> completedTasks =
       new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER);
   private final LoadLocalDataStep loadLocalDataStep =
-      new LoadLocalDataStep(worldStateStorage, new NoOpMetricsSystem());
+      new LoadLocalDataStep(
+          new WorldStateStorageCoordinator(worldStateStorage), new NoOpMetricsSystem());
 
   @Test
   public void shouldReturnStreamWithUnchangedTaskWhenDataNotPresent() {

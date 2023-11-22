@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -75,13 +75,13 @@ public class KeyValueStorageProvider implements StorageProvider {
   }
 
   @Override
-  public WorldStateStorageFormatCoordinator createWorldStateStorage(
+  public WorldStateStorageCoordinator createWorldStateStorage(
       final DataStorageFormat dataStorageFormat) {
     if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
-      return new WorldStateStorageFormatCoordinator(
+      return new WorldStateStorageCoordinator(
           new BonsaiWorldStateKeyValueStorage(this, metricsSystem));
     } else {
-      return new WorldStateStorageFormatCoordinator(
+      return new WorldStateStorageCoordinator(
           new ForestWorldStateKeyValueStorage(
               getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.WORLD_STATE)));
     }

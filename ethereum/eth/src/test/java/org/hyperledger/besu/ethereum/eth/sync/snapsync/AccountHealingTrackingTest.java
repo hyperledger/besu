@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.List;
@@ -60,7 +60,7 @@ public class AccountHealingTrackingTest {
       new BonsaiWorldStateKeyValueStorage(
           new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
 
-  private WorldStateStorageFormatCoordinator worldStateStorageCoordinator;
+  private WorldStateStorageCoordinator worldStateStorageCoordinator;
 
   private WorldStateProofProvider worldStateProofProvider;
 
@@ -70,7 +70,7 @@ public class AccountHealingTrackingTest {
 
   @BeforeEach
   public void setup() {
-    worldStateStorageCoordinator = new WorldStateStorageFormatCoordinator(worldStateStorage);
+    worldStateStorageCoordinator = new WorldStateStorageCoordinator(worldStateStorage);
     accountStateTrie =
         TrieGenerator.generateTrie(
             worldStateStorageCoordinator,

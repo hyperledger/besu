@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.io.File;
@@ -59,7 +59,7 @@ public class FastDownloaderFactoryTest {
   @Mock private ProtocolContext protocolContext;
   @Mock private MetricsSystem metricsSystem;
   @Mock private EthContext ethContext;
-  @Mock private WorldStateStorageFormatCoordinator worldStateStorage;
+  @Mock private WorldStateStorageCoordinator worldStateStorage;
   @Mock private SyncState syncState;
   @Mock private Clock clock;
   @Mock private Path dataDirectory;

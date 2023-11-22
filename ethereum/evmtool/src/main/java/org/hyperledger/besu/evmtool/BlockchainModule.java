@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStor
 import org.hyperledger.besu.ethereum.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageFormatCoordinator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -57,7 +57,7 @@ public class BlockchainModule {
   @Singleton
   MutableWorldState getMutableWorldState(
       @Named("StateRoot") final Bytes32 stateRoot,
-      final WorldStateStorageFormatCoordinator worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorage,
       final WorldStatePreimageStorage worldStatePreimageStorage,
       final GenesisState genesisState,
       @Named("KeyValueStorageName") final String keyValueStorageName,
@@ -81,10 +81,9 @@ public class BlockchainModule {
 
   @Provides
   @Singleton
-  WorldStateStorageFormatCoordinator provideWorldStateStorage(
+  WorldStateStorageCoordinator provideWorldStateStorage(
       @Named("worldState") final KeyValueStorage keyValueStorage) {
-    return new WorldStateStorageFormatCoordinator(
-        new ForestWorldStateKeyValueStorage(keyValueStorage));
+    return new WorldStateStorageCoordinator(new ForestWorldStateKeyValueStorage(keyValueStorage));
   }
 
   @Provides

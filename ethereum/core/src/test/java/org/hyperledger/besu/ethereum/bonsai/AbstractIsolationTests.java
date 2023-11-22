@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -66,6 +65,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
@@ -89,7 +89,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 public abstract class AbstractIsolationTests {
   protected BonsaiWorldStateProvider archive;
-  protected BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorage;
+  protected WorldStateStorageCoordinator worldStateStorageCoordinator;
   protected ProtocolContext protocolContext;
   protected EthContext ethContext;
   final Function<String, KeyPair> asKeyPair =
@@ -139,12 +139,11 @@ public abstract class AbstractIsolationTests {
 
   @BeforeEach
   public void createStorage() {
-    bonsaiWorldStateStorage =
-        (BonsaiWorldStateKeyValueStorage)
-            createKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.BONSAI);
+    worldStateStorageCoordinator =
+        createKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.BONSAI);
     archive =
         new BonsaiWorldStateProvider(
-            bonsaiWorldStateStorage,
+            worldStateStorageCoordinator,
             blockchain,
             Optional.of(16L),
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
