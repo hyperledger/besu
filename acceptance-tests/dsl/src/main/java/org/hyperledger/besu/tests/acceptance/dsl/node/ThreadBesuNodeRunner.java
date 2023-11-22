@@ -225,7 +225,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
     runnerBuilder.permissioningConfiguration(node.getPermissioningConfiguration());
-    runnerBuilder.apiConfiguration((node.getApiConfiguration()));
+    runnerBuilder.apiConfiguration(node.getApiConfiguration());
 
     runnerBuilder
         .vertx(Vertx.vertx())
