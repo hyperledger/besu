@@ -32,6 +32,10 @@ class AccessListTransactionDecoder {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
+  private AccessListTransactionDecoder() {
+    // private constructor
+  }
+
   public static Transaction decode(final RLPInput rlpInput) {
     rlpInput.enterList();
     final Transaction.Builder preSignatureTransactionBuilder =
@@ -43,7 +47,7 @@ class AccessListTransactionDecoder {
             .gasLimit(rlpInput.readLongScalar())
             .to(
                 rlpInput.readBytes(
-                    addressBytes -> addressBytes.size() == 0 ? null : Address.wrap(addressBytes)))
+                    addressBytes -> addressBytes.isEmpty() ? null : Address.wrap(addressBytes)))
             .value(Wei.of(rlpInput.readUInt256Scalar()))
             .payload(rlpInput.readBytes())
             .accessList(
@@ -57,7 +61,7 @@ class AccessListTransactionDecoder {
                       accessListEntryRLPInput.leaveList();
                       return accessListEntry;
                     }));
-    final byte recId = (byte) rlpInput.readIntScalar();
+    final byte recId = (byte) rlpInput.readUnsignedByte();
     final Transaction transaction =
         preSignatureTransactionBuilder
             .signature(
