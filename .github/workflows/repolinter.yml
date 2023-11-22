@@ -1,21 +1,15 @@
 # SPDX-License-Identifier: Apache-2.0
 # Hyperledger Repolinter Action
-name: Repolinter
+name: repolinter
 
 on:
-  push:
-    branches:
-      - master
-      - main
-  pull_request:
-    branches:
-      - master
-      - main
+  workflow_call:
+
 
 jobs:
   build:
-    runs-on: [besu-research-ubuntu-16]
-    container: ghcr.io/todogroup/repolinter:v0.10.1
+    runs-on: ubuntu-22.04
+    container: ghcr.io/todogroup/repolinter:v0.11.2
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4

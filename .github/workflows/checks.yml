@@ -1,0 +1,37 @@
+name: "checks"
+
+on:
+  pull_request:
+
+jobs:
+  lint:
+    name: "Repository Linting"
+    runs-on: ubuntu-22.04
+    container: ghcr.io/todogroup/repolinter:v0.11.2
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    - name: Lint Repo
+      run: bundle exec /app/bin/repolinter.js --rulesetUrl https://raw.githubusercontent.com/hyperledger-labs/hyperledger-community-management-tools/main/repo_structure/repolint.json --format markdown
+  gradle-wrapper:
+    name: "Gradle Wrapper Validation"
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: gradle/wrapper-validation-action@v1.1.0
+  spotless:
+    runs-on: ubuntu-22.04
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: adopt
+          java-version: 17
+      - name: spotless
+        uses: gradle/gradle-build-action@v2.10.0
+        with:
+          arguments: build spotlessCheck -Dorg.gradle.parallel=true
+          cache: gradle
