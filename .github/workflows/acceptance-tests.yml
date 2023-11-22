@@ -1,6 +1,7 @@
 name: acceptance-tests
 on:
-  workflow_call:
+  pull_request_review:
+    types: [ submitted ]
 
 
 env:
@@ -9,7 +10,8 @@ env:
 
 jobs:
   runner-indexes:
-    runs-on: ubuntu-22.04
+    runs-on:
+      group: "Besu Large Runners"
     name: Generate runner indexes
     outputs:
       json: ${{ steps.generate-index-list.outputs.json }}
@@ -21,23 +23,17 @@ jobs:
           INDEX_JSON=$(jq --null-input --compact-output '. |= [inputs]' <<< ${INDEX_LIST})
           echo "::set-output name=json::${INDEX_JSON}"
   acceptanceTestEthereum:
-    runs-on: [ self-hosted, X64, Linux ]
+    runs-on:
+      group: "Besu Large Runners"
     name: "Acceptance Runner #${{ matrix.runner-index }}: Run acceptance tests in parallel"
     needs:
       - runner-indexes
-    if: ${{ github.actor != 'dependabot[bot]' }}
+    if: ${{ github.actor != 'dependabot[bot]'}}
     strategy:
       fail-fast: false
       matrix:
         runner-index: ${{ fromjson(needs.runner-indexes.outputs.json) }}
     steps:
-      - name: export runner UID
-        run: echo "runner_uid=$UID" >> $GITHUB_ENV
-      - name: install native packages
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libsodium23 libsodium-dev libjemalloc-dev apt-transport-https haveged libnss3-tools
-          sudo service haveged restart
       - name: Checkout Repo
         uses: actions/checkout@v3
       - name: Set up Java
@@ -46,11 +42,12 @@ jobs:
           distribution: adopt
           java-version: 17
           cache: gradle
-      - name: Restore classes
-        uses: actions/cache@v3
+      - name: Compile
+        uses: gradle/gradle-build-action@v2
         with:
-          path: "**/*.class"
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
+          gradle-home-cache-cleanup: true
+          cache-read-only: false
+          arguments: compileJava compileTestJava -Dorg.gradle.parallel=true
       - name: Split tests
         id: split-tests
         uses: chaosaffe/split-tests@v1-alpha.1
@@ -71,21 +68,8 @@ jobs:
         run: ./gradlew acceptanceTest --tests `cat gradleArgs.txt`
       - name: cleanup tempfiles
         run: rm testList.txt gradleArgs.txt
-      - name: Correct Ownership in GITHUB_WORKSPACE directory
-        uses: peter-murray/reset-workspace-ownership-action@v1
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v4
+        if: success() || failure() # always run even if the build step fails
         with:
-          user_id: ${{ env.runner_uid }}
-      - name: Upload Test Report
-        uses: actions/upload-artifact@v3
-        if: always() # always run even if the previous step fails
-        with:
-          name: junit-acceptance-${{ matrix.runner-index }}-test-results
-          path: 'acceptance-tests/tests/build/test-results/acceptanceTest/TEST-*.xml'
-          retention-days: 1
-      - name: Acceptance Test Report html
-        uses: actions/upload-artifact@v3
-        if: always() # always run even if the previous step fails
-        with:
-          name: html-acceptance-${{ matrix.runner-index }}-test-results
-          path: 'acceptance-tests/tests/build/reports/tests/acceptanceTest/**'
-          retention-days: 1
+          report_paths: 'acceptance-tests/tests/build/test-results/acceptanceTest/TEST-*.xml'

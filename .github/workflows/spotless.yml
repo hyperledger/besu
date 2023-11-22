@@ -1,8 +1,7 @@
-name: "Spotless Code Formatting"
+name: spotless
 on:
-  push:
-    branches: [ main ]
-  pull_request:
+  workflow_call:
+
 
 jobs:
   spotless:
