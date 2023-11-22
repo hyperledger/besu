@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.acceptance.clique;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory.CliqueOptions;
 
 import java.io.IOException;
 
@@ -40,6 +41,35 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
 
     minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2));
     cluster.verify(receiver.balanceEquals(3));
+  }
+
+  @Test
+  public void shouldNotMineBlocksIfNoTransactionsOnSingleNode() throws IOException {
+    final var cliqueOptionsNoEmptyBlocks =
+        new CliqueOptions(
+            CliqueOptions.DEFAULT.blockPeriodSeconds(), CliqueOptions.DEFAULT.epochLength(), false);
+    final BesuNode minerNode = besu.createCliqueNode("miner1", cliqueOptionsNoEmptyBlocks);
+    cluster.start(minerNode);
+
+    cluster.verify(clique.noNewBlockCreated(minerNode));
+  }
+
+  @Test
+  public void shouldMineBlocksOnlyWhenTransactionsArePresentWhenCreateEmptyBlockIsFalse()
+      throws IOException {
+    final var cliqueOptionsNoEmptyBlocks =
+        new CliqueOptions(
+            CliqueOptions.DEFAULT.blockPeriodSeconds(), CliqueOptions.DEFAULT.epochLength(), false);
+    final BesuNode minerNode = besu.createCliqueNode("miner1", cliqueOptionsNoEmptyBlocks);
+    cluster.start(minerNode);
+
+    final Account sender = accounts.createAccount("account1");
+
+    cluster.verify(clique.noNewBlockCreated(minerNode));
+
+    minerNode.execute(accountTransactions.createTransfer(sender, 50));
+
+    minerNode.verify(clique.blockIsCreatedByProposer(minerNode));
   }
 
   @Test
