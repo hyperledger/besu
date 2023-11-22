@@ -126,7 +126,7 @@ public abstract class AbstractGetHeadersFromPeerTask
     }
 
     LOG.debug(
-        "Received {} of {} headers requested from peer {}",
+        "Received {} of {} headers requested from peer {}...",
         headersList.size(),
         count,
         peer.getShortNodeId());
@@ -136,7 +136,7 @@ public abstract class AbstractGetHeadersFromPeerTask
   private void updatePeerChainState(final EthPeer peer, final BlockHeader blockHeader) {
     if (blockHeader.getNumber() > peer.chainState().getEstimatedHeight()) {
       LOG.atTrace()
-          .setMessage("Updating chain state for peer {} to block header {}")
+          .setMessage("Updating chain state for peer {}... to block header {}")
           .addArgument(peer::getShortNodeId)
           .addArgument(blockHeader::toLogString)
           .log();

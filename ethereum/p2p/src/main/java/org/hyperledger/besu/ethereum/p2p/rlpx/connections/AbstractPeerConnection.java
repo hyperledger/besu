@@ -84,7 +84,8 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     this.inboundInitiated = inboundInitiated;
     this.initiatedAt = System.currentTimeMillis();
 
-    LOG.debug("New PeerConnection ({}) established with peer {}", this, peer.getId());
+    LOG.debug(
+        "New PeerConnection ({}) established with peer {}...", this, peer.getId().slice(0, 16));
   }
 
   @Override

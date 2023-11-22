@@ -120,7 +120,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
     return sendRequestToPeer(
         peer -> {
           LOG.debug(
-              "Requesting {} headers (hash {}...) from peer {}.",
+              "Requesting {} headers (hash {}...) from peer {}...",
               count,
               referenceHash.slice(0, 6),
               peer.getShortNodeId());

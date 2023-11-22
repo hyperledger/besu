@@ -257,14 +257,14 @@ public class EthPeer implements Comparable<EthPeer> {
       throws PeerNotConnected {
     if (connectionToUse.getAgreedCapabilities().stream()
         .noneMatch(capability -> capability.getName().equalsIgnoreCase(protocolName))) {
-      LOG.debug("Protocol {} unavailable for this peer {}", protocolName, this.getShortNodeId());
+      LOG.debug("Protocol {} unavailable for this peer {}...", protocolName, this.getShortNodeId());
       return null;
     }
     if (permissioningProviders.stream()
         .anyMatch(
             p -> !p.isMessagePermitted(connectionToUse.getRemoteEnode(), messageData.getCode()))) {
       LOG.info(
-          "Permissioning blocked sending of message code {} to {}",
+          "Permissioning blocked sending of message code {} to {}...",
           messageData.getCode(),
           this.getShortNodeId());
       if (LOG.isDebugEnabled()) {
