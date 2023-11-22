@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterIdGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -190,8 +191,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             folder,
             mock(EthPeers.class),
             syncVertx,
-            Optional.empty(),
-            Optional.empty(),
+            mock(ApiConfiguration.class),
             Optional.empty());
   }
 
