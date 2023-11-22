@@ -82,35 +82,37 @@ public class TransactionAdapter extends AdapterBase {
 
   public AccountAdapter getFrom(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
-    Long blockNumber = environment.getArgument("block");
-    if (blockNumber == null) {
-      blockNumber = transactionWithMetadata.getBlockNumber().orElseGet(query::headBlockNumber);
-    }
+    final Long blockNumber =
+        Optional.<Long>ofNullable(environment.getArgument("block"))
+            .or(() -> transactionWithMetadata.getBlockNumber())
+            .orElseGet(query::headBlockNumber);
+
+    final Address senderAddress = transactionWithMetadata.getTransaction().getSender();
     return query
         .getAndMapWorldState(
             blockNumber,
             mutableWorldState ->
-                Optional.of(
-                    new AccountAdapter(
-                        mutableWorldState.get(
-                            transactionWithMetadata.getTransaction().getSender()))))
-        .get();
+                Optional.of(new AccountAdapter(mutableWorldState.get(senderAddress))))
+        .orElse(new EmptyAccountAdapter(senderAddress));
   }
 
   public Optional<AccountAdapter> getTo(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
-    Long blockNumber = environment.getArgument("block");
-    if (blockNumber == null) {
-      blockNumber = transactionWithMetadata.getBlockNumber().orElseGet(query::headBlockNumber);
-    }
+    final Long blockNumber =
+        Optional.<Long>ofNullable(environment.getArgument("block"))
+            .or(() -> transactionWithMetadata.getBlockNumber())
+            .orElseGet(query::headBlockNumber);
 
-    return query.getAndMapWorldState(
-        blockNumber,
-        ws ->
-            transactionWithMetadata
-                .getTransaction()
-                .getTo()
-                .map(address -> new AccountAdapter(address, ws.get(address))));
+    return transactionWithMetadata
+        .getTransaction()
+        .getTo()
+        .flatMap(
+            address ->
+                query
+                    .getAndMapWorldState(
+                        blockNumber,
+                        ws -> Optional.of(new AccountAdapter(address, ws.get(address))))
+                    .or(() -> Optional.of(new EmptyAccountAdapter(address))));
   }
 
   public Wei getValue() {
