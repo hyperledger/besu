@@ -22,7 +22,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Transaction;
-import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -210,7 +209,7 @@ class EthGetTransactionByHashTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     Transaction pendingTransaction = gen.transaction();
     System.out.println(pendingTransaction.getHash());
-    return gen.transactions(4, TransactionType.EIP1559).stream()
+    return gen.transactionsWithAllTypes(4).stream()
         .map(PendingTransaction.Local::new)
         .collect(Collectors.toUnmodifiableSet());
   }

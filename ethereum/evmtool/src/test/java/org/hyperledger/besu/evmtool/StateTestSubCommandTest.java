@@ -91,7 +91,7 @@ class StateTestSubCommandTest {
     final StateTestSubCommand stateTestSubCommand =
         new StateTestSubCommand(new EvmToolCommand(bais, new PrintWriter(baos, true, UTF_8)));
     stateTestSubCommand.run();
-    assertThat(baos.toString(UTF_8)).contains("exceeds transaction sender account balance");
+    assertThat(baos.toString(UTF_8)).contains("Upfront gas cost cannot exceed 2^256 Wei");
   }
 
   @Test
