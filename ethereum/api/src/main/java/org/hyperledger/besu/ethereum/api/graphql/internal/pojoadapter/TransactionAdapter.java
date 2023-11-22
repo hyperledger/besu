@@ -84,7 +84,7 @@ public class TransactionAdapter extends AdapterBase {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final Long blockNumber =
         Optional.<Long>ofNullable(environment.getArgument("block"))
-            .or(() -> transactionWithMetadata.getBlockNumber())
+            .or(transactionWithMetadata::getBlockNumber)
             .orElseGet(query::headBlockNumber);
 
     final Address addr = transactionWithMetadata.getTransaction().getSender();
@@ -99,7 +99,7 @@ public class TransactionAdapter extends AdapterBase {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final Long blockNumber =
         Optional.<Long>ofNullable(environment.getArgument("block"))
-            .or(() -> transactionWithMetadata.getBlockNumber())
+            .or(transactionWithMetadata::getBlockNumber)
             .orElseGet(query::headBlockNumber);
 
     return transactionWithMetadata
