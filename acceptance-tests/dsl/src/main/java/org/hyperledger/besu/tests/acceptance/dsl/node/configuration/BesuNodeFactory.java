@@ -69,6 +69,7 @@ public class BesuNodeFactory {
         config.getJsonRpcIpcConfiguration(),
         config.getMetricsConfiguration(),
         config.getPermissioningConfiguration(),
+        config.getApiConfiguration(),
         config.getKeyFilePath(),
         config.isDevMode(),
         config.getNetwork(),

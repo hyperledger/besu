@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceBlock;
@@ -31,22 +32,21 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 
 import java.util.Map;
-import java.util.Optional;
 
 public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockchainQueries blockchainQueries;
   private final ProtocolSchedule protocolSchedule;
 
-  private final Optional<Long> gasCap;
+  private final ApiConfiguration apiConfiguration;
 
   TraceJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
-      final Optional<Long> gasCap) {
+      final ApiConfiguration apiConfiguration) {
     this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;
-    this.gasCap = gasCap;
+    this.apiConfiguration = apiConfiguration;
   }
 
   @Override
@@ -72,7 +72,7 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
                 protocolSchedule,
-                gasCap)),
+                apiConfiguration.getGasCap())),
         new TraceCallMany(
             blockchainQueries,
             protocolSchedule,
@@ -80,7 +80,7 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
                 protocolSchedule,
-                gasCap)),
+                apiConfiguration.getGasCap())),
         new TraceRawTransaction(
             protocolSchedule,
             blockchainQueries,
@@ -88,6 +88,6 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
                 protocolSchedule,
-                gasCap)));
+                apiConfiguration.getGasCap())));
   }
 }
