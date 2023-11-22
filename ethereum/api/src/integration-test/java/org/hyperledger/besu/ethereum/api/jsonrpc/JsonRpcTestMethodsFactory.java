@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManagerBuilder;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -187,8 +188,7 @@ public class JsonRpcTestMethodsFactory {
             dataDir,
             ethPeers,
             Vertx.vertx(new VertxOptions().setWorkerPoolSize(1)),
-            Optional.empty(),
-            Optional.empty(),
+            ImmutableApiConfiguration.builder().build(),
             Optional.empty());
   }
 }
