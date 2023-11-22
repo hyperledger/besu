@@ -59,4 +59,19 @@ public abstract class ApiConfiguration {
   public Long getGasCap() {
     return 0L;
   }
+
+  @Value.Default
+  public boolean isPriorityFeeLimitingEnabled() {
+    return false;
+  }
+
+  @Value.Default
+  public Long getLowerBoundPriorityFeeCoefficient() {
+    return 100L;
+  }
+
+  @Value.Default
+  public Long getUpperBoundPriorityFeeCoefficient() {
+    return 100L;
+  }
 }

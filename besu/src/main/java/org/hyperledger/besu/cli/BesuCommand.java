@@ -1218,6 +1218,26 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Long apiGasPriceMax = 500_000_000_000L;
 
   @CommandLine.Option(
+      names = {"--api-priority-fee-boundary-enabled"},
+      hidden = true,
+      description = "Set to enable rewards boundary in eth_feeHistory (default: ${DEFAULT-VALUE})")
+  private final boolean apiPriorityFeeLimitingEnabled = false;
+
+  @CommandLine.Option(
+      names = {"--api-priority-fee-lower-bound-coefficient"},
+      hidden = true,
+      description =
+          "Coefficient for setting the lower limit of minimum priority fee in eth_feeHistory (default: ${DEFAULT-VALUE})")
+  private final Long apiPriorityFeeLowerBoundCoefficient = 100L;
+
+  @CommandLine.Option(
+      names = {"--api-priority-fee-upper-bound-coefficient"},
+      hidden = true,
+      description =
+          "Coefficient for setting the upper limit of minimum priority fee in eth_feeHistory (default: ${DEFAULT-VALUE})")
+  private final Long apiPriorityFeeUpperBoundCoefficient = 100L;
+
+  @CommandLine.Option(
       names = {"--static-nodes-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
@@ -2488,11 +2508,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return ImmutableApiConfiguration.builder()
         .gasPriceBlocks(apiGasPriceBlocks)
         .gasPricePercentile(apiGasPricePercentile)
+        .gasPriceMax(apiGasPriceMax)
         .gasPriceMinSupplier(
             getMiningParameters().getMinTransactionGasPrice().getAsBigInteger()::longValueExact)
         .gasPriceMax(apiGasPriceMax)
         .maxLogsRange(rpcMaxLogsRange)
         .gasCap(rpcGasCap)
+        .isPriorityFeeLimitingEnabled(apiPriorityFeeLimitingEnabled)
+        .lowerBoundPriorityFeeCoefficient(apiPriorityFeeLowerBoundCoefficient)
+        .upperBoundPriorityFeeCoefficient(apiPriorityFeeUpperBoundCoefficient)
         .build();
   }
 
