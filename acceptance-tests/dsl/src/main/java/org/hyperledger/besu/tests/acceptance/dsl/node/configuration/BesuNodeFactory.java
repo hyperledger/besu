@@ -387,6 +387,7 @@ public class BesuNodeFactory {
             .jsonRpcConfiguration(node.createJsonRpcWithCliqueEnabledConfig())
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
+            .jsonRpcTxPool()
             .genesisConfigProvider(
                 validators ->
                     GenesisConfigurationFactory.createCliqueGenesisConfig(
@@ -583,6 +584,7 @@ public class BesuNodeFactory {
             .miningEnabled()
             .jsonRpcConfiguration(node.createJsonRpcWithCliqueEnabledConfig())
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .jsonRpcTxPool()
             .devMode(false)
             .genesisConfigProvider(
                 nodes ->
