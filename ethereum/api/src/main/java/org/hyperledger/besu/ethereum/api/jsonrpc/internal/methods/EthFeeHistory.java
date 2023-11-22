@@ -213,10 +213,10 @@ public class EthFeeHistory implements JsonRpcMethod {
     final ArrayList<Wei> rewards = new ArrayList<>(rewardPercentiles.size());
 
     // Start with the gas used by the first transaction
-    long cumulativeGasUsed = sortedTransactionsInfo.get(0).gasUsed();
+    double cumulativeGasUsed = sortedTransactionsInfo.get(0).gasUsed();
     var transactionIndex = 0;
     // Iterate over each reward percentile
-    for (var rewardPercentile : rewardPercentiles) {
+    for (double rewardPercentile : rewardPercentiles) {
       // Calculate the threshold gas used for the current reward percentile
       // This is the amount of gas that needs to be used to reach this percentile
       var thresholdGasUsed = rewardPercentile * block.getHeader().getGasUsed() / 100;
