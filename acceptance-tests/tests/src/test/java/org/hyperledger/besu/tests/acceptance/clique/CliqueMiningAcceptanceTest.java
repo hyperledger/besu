@@ -44,7 +44,7 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void shouldNotMineBlocksIfNoTransactionsOnSingleNode() throws IOException {
+  public void shouldNotMineBlocksIfNoTransactionsWhenCreateEmptyBlockIsFalse() throws IOException {
     final var cliqueOptionsNoEmptyBlocks =
         new CliqueOptions(
             CliqueOptions.DEFAULT.blockPeriodSeconds(), CliqueOptions.DEFAULT.epochLength(), false);

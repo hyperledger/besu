@@ -374,6 +374,12 @@ public class BesuNodeFactory {
 
   public BesuNode createCliqueNode(final String name, final CliqueOptions cliqueOptions)
       throws IOException {
+    return createCliqueNodeWithExtraCliOptions(name, cliqueOptions, List.of());
+  }
+
+  public BesuNode createCliqueNodeWithExtraCliOptions(
+      final String name, final CliqueOptions cliqueOptions, final List<String> extraCliOptions)
+      throws IOException {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
@@ -385,6 +391,7 @@ public class BesuNodeFactory {
                 validators ->
                     GenesisConfigurationFactory.createCliqueGenesisConfig(
                         validators, cliqueOptions))
+            .extraCLIOptions(extraCliOptions)
             .build());
   }
 
