@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.LOWER_NONCE_INVALID_TRANSACTION_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
 
@@ -24,6 +23,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
@@ -69,7 +69,6 @@ import org.slf4j.LoggerFactory;
  * <p>This class is safe for use across multiple threads.
  */
 public abstract class AbstractPendingTransactionsSorter implements PendingTransactions {
-  private static final int DEFAULT_LOWEST_INVALID_KNOWN_NONCE_CACHE = 10_000;
   private static final Logger LOG =
       LoggerFactory.getLogger(AbstractPendingTransactionsSorter.class);
 
@@ -82,8 +81,6 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
   protected final Map<Address, PendingTransactionsForSender> transactionsBySender =
       new ConcurrentHashMap<>();
 
-  protected final LowestInvalidNonceCache lowestInvalidKnownNonceCache =
-      new LowestInvalidNonceCache(DEFAULT_LOWEST_INVALID_KNOWN_NONCE_CACHE);
   protected final Subscribers<PendingTransactionAddedListener> pendingTransactionSubscribers =
       Subscribers.create();
 
@@ -96,6 +93,8 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
 
   protected final TransactionPoolReplacementHandler transactionReplacementHandler;
   protected final Supplier<BlockHeader> chainHeadHeaderSupplier;
+
+  private final BlobCache blobCache;
 
   public AbstractPendingTransactionsSorter(
       final TransactionPoolConfiguration poolConfig,
@@ -130,13 +129,14 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         "transactions",
         "Current size of the transaction pool",
         pendingTransactions::size);
+
+    this.blobCache = new BlobCache();
   }
 
   @Override
   public void reset() {
     pendingTransactions.clear();
     transactionsBySender.clear();
-    lowestInvalidKnownNonceCache.reset();
   }
 
   @Override
@@ -179,21 +179,10 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
   public TransactionAddedResult addTransaction(
       final PendingTransaction transaction, final Optional<Account> maybeSenderAccount) {
 
-    if (!transaction.isReceivedFromLocalSource()
-        && lowestInvalidKnownNonceCache.hasInvalidLowerNonce(transaction.getTransaction())) {
-      LOG.atDebug()
-          .setMessage(
-              "Dropping transaction {} since the sender has an invalid transaction with lower nonce")
-          .addArgument(transaction::toTraceLog)
-          .log();
-      return LOWER_NONCE_INVALID_TRANSACTION_KNOWN;
-    }
-
     final TransactionAddedResult transactionAddedStatus =
         internalAddTransaction(transaction, maybeSenderAccount);
     if (transactionAddedStatus.equals(ADDED)) {
       if (!transaction.isReceivedFromLocalSource()) {
-        lowestInvalidKnownNonceCache.registerValidTransaction(transaction.getTransaction());
         remoteTransactionAddedCounter.inc();
       } else {
         localTransactionAddedCounter.inc();
@@ -223,7 +212,6 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
 
   public void transactionAddedToBlock(final Transaction transaction) {
     removeTransaction(transaction, true);
-    lowestInvalidKnownNonceCache.registerValidTransaction(transaction);
   }
 
   private void incrementTransactionRemovedCounter(
@@ -259,8 +247,6 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
 
           if (result.discard()) {
             transactionsToRemove.add(transactionToProcess.getTransaction());
-            transactionsToRemove.addAll(
-                signalInvalidAndGetDependentTransactions(transactionToProcess.getTransaction()));
           }
 
           if (result.stop()) {
@@ -412,6 +398,10 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         removePendingTransactionBySenderAndNonce(removedPendingTx);
         incrementTransactionRemovedCounter(
             removedPendingTx.isReceivedFromLocalSource(), addedToBlock);
+        if (removedPendingTx.getTransaction().getBlobsWithCommitments().isPresent()
+            && addedToBlock) {
+          this.blobCache.cacheBlobs(removedPendingTx.getTransaction());
+        }
       }
     }
   }
@@ -504,34 +494,13 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
       return sb.toString();
     }
   }
-
+  /**
+   * @param transaction to restore blobs onto
+   * @return an optional copy of the supplied transaction, but with the BlobsWithCommitments
+   *     restored. If none could be restored, empty.
+   */
   @Override
-  public List<Transaction> signalInvalidAndGetDependentTransactions(final Transaction transaction) {
-    final long invalidNonce = lowestInvalidKnownNonceCache.registerInvalidTransaction(transaction);
-
-    PendingTransactionsForSender txsForSender = transactionsBySender.get(transaction.getSender());
-    if (txsForSender != null) {
-      return txsForSender
-          .streamPendingTransactions()
-          .filter(pendingTx -> pendingTx.getTransaction().getNonce() > invalidNonce)
-          .peek(
-              pendingTx ->
-                  LOG.atTrace()
-                      .setMessage(
-                          "Transaction {} invalid since there is a lower invalid nonce {} for the sender")
-                      .addArgument(pendingTx::toTraceLog)
-                      .addArgument(invalidNonce)
-                      .log())
-          .map(PendingTransaction::getTransaction)
-          .collect(Collectors.toList());
-    }
-    return List.of();
-  }
-
-  @Override
-  public void signalInvalidAndRemoveDependentTransactions(final Transaction transaction) {
-    synchronized (lock) {
-      signalInvalidAndGetDependentTransactions(transaction).forEach(this::removeTransaction);
-    }
+  public Optional<Transaction> restoreBlob(final Transaction transaction) {
+    return blobCache.restoreBlob(transaction);
   }
 }

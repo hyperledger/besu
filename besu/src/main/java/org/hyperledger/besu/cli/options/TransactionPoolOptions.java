@@ -54,6 +54,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   private static final String STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG =
       "--strict-tx-replay-protection-enabled";
   private static final String TX_POOL_PRIORITY_SENDERS = "--tx-pool-priority-senders";
+  private static final String TX_POOL_MIN_GAS_PRICE = "--tx-pool-min-gas-price";
 
   @CommandLine.Option(
       names = {TX_POOL_IMPLEMENTATION},
@@ -121,6 +122,15 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
           "Pending transactions sent exclusively by these addresses, from any source, are prioritized and only evicted after all others. If not specified, then only the senders submitting transactions via RPC have priority (default: ${DEFAULT-VALUE})",
       arity = "1..*")
   private Set<Address> prioritySenders = TransactionPoolConfiguration.DEFAULT_PRIORITY_SENDERS;
+
+  @CommandLine.Option(
+      names = {TX_POOL_MIN_GAS_PRICE},
+      paramLabel = "<Wei>",
+      description =
+          "Transactions with gas price (in Wei) lower than this minimum will not be accepted into the txpool"
+              + "(not to be confused with min-gas-price, that is applied on block creation) (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private Wei minGasPrice = TransactionPoolConfiguration.DEFAULT_TX_POOL_MIN_GAS_PRICE;
 
   @CommandLine.ArgGroup(
       validate = false,
@@ -257,6 +267,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     options.saveFile = config.getSaveFile();
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
     options.prioritySenders = config.getPrioritySenders();
+    options.minGasPrice = config.getMinGasPrice();
     options.layeredOptions.txPoolLayerMaxCapacity =
         config.getPendingTransactionsLayerMaxCapacityBytes();
     options.layeredOptions.txPoolMaxPrioritized = config.getMaxPrioritizedTransactions();
@@ -312,6 +323,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         .saveFile(saveFile)
         .strictTransactionReplayProtectionEnabled(strictTxReplayProtectionEnabled)
         .prioritySenders(prioritySenders)
+        .minGasPrice(minGasPrice)
         .pendingTransactionsLayerMaxCapacityBytes(layeredOptions.txPoolLayerMaxCapacity)
         .maxPrioritizedTransactions(layeredOptions.txPoolMaxPrioritized)
         .maxFutureBySender(layeredOptions.txPoolMaxFutureBySender)
@@ -339,5 +351,15 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
    */
   public boolean isPriceBumpSet(final CommandLine commandLine) {
     return CommandLineUtils.isOptionSet(commandLine, TransactionPoolOptions.TX_POOL_PRICE_BUMP);
+  }
+
+  /**
+   * Is min gas price option set?
+   *
+   * @param commandLine the command line
+   * @return true if tx-pool-min-gas-price is set
+   */
+  public boolean isMinGasPriceSet(final CommandLine commandLine) {
+    return CommandLineUtils.isOptionSet(commandLine, TransactionPoolOptions.TX_POOL_MIN_GAS_PRICE);
   }
 }

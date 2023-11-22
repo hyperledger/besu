@@ -44,7 +44,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -119,7 +118,6 @@ public class EthGetFilterChangesIntegrationTest {
             protocolContext,
             batchAddedListener,
             ethContext,
-            MiningParameters.newDefault(),
             new TransactionPoolMetrics(metricsSystem),
             TransactionPoolConfiguration.DEFAULT,
             null);

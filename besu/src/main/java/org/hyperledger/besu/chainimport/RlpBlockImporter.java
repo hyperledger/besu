@@ -156,7 +156,13 @@ public class RlpBlockImporter implements Closeable {
         previousBlockFuture =
             validationFuture.runAfterBothAsync(
                 calculationFutures,
-                () -> evaluateBlock(context, block, header, protocolSpec, skipPowValidation),
+                () ->
+                    evaluateBlock(
+                        context,
+                        block,
+                        header,
+                        protocolSchedule.getByBlockHeader(header),
+                        skipPowValidation),
                 importExecutor);
         previousBlockFuture.exceptionally(
             exception -> {

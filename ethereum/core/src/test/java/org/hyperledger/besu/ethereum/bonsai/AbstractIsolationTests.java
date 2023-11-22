@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -50,6 +51,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
@@ -127,7 +129,8 @@ public abstract class AbstractIsolationTests {
               poolConfiguration,
               new EndLayer(txPoolMetrics),
               txPoolMetrics,
-              transactionReplacementTester));
+              transactionReplacementTester,
+              new BlobCache()));
 
   protected final List<GenesisAllocation> accounts =
       GenesisConfigFile.development()
@@ -153,7 +156,8 @@ public abstract class AbstractIsolationTests {
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
             new NoOpMetricsSystem(),
             null,
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            TrieLogPruner.noOpTrieLogPruner());
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
     protocolContext = new ProtocolContext(blockchain, archive, null, Optional.empty());
@@ -166,7 +170,6 @@ public abstract class AbstractIsolationTests {
             protocolContext,
             mock(TransactionBroadcaster.class),
             ethContext,
-            mock(MiningParameters.class),
             txPoolMetrics,
             poolConfiguration,
             null);
