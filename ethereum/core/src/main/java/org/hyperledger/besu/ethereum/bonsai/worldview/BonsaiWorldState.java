@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
@@ -42,6 +43,7 @@ import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -71,6 +73,7 @@ public class BonsaiWorldState
   protected BonsaiWorldStateKeyValueStorage worldStateStorage;
 
   protected final CachedMerkleTrieLoader cachedMerkleTrieLoader;
+  protected final CachedWorldStorageManager cachedWorldStorageManager;
   protected final TrieLogManager trieLogManager;
   private BonsaiWorldStateUpdateAccumulator accumulator;
 
@@ -80,14 +83,22 @@ public class BonsaiWorldState
 
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
-      final BonsaiWorldStateKeyValueStorage worldStateStorage) {
-    this(worldStateStorage, archive.getCachedMerkleTrieLoader(), archive.getTrieLogManager());
+      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final EvmConfiguration evmConfiguration) {
+    this(
+        worldStateStorage,
+        archive.getCachedMerkleTrieLoader(),
+        archive.getCachedWorldStorageManager(),
+        archive.getTrieLogManager(),
+        evmConfiguration);
   }
 
   protected BonsaiWorldState(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
-      final TrieLogManager trieLogManager) {
+      final CachedWorldStorageManager cachedWorldStorageManager,
+      final TrieLogManager trieLogManager,
+      final EvmConfiguration evmConfiguration) {
     this.worldStateStorage = worldStateStorage;
     this.worldStateRootHash =
         Hash.wrap(
@@ -101,8 +112,10 @@ public class BonsaiWorldState
                 cachedMerkleTrieLoader.preLoadAccount(
                     getWorldStateStorage(), worldStateRootHash, addr),
             (addr, value) ->
-                cachedMerkleTrieLoader.preLoadStorageSlot(getWorldStateStorage(), addr, value));
+                cachedMerkleTrieLoader.preLoadStorageSlot(getWorldStateStorage(), addr, value),
+            evmConfiguration);
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
+    this.cachedWorldStorageManager = cachedWorldStorageManager;
     this.trieLogManager = trieLogManager;
   }
 
@@ -413,7 +426,7 @@ public class BonsaiWorldState
               trieLogManager.saveTrieLog(localCopy, newWorldStateRootHash, blockHeader, this);
               // not save a frozen state in the cache
               if (!isFrozen) {
-                trieLogManager.addCachedLayer(blockHeader, newWorldStateRootHash, this);
+                cachedWorldStorageManager.addCachedLayer(blockHeader, newWorldStateRootHash, this);
               }
             };
 

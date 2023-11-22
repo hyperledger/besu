@@ -85,12 +85,12 @@ public class TransactionTestFixture {
         builder.maxFeePerGas(maxFeePerGas.orElse(Wei.of(5000)));
         builder.accessList(accessListEntries.orElse(List.of()));
         builder.maxFeePerBlobGas(maxFeePerBlobGas.orElse(Wei.ONE));
-        builder.versionedHashes(
-            versionedHashes.orElse(List.of(VersionedHash.DEFAULT_VERSIONED_HASH)));
-        blobs.ifPresent(
-            bwc -> {
-              builder.kzgBlobs(bwc.getKzgCommitments(), bwc.getBlobs(), bwc.getKzgProofs());
-            });
+        if (blobs.isPresent()) {
+          builder.kzgBlobs(
+              blobs.get().getKzgCommitments(), blobs.get().getBlobs(), blobs.get().getKzgProofs());
+        } else if (versionedHashes.isPresent()) {
+          builder.versionedHashes(versionedHashes.get());
+        }
         break;
     }
 

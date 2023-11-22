@@ -21,18 +21,17 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.AbstractTransactionPoolTest;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.number.Fraction;
 
 import java.time.ZoneId;
 import java.util.function.BiFunction;
 
-public class LegacyTransactionPoolGasPriceTest extends AbstractLegacyTransactionPoolTest {
+public class LegacyTransactionPoolGasPriceTest extends AbstractTransactionPoolTest {
 
   @Override
   protected PendingTransactions createPendingTransactions(
@@ -41,10 +40,7 @@ public class LegacyTransactionPoolGasPriceTest extends AbstractLegacyTransaction
           transactionReplacementTester) {
 
     return new GasPricePendingTransactionsSorter(
-        ImmutableTransactionPoolConfiguration.builder()
-            .txPoolMaxSize(MAX_TRANSACTIONS)
-            .txPoolLimitByAccountPercentage(Fraction.fromFloat(1.0f))
-            .build(),
+        poolConfig,
         TestClock.system(ZoneId.systemDefault()),
         metricsSystem,
         protocolContext.getBlockchain()::getChainHeadHeader);

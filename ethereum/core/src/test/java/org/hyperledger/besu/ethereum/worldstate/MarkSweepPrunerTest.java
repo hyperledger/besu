@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -55,7 +56,7 @@ import org.mockito.InOrder;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class MarkSweepPrunerTest {
+class MarkSweepPrunerTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
@@ -65,13 +66,15 @@ public class MarkSweepPrunerTest {
       spy(new WorldStateKeyValueStorage(stateStorage));
   private final WorldStateArchive worldStateArchive =
       new DefaultWorldStateArchive(
-          worldStateStorage, new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
+          worldStateStorage,
+          new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
+          EvmConfiguration.DEFAULT);
   private final InMemoryKeyValueStorage markStorage = new InMemoryKeyValueStorage();
   private final Block genesisBlock = gen.genesisBlock();
   private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisBlock);
 
   @Test
-  public void mark_marksAllExpectedNodes() {
+  void mark_marksAllExpectedNodes() {
     final MarkSweepPruner pruner =
         new MarkSweepPruner(worldStateStorage, blockchain, markStorage, metricsSystem);
 
@@ -84,7 +87,7 @@ public class MarkSweepPrunerTest {
     final BlockHeader markBlock = blockchain.getBlockHeader(markBlockNumber).get();
     // Collect the nodes we expect to keep
     final Set<Bytes> expectedNodes = collectWorldStateNodes(markBlock.getStateRoot());
-    assertThat(hashValueStore.size()).isGreaterThan(expectedNodes.size()); // Sanity check
+    assertThat(hashValueStore).hasSizeGreaterThan(expectedNodes.size()); // Sanity check
 
     // Mark and sweep
     pruner.mark(markBlock.getStateRoot());
@@ -113,14 +116,14 @@ public class MarkSweepPrunerTest {
     }
 
     // Check that storage contains only the values we expect
-    assertThat(hashValueStore.size()).isEqualTo(expectedNodes.size());
+    assertThat(hashValueStore).hasSameSizeAs(expectedNodes);
     assertThat(hashValueStore.values().stream().map(Optional::get))
         .containsExactlyInAnyOrderElementsOf(
             expectedNodes.stream().map(Bytes::toArrayUnsafe).collect(Collectors.toSet()));
   }
 
   @Test
-  public void sweepBefore_shouldSweepStateRootFirst() {
+  void sweepBefore_shouldSweepStateRootFirst() {
     final MarkSweepPruner pruner =
         new MarkSweepPruner(worldStateStorage, blockchain, markStorage, metricsSystem);
 
@@ -155,7 +158,7 @@ public class MarkSweepPrunerTest {
   }
 
   @Test
-  public void sweepBefore_shouldNotRemoveMarkedStateRoots() {
+  void sweepBefore_shouldNotRemoveMarkedStateRoots() {
     final MarkSweepPruner pruner =
         new MarkSweepPruner(worldStateStorage, blockchain, markStorage, metricsSystem);
 

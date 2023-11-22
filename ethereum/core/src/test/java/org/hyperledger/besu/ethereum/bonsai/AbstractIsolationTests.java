@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -41,12 +42,16 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
@@ -64,11 +69,13 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -77,7 +84,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -90,6 +96,7 @@ public abstract class AbstractIsolationTests {
   protected BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorage;
   protected ProtocolContext protocolContext;
   protected EthContext ethContext;
+  protected EthScheduler ethScheduler = new DeterministicEthScheduler();
   final Function<String, KeyPair> asKeyPair =
       key ->
           SignatureAlgorithmFactory.getInstance()
@@ -122,7 +129,8 @@ public abstract class AbstractIsolationTests {
               poolConfiguration,
               new EndLayer(txPoolMetrics),
               txPoolMetrics,
-              transactionReplacementTester));
+              transactionReplacementTester,
+              new BlobCache()));
 
   protected final List<GenesisAllocation> accounts =
       GenesisConfigFile.development()
@@ -147,7 +155,9 @@ public abstract class AbstractIsolationTests {
             Optional.of(16L),
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
             new NoOpMetricsSystem(),
-            null);
+            null,
+            EvmConfiguration.DEFAULT,
+            TrieLogPruner.noOpTrieLogPruner());
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
     protocolContext = new ProtocolContext(blockchain, archive, null, Optional.empty());
@@ -160,7 +170,6 @@ public abstract class AbstractIsolationTests {
             protocolContext,
             mock(TransactionBroadcaster.class),
             ethContext,
-            mock(MiningParameters.class),
             txPoolMetrics,
             poolConfiguration,
             null);
@@ -205,46 +214,54 @@ public abstract class AbstractIsolationTests {
 
   static class TestBlockCreator extends AbstractBlockCreator {
     private TestBlockCreator(
-        final Address coinbase,
+        final MiningParameters miningParameters,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-        final Supplier<Optional<Long>> targetGasLimitSupplier,
         final ExtraDataCalculator extraDataCalculator,
         final TransactionPool transactionPool,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
-        final Wei minTransactionGasPrice,
-        final Double minBlockOccupancyRatio,
-        final BlockHeader parentHeader) {
+        final BlockHeader parentHeader,
+        final EthScheduler ethScheduler) {
       super(
-          coinbase,
+          miningParameters,
           miningBeneficiaryCalculator,
-          targetGasLimitSupplier,
           extraDataCalculator,
           transactionPool,
           protocolContext,
           protocolSchedule,
-          minTransactionGasPrice,
-          minBlockOccupancyRatio,
           parentHeader,
-          Optional.empty());
+          Optional.empty(),
+          ethScheduler);
     }
 
     static TestBlockCreator forHeader(
         final BlockHeader parentHeader,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
-        final TransactionPool transactionPool) {
+        final TransactionPool transactionPool,
+        final EthScheduler ethScheduler) {
+
+      final MiningParameters miningParameters =
+          ImmutableMiningParameters.builder()
+              .mutableInitValues(
+                  MutableInitValues.builder()
+                      .extraData(Bytes.fromHexString("deadbeef"))
+                      .targetGasLimit(30_000_000L)
+                      .minTransactionGasPrice(Wei.ONE)
+                      .minBlockOccupancyRatio(0d)
+                      .coinbase(Address.ZERO)
+                      .build())
+              .build();
+
       return new TestBlockCreator(
-          Address.ZERO,
+          miningParameters,
           __ -> Address.ZERO,
-          () -> Optional.of(30_000_000L),
           __ -> Bytes.fromHexString("deadbeef"),
           transactionPool,
           protocolContext,
           protocolSchedule,
-          Wei.of(1L),
-          0d,
-          parentHeader);
+          parentHeader,
+          ethScheduler);
     }
 
     @Override
@@ -275,7 +292,8 @@ public abstract class AbstractIsolationTests {
 
   protected Block forTransactions(
       final List<Transaction> transactions, final BlockHeader forHeader) {
-    return TestBlockCreator.forHeader(forHeader, protocolContext, protocolSchedule, transactionPool)
+    return TestBlockCreator.forHeader(
+            forHeader, protocolContext, protocolSchedule, transactionPool, ethScheduler)
         .createBlock(transactions, Collections.emptyList(), System.currentTimeMillis())
         .getBlock();
   }

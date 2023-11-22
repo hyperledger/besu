@@ -28,12 +28,13 @@ import com.google.common.cache.CacheBuilder;
 
 public class BadBlockManager {
 
+  public static final int MAX_BAD_BLOCKS_SIZE = 100;
   private final Cache<Hash, Block> badBlocks =
-      CacheBuilder.newBuilder().maximumSize(100).concurrencyLevel(1).build();
+      CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
   private final Cache<Hash, BlockHeader> badHeaders =
-      CacheBuilder.newBuilder().maximumSize(100).concurrencyLevel(1).build();
+      CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
   private final Cache<Hash, Hash> latestValidHashes =
-      CacheBuilder.newBuilder().maximumSize(100).concurrencyLevel(1).build();
+      CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
 
   /**
    * Add a new invalid block.

@@ -48,6 +48,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -216,6 +217,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return trieLogStorage.get(blockHash.toArrayUnsafe());
   }
 
+  public Stream<byte[]> streamTrieLogKeys(final int limit) {
+    return trieLogStorage.streamKeys().limit(limit);
+  }
+
   public Optional<Bytes> getStateTrieNode(final Bytes location) {
     return composedWorldStateStorage
         .get(TRIE_BRANCH_STORAGE, location.toArrayUnsafe())
@@ -347,6 +352,15 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   @Override
   public long prune(final Predicate<byte[]> inUseCheck) {
     throw new RuntimeException("Bonsai Tries do not work with pruning.");
+  }
+
+  public boolean pruneTrieLog(final Hash blockHash) {
+    try {
+      return trieLogStorage.tryDelete(blockHash.toArrayUnsafe());
+    } catch (Exception e) {
+      LOG.error("Error pruning trie log for block hash {}", blockHash, e);
+      return false;
+    }
   }
 
   @Override

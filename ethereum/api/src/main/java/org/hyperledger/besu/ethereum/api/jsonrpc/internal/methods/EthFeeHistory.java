@@ -47,6 +47,7 @@ import java.util.stream.Stream;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
 
 public class EthFeeHistory implements JsonRpcMethod {
@@ -73,8 +74,7 @@ public class EthFeeHistory implements JsonRpcMethod {
     final Object requestId = request.getRequest().getId();
 
     final int blockCount = request.getRequiredParameter(0, UnsignedIntParameter.class).getValue();
-
-    if (blockCount < 1 || blockCount > 1024) {
+    if (isInvalidBlockCount(blockCount)) {
       return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS);
     }
     final BlockParameter highestBlock = request.getRequiredParameter(1, BlockParameter.class);
@@ -83,170 +83,226 @@ public class EthFeeHistory implements JsonRpcMethod {
 
     final BlockHeader chainHeadHeader = blockchain.getChainHeadHeader();
     final long chainHeadBlockNumber = chainHeadHeader.getNumber();
-    final long resolvedHighestBlockNumber =
-        highestBlock
-            .getNumber()
-            .orElse(
-                chainHeadBlockNumber /* both latest and pending use the head block until we have pending block support */);
-
-    if (resolvedHighestBlockNumber > chainHeadBlockNumber) {
+    final long highestBlockNumber = highestBlock.getNumber().orElse(chainHeadBlockNumber);
+    if (highestBlockNumber > chainHeadBlockNumber) {
       return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS);
     }
 
-    final long oldestBlock = Math.max(0, resolvedHighestBlockNumber - (blockCount - 1));
-
+    final long firstBlock = Math.max(0, highestBlockNumber - (blockCount - 1));
     final long lastBlock =
-        blockCount > resolvedHighestBlockNumber
-            ? (resolvedHighestBlockNumber + 1)
-            : (oldestBlock + blockCount);
+        blockCount > highestBlockNumber ? (highestBlockNumber + 1) : (firstBlock + blockCount);
 
-    final List<BlockHeader> blockHeaders =
-        LongStream.range(oldestBlock, lastBlock)
-            .parallel()
-            .mapToObj(blockchain::getBlockHeader)
-            .flatMap(Optional::stream)
-            .collect(toUnmodifiableList());
-
-    // we return the base fees for the blocks requested and 1 more because we can always compute it
-    final List<Wei> explicitlyRequestedBaseFees =
-        blockHeaders.stream()
-            .map(blockHeader -> blockHeader.getBaseFee().orElse(Wei.ZERO))
-            .collect(toUnmodifiableList());
-    final long nextBlockNumber = resolvedHighestBlockNumber + 1;
+    final List<BlockHeader> blockHeaderRange = getBlockHeaders(firstBlock, lastBlock);
+    final List<Wei> requestedBaseFees = getBaseFees(blockHeaderRange);
     final Wei nextBaseFee =
-        blockchain
-            .getBlockHeader(nextBlockNumber)
-            .map(blockHeader -> blockHeader.getBaseFee().orElse(Wei.ZERO))
-            .orElseGet(
-                () ->
-                    Optional.of(
-                            // We are able to use the chain head timestamp for next block header as
-                            // the base fee market can only be pre or post London. If another fee
-                            // market is added will need to reconsider this.
-                            protocolSchedule
-                                .getForNextBlockHeader(
-                                    chainHeadHeader, chainHeadHeader.getTimestamp())
-                                .getFeeMarket())
-                        .filter(FeeMarket::implementsBaseFee)
-                        .map(BaseFeeMarket.class::cast)
-                        .map(
-                            feeMarket -> {
-                              final BlockHeader lastBlockHeader =
-                                  blockHeaders.get(blockHeaders.size() - 1);
-                              return feeMarket.computeBaseFee(
-                                  nextBlockNumber,
-                                  explicitlyRequestedBaseFees.get(
-                                      explicitlyRequestedBaseFees.size() - 1),
-                                  lastBlockHeader.getGasUsed(),
-                                  feeMarket.targetGasUsed(lastBlockHeader));
-                            })
-                        .orElse(Wei.ZERO));
-
-    final List<Double> gasUsedRatios =
-        blockHeaders.stream()
-            .map(blockHeader -> blockHeader.getGasUsed() / (double) blockHeader.getGasLimit())
-            .collect(toUnmodifiableList());
-
+        getNextBaseFee(highestBlockNumber, chainHeadHeader, requestedBaseFees, blockHeaderRange);
+    final List<Double> gasUsedRatios = getGasUsedRatios(blockHeaderRange);
     final Optional<List<List<Wei>>> maybeRewards =
-        maybeRewardPercentiles.map(
-            rewardPercentiles -> {
-              var sortedPercentiles = rewardPercentiles.stream().sorted().toList();
-              return blockHeaders.stream()
-                  .parallel()
-                  .map(
-                      blockHeader -> {
-                        final RewardCacheKey key =
-                            new RewardCacheKey(blockHeader.getBlockHash(), rewardPercentiles);
-                        return Optional.ofNullable(cache.getIfPresent(key))
-                            .or(
-                                () -> {
-                                  Optional<Block> block =
-                                      blockchain.getBlockByHash(blockHeader.getBlockHash());
-                                  return block.map(
-                                      b -> {
-                                        List<Wei> rewards = computeRewards(sortedPercentiles, b);
-                                        cache.put(key, rewards);
-                                        return rewards;
-                                      });
-                                });
-                      })
-                  .flatMap(Optional::stream)
-                  .toList();
-            });
-
+        maybeRewardPercentiles.map(rewards -> getRewards(rewards, blockHeaderRange));
     return new JsonRpcSuccessResponse(
         requestId,
-        FeeHistory.FeeHistoryResult.from(
-            ImmutableFeeHistory.builder()
-                .oldestBlock(oldestBlock)
-                .baseFeePerGas(
-                    Stream.concat(explicitlyRequestedBaseFees.stream(), Stream.of(nextBaseFee))
-                        .collect(toUnmodifiableList()))
-                .gasUsedRatio(gasUsedRatios)
-                .reward(maybeRewards)
-                .build()));
+        createFeeHistoryResult(
+            firstBlock, requestedBaseFees, nextBaseFee, gasUsedRatios, maybeRewards));
   }
 
-  private List<Wei> computeRewards(final List<Double> rewardPercentiles, final Block block) {
+  private Wei getNextBaseFee(
+      final long resolvedHighestBlockNumber,
+      final BlockHeader chainHeadHeader,
+      final List<Wei> explicitlyRequestedBaseFees,
+      final List<BlockHeader> blockHeaders) {
+    final long nextBlockNumber = resolvedHighestBlockNumber + 1;
+    return blockchain
+        .getBlockHeader(nextBlockNumber)
+        .map(blockHeader -> blockHeader.getBaseFee().orElse(Wei.ZERO))
+        .orElseGet(
+            () ->
+                computeNextBaseFee(
+                    nextBlockNumber, chainHeadHeader, explicitlyRequestedBaseFees, blockHeaders));
+  }
+
+  private Wei computeNextBaseFee(
+      final long nextBlockNumber,
+      final BlockHeader chainHeadHeader,
+      final List<Wei> explicitlyRequestedBaseFees,
+      final List<BlockHeader> blockHeaders) {
+
+    // Note: We are able to use the chain head timestamp for next block header as
+    // the base fee market can only be pre or post London. If another fee
+    // market is added, we will need to reconsider this.
+
+    // Get the fee market for the next block header
+    Optional<FeeMarket> feeMarketOptional =
+        Optional.of(
+            protocolSchedule
+                .getForNextBlockHeader(chainHeadHeader, chainHeadHeader.getTimestamp())
+                .getFeeMarket());
+
+    // If the fee market implements base fee, compute the next base fee
+    return feeMarketOptional
+        .filter(FeeMarket::implementsBaseFee)
+        .map(BaseFeeMarket.class::cast)
+        .map(
+            feeMarket -> {
+              // Get the last block header and the last explicitly requested base fee
+              final BlockHeader lastBlockHeader = blockHeaders.get(blockHeaders.size() - 1);
+              final Wei lastExplicitlyRequestedBaseFee =
+                  explicitlyRequestedBaseFees.get(explicitlyRequestedBaseFees.size() - 1);
+
+              // Compute the next base fee
+              return feeMarket.computeBaseFee(
+                  nextBlockNumber,
+                  lastExplicitlyRequestedBaseFee,
+                  lastBlockHeader.getGasUsed(),
+                  feeMarket.targetGasUsed(lastBlockHeader));
+            })
+        .orElse(Wei.ZERO); // If the fee market does not implement base fee, return zero
+  }
+
+  private List<List<Wei>> getRewards(
+      final List<Double> rewardPercentiles, final List<BlockHeader> blockHeaders) {
+    var sortedPercentiles = rewardPercentiles.stream().sorted().toList();
+    return blockHeaders.stream()
+        .parallel()
+        .map(blockHeader -> calculateBlockHeaderReward(sortedPercentiles, blockHeader))
+        .flatMap(Optional::stream)
+        .toList();
+  }
+
+  private Optional<List<Wei>> calculateBlockHeaderReward(
+      final List<Double> sortedPercentiles, final BlockHeader blockHeader) {
+
+    // Create a new key for the reward cache
+    final RewardCacheKey key = new RewardCacheKey(blockHeader.getBlockHash(), sortedPercentiles);
+
+    // Try to get the rewards from the cache
+    return Optional.ofNullable(cache.getIfPresent(key))
+        .or(
+            () -> {
+              // If the rewards are not in the cache, compute them
+              Optional<Block> block = blockchain.getBlockByHash(blockHeader.getBlockHash());
+              return block.map(
+                  b -> {
+                    List<Wei> rewards = computeRewards(sortedPercentiles, b);
+                    // Put the computed rewards in the cache for future use
+                    cache.put(key, rewards);
+                    return rewards;
+                  });
+            });
+  }
+
+  record TransactionInfo(Transaction transaction, Long gasUsed, Wei effectivePriorityFeePerGas) {}
+
+  @VisibleForTesting
+  public List<Wei> computeRewards(final List<Double> rewardPercentiles, final Block block) {
     final List<Transaction> transactions = block.getBody().getTransactions();
     if (transactions.isEmpty()) {
       // all 0's for empty block
-      return Stream.generate(() -> Wei.ZERO)
-          .limit(rewardPercentiles.size())
-          .collect(toUnmodifiableList());
+      return generateZeroWeiList(rewardPercentiles.size());
     }
-
     final Optional<Wei> baseFee = block.getHeader().getBaseFee();
+    final List<Long> transactionsGasUsed = calculateTransactionsGasUsed(block);
+    final List<TransactionInfo> transactionsInfo =
+        generateTransactionsInfo(transactions, transactionsGasUsed, baseFee);
+    return calculateRewards(rewardPercentiles, block, transactionsInfo);
+  }
 
-    // we need to get the gas used for the individual transactions and can't use the cumulative gas
-    // used because we're going to be reordering the transactions
+  private List<Wei> calculateRewards(
+      final List<Double> rewardPercentiles,
+      final Block block,
+      final List<TransactionInfo> sortedTransactionsInfo) {
+    final ArrayList<Wei> rewards = new ArrayList<>(rewardPercentiles.size());
+
+    // Start with the gas used by the first transaction
+    double cumulativeGasUsed = sortedTransactionsInfo.get(0).gasUsed();
+    var transactionIndex = 0;
+    // Iterate over each reward percentile
+    for (double rewardPercentile : rewardPercentiles) {
+      // Calculate the threshold gas used for the current reward percentile
+      // This is the amount of gas that needs to be used to reach this percentile
+      var thresholdGasUsed = rewardPercentile * block.getHeader().getGasUsed() / 100;
+
+      // Update cumulativeGasUsed by adding the gas used by each transaction
+      // Stop when cumulativeGasUsed reaches the threshold or there are no more transactions
+      while (cumulativeGasUsed < thresholdGasUsed
+          && transactionIndex < sortedTransactionsInfo.size() - 1) {
+        transactionIndex++;
+        cumulativeGasUsed += sortedTransactionsInfo.get(transactionIndex).gasUsed();
+      }
+      // Add the effective priority fee per gas of the transaction that reached the percentile to
+      // the rewards list
+      rewards.add(sortedTransactionsInfo.get(transactionIndex).effectivePriorityFeePerGas);
+    }
+    return rewards;
+  }
+
+  private List<Long> calculateTransactionsGasUsed(final Block block) {
     final List<Long> transactionsGasUsed = new ArrayList<>();
+    long cumulativeGasUsed = 0L;
     for (final TransactionReceipt transactionReceipt :
         blockchain.getTxReceipts(block.getHash()).get()) {
-      transactionsGasUsed.add(
-          transactionsGasUsed.isEmpty()
-              ? transactionReceipt.getCumulativeGasUsed()
-              : transactionReceipt.getCumulativeGasUsed()
-                  - transactionsGasUsed.get(transactionsGasUsed.size() - 1));
+      transactionsGasUsed.add(transactionReceipt.getCumulativeGasUsed() - cumulativeGasUsed);
+      cumulativeGasUsed = transactionReceipt.getCumulativeGasUsed();
     }
+    return transactionsGasUsed;
+  }
 
-    record TransactionInfo(Transaction transaction, Long gasUsed, Wei effectivePriorityFeePerGas) {}
+  private List<TransactionInfo> generateTransactionsInfo(
+      final List<Transaction> transactions,
+      final List<Long> transactionsGasUsed,
+      final Optional<Wei> baseFee) {
+    return Streams.zip(
+            transactions.stream(),
+            transactionsGasUsed.stream(),
+            (transaction, gasUsed) ->
+                new TransactionInfo(
+                    transaction, gasUsed, transaction.getEffectivePriorityFeePerGas(baseFee)))
+        .sorted(Comparator.comparing(TransactionInfo::effectivePriorityFeePerGas))
+        .toList();
+  }
 
-    final List<TransactionInfo> transactionsInfo =
-        Streams.zip(
-                transactions.stream(),
-                transactionsGasUsed.stream(),
-                (transaction, gasUsed) ->
-                    new TransactionInfo(
-                        transaction, gasUsed, transaction.getEffectivePriorityFeePerGas(baseFee)))
-            .collect(toUnmodifiableList());
+  private boolean isInvalidBlockCount(final int blockCount) {
+    return blockCount < 1 || blockCount > 1024;
+  }
 
-    final List<TransactionInfo> transactionsAndGasUsedAscendingEffectiveGasFee =
-        transactionsInfo.stream()
-            .sorted(Comparator.comparing(TransactionInfo::effectivePriorityFeePerGas))
-            .collect(toUnmodifiableList());
+  private List<BlockHeader> getBlockHeaders(final long oldestBlock, final long lastBlock) {
+    return LongStream.range(oldestBlock, lastBlock)
+        .parallel()
+        .mapToObj(blockchain::getBlockHeader)
+        .flatMap(Optional::stream)
+        .toList();
+  }
 
-    // We need to weight the percentile of rewards by the gas used in the transaction.
-    // That's why we're keeping track of the cumulative gas used and checking to see which
-    // percentile markers we've passed
-    final ArrayList<Wei> rewards = new ArrayList<>();
-    int rewardPercentileIndex = 0;
-    long gasUsed = 0;
-    for (final TransactionInfo transactionAndGasUsed :
-        transactionsAndGasUsedAscendingEffectiveGasFee) {
+  private List<Wei> getBaseFees(final List<BlockHeader> blockHeaders) {
+    // we return the base fees for the blocks requested and 1 more because we can always compute it
+    return blockHeaders.stream()
+        .map(blockHeader -> blockHeader.getBaseFee().orElse(Wei.ZERO))
+        .toList();
+  }
 
-      gasUsed += transactionAndGasUsed.gasUsed();
+  private List<Double> getGasUsedRatios(final List<BlockHeader> blockHeaders) {
+    return blockHeaders.stream()
+        .map(blockHeader -> blockHeader.getGasUsed() / (double) blockHeader.getGasLimit())
+        .toList();
+  }
 
-      while (rewardPercentileIndex < rewardPercentiles.size()
-          && 100.0 * gasUsed / block.getHeader().getGasUsed()
-              >= rewardPercentiles.get(rewardPercentileIndex)) {
-        rewards.add(transactionAndGasUsed.effectivePriorityFeePerGas);
-        rewardPercentileIndex++;
-      }
-    }
-    // Put the computed rewards in the cache
-    cache.put(new RewardCacheKey(block.getHeader().getBlockHash(), rewardPercentiles), rewards);
+  private FeeHistory.FeeHistoryResult createFeeHistoryResult(
+      final long oldestBlock,
+      final List<Wei> explicitlyRequestedBaseFees,
+      final Wei nextBaseFee,
+      final List<Double> gasUsedRatios,
+      final Optional<List<List<Wei>>> maybeRewards) {
+    return FeeHistory.FeeHistoryResult.from(
+        ImmutableFeeHistory.builder()
+            .oldestBlock(oldestBlock)
+            .baseFeePerGas(
+                Stream.concat(explicitlyRequestedBaseFees.stream(), Stream.of(nextBaseFee))
+                    .collect(toUnmodifiableList()))
+            .gasUsedRatio(gasUsedRatios)
+            .reward(maybeRewards)
+            .build());
+  }
 
-    return rewards;
+  private List<Wei> generateZeroWeiList(final int size) {
+    return Stream.generate(() -> Wei.ZERO).limit(size).toList();
   }
 }

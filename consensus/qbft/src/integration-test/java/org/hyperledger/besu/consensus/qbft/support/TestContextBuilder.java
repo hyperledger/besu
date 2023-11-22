@@ -90,10 +90,13 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -106,6 +109,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -365,11 +369,14 @@ public class TestContextBuilder {
       final List<QbftFork> qbftForks) {
 
     final MiningParameters miningParams =
-        new MiningParameters.Builder()
-            .coinbase(AddressHelpers.ofValue(1))
-            .minTransactionGasPrice(Wei.ZERO)
-            .extraData(Bytes.wrap("Qbft Int tests".getBytes(UTF_8)))
-            .miningEnabled(true)
+        ImmutableMiningParameters.builder()
+            .mutableInitValues(
+                MutableInitValues.builder()
+                    .isMiningEnabled(true)
+                    .minTransactionGasPrice(Wei.ZERO)
+                    .extraData(Bytes.wrap("Qbft Int tests".getBytes(UTF_8)))
+                    .coinbase(AddressHelpers.ofValue(1))
+                    .build())
             .build();
 
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
@@ -407,7 +414,7 @@ public class TestContextBuilder {
 
     final BftValidatorOverrides validatorOverrides = convertBftForks(qbftForks);
     final TransactionSimulator transactionSimulator =
-        new TransactionSimulator(blockChain, worldStateArchive, protocolSchedule);
+        new TransactionSimulator(blockChain, worldStateArchive, protocolSchedule, 0L);
 
     final BlockValidatorProvider blockValidatorProvider =
         BlockValidatorProvider.forkingValidatorProvider(
@@ -443,12 +450,13 @@ public class TestContextBuilder {
             protocolContext,
             mock(TransactionBroadcaster.class),
             ethContext,
-            miningParams,
             new TransactionPoolMetrics(metricsSystem),
             poolConf,
             null);
 
     transactionPool.setEnabled();
+
+    final EthScheduler ethScheduler = new DeterministicEthScheduler();
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final BftBlockCreatorFactory<?> blockCreatorFactory =
@@ -459,7 +467,8 @@ public class TestContextBuilder {
             forksSchedule,
             miningParams,
             localAddress,
-            BFT_EXTRA_DATA_ENCODER);
+            BFT_EXTRA_DATA_ENCODER,
+            ethScheduler);
 
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockChain, blockInterface, true, validatorProvider);
