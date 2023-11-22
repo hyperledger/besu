@@ -1,10 +1,6 @@
 name: javadoc
 on:
-  workflow_dispatch:
-  workflow_run:
-    workflows: [compile]
-    types:
-      - completed
+  workflow_call:
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
@@ -23,9 +19,5 @@ jobs:
           distribution: adopt
           java-version: 17
           cache: gradle
-      - name: Restore classes
-        uses: actions/download-artifact@v3
-        with:
-          name: classes
       - name: javadoc (JDK 17)
         run: ./gradlew --no-daemon javadoc
