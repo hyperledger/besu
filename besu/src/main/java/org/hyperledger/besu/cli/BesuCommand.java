@@ -2508,7 +2508,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return ImmutableApiConfiguration.builder()
         .gasPriceBlocks(apiGasPriceBlocks)
         .gasPricePercentile(apiGasPricePercentile)
-        .gasPriceMax(apiGasPriceMax)
         .gasPriceMinSupplier(
             getMiningParameters().getMinTransactionGasPrice().getAsBigInteger()::longValueExact)
         .gasPriceMax(apiGasPriceMax)
