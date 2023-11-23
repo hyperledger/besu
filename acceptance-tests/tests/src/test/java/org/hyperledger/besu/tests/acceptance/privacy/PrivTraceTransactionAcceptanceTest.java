@@ -17,7 +17,6 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.web3j.utils.Restriction.UNRESTRICTED;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
@@ -65,7 +64,7 @@ public class PrivTraceTransactionAcceptanceTest extends ParameterizedEnclaveTest
     /*
      Updating the contract value
     */
-    Hash transactionHash = doTransaction(privacyGroupId, simpleStorageContract, 1);
+    String transactionHash = doTransaction(privacyGroupId, simpleStorageContract, 1);
 
     final String result =
         node.execute(privacyTransactions.privTraceTrasnaction(privacyGroupId, transactionHash));
@@ -96,18 +95,15 @@ public class PrivTraceTransactionAcceptanceTest extends ParameterizedEnclaveTest
     return simpleStorage;
   }
 
-  private Hash doTransaction(
+  private String doTransaction(
       final String privacyGroupId, final SimpleStorage simpleStorageContract, final int value) {
-    final String transactionHash =
-        node.execute(
-            privateContractTransactions.callSmartContractWithPrivacyGroupId(
-                simpleStorageContract.getContractAddress(),
-                simpleStorageContract.set(BigInteger.valueOf(value)).encodeFunctionCall(),
-                node.getTransactionSigningKey(),
-                restriction,
-                node.getEnclaveKey(),
-                privacyGroupId));
-
-    return Hash.fromHexString(transactionHash);
+    return node.execute(
+        privateContractTransactions.callSmartContractWithPrivacyGroupId(
+            simpleStorageContract.getContractAddress(),
+            simpleStorageContract.set(BigInteger.valueOf(value)).encodeFunctionCall(),
+            node.getTransactionSigningKey(),
+            restriction,
+            node.getEnclaveKey(),
+            privacyGroupId));
   }
 }

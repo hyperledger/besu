@@ -458,7 +458,7 @@ public class PrivacyRequestFactory {
   }
 
   public Request<?, PrivTraceTransaction> privTraceTransaction(
-      final String privacyGroupId, final Hash transactionHash) {
+      final String privacyGroupId, final String transactionHash) {
 
     return new Request<>(
         "priv_traceTransaction",

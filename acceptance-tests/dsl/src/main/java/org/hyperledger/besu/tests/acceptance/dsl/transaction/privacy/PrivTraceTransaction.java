@@ -16,7 +16,6 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
@@ -25,9 +24,9 @@ import java.io.IOException;
 public class PrivTraceTransaction implements Transaction<String> {
 
   private final String privacyGroupId;
-  private final Hash transactionHash;
+  private final String transactionHash;
 
-  public PrivTraceTransaction(final String privacyGroupId, final Hash transactionHash) {
+  public PrivTraceTransaction(final String privacyGroupId, final String transactionHash) {
     this.privacyGroupId = privacyGroupId;
     this.transactionHash = transactionHash;
   }
@@ -41,7 +40,7 @@ public class PrivTraceTransaction implements Transaction<String> {
       assertThat(response).as("check response is not null").isNotNull();
       assertThat(response.getResult()).as("check result in response isn't null").isNotNull();
 
-      return response.getRawResponse();
+      return response.getResult();
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }
