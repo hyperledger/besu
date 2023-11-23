@@ -8,8 +8,9 @@
     "constantinopleBlock": 6,
     "petersburgBlock": 7,
     "clique": {
-      "blockperiodseconds": 10,
-      "epochlength": 30000
+      "blockperiodseconds": %blockperiodseconds%,
+      "epochlength": %epochlength%,
+      "createemptyblocks": %createemptyblocks%
     }
   },
   "nonce": "0x0",
