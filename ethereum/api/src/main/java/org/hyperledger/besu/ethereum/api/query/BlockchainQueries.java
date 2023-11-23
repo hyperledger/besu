@@ -625,8 +625,8 @@ public class BlockchainQueries {
     // on a missing optional is appropriate.
     final TransactionLocation location = maybeLocation.get();
     final Block block = blockchain.getBlockByHash(location.getBlockHash()).orElseThrow();
-    final Transaction transaction =
-        block.getBody().getTransactions().get(location.getTransactionIndex());
+    final List<Transaction> transactions = block.getBody().getTransactions();
+    final Transaction transaction = transactions.get(location.getTransactionIndex());
 
     final Hash blockhash = location.getBlockHash();
     final BlockHeader header = block.getHeader();
@@ -648,6 +648,8 @@ public class BlockchainQueries {
     Optional<Wei> maybeBlobGasPrice =
         getBlobGasPrice(transaction, header, protocolSchedule.getByBlockHeader(header));
 
+    final int logIndexOffset = logIndexOffset(transactionHash, transactionReceipts, transactions);
+
     return Optional.of(
         TransactionReceiptWithMetadata.create(
             transactionReceipt,
@@ -659,7 +661,8 @@ public class BlockchainQueries {
             blockhash,
             header.getNumber(),
             maybeBlobGasUsed,
-            maybeBlobGasPrice));
+            maybeBlobGasPrice,
+            logIndexOffset));
   }
 
   /**
