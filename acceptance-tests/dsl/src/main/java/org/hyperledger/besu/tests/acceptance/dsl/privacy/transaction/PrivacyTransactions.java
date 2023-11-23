@@ -15,6 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.PrivGetTransactionReceiptTransaction;
@@ -117,7 +118,7 @@ public class PrivacyTransactions {
   }
 
   public PrivTraceTransaction privTraceTrasnaction(
-      final String privacyGroupId, final String transactionHash) {
+      final String privacyGroupId, final Hash transactionHash) {
     return new PrivTraceTransaction(privacyGroupId, transactionHash);
   }
 
