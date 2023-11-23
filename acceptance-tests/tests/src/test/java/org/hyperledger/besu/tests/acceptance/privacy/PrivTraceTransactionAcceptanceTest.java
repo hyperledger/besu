@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.web3j.utils.Restriction.UNRESTRICTED;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
@@ -64,13 +65,14 @@ public class PrivTraceTransactionAcceptanceTest extends ParameterizedEnclaveTest
     /*
      Updating the contract value
     */
-    String transactionHash = doTransaction(privacyGroupId, simpleStorageContract, 1);
+    Hash transactionHash =
+        Hash.fromHexString(doTransaction(privacyGroupId, simpleStorageContract, 1));
 
     final String result =
         node.execute(privacyTransactions.privTraceTrasnaction(privacyGroupId, transactionHash));
 
-    assertThat(result).isNotNull();
     System.out.println("privTransactionTrace = " + result);
+    assertThat(result).isNotNull();
   }
 
   private String createPrivacyGroup() {
