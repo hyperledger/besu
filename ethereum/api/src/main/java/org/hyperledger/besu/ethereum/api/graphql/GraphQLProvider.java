@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.graphql;
 
 import org.hyperledger.besu.ethereum.api.graphql.internal.Scalars;
+import org.hyperledger.besu.ethereum.api.graphql.internal.instrumentation.CheckIsAliveInstrumentation;
 
 import java.io.IOException;
 import java.net.URL;
@@ -24,6 +25,7 @@ import com.google.common.io.Resources;
 import graphql.GraphQL;
 import graphql.analysis.FieldComplexityEnvironment;
 import graphql.analysis.MaxQueryComplexityInstrumentation;
+import graphql.execution.instrumentation.ChainedInstrumentation;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaGenerator;
@@ -60,11 +62,13 @@ public class GraphQLProvider {
     final URL url = Resources.getResource("schema.graphqls");
     final String sdl = Resources.toString(url, Charsets.UTF_8);
     final GraphQLSchema graphQLSchema = buildSchema(sdl, graphQLDataFetchers);
-    return GraphQL.newGraphQL(graphQLSchema)
-        .instrumentation(
+
+    final ChainedInstrumentation graphQLInstrumentations =
+        new ChainedInstrumentation(
             new MaxQueryComplexityInstrumentation(
-                MAX_COMPLEXITY, GraphQLProvider::calculateFieldCost))
-        .build();
+                MAX_COMPLEXITY, GraphQLProvider::calculateFieldCost),
+            new CheckIsAliveInstrumentation());
+    return GraphQL.newGraphQL(graphQLSchema).instrumentation(graphQLInstrumentations).build();
   }
 
   private static GraphQLSchema buildSchema(
