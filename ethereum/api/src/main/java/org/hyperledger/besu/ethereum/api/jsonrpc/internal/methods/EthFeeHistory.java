@@ -219,7 +219,7 @@ public class EthFeeHistory implements JsonRpcMethod {
     // If the priority fee boundary is set, return the bounded rewards. Otherwise, return the real
     // rewards.
     if (apiConfiguration.isPriorityFeeLimitingEnabled()) {
-      return calculateBoundedRewards(realRewards);
+      return boundRewards(realRewards);
     } else {
       return realRewards;
     }
@@ -260,7 +260,7 @@ public class EthFeeHistory implements JsonRpcMethod {
    * @param rewards The list of rewards to be bounded.
    * @return The list of bounded rewards.
    */
-  private List<Wei> calculateBoundedRewards(final List<Wei> rewards) {
+  private List<Wei> boundRewards(final List<Wei> rewards) {
     Wei minPriorityFee = miningCoordinator.getMinTransactionGasPrice();
     Wei lowerBound =
         minPriorityFee.multiply(apiConfiguration.getLowerBoundPriorityFeeCoefficient()).divide(100);
@@ -281,7 +281,7 @@ public class EthFeeHistory implements JsonRpcMethod {
   private Wei boundReward(final Wei reward, final Wei lowerBound, final Wei upperBound) {
 
     // If the reward is less than the lower bound, return the lower bound.
-    if (reward.compareTo(lowerBound) < 0) {
+    if (reward.compareTo(lowerBound) <= 0) {
       return lowerBound;
     }
 

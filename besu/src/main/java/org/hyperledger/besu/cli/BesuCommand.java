@@ -1220,7 +1220,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @CommandLine.Option(
       names = {"--api-priority-fee-limiting-enabled"},
       hidden = true,
-      description = "Set to enable rewards limit in eth_feeHistory (default: ${DEFAULT-VALUE})")
+      description =
+          "Set to enable priority fee limit in eth_feeHistory (default: ${DEFAULT-VALUE})")
   private final Boolean apiPriorityFeeLimitingEnabled = false;
 
   @CommandLine.Option(
