@@ -639,7 +639,7 @@ public class BlockchainQueries {
     long gasUsed = transactionReceipt.getCumulativeGasUsed();
     int logIndexOffset = 0;
     if (transactionIndex > 0) {
-      gasUsed = gasUsed - transactionReceipts.get(transactionIndex - 1).getCumulativeGasUsed();
+      gasUsed -= transactionReceipts.get(transactionIndex - 1).getCumulativeGasUsed();
       logIndexOffset =
           IntStream.range(0, transactionIndex)
               .parallel()
