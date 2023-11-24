@@ -629,6 +629,7 @@ public class BlockchainQueries {
     final Transaction transaction = transactions.get(location.getTransactionIndex());
 
     final Hash blockhash = location.getBlockHash();
+    final int transactionIndex = location.getTransactionIndex();
     final BlockHeader header = block.getHeader();
     final List<TransactionReceipt> transactionReceipts =
         blockchain.getTxReceipts(blockhash).orElseThrow();
@@ -636,10 +637,14 @@ public class BlockchainQueries {
         transactionReceipts.get(location.getTransactionIndex());
 
     long gasUsed = transactionReceipt.getCumulativeGasUsed();
-    if (location.getTransactionIndex() > 0) {
-      gasUsed =
-          gasUsed
-              - transactionReceipts.get(location.getTransactionIndex() - 1).getCumulativeGasUsed();
+    int logIndexOffset = 0;
+    if (transactionIndex > 0) {
+      gasUsed = gasUsed - transactionReceipts.get(transactionIndex - 1).getCumulativeGasUsed();
+      logIndexOffset =
+          IntStream.range(0, transactionIndex)
+              .parallel()
+              .map(i -> transactionReceipts.get(i).getLogs().size())
+              .sum();
     }
 
     Optional<Long> maybeBlobGasUsed =
@@ -647,8 +652,6 @@ public class BlockchainQueries {
 
     Optional<Wei> maybeBlobGasPrice =
         getBlobGasPrice(transaction, header, protocolSchedule.getByBlockHeader(header));
-
-    final int logIndexOffset = logIndexOffset(transactionHash, transactionReceipts, transactions);
 
     return Optional.of(
         TransactionReceiptWithMetadata.create(
