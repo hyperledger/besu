@@ -74,7 +74,7 @@ class StorageTrieNodeHealingRequestTest {
     } else {
       final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
       worldStateStorage =
-          new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
+          new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false);
     }
     final MerkleTrie<Bytes, Bytes> trie =
         TrieGenerator.generateTrie(
