@@ -23,9 +23,8 @@ import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLJsonRe
 import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLResponse;
 import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLResponseType;
 import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLSuccessResponse;
-import org.hyperledger.besu.ethereum.api.handlers.IsAliveHandler;
+import org.hyperledger.besu.ethereum.api.handlers.HandlerFactory;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
-import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.net.InetSocketAddress;
@@ -40,6 +39,8 @@ import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.annotations.VisibleForTesting;
@@ -92,14 +93,14 @@ public class GraphQLHttpService {
   private final Vertx vertx;
   private final GraphQLConfiguration config;
   private final Path dataDir;
+  private final int maxActiveConnections;
+  private final AtomicInteger activeConnectionsCount = new AtomicInteger();
 
   private HttpServer httpServer;
 
   private final GraphQL graphQL;
 
   private final Map<GraphQLContextType, Object> graphQlContextMap;
-
-  private final EthScheduler scheduler;
 
   /**
    * Construct a GraphQLHttpService handler
@@ -109,23 +110,21 @@ public class GraphQLHttpService {
    * @param config Configuration for the rpc methods being loaded
    * @param graphQL GraphQL engine
    * @param graphQlContextMap GraphQlContext Map
-   * @param scheduler {@link EthScheduler} used to trigger timeout on backend queries
    */
   public GraphQLHttpService(
       final Vertx vertx,
       final Path dataDir,
       final GraphQLConfiguration config,
       final GraphQL graphQL,
-      final Map<GraphQLContextType, Object> graphQlContextMap,
-      final EthScheduler scheduler) {
+      final Map<GraphQLContextType, Object> graphQlContextMap) {
     this.dataDir = dataDir;
 
     validateConfig(config);
     this.config = config;
     this.vertx = vertx;
+    this.maxActiveConnections = config.getMaxActiveConnections();
     this.graphQL = graphQL;
     this.graphQlContextMap = graphQlContextMap;
-    this.scheduler = scheduler;
   }
 
   private void validateConfig(final GraphQLConfiguration config) {
@@ -133,6 +132,8 @@ public class GraphQLHttpService {
         config.getPort() == 0 || NetworkUtility.isValidPort(config.getPort()),
         "Invalid port configuration.");
     checkArgument(config.getHost() != null, "Required host is not configured.");
+    checkArgument(
+        config.getMaxActiveConnections() > 0, "Invalid max active connections configuration.");
   }
 
   /**
@@ -146,6 +147,7 @@ public class GraphQLHttpService {
    */
   public CompletableFuture<?> start() {
     LOG.info("Starting GraphQL HTTP service on {}:{}", config.getHost(), config.getPort());
+    LOG.debug("max number of active connections {}", maxActiveConnections);
     // Create the HTTP server and a router object.
     httpServer =
         vertx.createHttpServer(
@@ -154,6 +156,9 @@ public class GraphQLHttpService {
                 .setPort(config.getPort())
                 .setHandle100ContinueAutomatically(true)
                 .setCompressionSupported(true));
+
+    httpServer.connectionHandler(
+        HandlerFactory.maxConnections(activeConnectionsCount, maxActiveConnections));
 
     // Handle graphql http requests
     final Router router = Router.router(vertx);
@@ -364,10 +369,12 @@ public class GraphQLHttpService {
       }
 
       final HttpServerResponse response = routingContext.response();
+      final Supplier<Boolean> isAlive = () -> !response.closed();
       vertx.executeBlocking(
           future -> {
             try {
-              final GraphQLResponse graphQLResponse = process(query, operationName, variables);
+              final GraphQLResponse graphQLResponse =
+                  process(query, operationName, variables, isAlive);
               future.complete(graphQLResponse);
             } catch (final Exception e) {
               future.fail(e);
@@ -375,7 +382,7 @@ public class GraphQLHttpService {
           },
           false,
           (res) -> {
-            if (response.closed()) {
+            if (response.closed() || response.headWritten()) {
               return;
             }
             response.putHeader("Content-Type", MediaType.JSON_UTF_8.toString());
@@ -421,16 +428,19 @@ public class GraphQLHttpService {
       return EMPTY_RESPONSE;
     }
 
-    return Json.encodePrettily(response.getResult());
+    return config.getPrettyJsonEnabled()
+        ? Json.encodePrettily(response.getResult())
+        : Json.encode(response.getResult());
   }
 
   private GraphQLResponse process(
-      final String requestJson, final String operationName, final Map<String, Object> variables) {
+      final String requestJson,
+      final String operationName,
+      final Map<String, Object> variables,
+      final Supplier<Boolean> isAlive) {
     Map<GraphQLContextType, Object> contextMap = new ConcurrentHashMap<>();
     contextMap.putAll(graphQlContextMap);
-    contextMap.put(
-        GraphQLContextType.IS_ALIVE_HANDLER,
-        new IsAliveHandler(scheduler, config.getHttpTimeoutSec()));
+    contextMap.put(GraphQLContextType.IS_ALIVE_HANDLER, isAlive);
     final ExecutionInput executionInput =
         ExecutionInput.newExecutionInput()
             .query(requestJson)

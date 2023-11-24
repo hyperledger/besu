@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.options;
 
 import static java.util.Arrays.asList;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
+import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_MAX_ACTIVE_CONNECTIONS;
 
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
@@ -57,8 +58,12 @@ public class GraphQlOptions {
   private final CorsAllowedOriginsProperty graphQLHttpCorsAllowedOrigins =
       new CorsAllowedOriginsProperty();
 
-  /** Default constructor */
-  public GraphQlOptions() {}
+  @CommandLine.Option(
+      names = {"--graphql-http-max-active-connections"},
+      description =
+          "Maximum number of HTTP connections allowed for GraphQL (default: ${DEFAULT-VALUE}). Once this limit is reached, incoming connections will be rejected.",
+      arity = "1")
+  private final Integer graphQLHttpMaxConnections = DEFAULT_MAX_ACTIVE_CONNECTIONS;
 
   /**
    * Validates the GraphQL HTTP options.
@@ -81,10 +86,14 @@ public class GraphQlOptions {
    * @param hostsAllowlist List of hosts allowed
    * @param defaultHostAddress Default host address
    * @param timoutSec Timeout in seconds
+   * @param prettyJsonEnabled JSON spacing in output
    * @return A GraphQLConfiguration instance
    */
   public GraphQLConfiguration graphQLConfiguration(
-      final List<String> hostsAllowlist, final String defaultHostAddress, final Long timoutSec) {
+      final List<String> hostsAllowlist,
+      final String defaultHostAddress,
+      final Long timoutSec,
+      final Boolean prettyJsonEnabled) {
     final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();
     graphQLConfiguration.setEnabled(isGraphQLHttpEnabled);
     graphQLConfiguration.setHost(
@@ -93,6 +102,8 @@ public class GraphQlOptions {
     graphQLConfiguration.setHostsAllowlist(hostsAllowlist);
     graphQLConfiguration.setCorsAllowedDomains(graphQLHttpCorsAllowedOrigins);
     graphQLConfiguration.setHttpTimeoutSec(timoutSec);
+    graphQLConfiguration.setMaxActiveConnections(graphQLHttpMaxConnections);
+    graphQLConfiguration.setPrettyJsonEnabled(prettyJsonEnabled);
     return graphQLConfiguration;
   }
 
