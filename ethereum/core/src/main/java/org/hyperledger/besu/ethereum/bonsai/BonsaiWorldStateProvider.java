@@ -76,10 +76,12 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
       final ObservableMetricsSystem metricsSystem,
       final BesuContext pluginContext,
       final EvmConfiguration evmConfiguration,
-      final TrieLogPruner trieLogPruner) {
+      final TrieLogPruner trieLogPruner,
+      final boolean useCodeHashStorageMode) {
 
     this.cachedWorldStorageManager =
-        new CachedWorldStorageManager(this, worldStateStorage, metricsSystem);
+        new CachedWorldStorageManager(
+            this, worldStateStorage, metricsSystem, useCodeHashStorageMode);
     // TODO: de-dup constructors
     this.trieLogManager =
         new TrieLogManager(

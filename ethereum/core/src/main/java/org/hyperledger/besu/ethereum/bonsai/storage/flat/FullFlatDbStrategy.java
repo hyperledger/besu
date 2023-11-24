@@ -38,8 +38,8 @@ public class FullFlatDbStrategy extends FlatDbStrategy {
   protected final Counter getStorageValueNotFoundInFlatDatabaseCounter;
 
   public FullFlatDbStrategy(
-      final MetricsSystem metricsSystem, final boolean useAccountHashCodeStorage) {
-    super(metricsSystem, useAccountHashCodeStorage);
+      final MetricsSystem metricsSystem, final boolean useCodeHashStorageMode) {
+    super(metricsSystem, useCodeHashStorageMode);
 
     getAccountNotFoundInFlatDatabaseCounter =
         metricsSystem.createCounter(

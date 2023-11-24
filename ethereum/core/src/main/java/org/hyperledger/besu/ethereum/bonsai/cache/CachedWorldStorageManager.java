@@ -46,31 +46,36 @@ public class CachedWorldStorageManager implements BonsaiStorageSubscriber {
 
   private final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
   private final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash;
+  private final boolean useCodeHashStorageMode;
 
   private CachedWorldStorageManager(
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash,
       final ObservableMetricsSystem metricsSystem,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final boolean useCodeHashStorageMode) {
     worldStateStorage.subscribe(this);
     this.rootWorldStateStorage = worldStateStorage;
     this.cachedWorldStatesByHash = cachedWorldStatesByHash;
     this.archive = archive;
     this.metricsSystem = metricsSystem;
     this.evmConfiguration = evmConfiguration;
+    this.useCodeHashStorageMode = useCodeHashStorageMode;
   }
 
   public CachedWorldStorageManager(
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
-      final ObservableMetricsSystem metricsSystem) {
+      final ObservableMetricsSystem metricsSystem,
+      final boolean useCodeHashStorageMode) {
     this(
         archive,
         worldStateStorage,
         new ConcurrentHashMap<>(),
         metricsSystem,
-        EvmConfiguration.DEFAULT);
+        EvmConfiguration.DEFAULT,
+        useCodeHashStorageMode);
   }
 
   public synchronized void addCachedLayer(
@@ -93,7 +98,7 @@ public class CachedWorldStorageManager implements BonsaiStorageSubscriber {
             .get()
             .updateWorldStateStorage(
                 new BonsaiSnapshotWorldStateKeyValueStorage(
-                    forWorldState.getWorldStateStorage(), metricsSystem));
+                    forWorldState.getWorldStateStorage(), metricsSystem, useCodeHashStorageMode));
       }
     } else {
       LOG.atDebug()
@@ -107,7 +112,7 @@ public class CachedWorldStorageManager implements BonsaiStorageSubscriber {
             new CachedBonsaiWorldView(
                 blockHeader,
                 new BonsaiSnapshotWorldStateKeyValueStorage(
-                    forWorldState.getWorldStateStorage(), metricsSystem)));
+                    forWorldState.getWorldStateStorage(), metricsSystem, useCodeHashStorageMode)));
       } else {
         // otherwise, add the layer to the cache
         cachedWorldStatesByHash.put(

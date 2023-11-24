@@ -15,8 +15,7 @@
 
 package org.hyperledger.besu.ethereum.bonsai.storage.flat;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_HASH_COUNT;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE_BY_HASH;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -28,10 +27,13 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
+  static final Bytes CODE_PREFIX = Bytes.of(1);
+  static final Bytes COUNT_PREFIX = Bytes.of(2);
+
   @Override
   public Optional<Bytes> getFlatCode(
       final Hash codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
-    return storage.get(CODE_STORAGE_BY_HASH, codeHash.toArrayUnsafe()).map(Bytes::wrap);
+    return storage.get(CODE_STORAGE, codeHash.toArrayUnsafe()).map(Bytes::wrap);
   }
 
   @Override
@@ -44,7 +46,7 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
     updateCodeHashCount(transaction, codeHash, codeHashCount + 1);
 
     if (codeHashCount == 0) {
-      transaction.put(CODE_STORAGE_BY_HASH, codeHash.toArrayUnsafe(), code.toArrayUnsafe());
+      transaction.put(CODE_STORAGE, prefixKey(CODE_PREFIX, codeHash), code.toArrayUnsafe());
     }
   }
 
@@ -60,21 +62,20 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
     if (updatedCodeHashCount > 0) {
       updateCodeHashCount(transaction, codeHash, updatedCodeHashCount);
     } else {
-      transaction.remove(CODE_STORAGE_BY_HASH, codeHash.toArrayUnsafe());
-      transaction.remove(CODE_HASH_COUNT, codeHash.toArrayUnsafe());
+      transaction.remove(CODE_STORAGE, prefixKey(CODE_PREFIX, codeHash));
+      transaction.remove(CODE_STORAGE, prefixKey(COUNT_PREFIX, codeHash));
     }
   }
 
   @Override
   public void clear(final SegmentedKeyValueStorage storage) {
-    storage.clear(CODE_STORAGE_BY_HASH);
-    storage.clear(CODE_HASH_COUNT);
+    storage.clear(CODE_STORAGE);
   }
 
   private long getCodeHashCount(
       final SegmentedKeyValueStorageTransaction transaction, final Bytes32 codeHash) {
     return transaction
-        .get(CODE_HASH_COUNT, codeHash.toArrayUnsafe())
+        .get(CODE_STORAGE, prefixKey(COUNT_PREFIX, codeHash))
         .map(b -> Bytes.wrap(b).toLong())
         .orElse(0L);
   }
@@ -84,8 +85,12 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
       final Bytes32 codeHash,
       final long updatedCodeHashCount) {
     transaction.put(
-        CODE_HASH_COUNT,
-        codeHash.toArray(),
+        CODE_STORAGE,
+        prefixKey(COUNT_PREFIX, codeHash),
         Bytes.ofUnsignedLong(updatedCodeHashCount).trimLeadingZeros().toArrayUnsafe());
+  }
+
+  private byte[] prefixKey(final Bytes prefix, final Bytes32 codeHash) {
+    return Bytes.concatenate(prefix, codeHash).toArrayUnsafe();
   }
 }

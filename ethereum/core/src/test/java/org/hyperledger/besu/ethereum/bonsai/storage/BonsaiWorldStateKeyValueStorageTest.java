@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.StorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
@@ -128,7 +127,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
       final FlatDbMode flatDbMode, final boolean accountHashCodeStorage) {
     setUp(flatDbMode, accountHashCodeStorage);
     assertThat(storage.getNodeData(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH)).isEmpty();
-    assertThat(storage.isAccountHashCodeStorageMode()).isEqualTo(accountHashCodeStorage);
+    assertThat(storage.isCodeHashStorageMode()).isEqualTo(accountHashCodeStorage);
   }
 
   @ParameterizedTest
@@ -144,7 +143,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
     assertThat(storage.getCode(Hash.hash(MerkleTrie.EMPTY_TRIE_NODE), Hash.EMPTY))
         .contains(MerkleTrie.EMPTY_TRIE_NODE);
-    assertThat(storage.isAccountHashCodeStorageMode()).isEqualTo(accountHashCodeStorage);
+    assertThat(storage.isCodeHashStorageMode()).isEqualTo(accountHashCodeStorage);
   }
 
   @ParameterizedTest
@@ -156,7 +155,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     storage.updater().putCode(Hash.EMPTY, bytes).commit();
 
     assertThat(storage.getCode(Hash.hash(bytes), Hash.EMPTY)).contains(bytes);
-    assertThat(storage.isAccountHashCodeStorageMode()).isEqualTo(accountHashCodeStorage);
+    assertThat(storage.isCodeHashStorageMode()).isEqualTo(accountHashCodeStorage);
   }
 
   @ParameterizedTest
@@ -501,22 +500,22 @@ public class BonsaiWorldStateKeyValueStorageTest {
   }
 
   private BonsaiWorldStateKeyValueStorage emptyStorage() {
-        return new BonsaiWorldStateKeyValueStorage(
-                new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
+    return new BonsaiWorldStateKeyValueStorage(
+        new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem(), false);
   }
 
   private BonsaiWorldStateKeyValueStorage emptyStorage(final boolean useAccountHashCodeStorage) {
-        final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
-                new BonsaiWorldStateKeyValueStorage(
-                        new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
-        if (useAccountHashCodeStorage) {
-            final SegmentedKeyValueStorageTransaction transaction =
-                    bonsaiWorldStateKeyValueStorage.getWorldStateStorage().startTransaction();
-            transaction.put(
-                    KeyValueSegmentIdentifier.CODE_STORAGE, Bytes.of(1).toArray(), Bytes.of(1).toArray());
-            transaction.commit();
-        }
-        return bonsaiWorldStateKeyValueStorage;
+    final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
+        new BonsaiWorldStateKeyValueStorage(
+            new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem(), false);
+    if (useAccountHashCodeStorage) {
+      final SegmentedKeyValueStorageTransaction transaction =
+          bonsaiWorldStateKeyValueStorage.getWorldStateStorage().startTransaction();
+      transaction.put(
+          KeyValueSegmentIdentifier.CODE_STORAGE, Bytes.of(1).toArray(), Bytes.of(1).toArray());
+      transaction.commit();
+    }
+    return bonsaiWorldStateKeyValueStorage;
   }
 
   private BonsaiWorldStateKeyValueStorage setupMockStorage(
@@ -527,7 +526,6 @@ public class BonsaiWorldStateKeyValueStorageTest {
         .thenReturn(mockTrieLogStorage);
     when(mockStorageProvider.getStorageBySegmentIdentifiers(any()))
         .thenReturn(mock(SegmentedKeyValueStorage.class));
-    return new BonsaiWorldStateKeyValueStorage(mockStorageProvider, new NoOpMetricsSystem());
+    return new BonsaiWorldStateKeyValueStorage(mockStorageProvider, new NoOpMetricsSystem(), false);
   }
-
 }

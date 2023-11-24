@@ -1088,7 +1088,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             metricsSystem,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,
-            trieLogPruner);
+            trieLogPruner,
+            syncConfig.getSnapSyncConfiguration().isServerEnabled());
       }
       case FOREST -> {
         final WorldStatePreimageStorage preimageStorage =

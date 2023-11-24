@@ -22,12 +22,10 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
-import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateLayerStorage;
-import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,6 +33,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -45,23 +44,25 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class BonsaiWorldStateTest {
-  @Mock TrieLogManager trieLogManager;
-  @Mock CachedMerkleTrieLoader cachedMerkleTrieLoader;
   @Mock BonsaiWorldStateUpdateAccumulator bonsaiWorldStateUpdateAccumulator;
   @Mock BonsaiWorldStateKeyValueStorage.BonsaiUpdater bonsaiUpdater;
+  @Mock Blockchain blockchain;
+  @Mock BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage;
 
   private static final Bytes CODE = Bytes.of(10);
   private static final Hash CODE_HASH = Hash.hash(CODE);
   private static final Hash ACCOUNT_HASH = Hash.hash(Address.ZERO);
   private static final Address ACCOUNT = Address.ZERO;
+  private BonsaiWorldState worldState;
 
-  final BonsaiWorldState worldState =
-      new BonsaiWorldState(
-          new BonsaiWorldStateLayerStorage(
-              new BonsaiWorldStateKeyValueStorage(
-                  new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem())),
-          cachedMerkleTrieLoader,
-          trieLogManager);
+  @BeforeEach
+  void setup() {
+    worldState =
+        new BonsaiWorldState(
+            InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive(blockchain),
+            bonsaiWorldStateKeyValueStorage,
+            EvmConfiguration.DEFAULT);
+  }
 
   @ParameterizedTest
   @MethodSource("priorAndUpdatedEmptyAndNullBytes")

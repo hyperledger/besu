@@ -40,10 +40,7 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   BACKWARD_SYNC_CHAIN(new byte[] {15}),
   SNAPSYNC_MISSING_ACCOUNT_RANGE(new byte[] {16}),
   SNAPSYNC_ACCOUNT_TO_FIX(new byte[] {17}),
-  CHAIN_PRUNER_STATE(new byte[] {18}),
-
-  CODE_STORAGE_BY_HASH(new byte[] {19}, new int[] {2}),
-  CODE_HASH_COUNT(new byte[] {20}, new int[] {2});
+  CHAIN_PRUNER_STATE(new byte[] {18});
 
   private final byte[] id;
   private final int[] versionList;

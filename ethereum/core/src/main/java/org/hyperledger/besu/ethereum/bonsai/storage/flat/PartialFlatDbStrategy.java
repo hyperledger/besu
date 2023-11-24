@@ -53,8 +53,8 @@ public class PartialFlatDbStrategy extends FlatDbStrategy {
   protected final Counter getStorageValueMissingMerkleTrieCounter;
 
   public PartialFlatDbStrategy(
-      final MetricsSystem metricsSystem, final boolean useLegacyCodeStorage) {
-    super(metricsSystem, useLegacyCodeStorage);
+      final MetricsSystem metricsSystem, final boolean useCodeHashStorageMode) {
+    super(metricsSystem, useCodeHashStorageMode);
     getAccountMerkleTrieCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.BLOCKCHAIN,

@@ -42,11 +42,12 @@ import java.util.Optional;
 
 public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
 
+  // TODO JF do we need to pass in the useCodeHashStorageMode flag here?
   public InMemoryKeyValueStorageProvider() {
     super(
         segmentIdentifiers -> new SegmentedInMemoryKeyValueStorage(),
         new InMemoryKeyValueStorage(),
-        new NoOpMetricsSystem());
+        new NoOpMetricsSystem(), false);
   }
 
   public static MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
@@ -90,6 +91,7 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
     return createBonsaiInMemoryWorldStateArchive(blockchain, EvmConfiguration.DEFAULT);
   }
 
+  // TODO JF do we need to pass in the useCodeHashStorageMode flag here?
   public static BonsaiWorldStateProvider createBonsaiInMemoryWorldStateArchive(
       final Blockchain blockchain, final EvmConfiguration evmConfiguration) {
     final InMemoryKeyValueStorageProvider inMemoryKeyValueStorageProvider =
@@ -105,7 +107,7 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         new NoOpMetricsSystem(),
         null,
         evmConfiguration,
-        TrieLogPruner.noOpTrieLogPruner());
+        TrieLogPruner.noOpTrieLogPruner(), false);
   }
 
   public static MutableWorldState createInMemoryWorldState() {
