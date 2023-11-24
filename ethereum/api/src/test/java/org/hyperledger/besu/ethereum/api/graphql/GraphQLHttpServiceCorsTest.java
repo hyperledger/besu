@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
-import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 
@@ -232,8 +231,7 @@ public class GraphQLHttpServiceCorsTest {
     final GraphQL graphQL = GraphQLProvider.buildGraphQL(dataFetchers);
 
     final GraphQLHttpService graphQLHttpService =
-        new GraphQLHttpService(
-            vertx, folder, config, graphQL, graphQLContextMap, Mockito.mock(EthScheduler.class));
+        new GraphQLHttpService(vertx, folder, config, graphQL, graphQLContextMap);
     graphQLHttpService.start().join();
 
     return graphQLHttpService;

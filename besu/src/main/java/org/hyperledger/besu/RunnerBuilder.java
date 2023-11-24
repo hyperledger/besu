@@ -914,12 +914,7 @@ public class RunnerBuilder {
       graphQLHttpService =
           Optional.of(
               new GraphQLHttpService(
-                  vertx,
-                  dataDir,
-                  graphQLConfiguration,
-                  graphQL,
-                  graphQlContextMap,
-                  besuController.getProtocolManager().ethContext().getScheduler()));
+                  vertx, dataDir, graphQLConfiguration, graphQL, graphQlContextMap));
     }
 
     Optional<WebSocketService> webSocketService = Optional.empty();

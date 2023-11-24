@@ -22,11 +22,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.opentelemetry.api.trace.Tracer;
 import io.vertx.core.Handler;
+import io.vertx.core.http.HttpConnection;
 import io.vertx.ext.web.RoutingContext;
 
 public class HandlerFactory {
@@ -54,5 +56,10 @@ public class HandlerFactory {
       final Tracer tracer,
       final JsonRpcConfiguration jsonRpcConfiguration) {
     return JsonRpcExecutorHandler.handler(jsonRpcExecutor, tracer, jsonRpcConfiguration);
+  }
+
+  public static Handler<HttpConnection> maxConnections(
+      final AtomicInteger activeConnectionsCount, final int maxActiveConnections) {
+    return MaxConnectionsHandler.handler(activeConnectionsCount, maxActiveConnections);
   }
 }

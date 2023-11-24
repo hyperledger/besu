@@ -199,7 +199,31 @@ public class JsonRpcConfiguration {
     this.httpTimeoutSec = httpTimeoutSec;
   }
 
-  public boolean isPrettyJsonEnabled() {
+  public int getMaxActiveConnections() {
+    return maxActiveConnections;
+  }
+
+  public void setMaxActiveConnections(final int maxActiveConnections) {
+    this.maxActiveConnections = maxActiveConnections;
+  }
+
+  public int getMaxBatchSize() {
+    return maxBatchSize;
+  }
+
+  public void setMaxBatchSize(final int maxBatchSize) {
+    this.maxBatchSize = maxBatchSize;
+  }
+
+  public long getMaxRequestContentLength() {
+    return maxRequestContentLength;
+  }
+
+  public void setMaxRequestContentLength(final long maxRequestContentLength) {
+    this.maxRequestContentLength = maxRequestContentLength;
+  }
+
+  public boolean getPrettyJsonEnabled() {
     return prettyJsonEnabled;
   }
 
@@ -223,6 +247,8 @@ public class JsonRpcConfiguration {
         .add("httpTimeoutSec", httpTimeoutSec)
         .add("maxActiveConnections", maxActiveConnections)
         .add("maxBatchSize", maxBatchSize)
+        .add("maxRequestContentLength", maxRequestContentLength)
+        .add("prettyJsonEnabled", prettyJsonEnabled)
         .toString();
   }
 
@@ -237,14 +263,19 @@ public class JsonRpcConfiguration {
     final JsonRpcConfiguration that = (JsonRpcConfiguration) o;
     return enabled == that.enabled
         && port == that.port
-        && authenticationEnabled == that.authenticationEnabled
         && Objects.equals(host, that.host)
         && Objects.equals(corsAllowedDomains, that.corsAllowedDomains)
-        && Objects.equals(rpcApis, that.rpcApis)
         && Objects.equals(hostsAllowlist, that.hostsAllowlist)
+        && Objects.equals(rpcApis, that.rpcApis)
+        && authenticationEnabled == that.authenticationEnabled
         && Objects.equals(authenticationCredentialsFile, that.authenticationCredentialsFile)
         && Objects.equals(authenticationPublicKeyFile, that.authenticationPublicKeyFile)
-        && maxBatchSize == that.maxBatchSize;
+        && Objects.equals(tlsConfiguration, that.tlsConfiguration)
+        && httpTimeoutSec == that.httpTimeoutSec
+        && maxBatchSize == that.maxBatchSize
+        && maxActiveConnections == that.maxActiveConnections
+        && maxRequestContentLength == that.maxRequestContentLength
+        && prettyJsonEnabled == that.prettyJsonEnabled;
   }
 
   @Override
@@ -259,30 +290,11 @@ public class JsonRpcConfiguration {
         authenticationEnabled,
         authenticationCredentialsFile,
         authenticationPublicKeyFile,
-        maxBatchSize);
-  }
-
-  public int getMaxActiveConnections() {
-    return maxActiveConnections;
-  }
-
-  public void setMaxActiveConnections(final int maxActiveConnections) {
-    this.maxActiveConnections = maxActiveConnections;
-  }
-
-  public int getMaxBatchSize() {
-    return maxBatchSize;
-  }
-
-  public void setMaxBatchSize(final int maxBatchSize) {
-    this.maxBatchSize = maxBatchSize;
-  }
-
-  public long getMaxRequestContentLength() {
-    return maxRequestContentLength;
-  }
-
-  public void setMaxRequestContentLength(final long maxRequestContentLength) {
-    this.maxRequestContentLength = maxRequestContentLength;
+        tlsConfiguration,
+        httpTimeoutSec,
+        maxBatchSize,
+        maxActiveConnections,
+        maxRequestContentLength,
+        prettyJsonEnabled);
   }
 }
