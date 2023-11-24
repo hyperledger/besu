@@ -152,12 +152,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public boolean isCodeHashStorageMode() {
-    return composedWorldStateStorage
-        .get(CODE_STORAGE, CODE_STORAGE_MODE)
-        .map(b -> Bytes.wrap(b).toInt() == 1)
-        .orElse(false);
-
-    // flag doesn't exist then assume
+    return useCodeHashStorageMode;
   }
 
   @Override

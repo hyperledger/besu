@@ -41,7 +41,6 @@ import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -505,17 +504,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
   }
 
   private BonsaiWorldStateKeyValueStorage emptyStorage(final boolean useAccountHashCodeStorage) {
-    final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
-        new BonsaiWorldStateKeyValueStorage(
-            new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem(), false);
-    if (useAccountHashCodeStorage) {
-      final SegmentedKeyValueStorageTransaction transaction =
-          bonsaiWorldStateKeyValueStorage.getWorldStateStorage().startTransaction();
-      transaction.put(
-          KeyValueSegmentIdentifier.CODE_STORAGE, Bytes.of(1).toArray(), Bytes.of(1).toArray());
-      transaction.commit();
-    }
-    return bonsaiWorldStateKeyValueStorage;
+    return new BonsaiWorldStateKeyValueStorage(
+        new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem(), useAccountHashCodeStorage);
   }
 
   private BonsaiWorldStateKeyValueStorage setupMockStorage(

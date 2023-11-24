@@ -33,7 +33,7 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
   @Override
   public Optional<Bytes> getFlatCode(
       final Hash codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
-    return storage.get(CODE_STORAGE, codeHash.toArrayUnsafe()).map(Bytes::wrap);
+    return storage.get(CODE_STORAGE, prefixKey(CODE_PREFIX, codeHash)).map(Bytes::wrap);
   }
 
   @Override
