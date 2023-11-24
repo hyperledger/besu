@@ -157,7 +157,8 @@ public abstract class AbstractIsolationTests {
             new NoOpMetricsSystem(),
             null,
             EvmConfiguration.DEFAULT,
-            TrieLogPruner.noOpTrieLogPruner(), false);
+            TrieLogPruner.noOpTrieLogPruner(),
+            false);
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
     protocolContext = new ProtocolContext(blockchain, archive, null, Optional.empty());

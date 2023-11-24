@@ -48,7 +48,8 @@ class CachedMerkleTrieLoaderTest {
   private CachedMerkleTrieLoader merkleTrieLoader;
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
   private final BonsaiWorldStateKeyValueStorage inMemoryWorldState =
-      Mockito.spy(new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false));
+      Mockito.spy(
+          new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false));
 
   final List<Address> accounts =
       List.of(Address.fromHexString("0xdeadbeef"), Address.fromHexString("0xdeadbeee"));

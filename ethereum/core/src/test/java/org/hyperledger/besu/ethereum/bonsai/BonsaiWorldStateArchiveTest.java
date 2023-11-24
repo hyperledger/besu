@@ -126,7 +126,8 @@ class BonsaiWorldStateArchiveTest {
             new NoOpMetricsSystem(),
             null,
             EvmConfiguration.DEFAULT,
-            TrieLogPruner.noOpTrieLogPruner(), false);
+            TrieLogPruner.noOpTrieLogPruner(),
+            false);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(512).buildHeader();
     when(blockchain.getChainHeadHeader()).thenReturn(chainHead);
@@ -276,7 +277,8 @@ class BonsaiWorldStateArchiveTest {
             new BonsaiWorldStateProvider(
                 cachedWorldStorageManager,
                 trieLogManager,
-                new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false),
+                new BonsaiWorldStateKeyValueStorage(
+                    storageProvider, new NoOpMetricsSystem(), false),
                 blockchain,
                 new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
                 EvmConfiguration.DEFAULT));
