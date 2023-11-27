@@ -61,7 +61,7 @@ class AccessListTransactionDecoder {
                       accessListEntryRLPInput.leaveList();
                       return accessListEntry;
                     }));
-    final byte recId = (byte) rlpInput.readUnsignedByte();
+    final byte recId = (byte) rlpInput.readUnsignedByteScalar();
     final Transaction transaction =
         preSignatureTransactionBuilder
             .signature(

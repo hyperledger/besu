@@ -326,6 +326,16 @@ abstract class AbstractRLPInput implements RLPInput {
   }
 
   @Override
+  public int readUnsignedByteScalar() {
+    checkScalar("unsigned byte scalar", 1);
+    if (currentPayloadSize == 0) {
+      return 0;
+    } else {
+      return payloadByte(0) & 0xff;
+    }
+  }
+
+  @Override
   public BigInteger readBigIntegerScalar() {
     checkScalar("arbitrary precision scalar");
     final BigInteger res = getUnsignedBigInteger(currentPayloadOffset, currentPayloadSize);

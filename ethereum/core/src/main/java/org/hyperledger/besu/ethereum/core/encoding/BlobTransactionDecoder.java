@@ -90,7 +90,7 @@ public class BlobTransactionDecoder {
         .versionedHashes(
             input.readList(versionedHashes -> new VersionedHash(versionedHashes.readBytes32())));
 
-    final byte recId = (byte) input.readUnsignedByte();
+    final byte recId = (byte) input.readUnsignedByteScalar();
     builder.signature(
         SIGNATURE_ALGORITHM
             .get()

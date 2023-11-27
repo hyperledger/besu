@@ -274,6 +274,16 @@ public interface RLPInput {
   long readUnsignedIntScalar();
 
   /**
+   * Reads a scalar from the input and return is as an unsigned byte contained in an int
+   *
+   * @return The next scalar item of this input as an unsigned byte value as int
+   * @throws RLPException if the next item to read is a list, the input is at the end of its current
+   *     list (and {@link #leaveList()} hasn't been called) or if the next item is either too big to
+   *     fit an unsigned byte or has leading zeros.
+   */
+  int readUnsignedByteScalar();
+
+  /**
    * Reads an inet address from this input.
    *
    * @return The inet address corresponding to the next item of this input.

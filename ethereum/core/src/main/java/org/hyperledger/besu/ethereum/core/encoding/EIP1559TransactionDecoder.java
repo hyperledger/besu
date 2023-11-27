@@ -61,7 +61,7 @@ public class EIP1559TransactionDecoder {
                       accessListEntryRLPInput.leaveList();
                       return accessListEntry;
                     }));
-    final byte recId = (byte) input.readUnsignedByte();
+    final byte recId = (byte) input.readUnsignedByteScalar();
     final Transaction transaction =
         builder
             .signature(
