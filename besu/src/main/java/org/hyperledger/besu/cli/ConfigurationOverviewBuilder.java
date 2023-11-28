@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.util.log.FramedLogMessage;
 import org.hyperledger.besu.util.platform.PlatformDetector;
@@ -49,7 +50,11 @@ public class ConfigurationOverviewBuilder {
   private Collection<String> engineApis;
   private String engineJwtFilePath;
   private boolean isHighSpec = false;
+  private boolean isTrieLogPruningEnabled = false;
+  private long trieLogRetentionThreshold = 0;
+  private Integer trieLogPruningLimit = null;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
+  private EvmConfiguration.WorldUpdaterMode worldStateUpdateMode;
   private Map<String, String> environment;
   private BesuPluginContextImpl besuPluginContext;
 
@@ -170,6 +175,38 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets trie log pruning enabled
+   *
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setTrieLogPruningEnabled() {
+    isTrieLogPruningEnabled = true;
+    return this;
+  }
+
+  /**
+   * Sets trie log retention threshold
+   *
+   * @param threshold the number of blocks to retain trie logs for
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setTrieLogRetentionThreshold(final long threshold) {
+    trieLogRetentionThreshold = threshold;
+    return this;
+  }
+
+  /**
+   * Sets trie log pruning limit
+   *
+   * @param limit the max number of blocks to load and prune trie logs for at startup
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setTrieLogPruningLimit(final int limit) {
+    trieLogPruningLimit = limit;
+    return this;
+  }
+
+  /**
    * Sets the txpool implementation in use.
    *
    * @param implementation the txpool implementation
@@ -178,6 +215,18 @@ public class ConfigurationOverviewBuilder {
   public ConfigurationOverviewBuilder setTxPoolImplementation(
       final TransactionPoolConfiguration.Implementation implementation) {
     txPoolImplementation = implementation;
+    return this;
+  }
+
+  /**
+   * Sets the world state updater mode
+   *
+   * @param worldStateUpdateMode the world state updater mode
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setWorldStateUpdateMode(
+      final EvmConfiguration.WorldUpdaterMode worldStateUpdateMode) {
+    this.worldStateUpdateMode = worldStateUpdateMode;
     return this;
   }
 
@@ -252,11 +301,24 @@ public class ConfigurationOverviewBuilder {
       lines.add("Engine JWT: " + engineJwtFilePath);
     }
 
+    lines.add("Using " + txPoolImplementation + " transaction pool implementation");
+
     if (isHighSpec) {
       lines.add("Experimental high spec configuration enabled");
     }
 
-    lines.add("Using " + txPoolImplementation + " transaction pool implementation");
+    lines.add("Using " + worldStateUpdateMode + " worldstate update mode");
+
+    if (isTrieLogPruningEnabled) {
+      final StringBuilder trieLogPruningString = new StringBuilder();
+      trieLogPruningString
+          .append("Trie log pruning enabled: retention: ")
+          .append(trieLogRetentionThreshold);
+      if (trieLogPruningLimit != null) {
+        trieLogPruningString.append("; prune limit: ").append(trieLogPruningLimit);
+      }
+      lines.add(trieLogPruningString.toString());
+    }
 
     lines.add("");
     lines.add("Host:");

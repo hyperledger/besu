@@ -134,7 +134,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transitionProtocolSchedule.getPreMergeSchedule(),
                 protocolContext,
                 transactionPool,
-                new MiningParameters.Builder(miningParameters).miningEnabled(false).build(),
+                MiningParameters.MINING_DISABLED,
                 syncState,
                 ethProtocolManager),
             mergeBesuControllerBuilder.createTransitionMiningCoordinator(
@@ -144,7 +144,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transitionMiningParameters,
                 syncState,
                 transitionBackwardsSyncContext,
-                metricsSystem));
+                ethProtocolManager.ethContext().getScheduler()));
     initTransitionWatcher(protocolContext, composedCoordinator);
     return composedCoordinator;
   }

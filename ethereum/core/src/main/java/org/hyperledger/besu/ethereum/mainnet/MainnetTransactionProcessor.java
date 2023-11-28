@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVAT
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 
+import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -43,7 +44,6 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -318,7 +318,7 @@ public class MainnetTransactionProcessor {
       final List<AccessListEntry> accessListEntries = transaction.getAccessList().orElse(List.of());
       // we need to keep a separate hash set of addresses in case they specify no storage.
       // No-storage is a common pattern, especially for Externally Owned Accounts
-      final Set<Address> addressList = new HashSet<>();
+      final Set<Address> addressList = new BytesTrieSet<>(Address.SIZE);
       final Multimap<Address, Bytes32> storageList = HashMultimap.create();
       int accessListStorageCount = 0;
       for (final var entry : accessListEntries) {
@@ -354,6 +354,8 @@ public class MainnetTransactionProcessor {
       if (privateMetadataUpdater != null) {
         contextVariablesBuilder.put(KEY_PRIVATE_METADATA_UPDATER, privateMetadataUpdater);
       }
+
+      operationTracer.traceStartTransaction(worldUpdater, transaction);
 
       final MessageFrame.Builder commonMessageFrameBuilder =
           MessageFrame.builder()
@@ -451,6 +453,15 @@ public class MainnetTransactionProcessor {
           .log();
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
 
+      operationTracer.traceEndTransaction(
+          worldUpdater,
+          transaction,
+          initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS,
+          initialFrame.getOutputData(),
+          initialFrame.getLogs(),
+          gasUsedByTransaction,
+          0L);
+
       // update the coinbase
       final var coinbase = worldState.getOrCreate(miningBeneficiary);
       final long usedGas = transaction.getGasLimit() - refundedGas;
@@ -500,7 +511,8 @@ public class MainnetTransactionProcessor {
       LOG.error("Critical Exception Processing Transaction", re);
       return TransactionProcessingResult.invalid(
           ValidationResult.invalid(
-              TransactionInvalidReason.INTERNAL_ERROR, "Internal Error in Besu - " + re));
+              TransactionInvalidReason.INTERNAL_ERROR,
+              "Internal Error in Besu - " + re + "\n" + printableStackTraceFromThrowable(re)));
     }
   }
 
@@ -524,5 +536,15 @@ public class MainnetTransactionProcessor {
         (transaction.getGasLimit() - gasRemaining) / gasCalculator.getMaxRefundQuotient();
     final long refundAllowance = Math.min(maxRefundAllowance, gasRefund);
     return gasRemaining + refundAllowance;
+  }
+
+  private String printableStackTraceFromThrowable(final RuntimeException re) {
+    final StringBuilder builder = new StringBuilder();
+
+    for (final StackTraceElement stackTraceElement : re.getStackTrace()) {
+      builder.append("\tat ").append(stackTraceElement.toString()).append("\n");
+    }
+
+    return builder.toString();
   }
 }

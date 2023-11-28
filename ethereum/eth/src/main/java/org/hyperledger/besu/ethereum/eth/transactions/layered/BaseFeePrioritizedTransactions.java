@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
@@ -45,8 +46,9 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
       final TransactionPoolMetrics metrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
-      final FeeMarket feeMarket) {
-    super(poolConfig, nextLayer, metrics, transactionReplacementTester);
+      final FeeMarket feeMarket,
+      final BlobCache blobCache) {
+    super(poolConfig, nextLayer, metrics, transactionReplacementTester, blobCache);
     this.nextBlockBaseFee =
         Optional.of(calculateNextBlockBaseFee(feeMarket, chainHeadHeaderSupplier.get()));
   }

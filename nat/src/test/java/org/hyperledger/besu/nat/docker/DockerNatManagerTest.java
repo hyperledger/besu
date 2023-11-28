@@ -30,13 +30,13 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public final class DockerNatManagerTest {
 
   private final String advertisedHost = "99.45.69.12";
@@ -49,7 +49,7 @@ public final class DockerNatManagerTest {
 
   private DockerNatManager natManager;
 
-  @Before
+  @BeforeEach
   public void initialize() throws NatInitializationException {
     hostBasedIpDetector = mock(HostBasedIpDetector.class);
     when(hostBasedIpDetector.detectAdvertisedIp()).thenReturn(Optional.of(detectedAdvertisedHost));

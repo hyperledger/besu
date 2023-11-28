@@ -42,7 +42,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiAccount implements MutableAccount, AccountValue {
   private final BonsaiWorldView context;
-  private boolean mutable;
+  private boolean immutable;
 
   private final Address address;
   private final Hash addressHash;
@@ -71,7 +71,7 @@ public class BonsaiAccount implements MutableAccount, AccountValue {
     this.storageRoot = storageRoot;
     this.codeHash = codeHash;
 
-    this.mutable = mutable;
+    this.immutable = !mutable;
   }
 
   public BonsaiAccount(
@@ -106,7 +106,7 @@ public class BonsaiAccount implements MutableAccount, AccountValue {
     this.code = toCopy.code;
     updatedStorage.putAll(toCopy.updatedStorage);
 
-    this.mutable = mutable;
+    this.immutable = !mutable;
   }
 
   public BonsaiAccount(
@@ -121,7 +121,7 @@ public class BonsaiAccount implements MutableAccount, AccountValue {
     this.code = tracked.getCode();
     updatedStorage.putAll(tracked.getUpdatedStorage());
 
-    this.mutable = true;
+    this.immutable = false;
   }
 
   public static BonsaiAccount fromRLP(
@@ -161,7 +161,7 @@ public class BonsaiAccount implements MutableAccount, AccountValue {
 
   @Override
   public void setNonce(final long value) {
-    if (!mutable) {
+    if (immutable) {
       throw new ModificationNotAllowedException();
     }
     nonce = value;
@@ -174,7 +174,7 @@ public class BonsaiAccount implements MutableAccount, AccountValue {
 
   @Override
   public void setBalance(final Wei value) {
-    if (!mutable) {
+    if (immutable) {
       throw new ModificationNotAllowedException();
     }
     balance = value;
@@ -190,7 +190,7 @@ public class BonsaiAccount implements MutableAccount, AccountValue {
 
   @Override
   public void setCode(final Bytes code) {
-    if (!mutable) {
+    if (immutable) {
       throw new ModificationNotAllowedException();
     }
     this.code = code;
@@ -242,7 +242,7 @@ public class BonsaiAccount implements MutableAccount, AccountValue {
 
   @Override
   public void setStorageValue(final UInt256 key, final UInt256 value) {
-    if (!mutable) {
+    if (immutable) {
       throw new ModificationNotAllowedException();
     }
     updatedStorage.put(key, value);
@@ -264,7 +264,7 @@ public class BonsaiAccount implements MutableAccount, AccountValue {
   }
 
   public void setStorageRoot(final Hash storageRoot) {
-    if (!mutable) {
+    if (immutable) {
       throw new ModificationNotAllowedException();
     }
     this.storageRoot = storageRoot;
@@ -272,7 +272,7 @@ public class BonsaiAccount implements MutableAccount, AccountValue {
 
   @Override
   public void becomeImmutable() {
-    mutable = false;
+    immutable = true;
   }
 
   @Override

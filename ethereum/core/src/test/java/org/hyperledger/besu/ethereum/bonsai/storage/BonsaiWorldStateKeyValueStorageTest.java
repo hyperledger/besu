@@ -19,9 +19,11 @@ import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyVa
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -29,12 +31,16 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.StorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,6 +51,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
@@ -446,5 +453,40 @@ public class BonsaiWorldStateKeyValueStorageTest {
   private BonsaiWorldStateKeyValueStorage emptyStorage() {
     return new BonsaiWorldStateKeyValueStorage(
         new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
+  }
+
+  @Test
+  void successfulPruneReturnsTrue() {
+    final KeyValueStorage mockTrieLogStorage = mock(KeyValueStorage.class);
+    when(mockTrieLogStorage.tryDelete(any())).thenReturn(true);
+    final BonsaiWorldStateKeyValueStorage storage = setupMockStorage(mockTrieLogStorage);
+    assertThat(storage.pruneTrieLog(Hash.ZERO)).isTrue();
+  }
+
+  @Test
+  void failedPruneReturnsFalse() {
+    final KeyValueStorage mockTrieLogStorage = mock(KeyValueStorage.class);
+    when(mockTrieLogStorage.tryDelete(any())).thenReturn(false);
+    final BonsaiWorldStateKeyValueStorage storage = setupMockStorage(mockTrieLogStorage);
+    assertThat(storage.pruneTrieLog(Hash.ZERO)).isFalse();
+  }
+
+  @Test
+  void exceptionalPruneReturnsFalse() {
+    final KeyValueStorage mockTrieLogStorage = mock(KeyValueStorage.class);
+    when(mockTrieLogStorage.tryDelete(any())).thenThrow(new RuntimeException("test exception"));
+    final BonsaiWorldStateKeyValueStorage storage = setupMockStorage(mockTrieLogStorage);
+    assertThat(storage.pruneTrieLog(Hash.ZERO)).isFalse();
+  }
+
+  private BonsaiWorldStateKeyValueStorage setupMockStorage(
+      final KeyValueStorage mockTrieLogStorage) {
+    final StorageProvider mockStorageProvider = mock(StorageProvider.class);
+    when(mockStorageProvider.getStorageBySegmentIdentifier(
+            KeyValueSegmentIdentifier.TRIE_LOG_STORAGE))
+        .thenReturn(mockTrieLogStorage);
+    when(mockStorageProvider.getStorageBySegmentIdentifiers(any()))
+        .thenReturn(mock(SegmentedKeyValueStorage.class));
+    return new BonsaiWorldStateKeyValueStorage(mockStorageProvider, new NoOpMetricsSystem());
   }
 }

@@ -28,7 +28,6 @@ import java.util.OptionalLong;
 
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class TraceFrame {
@@ -44,7 +43,7 @@ public class TraceFrame {
   private final Wei value;
   private final Bytes inputData;
   private final Bytes outputData;
-  private final Optional<Bytes32[]> stack;
+  private final Optional<Bytes[]> stack;
   private final Optional<Bytes[]> memory;
   private final Optional<Map<UInt256, UInt256>> storage;
 
@@ -53,7 +52,7 @@ public class TraceFrame {
   private final Optional<Map<Address, Wei>> maybeRefunds;
   private final Optional<Code> maybeCode;
   private final int stackItemsProduced;
-  private final Optional<Bytes32[]> stackPostExecution;
+  private final Optional<Bytes[]> stackPostExecution;
 
   private long gasRemainingPostExecution;
   private final boolean virtualOperation;
@@ -73,7 +72,7 @@ public class TraceFrame {
       final Wei value,
       final Bytes inputData,
       final Bytes outputData,
-      final Optional<Bytes32[]> stack,
+      final Optional<Bytes[]> stack,
       final Optional<Bytes[]> memory,
       final Optional<Map<UInt256, UInt256>> storage,
       final WorldUpdater worldUpdater,
@@ -81,7 +80,7 @@ public class TraceFrame {
       final Optional<Map<Address, Wei>> maybeRefunds,
       final Optional<Code> maybeCode,
       final int stackItemsProduced,
-      final Optional<Bytes32[]> stackPostExecution,
+      final Optional<Bytes[]> stackPostExecution,
       final boolean virtualOperation,
       final Optional<MemoryEntry> maybeUpdatedMemory,
       final Optional<StorageEntry> maybeUpdatedStorage) {
@@ -159,7 +158,7 @@ public class TraceFrame {
     return outputData;
   }
 
-  public Optional<Bytes32[]> getStack() {
+  public Optional<Bytes[]> getStack() {
     return stack;
   }
 
@@ -206,7 +205,7 @@ public class TraceFrame {
     return stackItemsProduced;
   }
 
-  public Optional<Bytes32[]> getStackPostExecution() {
+  public Optional<Bytes[]> getStackPostExecution() {
     return stackPostExecution;
   }
 

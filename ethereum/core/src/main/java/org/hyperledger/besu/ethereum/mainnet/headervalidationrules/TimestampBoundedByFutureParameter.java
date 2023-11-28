@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Responsible for ensuring the timestamp of a block is not more than "acceptableClockDriftSeconds'
+ * Responsible for ensuring the timestamp of a block is not more than "acceptableClockDriftSeconds"
  * into the future.
  */
 public class TimestampBoundedByFutureParameter implements DetachedBlockHeaderValidationRule {

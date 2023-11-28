@@ -25,6 +25,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
@@ -58,7 +59,8 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
         nextLayer,
         txPoolMetrics,
         transactionReplacementTester,
-        FeeMarket.london(0L));
+        FeeMarket.london(0L),
+        new BlobCache());
   }
 
   @Override
