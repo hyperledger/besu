@@ -86,8 +86,8 @@ public class NewPooledTransactionHashesMessageProcessor {
 
       LOG.atTrace()
           .setMessage(
-              "Received pooled transaction hashes message from {}, incoming hashes {}, incoming list {}")
-          .addArgument(peer)
+              "Received pooled transaction hashes message from {}... incoming hashes {}, incoming list {}")
+          .addArgument(peer.getShortNodeId())
           .addArgument(incomingTransactionHashes::size)
           .addArgument(incomingTransactionHashes)
           .log();
