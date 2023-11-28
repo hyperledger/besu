@@ -394,12 +394,13 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final DisconnectReason reason,
       final boolean initiatedByPeer) {
     if (ethPeers.registerDisconnect(connection)) {
-      LOG.info(
-          "Disconnect - {} - {} - {}... - {} peers left",
-          initiatedByPeer ? "Inbound" : "Outbound",
-          reason,
-          connection.getPeer().getId().slice(0, 8),
-          ethPeers.peerCount());
+      LOG.atDebug()
+          .setMessage("Disconnect - {} - {} - {}... - {} peers left")
+          .addArgument(initiatedByPeer ? "Inbound" : "Outbound")
+          .addArgument(reason)
+          .addArgument(connection.getPeer().getId().slice(0, 8))
+          .addArgument(ethPeers.peerCount())
+          .log();
       LOG.atTrace().addArgument(ethPeers).log();
     }
   }
