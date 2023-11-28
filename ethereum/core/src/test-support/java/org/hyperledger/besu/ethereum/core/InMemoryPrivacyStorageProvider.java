@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
@@ -35,14 +34,6 @@ public class InMemoryPrivacyStorageProvider implements PrivacyStorageProvider {
     return new DefaultWorldStateArchive(
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
-        EvmConfiguration.DEFAULT);
-  }
-
-  public static MutableWorldState createInMemoryWorldState() {
-    final InMemoryPrivacyStorageProvider provider = new InMemoryPrivacyStorageProvider();
-    return new DefaultMutableWorldState(
-        provider.createWorldStateStorage(),
-        provider.createWorldStatePreimageStorage(),
         EvmConfiguration.DEFAULT);
   }
 

@@ -126,8 +126,7 @@ class BonsaiWorldStateArchiveTest {
             new NoOpMetricsSystem(),
             null,
             EvmConfiguration.DEFAULT,
-            TrieLogPruner.noOpTrieLogPruner(),
-            false);
+            TrieLogPruner.noOpTrieLogPruner());
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(512).buildHeader();
     when(blockchain.getChainHeadHeader()).thenReturn(chainHead);

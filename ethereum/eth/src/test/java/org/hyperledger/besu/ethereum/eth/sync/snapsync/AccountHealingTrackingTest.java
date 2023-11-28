@@ -58,7 +58,7 @@ public class AccountHealingTrackingTest {
   private final List<Address> accounts = List.of(Address.fromHexString("0xdeadbeef"));
   private final WorldStateStorage worldStateStorage =
       new BonsaiWorldStateKeyValueStorage(
-          new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem(), false);
+          new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
 
   private WorldStateProofProvider worldStateProofProvider;
 

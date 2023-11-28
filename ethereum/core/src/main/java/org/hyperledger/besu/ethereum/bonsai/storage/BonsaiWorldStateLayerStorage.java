@@ -30,17 +30,15 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
         new LayeredKeyValueStorage(parent.composedWorldStateStorage),
         parent.trieLogStorage,
         parent,
-        parent.metricsSystem,
-        parent.useCodeHashStorageMode);
+        parent.metricsSystem);
   }
 
   public BonsaiWorldStateLayerStorage(
       final SnappedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage,
       final BonsaiWorldStateKeyValueStorage parent,
-      final ObservableMetricsSystem metricsSystem,
-      final boolean useCodeHashStorageMode) {
-    super(parent, composedWorldStateStorage, trieLogStorage, metricsSystem, useCodeHashStorageMode);
+      final ObservableMetricsSystem metricsSystem) {
+    super(parent, composedWorldStateStorage, trieLogStorage, metricsSystem);
   }
 
   @Override
@@ -54,7 +52,6 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
         ((LayeredKeyValueStorage) composedWorldStateStorage).clone(),
         trieLogStorage,
         parentWorldStateStorage,
-        metricsSystem,
-        useCodeHashStorageMode);
+        metricsSystem);
   }
 }

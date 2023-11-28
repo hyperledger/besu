@@ -44,29 +44,26 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final BonsaiWorldStateKeyValueStorage parentWorldStateStorage,
       final SnappedKeyValueStorage segmentedWorldStateStorage,
       final KeyValueStorage trieLogStorage,
-      final ObservableMetricsSystem metricsSystem,
-      final boolean useCodeHashStorageMode) {
+      final ObservableMetricsSystem metricsSystem) {
     super(
         parentWorldStateStorage.flatDbMode,
         parentWorldStateStorage.flatDbStrategy,
         segmentedWorldStateStorage,
         trieLogStorage,
         metricsSystem,
-        useCodeHashStorageMode);
+        parentWorldStateStorage.useCodeHashStorageMode);
     this.parentWorldStateStorage = parentWorldStateStorage;
     this.subscribeParentId = parentWorldStateStorage.subscribe(this);
   }
 
   public BonsaiSnapshotWorldStateKeyValueStorage(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
-      final ObservableMetricsSystem metricsSystem,
-      final boolean useCodeHashStorageMode) {
+      final ObservableMetricsSystem metricsSystem) {
     this(
         worldStateStorage,
         ((SnappableKeyValueStorage) worldStateStorage.composedWorldStateStorage).takeSnapshot(),
         worldStateStorage.trieLogStorage,
-        metricsSystem,
-        useCodeHashStorageMode);
+        metricsSystem);
   }
 
   private boolean isClosedGet() {

@@ -156,8 +156,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
           null,
           new BonsaiWorldStateKeyValueStorage(
               new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem()),
-          new NoOpMetricsSystem(),
-          false);
+          new NoOpMetricsSystem());
     }
 
     @SuppressWarnings({"UnsynchronizedOverridesSynchronized", "squid:S3551"})

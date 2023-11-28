@@ -105,8 +105,7 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         new NoOpMetricsSystem(),
         null,
         evmConfiguration,
-        TrieLogPruner.noOpTrieLogPruner(),
-        false);
+        TrieLogPruner.noOpTrieLogPruner());
   }
 
   public static MutableWorldState createInMemoryWorldState() {

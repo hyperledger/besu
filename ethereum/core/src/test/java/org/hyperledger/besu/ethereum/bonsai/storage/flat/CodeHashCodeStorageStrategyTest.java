@@ -122,7 +122,7 @@ class CodeHashCodeStorageStrategyTest {
 
     codeStorage.clear(keyValueStorage);
 
-    assertThat(keyValueStorage.hasValues(CODE_STORAGE)).isFalse();
+    assertThat(keyValueStorage.streamKeys(CODE_STORAGE)).isEmpty();
   }
 
   private void useTransaction(
