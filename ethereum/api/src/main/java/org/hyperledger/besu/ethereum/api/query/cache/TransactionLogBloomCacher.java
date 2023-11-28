@@ -159,7 +159,7 @@ public class TransactionLogBloomCacher {
         return;
       }
       final long blockNumber = blockHeader.getNumber();
-      LOG.debug("Caching logs bloom for block {}.", "0x" + Long.toHexString(blockNumber));
+      LOG.debug("Caching logs bloom for block {}", "0x" + Long.toHexString(blockNumber));
       final File cacheFile = reusedCacheFile.orElse(calculateCacheFileName(blockNumber, cacheDir));
       if (cacheFile.exists()) {
         try {

@@ -77,11 +77,12 @@ public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTa
   protected PendingPeerRequest sendRequest() {
     return sendRequestToPeer(
         peer -> {
-          LOG.debug(
-              "Requesting {} headers (blockNumber {}) from peer {}.",
-              count,
-              blockNumber,
-              peer.getShortNodeId());
+          LOG.atTrace()
+              .setMessage("Requesting {} headers (blockNumber {}) from peer {}.")
+              .addArgument(count)
+              .addArgument(blockNumber)
+              .addArgument(peer.getShortNodeId())
+              .log();
           return peer.getHeadersByNumber(blockNumber, count, skip, reverse);
         },
         blockNumber);
