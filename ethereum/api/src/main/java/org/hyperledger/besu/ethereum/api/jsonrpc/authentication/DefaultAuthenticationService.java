@@ -171,12 +171,14 @@ public class DefaultAuthenticationService implements AuthenticationService {
       final RoutingContext routingContext, final AuthenticationProvider credentialAuthProvider) {
     final JsonObject requestBody = routingContext.body().asJsonObject();
 
-    if (requestBody == null) {
+    if (requestBody == null
+        || requestBody.getValue(USERNAME) == null
+        || requestBody.getValue("password") == null) {
       routingContext
           .response()
           .setStatusCode(HttpResponseStatus.BAD_REQUEST.code())
           .setStatusMessage(HttpResponseStatus.BAD_REQUEST.reasonPhrase())
-          .end();
+          .end("Authentication failed: username and password are required.");
       return;
     }
 
@@ -194,7 +196,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
                 .response()
                 .setStatusCode(HttpResponseStatus.UNAUTHORIZED.code())
                 .setStatusMessage(HttpResponseStatus.UNAUTHORIZED.reasonPhrase())
-                .end();
+                .end("Authentication failed: the username or password is incorrect.");
           } else {
             final User user = r.result();
 
