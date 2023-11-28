@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.storage.keyvalue;
 
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.CHAIN_HEAD_HASH;
+import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.CODE_MODE;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.FINALIZED_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.FORK_HEADS;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.SAFE_BLOCK_HASH;
@@ -68,6 +69,11 @@ public class VariablesKeyValueStorage implements VariablesStorage {
   }
 
   @Override
+  public Optional<Boolean> isCodeStoredUsingCodeHash() {
+    return getVariable(CODE_MODE).map(b -> b.toInt() == 1);
+  }
+
+  @Override
   public Updater updater() {
     return new Updater(variables.startTransaction());
   }
@@ -113,6 +119,12 @@ public class VariablesKeyValueStorage implements VariablesStorage {
     @Override
     public void setLocalEnrSeqno(final Bytes nodeRecord) {
       setVariable(SEQ_NO_STORE, nodeRecord);
+    }
+
+    @Override
+    public void setCodeStoredUsingCodeHash(final boolean isCodeHash) {
+      final Bytes codeModeAsBytes = isCodeHash ? Bytes.minimalBytes(1) : Bytes.minimalBytes(0);
+      setVariable(CODE_MODE, codeModeAsBytes);
     }
 
     @Override

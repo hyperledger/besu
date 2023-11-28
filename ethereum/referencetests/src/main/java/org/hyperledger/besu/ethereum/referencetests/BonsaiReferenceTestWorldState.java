@@ -120,7 +120,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     final BonsaiReferenceTestWorldStateStorage worldStateStorage =
         new BonsaiReferenceTestWorldStateStorage(
             new BonsaiWorldStateKeyValueStorage(
-                new InMemoryKeyValueStorageProvider(), metricsSystem, false),
+                new InMemoryKeyValueStorageProvider(), metricsSystem),
             preImageProxy);
 
     final NoOpCachedWorldStorageManager noOpCachedWorldStorageManager =
@@ -155,7 +155,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
       super(
           null,
           new BonsaiWorldStateKeyValueStorage(
-              new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem(), false),
+              new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem()),
           new NoOpMetricsSystem(),
           false);
     }

@@ -46,8 +46,7 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
     super(
         segmentIdentifiers -> new SegmentedInMemoryKeyValueStorage(),
         new InMemoryKeyValueStorage(),
-        new NoOpMetricsSystem(),
-        false);
+        new NoOpMetricsSystem());
   }
 
   public static MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {

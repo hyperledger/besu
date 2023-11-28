@@ -16,6 +16,9 @@ package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -28,6 +31,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.ethereum.bonsai.storage.flat.PartialFlatDbStrategy;
+import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -44,6 +49,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
 
@@ -81,8 +87,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
     }
   }
 
-  public void setUp(final FlatDbMode flatDbMode, final boolean useAccountHashCodeStorage) {
-    storage = emptyStorage(useAccountHashCodeStorage);
+  public void setUp(final FlatDbMode flatDbMode, final boolean useCodeHashStorageMode) {
+    storage = emptyStorage(useCodeHashStorageMode);
     if (flatDbMode.equals(FlatDbMode.FULL)) {
       storage.upgradeToFullFlatDbMode();
     }
@@ -126,7 +132,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
       final FlatDbMode flatDbMode, final boolean accountHashCodeStorage) {
     setUp(flatDbMode, accountHashCodeStorage);
     assertThat(storage.getNodeData(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH)).isEmpty();
-    assertThat(storage.isCodeHashStorageMode()).isEqualTo(accountHashCodeStorage);
+    assertThat(storage.useCodeHashStorageMode).isEqualTo(accountHashCodeStorage);
   }
 
   @ParameterizedTest
@@ -142,7 +148,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
     assertThat(storage.getCode(Hash.hash(MerkleTrie.EMPTY_TRIE_NODE), Hash.EMPTY))
         .contains(MerkleTrie.EMPTY_TRIE_NODE);
-    assertThat(storage.isCodeHashStorageMode()).isEqualTo(accountHashCodeStorage);
+    assertThat(storage.useCodeHashStorageMode).isEqualTo(accountHashCodeStorage);
   }
 
   @ParameterizedTest
@@ -154,7 +160,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     storage.updater().putCode(Hash.EMPTY, bytes).commit();
 
     assertThat(storage.getCode(Hash.hash(bytes), Hash.EMPTY)).contains(bytes);
-    assertThat(storage.isCodeHashStorageMode()).isEqualTo(accountHashCodeStorage);
+    assertThat(storage.useCodeHashStorageMode).isEqualTo(accountHashCodeStorage);
   }
 
   @ParameterizedTest
@@ -500,12 +506,25 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
   private BonsaiWorldStateKeyValueStorage emptyStorage() {
     return new BonsaiWorldStateKeyValueStorage(
-        new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem(), false);
+        new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
   }
 
-  private BonsaiWorldStateKeyValueStorage emptyStorage(final boolean useAccountHashCodeStorage) {
+  private BonsaiWorldStateKeyValueStorage emptyStorage(final boolean useCodeHashStorageMode) {
+    final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
+    var metricsSystem = new NoOpMetricsSystem();
+    var segmentedStorage =
+        provider.getStorageBySegmentIdentifiers(
+            List.of(
+                ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE));
+    var trieLogStorage =
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
     return new BonsaiWorldStateKeyValueStorage(
-        new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem(), useAccountHashCodeStorage);
+        FlatDbMode.PARTIAL,
+        new PartialFlatDbStrategy(metricsSystem, useCodeHashStorageMode),
+        segmentedStorage,
+        trieLogStorage,
+        metricsSystem,
+        useCodeHashStorageMode);
   }
 
   private BonsaiWorldStateKeyValueStorage setupMockStorage(
@@ -516,6 +535,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
         .thenReturn(mockTrieLogStorage);
     when(mockStorageProvider.getStorageBySegmentIdentifiers(any()))
         .thenReturn(mock(SegmentedKeyValueStorage.class));
-    return new BonsaiWorldStateKeyValueStorage(mockStorageProvider, new NoOpMetricsSystem(), false);
+    when(mockStorageProvider.createVariablesStorage()).thenReturn(mock(VariablesStorage.class));
+    return new BonsaiWorldStateKeyValueStorage(mockStorageProvider, new NoOpMetricsSystem());
   }
 }

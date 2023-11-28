@@ -31,7 +31,7 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
         parent.trieLogStorage,
         parent,
         parent.metricsSystem,
-        parent.isCodeHashStorageMode());
+        parent.useCodeHashStorageMode);
   }
 
   public BonsaiWorldStateLayerStorage(

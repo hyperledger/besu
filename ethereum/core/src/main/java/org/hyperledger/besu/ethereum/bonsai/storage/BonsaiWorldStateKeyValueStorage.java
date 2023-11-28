@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.bonsai.storage.flat.FullFlatDbStrategy;
 import org.hyperledger.besu.ethereum.bonsai.storage.flat.PartialFlatDbStrategy;
+import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
@@ -84,9 +85,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   protected final Subscribers<BonsaiStorageSubscriber> subscribers = Subscribers.create();
 
   public BonsaiWorldStateKeyValueStorage(
-      final StorageProvider provider,
-      final ObservableMetricsSystem metricsSystem,
-      final boolean useCodeHashStorageMode) {
+      final StorageProvider provider, final ObservableMetricsSystem metricsSystem) {
     this.composedWorldStateStorage =
         provider.getStorageBySegmentIdentifiers(
             List.of(
@@ -94,7 +93,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     this.trieLogStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
     this.metricsSystem = metricsSystem;
-    this.useCodeHashStorageMode = useCodeHashStorageMode;
+    this.useCodeHashStorageMode = isCodeHashStorageMode(provider.createVariablesStorage());
     loadFlatDbStrategy();
   }
 
@@ -116,7 +115,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   private void loadFlatDbStrategy() {
     // derive our flatdb strategy from db or default:
     var newFlatDbMode = deriveFlatDbStrategy();
-    final boolean useCodeHashStorageMode = isCodeHashStorageMode();
     // if  flatDbMode is not loaded or has changed, reload flatDbStrategy
     if (this.flatDbMode == null || !this.flatDbMode.equals(newFlatDbMode)) {
       this.flatDbMode = newFlatDbMode;
@@ -151,8 +149,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return composedWorldStateStorage;
   }
 
-  public boolean isCodeHashStorageMode() {
-    return useCodeHashStorageMode;
+  private boolean isCodeHashStorageMode(final VariablesStorage variablesStorage) {
+    return variablesStorage.isCodeStoredUsingCodeHash().orElse(false);
   }
 
   @Override

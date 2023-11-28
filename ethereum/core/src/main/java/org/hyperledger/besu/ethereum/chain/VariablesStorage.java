@@ -29,7 +29,8 @@ public interface VariablesStorage {
     FORK_HEADS("forkHeads"),
     FINALIZED_BLOCK_HASH("finalizedBlockHash"),
     SAFE_BLOCK_HASH("safeBlockHash"),
-    SEQ_NO_STORE("local-enr-seqno");
+    SEQ_NO_STORE("local-enr-seqno"),
+    CODE_MODE("codeHash");
 
     private final String key;
     private final byte[] byteArray;
@@ -65,6 +66,8 @@ public interface VariablesStorage {
 
   Optional<Bytes> getLocalEnrSeqno();
 
+  Optional<Boolean> isCodeStoredUsingCodeHash();
+
   Updater updater();
 
   interface Updater {
@@ -78,6 +81,8 @@ public interface VariablesStorage {
     void setSafeBlock(Hash blockHash);
 
     void setLocalEnrSeqno(Bytes nodeRecord);
+
+    void setCodeStoredUsingCodeHash(final boolean isCodeHash);
 
     void removeAll();
 

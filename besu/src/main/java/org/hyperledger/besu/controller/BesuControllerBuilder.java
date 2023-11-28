@@ -616,7 +616,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             .orElseGet(() -> new CachedMerkleTrieLoader(metricsSystem));
 
     final WorldStateArchive worldStateArchive =
-        createWorldStateArchive(worldStateStorage, blockchain, cachedMerkleTrieLoader);
+        createWorldStateArchive(
+            worldStateStorage, blockchain, cachedMerkleTrieLoader, variablesStorage);
 
     if (blockchain.getChainHeadBlockNumber() < 1) {
       genesisState.writeStateTo(worldStateArchive.getMutable());
@@ -1064,7 +1065,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   WorldStateArchive createWorldStateArchive(
       final WorldStateStorage worldStateStorage,
       final Blockchain blockchain,
-      final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
+      final CachedMerkleTrieLoader cachedMerkleTrieLoader,
+      final VariablesStorage variablesStorage) {
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI -> {
         final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
@@ -1080,6 +1082,24 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                     isProofOfStake)
                 : TrieLogPruner.noOpTrieLogPruner();
         trieLogPruner.initialize();
+
+        final boolean snapSyncServerEnabled =
+            syncConfig.getSnapSyncConfiguration().isServerEnabled();
+        variablesStorage
+            .isCodeStoredUsingCodeHash()
+            .ifPresentOrElse(
+                codeStoredUsingCodeHash -> {
+                  if (snapSyncServerEnabled && !codeStoredUsingCodeHash) {
+                    throw new IllegalArgumentException(
+                        "Snap sync server enabled but database is not using code storage by code hash");
+                  }
+                },
+                () -> {
+                  final VariablesStorage.Updater updater = variablesStorage.updater();
+                  updater.setCodeStoredUsingCodeHash(snapSyncServerEnabled);
+                  updater.commit();
+                });
+
         yield new BonsaiWorldStateProvider(
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
             blockchain,
@@ -1089,7 +1109,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,
             trieLogPruner,
-            syncConfig.getSnapSyncConfiguration().isServerEnabled());
+            snapSyncServerEnabled);
       }
       case FOREST -> {
         final WorldStatePreimageStorage preimageStorage =
