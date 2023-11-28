@@ -26,7 +26,12 @@ import java.util.function.Function;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public record WorldStateStorageCoordinator(WorldStateKeyValueStorage worldStateKeyValueStorage) {
+public class WorldStateStorageCoordinator {
+  private final WorldStateKeyValueStorage worldStateKeyValueStorage;
+
+  public WorldStateStorageCoordinator(final WorldStateKeyValueStorage worldStateKeyValueStorage) {
+    this.worldStateKeyValueStorage = worldStateKeyValueStorage;
+  }
 
   public DataStorageFormat getDataStorageFormat() {
     return worldStateKeyValueStorage.getDataStorageFormat();
@@ -61,6 +66,15 @@ public record WorldStateStorageCoordinator(WorldStateKeyValueStorage worldStateK
   public <STRATEGY extends WorldStateKeyValueStorage> STRATEGY getStrategy(
       final Class<STRATEGY> strategyClass) {
     return (STRATEGY) worldStateKeyValueStorage;
+  }
+
+  public boolean isMatchingFlatMode(final FlatDbMode flatDbMode) {
+    if (getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
+      final BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorageStrategy =
+          (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage();
+      return bonsaiWorldStateStorageStrategy.getFlatDbMode().equals(flatDbMode);
+    }
+    return false;
   }
 
   public void applyOnMatchingFlatMode(
@@ -133,5 +147,9 @@ public record WorldStateStorageCoordinator(WorldStateKeyValueStorage worldStateK
 
   public void clear() {
     worldStateKeyValueStorage.clear();
+  }
+
+  public WorldStateKeyValueStorage worldStateKeyValueStorage() {
+    return worldStateKeyValueStorage;
   }
 }

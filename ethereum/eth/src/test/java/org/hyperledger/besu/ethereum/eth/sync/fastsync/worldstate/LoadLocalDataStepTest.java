@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.pipeline.Pipe;
@@ -32,6 +33,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -53,6 +55,11 @@ public class LoadLocalDataStepTest {
   private final LoadLocalDataStep loadLocalDataStep =
       new LoadLocalDataStep(
           new WorldStateStorageCoordinator(worldStateKeyValueStorage), new NoOpMetricsSystem());
+
+  @BeforeEach
+  public void setup() {
+    when(worldStateKeyValueStorage.getDataStorageFormat()).thenReturn(DataStorageFormat.BONSAI);
+  }
 
   @Test
   public void shouldReturnStreamWithUnchangedTaskWhenDataNotPresent() {

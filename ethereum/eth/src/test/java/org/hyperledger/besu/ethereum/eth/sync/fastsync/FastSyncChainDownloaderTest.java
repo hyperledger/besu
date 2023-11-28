@@ -74,6 +74,7 @@ public class FastSyncChainDownloaderTest {
   }
 
   public void setup(final DataStorageFormat storageFormat) {
+    when(worldStateStorageCoordinator.getDataStorageFormat()).thenReturn(storageFormat);
     when(worldStateStorageCoordinator.isWorldStateAvailable(any(), any())).thenReturn(true);
     final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
     localBlockchain = localBlockchainSetup.getBlockchain();

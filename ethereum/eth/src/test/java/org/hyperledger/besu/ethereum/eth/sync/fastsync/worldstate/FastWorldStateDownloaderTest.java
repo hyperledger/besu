@@ -218,7 +218,7 @@ class FastWorldStateDownloaderTest {
     final WorldStateDownloader downloader =
         createDownloader(
             ethProtocolManager.ethContext(),
-            worldStateArchive.getWorldStateStorage().worldStateKeyValueStorage(),
+            worldStateArchive.getWorldStateStorage(),
             taskCollection);
 
     final FastSyncState fastSyncState = new FastSyncState(header);

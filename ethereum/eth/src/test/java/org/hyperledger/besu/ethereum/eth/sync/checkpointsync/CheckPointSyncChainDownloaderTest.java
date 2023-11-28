@@ -20,6 +20,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
@@ -35,6 +37,7 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.ImmutableCheckpoint;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -53,9 +56,6 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 public class CheckPointSyncChainDownloaderTest {
 
-  private final WorldStateStorageCoordinator worldStateStorageCoordinator =
-      mock(WorldStateStorageCoordinator.class);
-
   protected ProtocolSchedule protocolSchedule;
   protected EthProtocolManager ethProtocolManager;
   protected EthContext ethContext;
@@ -67,6 +67,8 @@ public class CheckPointSyncChainDownloaderTest {
   protected Blockchain otherBlockchain;
   private Checkpoint checkpoint;
 
+  private WorldStateStorageCoordinator worldStateStorageCoordinator;
+
   static class CheckPointSyncChainDownloaderTestArguments implements ArgumentsProvider {
     @Override
     public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
@@ -75,11 +77,26 @@ public class CheckPointSyncChainDownloaderTest {
     }
   }
 
-  public void setup(final DataStorageFormat storageFormat) {
-    when(worldStateStorageCoordinator.isWorldStateAvailable(any(), any())).thenReturn(true);
-    final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
+  public void setup(final DataStorageFormat dataStorageFormat) {
+    final WorldStateKeyValueStorage worldStateKeyValueStorage;
+    if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
+      worldStateKeyValueStorage = mock(BonsaiWorldStateKeyValueStorage.class);
+      when(((BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage)
+              .isWorldStateAvailable(any(), any()))
+          .thenReturn(true);
+    } else {
+      worldStateKeyValueStorage = mock(ForestWorldStateKeyValueStorage.class);
+      when(((ForestWorldStateKeyValueStorage) worldStateKeyValueStorage)
+              .isWorldStateAvailable(any()))
+          .thenReturn(true);
+    }
+    when(worldStateKeyValueStorage.getDataStorageFormat()).thenReturn(dataStorageFormat);
+    worldStateStorageCoordinator = new WorldStateStorageCoordinator(worldStateKeyValueStorage);
+
+    final BlockchainSetupUtil localBlockchainSetup =
+        BlockchainSetupUtil.forTesting(dataStorageFormat);
     localBlockchain = localBlockchainSetup.getBlockchain();
-    otherBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
+    otherBlockchainSetup = BlockchainSetupUtil.forTesting(dataStorageFormat);
     otherBlockchain = otherBlockchainSetup.getBlockchain();
     protocolSchedule = localBlockchainSetup.getProtocolSchedule();
     protocolContext = localBlockchainSetup.getProtocolContext();

@@ -86,6 +86,7 @@ public class FastSyncActionsTest {
   }
 
   public void setUp(final DataStorageFormat storageFormat) {
+    when(worldStateStorageCoordinator.getDataStorageFormat()).thenReturn(storageFormat);
     blockchainSetupUtil = BlockchainSetupUtil.forTesting(storageFormat);
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
