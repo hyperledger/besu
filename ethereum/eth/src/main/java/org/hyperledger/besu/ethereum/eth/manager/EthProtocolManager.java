@@ -401,7 +401,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           .addArgument(connection.getPeer().getId().slice(0, 8))
           .addArgument(ethPeers.peerCount())
           .log();
-      LOG.atTrace().addArgument(ethPeers).log();
+      LOG.trace("{}", ethPeers);
     }
   }
 
