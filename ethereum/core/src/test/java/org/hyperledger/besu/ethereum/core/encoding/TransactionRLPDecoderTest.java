@@ -97,7 +97,7 @@ class TransactionRLPDecoderTest {
           },
           {
             "9602d4013030308430303030803080c084303030013030",
-            "Cannot read a byte, expecting 1 bytes but current element is 4 bytes long",
+            "Cannot read a unsigned byte scalar, expecting a maximum of 1 bytes but current element is 4 bytes long",
             false
           }
         });
