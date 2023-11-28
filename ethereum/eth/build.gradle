@@ -59,6 +59,11 @@ dependencies {
   implementation 'io.tmio:tuweni-units'
   implementation 'io.tmio:tuweni-rlp'
   implementation 'org.rocksdb:rocksdbjni'
+  // Soruba
+  implementation 'com.rabbitmq:amqp-client:5.20.0'
+  implementation 'com.fasterxml.jackson.core:jackson-databind'
+  implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
+  implementation 'org.apache.commons:commons-text'
 
   annotationProcessor "org.immutables:value"
   implementation "org.immutables:value-annotations"

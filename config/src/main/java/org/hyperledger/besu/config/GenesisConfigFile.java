@@ -148,6 +148,11 @@ public class GenesisConfigFile {
     return JsonGenesisConfigOptions.fromJsonObjectWithOverrides(config, overridesRef);
   }
 
+  // Soruba
+  public ObjectNode getConfigRoot() {
+    return configRoot;
+  }
+
   /**
    * Stream allocations stream.
    *

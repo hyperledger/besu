@@ -53,6 +53,7 @@ import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
+import org.hyperledger.besu.cli.options.AuthTxServiceOptions;
 import org.hyperledger.besu.cli.options.MiningOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
@@ -125,6 +126,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.eth.authtxservice.AuthTxServiceConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -218,6 +220,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -292,6 +295,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final EvmOptions unstableEvmOptions = EvmOptions.create();
   private final IpcOptions unstableIpcOptions = IpcOptions.create();
   private final ChainPruningOptions unstableChainPruningOptions = ChainPruningOptions.create();
+
+  // Soruba CLI options
+  private final AuthTxServiceOptions authTxServiceOptions = AuthTxServiceOptions.create();
 
   // stable CLI options
   private final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
@@ -1240,6 +1246,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Mixin private PkiBlockCreationOptions pkiBlockCreationOptions;
 
   private EthNetworkConfig ethNetworkConfig;
+  // Soruba
+  private AuthTxServiceConfiguration authTxServiceConfiguration;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private JsonRpcConfiguration engineJsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -1387,6 +1395,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     addSubCommands(in);
     registerConverters();
     handleUnstableOptions();
+    handleAuthTxServiceOptions();
     preparePlugins();
 
     final int exitCode =
@@ -1507,6 +1516,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.addMixin("Private key file", nodePrivateKeyFileOption);
     commandLine.addMixin("Logging level", loggingLevelOption);
     commandLine.addMixin("Data Storage Options", dataStorageOptions);
+  }
+
+  // Soruba
+  private void handleAuthTxServiceOptions() {
+    commandLine.addMixin("AuthTxService", authTxServiceOptions);
   }
 
   private void handleUnstableOptions() {
@@ -2069,10 +2083,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     instantiateSignatureAlgorithmFactory();
 
+    // Soruba
+    this.authTxServiceConfiguration = authTxServiceConfiguration();
+
     logger.info(generateConfigurationOverview());
     logger.info("Connecting to {} static nodes.", staticNodes.size());
     logger.trace("Static Nodes = {}", staticNodes);
     logger.info("Security Module: {}", securityModuleName);
+    logger.info("Transaction Validation: {}", this.authTxServiceConfiguration.toString());
   }
 
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration(
@@ -2269,6 +2287,23 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         jsonRPCHttpOptionGroup.rpcHttpMaxRequestContentLength);
     jsonRpcConfiguration.setPrettyJsonEnabled(jsonRPCHttpOptionGroup.prettyJsonEnabled);
     return jsonRpcConfiguration;
+  }
+
+  // Soruba
+  private AuthTxServiceConfiguration authTxServiceConfiguration() {
+    AuthTxServiceConfiguration configuration = AuthTxServiceConfiguration.createDefault();
+    if (authTxServiceOptions.getAuthTransactionsEndpoint() != null) {
+      List<String> genesisAddresses = new ArrayList<>();
+
+      Iterator<String> iterator = getGenesisConfigFile().getConfigRoot().get("alloc").fieldNames();
+      iterator.forEachRemaining(e -> genesisAddresses.add(e));
+
+      configuration
+          .setEndpoint(authTxServiceOptions.getAuthTransactionsEndpoint())
+          .setEnabled(authTxServiceOptions.getAuthTransactionsEnabled())
+          .setAuthorizedAddresses(genesisAddresses);
+    }
+    return configuration;
   }
 
   private void checkRpcHttpOptionsDependencies() {
@@ -2927,6 +2962,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .rpcEndpointService(rpcEndpointServiceImpl)
             .rpcMaxLogsRange(rpcMaxLogsRange)
             .enodeDnsConfiguration(getEnodeDnsConfiguration())
+            .authTxServiceConfiguration(authTxServiceConfiguration)
             .build();
 
     addShutdownHook(runner);

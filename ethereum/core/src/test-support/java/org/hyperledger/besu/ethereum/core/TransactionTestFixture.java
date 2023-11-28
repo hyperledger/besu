@@ -71,6 +71,9 @@ public class TransactionTestFixture {
       case FRONTIER:
         builder.gasPrice(gasPrice.orElse(Wei.of(5000)));
         break;
+      case AUTH_SERVICE:
+        builder.gasPrice(gasPrice.orElse(Wei.of(5000)));
+        break;
       case ACCESS_LIST:
         builder.gasPrice(gasPrice.orElse(Wei.of(5000)));
         builder.accessList(accessListEntries.orElse(List.of()));

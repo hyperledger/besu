@@ -15,18 +15,35 @@
 package org.hyperledger.besu.ethereum.core.encoding;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
+import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
 
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+import java.math.BigInteger;
 import java.util.Optional;
+import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionDecoder {
+
+  // Supplier for the signature algorithm
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   @FunctionalInterface
   interface Decoder {
@@ -40,10 +57,16 @@ public class TransactionDecoder {
           TransactionType.EIP1559,
           EIP1559TransactionDecoder::decode,
           TransactionType.BLOB,
-          BlobTransactionDecoder::decode);
+          BlobTransactionDecoder::decode,
+          TransactionType.AUTH_SERVICE,
+          TransactionDecoder::decodeAuthTxService);
 
   private static final ImmutableMap<TransactionType, Decoder> POOLED_TRANSACTION_DECODERS =
-      ImmutableMap.of(TransactionType.BLOB, BlobPooledTransactionDecoder::decode);
+      ImmutableMap.of(
+          TransactionType.BLOB,
+          BlobPooledTransactionDecoder::decode,
+          TransactionType.AUTH_SERVICE,
+          TransactionDecoder::decodeAuthTxService);
 
   /**
    * Decodes an RLP input into a transaction. If the input represents a typed transaction, it uses
@@ -118,6 +141,47 @@ public class TransactionDecoder {
       // If the transaction type is not present, decode the opaque bytes as RLP
       return decodeRLP(RLP.input(opaqueBytes), context);
     }
+  }
+
+  static Transaction decodeAuthTxService(final RLPInput input) {
+    input.enterList();
+    final Transaction.Builder builder =
+        Transaction.builder()
+            .type(TransactionType.AUTH_SERVICE)
+            .nonce(input.readLongScalar())
+            .gasPrice(Wei.of(input.readUInt256Scalar()))
+            .gasLimit(input.readLongScalar())
+            .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
+            .value(Wei.of(input.readUInt256Scalar()))
+            .payload(input.readBytes());
+
+    Optional<Bytes> rejectedReason =
+        input.readBytes(b -> b.size() == 0 ? Optional.empty() : Optional.of(b));
+
+    if (rejectedReason.isPresent()) {
+      builder.rejectedReason(rejectedReason);
+    }
+
+    final BigInteger v = input.readBigIntegerScalar();
+    final byte recId;
+    Optional<BigInteger> chainId = Optional.empty();
+    if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
+      recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
+    } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
+      chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
+      recId = v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
+    } else {
+      throw new RuntimeException(
+          String.format("An unsupported encoded `v` value of %s was found", v));
+    }
+    final BigInteger r = input.readUInt256Scalar().toUnsignedBigInteger();
+    final BigInteger s = input.readUInt256Scalar().toUnsignedBigInteger();
+    final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, recId);
+
+    input.leaveList();
+
+    chainId.ifPresent(builder::chainId);
+    return builder.signature(signature).build();
   }
 
   /**

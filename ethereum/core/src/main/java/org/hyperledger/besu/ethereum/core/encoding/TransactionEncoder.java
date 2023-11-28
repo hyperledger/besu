@@ -39,7 +39,9 @@ public class TransactionEncoder {
           TransactionType.EIP1559,
           EIP1559TransactionEncoder::encode,
           TransactionType.BLOB,
-          BlobTransactionEncoder::encode);
+          BlobTransactionEncoder::encode,
+          TransactionType.AUTH_SERVICE,
+          TransactionEncoder::encodeAuthTxService);
 
   private static final ImmutableMap<TransactionType, Encoder> POOLED_TRANSACTION_ENCODERS =
       ImmutableMap.of(TransactionType.BLOB, BlobPooledTransactionEncoder::encode);
@@ -77,6 +79,10 @@ public class TransactionEncoder {
     }
   }
 
+  public static Bytes encodeAuthServiceForHash(final Transaction transaction) {
+    return RLP.encode(rlpOutput -> FrontierTransactionEncoder.encode(transaction, rlpOutput));
+  }
+
   /**
    * Encodes a transaction into opaque bytes.
    *
@@ -96,6 +102,19 @@ public class TransactionEncoder {
       encoder.encode(transaction, out);
       return out.encoded();
     }
+  }
+
+  static void encodeAuthTxService(final Transaction transaction, final RLPOutput out) {
+    out.startList();
+    out.writeLongScalar(transaction.getNonce());
+    out.writeUInt256Scalar(transaction.getGasPrice().orElseThrow());
+    out.writeLongScalar(transaction.getGasLimit());
+    out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
+    out.writeUInt256Scalar(transaction.getValue());
+    out.writeBytes(transaction.getPayload());
+    out.writeBytes(transaction.getRejectedReason().map(Bytes::copy).orElse(Bytes.EMPTY));
+    writeSignatureAndV(transaction, out);
+    out.endList();
   }
 
   static void writeSignatureAndV(final Transaction transaction, final RLPOutput out) {

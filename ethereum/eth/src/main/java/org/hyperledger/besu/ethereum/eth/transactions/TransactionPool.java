@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.authtxservice.AuthTxService;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -114,6 +115,8 @@ public class TransactionPool implements BlockAddedObserver {
   private final Set<Address> localSenders = ConcurrentHashMap.newKeySet();
   private final Lock blockAddedLock = new ReentrantLock();
   private final Queue<BlockAddedEvent> blockAddedQueue = new ConcurrentLinkedQueue<>();
+  // Soruba
+  private Optional<AuthTxService> authTxService = Optional.empty();
 
   public TransactionPool(
       final Supplier<PendingTransactions> pendingTransactionsSupplier,
@@ -290,6 +293,12 @@ public class TransactionPool implements BlockAddedObserver {
     return validationResult.result;
   }
 
+  // Soruba
+  /** Receive and decode transaction via AuthTxService */
+  public void addLocalTransactionViaAuth(final Transaction transaction) {
+    addTransaction(transaction, true);
+  }
+
   private Optional<Wei> getMaxGasPrice(final Transaction transaction) {
     return transaction.getGasPrice().map(Optional::of).orElse(transaction.getMaxFeePerGas());
   }
@@ -328,6 +337,16 @@ public class TransactionPool implements BlockAddedObserver {
 
   public void unsubscribeDroppedTransactions(final long id) {
     pendingTransactionsListenersProxy.onDroppedListeners.unsubscribe(id);
+  }
+
+  // Soruba
+  /** Set auth transaction service for push messaging */
+  public void setAuthPublishService(final AuthTxService authTxService) {
+    this.authTxService = Optional.of(authTxService);
+  }
+
+  public AuthTxService getAuthPublishService() {
+    return this.authTxService.get();
   }
 
   @Override

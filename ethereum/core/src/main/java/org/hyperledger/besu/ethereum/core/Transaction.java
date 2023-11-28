@@ -98,6 +98,8 @@ public class Transaction
 
   private final Optional<BigInteger> chainId;
 
+  private Optional<Bytes> rejectedReason;
+
   // Caches a "hash" of a portion of the transaction used for sender recovery.
   // Note that this hash does not include the transaction signature so it does not
   // fully identify the transaction (use the result of the {@code hash()} for that).
@@ -111,7 +113,7 @@ public class Transaction
   protected volatile Hash hash;
   // Caches the size in bytes of the encoded transaction.
   protected volatile int size = -1;
-  private final TransactionType transactionType;
+  private TransactionType transactionType;
 
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
   private final Optional<List<VersionedHash>> versionedHashes;
@@ -154,6 +156,8 @@ public class Transaction
    *     otherwise it should contain an address.
    *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
    *     it will default to any chain.
+   * @param rejectedReason the reason given by AuthTxService that authorizes or not to be executed
+   *     in transaction processor.
    */
   private Transaction(
       final boolean forCopy,
@@ -172,7 +176,8 @@ public class Transaction
       final Address sender,
       final Optional<BigInteger> chainId,
       final Optional<List<VersionedHash>> versionedHashes,
-      final Optional<BlobsWithCommitments> blobsWithCommitments) {
+      final Optional<BlobsWithCommitments> blobsWithCommitments,
+      final Optional<Bytes> rejectedReason) {
 
     if (!forCopy) {
       if (transactionType.requiresChainId()) {
@@ -226,6 +231,7 @@ public class Transaction
     this.chainId = chainId;
     this.versionedHashes = versionedHashes;
     this.blobsWithCommitments = blobsWithCommitments;
+    this.rejectedReason = rejectedReason;
 
     if (!forCopy && isUpfrontGasCostTooHigh()) {
       throw new IllegalArgumentException("Upfront gas cost exceeds UInt256");
@@ -487,7 +493,9 @@ public class Transaction
 
   @Override
   public BigInteger getV() {
-    if (transactionType != null && transactionType != TransactionType.FRONTIER) {
+    if (transactionType != null
+        && transactionType != TransactionType.FRONTIER
+        && transactionType != TransactionType.AUTH_SERVICE) {
       // EIP-2718 typed transaction, use yParity:
       return null;
     } else {
@@ -500,7 +508,9 @@ public class Transaction
 
   @Override
   public BigInteger getYParity() {
-    if (transactionType != null && transactionType != TransactionType.FRONTIER) {
+    if (transactionType != null
+        && transactionType != TransactionType.FRONTIER
+        && transactionType != TransactionType.AUTH_SERVICE) {
       // EIP-2718 typed transaction, return yParity:
       return BigInteger.valueOf(signature.getRecId());
     } else {
@@ -536,7 +546,10 @@ public class Transaction
   }
 
   private void memoizeHashAndSize() {
-    final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.BLOCK_BODY);
+    final Bytes bytes =
+        this.transactionType.equals(TransactionType.AUTH_SERVICE)
+            ? TransactionEncoder.encodeAuthServiceForHash(this)
+            : TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.BLOCK_BODY);
     hash = Hash.hash(bytes);
     if (transactionType.supportsBlob() && getBlobsWithCommitments().isPresent()) {
       final Bytes pooledBytes =
@@ -657,6 +670,11 @@ public class Transaction
     return this.transactionType;
   }
 
+  public Transaction setType(final TransactionType transactionType) {
+    this.transactionType = transactionType;
+    return this;
+  }
+
   @Override
   public Optional<List<VersionedHash>> getVersionedHashes() {
     return versionedHashes;
@@ -665,6 +683,15 @@ public class Transaction
   @Override
   public Optional<BlobsWithCommitments> getBlobsWithCommitments() {
     return blobsWithCommitments;
+  }
+
+  // @Override
+  public Optional<Bytes> getRejectedReason() {
+    return this.rejectedReason;
+  }
+
+  public void setRejectedReason(final Optional<Bytes> rejectedReason) {
+    this.rejectedReason = rejectedReason;
   }
 
   /**
@@ -698,6 +725,8 @@ public class Transaction
     final Bytes preimage =
         switch (transactionType) {
           case FRONTIER -> frontierPreimage(nonce, gasPrice, gasLimit, to, value, payload, chainId);
+          case AUTH_SERVICE -> frontierPreimage(
+              nonce, gasPrice, gasLimit, to, value, payload, chainId);
           case EIP1559 -> eip1559Preimage(
               nonce,
               maxPriorityFeePerGas,
@@ -1035,7 +1064,8 @@ public class Transaction
         sender,
         chainId,
         detachedVersionedHashes,
-        detachedBlobsWithCommitments);
+        detachedBlobsWithCommitments,
+        rejectedReason);
   }
 
   private AccessListEntry accessListDetachedCopy(final AccessListEntry accessListEntry) {
@@ -1095,6 +1125,8 @@ public class Transaction
     protected Optional<BigInteger> v = Optional.empty();
     protected List<VersionedHash> versionedHashes = null;
     private BlobsWithCommitments blobsWithCommitments;
+
+    protected Optional<Bytes> rejectedReason = Optional.empty();
 
     public Builder type(final TransactionType transactionType) {
       this.transactionType = transactionType;
@@ -1186,9 +1218,16 @@ public class Transaction
         transactionType = TransactionType.EIP1559;
       } else if (accessList.isPresent()) {
         transactionType = TransactionType.ACCESS_LIST;
+      } else if (rejectedReason.isPresent()) {
+        transactionType = TransactionType.AUTH_SERVICE;
       } else {
         transactionType = TransactionType.FRONTIER;
       }
+      return this;
+    }
+
+    public Builder rejectedReason(final Optional<Bytes> rejectedReason) {
+      this.rejectedReason = rejectedReason;
       return this;
     }
 
@@ -1215,7 +1254,8 @@ public class Transaction
           sender,
           chainId,
           Optional.ofNullable(versionedHashes),
-          Optional.ofNullable(blobsWithCommitments));
+          Optional.ofNullable(blobsWithCommitments),
+          rejectedReason);
     }
 
     public Transaction signAndBuild(final KeyPair keys) {

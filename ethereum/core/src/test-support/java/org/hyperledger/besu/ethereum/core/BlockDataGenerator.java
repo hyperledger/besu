@@ -373,6 +373,7 @@ public class BlockDataGenerator {
       final TransactionType transactionType, final Bytes payload, final Address to) {
     return switch (transactionType) {
       case FRONTIER -> frontierTransaction(payload, to);
+      case AUTH_SERVICE -> frontierTransaction(payload, to);
       case EIP1559 -> eip1559Transaction(payload, to);
       case ACCESS_LIST -> accessListTransaction(payload, to);
       case BLOB -> blobTransaction(payload, to);

@@ -128,6 +128,7 @@ public abstract class PendingTransaction
   private int computeMemorySize() {
     return switch (transaction.getType()) {
           case FRONTIER -> computeFrontierMemorySize();
+          case AUTH_SERVICE -> computeFrontierMemorySize();
           case ACCESS_LIST -> computeAccessListMemorySize();
           case EIP1559 -> computeEIP1559MemorySize();
           case BLOB -> computeBlobMemorySize();

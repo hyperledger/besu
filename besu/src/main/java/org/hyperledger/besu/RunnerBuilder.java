@@ -72,6 +72,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.ethereum.eth.authtxservice.AuthTxService;
+import org.hyperledger.besu.ethereum.eth.authtxservice.AuthTxServiceConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -193,6 +195,9 @@ public class RunnerBuilder {
   private boolean legacyForkIdEnabled;
   private Optional<Long> rpcMaxLogsRange;
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
+
+  // Soruba
+  private AuthTxServiceConfiguration authTxServiceConfiguration;
 
   /**
    * Add Vertx.
@@ -560,6 +565,13 @@ public class RunnerBuilder {
    */
   public RunnerBuilder rpcEndpointService(final RpcEndpointServiceImpl rpcEndpointService) {
     this.rpcEndpointServiceImpl = rpcEndpointService;
+    return this;
+  }
+
+  // Soruba
+  public RunnerBuilder authTxServiceConfiguration(
+      final AuthTxServiceConfiguration authTxServiceConfiguration) {
+    this.authTxServiceConfiguration = authTxServiceConfiguration;
     return this;
   }
 
@@ -1051,6 +1063,13 @@ public class RunnerBuilder {
       jsonRpcIpcService = Optional.empty();
     }
 
+    // Soruba
+    Optional<AuthTxService> authTxService = Optional.empty();
+    if (authTxServiceConfiguration.isEnabled()) {
+      authTxServiceConfiguration.setEnode(localNodeId.toString());
+      authTxService = Optional.of(new AuthTxService(authTxServiceConfiguration, transactionPool));
+    }
+
     return new Runner(
         vertx,
         networkRunner,
@@ -1067,7 +1086,8 @@ public class RunnerBuilder {
         dataDir,
         pidPath,
         autoLogBloomCaching ? blockchainQueries.getTransactionLogBloomCacher() : Optional.empty(),
-        context.getBlockchain());
+        context.getBlockchain(),
+        authTxService);
   }
 
   private boolean isEthStatsEnabled() {

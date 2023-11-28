@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketService;
 import org.hyperledger.besu.ethereum.api.query.cache.AutoTransactionLogBloomCachingService;
 import org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.eth.authtxservice.AuthTxService;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolEvictionService;
 import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
@@ -78,6 +79,9 @@ public class Runner implements AutoCloseable {
   private final Optional<AutoTransactionLogBloomCachingService>
       autoTransactionLogBloomCachingService;
 
+  // Soruba
+  private final Optional<AuthTxService> authTxService;
+
   /**
    * Instantiates a new Runner.
    *
@@ -114,7 +118,8 @@ public class Runner implements AutoCloseable {
       final Path dataDir,
       final Optional<Path> pidPath,
       final Optional<TransactionLogBloomCacher> transactionLogBloomCacher,
-      final Blockchain blockchain) {
+      final Blockchain blockchain,
+      final Optional<AuthTxService> authTxService) {
     this.vertx = vertx;
     this.networkRunner = networkRunner;
     this.natService = natService;
@@ -134,6 +139,8 @@ public class Runner implements AutoCloseable {
             cacher -> new AutoTransactionLogBloomCachingService(blockchain, cacher));
     this.transactionPoolEvictionService =
         new TransactionPoolEvictionService(vertx, besuController.getTransactionPool());
+    // Soruba
+    this.authTxService = authTxService;
   }
 
   /** Start external services. */
@@ -173,9 +180,14 @@ public class Runner implements AutoCloseable {
       transactionPoolEvictionService.start();
 
       LOG.info("Ethereum main loop is up.");
-      // we write these values to disk to be able to access them during the acceptance tests
+      // we write these values to disk to be able to access them during the acceptance
+      // tests
       writeBesuPortsToFile();
       writeBesuNetworksToFile();
+
+      // Soruba
+      authTxService.ifPresent(service -> waitForServiceToStart("AuthTxService", service.start()));
+
       writePidFile();
 
       // start external service that depends on information from main loop
@@ -215,6 +227,10 @@ public class Runner implements AutoCloseable {
     besuController.close();
     vertx.close((res) -> vertxShutdownLatch.countDown());
     waitForServiceToStop("Vertx", vertxShutdownLatch::await);
+
+    // Soruba
+    authTxService.ifPresent(service -> waitForServiceToStart("AuthTxService", service.stop()));
+
     shutdown.countDown();
   }
 

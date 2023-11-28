@@ -30,3 +30,5 @@ site/
 **/src/*/generated
 jitpack.yml
 /ethereum/eth/src/test/resources/tx.csv.gz
+.local_node/
+.vscode/
