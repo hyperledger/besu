@@ -134,6 +134,7 @@ public class VariablesKeyValueStorage implements VariablesStorage {
       removeVariable(SAFE_BLOCK_HASH);
       removeVariable(FORK_HEADS);
       removeVariable(SEQ_NO_STORE);
+      removeVariable(CODE_MODE);
     }
 
     @Override

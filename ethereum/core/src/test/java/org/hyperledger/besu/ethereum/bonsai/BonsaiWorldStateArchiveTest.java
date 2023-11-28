@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -87,6 +88,7 @@ class BonsaiWorldStateArchiveTest {
     when(segmentedKeyValueStorage.startTransaction())
         .thenReturn(segmentedKeyValueStorageTransaction);
     when(storageProvider.getStorageBySegmentIdentifier(any())).thenReturn(trieLogStorage);
+    when(storageProvider.createVariablesStorage()).thenReturn(mock(VariablesStorage.class));
     when(trieLogStorage.startTransaction()).thenReturn(mock(KeyValueStorageTransaction.class));
   }
 
