@@ -257,7 +257,11 @@ public class EthPeer implements Comparable<EthPeer> {
       throws PeerNotConnected {
     if (connectionToUse.getAgreedCapabilities().stream()
         .noneMatch(capability -> capability.getName().equalsIgnoreCase(protocolName))) {
-      LOG.debug("Protocol {} unavailable for this peer {}...", protocolName, this.getShortNodeId());
+      LOG.atDebug()
+          .setMessage("Protocol {} unavailable for this peer {}...")
+          .addArgument(protocolName)
+          .addArgument(this.getShortNodeId())
+          .log();
       return null;
     }
     if (permissioningProviders.stream()
