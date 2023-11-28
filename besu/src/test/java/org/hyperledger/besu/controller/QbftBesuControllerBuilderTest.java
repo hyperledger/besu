@@ -36,13 +36,13 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -85,7 +85,6 @@ public class QbftBesuControllerBuilderTest {
   @Mock private Clock clock;
   @Mock private StorageProvider storageProvider;
   @Mock private GasLimitCalculator gasLimitCalculator;
-  @Mock private WorldStateStorageCoordinator worldStateStorageCoordinator;
   @Mock private WorldStatePreimageStorage worldStatePreimageStorage;
   private static final BigInteger networkId = BigInteger.ONE;
   private static final NodeKey nodeKey = NodeKeyUtils.generate();
@@ -98,6 +97,11 @@ public class QbftBesuControllerBuilderTest {
   @Before
   public void setup() {
     // besu controller setup
+    final ForestWorldStateKeyValueStorage worldStateKeyValueStorage =
+        mock(ForestWorldStateKeyValueStorage.class);
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateKeyValueStorage);
+
     when(genesisConfigFile.getParentHash()).thenReturn(Hash.ZERO.toHexString());
     when(genesisConfigFile.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
     when(genesisConfigFile.getExtraData()).thenReturn(Bytes.EMPTY.toHexString());
@@ -114,9 +118,9 @@ public class QbftBesuControllerBuilderTest {
                 new MainnetBlockHeaderFunctions()));
     when(storageProvider.createWorldStateStorageCoordinator(DataStorageFormat.FOREST))
         .thenReturn(worldStateStorageCoordinator);
-    when(worldStateStorageCoordinator.isWorldStateAvailable(any(), any())).thenReturn(true);
+    when(worldStateKeyValueStorage.isWorldStateAvailable(any())).thenReturn(true);
     when(worldStateStorageCoordinator.updater())
-        .thenReturn(mock(WorldStateKeyValueStorage.Updater.class));
+        .thenReturn(mock(ForestWorldStateKeyValueStorage.Updater.class));
     when(worldStatePreimageStorage.updater())
         .thenReturn(mock(WorldStatePreimageStorage.Updater.class));
     when(storageProvider.createWorldStatePreimageStorage()).thenReturn(worldStatePreimageStorage);
