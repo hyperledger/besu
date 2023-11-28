@@ -438,7 +438,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else if (mergePeerFilter.isPresent()
           && mergePeerFilter.get().disconnectIfPoW(status, peer)) {
-        LOG.debug("Post-merge disconnect: peer still PoW {}", peer);
+        LOG.atDebug()
+            .setMessage("Post-merge disconnect: peer still PoW {}")
+            .addArgument(peer.getShortNodeId())
+            .log();
         handleDisconnect(peer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
       } else {
         LOG.debug(
