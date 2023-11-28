@@ -14,15 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.privacy.storage.keyvalue;
 
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 
 import java.io.IOException;
@@ -47,8 +48,13 @@ public class PrivacyKeyValueStorageProvider implements PrivacyStorageProvider {
   }
 
   @Override
-  public WorldStateStorage createWorldStateStorage() {
-    return new WorldStateKeyValueStorage(privateWorldStateKeyValueStorage);
+  public WorldStateKeyValueStorage createWorldStateStorage() {
+    return new ForestWorldStateKeyValueStorage(privateWorldStateKeyValueStorage);
+  }
+
+  @Override
+  public WorldStateStorageCoordinator createWorldStateStorageCoordinator() {
+    return new WorldStateStorageCoordinator(createWorldStateStorage());
   }
 
   @Override

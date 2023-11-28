@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator.applyForStrategy;
+
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -34,21 +36,36 @@ class CodeNodeDataRequest extends NodeDataRequest {
   }
 
   @Override
-  protected void doPersist(final Updater updater) {
-    updater.putCode(accountHash.orElse(Hash.EMPTY), getHash(), getData());
+  protected void doPersist(final WorldStateKeyValueStorage.Updater updater) {
+    applyForStrategy(
+        updater,
+        onBonsai -> {
+          onBonsai.putCode(accountHash.orElse(Hash.EMPTY), getHash(), getData());
+        },
+        onForest -> {
+          onForest.putCode(getHash(), getData());
+        });
   }
 
   @Override
-  public Stream<NodeDataRequest> getChildRequests(final WorldStateStorage worldStateStorage) {
+  public Stream<NodeDataRequest> getChildRequests(
+      final WorldStateStorageCoordinator worldStateStorageCoordinator) {
     // Code nodes have nothing further to download
     return Stream.empty();
   }
 
   @Override
-  public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    return worldStateStorage
-        .getCode(getHash(), accountHash.orElse(Hash.EMPTY))
-        .filter(codeBytes -> Hash.hash(codeBytes).equals(getHash()));
+  public Optional<Bytes> getExistingData(
+      final WorldStateStorageCoordinator worldStateStorageCoordinator) {
+    return worldStateStorageCoordinator.applyForStrategy(
+        onBonsai -> {
+          return onBonsai
+              .getCode(getHash(), accountHash.orElse(Hash.EMPTY))
+              .filter(codeBytes -> Hash.hash(codeBytes).equals(getHash()));
+        },
+        onForest -> {
+          return onForest.getCode(getHash());
+        });
   }
 
   public Optional<Hash> getAccountHash() {

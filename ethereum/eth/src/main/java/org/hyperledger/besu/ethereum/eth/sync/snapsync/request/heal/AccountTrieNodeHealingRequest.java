@@ -15,9 +15,10 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal;
 
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator.applyForStrategy;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
@@ -26,9 +27,8 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -56,22 +56,30 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
   @Override
   protected int doPersist(
-      final WorldStateStorage worldStateStorage,
-      final WorldStateStorage.Updater updater,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
+      final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncProcessState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration) {
     if (isRoot()) {
       downloadState.setRootNodeData(data);
     }
-    updater.putAccountStateTrieNode(getLocation(), getNodeHash(), data);
+    applyForStrategy(
+        updater,
+        onBonsai -> {
+          onBonsai.putAccountStateTrieNode(getLocation(), getNodeHash(), data);
+        },
+        onForest -> {
+          onForest.putAccountStateTrieNode(getNodeHash(), data);
+        });
     return 1;
   }
 
   @Override
   public Optional<Bytes> getExistingData(
-      final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage) {
-    return worldStateStorage
+      final SnapWorldDownloadState downloadState,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator) {
+    return worldStateStorageCoordinator
         .getAccountStateTrieNode(getLocation(), getNodeHash())
         .filter(data -> !getLocation().isEmpty());
   }
@@ -93,11 +101,12 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
   }
 
   @Override
-  public Stream<SnapDataRequest> getRootStorageRequests(final WorldStateStorage worldStateStorage) {
+  public Stream<SnapDataRequest> getRootStorageRequests(
+      final WorldStateStorageCoordinator worldStateStorageCoordinator) {
     final List<SnapDataRequest> requests = new ArrayList<>();
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(
-            worldStateStorage::getAccountStateTrieNode,
+            worldStateStorageCoordinator::getAccountStateTrieNode,
             Hash.hash(data),
             getLocation(),
             Function.identity(),
@@ -137,7 +146,7 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
   @Override
   protected Stream<SnapDataRequest> getRequestsFromTrieNodeValue(
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SnapWorldDownloadState downloadState,
       final Bytes location,
       final Bytes path,
@@ -151,11 +160,10 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
             Bytes32.wrap(CompactEncoding.pathToBytes(Bytes.concatenate(getLocation(), path))));
 
     // update the flat db only for bonsai
-    if (!worldStateStorage.getFlatDbMode().equals(FlatDbMode.NO_FLATTENED)) {
-      ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
-          .putAccountInfoState(accountHash, value)
-          .commit();
-    }
+    worldStateStorageCoordinator.applyWhenFlatModeEnabled(
+        onBonsai -> {
+          onBonsai.updater().putAccountInfoState(accountHash, value).commit();
+        });
 
     // Add code, if appropriate
     if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
@@ -164,7 +172,7 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
     // Retrieve the storage root from the database, if available
     final Hash storageRootFoundInDb =
-        worldStateStorage
+        worldStateStorageCoordinator
             .getTrieNodeUnsafe(Bytes.concatenate(accountHash, Bytes.EMPTY))
             .map(Hash::hash)
             .orElse(Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH));

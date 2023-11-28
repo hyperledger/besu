@@ -30,6 +30,7 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
@@ -39,6 +40,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -48,10 +50,9 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -88,7 +89,7 @@ public class BesuControllerBuilderTest {
   @Mock Clock clock;
   @Mock StorageProvider storageProvider;
   @Mock GasLimitCalculator gasLimitCalculator;
-  @Mock WorldStateStorage worldStateStorage;
+  @Mock WorldStateStorageCoordinator worldStateStorageCoordinator;
   @Mock WorldStateArchive worldStateArchive;
   @Mock BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorage;
   @Mock WorldStatePreimageStorage worldStatePreimageStorage;
@@ -129,14 +130,15 @@ public class BesuControllerBuilderTest {
 
     when(synchronizerConfiguration.getBlockPropagationRange()).thenReturn(Range.closed(1L, 2L));
 
-    when(storageProvider.createWorldStateStorage(DataStorageFormat.FOREST))
-        .thenReturn(worldStateStorage);
+    when(storageProvider.createWorldStateStorageCoordinator(DataStorageFormat.FOREST))
+        .thenReturn(worldStateStorageCoordinator);
     when(storageProvider.createWorldStatePreimageStorage()).thenReturn(worldStatePreimageStorage);
 
-    when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
+    when(worldStateStorageCoordinator.isWorldStateAvailable(any(), any())).thenReturn(true);
     when(worldStatePreimageStorage.updater())
         .thenReturn(mock(WorldStatePreimageStorage.Updater.class));
-    when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));
+    when(worldStateStorageCoordinator.updater())
+        .thenReturn(mock(WorldStateKeyValueStorage.Updater.class));
     besuControllerBuilder = spy(visitWithMockConfigs(new MainnetBesuControllerBuilder()));
   }
 
@@ -165,11 +167,13 @@ public class BesuControllerBuilderTest {
     doReturn(worldStateArchive)
         .when(besuControllerBuilder)
         .createWorldStateArchive(
-            any(WorldStateStorage.class), any(Blockchain.class), any(CachedMerkleTrieLoader.class));
+            any(WorldStateStorageCoordinator.class),
+            any(Blockchain.class),
+            any(CachedMerkleTrieLoader.class));
     doReturn(mockWorldState).when(worldStateArchive).getMutable();
 
-    when(storageProvider.createWorldStateStorage(DataStorageFormat.BONSAI))
-        .thenReturn(bonsaiWorldStateStorage);
+    when(storageProvider.createWorldStateStorageCoordinator(DataStorageFormat.BONSAI))
+        .thenReturn(new WorldStateStorageCoordinator(bonsaiWorldStateStorage));
     besuControllerBuilder
         .isPruningEnabled(true)
         .dataStorageConfiguration(

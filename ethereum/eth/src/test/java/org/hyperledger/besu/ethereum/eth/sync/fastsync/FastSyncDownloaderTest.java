@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataReques
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.nio.file.Path;
@@ -54,7 +54,8 @@ public class FastSyncDownloaderTest {
   @SuppressWarnings("unchecked")
   private final FastSyncActions fastSyncActions = mock(FastSyncActions.class);
 
-  private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
+  private final WorldStateStorageCoordinator worldStateStorageCoordinator =
+      mock(WorldStateStorageCoordinator.class);
 
   private final WorldStateDownloader worldStateDownloader = mock(FastWorldStateDownloader.class);
   private final FastSyncStateStorage storage = mock(FastSyncStateStorage.class);
@@ -69,7 +70,7 @@ public class FastSyncDownloaderTest {
   private final FastSyncDownloader<NodeDataRequest> downloader =
       new FastSyncDownloader<>(
           fastSyncActions,
-          worldStateStorage,
+          worldStateStorageCoordinator,
           worldStateDownloader,
           storage,
           taskCollection,
@@ -78,8 +79,8 @@ public class FastSyncDownloaderTest {
 
   @BeforeEach
   public void setup() {
-    when(worldStateStorage.getDataStorageFormat()).thenReturn(DataStorageFormat.FOREST);
-    when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
+    when(worldStateStorageCoordinator.getDataStorageFormat()).thenReturn(DataStorageFormat.FOREST);
+    when(worldStateStorageCoordinator.isWorldStateAvailable(any(), any())).thenReturn(true);
   }
 
   @Test
@@ -127,7 +128,7 @@ public class FastSyncDownloaderTest {
     final FastSyncDownloader<NodeDataRequest> resumedDownloader =
         new FastSyncDownloader<>(
             fastSyncActions,
-            worldStateStorage,
+            worldStateStorageCoordinator,
             worldStateDownloader,
             storage,
             taskCollection,

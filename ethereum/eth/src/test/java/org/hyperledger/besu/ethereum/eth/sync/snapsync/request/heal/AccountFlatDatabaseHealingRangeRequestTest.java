@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
@@ -24,14 +25,14 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapsyncMetricsManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -72,11 +73,14 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
 
   @Test
   public void shouldReturnChildRequests() {
-    final WorldStateStorage worldStateStorage =
-        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStateProofProvider proofProvider = new WorldStateProofProvider(worldStateStorage);
+    final ForestWorldStateKeyValueStorage worldStateKeyValueStorage =
+        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateKeyValueStorage);
+    final WorldStateProofProvider proofProvider =
+        new WorldStateProofProvider(worldStateStorageCoordinator);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
-        TrieGenerator.generateTrie(worldStateStorage, 15);
+        TrieGenerator.generateTrie(worldStateStorageCoordinator, 15);
 
     // Create a collector to gather account entries within a specific range
     final RangeStorageEntriesCollector collector =
@@ -113,7 +117,9 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
     // Verify that the start key hash of the snapDataRequest is greater than the last key in the
     // accounts TreeMap
     List<SnapDataRequest> childRequests =
-        request.getChildRequests(downloadState, worldStateStorage, snapSyncState).toList();
+        request
+            .getChildRequests(downloadState, worldStateStorageCoordinator, snapSyncState)
+            .toList();
     Assertions.assertThat(childRequests).hasSize(1);
     AccountFlatDatabaseHealingRangeRequest snapDataRequest =
         (AccountFlatDatabaseHealingRangeRequest) childRequests.get(0);
@@ -127,7 +133,9 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
                     .map(CompactEncoding::bytesToPath)
                     .collect(Collectors.toList())));
     childRequests =
-        request.getChildRequests(downloadState, worldStateStorage, snapSyncState).toList();
+        request
+            .getChildRequests(downloadState, worldStateStorageCoordinator, snapSyncState)
+            .toList();
     Assertions.assertThat(childRequests).hasSizeGreaterThan(1);
     Assertions.assertThat(childRequests)
         .hasAtLeastOneElementOfType(AccountFlatDatabaseHealingRangeRequest.class);
@@ -137,11 +145,14 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
 
   @Test
   public void shouldNotReturnChildRequestsWhenNoMoreAccounts() {
-    final WorldStateStorage worldStateStorage =
-        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStateProofProvider proofProvider = new WorldStateProofProvider(worldStateStorage);
+    final ForestWorldStateKeyValueStorage worldStateKeyValueStorage =
+        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateKeyValueStorage);
+    final WorldStateProofProvider proofProvider =
+        new WorldStateProofProvider(worldStateStorageCoordinator);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
-        TrieGenerator.generateTrie(worldStateStorage, 15);
+        TrieGenerator.generateTrie(worldStateStorageCoordinator, 15);
 
     // Create a collector to gather account entries within a specific range
     final RangeStorageEntriesCollector collector =
@@ -169,7 +180,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
 
     // Verify that no child requests are returned from the request
     final Stream<SnapDataRequest> childRequests =
-        request.getChildRequests(downloadState, worldStateStorage, snapSyncState);
+        request.getChildRequests(downloadState, worldStateStorageCoordinator, snapSyncState);
     Assertions.assertThat(childRequests).isEmpty();
   }
 
@@ -178,11 +189,14 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
 
     final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
-    final WorldStateStorage worldStateStorage =
+    final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
-    final WorldStateProofProvider proofProvider = new WorldStateProofProvider(worldStateStorage);
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateKeyValueStorage);
+    final WorldStateProofProvider proofProvider =
+        new WorldStateProofProvider(worldStateStorageCoordinator);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
-        TrieGenerator.generateTrie(worldStateStorage, 15);
+        TrieGenerator.generateTrie(worldStateStorageCoordinator, 15);
     // Create a collector to gather account entries within a specific range
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
@@ -217,9 +231,9 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
     // an ArrayDeque
     request.addLocalData(proofProvider, accounts, new ArrayDeque<>(proofs));
 
-    WorldStateStorage.Updater updater = Mockito.spy(worldStateStorage.updater());
+    WorldStateKeyValueStorage.Updater updater = Mockito.spy(worldStateKeyValueStorage.updater());
     request.doPersist(
-        worldStateStorage,
+        worldStateStorageCoordinator,
         updater,
         downloadState,
         snapSyncState,
@@ -232,11 +246,14 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
 
     final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
-    final WorldStateStorage worldStateStorage =
+    final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
-    final WorldStateProofProvider proofProvider = new WorldStateProofProvider(worldStateStorage);
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateKeyValueStorage);
+    final WorldStateProofProvider proofProvider =
+        new WorldStateProofProvider(worldStateStorageCoordinator);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
-        TrieGenerator.generateTrie(worldStateStorage, 15);
+        TrieGenerator.generateTrie(worldStateStorageCoordinator, 15);
     // Create a collector to gather account entries within a specific range
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
@@ -286,9 +303,9 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
     request.addLocalData(proofProvider, accounts, new ArrayDeque<>(proofs));
 
     BonsaiWorldStateKeyValueStorage.Updater updater =
-        (BonsaiWorldStateKeyValueStorage.Updater) Mockito.spy(worldStateStorage.updater());
+        Mockito.spy(worldStateKeyValueStorage.updater());
     request.doPersist(
-        worldStateStorage,
+        worldStateStorageCoordinator,
         updater,
         downloadState,
         snapSyncState,

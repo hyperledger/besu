@@ -15,14 +15,15 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.BYTECODES;
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator.applyForStrategy;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
 import java.util.stream.Stream;
 
@@ -51,18 +52,26 @@ public class BytecodeRequest extends SnapDataRequest {
 
   @Override
   protected int doPersist(
-      final WorldStateStorage worldStateStorage,
-      final Updater updater,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
+      final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncProcessState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration) {
-    updater.putCode(Hash.wrap(accountHash), code);
+
+    applyForStrategy(
+        updater,
+        onBonsai -> {
+          onBonsai.putCode(Hash.wrap(accountHash), codeHash, code);
+        },
+        onForest -> {
+          onForest.putCode(codeHash, code);
+        });
     downloadState.getMetricsManager().notifyCodeDownloaded();
     return possibleParent
         .map(
             trieNodeDataRequest ->
                 trieNodeDataRequest.saveParent(
-                        worldStateStorage,
+                        worldStateStorageCoordinator,
                         updater,
                         downloadState,
                         snapSyncState,
@@ -79,7 +88,7 @@ public class BytecodeRequest extends SnapDataRequest {
   @Override
   public Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SnapSyncProcessState snapSyncState) {
     return Stream.empty();
   }

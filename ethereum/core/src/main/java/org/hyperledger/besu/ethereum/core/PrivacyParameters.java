@@ -21,15 +21,15 @@ import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
+import org.hyperledger.besu.ethereum.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateWorldStateReader;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupGenesisProvider;
@@ -335,12 +335,12 @@ public class PrivacyParameters {
     public PrivacyParameters build() {
       final PrivacyParameters config = new PrivacyParameters();
       if (enabled) {
-        final WorldStateStorage privateWorldStateStorage =
-            storageProvider.createWorldStateStorage();
+        final WorldStateStorageCoordinator privateWorldStateStorage =
+            storageProvider.createWorldStateStorageCoordinator();
         final WorldStatePreimageStorage privatePreimageStorage =
             storageProvider.createWorldStatePreimageStorage();
         final WorldStateArchive privateWorldStateArchive =
-            new DefaultWorldStateArchive(
+            new ForestWorldStateArchive(
                 privateWorldStateStorage, privatePreimageStorage, EvmConfiguration.DEFAULT);
 
         final PrivateStateStorage privateStateStorage = storageProvider.createPrivateStateStorage();

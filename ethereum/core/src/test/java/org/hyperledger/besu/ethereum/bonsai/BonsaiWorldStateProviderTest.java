@@ -65,7 +65,7 @@ import org.mockito.quality.Strictness;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class BonsaiWorldStateArchiveTest {
+class BonsaiWorldStateProviderTest {
   final BlockHeaderTestFixture blockBuilder = new BlockHeaderTestFixture();
 
   @Mock Blockchain blockchain;
@@ -166,14 +166,14 @@ class BonsaiWorldStateArchiveTest {
         .when(trieLogManager)
         .getTrieLogLayer(any(Hash.class));
 
-    var worldStateStorage =
+    var worldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateProvider(
                 cachedWorldStorageManager,
                 trieLogManager,
-                worldStateStorage,
+                worldStateKeyValueStorage,
                 blockchain,
                 new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
                 EvmConfiguration.DEFAULT));
@@ -192,14 +192,14 @@ class BonsaiWorldStateArchiveTest {
   @Test
   void testGetMutableWithStorageConsistencyNotRollbackTheState() {
 
-    var worldStateStorage =
+    var worldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateProvider(
                 cachedWorldStorageManager,
                 trieLogManager,
-                worldStateStorage,
+                worldStateKeyValueStorage,
                 blockchain,
                 new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
                 EvmConfiguration.DEFAULT));
@@ -228,7 +228,7 @@ class BonsaiWorldStateArchiveTest {
         .when(trieLogManager)
         .getTrieLogLayer(any(Hash.class));
 
-    var worldStateStorage =
+    var worldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
 
     bonsaiWorldStateArchive =
@@ -236,7 +236,7 @@ class BonsaiWorldStateArchiveTest {
             new BonsaiWorldStateProvider(
                 cachedWorldStorageManager,
                 trieLogManager,
-                worldStateStorage,
+                worldStateKeyValueStorage,
                 blockchain,
                 new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
                 EvmConfiguration.DEFAULT));

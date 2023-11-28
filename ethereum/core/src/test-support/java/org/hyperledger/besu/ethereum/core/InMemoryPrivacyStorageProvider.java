@@ -14,41 +14,48 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
-import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 public class InMemoryPrivacyStorageProvider implements PrivacyStorageProvider {
 
   public static WorldStateArchive createInMemoryWorldStateArchive() {
-    return new DefaultWorldStateArchive(
-        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
+    return new ForestWorldStateArchive(
+        new WorldStateStorageCoordinator(
+            new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage())),
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
         EvmConfiguration.DEFAULT);
   }
 
   public static MutableWorldState createInMemoryWorldState() {
     final InMemoryPrivacyStorageProvider provider = new InMemoryPrivacyStorageProvider();
-    return new DefaultMutableWorldState(
+    return new ForestMutableWorldState(
         provider.createWorldStateStorage(),
         provider.createWorldStatePreimageStorage(),
         EvmConfiguration.DEFAULT);
   }
 
   @Override
-  public WorldStateStorage createWorldStateStorage() {
-    return new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+  public WorldStateKeyValueStorage createWorldStateStorage() {
+    return new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+  }
+
+  @Override
+  public WorldStateStorageCoordinator createWorldStateStorageCoordinator() {
+    return new WorldStateStorageCoordinator(createWorldStateStorage());
   }
 
   @Override

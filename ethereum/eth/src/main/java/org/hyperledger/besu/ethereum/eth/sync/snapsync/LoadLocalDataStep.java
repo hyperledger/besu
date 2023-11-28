@@ -18,9 +18,10 @@ import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.can
 import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.errorCountAtThreshold;
 import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.getRetryableErrorCounter;
 
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -38,7 +39,7 @@ import org.slf4j.LoggerFactory;
 public class LoadLocalDataStep {
 
   private static final Logger LOG = LoggerFactory.getLogger(LoadLocalDataStep.class);
-  private final WorldStateStorage worldStateStorage;
+  private final WorldStateStorageCoordinator worldStateStorageCoordinator;
   private final SnapWorldDownloadState downloadState;
   private final SnapSyncProcessState snapSyncState;
 
@@ -46,12 +47,12 @@ public class LoadLocalDataStep {
   private final Counter existingNodeCounter;
 
   public LoadLocalDataStep(
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SnapWorldDownloadState downloadState,
       final SnapSyncConfiguration snapSyncConfiguration,
       final MetricsSystem metricsSystem,
       final SnapSyncProcessState snapSyncState) {
-    this.worldStateStorage = worldStateStorage;
+    this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.downloadState = downloadState;
     this.snapSyncConfiguration = snapSyncConfiguration;
     existingNodeCounter =
@@ -68,16 +69,22 @@ public class LoadLocalDataStep {
     // check if node is already stored in the worldstate
     try {
       if (snapSyncState.hasPivotBlockHeader()) {
-        Optional<Bytes> existingData = request.getExistingData(downloadState, worldStateStorage);
+        Optional<Bytes> existingData =
+            request.getExistingData(downloadState, worldStateStorageCoordinator);
         if (existingData.isPresent()) {
           existingNodeCounter.inc();
           request.setData(existingData.get());
           request.setRequiresPersisting(false);
-          final WorldStateStorage.Updater updater = worldStateStorage.updater();
+          final WorldStateKeyValueStorage.Updater updater = worldStateStorageCoordinator.updater();
           request.persist(
-              worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration);
+              worldStateStorageCoordinator,
+              updater,
+              downloadState,
+              snapSyncState,
+              snapSyncConfiguration);
           updater.commit();
-          downloadState.enqueueRequests(request.getRootStorageRequests(worldStateStorage));
+          downloadState.enqueueRequests(
+              request.getRootStorageRequests(worldStateStorageCoordinator));
           completedTasks.put(task);
           return Stream.empty();
         }

@@ -25,9 +25,10 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataR
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.services.tasks.Task;
 
 import java.util.List;
@@ -38,15 +39,17 @@ import org.junit.jupiter.api.Test;
 
 public class PersistDataStepTest {
 
-  private final WorldStateStorage worldStateStorage =
-      new InMemoryKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.FOREST);
+  private final WorldStateStorageCoordinator worldStateStorageCoordinator =
+      new InMemoryKeyValueStorageProvider()
+          .createWorldStateStorageCoordinator(DataStorageFormat.FOREST);
   private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
   private final SnapWorldDownloadState downloadState = mock(SnapWorldDownloadState.class);
 
   private final SnapSyncConfiguration snapSyncConfiguration = mock(SnapSyncConfiguration.class);
 
   private final PersistDataStep persistDataStep =
-      new PersistDataStep(snapSyncState, worldStateStorage, downloadState, snapSyncConfiguration);
+      new PersistDataStep(
+          snapSyncState, worldStateStorageCoordinator, downloadState, snapSyncConfiguration);
 
   @BeforeEach
   public void setUp() {
@@ -69,7 +72,10 @@ public class PersistDataStepTest {
     final List<Task<SnapDataRequest>> result = persistDataStep.persist(tasks);
 
     assertThat(result).isSameAs(tasks);
-    assertThat(worldStateStorage.getNodeData(Bytes.EMPTY, tasks.get(0).getData().getRootHash()))
+    assertThat(
+            worldStateStorageCoordinator
+                .getStrategy(ForestWorldStateKeyValueStorage.class)
+                .getNodeData(tasks.get(0).getData().getRootHash()))
         .isEmpty();
   }
 
@@ -80,14 +86,17 @@ public class PersistDataStepTest {
             final AccountRangeDataRequest data = (AccountRangeDataRequest) task.getData();
             StoredMerklePatriciaTrie<Bytes, Bytes> trie =
                 new StoredMerklePatriciaTrie<>(
-                    worldStateStorage::getAccountStateTrieNode, data.getRootHash(), b -> b, b -> b);
+                    worldStateStorageCoordinator::getAccountStateTrieNode,
+                    data.getRootHash(),
+                    b -> b,
+                    b -> b);
             data.getAccounts().forEach((key, value) -> assertThat(trie.get(key)).isPresent());
           } else if (task.getData() instanceof StorageRangeDataRequest) {
             final StorageRangeDataRequest data = (StorageRangeDataRequest) task.getData();
             final StoredMerklePatriciaTrie<Bytes, Bytes> trie =
                 new StoredMerklePatriciaTrie<>(
                     (location, hash) ->
-                        worldStateStorage.getAccountStorageTrieNode(
+                        worldStateStorageCoordinator.getAccountStorageTrieNode(
                             Hash.wrap(data.getAccountHash()), location, hash),
                     data.getStorageRoot(),
                     b -> b,
@@ -96,7 +105,9 @@ public class PersistDataStepTest {
           } else if (task.getData() instanceof BytecodeRequest) {
             final BytecodeRequest data = (BytecodeRequest) task.getData();
             assertThat(
-                    worldStateStorage.getCode(data.getCodeHash(), Hash.wrap(data.getAccountHash())))
+                    worldStateStorageCoordinator
+                        .getStrategy(ForestWorldStateKeyValueStorage.class)
+                        .getCode(data.getCodeHash()))
                 .isPresent();
           } else {
             fail("not expected message");

@@ -33,10 +33,10 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.forest.pruner.Pruner;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.worldstate.Pruner;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
@@ -77,7 +77,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       final SynchronizerConfiguration syncConfig,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final BlockBroadcaster blockBroadcaster,
       final Optional<Pruner> maybePruner,
       final EthContext ethContext,
@@ -139,7 +139,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   protocolContext,
                   metricsSystem,
                   ethContext,
-                  worldStateStorage,
+                  worldStateStorageCoordinator,
                   syncState,
                   clock);
     } else if (SyncMode.X_CHECKPOINT.equals(syncConfig.getSyncMode())) {
@@ -154,7 +154,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   protocolContext,
                   metricsSystem,
                   ethContext,
-                  worldStateStorage,
+                  worldStateStorageCoordinator,
                   syncState,
                   clock);
     } else {
@@ -169,7 +169,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   protocolContext,
                   metricsSystem,
                   ethContext,
-                  worldStateStorage,
+                  worldStateStorageCoordinator,
                   syncState,
                   clock);
     }

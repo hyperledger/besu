@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CachedBonsaiWorldView implements BonsaiStorageSubscriber {
-  private BonsaiWorldStateKeyValueStorage worldStateStorage;
+  private BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage;
   private final BlockHeader blockHeader;
   private long worldViewSubscriberId;
   private static final Logger LOG = LoggerFactory.getLogger(CachedBonsaiWorldView.class);
@@ -32,12 +32,12 @@ public class CachedBonsaiWorldView implements BonsaiStorageSubscriber {
   public CachedBonsaiWorldView(
       final BlockHeader blockHeader, final BonsaiWorldStateKeyValueStorage worldView) {
     this.blockHeader = blockHeader;
-    this.worldStateStorage = worldView;
-    this.worldViewSubscriberId = worldStateStorage.subscribe(this);
+    this.worldStateKeyValueStorage = worldView;
+    this.worldViewSubscriberId = worldStateKeyValueStorage.subscribe(this);
   }
 
   public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
-    return worldStateStorage;
+    return worldStateKeyValueStorage;
   }
 
   public long getBlockNumber() {
@@ -49,9 +49,9 @@ public class CachedBonsaiWorldView implements BonsaiStorageSubscriber {
   }
 
   public synchronized void close() {
-    worldStateStorage.unSubscribe(this.worldViewSubscriberId);
+    worldStateKeyValueStorage.unSubscribe(this.worldViewSubscriberId);
     try {
-      worldStateStorage.close();
+      worldStateKeyValueStorage.close();
     } catch (final Exception e) {
       LOG.warn("Failed to close worldstate storage for block " + blockHeader.toLogString(), e);
     }
@@ -60,9 +60,9 @@ public class CachedBonsaiWorldView implements BonsaiStorageSubscriber {
   public synchronized void updateWorldStateStorage(
       final BonsaiWorldStateKeyValueStorage newWorldStateStorage) {
     long newSubscriberId = newWorldStateStorage.subscribe(this);
-    this.worldStateStorage.unSubscribe(this.worldViewSubscriberId);
-    BonsaiWorldStateKeyValueStorage oldWorldStateStorage = this.worldStateStorage;
-    this.worldStateStorage = newWorldStateStorage;
+    this.worldStateKeyValueStorage.unSubscribe(this.worldViewSubscriberId);
+    BonsaiWorldStateKeyValueStorage oldWorldStateStorage = this.worldStateKeyValueStorage;
+    this.worldStateKeyValueStorage = newWorldStateStorage;
     this.worldViewSubscriberId = newSubscriberId;
     try {
       oldWorldStateStorage.close();

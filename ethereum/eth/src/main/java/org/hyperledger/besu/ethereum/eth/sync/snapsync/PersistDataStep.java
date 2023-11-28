@@ -18,10 +18,11 @@ import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.can
 import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.errorCountAtThreshold;
 import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.getRetryableErrorCounter;
 
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.services.tasks.Task;
 
@@ -35,30 +36,31 @@ public class PersistDataStep {
   private static final Logger LOG = LoggerFactory.getLogger(PersistDataStep.class);
 
   private final SnapSyncProcessState snapSyncState;
-  private final WorldStateStorage worldStateStorage;
+  private final WorldStateStorageCoordinator worldStateStorageCoordinator;
   private final SnapWorldDownloadState downloadState;
 
   private final SnapSyncConfiguration snapSyncConfiguration;
 
   public PersistDataStep(
       final SnapSyncProcessState snapSyncState,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SnapWorldDownloadState downloadState,
       final SnapSyncConfiguration snapSyncConfiguration) {
     this.snapSyncState = snapSyncState;
-    this.worldStateStorage = worldStateStorage;
+    this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.downloadState = downloadState;
     this.snapSyncConfiguration = snapSyncConfiguration;
   }
 
   public List<Task<SnapDataRequest>> persist(final List<Task<SnapDataRequest>> tasks) {
     try {
-      final WorldStateStorage.Updater updater = worldStateStorage.updater();
+      final WorldStateKeyValueStorage.Updater updater = worldStateStorageCoordinator.updater();
       for (Task<SnapDataRequest> task : tasks) {
         if (task.getData().isResponseReceived()) {
           // enqueue child requests
           final Stream<SnapDataRequest> childRequests =
-              task.getData().getChildRequests(downloadState, worldStateStorage, snapSyncState);
+              task.getData()
+                  .getChildRequests(downloadState, worldStateStorageCoordinator, snapSyncState);
           if (!(task.getData() instanceof TrieNodeHealingRequest)) {
             enqueueChildren(childRequests);
           } else {
@@ -73,7 +75,7 @@ public class PersistDataStep {
           final int persistedNodes =
               task.getData()
                   .persist(
-                      worldStateStorage,
+                      worldStateStorageCoordinator,
                       updater,
                       downloadState,
                       snapSyncState,
@@ -115,15 +117,21 @@ public class PersistDataStep {
    */
   public List<Task<SnapDataRequest>> healFlatDatabase(final List<Task<SnapDataRequest>> tasks) {
     final BonsaiWorldStateKeyValueStorage.Updater updater =
-        (BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater();
+        (BonsaiWorldStateKeyValueStorage.Updater) worldStateStorageCoordinator.updater();
     for (Task<SnapDataRequest> task : tasks) {
       // heal and/or persist
       task.getData()
-          .persist(worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration);
+          .persist(
+              worldStateStorageCoordinator,
+              updater,
+              downloadState,
+              snapSyncState,
+              snapSyncConfiguration);
       // enqueue child requests, these will be the right part of the ranges to complete if we have
       // not healed all the range
       enqueueChildren(
-          task.getData().getChildRequests(downloadState, worldStateStorage, snapSyncState));
+          task.getData()
+              .getChildRequests(downloadState, worldStateStorageCoordinator, snapSyncState));
     }
     updater.commit();
     return tasks;

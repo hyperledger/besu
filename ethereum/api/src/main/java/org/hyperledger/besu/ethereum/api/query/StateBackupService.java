@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.Node;
@@ -33,7 +34,6 @@ import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.TrieIterator.State;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.util.io.RollingFileWriter;
 
 import java.io.IOException;
@@ -73,7 +73,7 @@ public class StateBackupService {
   private final Lock submissionLock = new ReentrantLock();
   private final EthScheduler scheduler;
   private final Blockchain blockchain;
-  private final WorldStateStorage worldStateStorage;
+  private final ForestWorldStateKeyValueStorage worldStateKeyValueStorage;
   private final BackupStatus backupStatus = new BackupStatus();
 
   private Path backupDir;
@@ -84,12 +84,12 @@ public class StateBackupService {
       final Blockchain blockchain,
       final Path backupDir,
       final EthScheduler scheduler,
-      final WorldStateStorage worldStateStorage) {
+      final ForestWorldStateKeyValueStorage worldStateKeyValueStorage) {
     this.besuVersion = besuVersion;
     this.blockchain = blockchain;
     this.backupDir = backupDir;
     this.scheduler = scheduler;
-    this.worldStateStorage = worldStateStorage;
+    this.worldStateKeyValueStorage = worldStateKeyValueStorage;
   }
 
   public Path getBackupDir() {
@@ -214,7 +214,7 @@ public class StateBackupService {
       return;
     }
     final Optional<Bytes> worldStateRoot =
-        worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, header.get().getStateRoot());
+        worldStateKeyValueStorage.getAccountStateTrieNode(header.get().getStateRoot());
     if (worldStateRoot.isEmpty()) {
       backupStatus.currentAccount = null;
       return;
@@ -226,7 +226,7 @@ public class StateBackupService {
 
       final StoredMerklePatriciaTrie<Bytes32, Bytes> accountTrie =
           new StoredMerklePatriciaTrie<>(
-              worldStateStorage::getAccountStateTrieNode,
+              (location, hash) -> worldStateKeyValueStorage.getAccountStateTrieNode(hash),
               header.get().getStateRoot(),
               Function.identity(),
               Function.identity());
@@ -246,7 +246,7 @@ public class StateBackupService {
     final StateTrieAccountValue account =
         StateTrieAccountValue.readFrom(new BytesValueRLPInput(nodeValue, false));
 
-    final Bytes code = worldStateStorage.getCode(account.getCodeHash(), null).orElse(Bytes.EMPTY);
+    final Bytes code = worldStateKeyValueStorage.getCode(account.getCodeHash()).orElse(Bytes.EMPTY);
     backupStatus.codeSize.addAndGet(code.size());
 
     final BytesValueRLPOutput accountOutput = new BytesValueRLPOutput();
@@ -266,7 +266,7 @@ public class StateBackupService {
     // storage is written for each leaf, otherwise the whole trie would have to fit in memory
     final StoredMerklePatriciaTrie<Bytes32, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
-            worldStateStorage::getAccountStateTrieNode,
+            (location, hash) -> worldStateKeyValueStorage.getAccountStateTrieNode(hash),
             account.getStorageRoot(),
             Function.identity(),
             Function.identity());

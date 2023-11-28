@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.trie.StorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -93,20 +94,6 @@ public class BonsaiWorldStateKeyValueStorageTest {
             storage.getAccountStorageTrieNode(
                 Hash.EMPTY, Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH))
         .contains(MerkleTrie.EMPTY_TRIE_NODE);
-  }
-
-  @ParameterizedTest
-  @MethodSource("data")
-  void getNodeData_returnsEmptyValue(final FlatDbMode flatDbMode) {
-    setUp(flatDbMode);
-    assertThat(storage.getNodeData(null, null)).isEmpty();
-  }
-
-  @ParameterizedTest
-  @MethodSource("data")
-  void getNodeData_returnsEmptyNode(final FlatDbMode flatDbMode) {
-    setUp(flatDbMode);
-    assertThat(storage.getNodeData(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH)).isEmpty();
   }
 
   @ParameterizedTest
@@ -207,15 +194,15 @@ public class BonsaiWorldStateKeyValueStorageTest {
     setUp(flatDbMode);
     Assumptions.assumeTrue(flatDbMode == FlatDbMode.FULL);
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
-
-    final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
+    final WorldStateStorageCoordinator coordinator = new WorldStateStorageCoordinator(storage);
+    final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(coordinator, 1);
 
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
 
     // save world state root hash
-    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
+    final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
     updater
         .getWorldStateTransaction()
         .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
@@ -239,13 +226,14 @@ public class BonsaiWorldStateKeyValueStorageTest {
     setUp(flatDbMode);
     Assumptions.assumeTrue(flatDbMode == FlatDbMode.PARTIAL);
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
-    final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
+    final WorldStateStorageCoordinator coordinator = new WorldStateStorageCoordinator(storage);
+    final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(coordinator, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
 
     // save world state root hash
-    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
+    final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
     updater
         .getWorldStateTransaction()
         .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
@@ -268,14 +256,14 @@ public class BonsaiWorldStateKeyValueStorageTest {
     setUp(flatDbMode);
     Assumptions.assumeTrue(flatDbMode == FlatDbMode.PARTIAL);
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
-
-    final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
+    final WorldStateStorageCoordinator coordinator = new WorldStateStorageCoordinator(storage);
+    final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(coordinator, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
 
     // save world state root hash
-    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
+    final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
     updater
         .getWorldStateTransaction()
         .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
@@ -300,7 +288,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
     setUp(flatDbMode);
     Assumptions.assumeTrue(flatDbMode == FlatDbMode.PARTIAL);
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
-    final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
+    final WorldStateStorageCoordinator coordinator = new WorldStateStorageCoordinator(storage);
+    final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(coordinator, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
@@ -322,7 +311,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
                 root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
 
     // save world state root hash
-    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
+    final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
     updater
         .getWorldStateTransaction()
         .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
@@ -350,10 +339,11 @@ public class BonsaiWorldStateKeyValueStorageTest {
     Assumptions.assumeTrue(flatDbMode == FlatDbMode.FULL);
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
     storage.upgradeToFullFlatDbMode();
-    final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
+    final WorldStateStorageCoordinator coordinator = new WorldStateStorageCoordinator(storage);
+    final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(coordinator, 1);
 
     // save world state root hash
-    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
+    final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
     updater
         .getWorldStateTransaction()
         .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
@@ -370,7 +360,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
 
     // save world state root hash
-    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
+    final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
     updater.putAccountInfoState(Hash.ZERO, Bytes32.random()).commit();
 
     assertThat(storage.getAccount(Hash.ZERO)).isNotEmpty();
@@ -394,8 +384,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final Bytes bytesB = Bytes.fromHexString("0x1234");
     final Bytes bytesC = Bytes.fromHexString("0x123456");
 
-    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updaterA = storage.updater();
-    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updaterB = storage.updater();
+    final BonsaiWorldStateKeyValueStorage.Updater updaterA = storage.updater();
+    final BonsaiWorldStateKeyValueStorage.Updater updaterB = storage.updater();
 
     updaterA.putCode(accountHashA, bytesA);
     updaterB.putCode(accountHashB, bytesA);
@@ -421,7 +411,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   void isWorldStateAvailable_StateAvailableByRootHash(final FlatDbMode flatDbMode) {
     setUp(flatDbMode);
 
-    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
+    final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
     final Bytes rootHashKey = Bytes32.fromHexString("0x01");
     updater
         .getWorldStateTransaction()
@@ -436,7 +426,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   void isWorldStateAvailable_afterCallingSaveWorldstate(final FlatDbMode flatDbMode) {
     setUp(flatDbMode);
 
-    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
+    final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
 
     final Bytes blockHash = Bytes32.fromHexString("0x01");
     final Bytes32 nodeHashKey = Bytes32.fromHexString("0x02");

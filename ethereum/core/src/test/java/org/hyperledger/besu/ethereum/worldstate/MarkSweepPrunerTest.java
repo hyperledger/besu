@@ -28,8 +28,10 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.forest.pruner.MarkSweepPruner;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
@@ -62,11 +64,11 @@ class MarkSweepPrunerTest {
   private final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final Map<Bytes, Optional<byte[]>> hashValueStore = spy(new HashMap<>());
   private final InMemoryKeyValueStorage stateStorage = new TestInMemoryStorage(hashValueStore);
-  private final WorldStateStorage worldStateStorage =
-      spy(new WorldStateKeyValueStorage(stateStorage));
+  private final ForestWorldStateKeyValueStorage worldStateKeyValueStorage =
+      spy(new ForestWorldStateKeyValueStorage(stateStorage));
   private final WorldStateArchive worldStateArchive =
-      new DefaultWorldStateArchive(
-          worldStateStorage,
+      new ForestWorldStateArchive(
+          new WorldStateStorageCoordinator(worldStateKeyValueStorage),
           new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
           EvmConfiguration.DEFAULT);
   private final InMemoryKeyValueStorage markStorage = new InMemoryKeyValueStorage();
@@ -76,7 +78,7 @@ class MarkSweepPrunerTest {
   @Test
   void mark_marksAllExpectedNodes() {
     final MarkSweepPruner pruner =
-        new MarkSweepPruner(worldStateStorage, blockchain, markStorage, metricsSystem);
+        new MarkSweepPruner(worldStateKeyValueStorage, blockchain, markStorage, metricsSystem);
 
     // Generate accounts and save corresponding state root
     final int numBlocks = 15;
@@ -125,7 +127,7 @@ class MarkSweepPrunerTest {
   @Test
   void sweepBefore_shouldSweepStateRootFirst() {
     final MarkSweepPruner pruner =
-        new MarkSweepPruner(worldStateStorage, blockchain, markStorage, metricsSystem);
+        new MarkSweepPruner(worldStateKeyValueStorage, blockchain, markStorage, metricsSystem);
 
     // Generate accounts and save corresponding state root
     final int numBlocks = 15;
@@ -150,17 +152,17 @@ class MarkSweepPrunerTest {
     stateRoots.forEach(
         stateRoot -> {
           final InOrder thisRootsOrdering =
-              inOrder(worldStateStorage, hashValueStore, worldStateStorage);
-          thisRootsOrdering.verify(worldStateStorage).isWorldStateAvailable(stateRoot, null);
+              inOrder(worldStateKeyValueStorage, hashValueStore, worldStateKeyValueStorage);
+          thisRootsOrdering.verify(worldStateKeyValueStorage).isWorldStateAvailable(stateRoot);
           thisRootsOrdering.verify(hashValueStore).keySet();
-          thisRootsOrdering.verify(worldStateStorage).prune(any());
+          thisRootsOrdering.verify(worldStateKeyValueStorage).prune(any());
         });
   }
 
   @Test
   void sweepBefore_shouldNotRemoveMarkedStateRoots() {
     final MarkSweepPruner pruner =
-        new MarkSweepPruner(worldStateStorage, blockchain, markStorage, metricsSystem);
+        new MarkSweepPruner(worldStateKeyValueStorage, blockchain, markStorage, metricsSystem);
 
     // Generate accounts and save corresponding state root
     final int numBlocks = 15;
@@ -189,10 +191,10 @@ class MarkSweepPrunerTest {
     stateRoots.forEach(
         stateRoot -> {
           final InOrder thisRootsOrdering =
-              inOrder(worldStateStorage, hashValueStore, worldStateStorage);
-          thisRootsOrdering.verify(worldStateStorage).isWorldStateAvailable(stateRoot, null);
+              inOrder(worldStateKeyValueStorage, hashValueStore, worldStateKeyValueStorage);
+          thisRootsOrdering.verify(worldStateKeyValueStorage).isWorldStateAvailable(stateRoot);
           thisRootsOrdering.verify(hashValueStore).keySet();
-          thisRootsOrdering.verify(worldStateStorage).prune(any());
+          thisRootsOrdering.verify(worldStateKeyValueStorage).prune(any());
         });
 
     assertThat(stateStorage.containsKey(markedRoot.toArray())).isTrue();
@@ -265,7 +267,7 @@ class MarkSweepPrunerTest {
 
   private MerkleTrie<Bytes32, Bytes> createStateTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStateTrieNode,
+        (location, hash) -> worldStateKeyValueStorage.getAccountStateTrieNode(hash),
         rootHash,
         Function.identity(),
         Function.identity());
@@ -273,7 +275,7 @@ class MarkSweepPrunerTest {
 
   private MerkleTrie<Bytes32, Bytes> createStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        (location, hash) -> worldStateStorage.getAccountStorageTrieNode(null, location, hash),
+        (location, hash) -> worldStateKeyValueStorage.getAccountStorageTrieNode(hash),
         rootHash,
         Function.identity(),
         Function.identity());

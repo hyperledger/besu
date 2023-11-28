@@ -12,18 +12,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.worldstate;
+package org.hyperledger.besu.ethereum.forest.worldview;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -47,10 +51,10 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class DefaultMutableWorldState implements MutableWorldState {
+public class ForestMutableWorldState implements MutableWorldState {
 
   private final EvmConfiguration evmConfiguration;
-  private final WorldStateStorage worldStateStorage;
+  private final ForestWorldStateKeyValueStorage worldStateKeyValueStorage;
   private final WorldStatePreimageStorage preimageStorage;
 
   private final MerkleTrie<Bytes32, Bytes> accountStateTrie;
@@ -59,34 +63,37 @@ public class DefaultMutableWorldState implements MutableWorldState {
   private final Map<Bytes32, UInt256> newStorageKeyPreimages = new HashMap<>();
   private final Map<Bytes32, Address> newAccountKeyPreimages = new HashMap<>();
 
-  public DefaultMutableWorldState(
-      final WorldStateStorage storage,
+  public ForestMutableWorldState(
+      final WorldStateKeyValueStorage worldStateKeyValueStorage,
       final WorldStatePreimageStorage preimageStorage,
       final EvmConfiguration evmConfiguration) {
-    this(MerkleTrie.EMPTY_TRIE_NODE_HASH, storage, preimageStorage, evmConfiguration);
+    this(
+        MerkleTrie.EMPTY_TRIE_NODE_HASH,
+        worldStateKeyValueStorage,
+        preimageStorage,
+        evmConfiguration);
   }
 
-  public DefaultMutableWorldState(
+  public ForestMutableWorldState(
       final Bytes32 rootHash,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateKeyValueStorage worldStateKeyValueStorage,
       final WorldStatePreimageStorage preimageStorage,
       final EvmConfiguration evmConfiguration) {
-    this.worldStateStorage = worldStateStorage;
+    this.worldStateKeyValueStorage = (ForestWorldStateKeyValueStorage) worldStateKeyValueStorage;
     this.accountStateTrie = newAccountStateTrie(rootHash);
     this.preimageStorage = preimageStorage;
     this.evmConfiguration = evmConfiguration;
   }
 
-  public DefaultMutableWorldState(
+  public ForestMutableWorldState(
       final WorldState worldState, final EvmConfiguration evmConfiguration) {
     // TODO: this is an abstraction leak (and kind of incorrect in that we reuse the underlying
     // storage), but the reason for this is that the accounts() method is unimplemented below and
     // can't be until NC-754.
-    if (!(worldState instanceof DefaultMutableWorldState other)) {
+    if (!(worldState instanceof ForestMutableWorldState other)) {
       throw new UnsupportedOperationException();
     }
-
-    this.worldStateStorage = other.worldStateStorage;
+    this.worldStateKeyValueStorage = other.worldStateKeyValueStorage;
     this.preimageStorage = other.preimageStorage;
     this.accountStateTrie = newAccountStateTrie(other.accountStateTrie.getRootHash());
     this.evmConfiguration = evmConfiguration;
@@ -94,12 +101,15 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   private MerkleTrie<Bytes32, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStateTrieNode, rootHash, b -> b, b -> b);
+        (location, hash) -> worldStateKeyValueStorage.getAccountStateTrieNode(hash),
+        rootHash,
+        b -> b,
+        b -> b);
   }
 
   private MerkleTrie<Bytes32, Bytes> newAccountStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        (location, hash) -> worldStateStorage.getAccountStorageTrieNode(null, location, hash),
+        (location, hash) -> worldStateKeyValueStorage.getAccountStorageTrieNode(hash),
         rootHash,
         b -> b,
         b -> b);
@@ -156,7 +166,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   @Override
   public final boolean equals(final Object other) {
-    if (!(other instanceof DefaultMutableWorldState that)) {
+    if (!(other instanceof ForestMutableWorldState that)) {
       return false;
     }
 
@@ -165,19 +175,20 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   @Override
   public void persist(final BlockHeader blockHeader) {
-    final WorldStateStorage.Updater stateUpdater = worldStateStorage.updater();
+    final ForestWorldStateKeyValueStorage.Updater stateUpdater =
+        worldStateKeyValueStorage.updater();
     // Store updated code
     for (final Bytes code : updatedAccountCode.values()) {
-      stateUpdater.putCode(null, code);
+      stateUpdater.putCode(code);
     }
     // Commit account storage tries
     for (final MerkleTrie<Bytes32, Bytes> updatedStorage : updatedStorageTries.values()) {
       updatedStorage.commit(
-          (location, hash, value) ->
-              stateUpdater.putAccountStorageTrieNode(null, location, hash, value));
+          (location, hash, value) -> stateUpdater.putAccountStorageTrieNode(hash, value));
     }
     // Commit account updates
-    accountStateTrie.commit(stateUpdater::putAccountStateTrieNode);
+    accountStateTrie.commit(
+        (location, hash, value) -> stateUpdater.putAccountStateTrieNode(hash, value));
 
     // Persist preimages
     final WorldStatePreimageStorage.Updater preimageUpdater = preimageStorage.updater();
@@ -271,7 +282,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
       if (codeHash.equals(Hash.EMPTY)) {
         return Bytes.EMPTY;
       }
-      return worldStateStorage.getCode(codeHash, null).orElse(Bytes.EMPTY);
+      return worldStateKeyValueStorage.getCode(codeHash).orElse(Bytes.EMPTY);
     }
 
     @Override
@@ -288,7 +299,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
     public UInt256 getStorageValue(final UInt256 key) {
       return storageTrie()
           .get(Hash.hash(key))
-          .map(DefaultMutableWorldState::convertToUInt256)
+          .map(ForestMutableWorldState::convertToUInt256)
           .orElse(UInt256.ZERO);
     }
 
@@ -332,16 +343,16 @@ public class DefaultMutableWorldState implements MutableWorldState {
   }
 
   protected static class Updater
-      extends AbstractWorldUpdater<DefaultMutableWorldState, WorldStateAccount> {
+      extends AbstractWorldUpdater<ForestMutableWorldState, WorldStateAccount> {
 
     protected Updater(
-        final DefaultMutableWorldState world, final EvmConfiguration evmConfiguration) {
+        final ForestMutableWorldState world, final EvmConfiguration evmConfiguration) {
       super(world, evmConfiguration);
     }
 
     @Override
     protected WorldStateAccount getForMutation(final Address address) {
-      final DefaultMutableWorldState wrapped = wrappedWorldView();
+      final ForestMutableWorldState wrapped = wrappedWorldView();
       final Hash addressHash = address.addressHash();
       return wrapped
           .accountStateTrie
@@ -368,7 +379,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
     @Override
     public void commit() {
-      final DefaultMutableWorldState wrapped = wrappedWorldView();
+      final ForestMutableWorldState wrapped = wrappedWorldView();
 
       for (final Address address : getDeletedAccounts()) {
         final Hash addressHash = address.addressHash();

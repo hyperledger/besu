@@ -51,12 +51,12 @@ public class TrieLogManager {
 
   public TrieLogManager(
       final Blockchain blockchain,
-      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final long maxLayersToLoad,
       final BesuContext pluginContext,
       final TrieLogPruner trieLogPruner) {
     this.blockchain = blockchain;
-    this.rootWorldStateStorage = worldStateStorage;
+    this.rootWorldStateStorage = worldStateKeyValueStorage;
     this.maxLayersToLoad = maxLayersToLoad;
     this.trieLogFactory = setupTrieLogFactory(pluginContext);
     this.trieLogPruner = trieLogPruner;
@@ -71,7 +71,7 @@ public class TrieLogManager {
     // if it's only in memory we need to save it
     // for example, in case of reorg we don't replace a trielog layer
     if (rootWorldStateStorage.getTrieLog(forBlockHeader.getHash()).isEmpty()) {
-      final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater =
+      final BonsaiWorldStateKeyValueStorage.Updater stateUpdater =
           forWorldState.getWorldStateStorage().updater();
       boolean success = false;
       try {
@@ -109,7 +109,7 @@ public class TrieLogManager {
       final BlockHeader blockHeader,
       final Hash worldStateRootHash,
       final TrieLog trieLog,
-      final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater) {
+      final BonsaiWorldStateKeyValueStorage.Updater stateUpdater) {
     LOG.atDebug()
         .setMessage("Persisting trie log for block hash {} and world state root {}")
         .addArgument(blockHeader::toLogString)

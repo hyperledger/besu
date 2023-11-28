@@ -28,10 +28,11 @@ public class RangeStorageEntriesCollectorTest {
 
   @Test
   public void shouldRetrieveAllLeavesInRangeWhenStartFromZero() {
-    InMemoryKeyValueStorage worldStateStorage = new InMemoryKeyValueStorage();
+    InMemoryKeyValueStorage worldStateKeyValueStorage = new InMemoryKeyValueStorage();
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) -> worldStateStorage.get(hash.toArrayUnsafe()).map(Bytes::wrap),
+            (location, hash) ->
+                worldStateKeyValueStorage.get(hash.toArrayUnsafe()).map(Bytes::wrap),
             b -> b,
             b -> b);
     final List<Bytes32> lists =
@@ -47,10 +48,11 @@ public class RangeStorageEntriesCollectorTest {
 
   @Test
   public void shouldRetrieveAllLeavesInRangeWhenStartFromSpecificRange() {
-    InMemoryKeyValueStorage worldStateStorage = new InMemoryKeyValueStorage();
+    InMemoryKeyValueStorage worldStateKeyValueStorage = new InMemoryKeyValueStorage();
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) -> worldStateStorage.get(hash.toArrayUnsafe()).map(Bytes::wrap),
+            (location, hash) ->
+                worldStateKeyValueStorage.get(hash.toArrayUnsafe()).map(Bytes::wrap),
             b -> b,
             b -> b);
     final List<Bytes32> lists =
@@ -66,10 +68,11 @@ public class RangeStorageEntriesCollectorTest {
 
   @Test
   public void shouldExcludeLeavesNotInRange() {
-    InMemoryKeyValueStorage worldStateStorage = new InMemoryKeyValueStorage();
+    InMemoryKeyValueStorage worldStateKeyValueStorage = new InMemoryKeyValueStorage();
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) -> worldStateStorage.get(hash.toArrayUnsafe()).map(Bytes::wrap),
+            (location, hash) ->
+                worldStateKeyValueStorage.get(hash.toArrayUnsafe()).map(Bytes::wrap),
             b -> b,
             b -> b);
     final List<Bytes32> lists =

@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataR
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
@@ -63,7 +63,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   private final int maxOutstandingRequests;
   private final int maxNodeRequestsWithoutProgress;
   private final ProtocolContext protocolContext;
-  private final WorldStateStorage worldStateStorage;
+  private final WorldStateStorageCoordinator worldStateStorageCoordinator;
 
   private final AtomicReference<SnapWorldDownloadState> downloadState = new AtomicReference<>();
 
@@ -71,7 +71,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final EthContext ethContext,
       final SnapSyncStatePersistenceManager snapContext,
       final ProtocolContext protocolContext,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection,
       final SnapSyncConfiguration snapSyncConfiguration,
       final int maxOutstandingRequests,
@@ -81,7 +81,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.protocolContext = protocolContext;
-    this.worldStateStorage = worldStateStorage;
+    this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.snapContext = snapContext;
     this.snapTaskCollection = snapTaskCollection;
     this.snapSyncConfiguration = snapSyncConfiguration;
@@ -138,7 +138,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
       final SnapWorldDownloadState newDownloadState =
           new SnapWorldDownloadState(
-              worldStateStorage,
+              worldStateStorageCoordinator,
               snapContext,
               protocolContext.getBlockchain(),
               snapSyncState,
@@ -167,19 +167,30 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
                 });
       } else if (!snapContext.getAccountsHealingList().isEmpty()) { // restart only the heal step
         snapSyncState.setHealTrieStatus(true);
-        worldStateStorage.clearFlatDatabase();
-        worldStateStorage.clearTrieLog();
+        worldStateStorageCoordinator.applyOnMatchingStrategy(
+            DataStorageFormat.BONSAI,
+            strategy -> {
+              BonsaiWorldStateKeyValueStorage onBonsai = (BonsaiWorldStateKeyValueStorage) strategy;
+              onBonsai.clearFlatDatabase();
+              onBonsai.clearTrieLog();
+            });
+
         newDownloadState.setAccountsHealingList(inconsistentAccounts);
         newDownloadState.enqueueRequest(
             SnapDataRequest.createAccountTrieNodeDataRequest(
                 stateRoot, Bytes.EMPTY, snapContext.getAccountsHealingList()));
       } else {
         // start from scratch
-        worldStateStorage.clear();
+        worldStateStorageCoordinator.clear();
         // we have to upgrade to full flat db mode if we are in bonsai mode
-        if (worldStateStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)
-            && snapSyncConfiguration.isFlatDbHealingEnabled()) {
-          ((BonsaiWorldStateKeyValueStorage) worldStateStorage).upgradeToFullFlatDbMode();
+        if (snapSyncConfiguration.isFlatDbHealingEnabled()) {
+          worldStateStorageCoordinator.applyOnMatchingStrategy(
+              DataStorageFormat.BONSAI,
+              strategy -> {
+                BonsaiWorldStateKeyValueStorage onBonsai =
+                    (BonsaiWorldStateKeyValueStorage) strategy;
+                onBonsai.upgradeToFullFlatDbMode();
+              });
         }
         ranges.forEach(
             (key, value) ->
@@ -205,7 +216,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               .dynamicPivotBlockSelector(dynamicPivotBlockManager)
               .loadLocalDataStep(
                   new LoadLocalDataStep(
-                      worldStateStorage,
+                      worldStateStorageCoordinator,
                       newDownloadState,
                       snapSyncConfiguration,
                       metricsSystem,
@@ -213,14 +224,17 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               .requestDataStep(
                   new RequestDataStep(
                       ethContext,
-                      worldStateStorage,
+                      worldStateStorageCoordinator,
                       snapSyncState,
                       newDownloadState,
                       snapSyncConfiguration,
                       metricsSystem))
               .persistDataStep(
                   new PersistDataStep(
-                      snapSyncState, worldStateStorage, newDownloadState, snapSyncConfiguration))
+                      snapSyncState,
+                      worldStateStorageCoordinator,
+                      newDownloadState,
+                      snapSyncConfiguration))
               .completeTaskStep(maybeCompleteTask.get())
               .downloadState(newDownloadState)
               .fastSyncState(snapSyncState)

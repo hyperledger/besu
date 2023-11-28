@@ -19,12 +19,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.ArrayList;
@@ -47,14 +47,15 @@ public class WorldStateProofProviderTest {
   private static final Address address =
       Address.fromHexString("0x1234567890123456789012345678901234567890");
 
-  private final WorldStateStorage worldStateStorage =
-      new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+  private final ForestWorldStateKeyValueStorage worldStateKeyValueStorage =
+      new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
   private WorldStateProofProvider worldStateProofProvider;
 
   @BeforeEach
   public void setup() {
-    worldStateProofProvider = new WorldStateProofProvider(worldStateStorage);
+    worldStateProofProvider =
+        new WorldStateProofProvider(new WorldStateStorageCoordinator(worldStateKeyValueStorage));
   }
 
   @Test
@@ -68,19 +69,17 @@ public class WorldStateProofProviderTest {
   @Test
   public void getProofWhenWorldStateAvailable() {
     final Hash addressHash = address.addressHash();
-    final MerkleTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie(addressHash);
+    final MerkleTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie();
     final MerkleTrie<Bytes32, Bytes> storageTrie = emptyStorageTrie();
 
-    final WorldStateStorage.Updater updater = worldStateStorage.updater();
+    final ForestWorldStateKeyValueStorage.Updater updater = worldStateKeyValueStorage.updater();
 
     // Add some storage values
     writeStorageValue(storageTrie, UInt256.ONE, UInt256.valueOf(2L));
     writeStorageValue(storageTrie, UInt256.valueOf(2L), UInt256.valueOf(4L));
     writeStorageValue(storageTrie, UInt256.valueOf(3L), UInt256.valueOf(6L));
     // Save to Storage
-    storageTrie.commit(
-        (location, hash, value) ->
-            updater.putAccountStorageTrieNode(addressHash, location, hash, value));
+    storageTrie.commit((location, hash, value) -> updater.putAccountStorageTrieNode(hash, value));
 
     // Define account value
     final Hash codeHash = Hash.hash(Bytes.fromHexString("0x1122"));
@@ -88,7 +87,7 @@ public class WorldStateProofProviderTest {
         new StateTrieAccountValue(1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash);
     // Save to storage
     worldStateTrie.put(addressHash, RLP.encode(accountValue::writeTo));
-    worldStateTrie.commit(updater::putAccountStateTrieNode);
+    worldStateTrie.commit((location, hash, value) -> updater.putAccountStateTrieNode(hash, value));
 
     // Persist updates
     updater.commit();
@@ -121,7 +120,7 @@ public class WorldStateProofProviderTest {
 
   @Test
   public void getProofWhenStateTrieAccountUnavailable() {
-    final MerkleTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie(null);
+    final MerkleTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie();
 
     final Optional<WorldStateProof> accountProof =
         worldStateProofProvider.getAccountProof(
@@ -145,13 +144,14 @@ public class WorldStateProofProviderTest {
 
   private MerkleTrie<Bytes32, Bytes> emptyStorageTrie() {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStateTrieNode, b -> b, b -> b);
+        (location, hash) -> worldStateKeyValueStorage.getAccountStateTrieNode(hash),
+        b -> b,
+        b -> b);
   }
 
-  private MerkleTrie<Bytes32, Bytes> emptyWorldStateTrie(final Hash accountHash) {
+  private MerkleTrie<Bytes32, Bytes> emptyWorldStateTrie() {
     return new StoredMerklePatriciaTrie<>(
-        (location, hash) ->
-            worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash),
+        (location, hash) -> worldStateKeyValueStorage.getAccountStorageTrieNode(hash),
         b -> b,
         b -> b);
   }

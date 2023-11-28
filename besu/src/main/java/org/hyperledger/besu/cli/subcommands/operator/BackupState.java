@@ -26,8 +26,8 @@ import org.hyperledger.besu.ethereum.api.query.StateBackupService;
 import org.hyperledger.besu.ethereum.api.query.StateBackupService.BackupStatus;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.io.File;
@@ -81,15 +81,19 @@ public class BackupState implements Runnable {
 
     final BesuController besuController = createBesuController();
     final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
-    final WorldStateStorage worldStateStorage =
-        ((DefaultWorldStateArchive) besuController.getProtocolContext().getWorldStateArchive())
+    final ForestWorldStateKeyValueStorage worldStateKeyValueStorage =
+        ((ForestWorldStateArchive) besuController.getProtocolContext().getWorldStateArchive())
             .getWorldStateStorage();
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
     try {
       final long targetBlock = Math.min(blockchain.getChainHeadBlockNumber(), this.block);
       final StateBackupService backup =
           new StateBackupService(
-              BesuInfo.version(), blockchain, backupDir.toPath(), scheduler, worldStateStorage);
+              BesuInfo.version(),
+              blockchain,
+              backupDir.toPath(),
+              scheduler,
+              worldStateKeyValueStorage);
       final BackupStatus status = backup.requestBackup(targetBlock, compress, Optional.empty());
 
       final double refValue = Math.pow(2, 256) / 100.0d;

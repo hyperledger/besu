@@ -18,11 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.ArrayList;
@@ -40,21 +40,22 @@ public class WorldStateRangeProofProviderTest {
 
   private static final Hash MAX_RANGE =
       Hash.fromHexString("0x0fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+  private static final ForestWorldStateKeyValueStorage worldStateKeyValueStorage =
+      new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
-  private static final WorldStateStorage worldStateStorage =
-      new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-
+  private WorldStateStorageCoordinator worldStateStorageCoordinator;
   private static WorldStateProofProvider worldStateProofProvider;
 
   @BeforeEach
   public void setup() {
-    worldStateProofProvider = new WorldStateProofProvider(worldStateStorage);
+    worldStateStorageCoordinator = new WorldStateStorageCoordinator(worldStateKeyValueStorage);
+    worldStateProofProvider = new WorldStateProofProvider(worldStateStorageCoordinator);
   }
 
   @Test
   public void rangeProofValidationNominalCase() {
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
-        TrieGenerator.generateTrie(worldStateStorage, 15);
+        TrieGenerator.generateTrie(worldStateStorageCoordinator, 15);
     // collect accounts in range
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 10, Integer.MAX_VALUE);
@@ -82,7 +83,8 @@ public class WorldStateRangeProofProviderTest {
 
   @Test
   public void rangeProofValidationMissingAccount() {
-    MerkleTrie<Bytes, Bytes> accountStateTrie = TrieGenerator.generateTrie(worldStateStorage, 15);
+    MerkleTrie<Bytes, Bytes> accountStateTrie =
+        TrieGenerator.generateTrie(worldStateStorageCoordinator, 15);
     // collect accounts in range
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 10, Integer.MAX_VALUE);
@@ -119,7 +121,8 @@ public class WorldStateRangeProofProviderTest {
 
   @Test
   public void rangeProofValidationNoMonotonicIncreasing() {
-    MerkleTrie<Bytes, Bytes> accountStateTrie = TrieGenerator.generateTrie(worldStateStorage, 15);
+    MerkleTrie<Bytes, Bytes> accountStateTrie =
+        TrieGenerator.generateTrie(worldStateStorageCoordinator, 15);
 
     // generate the invalid proof
     final RangeStorageEntriesCollector collector =
@@ -155,7 +158,8 @@ public class WorldStateRangeProofProviderTest {
 
   @Test
   public void rangeProofValidationEmptyProof() {
-    MerkleTrie<Bytes, Bytes> accountStateTrie = TrieGenerator.generateTrie(worldStateStorage, 15);
+    MerkleTrie<Bytes, Bytes> accountStateTrie =
+        TrieGenerator.generateTrie(worldStateStorageCoordinator, 15);
 
     // generate the invalid proof
     final RangeStorageEntriesCollector collector =
@@ -182,7 +186,8 @@ public class WorldStateRangeProofProviderTest {
 
   @Test
   public void rangeProofValidationInvalidEmptyProof() {
-    MerkleTrie<Bytes, Bytes> accountStateTrie = TrieGenerator.generateTrie(worldStateStorage, 15);
+    MerkleTrie<Bytes, Bytes> accountStateTrie =
+        TrieGenerator.generateTrie(worldStateStorageCoordinator, 15);
 
     // generate the invalid proof
     final RangeStorageEntriesCollector collector =

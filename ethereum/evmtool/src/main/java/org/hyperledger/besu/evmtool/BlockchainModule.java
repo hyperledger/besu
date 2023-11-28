@@ -23,11 +23,11 @@ import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -57,28 +57,33 @@ public class BlockchainModule {
   @Singleton
   MutableWorldState getMutableWorldState(
       @Named("StateRoot") final Bytes32 stateRoot,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final WorldStatePreimageStorage worldStatePreimageStorage,
       final GenesisState genesisState,
       @Named("KeyValueStorageName") final String keyValueStorageName,
       final EvmConfiguration evmConfiguration) {
     if ("memory".equals(keyValueStorageName)) {
       final MutableWorldState mutableWorldState =
-          new DefaultMutableWorldState(
-              worldStateStorage, worldStatePreimageStorage, evmConfiguration);
+          new ForestMutableWorldState(
+              worldStateStorageCoordinator.worldStateKeyValueStorage(),
+              worldStatePreimageStorage,
+              evmConfiguration);
       genesisState.writeStateTo(mutableWorldState);
       return mutableWorldState;
     } else {
-      return new DefaultMutableWorldState(
-          stateRoot, worldStateStorage, worldStatePreimageStorage, evmConfiguration);
+      return new ForestMutableWorldState(
+          stateRoot,
+          worldStateStorageCoordinator.worldStateKeyValueStorage(),
+          worldStatePreimageStorage,
+          evmConfiguration);
     }
   }
 
   @Provides
   @Singleton
-  WorldStateStorage provideWorldStateStorage(
+  WorldStateStorageCoordinator provideWorldStateStorage(
       @Named("worldState") final KeyValueStorage keyValueStorage) {
-    return new WorldStateKeyValueStorage(keyValueStorage);
+    return new WorldStateStorageCoordinator(new ForestWorldStateKeyValueStorage(keyValueStorage));
   }
 
   @Provides

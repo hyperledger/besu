@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.worldstate;
+package org.hyperledger.besu.ethereum.forest.pruner;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -51,7 +51,7 @@ public class Pruner {
   private final ExecutorService executorService;
 
   @VisibleForTesting
-  Pruner(
+  public Pruner(
       final MarkSweepPruner pruningStrategy,
       final Blockchain blockchain,
       final PrunerConfiguration prunerConfiguration,
@@ -179,11 +179,11 @@ public class Pruner {
     }
   }
 
-  PruningPhase getPruningPhase() {
+  public PruningPhase getPruningPhase() {
     return pruningPhase.get();
   }
 
-  enum PruningPhase {
+  public enum PruningPhase {
     IDLE,
     MARK_BLOCK_CONFIRMATIONS_AWAITING,
     MARKING,

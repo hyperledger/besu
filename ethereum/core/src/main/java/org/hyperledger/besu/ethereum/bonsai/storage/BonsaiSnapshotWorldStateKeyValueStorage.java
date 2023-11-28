@@ -56,12 +56,13 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   public BonsaiSnapshotWorldStateKeyValueStorage(
-      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final ObservableMetricsSystem metricsSystem) {
     this(
-        worldStateStorage,
-        ((SnappableKeyValueStorage) worldStateStorage.composedWorldStateStorage).takeSnapshot(),
-        worldStateStorage.trieLogStorage,
+        worldStateKeyValueStorage,
+        ((SnappableKeyValueStorage) worldStateKeyValueStorage.composedWorldStateStorage)
+            .takeSnapshot(),
+        worldStateKeyValueStorage.trieLogStorage,
         metricsSystem);
   }
 
@@ -74,7 +75,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
-  public BonsaiUpdater updater() {
+  public Updater updater() {
     return new Updater(
         ((SnappedKeyValueStorage) composedWorldStateStorage).getSnapshotTransaction(),
         trieLogStorage.startTransaction(),

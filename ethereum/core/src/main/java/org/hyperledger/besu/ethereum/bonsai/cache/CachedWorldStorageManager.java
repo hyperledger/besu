@@ -49,12 +49,12 @@ public class CachedWorldStorageManager implements BonsaiStorageSubscriber {
 
   private CachedWorldStorageManager(
       final BonsaiWorldStateProvider archive,
-      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash,
       final ObservableMetricsSystem metricsSystem,
       final EvmConfiguration evmConfiguration) {
-    worldStateStorage.subscribe(this);
-    this.rootWorldStateStorage = worldStateStorage;
+    worldStateKeyValueStorage.subscribe(this);
+    this.rootWorldStateStorage = worldStateKeyValueStorage;
     this.cachedWorldStatesByHash = cachedWorldStatesByHash;
     this.archive = archive;
     this.metricsSystem = metricsSystem;
@@ -63,11 +63,11 @@ public class CachedWorldStorageManager implements BonsaiStorageSubscriber {
 
   public CachedWorldStorageManager(
       final BonsaiWorldStateProvider archive,
-      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final ObservableMetricsSystem metricsSystem) {
     this(
         archive,
-        worldStateStorage,
+        worldStateKeyValueStorage,
         new ConcurrentHashMap<>(),
         metricsSystem,
         EvmConfiguration.DEFAULT);

@@ -18,10 +18,10 @@ import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.can
 import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.errorCountAtThreshold;
 import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.getRetryableErrorCounter;
 
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.services.tasks.Task;
 
@@ -34,10 +34,10 @@ public class PersistDataStep {
 
   private static final Logger LOG = LoggerFactory.getLogger(PersistDataStep.class);
 
-  private final WorldStateStorage worldStateStorage;
+  private final WorldStateStorageCoordinator worldStateStorageCoordinator;
 
-  public PersistDataStep(final WorldStateStorage worldStateStorage) {
-    this.worldStateStorage = worldStateStorage;
+  public PersistDataStep(final WorldStateStorageCoordinator worldStateStorageCoordinator) {
+    this.worldStateStorageCoordinator = worldStateStorageCoordinator;
   }
 
   public List<Task<NodeDataRequest>> persist(
@@ -45,7 +45,7 @@ public class PersistDataStep {
       final BlockHeader blockHeader,
       final WorldDownloadState<NodeDataRequest> downloadState) {
     try {
-      final Updater updater = worldStateStorage.updater();
+      final WorldStateKeyValueStorage.Updater updater = worldStateStorageCoordinator.updater();
       tasks.stream()
           .map(
               task -> {
@@ -88,6 +88,6 @@ public class PersistDataStep {
   private void enqueueChildren(
       final Task<NodeDataRequest> task, final WorldDownloadState<NodeDataRequest> downloadState) {
     final NodeDataRequest request = task.getData();
-    downloadState.enqueueRequests(request.getChildRequests(worldStateStorage));
+    downloadState.enqueueRequests(request.getChildRequests(worldStateStorageCoordinator));
   }
 }

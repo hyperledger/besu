@@ -31,6 +31,7 @@ import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -54,7 +55,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -98,7 +99,7 @@ public class MergeBesuControllerBuilderTest {
   @Mock Clock clock;
   @Mock StorageProvider storageProvider;
   @Mock GasLimitCalculator gasLimitCalculator;
-  @Mock WorldStateStorage worldStateStorage;
+  @Mock WorldStateStorageCoordinator worldStateStorageCoordinator;
   @Mock WorldStatePreimageStorage worldStatePreimageStorage;
 
   BigInteger networkId = BigInteger.ONE;
@@ -139,14 +140,15 @@ public class MergeBesuControllerBuilderTest {
 
     when(synchronizerConfiguration.getBlockPropagationRange()).thenReturn(Range.closed(1L, 2L));
 
-    when(storageProvider.createWorldStateStorage(DataStorageFormat.FOREST))
-        .thenReturn(worldStateStorage);
+    when(storageProvider.createWorldStateStorageCoordinator(DataStorageFormat.FOREST))
+        .thenReturn(worldStateStorageCoordinator);
     when(storageProvider.createWorldStatePreimageStorage()).thenReturn(worldStatePreimageStorage);
 
-    when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
+    when(worldStateStorageCoordinator.isWorldStateAvailable(any(), any())).thenReturn(true);
     when(worldStatePreimageStorage.updater())
         .thenReturn(mock(WorldStatePreimageStorage.Updater.class));
-    when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));
+    when(worldStateStorageCoordinator.updater())
+        .thenReturn(mock(WorldStateKeyValueStorage.Updater.class));
     when(miningParameters.getTargetGasLimit()).thenReturn(OptionalLong.empty());
 
     besuControllerBuilder = visitWithMockConfigs(new MergeBesuControllerBuilder());

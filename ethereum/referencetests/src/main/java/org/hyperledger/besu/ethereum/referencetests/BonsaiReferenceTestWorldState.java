@@ -50,19 +50,19 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   private final EvmConfiguration evmConfiguration;
 
   protected BonsaiReferenceTestWorldState(
-      final BonsaiReferenceTestWorldStateStorage worldStateStorage,
+      final BonsaiReferenceTestWorldStateStorage worldStateKeyValueStorage,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
       final CachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
       final BonsaiPreImageProxy preImageProxy,
       final EvmConfiguration evmConfiguration) {
     super(
-        worldStateStorage,
+        worldStateKeyValueStorage,
         cachedMerkleTrieLoader,
         cachedWorldStorageManager,
         trieLogManager,
         evmConfiguration);
-    this.refTestStorage = worldStateStorage;
+    this.refTestStorage = worldStateKeyValueStorage;
     this.preImageProxy = preImageProxy;
     this.evmConfiguration = evmConfiguration;
     setAccumulator(
@@ -79,7 +79,8 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
 
   @Override
   public ReferenceTestWorldState copy() {
-    var layerCopy = new BonsaiReferenceTestWorldStateStorage(worldStateStorage, preImageProxy);
+    var layerCopy =
+        new BonsaiReferenceTestWorldStateStorage(worldStateKeyValueStorage, preImageProxy);
     return new BonsaiReferenceTestWorldState(
         layerCopy,
         cachedMerkleTrieLoader,
@@ -117,7 +118,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     final BonsaiPreImageProxy preImageProxy =
         new BonsaiPreImageProxy.BonsaiReferenceTestPreImageProxy();
 
-    final BonsaiReferenceTestWorldStateStorage worldStateStorage =
+    final BonsaiReferenceTestWorldStateStorage worldStateKeyValueStorage =
         new BonsaiReferenceTestWorldStateStorage(
             new BonsaiWorldStateKeyValueStorage(
                 new InMemoryKeyValueStorageProvider(), metricsSystem),
@@ -128,7 +129,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
 
     final BonsaiReferenceTestWorldState worldState =
         new BonsaiReferenceTestWorldState(
-            worldStateStorage,
+            worldStateKeyValueStorage,
             cachedMerkleTrieLoader,
             noOpCachedWorldStorageManager,
             trieLogManager,

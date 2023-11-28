@@ -57,24 +57,25 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
   }
 
   public void preLoadAccount(
-      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Hash worldStateRootHash,
       final Address account) {
     CompletableFuture.runAsync(
-        () -> cacheAccountNodes(worldStateStorage, worldStateRootHash, account));
+        () -> cacheAccountNodes(worldStateKeyValueStorage, worldStateRootHash, account));
   }
 
   @VisibleForTesting
   public void cacheAccountNodes(
-      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Hash worldStateRootHash,
       final Address account) {
-    final long storageSubscriberId = worldStateStorage.subscribe(this);
+    final long storageSubscriberId = worldStateKeyValueStorage.subscribe(this);
     try {
       final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
           new StoredMerklePatriciaTrie<>(
               (location, hash) -> {
-                Optional<Bytes> node = getAccountStateTrieNode(worldStateStorage, location, hash);
+                Optional<Bytes> node =
+                    getAccountStateTrieNode(worldStateKeyValueStorage, location, hash);
                 node.ifPresent(bytes -> accountNodes.put(Hash.hash(bytes), bytes));
                 return node;
               },
@@ -85,26 +86,27 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
     } catch (MerkleTrieException e) {
       // ignore exception for the cache
     } finally {
-      worldStateStorage.unSubscribe(storageSubscriberId);
+      worldStateKeyValueStorage.unSubscribe(storageSubscriberId);
     }
   }
 
   public void preLoadStorageSlot(
-      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Address account,
       final StorageSlotKey slotKey) {
-    CompletableFuture.runAsync(() -> cacheStorageNodes(worldStateStorage, account, slotKey));
+    CompletableFuture.runAsync(
+        () -> cacheStorageNodes(worldStateKeyValueStorage, account, slotKey));
   }
 
   @VisibleForTesting
   public void cacheStorageNodes(
-      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Address account,
       final StorageSlotKey slotKey) {
     final Hash accountHash = account.addressHash();
-    final long storageSubscriberId = worldStateStorage.subscribe(this);
+    final long storageSubscriberId = worldStateKeyValueStorage.subscribe(this);
     try {
-      worldStateStorage
+      worldStateKeyValueStorage
           .getStateTrieNode(Bytes.concatenate(accountHash, Bytes.EMPTY))
           .ifPresent(
               storageRoot -> {
@@ -114,7 +116,7 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
                           (location, hash) -> {
                             Optional<Bytes> node =
                                 getAccountStorageTrieNode(
-                                    worldStateStorage, accountHash, location, hash);
+                                    worldStateKeyValueStorage, accountHash, location, hash);
                             node.ifPresent(bytes -> storageNodes.put(Hash.hash(bytes), bytes));
                             return node;
                           },
@@ -127,7 +129,7 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
                 }
               });
     } finally {
-      worldStateStorage.unSubscribe(storageSubscriberId);
+      worldStateKeyValueStorage.unSubscribe(storageSubscriberId);
     }
   }
 

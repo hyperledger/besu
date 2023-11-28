@@ -14,14 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.privacy.storage;
 
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
 import java.io.Closeable;
 
 public interface PrivacyStorageProvider extends Closeable {
 
-  WorldStateStorage createWorldStateStorage();
+  WorldStateKeyValueStorage createWorldStateStorage();
+
+  WorldStateStorageCoordinator createWorldStateStorageCoordinator();
 
   WorldStatePreimageStorage createWorldStatePreimageStorage();
 

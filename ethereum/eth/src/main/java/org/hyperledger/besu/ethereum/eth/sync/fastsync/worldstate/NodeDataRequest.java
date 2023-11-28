@@ -17,10 +17,11 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderException;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
 import java.util.Optional;
@@ -103,7 +104,7 @@ public abstract class NodeDataRequest implements TasksPriorityProvider {
     return this;
   }
 
-  public final void persist(final WorldStateStorage.Updater updater) {
+  public final void persist(final WorldStateKeyValueStorage.Updater updater) {
     if (pendingChildren.get() > 0) {
       return; // we do nothing. Our last child will eventually persist us.
     }
@@ -115,7 +116,7 @@ public abstract class NodeDataRequest implements TasksPriorityProvider {
         parent -> parent.saveParent(updater), () -> LOG.warn("Missing a parent for {}", this.hash));
   }
 
-  private void saveParent(final WorldStateStorage.Updater updater) {
+  private void saveParent(final WorldStateKeyValueStorage.Updater updater) {
     if (pendingChildren.decrementAndGet() == 0) {
       persist(updater);
     }
@@ -127,11 +128,13 @@ public abstract class NodeDataRequest implements TasksPriorityProvider {
 
   protected abstract void writeTo(final RLPOutput out);
 
-  protected abstract void doPersist(final WorldStateStorage.Updater updater);
+  protected abstract void doPersist(final WorldStateKeyValueStorage.Updater updater);
 
-  public abstract Stream<NodeDataRequest> getChildRequests(WorldStateStorage worldStateStorage);
+  public abstract Stream<NodeDataRequest> getChildRequests(
+      WorldStateStorageCoordinator worldStateStorageCoordinator);
 
-  public abstract Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage);
+  public abstract Optional<Bytes> getExistingData(
+      final WorldStateStorageCoordinator worldStateStorageCoordinator);
 
   protected void registerParent(final NodeDataRequest parent) {
     if (this.possibleParent.isPresent()) {

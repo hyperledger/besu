@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -28,12 +29,13 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class LoadLocalDataStep {
 
-  private final WorldStateStorage worldStateStorage;
+  private final WorldStateStorageCoordinator worldStateStorageCoordinator;
   private final Counter existingNodeCounter;
 
   public LoadLocalDataStep(
-      final WorldStateStorage worldStateStorage, final MetricsSystem metricsSystem) {
-    this.worldStateStorage = worldStateStorage;
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
+      final MetricsSystem metricsSystem) {
+    this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     existingNodeCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.SYNCHRONIZER,
@@ -44,12 +46,12 @@ public class LoadLocalDataStep {
   public Stream<Task<NodeDataRequest>> loadLocalData(
       final Task<NodeDataRequest> task, final Pipe<Task<NodeDataRequest>> completedTasks) {
     final NodeDataRequest request = task.getData();
-    final Optional<Bytes> existingData = request.getExistingData(worldStateStorage);
+    final Optional<Bytes> existingData = request.getExistingData(worldStateStorageCoordinator);
     if (existingData.isPresent()) {
       existingNodeCounter.inc();
       request.setData(existingData.get());
       request.setRequiresPersisting(false);
-      final WorldStateStorage.Updater updater = worldStateStorage.updater();
+      final WorldStateKeyValueStorage.Updater updater = worldStateStorageCoordinator.updater();
       request.persist(updater);
       updater.commit();
 

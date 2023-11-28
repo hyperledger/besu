@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.ArrayList;
@@ -49,6 +50,8 @@ class CachedMerkleTrieLoaderTest {
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
   private final BonsaiWorldStateKeyValueStorage inMemoryWorldState =
       Mockito.spy(new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()));
+  private final WorldStateStorageCoordinator worldStateStorageCoordinator =
+      new WorldStateStorageCoordinator(inMemoryWorldState);
 
   final List<Address> accounts =
       List.of(Address.fromHexString("0xdeadbeef"), Address.fromHexString("0xdeadbeee"));
@@ -59,7 +62,7 @@ class CachedMerkleTrieLoaderTest {
   public void setup() {
     trie =
         TrieGenerator.generateTrie(
-            inMemoryWorldState,
+            worldStateStorageCoordinator,
             accounts.stream().map(Address::addressHash).collect(Collectors.toList()));
     merkleTrieLoader = new CachedMerkleTrieLoader(new NoOpMetricsSystem());
   }

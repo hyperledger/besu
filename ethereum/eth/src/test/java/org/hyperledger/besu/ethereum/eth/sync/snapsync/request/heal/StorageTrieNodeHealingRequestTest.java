@@ -20,13 +20,13 @@ import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStor
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -56,7 +56,7 @@ class StorageTrieNodeHealingRequestTest {
           Address.fromHexString("0xdeadbeea"),
           Address.fromHexString("0xdeadbeeb"));
 
-  private WorldStateStorage worldStateStorage;
+  private WorldStateStorageCoordinator worldStateStorageCoordinator;
   private Hash account0Hash;
   private Hash account0StorageRoot;
 
@@ -70,15 +70,18 @@ class StorageTrieNodeHealingRequestTest {
 
   public void setup(final DataStorageFormat storageFormat) {
     if (storageFormat.equals(DataStorageFormat.FOREST)) {
-      worldStateStorage = new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+      worldStateStorageCoordinator =
+          new WorldStateStorageCoordinator(
+              new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage()));
     } else {
       final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
-      worldStateStorage =
-          new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
+      worldStateStorageCoordinator =
+          new WorldStateStorageCoordinator(
+              new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()));
     }
     final MerkleTrie<Bytes, Bytes> trie =
         TrieGenerator.generateTrie(
-            worldStateStorage,
+            worldStateStorageCoordinator,
             accounts.stream().map(Address::addressHash).collect(Collectors.toList()));
 
     account0Hash = accounts.get(0).addressHash();
@@ -99,7 +102,8 @@ class StorageTrieNodeHealingRequestTest {
         new StorageTrieNodeHealingRequest(
             account0StorageRoot, account0Hash, Hash.EMPTY, Bytes.EMPTY);
 
-    Assertions.assertThat(request.getExistingData(downloadState, worldStateStorage)).isPresent();
+    Assertions.assertThat(request.getExistingData(downloadState, worldStateStorageCoordinator))
+        .isPresent();
   }
 
   @ParameterizedTest
@@ -109,6 +113,7 @@ class StorageTrieNodeHealingRequestTest {
     final StorageTrieNodeHealingRequest request =
         new StorageTrieNodeHealingRequest(Hash.EMPTY, account0Hash, Hash.EMPTY, Bytes.EMPTY);
 
-    Assertions.assertThat(request.getExistingData(downloadState, worldStateStorage)).isEmpty();
+    Assertions.assertThat(request.getExistingData(downloadState, worldStateStorageCoordinator))
+        .isEmpty();
   }
 }
