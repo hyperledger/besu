@@ -210,14 +210,14 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public void recordRequestTimeout(final int requestCode) {
-    LOG.debug("Timed out while waiting for response from peer {}", this.getShortNodeId());
+    LOG.debug("Timed out while waiting for response from peer {}...", this.getShortNodeId());
     LOG.trace("Timed out while waiting for response from peer {}", this);
     reputation.recordRequestTimeout(requestCode).ifPresent(this::disconnect);
   }
 
   public void recordUselessResponse(final String requestType) {
-    LOG.debug(
-        "Received useless response for request type {} from peer {}",
+    LOG.trace(
+        "Received useless response for request type {} from peer {}...",
         requestType,
         this.getShortNodeId());
     reputation.recordUselessResponse(System.currentTimeMillis()).ifPresent(this::disconnect);
