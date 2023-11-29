@@ -148,9 +148,9 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
   }
 
   /**
-   * Gets min transaction priority fee per gas
+   * Gets min priority fee per gas
    *
-   * @return min transaction priority fee per gas
+   * @return min priority fee per gas
    */
   public Wei getMinPriorityFeePerGas() {
     return miningParameters.getMinPriorityFeePerGas();
