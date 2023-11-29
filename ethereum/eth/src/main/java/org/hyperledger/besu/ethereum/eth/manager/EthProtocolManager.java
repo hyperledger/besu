@@ -393,16 +393,29 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final PeerConnection connection,
       final DisconnectReason reason,
       final boolean initiatedByPeer) {
-    if (ethPeers.registerDisconnect(connection)) {
-      LOG.atDebug()
-          .setMessage("Disconnect - {} - {} - {}... - {} peers left")
-          .addArgument(initiatedByPeer ? "Inbound" : "Outbound")
-          .addArgument(reason)
-          .addArgument(connection.getPeer().getId().slice(0, 8))
-          .addArgument(ethPeers.peerCount())
-          .log();
-      LOG.trace("{}", ethPeers);
+
+    // don't even attempt outbound disconnect if we have fewer than desired number of peers
+    final boolean attemptDisconnect = initiatedByPeer || ethPeers.hasSufficientPeers();
+    boolean didDisconnect = false;
+
+    if (attemptDisconnect) {
+      didDisconnect = ethPeers.registerDisconnect(connection);
+      if (didDisconnect) {
+        LOG.trace("{}", ethPeers);
+      }
     }
+
+    LOG.atDebug()
+        .setMessage("{} Disconnect - {} - {} - {}... - {} peers left")
+        .addArgument(
+            attemptDisconnect
+                ? (didDisconnect ? "Did register" : "Did not register")
+                : "Not attempting (insufficient peers)")
+        .addArgument(initiatedByPeer ? "Inbound" : "Outbound")
+        .addArgument(reason)
+        .addArgument(connection.getPeer().getId().slice(0, 8))
+        .addArgument(ethPeers.peerCount())
+        .log();
   }
 
   private void handleStatusMessage(final EthPeer peer, final Message message) {
