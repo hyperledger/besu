@@ -1229,14 +1229,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       hidden = true,
       description =
           "Coefficient for setting the lower limit of minimum priority fee in eth_feeHistory (default: ${DEFAULT-VALUE})")
-  private final Long apiPriorityFeeLowerBoundCoefficient = 100L;
+  private final Long apiPriorityFeeLowerBoundCoefficient =
+      ApiConfiguration.DEFAULT_LOWER_BOUND_PRIORITY_FEE_COEFFICIENT;
 
   @CommandLine.Option(
       names = {"--api-priority-fee-upper-bound-coefficient"},
       hidden = true,
       description =
           "Coefficient for setting the upper limit of minimum priority fee in eth_feeHistory (default: ${DEFAULT-VALUE})")
-  private final Long apiPriorityFeeUpperBoundCoefficient = 100L;
+  private final Long apiPriorityFeeUpperBoundCoefficient =
+      ApiConfiguration.DEFAULT_UPPER_BOUND_PRIORITY_FEE_COEFFICIENT;
 
   @CommandLine.Option(
       names = {"--static-nodes-file"},
@@ -2506,6 +2508,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private ApiConfiguration apiConfiguration() {
+    if (!apiPriorityFeeLimitingEnabled
+        && !(apiPriorityFeeLowerBoundCoefficient.equals(
+                ApiConfiguration.DEFAULT_LOWER_BOUND_PRIORITY_FEE_COEFFICIENT)
+            && apiPriorityFeeUpperBoundCoefficient.equals(
+                ApiConfiguration.DEFAULT_UPPER_BOUND_PRIORITY_FEE_COEFFICIENT))) {
+      throw new ParameterException(
+          this.commandLine,
+          "---api-priority-fee-upper-bound-coefficient and --api-priority-fee-lower-bound-coefficient require "
+              + "--api-priority-fee-limiting-enabled");
+    }
+
     return ImmutableApiConfiguration.builder()
         .gasPriceBlocks(apiGasPriceBlocks)
         .gasPricePercentile(apiGasPricePercentile)

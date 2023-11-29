@@ -1624,13 +1624,17 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void apiPriorityFeeLowerBoundCoefficientOptionMustBeUsed() {
     final long lowerBound = 150L;
-    parseCommand("--api-priority-fee-lower-bound-coefficient", Long.toString(lowerBound));
+    parseCommand(
+        "--api-priority-fee-lower-bound-coefficient",
+        Long.toString(lowerBound),
+        "--api-priority-fee-limiting-enabled");
     verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
     verify(mockRunnerBuilder).build();
     assertThat(apiConfigurationCaptor.getValue())
         .isEqualTo(
             ImmutableApiConfiguration.builder()
                 .lowerBoundPriorityFeeCoefficient(lowerBound)
+                .isPriorityFeeLimitingEnabled(true)
                 .build());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -1638,15 +1642,30 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void apiPriorityFeeBoundCoefficientsRequireOptionApiPriorityFeeLimitingEnabled() {
+    final long lowerBound = 150L;
+    parseCommand("--api-priority-fee-lower-bound-coefficient", Long.toString(lowerBound));
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "---api-priority-fee-upper-bound-coefficient and --api-priority-fee-lower-bound-coefficient require");
+  }
+
+  @Test
   public void apiPriorityFeeUpperBoundCoefficientsOptionMustBeUsed() {
     final long upperBound = 200L;
-    parseCommand("--api-priority-fee-upper-bound-coefficient", Long.toString(upperBound));
+    parseCommand(
+        "--api-priority-fee-upper-bound-coefficient",
+        Long.toString(upperBound),
+        "--api-priority-fee-limiting-enabled");
     verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
     verify(mockRunnerBuilder).build();
     assertThat(apiConfigurationCaptor.getValue())
         .isEqualTo(
             ImmutableApiConfiguration.builder()
                 .upperBoundPriorityFeeCoefficient(upperBound)
+                .isPriorityFeeLimitingEnabled(true)
                 .build());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
