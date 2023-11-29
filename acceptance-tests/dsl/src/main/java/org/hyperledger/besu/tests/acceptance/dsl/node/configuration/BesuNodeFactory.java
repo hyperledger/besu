@@ -38,6 +38,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory.CliqueOptions;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.pki.PkiKeystoreConfigurationFactory;
 
 import java.io.File;
@@ -368,6 +369,17 @@ public class BesuNodeFactory {
   }
 
   public BesuNode createCliqueNode(final String name) throws IOException {
+    return createCliqueNode(name, CliqueOptions.DEFAULT);
+  }
+
+  public BesuNode createCliqueNode(final String name, final CliqueOptions cliqueOptions)
+      throws IOException {
+    return createCliqueNodeWithExtraCliOptions(name, cliqueOptions, List.of());
+  }
+
+  public BesuNode createCliqueNodeWithExtraCliOptions(
+      final String name, final CliqueOptions cliqueOptions, final List<String> extraCliOptions)
+      throws IOException {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
@@ -375,7 +387,12 @@ public class BesuNodeFactory {
             .jsonRpcConfiguration(node.createJsonRpcWithCliqueEnabledConfig())
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
-            .genesisConfigProvider(GenesisConfigurationFactory::createCliqueGenesisConfig)
+            .jsonRpcTxPool()
+            .genesisConfigProvider(
+                validators ->
+                    GenesisConfigurationFactory.createCliqueGenesisConfig(
+                        validators, cliqueOptions))
+            .extraCLIOptions(extraCliOptions)
             .build());
   }
 
@@ -567,6 +584,7 @@ public class BesuNodeFactory {
             .miningEnabled()
             .jsonRpcConfiguration(node.createJsonRpcWithCliqueEnabledConfig())
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .jsonRpcTxPool()
             .devMode(false)
             .genesisConfigProvider(
                 nodes ->
