@@ -309,6 +309,7 @@ public class EthPeers {
         .forEach(
             ep -> {
               if (ep.isDisconnected()) {
+                LOG.atTrace().setMessage("removing disconnected peer {}").addArgument(ep).log();
                 registerDisconnect(ep.getId(), ep, ep.getConnection());
               }
             });
@@ -480,6 +481,10 @@ public class EthPeers {
     return completeConnections.values().stream()
         .filter(p -> !p.isDisconnected())
         .sorted(this::comparePeerPriorities);
+  }
+
+  public boolean hasSufficientPeers() {
+    return peerCount() >= peerUpperBound;
   }
 
   private void enforceConnectionLimits() {
