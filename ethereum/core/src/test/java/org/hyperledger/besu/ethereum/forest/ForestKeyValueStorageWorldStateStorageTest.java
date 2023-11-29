@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.storage.keyvalue;
+package org.hyperledger.besu.ethereum.forest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 
-public class KeyValueStorageWorldStateStorageTest {
+public class ForestKeyValueStorageWorldStateStorageTest {
 
   @Test
   public void getCode_returnsEmpty() {
@@ -64,7 +64,7 @@ public class KeyValueStorageWorldStateStorageTest {
   @Test
   public void getCode_saveAndGetSpecialValues() {
     final ForestWorldStateKeyValueStorage storage = emptyStorage();
-    storage.updater().putCode(null, MerkleTrie.EMPTY_TRIE_NODE);
+    storage.updater().putCode(MerkleTrie.EMPTY_TRIE_NODE);
     storage.updater().putCode(Bytes.EMPTY).commit();
 
     assertThat(storage.getCode(MerkleTrie.EMPTY_TRIE_NODE_HASH))
@@ -76,7 +76,7 @@ public class KeyValueStorageWorldStateStorageTest {
   public void getCode_saveAndGetRegularValue() {
     final Bytes bytes = Bytes.fromHexString("0x123456");
     final ForestWorldStateKeyValueStorage storage = emptyStorage();
-    storage.updater().putCode(null, bytes).commit();
+    storage.updater().putCode(bytes).commit();
 
     assertThat(storage.getCode(Hash.hash(bytes))).contains(bytes);
   }
@@ -162,10 +162,10 @@ public class KeyValueStorageWorldStateStorageTest {
     final Updater updaterA = storage.updater();
     final Updater updaterB = storage.updater();
 
-    updaterA.putCode(null, bytesA);
-    updaterB.putCode(null, bytesA);
-    updaterB.putCode(null, bytesB);
-    updaterA.putCode(null, bytesC);
+    updaterA.putCode(bytesA);
+    updaterB.putCode(bytesA);
+    updaterB.putCode(bytesB);
+    updaterA.putCode(bytesC);
 
     updaterA.commit();
     updaterB.commit();

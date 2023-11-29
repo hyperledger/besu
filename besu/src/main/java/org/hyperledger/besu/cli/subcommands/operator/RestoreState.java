@@ -263,7 +263,7 @@ public class RestoreState implements Runnable {
 
   private void updateCode(final Bytes code) {
     maybeCommitUpdater();
-    updater.putCode(null, code);
+    updater.putCode(code);
   }
 
   private void updateAccountState(final Bytes32 key, final Bytes value) {

@@ -327,7 +327,7 @@ class FastWorldStateDownloaderTest {
     final Map<Bytes32, Bytes> knownCode = new HashMap<>();
     accounts.subList(0, 5).forEach(a -> knownCode.put(a.getCodeHash(), a.getCode()));
     final ForestWorldStateKeyValueStorage.Updater localStorageUpdater = localStorage.updater();
-    knownCode.forEach((bytes32, code) -> localStorageUpdater.putCode(null, code));
+    knownCode.forEach((bytes32, code) -> localStorageUpdater.putCode(code));
     localStorageUpdater.commit();
 
     final WorldStateDownloader downloader =
