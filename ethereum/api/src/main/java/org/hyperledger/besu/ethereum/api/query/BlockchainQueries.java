@@ -641,7 +641,6 @@ public class BlockchainQueries {
       gasUsed -= transactionReceipts.get(transactionIndex - 1).getCumulativeGasUsed();
       logIndexOffset =
           IntStream.range(0, transactionIndex)
-              .parallel()
               .map(i -> transactionReceipts.get(i).getLogs().size())
               .sum();
     }
