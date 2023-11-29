@@ -242,7 +242,11 @@ final class DeFramer extends ByteToMessageDecoder {
     } else {
       LOG.error("Exception while processing incoming message", throwable);
     }
-    if (connectFuture.isDone() && !connectFuture.isCompletedExceptionally()) {
+    // don't disconnect for IOException
+    if (connectFuture.isDone()
+        && !connectFuture.isCompletedExceptionally()
+        && !(cause instanceof IOException)) {
+
       connectFuture
           .get()
           .terminateConnection(DisconnectMessage.DisconnectReason.TCP_SUBSYSTEM_ERROR, false);
