@@ -261,7 +261,7 @@ public class EthFeeHistory implements JsonRpcMethod {
    * @return The list of bounded rewards.
    */
   private List<Wei> boundRewards(final List<Wei> rewards) {
-    Wei minPriorityFee = miningCoordinator.getMinTransactionGasPrice();
+    Wei minPriorityFee = miningCoordinator.getMinPriorityFeePerGas();
     Wei lowerBound =
         minPriorityFee.multiply(apiConfiguration.getLowerBoundPriorityFeeCoefficient()).divide(100);
     Wei upperBound =

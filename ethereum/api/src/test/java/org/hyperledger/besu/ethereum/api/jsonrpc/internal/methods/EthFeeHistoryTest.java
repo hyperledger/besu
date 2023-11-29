@@ -78,7 +78,7 @@ public class EthFeeHistoryTest {
     gen.blockSequence(genesisBlock, 10)
         .forEach(block -> blockchain.appendBlock(block, gen.receipts(block)));
     miningCoordinator = mock(MergeCoordinator.class);
-    when(miningCoordinator.getMinTransactionGasPrice()).thenReturn(Wei.ONE);
+    when(miningCoordinator.getMinPriorityFeePerGas()).thenReturn(Wei.ONE);
 
     method =
         new EthFeeHistory(
