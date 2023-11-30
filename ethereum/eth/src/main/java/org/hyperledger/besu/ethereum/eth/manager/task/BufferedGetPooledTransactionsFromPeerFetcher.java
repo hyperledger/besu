@@ -121,7 +121,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
     LOG.atTrace()
         .setMessage(
             "Transaction hashes to request from peer {}... fresh count {}, already seen count {}")
-        .addArgument(peer.getShortNodeId())
+        .addArgument(peer::getShortNodeId)
         .addArgument(toRetrieve::size)
         .addArgument(alreadySeenCount)
         .log();
