@@ -470,7 +470,7 @@ public class BonsaiWorldStateUpdateAccumulator
     if (localAccountStorage != null) {
       final BonsaiValue<UInt256> value = localAccountStorage.get(storageSlotKey);
       if (value != null) {
-        if (value.isCleared()) {
+        if (value.isLastStepCleared()) {
           return UInt256.ZERO;
         }
         final UInt256 updated = value.getUpdated();
