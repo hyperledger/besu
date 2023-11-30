@@ -67,10 +67,6 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
       return Optional.ofNullable(
           innerTx.get(columnFamilyMapper.apply(segmentId), readOptions, key));
     } catch (final RocksDBException e) {
-      if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
-        logger.error(e.getMessage());
-        System.exit(0);
-      }
       throw new StorageException(e);
     }
   }

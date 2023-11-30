@@ -67,7 +67,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   // 0x666C61744462537461747573
   public static final byte[] FLAT_DB_MODE = "flatDbStatus".getBytes(StandardCharsets.UTF_8);
-  public static final byte[] CODE_STORAGE_MODE = "codeStorageMode".getBytes(StandardCharsets.UTF_8);
 
   protected FlatDbMode flatDbMode;
   protected FlatDbStrategy flatDbStrategy;
@@ -143,10 +142,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       loadFlatDbStrategy();
     }
     return flatDbStrategy;
-  }
-
-  public SegmentedKeyValueStorage getWorldStateStorage() {
-    return composedWorldStateStorage;
   }
 
   private boolean isCodeHashStorageMode(final VariablesStorage variablesStorage) {
@@ -345,8 +340,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return new Updater(
         composedWorldStateStorage.startTransaction(),
         trieLogStorage.startTransaction(),
-        flatDbStrategy,
-        composedWorldStateStorage);
+        flatDbStrategy);
   }
 
   @Override
@@ -395,23 +389,19 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     private final SegmentedKeyValueStorageTransaction composedWorldStateTransaction;
     private final KeyValueStorageTransaction trieLogStorageTransaction;
     private final FlatDbStrategy flatDbStrategy;
-    private final SegmentedKeyValueStorage composedWorldStateStorage;
 
     public Updater(
         final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
         final KeyValueStorageTransaction trieLogStorageTransaction,
-        final FlatDbStrategy flatDbStrategy,
-        final SegmentedKeyValueStorage composedWorldStateStorage) {
+        final FlatDbStrategy flatDbStrategy) {
       this.composedWorldStateTransaction = composedWorldStateTransaction;
       this.trieLogStorageTransaction = trieLogStorageTransaction;
       this.flatDbStrategy = flatDbStrategy;
-      this.composedWorldStateStorage = composedWorldStateStorage;
     }
 
     @Override
     public BonsaiUpdater removeCode(final Hash accountHash, final Hash codeHash) {
-      flatDbStrategy.removeFlatCode(
-          composedWorldStateTransaction, accountHash, codeHash, composedWorldStateStorage);
+      flatDbStrategy.removeFlatCode(composedWorldStateTransaction, accountHash, codeHash);
       return this;
     }
 
@@ -421,8 +411,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         // Don't save empty values
         return this;
       }
-      flatDbStrategy.putFlatCode(
-          composedWorldStateTransaction, accountHash, codeHash, code, composedWorldStateStorage);
+      flatDbStrategy.putFlatCode(composedWorldStateTransaction, accountHash, codeHash, code);
       return this;
     }
 
