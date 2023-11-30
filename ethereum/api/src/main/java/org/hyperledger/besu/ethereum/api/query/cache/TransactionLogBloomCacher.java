@@ -161,7 +161,7 @@ public class TransactionLogBloomCacher {
       final long blockNumber = blockHeader.getNumber();
       LOG.atDebug()
           .setMessage("Caching logs bloom for block {}")
-          .addArgument("0x" + Long.toHexString(blockNumber))
+          .addArgument(() -> "0x" + Long.toHexString(blockNumber))
           .log();
       final File cacheFile = reusedCacheFile.orElse(calculateCacheFileName(blockNumber, cacheDir));
       if (cacheFile.exists()) {
