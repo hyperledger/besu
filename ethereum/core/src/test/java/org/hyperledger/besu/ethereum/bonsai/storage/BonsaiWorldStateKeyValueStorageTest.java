@@ -503,7 +503,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
   private BonsaiWorldStateKeyValueStorage emptyStorage() {
     return new BonsaiWorldStateKeyValueStorage(
-        new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
+        new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem(), false);
   }
 
   private BonsaiWorldStateKeyValueStorage emptyStorage(final boolean useCodeHashStorageMode) {
@@ -517,11 +517,12 @@ public class BonsaiWorldStateKeyValueStorageTest {
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
     return new BonsaiWorldStateKeyValueStorage(
         FlatDbMode.PARTIAL,
-        new PartialFlatDbStrategy(metricsSystem, useCodeHashStorageMode),
+        new PartialFlatDbStrategy(metricsSystem, useCodeHashStorageMode, false),
         segmentedStorage,
         trieLogStorage,
         metricsSystem,
-        useCodeHashStorageMode);
+        useCodeHashStorageMode,
+        false);
   }
 
   private BonsaiWorldStateKeyValueStorage setupMockStorage(
@@ -533,6 +534,6 @@ public class BonsaiWorldStateKeyValueStorageTest {
     when(mockStorageProvider.getStorageBySegmentIdentifiers(any()))
         .thenReturn(mock(SegmentedKeyValueStorage.class));
     when(mockStorageProvider.createVariablesStorage()).thenReturn(mock(VariablesStorage.class));
-    return new BonsaiWorldStateKeyValueStorage(mockStorageProvider, new NoOpMetricsSystem());
+    return new BonsaiWorldStateKeyValueStorage(mockStorageProvider, new NoOpMetricsSystem(), false);
   }
 }

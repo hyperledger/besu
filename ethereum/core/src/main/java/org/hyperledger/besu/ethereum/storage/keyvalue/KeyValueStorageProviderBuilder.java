@@ -30,6 +30,7 @@ public class KeyValueStorageProviderBuilder {
   private KeyValueStorageFactory storageFactory;
   private BesuConfiguration commonConfiguration;
   private MetricsSystem metricsSystem;
+  private boolean deleteCodeInCodeHashStorageMode;
 
   public KeyValueStorageProviderBuilder withStorageFactory(
       final KeyValueStorageFactory storageFactory) {
@@ -48,6 +49,12 @@ public class KeyValueStorageProviderBuilder {
     return this;
   }
 
+  public KeyValueStorageProviderBuilder withDeleteCodeInCodeHashStorageMode(
+      final boolean deleteCodeInCodeHashStorageMode) {
+    this.deleteCodeInCodeHashStorageMode = deleteCodeInCodeHashStorageMode;
+    return this;
+  }
+
   public KeyValueStorageProvider build() {
     checkNotNull(storageFactory, "Cannot build a storage provider without a storage factory.");
     checkNotNull(
@@ -61,6 +68,7 @@ public class KeyValueStorageProviderBuilder {
     return new KeyValueStorageProvider(
         segments -> storageFactory.create(segments, commonConfiguration, metricsSystem),
         worldStatePreImageStorage,
-        (ObservableMetricsSystem) metricsSystem);
+        (ObservableMetricsSystem) metricsSystem,
+        deleteCodeInCodeHashStorageMode);
   }
 }

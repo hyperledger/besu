@@ -84,9 +84,7 @@ public class DataStorageOptionsTest
     internalTestSuccess(
         dataStorageConfiguration ->
             assertThat(
-                    dataStorageConfiguration
-                        .getUnstable()
-                        .getBonsaiCodeStoredByCodeHashDeletionEnabled())
+                    dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled())
                 .isEqualTo(true),
         "--Xbonsai-code-using-code-hash-enabled");
   }

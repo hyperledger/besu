@@ -90,6 +90,14 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         description =
             "Enables code storage using code hash instead of by account hash. (default: ${DEFAULT-VALUE})")
     private boolean bonsaiCodeUsingCodeHashEnabled = DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
+
+    @CommandLine.Option(
+        hidden = true,
+        names = {"--Xbonsai-code--using-code-hash-deletion-enabled"},
+        description =
+            "Enables deletion of code when using the code storage using code hash mode. (default: ${DEFAULT-VALUE})")
+    private boolean bonsaiCodeUsingCodeHashDeletionEnabled =
+        DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
   }
   /**
    * Create data storage options.
@@ -137,6 +145,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         domainObject.getUnstable().getBonsaiTrieLogPruningLimit();
     dataStorageOptions.unstableOptions.bonsaiCodeUsingCodeHashEnabled =
         domainObject.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
+    dataStorageOptions.unstableOptions.bonsaiCodeUsingCodeHashDeletionEnabled =
+        domainObject.getUnstable().getBonsaiCodeStoredByCodeHashDeletionEnabled();
 
     return dataStorageOptions;
   }
@@ -152,6 +162,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
                 .bonsaiTrieLogRetentionThreshold(unstableOptions.bonsaiTrieLogRetentionThreshold)
                 .bonsaiTrieLogPruningLimit(unstableOptions.bonsaiTrieLogPruningLimit)
                 .bonsaiCodeStoredByCodeHashEnabled(unstableOptions.bonsaiCodeUsingCodeHashEnabled)
+                .bonsaiCodeStoredByCodeHashDeletionEnabled(
+                    unstableOptions.bonsaiCodeUsingCodeHashDeletionEnabled)
                 .build())
         .build();
   }

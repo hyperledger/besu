@@ -38,6 +38,4 @@ public interface CodeStorageStrategy {
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash codeHash);
-
-  void clear(SegmentedKeyValueStorage storage);
 }

@@ -48,14 +48,17 @@ public class KeyValueStorageProvider implements StorageProvider {
   protected final Map<List<SegmentIdentifier>, SegmentedKeyValueStorage> storageInstances =
       new HashMap<>();
   private final ObservableMetricsSystem metricsSystem;
+  private final boolean deleteCodeInCodeHashStorageMode;
 
   public KeyValueStorageProvider(
       final Function<List<SegmentIdentifier>, SegmentedKeyValueStorage> segmentedStorageCreator,
       final KeyValueStorage worldStatePreimageStorage,
-      final ObservableMetricsSystem metricsSystem) {
+      final ObservableMetricsSystem metricsSystem,
+      final boolean deleteCodeInCodeHashStorageMode) {
     this.segmentedStorageCreator = segmentedStorageCreator;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
     this.metricsSystem = metricsSystem;
+    this.deleteCodeInCodeHashStorageMode = deleteCodeInCodeHashStorageMode;
   }
 
   @Override
@@ -76,7 +79,8 @@ public class KeyValueStorageProvider implements StorageProvider {
   @Override
   public WorldStateStorage createWorldStateStorage(final DataStorageFormat dataStorageFormat) {
     if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
-      return new BonsaiWorldStateKeyValueStorage(this, metricsSystem);
+      return new BonsaiWorldStateKeyValueStorage(
+          this, metricsSystem, deleteCodeInCodeHashStorageMode);
     } else {
       return new WorldStateKeyValueStorage(
           getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.WORLD_STATE));

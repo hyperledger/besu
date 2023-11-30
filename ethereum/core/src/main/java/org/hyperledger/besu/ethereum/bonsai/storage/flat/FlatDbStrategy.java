@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.bonsai.storage.flat;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
@@ -54,11 +55,14 @@ public abstract class FlatDbStrategy {
   protected final Counter getStorageValueFlatDatabaseCounter;
   private final CodeStorageStrategy codeStorageStrategy;
 
-  public FlatDbStrategy(final MetricsSystem metricsSystem, final boolean useCodeHashStorageMode) {
+  public FlatDbStrategy(
+      final MetricsSystem metricsSystem,
+      final boolean useCodeHashStorageMode,
+      final boolean deleteCodeInCodeHashStorageMode) {
     this.metricsSystem = metricsSystem;
     this.codeStorageStrategy =
         useCodeHashStorageMode
-            ? new CodeHashCodeStorageStrategy()
+            ? new CodeHashCodeStorageStrategy(deleteCodeInCodeHashStorageMode)
             : new AccountHashCodeStorageStrategy();
 
     getAccountCounter =
@@ -183,7 +187,7 @@ public abstract class FlatDbStrategy {
   public void clearAll(final SegmentedKeyValueStorage storage) {
     storage.clear(ACCOUNT_INFO_STATE);
     storage.clear(ACCOUNT_STORAGE_STORAGE);
-    codeStorageStrategy.clear(storage);
+    storage.clear(CODE_STORAGE);
   }
 
   public void resetOnResync(final SegmentedKeyValueStorage storage) {
