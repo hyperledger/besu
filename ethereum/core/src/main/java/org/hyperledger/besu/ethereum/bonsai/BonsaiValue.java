@@ -59,7 +59,7 @@ public class BonsaiValue<T> implements TrieLog.LogTuple<T> {
 
   public BonsaiValue<T> setUpdated(final T updated) {
     this.lastStepCleared = updated == null;
-    if(lastStepCleared){
+    if (lastStepCleared) {
       this.clearedAtLeastOnce = true;
     }
     this.updated = updated;
@@ -111,6 +111,10 @@ public class BonsaiValue<T> implements TrieLog.LogTuple<T> {
 
   @Override
   public int hashCode() {
-    return new HashCodeBuilder(17, 37).append(prior).append(updated).append(lastStepCleared).toHashCode();
+    return new HashCodeBuilder(17, 37)
+        .append(prior)
+        .append(updated)
+        .append(lastStepCleared)
+        .toHashCode();
   }
 }
