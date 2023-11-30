@@ -96,6 +96,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     graphQLConfiguration.setEnabled(false);
     graphQLConfiguration.setHost("6.7.8.9");
     graphQLConfiguration.setPort(6789);
+    graphQLConfiguration.setMaxActiveConnections(1000);
 
     final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
     webSocketConfiguration.setEnabled(false);

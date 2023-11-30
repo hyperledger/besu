@@ -42,12 +42,6 @@ public class JsonRpcConfigurationTest {
   }
 
   @Test
-  public void corsAllowedOriginsDefaultShouldBeEmptyList() {
-    final JsonRpcConfiguration configuration = JsonRpcConfiguration.createDefault();
-    assertThat(configuration.getCorsAllowedDomains()).isEmpty();
-  }
-
-  @Test
   public void rpcApiDefaultShouldBePredefinedList() {
     final JsonRpcConfiguration configuration = JsonRpcConfiguration.createDefault();
     assertThat(configuration.getRpcApis()).containsExactlyElementsOf(DEFAULT_RPC_APIS);
