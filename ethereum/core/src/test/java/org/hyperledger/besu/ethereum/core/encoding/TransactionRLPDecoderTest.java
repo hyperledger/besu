@@ -86,8 +86,18 @@ class TransactionRLPDecoderTest {
           {EIP1559_TX_RLP, "EIP1559_TX_RLP", true},
           {NONCE_64_BIT_MAX_MINUS_2_TX_RLP, "NONCE_64_BIT_MAX_MINUS_2_TX_RLP", true},
           {
-            "01f89a0130308263309430303030303030303030303030303030303030303030f838f7943030303030303030303030303030303030303030e0a0303030303030303030303030303030303030303030303030303030303030303001a03130303130303031313031313031303130303030323030323030323030313030a03030303030303030303030303030303030303030303030303030303030303030",
-            "EIP1559 list too small",
+            "b89d01f89a0130308263309430303030303030303030303030303030303030303030f838f7943030303030303030303030303030303030303030e0a0303030303030303030303030303030303030303030303030303030303030303001a03130303130303031313031313031303130303030323030323030323030313030a03030303030303030303030303030303030303030303030303030303030303030",
+            "too large for enclosing list",
+            false
+          },
+          {
+            "b84401f8410130308330303080308430303030d6d5943030303030303030303030303030303030303030c0808230309630303030303030303030303030303030303030303030",
+            "list ends outside of enclosing list",
+            false
+          },
+          {
+            "9602d4013030308430303030803080c084303030013030",
+            "Cannot read a unsigned byte scalar, expecting a maximum of 1 bytes but current element is 4 bytes long",
             false
           }
         });
@@ -119,13 +129,14 @@ class TransactionRLPDecoderTest {
 
   @ParameterizedTest(name = "[{index}] {1}")
   @MethodSource("dataTransactionSize")
-  void shouldDecodeRLP(final String txRlp, final String ignoredName, final boolean valid) {
+  void shouldDecodeRLP(final String txRlp, final String name, final boolean valid) {
     if (valid) {
       // thrown exceptions will break test
       decodeRLP(RLP.input(Bytes.fromHexString(txRlp)));
     } else {
       assertThatThrownBy(() -> decodeRLP(RLP.input(Bytes.fromHexString(txRlp))))
-          .isInstanceOf(RLPException.class);
+          .isInstanceOf(RLPException.class)
+          .hasMessageContaining(name);
     }
   }
 
