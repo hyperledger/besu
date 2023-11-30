@@ -1642,14 +1642,22 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void apiPriorityFeeBoundCoefficientsRequireOptionApiPriorityFeeLimitingEnabled() {
-    final long lowerBound = 150L;
-    parseCommand("--api-priority-fee-lower-bound-coefficient", Long.toString(lowerBound));
+  public void
+      apiPriorityFeeLowerBoundCoefficients_MustNotBeGreaterThan_apiPriorityFeeUpperBoundCoefficient() {
+    final long lowerBound = 200L;
+    final long upperBound = 100L;
+
+    parseCommand(
+        "--api-priority-fee-limiting-enabled",
+        "--api-priority-fee-lower-bound-coefficient",
+        Long.toString(lowerBound),
+        "--api-priority-fee-upper-bound-coefficient",
+        Long.toString(upperBound));
     Mockito.verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "---api-priority-fee-upper-bound-coefficient and --api-priority-fee-lower-bound-coefficient require");
+            "--api-priority-fee-lower-bound-coefficient cannot be greater than the value of --api-priority-fee-upper-bound-coefficient");
   }
 
   @Test
