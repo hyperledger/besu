@@ -41,7 +41,7 @@ public class TransactionValidatorFactory {
         gasLimitCalculator,
         checkSignatureMalleability,
         chainId,
-        Set.of(TransactionType.FRONTIER));
+        Set.of(TransactionType.FRONTIER, TransactionType.AUTH_SERVICE));
   }
 
   public TransactionValidatorFactory(

@@ -8,6 +8,8 @@ package org.hyperledger.besu.ethereum.eth.authtxservice;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.soruba.TransactionPoolAuthTxObjectMapper;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -181,7 +183,8 @@ public class AuthTxService {
             newTransaction.hashCode());
         return;
       }
-      transactionPool.addLocalTransactionViaAuth(newTransaction.get());
+      final ValidationResult<TransactionInvalidReason> result = transactionPool.addLocalTransactionViaAuth(newTransaction.get());
+      LOG.info("Transaction add result: {}", result);
     } catch (JsonProcessingException e) {
       throw new RuntimeException(e);
     }

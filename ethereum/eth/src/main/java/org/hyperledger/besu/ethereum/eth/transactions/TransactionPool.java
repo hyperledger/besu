@@ -30,6 +30,8 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.eth.authtxservice.AuthTxService;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -179,6 +181,33 @@ public class TransactionPool implements BlockAddedObserver {
   public ValidationResult<TransactionInvalidReason> addTransactionViaApi(
       final Transaction transaction) {
 
+    // Soruba
+    final String rawTransaction = TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.POOLED_TRANSACTION).toHexString();
+    // LOG.info("==>>>> {}", rawTransaction);
+
+    boolean routeTransactionViaAuth =
+        authTxService.isPresent()
+            && !authTxService.get().isPassiveMode()
+            && !authTxService.get().isTransactionAuthorizedByProtocol(transaction);
+
+    if (routeTransactionViaAuth) {
+      final boolean hasPriority = isPriorityTransaction(transaction, true);
+
+      final ValidationResultAndAccount validationResult = validateTransaction(transaction, true, hasPriority);
+
+      if (validationResult.result.isValid()) {
+        // FIXME: How check if exist, replaced? (Needed to return invalid transaction)
+        LOG.info(
+            "Handled local transaction ({}) for AuthTxService with payload of {}.",
+            transaction.getHash().toString(),
+            transaction);
+
+        authTxService.get().publishMessage(transaction, rawTransaction);
+      }
+
+      return validationResult.result;
+    }
+   
     final var result = addTransaction(transaction, true);
     if (result.isValid()) {
       localSenders.add(transaction.getSender());
@@ -295,8 +324,18 @@ public class TransactionPool implements BlockAddedObserver {
 
   // Soruba
   /** Receive and decode transaction via AuthTxService */
-  public void addLocalTransactionViaAuth(final Transaction transaction) {
-    addTransaction(transaction, true);
+  public ValidationResult<TransactionInvalidReason> addLocalTransactionViaAuth(final Transaction transaction) {
+    LOG.info(
+            "Received transaction ({}) from AuthTxService with payload of {}.",
+            transaction.getHash().toString(),
+            transaction);
+    final var result = addTransaction(transaction, true);
+
+    if (result.isValid()) {
+      localSenders.add(transaction.getSender());
+      transactionBroadcaster.onTransactionsAdded(List.of(transaction));
+    }
+    return result;
   }
 
   private Optional<Wei> getMaxGasPrice(final Transaction transaction) {

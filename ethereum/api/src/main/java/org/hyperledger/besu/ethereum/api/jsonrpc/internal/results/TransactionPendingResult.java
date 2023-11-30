@@ -106,7 +106,7 @@ public class TransactionPendingResult implements TransactionResult {
         TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.POOLED_TRANSACTION)
             .toString();
     this.to = transaction.getTo().map(Address::toHexString).orElse(null);
-    if (transactionType == TransactionType.FRONTIER) {
+    if (transactionType == TransactionType.FRONTIER || transactionType == TransactionType.AUTH_SERVICE) {
       this.type = Quantity.create(0);
       this.yParity = null;
       this.v = Quantity.create(transaction.getV());

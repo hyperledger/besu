@@ -696,7 +696,9 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.FRONTIER,
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559,
-                        TransactionType.BLOB),
+                        TransactionType.BLOB,
+                        // Soruba
+                        TransactionType.AUTH_SERVICE),
                     SHANGHAI_INIT_CODE_SIZE_LIMIT))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::cancunBlockHeaderValidator)
