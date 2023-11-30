@@ -81,7 +81,7 @@ public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTa
               .setMessage("Requesting {} headers (blockNumber {}) from peer {}.")
               .addArgument(count)
               .addArgument(blockNumber)
-              .addArgument(peer.getShortNodeId())
+              .addArgument(peer::getShortNodeId)
               .log();
           return peer.getHeadersByNumber(blockNumber, count, skip, reverse);
         },
