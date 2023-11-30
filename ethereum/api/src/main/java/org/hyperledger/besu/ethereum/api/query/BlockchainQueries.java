@@ -841,7 +841,7 @@ public class BlockchainQueries {
                           transactions.get(i).getHash(),
                           i,
                           removed);
-                  logIndexOffset.addAndGet(receipts.get(i).getLogs().size());
+                  logIndexOffset.addAndGet(receipts.get(i).getLogsList().size());
                   return result;
                 } catch (final Exception e) {
                   throw new RuntimeException(e);
