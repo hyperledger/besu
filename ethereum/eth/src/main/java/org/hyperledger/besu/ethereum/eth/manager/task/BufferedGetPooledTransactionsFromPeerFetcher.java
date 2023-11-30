@@ -89,10 +89,10 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
                 transactionTracker.markTransactionsAsSeen(peer, retrievedTransactions);
 
                 LOG.atTrace()
-                    .setMessage("Got {} transactions of {} hashes requested from peer {}")
+                    .setMessage("Got {} transactions of {} hashes requested from peer {}...")
                     .addArgument(retrievedTransactions::size)
                     .addArgument(task.getTransactionHashes()::size)
-                    .addArgument(peer)
+                    .addArgument(peer::getShortNodeId)
                     .log();
 
                 transactionPool.addRemoteTransactions(retrievedTransactions);
@@ -120,8 +120,8 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
     metrics.incrementAlreadySeenTransactions(metricLabel, alreadySeenCount);
     LOG.atTrace()
         .setMessage(
-            "Transaction hashes to request from peer {}, fresh count {}, already seen count {}")
-        .addArgument(peer)
+            "Transaction hashes to request from peer {}... fresh count {}, already seen count {}")
+        .addArgument(peer::getShortNodeId)
         .addArgument(toRetrieve::size)
         .addArgument(alreadySeenCount)
         .log();

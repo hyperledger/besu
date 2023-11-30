@@ -32,6 +32,10 @@ public class EIP1559TransactionDecoder {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
+  private EIP1559TransactionDecoder() {
+    // private constructor
+  }
+
   public static Transaction decode(final RLPInput input) {
     input.enterList();
     final BigInteger chainId = input.readBigIntegerScalar();
@@ -43,7 +47,7 @@ public class EIP1559TransactionDecoder {
             .maxPriorityFeePerGas(Wei.of(input.readUInt256Scalar()))
             .maxFeePerGas(Wei.of(input.readUInt256Scalar()))
             .gasLimit(input.readLongScalar())
-            .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
+            .to(input.readBytes(v -> v.isEmpty() ? null : Address.wrap(v)))
             .value(Wei.of(input.readUInt256Scalar()))
             .payload(input.readBytes())
             .accessList(
@@ -57,7 +61,7 @@ public class EIP1559TransactionDecoder {
                       accessListEntryRLPInput.leaveList();
                       return accessListEntry;
                     }));
-    final byte recId = (byte) input.readIntScalar();
+    final byte recId = (byte) input.readUnsignedByteScalar();
     final Transaction transaction =
         builder
             .signature(
