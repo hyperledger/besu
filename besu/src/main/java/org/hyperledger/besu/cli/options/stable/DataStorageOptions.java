@@ -17,6 +17,8 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_CODE_USING_CODE_HASH_DELETION_ENABLED;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_LIMIT;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
@@ -82,6 +84,23 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         description =
             "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
     private int bonsaiTrieLogPruningLimit = DEFAULT_BONSAI_TRIE_LOG_PRUNING_LIMIT;
+
+    @CommandLine.Option(
+        hidden = true,
+        names = {"--Xbonsai-code-using-code-hash-enabled"},
+        arity = "1",
+        description =
+            "Enables code storage using code hash instead of by account hash. (default: ${DEFAULT-VALUE})")
+    private boolean bonsaiCodeUsingCodeHashEnabled = DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
+
+    @CommandLine.Option(
+        hidden = true,
+        names = {"--Xbonsai-code-using-code-hash-deletion-enabled"},
+        arity = "1",
+        description =
+            "Enables deletion of code when using code storage using code hash mode. (default: ${DEFAULT-VALUE})")
+    private boolean bonsaiCodeUsingCodeHashDeletionEnabled =
+        DEFAULT_BONSAI_CODE_USING_CODE_HASH_DELETION_ENABLED;
   }
   /**
    * Create data storage options.
@@ -127,6 +146,10 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         domainObject.getUnstable().getBonsaiTrieLogRetentionThreshold();
     dataStorageOptions.unstableOptions.bonsaiTrieLogPruningLimit =
         domainObject.getUnstable().getBonsaiTrieLogPruningLimit();
+    dataStorageOptions.unstableOptions.bonsaiCodeUsingCodeHashEnabled =
+        domainObject.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
+    dataStorageOptions.unstableOptions.bonsaiCodeUsingCodeHashDeletionEnabled =
+        domainObject.getUnstable().getBonsaiCodeStoredByCodeHashDeletionEnabled();
 
     return dataStorageOptions;
   }
@@ -141,6 +164,9 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
                 .bonsaiTrieLogPruningEnabled(unstableOptions.bonsaiTrieLogPruningEnabled)
                 .bonsaiTrieLogRetentionThreshold(unstableOptions.bonsaiTrieLogRetentionThreshold)
                 .bonsaiTrieLogPruningLimit(unstableOptions.bonsaiTrieLogPruningLimit)
+                .bonsaiCodeStoredByCodeHashEnabled(unstableOptions.bonsaiCodeUsingCodeHashEnabled)
+                .bonsaiCodeStoredByCodeHashDeletionEnabled(
+                    unstableOptions.bonsaiCodeUsingCodeHashDeletionEnabled)
                 .build())
         .build();
   }
