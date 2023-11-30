@@ -39,6 +39,9 @@ import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -48,8 +51,6 @@ import java.util.TreeMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -475,6 +476,20 @@ public class BonsaiWorldStateKeyValueStorageTest {
   private BonsaiWorldStateKeyValueStorage emptyStorage() {
     return new BonsaiWorldStateKeyValueStorage(
         new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
+  }
+
+  private BonsaiWorldStateKeyValueStorage emptyStorage(final boolean useAccountHashCodeStorage) {
+    final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
+        new BonsaiWorldStateKeyValueStorage(
+            new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
+    if (useAccountHashCodeStorage) {
+      final SegmentedKeyValueStorageTransaction transaction =
+          bonsaiWorldStateKeyValueStorage.getWorldStateStorage().startTransaction();
+      transaction.put(
+          KeyValueSegmentIdentifier.CODE_STORAGE, Bytes.of(1).toArray(), Bytes.of(1).toArray());
+      transaction.commit();
+    }
+    return bonsaiWorldStateKeyValueStorage;
   }
 
   @Test
