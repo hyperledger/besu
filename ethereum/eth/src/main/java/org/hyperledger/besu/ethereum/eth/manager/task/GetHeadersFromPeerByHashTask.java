@@ -123,7 +123,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
               .setMessage("Requesting {} headers (hash {}...) from peer {}...")
               .addArgument(count)
               .addArgument(referenceHash.slice(0, 6))
-              .addArgument(peer.getShortNodeId())
+              .addArgument(peer::getShortNodeId)
               .log();
           return peer.getHeadersByHash(referenceHash, count, skip, reverse);
         },
