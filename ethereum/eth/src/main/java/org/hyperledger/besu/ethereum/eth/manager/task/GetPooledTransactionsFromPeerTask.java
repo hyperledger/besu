@@ -63,8 +63,8 @@ public class GetPooledTransactionsFromPeerTask extends AbstractPeerRequestTask<L
         peer -> {
           LOG.atTrace()
               .setMessage("Requesting {} transaction pool entries from peer {}...")
-              .addArgument(hashes.size())
-              .addArgument(peer.getShortNodeId())
+              .addArgument(hashes::size)
+              .addArgument(peer::getShortNodeId)
               .log();
           return peer.getPooledTransactions(new ArrayList<>(hashes));
         },
