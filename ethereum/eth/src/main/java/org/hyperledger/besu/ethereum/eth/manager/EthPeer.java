@@ -257,14 +257,18 @@ public class EthPeer implements Comparable<EthPeer> {
       throws PeerNotConnected {
     if (connectionToUse.getAgreedCapabilities().stream()
         .noneMatch(capability -> capability.getName().equalsIgnoreCase(protocolName))) {
-      LOG.debug("Protocol {} unavailable for this peer {}", protocolName, this.getShortNodeId());
+      LOG.atDebug()
+          .setMessage("Protocol {} unavailable for this peer {}...")
+          .addArgument(protocolName)
+          .addArgument(this.getShortNodeId())
+          .log();
       return null;
     }
     if (permissioningProviders.stream()
         .anyMatch(
             p -> !p.isMessagePermitted(connectionToUse.getRemoteEnode(), messageData.getCode()))) {
       LOG.info(
-          "Permissioning blocked sending of message code {} to {}",
+          "Permissioning blocked sending of message code {} to {}...",
           messageData.getCode(),
           this.getShortNodeId());
       if (LOG.isDebugEnabled()) {
@@ -454,7 +458,7 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   void handleDisconnect() {
-    LOG.debug("handleDisconnect - EthPeer {}", this);
+    LOG.trace("handleDisconnect - EthPeer {}", this);
 
     requestManagers.forEach(
         (protocolName, map) -> map.forEach((code, requestManager) -> requestManager.close()));

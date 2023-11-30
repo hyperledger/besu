@@ -75,7 +75,8 @@ class TransactionDataFetcherTest extends AbstractDataFetcherTest {
             fakedHash,
             1,
             Optional.empty(),
-            Optional.empty());
+            Optional.empty(),
+            0);
     when(query.transactionReceiptByTransactionHash(any(), any()))
         .thenReturn(Optional.of(transactionReceiptWithMetadata));
 
@@ -109,7 +110,8 @@ class TransactionDataFetcherTest extends AbstractDataFetcherTest {
             fakedHash,
             1,
             Optional.of(0L),
-            Optional.of(Wei.ZERO));
+            Optional.of(Wei.ZERO),
+            0);
     when(query.transactionReceiptByTransactionHash(any(), any()))
         .thenReturn(Optional.of(transactionReceiptWithMetadata));
 
@@ -143,7 +145,8 @@ class TransactionDataFetcherTest extends AbstractDataFetcherTest {
             fakedHash,
             1,
             Optional.of(blobGasUsed),
-            Optional.of(blobGasPrice));
+            Optional.of(blobGasPrice),
+            0);
     when(query.transactionReceiptByTransactionHash(any(), any()))
         .thenReturn(Optional.of(transactionReceiptWithMetadata));
 
