@@ -17,6 +17,7 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_CODE_USING_CODE_HASH_DELETION_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_LIMIT;
@@ -97,7 +98,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         description =
             "Enables deletion of code when using the code storage using code hash mode. (default: ${DEFAULT-VALUE})")
     private boolean bonsaiCodeUsingCodeHashDeletionEnabled =
-        DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
+        DEFAULT_BONSAI_CODE_USING_CODE_HASH_DELETION_ENABLED;
   }
   /**
    * Create data storage options.
