@@ -120,7 +120,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
     return sendRequestToPeer(
         peer -> {
           LOG.atTrace()
-              .setMessage("Requesting {} headers (hash {}...) from peer {}.")
+              .setMessage("Requesting {} headers (hash {}...) from peer {}...")
               .addArgument(count)
               .addArgument(referenceHash.slice(0, 6))
               .addArgument(peer.getShortNodeId())

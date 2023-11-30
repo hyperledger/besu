@@ -84,7 +84,11 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     this.inboundInitiated = inboundInitiated;
     this.initiatedAt = System.currentTimeMillis();
 
-    LOG.debug("New PeerConnection ({}) established with peer {}", this, peer.getId());
+    LOG.atDebug()
+        .setMessage("New PeerConnection ({}) established with peer {}...")
+        .addArgument(this)
+        .addArgument(peer.getId().slice(0, 16))
+        .log();
   }
 
   @Override
@@ -164,7 +168,11 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     // Always ensure the context gets closed immediately even if we previously sent a disconnect
     // message and are waiting to close.
     closeConnectionImmediately();
-    LOG.debug("Terminating connection {}, reason {}", this, reason);
+    LOG.atTrace()
+        .setMessage("Terminating connection {}, reason {}")
+        .addArgument(this)
+        .addArgument(reason)
+        .log();
   }
 
   protected abstract void closeConnectionImmediately();
@@ -176,11 +184,12 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     if (disconnected.compareAndSet(false, true)) {
       connectionEventDispatcher.dispatchDisconnect(this, reason, false);
       doSend(null, DisconnectMessage.create(reason));
-      LOG.debug(
-          "Disconnecting connection {}, peer {}... reason {}",
-          System.identityHashCode(this),
-          peer.getId().slice(0, 16),
-          reason);
+      LOG.atDebug()
+          .setMessage("Disconnecting connection {}, peer {}... reason {}")
+          .addArgument(this.hashCode())
+          .addArgument(peer.getId().slice(0, 16))
+          .addArgument(reason)
+          .log();
       closeConnection();
     }
   }
