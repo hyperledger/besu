@@ -3,7 +3,7 @@ FROM ubuntu:22.04
 
 ARG VERSION="dev"
 RUN apt-get update  && \
- apt-get install --no-install-recommends -q --assume-yes ca-certificates-java=20190909 && \
+ apt-get install --no-install-recommends -q --assume-yes ca-certificates-java=20190909* && \
  apt-get install --no-install-recommends -q --assume-yes curl=7* wget=1.21* jq=1.6* net-tools=1.60* openjdk-17-jdk-headless=17* libjemalloc-dev=5.* && \
  apt-get clean  && \
  rm -rf /var/lib/apt/lists/*  && \
