@@ -1083,20 +1083,20 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                 : TrieLogPruner.noOpTrieLogPruner();
         trieLogPruner.initialize();
 
-        final boolean snapSyncServerEnabled =
-            syncConfig.getSnapSyncConfiguration().isServerEnabled();
+        final boolean codeStoredByCodeHashEnabled =
+            dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
         variablesStorage
             .isCodeStoredUsingCodeHash()
             .ifPresentOrElse(
                 codeStoredUsingCodeHash -> {
-                  if (snapSyncServerEnabled && !codeStoredUsingCodeHash) {
+                  if (codeStoredByCodeHashEnabled && !codeStoredUsingCodeHash) {
                     throw new IllegalArgumentException(
-                        "Snap sync server enabled but database is not using code storage by code hash");
+                        "Code stored by code hash enabled but database is not using code stored by code hash");
                   }
                 },
                 () -> {
                   final VariablesStorage.Updater updater = variablesStorage.updater();
-                  updater.setCodeStoredUsingCodeHash(snapSyncServerEnabled);
+                  updater.setCodeStoredUsingCodeHash(codeStoredByCodeHashEnabled);
                   updater.commit();
                 });
 

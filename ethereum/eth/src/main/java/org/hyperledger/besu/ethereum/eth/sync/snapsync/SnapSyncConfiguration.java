@@ -37,7 +37,6 @@ public class SnapSyncConfiguration {
       1024; // The default number of flat slots entries to verify and heal per request.
 
   public static final Boolean DEFAULT_IS_FLAT_DB_HEALING_ENABLED = Boolean.FALSE;
-  public static final Boolean DEFAULT_SERVER_ENABLED = Boolean.FALSE;
 
   public static SnapSyncConfiguration getDefault() {
     return ImmutableSnapSyncConfiguration.builder().build();
@@ -81,10 +80,5 @@ public class SnapSyncConfiguration {
   @Value.Default
   public Boolean isFlatDbHealingEnabled() {
     return DEFAULT_IS_FLAT_DB_HEALING_ENABLED;
-  }
-
-  @Value.Default
-  public Boolean isServerEnabled() {
-    return DEFAULT_SERVER_ENABLED;
   }
 }

@@ -79,6 +79,18 @@ public class DataStorageOptionsTest
         "511");
   }
 
+  @Test
+  public void bonsaiCodeUsingCodeHashEnabledOption() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(
+                    dataStorageConfiguration
+                        .getUnstable()
+                        .getBonsaiCodeStoredByCodeHashDeletionEnabled())
+                .isEqualTo(true),
+        "--Xbonsai-code-using-code-hash-enabled");
+  }
+
   @Override
   protected DataStorageConfiguration createDefaultDomainObject() {
     return DataStorageConfiguration.DEFAULT_CONFIG;

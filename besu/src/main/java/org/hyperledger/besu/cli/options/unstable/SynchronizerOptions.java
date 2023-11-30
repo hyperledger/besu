@@ -82,8 +82,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String SNAP_FLAT_DB_HEALING_ENABLED_FLAG =
       "--Xsnapsync-synchronizer-flat-db-healing-enabled";
 
-  private static final String SNAP_SERVER_ENABLED_FLAG = "--Xsnapsync-server-enabled";
-
   private static final String CHECKPOINT_POST_MERGE_FLAG = "--Xcheckpoint-post-merge-enabled";
 
   /**
@@ -321,14 +319,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       SnapSyncConfiguration.DEFAULT_IS_FLAT_DB_HEALING_ENABLED;
 
   @CommandLine.Option(
-      names = SNAP_SERVER_ENABLED_FLAG,
-      hidden = true,
-      defaultValue = "false",
-      paramLabel = "<Boolean>",
-      description = "Snap sync server enabled (default: ${DEFAULT-VALUE})")
-  private Boolean snapsyncServerEnabled = SnapSyncConfiguration.DEFAULT_SERVER_ENABLED;
-
-  @CommandLine.Option(
       names = {CHECKPOINT_POST_MERGE_FLAG},
       hidden = true,
       description = "Enable the sync to start from a post-merge block.")
@@ -397,7 +387,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getSnapSyncConfiguration().getLocalFlatStorageCountToHealPerRequest();
     options.snapsyncFlatDbHealingEnabled =
         config.getSnapSyncConfiguration().isFlatDbHealingEnabled();
-    options.snapsyncServerEnabled = config.getSnapSyncConfiguration().isServerEnabled();
     options.checkpointPostMergeSyncEnabled = config.isCheckpointPostMergeEnabled();
     return options;
   }
@@ -431,7 +420,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .localFlatAccountCountToHealPerRequest(snapsyncFlatAccountHealedCountPerRequest)
             .localFlatStorageCountToHealPerRequest(snapsyncFlatStorageHealedCountPerRequest)
             .isFlatDbHealingEnabled(snapsyncFlatDbHealingEnabled)
-            .isServerEnabled(snapsyncServerEnabled)
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
 
@@ -483,8 +471,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             SNAP_BYTECODE_COUNT_PER_REQUEST_FLAG,
             OptionParser.format(snapsyncBytecodeCountPerRequest),
             SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG,
-            OptionParser.format(snapsyncTrieNodeCountPerRequest),
-            SNAP_SERVER_ENABLED_FLAG + "=" + snapsyncServerEnabled);
+            OptionParser.format(snapsyncTrieNodeCountPerRequest));
     if (isSnapsyncFlatDbHealingEnabled()) {
       value.addAll(
           Arrays.asList(
