@@ -106,6 +106,11 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
    */
   public void registerPlugins(final Path pluginsDir) {
     lines.add("Plugins:");
+    try {
+      Thread.sleep(10000);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
     checkState(
         state == Lifecycle.UNINITIALIZED,
         "Besu plugins have already been registered.  Cannot register additional plugins.");
@@ -124,8 +129,9 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
       try {
         plugin.register(this);
         LOG.info("Registered plugin of type {}.", plugin.getClass().getName());
-        lines.add(String.format(plugin.getClass().getSimpleName()));
-        addPluginVersion(plugin);
+        String pluginVersion = getPluginVersion(plugin);
+        pluginVersions.add(pluginVersion);
+        lines.add(String.format("%s (%s)", plugin.getClass().getSimpleName(), pluginVersion));
       } catch (final Exception e) {
         LOG.error(
             "Error registering plugin of type "
@@ -156,7 +162,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     return lines;
   }
 
-  private void addPluginVersion(final BesuPlugin plugin) {
+  private String getPluginVersion(final BesuPlugin plugin) {
     final Package pluginPackage = plugin.getClass().getPackage();
     final String implTitle =
         Optional.ofNullable(pluginPackage.getImplementationTitle())
@@ -166,8 +172,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
         Optional.ofNullable(pluginPackage.getImplementationVersion())
             .filter(Predicate.not(String::isBlank))
             .orElse("<Unknown Version>");
-    final String pluginVersion = implTitle + "/v" + implVersion;
-    pluginVersions.add(pluginVersion);
+    return implTitle + "/v" + implVersion;
   }
 
   /** Before external services. */
