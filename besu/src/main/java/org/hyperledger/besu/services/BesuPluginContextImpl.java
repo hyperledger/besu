@@ -106,11 +106,6 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
    */
   public void registerPlugins(final Path pluginsDir) {
     lines.add("Plugins:");
-    try {
-      Thread.sleep(10000);
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
     checkState(
         state == Lifecycle.UNINITIALIZED,
         "Besu plugins have already been registered.  Cannot register additional plugins.");
