@@ -80,13 +80,51 @@ public class DataStorageOptionsTest
   }
 
   @Test
-  public void bonsaiCodeUsingCodeHashEnabledOption() {
+  public void bonsaiCodeUsingCodeHashEnabledCanBeEnabled() {
     internalTestSuccess(
         dataStorageConfiguration ->
             assertThat(
                     dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled())
                 .isEqualTo(true),
-        "--Xbonsai-code-using-code-hash-enabled");
+        "--Xbonsai-code-using-code-hash-enabled",
+        "true");
+  }
+
+  @Test
+  public void bonsaiCodeUsingCodeHashEnabledCanBeDisabled() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(
+                    dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled())
+                .isEqualTo(false),
+        "--Xbonsai-code-using-code-hash-enabled",
+        "false");
+  }
+
+  @Test
+  public void bonsaiCodeUsingCodeHashDeletionEnabledCanBeEnabled() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(
+                    dataStorageConfiguration
+                        .getUnstable()
+                        .getBonsaiCodeStoredByCodeHashDeletionEnabled())
+                .isEqualTo(true),
+        "--Xbonsai-code-using-code-hash-deletion-enabled",
+        "true");
+  }
+
+  @Test
+  public void bonsaiCodeUsingCodeHashDeletionEnabledCanBeDisabled() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(
+                    dataStorageConfiguration
+                        .getUnstable()
+                        .getBonsaiCodeStoredByCodeHashDeletionEnabled())
+                .isEqualTo(false),
+        "--Xbonsai-code-using-code-hash-deletion-enabled",
+        "false");
   }
 
   @Override

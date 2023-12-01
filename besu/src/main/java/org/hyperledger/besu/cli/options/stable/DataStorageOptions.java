@@ -88,15 +88,17 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     @CommandLine.Option(
         hidden = true,
         names = {"--Xbonsai-code-using-code-hash-enabled"},
+        arity = "1",
         description =
             "Enables code storage using code hash instead of by account hash. (default: ${DEFAULT-VALUE})")
     private boolean bonsaiCodeUsingCodeHashEnabled = DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
 
     @CommandLine.Option(
         hidden = true,
-        names = {"--Xbonsai-code--using-code-hash-deletion-enabled"},
+        names = {"--Xbonsai-code-using-code-hash-deletion-enabled"},
+        arity = "1",
         description =
-            "Enables deletion of code when using the code storage using code hash mode. (default: ${DEFAULT-VALUE})")
+            "Enables deletion of code when using code storage using code hash mode. (default: ${DEFAULT-VALUE})")
     private boolean bonsaiCodeUsingCodeHashDeletionEnabled =
         DEFAULT_BONSAI_CODE_USING_CODE_HASH_DELETION_ENABLED;
   }
