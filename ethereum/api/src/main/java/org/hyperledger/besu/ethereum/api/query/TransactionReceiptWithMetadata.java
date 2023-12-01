@@ -32,6 +32,7 @@ public class TransactionReceiptWithMetadata {
   private final Transaction transaction;
   private final Optional<Long> blobGasUsed;
   private final Optional<Wei> blobGasPrice;
+  private final int logIndexOffset;
 
   private TransactionReceiptWithMetadata(
       final TransactionReceipt receipt,
@@ -43,7 +44,8 @@ public class TransactionReceiptWithMetadata {
       final Hash blockHash,
       final long blockNumber,
       final Optional<Long> blobGasUsed,
-      final Optional<Wei> blobGasPrice) {
+      final Optional<Wei> blobGasPrice,
+      final int logIndexOffset) {
     this.receipt = receipt;
     this.transactionHash = transactionHash;
     this.transactionIndex = transactionIndex;
@@ -54,6 +56,7 @@ public class TransactionReceiptWithMetadata {
     this.transaction = transaction;
     this.blobGasUsed = blobGasUsed;
     this.blobGasPrice = blobGasPrice;
+    this.logIndexOffset = logIndexOffset;
   }
 
   public static TransactionReceiptWithMetadata create(
@@ -66,7 +69,8 @@ public class TransactionReceiptWithMetadata {
       final Hash blockHash,
       final long blockNumber,
       final Optional<Long> blobGasUsed,
-      final Optional<Wei> blobGasPrice) {
+      final Optional<Wei> blobGasPrice,
+      final int logIndexOffset) {
     return new TransactionReceiptWithMetadata(
         receipt,
         transaction,
@@ -77,7 +81,8 @@ public class TransactionReceiptWithMetadata {
         blockHash,
         blockNumber,
         blobGasUsed,
-        blobGasPrice);
+        blobGasPrice,
+        logIndexOffset);
   }
 
   public TransactionReceipt getReceipt() {
@@ -120,5 +125,9 @@ public class TransactionReceiptWithMetadata {
 
   public Optional<Wei> getBlobGasPrice() {
     return blobGasPrice;
+  }
+
+  public int getLogIndexOffset() {
+    return logIndexOffset;
   }
 }

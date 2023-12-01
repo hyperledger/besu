@@ -51,6 +51,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
@@ -197,7 +198,6 @@ public abstract class CommandTestAbstract {
   @Captor protected ArgumentCaptor<String> stringArgumentCaptor;
   @Captor protected ArgumentCaptor<Integer> intArgumentCaptor;
   @Captor protected ArgumentCaptor<Long> longArgumentCaptor;
-  @Captor protected ArgumentCaptor<Float> floatCaptor;
   @Captor protected ArgumentCaptor<EthNetworkConfig> ethNetworkConfigArgumentCaptor;
   @Captor protected ArgumentCaptor<SynchronizerConfiguration> syncConfigurationCaptor;
   @Captor protected ArgumentCaptor<JsonRpcConfiguration> jsonRpcConfigArgumentCaptor;
@@ -214,6 +214,7 @@ public abstract class CommandTestAbstract {
       permissioningConfigurationArgumentCaptor;
 
   @Captor protected ArgumentCaptor<TransactionPoolConfiguration> transactionPoolConfigCaptor;
+  @Captor protected ArgumentCaptor<ApiConfiguration> apiConfigurationCaptor;
 
   @Captor protected ArgumentCaptor<EthstatsOptions> ethstatsOptionsArgumentCaptor;
 
@@ -313,7 +314,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.storageProvider(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.rpcEndpointService(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.legacyForkId(anyBoolean())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.rpcMaxLogsRange(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.apiConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.enodeDnsConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
 

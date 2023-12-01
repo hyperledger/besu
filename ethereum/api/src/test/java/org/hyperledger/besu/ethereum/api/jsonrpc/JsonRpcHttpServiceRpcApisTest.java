@@ -24,6 +24,7 @@ import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -229,7 +230,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     folder,
                     mock(EthPeers.class),
                     vertx,
-                    Optional.empty(),
+                    mock(ApiConfiguration.class),
                     Optional.empty()));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
@@ -339,7 +340,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     folder,
                     mock(EthPeers.class),
                     vertx,
-                    Optional.empty(),
+                    mock(ApiConfiguration.class),
                     Optional.empty()));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
