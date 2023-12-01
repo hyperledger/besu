@@ -282,8 +282,16 @@ public abstract class PeerDiscoveryAgent {
             .flatMap(Endpoint::getTcpPort)
             .orElse(udpPort);
 
+    // If the host is present in the P2P packet itself, use that as the endpoint. Otherwise
+    // take it from the UDP packet source IP.
+    final String host =
+        packet
+            .getPacketData(PingPacketData.class)
+            .flatMap(PingPacketData::getFrom)
+            .map(Endpoint::getHost)
+            .orElse(sourceEndpoint.getHost());
+
     // Notify the peer controller.
-    final String host = sourceEndpoint.getHost();
     final DiscoveryPeer peer =
         DiscoveryPeer.fromEnode(
             EnodeURLImpl.builder()
