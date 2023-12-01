@@ -33,7 +33,7 @@ import picocli.CommandLine.ParentCommand;
 
 /** The RocksDB subcommand. */
 @Command(
-    name = "x-rocksdb",
+    name = "rocksdb",
     description = "Print RocksDB information",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class,
@@ -55,7 +55,7 @@ public class RocksDbSubCommand implements Runnable {
 
   @Command(
       name = "usage",
-      description = "Prints disk usage",
+      description = "Print disk usage",
       mixinStandardHelpOptions = true,
       versionProvider = VersionProvider.class)
   static class RocksDbUsage implements Runnable {
@@ -93,11 +93,12 @@ public class RocksDbSubCommand implements Runnable {
       } catch (RocksDBException e) {
         throw new RuntimeException(e);
       }
-      List<ColumnFamilyHandle> cfHandles = new ArrayList<>();
-      List<ColumnFamilyDescriptor> cfDescriptors = new ArrayList<>();
+      final List<ColumnFamilyHandle> cfHandles = new ArrayList<>();
+      final List<ColumnFamilyDescriptor> cfDescriptors = new ArrayList<>();
       for (byte[] cfName : cfNames) {
         cfDescriptors.add(new ColumnFamilyDescriptor(cfName));
       }
+      RocksDbUsageHelper.printTableHeader(out);
       try (final RocksDB rocksdb = RocksDB.openReadOnly(dbPath, cfDescriptors, cfHandles)) {
         for (ColumnFamilyHandle cfHandle : cfHandles) {
           RocksDbUsageHelper.printUsageForColumnFamily(rocksdb, cfHandle, out);

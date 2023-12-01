@@ -21,7 +21,6 @@ import java.io.PrintWriter;
 
 import org.bouncycastle.util.Arrays;
 import org.rocksdb.ColumnFamilyHandle;
-import org.rocksdb.ColumnFamilyMetaData;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 
@@ -31,40 +30,24 @@ public class RocksDbUsageHelper {
   static void printUsageForColumnFamily(
       final RocksDB rocksdb, final ColumnFamilyHandle cfHandle, final PrintWriter out)
       throws RocksDBException {
-    String size = rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size");
+    final String size = rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size");
     boolean emptyColumnFamily = false;
     if (!size.isEmpty() && !size.isBlank()) {
-      long sizeLong = Long.parseLong(size);
-      if (sizeLong == 0) emptyColumnFamily = true;
+      final long sizeLong = Long.parseLong(size);
+      if (sizeLong == 0) {
+        emptyColumnFamily = true;
+      }
+      String totolSstFilesSize = rocksdb.getProperty(cfHandle, "rocksdb.total-sst-files-size");
       if (!emptyColumnFamily) {
-        out.println(
-            "****** Column family '"
-                + getNameById(cfHandle.getName())
-                + "' size: "
-                + formatOutputSize(sizeLong)
-                + " ******");
-
-        out.println(
-            "Number of keys : " + rocksdb.getProperty(cfHandle, "rocksdb.estimate-num-keys"));
-        out.println(
-            "Number of live snapshots : " + rocksdb.getProperty(cfHandle, "rocksdb.num-snapshots"));
-
-        String totolSstFilesSize = rocksdb.getProperty(cfHandle, "rocksdb.total-sst-files-size");
-        if (!totolSstFilesSize.isEmpty() && !totolSstFilesSize.isBlank()) {
-          out.println(
-              "Total size of SST Files : " + formatOutputSize(Long.parseLong(totolSstFilesSize)));
-        }
-        String liveSstFilesSize = rocksdb.getProperty(cfHandle, "rocksdb.live-sst-files-size");
-        if (!liveSstFilesSize.isEmpty() && !liveSstFilesSize.isBlank()) {
-          out.println(
-              "Size of live SST Filess : " + formatOutputSize(Long.parseLong(liveSstFilesSize)));
-        }
-
-        ColumnFamilyMetaData columnFamilyMetaData = rocksdb.getColumnFamilyMetaData(cfHandle);
-        long sizeBytes = columnFamilyMetaData.size();
-        out.println(
-            "Column family size (with getColumnFamilyMetaData) : " + formatOutputSize(sizeBytes));
-        out.println("");
+        printLine(
+            out,
+            getNameById(cfHandle.getName()),
+            rocksdb.getProperty(cfHandle, "rocksdb.estimate-num-keys"),
+            formatOutputSize(sizeLong),
+            formatOutputSize(
+                !totolSstFilesSize.isEmpty() && !totolSstFilesSize.isBlank()
+                    ? Long.parseLong(rocksdb.getProperty(cfHandle, "rocksdb.total-sst-files-size"))
+                    : 0));
       }
     }
   }
@@ -91,5 +74,22 @@ public class RocksDbUsageHelper {
       }
     }
     return null; // id not found
+  }
+
+  public static void printTableHeader(final PrintWriter out) {
+    out.format(
+        "| Column Family                  | Keys            | Column Size  | SST Files Size  |\n");
+    out.format(
+        "|--------------------------------|-----------------|--------------|-----------------|\n");
+  }
+
+  public static void printLine(
+      final PrintWriter out,
+      final String cfName,
+      final String keys,
+      final String columnSize,
+      final String sstFilesSize) {
+    final String format = "| %-30s | %-15s | %-12s | %-15s |\n";
+    out.format(format, cfName, keys, columnSize, sstFilesSize);
   }
 }
