@@ -99,7 +99,7 @@ public class Transaction
   private final Optional<BigInteger> chainId;
 
   // Caches a "hash" of a portion of the transaction used for sender recovery.
-  // Note that this hash does not include the transaction signature so it does not
+  // Note that this hash does not include the transaction signature, so it does not
   // fully identify the transaction (use the result of the {@code hash()} for that).
   // It is only used to compute said signature and recover the sender from it.
   private volatile Bytes32 hashNoSignature;
@@ -226,10 +226,6 @@ public class Transaction
     this.chainId = chainId;
     this.versionedHashes = versionedHashes;
     this.blobsWithCommitments = blobsWithCommitments;
-
-    if (!forCopy && isUpfrontGasCostTooHigh()) {
-      throw new IllegalArgumentException("Upfront gas cost exceeds UInt256");
-    }
   }
 
   /**
@@ -567,15 +563,6 @@ public class Transaction
   }
 
   /**
-   * Check if the upfront gas cost is over the max allowed
-   *
-   * @return true is upfront data cost overflow uint256 max value
-   */
-  private boolean isUpfrontGasCostTooHigh() {
-    return calculateUpfrontGasCost(getMaxGasPrice(), Wei.ZERO, 0L).bitLength() > 256;
-  }
-
-  /**
    * Calculates the up-front cost for the gas and blob gas the transaction can use.
    *
    * @param gasPrice the gas price to use
@@ -597,7 +584,7 @@ public class Transaction
     }
   }
 
-  private BigInteger calculateUpfrontGasCost(
+  public BigInteger calculateUpfrontGasCost(
       final Wei gasPrice, final Wei blobGasPrice, final long totalBlobGas) {
     var cost =
         new BigInteger(1, Longs.toByteArray(getGasLimit())).multiply(gasPrice.getAsBigInteger());
@@ -619,7 +606,9 @@ public class Transaction
    * @return the up-front gas cost for the transaction
    */
   public Wei getUpfrontCost(final long totalBlobGas) {
-    return getMaxUpfrontGasCost(totalBlobGas).addExact(getValue());
+    Wei maxUpfrontGasCost = getMaxUpfrontGasCost(totalBlobGas);
+    Wei result = maxUpfrontGasCost.add(getValue());
+    return (maxUpfrontGasCost.compareTo(result) > 0) ? Wei.MAX_WEI : result;
   }
 
   /**
@@ -1096,6 +1085,26 @@ public class Transaction
     protected List<VersionedHash> versionedHashes = null;
     private BlobsWithCommitments blobsWithCommitments;
 
+    public Builder copiedFrom(final Transaction toCopy) {
+      this.transactionType = toCopy.transactionType;
+      this.nonce = toCopy.nonce;
+      this.gasPrice = toCopy.gasPrice.orElse(null);
+      this.maxPriorityFeePerGas = toCopy.maxPriorityFeePerGas.orElse(null);
+      this.maxFeePerGas = toCopy.maxFeePerGas.orElse(null);
+      this.maxFeePerBlobGas = toCopy.maxFeePerBlobGas.orElse(null);
+      this.gasLimit = toCopy.gasLimit;
+      this.to = toCopy.to;
+      this.value = toCopy.value;
+      this.signature = toCopy.signature;
+      this.payload = toCopy.payload;
+      this.accessList = toCopy.maybeAccessList;
+      this.sender = toCopy.sender;
+      this.chainId = toCopy.chainId;
+      this.versionedHashes = toCopy.versionedHashes.orElse(null);
+      this.blobsWithCommitments = toCopy.blobsWithCommitments.orElse(null);
+      return this;
+    }
+
     public Builder type(final TransactionType transactionType) {
       this.transactionType = transactionType;
       return this;
@@ -1258,6 +1267,11 @@ public class Transaction
       }
       this.blobsWithCommitments =
           new BlobsWithCommitments(kzgCommitments, blobs, kzgProofs, versionedHashes);
+      return this;
+    }
+
+    public Builder blobsWithCommitments(final BlobsWithCommitments blobsWithCommitments) {
+      this.blobsWithCommitments = blobsWithCommitments;
       return this;
     }
   }

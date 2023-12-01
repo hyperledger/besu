@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -25,6 +26,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -36,13 +38,13 @@ import java.util.stream.Stream;
 import com.google.common.base.Suppliers;
 import org.junit.jupiter.api.Test;
 
-public class TransactionBuilderTest {
+class TransactionBuilderTest {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair senderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
 
   @Test
-  public void guessTypeCanGuessAllTypes() {
+  void guessTypeCanGuessAllTypes() {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final Transaction.Builder frontierBuilder = Transaction.builder();
     final Transaction.Builder eip1559Builder = Transaction.builder().maxFeePerGas(Wei.of(5));
@@ -61,19 +63,36 @@ public class TransactionBuilderTest {
   }
 
   @Test
-  public void zeroBlobTransactionIsInvalid() {
+  void zeroBlobTransactionIsInvalid() {
+    TransactionTestFixture ttf =
+        new TransactionTestFixture()
+            .type(TransactionType.BLOB)
+            .chainId(Optional.of(BigInteger.ONE))
+            .versionedHashes(Optional.of(List.of()))
+            .maxFeePerGas(Optional.of(Wei.of(5)))
+            .maxPriorityFeePerGas(Optional.of(Wei.of(5)))
+            .maxFeePerBlobGas(Optional.of(Wei.of(5)));
     try {
-      new TransactionTestFixture()
-          .type(TransactionType.BLOB)
-          .chainId(Optional.of(BigInteger.ONE))
-          .versionedHashes(Optional.of(List.of()))
-          .maxFeePerGas(Optional.of(Wei.of(5)))
-          .maxPriorityFeePerGas(Optional.of(Wei.of(5)))
-          .maxFeePerBlobGas(Optional.of(Wei.of(5)))
-          .createTransaction(senderKeys);
+      ttf.createTransaction(senderKeys);
       fail();
     } catch (IllegalArgumentException iea) {
       assertThat(iea).hasMessage("Blob transaction must have at least one versioned hash");
     }
+  }
+
+  @Test
+  @SuppressWarnings("ReferenceEquality")
+  void copyFromIsIdentical() {
+    final TransactionTestFixture fixture = new TransactionTestFixture();
+    final Transaction transaction = fixture.createTransaction(senderKeys);
+    final Transaction.Builder builder = Transaction.builder();
+    final Transaction copy = builder.copiedFrom(transaction).build();
+    assertThat(copy).isEqualTo(transaction).isNotSameAs(transaction);
+    assertThat(copy.getHash()).isEqualTo(transaction.getHash());
+    BytesValueRLPOutput sourceRLP = new BytesValueRLPOutput();
+    transaction.writeTo(sourceRLP);
+    BytesValueRLPOutput copyRLP = new BytesValueRLPOutput();
+    copy.writeTo(copyRLP);
+    assertEquals(sourceRLP.encoded(), copyRLP.encoded());
   }
 }

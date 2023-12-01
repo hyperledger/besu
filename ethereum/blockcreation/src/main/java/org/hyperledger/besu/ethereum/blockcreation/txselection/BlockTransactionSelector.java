@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection;
 
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVALUATION_TOO_LONG;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -56,6 +57,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
+import com.google.common.base.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,6 +97,7 @@ public class BlockTransactionSelector {
   private final BlockAwareOperationTracer pluginOperationTracer;
   private final EthScheduler ethScheduler;
   private final AtomicBoolean isTimeout = new AtomicBoolean(false);
+  private final long blockTxsSelectionMaxTime;
   private WorldUpdater blockWorldStateUpdater;
 
   public BlockTransactionSelector(
@@ -133,6 +136,7 @@ public class BlockTransactionSelector {
     this.pluginTransactionSelector = pluginTransactionSelector;
     this.pluginOperationTracer = pluginTransactionSelector.getOperationTracer();
     blockWorldStateUpdater = worldState.updater();
+    blockTxsSelectionMaxTime = miningParameters.getUnstable().getBlockTxsSelectionMaxTime();
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(
@@ -168,8 +172,6 @@ public class BlockTransactionSelector {
   }
 
   private void timeLimitedSelection() {
-    final long blockTxsSelectionMaxTime =
-        blockSelectionContext.miningParameters().getUnstable().getBlockTxsSelectionMaxTime();
     final var txSelection =
         ethScheduler.scheduleBlockCreationTask(
             () ->
@@ -226,9 +228,11 @@ public class BlockTransactionSelector {
       final PendingTransaction pendingTransaction) {
     checkCancellation();
 
+    final Stopwatch evaluationTimer = Stopwatch.createStarted();
+
     TransactionSelectionResult selectionResult = evaluatePreProcessing(pendingTransaction);
     if (!selectionResult.selected()) {
-      return handleTransactionNotSelected(pendingTransaction, selectionResult);
+      return handleTransactionNotSelected(pendingTransaction, selectionResult, evaluationTimer);
     }
 
     final WorldUpdater txWorldStateUpdater = blockWorldStateUpdater.updater();
@@ -239,10 +243,11 @@ public class BlockTransactionSelector {
         evaluatePostProcessing(pendingTransaction, processingResult);
 
     if (postProcessingSelectionResult.selected()) {
-      return handleTransactionSelected(pendingTransaction, processingResult, txWorldStateUpdater);
+      return handleTransactionSelected(
+          pendingTransaction, processingResult, txWorldStateUpdater, evaluationTimer);
     }
     return handleTransactionNotSelected(
-        pendingTransaction, postProcessingSelectionResult, txWorldStateUpdater);
+        pendingTransaction, postProcessingSelectionResult, txWorldStateUpdater, evaluationTimer);
   }
 
   /**
@@ -326,12 +331,14 @@ public class BlockTransactionSelector {
    * @param pendingTransaction The pending transaction.
    * @param processingResult The result of the transaction processing.
    * @param txWorldStateUpdater The world state updater.
+   * @param evaluationTimer tracks the evaluation elapsed time
    * @return The result of the transaction selection process.
    */
   private TransactionSelectionResult handleTransactionSelected(
       final PendingTransaction pendingTransaction,
       final TransactionProcessingResult processingResult,
-      final WorldUpdater txWorldStateUpdater) {
+      final WorldUpdater txWorldStateUpdater,
+      final Stopwatch evaluationTimer) {
     final Transaction transaction = pendingTransaction.getTransaction();
 
     final long gasUsedByTransaction =
@@ -347,7 +354,8 @@ public class BlockTransactionSelector {
     // this need to be done synchronously to avoid that a concurrent timeout
     // could start packing a block while we are updating the state here
     synchronized (isTimeout) {
-      if (!isTimeout.get()) {
+      tooLate = isTimeout.get();
+      if (!tooLate) {
         txWorldStateUpdater.commit();
         blockWorldStateUpdater.commit();
         final TransactionReceipt receipt =
@@ -356,30 +364,46 @@ public class BlockTransactionSelector {
 
         transactionSelectionResults.updateSelected(
             pendingTransaction.getTransaction(), receipt, gasUsedByTransaction, blobGasUsed);
-        tooLate = false;
-      } else {
-        tooLate = true;
       }
     }
 
     if (tooLate) {
       // even if this tx passed all the checks, it is too late to include it in this block,
       // so we need to treat it as not selected
-      LOG.atTrace()
-          .setMessage("{} processed too late for block creation")
-          .addArgument(transaction::toTraceLog)
-          .log();
+
+      // check if this tx took too much to evaluate, and in case remove it from the pool
+      final TransactionSelectionResult timeoutSelectionResult;
+      if (evaluationTimer.elapsed(TimeUnit.MILLISECONDS) > blockTxsSelectionMaxTime) {
+        LOG.atWarn()
+            .setMessage(
+                "Transaction {} is too late for inclusion, evaluated in {} that is over the max limit of {}ms"
+                    + ", removing it from the pool")
+            .addArgument(transaction::toTraceLog)
+            .addArgument(evaluationTimer)
+            .addArgument(blockTxsSelectionMaxTime)
+            .log();
+        timeoutSelectionResult = TX_EVALUATION_TOO_LONG;
+      } else {
+        LOG.atTrace()
+            .setMessage("Transaction {} is too late for inclusion")
+            .addArgument(transaction::toTraceLog)
+            .addArgument(evaluationTimer)
+            .log();
+        timeoutSelectionResult = BLOCK_SELECTION_TIMEOUT;
+      }
+
       // do not rely on the presence of this result, since by the time it is added, the code
       // reading it could have been already executed by another thread
       return handleTransactionNotSelected(
-          pendingTransaction, BLOCK_SELECTION_TIMEOUT, txWorldStateUpdater);
+          pendingTransaction, timeoutSelectionResult, txWorldStateUpdater, evaluationTimer);
     }
 
     pluginTransactionSelector.onTransactionSelected(pendingTransaction, processingResult);
     blockWorldStateUpdater = worldState.updater();
     LOG.atTrace()
-        .setMessage("Selected {} for block creation")
+        .setMessage("Selected {} for block creation, evaluated in {}")
         .addArgument(transaction::toTraceLog)
+        .addArgument(evaluationTimer)
         .log();
     return SELECTED;
   }
@@ -391,24 +415,34 @@ public class BlockTransactionSelector {
    *
    * @param pendingTransaction The unselected pending transaction.
    * @param selectionResult The result of the transaction selection process.
+   * @param evaluationTimer tracks the evaluation elapsed time
    * @return The result of the transaction selection process.
    */
   private TransactionSelectionResult handleTransactionNotSelected(
       final PendingTransaction pendingTransaction,
-      final TransactionSelectionResult selectionResult) {
+      final TransactionSelectionResult selectionResult,
+      final Stopwatch evaluationTimer) {
 
     transactionSelectionResults.updateNotSelected(
         pendingTransaction.getTransaction(), selectionResult);
     pluginTransactionSelector.onTransactionNotSelected(pendingTransaction, selectionResult);
+    LOG.atTrace()
+        .setMessage("Not selected {} for block creation with result {}, evaluated in {}")
+        .addArgument(pendingTransaction::toTraceLog)
+        .addArgument(selectionResult)
+        .addArgument(evaluationTimer)
+        .log();
+
     return selectionResult;
   }
 
   private TransactionSelectionResult handleTransactionNotSelected(
       final PendingTransaction pendingTransaction,
       final TransactionSelectionResult selectionResult,
-      final WorldUpdater txWorldStateUpdater) {
+      final WorldUpdater txWorldStateUpdater,
+      final Stopwatch evaluationTimer) {
     txWorldStateUpdater.revert();
-    return handleTransactionNotSelected(pendingTransaction, selectionResult);
+    return handleTransactionNotSelected(pendingTransaction, selectionResult, evaluationTimer);
   }
 
   private void checkCancellation() {

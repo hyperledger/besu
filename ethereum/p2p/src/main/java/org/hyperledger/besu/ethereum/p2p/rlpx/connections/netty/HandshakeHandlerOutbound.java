@@ -87,7 +87,7 @@ final class HandshakeHandlerOutbound extends AbstractHandshakeHandler {
         .addListener(
             f -> {
               if (f.isSuccess()) {
-                LOG.debug(
+                LOG.trace(
                     "Wrote initial crypto handshake message to {}.", ctx.channel().remoteAddress());
               }
             });

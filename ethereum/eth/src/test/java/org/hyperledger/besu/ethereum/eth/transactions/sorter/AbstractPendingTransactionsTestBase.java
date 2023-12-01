@@ -65,6 +65,7 @@ import org.junit.jupiter.api.Test;
 public abstract class AbstractPendingTransactionsTestBase {
 
   protected static final int MAX_TRANSACTIONS = 5;
+  protected static final int MAX_TRANSACTIONS_LARGE_POOL = 15;
   private static final float LIMITED_TRANSACTIONS_BY_SENDER_PERCENTAGE = 0.8f;
   protected static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -93,9 +94,24 @@ public abstract class AbstractPendingTransactionsTestBase {
           .build();
   protected PendingTransactions senderLimitedTransactions =
       getPendingTransactions(senderLimitedConfig, Optional.empty());
+  protected AbstractPendingTransactionsSorter transactionsLarge =
+      getPendingTransactions(
+          ImmutableTransactionPoolConfiguration.builder()
+              .txPoolMaxSize(MAX_TRANSACTIONS_LARGE_POOL)
+              .txPoolLimitByAccountPercentage(Fraction.fromFloat(1.0f))
+              .build(),
+          Optional.empty());
 
   protected final Transaction transaction1 = createTransaction(2);
   protected final Transaction transaction2 = createTransaction(1);
+  protected final Transaction transaction3 = createTransaction(3);
+
+  protected final Transaction zeroGasPriceTX1Sdr1 = createZeroGasPriceTransactionSender1(1);
+  protected final Transaction zeroGasPriceTX2Sdr1 = createZeroGasPriceTransactionSender1(2);
+  protected final Transaction zeroGasPriceTX3Sdr1 = createZeroGasPriceTransactionSender1(3);
+  protected final Transaction zeroGasPriceTX1Sdr2 = createZeroGasPriceTransactionSender2(1);
+  protected final Transaction zeroGasPriceTX2Sdr2 = createZeroGasPriceTransactionSender2(2);
+  protected final Transaction zeroGasPriceTX3Sdr2 = createZeroGasPriceTransactionSender2(3);
 
   protected final PendingTransactionAddedListener listener =
       mock(PendingTransactionAddedListener.class);
@@ -109,6 +125,7 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void shouldReturnExclusivelyLocalTransactionsWhenAppropriate() {
+
     final Transaction localTransaction0 = createTransaction(0);
     transactions.addTransaction(createLocalPendingTransaction(localTransaction0), Optional.empty());
     assertThat(transactions.size()).isEqualTo(1);
@@ -318,6 +335,62 @@ public abstract class AbstractPendingTransactionsTestBase {
     transactions.transactionAddedToBlock(transaction1);
 
     verifyNoInteractions(droppedListener);
+  }
+
+  @Test
+  public void selectTransactionsInCorrectOrder() {
+    assertThat(
+            transactionsLarge.addTransaction(
+                createRemotePendingTransaction(zeroGasPriceTX2Sdr1), Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactionsLarge.addTransaction(
+                createRemotePendingTransaction(zeroGasPriceTX3Sdr1), Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactionsLarge.addTransaction(
+                createRemotePendingTransaction(zeroGasPriceTX1Sdr2), Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactionsLarge.addTransaction(
+                createRemotePendingTransaction(zeroGasPriceTX1Sdr1), Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactionsLarge.addTransaction(
+                createRemotePendingTransaction(zeroGasPriceTX2Sdr2), Optional.empty()))
+        .isEqualTo(ADDED);
+    assertThat(
+            transactionsLarge.addTransaction(
+                createRemotePendingTransaction(zeroGasPriceTX3Sdr2), Optional.empty()))
+        .isEqualTo(ADDED);
+
+    final List<Transaction> parsedTransactions = Lists.newArrayList();
+    transactionsLarge.selectTransactions(
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
+
+          if (parsedTransactions.size() == 6) {
+            return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
+          }
+          return SELECTED;
+        });
+
+    // All 6 transactions should have been selected
+    assertThat(parsedTransactions.size()).isEqualTo(6);
+
+    // The order should be:
+    // sender 2, nonce 1
+    // sender 1, nonce 1
+    // sender 1, nonce 2
+    // sender 1, nonce 3
+    // sender 2, nonce 2
+    // sender 2, nonce 3
+    assertThat(parsedTransactions.get(0)).isEqualTo(zeroGasPriceTX1Sdr2);
+    assertThat(parsedTransactions.get(1)).isEqualTo(zeroGasPriceTX1Sdr1);
+    assertThat(parsedTransactions.get(2)).isEqualTo(zeroGasPriceTX2Sdr1);
+    assertThat(parsedTransactions.get(3)).isEqualTo(zeroGasPriceTX3Sdr1);
+    assertThat(parsedTransactions.get(4)).isEqualTo(zeroGasPriceTX2Sdr2);
+    assertThat(parsedTransactions.get(5)).isEqualTo(zeroGasPriceTX3Sdr2);
   }
 
   @Test
@@ -659,7 +732,28 @@ public abstract class AbstractPendingTransactionsTestBase {
     return new TransactionTestFixture()
         .value(Wei.of(transactionNumber))
         .nonce(transactionNumber)
+        .gasPrice(Wei.of(0))
         .createTransaction(KEYS1);
+  }
+
+  protected Transaction createZeroGasPriceTransactionSender1(final long transactionNumber) {
+    return new TransactionTestFixture()
+        .value(Wei.of(transactionNumber))
+        .nonce(transactionNumber)
+        .gasPrice(Wei.of(0))
+        .maxFeePerGas(Optional.of(Wei.of(0)))
+        .maxPriorityFeePerGas(Optional.of(Wei.of(0)))
+        .createTransaction(KEYS1);
+  }
+
+  protected Transaction createZeroGasPriceTransactionSender2(final long transactionNumber) {
+    return new TransactionTestFixture()
+        .value(Wei.of(transactionNumber))
+        .nonce(transactionNumber)
+        .gasPrice(Wei.of(0))
+        .maxFeePerGas(Optional.of(Wei.of(0)))
+        .maxPriorityFeePerGas(Optional.of(Wei.of(0)))
+        .createTransaction(KEYS2);
   }
 
   private PendingTransaction createRemotePendingTransaction(

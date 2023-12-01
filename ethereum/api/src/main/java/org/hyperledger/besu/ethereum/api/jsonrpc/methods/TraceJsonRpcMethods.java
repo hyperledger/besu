@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceBlock;
@@ -37,10 +38,15 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final BlockchainQueries blockchainQueries;
   private final ProtocolSchedule protocolSchedule;
 
+  private final ApiConfiguration apiConfiguration;
+
   TraceJsonRpcMethods(
-      final BlockchainQueries blockchainQueries, final ProtocolSchedule protocolSchedule) {
+      final BlockchainQueries blockchainQueries,
+      final ProtocolSchedule protocolSchedule,
+      final ApiConfiguration apiConfiguration) {
     this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;
+    this.apiConfiguration = apiConfiguration;
   }
 
   @Override
@@ -65,20 +71,23 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule)),
+                protocolSchedule,
+                apiConfiguration.getGasCap())),
         new TraceCallMany(
             blockchainQueries,
             protocolSchedule,
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule)),
+                protocolSchedule,
+                apiConfiguration.getGasCap())),
         new TraceRawTransaction(
             protocolSchedule,
             blockchainQueries,
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule)));
+                protocolSchedule,
+                apiConfiguration.getGasCap())));
   }
 }

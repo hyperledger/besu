@@ -41,31 +41,24 @@ public class BlockHeaderValidator {
       final BlockHeader parent,
       final ProtocolContext protocolContext,
       final HeaderValidationMode mode) {
-    switch (mode) {
-      case NONE:
-        return true;
-      case LIGHT_DETACHED_ONLY:
-        return applyRules(
-            header,
-            parent,
-            protocolContext,
-            rule -> rule.includeInLightValidation() && rule.isDetachedSupported());
-      case LIGHT_SKIP_DETACHED:
-        return applyRules(
-            header,
-            parent,
-            protocolContext,
-            rule -> rule.includeInLightValidation() && !rule.isDetachedSupported());
-      case LIGHT:
-        return applyRules(header, parent, protocolContext, Rule::includeInLightValidation);
-      case DETACHED_ONLY:
-        return applyRules(header, parent, protocolContext, Rule::isDetachedSupported);
-      case SKIP_DETACHED:
-        return applyRules(header, parent, protocolContext, rule -> !rule.isDetachedSupported());
-      case FULL:
-        return applyRules(header, parent, protocolContext, rule -> true);
-    }
-    throw new IllegalArgumentException("Unknown HeaderValidationMode: " + mode);
+    return switch (mode) {
+      case NONE -> true;
+      case LIGHT_DETACHED_ONLY -> applyRules(
+          header,
+          parent,
+          protocolContext,
+          rule -> rule.includeInLightValidation() && rule.isDetachedSupported());
+      case LIGHT_SKIP_DETACHED -> applyRules(
+          header,
+          parent,
+          protocolContext,
+          rule -> rule.includeInLightValidation() && !rule.isDetachedSupported());
+      case LIGHT -> applyRules(header, parent, protocolContext, Rule::includeInLightValidation);
+      case DETACHED_ONLY -> applyRules(header, parent, protocolContext, Rule::isDetachedSupported);
+      case SKIP_DETACHED -> applyRules(
+          header, parent, protocolContext, rule -> !rule.isDetachedSupported());
+      case FULL -> applyRules(header, parent, protocolContext, rule -> true);
+    };
   }
 
   public boolean validateHeader(
@@ -90,7 +83,9 @@ public class BlockHeaderValidator {
         .allMatch(
             rule -> {
               boolean worked = rule.validate(header, parent, protocolContext);
-              if (!worked) LOG.debug("{} rule failed", rule.innerRuleClass().getCanonicalName());
+              if (!worked) {
+                LOG.debug("{} rule failed", rule.innerRuleClass().getCanonicalName());
+              }
               return worked;
             });
   }

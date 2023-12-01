@@ -90,7 +90,7 @@ dependencies {
   testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'commons-io:commons-io'
   testImplementation 'io.opentelemetry:opentelemetry-api'
-  testImplementation 'junit:junit'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation 'org.apache.commons:commons-text'
   testImplementation 'io.tmio:tuweni-bytes'
   testImplementation 'io.tmio:tuweni-units'
