@@ -210,16 +210,20 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public void recordRequestTimeout(final int requestCode) {
-    LOG.debug("Timed out while waiting for response from peer {}", this.getShortNodeId());
+    LOG.atDebug()
+        .setMessage("Timed out while waiting for response from peer {}...")
+        .addArgument(this::getShortNodeId)
+        .log();
     LOG.trace("Timed out while waiting for response from peer {}", this);
     reputation.recordRequestTimeout(requestCode).ifPresent(this::disconnect);
   }
 
   public void recordUselessResponse(final String requestType) {
-    LOG.debug(
-        "Received useless response for request type {} from peer {}",
-        requestType,
-        this.getShortNodeId());
+    LOG.atTrace()
+        .setMessage("Received useless response for request type {} from peer {}...")
+        .addArgument(requestType)
+        .addArgument(this::getShortNodeId)
+        .log();
     reputation.recordUselessResponse(System.currentTimeMillis()).ifPresent(this::disconnect);
   }
 
@@ -257,14 +261,18 @@ public class EthPeer implements Comparable<EthPeer> {
       throws PeerNotConnected {
     if (connectionToUse.getAgreedCapabilities().stream()
         .noneMatch(capability -> capability.getName().equalsIgnoreCase(protocolName))) {
-      LOG.debug("Protocol {} unavailable for this peer {}", protocolName, this.getShortNodeId());
+      LOG.atDebug()
+          .setMessage("Protocol {} unavailable for this peer {}...")
+          .addArgument(protocolName)
+          .addArgument(this.getShortNodeId())
+          .log();
       return null;
     }
     if (permissioningProviders.stream()
         .anyMatch(
             p -> !p.isMessagePermitted(connectionToUse.getRemoteEnode(), messageData.getCode()))) {
       LOG.info(
-          "Permissioning blocked sending of message code {} to {}",
+          "Permissioning blocked sending of message code {} to {}...",
           messageData.getCode(),
           this.getShortNodeId());
       if (LOG.isDebugEnabled()) {
@@ -454,7 +462,7 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   void handleDisconnect() {
-    LOG.debug("handleDisconnect - EthPeer {}", this);
+    LOG.trace("handleDisconnect - EthPeer {}", this);
 
     requestManagers.forEach(
         (protocolName, map) -> map.forEach((code, requestManager) -> requestManager.close()));
