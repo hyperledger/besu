@@ -76,14 +76,14 @@ public class RocksDbUsageHelper {
     return null; // id not found
   }
 
-  public static void printTableHeader(final PrintWriter out) {
+  static void printTableHeader(final PrintWriter out) {
     out.format(
         "| Column Family                  | Keys            | Column Size  | SST Files Size  |\n");
     out.format(
         "|--------------------------------|-----------------|--------------|-----------------|\n");
   }
 
-  public static void printLine(
+  static void printLine(
       final PrintWriter out,
       final String cfName,
       final String keys,
