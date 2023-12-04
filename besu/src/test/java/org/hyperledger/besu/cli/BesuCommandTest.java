@@ -3816,6 +3816,21 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void pruningLogsDeprecationWarning() {
+    parseCommand("--pruning-enabled");
+
+    verify(mockControllerBuilder).isPruningEnabled(true);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    verify(mockLogger)
+        .warn(
+            contains(
+                "Forest pruning is deprecated and will be removed soon."
+                    + " To save disk space consider switching to Bonsai data storage format."));
+  }
+
+  @Test
   public void devModeOptionMustBeUsed() throws Exception {
     parseCommand("--network", "dev");
 
