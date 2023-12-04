@@ -1,5 +1,18 @@
 # Changelog
 
+## 23.10.4
+
+### Breaking Changes
+
+### Deprecations
+- Forest pruning (`pruning-enabled` options) is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format [#6230](https://github.com/hyperledger/besu/pull/6230)
+
+### Additions and Improvements
+- Add error messages on authentication failures with username and password [#6212](https://github.com/hyperledger/besu/pull/6212)
+
+### Bug fixes
+
+
 ## 23.10.3
 
 ### Breaking Changes
