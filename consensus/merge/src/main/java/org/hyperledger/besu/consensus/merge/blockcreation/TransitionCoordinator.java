@@ -102,6 +102,11 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
+  public Wei getMinPriorityFeePerGas() {
+    return dispatchFunctionAccordingToMergeState(MiningCoordinator::getMinPriorityFeePerGas);
+  }
+
+  @Override
   public void setExtraData(final Bytes extraData) {
     miningCoordinator.setExtraData(extraData);
     mergeCoordinator.setExtraData(extraData);
