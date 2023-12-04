@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
 public class DefaultAuthenticationService implements AuthenticationService {
 
   public static final String USERNAME = "username";
+  public static final String PASSWORD = "password";
   private final JWTAuth jwtAuthProvider;
   @VisibleForTesting public final JWTAuthOptions jwtAuthOptions;
   private final Optional<AuthenticationProvider> credentialAuthProvider;
@@ -173,7 +174,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
     if (requestBody == null
         || requestBody.getValue(USERNAME) == null
-        || requestBody.getValue("password") == null) {
+        || requestBody.getValue(PASSWORD) == null) {
       routingContext
           .response()
           .setStatusCode(HttpResponseStatus.BAD_REQUEST.code())
@@ -185,7 +186,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
     // Check user
     final JsonObject authParams = new JsonObject();
     authParams.put(USERNAME, requestBody.getValue(USERNAME));
-    authParams.put("password", requestBody.getValue("password"));
+    authParams.put(PASSWORD, requestBody.getValue(PASSWORD));
     final Credentials credentials = new UsernamePasswordCredentials(authParams);
 
     credentialAuthProvider.authenticate(
