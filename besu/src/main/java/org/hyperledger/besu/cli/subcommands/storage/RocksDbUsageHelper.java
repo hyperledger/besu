@@ -23,31 +23,41 @@ import org.bouncycastle.util.Arrays;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** RocksDB Usage subcommand helper methods for formatting and printing. */
 public class RocksDbUsageHelper {
+  private static final Logger LOG = LoggerFactory.getLogger(RocksDbUsageHelper.class);
 
   static void printUsageForColumnFamily(
       final RocksDB rocksdb, final ColumnFamilyHandle cfHandle, final PrintWriter out)
-      throws RocksDBException {
+      throws RocksDBException, NumberFormatException {
     final String size = rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size");
     boolean emptyColumnFamily = false;
     if (!size.isEmpty() && !size.isBlank()) {
-      final long sizeLong = Long.parseLong(size);
-      if (sizeLong == 0) {
-        emptyColumnFamily = true;
-      }
-      String totolSstFilesSize = rocksdb.getProperty(cfHandle, "rocksdb.total-sst-files-size");
-      if (!emptyColumnFamily) {
-        printLine(
-            out,
-            getNameById(cfHandle.getName()),
-            rocksdb.getProperty(cfHandle, "rocksdb.estimate-num-keys"),
-            formatOutputSize(sizeLong),
-            formatOutputSize(
-                !totolSstFilesSize.isEmpty() && !totolSstFilesSize.isBlank()
-                    ? Long.parseLong(rocksdb.getProperty(cfHandle, "rocksdb.total-sst-files-size"))
-                    : 0));
+      try {
+        final long sizeLong = Long.parseLong(size);
+        final String totalSstFilesSize =
+            rocksdb.getProperty(cfHandle, "rocksdb.total-sst-files-size");
+        final long totalSstFilesSizeLong =
+            !totalSstFilesSize.isEmpty() && !totalSstFilesSize.isBlank()
+                ? Long.parseLong(totalSstFilesSize)
+                : 0;
+        if (sizeLong == 0) {
+          emptyColumnFamily = true;
+        }
+
+        if (!emptyColumnFamily) {
+          printLine(
+              out,
+              getNameById(cfHandle.getName()),
+              rocksdb.getProperty(cfHandle, "rocksdb.estimate-num-keys"),
+              formatOutputSize(sizeLong),
+              formatOutputSize(totalSstFilesSizeLong));
+        }
+      } catch (NumberFormatException e) {
+        LOG.error("Failed to parse string into long: " + e.getMessage());
       }
     }
   }
