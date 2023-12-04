@@ -245,6 +245,26 @@ public class PeerDiscoveryAgentTest {
   }
 
   @Test
+  public void endpointHonoursCustomAdvertisedAddressInPingPacket() {
+
+    // Start a peer with the default advertised host
+    final MockPeerDiscoveryAgent agent1 = helper.startDiscoveryAgent();
+
+    // Start another peer with its advertised host set to a custom value
+    final MockPeerDiscoveryAgent agent2 = helper.startDiscoveryAgent("192.168.0.1");
+
+    // Send a PING so we can exchange messages
+    Packet packet = helper.createPingPacket(agent2, agent1);
+    helper.sendMessageBetweenAgents(agent2, agent1, packet);
+
+    // Agent 1's peers should have endpoints that match the custom advertised value...
+    agent1.streamDiscoveredPeers().forEach(peer -> assertThat(peer.getEndpoint().getHost()).isEqualTo("192.168.0.1"));
+
+    // Agent 2's peers should have endpoints that match the default
+    agent2.streamDiscoveredPeers().forEach(peer -> assertThat(peer.getEndpoint().getHost()).isEqualTo("127.0.0.1"));
+  }
+
+  @Test
   public void shouldEvictPeerWhenPermissionsRevoked() {
     final PeerPermissionsDenylist denylist = PeerPermissionsDenylist.create();
     final MockPeerDiscoveryAgent peerDiscoveryAgent1 = helper.startDiscoveryAgent();

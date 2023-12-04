@@ -284,12 +284,17 @@ public abstract class PeerDiscoveryAgent {
 
     // If the host is present in the P2P packet itself, use that as the endpoint. Otherwise
     // take it from the UDP packet source IP.
-    final String host =
+    String host =
         packet
             .getPacketData(PingPacketData.class)
             .flatMap(PingPacketData::getFrom)
             .map(Endpoint::getHost)
             .orElse(sourceEndpoint.getHost());
+
+    if (host.equals("127.0.0.1")) {
+      host = sourceEndpoint.getHost();
+      LOG.trace("Ping packet advertised endpoint '127.0.0.1' ignored, using UDP source host {}", host);
+    }
 
     // Notify the peer controller.
     final DiscoveryPeer peer =
