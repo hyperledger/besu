@@ -148,6 +148,15 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
   }
 
   /**
+   * Gets min priority fee per gas
+   *
+   * @return min priority fee per gas
+   */
+  public Wei getMinPriorityFeePerGas() {
+    return miningParameters.getMinPriorityFeePerGas();
+  }
+
+  /**
    * Create extra data bytes.
    *
    * @param round the round
