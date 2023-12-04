@@ -224,8 +224,7 @@ assertThat(bodyString).contains("username and password are required");
       assertThat(resp.code()).isEqualTo(401);
       assertThat(resp.message()).isEqualTo("Unauthorized");
       final String bodyString = resp.body().string();
-      assertThat(bodyString).isNotNull();
-      assertThat(bodyString).isNotBlank();
+      assertThat(bodyString).contains("the username or password is incorrect");
     }
   }
 
