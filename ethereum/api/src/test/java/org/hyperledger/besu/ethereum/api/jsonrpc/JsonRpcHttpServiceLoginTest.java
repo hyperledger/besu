@@ -211,8 +211,7 @@ public class JsonRpcHttpServiceLoginTest {
       assertThat(resp.code()).isEqualTo(400);
       assertThat(resp.message()).isEqualTo("Bad Request");
       final String bodyString = resp.body().string();
-      assertThat(bodyString).isNotNull();
-      assertThat(bodyString).isNotBlank();
+assertThat(bodyString).contains("username and password are required");
     }
   }
 
