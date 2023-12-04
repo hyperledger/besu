@@ -205,8 +205,7 @@ public class JsonRpcHttpServiceLoginTest {
 
   @Test
   public void loginWithEmptyCredentials() throws IOException {
-    final RequestBody body =
-            RequestBody.create("{}", JSON);
+    final RequestBody body = RequestBody.create("{}", JSON);
     final Request request = new Request.Builder().post(body).url(baseUrl + "/login").build();
     try (final Response resp = client.newCall(request).execute()) {
       assertThat(resp.code()).isEqualTo(400);
