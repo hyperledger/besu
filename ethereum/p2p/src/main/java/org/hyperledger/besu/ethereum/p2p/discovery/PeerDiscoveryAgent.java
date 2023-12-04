@@ -289,11 +289,12 @@ public abstract class PeerDiscoveryAgent {
             .getPacketData(PingPacketData.class)
             .flatMap(PingPacketData::getFrom)
             .map(Endpoint::getHost)
-            .orElse(sourceEndpoint.getHost());
+            .orElseGet(sourceEndpoint::getHost);
 
     if (host.equals("127.0.0.1")) {
       host = sourceEndpoint.getHost();
-      LOG.trace("Ping packet advertised endpoint '127.0.0.1' ignored, using UDP source host {}", host);
+      LOG.trace(
+          "Ping packet advertised endpoint '127.0.0.1' ignored, using UDP source host {}", host);
     }
 
     // Notify the peer controller.

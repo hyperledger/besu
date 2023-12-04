@@ -165,8 +165,10 @@ public class PeerDiscoveryTestHelper {
     return startDiscoveryAgent(agentBuilder);
   }
 
-  public MockPeerDiscoveryAgent startDiscoveryAgent(final String advertisedHost, final DiscoveryPeer... bootstrapPeers) {
-    final AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(bootstrapPeers).advertisedHost(advertisedHost);
+  public MockPeerDiscoveryAgent startDiscoveryAgent(
+      final String advertisedHost, final DiscoveryPeer... bootstrapPeers) {
+    final AgentBuilder agentBuilder =
+        agentBuilder().bootstrapPeers(bootstrapPeers).advertisedHost(advertisedHost);
 
     return startDiscoveryAgent(agentBuilder);
   }

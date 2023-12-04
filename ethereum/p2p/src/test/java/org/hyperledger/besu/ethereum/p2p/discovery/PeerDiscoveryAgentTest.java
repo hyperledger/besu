@@ -258,10 +258,14 @@ public class PeerDiscoveryAgentTest {
     helper.sendMessageBetweenAgents(agent2, agent1, packet);
 
     // Agent 1's peers should have endpoints that match the custom advertised value...
-    agent1.streamDiscoveredPeers().forEach(peer -> assertThat(peer.getEndpoint().getHost()).isEqualTo("192.168.0.1"));
+    agent1
+        .streamDiscoveredPeers()
+        .forEach(peer -> assertThat(peer.getEndpoint().getHost()).isEqualTo("192.168.0.1"));
 
-    // Agent 2's peers should have endpoints that match the default
-    agent2.streamDiscoveredPeers().forEach(peer -> assertThat(peer.getEndpoint().getHost()).isEqualTo("127.0.0.1"));
+    // ...but agent 2's peers should have endpoints that match the default
+    agent2
+        .streamDiscoveredPeers()
+        .forEach(peer -> assertThat(peer.getEndpoint().getHost()).isEqualTo("127.0.0.1"));
   }
 
   @Test
