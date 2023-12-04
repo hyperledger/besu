@@ -149,6 +149,11 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
   }
 
   @Override
+  public Wei getMinPriorityFeePerGas() {
+    return blockCreatorFactory.getMinPriorityFeePerGas();
+  }
+
+  @Override
   public void setExtraData(final Bytes extraData) {
     blockCreatorFactory.setExtraData(extraData);
   }
