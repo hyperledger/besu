@@ -80,7 +80,8 @@ public class KeyValueStorageProvider implements StorageProvider {
       final DataStorageConfiguration dataStorageConfiguration) {
     if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
       final FlatDbStrategyProvider flatDbStrategyProvider =
-          new FlatDbStrategyProvider(metricsSystem, dataStorageConfiguration);
+          new FlatDbStrategyProvider(
+              metricsSystem, dataStorageConfiguration, createVariablesStorage());
       return new BonsaiWorldStateKeyValueStorage(this, flatDbStrategyProvider);
     } else {
       return new WorldStateKeyValueStorage(

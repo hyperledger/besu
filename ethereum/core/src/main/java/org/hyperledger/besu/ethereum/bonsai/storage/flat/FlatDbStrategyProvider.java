@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.bonsai.storage.flat;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
+import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -36,13 +37,17 @@ public class FlatDbStrategyProvider {
   public static final byte[] FLAT_DB_MODE = "flatDbStatus".getBytes(StandardCharsets.UTF_8);
   private final MetricsSystem metricsSystem;
   private final DataStorageConfiguration dataStorageConfiguration;
+  private final VariablesStorage variablesStorage;
   protected FlatDbMode flatDbMode;
   protected FlatDbStrategy flatDbStrategy;
 
   public FlatDbStrategyProvider(
-      final MetricsSystem metricsSystem, final DataStorageConfiguration dataStorageConfiguration) {
+      final MetricsSystem metricsSystem,
+      final DataStorageConfiguration dataStorageConfiguration,
+      final VariablesStorage variablesStorage) {
     this.metricsSystem = metricsSystem;
     this.dataStorageConfiguration = dataStorageConfiguration;
+    this.variablesStorage = variablesStorage;
   }
 
   public void loadFlatDbStrategy(final SegmentedKeyValueStorage composedWorldStateStorage) {
@@ -52,7 +57,7 @@ public class FlatDbStrategyProvider {
     if (this.flatDbMode == null || !this.flatDbMode.equals(newFlatDbMode)) {
       this.flatDbMode = newFlatDbMode;
       final boolean useCodeHashStorageMode =
-          dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
+          variablesStorage.isCodeStoredUsingCodeHash().orElse(false);
       final boolean deleteCodeEnabled =
           dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
       if (flatDbMode == FlatDbMode.FULL) {

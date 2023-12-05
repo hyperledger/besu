@@ -83,7 +83,9 @@ class StorageFlatDatabaseHealingRangeRequestTest {
         new BonsaiWorldStateKeyValueStorage(
             storageProvider,
             new FlatDbStrategyProvider(
-                new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+                new NoOpMetricsSystem(),
+                DataStorageConfiguration.DEFAULT_CONFIG,
+                storageProvider.createVariablesStorage()));
     proofProvider = new WorldStateProofProvider(worldStateStorage);
     trie =
         TrieGenerator.generateTrie(

@@ -82,6 +82,7 @@ class BonsaiWorldStateArchiveTest {
 
   @Mock CachedWorldStorageManager cachedWorldStorageManager;
   @Mock TrieLogManager trieLogManager;
+  @Mock VariablesStorage variablesStorage;
 
   @BeforeEach
   public void setUp() {
@@ -90,7 +91,7 @@ class BonsaiWorldStateArchiveTest {
     when(segmentedKeyValueStorage.startTransaction())
         .thenReturn(segmentedKeyValueStorageTransaction);
     when(storageProvider.getStorageBySegmentIdentifier(any())).thenReturn(trieLogStorage);
-    when(storageProvider.createVariablesStorage()).thenReturn(mock(VariablesStorage.class));
+    when(storageProvider.createVariablesStorage()).thenReturn(variablesStorage);
     when(trieLogStorage.startTransaction()).thenReturn(mock(KeyValueStorageTransaction.class));
   }
 
@@ -113,7 +114,9 @@ class BonsaiWorldStateArchiveTest {
             new BonsaiWorldStateKeyValueStorage(
                 storageProvider,
                 new FlatDbStrategyProvider(
-                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
+                    new NoOpMetricsSystem(),
+                    DataStorageConfiguration.DEFAULT_CONFIG,
+                    variablesStorage)),
             blockchain,
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT);
@@ -129,7 +132,9 @@ class BonsaiWorldStateArchiveTest {
             new BonsaiWorldStateKeyValueStorage(
                 storageProvider,
                 new FlatDbStrategyProvider(
-                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
+                    new NoOpMetricsSystem(),
+                    DataStorageConfiguration.DEFAULT_CONFIG,
+                    variablesStorage)),
             blockchain,
             Optional.of(512L),
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
@@ -153,7 +158,9 @@ class BonsaiWorldStateArchiveTest {
             new BonsaiWorldStateKeyValueStorage(
                 storageProvider,
                 new FlatDbStrategyProvider(
-                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
+                    new NoOpMetricsSystem(),
+                    DataStorageConfiguration.DEFAULT_CONFIG,
+                    variablesStorage)),
             blockchain,
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT);
@@ -182,7 +189,9 @@ class BonsaiWorldStateArchiveTest {
         new BonsaiWorldStateKeyValueStorage(
             storageProvider,
             new FlatDbStrategyProvider(
-                new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+                new NoOpMetricsSystem(),
+                DataStorageConfiguration.DEFAULT_CONFIG,
+                variablesStorage));
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateProvider(
@@ -211,7 +220,9 @@ class BonsaiWorldStateArchiveTest {
         new BonsaiWorldStateKeyValueStorage(
             storageProvider,
             new FlatDbStrategyProvider(
-                new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+                new NoOpMetricsSystem(),
+                DataStorageConfiguration.DEFAULT_CONFIG,
+                variablesStorage));
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateProvider(
@@ -250,7 +261,9 @@ class BonsaiWorldStateArchiveTest {
         new BonsaiWorldStateKeyValueStorage(
             storageProvider,
             new FlatDbStrategyProvider(
-                new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+                new NoOpMetricsSystem(),
+                DataStorageConfiguration.DEFAULT_CONFIG,
+                variablesStorage));
 
     bonsaiWorldStateArchive =
         spy(
@@ -300,7 +313,9 @@ class BonsaiWorldStateArchiveTest {
                 new BonsaiWorldStateKeyValueStorage(
                     storageProvider,
                     new FlatDbStrategyProvider(
-                        new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
+                        new NoOpMetricsSystem(),
+                        DataStorageConfiguration.DEFAULT_CONFIG,
+                        variablesStorage)),
                 blockchain,
                 new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
                 EvmConfiguration.DEFAULT));

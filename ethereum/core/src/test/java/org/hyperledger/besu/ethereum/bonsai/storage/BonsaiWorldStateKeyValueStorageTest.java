@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.StorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
@@ -128,16 +129,16 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @ParameterizedTest
   @MethodSource("flatDbModeAndCodeStorageMode")
   void getNodeData_returnsEmptyNode(
-      final FlatDbMode flatDbMode, final boolean accountHashCodeStorage) {
-    setUp(flatDbMode, accountHashCodeStorage);
+      final FlatDbMode flatDbMode, final boolean useCodeHashStorageMode) {
+    setUp(flatDbMode, useCodeHashStorageMode);
     assertThat(storage.getNodeData(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH)).isEmpty();
   }
 
   @ParameterizedTest
   @MethodSource("flatDbModeAndCodeStorageMode")
   void getCode_saveAndGetSpecialValues(
-      final FlatDbMode flatDbMode, final boolean accountHashCodeStorage) {
-    setUp(flatDbMode, accountHashCodeStorage);
+      final FlatDbMode flatDbMode, final boolean useCodeHashStorageMode) {
+    setUp(flatDbMode, useCodeHashStorageMode);
     storage
         .updater()
         .putCode(Hash.EMPTY, MerkleTrie.EMPTY_TRIE_NODE)
@@ -151,8 +152,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @ParameterizedTest
   @MethodSource("flatDbModeAndCodeStorageMode")
   void getCode_saveAndGetRegularValue(
-      final FlatDbMode flatDbMode, final boolean accountHashCodeStorage) {
-    setUp(flatDbMode, accountHashCodeStorage);
+      final FlatDbMode flatDbMode, final boolean useCodeHashStorageMode) {
+    setUp(flatDbMode, useCodeHashStorageMode);
     final Bytes bytes = Bytes.fromHexString("0x123456");
     storage.updater().putCode(Hash.EMPTY, bytes).commit();
 
@@ -501,10 +502,13 @@ public class BonsaiWorldStateKeyValueStorageTest {
   }
 
   private BonsaiWorldStateKeyValueStorage emptyStorage() {
+    final KeyValueStorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
     return new BonsaiWorldStateKeyValueStorage(
-        new InMemoryKeyValueStorageProvider(),
+        storageProvider,
         new FlatDbStrategyProvider(
-            new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+            new NoOpMetricsSystem(),
+            DataStorageConfiguration.DEFAULT_CONFIG,
+            storageProvider.createVariablesStorage()));
   }
 
   private BonsaiWorldStateKeyValueStorage emptyStorage(final boolean useCodeHashStorageMode) {
@@ -517,23 +521,29 @@ public class BonsaiWorldStateKeyValueStorageTest {
                     .bonsaiCodeStoredByCodeHashEnabled(useCodeHashStorageMode)
                     .build())
             .build();
+    final KeyValueStorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
     return new BonsaiWorldStateKeyValueStorage(
-        new InMemoryKeyValueStorageProvider(),
-        new FlatDbStrategyProvider(new NoOpMetricsSystem(), dataStorageConfiguration));
+        storageProvider,
+        new FlatDbStrategyProvider(
+            new NoOpMetricsSystem(),
+            dataStorageConfiguration,
+            storageProvider.createVariablesStorage()));
   }
 
   private BonsaiWorldStateKeyValueStorage setupMockStorage(
       final KeyValueStorage mockTrieLogStorage) {
     final StorageProvider mockStorageProvider = mock(StorageProvider.class);
+    final VariablesStorage mockVariablesStorage = mock(VariablesStorage.class);
     when(mockStorageProvider.getStorageBySegmentIdentifier(
             KeyValueSegmentIdentifier.TRIE_LOG_STORAGE))
         .thenReturn(mockTrieLogStorage);
     when(mockStorageProvider.getStorageBySegmentIdentifiers(any()))
         .thenReturn(mock(SegmentedKeyValueStorage.class));
-    when(mockStorageProvider.createVariablesStorage()).thenReturn(mock(VariablesStorage.class));
     return new BonsaiWorldStateKeyValueStorage(
         mockStorageProvider,
         new FlatDbStrategyProvider(
-            new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+            new NoOpMetricsSystem(),
+            DataStorageConfiguration.DEFAULT_CONFIG,
+            mockVariablesStorage));
   }
 }

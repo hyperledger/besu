@@ -60,7 +60,9 @@ public class RollingImport {
             new BonsaiWorldStateKeyValueStorage(
                 provider,
                 new FlatDbStrategyProvider(
-                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
+                    new NoOpMetricsSystem(),
+                    DataStorageConfiguration.DEFAULT_CONFIG,
+                    provider.createVariablesStorage())),
             EvmConfiguration.DEFAULT);
     final SegmentedInMemoryKeyValueStorage worldStateStorage =
         (SegmentedInMemoryKeyValueStorage)

@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -119,12 +120,15 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     final BonsaiPreImageProxy preImageProxy =
         new BonsaiPreImageProxy.BonsaiReferenceTestPreImageProxy();
 
+    final KeyValueStorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
     final BonsaiReferenceTestWorldStateStorage worldStateStorage =
         new BonsaiReferenceTestWorldStateStorage(
             new BonsaiWorldStateKeyValueStorage(
-                new InMemoryKeyValueStorageProvider(),
+                storageProvider,
                 new FlatDbStrategyProvider(
-                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
+                    new NoOpMetricsSystem(),
+                    DataStorageConfiguration.DEFAULT_CONFIG,
+                    storageProvider.createVariablesStorage())),
             preImageProxy);
 
     final NoOpCachedWorldStorageManager noOpCachedWorldStorageManager =
@@ -161,7 +165,9 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
           new BonsaiWorldStateKeyValueStorage(
               new InMemoryKeyValueStorageProvider(),
               new FlatDbStrategyProvider(
-                  new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)));
+                  new NoOpMetricsSystem(),
+                  DataStorageConfiguration.DEFAULT_CONFIG,
+                  new InMemoryKeyValueStorageProvider().createVariablesStorage())));
     }
 
     @SuppressWarnings({"UnsynchronizedOverridesSynchronized", "squid:S3551"})

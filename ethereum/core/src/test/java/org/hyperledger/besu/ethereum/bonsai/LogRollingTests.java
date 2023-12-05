@@ -166,7 +166,9 @@ class LogRollingTests {
             new BonsaiWorldStateKeyValueStorage(
                 provider,
                 new FlatDbStrategyProvider(
-                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
+                    new NoOpMetricsSystem(),
+                    DataStorageConfiguration.DEFAULT_CONFIG,
+                    provider.createVariablesStorage())),
             EvmConfiguration.DEFAULT);
     final WorldUpdater updater = worldState.updater();
 
@@ -182,7 +184,9 @@ class LogRollingTests {
             new BonsaiWorldStateKeyValueStorage(
                 secondProvider,
                 new FlatDbStrategyProvider(
-                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
+                    new NoOpMetricsSystem(),
+                    DataStorageConfiguration.DEFAULT_CONFIG,
+                    provider.createVariablesStorage())),
             EvmConfiguration.DEFAULT);
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
@@ -216,7 +220,9 @@ class LogRollingTests {
             new BonsaiWorldStateKeyValueStorage(
                 provider,
                 new FlatDbStrategyProvider(
-                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
+                    new NoOpMetricsSystem(),
+                    DataStorageConfiguration.DEFAULT_CONFIG,
+                    provider.createVariablesStorage())),
             EvmConfiguration.DEFAULT);
 
     final WorldUpdater updater = worldState.updater();
@@ -240,7 +246,9 @@ class LogRollingTests {
             new BonsaiWorldStateKeyValueStorage(
                 secondProvider,
                 new FlatDbStrategyProvider(
-                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
+                    new NoOpMetricsSystem(),
+                    DataStorageConfiguration.DEFAULT_CONFIG,
+                    provider.createVariablesStorage())),
             EvmConfiguration.DEFAULT);
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
@@ -275,7 +283,9 @@ class LogRollingTests {
             new BonsaiWorldStateKeyValueStorage(
                 provider,
                 new FlatDbStrategyProvider(
-                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
+                    new NoOpMetricsSystem(),
+                    DataStorageConfiguration.DEFAULT_CONFIG,
+                    provider.createVariablesStorage())),
             EvmConfiguration.DEFAULT);
 
     final WorldUpdater updater = worldState.updater();
@@ -306,7 +316,9 @@ class LogRollingTests {
             new BonsaiWorldStateKeyValueStorage(
                 secondProvider,
                 new FlatDbStrategyProvider(
-                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
+                    new NoOpMetricsSystem(),
+                    DataStorageConfiguration.DEFAULT_CONFIG,
+                    provider.createVariablesStorage())),
             EvmConfiguration.DEFAULT);
 
     final WorldUpdater secondUpdater = secondWorldState.updater();

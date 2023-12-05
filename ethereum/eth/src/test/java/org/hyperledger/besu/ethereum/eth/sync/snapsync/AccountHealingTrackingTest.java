@@ -62,7 +62,9 @@ public class AccountHealingTrackingTest {
       new BonsaiWorldStateKeyValueStorage(
           new InMemoryKeyValueStorageProvider(),
           new FlatDbStrategyProvider(
-              new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+              new NoOpMetricsSystem(),
+              DataStorageConfiguration.DEFAULT_CONFIG,
+              new InMemoryKeyValueStorageProvider().createVariablesStorage()));
 
   private WorldStateProofProvider worldStateProofProvider;
 

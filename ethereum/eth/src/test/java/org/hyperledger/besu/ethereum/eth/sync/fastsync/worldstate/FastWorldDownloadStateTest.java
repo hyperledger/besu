@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProcess;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
@@ -80,11 +81,14 @@ public class FastWorldDownloadStateTest {
 
   public void setUp(final DataStorageFormat storageFormat) {
     if (storageFormat == DataStorageFormat.BONSAI) {
+      final KeyValueStorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
       worldStateStorage =
           new BonsaiWorldStateKeyValueStorage(
-              new InMemoryKeyValueStorageProvider(),
+              storageProvider,
               new FlatDbStrategyProvider(
-                  new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+                  new NoOpMetricsSystem(),
+                  DataStorageConfiguration.DEFAULT_CONFIG,
+                  storageProvider.createVariablesStorage()));
     } else {
       worldStateStorage = new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     }

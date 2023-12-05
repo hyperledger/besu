@@ -54,7 +54,9 @@ class CachedMerkleTrieLoaderTest {
           new BonsaiWorldStateKeyValueStorage(
               storageProvider,
               new FlatDbStrategyProvider(
-                  new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)));
+                  new NoOpMetricsSystem(),
+                  DataStorageConfiguration.DEFAULT_CONFIG,
+                  storageProvider.createVariablesStorage())));
 
   final List<Address> accounts =
       List.of(Address.fromHexString("0xdeadbeef"), Address.fromHexString("0xdeadbeee"));
@@ -79,7 +81,9 @@ class CachedMerkleTrieLoaderTest {
         new BonsaiWorldStateKeyValueStorage(
             new InMemoryKeyValueStorageProvider(),
             new FlatDbStrategyProvider(
-                new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+                new NoOpMetricsSystem(),
+                DataStorageConfiguration.DEFAULT_CONFIG,
+                storageProvider.createVariablesStorage()));
     StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
@@ -120,7 +124,9 @@ class CachedMerkleTrieLoaderTest {
         new BonsaiWorldStateKeyValueStorage(
             new InMemoryKeyValueStorageProvider(),
             new FlatDbStrategyProvider(
-                new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+                new NoOpMetricsSystem(),
+                DataStorageConfiguration.DEFAULT_CONFIG,
+                storageProvider.createVariablesStorage()));
     final StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->

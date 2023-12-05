@@ -112,7 +112,9 @@ public class SnapWorldDownloadStateTest {
           new BonsaiWorldStateKeyValueStorage(
               new InMemoryKeyValueStorageProvider(),
               new FlatDbStrategyProvider(
-                  new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+                  new NoOpMetricsSystem(),
+                  DataStorageConfiguration.DEFAULT_CONFIG,
+                  new InMemoryKeyValueStorageProvider().createVariablesStorage()));
     } else {
       worldStateStorage = new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     }

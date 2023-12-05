@@ -184,7 +184,9 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
         new BonsaiWorldStateKeyValueStorage(
             storageProvider,
             new FlatDbStrategyProvider(
-                new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+                new NoOpMetricsSystem(),
+                DataStorageConfiguration.DEFAULT_CONFIG,
+                storageProvider.createVariablesStorage()));
     final WorldStateProofProvider proofProvider = new WorldStateProofProvider(worldStateStorage);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);
@@ -241,7 +243,9 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
         new BonsaiWorldStateKeyValueStorage(
             storageProvider,
             new FlatDbStrategyProvider(
-                new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+                new NoOpMetricsSystem(),
+                DataStorageConfiguration.DEFAULT_CONFIG,
+                storageProvider.createVariablesStorage()));
     final WorldStateProofProvider proofProvider = new WorldStateProofProvider(worldStateStorage);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);
