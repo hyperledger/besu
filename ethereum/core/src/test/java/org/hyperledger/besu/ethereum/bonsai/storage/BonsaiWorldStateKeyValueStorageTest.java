@@ -16,9 +16,6 @@ package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -31,7 +28,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.bonsai.storage.flat.PartialFlatDbStrategy;
+import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
@@ -41,7 +38,10 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.StorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -49,7 +49,6 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
 
@@ -503,26 +502,24 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
   private BonsaiWorldStateKeyValueStorage emptyStorage() {
     return new BonsaiWorldStateKeyValueStorage(
-        new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem(), false);
+        new InMemoryKeyValueStorageProvider(),
+        new FlatDbStrategyProvider(
+            new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
   }
 
   private BonsaiWorldStateKeyValueStorage emptyStorage(final boolean useCodeHashStorageMode) {
-    final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
-    var metricsSystem = new NoOpMetricsSystem();
-    var segmentedStorage =
-        provider.getStorageBySegmentIdentifiers(
-            List.of(
-                ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE));
-    var trieLogStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+    final DataStorageConfiguration dataStorageConfiguration =
+        ImmutableDataStorageConfiguration.builder()
+            .dataStorageFormat(DataStorageFormat.BONSAI)
+            .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+            .unstable(
+                ImmutableDataStorageConfiguration.Unstable.builder()
+                    .bonsaiCodeStoredByCodeHashEnabled(useCodeHashStorageMode)
+                    .build())
+            .build();
     return new BonsaiWorldStateKeyValueStorage(
-        FlatDbMode.PARTIAL,
-        new PartialFlatDbStrategy(metricsSystem, useCodeHashStorageMode, false),
-        segmentedStorage,
-        trieLogStorage,
-        metricsSystem,
-        useCodeHashStorageMode,
-        false);
+        new InMemoryKeyValueStorageProvider(),
+        new FlatDbStrategyProvider(new NoOpMetricsSystem(), dataStorageConfiguration));
   }
 
   private BonsaiWorldStateKeyValueStorage setupMockStorage(
@@ -534,6 +531,9 @@ public class BonsaiWorldStateKeyValueStorageTest {
     when(mockStorageProvider.getStorageBySegmentIdentifiers(any()))
         .thenReturn(mock(SegmentedKeyValueStorage.class));
     when(mockStorageProvider.createVariablesStorage()).thenReturn(mock(VariablesStorage.class));
-    return new BonsaiWorldStateKeyValueStorage(mockStorageProvider, new NoOpMetricsSystem(), false);
+    return new BonsaiWorldStateKeyValueStorage(
+        mockStorageProvider,
+        new FlatDbStrategyProvider(
+            new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
   }
 }

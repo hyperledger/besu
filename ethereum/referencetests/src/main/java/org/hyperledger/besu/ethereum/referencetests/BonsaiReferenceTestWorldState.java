@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogAddedEvent;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogPruner;
@@ -27,6 +28,7 @@ import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -120,7 +122,9 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     final BonsaiReferenceTestWorldStateStorage worldStateStorage =
         new BonsaiReferenceTestWorldStateStorage(
             new BonsaiWorldStateKeyValueStorage(
-                new InMemoryKeyValueStorageProvider(), metricsSystem, false),
+                new InMemoryKeyValueStorageProvider(),
+                new FlatDbStrategyProvider(
+                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
             preImageProxy);
 
     final NoOpCachedWorldStorageManager noOpCachedWorldStorageManager =
@@ -155,8 +159,9 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
       super(
           null,
           new BonsaiWorldStateKeyValueStorage(
-              new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem(), false),
-          new NoOpMetricsSystem());
+              new InMemoryKeyValueStorageProvider(),
+              new FlatDbStrategyProvider(
+                  new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)));
     }
 
     @SuppressWarnings({"UnsynchronizedOverridesSynchronized", "squid:S3551"})

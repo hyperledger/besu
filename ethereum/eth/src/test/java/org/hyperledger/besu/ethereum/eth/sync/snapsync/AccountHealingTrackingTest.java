@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
@@ -34,6 +35,7 @@ import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -58,7 +60,9 @@ public class AccountHealingTrackingTest {
   private final List<Address> accounts = List.of(Address.fromHexString("0xdeadbeef"));
   private final WorldStateStorage worldStateStorage =
       new BonsaiWorldStateKeyValueStorage(
-          new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem(), false);
+          new InMemoryKeyValueStorageProvider(),
+          new FlatDbStrategyProvider(
+              new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
 
   private WorldStateProofProvider worldStateProofProvider;
 

@@ -25,6 +25,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -44,6 +45,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -80,7 +82,10 @@ class BlockImportExceptionHandlingTest {
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
   private final WorldStateStorage worldStateStorage =
-      new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false);
+      new BonsaiWorldStateKeyValueStorage(
+          storageProvider,
+          new FlatDbStrategyProvider(
+              new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
 
   private final WorldStateArchive worldStateArchive =
       // contains a BonsaiWorldState which we need to spy on.

@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
@@ -29,6 +30,7 @@ import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccu
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -55,7 +57,10 @@ public class RollingImport {
     final BonsaiWorldState bonsaiState =
         new BonsaiWorldState(
             archive,
-            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem(), false),
+            new BonsaiWorldStateKeyValueStorage(
+                provider,
+                new FlatDbStrategyProvider(
+                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
             EvmConfiguration.DEFAULT);
     final SegmentedInMemoryKeyValueStorage worldStateStorage =
         (SegmentedInMemoryKeyValueStorage)

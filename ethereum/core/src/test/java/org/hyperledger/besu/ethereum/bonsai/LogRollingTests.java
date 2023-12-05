@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
@@ -34,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -161,7 +163,10 @@ class LogRollingTests {
     final BonsaiWorldState worldState =
         new BonsaiWorldState(
             archive,
-            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem(), false),
+            new BonsaiWorldStateKeyValueStorage(
+                provider,
+                new FlatDbStrategyProvider(
+                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
             EvmConfiguration.DEFAULT);
     final WorldUpdater updater = worldState.updater();
 
@@ -174,7 +179,10 @@ class LogRollingTests {
     final BonsaiWorldState secondWorldState =
         new BonsaiWorldState(
             secondArchive,
-            new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem(), false),
+            new BonsaiWorldStateKeyValueStorage(
+                secondProvider,
+                new FlatDbStrategyProvider(
+                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
             EvmConfiguration.DEFAULT);
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
@@ -205,7 +213,10 @@ class LogRollingTests {
     final BonsaiWorldState worldState =
         new BonsaiWorldState(
             archive,
-            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem(), false),
+            new BonsaiWorldStateKeyValueStorage(
+                provider,
+                new FlatDbStrategyProvider(
+                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
             EvmConfiguration.DEFAULT);
 
     final WorldUpdater updater = worldState.updater();
@@ -226,7 +237,10 @@ class LogRollingTests {
     final BonsaiWorldState secondWorldState =
         new BonsaiWorldState(
             secondArchive,
-            new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem(), false),
+            new BonsaiWorldStateKeyValueStorage(
+                secondProvider,
+                new FlatDbStrategyProvider(
+                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
             EvmConfiguration.DEFAULT);
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
@@ -258,7 +272,10 @@ class LogRollingTests {
     final BonsaiWorldState worldState =
         new BonsaiWorldState(
             archive,
-            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem(), false),
+            new BonsaiWorldStateKeyValueStorage(
+                provider,
+                new FlatDbStrategyProvider(
+                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
             EvmConfiguration.DEFAULT);
 
     final WorldUpdater updater = worldState.updater();
@@ -286,7 +303,10 @@ class LogRollingTests {
     final BonsaiWorldState secondWorldState =
         new BonsaiWorldState(
             secondArchive,
-            new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem(), false),
+            new BonsaiWorldStateKeyValueStorage(
+                secondProvider,
+                new FlatDbStrategyProvider(
+                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
             EvmConfiguration.DEFAULT);
 
     final WorldUpdater secondUpdater = secondWorldState.updater();

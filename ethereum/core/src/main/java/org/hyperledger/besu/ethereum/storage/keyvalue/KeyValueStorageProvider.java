@@ -15,11 +15,13 @@
 package org.hyperledger.besu.ethereum.storage.keyvalue;
 
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -48,17 +50,14 @@ public class KeyValueStorageProvider implements StorageProvider {
   protected final Map<List<SegmentIdentifier>, SegmentedKeyValueStorage> storageInstances =
       new HashMap<>();
   private final ObservableMetricsSystem metricsSystem;
-  private final boolean deleteCodeInCodeHashStorageMode;
 
   public KeyValueStorageProvider(
       final Function<List<SegmentIdentifier>, SegmentedKeyValueStorage> segmentedStorageCreator,
       final KeyValueStorage worldStatePreimageStorage,
-      final ObservableMetricsSystem metricsSystem,
-      final boolean deleteCodeInCodeHashStorageMode) {
+      final ObservableMetricsSystem metricsSystem) {
     this.segmentedStorageCreator = segmentedStorageCreator;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
     this.metricsSystem = metricsSystem;
-    this.deleteCodeInCodeHashStorageMode = deleteCodeInCodeHashStorageMode;
   }
 
   @Override
@@ -77,10 +76,12 @@ public class KeyValueStorageProvider implements StorageProvider {
   }
 
   @Override
-  public WorldStateStorage createWorldStateStorage(final DataStorageFormat dataStorageFormat) {
-    if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
-      return new BonsaiWorldStateKeyValueStorage(
-          this, metricsSystem, deleteCodeInCodeHashStorageMode);
+  public WorldStateStorage createWorldStateStorage(
+      final DataStorageConfiguration dataStorageConfiguration) {
+    if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
+      final FlatDbStrategyProvider flatDbStrategyProvider =
+          new FlatDbStrategyProvider(metricsSystem, dataStorageConfiguration);
+      return new BonsaiWorldStateKeyValueStorage(this, flatDbStrategyProvider);
     } else {
       return new WorldStateKeyValueStorage(
           getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.WORLD_STATE));
