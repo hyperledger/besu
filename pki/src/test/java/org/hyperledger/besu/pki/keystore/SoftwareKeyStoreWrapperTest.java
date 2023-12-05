@@ -15,8 +15,9 @@
 
 package org.hyperledger.besu.pki.keystore;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.pki.keystore.KeyStoreWrapper.KEYSTORE_TYPE_PKCS12;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -28,13 +29,13 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class SoftwareKeyStoreWrapperTest {
 
   private static final String KEY_ALIAS = "keyalias";
@@ -49,7 +50,7 @@ public class SoftwareKeyStoreWrapperTest {
   @Mock private PublicKey publicKey;
   @Mock private Certificate certificate;
 
-  @Before
+  @BeforeEach
   public void before() {
     keyStoreWrapper = new SoftwareKeyStoreWrapper(keyStore, new String(PASSWORD), null, "");
   }
@@ -59,7 +60,7 @@ public class SoftwareKeyStoreWrapperTest {
     when(keyStore.containsAlias(KEY_ALIAS)).thenReturn(true);
     when(keyStore.getKey(KEY_ALIAS, PASSWORD)).thenReturn(privateKey);
 
-    assertThat(keyStoreWrapper.getPrivateKey(KEY_ALIAS)).isNotNull();
+    assertNotNull(keyStoreWrapper.getPrivateKey(KEY_ALIAS));
   }
 
   @Test
@@ -83,7 +84,7 @@ public class SoftwareKeyStoreWrapperTest {
     when(trustStore.containsAlias(KEY_ALIAS)).thenReturn(true);
     when(trustStore.getKey(KEY_ALIAS, PASSWORD)).thenReturn(privateKey);
 
-    assertThat(keyStoreWrapper.getPrivateKey(KEY_ALIAS)).isNotNull();
+    assertNotNull(keyStoreWrapper.getPrivateKey(KEY_ALIAS));
 
     verify(trustStore).getKey(eq(KEY_ALIAS), eq(PASSWORD));
   }
@@ -93,7 +94,7 @@ public class SoftwareKeyStoreWrapperTest {
     when(keyStore.containsAlias(KEY_ALIAS)).thenReturn(true);
     when(keyStore.getKey(KEY_ALIAS, PASSWORD)).thenReturn(publicKey);
 
-    assertThat(keyStoreWrapper.getPublicKey(KEY_ALIAS)).isNotNull();
+    assertNotNull(keyStoreWrapper.getPublicKey(KEY_ALIAS));
   }
 
   @Test
@@ -117,7 +118,7 @@ public class SoftwareKeyStoreWrapperTest {
     when(trustStore.containsAlias(KEY_ALIAS)).thenReturn(true);
     when(trustStore.getKey(KEY_ALIAS, PASSWORD)).thenReturn(publicKey);
 
-    assertThat(keyStoreWrapper.getPublicKey(KEY_ALIAS)).isNotNull();
+    assertNotNull(keyStoreWrapper.getPublicKey(KEY_ALIAS));
 
     verify(trustStore).getKey(eq(KEY_ALIAS), eq(PASSWORD));
   }
@@ -126,7 +127,7 @@ public class SoftwareKeyStoreWrapperTest {
   public void getCertificate() throws Exception {
     when(keyStore.getCertificate(CERTIFICATE_ALIAS)).thenReturn(certificate);
 
-    assertThat(keyStoreWrapper.getCertificate(CERTIFICATE_ALIAS)).isNotNull();
+    assertNotNull(keyStoreWrapper.getCertificate(CERTIFICATE_ALIAS));
   }
 
   @Test
@@ -148,7 +149,7 @@ public class SoftwareKeyStoreWrapperTest {
     when(keyStore.getCertificate(CERTIFICATE_ALIAS)).thenReturn(null);
     when(trustStore.getCertificate(CERTIFICATE_ALIAS)).thenReturn(certificate);
 
-    assertThat(keyStoreWrapper.getCertificate(CERTIFICATE_ALIAS)).isNotNull();
+    assertNotNull(keyStoreWrapper.getCertificate(CERTIFICATE_ALIAS));
 
     verify(trustStore).getCertificate(eq(CERTIFICATE_ALIAS));
   }
@@ -158,7 +159,7 @@ public class SoftwareKeyStoreWrapperTest {
     when(keyStore.getCertificateChain(CERTIFICATE_ALIAS))
         .thenReturn(new Certificate[] {certificate});
 
-    assertThat(keyStoreWrapper.getCertificateChain(CERTIFICATE_ALIAS)).hasSize(1);
+    assertEquals(keyStoreWrapper.getCertificateChain(CERTIFICATE_ALIAS), 1);
   }
 
   @Test
@@ -171,7 +172,7 @@ public class SoftwareKeyStoreWrapperTest {
     when(trustStore.getCertificateChain(CERTIFICATE_ALIAS))
         .thenReturn(new Certificate[] {certificate});
 
-    assertThat(keyStoreWrapper.getCertificateChain(CERTIFICATE_ALIAS)).hasSize(1);
+    assertEquals(keyStoreWrapper.getCertificateChain(CERTIFICATE_ALIAS), 1);
 
     verify(trustStore).getCertificateChain(eq(CERTIFICATE_ALIAS));
   }
@@ -188,10 +189,10 @@ public class SoftwareKeyStoreWrapperTest {
             "validator",
             null);
 
-    assertThat(loadedKeyStore.getPublicKey("validator")).isNotNull();
-    assertThat(loadedKeyStore.getPrivateKey("validator")).isNotNull();
-    assertThat(loadedKeyStore.getCertificate("validator")).isNotNull();
+    assertNotNull(loadedKeyStore.getPublicKey("validator"));
+    assertNotNull(loadedKeyStore.getPrivateKey("validator"));
+    assertNotNull(loadedKeyStore.getCertificate("validator"));
     // CA -> INTERCA -> PARTNERACA -> VALIDATOR
-    assertThat(loadedKeyStore.getCertificateChain("validator")).hasSize(4);
+    assertEquals(loadedKeyStore.getCertificateChain("validator"), 4);
   }
 }
