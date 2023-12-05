@@ -282,27 +282,27 @@ public abstract class PeerDiscoveryAgent {
             .flatMap(Endpoint::getTcpPort)
             .orElse(udpPort);
 
-    // If the host is present in the P2P packet itself, use that as the endpoint. Otherwise
-    // take it from the UDP packet source IP.
-    final String host;
-    final Optional<String> packetHost =
+    // If the host is present in the P2P PING packet itself, use that as the endpoint. If the P2P
+    // PING packet specifies 127.0.0.1 (the default if a custom value is not specified with
+    // --p2p-host or via a suitable --nat-method) we ignore it in favour of the UDP source address.
+    // The likelihood is that the UDP source will be 127.0.0.1 anyway, but this reduces the chance
+    // of an unexpected change in behaviour as a result of
+    // https://github.com/hyperledger/besu/issues/6224 being fixed.
+    final String host =
         packet
             .getPacketData(PingPacketData.class)
             .flatMap(PingPacketData::getFrom)
-            .map(Endpoint::getHost);
-
-    if (packetHost.isPresent()) {
-      if (packetHost.get().equals("127.0.0.1")) {
-        host = sourceEndpoint.getHost();
-        LOG.trace(
-            "Ping packet advertised endpoint '127.0.0.1' ignored, using UDP source host {}", host);
-      } else {
-        host = packetHost.get();
-      }
-    } else {
-      host = sourceEndpoint.getHost();
-      LOG.trace("No advertised host present in PING packet, using UDP source host {}", host);
-    }
+            .map(Endpoint::getHost)
+            .filter(abc -> !abc.equals("127.0.0.1"))
+            .stream()
+            .peek(
+                h ->
+                    LOG.trace(
+                        "Using \"From\" endpoint {} specified in ping packet. Ignoring UDP source host {}",
+                        h,
+                        sourceEndpoint.getHost()))
+            .findFirst()
+            .orElseGet(sourceEndpoint::getHost);
 
     // Notify the peer controller.
     final DiscoveryPeer peer =
