@@ -40,13 +40,16 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+@ExtendWith(MockitoExtension.class)
 public class MigratingMiningCoordinatorTest {
 
   @Mock private BftMiningCoordinator coordinator1;
@@ -58,7 +61,7 @@ public class MigratingMiningCoordinatorTest {
   private ForksSchedule<MiningCoordinator> coordinatorSchedule;
   private static final long MIGRATION_BLOCK_NUMBER = 5L;
 
-  @Before
+  @BeforeEach
   public void setup() {
     coordinatorSchedule = createCoordinatorSchedule(coordinator1, coordinator2);
     final Block block = new Block(blockHeader, blockBody);
@@ -93,7 +96,6 @@ public class MigratingMiningCoordinatorTest {
             createCoordinatorSchedule(delegateCoordinator, coordinator2), blockchain);
 
     coordinator.start();
-
     verify(blockchain).observeBlockAdded(coordinator);
     verify(blockchain).observeBlockAdded(delegateCoordinator);
     verify(blockchain).removeObserver(1L);
