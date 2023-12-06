@@ -52,7 +52,7 @@ jobs:
           java-version: 17
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2.10.0
-      - name: Run Build
+      - name: Gradle Compile
         run: ./gradlew build -x test -x spotlessCheck -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
   unitTests:
     runs-on: besu-research-ubuntu-8
@@ -69,6 +69,7 @@ jobs:
           java-version: 17
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2.10.0
+      - name: Gradle Unit Tests
         run: ./gradlew build -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Upload Test Report
         uses: actions/upload-artifact@v3
