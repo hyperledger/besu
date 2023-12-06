@@ -24,6 +24,7 @@ jobs:
           java-version: 17
           cache: gradle
       - name: Compile
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v2.10.0
         with:
           arguments: build -x test -x spotlessCheck -Dorg.gradle.parallel=true
+          cache: gradle
