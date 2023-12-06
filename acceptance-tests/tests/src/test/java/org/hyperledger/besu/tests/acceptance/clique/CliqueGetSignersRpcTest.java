@@ -19,16 +19,16 @@ import static org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.Cliqu
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-@Ignore
+@Disabled("flaky test due to hardcoded block numbers")
 public class CliqueGetSignersRpcTest extends AcceptanceTestBase {
   private BesuNode minerNode1;
   private BesuNode minerNode2;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     final String[] validators = {"miner1"};
     minerNode1 = besu.createCliqueNodeWithValidators("miner1", validators);
