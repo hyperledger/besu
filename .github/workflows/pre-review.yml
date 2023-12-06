@@ -2,6 +2,7 @@ name: pre-review
 
 on:
   pull_request:
+  workflow_dispatch:
 
 env:
   GRADLE_BUILD_ACTION_CACHE_DEBUG_ENABLED: true
