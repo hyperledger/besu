@@ -55,7 +55,7 @@ jobs:
       - name: Gradle Compile
         run: ./gradlew build -x test -x spotlessCheck -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
   unitTests:
-    runs-on: besu-research-ubuntu-8
+    runs-on: [self-hosted]
     needs: [ compile ]
     permissions:
       checks: write
