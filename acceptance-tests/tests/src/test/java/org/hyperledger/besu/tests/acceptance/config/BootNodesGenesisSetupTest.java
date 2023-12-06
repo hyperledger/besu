@@ -33,7 +33,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-
 public class BootNodesGenesisSetupTest extends AcceptanceTestBase {
   private static final String CURVE_NAME = "secp256k1";
   private static final String ALGORITHM = SignatureAlgorithm.ALGORITHM;

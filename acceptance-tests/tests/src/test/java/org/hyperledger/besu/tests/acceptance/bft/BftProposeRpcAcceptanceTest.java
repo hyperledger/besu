@@ -17,7 +17,6 @@ package org.hyperledger.besu.tests.acceptance.bft;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -28,7 +27,7 @@ public class BftProposeRpcAcceptanceTest extends ParameterizedBftTestBase {
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("factoryFunctions")
   public void validatorsCanBeAddedAndThenRemoved(
-          final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
+      final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
     setUp(testName, nodeFactory);
     final String[] validators = {"validator1", "validator2", "validator3"};
     final BesuNode validator1 =

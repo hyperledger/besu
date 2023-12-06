@@ -16,7 +16,6 @@ package org.hyperledger.besu.tests.acceptance.bft;
 
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
-import org.junit.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -25,7 +24,7 @@ public class BftZeroValidators extends ParameterizedBftTestBase {
   @ParameterizedTest(name = "{0} bft node factory type")
   @MethodSource("factoryFunctions")
   public void zeroValidatorsFormValidCluster(
-          final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
+      final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
     setUp(testName, nodeFactory);
     final String[] validators = {};
     final BesuNode node1 = nodeFactory.createNodeWithValidators(besu, "node1", validators);

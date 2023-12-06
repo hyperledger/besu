@@ -16,14 +16,10 @@ package org.hyperledger.besu.tests.acceptance.bft.pki;
 
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 
-import java.util.Collection;
 import java.util.stream.Stream;
 
 import org.junit.Ignore;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
 
 @Ignore("This is not a test class, it offers PKI QBFT parameterization only.")
 public abstract class ParameterizedPkiQbftTestBase extends AcceptanceTestBase {
