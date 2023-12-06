@@ -2059,6 +2059,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "--privacy-onchain-groups-enabled",
           "--privacy-flexible-groups-enabled");
     }
+
+    if (isPruningEnabled()) {
+      logger.warn(
+          "Forest pruning is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format.");
+    }
   }
 
   private void configure() throws Exception {
