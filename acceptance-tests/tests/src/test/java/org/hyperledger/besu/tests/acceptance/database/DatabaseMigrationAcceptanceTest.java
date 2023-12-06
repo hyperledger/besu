@@ -28,49 +28,31 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class DatabaseMigrationAcceptanceTest
     extends org.hyperledger.besu.tests.acceptance.AbstractPreexistingNodeTest {
-  private final long expectedChainHeight;
   private BesuNode node;
-  private final List<AccountData> testAccounts;
 
-  public DatabaseMigrationAcceptanceTest(
-      final String testName,
-      final String dataPath,
-      final long expectedChainHeight,
-      final List<AccountData> testAccounts) {
-    super(testName, dataPath);
-    this.expectedChainHeight = expectedChainHeight;
-    this.testAccounts = testAccounts;
+  public static Stream<Arguments> getParameters() {
+    // First 10 blocks of ropsten
+    return Stream.of(
+        Arguments.of(
+            "After versioning was enabled and using multiple RocksDB columns",
+            "version1",
+            0xA,
+            singletonList(
+                new AccountData(
+                    "0xd1aeb42885a43b72b518182ef893125814811048",
+                    BigInteger.valueOf(0xA),
+                    Wei.fromHexString("0x2B5E3AF16B1880000")))));
   }
 
-  @Parameters(name = "{0}")
-  public static Object[][] getParameters() {
-    return new Object[][] {
-      // First 10 blocks of ropsten
-      new Object[] {
-        "After versioning was enabled and using multiple RocksDB columns",
-        "version1",
-        0xA,
-        singletonList(
-            new AccountData(
-                "0xd1aeb42885a43b72b518182ef893125814811048",
-                BigInteger.valueOf(0xA),
-                Wei.fromHexString("0x2B5E3AF16B1880000")))
-      }
-    };
-  }
-
-  @Before
-  public void setUp() throws Exception {
+  public void setUp(final String testName, final String dataPath) throws Exception {
     final URL rootURL = DatabaseMigrationAcceptanceTest.class.getResource(dataPath);
     hostDataPath = copyDataDir(rootURL);
     final Path databaseArchive =
@@ -83,13 +65,27 @@ public class DatabaseMigrationAcceptanceTest
     cluster.start(node);
   }
 
-  @Test
-  public void shouldReturnCorrectBlockHeight() {
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("getParameters")
+  public void shouldReturnCorrectBlockHeight(
+      final String testName,
+      final String dataPath,
+      final long expectedChainHeight,
+      final List<AccountData> testAccounts)
+      throws Exception {
+    setUp(testName, dataPath);
     blockchain.currentHeight(expectedChainHeight).verify(node);
   }
 
-  @Test
-  public void shouldReturnCorrectAccountBalance() {
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("getParameters")
+  public void shouldReturnCorrectAccountBalance(
+      final String testName,
+      final String dataPath,
+      final long expectedChainHeight,
+      final List<AccountData> testAccounts)
+      throws Exception {
+    setUp(testName, dataPath);
     testAccounts.forEach(
         accountData ->
             accounts
