@@ -10,24 +10,24 @@ RUN apt-get update && \
 
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "aarch64" ]; then \
-        curl -kL -o jdk-17.tar.gz https://github.com/ibmruntimes/semeru17-binaries/releases/download/jdk-17.0.5%2B8_openj9-0.35.0/ibm-semeru-open-jdk_aarch64_linux_17.0.5_8_openj9-0.35.0.tar.gz ; \
+        curl -kL -o jdk-17.tar.gz https://github.com/ibmruntimes/semeru17-binaries/releases/download/jdk-17.0.9%2B9_openj9-0.41.0/ibm-semeru-open-jre_aarch64_linux_17.0.9_9_openj9-0.41.0.tar.gz ; \
     elif [ "$(uname -s)" = "Darwin" ] && [ "$(uname -m)" = "arm64" ]; then \
-        curl -kL -o jdk-17.tar.gz https://github.com/ibmruntimes/semeru17-binaries/releases/download/jdk-17.0.5%2B8_openj9-0.35.0/ibm-semeru-open-jdk_aarch64_linux_17.0.5_8_openj9-0.35.0.tar.gz ; \
+        curl -kL -o jdk-17.tar.gz https://github.com/ibmruntimes/semeru17-binaries/releases/download/jdk-17.0.9%2B9_openj9-0.41.0/ibm-semeru-open-jre_aarch64_mac_17.0.9_9_openj9-0.41.0.tar.gz ; \
     elif [ "$ARCH" = "x86_64" ]; then \
-        curl -kL -o jdk-17.tar.gz https://github.com/ibmruntimes/semeru17-binaries/releases/download/jdk-17.0.5%2B8_openj9-0.35.0/ibm-semeru-open-jdk_x64_linux_17.0.5_8_openj9-0.35.0.tar.gz ; \
+        curl -kL -o jdk-17.tar.gz https://github.com/ibmruntimes/semeru17-binaries/releases/download/jdk-17.0.9%2B9_openj9-0.41.0/ibm-semeru-open-jre_x64_linux_17.0.9_9_openj9-0.41.0.tar.gz ; \
     else \
         echo "Unsupported platform: $ARCH"; exit 1; \
     fi
 
 RUN tar -xzf jdk-17.tar.gz && \
     rm jdk-17.tar.gz && \
-    mv jdk-17.0.5+8 /usr/bin/ && \
-    update-alternatives --install "/usr/bin/java" "java" "/usr/bin/jdk-17.0.5+8/bin/java" 1 && \
+    mv jdk-17.0.9+9-jre /usr/bin/ && \
+    update-alternatives --install "/usr/bin/java" "java" "/usr/bin/jdk-17.0.9+9-jre/bin/java" 1 && \
     adduser --disabled-password --gecos "" --home /opt/besu besu && \
     chown besu:besu /opt/besu && \
     chmod 0755 /opt/besu
 
-ENV JAVA_HOME /usr/bin/jdk-17.0.5+8/
+ENV JAVA_HOME /usr/bin/jdk-17.0.9+9-jre/
 RUN export JAVA_HOME
 
 USER besu

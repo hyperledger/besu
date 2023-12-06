@@ -1218,6 +1218,29 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Long apiGasPriceMax = 500_000_000_000L;
 
   @CommandLine.Option(
+      names = {"--api-priority-fee-limiting-enabled"},
+      hidden = true,
+      description =
+          "Set to enable priority fee limit in eth_feeHistory (default: ${DEFAULT-VALUE})")
+  private final Boolean apiPriorityFeeLimitingEnabled = false;
+
+  @CommandLine.Option(
+      names = {"--api-priority-fee-lower-bound-coefficient"},
+      hidden = true,
+      description =
+          "Coefficient for setting the lower limit of minimum priority fee in eth_feeHistory (default: ${DEFAULT-VALUE})")
+  private final Long apiPriorityFeeLowerBoundCoefficient =
+      ApiConfiguration.DEFAULT_LOWER_BOUND_PRIORITY_FEE_COEFFICIENT;
+
+  @CommandLine.Option(
+      names = {"--api-priority-fee-upper-bound-coefficient"},
+      hidden = true,
+      description =
+          "Coefficient for setting the upper limit of minimum priority fee in eth_feeHistory (default: ${DEFAULT-VALUE})")
+  private final Long apiPriorityFeeUpperBoundCoefficient =
+      ApiConfiguration.DEFAULT_UPPER_BOUND_PRIORITY_FEE_COEFFICIENT;
+
+  @CommandLine.Option(
       names = {"--static-nodes-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
@@ -1875,6 +1898,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
+  private void checkApiOptionsDependencies() {
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--api-priority-fee-limiting-enabled",
+        !apiPriorityFeeLimitingEnabled,
+        asList(
+            "--api-priority-fee-upper-bound-coefficient",
+            "--api-priority-fee-lower-bound-coefficient"));
+  }
+
   private void ensureValidPeerBoundParams() {
     maxPeers = p2PDiscoveryOptionGroup.maxPeers;
     peersLowerBound = unstableNetworkingOptions.toDomainObject().getPeerLowerBound();
@@ -2024,6 +2058,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           DEPRECATION_WARNING_MSG,
           "--privacy-onchain-groups-enabled",
           "--privacy-flexible-groups-enabled");
+    }
+
+    if (isPruningEnabled()) {
+      logger.warn(
+          "Forest pruning is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format.");
     }
   }
 
@@ -2485,15 +2524,28 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private ApiConfiguration apiConfiguration() {
-    return ImmutableApiConfiguration.builder()
-        .gasPriceBlocks(apiGasPriceBlocks)
-        .gasPricePercentile(apiGasPricePercentile)
-        .gasPriceMinSupplier(
-            getMiningParameters().getMinTransactionGasPrice().getAsBigInteger()::longValueExact)
-        .gasPriceMax(apiGasPriceMax)
-        .maxLogsRange(rpcMaxLogsRange)
-        .gasCap(rpcGasCap)
-        .build();
+    checkApiOptionsDependencies();
+    var builder =
+        ImmutableApiConfiguration.builder()
+            .gasPriceBlocks(apiGasPriceBlocks)
+            .gasPricePercentile(apiGasPricePercentile)
+            .gasPriceMinSupplier(
+                getMiningParameters().getMinTransactionGasPrice().getAsBigInteger()::longValueExact)
+            .gasPriceMax(apiGasPriceMax)
+            .maxLogsRange(rpcMaxLogsRange)
+            .gasCap(rpcGasCap)
+            .isPriorityFeeLimitingEnabled(apiPriorityFeeLimitingEnabled);
+    if (apiPriorityFeeLimitingEnabled) {
+      if (apiPriorityFeeLowerBoundCoefficient > apiPriorityFeeUpperBoundCoefficient) {
+        throw new ParameterException(
+            this.commandLine,
+            "--api-priority-fee-lower-bound-coefficient cannot be greater than the value of --api-priority-fee-upper-bound-coefficient");
+      }
+      builder
+          .lowerBoundPriorityFeeCoefficient(apiPriorityFeeLowerBoundCoefficient)
+          .upperBoundPriorityFeeCoefficient(apiPriorityFeeUpperBoundCoefficient);
+    }
+    return builder.build();
   }
 
   /**
