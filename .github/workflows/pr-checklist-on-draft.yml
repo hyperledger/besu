@@ -6,7 +6,7 @@ on:
 jobs:
   checklist:
     name: "add checklist as a comment on newly opened PRs"
-    runs-on: [besu,Linux,self-hosted,nodocker]
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/github-script@v5
         with:
