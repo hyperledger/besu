@@ -106,7 +106,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   @Override
   public FlatDbMode getFlatDbMode() {
-    return flatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage).getFlatDbMode();
+    return flatDbStrategyProvider.getFlatDbMode();
   }
 
   @Override

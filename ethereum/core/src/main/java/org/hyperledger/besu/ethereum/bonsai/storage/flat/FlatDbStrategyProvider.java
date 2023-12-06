@@ -110,4 +110,8 @@ public class FlatDbStrategyProvider {
     transaction.commit();
     loadFlatDbStrategy(composedWorldStateStorage); // force reload of flat db reader strategy
   }
+
+  public FlatDbMode getFlatDbMode() {
+    return flatDbMode;
+  }
 }
