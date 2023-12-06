@@ -16,7 +16,6 @@ jobs:
   compile:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
-    if: ${{ github.actor != 'dependabot[bot]' && github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
