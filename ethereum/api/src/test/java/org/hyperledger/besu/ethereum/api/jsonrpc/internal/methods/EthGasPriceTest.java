@@ -61,12 +61,8 @@ public class EthGasPriceTest {
 
   @BeforeEach
   public void setUp() {
-    ApiConfiguration apiConfig = createApiConfiguration();
-    method =
-        new EthGasPrice(
-            new BlockchainQueries(blockchain, null, Optional.empty(), Optional.empty(), apiConfig),
-            miningCoordinator,
-            apiConfig);
+    ApiConfiguration apiConfig = createDefaultApiConfiguration();
+    method = createEthGasPriceMethod(apiConfig);
   }
 
   @Test
@@ -180,11 +176,13 @@ public class EthGasPriceTest {
    * @param upperBound The upper bound of the gas price.
    * @param expectedGasPrice The expected gas price.
    */
-  private void verifyGasPriceLimit(Long lowerBound, Long upperBound, long expectedGasPrice) {
+  private void verifyGasPriceLimit(
+      final Long lowerBound, final Long upperBound, final long expectedGasPrice) {
     when(miningCoordinator.getMinTransactionGasPrice()).thenReturn(Wei.of(100));
 
-    var apiConfig = createApiConfiguration(lowerBound, upperBound);
-    method = createMethod(apiConfig);
+    var apiConfig =
+        createApiConfiguration(Optional.ofNullable(lowerBound), Optional.ofNullable(upperBound));
+    method = createEthGasPriceMethod(apiConfig);
 
     final JsonRpcRequestContext request = requestWithParams();
     final JsonRpcResponse expectedResponse =
@@ -211,7 +209,7 @@ public class EthGasPriceTest {
                 Hash.EMPTY_TRIE_HASH,
                 LogsBloomFilter.builder().build(),
                 Difficulty.ONE,
-                    height,
+                height,
                 0,
                 0,
                 0,
@@ -269,28 +267,30 @@ public class EthGasPriceTest {
     return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params));
   }
 
-  private ApiConfiguration createApiConfiguration() {
-    return createApiConfiguration(null, null);
+  private ApiConfiguration createDefaultApiConfiguration() {
+    return createApiConfiguration(Optional.empty(), Optional.empty());
   }
 
-  private ApiConfiguration createApiConfiguration(final Long lowerBound, final Long upperBound) {
+  private ApiConfiguration createApiConfiguration(
+      final Optional<Long> lowerBound, final Optional<Long> upperBound) {
     ImmutableApiConfiguration.Builder builder =
         ImmutableApiConfiguration.builder().gasPriceMinSupplier(() -> 100);
 
-    if (lowerBound != null) {
-      builder
-          .isGasAndPriorityFeeLimitingEnabled(true)
-          .lowerBoundGasAndPriorityFeeCoefficient(lowerBound);
-    }
-    if (upperBound != null) {
-      builder
-          .isGasAndPriorityFeeLimitingEnabled(true)
-          .upperBoundGasAndPriorityFeeCoefficient(upperBound);
-    }
+    lowerBound.ifPresent(
+        value ->
+            builder
+                .isGasAndPriorityFeeLimitingEnabled(true)
+                .lowerBoundGasAndPriorityFeeCoefficient(value));
+    upperBound.ifPresent(
+        value ->
+            builder
+                .isGasAndPriorityFeeLimitingEnabled(true)
+                .upperBoundGasAndPriorityFeeCoefficient(value));
+
     return builder.build();
   }
 
-  private EthGasPrice createMethod(final ApiConfiguration apiConfig) {
+  private EthGasPrice createEthGasPriceMethod(final ApiConfiguration apiConfig) {
     return new EthGasPrice(
         new BlockchainQueries(blockchain, null, Optional.empty(), Optional.empty(), apiConfig),
         miningCoordinator,
