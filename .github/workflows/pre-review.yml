@@ -67,7 +67,7 @@ jobs:
           distribution: adopt
           java-version: 17
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v2.10.0
         run: ./gradlew build -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Upload Test Report
         uses: actions/upload-artifact@v3
