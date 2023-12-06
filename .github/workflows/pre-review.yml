@@ -82,7 +82,7 @@ jobs:
         with:
           name: junit-xml-reports
           path: tmp/junit-xml-reports-downloaded
-          if-no-artifact-found: ignore
+          if_no_artifact_found: ignore
       - uses: r7kamura/split-tests-by-timings@v0
         id: split-tests
         with:
