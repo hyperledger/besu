@@ -1,10 +1,8 @@
 name: compile
 on:
   workflow_run:
-    workflows:
-      - checks
-    types:
-      - completed
+    workflows: [ "checks" ]
+    types: [ "completed" ]
   workflow_dispatch:
 
 
