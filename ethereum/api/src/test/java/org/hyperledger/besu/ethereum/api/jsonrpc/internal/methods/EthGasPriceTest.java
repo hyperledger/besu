@@ -200,10 +200,6 @@ public class EthGasPriceTest {
   }
 
   private Object createFakeBlock(final Long height) {
-    return createFakeBlock(height, Wei.of(height * 1000000L));
-  }
-
-  private Object createFakeBlock(final long blockNumber, final Wei transactionGasPrice) {
     return Optional.of(
         new Block(
             new BlockHeader(
@@ -215,7 +211,7 @@ public class EthGasPriceTest {
                 Hash.EMPTY_TRIE_HASH,
                 LogsBloomFilter.builder().build(),
                 Difficulty.ONE,
-                blockNumber,
+                    height,
                 0,
                 0,
                 0,
@@ -233,7 +229,7 @@ public class EthGasPriceTest {
                 List.of(
                     new Transaction.Builder()
                         .nonce(0)
-                        .gasPrice(transactionGasPrice)
+                        .gasPrice(Wei.of(height * 1000000L))
                         .gasLimit(0)
                         .value(Wei.ZERO)
                         .build()),
