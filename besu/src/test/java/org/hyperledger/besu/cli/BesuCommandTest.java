@@ -1611,11 +1611,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void apiPriorityFeeLimitingEnabledOptionMustBeUsed() {
-    parseCommand("--api-priority-fee-limiting-enabled");
+    parseCommand("--api-gas-and-priority-fee-limiting-enabled");
     verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
     verify(mockRunnerBuilder).build();
     assertThat(apiConfigurationCaptor.getValue())
-        .isEqualTo(ImmutableApiConfiguration.builder().isPriorityFeeLimitingEnabled(true).build());
+        .isEqualTo(
+            ImmutableApiConfiguration.builder().isGasAndPriorityFeeLimitingEnabled(true).build());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1625,16 +1626,16 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void apiPriorityFeeLowerBoundCoefficientOptionMustBeUsed() {
     final long lowerBound = 150L;
     parseCommand(
-        "--api-priority-fee-lower-bound-coefficient",
+        "--api-gas-and-priority-fee-lower-bound-coefficient",
         Long.toString(lowerBound),
-        "--api-priority-fee-limiting-enabled");
+        "--api-gas-and-priority-fee-limiting-enabled");
     verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
     verify(mockRunnerBuilder).build();
     assertThat(apiConfigurationCaptor.getValue())
         .isEqualTo(
             ImmutableApiConfiguration.builder()
-                .lowerBoundPriorityFeeCoefficient(lowerBound)
-                .isPriorityFeeLimitingEnabled(true)
+                .lowerBoundGasAndPriorityFeeCoefficient(lowerBound)
+                .isGasAndPriorityFeeLimitingEnabled(true)
                 .build());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -1648,32 +1649,32 @@ public class BesuCommandTest extends CommandTestAbstract {
     final long upperBound = 100L;
 
     parseCommand(
-        "--api-priority-fee-limiting-enabled",
-        "--api-priority-fee-lower-bound-coefficient",
+        "--api-gas-and-priority-fee-limiting-enabled",
+        "--api-gas-and-priority-fee-lower-bound-coefficient",
         Long.toString(lowerBound),
-        "--api-priority-fee-upper-bound-coefficient",
+        "--api-gas-and-priority-fee-upper-bound-coefficient",
         Long.toString(upperBound));
     Mockito.verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "--api-priority-fee-lower-bound-coefficient cannot be greater than the value of --api-priority-fee-upper-bound-coefficient");
+            "--api-gas-and-priority-fee-lower-bound-coefficient cannot be greater than the value of --api-gas-and-priority-fee-upper-bound-coefficient");
   }
 
   @Test
   public void apiPriorityFeeUpperBoundCoefficientsOptionMustBeUsed() {
     final long upperBound = 200L;
     parseCommand(
-        "--api-priority-fee-upper-bound-coefficient",
+        "--api-gas-and-priority-fee-upper-bound-coefficient",
         Long.toString(upperBound),
-        "--api-priority-fee-limiting-enabled");
+        "--api-gas-and-priority-fee-limiting-enabled");
     verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
     verify(mockRunnerBuilder).build();
     assertThat(apiConfigurationCaptor.getValue())
         .isEqualTo(
             ImmutableApiConfiguration.builder()
-                .upperBoundPriorityFeeCoefficient(upperBound)
-                .isPriorityFeeLimitingEnabled(true)
+                .upperBoundGasAndPriorityFeeCoefficient(upperBound)
+                .isGasAndPriorityFeeLimitingEnabled(true)
                 .build());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();

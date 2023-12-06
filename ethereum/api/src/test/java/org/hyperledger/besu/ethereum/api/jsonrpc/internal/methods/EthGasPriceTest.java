@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -60,15 +61,12 @@ public class EthGasPriceTest {
 
   @BeforeEach
   public void setUp() {
+    ApiConfiguration apiConfig = createApiConfiguration();
     method =
         new EthGasPrice(
-            new BlockchainQueries(
-                blockchain,
-                null,
-                Optional.empty(),
-                Optional.empty(),
-                ImmutableApiConfiguration.builder().gasPriceMinSupplier(() -> 100).build()),
-            miningCoordinator);
+            new BlockchainQueries(blockchain, null, Optional.empty(), Optional.empty(), apiConfig),
+            miningCoordinator,
+            apiConfig);
   }
 
   @Test
@@ -141,7 +139,71 @@ public class EthGasPriceTest {
     verifyNoMoreInteractions(blockchain);
   }
 
+  /**
+   * Test to verify that the method returns the lower bound gas price when the lower bound parameter
+   * is present.
+   */
+  @Test
+  public void shouldReturnLimitedPriceWhenLowerBoundIsPresent() {
+    long gasPrice = 5000000;
+    long lowerBoundGasPrice = gasPrice + 1;
+    verifyGasPriceLimit(lowerBoundGasPrice, null, lowerBoundGasPrice);
+  }
+
+  /**
+   * Test to verify that the method returns the upper bound gas price when the upper bound parameter
+   * is present.
+   */
+  @Test
+  public void shouldReturnLimitedPriceWhenUpperBoundIsPresent() {
+    long gasPrice = 5000000;
+    long upperBoundGasPrice = gasPrice - 1;
+    verifyGasPriceLimit(null, upperBoundGasPrice, upperBoundGasPrice);
+  }
+
+  /**
+   * Test to verify that the method returns the actual gas price when the gas price is within the
+   * bound range.
+   */
+  @Test
+  public void shouldReturnActualGasPriceWhenWithinBoundRange() {
+    long gasPrice = 5000000;
+    long lowerBoundGasPrice = gasPrice - 1;
+    long upperBoundGasPrice = gasPrice + 1;
+    verifyGasPriceLimit(lowerBoundGasPrice, upperBoundGasPrice, gasPrice);
+  }
+
+  /**
+   * Helper method to verify the gas price limit.
+   *
+   * @param lowerBound The lower bound of the gas price.
+   * @param upperBound The upper bound of the gas price.
+   * @param expectedGasPrice The expected gas price.
+   */
+  private void verifyGasPriceLimit(Long lowerBound, Long upperBound, long expectedGasPrice) {
+    when(miningCoordinator.getMinTransactionGasPrice()).thenReturn(Wei.of(100));
+
+    var apiConfig = createApiConfiguration(lowerBound, upperBound);
+    method = createMethod(apiConfig);
+
+    final JsonRpcRequestContext request = requestWithParams();
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(
+            request.getRequest().getId(), Wei.of(expectedGasPrice).toShortHexString());
+
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(10L);
+    when(blockchain.getBlockByNumber(anyLong()))
+        .thenAnswer(invocation -> createFakeBlock(invocation.getArgument(0, Long.class)));
+
+    final JsonRpcResponse actualResponse = method.response(request);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
   private Object createFakeBlock(final Long height) {
+    return createFakeBlock(height, Wei.of(height * 1000000L));
+  }
+
+  private Object createFakeBlock(final long blockNumber, final Wei transactionGasPrice) {
     return Optional.of(
         new Block(
             new BlockHeader(
@@ -153,7 +215,7 @@ public class EthGasPriceTest {
                 Hash.EMPTY_TRIE_HASH,
                 LogsBloomFilter.builder().build(),
                 Difficulty.ONE,
-                height,
+                blockNumber,
                 0,
                 0,
                 0,
@@ -171,7 +233,7 @@ public class EthGasPriceTest {
                 List.of(
                     new Transaction.Builder()
                         .nonce(0)
-                        .gasPrice(Wei.of(height * 1000000L))
+                        .gasPrice(transactionGasPrice)
                         .gasLimit(0)
                         .value(Wei.ZERO)
                         .build()),
@@ -209,5 +271,33 @@ public class EthGasPriceTest {
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {
     return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params));
+  }
+
+  private ApiConfiguration createApiConfiguration() {
+    return createApiConfiguration(null, null);
+  }
+
+  private ApiConfiguration createApiConfiguration(final Long lowerBound, final Long upperBound) {
+    ImmutableApiConfiguration.Builder builder =
+        ImmutableApiConfiguration.builder().gasPriceMinSupplier(() -> 100);
+
+    if (lowerBound != null) {
+      builder
+          .isGasAndPriorityFeeLimitingEnabled(true)
+          .lowerBoundGasAndPriorityFeeCoefficient(lowerBound);
+    }
+    if (upperBound != null) {
+      builder
+          .isGasAndPriorityFeeLimitingEnabled(true)
+          .upperBoundGasAndPriorityFeeCoefficient(upperBound);
+    }
+    return builder.build();
+  }
+
+  private EthGasPrice createMethod(final ApiConfiguration apiConfig) {
+    return new EthGasPrice(
+        new BlockchainQueries(blockchain, null, Optional.empty(), Optional.empty(), apiConfig),
+        miningCoordinator,
+        apiConfig);
   }
 }

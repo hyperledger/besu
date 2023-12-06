@@ -24,8 +24,8 @@ import org.immutables.value.Value;
 @Value.Style(allParameters = true)
 public abstract class ApiConfiguration {
 
-  public static final long DEFAULT_LOWER_BOUND_PRIORITY_FEE_COEFFICIENT = 0L;
-  public static final long DEFAULT_UPPER_BOUND_PRIORITY_FEE_COEFFICIENT = Long.MAX_VALUE;
+  public static final long DEFAULT_LOWER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT = 0L;
+  public static final long DEFAULT_UPPER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT = Long.MAX_VALUE;
 
   @Value.Default
   public long getGasPriceBlocks() {
@@ -64,17 +64,17 @@ public abstract class ApiConfiguration {
   }
 
   @Value.Default
-  public boolean isPriorityFeeLimitingEnabled() {
+  public boolean isGasAndPriorityFeeLimitingEnabled() {
     return false;
   }
 
   @Value.Default
-  public Long getLowerBoundPriorityFeeCoefficient() {
-    return DEFAULT_LOWER_BOUND_PRIORITY_FEE_COEFFICIENT;
+  public Long getLowerBoundGasAndPriorityFeeCoefficient() {
+    return DEFAULT_LOWER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT;
   }
 
   @Value.Default
-  public Long getUpperBoundPriorityFeeCoefficient() {
-    return DEFAULT_UPPER_BOUND_PRIORITY_FEE_COEFFICIENT;
+  public Long getUpperBoundGasAndPriorityFeeCoefficient() {
+    return DEFAULT_UPPER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT;
   }
 }

@@ -218,7 +218,7 @@ public class EthFeeHistory implements JsonRpcMethod {
 
     // If the priority fee boundary is set, return the bounded rewards. Otherwise, return the real
     // rewards.
-    if (apiConfiguration.isPriorityFeeLimitingEnabled()) {
+    if (apiConfiguration.isGasAndPriorityFeeLimitingEnabled()) {
       return boundRewards(realRewards);
     } else {
       return realRewards;
@@ -263,9 +263,13 @@ public class EthFeeHistory implements JsonRpcMethod {
   private List<Wei> boundRewards(final List<Wei> rewards) {
     Wei minPriorityFee = miningCoordinator.getMinPriorityFeePerGas();
     Wei lowerBound =
-        minPriorityFee.multiply(apiConfiguration.getLowerBoundPriorityFeeCoefficient()).divide(100);
+        minPriorityFee
+            .multiply(apiConfiguration.getLowerBoundGasAndPriorityFeeCoefficient())
+            .divide(100);
     Wei upperBound =
-        minPriorityFee.multiply(apiConfiguration.getUpperBoundPriorityFeeCoefficient()).divide(100);
+        minPriorityFee
+            .multiply(apiConfiguration.getUpperBoundGasAndPriorityFeeCoefficient())
+            .divide(100);
 
     return rewards.stream().map(reward -> boundReward(reward, lowerBound, upperBound)).toList();
   }
@@ -279,19 +283,9 @@ public class EthFeeHistory implements JsonRpcMethod {
    * @return The bounded reward.
    */
   private Wei boundReward(final Wei reward, final Wei lowerBound, final Wei upperBound) {
-
-    // If the reward is less than the lower bound, return the lower bound.
-    if (reward.compareTo(lowerBound) <= 0) {
-      return lowerBound;
-    }
-
-    // If the reward is greater than the upper bound, return the upper bound.
-    if (reward.compareTo(upperBound) > 0) {
-      return upperBound;
-    }
-
-    // If the reward is within the bounds, return the reward as is.
-    return reward;
+    return reward.compareTo(lowerBound) <= 0
+        ? lowerBound
+        : reward.compareTo(upperBound) > 0 ? upperBound : reward;
   }
 
   private List<Long> calculateTransactionsGasUsed(final Block block) {
