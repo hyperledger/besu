@@ -55,10 +55,18 @@ jobs:
       - name: Gradle Compile
         run: ./gradlew build -x test -x spotlessCheck -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
   unitTests:
-    runs-on: [self-hosted]
+    runs-on: ubuntu-22.04
     needs: [ compile ]
     permissions:
       checks: write
+    strategy:
+      fail-fast: false
+      matrix:
+        ci_node_index:
+          - 0
+          - 1
+          - 2
+          - 3
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -69,8 +77,32 @@ jobs:
           java-version: 17
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2.10.0
-      - name: Gradle Unit Tests
-        run: ./gradlew build -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+      - name: Download existing test timings
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          branch: main
+          name: junit-xml-reports
+          path: tmp/junit-xml-reports-downloaded
+          continue-on-error: true
+      - uses: r7kamura/split-tests-by-timings@v0
+        id: split-tests
+        with:
+          reports: tmp/junit-xml-reports-downloaded
+          glob: "**/src/test/java/**/*.java"
+          index: ${{ matrix.ci_node_index }}
+          total: 4
+      - name: write out test list
+        run: echo "${{ steps.split-tests.outputs.paths }}" >> testList.txt
+      - name: debug testfile paths
+        run: cat testList.txt
+      - name: format gradle args
+        # regex means: truncate file paths to align with package name, replacing with tests switch, then drop file extension,
+        # then swap path delimiter with package delimiter
+        run: cat testList.txt | sed -e 's/[^ ]*src\/test\/java\//--tests\ /g' -e 's/\.java//g' -e 's/\//\./g' >> gradleArgs.txt
+      - name: debug test class list
+        run: cat gradleArgs.txt
+      - name: run unit tests
+        run: ./gradlew test `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Upload Test Report
         uses: actions/upload-artifact@v3
         if: always() # always run even if the previous step fails
