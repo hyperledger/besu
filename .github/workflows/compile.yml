@@ -5,9 +5,12 @@ on:
       - checks
     types:
       - completed
+  workflow_dispatch:
+
 
 env:
-  GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
+  GRADLE_OPTS: "-Xmx6g"
+  GRADLE_BUILD_ACTION_CACHE_DEBUG_ENABLED: true
 
 jobs:
   compile:
@@ -23,8 +26,7 @@ jobs:
           distribution: adopt
           java-version: 17
           cache: gradle
-      - name: Compile
+      - name: Setup Gradle
         uses: gradle/gradle-build-action@v2.10.0
-        with:
-          arguments: build -x test -x spotlessCheck -Dorg.gradle.parallel=true
-          cache: gradle
+      - name: Run Build
+        run: ./gradlew build -x test -x spotlessCheck -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
