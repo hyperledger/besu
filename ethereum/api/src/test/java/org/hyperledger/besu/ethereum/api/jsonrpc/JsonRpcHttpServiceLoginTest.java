@@ -204,6 +204,18 @@ public class JsonRpcHttpServiceLoginTest {
   }
 
   @Test
+  public void loginWithEmptyCredentials() throws IOException {
+    final RequestBody body = RequestBody.create("{}", JSON);
+    final Request request = new Request.Builder().post(body).url(baseUrl + "/login").build();
+    try (final Response resp = client.newCall(request).execute()) {
+      assertThat(resp.code()).isEqualTo(400);
+      assertThat(resp.message()).isEqualTo("Bad Request");
+      final String bodyString = resp.body().string();
+      assertThat(bodyString).containsIgnoringCase("username and password are required");
+    }
+  }
+
+  @Test
   public void loginWithBadCredentials() throws IOException {
     final RequestBody body =
         RequestBody.create("{\"username\":\"user\",\"password\":\"badpass\"}", JSON);
@@ -211,6 +223,8 @@ public class JsonRpcHttpServiceLoginTest {
     try (final Response resp = client.newCall(request).execute()) {
       assertThat(resp.code()).isEqualTo(401);
       assertThat(resp.message()).isEqualTo("Unauthorized");
+      final String bodyString = resp.body().string();
+      assertThat(bodyString).containsIgnoringCase("the username or password is incorrect");
     }
   }
 

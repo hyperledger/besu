@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
 public class DefaultAuthenticationService implements AuthenticationService {
 
   public static final String USERNAME = "username";
+  public static final String PASSWORD = "password";
   private final JWTAuth jwtAuthProvider;
   @VisibleForTesting public final JWTAuthOptions jwtAuthOptions;
   private final Optional<AuthenticationProvider> credentialAuthProvider;
@@ -171,19 +172,21 @@ public class DefaultAuthenticationService implements AuthenticationService {
       final RoutingContext routingContext, final AuthenticationProvider credentialAuthProvider) {
     final JsonObject requestBody = routingContext.body().asJsonObject();
 
-    if (requestBody == null) {
+    if (requestBody == null
+        || requestBody.getValue(USERNAME) == null
+        || requestBody.getValue(PASSWORD) == null) {
       routingContext
           .response()
           .setStatusCode(HttpResponseStatus.BAD_REQUEST.code())
           .setStatusMessage(HttpResponseStatus.BAD_REQUEST.reasonPhrase())
-          .end();
+          .end("Authentication failed: username and password are required.");
       return;
     }
 
     // Check user
     final JsonObject authParams = new JsonObject();
     authParams.put(USERNAME, requestBody.getValue(USERNAME));
-    authParams.put("password", requestBody.getValue("password"));
+    authParams.put(PASSWORD, requestBody.getValue(PASSWORD));
     final Credentials credentials = new UsernamePasswordCredentials(authParams);
 
     credentialAuthProvider.authenticate(
@@ -194,7 +197,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
                 .response()
                 .setStatusCode(HttpResponseStatus.UNAUTHORIZED.code())
                 .setStatusMessage(HttpResponseStatus.UNAUTHORIZED.reasonPhrase())
-                .end();
+                .end("Authentication failed: the username or password is incorrect.");
           } else {
             final User user = r.result();
 
