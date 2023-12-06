@@ -80,10 +80,9 @@ jobs:
       - name: Download existing test timings
         uses: dawidd6/action-download-artifact@v2
         with:
-          branch: main
           name: junit-xml-reports
           path: tmp/junit-xml-reports-downloaded
-          continue-on-error: true
+          if-no-artifact-found: ignore
       - uses: r7kamura/split-tests-by-timings@v0
         id: split-tests
         with:
