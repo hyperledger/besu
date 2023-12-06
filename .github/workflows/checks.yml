@@ -33,5 +33,5 @@ jobs:
       - name: spotless
         uses: gradle/gradle-build-action@v2.10.0
         with:
-          arguments: build spotlessCheck -Dorg.gradle.parallel=true
+          arguments: spotlessCheck -Dorg.gradle.parallel=true
           cache: gradle
