@@ -198,7 +198,7 @@ public class EthPeers {
         disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
         peer.handleDisconnect();
         abortPendingRequestsAssignedToDisconnectedPeers();
-        LOG.debug("Disconnected EthPeer {}...", peer.getShortNodeId());
+        LOG.debug("Disconnected EthPeer {}", peer.getShortNodeId());
         LOG.trace("Disconnected EthPeer {}", peer);
       }
     }
@@ -392,7 +392,7 @@ public class EthPeers {
             peer -> {
               LOG.atDebug()
                   .setMessage(
-                      "disconnecting peer {}... Waiting for better peers. Current {} of max {}")
+                      "disconnecting peer {}. Waiting for better peers. Current {} of max {}")
                   .addArgument(peer::getShortNodeId)
                   .addArgument(this::peerCount)
                   .addArgument(this::getMaxPeers)

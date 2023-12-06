@@ -110,6 +110,10 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
     return miningParameters.getMinTransactionGasPrice();
   }
 
+  public Wei getMinPriorityFeePerGas() {
+    return miningParameters.getMinPriorityFeePerGas();
+  }
+
   public abstract Optional<Address> getCoinbase();
 
   public void changeTargetGasLimit(final Long newTargetGasLimit) {

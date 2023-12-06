@@ -15,6 +15,7 @@
 
 dependencyManagement {
   dependencies {
+    applyMavenExclusions = false
 
     dependencySet(group: 'org.antlr', version: '4.11.1') {
       entry 'antlr4'
