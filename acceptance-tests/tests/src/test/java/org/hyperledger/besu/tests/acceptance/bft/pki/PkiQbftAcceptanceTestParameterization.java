@@ -19,76 +19,66 @@ package org.hyperledger.besu.tests.acceptance.bft.pki;
 
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeFactory;
+import org.junit.jupiter.params.provider.Arguments;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class PkiQbftAcceptanceTestParameterization {
 
-  public static List<Object[]> getFactories() {
-    final List<Object[]> ret = new ArrayList<>();
+  public static Stream<Arguments> getFactories() {
+    List<Arguments> args = new ArrayList<>();
 
     /*
      BLOCK CREATION
     */
 
-    ret.add(
-        new Object[] {
+    args.add( Arguments.of(
           "qbft-pki-jks",
           new PkiQbftAcceptanceTestParameterization(
               BesuNodeFactory::createPkiQbftJKSNode,
-              BesuNodeFactory::createPkiQbftJKSNodeWithValidators)
-        });
+              BesuNodeFactory::createPkiQbftJKSNodeWithValidators)));
 
-    ret.add(
-        new Object[] {
+    args.add( Arguments.of(
           "qbft-pki-pkcs12",
           new PkiQbftAcceptanceTestParameterization(
               BesuNodeFactory::createPkiQbftPKCS12Node,
-              BesuNodeFactory::createPkiQbftPKCS12NodeWithValidators)
-        });
+              BesuNodeFactory::createPkiQbftPKCS12NodeWithValidators)));
 
     if (Boolean.getBoolean("acctests.runBesuAsProcess")) {
-      ret.add(
-          new Object[] {
+      args.add( Arguments.of(
             "qbft-pki-pkcs11",
             new PkiQbftAcceptanceTestParameterization(
                 BesuNodeFactory::createPkiQbftPKCS11Node,
-                BesuNodeFactory::createPkiQbftPKCS11NodeWithValidators)
-          });
+                BesuNodeFactory::createPkiQbftPKCS11NodeWithValidators)));
     }
 
     /*
      TLS
     */
 
-    ret.add(
-        new Object[] {
+    args.add( Arguments.of(
           "qbft-tls-jks",
           new PkiQbftAcceptanceTestParameterization(
               BesuNodeFactory::createQbftNodeWithTLSJKS,
-              BesuNodeFactory::createQbftTLSJKSNodeWithValidators)
-        });
+              BesuNodeFactory::createQbftTLSJKSNodeWithValidators)));
 
-    ret.add(
-        new Object[] {
+    args.add( Arguments.of(
           "qbft-tls-pkcs12",
           new PkiQbftAcceptanceTestParameterization(
               BesuNodeFactory::createQbftNodeWithTLSPKCS12,
-              BesuNodeFactory::createQbftTLSPKCS12NodeWithValidators)
-        });
+              BesuNodeFactory::createQbftTLSPKCS12NodeWithValidators)));
 
     if (Boolean.getBoolean("acctests.runBesuAsProcess")) {
-      ret.add(
-          new Object[] {
+      args.add( Arguments.of(
             "qbft-tls-pkcs11",
             new PkiQbftAcceptanceTestParameterization(
                 BesuNodeFactory::createQbftNodeWithTLSPKCS11,
-                BesuNodeFactory::createQbftTLSPKCS11NodeWithValidators)
-          });
+                BesuNodeFactory::createQbftTLSPKCS11NodeWithValidators)));
     }
 
-    return ret;
+    return args.stream();
   }
 
   @FunctionalInterface
