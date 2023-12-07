@@ -62,11 +62,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ci_node_index:
-          - 0
-          - 1
-          - 2
-          - 3
+        gradle_args:
+          - "test -x besu:test -x consensus:test -x crypto:test -x ethereum:eth:test -x ethereum:api:test -x ethereum:core:test"
+          - "besu:test consensus:test crypto:test"
+          - "ethereum:api:test"
+          - "ethereum:core:test"
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -77,38 +77,8 @@ jobs:
           java-version: 17
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2.10.0
-      - name: Download existing test timings
-        uses: dawidd6/action-download-artifact@v2
-        with:
-          name: junit-xml-reports
-          path: tmp/junit-xml-reports-downloaded
-          if_no_artifact_found: ignore
-      - uses: r7kamura/split-tests-by-timings@v0
-        id: split-tests
-        with:
-          reports: tmp/junit-xml-reports-downloaded
-          glob: "**/src/test/java/**/*Test.java"
-          index: ${{ matrix.ci_node_index }}
-          total: 40
-        # take the space separated list of paths to test files and break into newlines to filter out other tests with grep
-      - name: write out test list
-        run: echo "${{ steps.split-tests.outputs.paths }}" | awk '{for(i=1; i<=NF; i++) print $i}' | grep -v "acceptance-tests\/" | grep -v "ethereum\/referencetests" >> testList.txt
-      - name: debug testfile paths
-        run: cat testList.txt
-      - name: format gradle args
-
-        # use sed on each one to:
-          # copy the initial path to the hold buffer, strip off the source root and start quoting, then convert / to .
-          # so the file path is a package path, drop the trailing .java and close the quote. swap that with the holding buffer,
-          # get the module prefix of the path, and convert that to a gradle module syntax referring to the test target,
-          # delimited with colons, and suffix with --test. Now append the holding buffer back onto patternspace.
-        # now pipe that to awk to collapse the newlines introduced by sed
-        # use tr to convert newlines to spaces, so it can all go in as one thing into gradle.
-        run: cat testList.txt | sed -e 'h;s/.*src\/test\/java\//\"/;s/\//\./g;s/\.java$/\"/;x;s/\(.*\)src\/test\/java.*/\1test\ --tests/;s/\//\:/g;G' | awk 'ORS=NR%2?" ":"\n"' | tr '\n' ' ' > gradleArgs.txt
-      - name: debug test class list
-        run: cat gradleArgs.txt
       - name: run unit tests
-        run: ./gradlew `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+        run: ./gradlew ${{ matrix.gradle.args }} -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Upload Test Report
         uses: actions/upload-artifact@v3
         if: always() # always run even if the previous step fails
