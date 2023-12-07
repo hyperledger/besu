@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.common;
 
 import static java.util.Collections.emptyList;
 import static org.hyperledger.besu.ethereum.core.BlockHeader.GENESIS_BLOCK_NUMBER;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -40,13 +41,13 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class MigratingMiningCoordinatorTest {
 
   @Mock private BftMiningCoordinator coordinator1;
@@ -58,7 +59,7 @@ public class MigratingMiningCoordinatorTest {
   private ForksSchedule<MiningCoordinator> coordinatorSchedule;
   private static final long MIGRATION_BLOCK_NUMBER = 5L;
 
-  @Before
+  @BeforeEach
   public void setup() {
     coordinatorSchedule = createCoordinatorSchedule(coordinator1, coordinator2);
     final Block block = new Block(blockHeader, blockBody);
@@ -87,13 +88,12 @@ public class MigratingMiningCoordinatorTest {
   @Test
   public void startShouldUnregisterDelegateCoordinatorAsObserver() {
     final BftMiningCoordinator delegateCoordinator = createDelegateCoordinator();
-    when(blockchain.observeBlockAdded(delegateCoordinator)).thenReturn(1L);
+    lenient().when(blockchain.observeBlockAdded(delegateCoordinator)).thenReturn(1L);
     final MigratingMiningCoordinator coordinator =
         new MigratingMiningCoordinator(
             createCoordinatorSchedule(delegateCoordinator, coordinator2), blockchain);
 
     coordinator.start();
-
     verify(blockchain).observeBlockAdded(coordinator);
     verify(blockchain).observeBlockAdded(delegateCoordinator);
     verify(blockchain).removeObserver(1L);

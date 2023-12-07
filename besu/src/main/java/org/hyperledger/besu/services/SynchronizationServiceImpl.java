@@ -61,9 +61,10 @@ public class SynchronizationServiceImpl implements SynchronizationService {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.syncState = syncState;
-    this.worldStateArchive = Optional.ofNullable(worldStateArchive)
-        .filter(z -> z instanceof BonsaiWorldStateProvider)
-        .map(BonsaiWorldStateProvider.class::cast);
+    this.worldStateArchive =
+        Optional.ofNullable(worldStateArchive)
+            .filter(z -> z instanceof BonsaiWorldStateProvider)
+            .map(BonsaiWorldStateProvider.class::cast);
   }
 
   @Override
@@ -102,9 +103,7 @@ public class SynchronizationServiceImpl implements SynchronizationService {
 
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
-    if (worldStateArchive
-        .flatMap(archive -> archive.getMutable(coreHeader, true))
-        .isPresent()) {
+    if (worldStateArchive.flatMap(archive -> archive.getMutable(coreHeader, true)).isPresent()) {
       if (coreHeader.getParentHash().equals(blockchain.getChainHeadHash())) {
         LOG.atDebug()
             .setMessage(
@@ -131,20 +130,22 @@ public class SynchronizationServiceImpl implements SynchronizationService {
   @Override
   public void disableWorldStateTrie() {
     // TODO MAYBE FIND A BEST WAY TO DELETE AND DISABLE TRIE
-    worldStateArchive.ifPresent(archive -> {
-      archive.getDefaultBonsaiWorldStateConfig().setTrieDisabled(true);
-      final BonsaiWorldStateKeyValueStorage worldStateStorage = archive.getWorldStateStorage();
-      final Optional<Hash> worldStateBlockHash = worldStateStorage.getWorldStateBlockHash();
-      final Optional<Bytes> worldStateRootHash = worldStateStorage.getWorldStateRootHash();
-      if (worldStateRootHash.isPresent() && worldStateBlockHash.isPresent()) {
-        worldStateStorage.clearTrie();
-        // keep root and block hash in the trie branch
-        final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = worldStateStorage.updater();
-        updater.saveWorldState(worldStateBlockHash.get(), Bytes32.wrap(worldStateRootHash.get()),
-            Bytes.EMPTY);
-        updater.commit();
-        worldStateStorage.upgradeToFullFlatDbMode();
-      }
-    });
+    worldStateArchive.ifPresent(
+        archive -> {
+          archive.getDefaultBonsaiWorldStateConfig().setTrieDisabled(true);
+          final BonsaiWorldStateKeyValueStorage worldStateStorage = archive.getWorldStateStorage();
+          final Optional<Hash> worldStateBlockHash = worldStateStorage.getWorldStateBlockHash();
+          final Optional<Bytes> worldStateRootHash = worldStateStorage.getWorldStateRootHash();
+          if (worldStateRootHash.isPresent() && worldStateBlockHash.isPresent()) {
+            worldStateStorage.clearTrie();
+            // keep root and block hash in the trie branch
+            final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater =
+                worldStateStorage.updater();
+            updater.saveWorldState(
+                worldStateBlockHash.get(), Bytes32.wrap(worldStateRootHash.get()), Bytes.EMPTY);
+            updater.commit();
+            worldStateStorage.upgradeToFullFlatDbMode();
+          }
+        });
   }
 }

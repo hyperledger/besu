@@ -84,6 +84,11 @@ public class NoopMiningCoordinator implements MiningCoordinator {
   }
 
   @Override
+  public Wei getMinPriorityFeePerGas() {
+    return miningParameters.getMinPriorityFeePerGas();
+  }
+
+  @Override
   public void setExtraData(final Bytes extraData) {}
 
   @Override
