@@ -89,7 +89,7 @@ jobs:
           reports: tmp/junit-xml-reports-downloaded
           glob: "**/src/test/java/**/*Test.java"
           index: ${{ matrix.ci_node_index }}
-          total: 4
+          total: 40
       - name: write out test list
         run: echo "${{ steps.split-tests.outputs.paths }}" | grep -v "acceptance-tests\/" | grep -v "ethereum\/referencetests" >> testList.txt
       - name: debug testfile paths
