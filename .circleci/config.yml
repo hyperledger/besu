@@ -424,9 +424,11 @@ workflows:
       - acceptanceTestsCliqueBft:
           requires:
             - assemble
+            - acceptanceTests
       - acceptanceTestsPermissioning:
           requires:
             - assemble
+            - acceptanceTestsCliqueBft
       - buildDocker:
           requires:
             - assemble

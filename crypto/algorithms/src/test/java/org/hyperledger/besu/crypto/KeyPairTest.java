@@ -28,8 +28,8 @@ import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class KeyPairTest {
   public static final String ALGORITHM = SignatureAlgorithm.ALGORITHM;
@@ -39,7 +39,7 @@ public class KeyPairTest {
   public static KeyPairGenerator keyPairGenerator;
   public static ECDomainParameters curve;
 
-  @BeforeClass
+  @BeforeAll
   public static void setUp() {
     Security.addProvider(new BouncyCastleProvider());
 
