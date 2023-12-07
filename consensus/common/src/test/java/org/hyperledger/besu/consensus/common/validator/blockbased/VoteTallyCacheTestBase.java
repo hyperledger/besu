@@ -33,7 +33,7 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.util.Lists;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 
 public class VoteTallyCacheTestBase {
 
@@ -55,7 +55,7 @@ public class VoteTallyCacheTestBase {
 
   protected final BlockInterface blockInterface = mock(BlockInterface.class);
 
-  @Before
+  @BeforeEach
   public void constructThreeBlockChain() {
     for (int i = 0; i < 3; i++) {
       validators.add(AddressHelpers.ofValue(i));
