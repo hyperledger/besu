@@ -21,6 +21,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -43,11 +44,13 @@ public class BadCLIOptionsPluginTest extends AcceptanceTestBase {
     node =
         besu.createPluginsNode(
             "node1", Collections.singletonList("testPlugins"), Collections.emptyList());
+    Files.deleteIfExists(node.homeDirectory().resolve("plugins/badCLIOptions.register"));
+    Files.deleteIfExists(node.homeDirectory().resolve("plugins/badCLIOptions.start"));
     cluster.start(node);
   }
 
   @AfterEach
-  public void tearDown() {
+  public void tearDown() throws IOException {
     System.setProperty("TEST_BAD_CLI", "false");
   }
 
