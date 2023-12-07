@@ -90,13 +90,13 @@ jobs:
           glob: "**/src/test/java/**/*Test.java"
           index: ${{ matrix.ci_node_index }}
           total: 40
+        # take the space separated list of paths to test files and break into newlines to filter out other tests with grep
       - name: write out test list
-        run: echo "${{ steps.split-tests.outputs.paths }}" | grep -v "acceptance-tests\/" | grep -v "ethereum\/referencetests" >> testList.txt
+        run: echo "${{ steps.split-tests.outputs.paths }}" | awk '{for(i=1; i<=NF; i++) print $i}' | grep -v "acceptance-tests\/" | grep -v "ethereum\/referencetests" >> testList.txt
       - name: debug testfile paths
         run: cat testList.txt
       - name: format gradle args
-        # I'm so sorry.
-        # take the space separated list of paths to test files and break into newlines
+
         # use sed on each one to:
           # copy the initial path to the hold buffer, strip off the source root and start quoting, then convert / to .
           # so the file path is a package path, drop the trailing .java and close the quote. swap that with the holding buffer,
@@ -104,7 +104,7 @@ jobs:
           # delimited with colons, and suffix with --test. Now append the holding buffer back onto patternspace.
         # now pipe that to awk to collapse the newlines introduced by sed
         # use tr to convert newlines to spaces, so it can all go in as one thing into gradle.
-        run: cat testList.txt | awk '{for(i=1; i<=NF; i++) print $i}' | sed -e 'h;s/.*src\/test\/java\//\"/;s/\//\./g;s/\.java$/\"/;x;s/\(.*\)src\/test\/java.*/\1test\ --tests/;s/\//\:/g;G' | awk 'ORS=NR%2?" ":"\n"' | tr '\n' ' ' > gradleArgs.txt
+        run: cat testList.txt | sed -e 'h;s/.*src\/test\/java\//\"/;s/\//\./g;s/\.java$/\"/;x;s/\(.*\)src\/test\/java.*/\1test\ --tests/;s/\//\:/g;G' | awk 'ORS=NR%2?" ":"\n"' | tr '\n' ' ' > gradleArgs.txt
       - name: debug test class list
         run: cat gradleArgs.txt
       - name: run unit tests
