@@ -16,8 +16,8 @@ package org.hyperledger.besu.tests.acceptance.permissioning;
 
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class NodeSmartContractPermissioningV2AcceptanceTest
     extends NodeSmartContractPermissioningV2AcceptanceTestBase {
@@ -27,7 +27,7 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
   private Node allowedNode;
   private Node forbiddenNode;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     bootnode = bootnode("bootnode");
     forbiddenNode = node("forbidden-node");

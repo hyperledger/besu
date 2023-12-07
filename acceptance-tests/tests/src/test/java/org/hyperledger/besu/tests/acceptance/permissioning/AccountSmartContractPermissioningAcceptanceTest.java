@@ -21,8 +21,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.TransferTra
 import java.math.BigInteger;
 import java.util.Collections;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AccountSmartContractPermissioningAcceptanceTest
     extends AccountSmartContractPermissioningAcceptanceTestBase {
@@ -31,7 +31,7 @@ public class AccountSmartContractPermissioningAcceptanceTest
   private Account allowedSender;
   private Account otherAccount;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     node = permissionedNode("node1", Collections.emptyList());
     permissionedCluster.start(node);
