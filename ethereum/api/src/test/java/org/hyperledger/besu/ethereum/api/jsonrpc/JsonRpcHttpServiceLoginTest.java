@@ -90,6 +90,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class JsonRpcHttpServiceLoginTest {
 
+  // this tempDir is deliberately static
   @TempDir private static Path folder;
 
   private static final Vertx vertx = Vertx.vertx();
