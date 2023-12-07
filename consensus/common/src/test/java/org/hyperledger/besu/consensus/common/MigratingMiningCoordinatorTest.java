@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.common;
 
 import static java.util.Collections.emptyList;
 import static org.hyperledger.besu.ethereum.core.BlockHeader.GENESIS_BLOCK_NUMBER;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -48,7 +49,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-@MockitoSettings(strictness = Strictness.LENIENT)
 @ExtendWith(MockitoExtension.class)
 public class MigratingMiningCoordinatorTest {
 
@@ -90,7 +90,7 @@ public class MigratingMiningCoordinatorTest {
   @Test
   public void startShouldUnregisterDelegateCoordinatorAsObserver() {
     final BftMiningCoordinator delegateCoordinator = createDelegateCoordinator();
-    when(blockchain.observeBlockAdded(delegateCoordinator)).thenReturn(1L);
+    lenient().when(blockchain.observeBlockAdded(delegateCoordinator)).thenReturn(1L);
     final MigratingMiningCoordinator coordinator =
         new MigratingMiningCoordinator(
             createCoordinatorSchedule(delegateCoordinator, coordinator2), blockchain);
