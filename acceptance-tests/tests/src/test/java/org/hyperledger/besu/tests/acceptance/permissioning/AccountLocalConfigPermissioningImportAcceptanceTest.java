@@ -67,7 +67,7 @@ public class AccountLocalConfigPermissioningImportAcceptanceTest extends Accepta
 
   @Test
   public void transactionFromDeniedAccountShouldNotBreakBlockImport() throws IOException {
-    final File newPermissionsFile = Files.createFile(folder).toFile();
+    final File newPermissionsFile = Files.createFile(folder.resolve("new.txt")).toFile();
     final List<String> allowList = List.of(beneficiary.getAddress());
     persistAllowList(allowList, newPermissionsFile.toPath());
     final BesuNode nodeC =
