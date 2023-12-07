@@ -29,13 +29,13 @@ import java.util.Optional;
 
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.ThrowableAssert;
-import org.junit.After;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class BesuPluginContextImplTest {
 
-  @BeforeClass
+  @BeforeAll
   public static void createFakePluginDir() throws IOException {
     if (System.getProperty("besu.plugins.dir") == null) {
       final Path pluginDir = Files.createTempDirectory("besuTest");
@@ -44,7 +44,7 @@ public class BesuPluginContextImplTest {
     }
   }
 
-  @After
+  @AfterEach
   public void clearTestPluginState() {
     System.clearProperty("testPicoCLIPlugin.testOption");
   }
