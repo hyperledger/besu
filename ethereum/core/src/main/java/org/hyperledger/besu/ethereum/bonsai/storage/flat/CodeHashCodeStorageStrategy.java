@@ -23,13 +23,15 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
   static final Bytes CODE_PREFIX = Bytes.of(1);
   static final Bytes COUNT_PREFIX = Bytes.of(2);
-  private final boolean deleteCode;
+
+  @VisibleForTesting protected final boolean deleteCode;
 
   public CodeHashCodeStorageStrategy(final boolean deleteCode) {
     this.deleteCode = deleteCode;

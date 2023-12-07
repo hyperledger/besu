@@ -59,7 +59,7 @@ public class FlatDbStrategyProvider {
       final boolean useCodeHashStorageMode =
           variablesStorage.isCodeStoredUsingCodeHash().orElse(false);
       final boolean deleteCodeEnabled =
-          dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
+          dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashDeletionEnabled();
       if (flatDbMode == FlatDbMode.FULL) {
         this.flatDbStrategy =
             new FullFlatDbStrategy(metricsSystem, useCodeHashStorageMode, deleteCodeEnabled);

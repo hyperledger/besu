@@ -35,6 +35,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
 import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -53,7 +54,8 @@ public abstract class FlatDbStrategy {
 
   protected final Counter getStorageValueCounter;
   protected final Counter getStorageValueFlatDatabaseCounter;
-  private final CodeStorageStrategy codeStorageStrategy;
+
+  @VisibleForTesting protected final CodeStorageStrategy codeStorageStrategy;
 
   public FlatDbStrategy(
       final MetricsSystem metricsSystem,
