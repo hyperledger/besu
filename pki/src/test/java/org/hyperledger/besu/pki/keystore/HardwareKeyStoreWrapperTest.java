@@ -77,6 +77,6 @@ public class HardwareKeyStoreWrapperTest {
     when(keyStore.getCertificateChain(CERTIFICATE_ALIAS))
         .thenReturn(new Certificate[] {certificate});
 
-    assertEquals(keyStoreWrapper.getCertificateChain(CERTIFICATE_ALIAS), 1);
+    assertEquals(keyStoreWrapper.getCertificateChain(CERTIFICATE_ALIAS).length, 1);
   }
 }

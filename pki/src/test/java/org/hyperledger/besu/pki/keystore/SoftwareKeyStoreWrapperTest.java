@@ -159,7 +159,7 @@ public class SoftwareKeyStoreWrapperTest {
     when(keyStore.getCertificateChain(CERTIFICATE_ALIAS))
         .thenReturn(new Certificate[] {certificate});
 
-    assertEquals(keyStoreWrapper.getCertificateChain(CERTIFICATE_ALIAS), 1);
+    assertEquals(keyStoreWrapper.getCertificateChain(CERTIFICATE_ALIAS).length, 1);
   }
 
   @Test
@@ -172,7 +172,7 @@ public class SoftwareKeyStoreWrapperTest {
     when(trustStore.getCertificateChain(CERTIFICATE_ALIAS))
         .thenReturn(new Certificate[] {certificate});
 
-    assertEquals(keyStoreWrapper.getCertificateChain(CERTIFICATE_ALIAS), 1);
+    assertEquals(keyStoreWrapper.getCertificateChain(CERTIFICATE_ALIAS).length, 1);
 
     verify(trustStore).getCertificateChain(eq(CERTIFICATE_ALIAS));
   }
@@ -193,6 +193,6 @@ public class SoftwareKeyStoreWrapperTest {
     assertNotNull(loadedKeyStore.getPrivateKey("validator"));
     assertNotNull(loadedKeyStore.getCertificate("validator"));
     // CA -> INTERCA -> PARTNERACA -> VALIDATOR
-    assertEquals(loadedKeyStore.getCertificateChain("validator"), 4);
+    assertEquals(loadedKeyStore.getCertificateChain("validator").length, 4);
   }
 }
