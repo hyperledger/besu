@@ -95,7 +95,11 @@ public class ChainHeadTracker implements ConnectCallback {
                     .addArgument(peer::getShortNodeId)
                     .log();
               } else {
-                LOG.debug("Failed to retrieve chain head info. Disconnecting {}", peer, error);
+                LOG.atDebug()
+                    .setMessage("Failed to retrieve chain head info. Disconnecting {}... {}")
+                    .addArgument(peer::getShortNodeId)
+                    .addArgument(error)
+                    .log();
                 peer.disconnect(DisconnectReason.USELESS_PEER);
               }
             });
