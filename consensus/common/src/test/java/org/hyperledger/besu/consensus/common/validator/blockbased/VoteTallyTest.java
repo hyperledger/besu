@@ -22,7 +22,7 @@ import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.consensus.common.validator.VoteType;
 import org.hyperledger.besu.datatypes.Address;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class VoteTallyTest {
 
