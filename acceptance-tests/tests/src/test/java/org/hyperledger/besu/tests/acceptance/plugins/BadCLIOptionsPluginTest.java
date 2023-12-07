@@ -21,7 +21,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -50,7 +49,7 @@ public class BadCLIOptionsPluginTest extends AcceptanceTestBase {
   }
 
   @AfterEach
-  public void tearDown() throws IOException {
+  public void tearDown() {
     System.setProperty("TEST_BAD_CLI", "false");
   }
 
