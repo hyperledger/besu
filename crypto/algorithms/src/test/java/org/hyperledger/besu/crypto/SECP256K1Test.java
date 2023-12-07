@@ -28,9 +28,9 @@ import java.time.format.DateTimeFormatter;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SECP256K1Test {
 
@@ -39,7 +39,7 @@ public class SECP256K1Test {
   protected static String suiteStartTime = null;
   protected static String suiteName = null;
 
-  @BeforeClass
+  @BeforeAll
   public static void setTestSuiteStartTime() {
     suiteStartTime =
         LocalDateTime.now(ZoneId.systemDefault())
@@ -47,7 +47,7 @@ public class SECP256K1Test {
     suiteName(SECP256K1Test.class);
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     secp256K1 = new SECP256K1();
   }
