@@ -221,6 +221,13 @@ jobs:
           name: AcceptanceTests (Mainnet)
           no_output_timeout: 20m
           command: |
+            CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
+              | sed 's@.*/src/test/java/@@' \
+              | sed 's@/@.@g' \
+              | sed 's/.\{5\}$//' \
+              | circleci tests split --split-by=timings --timings-type=classname)
+            # Format the arguments to "./gradlew test"
+            GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
             ./gradlew --no-daemon acceptanceTestMainnet $GRADLE_ARGS
       - capture_test_results
       - capture_test_logs
