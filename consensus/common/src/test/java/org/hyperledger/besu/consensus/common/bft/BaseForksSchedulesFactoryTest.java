@@ -30,7 +30,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public abstract class BaseForksSchedulesFactoryTest<
     C extends BftConfigOptions, M extends MutableBftConfigOptions> {

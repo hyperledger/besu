@@ -37,14 +37,14 @@ import java.time.Clock;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
+@ExtendWith(MockitoExtension.class)
 public class BlockTimerTest {
 
   private BftExecutors bftExecutors;
@@ -52,7 +52,7 @@ public class BlockTimerTest {
   private Clock mockClock;
   private ForksSchedule<BftConfigOptions> mockForksSchedule;
 
-  @Before
+  @BeforeEach
   @SuppressWarnings("unchecked")
   public void initialise() {
     bftExecutors = mock(BftExecutors.class);
