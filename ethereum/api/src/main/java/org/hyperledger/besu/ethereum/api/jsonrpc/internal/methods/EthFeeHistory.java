@@ -285,7 +285,7 @@ public class EthFeeHistory implements JsonRpcMethod {
   private Wei boundReward(final Wei reward, final Wei lowerBound, final Wei upperBound) {
     return reward.compareTo(lowerBound) <= 0
         ? lowerBound
-        : reward.compareTo(upperBound) > 0 ? upperBound : reward;
+        : reward.compareTo(upperBound) >= 0 ? upperBound : reward;
   }
 
   private List<Long> calculateTransactionsGasUsed(final Block block) {

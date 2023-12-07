@@ -82,9 +82,9 @@ public class EthGasPrice implements JsonRpcMethod {
         calculateBound(
             minTransactionGasPrice, apiConfiguration.getUpperBoundGasAndPriorityFeeCoefficient());
 
-    return (gasPrice.compareTo(lowerBound) <= 0)
+    return gasPrice.compareTo(lowerBound) <= 0
         ? lowerBound
-        : (gasPrice.compareTo(upperBound) > 0) ? upperBound : gasPrice;
+        : gasPrice.compareTo(upperBound) >= 0 ? upperBound : gasPrice;
   }
 
   private Wei calculateBound(final Wei price, final long coefficient) {
