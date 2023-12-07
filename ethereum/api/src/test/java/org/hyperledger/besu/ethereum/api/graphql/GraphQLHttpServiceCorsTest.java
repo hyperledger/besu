@@ -41,7 +41,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 
 public class GraphQLHttpServiceCorsTest {
-  @TempDir private static Path folder;
+  @TempDir private Path folder;
 
   private final Vertx vertx = Vertx.vertx();
   private final OkHttpClient client = new OkHttpClient();

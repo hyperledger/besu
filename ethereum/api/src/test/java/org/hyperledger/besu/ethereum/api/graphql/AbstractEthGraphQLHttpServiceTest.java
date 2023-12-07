@@ -56,7 +56,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
 public abstract class AbstractEthGraphQLHttpServiceTest {
-  @TempDir private static Path tempDir;
+  @TempDir private Path tempDir;
 
   private static BlockchainSetupUtil blockchainSetupUtil;
 
