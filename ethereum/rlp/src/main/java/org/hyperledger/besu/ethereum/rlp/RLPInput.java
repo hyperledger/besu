@@ -41,9 +41,9 @@ import org.apache.tuweni.units.bigints.UInt64;
  *
  * <p>A {@link RLPInput} thus provides methods to decode both lists and binary values. A list in the
  * input is "entered" by calling {@link #enterList()} and left by calling {@link #leaveList()}.
- * Binary values can be read directly with {@link #readBytes()} ()}, but the {@link RLPInput}
- * interface provides a wealth of convenience methods to read specific types of data that are in
- * specific encoding.
+ * Binary values can be read directly with {@link #readBytes()}, but the {@link RLPInput} interface
+ * provides a wealth of convenience methods to read specific types of data that are in specific
+ * encoding.
  *
  * <p>Amongst the methods to read binary data, some methods are provided to read "scalar". A scalar
  * should simply be understood as a positive integer that is encoded with no leading zeros. In other
@@ -121,8 +121,8 @@ public interface RLPInput {
    * Exits the current list after all its items have been consumed.
    *
    * <p>Note that this method technically doesn't consume any input but must be called after having
-   * read the last element of a list. This allow to ensure the structure of the input is indeed the
-   * one expected.
+   * read the last element of a list. This allows it to ensure the structure of the input is indeed
+   * the one expected.
    *
    * @throws RLPException if the current list is not finished (it has more items).
    */
@@ -132,8 +132,8 @@ public interface RLPInput {
    * Exits the current list, ignoring any remaining unconsumed elements.
    *
    * <p>Note that this method technically doesn't consume any input but must be called after having
-   * read the last element of a list. This allow to ensure the structure of the input is indeed the
-   * one expected.
+   * read the last element of a list. This allows it to ensure the structure of the input is indeed
+   * the one expected.
    */
   void leaveListLenient();
 
@@ -272,6 +272,17 @@ public interface RLPInput {
    *     fit an unsigned int or has leading zeros.
    */
   long readUnsignedIntScalar();
+
+  /**
+   * Reads a scalar from the input and return is as an unsigned byte contained in an int
+   *
+   * @return The next scalar item of this input as an unsigned byte value as int
+   * @throws RLPException if the next item to read is a list, the input is at the end of its current
+   *     list (and {@link #leaveList()} hasn't been called) or if the next item is either too big to
+   *     fit an unsigned byte or has leading zeros.
+   */
+  int readUnsignedByteScalar();
+
   /**
    * Reads an inet address from this input.
    *
@@ -374,10 +385,11 @@ public interface RLPInput {
     for (int i = 0; i < size; i++) {
       try {
         res.add(valueReader.apply(this));
+      } catch (final RLPException e) {
+        throw e;
       } catch (final Exception e) {
         throw new RLPException(
-            String.format(
-                "Error applying element decoding function on " + "element %d of the list", i),
+            String.format("Error applying element decoding function on element %d of the list", i),
             e);
       }
     }

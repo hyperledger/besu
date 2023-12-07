@@ -74,8 +74,10 @@ public class RecursivePeerRefreshState {
   }
 
   void start(final List<DiscoveryPeer> initialPeers, final Bytes target) {
+    // TODO check this flag earlier
     if (iterativeSearchInProgress) {
-      LOG.debug("Skip peer search because previous search is still in progress.");
+      LOG.debug(
+          "Skip peer search because previous search ({}) is still in progress.", currentRound);
       return;
     }
     LOG.debug("Start peer search.");
@@ -93,7 +95,7 @@ public class RecursivePeerRefreshState {
   }
 
   private void addInitialPeers(final List<DiscoveryPeer> initialPeers) {
-    LOG.debug("INITIAL PEERS: {}", initialPeers);
+    LOG.debug("{} INITIAL PEERS: {}", initialPeers.size(), initialPeers);
     this.initialPeers = initialPeers;
     for (final DiscoveryPeer peer : initialPeers) {
       final MetadataPeer iterationParticipant =

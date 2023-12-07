@@ -30,16 +30,22 @@ import org.apache.tuweni.bytes.Bytes;
 public class NoopMiningCoordinator implements MiningCoordinator {
 
   private final Wei minTransactionGasPrice;
+  private final Wei minPriorityFeePerGas;
 
   private final Optional<Address> coinbase;
 
   public NoopMiningCoordinator(final MiningParameters miningParameters) {
     this.minTransactionGasPrice = miningParameters.getMinTransactionGasPrice();
+    this.minPriorityFeePerGas = miningParameters.getMinPriorityFeePerGas();
     this.coinbase = miningParameters.getCoinbase();
   }
 
-  public NoopMiningCoordinator(final Wei minTransactionGasPrice, final Optional<Address> coinbase) {
+  public NoopMiningCoordinator(
+      final Wei minTransactionGasPrice,
+      final Wei minPriorityFeePerGas,
+      final Optional<Address> coinbase) {
     this.minTransactionGasPrice = minTransactionGasPrice;
+    this.minPriorityFeePerGas = minPriorityFeePerGas;
     this.coinbase = coinbase;
   }
 
@@ -70,6 +76,11 @@ public class NoopMiningCoordinator implements MiningCoordinator {
   @Override
   public Wei getMinTransactionGasPrice() {
     return minTransactionGasPrice;
+  }
+
+  @Override
+  public Wei getMinPriorityFeePerGas() {
+    return minPriorityFeePerGas;
   }
 
   @Override

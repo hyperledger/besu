@@ -22,7 +22,6 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
@@ -37,6 +36,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -129,11 +129,7 @@ class LogRollingTests {
   @BeforeEach
   void createStorage() {
     provider = new InMemoryKeyValueStorageProvider();
-    final CachedMerkleTrieLoader cachedMerkleTrieLoader =
-        new CachedMerkleTrieLoader(new NoOpMetricsSystem());
-    archive =
-        new BonsaiWorldStateProvider(
-            provider, blockchain, cachedMerkleTrieLoader, new NoOpMetricsSystem(), null);
+    archive = InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive(blockchain);
     accountStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
     codeStorage = provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
@@ -145,15 +141,8 @@ class LogRollingTests {
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
 
     secondProvider = new InMemoryKeyValueStorageProvider();
-    final CachedMerkleTrieLoader secondOptimizedMerkleTrieLoader =
-        new CachedMerkleTrieLoader(new NoOpMetricsSystem());
     secondArchive =
-        new BonsaiWorldStateProvider(
-            secondProvider,
-            blockchain,
-            secondOptimizedMerkleTrieLoader,
-            new NoOpMetricsSystem(),
-            null);
+        InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive(blockchain);
     secondAccountStorage =
         secondProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
     secondCodeStorage =
@@ -174,6 +163,7 @@ class LogRollingTests {
         new BonsaiWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
+            EvmConfiguration.DEFAULT,
             new BonsaiWorldStateConfig());
     final WorldUpdater updater = worldState.updater();
 
@@ -187,6 +177,7 @@ class LogRollingTests {
         new BonsaiWorldState(
             secondArchive,
             new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()),
+            EvmConfiguration.DEFAULT,
             new BonsaiWorldStateConfig());
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
@@ -218,6 +209,7 @@ class LogRollingTests {
         new BonsaiWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
+            EvmConfiguration.DEFAULT,
             new BonsaiWorldStateConfig());
 
     final WorldUpdater updater = worldState.updater();
@@ -239,6 +231,7 @@ class LogRollingTests {
         new BonsaiWorldState(
             secondArchive,
             new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()),
+            EvmConfiguration.DEFAULT,
             new BonsaiWorldStateConfig());
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
@@ -271,6 +264,7 @@ class LogRollingTests {
         new BonsaiWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
+            EvmConfiguration.DEFAULT,
             new BonsaiWorldStateConfig());
 
     final WorldUpdater updater = worldState.updater();
@@ -299,6 +293,7 @@ class LogRollingTests {
         new BonsaiWorldState(
             secondArchive,
             new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()),
+            EvmConfiguration.DEFAULT,
             new BonsaiWorldStateConfig());
 
     final WorldUpdater secondUpdater = secondWorldState.updater();

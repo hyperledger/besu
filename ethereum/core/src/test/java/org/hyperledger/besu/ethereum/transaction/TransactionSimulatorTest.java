@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParam
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Status;
@@ -75,8 +76,9 @@ public class TransactionSimulatorTest {
 
   private static final Address DEFAULT_FROM =
       Address.fromHexString("0x0000000000000000000000000000000000000000");
-
+  private static final long GASCAP = 500L;
   private TransactionSimulator transactionSimulator;
+  private TransactionSimulator cappedTransactionSimulator;
 
   @Mock private Blockchain blockchain;
   @Mock private WorldStateArchive worldStateArchive;
@@ -84,13 +86,14 @@ public class TransactionSimulatorTest {
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private MainnetTransactionProcessor transactionProcessor;
-
   private final BlockHeaderTestFixture blockHeaderTestFixture = new BlockHeaderTestFixture();
 
   @BeforeEach
   public void setUp() {
     this.transactionSimulator =
-        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
+        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, 0);
+    this.cappedTransactionSimulator =
+        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, GASCAP);
   }
 
   @Test
@@ -156,7 +159,6 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     transactionSimulator.process(
@@ -260,7 +262,6 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     transactionSimulator.process(
@@ -523,6 +524,82 @@ public class TransactionSimulatorTest {
     verifyTransactionWasProcessed(expectedTransaction);
   }
 
+  @Test
+  public void shouldCapGasLimitWhenOriginalTransactionExceedsGasCap() {
+    final CallParameter callParameter =
+        eip1559TransactionCallParameter(Wei.ZERO, Wei.ZERO, GASCAP + 1);
+
+    final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE);
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .chainId(BigInteger.ONE)
+            .nonce(1L)
+            .gasLimit(GASCAP)
+            .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
+            .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
+            .to(callParameter.getTo())
+            .sender(callParameter.getFrom())
+            .value(callParameter.getValue())
+            .payload(callParameter.getPayload())
+            .signature(FAKE_SIGNATURE)
+            .build();
+
+    mockProtocolSpecForProcessWithWorldUpdater();
+
+    // call process with original transaction
+    cappedTransactionSimulator.process(
+        callParameter,
+        TransactionValidationParams.transactionSimulator(),
+        OperationTracer.NO_TRACING,
+        1L);
+
+    // expect overwritten transaction to be processed
+    verifyTransactionWasProcessed(expectedTransaction);
+  }
+
+  @Test
+  public void shouldKeepOriginalGasLimitWhenCapIsHigherThanOriginalValue() {
+    // generate a transaction with a gas limit that is lower than the gas cap
+    final CallParameter callParameter =
+        eip1559TransactionCallParameter(Wei.ZERO, Wei.ZERO, GASCAP - 1);
+
+    final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE);
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
+    mockProtocolSpecForProcessWithWorldUpdater();
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .chainId(BigInteger.ONE)
+            .nonce(1L)
+            .gasLimit(callParameter.getGasLimit())
+            .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
+            .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
+            .to(callParameter.getTo())
+            .sender(callParameter.getFrom())
+            .value(callParameter.getValue())
+            .payload(callParameter.getPayload())
+            .signature(FAKE_SIGNATURE)
+            .build();
+
+    // call process with original transaction
+    cappedTransactionSimulator.process(
+        callParameter,
+        TransactionValidationParams.transactionSimulator(),
+        OperationTracer.NO_TRACING,
+        1L);
+
+    // expect transaction with the original gas limit to be processed
+    verifyTransactionWasProcessed(expectedTransaction);
+  }
+
   private void mockWorldStateForAccount(
       final BlockHeader blockHeader, final Address address, final long nonce) {
     final Account account = mock(Account.class);
@@ -558,8 +635,7 @@ public class TransactionSimulatorTest {
         .thenReturn(Optional.of(blockHeader));
   }
 
-  private void mockProcessorStatusForTransaction(
-      final Transaction transaction, final Status status) {
+  private void mockProtocolSpecForProcessWithWorldUpdater() {
     final BlockHeaderFunctions blockHeaderFunctions = mock(BlockHeaderFunctions.class);
     when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.ONE));
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
@@ -567,7 +643,11 @@ public class TransactionSimulatorTest {
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);
     when(protocolSpec.getBlockHeaderFunctions()).thenReturn(blockHeaderFunctions);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0));
+  }
 
+  private void mockProcessorStatusForTransaction(
+      final Transaction transaction, final Status status) {
+    mockProtocolSpecForProcessWithWorldUpdater();
     final TransactionProcessingResult result = mock(TransactionProcessingResult.class);
     switch (status) {
       case SUCCESSFUL:
@@ -628,10 +708,15 @@ public class TransactionSimulatorTest {
 
   private CallParameter eip1559TransactionCallParameter(
       final Wei maxFeePerGas, final Wei maxPriorityFeePerGas) {
+    return eip1559TransactionCallParameter(maxFeePerGas, maxPriorityFeePerGas, 0L);
+  }
+
+  private CallParameter eip1559TransactionCallParameter(
+      final Wei maxFeePerGas, final Wei maxPriorityFeePerGas, final long gasLimit) {
     return new CallParameter(
         Address.fromHexString("0x0"),
         Address.fromHexString("0x0"),
-        0,
+        gasLimit,
         Wei.of(0),
         Optional.of(maxFeePerGas),
         Optional.of(maxPriorityFeePerGas),

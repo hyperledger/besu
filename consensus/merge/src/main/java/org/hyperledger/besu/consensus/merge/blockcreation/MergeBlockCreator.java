@@ -15,72 +15,57 @@
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes32;
 
 /** The Merge block creator. */
 class MergeBlockCreator extends AbstractBlockCreator {
-  /**
-   * On PoS you do not need to compete with other nodes for block production, since you have an
-   * allocated slot for that, so in this case make sense to always try to fill the block, if there
-   * are enough pending transactions, until the remaining gas is less than the minimum needed for
-   * the smaller transaction. So for PoS the min-block-occupancy-ratio option is set to always try
-   * to fill 100% of the block.
-   */
-  private static final double TRY_FILL_BLOCK = 1.0;
 
   /**
    * Instantiates a new Merge block creator.
    *
-   * @param coinbase the coinbase
-   * @param targetGasLimitSupplier the target gas limit supplier
+   * @param miningParameters the mining parameters
    * @param extraDataCalculator the extra data calculator
    * @param transactionPool the pending transactions
    * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
-   * @param minTransactionGasPrice the min transaction gas price
-   * @param miningBeneficiary the mining beneficiary
    * @param parentHeader the parent header
    */
   public MergeBlockCreator(
-      final Address coinbase,
-      final Supplier<Optional<Long>> targetGasLimitSupplier,
+      final MiningParameters miningParameters,
       final ExtraDataCalculator extraDataCalculator,
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final Wei minTransactionGasPrice,
-      final Address miningBeneficiary,
       final BlockHeader parentHeader,
-      final Optional<Address> depositContractAddress) {
+      final Optional<Address> depositContractAddress,
+      final EthScheduler ethScheduler) {
     super(
-        miningBeneficiary,
-        __ -> miningBeneficiary,
-        targetGasLimitSupplier,
+        miningParameters,
+        __ -> miningParameters.getCoinbase().orElseThrow(),
         extraDataCalculator,
         transactionPool,
         protocolContext,
         protocolSchedule,
-        minTransactionGasPrice,
-        TRY_FILL_BLOCK,
         parentHeader,
-        depositContractAddress);
+        depositContractAddress,
+        ethScheduler);
   }
 
   /**

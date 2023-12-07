@@ -191,7 +191,8 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
             qbftForksSchedule,
             miningParameters,
             localAddress,
-            bftExtraDataCodec().get());
+            bftExtraDataCodec().get(),
+            ethProtocolManager.ethContext().getScheduler());
 
     final ValidatorProvider validatorProvider =
         protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();
@@ -366,7 +367,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
             blockchain, epochManager, bftBlockInterface().get(), validatorOverrides);
 
     final TransactionSimulator transactionSimulator =
-        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
+        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule, 0L);
     transactionValidatorProvider =
         new TransactionValidatorProvider(
             blockchain, new ValidatorContractController(transactionSimulator), qbftForksSchedule);

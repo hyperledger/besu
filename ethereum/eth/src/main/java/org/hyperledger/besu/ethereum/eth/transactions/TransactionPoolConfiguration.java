@@ -69,6 +69,7 @@ public interface TransactionPoolConfiguration {
   int DEFAULT_MAX_FUTURE_BY_SENDER = 200;
   Implementation DEFAULT_TX_POOL_IMPLEMENTATION = Implementation.LAYERED;
   Set<Address> DEFAULT_PRIORITY_SENDERS = Set.of();
+  Wei DEFAULT_TX_POOL_MIN_GAS_PRICE = Wei.of(1000);
 
   TransactionPoolConfiguration DEFAULT = ImmutableTransactionPoolConfiguration.builder().build();
 
@@ -145,6 +146,11 @@ public interface TransactionPoolConfiguration {
   @Value.Default
   default Set<Address> getPrioritySenders() {
     return DEFAULT_PRIORITY_SENDERS;
+  }
+
+  @Value.Default
+  default Wei getMinGasPrice() {
+    return DEFAULT_TX_POOL_MIN_GAS_PRICE;
   }
 
   @Value.Default

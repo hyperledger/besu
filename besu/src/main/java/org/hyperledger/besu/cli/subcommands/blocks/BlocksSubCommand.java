@@ -16,10 +16,6 @@ package org.hyperledger.besu.cli.subcommands.blocks;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.COMMAND_NAME;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_MAX_OMMERS_DEPTH;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_POW_JOB_TTL;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_LIMIT;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_TTL;
 
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
@@ -35,6 +31,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.IncrementingNonceGenerator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.metrics.MetricsService;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -271,21 +269,14 @@ public class BlocksSubCommand implements Runnable {
       // Extradata and coinbase can be configured on a per-block level via the json file
       final Address coinbase = Address.ZERO;
       final Bytes extraData = Bytes.EMPTY;
-      return new MiningParameters.Builder()
-          .coinbase(coinbase)
-          .minTransactionGasPrice(minTransactionGasPrice)
-          .extraData(extraData)
-          .miningEnabled(false)
-          .stratumMiningEnabled(false)
-          .stratumNetworkInterface("0.0.0.0")
-          .stratumPort(8008)
-          .stratumExtranonce("080c")
-          .maybeNonceGenerator(new IncrementingNonceGenerator(0))
-          .minBlockOccupancyRatio(0.0)
-          .remoteSealersLimit(DEFAULT_REMOTE_SEALERS_LIMIT)
-          .remoteSealersTimeToLive(DEFAULT_REMOTE_SEALERS_TTL)
-          .powJobTimeToLive(DEFAULT_POW_JOB_TTL)
-          .maxOmmerDepth(DEFAULT_MAX_OMMERS_DEPTH)
+      return ImmutableMiningParameters.builder()
+          .mutableInitValues(
+              MutableInitValues.builder()
+                  .nonceGenerator(new IncrementingNonceGenerator(0))
+                  .extraData(extraData)
+                  .minTransactionGasPrice(minTransactionGasPrice)
+                  .coinbase(coinbase)
+                  .build())
           .build();
     }
 
@@ -381,7 +372,11 @@ public class BlocksSubCommand implements Runnable {
     }
 
     private BesuController createBesuController() {
-      return parentCommand.parentCommand.buildController();
+      return parentCommand
+          .parentCommand
+          .getControllerBuilder()
+          .miningParameters(MiningParameters.newDefault())
+          .build();
     }
 
     private void exportRlpFormat(final BesuController controller) throws IOException {

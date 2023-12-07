@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
@@ -44,6 +43,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -145,7 +145,10 @@ public class BesuEventsImplTest {
     blockBroadcaster = new BlockBroadcaster(mockEthContext);
     syncState = new SyncState(blockchain, mockEthPeers);
     TransactionPoolConfiguration txPoolConfig =
-        ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();
+        ImmutableTransactionPoolConfiguration.builder()
+            .txPoolMaxSize(1)
+            .minGasPrice(Wei.ZERO)
+            .build();
 
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
@@ -155,9 +158,9 @@ public class BesuEventsImplTest {
             TestClock.system(ZoneId.systemDefault()),
             new NoOpMetricsSystem(),
             syncState,
-            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             txPoolConfig,
-            null);
+            null,
+            new BlobCache());
 
     serviceImpl = new BesuEventsImpl(blockchain, blockBroadcaster, transactionPool, syncState);
   }

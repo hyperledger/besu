@@ -19,6 +19,8 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConf
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LEGACY;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -147,6 +149,24 @@ class ConfigurationOverviewBuilderTest {
   }
 
   @Test
+  void setTrieLogPruningEnabled() {
+    final String noTrieLogRetentionThresholdSet = builder.build();
+    assertThat(noTrieLogRetentionThresholdSet).doesNotContain("Trie log pruning enabled");
+
+    builder.setTrieLogPruningEnabled();
+    builder.setTrieLogRetentionThreshold(42);
+    String trieLogRetentionThresholdSet = builder.build();
+    assertThat(trieLogRetentionThresholdSet)
+        .contains("Trie log pruning enabled")
+        .contains("retention: 42");
+    assertThat(trieLogRetentionThresholdSet).doesNotContain("prune limit");
+
+    builder.setTrieLogPruningLimit(1000);
+    trieLogRetentionThresholdSet = builder.build();
+    assertThat(trieLogRetentionThresholdSet).contains("prune limit: 1000");
+  }
+
+  @Test
   void setTxPoolImplementationLayered() {
     builder.setTxPoolImplementation(LAYERED);
     final String layeredTxPoolSelected = builder.build();
@@ -158,5 +178,26 @@ class ConfigurationOverviewBuilderTest {
     builder.setTxPoolImplementation(LEGACY);
     final String legacyTxPoolSelected = builder.build();
     assertThat(legacyTxPoolSelected).contains("Using LEGACY transaction pool implementation");
+  }
+
+  @Test
+  void setWorldStateUpdateModeDefault() {
+    builder.setWorldStateUpdateMode(EvmConfiguration.DEFAULT.worldUpdaterMode());
+    final String layeredTxPoolSelected = builder.build();
+    assertThat(layeredTxPoolSelected).contains("Using STACKED worldstate update mode");
+  }
+
+  @Test
+  void setWorldStateUpdateModeStacked() {
+    builder.setWorldStateUpdateMode(EvmConfiguration.WorldUpdaterMode.STACKED);
+    final String layeredTxPoolSelected = builder.build();
+    assertThat(layeredTxPoolSelected).contains("Using STACKED worldstate update mode");
+  }
+
+  @Test
+  void setWorldStateUpdateModeJournaled() {
+    builder.setWorldStateUpdateMode(EvmConfiguration.WorldUpdaterMode.JOURNALED);
+    final String layeredTxPoolSelected = builder.build();
+    assertThat(layeredTxPoolSelected).contains("Using JOURNALED worldstate update mode");
   }
 }

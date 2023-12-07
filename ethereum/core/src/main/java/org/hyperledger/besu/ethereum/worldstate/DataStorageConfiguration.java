@@ -19,6 +19,7 @@ package org.hyperledger.besu.ethereum.worldstate;
 import org.immutables.value.Value;
 
 @Value.Immutable
+@Value.Enclosing
 public interface DataStorageConfiguration {
 
   long DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD = 512;
@@ -27,9 +28,42 @@ public interface DataStorageConfiguration {
       ImmutableDataStorageConfiguration.builder()
           .dataStorageFormat(DataStorageFormat.FOREST)
           .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+          .unstable(Unstable.DEFAULT)
           .build();
 
   DataStorageFormat getDataStorageFormat();
 
   Long getBonsaiMaxLayersToLoad();
+
+  @Value.Default
+  default Unstable getUnstable() {
+    return Unstable.DEFAULT;
+  }
+
+  @Value.Immutable
+  interface Unstable {
+
+    boolean DEFAULT_BONSAI_TRIE_LOG_PRUNING_ENABLED = false;
+    long DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD = 512L;
+    long MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD = DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
+    int DEFAULT_BONSAI_TRIE_LOG_PRUNING_LIMIT = 30_000;
+
+    DataStorageConfiguration.Unstable DEFAULT =
+        ImmutableDataStorageConfiguration.Unstable.builder().build();
+
+    @Value.Default
+    default boolean getBonsaiTrieLogPruningEnabled() {
+      return DEFAULT_BONSAI_TRIE_LOG_PRUNING_ENABLED;
+    }
+
+    @Value.Default
+    default long getBonsaiTrieLogRetentionThreshold() {
+      return DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
+    }
+
+    @Value.Default
+    default int getBonsaiTrieLogPruningLimit() {
+      return DEFAULT_BONSAI_TRIE_LOG_PRUNING_LIMIT;
+    }
+  }
 }
