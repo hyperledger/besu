@@ -18,7 +18,7 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class VoteTest {
   @Test

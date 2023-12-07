@@ -15,31 +15,46 @@
 package org.hyperledger.besu.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.worldstate.WorldView;
+import org.hyperledger.besu.plugin.data.BlockBody;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.BlockTraceResult;
 import org.hyperledger.besu.plugin.data.TransactionTraceResult;
 import org.hyperledger.besu.plugin.services.TraceService;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.LongStream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 class TraceServiceImplTest {
 
   TraceService traceService;
@@ -73,19 +88,40 @@ class TraceServiceImplTest {
     final long persistedNonceForAccount =
         worldStateArchive.getMutable().get(addressToVerify).getNonce();
 
+    final long blockNumber = 2;
+
+    final BlockAwareOperationTracer opTracer = mock(BlockAwareOperationTracer.class);
+
     traceService.trace(
-        2,
-        2,
+        blockNumber,
+        blockNumber,
         worldState -> {
           assertThat(worldState.get(addressToVerify).getNonce()).isEqualTo(1);
         },
         worldState -> {
           assertThat(worldState.get(addressToVerify).getNonce()).isEqualTo(2);
         },
-        BlockAwareOperationTracer.NO_TRACING);
+        opTracer);
 
     assertThat(worldStateArchive.getMutable().get(addressToVerify).getNonce())
         .isEqualTo(persistedNonceForAccount);
+
+    final Block tracedBlock = blockchain.getBlockByNumber(blockNumber).get();
+
+    verify(opTracer).traceStartBlock(tracedBlock.getHeader(), tracedBlock.getBody());
+
+    tracedBlock
+        .getBody()
+        .getTransactions()
+        .forEach(
+            tx -> {
+              verify(opTracer).traceStartTransaction(any(), eq(tx));
+              verify(opTracer)
+                  .traceEndTransaction(
+                      any(), eq(tx), anyBoolean(), any(), any(), anyLong(), anyLong());
+            });
+
+    verify(opTracer).traceEndBlock(tracedBlock.getHeader(), tracedBlock.getBody());
   }
 
   @Test
@@ -96,9 +132,13 @@ class TraceServiceImplTest {
     final long persistedNonceForAccount =
         worldStateArchive.getMutable().get(addressToVerify).getNonce();
 
+    final long startBlock = 1;
+    final long endBlock = 32;
+    final BlockAwareOperationTracer opTracer = mock(BlockAwareOperationTracer.class);
+
     traceService.trace(
-        0,
-        32,
+        startBlock,
+        endBlock,
         worldState -> {
           assertThat(worldState.get(addressToVerify).getNonce()).isEqualTo(0);
         },
@@ -106,10 +146,30 @@ class TraceServiceImplTest {
           assertThat(worldState.get(addressToVerify).getNonce())
               .isEqualTo(persistedNonceForAccount);
         },
-        BlockAwareOperationTracer.NO_TRACING);
+        opTracer);
 
     assertThat(worldStateArchive.getMutable().get(addressToVerify).getNonce())
         .isEqualTo(persistedNonceForAccount);
+
+    LongStream.rangeClosed(startBlock, endBlock)
+        .mapToObj(blockchain::getBlockByNumber)
+        .map(Optional::get)
+        .forEach(
+            tracedBlock -> {
+              verify(opTracer).traceStartBlock(tracedBlock.getHeader(), tracedBlock.getBody());
+              tracedBlock
+                  .getBody()
+                  .getTransactions()
+                  .forEach(
+                      tx -> {
+                        verify(opTracer).traceStartTransaction(any(), eq(tx));
+                        verify(opTracer)
+                            .traceEndTransaction(
+                                any(), eq(tx), anyBoolean(), any(), any(), anyLong(), anyLong());
+                      });
+
+              verify(opTracer).traceEndBlock(tracedBlock.getHeader(), tracedBlock.getBody());
+            });
   }
 
   @Test
@@ -197,8 +257,16 @@ class TraceServiceImplTest {
     public long txEndGasUsed;
     public Long txEndTimeNs;
 
+    private final Set<Transaction> traceStartTxCalled = new HashSet<>();
+    private final Set<Transaction> traceEndTxCalled = new HashSet<>();
+    private final Set<Hash> traceStartBlockCalled = new HashSet<>();
+    private final Set<Hash> traceEndBlockCalled = new HashSet<>();
+
     @Override
     public void traceStartTransaction(final WorldView worldView, final Transaction transaction) {
+      if (!traceStartTxCalled.add(transaction)) {
+        fail("traceStartTransaction already called for tx " + transaction);
+      }
       txStartWorldView = worldView;
       txStartTransaction = transaction;
     }
@@ -212,6 +280,9 @@ class TraceServiceImplTest {
         final List<Log> logs,
         final long gasUsed,
         final long timeNs) {
+      if (!traceEndTxCalled.add(transaction)) {
+        fail("traceEndTransaction already called for tx " + transaction);
+      }
       txEndWorldView = worldView;
       txEndTransaction = transaction;
       txEndStatus = status;
@@ -219,6 +290,20 @@ class TraceServiceImplTest {
       txEndLogs = logs;
       txEndGasUsed = gasUsed;
       txEndTimeNs = timeNs;
+    }
+
+    @Override
+    public void traceStartBlock(final BlockHeader blockHeader, final BlockBody blockBody) {
+      if (!traceStartBlockCalled.add(blockHeader.getBlockHash())) {
+        fail("traceStartBlock already called for block " + blockHeader);
+      }
+    }
+
+    @Override
+    public void traceEndBlock(final BlockHeader blockHeader, final BlockBody blockBody) {
+      if (!traceEndBlockCalled.add(blockHeader.getBlockHash())) {
+        fail("traceEndBlock already called for block " + blockHeader);
+      }
     }
   }
 }

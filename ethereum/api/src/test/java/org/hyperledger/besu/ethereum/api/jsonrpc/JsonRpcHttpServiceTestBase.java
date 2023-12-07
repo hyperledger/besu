@@ -67,6 +67,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 public class JsonRpcHttpServiceTestBase {
 
+  // this tempDir is deliberately static
   @TempDir private static Path folder;
   protected final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
 
