@@ -6,6 +6,7 @@ on:
 
 env:
   GRADLE_BUILD_ACTION_CACHE_DEBUG_ENABLED: true
+  GRADLEW_UNIT_TEST_ARGS: ${{matrix.gradle_args}}
 
 jobs:
   repolint:
@@ -78,7 +79,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2.10.0
       - name: run unit tests
-        run: ./gradlew "${{ matrix.gradle_args }}" -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+        run: ./gradlew $GRADLEW_UNIT_TEST_ARGS -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Upload Test Report
         uses: actions/upload-artifact@v3
         if: always() # always run even if the previous step fails
