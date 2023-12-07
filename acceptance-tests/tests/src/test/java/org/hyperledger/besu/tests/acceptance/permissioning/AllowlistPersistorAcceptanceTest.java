@@ -26,8 +26,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AllowlistPersistorAcceptanceTest extends AcceptanceTestBase {
 
@@ -45,7 +45,7 @@ public class AllowlistPersistorAcceptanceTest extends AcceptanceTestBase {
   private Account senderB;
   private Path tempFile;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     senderA = accounts.getPrimaryBenefactor();
     senderB = accounts.getSecondaryBenefactor();
