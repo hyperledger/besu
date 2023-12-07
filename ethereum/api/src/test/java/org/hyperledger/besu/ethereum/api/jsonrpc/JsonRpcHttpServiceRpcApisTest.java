@@ -88,7 +88,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class JsonRpcHttpServiceRpcApisTest {
 
-  @TempDir private static Path folder;
+  @TempDir private Path folder;
 
   private final Vertx vertx = Vertx.vertx();
   private final OkHttpClient client = new OkHttpClient();
