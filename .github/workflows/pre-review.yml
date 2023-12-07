@@ -6,7 +6,6 @@ on:
 
 env:
   GRADLE_BUILD_ACTION_CACHE_DEBUG_ENABLED: true
-  GRADLEW_UNIT_TEST_ARGS: ${{matrix.gradle_args}}
 
 jobs:
   repolint:
@@ -56,6 +55,8 @@ jobs:
       - name: Gradle Compile
         run: ./gradlew build -x test -x spotlessCheck -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
   unitTests:
+    env:
+        GRADLEW_UNIT_TEST_ARGS: ${{matrix.gradle_args}}
     runs-on: ubuntu-22.04
     needs: [ compile ]
     permissions:
