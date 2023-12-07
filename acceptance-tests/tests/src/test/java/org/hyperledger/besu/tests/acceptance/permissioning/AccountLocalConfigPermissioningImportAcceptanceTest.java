@@ -23,18 +23,18 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurati
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class AccountLocalConfigPermissioningImportAcceptanceTest extends AcceptanceTestBase {
 
-  @TempDir public Path folder;
+  @Rule public TemporaryFolder folder = new TemporaryFolder();
 
   private static final String GENESIS_FILE = "/ibft/ibft.json";
 
@@ -45,12 +45,12 @@ public class AccountLocalConfigPermissioningImportAcceptanceTest extends Accepta
   private BesuNode nodeB;
   private Cluster permissionedCluster;
 
-  @BeforeEach
+  @Before
   public void setUp() throws IOException {
     sender = accounts.getPrimaryBenefactor();
     beneficiary = accounts.createAccount("beneficiary");
     final List<String> allowList = List.of(sender.getAddress(), beneficiary.getAddress());
-    final File sharedFile = Files.createFile(folder.resolve("shared.txt")).toFile();
+    final File sharedFile = folder.newFile();
     persistAllowList(allowList, sharedFile.toPath());
     bootnode = besu.createIbft2NonValidatorBootnode("bootnode", GENESIS_FILE);
     nodeA =
@@ -67,7 +67,7 @@ public class AccountLocalConfigPermissioningImportAcceptanceTest extends Accepta
 
   @Test
   public void transactionFromDeniedAccountShouldNotBreakBlockImport() throws IOException {
-    final File newPermissionsFile = Files.createFile(folder.resolve("new.txt")).toFile();
+    final File newPermissionsFile = folder.newFile();
     final List<String> allowList = List.of(beneficiary.getAddress());
     persistAllowList(allowList, newPermissionsFile.toPath());
     final BesuNode nodeC =
@@ -91,7 +91,7 @@ public class AccountLocalConfigPermissioningImportAcceptanceTest extends Accepta
         AllowlistPersistor.ALLOWLIST_TYPE.ACCOUNTS, allowList, path);
   }
 
-  @AfterEach
+  @After
   public void tearDown() {
     permissionedCluster.stop();
   }
