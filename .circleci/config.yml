@@ -211,6 +211,7 @@ jobs:
       - capture_test_results
 
   acceptanceTests:
+    parallelism: 4
     executor: xl_machine_executor # needs the machine executor since privacy test uses container tests (docker)
     steps:
       - prepare
