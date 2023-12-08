@@ -98,7 +98,7 @@ sourceSets {
   }
 }
 
-processTestResources.dependsOn(':acceptance-tests:test-plugins:testPluginsJar')
+processTestResources.dependsOn(':acceptance-tests:test-plugins:testPluginsJar',':acceptance-tests:test-plugins:jar')
 
 task acceptanceTest(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
