@@ -35,43 +35,26 @@ import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.utils.Base64String;
 import org.web3j.utils.Restriction;
 
-@RunWith(Parameterized.class)
 public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanceTestBase {
 
-  private final EnclaveType enclaveType;
-  private final EnclaveEncryptorType enclaveEncryptorType;
-
-  public FlexibleMultiTenancyAcceptanceTest(
-      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType) {
-    this.enclaveType = enclaveType;
-    this.enclaveEncryptorType = enclaveEncryptorType;
-  }
-
-  @Parameterized.Parameters(name = "{0} enclave type with {1} encryptor")
-  public static Collection<Object[]> enclaveParameters() {
-    return Arrays.asList(
-        new Object[][] {
-          {TESSERA, NACL},
-          {TESSERA, EC}
-        });
+  public static Stream<Arguments> enclaveParameters() {
+    return Stream.of(Arguments.of(TESSERA, NACL), Arguments.of(TESSERA, EC));
   }
 
   private static final PermissioningTransactions permissioningTransactions =
@@ -81,8 +64,8 @@ public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanc
   private PrivacyNode alice;
   private MultiTenancyPrivacyNode aliceMultiTenancyPrivacyNode;
 
-  @Before
-  public void setUp() throws Exception {
+  public void setUp(final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
     alice =
         privacyBesu.createFlexiblePrivacyGroupEnabledMinerNode(
             "node1",
@@ -112,26 +95,35 @@ public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanc
         .addTenantWithToken(alice3EnclaveKey, alice3Token);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     privacyCluster.close();
   }
 
-  @Test
+  @ParameterizedTest(name = "{0} enclave and {1} encryptor type")
+  @MethodSource("enclaveParameters")
   public void createPrivacyGroup() {
     createFlexiblePrivacyGroup(alice);
   }
 
-  @Test
-  public void createPrivacyGroupWithAllTenants() {
+  @ParameterizedTest(name = "{0} enclave and {1} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void createPrivacyGroupWithAllTenants(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final MultiTenancyPrivacyGroup privacyGroup = new MultiTenancyPrivacyGroup();
     privacyGroup.addNodeWithTenants(
         aliceMultiTenancyPrivacyNode, aliceMultiTenancyPrivacyNode.getTenants());
     createFlexiblePrivacyGroup(privacyGroup);
   }
 
-  @Test
-  public void noAccessWhenNotAMember() {
+  @ParameterizedTest(name = "{0} enclave and {1} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void noAccessWhenNotAMember(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final MultiTenancyPrivacyGroup twoTenantsFromAlice = new MultiTenancyPrivacyGroup();
     final List<String> tenants = aliceMultiTenancyPrivacyNode.getTenants();
     final String removedTenant = tenants.remove(tenants.size() - 1);
@@ -330,8 +322,12 @@ public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanc
     // enclave key
   }
 
-  @Test
-  public void removedMemberCannotGetFilterChanges() {
+  @ParameterizedTest(name = "{0} enclave and {1} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void removedMemberCannotGetFilterChanges(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final MultiTenancyPrivacyGroup allTenantsFromAlice = new MultiTenancyPrivacyGroup();
     final List<String> tenants = aliceMultiTenancyPrivacyNode.getTenants();
     allTenantsFromAlice.addNodeWithTenants(aliceMultiTenancyPrivacyNode, tenants);

@@ -29,23 +29,19 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Optional;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.utils.Restriction;
 
-@RunWith(Parameterized.class)
 public class PrivateGenesisAcceptanceTest extends ParameterizedEnclaveTestBase {
-  private final PrivacyNode alice;
+  private PrivacyNode alice;
 
-  public PrivateGenesisAcceptanceTest(
+  public void setUp(
       final Restriction restriction,
       final EnclaveType enclaveType,
       final EnclaveEncryptorType enclaveEncryptorType)
       throws IOException {
-
-    super(restriction, enclaveType, enclaveEncryptorType);
 
     alice =
         privacyBesu.createIbft2NodePrivacyEnabledWithGenesis(
@@ -62,9 +58,15 @@ public class PrivateGenesisAcceptanceTest extends ParameterizedEnclaveTestBase {
     privacyCluster.start(alice);
   }
 
-  @Test
-  public void canInteractWithPrivateGenesisPreCompile() throws Exception {
-    final String privacyGroupId = createPrivacyGroup();
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("params")
+  public void canInteractWithPrivateGenesisPreCompile(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
+    final String privacyGroupId = createPrivacyGroup(restriction);
 
     final EventEmitter eventEmitter =
         alice.execute(
@@ -87,7 +89,7 @@ public class PrivateGenesisAcceptanceTest extends ParameterizedEnclaveTestBase {
     assertThat(new BigInteger(value.substring(2), 16)).isEqualByComparingTo(BigInteger.valueOf(42));
   }
 
-  private String createPrivacyGroup() {
+  private String createPrivacyGroup(final Restriction restriction) {
     if (restriction == RESTRICTED) {
       return alice.execute(privacyTransactions.createPrivacyGroup("name", "description", alice));
     } else if (restriction == UNRESTRICTED) {

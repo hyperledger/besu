@@ -32,40 +32,31 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.KeyPairGenerator;
 import java.security.spec.ECGenParameterSpec;
-import java.util.Arrays;
 import java.util.Base64;
-import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.crypto.sodium.Box;
 import org.assertj.core.api.Condition;
 import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.testcontainers.containers.Network;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.utils.Restriction;
 
-@RunWith(Parameterized.class)
 public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
 
-  private final PrivacyNode alice;
-  private final PrivacyNode bob;
-  private final String wrongPublicKey;
+  private PrivacyNode alice;
+  private PrivacyNode bob;
+  private String wrongPublicKey;
 
-  @Parameters(name = "{0} enclave type with {1} encryptor")
-  public static Collection<Object[]> enclaveParameters() {
-    return Arrays.asList(
-        new Object[][] {
-          {TESSERA, NACL},
-          {TESSERA, EC}
-        });
+  public static Stream<Arguments> enclaveParameters() {
+    return Stream.of(Arguments.of(TESSERA, NACL), Arguments.of(TESSERA, EC));
   }
 
-  public EnclaveErrorAcceptanceTest(
-      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+  public void setUp(final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
       throws IOException {
 
     final Network containerNetwork = Network.newNetwork();
@@ -102,8 +93,12 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
     wrongPublicKey = Base64.getEncoder().encodeToString(wrongPublicKeyBytes);
   }
 
-  @Test
-  public void aliceCannotSendTransactionFromBobNode() {
+  @ParameterizedTest(name = "{0} enclave type with {1} encryptor")
+  @MethodSource("enclaveParameters")
+  public void aliceCannotSendTransactionFromBobNode(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final Throwable throwable =
         catchThrowable(
             () ->
@@ -119,8 +114,12 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
             RpcErrorType.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY.getMessage());
   }
 
-  @Test
-  public void enclaveNoPeerUrlError() {
+  @ParameterizedTest(name = "{0} enclave type with {1} encryptor")
+  @MethodSource("enclaveParameters")
+  public void enclaveNoPeerUrlError(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final Throwable throwable =
         catchThrowable(
             () ->
@@ -136,8 +135,12 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
     assertThat(throwable.getMessage()).has(matchTesseraEnclaveMessage(tesseraMessage));
   }
 
-  @Test
-  public void whenEnclaveIsDisconnectedGetReceiptReturnsInternalError() {
+  @ParameterizedTest(name = "{0} enclave type with {1} encryptor")
+  @MethodSource("enclaveParameters")
+  public void whenEnclaveIsDisconnectedGetReceiptReturnsInternalError(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final EventEmitter eventEmitter =
         alice.execute(
             privateContractTransactions.createSmartContract(
@@ -174,9 +177,13 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
         privateTransactionVerifier.internalErrorPrivateTransactionReceipt(transactionHash));
   }
 
-  @Test
+  @ParameterizedTest(name = "{0} enclave type with {1} encryptor")
+  @MethodSource("enclaveParameters")
   @Ignore("Web3J is broken by PR #1426")
-  public void transactionFailsIfPartyIsOffline() {
+  public void transactionFailsIfPartyIsOffline(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     // Contract address is generated from sender address and transaction nonce
     final String contractAddress = "0xebf56429e6500e84442467292183d4d621359838";
 
@@ -209,8 +216,12 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
     assertThat(throwable).hasMessageContaining("NodePropagatingToAllPeers");
   }
 
-  @Test
-  public void createPrivacyGroupReturnsCorrectError() {
+  @ParameterizedTest(name = "{0} enclave type with {1} encryptor")
+  @MethodSource("enclaveParameters")
+  public void createPrivacyGroupReturnsCorrectError(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final Throwable throwable =
         catchThrowable(() -> alice.execute(privacyTransactions.createPrivacyGroup(null, null)));
     final String tesseraMessage = RpcErrorType.TESSERA_CREATE_GROUP_INCLUDE_SELF.getMessage();

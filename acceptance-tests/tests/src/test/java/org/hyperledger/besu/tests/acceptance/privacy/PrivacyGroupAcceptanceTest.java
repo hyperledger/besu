@@ -30,37 +30,30 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Stream;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.runners.Parameterized.Parameters;
 import org.testcontainers.containers.Network;
 import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.utils.Base64String;
 
-@RunWith(Parameterized.class)
 public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
 
-  private final PrivacyNode alice;
-  private final PrivacyNode bob;
-  private final PrivacyNode charlie;
+  private PrivacyNode alice;
+  private PrivacyNode bob;
+  private PrivacyNode charlie;
 
   @Parameters(name = "{0} enclave type with {1} encryptor")
-  public static Collection<Object[]> enclaveParameters() {
-    return Arrays.asList(
-        new Object[][] {
-          {TESSERA, NACL},
-          {TESSERA, EC}
-        });
+  public static Stream<Arguments> enclaveParameters() {
+    return Stream.of(Arguments.of(TESSERA, NACL), Arguments.of(TESSERA, EC));
   }
 
-  public PrivacyGroupAcceptanceTest(
-      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+  public void setUp(final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
       throws IOException {
 
     final Network containerNetwork = Network.newNetwork();
@@ -96,8 +89,12 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
     privacyCluster.start(alice, bob, charlie);
   }
 
-  @Test
-  public void nodeCanCreatePrivacyGroup() {
+  @ParameterizedTest(name = "{0} enclave and {1} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void nodeCanCreatePrivacyGroup(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     LogConfigurator.setLevel("", "DEBUG");
     final String privacyGroupId =
         alice.execute(
@@ -119,8 +116,12 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
     bob.verify(privateTransactionVerifier.validPrivacyGroupCreated(expected));
   }
 
-  @Test
-  public void nodeCanCreatePrivacyGroupWithoutName() {
+  @ParameterizedTest(name = "{0} enclave and {1} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void nodeCanCreatePrivacyGroupWithoutName(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final String privacyGroupId =
         alice.execute(
             privacyTransactions.createPrivacyGroup(null, "my group description", alice, bob));
@@ -140,8 +141,12 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
     bob.verify(privateTransactionVerifier.validPrivacyGroupCreated(expected));
   }
 
-  @Test
-  public void nodeCanCreatePrivacyGroupWithoutDescription() {
+  @ParameterizedTest(name = "{0} enclave and {1} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void nodeCanCreatePrivacyGroupWithoutDescription(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final String privacyGroupId =
         alice.execute(privacyTransactions.createPrivacyGroup("myGroupName", null, alice, bob));
 
@@ -160,8 +165,12 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
     bob.verify(privateTransactionVerifier.validPrivacyGroupCreated(expected));
   }
 
-  @Test
-  public void nodeCanCreatePrivacyGroupWithoutOptionalParams() {
+  @ParameterizedTest(name = "{0} enclave and {1} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void nodeCanCreatePrivacyGroupWithoutOptionalParams(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final String privacyGroupId =
         alice.execute(privacyTransactions.createPrivacyGroup(null, null, alice));
 
@@ -178,8 +187,12 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
     alice.verify(privateTransactionVerifier.validPrivacyGroupCreated(expected));
   }
 
-  @Test
-  public void canInteractWithMultiplePrivacyGroups() {
+  @ParameterizedTest(name = "{0} enclave and {1} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void canInteractWithMultiplePrivacyGroups(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final String privacyGroupIdABC =
         alice.execute(privacyTransactions.createPrivacyGroup(null, null, alice, bob, charlie));
 

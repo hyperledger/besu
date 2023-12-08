@@ -49,7 +49,7 @@ public class FlexiblePrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase
   }
 
   /**
-   * Create an flexible privacy group. The privacy group id will be randomly generated.
+   * Create a flexible privacy group. The privacy group id will be randomly generated.
    *
    * <p>This method also checks that each node member has successfully processed the transaction and
    * has the expected list of member for the group.

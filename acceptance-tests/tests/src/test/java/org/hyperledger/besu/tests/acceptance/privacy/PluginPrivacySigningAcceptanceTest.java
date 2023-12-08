@@ -29,40 +29,28 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.methods.response.EthBlock.Block;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
-@RunWith(Parameterized.class)
 public class PluginPrivacySigningAcceptanceTest extends PrivacyAcceptanceTestBase {
   private PrivacyNode minerNode;
 
-  private final EnclaveEncryptorType enclaveEncryptorType;
-
-  public PluginPrivacySigningAcceptanceTest(final EnclaveEncryptorType enclaveEncryptorType) {
-    this.enclaveEncryptorType = enclaveEncryptorType;
-  }
-
-  @Parameterized.Parameters(name = "{0}")
-  public static Collection<EnclaveEncryptorType> enclaveEncryptorTypes() {
-    return Arrays.stream(EnclaveEncryptorType.values())
+  public static Stream<Arguments> enclaveEncryptorTypes() {
+    return Stream.of(EnclaveEncryptorType.values())
         .filter(encryptorType -> !EnclaveEncryptorType.NOOP.equals(encryptorType))
-        .collect(Collectors.toList());
+        .map(Arguments::of);
   }
 
-  @Before
-  public void setup() throws IOException {
+  public void setup(final EnclaveEncryptorType enclaveEncryptorType) throws IOException {
     final PrivacyAccount BOB = PrivacyAccountResolver.BOB.resolve(enclaveEncryptorType);
 
     minerNode =
@@ -95,8 +83,11 @@ public class PluginPrivacySigningAcceptanceTest extends PrivacyAcceptanceTestBas
     privacyCluster.start(minerNode);
   }
 
-  @Test
-  public void canDeployContractSignedByPlugin() throws Exception {
+  @ParameterizedTest(name = "{0} encryptor type")
+  @MethodSource("enclaveEncryptorTypes")
+  public void canDeployContractSignedByPlugin(final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setup(enclaveEncryptorType);
     final String contractAddress =
         EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
             ? "0xf01ec73d91fdeb8bb9388ec74e6a3981da86e021"

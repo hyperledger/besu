@@ -29,20 +29,19 @@ import java.io.IOException;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.web3j.utils.Restriction;
 
 public class PrivGetCodeAcceptanceTest extends ParameterizedEnclaveTestBase {
 
-  private final PrivacyNode alice;
+  private PrivacyNode alice;
 
-  public PrivGetCodeAcceptanceTest(
+  public void setUp(
       final Restriction restriction,
       final EnclaveType enclaveType,
       final EnclaveEncryptorType enclaveEncryptorType)
       throws IOException {
-
-    super(restriction, enclaveType, enclaveEncryptorType);
 
     alice =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
@@ -57,10 +56,16 @@ public class PrivGetCodeAcceptanceTest extends ParameterizedEnclaveTestBase {
     privacyCluster.start(alice);
   }
 
-  @Test
-  public void privGetCodeReturnsDeployedContractBytecode() {
-    final String privacyGroupId = createPrivacyGroup();
-    final EventEmitter eventEmitterContract = deployPrivateContract(privacyGroupId);
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("params")
+  public void privGetCodeReturnsDeployedContractBytecode(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
+    final String privacyGroupId = createPrivacyGroup(restriction);
+    final EventEmitter eventEmitterContract = deployPrivateContract(restriction, privacyGroupId);
 
     final Bytes deployedContractCode =
         alice.execute(
@@ -73,7 +78,8 @@ public class PrivGetCodeAcceptanceTest extends ParameterizedEnclaveTestBase {
         .contains(deployedContractCode.toUnprefixedHexString());
   }
 
-  private EventEmitter deployPrivateContract(final String privacyGroupId) {
+  private EventEmitter deployPrivateContract(
+      final Restriction restriction, final String privacyGroupId) {
     final EventEmitter eventEmitter =
         alice.execute(
             privateContractTransactions.createSmartContractWithPrivacyGroupId(
@@ -90,9 +96,10 @@ public class PrivGetCodeAcceptanceTest extends ParameterizedEnclaveTestBase {
     return eventEmitter;
   }
 
-  private String createPrivacyGroup() {
+  private String createPrivacyGroup(final Restriction restriction) {
     final String privacyGroupId =
-        alice.execute(createPrivacyGroup("myGroupName", "my group description", alice));
+        alice.execute(
+            createPrivacyGroup(restriction, "myGroupName", "my group description", alice));
 
     assertThat(privacyGroupId).isNotNull();
 

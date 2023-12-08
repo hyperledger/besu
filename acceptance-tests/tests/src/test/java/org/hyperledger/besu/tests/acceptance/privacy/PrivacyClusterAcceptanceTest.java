@@ -34,18 +34,16 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.After;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.testcontainers.containers.Network;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.RawTransaction;
@@ -56,29 +54,20 @@ import org.web3j.protocol.eea.crypto.RawPrivateTransaction;
 import org.web3j.utils.Base64String;
 import org.web3j.utils.Numeric;
 
-@RunWith(Parameterized.class)
 public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
 
-  private final PrivacyNode alice;
-  private final PrivacyNode bob;
-  private final PrivacyNode charlie;
-  private final EnclaveEncryptorType enclaveEncryptorType;
+  private PrivacyNode alice;
+  private PrivacyNode bob;
+  private PrivacyNode charlie;
   private final Vertx vertx = Vertx.vertx();
   private final EnclaveFactory enclaveFactory = new EnclaveFactory(vertx);
 
-  @Parameters(name = "{0} enclave type with {1} encryptor")
-  public static Collection<Object[]> enclaveParameters() {
-    return Arrays.asList(
-        new Object[][] {
-          {TESSERA, NACL},
-          {TESSERA, EC}
-        });
+  public static Stream<Arguments> enclaveParameters() {
+    return Stream.of(Arguments.of(TESSERA, NACL), Arguments.of(TESSERA, EC));
   }
 
-  public PrivacyClusterAcceptanceTest(
-      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+  public void setUp(final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
       throws IOException {
-    this.enclaveEncryptorType = enclaveEncryptorType;
     final Network containerNetwork = Network.newNetwork();
     alice =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
@@ -110,13 +99,17 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     privacyCluster.start(alice, bob, charlie);
   }
 
-  @After
+  @AfterEach
   public void cleanUp() {
     vertx.close();
   }
 
-  @Test
-  public void onlyAliceAndBobCanExecuteContract() {
+  @ParameterizedTest(name = "{0} enclave type with {1} encryptor")
+  @MethodSource("enclaveParameters")
+  public void onlyAliceAndBobCanExecuteContract(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     // Contract address is generated from sender address and transaction nonce
     final String contractAddress =
         EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
@@ -176,8 +169,12 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             transactionHash2, expectedReceipt2));
   }
 
-  @Test
-  public void aliceCanUsePrivDistributeTransaction() {
+  @ParameterizedTest(name = "{0} enclave type with {1} encryptor")
+  @MethodSource("enclaveParameters")
+  public void aliceCanUsePrivDistributeTransaction(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     // Contract address is generated from sender address and transaction nonce
     final String contractAddress =
         EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
@@ -277,8 +274,12 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     assertThat(EventEmitter.BINARY).contains(bobPrivateTransactionReceipt.getOutput().substring(2));
   }
 
-  @Test
-  public void aliceCanDeployMultipleTimesInSingleGroup() {
+  @ParameterizedTest(name = "{0} enclave type with {1} encryptor")
+  @MethodSource("enclaveParameters")
+  public void aliceCanDeployMultipleTimesInSingleGroup(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final String firstDeployedAddress =
         EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
             ? "0x3e5d325a03ad3ce5640502219833d30b89ce3ce1"
@@ -314,8 +315,12 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
         .verify(secondEventEmitter);
   }
 
-  @Test
-  public void canInteractWithMultiplePrivacyGroups() {
+  @ParameterizedTest(name = "{0} enclave type with {1} encryptor")
+  @MethodSource("enclaveParameters")
+  public void canInteractWithMultiplePrivacyGroups(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     // alice deploys contract
     final String firstDeployedAddress =
         EnclaveEncryptorType.EC.equals(enclaveEncryptorType)

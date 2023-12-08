@@ -33,7 +33,8 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Optional;
 
-import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.testcontainers.containers.Network;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.RemoteFunctionCall;
@@ -44,14 +45,13 @@ import org.web3j.utils.Restriction;
 
 public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEnclaveTestBase {
 
-  private final PrivacyNode transactionNode;
+  private PrivacyNode transactionNode;
 
-  public PrivateContractPublicStateAcceptanceTest(
+  public void setUp(
       final Restriction restriction,
       final EnclaveType enclaveType,
       final EnclaveEncryptorType enclaveEncryptorType)
       throws IOException {
-    super(restriction, enclaveType, enclaveEncryptorType);
     final Network containerNetwork = Network.newNetwork();
 
     final PrivacyNode minerNode =
@@ -77,8 +77,14 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
     privacyCluster.start(minerNode, transactionNode);
   }
 
-  @Test
-  public void mustAllowAccessToPublicStateFromPrivateTx() throws Exception {
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("params")
+  public void mustAllowAccessToPublicStateFromPrivateTx(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
     final EventEmitter publicEventEmitter =
         transactionNode.execute(contractTransactions.createSmartContract(EventEmitter.class));
 
@@ -99,8 +105,14 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
     assertThat(result).isEqualTo(BigInteger.valueOf(12));
   }
 
-  @Test
-  public void mustNotAllowAccessToPrivateStateFromPublicTx() throws Exception {
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("params")
+  public void mustNotAllowAccessToPrivateStateFromPublicTx(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
     final EventEmitter privateEventEmitter =
         transactionNode.execute(
             (privateContractTransactions.createSmartContract(
@@ -119,8 +131,14 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
     assertThatThrownBy(functionCall::send).isInstanceOf(ContractCallException.class);
   }
 
-  @Test
-  public void privateContractMustNotBeAbleToCallPublicContractWhichChangesState() throws Exception {
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("params")
+  public void privateContractMustNotBeAbleToCallPublicContractWhichChangesState(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
     final CrossContractReader privateReader =
         transactionNode.execute(
             privateContractTransactions.createSmartContract(
@@ -138,9 +156,14 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             "0x", e -> ((PrivateTransactionReceipt) e.getTransactionReceipt().get()).getOutput());
   }
 
-  @Test
-  public void privateContractMustNotBeAbleToCallPublicContractWhichInstantiatesContract()
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("params")
+  public void privateContractMustNotBeAbleToCallPublicContractWhichInstantiatesContract(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
       throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
     final CrossContractReader privateReader =
         transactionNode.execute(
             privateContractTransactions.createSmartContract(
@@ -157,8 +180,14 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
         .returns(0, e -> e.getTransactionReceipt().get().getLogs().size());
   }
 
-  @Test
-  public void privateContractMustNotBeAbleToCallSelfDestructOnPublicContract() throws Exception {
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("params")
+  public void privateContractMustNotBeAbleToCallSelfDestructOnPublicContract(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
     final CrossContractReader privateReader =
         transactionNode.execute(
             privateContractTransactions.createSmartContract(
@@ -179,8 +208,14 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             "0x", e -> ((PrivateTransactionReceipt) e.getTransactionReceipt().get()).getOutput());
   }
 
-  @Test
-  public void privateContractCanCallPublicContractThatCallsPublicContract() throws Exception {
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("params")
+  public void privateContractCanCallPublicContractThatCallsPublicContract(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
     final SimpleStorage simpleStorage =
         transactionNode
             .getBesu()

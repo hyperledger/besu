@@ -55,10 +55,10 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   private BesuNode node;
@@ -93,7 +93,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
 
   @Rule public WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     final ClusterConfiguration clusterConfiguration =
         new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
@@ -111,7 +111,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     node.useAuthenticationTokenInHeaderForJsonRpc(token);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     multiTenancyCluster.close();
   }

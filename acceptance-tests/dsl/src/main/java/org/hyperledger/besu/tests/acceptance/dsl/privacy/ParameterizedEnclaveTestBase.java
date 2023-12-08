@@ -25,43 +25,26 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.PluginCreat
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.RestrictedCreatePrivacyGroupTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
-import org.hyperledger.enclave.testutil.EnclaveType;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.stream.Stream;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.provider.Arguments;
 import org.web3j.utils.Restriction;
 
-@RunWith(Parameterized.class)
 public abstract class ParameterizedEnclaveTestBase extends PrivacyAcceptanceTestBase {
-  protected final Restriction restriction;
-  protected final EnclaveType enclaveType;
-  protected final EnclaveEncryptorType enclaveEncryptorType;
 
-  protected ParameterizedEnclaveTestBase(
-      final Restriction restriction,
-      final EnclaveType enclaveType,
-      final EnclaveEncryptorType enclaveEncryptorType) {
-    this.restriction = restriction;
-    this.enclaveType = enclaveType;
-    this.enclaveEncryptorType = enclaveEncryptorType;
-  }
-
-  @Parameters(name = "{0} tx with {1} enclave and {2} encryptor type")
-  public static Collection<Object[]> params() {
-    return Arrays.asList(
-        new Object[][] {
-          {RESTRICTED, TESSERA, NACL},
-          {RESTRICTED, TESSERA, EC},
-          {UNRESTRICTED, NOOP, EnclaveEncryptorType.NOOP}
-        });
+  public static Stream<Arguments> params() {
+    return Stream.of(
+        Arguments.of(RESTRICTED, TESSERA, NACL),
+        Arguments.of(RESTRICTED, TESSERA, EC),
+        Arguments.of(UNRESTRICTED, NOOP, EnclaveEncryptorType.NOOP));
   }
 
   public Transaction<String> createPrivacyGroup(
-      final String name, final String description, final PrivacyNode... nodes) {
+      final Restriction restriction,
+      final String name,
+      final String description,
+      final PrivacyNode... nodes) {
 
     if (restriction == RESTRICTED) {
       return new RestrictedCreatePrivacyGroupTransaction(name, description, nodes);

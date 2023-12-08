@@ -26,19 +26,19 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 import java.io.IOException;
 import java.util.Optional;
 
-import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.web3j.utils.Restriction;
 
 public class DeployPrivateSmartContractAcceptanceTest extends ParameterizedEnclaveTestBase {
 
-  private final PrivacyNode minerNode;
+  private PrivacyNode minerNode;
 
-  public DeployPrivateSmartContractAcceptanceTest(
+  public void setUp(
       final Restriction restriction,
       final EnclaveType enclaveType,
       final EnclaveEncryptorType enclaveEncryptorType)
       throws IOException {
-    super(restriction, enclaveType, enclaveEncryptorType);
 
     minerNode =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
@@ -53,8 +53,14 @@ public class DeployPrivateSmartContractAcceptanceTest extends ParameterizedEncla
     privacyCluster.start(minerNode);
   }
 
-  @Test
-  public void deployingMustGiveValidReceiptAndCode() throws Exception {
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("params")
+  public void deployingMustGiveValidReceiptAndCode(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
     final String contractAddress =
         EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
             ? "0xfeeb2367e77e28f75fc3bcc55b70a535752db058"

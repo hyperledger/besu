@@ -30,7 +30,8 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthLog.LogResult;
 import org.web3j.utils.Restriction;
@@ -44,15 +45,13 @@ public class PrivGetLogsAcceptanceTest extends ParameterizedEnclaveTestBase {
   private static final String EVENT_EMITTER_EVENT_TOPIC =
       "0xc9db20adedc6cf2b5d25252b101ab03e124902a73fcb12b753f3d1aaa2d8f9f5";
 
-  private final PrivacyNode node;
+  private PrivacyNode node;
 
-  public PrivGetLogsAcceptanceTest(
+  public void setUp(
       final Restriction restriction,
       final EnclaveType enclaveType,
       final EnclaveEncryptorType enclaveEncryptorType)
       throws IOException {
-
-    super(restriction, enclaveType, enclaveEncryptorType);
 
     node =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
@@ -67,16 +66,23 @@ public class PrivGetLogsAcceptanceTest extends ParameterizedEnclaveTestBase {
     privacyCluster.start(node);
   }
 
-  @Test
-  public void getLogsUsingBlockRangeFilter() {
-    final String privacyGroupId = createPrivacyGroup();
-    final EventEmitter eventEmitterContract = deployEventEmitterContract(privacyGroupId);
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("params")
+  public void getLogsUsingBlockRangeFilter(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
+    final String privacyGroupId = createPrivacyGroup(restriction);
+    final EventEmitter eventEmitterContract =
+        deployEventEmitterContract(restriction, privacyGroupId);
 
     /*
      Updating the contract value 2 times
     */
-    updateContractValue(privacyGroupId, eventEmitterContract, 1);
-    updateContractValue(privacyGroupId, eventEmitterContract, 2);
+    updateContractValue(restriction, privacyGroupId, eventEmitterContract, 1);
+    updateContractValue(restriction, privacyGroupId, eventEmitterContract, 2);
 
     final LogFilterJsonParameter filter =
         blockRangeLogFilter("earliest", "latest", eventEmitterContract.getContractAddress());
@@ -90,16 +96,23 @@ public class PrivGetLogsAcceptanceTest extends ParameterizedEnclaveTestBase {
     assertThat(logs).hasSize(2);
   }
 
-  @Test
-  public void getLogsUsingBlockHashFilter() {
-    final String privacyGroupId = createPrivacyGroup();
-    final EventEmitter eventEmitterContract = deployEventEmitterContract(privacyGroupId);
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("params")
+  public void getLogsUsingBlockHashFilter(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
+    final String privacyGroupId = createPrivacyGroup(restriction);
+    final EventEmitter eventEmitterContract =
+        deployEventEmitterContract(restriction, privacyGroupId);
 
     /*
      Updating the contract value 1 times
     */
     final PrivateTransactionReceipt updateValueReceipt =
-        updateContractValue(privacyGroupId, eventEmitterContract, 1);
+        updateContractValue(restriction, privacyGroupId, eventEmitterContract, 1);
     final String blockHash = updateValueReceipt.getBlockHash();
 
     final LogFilterJsonParameter filter =
@@ -131,11 +144,13 @@ public class PrivGetLogsAcceptanceTest extends ParameterizedEnclaveTestBase {
         blockHash);
   }
 
-  private String createPrivacyGroup() {
-    return node.execute(createPrivacyGroup("myGroupName", "my group description", node));
+  private String createPrivacyGroup(final Restriction restriction) {
+    return node.execute(
+        createPrivacyGroup(restriction, "myGroupName", "my group description", node));
   }
 
-  private EventEmitter deployEventEmitterContract(final String privacyGroupId) {
+  private EventEmitter deployEventEmitterContract(
+      final Restriction restriction, final String privacyGroupId) {
     final EventEmitter eventEmitter =
         node.execute(
             privateContractTransactions.createSmartContractWithPrivacyGroupId(
@@ -154,7 +169,10 @@ public class PrivGetLogsAcceptanceTest extends ParameterizedEnclaveTestBase {
   }
 
   private PrivateTransactionReceipt updateContractValue(
-      final String privacyGroupId, final EventEmitter eventEmitterContract, final int value) {
+      final Restriction restriction,
+      final String privacyGroupId,
+      final EventEmitter eventEmitterContract,
+      final int value) {
     final String transactionHash =
         node.execute(
             privateContractTransactions.callSmartContractWithPrivacyGroupId(

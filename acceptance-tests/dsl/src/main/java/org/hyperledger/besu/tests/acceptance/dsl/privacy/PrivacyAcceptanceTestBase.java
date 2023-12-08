@@ -32,12 +32,9 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.NetTransactions
 import java.math.BigInteger;
 
 import io.vertx.core.Vertx;
-import org.junit.After;
-import org.junit.ClassRule;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
 
 public class PrivacyAcceptanceTestBase {
-  @ClassRule public static final TemporaryFolder privacy = new TemporaryFolder();
 
   protected final PrivacyTransactions privacyTransactions;
   protected final PrivateContractVerifier privateContractVerifier;
@@ -77,7 +74,7 @@ public class PrivacyAcceptanceTestBase {
                 .isGreaterThanOrEqualTo(BigInteger.valueOf(blockchainHeight)));
   }
 
-  @After
+  @AfterEach
   public void tearDownAcceptanceTestBase() {
     privacyCluster.close();
     vertx.close();

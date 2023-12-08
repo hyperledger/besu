@@ -32,22 +32,21 @@ import java.io.IOException;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.testcontainers.containers.Network;
 import org.web3j.utils.Restriction;
 
 public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclaveTestBase {
 
-  private final PrivacyNode alice;
-  private final PrivacyNode bob;
+  private PrivacyNode alice;
+  private PrivacyNode bob;
 
-  public PrivGetPrivateTransactionAcceptanceTest(
+  public void setUp(
       final Restriction restriction,
       final EnclaveType enclaveType,
       final EnclaveEncryptorType enclaveEncryptorType)
       throws IOException {
-
-    super(restriction, enclaveType, enclaveEncryptorType);
 
     final Network containerNetwork = Network.newNetwork();
 
@@ -77,14 +76,20 @@ public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclav
     privacyCluster.start(alice, bob);
   }
 
-  @Test
-  public void returnsTransaction() {
-    final Transaction<String> onlyAlice = createPrivacyGroup("Only Alice", "", alice);
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("params")
+  public void returnsTransaction(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
+    final Transaction<String> onlyAlice = createPrivacyGroup(restriction, "Only Alice", "", alice);
 
     final String privacyGroupId = alice.execute(onlyAlice);
 
     final PrivateTransaction validSignedPrivateTransaction =
-        getValidSignedPrivateTransaction(alice, privacyGroupId);
+        getValidSignedPrivateTransaction(restriction, alice, privacyGroupId);
     final BytesValueRLPOutput rlpOutput = getRLPOutput(validSignedPrivateTransaction);
 
     final Hash transactionHash =
@@ -97,19 +102,31 @@ public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclav
         .verify(priv.getPrivateTransaction(transactionHash, validSignedPrivateTransaction));
   }
 
-  @Test
-  public void nonExistentHashReturnsNull() {
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("params")
+  public void nonExistentHashReturnsNull(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
     alice.getBesu().verify(priv.getPrivateTransactionReturnsNull(Hash.ZERO));
   }
 
-  @Test
-  public void returnsNullTransactionNotInNodesPrivacyGroup() {
-    final Transaction<String> onlyAlice = createPrivacyGroup("Only Alice", "", alice);
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("params")
+  public void returnsNullTransactionNotInNodesPrivacyGroup(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
+    final Transaction<String> onlyAlice = createPrivacyGroup(restriction, "Only Alice", "", alice);
 
     final String privacyGroupId = alice.execute(onlyAlice);
 
     final PrivateTransaction validSignedPrivateTransaction =
-        getValidSignedPrivateTransaction(alice, privacyGroupId);
+        getValidSignedPrivateTransaction(restriction, alice, privacyGroupId);
     final BytesValueRLPOutput rlpOutput = getRLPOutput(validSignedPrivateTransaction);
 
     final Hash transactionHash =
@@ -127,7 +144,7 @@ public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclav
   }
 
   private PrivateTransaction getValidSignedPrivateTransaction(
-      final PrivacyNode node, final String privacyGoupId) {
+      final Restriction restriction, final PrivacyNode node, final String privacyGoupId) {
 
     org.hyperledger.besu.plugin.data.Restriction besuRestriction =
         restriction == RESTRICTED

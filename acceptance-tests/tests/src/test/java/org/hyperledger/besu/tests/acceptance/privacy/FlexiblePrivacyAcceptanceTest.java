@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIV
 import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.EC;
 import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.NACL;
 import static org.hyperledger.enclave.testutil.EnclaveType.TESSERA;
-import static org.junit.runners.Parameterized.Parameters;
 
 import org.hyperledger.besu.tests.acceptance.dsl.condition.eth.EthConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
@@ -32,18 +31,17 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.testcontainers.containers.Network;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
@@ -52,25 +50,10 @@ import org.web3j.protocol.core.methods.response.Log;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Contract;
 
-@RunWith(Parameterized.class)
 public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTestBase {
 
-  private final EnclaveType enclaveType;
-  private final EnclaveEncryptorType enclaveEncryptorType;
-
-  public FlexiblePrivacyAcceptanceTest(
-      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType) {
-    this.enclaveType = enclaveType;
-    this.enclaveEncryptorType = enclaveEncryptorType;
-  }
-
-  @Parameters(name = "{0} enclave type with {1} encryptor")
-  public static Collection<Object[]> enclaveParameters() {
-    return Arrays.asList(
-        new Object[][] {
-          {TESSERA, NACL},
-          {TESSERA, EC}
-        });
+  public static Stream<Arguments> enclaveParameters() {
+    return Stream.of(Arguments.of(TESSERA, NACL), Arguments.of(TESSERA, EC));
   }
 
   private PrivacyNode alice;
@@ -85,8 +68,8 @@ public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTest
   private static final String EXPECTED_STORE_EVENT_TOPIC =
       "0xc9db20adedc6cf2b5d25252b101ab03e124902a73fcb12b753f3d1aaa2d8f9f5";
 
-  @Before
-  public void setUp() throws Exception {
+  public void setUp(final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
     final Network containerNetwork = Network.newNetwork();
 
     alice =
@@ -113,14 +96,22 @@ public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTest
     privacyCluster.start(alice, bob, charlie);
   }
 
-  @Test
-  public void nodeCanCreatePrivacyGroup() {
+  @ParameterizedTest(name = "{0} enclave and {1} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void nodeCanCreatePrivacyGroup(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final String privacyGroupId = createFlexiblePrivacyGroup(alice);
     checkFlexiblePrivacyGroupExists(privacyGroupId, alice);
   }
 
-  @Test
-  public void deployingMustGiveValidReceipt() {
+  @ParameterizedTest(name = "{0} enclave and {1} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void deployingMustGiveValidReceipt(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final String privacyGroupId = createFlexiblePrivacyGroup(alice, bob);
     final Contract eventEmitter = deployPrivateContract(EventEmitter.class, privacyGroupId, alice);
     final String commitmentHash = getContractDeploymentCommitmentHash(eventEmitter);
@@ -129,8 +120,12 @@ public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTest
     bob.verify(privateTransactionVerifier.existingPrivateTransactionReceipt(commitmentHash));
   }
 
-  @Test
-  public void canAddParticipantToGroup() {
+  @ParameterizedTest(name = "{0} enclave and {1} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void canAddParticipantToGroup(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final String privacyGroupId = createFlexiblePrivacyGroup(alice, bob);
     final Contract eventEmitter = deployPrivateContract(EventEmitter.class, privacyGroupId, alice);
     final String commitmentHash = getContractDeploymentCommitmentHash(eventEmitter);
@@ -145,8 +140,12 @@ public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTest
     charlie.verify(privateTransactionVerifier.existingPrivateTransactionReceipt(commitmentHash));
   }
 
-  @Test
-  public void removedMemberCannotSendTransactionToGroup() {
+  @ParameterizedTest(name = "{0} enclave and {1} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void removedMemberCannotSendTransactionToGroup(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final String privacyGroupId = createFlexiblePrivacyGroup(alice, bob);
 
     final String removeHash =
@@ -160,8 +159,12 @@ public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTest
         .hasMessageContaining("Flexible Privacy group does not exist.");
   }
 
-  @Test
-  public void canInteractWithPrivateGenesisPreCompile() throws Exception {
+  @ParameterizedTest(name = "{0} enclave and {1} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void canInteractWithPrivateGenesisPreCompile(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final String privacyGroupId = createFlexiblePrivacyGroup(alice, bob);
 
     final EventEmitter eventEmitter =
@@ -205,8 +208,12 @@ public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTest
     assertThat(charlieResponse).isEqualTo("0x");
   }
 
-  @Test
-  public void memberCanBeAddedAfterBeingRemoved() {
+  @ParameterizedTest(name = "{0} enclave and {1} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void memberCanBeAddedAfterBeingRemoved(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final String privacyGroupId = createFlexiblePrivacyGroup(alice);
 
     checkFlexiblePrivacyGroupExists(privacyGroupId, alice);
@@ -321,8 +328,12 @@ public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTest
     }
   }
 
-  @Test
-  public void bobCanAddCharlieAfterBeingAddedByAlice() {
+  @ParameterizedTest(name = "{0} enclave and {1} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void bobCanAddCharlieAfterBeingAddedByAlice(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final String privacyGroupId = createFlexiblePrivacyGroup(alice);
     checkFlexiblePrivacyGroupExists(privacyGroupId, alice);
     final EventEmitter eventEmitter =
@@ -487,8 +498,12 @@ public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTest
     checkFlexiblePrivacyGroupExists(privacyGroupId, alice, bob);
   }
 
-  @Test
-  public void canOnlyCallProxyContractWhenGroupLocked() {
+  @ParameterizedTest(name = "{0} enclave and {1} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void canOnlyCallProxyContractWhenGroupLocked(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final String privacyGroupId = createFlexiblePrivacyGroup(alice);
     checkFlexiblePrivacyGroupExists(privacyGroupId, alice);
 
@@ -552,8 +567,12 @@ public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTest
     assertThatTransactionReceiptIs.accept(callAfterUnlockedHash, "0x1");
   }
 
-  @Test
-  public void addMembersToTwoGroupsInTheSameBlock() {
+  @ParameterizedTest(name = "{0} enclave and {1} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void addMembersToTwoGroupsInTheSameBlock(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(enclaveType, enclaveEncryptorType);
     final String privacyGroupId1 = createFlexiblePrivacyGroup(alice);
     final String privacyGroupId2 = createFlexiblePrivacyGroup(bob);
     checkFlexiblePrivacyGroupExists(privacyGroupId1, alice);

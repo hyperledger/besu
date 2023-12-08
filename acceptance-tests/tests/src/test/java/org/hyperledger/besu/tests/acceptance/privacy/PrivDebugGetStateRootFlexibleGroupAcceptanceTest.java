@@ -31,14 +31,10 @@ import java.util.Collection;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.Network;
 
-@RunWith(Parameterized.class)
 public class PrivDebugGetStateRootFlexibleGroupAcceptanceTest
     extends FlexiblePrivacyAcceptanceTestBase {
 
@@ -48,7 +44,6 @@ public class PrivDebugGetStateRootFlexibleGroupAcceptanceTest
     this.enclaveType = enclaveType;
   }
 
-  @Parameters(name = "{0}")
   public static Collection<EnclaveType> enclaveTypes() {
     return EnclaveType.valuesForTests();
   }
@@ -56,7 +51,7 @@ public class PrivDebugGetStateRootFlexibleGroupAcceptanceTest
   private PrivacyNode aliceNode;
   private PrivacyNode bobNode;
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException, URISyntaxException {
     final Network containerNetwork = Network.newNetwork();
 

@@ -34,20 +34,20 @@ import java.io.IOException;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.web3j.utils.Restriction;
 
 public class PrivacyReceiptAcceptanceTest extends ParameterizedEnclaveTestBase {
   final MinerTransactions minerTransactions = new MinerTransactions();
 
-  private final PrivacyNode alice;
+  private PrivacyNode alice;
 
-  public PrivacyReceiptAcceptanceTest(
+  public void setUp(
       final Restriction restriction,
       final EnclaveType enclaveType,
       final EnclaveEncryptorType enclaveEncryptorType)
       throws IOException {
-    super(restriction, enclaveType, enclaveEncryptorType);
 
     alice =
         privacyBesu.createIbft2NodePrivacyEnabled(
@@ -63,14 +63,20 @@ public class PrivacyReceiptAcceptanceTest extends ParameterizedEnclaveTestBase {
     privacyCluster.start(alice);
   }
 
-  @Test
-  public void createPrivateTransactionReceiptSuccessfulTransaction() {
-    final Transaction<String> onlyAlice = createPrivacyGroup("Only Alice", "", alice);
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("params")
+  public void createPrivateTransactionReceiptSuccessfulTransaction(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
+    final Transaction<String> onlyAlice = createPrivacyGroup(restriction, "Only Alice", "", alice);
 
     final String privacyGroupId = alice.execute(onlyAlice);
 
     final PrivateTransaction validTransaction =
-        createSignedTransaction(alice, privacyGroupId, empty());
+        createSignedTransaction(restriction, alice, privacyGroupId, empty());
     final BytesValueRLPOutput rlpOutput = getRLPOutput(validTransaction);
 
     final Hash transactionHash =
@@ -82,15 +88,24 @@ public class PrivacyReceiptAcceptanceTest extends ParameterizedEnclaveTestBase {
     alice.getBesu().verify(priv.getSuccessfulTransactionReceipt(transactionHash));
   }
 
-  @Test
-  public void createPrivateTransactionReceiptFailedTransaction() {
-    final Transaction<String> onlyAlice = createPrivacyGroup("Only Alice", "", alice);
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("params")
+  public void createPrivateTransactionReceiptFailedTransaction(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
+    final Transaction<String> onlyAlice = createPrivacyGroup(restriction, "Only Alice", "", alice);
 
     final String privacyGroupId = alice.execute(onlyAlice);
 
     final PrivateTransaction invalidPayloadTransaction =
         createSignedTransaction(
-            alice, privacyGroupId, Optional.of(Bytes.fromBase64String("invalidPayload")));
+            restriction,
+            alice,
+            privacyGroupId,
+            Optional.of(Bytes.fromBase64String("invalidPayload")));
     final BytesValueRLPOutput rlpOutput = getRLPOutput(invalidPayloadTransaction);
 
     final Hash transactionHash =
@@ -102,14 +117,20 @@ public class PrivacyReceiptAcceptanceTest extends ParameterizedEnclaveTestBase {
     alice.getBesu().verify(priv.getFailedTransactionReceipt(transactionHash));
   }
 
-  @Test
-  public void createPrivateTransactionReceiptInvalidTransaction() {
-    final Transaction<String> onlyAlice = createPrivacyGroup("Only Alice", "", alice);
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("params")
+  public void createPrivateTransactionReceiptInvalidTransaction(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
+    final Transaction<String> onlyAlice = createPrivacyGroup(restriction, "Only Alice", "", alice);
 
     final String privacyGroupId = alice.execute(onlyAlice);
 
     final PrivateTransaction validTransaction =
-        createSignedTransaction(alice, privacyGroupId, empty());
+        createSignedTransaction(restriction, alice, privacyGroupId, empty());
     final BytesValueRLPOutput rlpOutput = getRLPOutput(validTransaction);
 
     // Stop mining, to allow adding duplicate nonce block
@@ -139,7 +160,10 @@ public class PrivacyReceiptAcceptanceTest extends ParameterizedEnclaveTestBase {
   }
 
   private PrivateTransaction createSignedTransaction(
-      final PrivacyNode node, final String privacyGoupId, final Optional<Bytes> payload) {
+      final Restriction restriction,
+      final PrivacyNode node,
+      final String privacyGoupId,
+      final Optional<Bytes> payload) {
 
     org.hyperledger.besu.plugin.data.Restriction besuRestriction =
         restriction == RESTRICTED

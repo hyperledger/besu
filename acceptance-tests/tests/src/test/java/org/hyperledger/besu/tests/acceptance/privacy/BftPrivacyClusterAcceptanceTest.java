@@ -25,21 +25,18 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.testcontainers.containers.Network;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.utils.Restriction;
 
-@RunWith(Parameterized.class)
 public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
-  private final BftPrivacyType bftPrivacyType;
 
   public static class BftPrivacyType {
     private final EnclaveType enclaveType;
@@ -69,12 +66,7 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     }
   }
 
-  public BftPrivacyClusterAcceptanceTest(final BftPrivacyType bftPrivacyType) {
-    this.bftPrivacyType = bftPrivacyType;
-  }
-
-  @Parameterized.Parameters(name = "{0}")
-  public static Collection<BftPrivacyType> bftPrivacyTypes() {
+  public static Stream<Arguments> bftPrivacyTypes() {
     final List<BftPrivacyType> bftPrivacyTypes = new ArrayList<>();
     for (EnclaveType x : EnclaveType.valuesForTests()) {
       for (ConsensusType consensusType : ConsensusType.values()) {
@@ -95,26 +87,28 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
               Restriction.UNRESTRICTED));
     }
 
-    return bftPrivacyTypes;
+    return Stream.of(Arguments.of(bftPrivacyTypes));
   }
 
   private PrivacyNode alice;
   private PrivacyNode bob;
   private PrivacyNode charlie;
 
-  @Before
-  public void setUp() throws Exception {
+  public void setUp(final BftPrivacyType bftPrivacyType) throws Exception {
     final Network containerNetwork = Network.newNetwork();
 
-    alice = createNode(containerNetwork, "node1", 0);
-    bob = createNode(containerNetwork, "node2", 1);
-    charlie = createNode(containerNetwork, "node3", 2);
+    alice = createNode(bftPrivacyType, containerNetwork, "node1", 0);
+    bob = createNode(bftPrivacyType, containerNetwork, "node2", 1);
+    charlie = createNode(bftPrivacyType, containerNetwork, "node3", 2);
 
     privacyCluster.start(alice, bob, charlie);
   }
 
   private PrivacyNode createNode(
-      final Network containerNetwork, final String nodeName, final int privacyAccount)
+      final BftPrivacyType bftPrivacyType,
+      final Network containerNetwork,
+      final String nodeName,
+      final int privacyAccount)
       throws IOException {
     if (bftPrivacyType.consensusType == ConsensusType.IBFT2) {
       return privacyBesu.createIbft2NodePrivacyEnabled(
@@ -144,8 +138,11 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     }
   }
 
-  @Test
-  public void onlyAliceAndBobCanExecuteContract() {
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("bftPrivacyTypes")
+  public void onlyAliceAndBobCanExecuteContract(final BftPrivacyType bftPrivacyType)
+      throws Exception {
+    setUp(bftPrivacyType);
     // Contract address is generated from sender address and transaction nonce
     final String contractAddress =
         EnclaveEncryptorType.EC.equals(bftPrivacyType.enclaveEncryptorType)
@@ -186,8 +183,11 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     }
   }
 
-  @Test
-  public void aliceCanDeployMultipleTimesInSingleGroup() {
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("bftPrivacyTypes")
+  public void aliceCanDeployMultipleTimesInSingleGroup(final BftPrivacyType bftPrivacyType)
+      throws Exception {
+    setUp(bftPrivacyType);
     final String firstDeployedAddress =
         EnclaveEncryptorType.EC.equals(bftPrivacyType.enclaveEncryptorType)
             ? "0x3e5d325a03ad3ce5640502219833d30b89ce3ce1"
@@ -225,8 +225,11 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
         .verify(secondEventEmitter);
   }
 
-  @Test
-  public void canInteractWithMultiplePrivacyGroups() {
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("bftPrivacyTypes")
+  public void canInteractWithMultiplePrivacyGroups(final BftPrivacyType bftPrivacyType)
+      throws Exception {
+    setUp(bftPrivacyType);
     // alice deploys contract
     final String firstDeployedAddress =
         EnclaveEncryptorType.EC.equals(bftPrivacyType.enclaveEncryptorType)

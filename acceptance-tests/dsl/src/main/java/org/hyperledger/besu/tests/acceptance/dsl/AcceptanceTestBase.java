@@ -57,8 +57,8 @@ import java.math.BigInteger;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.junit.After;
 import org.junit.Rule;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.rules.TestName;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
@@ -133,7 +133,7 @@ public class AcceptanceTestBase {
 
   @Rule public final TestName name = new TestName();
 
-  @After
+  @AfterEach
   public void tearDownAcceptanceTestBase() {
     reportMemory();
     cluster.close();

@@ -36,7 +36,8 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Bool;
@@ -55,15 +56,13 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
 
   private static final int VALUE = 1024;
 
-  private final PrivacyNode minerNode;
+  private PrivacyNode minerNode;
 
-  public PrivCallAcceptanceTest(
+  public void setUp(
       final Restriction restriction,
       final EnclaveType enclaveType,
       final EnclaveEncryptorType enclaveEncryptorType)
       throws IOException {
-
-    super(restriction, enclaveType, enclaveEncryptorType);
 
     minerNode =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
@@ -78,11 +77,18 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
     privacyCluster.start(minerNode);
   }
 
-  @Test
-  public void mustReturnCorrectValue() throws Exception {
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("params")
+  public void mustReturnCorrectValue(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
 
     final String privacyGroupId =
-        minerNode.execute(createPrivacyGroup("myGroupName", "my group description", minerNode));
+        minerNode.execute(
+            createPrivacyGroup(restriction, "myGroupName", "my group description", minerNode));
 
     final EventEmitter eventEmitter =
         minerNode.execute(
@@ -115,11 +121,18 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
         .isEqualByComparingTo(BigInteger.valueOf(VALUE));
   }
 
-  @Test
-  public void mustRevertWithRevertReason() throws Exception {
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void mustRevertWithRevertReason(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
 
     final String privacyGroupId =
-        minerNode.execute(createPrivacyGroup("myGroupName", "my group description", minerNode));
+        minerNode.execute(
+            createPrivacyGroup(restriction, "myGroupName", "my group description", minerNode));
 
     final RevertReason revertReasonContract =
         minerNode.execute(
@@ -147,11 +160,18 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
     assertThat(revertMessage).isEqualTo("RevertReason");
   }
 
-  @Test
-  public void shouldReturnEmptyResultWithNonExistingPrivacyGroup() throws IOException {
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void shouldReturnEmptyResultWithNonExistingPrivacyGroup(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
 
     final String privacyGroupId =
-        minerNode.execute(createPrivacyGroup("myGroupName", "my group description", minerNode));
+        minerNode.execute(
+            createPrivacyGroup(restriction, "myGroupName", "my group description", minerNode));
 
     final EventEmitter eventEmitter =
         minerNode.execute(
@@ -176,11 +196,18 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
     assertThat(result.getResult()).isEqualTo("0x");
   }
 
-  @Test
-  public void mustNotSucceedWithWronglyEncodedFunction() throws IOException {
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void mustNotSucceedWithWronglyEncodedFunction(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
 
     final String privacyGroupId =
-        minerNode.execute(createPrivacyGroup("myGroupName", "my group description", minerNode));
+        minerNode.execute(
+            createPrivacyGroup(restriction, "myGroupName", "my group description", minerNode));
 
     final EventEmitter eventEmitter =
         minerNode.execute(
@@ -203,11 +230,18 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
     assertThat(errorMessage).isEqualTo("Private transaction failed");
   }
 
-  @Test
-  public void mustReturn0xUsingInvalidContractAddress() throws IOException {
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("enclaveParameters")
+  public void mustReturn0xUsingInvalidContractAddress(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
 
     final String privacyGroupId =
-        minerNode.execute(createPrivacyGroup("myGroupName", "my group description", minerNode));
+        minerNode.execute(
+            createPrivacyGroup(restriction, "myGroupName", "my group description", minerNode));
 
     final EventEmitter eventEmitter =
         minerNode.execute(

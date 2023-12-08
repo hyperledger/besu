@@ -29,22 +29,22 @@ import java.io.IOException;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.testcontainers.containers.Network;
 import org.web3j.utils.Restriction;
 
 public class PrivDebugGetStateRootOffchainGroupAcceptanceTest extends ParameterizedEnclaveTestBase {
 
-  private final PrivacyNode aliceNode;
-  private final PrivacyNode bobNode;
+  private PrivacyNode aliceNode;
+  private PrivacyNode bobNode;
 
-  public PrivDebugGetStateRootOffchainGroupAcceptanceTest(
+  public void setUp(
       final Restriction restriction,
       final EnclaveType enclaveType,
       final EnclaveEncryptorType enclaveEncryptorType)
       throws IOException {
-
-    super(restriction, enclaveType, enclaveEncryptorType);
 
     final Network containerNetwork = Network.newNetwork();
 
@@ -74,11 +74,18 @@ public class PrivDebugGetStateRootOffchainGroupAcceptanceTest extends Parameteri
     privacyCluster.start(aliceNode, bobNode);
   }
 
-  @Test
-  public void nodesInGroupShouldHaveSameStateRoot() {
+  @ParameterizedTest(name = "{0} tx with {1} enclave and {2} encryptor type")
+  @MethodSource("params")
+  public void nodesInGroupShouldHaveSameStateRoot(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
     final String privacyGroupId =
         aliceNode.execute(
-            createPrivacyGroup("testGroup", "A group for everyone", aliceNode, bobNode));
+            createPrivacyGroup(
+                restriction, "testGroup", "A group for everyone", aliceNode, bobNode));
 
     final Hash aliceStateRootId =
         aliceNode
@@ -94,7 +101,12 @@ public class PrivDebugGetStateRootOffchainGroupAcceptanceTest extends Parameteri
   }
 
   @Test
-  public void unknownGroupShouldReturnError() {
+  public void unknownGroupShouldReturnError(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws Exception {
+    setUp(restriction, enclaveType, enclaveEncryptorType);
     if (restriction != UNRESTRICTED) {
       final PrivacyRequestFactory.DebugGetStateRoot aliceResult =
           aliceNode.execute(
