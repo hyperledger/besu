@@ -423,6 +423,11 @@ public class Runner implements AutoCloseable {
     return networkRunner.getNetwork().getLocalEnode();
   }
 
+  /**
+   * get P2PNetwork service.
+   *
+   * @return p2p network service.
+   */
   public P2PNetwork getP2PNetwork() {
     return networkRunner.getNetwork();
   }
