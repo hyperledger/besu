@@ -6,7 +6,7 @@ on:
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
-  total-runners: 6
+  total-runners: 10
 
 jobs:
   runner-indexes:
