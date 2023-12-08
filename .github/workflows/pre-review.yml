@@ -67,7 +67,9 @@ jobs:
         gradle_args:
           - "test -x besu:test -x consensus:test -x crypto:test -x ethereum:eth:test -x ethereum:api:test -x ethereum:core:test"
           - "besu:test consensus:test crypto:test"
-          - "ethereum:api:test"
+          - "ethereum:api:testBonsai"
+          - "ethereum:api:testForest"
+          - "ethereum:api:testRemainder"
           - "ethereum:core:test"
     steps:
       - name: Checkout Repo

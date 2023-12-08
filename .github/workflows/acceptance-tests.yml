@@ -26,7 +26,7 @@ jobs:
     name: "Acceptance Runner #${{ matrix.runner-index }}: Run acceptance tests in parallel"
     needs:
       - runner-indexes
-    if: ${{ github.actor != 'dependabot[bot]'}}
+    if: ${{ github.actor != 'dependabot[bot]' && github.event.review.state == 'approved'}}
     strategy:
       fail-fast: false
       matrix:
@@ -39,13 +39,8 @@ jobs:
         with:
           distribution: adopt
           java-version: 17
-          cache: gradle
       - name: Compile
         uses: gradle/gradle-build-action@v2
-        with:
-          gradle-home-cache-cleanup: true
-          cache-read-only: false
-          arguments: compileJava compileTestJava -Dorg.gradle.parallel=true
       - name: Split tests
         id: split-tests
         uses: chaosaffe/split-tests@v1-alpha.1
@@ -60,10 +55,8 @@ jobs:
         #regex means: first truncate file paths to align with package name, then swap path delimiter with package delimiter,
         #then drop file extension, then insert --tests option between each.
         run: cat testList.txt | sed -e 's@acceptance-tests/tests/src/test/java/@@g' -e 's@/@.@g' -e 's/\.java//g' -e 's/\ /\ --tests\ /g' >> gradleArgs.txt
-      - name: list keystores
-        run: find . -name "*.jks"
       - name: run acceptance tests
-        run: ./gradlew acceptanceTest --tests `cat gradleArgs.txt`
+        run: ./gradlew acceptanceTest --tests `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: cleanup tempfiles
         run: rm testList.txt gradleArgs.txt
       - name: Publish Test Report
