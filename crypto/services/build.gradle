@@ -32,7 +32,6 @@ dependencies {
   api project(':crypto:algorithms')
   api project(':plugin-api')
 
-  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
 
