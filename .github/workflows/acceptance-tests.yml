@@ -10,8 +10,7 @@ env:
 
 jobs:
   runner-indexes:
-    runs-on:
-      group: "Besu Large Runners"
+    runs-on: ubuntu-22.04
     name: Generate runner indexes
     outputs:
       json: ${{ steps.generate-index-list.outputs.json }}
@@ -23,8 +22,7 @@ jobs:
           INDEX_JSON=$(jq --null-input --compact-output '. |= [inputs]' <<< ${INDEX_LIST})
           echo "::set-output name=json::${INDEX_JSON}"
   acceptanceTestEthereum:
-    runs-on:
-      group: "Besu Large Runners"
+    runs-on: ubuntu-22.04
     name: "Acceptance Runner #${{ matrix.runner-index }}: Run acceptance tests in parallel"
     needs:
       - runner-indexes
