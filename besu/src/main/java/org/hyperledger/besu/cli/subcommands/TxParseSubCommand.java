@@ -98,7 +98,7 @@ public class TxParseSubCommand implements Runnable {
         });
   }
 
-  public void dump(final Bytes tx) {
+  void dump(final Bytes tx) {
     try {
       out.println(TransactionDecoder.decodeOpaqueBytes(tx, EncodingContext.BLOCK_BODY).getSender());
     } catch (Exception ex) {
