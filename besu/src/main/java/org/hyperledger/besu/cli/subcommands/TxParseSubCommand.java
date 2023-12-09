@@ -31,7 +31,10 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
 
-/** txparse sub command. */
+/**
+ * txparse sub command implementing txparse spec from
+ * https://github.com/holiman/txparse/tree/main/cmd/txparse
+ */
 @CommandLine.Command(
     name = COMMAND_NAME,
     description = "Execute an Eth ereum State Test.",
