@@ -53,7 +53,9 @@ public class TxParseSubCommand implements Runnable {
       arity = "1..1",
       description = "file to read transaction data lines from, otherwise defaults to stdin")
   private String corpusFile = null;
-  static final BigInteger halfCurveOrder = SignatureAlgorithmFactory.getInstance().getHalfCurveOrder();
+
+  static final BigInteger halfCurveOrder =
+      SignatureAlgorithmFactory.getInstance().getHalfCurveOrder();
   static final BigInteger chainId = new BigInteger("1", 10);
 
   private final PrintWriter out;
@@ -106,7 +108,7 @@ public class TxParseSubCommand implements Runnable {
       var transaction = TransactionDecoder.decodeOpaqueBytes(tx, EncodingContext.BLOCK_BODY);
 
       // https://github.com/hyperledger/besu/blob/5fe49c60b30fe2954c7967e8475c3b3e9afecf35/ethereum/core/src/main/java/org/hyperledger/besu/ethereum/mainnet/MainnetTransactionValidator.java#L252
-      if (transaction.getChainId().isPresent() && !transaction.getChainId().get().equals(chainId) ){
+      if (transaction.getChainId().isPresent() && !transaction.getChainId().get().equals(chainId)) {
         throw new Exception("wrong chain id");
       }
 
