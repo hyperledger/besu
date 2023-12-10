@@ -914,7 +914,8 @@ public class Transaction
         && Objects.equals(this.signature, that.signature)
         && Objects.equals(this.to, that.to)
         && Objects.equals(this.value, that.value)
-        && Objects.equals(this.getV(), that.getV());
+        && Objects.equals(this.getV(), that.getV())
+        && Objects.equals(this.getRejectedReason(), that.getRejectedReason());
   }
 
   @Override
@@ -961,6 +962,8 @@ public class Transaction
     if (getTo().isPresent()) sb.append("to=").append(getTo().get()).append(", ");
     sb.append("value=").append(getValue()).append(", ");
     sb.append("sig=").append(getSignature()).append(", ");
+    //Soruba
+    if(getRejectedReason().isPresent()) sb.append("rejectedReason=").append(getRejectedReason().get()).append(", ");
     if (chainId.isPresent()) sb.append("chainId=").append(getChainId().get()).append(", ");
     if (transactionType.equals(TransactionType.ACCESS_LIST)) {
       sb.append("accessList=").append(maybeAccessList).append(", ");

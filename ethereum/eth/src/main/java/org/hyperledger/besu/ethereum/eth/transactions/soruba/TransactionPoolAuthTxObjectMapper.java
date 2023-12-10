@@ -38,7 +38,7 @@ public class TransactionPoolAuthTxObjectMapper {
         new TransactionPoolAuthTxMessage(
             transaction.getHash().toString(),
             transaction.getSender().toString(),
-            transaction.getTo().get().toString(),
+            transaction.getTo().isPresent() ? transaction.getTo().get().toString() : "",
             transaction.getValue().toString(),
             transaction.getPayload().toString(),
             transaction.getGasLimit(),

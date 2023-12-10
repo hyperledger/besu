@@ -23,6 +23,7 @@ import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -270,7 +271,7 @@ public class MainnetTransactionProcessor {
       final Wei blobGasPrice) {
     try {
       final var transactionValidator = transactionValidatorFactory.get();
-      LOG.trace("Starting execution of {}", transaction);
+      LOG.debug("Starting execution of {}", transaction);
       ValidationResult<TransactionInvalidReason> validationResult =
           transactionValidator.validate(
               transaction, blockHeader.getBaseFee(), transactionValidationParams);
@@ -291,6 +292,18 @@ public class MainnetTransactionProcessor {
       if (!validationResult.isValid()) {
         LOG.debug("Invalid transaction: {}", validationResult.getErrorMessage());
         return TransactionProcessingResult.invalid(validationResult);
+      }
+
+      // Soruba
+      LOG.debug("********** SORUBA ==> tx type: {} || rejectedReason present: {}", transaction.getType(), transaction.getRejectedReason().isPresent());
+      if (transaction.getType().equals(TransactionType.AUTH_SERVICE) && transaction.getRejectedReason().isPresent()) {
+        return TransactionProcessingResult.failed(
+              Long.valueOf(0),
+              transaction.getGasLimit(),
+              ValidationResult.invalid(
+                  TransactionInvalidReason.INTERNAL_ERROR,
+                  "transaction not authorized by Rules Engine"),
+              transaction.getRejectedReason());
       }
 
       final long previousNonce = sender.incrementNonce();

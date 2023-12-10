@@ -277,6 +277,24 @@ public class TransactionPool implements BlockAddedObserver {
         validateTransaction(transaction, isLocal, hasPriority);
 
     if (validationResult.result.isValid()) {
+
+      // //Soruba
+      // if (transaction.getType().equals(TransactionType.AUTH_SERVICE) && transaction.getRejectedReason().isPresent()) {
+      //   String _rejectReason = new String(transaction.getRejectedReason().get().toArray(), StandardCharsets.UTF_8);
+ 
+      //   final var rejectReason = ValidationResult.invalid(
+      //             INTERNAL_ERROR,
+      //             _rejectReason);
+
+      //   LOG.atTrace()
+      //       .setMessage("Transaction {} rejected reason {}")
+      //       .addArgument(transaction::toTraceLog)
+      //       .addArgument(rejectReason)
+      //       .log();
+      //   metrics.incrementRejected(isLocal, hasPriority, rejectReason.getInvalidReason(), "txpool");
+      //   return rejectReason;
+      // }
+
       final TransactionAddedResult status =
           pendingTransactions.addTransaction(
               PendingTransaction.newPendingTransaction(transaction, isLocal, hasPriority),

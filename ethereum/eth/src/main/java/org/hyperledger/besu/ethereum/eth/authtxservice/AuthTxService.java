@@ -177,6 +177,8 @@ public class AuthTxService {
       newTransaction =
           TransactionPoolAuthTxObjectMapper.decodeAuthTxObject(
               parseMessageBytes(message), rejectedReasonEnabled);
+      LOG.debug("Decoded transaction: {}", newTransaction);
+      
       if (rejectedReasonEnabled && newTransaction.isEmpty()) {
         LOG.info(
             "Dropping transaction hash {} due not get reject reason code",
