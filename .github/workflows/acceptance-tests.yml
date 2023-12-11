@@ -50,7 +50,7 @@ jobs:
         #then drop file extension, then insert --tests option between each.
         run: cat testList.txt | sed -e 's@acceptance-tests/tests/src/test/java/@--tests\ @g;s@/@.@g;s/\.java//g'  > gradleArgs.txt
       - name: run acceptance tests
-        run: ./gradlew acceptanceTest --tests `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+        run: ./gradlew acceptanceTest `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: cleanup tempfiles
         run: rm testList.txt gradleArgs.txt
       - name: Upload Acceptance Test Results
