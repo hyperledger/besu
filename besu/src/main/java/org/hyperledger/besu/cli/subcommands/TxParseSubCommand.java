@@ -61,7 +61,7 @@ public class TxParseSubCommand implements Runnable {
   private final PrintWriter out;
 
   /**
-   * Instantiates a new Validate config sub command.
+   * Instantiates a new TxParse sub command.
    *
    * @param out the PrintWriter where validation results will be reported.
    */
