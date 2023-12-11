@@ -16,7 +16,7 @@ package org.hyperledger.besu.crypto.altbn128;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Adapted from the pc_ecc (Apache 2 License) implementation:

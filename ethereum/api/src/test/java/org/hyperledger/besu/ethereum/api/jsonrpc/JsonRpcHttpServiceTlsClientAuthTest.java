@@ -79,6 +79,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 public class JsonRpcHttpServiceTlsClientAuthTest {
+  // this tempDir is deliberately static
   @TempDir private static Path folder;
 
   protected static final Vertx vertx = Vertx.vertx();
