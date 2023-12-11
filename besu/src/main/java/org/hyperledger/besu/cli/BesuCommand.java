@@ -3123,6 +3123,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
       DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
       builder.setBootNodes(listBootNodes);
+    } else {
+      logger.debug("0 Bootnodes configured");
     }
     return builder.build();
   }
