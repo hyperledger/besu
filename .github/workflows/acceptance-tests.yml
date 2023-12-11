@@ -9,29 +9,15 @@ env:
   total-runners: 32
 
 jobs:
-  runner-indexes:
-    runs-on: ubuntu-22.04
-    name: Generate runner indexes
-    outputs:
-      json: ${{ steps.generate-index-list.outputs.json }}
-    steps:
-      - id: generate-index-list
-        run: |
-          MAX_INDEX=$((${{ env.total-runners }}-1))
-          INDEX_LIST=$(seq 0 ${MAX_INDEX})
-          INDEX_JSON=$(jq --null-input --compact-output '. |= [inputs]' <<< ${INDEX_LIST})
-          echo "::set-output name=json::${INDEX_JSON}"
   acceptanceTestEthereum:
     runs-on: ubuntu-22.04
     name: "Acceptance Runner #${{ matrix.runner-index }}: Run acceptance tests in parallel"
-    needs:
-      - runner-indexes
     # TODO: return check for PR approval here!
     if: ${{ github.actor != 'dependabot[bot]'}}
     strategy:
       fail-fast: false
       matrix:
-        runner-index: ${{ fromjson(needs.runner-indexes.outputs.json) }}
+        runner_index: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -40,18 +26,25 @@ jobs:
         with:
           distribution: adopt
           java-version: 17
-      - name: Compile
+      - name: get acceptance test report
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          branch: main
+          name: acceptance-test-results
+          path: tmp/junit-xml-reports-downloaded
+          continue-on-error: true
+      - name: setup gradle
         uses: gradle/gradle-build-action@v2
       - name: Split tests
         id: split-tests
-        uses: chaosaffe/split-tests@v1-alpha.1
+        uses: r7kamura/split-tests-by-timings@v0
         with:
+          reports: tmp/junit-xml-reports-downloaded
           glob: 'acceptance-tests/tests/src/test/java/org/hyperledger/besu/tests/acceptance/**/*Test.java'
-          split-total: ${{ env.total-runners }}
-          split-index: ${{ matrix.runner-index }}
-
+          total: 16
+          index: ${{ matrix.runner-index }}
       - name: write out test list
-        run: echo "${{ steps.split-tests.outputs.test-suite }}" >> testList.txt
+        run: echo "${{ steps.split-tests.outputs.paths }}" >> testList.txt
       - name: format gradle args
         #regex means: first truncate file paths to align with package name, then swap path delimiter with package delimiter,
         #then drop file extension, then insert --tests option between each.
