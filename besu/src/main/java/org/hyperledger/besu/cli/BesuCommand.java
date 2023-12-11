@@ -3118,13 +3118,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (!p2PDiscoveryOptionGroup.peerDiscoveryEnabled) {
         logger.warn("Discovery disabled: bootnodes will be ignored.");
       } else {
-        logger.info("Configured {} bootnodes.", p2PDiscoveryOptionGroup.bootNodes.size());
-        logger.debug("Bootnodes = {}", p2PDiscoveryOptionGroup.bootNodes);
+        logger.info("Configured {} bootnodes.", listBootNodes.size());
+        logger.debug("Bootnodes = {}", listBootNodes);
       }
       DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
       builder.setBootNodes(listBootNodes);
     } else {
-      logger.debug("0 Bootnodes configured");
+      logger.info("0 Bootnodes configured");
     }
     return builder.build();
   }
