@@ -2,11 +2,13 @@ name: acceptance-tests
 on:
   pull_request_review:
     types: [ submitted ]
+  workflow_dispatch:
+
 
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
-  total-runners: 10
+  total-runners: 32
 
 jobs:
   runner-indexes:
