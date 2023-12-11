@@ -22,22 +22,22 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.spec.ECPoint;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class KeyPairSecurityModuleTest {
 
-  @Rule public final TemporaryFolder temp = new TemporaryFolder();
+  @TempDir public Path temp;
 
   @Test
   public void validatePublicKeyFromECPointCanBeConstructed() throws IOException {
-    final File keyDirectory = temp.newFolder();
-    final File keyFile = new File(keyDirectory, "key");
+    final File keyFile = Files.createFile(temp.resolve("key")).toFile();
 
     final KeyPair keyPair = KeyPairUtil.loadKeyPair(keyFile);
 
