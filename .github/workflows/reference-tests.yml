@@ -25,6 +25,12 @@ jobs:
         uses: gradle/gradle-build-action@v2
       - name: execute generate reference tests
         run: ./gradlew ethereum:referencetests:blockchainReferenceTests ethereum:referencetests:generalstateReferenceTests ethereum:referencetests:generalstateRegressionReferenceTests -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+      - name: store generated tests
+        uses: actions/upload-artifact@v3
+        with:
+          name: reference-tests
+          path: 'ethereum/referencetests/build/generated/sources/reference-test/**/*.java'
+
   referenceTestEthereum:
     runs-on: ubuntu-22.04
     needs:
@@ -53,6 +59,10 @@ jobs:
           if_no_artifact_found: true
       - name: setup gradle
         uses: gradle/gradle-build-action@v2
+      - name: retrieve generated tests
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          name: reference-tests
       - name: Split tests
         id: split-tests
         uses: r7kamura/split-tests-by-timings@v0
