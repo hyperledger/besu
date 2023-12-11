@@ -19,6 +19,7 @@ import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_INTEGER_FO
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LEGACY;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.SEQUENCED;
 
 import org.hyperledger.besu.cli.converter.DurationMillisConverter;
 import org.hyperledger.besu.cli.converter.FractionConverter;
@@ -171,7 +172,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
 
   @CommandLine.ArgGroup(
       validate = false,
-      heading = "@|bold Tx Pool Legacy Implementation Options|@%n")
+      heading = "@|bold Tx Pool Sequenced Implementation Options|@%n")
   private final Legacy legacyOptions = new Legacy();
 
   static class Legacy {
@@ -295,14 +296,14 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
       final CommandLine commandLine, final GenesisConfigOptions genesisConfigOptions) {
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
-        "Could not use legacy transaction pool options with layered implementation",
+        "Could not use legacy or sequenced transaction pool options with layered implementation",
         !txPoolImplementation.equals(LAYERED),
         CommandLineUtils.getCLIOptionNames(Legacy.class));
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
-        "Could not use layered transaction pool options with legacy implementation",
-        !txPoolImplementation.equals(LEGACY),
+        "Could not use layered transaction pool options with legacy or sequenced implementation",
+        !txPoolImplementation.equals(LEGACY) && !txPoolImplementation.equals(SEQUENCED),
         CommandLineUtils.getCLIOptionNames(Layered.class));
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
