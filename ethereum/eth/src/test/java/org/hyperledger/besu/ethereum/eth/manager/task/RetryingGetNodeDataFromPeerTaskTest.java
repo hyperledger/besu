@@ -100,6 +100,6 @@ public class RetryingGetNodeDataFromPeerTaskTest
 
   @Test
   @Override
-  @Ignore("Empty responses count as valid when requesting node data")
+  @Disabled("Empty responses count as valid when requesting node data")
   public void completesWhenBestPeerEmptyAndSecondPeerIsResponsive() {}
 }
