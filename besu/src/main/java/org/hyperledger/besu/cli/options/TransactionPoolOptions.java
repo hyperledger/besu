@@ -173,9 +173,9 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   @CommandLine.ArgGroup(
       validate = false,
       heading = "@|bold Tx Pool Sequenced Implementation Options|@%n")
-  private final Legacy legacyOptions = new Legacy();
+  private final Sequenced sequencedOptions = new Sequenced();
 
-  static class Legacy {
+  static class Sequenced {
     private static final String TX_POOL_RETENTION_HOURS = "--tx-pool-retention-hours";
     private static final String TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE =
         "--tx-pool-limit-by-account-percentage";
@@ -273,10 +273,10 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         config.getPendingTransactionsLayerMaxCapacityBytes();
     options.layeredOptions.txPoolMaxPrioritized = config.getMaxPrioritizedTransactions();
     options.layeredOptions.txPoolMaxFutureBySender = config.getMaxFutureBySender();
-    options.legacyOptions.txPoolLimitByAccountPercentage =
+    options.sequencedOptions.txPoolLimitByAccountPercentage =
         config.getTxPoolLimitByAccountPercentage();
-    options.legacyOptions.txPoolMaxSize = config.getTxPoolMaxSize();
-    options.legacyOptions.pendingTxRetentionPeriod = config.getPendingTxRetentionPeriod();
+    options.sequencedOptions.txPoolMaxSize = config.getTxPoolMaxSize();
+    options.sequencedOptions.pendingTxRetentionPeriod = config.getPendingTxRetentionPeriod();
     options.unstableOptions.txMessageKeepAliveSeconds =
         config.getUnstable().getTxMessageKeepAliveSeconds();
     options.unstableOptions.eth65TrxAnnouncedBufferingPeriod =
@@ -298,7 +298,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         commandLine,
         "Could not use legacy or sequenced transaction pool options with layered implementation",
         !txPoolImplementation.equals(LAYERED),
-        CommandLineUtils.getCLIOptionNames(Legacy.class));
+        CommandLineUtils.getCLIOptionNames(Sequenced.class));
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
@@ -328,9 +328,9 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         .pendingTransactionsLayerMaxCapacityBytes(layeredOptions.txPoolLayerMaxCapacity)
         .maxPrioritizedTransactions(layeredOptions.txPoolMaxPrioritized)
         .maxFutureBySender(layeredOptions.txPoolMaxFutureBySender)
-        .txPoolLimitByAccountPercentage(legacyOptions.txPoolLimitByAccountPercentage)
-        .txPoolMaxSize(legacyOptions.txPoolMaxSize)
-        .pendingTxRetentionPeriod(legacyOptions.pendingTxRetentionPeriod)
+        .txPoolLimitByAccountPercentage(sequencedOptions.txPoolLimitByAccountPercentage)
+        .txPoolMaxSize(sequencedOptions.txPoolMaxSize)
+        .pendingTxRetentionPeriod(sequencedOptions.pendingTxRetentionPeriod)
         .unstable(
             ImmutableTransactionPoolConfiguration.Unstable.builder()
                 .txMessageKeepAliveSeconds(unstableOptions.txMessageKeepAliveSeconds)
