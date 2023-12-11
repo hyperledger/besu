@@ -39,7 +39,7 @@ import picocli.CommandLine;
  */
 @CommandLine.Command(
     name = COMMAND_NAME,
-    description = "Execute an Ethereum State Test.",
+    description = "Parse input transactions and return the sender, or an error.",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class TxParseSubCommand implements Runnable {
