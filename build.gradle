@@ -25,7 +25,7 @@ plugins {
   id 'com.diffplug.spotless' version '6.23.3'
   id 'com.github.ben-manes.versions' version '0.50.0'
   id 'com.github.hierynomus.license' version '0.16.1-fix'
-  id 'com.jfrog.artifactory' version '4.28.3'
+  id 'com.jfrog.artifactory' version '5.1.11'
   id 'io.spring.dependency-management' version '1.0.11.RELEASE'
   id 'me.champeau.jmh' version '0.7.0' apply false
   id 'net.ltgt.errorprone' version '2.0.2'
