@@ -73,17 +73,17 @@ public class TransactionPoolOptionsTest
         String.valueOf(pendingTxRetentionHours),
         "--tx-pool=legacy");
   }
+
   @Test
   public void pendingTransactionRetentionPeriodSequenced() {
     final int pendingTxRetentionHours = 999;
     internalTestSuccess(
-            config ->
-                    assertThat(config.getPendingTxRetentionPeriod()).isEqualTo(pendingTxRetentionHours),
-            "--tx-pool-retention-hours",
-            String.valueOf(pendingTxRetentionHours),
-            "--tx-pool=sequenced");
+        config ->
+            assertThat(config.getPendingTxRetentionPeriod()).isEqualTo(pendingTxRetentionHours),
+        "--tx-pool-retention-hours",
+        String.valueOf(pendingTxRetentionHours),
+        "--tx-pool=sequenced");
   }
-
 
   @Test
   public void disableLocalsDefault() {
@@ -208,8 +208,8 @@ public class TransactionPoolOptionsTest
   @Test
   public void selectSequencedImplementationByArg() {
     internalTestSuccess(
-            config -> assertThat(config.getTxPoolImplementation()).isEqualTo(SEQUENCED),
-            "--tx-pool=sequenced");
+        config -> assertThat(config.getTxPoolImplementation()).isEqualTo(SEQUENCED),
+        "--tx-pool=sequenced");
   }
 
   @Test
@@ -238,9 +238,9 @@ public class TransactionPoolOptionsTest
   @Test
   public void failIfLayeredOptionsWhenSequencedSelectedByArg() {
     internalTestFailure(
-            "Could not use layered transaction pool options with legacy or sequenced implementation",
-            "--tx-pool=sequenced",
-            "--tx-pool-max-prioritized=1000");
+        "Could not use layered transaction pool options with legacy or sequenced implementation",
+        "--tx-pool=sequenced",
+        "--tx-pool-max-prioritized=1000");
   }
 
   @Test
