@@ -1,6 +1,6 @@
 name: reference-tests
 on:
-  workflow_call:
+  workflow_dispatch:
 
 
 env:
@@ -9,7 +9,7 @@ env:
 
 jobs:
   runner-indexes:
-    runs-on: besu-research-ubuntu-8
+    runs-on: ubuntu-22.04
     name: Generate runner indexes
     outputs:
       json: ${{ steps.generate-index-list.outputs.json }}
@@ -21,7 +21,7 @@ jobs:
           INDEX_JSON=$(jq --null-input --compact-output '. |= [inputs]' <<< ${INDEX_LIST})
           echo "::set-output name=json::${INDEX_JSON}"
   prepareReferenceTestEthereum:
-    runs-on: besu-research-ubuntu-8
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
@@ -57,7 +57,7 @@ jobs:
           path: "ethereum/referencetests/build/generated/sources/reference-test/**"
           key: ${{ runner.os }}-reftests-${{ github.sha }}
   referenceTestEthereum:
-    runs-on: besu-research-ubuntu-8
+    runs-on: ubuntu-22.04
     needs:
       - prepareReferenceTestEthereum
       - runner-indexes
@@ -110,7 +110,7 @@ jobs:
           path: '**/build/test-results/referenceTests/TEST-*.xml'
           retention-days: 1
   referenceTestQbft:
-    runs-on: besu-research-ubuntu-8
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
