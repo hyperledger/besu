@@ -2120,8 +2120,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     instantiateSignatureAlgorithmFactory();
 
     logger.info(generateConfigurationOverview());
-    logger.info("Connecting to {} static nodes.", staticNodes.size());
-    logger.trace("Static Nodes = {}", staticNodes);
     logger.info("Security Module: {}", securityModuleName);
   }
 
@@ -3119,6 +3117,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (listBootNodes != null) {
       if (!p2PDiscoveryOptionGroup.peerDiscoveryEnabled) {
         logger.warn("Discovery disabled: bootnodes will be ignored.");
+      } else {
+        logger.info("Configured {} bootnodes.", p2PDiscoveryOptionGroup.bootNodes.size());
+        logger.debug("Bootnodes = {}", p2PDiscoveryOptionGroup.bootNodes);
       }
       DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
       builder.setBootNodes(listBootNodes);
@@ -3224,7 +3225,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       staticNodesPath = dataDir().resolve(staticNodesFilename);
     }
     logger.debug("Static Nodes file: {}", staticNodesPath);
-    return StaticNodesParser.fromPath(staticNodesPath, getEnodeDnsConfiguration());
+    final Set<EnodeURL> staticNodes =
+        StaticNodesParser.fromPath(staticNodesPath, getEnodeDnsConfiguration());
+    logger.info("Connecting to {} static nodes.", staticNodes.size());
+    logger.debug("Static Nodes = {}", staticNodes);
+    return staticNodes;
   }
 
   private List<EnodeURL> buildEnodes(
