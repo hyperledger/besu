@@ -15,36 +15,32 @@
 package org.hyperledger.besu.tests.acceptance.jsonrpc;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.util.stream.Stream;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.params.provider.Arguments;
 
-@RunWith(Parameterized.class)
 public class ExecutionEngineShanghaiAcceptanceTest extends AbstractJsonRpcTest {
   private static final String GENESIS_FILE = "/jsonrpc/engine/shanghai/genesis.json";
   private static final String TEST_CASE_PATH = "/jsonrpc/engine/shanghai/test-cases/";
 
   private static JsonRpcTestsContext testsContext;
 
-  public ExecutionEngineShanghaiAcceptanceTest(final String ignored, final URI testCaseFileURI) {
-    super(ignored, testsContext, testCaseFileURI);
+  public ExecutionEngineShanghaiAcceptanceTest() {
+    super(testsContext);
   }
 
-  @BeforeClass
+  @BeforeAll
   public static void init() throws IOException {
     testsContext = new JsonRpcTestsContext(GENESIS_FILE);
   }
 
-  @Parameterized.Parameters(name = "{0}")
-  public static Iterable<Object[]> testCases() throws URISyntaxException {
-    return testCases(TEST_CASE_PATH);
+  public static Stream<Arguments> testCases() throws Exception {
+    return testCasesFromPath(TEST_CASE_PATH);
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDown() {
     testsContext.cluster.close();
   }
