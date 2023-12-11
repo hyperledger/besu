@@ -14,16 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountFlatHealingRangeRequest;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
 
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountFlatDatabaseHealingRangeRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageFlatDatabaseHealingRangeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
+import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
@@ -35,12 +40,15 @@ import java.time.Clock;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.OptionalLong;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,18 +60,23 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       new InMemoryTaskQueue<>();
   protected final InMemoryTaskQueue<SnapDataRequest> pendingStorageRequests =
       new InMemoryTaskQueue<>();
-  protected final InMemoryTaskQueue<SnapDataRequest> pendingBigStorageRequests =
+  protected final InMemoryTaskQueue<SnapDataRequest> pendingLargeStorageRequests =
       new InMemoryTaskQueue<>();
   protected final InMemoryTaskQueue<SnapDataRequest> pendingCodeRequests =
       new InMemoryTaskQueue<>();
   protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingTrieNodeRequests =
       new InMemoryTasksPriorityQueues<>();
-  public HashSet<Bytes> inconsistentAccounts = new HashSet<>();
 
-  private DynamicPivotBlockManager dynamicPivotBlockManager;
+  protected final InMemoryTasksPriorityQueues<SnapDataRequest>
+      pendingAccountFlatDatabaseHealingRequests = new InMemoryTasksPriorityQueues<>();
 
-  private final SnapPersistedContext snapContext;
-  private final SnapSyncState snapSyncState;
+  protected final InMemoryTasksPriorityQueues<SnapDataRequest>
+      pendingStorageFlatDatabaseHealingRequests = new InMemoryTasksPriorityQueues<>();
+  private HashSet<Bytes> accountsHealingList = new HashSet<>();
+  private DynamicPivotBlockSelector pivotBlockSelector;
+
+  private final SnapSyncStatePersistenceManager snapContext;
+  private final SnapSyncProcessState snapSyncState;
 
   // blockchain
   private final Blockchain blockchain;
@@ -74,9 +87,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public SnapWorldDownloadState(
       final WorldStateStorage worldStateStorage,
-      final SnapPersistedContext snapContext,
+      final SnapSyncStatePersistenceManager snapContext,
       final Blockchain blockchain,
-      final SnapSyncState snapSyncState,
+      final SnapSyncProcessState snapSyncState,
       final InMemoryTasksPriorityQueues<SnapDataRequest> pendingRequests,
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,
@@ -113,7 +126,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
             BesuMetricCategory.SYNCHRONIZER,
             "snap_world_state_pending_big_storage_requests_current",
             "Number of storage pending requests for snap sync world state download",
-            pendingBigStorageRequests::size);
+            pendingLargeStorageRequests::size);
     metricsManager
         .getMetricsSystem()
         .createLongGauge(
@@ -143,30 +156,59 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   @Override
   public synchronized boolean checkCompletion(final BlockHeader header) {
 
+    // Check if all snapsync tasks are completed
     if (!internalFuture.isDone()
         && pendingAccountRequests.allTasksCompleted()
         && pendingCodeRequests.allTasksCompleted()
         && pendingStorageRequests.allTasksCompleted()
-        && pendingBigStorageRequests.allTasksCompleted()
-        && pendingTrieNodeRequests.allTasksCompleted()) {
-      if (!snapSyncState.isHealInProgress()) {
-        startHeal();
-      } else if (dynamicPivotBlockManager.isBlockchainBehind()) {
+        && pendingLargeStorageRequests.allTasksCompleted()
+        && pendingTrieNodeRequests.allTasksCompleted()
+        && pendingAccountFlatDatabaseHealingRequests.allTasksCompleted()
+        && pendingStorageFlatDatabaseHealingRequests.allTasksCompleted()) {
+
+      // if all snapsync tasks are completed and the healing process was not running
+      if (!snapSyncState.isHealTrieInProgress()) {
+        // Register blockchain observer if not already registered
+        blockObserverId =
+            blockObserverId.isEmpty()
+                ? OptionalLong.of(blockchain.observeBlockAdded(createBlockchainObserver()))
+                : blockObserverId;
+        // Start the healing process
+        startTrieHeal();
+      }
+      // if all snapsync tasks are completed and the healing was running and blockchain is behind
+      // the pivot block
+      else if (pivotBlockSelector.isBlockchainBehind()) {
         LOG.info("Pausing world state download while waiting for sync to complete");
-        if (blockObserverId.isEmpty())
-          blockObserverId = OptionalLong.of(blockchain.observeBlockAdded(getBlockAddedListener()));
+        // Set the snapsync to wait for the blockchain to catch up
         snapSyncState.setWaitingBlockchain(true);
-      } else {
-        final WorldStateStorage.Updater updater = worldStateStorage.updater();
-        updater.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
-        updater.commit();
-        metricsManager.notifySnapSyncCompleted();
-        snapContext.clear();
-        internalFuture.complete(null);
-        return true;
+      }
+      // if all snapsync tasks are completed and the healing was running and the blockchain is not
+      // behind the pivot block
+      else {
+        // Remove the blockchain observer
+        blockObserverId.ifPresent(blockchain::removeObserver);
+        // If the flat database healing process is not in progress and the flat database mode is
+        // FULL
+        if (!snapSyncState.isHealFlatDatabaseInProgress()
+            && worldStateStorage.getFlatDbMode().equals(FlatDbMode.FULL)) {
+          // Start the flat database healing process
+          startFlatDatabaseHeal(header);
+        }
+        // If the flat database healing process is in progress or the flat database mode is not FULL
+        else {
+          final WorldStateStorage.Updater updater = worldStateStorage.updater();
+          updater.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
+          updater.commit();
+          // Notify that the snap sync has completed
+          metricsManager.notifySnapSyncCompleted();
+          // Clear the snap context
+          snapContext.clear();
+          internalFuture.complete(null);
+          return true;
+        }
       }
     }
-
     return false;
   }
 
@@ -175,16 +217,17 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     super.cleanupQueues();
     pendingAccountRequests.clear();
     pendingStorageRequests.clear();
-    pendingBigStorageRequests.clear();
+    pendingLargeStorageRequests.clear();
     pendingCodeRequests.clear();
     pendingTrieNodeRequests.clear();
   }
 
-  public synchronized void startHeal() {
+  /** Method to start the healing process of the trie */
+  public synchronized void startTrieHeal() {
     snapContext.clearAccountRangeTasks();
-    snapSyncState.setHealStatus(true);
-    // try to find new pivot block before healing
-    dynamicPivotBlockManager.switchToNewPivotBlock(
+    snapSyncState.setHealTrieStatus(true);
+    // Try to find a new pivot block before starting the healing process
+    pivotBlockSelector.switchToNewPivotBlock(
         (blockHeader, newPivotBlockFound) -> {
           snapContext.clearAccountRangeTasks();
           LOG.info(
@@ -192,17 +235,31 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
               blockHeader.getNumber());
           enqueueRequest(
               createAccountTrieNodeDataRequest(
-                  blockHeader.getStateRoot(), Bytes.EMPTY, inconsistentAccounts));
+                  blockHeader.getStateRoot(), Bytes.EMPTY, accountsHealingList));
         });
   }
 
-  public synchronized void reloadHeal() {
+  /** Method to reload the healing process of the trie */
+  public synchronized void reloadTrieHeal() {
+    // Clear the flat database and trie log from the world state storage if needed
     worldStateStorage.clearFlatDatabase();
     worldStateStorage.clearTrieLog();
+    // Clear pending trie node and code requests
     pendingTrieNodeRequests.clear();
     pendingCodeRequests.clear();
-    snapSyncState.setHealStatus(false);
+
+    snapSyncState.setHealTrieStatus(false);
     checkCompletion(snapSyncState.getPivotBlockHeader().orElseThrow());
+  }
+
+  public synchronized void startFlatDatabaseHeal(final BlockHeader header) {
+    LOG.info("Initiating the healing process for the flat database");
+    snapSyncState.setHealFlatDatabaseInProgress(true);
+    final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
+    ranges.forEach(
+        (key, value) ->
+            enqueueRequest(
+                createAccountFlatHealingRangeRequest(header.getStateRoot(), key, value)));
   }
 
   @Override
@@ -212,12 +269,16 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         pendingCodeRequests.add(request);
       } else if (request instanceof StorageRangeDataRequest) {
         if (!((StorageRangeDataRequest) request).getStartKeyHash().equals(RangeManager.MIN_RANGE)) {
-          pendingBigStorageRequests.add(request);
+          pendingLargeStorageRequests.add(request);
         } else {
           pendingStorageRequests.add(request);
         }
       } else if (request instanceof AccountRangeDataRequest) {
         pendingAccountRequests.add(request);
+      } else if (request instanceof AccountFlatDatabaseHealingRangeRequest) {
+        pendingAccountFlatDatabaseHealingRequests.add(request);
+      } else if (request instanceof StorageFlatDatabaseHealingRangeRequest) {
+        pendingStorageFlatDatabaseHealingRequests.add(request);
       } else {
         pendingTrieNodeRequests.add(request);
       }
@@ -225,15 +286,26 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     }
   }
 
-  public synchronized void setInconsistentAccounts(final HashSet<Bytes> inconsistentAccounts) {
-    this.inconsistentAccounts = inconsistentAccounts;
+  public synchronized void setAccountsHealingList(final HashSet<Bytes> addAccountToHealingList) {
+    this.accountsHealingList = addAccountToHealingList;
   }
 
-  public synchronized void addInconsistentAccount(final Bytes account) {
-    if (!inconsistentAccounts.contains(account)) {
-      snapContext.addInconsistentAccount(account);
-      inconsistentAccounts.add(account);
+  /**
+   * Adds an account to the list of accounts to be repaired during the healing process. If the
+   * account is not already in the list, it is added to both the snap context and the internal set
+   * of accounts to be repaired.
+   *
+   * @param account The account to be added for repair.
+   */
+  public synchronized void addAccountToHealingList(final Bytes account) {
+    if (!accountsHealingList.contains(account)) {
+      snapContext.addAccountToHealingList(account);
+      accountsHealingList.add(account);
     }
+  }
+
+  public HashSet<Bytes> getAccountsHealingList() {
+    return accountsHealingList;
   }
 
   @Override
@@ -281,13 +353,13 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public synchronized Task<SnapDataRequest> dequeueAccountRequestBlocking() {
     return dequeueRequestBlocking(
-        List.of(pendingStorageRequests, pendingBigStorageRequests, pendingCodeRequests),
+        List.of(pendingStorageRequests, pendingLargeStorageRequests, pendingCodeRequests),
         pendingAccountRequests,
         unused -> snapContext.updatePersistedTasks(pendingAccountRequests.asList()));
   }
 
-  public synchronized Task<SnapDataRequest> dequeueBigStorageRequestBlocking() {
-    return dequeueRequestBlocking(Collections.emptyList(), pendingBigStorageRequests, __ -> {});
+  public synchronized Task<SnapDataRequest> dequeueLargeStorageRequestBlocking() {
+    return dequeueRequestBlocking(Collections.emptyList(), pendingLargeStorageRequests, __ -> {});
   }
 
   public synchronized Task<SnapDataRequest> dequeueStorageRequestBlocking() {
@@ -300,8 +372,31 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public synchronized Task<SnapDataRequest> dequeueTrieNodeRequestBlocking() {
     return dequeueRequestBlocking(
-        List.of(pendingAccountRequests, pendingStorageRequests, pendingBigStorageRequests),
+        List.of(pendingAccountRequests, pendingStorageRequests, pendingLargeStorageRequests),
         pendingTrieNodeRequests,
+        __ -> {});
+  }
+
+  public synchronized Task<SnapDataRequest> dequeueAccountFlatDatabaseHealingRequestBlocking() {
+    return dequeueRequestBlocking(
+        List.of(
+            pendingAccountRequests,
+            pendingStorageRequests,
+            pendingLargeStorageRequests,
+            pendingTrieNodeRequests,
+            pendingStorageFlatDatabaseHealingRequests),
+        pendingAccountFlatDatabaseHealingRequests,
+        __ -> {});
+  }
+
+  public synchronized Task<SnapDataRequest> dequeueStorageFlatDatabaseHealingRequestBlocking() {
+    return dequeueRequestBlocking(
+        List.of(
+            pendingAccountRequests,
+            pendingStorageRequests,
+            pendingLargeStorageRequests,
+            pendingTrieNodeRequests),
+        pendingStorageFlatDatabaseHealingRequests,
         __ -> {});
   }
 
@@ -309,29 +404,29 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     return metricsManager;
   }
 
-  public void setDynamicPivotBlockManager(final DynamicPivotBlockManager dynamicPivotBlockManager) {
-    this.dynamicPivotBlockManager = dynamicPivotBlockManager;
+  public void setPivotBlockSelector(final DynamicPivotBlockSelector pivotBlockSelector) {
+    this.pivotBlockSelector = pivotBlockSelector;
   }
 
-  public BlockAddedObserver getBlockAddedListener() {
+  public BlockAddedObserver createBlockchainObserver() {
     return addedBlockContext -> {
-      if (snapSyncState.isWaitingBlockchain()) {
-        // if we receive a new pivot block we can restart the heal
-        dynamicPivotBlockManager.check(
-            (____, isNewPivotBlock) -> {
-              if (isNewPivotBlock) {
-                snapSyncState.setWaitingBlockchain(false);
-              }
-            });
-        // if we are close to the head we can also restart the heal and finish snapsync
-        if (!dynamicPivotBlockManager.isBlockchainBehind()) {
-          snapSyncState.setWaitingBlockchain(false);
-        }
-        if (!snapSyncState.isWaitingBlockchain()) {
-          blockObserverId.ifPresent(blockchain::removeObserver);
-          blockObserverId = OptionalLong.empty();
-          reloadHeal();
-        }
+      final AtomicBoolean foundNewPivotBlock = new AtomicBoolean(false);
+      pivotBlockSelector.check(
+          (____, isNewPivotBlock) -> {
+            if (isNewPivotBlock) {
+              foundNewPivotBlock.set(true);
+            }
+          });
+
+      final boolean isNewPivotBlockFound = foundNewPivotBlock.get();
+      final boolean isBlockchainCaughtUp =
+          snapSyncState.isWaitingBlockchain() && !pivotBlockSelector.isBlockchainBehind();
+
+      if (isNewPivotBlockFound
+          || isBlockchainCaughtUp) { // restart heal if we found a new pivot block or if close to
+        // head again
+        snapSyncState.setWaitingBlockchain(false);
+        reloadTrieHeal();
       }
     };
   }

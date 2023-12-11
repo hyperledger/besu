@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -27,10 +28,10 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -45,22 +46,27 @@ import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import com.google.common.collect.Iterables;
+
 public class SparseTransactions extends AbstractTransactionsLayer {
   private final NavigableSet<PendingTransaction> sparseEvictionOrder =
-      new TreeSet<>(Comparator.comparing(PendingTransaction::getSequence));
+      new TreeSet<>(
+          Comparator.comparing(PendingTransaction::hasPriority)
+              .thenComparing(PendingTransaction::getSequence));
   private final Map<Address, Integer> gapBySender = new HashMap<>();
-  private final List<Set<Address>> orderByGap;
+  private final List<SendersByPriority> orderByGap;
 
   public SparseTransactions(
       final TransactionPoolConfiguration poolConfig,
       final TransactionsLayer nextLayer,
       final TransactionPoolMetrics metrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
-          transactionReplacementTester) {
-    super(poolConfig, nextLayer, transactionReplacementTester, metrics);
+          transactionReplacementTester,
+      final BlobCache blobCache) {
+    super(poolConfig, nextLayer, transactionReplacementTester, metrics, blobCache);
     orderByGap = new ArrayList<>(poolConfig.getMaxFutureBySender());
     IntStream.range(0, poolConfig.getMaxFutureBySender())
-        .forEach(i -> orderByGap.add(new HashSet<>()));
+        .forEach(i -> orderByGap.add(new SendersByPriority()));
   }
 
   @Override
@@ -83,7 +89,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
     super.reset();
     sparseEvictionOrder.clear();
     gapBySender.clear();
-    orderByGap.forEach(Set::clear);
+    orderByGap.forEach(SendersByPriority::clear);
   }
 
   @Override
@@ -93,12 +99,12 @@ public class SparseTransactions extends AbstractTransactionsLayer {
         pendingTransaction.getSender(),
         (sender, currGap) -> {
           if (currGap == null) {
-            orderByGap.get(gap).add(sender);
+            orderByGap.get(gap).add(pendingTransaction);
             return gap;
           }
           if (pendingTransaction.getNonce() < txsBySender.get(sender).firstKey()) {
             orderByGap.get(currGap).remove(sender);
-            orderByGap.get(gap).add(sender);
+            orderByGap.get(gap).add(pendingTransaction);
             return gap;
           }
           return currGap;
@@ -126,36 +132,86 @@ public class SparseTransactions extends AbstractTransactionsLayer {
   @Override
   protected void internalBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {}
 
+  /**
+   * We only want to promote transactions that have gap == 0, so there will be no gap in the prev
+   * layers. A promoted transaction is removed from this layer, and the gap data is updated for its
+   * sender.
+   *
+   * @param promotionFilter the prev layer's promotion filter
+   * @param freeSpace max amount of memory promoted txs can occupy
+   * @param freeSlots max number of promoted txs
+   * @return a list of transactions promoted to the prev layer
+   */
   @Override
-  public PendingTransaction promote(final Predicate<PendingTransaction> promotionFilter) {
-    final PendingTransaction promotedTx =
-        orderByGap.get(0).stream()
-            .map(txsBySender::get)
-            .map(NavigableMap::values)
-            .flatMap(Collection::stream)
-            .filter(promotionFilter)
-            .findFirst()
-            .orElse(null);
+  public List<PendingTransaction> promote(
+      final Predicate<PendingTransaction> promotionFilter,
+      final long freeSpace,
+      final int freeSlots) {
+    long accumulatedSpace = 0;
+    final List<PendingTransaction> promotedTxs = new ArrayList<>();
 
-    if (promotedTx != null) {
-      final Address sender = promotedTx.getSender();
-      final var senderTxs = txsBySender.get(sender);
-      senderTxs.pollFirstEntry();
-      processRemove(senderTxs, promotedTx.getTransaction(), PROMOTED);
-      if (senderTxs.isEmpty()) {
-        txsBySender.remove(sender);
-        orderByGap.get(0).remove(sender);
-        gapBySender.remove(sender);
-      } else {
-        final long firstNonce = senderTxs.firstKey();
-        final int newGap = (int) (firstNonce - (promotedTx.getNonce() + 1));
-        if (newGap != 0) {
-          updateGap(sender, 0, newGap);
+    final var zeroGapSenders = orderByGap.get(0);
+
+    search:
+    for (final var sender : zeroGapSenders) {
+      final var senderSeqTxs = getSequentialSubset(txsBySender.get(sender));
+
+      for (final var candidateTx : senderSeqTxs.values()) {
+
+        if (promotionFilter.test(candidateTx)) {
+          accumulatedSpace += candidateTx.memorySize();
+          if (promotedTxs.size() < freeSlots && accumulatedSpace <= freeSpace) {
+            promotedTxs.add(candidateTx);
+          } else {
+            // no room for more txs the search is over exit the loops
+            break search;
+          }
+        } else {
+          // skip remaining txs for this sender
+          break;
         }
       }
     }
 
-    return promotedTx;
+    // remove promoted txs from this layer
+    promotedTxs.forEach(
+        promotedTx -> {
+          final var sender = promotedTx.getSender();
+          final var senderTxs = txsBySender.get(sender);
+          senderTxs.remove(promotedTx.getNonce());
+          processRemove(senderTxs, promotedTx.getTransaction(), PROMOTED);
+          if (senderTxs.isEmpty()) {
+            txsBySender.remove(sender);
+            orderByGap.get(0).remove(sender);
+            gapBySender.remove(sender);
+          } else {
+            final long firstNonce = senderTxs.firstKey();
+            final int newGap = (int) (firstNonce - (promotedTx.getNonce() + 1));
+            if (newGap != 0) {
+              updateGap(sender, 0, newGap);
+            }
+          }
+        });
+
+    if (!promotedTxs.isEmpty()) {
+      // since we removed some txs we can try to promote from next layer
+      promoteTransactions();
+    }
+
+    return promotedTxs;
+  }
+
+  private NavigableMap<Long, PendingTransaction> getSequentialSubset(
+      final NavigableMap<Long, PendingTransaction> senderTxs) {
+    long lastSequentialNonce = senderTxs.firstKey();
+    for (final long nonce : senderTxs.tailMap(lastSequentialNonce, false).keySet()) {
+      if (nonce == lastSequentialNonce + 1) {
+        ++lastSequentialNonce;
+      } else {
+        break;
+      }
+    }
+    return senderTxs.headMap(lastSequentialNonce, true);
   }
 
   @Override
@@ -341,8 +397,8 @@ public class SparseTransactions extends AbstractTransactionsLayer {
   }
 
   private void updateGap(final Address sender, final int currGap, final int newGap) {
-    orderByGap.get(currGap).remove(sender);
-    orderByGap.get(newGap).add(sender);
+    final boolean hasPriority = orderByGap.get(currGap).remove(sender);
+    orderByGap.get(newGap).add(sender, hasPriority);
     gapBySender.put(sender, newGap);
   }
 
@@ -380,5 +436,51 @@ public class SparseTransactions extends AbstractTransactionsLayer {
                 prevNonce = currNonce;
               }
             });
+  }
+
+  private static class SendersByPriority implements Iterable<Address> {
+    final Set<Address> prioritySenders = new HashSet<>();
+    final Set<Address> standardSenders = new HashSet<>();
+
+    void clear() {
+      prioritySenders.clear();
+      standardSenders.clear();
+    }
+
+    public void add(final Address sender, final boolean hasPriority) {
+      if (hasPriority) {
+        if (standardSenders.contains(sender)) {
+          throw new IllegalStateException(
+              "Sender " + sender + " cannot simultaneously have and not have priority");
+        }
+        prioritySenders.add(sender);
+      } else {
+        if (prioritySenders.contains(sender)) {
+          throw new IllegalStateException(
+              "Sender " + sender + " cannot simultaneously have and not have priority");
+        }
+        standardSenders.add(sender);
+      }
+    }
+
+    void add(final PendingTransaction pendingTransaction) {
+      add(pendingTransaction.getSender(), pendingTransaction.hasPriority());
+    }
+
+    boolean remove(final Address sender) {
+      if (standardSenders.remove(sender)) {
+        return false;
+      }
+      return prioritySenders.remove(sender);
+    }
+
+    public boolean contains(final Address sender) {
+      return standardSenders.contains(sender) || prioritySenders.contains(sender);
+    }
+
+    @Override
+    public Iterator<Address> iterator() {
+      return Iterables.concat(prioritySenders, standardSenders).iterator();
+    }
   }
 }

@@ -37,13 +37,13 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PostMergeContextTest {
 
   @Mock private SyncState mockSyncState;
@@ -52,7 +52,7 @@ public class PostMergeContextTest {
 
   private MergeStateChangeCollector mergeStateChangeCollector;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     mergeStateChangeCollector = new MergeStateChangeCollector();
     postMergeContext = new PostMergeContext();
@@ -138,7 +138,7 @@ public class PostMergeContextTest {
     BlockWithReceipts mockBlockWithReceipts = createBlockWithReceipts(1, 21000, 1);
 
     PayloadIdentifier firstPayloadId = new PayloadIdentifier(1L);
-    postMergeContext.putPayloadById(firstPayloadId, mockBlockWithReceipts);
+    postMergeContext.putPayloadById(new PayloadWrapper(firstPayloadId, mockBlockWithReceipts));
 
     assertThat(postMergeContext.retrieveBlockById(firstPayloadId)).contains(mockBlockWithReceipts);
   }
@@ -149,8 +149,8 @@ public class PostMergeContextTest {
     BlockWithReceipts betterBlockWithReceipts = createBlockWithReceipts(2, 11, 1);
 
     PayloadIdentifier payloadId = new PayloadIdentifier(1L);
-    postMergeContext.putPayloadById(payloadId, zeroTxBlockWithReceipts);
-    postMergeContext.putPayloadById(payloadId, betterBlockWithReceipts);
+    postMergeContext.putPayloadById(new PayloadWrapper(payloadId, zeroTxBlockWithReceipts));
+    postMergeContext.putPayloadById(new PayloadWrapper(payloadId, betterBlockWithReceipts));
 
     assertThat(postMergeContext.retrieveBlockById(payloadId)).contains(betterBlockWithReceipts);
   }
@@ -162,9 +162,9 @@ public class PostMergeContextTest {
     BlockWithReceipts smallBlockWithReceipts = createBlockWithReceipts(3, 5, 1);
 
     PayloadIdentifier payloadId = new PayloadIdentifier(1L);
-    postMergeContext.putPayloadById(payloadId, zeroTxBlockWithReceipts);
-    postMergeContext.putPayloadById(payloadId, betterBlockWithReceipts);
-    postMergeContext.putPayloadById(payloadId, smallBlockWithReceipts);
+    postMergeContext.putPayloadById(new PayloadWrapper(payloadId, zeroTxBlockWithReceipts));
+    postMergeContext.putPayloadById(new PayloadWrapper(payloadId, betterBlockWithReceipts));
+    postMergeContext.putPayloadById(new PayloadWrapper(payloadId, smallBlockWithReceipts));
 
     assertThat(postMergeContext.retrieveBlockById(payloadId)).contains(betterBlockWithReceipts);
   }
@@ -178,12 +178,6 @@ public class PostMergeContextTest {
 
   @Test
   public void tryingToRetrieveABlockPutButEvictedReturnsEmpty() {
-    for (long i = 0; i < PostMergeContext.MAX_BLOCKS_IN_PROGRESS + 1; i++) {
-      PayloadIdentifier payloadId = new PayloadIdentifier(i);
-      BlockWithReceipts mockBlockWithReceipts = createBlockWithReceipts((int) i + 1, 11, 1);
-      postMergeContext.putPayloadById(payloadId, mockBlockWithReceipts);
-    }
-
     PayloadIdentifier evictedPayloadId = new PayloadIdentifier(0L);
 
     assertThat(postMergeContext.retrieveBlockById(evictedPayloadId)).isEmpty();
@@ -222,10 +216,10 @@ public class PostMergeContextTest {
     lenient()
         .when(mockBlock.toLogString())
         .thenReturn(number + " (" + Hash.wrap(Bytes32.random()) + ")");
-    when(mockBlock.getHeader().getGasUsed()).thenReturn(gasUsed);
-    when(mockBlock.getBody().getTransactions().size()).thenReturn(txCount);
+    lenient().when(mockBlock.getHeader().getGasUsed()).thenReturn(gasUsed);
+    lenient().when(mockBlock.getBody().getTransactions().size()).thenReturn(txCount);
     BlockWithReceipts mockBlockWithReceipts = mock(BlockWithReceipts.class);
-    when(mockBlockWithReceipts.getBlock()).thenReturn(mockBlock);
+    lenient().when(mockBlockWithReceipts.getBlock()).thenReturn(mockBlock);
     return mockBlockWithReceipts;
   }
 

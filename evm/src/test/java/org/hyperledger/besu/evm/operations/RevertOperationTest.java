@@ -24,24 +24,24 @@ import org.hyperledger.besu.evm.operation.RevertOperation;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
-public class RevertOperationTest {
+@ExtendWith(MockitoExtension.class)
+class RevertOperationTest {
 
   @Mock private MessageFrame messageFrame;
   private final RevertOperation operation = new RevertOperation(new ConstantinopleGasCalculator());
 
   private final Bytes revertReasonBytes = Bytes.fromHexString("726576657274206d657373616765");
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     when(messageFrame.popStackItem())
         .thenReturn(UInt256.fromHexString("0x00"))
         .thenReturn(UInt256.fromHexString("0x0e"));
@@ -52,7 +52,7 @@ public class RevertOperationTest {
   }
 
   @Test
-  public void shouldReturnReason() {
+  void shouldReturnReason() {
     final ArgumentCaptor<Bytes> arg = ArgumentCaptor.forClass(Bytes.class);
     operation.execute(messageFrame, null);
     Mockito.verify(messageFrame).setRevertReason(arg.capture());

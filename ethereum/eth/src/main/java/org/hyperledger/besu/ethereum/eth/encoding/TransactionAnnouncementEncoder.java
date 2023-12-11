@@ -17,11 +17,11 @@ package org.hyperledger.besu.ethereum.eth.encoding;
 import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +69,7 @@ public class TransactionAnnouncementEncoder {
   /**
    * Encode a list of transactions for the NewPooledTransactionHashesMessage using the Eth/68
    *
-   * <p>format: [[type_0: B_1, type_1: B_1, ...], [size_0: B_4, size_1: B_4, ...], ...]
+   * <p>format: [[type_0: B_1, type_1: B_1, ...], [size_0: P, size_1: P, ...], ...]
    *
    * @param transactions the list to encode
    * @return the encoded value. The message data will contain hashes, types and sizes.
@@ -81,7 +81,7 @@ public class TransactionAnnouncementEncoder {
 
     for (int i = 0; i < transactions.size(); i++) {
       final TransactionType type = transactions.get(i).getType();
-      types[i] = type == TransactionType.FRONTIER ? 0x00 : type.getSerializedType();
+      types[i] = type.getEthSerializedType();
       sizes.add(transactions.get(i).getSize());
       hashes.add(transactions.get(i).getHash());
     }
@@ -96,7 +96,7 @@ public class TransactionAnnouncementEncoder {
     final byte[] byteTypes = new byte[types.size()];
     for (int i = 0; i < types.size(); i++) {
       final TransactionType type = types.get(i);
-      byteTypes[i] = type == TransactionType.FRONTIER ? 0x00 : type.getSerializedType();
+      byteTypes[i] = type.getEthSerializedType();
     }
     return encodeForEth68(byteTypes, sizes, hashes);
   }
@@ -112,7 +112,7 @@ public class TransactionAnnouncementEncoder {
     }
     out.startList();
     out.writeBytes(Bytes.wrap((types)));
-    out.writeList(sizes, (h, w) -> w.writeInt(h));
+    out.writeList(sizes, (h, w) -> w.writeUnsignedInt(h));
     out.writeList(hashes, (h, w) -> w.writeBytes(h));
     out.endList();
     return out.encoded();

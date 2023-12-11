@@ -28,8 +28,6 @@ public class DefaultDiscoveryConfiguration {
       "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.goerli.ethdisco.net";
   public static final String MAINNET_DISCOVERY_URL =
       "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.mainnet.ethdisco.net";
-  public static final String RINKEBY_DISCOVERY_URL =
-      "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.rinkeby.ethdisco.net";
 
   public static final List<EnodeURL> MAINNET_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
@@ -40,14 +38,6 @@ public class DefaultDiscoveryConfiguration {
                   "enode://2b252ab6a1d0f971d9722cb839a42cb81db019ba44c08754628ab4a823487071b5695317c8ccd085219c3a03af063495b2f1da8d18218da2d6a82981b45e6ffc@65.108.70.101:30303", // Helsinki Hetzner
                   "enode://4aeb4ab6c14b23e2c4cfdce879c04b0748a20d8e9b59e25ded2a08143e265c6c25936e74cbc8e641e3312ca288673d91f2f93f8e277de3cfa444ecdaaf982052@157.90.35.166:30303" // Falkenstein Hetzner
                   )
-              .map(EnodeURLImpl::fromString)
-              .collect(toList()));
-  public static final List<EnodeURL> RINKEBY_BOOTSTRAP_NODES =
-      Collections.unmodifiableList(
-          Stream.of(
-                  "enode://a24ac7c5484ef4ed0c5eb2d36620ba4e4aa13b8c84684e1b4aab0cebea2ae45cb4d375b77eab56516d34bfbd3c1a833fc51296ff084b770b94fb9028c4d25ccf@52.169.42.101:30303",
-                  "enode://343149e4feefa15d882d9fe4ac7d88f885bd05ebb735e547f12e12080a9fa07c8014ca6fd7f373123488102fe5e34111f8509cf0b7de3f5b44339c9f25e87cb8@52.3.158.184:30303",
-                  "enode://b6b28890b006743680c52e64e0d16db57f28124885595fa03a562be1d2bf0f3a1da297d56b13da25fb992888fd556d4c1a27b1f39d531bde7de1921c90061cc6@159.89.28.211:30303")
               .map(EnodeURLImpl::fromString)
               .collect(toList()));
   public static final List<EnodeURL> GOERLI_BOOTSTRAP_NODES =
@@ -117,25 +107,6 @@ public class DefaultDiscoveryConfiguration {
                   "enode://0daae2a30f2c73b0b257746587136efb8e3479496f7ea1e943eeb9a663b72dd04582f699f7010ee02c57fc45d1f09568c20a9050ff937f9139e2973ddd98b87b@159.89.169.103:30303",
                   "enode://50808461dd73b3d70537e4c1e5fafd1132b3a90f998399af9205f8889987d62096d4e853813562dd43e7270a71c9d9d4e4dd73a534fdb22fbac98c389c1a7362@178.128.55.119:30303",
                   "enode://5cd218959f8263bc3721d7789070806b0adff1a0ed3f95ec886fb469f9362c7507e3b32b256550b9a7964a23a938e8d42d45a0c34b332bfebc54b29081e83b93@35.187.57.94:30303")
-              .map(EnodeURLImpl::fromString)
-              .collect(toList()));
-  public static final List<EnodeURL> KOTTI_BOOTSTRAP_NODES =
-      Collections.unmodifiableList(
-          Stream.of(
-                  // Authority Nodes
-                  "enode://a59e33ccd2b3e52d578f1fbd70c6f9babda2650f0760d6ff3b37742fdcdfdb3defba5d56d315b40c46b70198c7621e63ffa3f987389c7118634b0fefbbdfa7fd@51.158.191.43:37956", // @q9f Mizar
-                  "enode://93c94e999be5dd854c5d82a7cf5c14822973b5d9badb56ad4974586ec4d4f1995c815af795c20bb6e0a6226d3ee55808435c4dc89baf94ee581141b064d19dfc@80.187.116.161:25720",
-                  "enode://ae8658da8d255d1992c3ec6e62e11d6e1c5899aa1566504bc1ff96a0c9c8bd44838372be643342553817f5cc7d78f1c83a8093dee13d77b3b0a583c050c81940@18.232.185.151:30303",
-                  "enode://b477ca6d507a3f57070783eb62ba838847635f8b1a0cbffb8b7f8173f5894cf550f0225a5c279341e2d862a606e778b57180a4f1db3db78c51eadcfa4fdc6963@40.68.240.160:30303",
-
-                  // @q9f Bootnodes
-                  "enode://4956f6924335c951cb70cbc169a85c081f6ff0b374aa2815453b8a3132b49613f38a1a6b8e103f878dbec86364f60091e92a376d7cd3aca9d82d2f2554794e63@51.15.97.240:41235", // @q9f Ginan
-                  "enode://6c9a052c01bb9995fa53bebfcdbc17733fe90708270d0e6d8e38dc57b32e1dbe8c287590b634ee9753b94ba302f411c96519c7fa07df0df6a6848149d819b2c5@51.15.70.7:41235", // @q9f Polis
-                  "enode://95a7302fd8f35d9ad716a591b90dfe839dbf2d3d6a6737ef39e07899f844ad82f1659dd6212492922dd36705fb0a1e984c1d5d5c42069d5bd329388831e820c1@51.15.97.240:45678", // @q9f Ginan
-                  "enode://8c5c4dec9a0728c7058d3c29698bae888adc244e443cebc21f3d708a20751511acbf98a52b5e5ea472f8715c658913e8084123461fd187a4980a0600420b0791@51.15.70.7:45678", // @q9f Polis
-                  "enode://efd7391a3bed73ad74ae5760319bb48f9c9f1983ff22964422688cdb426c5d681004ece26c47121396653cf9bafe7104aa4ecff70e24cc5b11fd76be8e5afce0@51.158.191.43:45678", // @q9f Mizar
-                  "enode://93b12383c74c39b67afa99a7ff44ce250fe94295fa1fc087465cc4fe2d0b33b91a8d8cabe03b250104a9096aa0e06bcde5f95665a5bd9f890edd2ab33e16ae47@51.15.41.19:30303" // @q9f Zibal
-                  )
               .map(EnodeURLImpl::fromString)
               .collect(toList()));
   public static final List<EnodeURL> MORDOR_BOOTSTRAP_NODES =

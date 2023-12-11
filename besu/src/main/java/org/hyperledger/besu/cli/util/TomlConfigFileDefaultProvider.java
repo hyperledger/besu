@@ -15,11 +15,15 @@
 package org.hyperledger.besu.cli.util;
 
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.util.number.Fraction;
+import org.hyperledger.besu.util.number.Percentage;
 
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -87,6 +91,10 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
       defaultValue = getNumericEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(Float.class) || optionSpec.type().equals(float.class)) {
       defaultValue = getNumericEntryAsString(optionSpec);
+    } else if (optionSpec.type().equals(Percentage.class)) {
+      defaultValue = getNumericEntryAsString(optionSpec);
+    } else if (optionSpec.type().equals(Fraction.class)) {
+      defaultValue = getNumericEntryAsString(optionSpec);
     } else { // else will be treated as String
       defaultValue = getEntryAsString(optionSpec);
     }
@@ -102,11 +110,49 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
   private Optional<String> getKeyName(final OptionSpec spec) {
     // If any of the names of the option are used as key in the toml results
     // then returns the value of first one.
-    return Arrays.stream(spec.names())
-        // remove leading dashes on option name as we can have "--" or "-" options
-        .map(name -> name.replaceFirst("^-+", ""))
-        .filter(result::contains)
-        .findFirst();
+    Optional<String> keyName =
+        Arrays.stream(spec.names())
+            // remove leading dashes on option name as we can have "--" or "-" options
+            .map(name -> name.replaceFirst("^-+", ""))
+            .filter(result::contains)
+            .findFirst();
+
+    if (keyName.isEmpty()) {
+      // If the base key name doesn't exist in the file it may be under a TOML table heading
+      // e.g. TxPool.tx-pool-max-size
+      keyName = getDottedKeyName(spec);
+    }
+
+    return keyName;
+  }
+
+  /*
+   For all spec names, look to see if any of the TOML keyPathSet entries contain
+   the name. A key path set might look like ["TxPool", "tx-max-pool-size"] where
+   "TxPool" is the TOML table heading (which we ignore) and "tx-max-pool-size" is
+   the name of the option being requested. For a request for "tx-max-pool-size" this
+   function will return "TxPool.tx-max-pool-size" which can then be used directly
+   as a query on the TOML result structure.
+  */
+  private Optional<String> getDottedKeyName(final OptionSpec spec) {
+    List<String> foundNames = new ArrayList<>();
+
+    Arrays.stream(spec.names())
+        .forEach(
+            nextSpecName -> {
+              String specName =
+                  result.keyPathSet().stream()
+                      .filter(option -> option.contains(nextSpecName.replaceFirst("^-+", "")))
+                      .findFirst()
+                      .orElse(new ArrayList<>())
+                      .stream()
+                      .collect(Collectors.joining("."));
+              if (specName.length() > 0) {
+                foundNames.add(specName);
+              }
+            });
+
+    return foundNames.stream().findFirst();
   }
 
   private String getListEntryAsString(final OptionSpec spec) {
@@ -142,7 +188,8 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
     // return the string representation of the numeric value corresponding to the option in toml
     // file - this works for integer, double, and float
     // or null if not present in the config
-    return getKeyName(spec).map(result::get).map(String::valueOf).orElse(null);
+
+    return getKeyName(spec).map(result::get).map(Object::toString).orElse(null);
   }
 
   private void checkConfigurationValidity() {
@@ -184,8 +231,23 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
   private void checkUnknownOptions(final TomlParseResult result) {
     final CommandSpec commandSpec = commandLine.getCommandSpec();
 
+    // Besu ignores TOML table headings (e.g. [TxPool]) so we use keyPathSet() and take the
+    // last element in each one. For a TOML parameter that's not defined inside a table, the lists
+    // returned in keyPathSet() will contain a single entry - the config parameter itself. For a
+    // TOML
+    // entry that is in a table the list will contain N entries, the last one being the config
+    // parameter itself.
+    final Set<String> optionsWithoutTables = new HashSet<String>();
+    result.keyPathSet().stream()
+        .forEach(
+            strings -> {
+              optionsWithoutTables.add(strings.get(strings.size() - 1));
+            });
+
+    // Once we've stripped TOML table headings from the lists, we can check that the remaining
+    // options are valid
     final Set<String> unknownOptionsList =
-        result.keySet().stream()
+        optionsWithoutTables.stream()
             .filter(option -> !commandSpec.optionsMap().containsKey("--" + option))
             .collect(Collectors.toSet());
 

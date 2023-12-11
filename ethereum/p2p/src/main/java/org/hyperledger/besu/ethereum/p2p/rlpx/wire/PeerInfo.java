@@ -30,6 +30,7 @@ import java.util.Objects;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.owasp.encoder.Encode;
 
 /**
  * Encapsulates information about a peer, including their protocol version, client ID, capabilities
@@ -43,6 +44,7 @@ public class PeerInfo implements Comparable<PeerInfo> {
   private final List<Capability> capabilities;
   private final int port;
   private final Bytes nodeId;
+  private Address address = null;
 
   public PeerInfo(
       final int version,
@@ -97,9 +99,12 @@ public class PeerInfo implements Comparable<PeerInfo> {
   }
 
   public Address getAddress() {
-    final SECPPublicKey remotePublicKey =
-        SignatureAlgorithmFactory.getInstance().createPublicKey(nodeId);
-    return Util.publicKeyToAddress(remotePublicKey);
+    if (address == null) {
+      final SECPPublicKey remotePublicKey =
+          SignatureAlgorithmFactory.getInstance().createPublicKey(nodeId);
+      address = Util.publicKeyToAddress(remotePublicKey);
+    }
+    return address;
   }
 
   public void writeTo(final RLPOutput out) {
@@ -113,10 +118,11 @@ public class PeerInfo implements Comparable<PeerInfo> {
   }
 
   @Override
+  /** Returned string is sanitized since it contains user input */
   public String toString() {
     final StringBuilder sb = new StringBuilder("PeerInfo{");
     sb.append("version=").append(version);
-    sb.append(", clientId='").append(clientId).append('\'');
+    sb.append(", clientId='").append(Encode.forJava(clientId)).append('\'');
     sb.append(", capabilities=").append(capabilities);
     sb.append(", port=").append(port);
     sb.append(", nodeId=").append(nodeId);

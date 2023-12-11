@@ -51,14 +51,14 @@ import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class SyncStateTest {
 
   private static final Difficulty standardDifficultyPerBlock = Difficulty.ONE;
@@ -88,7 +88,7 @@ public class SyncStateTest {
   private RespondingEthPeer otherPeer;
   private SyncState syncState;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain);
     ethPeers = spy(ethProtocolManager.ethContext().getEthPeers());

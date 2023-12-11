@@ -22,5 +22,6 @@ public enum GraphQLContextType {
   MINING_COORDINATOR,
   SYNCHRONIZER,
   IS_ALIVE_HANDLER,
-  CHAIN_ID
+  CHAIN_ID,
+  GAS_CAP
 }

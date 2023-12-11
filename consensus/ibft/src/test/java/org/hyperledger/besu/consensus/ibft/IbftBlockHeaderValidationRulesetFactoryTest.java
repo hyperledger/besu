@@ -42,13 +42,16 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
     return new ProtocolContext(
-        null, null, setupContextWithBftExtraDataEncoder(validators, new IbftExtraDataCodec()));
+        null,
+        null,
+        setupContextWithBftExtraDataEncoder(validators, new IbftExtraDataCodec()),
+        Optional.empty());
   }
 
   @Test

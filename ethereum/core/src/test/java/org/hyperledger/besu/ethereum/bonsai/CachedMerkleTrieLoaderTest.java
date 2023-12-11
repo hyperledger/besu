@@ -39,11 +39,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-public class CachedMerkleTrieLoaderTest {
+class CachedMerkleTrieLoaderTest {
 
   private CachedMerkleTrieLoader merkleTrieLoader;
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
@@ -55,16 +55,17 @@ public class CachedMerkleTrieLoaderTest {
 
   private MerkleTrie<Bytes, Bytes> trie;
 
-  @Before
+  @BeforeEach
   public void setup() {
     trie =
         TrieGenerator.generateTrie(
-            inMemoryWorldState, accounts.stream().map(Hash::hash).collect(Collectors.toList()));
+            inMemoryWorldState,
+            accounts.stream().map(Address::addressHash).collect(Collectors.toList()));
     merkleTrieLoader = new CachedMerkleTrieLoader(new NoOpMetricsSystem());
   }
 
   @Test
-  public void shouldAddAccountNodesInCacheDuringPreload() {
+  void shouldAddAccountNodesInCacheDuringPreload() {
     merkleTrieLoader.cacheAccountNodes(
         inMemoryWorldState, Hash.wrap(trie.getRootHash()), accounts.get(0));
 
@@ -79,13 +80,13 @@ public class CachedMerkleTrieLoaderTest {
             Function.identity(),
             Function.identity());
 
-    final Hash hashAccountZero = Hash.hash(accounts.get(0));
+    final Hash hashAccountZero = accounts.get(0).addressHash();
     assertThat(cachedTrie.get(hashAccountZero)).isEqualTo(trie.get(hashAccountZero));
   }
 
   @Test
-  public void shouldAddStorageNodesInCacheDuringPreload() {
-    final Hash hashAccountZero = Hash.hash(accounts.get(0));
+  void shouldAddStorageNodesInCacheDuringPreload() {
+    final Hash hashAccountZero = accounts.get(0).addressHash();
     final StateTrieAccountValue stateTrieAccountValue =
         StateTrieAccountValue.readFrom(RLP.input(trie.get(hashAccountZero).orElseThrow()));
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
@@ -123,12 +124,11 @@ public class CachedMerkleTrieLoaderTest {
           cachedSlots.add(node.getEncodedBytes());
           return TrieIterator.State.CONTINUE;
         });
-    assertThat(originalSlots).isNotEmpty();
-    assertThat(originalSlots).isEqualTo(cachedSlots);
+    assertThat(originalSlots).isNotEmpty().isEqualTo(cachedSlots);
   }
 
   @Test
-  public void shouldFallbackWhenAccountNodesIsNotInCache() {
+  void shouldFallbackWhenAccountNodesIsNotInCache() {
     final StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
@@ -136,13 +136,13 @@ public class CachedMerkleTrieLoaderTest {
             trie.getRootHash(),
             Function.identity(),
             Function.identity());
-    final Hash hashAccountZero = Hash.hash(accounts.get(0));
+    final Hash hashAccountZero = accounts.get(0).addressHash();
     assertThat(cachedTrie.get(hashAccountZero)).isEqualTo(trie.get(hashAccountZero));
   }
 
   @Test
-  public void shouldFallbackWhenStorageNodesIsNotInCache() {
-    final Hash hashAccountZero = Hash.hash(accounts.get(0));
+  void shouldFallbackWhenStorageNodesIsNotInCache() {
+    final Hash hashAccountZero = accounts.get(0).addressHash();
     final StateTrieAccountValue stateTrieAccountValue =
         StateTrieAccountValue.readFrom(RLP.input(trie.get(hashAccountZero).orElseThrow()));
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
@@ -173,7 +173,6 @@ public class CachedMerkleTrieLoaderTest {
           cachedSlots.add(node.getEncodedBytes());
           return TrieIterator.State.CONTINUE;
         });
-    assertThat(originalSlots).isNotEmpty();
-    assertThat(originalSlots).isEqualTo(cachedSlots);
+    assertThat(originalSlots).isNotEmpty().isEqualTo(cachedSlots);
   }
 }

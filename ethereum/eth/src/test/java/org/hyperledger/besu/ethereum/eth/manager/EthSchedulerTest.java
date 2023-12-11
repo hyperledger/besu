@@ -21,7 +21,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.MockExecutorService;
+import org.hyperledger.besu.testutil.MockScheduledExecutor;
 
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
@@ -29,8 +31,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EthSchedulerTest {
 
@@ -39,7 +41,7 @@ public class EthSchedulerTest {
   private MockScheduledExecutor scheduledExecutor;
   private AtomicBoolean shouldTimeout;
 
-  @Before
+  @BeforeEach
   public void setup() {
     shouldTimeout = new AtomicBoolean(false);
     ethScheduler = new DeterministicEthScheduler(shouldTimeout::get);

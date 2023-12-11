@@ -30,7 +30,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.User;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class AuthenticationServiceTest {
   private final Vertx vertx = Vertx.vertx();

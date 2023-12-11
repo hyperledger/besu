@@ -48,10 +48,11 @@
       "currentTimestamp": "24",
       "currentRandom": "0",
       "currentDifficulty": "0",
+      "currentStateRoot": "0x89412c0f1bb31b983d0317e6e2801a4e604e1ef9987a132ab63c52f2d5a3994b",
       "parentDifficulty": "0",
       "parentGasUsed": "0",
       "parentGasLimit": "100000000000000000",
-      "parentTimstamp": "12",
+      "parentTimestamp": "12",
       "blockHashes": {
         "0": "0x651666d6d8727a6478a750dc8406c1bda0be85abc99094dca694807fa772f83c",
         "1": "0x0275fc82fe832100726ec7c26078ffb1c1dbff14a3b52d93dc359768fc8c7baa"

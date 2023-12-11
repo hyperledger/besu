@@ -24,12 +24,15 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes48;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.bytes.MutableBytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.apache.tuweni.units.bigints.UInt64;
 
 abstract class AbstractRLPInput implements RLPInput {
+
+  private static final String errorMessageSuffix = " (at bytes %d-%d: %s%s[%s]%s%s)";
 
   private final boolean lenient;
 
@@ -72,7 +75,7 @@ abstract class AbstractRLPInput implements RLPInput {
     // input is corrupted.
     if (size > inputSize) {
       // Our error message include a snippet of the input and that code assume size is not set
-      // outside of the input, and that's exactly the case we're testing, so resetting the size
+      // outside the input, and that's exactly the case we're testing, so resetting the size
       // simply for the sake of the error being properly generated.
       final long itemEnd = size;
       size = inputSize;
@@ -97,6 +100,8 @@ abstract class AbstractRLPInput implements RLPInput {
   protected abstract Bytes inputSlice(long offset, int length);
 
   protected abstract Bytes32 inputSlice32(long offset);
+
+  protected abstract Bytes48 inputSlice48(long offset);
 
   protected abstract String inputHex(long offset, int length);
 
@@ -137,24 +142,22 @@ abstract class AbstractRLPInput implements RLPInput {
       currentPayloadSize = elementMetadata.payloadSize;
     } catch (final RLPException exception) {
       final String message =
-          String.format(
-              exception.getMessage() + getErrorMessageSuffix(), getErrorMessageSuffixParams());
+          String.format(exception.getMessage() + errorMessageSuffix, getErrorMessageSuffixParams());
       throw new RLPException(message, exception);
     }
   }
 
   private void validateCurrentItem() {
-    if (currentKind == RLPDecodingHelpers.Kind.SHORT_ELEMENT) {
-      // Validate that a single byte SHORT_ELEMENT payload is not <= 0x7F. If it is, is should have
-      // been written as a BYTE_ELEMENT.
-      if (currentPayloadSize == 1
-          && currentPayloadOffset < size
-          && (payloadByte(0) & 0xFF) <= 0x7F) {
-        throwMalformed(
-            "Malformed RLP item: single byte value 0x%s should have been "
-                + "written without a prefix",
-            hex(currentPayloadOffset, currentPayloadOffset + 1));
-      }
+    // Validate that a single byte SHORT_ELEMENT payload is not <= 0x7F. If it is, it should have
+    // been written as a BYTE_ELEMENT.
+    if (currentKind == RLPDecodingHelpers.Kind.SHORT_ELEMENT
+        && currentPayloadSize == 1
+        && currentPayloadOffset < size
+        && (payloadByte(0) & 0xFF) <= 0x7F) {
+      throwMalformed(
+          "Malformed RLP item: single byte value 0x%s should have been "
+              + "written without a prefix",
+          hex(currentPayloadOffset, currentPayloadOffset + 1));
     }
 
     if (currentPayloadSize > 0 && currentPayloadOffset >= size) {
@@ -183,9 +186,9 @@ abstract class AbstractRLPInput implements RLPInput {
 
   private String hex(final long start, final long taintedEnd) {
     final long end = Math.min(taintedEnd, size);
-    final long size = end - start;
-    if (size < 10) {
-      return inputHex(start, Math.toIntExact(size));
+    final long length = end - start;
+    if (length < 10) {
+      return inputHex(start, Math.toIntExact(length));
     } else {
       return String.format("%s...%s", inputHex(start, 4), inputHex(end - 4, 4));
     }
@@ -209,11 +212,7 @@ abstract class AbstractRLPInput implements RLPInput {
 
   private String errorMsg(final String message, final Object... params) {
     return String.format(
-        message + getErrorMessageSuffix(), concatParams(params, getErrorMessageSuffixParams()));
-  }
-
-  private String getErrorMessageSuffix() {
-    return " (at bytes %d-%d: %s%s[%s]%s%s)";
+        message + errorMessageSuffix, concatParams(params, getErrorMessageSuffixParams()));
   }
 
   private Object[] getErrorMessageSuffixParams() {
@@ -241,6 +240,9 @@ abstract class AbstractRLPInput implements RLPInput {
   private void checkElt(final String what) {
     if (currentItem >= size) {
       throw error("Cannot read a %s, input is fully consumed", what);
+    }
+    if (depth > 0 && currentPayloadOffset + currentPayloadSize > endOfListOffset[depth - 1]) {
+      throw error("Cannot read a %s, too large for enclosing list", what);
     }
     if (isEndOfCurrentList()) {
       throw error("Cannot read a %s, reached end of current list", what);
@@ -315,6 +317,20 @@ abstract class AbstractRLPInput implements RLPInput {
     }
     setTo(nextItem());
     return res;
+  }
+
+  @Override
+  public long readUnsignedIntScalar() {
+    checkScalar("unsigned int scalar", 4);
+    return readLongScalar();
+  }
+
+  @Override
+  public int readUnsignedByteScalar() {
+    checkScalar("unsigned byte scalar", 1);
+    int result = (currentPayloadSize == 0) ? 0 : payloadByte(0) & 0xff;
+    setTo(nextItem());
+    return result;
   }
 
   @Override
@@ -399,7 +415,7 @@ abstract class AbstractRLPInput implements RLPInput {
       return InetAddress.getByAddress(address);
     } catch (final UnknownHostException e) {
       // InetAddress.getByAddress() only throws for an address of illegal length, and we have
-      // validated that length already, this this genuinely shouldn't throw.
+      // validated that length already, this genuinely shouldn't throw.
       throw new AssertionError(e);
     }
   }
@@ -416,6 +432,14 @@ abstract class AbstractRLPInput implements RLPInput {
   public Bytes32 readBytes32() {
     checkElt("32 bytes value", 32);
     final Bytes32 res = inputSlice32(currentPayloadOffset);
+    setTo(nextItem());
+    return res;
+  }
+
+  @Override
+  public Bytes48 readBytes48() {
+    checkElt("48 bytes value", 48);
+    final Bytes48 res = inputSlice48(currentPayloadOffset);
     setTo(nextItem());
     return res;
   }
@@ -466,7 +490,7 @@ abstract class AbstractRLPInput implements RLPInput {
     if (depth > endOfListOffset.length) {
       endOfListOffset = Arrays.copyOf(endOfListOffset, (endOfListOffset.length * 3) / 2);
     }
-    // The first list element is the beginning of the payload. It's end is the end of this item.
+    // The first list element is the beginning of the payload. Its end is the end of this item.
     final long listStart = currentPayloadOffset;
     final long listEnd = nextItem();
 
@@ -474,6 +498,12 @@ abstract class AbstractRLPInput implements RLPInput {
       throw corrupted(
           "Invalid RLP item: list payload should end at offset %d but input has only %d bytes",
           listEnd, size);
+    }
+
+    if (depth > 1 && (listEnd > endOfListOffset[depth - 2])) {
+      throw corrupted(
+          "Invalid RLP item: list ends outside of enclosing list (inner: %d, outer: %d)",
+          listEnd, endOfListOffset[depth - 2]);
     }
 
     endOfListOffset[depth - 1] = listEnd;

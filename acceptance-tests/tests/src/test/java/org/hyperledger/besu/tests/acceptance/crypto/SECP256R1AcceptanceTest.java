@@ -32,8 +32,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurati
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SECP256R1AcceptanceTest extends AcceptanceTestBase {
   private Node minerNode;
@@ -49,7 +49,7 @@ public class SECP256R1AcceptanceTest extends AcceptanceTestBase {
 
   private static final SECP256R1 SECP256R1_SIGNATURE_ALGORITHM = new SECP256R1();
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     KeyPair minerNodeKeyPair = createKeyPair(MINER_NODE_PRIVATE_KEY);
     KeyPair otherNodeKeyPair = createKeyPair(OTHER_NODE_PRIVATE_KEY);

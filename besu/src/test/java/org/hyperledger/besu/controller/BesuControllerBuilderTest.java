@@ -15,7 +15,6 @@
 package org.hyperledger.besu.controller;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -45,6 +44,7 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
+import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
@@ -54,6 +54,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
@@ -83,17 +84,19 @@ public class BesuControllerBuilderTest {
   @Mock CheckpointConfigOptions checkpointConfigOptions;
   @Mock SynchronizerConfiguration synchronizerConfiguration;
   @Mock EthProtocolConfiguration ethProtocolConfiguration;
-  @Mock MiningParameters miningParameters;
-  @Mock ObservableMetricsSystem observableMetricsSystem;
   @Mock PrivacyParameters privacyParameters;
   @Mock Clock clock;
-  @Mock TransactionPoolConfiguration poolConfiguration;
   @Mock StorageProvider storageProvider;
   @Mock GasLimitCalculator gasLimitCalculator;
   @Mock WorldStateStorage worldStateStorage;
   @Mock WorldStateArchive worldStateArchive;
   @Mock BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorage;
   @Mock WorldStatePreimageStorage worldStatePreimageStorage;
+  private final TransactionPoolConfiguration poolConfiguration =
+      TransactionPoolConfiguration.DEFAULT;
+  private final MiningParameters miningParameters = MiningParameters.newDefault();
+
+  private final ObservableMetricsSystem observableMetricsSystem = new NoOpMetricsSystem();
 
   BigInteger networkId = BigInteger.ONE;
 
@@ -114,24 +117,21 @@ public class BesuControllerBuilderTest {
     when(ethashConfigOptions.getFixedDifficulty()).thenReturn(OptionalLong.empty());
     when(storageProvider.getStorageBySegmentIdentifier(any()))
         .thenReturn(new InMemoryKeyValueStorage());
-    when(storageProvider.createBlockchainStorage(any()))
+    when(storageProvider.createBlockchainStorage(any(), any()))
         .thenReturn(
             new KeyValueStoragePrefixedKeyBlockchainStorage(
-                new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions()));
+                new InMemoryKeyValueStorage(),
+                new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
+                new MainnetBlockHeaderFunctions()));
     when(synchronizerConfiguration.getDownloaderParallelism()).thenReturn(1);
     when(synchronizerConfiguration.getTransactionsParallelism()).thenReturn(1);
     when(synchronizerConfiguration.getComputationParallelism()).thenReturn(1);
 
     when(synchronizerConfiguration.getBlockPropagationRange()).thenReturn(Range.closed(1L, 2L));
 
-    when(observableMetricsSystem.createLabelledCounter(
-            any(), anyString(), anyString(), anyString()))
-        .thenReturn(labels -> null);
-
     when(storageProvider.createWorldStateStorage(DataStorageFormat.FOREST))
         .thenReturn(worldStateStorage);
     when(storageProvider.createWorldStatePreimageStorage()).thenReturn(worldStatePreimageStorage);
-    when(storageProvider.isWorldStateIterable()).thenReturn(true);
 
     when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
     when(worldStatePreimageStorage.updater())

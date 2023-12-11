@@ -18,8 +18,8 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
-import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
+import org.hyperledger.besu.evm.internal.OverflowException;
+import org.hyperledger.besu.evm.internal.UnderflowException;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -33,7 +33,7 @@ public class TLoadOperation extends AbstractOperation {
    * @param gasCalculator gas calculator for costing
    */
   public TLoadOperation(final GasCalculator gasCalculator) {
-    super(0xb3, "TLOAD", 1, 1, gasCalculator);
+    super(0x5C, "TLOAD", 1, 1, gasCalculator);
   }
 
   @Override

@@ -14,25 +14,25 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INTERNAL_ERROR;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.util.DomainObjectDecodeUtils;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Optional;
@@ -67,7 +67,7 @@ public class TraceRawTransaction extends AbstractTraceByBlock implements JsonRpc
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     if (requestContext.getRequest().getParamLength() != 2) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     }
 
     final var rawTransaction = requestContext.getRequiredParameter(0, String.class);
@@ -85,40 +85,43 @@ public class TraceRawTransaction extends AbstractTraceByBlock implements JsonRpc
       LOG.trace("rawTx decoded to transaction {}", transaction);
     } catch (final RLPException | IllegalArgumentException e) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     }
 
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
     final DebugOperationTracer tracer = new DebugOperationTracer(buildTraceOptions(traceTypes));
-    final long headBlockNumber = blockchainQueriesSupplier.get().headBlockNumber();
-    final Optional<TransactionSimulatorResult> maybeSimulatorResult =
-        transactionSimulator.process(
+    final BlockHeader headBlock = blockchainQueriesSupplier.get().headBlockHeader();
+    return transactionSimulator
+        .process(
             CallParameter.fromTransaction(transaction),
             buildTransactionValidationParams(),
             tracer,
-            headBlockNumber);
+            (mutableWorldState, transactionSimulatorResult) ->
+                transactionSimulatorResult.map(
+                    result -> {
+                      final TransactionTrace transactionTrace =
+                          new TransactionTrace(
+                              result.getTransaction(), result.getResult(), tracer.getTraceFrames());
+                      final Optional<Block> maybeBlock =
+                          blockchainQueriesSupplier
+                              .get()
+                              .getBlockchain()
+                              .getBlockByNumber(headBlock.getNumber());
 
-    if (maybeSimulatorResult.isEmpty()) {
-      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
-    }
+                      if (maybeBlock.isEmpty()) {
+                        return new JsonRpcErrorResponse(
+                            requestContext.getRequest().getId(), INTERNAL_ERROR);
+                      }
 
-    final TransactionTrace transactionTrace =
-        new TransactionTrace(
-            maybeSimulatorResult.get().getTransaction(),
-            maybeSimulatorResult.get().getResult(),
-            tracer.getTraceFrames());
-    final Optional<Block> maybeBlock =
-        blockchainQueriesSupplier.get().getBlockchain().getBlockByNumber(headBlockNumber);
+                      final Block block = maybeBlock.get();
+                      final Object response =
+                          getTraceCallResult(
+                              protocolSchedule, traceTypes, result, transactionTrace, block);
 
-    if (maybeBlock.isEmpty()) {
-      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
-    }
-
-    final Block block = maybeBlock.get();
-    final Object response =
-        getTraceCallResult(
-            protocolSchedule, traceTypes, maybeSimulatorResult, transactionTrace, block);
-
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
+                      return new JsonRpcSuccessResponse(
+                          requestContext.getRequest().getId(), response);
+                    }),
+            headBlock)
+        .orElse(new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
   }
 }

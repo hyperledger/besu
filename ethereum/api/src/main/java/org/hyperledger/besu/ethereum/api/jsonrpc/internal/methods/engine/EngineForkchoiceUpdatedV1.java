@@ -17,8 +17,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+
+import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
@@ -34,6 +38,12 @@ public class EngineForkchoiceUpdatedV1 extends AbstractEngineForkchoiceUpdated {
   }
 
   @Override
+  protected Optional<JsonRpcErrorResponse> isPayloadAttributesValid(
+      final Object requestId, final EnginePayloadAttributesParameter payloadAttributes) {
+    return Optional.empty();
+  }
+
+  @Override
   public String getName() {
     return RpcMethod.ENGINE_FORKCHOICE_UPDATED_V1.getMethodName();
   }
@@ -44,7 +54,7 @@ public class EngineForkchoiceUpdatedV1 extends AbstractEngineForkchoiceUpdated {
   }
 
   @Override
-  protected JsonRpcError getInvalidPayloadError() {
-    return JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES;
+  protected RpcErrorType getInvalidPayloadError() {
+    return RpcErrorType.INVALID_PAYLOAD_ATTRIBUTES;
   }
 }

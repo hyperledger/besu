@@ -14,11 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
+import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.canRetryOnError;
+import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.errorCountAtThreshold;
+import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.getRetryableErrorCounter;
+
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.services.pipeline.Pipe;
 import org.hyperledger.besu.services.tasks.Task;
@@ -27,21 +32,28 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LoadLocalDataStep {
 
+  private static final Logger LOG = LoggerFactory.getLogger(LoadLocalDataStep.class);
   private final WorldStateStorage worldStateStorage;
   private final SnapWorldDownloadState downloadState;
-  private final SnapSyncState snapSyncState;
+  private final SnapSyncProcessState snapSyncState;
+
+  private final SnapSyncConfiguration snapSyncConfiguration;
   private final Counter existingNodeCounter;
 
   public LoadLocalDataStep(
       final WorldStateStorage worldStateStorage,
       final SnapWorldDownloadState downloadState,
+      final SnapSyncConfiguration snapSyncConfiguration,
       final MetricsSystem metricsSystem,
-      final SnapSyncState snapSyncState) {
+      final SnapSyncProcessState snapSyncState) {
     this.worldStateStorage = worldStateStorage;
     this.downloadState = downloadState;
+    this.snapSyncConfiguration = snapSyncConfiguration;
     existingNodeCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.SYNCHRONIZER,
@@ -52,20 +64,37 @@ public class LoadLocalDataStep {
 
   public Stream<Task<SnapDataRequest>> loadLocalDataTrieNode(
       final Task<SnapDataRequest> task, final Pipe<Task<SnapDataRequest>> completedTasks) {
-    final TrieNodeDataRequest request = (TrieNodeDataRequest) task.getData();
+    final TrieNodeHealingRequest request = (TrieNodeHealingRequest) task.getData();
     // check if node is already stored in the worldstate
-    if (snapSyncState.hasPivotBlockHeader()) {
-      Optional<Bytes> existingData = request.getExistingData(worldStateStorage);
-      if (existingData.isPresent()) {
-        existingNodeCounter.inc();
-        request.setData(existingData.get());
-        request.setRequiresPersisting(false);
-        final WorldStateStorage.Updater updater = worldStateStorage.updater();
-        request.persist(worldStateStorage, updater, downloadState, snapSyncState);
-        updater.commit();
-        downloadState.enqueueRequests(request.getRootStorageRequests(worldStateStorage));
-        completedTasks.put(task);
-        return Stream.empty();
+    try {
+      if (snapSyncState.hasPivotBlockHeader()) {
+        Optional<Bytes> existingData = request.getExistingData(downloadState, worldStateStorage);
+        if (existingData.isPresent()) {
+          existingNodeCounter.inc();
+          request.setData(existingData.get());
+          request.setRequiresPersisting(false);
+          final WorldStateStorage.Updater updater = worldStateStorage.updater();
+          request.persist(
+              worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration);
+          updater.commit();
+          downloadState.enqueueRequests(request.getRootStorageRequests(worldStateStorage));
+          completedTasks.put(task);
+          return Stream.empty();
+        }
+      }
+    } catch (StorageException storageException) {
+      if (canRetryOnError(storageException)) {
+        // We reset the task by setting it to null. This way, it is considered as failed by the
+        // pipeline, and it will attempt to execute it again later.
+        if (errorCountAtThreshold()) {
+          LOG.info(
+              "Encountered {} retryable RocksDB errors, latest error message {}",
+              getRetryableErrorCounter(),
+              storageException.getMessage());
+        }
+        task.getData().clear();
+      } else {
+        throw storageException;
       }
     }
     return Stream.of(task);

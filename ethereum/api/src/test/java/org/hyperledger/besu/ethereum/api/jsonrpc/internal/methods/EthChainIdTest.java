@@ -25,15 +25,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import java.math.BigInteger;
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EthChainIdTest {
 
   private EthChainId method;
   private final BigInteger CHAIN_ID = BigInteger.ONE;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     method = new EthChainId(Optional.of(CHAIN_ID));
   }

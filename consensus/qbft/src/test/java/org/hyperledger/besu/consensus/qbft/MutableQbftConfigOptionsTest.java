@@ -26,7 +26,7 @@ import org.hyperledger.besu.config.QbftConfigOptions;
 
 import java.util.Optional;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class MutableQbftConfigOptionsTest {
 

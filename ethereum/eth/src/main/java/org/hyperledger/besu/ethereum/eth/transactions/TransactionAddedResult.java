@@ -35,8 +35,6 @@ public final class TransactionAddedResult {
       new TransactionAddedResult(TransactionInvalidReason.TRANSACTION_REPLACEMENT_UNDERPRICED);
   public static final TransactionAddedResult NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER =
       new TransactionAddedResult(TransactionInvalidReason.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER);
-  public static final TransactionAddedResult LOWER_NONCE_INVALID_TRANSACTION_KNOWN =
-      new TransactionAddedResult(TransactionInvalidReason.LOWER_NONCE_INVALID_TRANSACTION_EXISTS);
 
   public static final TransactionAddedResult ADDED = new TransactionAddedResult(Status.ADDED);
   public static final TransactionAddedResult TRY_NEXT_LAYER =
@@ -46,6 +44,8 @@ public final class TransactionAddedResult {
 
   public static final TransactionAddedResult INTERNAL_ERROR =
       new TransactionAddedResult(Status.INTERNAL_ERROR);
+  public static final TransactionAddedResult DISABLED =
+      new TransactionAddedResult(TransactionInvalidReason.TX_POOL_DISABLED);
 
   private final Optional<TransactionInvalidReason> rejectReason;
 

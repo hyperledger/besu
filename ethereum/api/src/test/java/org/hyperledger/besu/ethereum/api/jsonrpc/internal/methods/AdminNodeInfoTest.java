@@ -24,10 +24,10 @@ import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
@@ -50,13 +50,16 @@ import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class AdminNodeInfoTest {
 
   @Mock private P2PNetwork p2pNetwork;
@@ -81,7 +84,7 @@ public class AdminNodeInfoTest {
               .listeningPort(30303)
               .build());
 
-  @Before
+  @BeforeEach
   public void setup() {
     when(blockHeader.getHash()).thenReturn(Hash.EMPTY);
     final ChainHead testChainHead = new ChainHead(blockHeader, Difficulty.ONE, 1L);
@@ -334,7 +337,7 @@ public class AdminNodeInfoTest {
     final JsonRpcRequestContext request = adminNodeInfo();
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.P2P_DISABLED);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.P2P_DISABLED);
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
@@ -349,7 +352,7 @@ public class AdminNodeInfoTest {
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.P2P_NETWORK_NOT_RUNNING);
+            request.getRequest().getId(), RpcErrorType.P2P_NETWORK_NOT_RUNNING);
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
@@ -374,7 +377,8 @@ public class AdminNodeInfoTest {
             .phoenix(8)
             .thanos(9)
             .magneto(10)
-            .mystique(12);
+            .mystique(11)
+            .spiral(12);
 
     final AdminNodeInfo methodClassic =
         new AdminNodeInfo(
@@ -400,7 +404,8 @@ public class AdminNodeInfoTest {
                 "phoenixBlock", 8L,
                 "thanosBlock", 9L,
                 "magnetoBlock", 10L));
-    expectedConfig.put("mystiqueBlock", 12L);
+    expectedConfig.put("mystiqueBlock", 11L);
+    expectedConfig.put("spiralBlock", 12L);
 
     final JsonRpcResponse response = methodClassic.response(request);
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);

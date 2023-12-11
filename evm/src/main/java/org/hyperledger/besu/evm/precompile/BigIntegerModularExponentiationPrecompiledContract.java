@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
 import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
@@ -24,7 +25,6 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.nativelib.arithmetic.LibArithmetic;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
@@ -43,15 +43,6 @@ public class BigIntegerModularExponentiationPrecompiledContract
 
   /** Use native Arithmetic libraries. */
   static boolean useNative;
-
-  static {
-    try {
-      useNative = LibArithmetic.ENABLED;
-    } catch (UnsatisfiedLinkError | NoClassDefFoundError ule) {
-      LOG.info("modexp native precompile not available: {}", ule.getMessage());
-      useNative = false;
-    }
-  }
 
   /** The constant BASE_OFFSET. */
   public static final int BASE_OFFSET = 96;
@@ -73,6 +64,21 @@ public class BigIntegerModularExponentiationPrecompiledContract
   /** Disable native Arithmetic libraries. */
   public static void disableNative() {
     useNative = false;
+  }
+
+  /**
+   * Attempt to enable the native library for ModExp
+   *
+   * @return true if the native library was enabled.
+   */
+  public static boolean maybeEnableNative() {
+    try {
+      useNative = LibArithmetic.ENABLED;
+    } catch (UnsatisfiedLinkError | NoClassDefFoundError ule) {
+      LOG.info("modexp native precompile not available: {}", ule.getMessage());
+      useNative = false;
+    }
+    return useNative;
   }
 
   /**
@@ -148,9 +154,9 @@ public class BigIntegerModularExponentiationPrecompiledContract
     if (x <= 64) {
       return square(x);
     } else if (x <= 1024) {
-      return (square(x) / 4) + (x * 96) - 3072;
+      return clampedAdd((square(x) / 4), clampedMultiply(x, 96)) - 3072;
     } else {
-      return (square(x) / 16) + (480 * x) - 199680;
+      return clampedAdd((square(x) / 16), clampedMultiply(480, x)) - 199680;
     }
   }
 
@@ -193,11 +199,16 @@ public class BigIntegerModularExponentiationPrecompiledContract
    * @return the big integer
    */
   public static BigInteger extractParameter(final Bytes input, final int offset, final int length) {
-    if (offset > input.size() || length == 0) {
+    if (offset >= input.size() || length == 0) {
       return BigInteger.ZERO;
+    } else if (offset + length < input.size()) {
+      return new BigInteger(1, input.slice(offset, length).toArray());
+    } else {
+      byte[] raw = new byte[length];
+      Bytes partial = input.slice(offset);
+      System.arraycopy(partial.toArray(), 0, raw, 0, partial.size());
+      return new BigInteger(1, raw);
     }
-    final byte[] raw = Arrays.copyOfRange(input.toArray(), offset, offset + length);
-    return new BigInteger(1, raw);
   }
 
   /**

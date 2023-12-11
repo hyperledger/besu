@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProcess;
@@ -46,23 +47,23 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import org.hyperledger.besu.testutil.TestClock;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
 @SuppressWarnings("unchecked")
-@RunWith(Parameterized.class)
 public class SnapWorldDownloadStateTest {
 
   private static final Bytes ROOT_NODE_DATA = Bytes.of(1, 2, 3, 4);
@@ -77,31 +78,30 @@ public class SnapWorldDownloadStateTest {
       new InMemoryTasksPriorityQueues<>();
   private final WorldStateDownloadProcess worldStateDownloadProcess =
       mock(WorldStateDownloadProcess.class);
-  private final SnapSyncState snapSyncState = mock(SnapSyncState.class);
-  private final SnapPersistedContext snapContext = mock(SnapPersistedContext.class);
+  private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
+  private final SnapSyncStatePersistenceManager snapContext =
+      mock(SnapSyncStatePersistenceManager.class);
   private final SnapsyncMetricsManager metricsManager = mock(SnapsyncMetricsManager.class);
   private final Blockchain blockchain = mock(Blockchain.class);
-  private final DynamicPivotBlockManager dynamicPivotBlockManager =
-      mock(DynamicPivotBlockManager.class);
+  private final DynamicPivotBlockSelector dynamicPivotBlockManager =
+      mock(DynamicPivotBlockSelector.class);
 
   private final TestClock clock = new TestClock();
   private SnapWorldDownloadState downloadState;
 
   private CompletableFuture<Void> future;
 
-  @Parameterized.Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][] {{DataStorageFormat.BONSAI}, {DataStorageFormat.FOREST}});
+  static class SnapWorldDownloadStateTestArguments implements ArgumentsProvider {
+    @Override
+    public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
+      return Stream.of(
+          Arguments.of(DataStorageFormat.BONSAI, true),
+          Arguments.of(DataStorageFormat.BONSAI, false),
+          Arguments.of(DataStorageFormat.FOREST, false));
+    }
   }
 
-  private final DataStorageFormat storageFormat;
-
-  public SnapWorldDownloadStateTest(final DataStorageFormat storageFormat) {
-    this.storageFormat = storageFormat;
-  }
-
-  @Before
-  public void setUp() {
+  public void setUp(final DataStorageFormat storageFormat) {
 
     when(metricsManager.getMetricsSystem()).thenReturn(new NoOpMetricsSystem());
 
@@ -123,7 +123,8 @@ public class SnapWorldDownloadStateTest {
             MIN_MILLIS_BEFORE_STALLING,
             metricsManager,
             clock);
-    final DynamicPivotBlockManager dynamicPivotBlockManager = mock(DynamicPivotBlockManager.class);
+    final DynamicPivotBlockSelector dynamicPivotBlockManager =
+        mock(DynamicPivotBlockSelector.class);
     doAnswer(
             invocation -> {
               BiConsumer<BlockHeader, Boolean> callback = invocation.getArgument(0);
@@ -132,24 +133,31 @@ public class SnapWorldDownloadStateTest {
             })
         .when(dynamicPivotBlockManager)
         .switchToNewPivotBlock(any());
-    downloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
+    downloadState.setPivotBlockSelector(dynamicPivotBlockManager);
     downloadState.setRootNodeData(ROOT_NODE_DATA);
     future = downloadState.getDownloadFuture();
     assertThat(downloadState.isDownloading()).isTrue();
   }
 
-  @Test
-  public void shouldCompleteReturnedFutureWhenNoPendingTasksRemain() {
-    when(snapSyncState.isHealInProgress()).thenReturn(true);
+  @ParameterizedTest
+  @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
+  public void shouldCompleteReturnedFutureWhenNoPendingTasksRemain(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
+    setUp(storageFormat);
+    when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
+    when(snapSyncState.isHealFlatDatabaseInProgress()).thenReturn(true);
     downloadState.checkCompletion(header);
 
     assertThat(future).isCompleted();
     assertThat(downloadState.isDownloading()).isFalse();
   }
 
-  @Test
-  public void shouldStartHealWhenNoSnapsyncPendingTasksRemain() {
-    when(snapSyncState.isHealInProgress()).thenReturn(false);
+  @ParameterizedTest
+  @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
+  public void shouldStartHealWhenNoSnapsyncPendingTasksRemain(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
+    setUp(storageFormat);
+    when(snapSyncState.isHealTrieInProgress()).thenReturn(false);
     when(snapSyncState.getPivotBlockHeader()).thenReturn(Optional.of(mock(BlockHeader.class)));
     assertThat(downloadState.pendingTrieNodeRequests.isEmpty()).isTrue();
 
@@ -158,9 +166,13 @@ public class SnapWorldDownloadStateTest {
     assertThat(downloadState.pendingTrieNodeRequests.isEmpty()).isFalse();
   }
 
-  @Test
-  public void shouldStoreRootNodeBeforeReturnedFutureCompletes() {
-    when(snapSyncState.isHealInProgress()).thenReturn(true);
+  @ParameterizedTest
+  @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
+  public void shouldStoreRootNodeBeforeReturnedFutureCompletes(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
+    setUp(storageFormat);
+    when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
+    when(snapSyncState.isHealFlatDatabaseInProgress()).thenReturn(true);
     final CompletableFuture<Void> postFutureChecks =
         future.thenAccept(
             result ->
@@ -173,9 +185,12 @@ public class SnapWorldDownloadStateTest {
     assertThat(postFutureChecks).isCompleted();
   }
 
-  @Test
-  public void shouldNotCompleteWhenThereAreAccountPendingTasks() {
-    when(snapSyncState.isHealInProgress()).thenReturn(false);
+  @ParameterizedTest
+  @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
+  public void shouldNotCompleteWhenThereAreAccountPendingTasks(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
+    setUp(storageFormat);
+    when(snapSyncState.isHealTrieInProgress()).thenReturn(false);
     downloadState.pendingAccountRequests.add(
         SnapDataRequest.createAccountDataRequest(
             Hash.EMPTY_TRIE_HASH,
@@ -190,9 +205,12 @@ public class SnapWorldDownloadStateTest {
     assertThat(downloadState.isDownloading()).isTrue();
   }
 
-  @Test
-  public void shouldNotCompleteWhenThereAreStoragePendingTasks() {
-    when(snapSyncState.isHealInProgress()).thenReturn(false);
+  @ParameterizedTest
+  @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
+  public void shouldNotCompleteWhenThereAreStoragePendingTasks(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
+    setUp(storageFormat);
+    when(snapSyncState.isHealTrieInProgress()).thenReturn(false);
     downloadState.pendingStorageRequests.add(
         SnapDataRequest.createStorageTrieNodeDataRequest(
             Hash.EMPTY_TRIE_HASH, Hash.wrap(Bytes32.random()), Hash.EMPTY_TRIE_HASH, Bytes.EMPTY));
@@ -203,7 +221,7 @@ public class SnapWorldDownloadStateTest {
     assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
 
-    downloadState.pendingBigStorageRequests.add(
+    downloadState.pendingLargeStorageRequests.add(
         SnapDataRequest.createStorageTrieNodeDataRequest(
             Hash.EMPTY_TRIE_HASH, Hash.wrap(Bytes32.random()), Hash.EMPTY_TRIE_HASH, Bytes.EMPTY));
 
@@ -214,9 +232,12 @@ public class SnapWorldDownloadStateTest {
     assertThat(downloadState.isDownloading()).isTrue();
   }
 
-  @Test
-  public void shouldNotCompleteWhenThereAreTriePendingTasks() {
-    when(snapSyncState.isHealInProgress()).thenReturn(true);
+  @ParameterizedTest
+  @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
+  public void shouldNotCompleteWhenThereAreTriePendingTasks(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
+    setUp(storageFormat);
+    when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
     downloadState.pendingTrieNodeRequests.add(
         SnapDataRequest.createAccountTrieNodeDataRequest(
             Hash.wrap(Bytes32.random()), Bytes.EMPTY, new HashSet<>()));
@@ -228,8 +249,29 @@ public class SnapWorldDownloadStateTest {
     assertThat(downloadState.isDownloading()).isTrue();
   }
 
-  @Test
-  public void shouldCancelOutstandingTasksWhenFutureIsCancelled() {
+  @ParameterizedTest
+  @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
+  public void shouldNotCompleteWhenThereAreFlatDBHealingPendingTasks(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
+    setUp(storageFormat);
+    when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
+    when(snapSyncState.isHealFlatDatabaseInProgress()).thenReturn(true);
+    downloadState.pendingAccountFlatDatabaseHealingRequests.add(
+        SnapDataRequest.createAccountFlatHealingRangeRequest(
+            Hash.wrap(Bytes32.random()), Bytes32.ZERO, Bytes32.ZERO));
+
+    downloadState.checkCompletion(header);
+
+    assertThat(future).isNotDone();
+    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
+    assertThat(downloadState.isDownloading()).isTrue();
+  }
+
+  @ParameterizedTest
+  @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
+  public void shouldCancelOutstandingTasksWhenFutureIsCancelled(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
+    setUp(storageFormat);
     final EthTask<?> outstandingTask1 = mock(EthTask.class);
     final EthTask<?> outstandingTask2 = mock(EthTask.class);
     downloadState.addOutstandingTask(outstandingTask1);
@@ -257,14 +299,17 @@ public class SnapWorldDownloadStateTest {
     assertThat(downloadState.isDownloading()).isFalse();
   }
 
-  @Test
-  public void shouldRestartHealWhenNewPivotBlock() {
+  @ParameterizedTest
+  @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
+  public void shouldRestartHealWhenNewPivotBlock(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
+    setUp(storageFormat);
     when(snapSyncState.getPivotBlockHeader()).thenReturn(Optional.of(mock(BlockHeader.class)));
-    when(snapSyncState.isHealInProgress()).thenReturn(false);
+    when(snapSyncState.isHealTrieInProgress()).thenReturn(false);
     assertThat(downloadState.pendingTrieNodeRequests.isEmpty()).isTrue();
     // start heal
     downloadState.checkCompletion(header);
-    verify(snapSyncState).setHealStatus(true);
+    verify(snapSyncState).setHealTrieStatus(true);
     assertThat(downloadState.pendingTrieNodeRequests.isEmpty()).isFalse();
     // add useless requests
     downloadState.pendingTrieNodeRequests.add(
@@ -272,18 +317,20 @@ public class SnapWorldDownloadStateTest {
     downloadState.pendingCodeRequests.add(
         BytecodeRequest.createBytecodeRequest(Bytes32.ZERO, Hash.EMPTY, Bytes32.ZERO));
     // reload the heal
-    downloadState.reloadHeal();
-    verify(snapSyncState).setHealStatus(false);
+    downloadState.reloadTrieHeal();
+    verify(snapSyncState).setHealTrieStatus(false);
     assertThat(downloadState.pendingTrieNodeRequests.size()).isEqualTo(1);
     assertThat(downloadState.pendingCodeRequests.isEmpty()).isTrue();
   }
 
-  @Test
-  public void shouldWaitingBlockchainWhenTooBehind() {
-    when(snapSyncState.isHealInProgress()).thenReturn(true);
+  @ParameterizedTest
+  @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
+  public void shouldListeningBlockchainDuringHeal(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
+    setUp(storageFormat);
+    when(snapSyncState.isHealTrieInProgress()).thenReturn(false);
 
-    downloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
-    when(dynamicPivotBlockManager.isBlockchainBehind()).thenReturn(true);
+    downloadState.setPivotBlockSelector(dynamicPivotBlockManager);
 
     downloadState.checkCompletion(header);
 
@@ -291,19 +338,22 @@ public class SnapWorldDownloadStateTest {
 
     // should register only one time
     verify(blockchain, times(1)).observeBlockAdded(any());
-    verify(snapSyncState, atLeastOnce()).setWaitingBlockchain(true);
+    verify(snapSyncState, atLeastOnce()).setHealTrieStatus(true);
 
     assertThat(future).isNotDone();
     assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
 
-  @Test
-  public void shouldStopWaitingBlockchainWhenNewPivotBlockAvailable() {
+  @ParameterizedTest
+  @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
+  public void shouldStopWaitingBlockchainWhenNewPivotBlockAvailable(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
+    setUp(storageFormat);
 
-    when(snapSyncState.isHealInProgress()).thenReturn(true);
+    when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
 
-    downloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
+    downloadState.setPivotBlockSelector(dynamicPivotBlockManager);
     when(dynamicPivotBlockManager.isBlockchainBehind()).thenReturn(true);
 
     downloadState.checkCompletion(header);
@@ -323,7 +373,14 @@ public class SnapWorldDownloadStateTest {
         .when(dynamicPivotBlockManager)
         .check(any());
 
-    final BlockAddedObserver blockAddedListener = downloadState.getBlockAddedListener();
+    final Block newBlock =
+        new Block(
+            new BlockHeaderTestFixture().number(500).buildHeader(),
+            new BlockBody(emptyList(), emptyList()));
+
+    when(snapSyncState.getPivotBlockHeader()).thenReturn(Optional.of(newBlock.getHeader()));
+
+    final BlockAddedObserver blockAddedListener = downloadState.createBlockchainObserver();
     blockAddedListener.onBlockAdded(
         BlockAddedEvent.createForHeadAdvancement(
             new Block(
@@ -332,15 +389,21 @@ public class SnapWorldDownloadStateTest {
             Collections.emptyList(),
             Collections.emptyList()));
 
+    // reload heal
     verify(snapSyncState).setWaitingBlockchain(false);
+    verify(snapSyncState).setHealTrieStatus(false);
   }
 
-  @Test
-  public void shouldStopWaitingBlockchainWhenCloseToTheHead() {
+  @ParameterizedTest
+  @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
+  public void shouldStopWaitingBlockchainWhenCloseToTheHead(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
+    setUp(storageFormat);
 
-    when(snapSyncState.isHealInProgress()).thenReturn(true);
+    when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
 
-    downloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
+    downloadState.setPivotBlockSelector(dynamicPivotBlockManager);
+
     when(dynamicPivotBlockManager.isBlockchainBehind()).thenReturn(true);
 
     downloadState.checkCompletion(header);
@@ -348,16 +411,52 @@ public class SnapWorldDownloadStateTest {
     verify(snapSyncState).setWaitingBlockchain(true);
     when(snapSyncState.isWaitingBlockchain()).thenReturn(true);
 
+    final Block newBlock =
+        new Block(
+            new BlockHeaderTestFixture().number(500).buildHeader(),
+            new BlockBody(emptyList(), emptyList()));
+
     when(dynamicPivotBlockManager.isBlockchainBehind()).thenReturn(false);
-    final BlockAddedObserver blockAddedListener = downloadState.getBlockAddedListener();
+    when(snapSyncState.getPivotBlockHeader()).thenReturn(Optional.of(newBlock.getHeader()));
+
+    final BlockAddedObserver blockAddedListener = downloadState.createBlockchainObserver();
     blockAddedListener.onBlockAdded(
         BlockAddedEvent.createForHeadAdvancement(
-            new Block(
-                new BlockHeaderTestFixture().number(500).buildHeader(),
-                new BlockBody(emptyList(), emptyList())),
-            Collections.emptyList(),
-            Collections.emptyList()));
+            newBlock, Collections.emptyList(), Collections.emptyList()));
 
     verify(snapSyncState).setWaitingBlockchain(false);
+    verify(snapSyncState).setHealTrieStatus(false);
+  }
+
+  @ParameterizedTest
+  @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
+  public void shouldCompleteReturnedFutureWhenNoPendingTasksRemainAndFlatDBHealNotNeeded(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
+    setUp(storageFormat);
+    Assumptions.assumeTrue(
+        storageFormat == DataStorageFormat.FOREST
+            || (storageFormat == DataStorageFormat.BONSAI && !isFlatDbHealingEnabled));
+    when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
+    downloadState.checkCompletion(header);
+
+    assertThat(future).isCompleted();
+    assertThat(downloadState.isDownloading()).isFalse();
+  }
+
+  @ParameterizedTest
+  @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
+  public void shouldNotCompleteReturnedFutureWhenNoPendingTasksRemainAndFlatDBHealNeeded(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
+    setUp(storageFormat);
+    Assumptions.assumeTrue(storageFormat == DataStorageFormat.BONSAI);
+    Assumptions.assumeTrue(isFlatDbHealingEnabled);
+    ((BonsaiWorldStateKeyValueStorage) worldStateStorage).upgradeToFullFlatDbMode();
+    when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
+    downloadState.checkCompletion(header);
+
+    assertThat(future).isNotDone();
+    verify(snapSyncState).setHealFlatDatabaseInProgress(true);
+    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
+    assertThat(downloadState.isDownloading()).isTrue();
   }
 }

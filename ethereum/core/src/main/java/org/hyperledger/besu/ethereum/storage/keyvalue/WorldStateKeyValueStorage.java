@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.storage.keyvalue;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -44,17 +46,17 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
+  public DataStorageFormat getDataStorageFormat() {
+    return DataStorageFormat.FOREST;
+  }
+
+  @Override
   public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
       return keyValueStorage.get(codeHash.toArrayUnsafe()).map(Bytes::wrap);
     }
-  }
-
-  @Override
-  public Optional<Bytes> getAccountTrieNodeData(final Bytes location, final Bytes32 hash) {
-    return getAccountStateTrieNode(null, hash);
   }
 
   @Override
@@ -74,6 +76,16 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
     } else {
       return keyValueStorage.get(nodeHash.toArrayUnsafe()).map(Bytes::wrap);
     }
+  }
+
+  @Override
+  public Optional<Bytes> getTrieNodeUnsafe(final Bytes key) {
+    return keyValueStorage.get(key.toArrayUnsafe()).map(Bytes::wrap);
+  }
+
+  @Override
+  public FlatDbMode getFlatDbMode() {
+    return FlatDbMode.NO_FLATTENED;
   }
 
   @Override

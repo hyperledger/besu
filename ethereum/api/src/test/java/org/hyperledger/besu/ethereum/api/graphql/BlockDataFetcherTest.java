@@ -19,25 +19,36 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.EmptyAccountAdapter;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.NormalBlockAdapter;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 
 import java.util.Optional;
 
+import graphql.schema.DataFetcher;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
-public class BlockDataFetcherTest extends AbstractDataFetcherTest {
+@ExtendWith(MockitoExtension.class)
+class BlockDataFetcherTest extends AbstractDataFetcherTest {
+
+  private DataFetcher<Optional<NormalBlockAdapter>> fetcher;
+
+  @BeforeEach
+  @Override
+  public void before() {
+    super.before();
+    fetcher = fetchers.getBlockDataFetcher();
+  }
 
   @Test
-  public void bothNumberAndHashThrows() {
+  void bothNumberAndHashThrows() {
     final Hash fakedHash = Hash.hash(Bytes.of(1));
     when(environment.getArgument("number")).thenReturn(1L);
     when(environment.getArgument("hash")).thenReturn(fakedHash);
@@ -46,7 +57,7 @@ public class BlockDataFetcherTest extends AbstractDataFetcherTest {
   }
 
   @Test
-  public void onlyNumber() throws Exception {
+  void onlyNumber() throws Exception {
 
     when(environment.getArgument("number")).thenReturn(1L);
     when(environment.getArgument("hash")).thenReturn(null);
@@ -56,11 +67,11 @@ public class BlockDataFetcherTest extends AbstractDataFetcherTest {
     when(query.blockByNumber(ArgumentMatchers.anyLong()))
         .thenReturn(Optional.of(new BlockWithMetadata<>(null, null, null, null, 0)));
 
-    fetcher.get(environment);
+    assertThat(fetcher.get(environment)).isNotEmpty();
   }
 
   @Test
-  public void ibftMiner() throws Exception {
+  void ibftMiner() throws Exception {
     // IBFT can mine blocks with a coinbase that is an empty account, hence not stored and returned
     // as null. The compromise is to report zeros and empty on query from a block.
     final Address testAddress = Address.fromHexString("0xdeadbeef");
@@ -77,9 +88,29 @@ public class BlockDataFetcherTest extends AbstractDataFetcherTest {
     final Optional<NormalBlockAdapter> maybeBlock = fetcher.get(environment);
     assertThat(maybeBlock).isPresent();
     assertThat(maybeBlock.get().getMiner(environment)).isNotNull();
-    assertThat(((EmptyAccountAdapter) maybeBlock.get().getMiner(environment)).getBalance())
+    assertThat(maybeBlock.get().getMiner(environment).getBalance())
         .isGreaterThanOrEqualTo(Wei.ZERO);
-    assertThat(((EmptyAccountAdapter) maybeBlock.get().getMiner(environment)).getAddress())
-        .isEqualTo(testAddress);
+    assertThat(maybeBlock.get().getMiner(environment).getAddress()).isEqualTo(testAddress);
+  }
+
+  @Test
+  void blobData() throws Exception {
+    final long blobGasUsed = 0xb10b6a5;
+    final long excessBlobGas = 0xce556a5;
+
+    when(environment.getGraphQlContext()).thenReturn(graphQLContext);
+    when(environment.getArgument("number")).thenReturn(1L);
+    when(environment.getArgument("hash")).thenReturn(null);
+
+    when(graphQLContext.get(GraphQLContextType.BLOCKCHAIN_QUERIES)).thenReturn(query);
+    when(query.blockByNumber(ArgumentMatchers.anyLong()))
+        .thenReturn(Optional.of(new BlockWithMetadata<>(header, null, null, null, 0)));
+    when(header.getBlobGasUsed()).thenReturn(Optional.of(blobGasUsed));
+    when(header.getExcessBlobGas()).thenReturn(Optional.of(BlobGas.of(excessBlobGas)));
+
+    final Optional<NormalBlockAdapter> maybeBlock = fetcher.get(environment);
+    assertThat(maybeBlock).isPresent();
+    assertThat(maybeBlock.get().getBlobGasUsed()).contains(blobGasUsed);
+    assertThat(maybeBlock.get().getExcessBlobGas()).contains(excessBlobGas);
   }
 }

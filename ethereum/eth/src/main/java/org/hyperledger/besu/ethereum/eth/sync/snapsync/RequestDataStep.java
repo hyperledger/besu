@@ -27,16 +27,19 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataR
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataRequest;
-import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountFlatDatabaseHealingRangeRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageFlatDatabaseHealingRangeRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.Task;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -47,8 +50,10 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class RequestDataStep {
 
-  private final SnapSyncState fastSyncState;
-  private final WorldDownloadState<SnapDataRequest> downloadState;
+  private final WorldStateStorage worldStateStorage;
+  private final SnapSyncProcessState fastSyncState;
+  private final SnapWorldDownloadState downloadState;
+  private final SnapSyncConfiguration snapSyncConfiguration;
   private final MetricsSystem metricsSystem;
   private final EthContext ethContext;
   private final WorldStateProofProvider worldStateProofProvider;
@@ -56,11 +61,14 @@ public class RequestDataStep {
   public RequestDataStep(
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
-      final SnapSyncState fastSyncState,
-      final WorldDownloadState<SnapDataRequest> downloadState,
+      final SnapSyncProcessState fastSyncState,
+      final SnapWorldDownloadState downloadState,
+      final SnapSyncConfiguration snapSyncConfiguration,
       final MetricsSystem metricsSystem) {
+    this.worldStateStorage = worldStateStorage;
     this.fastSyncState = fastSyncState;
     this.downloadState = downloadState;
+    this.snapSyncConfiguration = snapSyncConfiguration;
     this.metricsSystem = metricsSystem;
     this.ethContext = ethContext;
     this.worldStateProofProvider = new WorldStateProofProvider(worldStateStorage);
@@ -186,8 +194,8 @@ public class RequestDataStep {
     final Map<Bytes, List<Bytes>> message = new HashMap<>();
     requestTasks.stream()
         .map(Task::getData)
-        .map(TrieNodeDataRequest.class::cast)
-        .map(TrieNodeDataRequest::getTrieNodePath)
+        .map(TrieNodeHealingRequest.class::cast)
+        .map(TrieNodeHealingRequest::getTrieNodePath)
         .forEach(
             path -> {
               final List<Bytes> bytes =
@@ -207,7 +215,7 @@ public class RequestDataStep {
               if (response != null) {
                 downloadState.removeOutstandingTask(getTrieNodeFromPeerTask);
                 for (final Task<SnapDataRequest> task : requestTasks) {
-                  final TrieNodeDataRequest request = (TrieNodeDataRequest) task.getData();
+                  final TrieNodeHealingRequest request = (TrieNodeHealingRequest) task.getData();
                   final Bytes matchingData = response.get(request.getPathId());
                   if (matchingData != null) {
                     request.setData(matchingData);
@@ -216,5 +224,86 @@ public class RequestDataStep {
               }
               return requestTasks;
             });
+  }
+
+  /**
+   * Retrieves local accounts from the flat database and generates the necessary proof, updates the
+   * data request with the retrieved information, and returns the modified data request task.
+   *
+   * @param requestTask request data to fill
+   * @return data request with local accounts
+   */
+  public CompletableFuture<Task<SnapDataRequest>> requestLocalFlatAccounts(
+      final Task<SnapDataRequest> requestTask) {
+
+    final AccountFlatDatabaseHealingRangeRequest accountDataRequest =
+        (AccountFlatDatabaseHealingRangeRequest) requestTask.getData();
+    final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
+
+    // retrieve accounts from flat database
+    final TreeMap<Bytes32, Bytes> accounts =
+        (TreeMap<Bytes32, Bytes>)
+            worldStateStorage.streamFlatAccounts(
+                accountDataRequest.getStartKeyHash(),
+                accountDataRequest.getEndKeyHash(),
+                snapSyncConfiguration.getLocalFlatAccountCountToHealPerRequest());
+    final List<Bytes> proofs = new ArrayList<>();
+    if (!accounts.isEmpty()) {
+      // generate range proof if accounts are present
+      proofs.addAll(
+          worldStateProofProvider.getAccountProofRelatedNodes(
+              blockHeader.getStateRoot(), accounts.firstKey()));
+      proofs.addAll(
+          worldStateProofProvider.getAccountProofRelatedNodes(
+              blockHeader.getStateRoot(), accounts.lastKey()));
+    }
+
+    accountDataRequest.setRootHash(blockHeader.getStateRoot());
+    accountDataRequest.addLocalData(worldStateProofProvider, accounts, new ArrayDeque<>(proofs));
+
+    return CompletableFuture.completedFuture(requestTask);
+  }
+
+  /**
+   * Retrieves local storage slots from the flat database and generates the necessary proof, updates
+   * the data request with the retrieved information, and returns the modified data request task.
+   *
+   * @param requestTask request data to fill
+   * @return data request with local slots
+   */
+  public CompletableFuture<Task<SnapDataRequest>> requestLocalFlatStorages(
+      final Task<SnapDataRequest> requestTask) {
+
+    final StorageFlatDatabaseHealingRangeRequest storageDataRequest =
+        (StorageFlatDatabaseHealingRangeRequest) requestTask.getData();
+    final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
+
+    storageDataRequest.setRootHash(blockHeader.getStateRoot());
+
+    // retrieve slots from flat database
+    final TreeMap<Bytes32, Bytes> slots =
+        (TreeMap<Bytes32, Bytes>)
+            worldStateStorage.streamFlatStorages(
+                storageDataRequest.getAccountHash(),
+                storageDataRequest.getStartKeyHash(),
+                storageDataRequest.getEndKeyHash(),
+                snapSyncConfiguration.getLocalFlatStorageCountToHealPerRequest());
+    final List<Bytes> proofs = new ArrayList<>();
+    if (!slots.isEmpty()) {
+      // generate range proof if slots are present
+      proofs.addAll(
+          worldStateProofProvider.getStorageProofRelatedNodes(
+              storageDataRequest.getStorageRoot(),
+              storageDataRequest.getAccountHash(),
+              slots.firstKey()));
+      proofs.addAll(
+          worldStateProofProvider.getStorageProofRelatedNodes(
+              storageDataRequest.getStorageRoot(),
+              storageDataRequest.getAccountHash(),
+              slots.lastKey()));
+    }
+    storageDataRequest.addLocalData(worldStateProofProvider, slots, new ArrayDeque<>(proofs));
+
+    return CompletableFuture.completedFuture(requestTask);
   }
 }

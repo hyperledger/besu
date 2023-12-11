@@ -82,19 +82,11 @@ public class ForkIdsNetworkConfigTest {
                 new ForkId(Bytes.ofUnsignedInt(0xf7f9bc08L), 0L))
           },
           new Object[] {
-            NetworkName.RINKEBY,
+            NetworkName.HOLESKY,
             List.of(
-                new ForkId(Bytes.ofUnsignedInt(0x3b8e0691L), 1L),
-                new ForkId(Bytes.ofUnsignedInt(0x60949295L), 2L),
-                new ForkId(Bytes.ofUnsignedInt(0x8bde40ddL), 3L),
-                new ForkId(Bytes.ofUnsignedInt(0xcb3a64bbL), 1035301L),
-                new ForkId(Bytes.ofUnsignedInt(0x8d748b57L), 3660663L),
-                new ForkId(Bytes.ofUnsignedInt(0xe49cab14L), 4321234L),
-                new ForkId(Bytes.ofUnsignedInt(0xafec6b27L), 5435345L),
-                new ForkId(Bytes.ofUnsignedInt(0xcbdb8838L), 8290928L),
-                new ForkId(Bytes.ofUnsignedInt(0x6910c8bdL), 8897988L),
-                new ForkId(Bytes.ofUnsignedInt(0x8e29f2f3L), 0L),
-                new ForkId(Bytes.ofUnsignedInt(0x8e29f2f3L), 0L))
+                new ForkId(Bytes.ofUnsignedInt(0xc61a6098L), 1696000704L),
+                new ForkId(Bytes.ofUnsignedInt(0xfd4f016bL), 0L),
+                new ForkId(Bytes.ofUnsignedInt(0xfd4f016bL), 0L))
           },
           new Object[] {
             NetworkName.GOERLI,
@@ -135,19 +127,9 @@ public class ForkIdsNetworkConfigTest {
                 new ForkId(Bytes.ofUnsignedInt(0xf42f5539L), 2520000L),
                 new ForkId(Bytes.ofUnsignedInt(0x66b5c286L), 3985893),
                 new ForkId(Bytes.ofUnsignedInt(0x92b323e0L), 5520000L),
-                new ForkId(Bytes.ofUnsignedInt(0x8c9b1797L), 0L),
-                new ForkId(Bytes.ofUnsignedInt(0x8c9b1797L), 0L))
-          },
-          new Object[] {
-            NetworkName.KOTTI,
-            List.of(
-                new ForkId(Bytes.ofUnsignedInt(0x550152eL), 716617L),
-                new ForkId(Bytes.ofUnsignedInt(0xa3270822L), 1705549L),
-                new ForkId(Bytes.ofUnsignedInt(0x8f3698e0L), 2200013L),
-                new ForkId(Bytes.ofUnsignedInt(0x6f402821L), 4368634),
-                new ForkId(Bytes.ofUnsignedInt(0xf03e54e7L), 5578000L),
-                new ForkId(Bytes.ofUnsignedInt(0xc5459816L), 0L),
-                new ForkId(Bytes.ofUnsignedInt(0xc5459816L), 0L))
+                new ForkId(Bytes.ofUnsignedInt(0x8c9b1797L), 9957000L),
+                new ForkId(Bytes.ofUnsignedInt(0x3a6b00d7L), 0L),
+                new ForkId(Bytes.ofUnsignedInt(0x3a6b00d7L), 0L))
           },
           new Object[] {
             NetworkName.CLASSIC,

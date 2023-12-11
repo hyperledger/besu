@@ -20,13 +20,12 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateUpdater;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -34,7 +33,6 @@ import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
 import java.util.Optional;
@@ -49,7 +47,7 @@ public class PrivateTransactionProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(PrivateTransactionProcessor.class);
 
   @SuppressWarnings("unused")
-  private final MainnetTransactionValidator transactionValidator;
+  private final TransactionValidatorFactory transactionValidatorFactory;
 
   private final PrivateTransactionValidator privateTransactionValidator;
 
@@ -63,13 +61,13 @@ public class PrivateTransactionProcessor {
   private final boolean clearEmptyAccounts;
 
   public PrivateTransactionProcessor(
-      final MainnetTransactionValidator transactionValidator,
+      final TransactionValidatorFactory transactionValidatorFactory,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
       final int maxStackSize,
       final PrivateTransactionValidator privateTransactionValidator) {
-    this.transactionValidator = transactionValidator;
+    this.transactionValidatorFactory = transactionValidatorFactory;
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
     this.clearEmptyAccounts = clearEmptyAccounts;
@@ -91,11 +89,11 @@ public class PrivateTransactionProcessor {
       LOG.trace("Starting private execution of {}", transaction);
 
       final Address senderAddress = transaction.getSender();
-      final EvmAccount maybePrivateSender = privateWorldState.getAccount(senderAddress);
+      final MutableAccount maybePrivateSender = privateWorldState.getAccount(senderAddress);
       final MutableAccount sender =
           maybePrivateSender != null
-              ? maybePrivateSender.getMutable()
-              : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO).getMutable();
+              ? maybePrivateSender
+              : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO);
 
       final ValidationResult<TransactionInvalidReason> validationResult =
           privateTransactionValidator.validate(transaction, sender.getNonce(), false);
@@ -112,10 +110,8 @@ public class PrivateTransactionProcessor {
 
       final WorldUpdater mutablePrivateWorldStateUpdater =
           new DefaultMutablePrivateWorldStateUpdater(publicWorldState, privateWorldState);
-      final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
       final MessageFrame.Builder commonMessageFrameBuilder =
           MessageFrame.builder()
-              .messageFrameStack(messageFrameStack)
               .maxStackSize(maxStackSize)
               .worldUpdater(mutablePrivateWorldStateUpdater)
               .initialGas(Long.MAX_VALUE)
@@ -125,7 +121,6 @@ public class PrivateTransactionProcessor {
               .value(transaction.getValue())
               .apparentValue(transaction.getValue())
               .blockValues(blockHeader)
-              .depth(0)
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
@@ -169,8 +164,7 @@ public class PrivateTransactionProcessor {
                 .build();
       }
 
-      messageFrameStack.addFirst(initialFrame);
-
+      final Deque<MessageFrame> messageFrameStack = initialFrame.getMessageFrameStack();
       while (!messageFrameStack.isEmpty()) {
         process(messageFrameStack.peekFirst(), operationTracer);
       }
@@ -211,13 +205,9 @@ public class PrivateTransactionProcessor {
   }
 
   private AbstractMessageProcessor getMessageProcessor(final MessageFrame.Type type) {
-    switch (type) {
-      case MESSAGE_CALL:
-        return messageCallProcessor;
-      case CONTRACT_CREATION:
-        return contractCreationProcessor;
-      default:
-        throw new IllegalStateException("Request for unsupported message processor type " + type);
-    }
+    return switch (type) {
+      case MESSAGE_CALL -> messageCallProcessor;
+      case CONTRACT_CREATION -> contractCreationProcessor;
+    };
   }
 }

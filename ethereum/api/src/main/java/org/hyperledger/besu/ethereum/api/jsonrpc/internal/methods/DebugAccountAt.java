@@ -23,8 +23,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableDebugAccountAtResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
@@ -79,13 +79,13 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
         blockchainQueries.get().blockByHash(blockHash);
     if (block.isEmpty()) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.BLOCK_NOT_FOUND);
+          requestContext.getRequest().getId(), RpcErrorType.BLOCK_NOT_FOUND);
     }
 
     List<TransactionWithMetadata> transactions = block.get().getTransactions();
     if (transactions.isEmpty() || txIndex < 0 || txIndex > block.get().getTransactions().size()) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     }
 
     return Tracer.processTracing(
@@ -113,7 +113,7 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
               if (transactionTrace.isEmpty()) {
                 return Optional.of(
                     new JsonRpcErrorResponse(
-                        requestContext.getRequest().getId(), JsonRpcError.TRANSACTION_NOT_FOUND));
+                        requestContext.getRequest().getId(), RpcErrorType.TRANSACTION_NOT_FOUND));
               }
 
               Optional<Account> account =
@@ -125,7 +125,7 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
               if (account.isEmpty()) {
                 return Optional.of(
                     new JsonRpcErrorResponse(
-                        requestContext.getRequest().getId(), JsonRpcError.NO_ACCOUNT_FOUND));
+                        requestContext.getRequest().getId(), RpcErrorType.NO_ACCOUNT_FOUND));
               }
 
               return Optional.of(
@@ -137,7 +137,7 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
             })
         .orElse(
             new JsonRpcErrorResponse(
-                requestContext.getRequest().getId(), JsonRpcError.WORLD_STATE_UNAVAILABLE));
+                requestContext.getRequest().getId(), RpcErrorType.WORLD_STATE_UNAVAILABLE));
   }
 
   protected ImmutableDebugAccountAtResult debugAccountAtResult(

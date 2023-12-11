@@ -28,8 +28,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Arrays;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -39,10 +40,12 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 abstract class AbstractJsonRpcTest {
-  private static final MediaType MEDIA_TYPE_JSON =
+  protected static final MediaType MEDIA_TYPE_JSON =
       MediaType.parse("application/json; charset=utf-8");
 
   static class JsonRpcTestsContext {
@@ -68,23 +71,30 @@ abstract class AbstractJsonRpcTest {
   }
 
   private final JsonRpcTestsContext testsContext;
-  private final URI testCaseFileURI;
 
-  public AbstractJsonRpcTest(
-      final String ignored, final JsonRpcTestsContext testsContext, final URI testCaseFileURI) {
-    this.testCaseFileURI = testCaseFileURI;
+  public AbstractJsonRpcTest(final JsonRpcTestsContext testsContext) {
     this.testsContext = testsContext;
   }
 
-  @Test
-  public void test() throws IOException {
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("testCases")
+  public void test(final URI testCaseFileURI) throws IOException {
     final JsonRpcTestCase testCase =
         testsContext.mapper.readValue(testCaseFileURI.toURL(), JsonRpcTestCase.class);
 
     final String rpcMethod = String.valueOf(testCase.getRequest().get("method"));
-
+    OkHttpClient client = testsContext.httpClient;
+    if (System.getenv("BESU_DEBUG_CHILD_PROCESS_PORT") != null) {
+      // if running in debug mode, set a longer timeout
+      client =
+          testsContext
+              .httpClient
+              .newBuilder()
+              .readTimeout(900, java.util.concurrent.TimeUnit.SECONDS)
+              .build();
+    }
     final Call testRequest =
-        testsContext.httpClient.newCall(
+        client.newCall(
             new Request.Builder()
                 .url(getRpcUrl(rpcMethod))
                 .post(RequestBody.create(testCase.getRequest().toString(), MEDIA_TYPE_JSON))
@@ -93,6 +103,7 @@ abstract class AbstractJsonRpcTest {
 
     assertThat(response.code()).isEqualTo(testCase.getStatusCode());
     final ObjectNode actualBody = JsonUtil.objectNodeFromString(response.body().string());
+    evaluateResponse(actualBody, testRequest, testCase, testCaseFileURI.toURL());
     final ObjectNode expectedBody =
         JsonUtil.objectNodeFromString(testCase.getResponse().toString());
     assertThat(actualBody)
@@ -101,7 +112,13 @@ abstract class AbstractJsonRpcTest {
         .isEqualTo(expectedBody);
   }
 
-  private String getRpcUrl(final String rpcMethod) {
+  protected void evaluateResponse(
+      final ObjectNode responseBody,
+      final Call testRequest,
+      final JsonRpcTestCase testCase,
+      final URL url) {}
+
+  protected String getRpcUrl(final String rpcMethod) {
     if (rpcMethod.contains("eth_") || rpcMethod.contains("engine_")) {
       return testsContext.besuNode.engineRpcUrl().get();
     }
@@ -109,14 +126,12 @@ abstract class AbstractJsonRpcTest {
     return testsContext.besuNode.jsonRpcBaseUrl().get();
   }
 
-  public static Iterable<Object[]> testCases(final String testCasesPath) throws URISyntaxException {
+  public static Stream<Arguments> testCasesFromPath(final String testCasesPath)
+      throws URISyntaxException {
 
     final File[] testCasesList =
         new File(AbstractJsonRpcTest.class.getResource(testCasesPath).toURI()).listFiles();
 
-    return Arrays.stream(testCasesList)
-        .sorted()
-        .map(file -> new Object[] {file.getName(), file.toURI()})
-        .collect(Collectors.toList());
+    return Arrays.stream(testCasesList).sorted().map(File::toURI).map(Arguments::of);
   }
 }

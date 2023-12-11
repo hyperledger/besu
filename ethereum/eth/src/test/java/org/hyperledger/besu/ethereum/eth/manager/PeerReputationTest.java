@@ -20,7 +20,8 @@ import static org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMes
 
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class PeerReputationTest {
 
@@ -28,9 +29,9 @@ public class PeerReputationTest {
   private static final int MAX_SCORE = 50;
   private final PeerReputation reputation = new PeerReputation(INITIAL_SCORE, MAX_SCORE);
 
-  @Test(expected = java.lang.IllegalArgumentException.class)
+  @Test
   public void shouldThrowOnInvalidInitialScore() {
-    new PeerReputation(2, 1);
+    Assertions.assertThrows(IllegalArgumentException.class, () -> new PeerReputation(2, 1));
   }
 
   @Test

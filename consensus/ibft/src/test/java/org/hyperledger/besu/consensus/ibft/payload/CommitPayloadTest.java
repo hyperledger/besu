@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class CommitPayloadTest {
   private static final ConsensusRoundIdentifier ROUND_IDENTIFIER =

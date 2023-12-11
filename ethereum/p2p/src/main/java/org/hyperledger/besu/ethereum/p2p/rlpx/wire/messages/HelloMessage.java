@@ -55,9 +55,4 @@ public final class HelloMessage extends AbstractMessageData {
   public PeerInfo getPeerInfo() {
     return PeerInfo.readFrom(RLP.input(data));
   }
-
-  @Override
-  public String toString() {
-    return "HelloMessage{" + "data=" + data + '}';
-  }
 }

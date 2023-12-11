@@ -20,9 +20,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -94,7 +94,7 @@ public abstract class AbstractJsonRpcExecutor {
   }
 
   protected static void handleJsonRpcError(
-      final RoutingContext routingContext, final Object id, final JsonRpcError error) {
+      final RoutingContext routingContext, final Object id, final RpcErrorType error) {
     final HttpServerResponse response = routingContext.response();
     if (!response.closed()) {
       response
@@ -103,7 +103,7 @@ public abstract class AbstractJsonRpcExecutor {
     }
   }
 
-  private static HttpResponseStatus statusCodeFromError(final JsonRpcError error) {
+  private static HttpResponseStatus statusCodeFromError(final RpcErrorType error) {
     return switch (error) {
       case INVALID_REQUEST, PARSE_ERROR -> HttpResponseStatus.BAD_REQUEST;
       default -> HttpResponseStatus.OK;

@@ -38,17 +38,17 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
-@RunWith(Parameterized.class)
 public class FullSyncTargetManagerTest {
 
   private EthProtocolManager ethProtocolManager;
@@ -58,19 +58,15 @@ public class FullSyncTargetManagerTest {
   private RespondingEthPeer.Responder responder;
   private FullSyncTargetManager syncTargetManager;
 
-  @Parameterized.Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][] {{DataStorageFormat.BONSAI}, {DataStorageFormat.FOREST}});
+  static class FullSyncTargetManagerTestArguments implements ArgumentsProvider {
+    @Override
+    public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
+      return Stream.of(
+          Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
+    }
   }
 
-  private final DataStorageFormat storageFormat;
-
-  public FullSyncTargetManagerTest(final DataStorageFormat storageFormat) {
-    this.storageFormat = storageFormat;
-  }
-
-  @Before
-  public void setup() {
+  public void setup(final DataStorageFormat storageFormat) {
     final BlockchainSetupUtil otherBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
     final Blockchain otherBlockchain = otherBlockchainSetup.getBlockchain();
     responder = RespondingEthPeer.blockchainResponder(otherBlockchain);
@@ -80,7 +76,7 @@ public class FullSyncTargetManagerTest {
 
     final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
     final ProtocolContext protocolContext =
-        new ProtocolContext(localBlockchain, localWorldState, null);
+        new ProtocolContext(localBlockchain, localWorldState, null, Optional.empty());
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             protocolSchedule,
@@ -102,13 +98,15 @@ public class FullSyncTargetManagerTest {
             SyncTerminationCondition.never());
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     ethProtocolManager.stop();
   }
 
-  @Test
-  public void findSyncTarget_withHeightEstimates() {
+  @ParameterizedTest
+  @ArgumentsSource(FullSyncTargetManagerTest.FullSyncTargetManagerTestArguments.class)
+  public void findSyncTarget_withHeightEstimates(final DataStorageFormat storageFormat) {
+    setup(storageFormat);
     final BlockHeader chainHeadHeader = localBlockchain.getChainHeadHeader();
     when(localWorldState.isWorldStateAvailable(
             chainHeadHeader.getStateRoot(), chainHeadHeader.getHash()))
@@ -124,8 +122,10 @@ public class FullSyncTargetManagerTest {
             new SyncTarget(bestPeer.getEthPeer(), localBlockchain.getBlockHeader(4L).get()));
   }
 
-  @Test
-  public void findSyncTarget_noHeightEstimates() {
+  @ParameterizedTest
+  @ArgumentsSource(FullSyncTargetManagerTest.FullSyncTargetManagerTestArguments.class)
+  public void findSyncTarget_noHeightEstimates(final DataStorageFormat storageFormat) {
+    setup(storageFormat);
     final BlockHeader chainHeadHeader = localBlockchain.getChainHeadHeader();
     when(localWorldState.isWorldStateAvailable(
             chainHeadHeader.getStateRoot(), chainHeadHeader.getHash()))
@@ -139,8 +139,11 @@ public class FullSyncTargetManagerTest {
     assertThat(result).isNotCompleted();
   }
 
-  @Test
-  public void shouldDisconnectPeerIfWorldStateIsUnavailableForCommonAncestor() {
+  @ParameterizedTest
+  @ArgumentsSource(FullSyncTargetManagerTest.FullSyncTargetManagerTestArguments.class)
+  public void shouldDisconnectPeerIfWorldStateIsUnavailableForCommonAncestor(
+      final DataStorageFormat storageFormat) {
+    setup(storageFormat);
     final BlockHeader chainHeadHeader = localBlockchain.getChainHeadHeader();
     when(localWorldState.isWorldStateAvailable(
             chainHeadHeader.getStateRoot(), chainHeadHeader.getHash()))
@@ -156,8 +159,11 @@ public class FullSyncTargetManagerTest {
     assertThat(bestPeer.getPeerConnection().isDisconnected()).isTrue();
   }
 
-  @Test
-  public void shouldAllowSyncTargetWhenIfWorldStateIsAvailableForCommonAncestor() {
+  @ParameterizedTest
+  @ArgumentsSource(FullSyncTargetManagerTest.FullSyncTargetManagerTestArguments.class)
+  public void shouldAllowSyncTargetWhenIfWorldStateIsAvailableForCommonAncestor(
+      final DataStorageFormat storageFormat) {
+    setup(storageFormat);
     final BlockHeader chainHeadHeader = localBlockchain.getChainHeadHeader();
     when(localWorldState.isWorldStateAvailable(
             chainHeadHeader.getStateRoot(), chainHeadHeader.getHash()))

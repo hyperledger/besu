@@ -31,6 +31,7 @@ import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -49,17 +50,17 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
 public class GraphQLHttpServiceTest {
 
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+  // this tempDir is deliberately static
+  @TempDir private static Path folder;
 
   private static final Vertx vertx = Vertx.vertx();
 
@@ -75,7 +76,7 @@ public class GraphQLHttpServiceTest {
 
   private final GraphQLTestHelper testHelper = new GraphQLTestHelper();
 
-  @BeforeClass
+  @BeforeAll
   public static void initServerAndClient() throws Exception {
     blockchainQueries = Mockito.mock(BlockchainQueries.class);
     final Synchronizer synchronizer = Mockito.mock(Synchronizer.class);
@@ -109,18 +110,13 @@ public class GraphQLHttpServiceTest {
   private static GraphQLHttpService createGraphQLHttpService(final GraphQLConfiguration config)
       throws Exception {
     return new GraphQLHttpService(
-        vertx,
-        folder.newFolder().toPath(),
-        config,
-        graphQL,
-        graphQlContextMap,
-        Mockito.mock(EthScheduler.class));
+        vertx, folder, config, graphQL, graphQlContextMap, Mockito.mock(EthScheduler.class));
   }
 
   private static GraphQLHttpService createGraphQLHttpService() throws Exception {
     return new GraphQLHttpService(
         vertx,
-        folder.newFolder().toPath(),
+        folder,
         createGraphQLConfig(),
         graphQL,
         graphQlContextMap,
@@ -133,7 +129,7 @@ public class GraphQLHttpServiceTest {
     return config;
   }
 
-  @BeforeClass
+  @BeforeAll
   public static void setupConstants() {
     final URL blocksUrl = BlockTestUtil.getTestBlockchainUrl();
 
@@ -144,7 +140,7 @@ public class GraphQLHttpServiceTest {
   }
 
   /** Tears down the HTTP server. */
-  @AfterClass
+  @AfterAll
   public static void shutdownServer() {
     client.dispatcher().executorService().shutdown();
     client.connectionPool().evictAll();

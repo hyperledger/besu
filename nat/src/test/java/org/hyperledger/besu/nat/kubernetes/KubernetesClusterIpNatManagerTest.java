@@ -33,13 +33,13 @@ import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Service;
 import io.kubernetes.client.openapi.models.V1ServicePort;
 import io.kubernetes.client.openapi.models.V1ServiceSpec;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public final class KubernetesClusterIpNatManagerTest {
 
   private final String detectedAdvertisedHost = "199.45.69.12";
@@ -51,7 +51,7 @@ public final class KubernetesClusterIpNatManagerTest {
 
   private KubernetesNatManager natManager;
 
-  @Before
+  @BeforeEach
   public void initialize() throws IOException {
 
     when(v1Service.getSpec())

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -23,12 +24,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.RpcModules;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
@@ -61,6 +64,7 @@ public class JsonRpcMethodsFactory {
       final ProtocolContext protocolContext,
       final FilterManager filterManager,
       final TransactionPool transactionPool,
+      final MiningParameters miningParameters,
       final MiningCoordinator miningCoordinator,
       final ObservableMetricsSystem metricsSystem,
       final Set<Capability> supportedCapabilities,
@@ -76,13 +80,12 @@ public class JsonRpcMethodsFactory {
       final Path dataDir,
       final EthPeers ethPeers,
       final Vertx consensusEngineServer,
-      final Optional<Long> maxLogRange) {
+      final ApiConfiguration apiConfiguration,
+      final Optional<EnodeDnsConfiguration> enodeDnsConfiguration) {
     final Map<String, JsonRpcMethod> enabled = new HashMap<>();
-
     if (!rpcApis.isEmpty()) {
       final JsonRpcMethod modules = new RpcModules(rpcApis);
       enabled.put(modules.getName(), modules);
-
       final List<JsonRpcMethods> availableApiGroups =
           List.of(
               new AdminJsonRpcMethods(
@@ -93,7 +96,8 @@ public class JsonRpcMethodsFactory {
                   blockchainQueries,
                   namedPlugins,
                   natService,
-                  ethPeers),
+                  ethPeers,
+                  enodeDnsConfiguration),
               new DebugJsonRpcMethods(
                   blockchainQueries,
                   protocolContext,
@@ -101,7 +105,8 @@ public class JsonRpcMethodsFactory {
                   metricsSystem,
                   transactionPool,
                   synchronizer,
-                  dataDir),
+                  dataDir,
+                  apiConfiguration),
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new ExecutionEngineJsonRpcMethods(
@@ -118,14 +123,14 @@ public class JsonRpcMethodsFactory {
                   transactionPool,
                   miningCoordinator,
                   supportedCapabilities,
-                  maxLogRange),
+                  apiConfiguration),
               new NetJsonRpcMethods(
                   p2pNetwork,
                   networkId,
                   jsonRpcConfiguration,
                   webSocketConfiguration,
                   metricsConfiguration),
-              new MinerJsonRpcMethods(miningCoordinator),
+              new MinerJsonRpcMethods(miningParameters, miningCoordinator),
               new PermJsonRpcMethods(accountsAllowlistController, nodeAllowlistController),
               new PrivJsonRpcMethods(
                   blockchainQueries,
@@ -136,7 +141,7 @@ public class JsonRpcMethodsFactory {
               new PrivxJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new Web3JsonRpcMethods(clientVersion),
-              new TraceJsonRpcMethods(blockchainQueries, protocolSchedule),
+              new TraceJsonRpcMethods(blockchainQueries, protocolSchedule, apiConfiguration),
               new TxPoolJsonRpcMethods(transactionPool),
               new PluginsJsonRpcMethods(namedPlugins));
 

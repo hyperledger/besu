@@ -31,8 +31,8 @@ import java.util.concurrent.ExecutionException;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 public class RetryingGetNodeDataFromPeerTaskTest
     extends RetryingSwitchingPeerMessageTaskTest<Map<Hash, Bytes>> {
@@ -90,12 +90,12 @@ public class RetryingGetNodeDataFromPeerTaskTest
 
   @Test
   @Override
-  @Ignore("Partial responses are enough to complete the request so this test doesn't apply")
+  @Disabled("Partial responses are enough to complete the request so this test doesn't apply")
   public void failsWhenPeerReturnsPartialResultThenStops() {}
 
   @Test
   @Override
-  @Ignore("Empty responses count as valid when requesting node data")
+  @Disabled("Empty responses count as valid when requesting node data")
   public void failsWhenPeersSendEmptyResponses() {}
 
   @Test

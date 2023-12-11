@@ -27,7 +27,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class RelativeJumpVectorOperation extends AbstractFixedCostOperation {
 
   /** The constant OPCODE. */
-  public static final int OPCODE = 0x5e;
+  public static final int OPCODE = 0xe2;
 
   /**
    * Instantiates a new Relative jump vector operation.

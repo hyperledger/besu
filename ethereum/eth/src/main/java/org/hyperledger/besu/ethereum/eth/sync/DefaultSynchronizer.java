@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloader
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDownloaderFactory;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapPersistedContext;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -146,7 +146,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       this.fastSyncFactory =
           () ->
               CheckpointDownloaderFactory.createCheckpointDownloader(
-                  new SnapPersistedContext(storageProvider),
+                  new SnapSyncStatePersistenceManager(storageProvider),
                   pivotBlockSelector,
                   syncConfig,
                   dataDirectory,
@@ -161,7 +161,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       this.fastSyncFactory =
           () ->
               SnapDownloaderFactory.createSnapDownloader(
-                  new SnapPersistedContext(storageProvider),
+                  new SnapSyncStatePersistenceManager(storageProvider),
                   pivotBlockSelector,
                   syncConfig,
                   dataDirectory,

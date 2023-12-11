@@ -28,8 +28,8 @@ import graphql.schema.CoercingParseLiteralException;
 import graphql.schema.CoercingParseValueException;
 import graphql.schema.CoercingSerializeException;
 import graphql.schema.GraphQLScalarType;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class LongScalarTest {
 
@@ -140,7 +140,7 @@ public class LongScalarTest {
         .isInstanceOf(CoercingParseLiteralException.class);
   }
 
-  @Before
+  @BeforeEach
   public void before() {
     scalar = Scalars.longScalar();
   }

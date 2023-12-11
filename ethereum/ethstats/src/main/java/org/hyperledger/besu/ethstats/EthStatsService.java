@@ -402,7 +402,7 @@ public class EthStatsService {
 
   /** Sends the number of pending transactions in the pool */
   private void sendPendingTransactionReport() {
-    final int pendingTransactionsNumber = transactionPool.getPendingTransactions().size();
+    final int pendingTransactionsNumber = transactionPool.count();
 
     final PendingTransactionsReport pendingTransactionsReport =
         ImmutablePendingTransactionsReport.builder()
@@ -424,7 +424,9 @@ public class EthStatsService {
     final boolean isSyncing = syncState.isInSync();
     final long gasPrice = suggestGasPrice(blockchainQueries.getBlockchain().getChainHeadBlock());
     final long hashrate = miningCoordinator.hashesPerSecond().orElse(0L);
-    final int peersNumber = protocolManager.ethContext().getEthPeers().peerCount();
+    // safe to cast to int since it isn't realistic to have more than max int peers
+    final int peersNumber =
+        (int) protocolManager.ethContext().getEthPeers().streamAvailablePeers().count();
 
     final NodeStatsReport nodeStatsReport =
         ImmutableNodeStatsReport.builder()
@@ -439,7 +441,7 @@ public class EthStatsService {
       final EthStatsRequest message,
       final Consumer<Boolean> handlerResult) {
     try {
-      LOG.debug("Send ethstats request {}", message.generateCommand());
+      LOG.trace("Send ethstats request {}", message.generateCommand());
       webSocket.writeTextMessage(
           message.generateCommand(),
           handler -> {

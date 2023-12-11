@@ -23,7 +23,7 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class NoOpMetricsSystemTest {
 

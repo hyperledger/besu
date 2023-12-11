@@ -20,6 +20,9 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
+
+import java.util.Optional;
 
 /** The Migrating protocol context. */
 public class MigratingProtocolContext extends ProtocolContext {
@@ -32,12 +35,14 @@ public class MigratingProtocolContext extends ProtocolContext {
    * @param blockchain the blockchain
    * @param worldStateArchive the world state archive
    * @param consensusContextSchedule the consensus context schedule
+   * @param transactionSelectorFactory the optional transaction selector factory
    */
   public MigratingProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ForksSchedule<ConsensusContext> consensusContextSchedule) {
-    super(blockchain, worldStateArchive, null);
+      final ForksSchedule<ConsensusContext> consensusContextSchedule,
+      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
+    super(blockchain, worldStateArchive, null, transactionSelectorFactory);
     this.consensusContextSchedule = consensusContextSchedule;
   }
 
@@ -48,18 +53,23 @@ public class MigratingProtocolContext extends ProtocolContext {
    * @param worldStateArchive the world state archive
    * @param protocolSchedule the protocol schedule
    * @param consensusContextFactory the consensus context factory
+   * @param transactionSelectorFactory the optional transaction selector factory
    * @return the protocol context
    */
   public static ProtocolContext init(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory) {
+      final ConsensusContextFactory consensusContextFactory,
+      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
     final ConsensusContext consensusContext =
         consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule);
     final MigratingContext migratingContext = consensusContext.as(MigratingContext.class);
     return new MigratingProtocolContext(
-        blockchain, worldStateArchive, migratingContext.getConsensusContextSchedule());
+        blockchain,
+        worldStateArchive,
+        migratingContext.getConsensusContextSchedule(),
+        transactionSelectorFactory);
   }
 
   @Override

@@ -16,7 +16,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.condition.priv;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
@@ -109,7 +109,7 @@ public class PrivConditions {
   }
 
   public Condition multiTenancyValidationFail(
-      final Transaction<?> transaction, final JsonRpcError error) {
+      final Transaction<?> transaction, final RpcErrorType error) {
     return new ExpectJsonRpcError(transaction, error);
   }
 }

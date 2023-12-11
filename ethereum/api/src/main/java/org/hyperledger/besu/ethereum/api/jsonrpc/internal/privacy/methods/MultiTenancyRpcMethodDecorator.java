@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import java.util.Optional;
 
@@ -46,10 +46,10 @@ public class MultiTenancyRpcMethodDecorator implements JsonRpcMethod {
     final Object id = requestContext.getRequest().getId();
     if (user.isEmpty()) {
       LOG.error("Request does not contain an authorization token");
-      return new JsonRpcUnauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
+      return new JsonRpcUnauthorizedResponse(id, RpcErrorType.UNAUTHORIZED);
     } else if (MultiTenancyUserUtil.privacyUserId(user).isEmpty()) {
       LOG.error("Request token does not contain an enclave public key");
-      return new JsonRpcErrorResponse(id, JsonRpcError.INVALID_REQUEST);
+      return new JsonRpcErrorResponse(id, RpcErrorType.INVALID_REQUEST);
     } else {
       return rpcMethod.response(requestContext);
     }

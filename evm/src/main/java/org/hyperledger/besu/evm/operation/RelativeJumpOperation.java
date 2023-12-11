@@ -26,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class RelativeJumpOperation extends AbstractFixedCostOperation {
 
   /** The constant OPCODE. */
-  public static final int OPCODE = 0x5c;
+  public static final int OPCODE = 0xe0;
 
   /**
    * Instantiates a new Relative jump operation.

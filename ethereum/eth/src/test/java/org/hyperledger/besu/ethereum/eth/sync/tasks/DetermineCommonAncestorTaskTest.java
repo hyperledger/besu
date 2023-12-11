@@ -54,12 +54,13 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class DetermineCommonAncestorTaskTest {
 
@@ -73,7 +74,7 @@ public class DetermineCommonAncestorTaskTest {
   private EthContext ethContext;
   private ProtocolContext protocolContext;
 
-  @Before
+  @BeforeEach
   public void setup() {
     localGenesisBlock = blockDataGenerator.genesisBlock();
     localBlockchain = createInMemoryBlockchain(localGenesisBlock);
@@ -86,7 +87,8 @@ public class DetermineCommonAncestorTaskTest {
             mock(TransactionPool.class),
             EthProtocolConfiguration.defaultConfig());
     ethContext = ethProtocolManager.ethContext();
-    protocolContext = new ProtocolContext(localBlockchain, worldStateArchive, null);
+    protocolContext =
+        new ProtocolContext(localBlockchain, worldStateArchive, null, Optional.empty());
   }
 
   @Test

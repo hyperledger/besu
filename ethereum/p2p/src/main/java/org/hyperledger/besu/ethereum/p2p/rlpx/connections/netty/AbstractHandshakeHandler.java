@@ -97,47 +97,47 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
       ctx.writeAndFlush(nextMsg.get());
     } else if (handshaker.getStatus() != Handshaker.HandshakeStatus.SUCCESS) {
       LOG.debug("waiting for more bytes");
-    } else {
-
-      final Bytes nodeId = handshaker.partyPubKey().getEncodedBytes();
-      if (!localNode.isReady()) {
-        // If we're handling a connection before the node is fully up, just disconnect
-        LOG.debug("Rejecting connection because local node is not ready {}", nodeId);
-        disconnect(ctx, DisconnectMessage.DisconnectReason.UNKNOWN);
-        return;
-      }
-
-      LOG.trace("Sending framed hello");
-
-      // Exchange keys done
-      final Framer framer = this.framerProvider.buildFramer(handshaker.secrets());
-
-      final ByteToMessageDecoder deFramer =
-          new DeFramer(
-              framer,
-              subProtocols,
-              localNode,
-              expectedPeer,
-              connectionEventDispatcher,
-              connectionFuture,
-              metricsSystem,
-              inboundInitiated);
-
-      ctx.channel()
-          .pipeline()
-          .replace(this, "DeFramer", deFramer)
-          .addBefore("DeFramer", "validate", new ValidateFirstOutboundMessage(framer));
-
-      ctx.writeAndFlush(new OutboundMessage(null, HelloMessage.create(localNode.getPeerInfo())))
-          .addListener(
-              ff -> {
-                if (ff.isSuccess()) {
-                  LOG.trace("Successfully wrote hello message");
-                }
-              });
-      msg.retain();
-      ctx.fireChannelRead(msg);
+      return;
     }
+
+    final Bytes nodeId = handshaker.partyPubKey().getEncodedBytes();
+    if (!localNode.isReady()) {
+      // If we're handling a connection before the node is fully up, just disconnect
+      LOG.debug("Rejecting connection because local node is not ready {}", nodeId);
+      disconnect(ctx, DisconnectMessage.DisconnectReason.UNKNOWN);
+      return;
+    }
+
+    LOG.trace("Sending framed hello");
+
+    // Exchange keys done
+    final Framer framer = this.framerProvider.buildFramer(handshaker.secrets());
+
+    final ByteToMessageDecoder deFramer =
+        new DeFramer(
+            framer,
+            subProtocols,
+            localNode,
+            expectedPeer,
+            connectionEventDispatcher,
+            connectionFuture,
+            metricsSystem,
+            inboundInitiated);
+
+    ctx.channel()
+        .pipeline()
+        .replace(this, "DeFramer", deFramer)
+        .addBefore("DeFramer", "validate", new ValidateFirstOutboundMessage(framer));
+
+    ctx.writeAndFlush(new OutboundMessage(null, HelloMessage.create(localNode.getPeerInfo())))
+        .addListener(
+            ff -> {
+              if (ff.isSuccess()) {
+                LOG.trace("Successfully wrote hello message");
+              }
+            });
+    msg.retain();
+    ctx.fireChannelRead(msg);
   }
 
   private void disconnect(
@@ -153,7 +153,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
 
   @Override
   public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable throwable) {
-    LOG.debug("Handshake error:", throwable);
+    LOG.trace("Handshake error:", throwable);
     connectionFuture.completeExceptionally(throwable);
     ctx.close();
   }

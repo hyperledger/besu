@@ -34,13 +34,13 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class ExtCodeHashOperationTest {
+class ExtCodeHashOperationTest {
 
   private static final Address REQUESTED_ADDRESS = Address.fromHexString("0x22222222");
 
-  ToyWorld toyWorld = new ToyWorld();
+  private final ToyWorld toyWorld = new ToyWorld();
   private final WorldUpdater worldStateUpdater = toyWorld.updater();
 
   private final ExtCodeHashOperation operation =
@@ -49,61 +49,61 @@ public class ExtCodeHashOperationTest {
       new ExtCodeHashOperation(new IstanbulGasCalculator());
 
   @Test
-  public void shouldCharge400Gas() {
+  void shouldCharge400Gas() {
     final OperationResult result = operation.execute(createMessageFrame(REQUESTED_ADDRESS), null);
     assertThat(result.getGasCost()).isEqualTo(400L);
   }
 
   @Test
-  public void istanbulShouldCharge700Gas() {
+  void istanbulShouldCharge700Gas() {
     final OperationResult result =
         operationIstanbul.execute(createMessageFrame(REQUESTED_ADDRESS), null);
     assertThat(result.getGasCost()).isEqualTo(700L);
   }
 
   @Test
-  public void shouldReturnZeroWhenAccountDoesNotExist() {
+  void shouldReturnZeroWhenAccountDoesNotExist() {
     final Bytes result = executeOperation(REQUESTED_ADDRESS);
     assertThat(result.trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
-  public void shouldReturnHashOfEmptyDataWhenAccountExistsButDoesNotHaveCode() {
-    worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).getMutable().setBalance(Wei.of(1));
+  void shouldReturnHashOfEmptyDataWhenAccountExistsButDoesNotHaveCode() {
+    worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).setBalance(Wei.of(1));
     assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(Hash.EMPTY);
   }
 
   @Test
-  public void shouldReturnZeroWhenAccountExistsButIsEmpty() {
+  void shouldReturnZeroWhenAccountExistsButIsEmpty() {
     worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     assertThat(executeOperation(REQUESTED_ADDRESS).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
-  public void shouldReturnZeroWhenPrecompiledContractHasNoBalance() {
+  void shouldReturnZeroWhenPrecompiledContractHasNoBalance() {
     assertThat(executeOperation(Address.ECREC).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
-  public void shouldReturnEmptyCodeHashWhenPrecompileHasBalance() {
+  void shouldReturnEmptyCodeHashWhenPrecompileHasBalance() {
     // Sending money to a precompile causes it to exist in the world state archive.
-    worldStateUpdater.getOrCreate(Address.ECREC).getMutable().setBalance(Wei.of(10));
+    worldStateUpdater.getOrCreate(Address.ECREC).setBalance(Wei.of(10));
     assertThat(executeOperation(Address.ECREC)).isEqualTo(Hash.EMPTY);
   }
 
   @Test
-  public void shouldGetHashOfAccountCodeWhenCodeIsPresent() {
+  void shouldGetHashOfAccountCodeWhenCodeIsPresent() {
     final Bytes code = Bytes.fromHexString("0xabcdef");
-    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).getMutable();
+    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
     assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(Hash.hash(code));
   }
 
   @Test
-  public void shouldZeroOutLeftMostBitsToGetAddress() {
+  void shouldZeroOutLeftMostBitsToGetAddress() {
     // If EXTCODEHASH of A is X, then EXTCODEHASH of A + 2**160 is X.
     final Bytes code = Bytes.fromHexString("0xabcdef");
-    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).getMutable();
+    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
     final UInt256 value =
         UInt256.fromBytes(Words.fromAddress(REQUESTED_ADDRESS))

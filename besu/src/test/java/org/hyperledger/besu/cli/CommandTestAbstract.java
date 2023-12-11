@@ -31,12 +31,14 @@ import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.options.MiningOptions;
+import org.hyperledger.besu.cli.options.TransactionPoolOptions;
+import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
-import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
@@ -49,6 +51,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
@@ -73,12 +76,15 @@ import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
+import org.hyperledger.besu.services.PluginTransactionValidatorServiceImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
+import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.io.ByteArrayOutputStream;
@@ -102,6 +108,7 @@ import java.util.function.Supplier;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.awaitility.Awaitility;
@@ -123,6 +130,20 @@ import picocli.CommandLine.RunLast;
 @RunWith(MockitoJUnitRunner.class)
 public abstract class CommandTestAbstract {
   private static final Logger TEST_LOGGER = LoggerFactory.getLogger(CommandTestAbstract.class);
+  protected static final JsonObject VALID_GENESIS_QBFT_POST_LONDON =
+      (new JsonObject())
+          .put(
+              "config",
+              new JsonObject()
+                  .put("londonBlock", 0)
+                  .put("qbft", new JsonObject().put("blockperiodseconds", 5)));
+  protected static final JsonObject VALID_GENESIS_IBFT2_POST_LONDON =
+      (new JsonObject())
+          .put(
+              "config",
+              new JsonObject()
+                  .put("londonBlock", 0)
+                  .put("ibft2", new JsonObject().put("blockperiodseconds", 5)));
   protected final PrintStream originalOut = System.out;
   protected final PrintStream originalErr = System.err;
   protected final ByteArrayOutputStream commandOutput = new ByteArrayOutputStream();
@@ -177,7 +198,6 @@ public abstract class CommandTestAbstract {
   @Captor protected ArgumentCaptor<String> stringArgumentCaptor;
   @Captor protected ArgumentCaptor<Integer> intArgumentCaptor;
   @Captor protected ArgumentCaptor<Long> longArgumentCaptor;
-  @Captor protected ArgumentCaptor<Float> floatCaptor;
   @Captor protected ArgumentCaptor<EthNetworkConfig> ethNetworkConfigArgumentCaptor;
   @Captor protected ArgumentCaptor<SynchronizerConfiguration> syncConfigurationCaptor;
   @Captor protected ArgumentCaptor<JsonRpcConfiguration> jsonRpcConfigArgumentCaptor;
@@ -194,6 +214,7 @@ public abstract class CommandTestAbstract {
       permissioningConfigurationArgumentCaptor;
 
   @Captor protected ArgumentCaptor<TransactionPoolConfiguration> transactionPoolConfigCaptor;
+  @Captor protected ArgumentCaptor<ApiConfiguration> apiConfigurationCaptor;
 
   @Captor protected ArgumentCaptor<EthstatsOptions> ethstatsOptionsArgumentCaptor;
 
@@ -237,8 +258,13 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.lowerBoundPeers(anyInt())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.maxRemotelyInitiatedPeers(anyInt()))
         .thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.transactionSelectorFactory(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.pluginTransactionValidatorFactory(any()))
+        .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.besuComponent(any(BesuComponent.class)))
         .thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.cacheLastBlocks(any())).thenReturn(mockControllerBuilder);
+
     // doReturn used because of generic BesuController
     doReturn(mockController).when(mockControllerBuilder).build();
     lenient().when(mockController.getProtocolManager()).thenReturn(mockEthProtocolManager);
@@ -288,7 +314,8 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.storageProvider(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.rpcEndpointService(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.legacyForkId(anyBoolean())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.rpcMaxLogsRange(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.apiConfiguration(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.enodeDnsConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
 
     final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
@@ -309,7 +336,7 @@ public abstract class CommandTestAbstract {
         .when(securityModuleService.getByName(eq("localfile")))
         .thenReturn(Optional.of(() -> securityModule));
     lenient()
-        .when(rocksDBSPrivacyStorageFactory.create(any(), any(), any()))
+        .when(rocksDBSPrivacyStorageFactory.create(any(SegmentIdentifier.class), any(), any()))
         .thenReturn(new InMemoryKeyValueStorage());
 
     lenient()
@@ -451,6 +478,25 @@ public abstract class CommandTestAbstract {
     }
   }
 
+  protected Path createTempFile(final String filename, final byte[] contents) throws IOException {
+    final Path file = Files.createTempFile(filename, "");
+    Files.write(file, contents);
+    file.toFile().deleteOnExit();
+    return file;
+  }
+
+  protected Path createFakeGenesisFile(final JsonObject jsonGenesis) throws IOException {
+    return createTempFile("genesisFile", encodeJsonGenesis(jsonGenesis).getBytes(UTF_8));
+  }
+
+  protected String encodeJsonGenesis(final JsonObject jsonGenesis) {
+    return jsonGenesis.encodePrettily();
+  }
+
+  protected Path createTempFile(final String filename, final String contents) throws IOException {
+    return createTempFile(filename, contents.getBytes(UTF_8));
+  }
+
   @CommandLine.Command
   public static class TestBesuCommand extends BesuCommand {
 
@@ -484,7 +530,9 @@ public abstract class CommandTestAbstract {
           new PermissioningServiceImpl(),
           privacyPluginService,
           pkiBlockCreationConfigProvider,
-          rpcEndpointServiceImpl);
+          rpcEndpointServiceImpl,
+          new TransactionSelectionServiceImpl(),
+          new PluginTransactionValidatorServiceImpl());
     }
 
     @Override
@@ -514,8 +562,16 @@ public abstract class CommandTestAbstract {
       return unstableEthProtocolOptions;
     }
 
+    public MiningOptions getMiningOptions() {
+      return miningOptions;
+    }
+
     public TransactionPoolOptions getTransactionPoolOptions() {
-      return unstableTransactionPoolOptions;
+      return transactionPoolOptions;
+    }
+
+    public DataStorageOptions getDataStorageOptions() {
+      return dataStorageOptions;
     }
 
     public MetricsCLIOptions getMetricsCLIOptions() {

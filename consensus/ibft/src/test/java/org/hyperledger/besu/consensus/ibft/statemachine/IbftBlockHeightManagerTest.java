@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -59,7 +60,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
-import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionSelectionResults;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -78,15 +79,15 @@ import java.util.Optional;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class IbftBlockHeightManagerTest {
 
   private final NodeKey nodeKey = NodeKeyUtils.generate();
@@ -126,7 +127,7 @@ public class IbftBlockHeightManagerTest {
     createdBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
   }
 
-  @Before
+  @BeforeEach
   public void setup() {
     for (int i = 0; i < 3; i++) {
       final NodeKey nodeKey = NodeKeyUtils.generate();
@@ -137,21 +138,27 @@ public class IbftBlockHeightManagerTest {
     buildCreatedBlock();
 
     final MessageValidator messageValidator = mock(MessageValidator.class);
-    when(messageValidator.validateProposal(any())).thenReturn(true);
-    when(messageValidator.validateCommit(any())).thenReturn(true);
-    when(messageValidator.validatePrepare(any())).thenReturn(true);
+    lenient().when(messageValidator.validateProposal(any())).thenReturn(true);
+    lenient().when(messageValidator.validateCommit(any())).thenReturn(true);
+    lenient().when(messageValidator.validatePrepare(any())).thenReturn(true);
     when(finalState.getBlockTimer()).thenReturn(blockTimer);
-    when(finalState.getQuorum()).thenReturn(3);
+    lenient().when(finalState.getQuorum()).thenReturn(3);
     when(finalState.getValidatorMulticaster()).thenReturn(validatorMulticaster);
-    when(blockCreator.createBlock(anyLong()))
+    lenient()
+        .when(blockCreator.createBlock(anyLong()))
         .thenReturn(new BlockCreationResult(createdBlock, new TransactionSelectionResults()));
 
-    when(futureRoundProposalMessageValidator.validateProposalMessage(any())).thenReturn(true);
+    lenient()
+        .when(futureRoundProposalMessageValidator.validateProposalMessage(any()))
+        .thenReturn(true);
     when(messageValidatorFactory.createFutureRoundProposalMessageValidator(anyLong(), any()))
         .thenReturn(futureRoundProposalMessageValidator);
-    when(messageValidatorFactory.createMessageValidator(any(), any())).thenReturn(messageValidator);
+    lenient()
+        .when(messageValidatorFactory.createMessageValidator(any(), any()))
+        .thenReturn(messageValidator);
 
-    protocolContext = new ProtocolContext(null, null, setupContextWithValidators(validators));
+    protocolContext =
+        new ProtocolContext(null, null, setupContextWithValidators(validators), Optional.empty());
 
     // Ensure the created IbftRound has the valid ConsensusRoundIdentifier;
     when(roundFactory.createNewRound(any(), anyInt()))
@@ -173,7 +180,8 @@ public class IbftBlockHeightManagerTest {
                   bftExtraDataCodec);
             });
 
-    when(roundFactory.createNewRoundWithState(any(), any()))
+    lenient()
+        .when(roundFactory.createNewRoundWithState(any(), any()))
         .thenAnswer(
             invocation -> {
               final RoundState providedRoundState = invocation.getArgument(1);

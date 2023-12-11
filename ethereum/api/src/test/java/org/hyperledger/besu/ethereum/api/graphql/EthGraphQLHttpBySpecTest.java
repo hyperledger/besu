@@ -14,10 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -26,116 +31,36 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest {
 
-  private final String specFileName;
-
-  public EthGraphQLHttpBySpecTest(final String specFileName) {
-    this.specFileName = specFileName;
+  @SuppressWarnings("StreamResourceLeak")
+  public static Stream<Arguments> specs() throws IOException, URISyntaxException {
+    final URL url =
+        EthGraphQLHttpBySpecTest.class.getResource(
+            "/org/hyperledger/besu/ethereum/api/graphql/eth_blockNumber.json");
+    checkState(url != null, "Cannot find test directory org/hyperledger/besu/ethereum/api/graphql");
+    final Path dir = Paths.get(url.toURI()).getParent();
+    return Files.list(dir)
+        .map(Path::getFileName)
+        .map(Path::toString)
+        .filter(p -> p.endsWith(".json"))
+        .filter(p -> !p.contains("genesis"))
+        .map(Arguments::of);
   }
 
-  @Parameters(name = "{index}: {0}")
-  public static Collection<String> specs() {
-    final List<String> specs = new ArrayList<>();
-
-    specs.add("eth_blockNumber");
-
-    specs.add("eth_call_Block8");
-    specs.add("eth_call_Block8_invalidHexBytesData");
-    specs.add("eth_call_BlockLatest");
-    specs.add("eth_call_from_contract");
-
-    specs.add("eth_estimateGas_transfer");
-    specs.add("eth_estimateGas_noParams");
-    specs.add("eth_estimateGas_contractDeploy");
-    specs.add("eth_estimateGas_from_contract");
-
-    specs.add("eth_gasPrice");
-
-    specs.add("eth_getBalance_0x19");
-    specs.add("eth_getBalance_invalidAccountBlockNumber");
-    specs.add("eth_getBalance_invalidAccountLatest");
-    specs.add("eth_getBalance_latest");
-    specs.add("eth_getBalance_toobig_bn");
-    specs.add("eth_getBalance_without_addr");
-
-    specs.add("eth_getBlock_byHash");
-    specs.add("eth_getBlock_byHash_InvalidHexBytes32Hash");
-    specs.add("eth_getBlock_byHashInvalid");
-    specs.add("eth_getBlock_byNumber");
-    specs.add("eth_getBlock_byNumberInvalid");
-    specs.add("eth_getBlock_wrongParams");
-
-    specs.add("eth_getBlockTransactionCount_byHash");
-    specs.add("eth_getBlockTransactionCount_byNumber");
-
-    specs.add("eth_getCode");
-    specs.add("eth_getCode_noCode");
-
-    specs.add("eth_getLogs_emptyListParam");
-    specs.add("eth_getLogs_matchTopic");
-    specs.add("eth_getLogs_matchAnyTopic");
-    specs.add("eth_getLogs_range");
-
-    specs.add("eth_getStorageAt");
-    specs.add("eth_getStorageAt_illegalRangeGreaterThan");
-
-    specs.add("eth_getTransaction_byBlockHashAndIndex");
-    specs.add("eth_getTransaction_byBlockNumberAndIndex");
-    specs.add("eth_getTransaction_byBlockNumberAndInvalidIndex");
-    specs.add("eth_getTransaction_byHash");
-    specs.add("eth_getTransaction_byHashNull");
-
-    specs.add("eth_getTransactionCount");
-
-    specs.add("eth_getTransactionReceipt");
-
-    specs.add("eth_sendRawTransaction_contractCreation");
-    specs.add("eth_sendRawTransaction_messageCall");
-    specs.add("eth_sendRawTransaction_nonceTooLow");
-    specs.add("eth_sendRawTransaction_transferEther");
-    specs.add("eth_sendRawTransaction_unsignedTransaction");
-
-    specs.add("eth_syncing");
-
-    specs.add("graphql_blocks_byFrom");
-    specs.add("graphql_blocks_byRange");
-    specs.add("graphql_blocks_byWrongRange");
-
-    specs.add("graphql_pending");
-
-    specs.add("graphql_tooComplex");
-    specs.add("graphql_tooComplexSchema");
-
-    specs.add("graphql_variable_address");
-    specs.add("graphql_variable_bytes");
-    specs.add("graphql_variable_bytes32");
-    specs.add("graphql_variable_long");
-
-    specs.add("block_withdrawals_pre_shanghai");
-    specs.add("block_withdrawals");
-    specs.add("eth_getTransaction_type2");
-    specs.add("eth_getBlock_shanghai");
-
-    return specs;
-  }
-
-  @Test
-  public void graphQLCallWithSpecFile() throws Exception {
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("specs")
+  void graphQLCallWithSpecFile(final String specFileName) throws Exception {
     graphQLCall(specFileName);
   }
 
   private void graphQLCall(final String name) throws IOException {
-    final String testSpecFile = name + ".json";
     final String json =
-        Resources.toString(
-            EthGraphQLHttpBySpecTest.class.getResource(testSpecFile), Charsets.UTF_8);
+        Resources.toString(EthGraphQLHttpBySpecTest.class.getResource(name), Charsets.UTF_8);
     final JsonObject spec = new JsonObject(json);
     final String rawRequestBody = spec.getString("request");
     final String rawVariables = spec.getString("variables");

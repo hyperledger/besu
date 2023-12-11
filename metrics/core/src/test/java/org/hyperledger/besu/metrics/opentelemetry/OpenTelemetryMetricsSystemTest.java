@@ -43,9 +43,9 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableSet;
 import io.opentelemetry.api.GlobalOpenTelemetry;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class OpenTelemetryMetricsSystemTest {
 
@@ -54,7 +54,7 @@ public class OpenTelemetryMetricsSystemTest {
           .thenComparing(Observation::getMetricName)
           .thenComparing((o1, o2) -> o1.getLabels().equals(o2.getLabels()) ? 0 : 1);
 
-  @Before
+  @BeforeEach
   public void resetGlobalOpenTelemetry() {
     GlobalOpenTelemetry.resetForTest();
   }
@@ -74,12 +74,12 @@ public class OpenTelemetryMetricsSystemTest {
     return null;
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     metricsSystem = new OpenTelemetrySystem(DEFAULT_METRIC_CATEGORIES, true, "job", false);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     metricsSystem.shutdown();
   }

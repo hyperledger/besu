@@ -39,6 +39,8 @@ import com.google.common.collect.Lists;
 
 public class TlsHelpers {
 
+  private TlsHelpers() {}
+
   private static KeyStore loadP12KeyStore(final File pkcsFile, final String password)
       throws KeyStoreException, NoSuchAlgorithmException, CertificateException {
     final KeyStore store = KeyStore.getInstance("pkcs12");
@@ -82,7 +84,7 @@ public class TlsHelpers {
 
   private static String generateFingerprint(final X509Certificate cert)
       throws NoSuchAlgorithmException, CertificateEncodingException {
-    final MessageDigest md = MessageDigestFactory.create("SHA-256");
+    final MessageDigest md = MessageDigestFactory.create(MessageDigestFactory.SHA256_ALG);
     md.update(cert.getEncoded());
     final byte[] digest = md.digest();
 

@@ -26,8 +26,8 @@ import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests ethTasks that request data from the network, and retry until all of the data is received.
@@ -38,7 +38,7 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
   protected static final int DEFAULT_MAX_RETRIES = 4;
   private int maxRetries;
 
-  @Before
+  @BeforeEach
   public void resetMaxRetries() {
     this.maxRetries = DEFAULT_MAX_RETRIES;
   }

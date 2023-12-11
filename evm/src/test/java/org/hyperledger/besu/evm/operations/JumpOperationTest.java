@@ -34,13 +34,13 @@ import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
-public class JumpOperationTest {
+@ExtendWith(MockitoExtension.class)
+class JumpOperationTest {
 
   private static final IstanbulGasCalculator gasCalculator = new IstanbulGasCalculator();
 
@@ -57,8 +57,8 @@ public class JumpOperationTest {
         .initialGas(initialGas);
   }
 
-  @Before
-  public void init() {
+  @BeforeEach
+  void init() {
     address = Address.fromHexString("0x18675309");
 
     final OperationRegistry registry = new OperationRegistry();
@@ -68,7 +68,7 @@ public class JumpOperationTest {
   }
 
   @Test
-  public void shouldJumpWhenLocationIsJumpDest() {
+  void shouldJumpWhenLocationIsJumpDest() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
     final Bytes jumpBytes = Bytes.fromHexString("0x6003565b00");
     final MessageFrame frame =
@@ -83,7 +83,7 @@ public class JumpOperationTest {
   }
 
   @Test
-  public void shouldJumpWhenLocationIsJumpDestAndAtEndOfCode() {
+  void shouldJumpWhenLocationIsJumpDestAndAtEndOfCode() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
     final Bytes jumpBytes = Bytes.fromHexString("0x6003565b");
     final MessageFrame frame =
@@ -98,7 +98,7 @@ public class JumpOperationTest {
   }
 
   @Test
-  public void shouldHaltWithInvalidJumDestinationWhenLocationIsOutsideOfCodeRange() {
+  void shouldHaltWithInvalidJumDestinationWhenLocationIsOutsideOfCodeRange() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
     final Bytes jumpBytes = Bytes.fromHexString("0x6801000000000000000c565b00");
     final MessageFrame frameDestinationGreaterThanCodeSize =
@@ -123,7 +123,7 @@ public class JumpOperationTest {
   }
 
   @Test
-  public void longContractsValidate() {
+  void longContractsValidate() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
     final Bytes longCode =
         Bytes.fromHexString(

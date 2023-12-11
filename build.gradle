@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,10 +14,12 @@
  */
 
 
+import groovy.transform.CompileStatic
 import groovy.transform.Memoized
 import net.ltgt.gradle.errorprone.CheckSeverity
 
 import java.text.SimpleDateFormat
+import java.util.regex.Pattern
 
 plugins {
   id 'com.diffplug.spotless' version '6.12.0'
@@ -146,7 +148,20 @@ allprojects {
     }
   }
 
-  dependencies { errorprone 'com.google.errorprone:error_prone_core' }
+  dependencies {
+    components.all(BouncyCastleCapability)
+    errorprone 'com.google.errorprone:error_prone_core'
+  }
+
+  configurations.all {
+    resolutionStrategy.capabilitiesResolution.withCapability('org.bouncycastle:bcprov-jdk18on') {
+      selectHighestVersion()
+    }
+    resolutionStrategy.capabilitiesResolution.withCapability('org.bouncycastle:bcpkix-jdk18on') {
+      selectHighestVersion()
+    }
+  }
+
 
   apply plugin: 'com.diffplug.spotless'
   spotless {
@@ -210,6 +225,13 @@ allprojects {
     }
 
     options.encoding = 'UTF-8'
+  }
+
+  // IntelliJ workaround to allow repeated debugging of unchanged code
+  tasks.withType(JavaExec) {
+    if (it.name.contains(".")) {
+      outputs.upToDateWhen { false }
+    }
   }
 
   /*
@@ -550,6 +572,22 @@ def tweakStartScript(createScriptTask) {
 }
 
 startScripts {
+  defaultJvmOpts = applicationDefaultJvmArgs + [
+    "-XX:G1ConcRefinementThreads=2",
+    "-XX:G1HeapWastePercent=15",
+    "-XX:MaxGCPauseMillis=100"
+  ]
+  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
+  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
+  doLast { tweakStartScript(startScripts) }
+}
+
+task untunedStartScripts(type: CreateStartScripts) {
+  mainClass = 'org.hyperledger.besu.Besu'
+  classpath = startScripts.classpath
+  outputDir = startScripts.outputDir
+  applicationName = 'besu-untuned'
+  defaultJvmOpts = applicationDefaultJvmArgs
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
   doLast { tweakStartScript(startScripts) }
@@ -559,7 +597,7 @@ task evmToolStartScripts(type: CreateStartScripts) {
   mainClass = 'org.hyperledger.besu.evmtool.EvmTool'
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
-  applicationName = 'evm'
+  applicationName = 'evmtool'
   defaultJvmOpts = [
     "-Dsecp256k1.randomize=false"
   ]
@@ -586,10 +624,10 @@ task autocomplete(type: JavaExec) {
   }
 }
 
-installDist { dependsOn checkLicenses }
+installDist { dependsOn checkLicenses, untunedStartScripts, evmToolStartScripts }
 
 distTar {
-  dependsOn checkLicenses, autocomplete
+  dependsOn checkLicenses, autocomplete, untunedStartScripts, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
@@ -598,7 +636,7 @@ distTar {
 }
 
 distZip {
-  dependsOn checkLicenses, autocomplete
+  dependsOn checkLicenses, autocomplete, untunedStartScripts, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
@@ -870,7 +908,7 @@ task manifestDockerRelease {
       archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }
 
       exec {
-        def cmd = "docker manifest create '${variantImage}' ${targets}"
+        def cmd = "docker manifest create '${variantImage}' ${targets} --amend"
         println "Executing '${cmd}'"
         executable "sh"
         args "-c", cmd
@@ -886,7 +924,7 @@ task manifestDockerRelease {
     exec {
       def targets = ""
       archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
-      def cmd = "docker manifest create '${baseTag}' ${targets}"
+      def cmd = "docker manifest create '${baseTag}' ${targets} --amend"
       println "Executing '${cmd}'"
       executable "sh"
       args "-c", cmd
@@ -900,6 +938,8 @@ task manifestDockerRelease {
   }
 }
 
+def sep = Pattern.quote(File.separator)
+
 task checkSpdxHeader(type: CheckSpdxHeader) {
   apply plugin: 'groovy'
 
@@ -907,16 +947,16 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
   spdxHeader = "* SPDX-License-Identifier: Apache-2.0"
   filesRegex = "(.*.java)|(.*.groovy)"
   excludeRegex = [
-    "(.*/generalstate/GeneralStateRegressionReferenceTest.*)",
-    "(.*/generalstate/GeneralStateReferenceTest.*)",
-    "(.*/generalstate/LegacyGeneralStateReferenceTest.*)",
-    "(.*/blockchain/BlockchainReferenceTest.*)",
-    "(.*/blockchain/LegacyBlockchainReferenceTest.*)",
-    "(.*/.gradle/.*)",
-    "(.*/.idea/.*)",
-    "(.*/out/.*)",
-    "(.*/build/.*)",
-    "(.*/src/[^/]+/generated/.*)"
+    "(.*${sep}generalstate${sep}GeneralStateRegressionReferenceTest.*)",
+    "(.*${sep}generalstate${sep}GeneralStateReferenceTest.*)",
+    "(.*${sep}generalstate${sep}LegacyGeneralStateReferenceTest.*)",
+    "(.*${sep}blockchain${sep}BlockchainReferenceTest.*)",
+    "(.*${sep}blockchain${sep}LegacyBlockchainReferenceTest.*)",
+    "(.*${sep}.gradle${sep}.*)",
+    "(.*${sep}.idea${sep}.*)",
+    "(.*${sep}out${sep}.*)",
+    "(.*${sep}build${sep}.*)",
+    "(.*${sep}src${sep}[^${sep}]+${sep}generated${sep}.*)"
   ].join("|")
 
 }
@@ -1023,6 +1063,29 @@ dependencies {
   implementation project(':besu')
   implementation project(':ethereum:evmtool')
   errorprone 'com.google.errorprone:error_prone_core'
+}
+
+@CompileStatic
+class BouncyCastleCapability implements ComponentMetadataRule {
+  void execute(ComponentMetadataContext context) {
+    context.details.with {
+      if (id.group == "org.bouncycastle") {
+        if(id.name == "bcprov-jdk15on") {
+          allVariants {
+            it.withCapabilities {
+              it.addCapability("org.bouncycastle", "bcprov-jdk18on", "0")
+            }
+          }
+        } else if(id.name == "bcpkix-jdk15on") {
+          allVariants {
+            it.withCapabilities {
+              it.addCapability("org.bouncycastle", "bcpkix-jdk18on", "0")
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 distributions {

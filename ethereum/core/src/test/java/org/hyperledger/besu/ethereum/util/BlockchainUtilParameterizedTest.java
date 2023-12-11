@@ -26,25 +26,22 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.OptionalInt;
 import java.util.Random;
+import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class BlockchainUtilParameterizedTest {
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   private static final Random random = new Random(1337);
 
   private static final int chainHeight = 89;
-  private final int commonAncestorHeight;
   private static Block genesisBlock;
   private static MutableBlockchain localBlockchain;
 
@@ -53,11 +50,7 @@ public class BlockchainUtilParameterizedTest {
   private BlockHeader commonHeader;
   private List<BlockHeader> headers;
 
-  public BlockchainUtilParameterizedTest(final int commonAncestorHeight) {
-    this.commonAncestorHeight = commonAncestorHeight;
-  }
-
-  @BeforeClass
+  @BeforeAll
   public static void setupClass() {
     genesisBlock = blockDataGenerator.genesisBlock();
     localBlockchain = InMemoryKeyValueStorageProvider.createInMemoryBlockchain(genesisBlock);
@@ -73,8 +66,7 @@ public class BlockchainUtilParameterizedTest {
     }
   }
 
-  @Before
-  public void setup() {
+  public void setup(final int commonAncestorHeight) {
     remoteBlockchain = InMemoryKeyValueStorageProvider.createInMemoryBlockchain(genesisBlock);
 
     commonHeader = genesisBlock.getHeader();
@@ -110,26 +102,29 @@ public class BlockchainUtilParameterizedTest {
     }
   }
 
-  @Parameterized.Parameters(name = "commonAncestor={0}")
-  public static Collection<Object[]> parameters() {
+  public static Stream<Arguments> parameters() {
     final List<Object[]> params = new ArrayList<>();
     params.add(new Object[] {0});
     params.add(new Object[] {chainHeight});
     params.add(new Object[] {random.nextInt(chainHeight - 1) + 1});
     params.add(new Object[] {random.nextInt(chainHeight - 1) + 1});
     params.add(new Object[] {random.nextInt(chainHeight - 1) + 1});
-    return params;
+    return params.stream().map(Arguments::of);
   }
 
-  @Test
-  public void searchesAscending() {
+  @ParameterizedTest(name = "commonAncestor={0}")
+  @MethodSource("parameters")
+  public void searchesAscending(final int commonAncestorHeight) {
+    setup(commonAncestorHeight);
     final OptionalInt maybeAncestorNumber =
         BlockchainUtil.findHighestKnownBlockIndex(localBlockchain, headers, true);
     assertThat(maybeAncestorNumber.getAsInt()).isEqualTo(Math.toIntExact(commonHeader.getNumber()));
   }
 
-  @Test
-  public void searchesDescending() {
+  @ParameterizedTest(name = "commonAncestor={0}")
+  @MethodSource("parameters")
+  public void searchesDescending(final int commonAncestorHeight) {
+    setup(commonAncestorHeight);
     Collections.reverse(headers);
     final OptionalInt maybeAncestorNumber =
         BlockchainUtil.findHighestKnownBlockIndex(localBlockchain, headers, false);

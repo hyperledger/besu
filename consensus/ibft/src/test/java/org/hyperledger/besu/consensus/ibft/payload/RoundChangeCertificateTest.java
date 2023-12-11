@@ -34,7 +34,7 @@ import java.math.BigInteger;
 import java.util.Optional;
 
 import org.assertj.core.util.Lists;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class RoundChangeCertificateTest {
   private static final ConsensusRoundIdentifier ROUND_IDENTIFIER =

@@ -42,6 +42,17 @@ public class RangeManager {
 
   private RangeManager() {}
 
+  public static int getRangeCount(
+      final Bytes32 min, final Bytes32 max, final TreeMap<Bytes32, Bytes> items) {
+    if (min.equals(MIN_RANGE) && max.equals(MAX_RANGE)) {
+      return MAX_RANGE
+          .toUnsignedBigInteger()
+          .divide(items.lastKey().toUnsignedBigInteger().subtract(min.toUnsignedBigInteger()))
+          .intValue();
+    }
+    return 1;
+  }
+
   public static Map<Bytes32, Bytes32> generateAllRanges(final int sizeRange) {
     if (sizeRange == 1) {
       return Map.ofEntries(Map.entry(MIN_RANGE, MAX_RANGE));
@@ -75,6 +86,9 @@ public class RangeManager {
       final BigInteger min, final BigInteger max, final int nbRange) {
     final BigInteger rangeSize = max.subtract(min).divide(BigInteger.valueOf(nbRange));
     final TreeMap<Bytes32, Bytes32> ranges = new TreeMap<>();
+    if (min.compareTo(max) > 0) {
+      return ranges;
+    }
     if (min.equals(max) || nbRange == 1) {
       ranges.put(format(min), format(max));
       return ranges;

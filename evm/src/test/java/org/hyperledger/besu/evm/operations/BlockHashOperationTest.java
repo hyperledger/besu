@@ -28,32 +28,32 @@ import java.util.function.Function;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class BlockHashOperationTest {
+class BlockHashOperationTest {
 
   private static final int MAXIMUM_COMPLETE_BLOCKS_BEHIND = 256;
   private final BlockHashOperation blockHashOperation =
       new BlockHashOperation(new FrontierGasCalculator());
 
   @Test
-  public void shouldReturnZeroWhenArgIsBiggerThanALong() {
+  void shouldReturnZeroWhenArgIsBiggerThanALong() {
     assertBlockHash(
         Bytes32.fromHexString("F".repeat(64)), Bytes32.ZERO, 100, n -> Hash.EMPTY_LIST_HASH);
   }
 
   @Test
-  public void shouldReturnZeroWhenCurrentBlockIsGenesis() {
+  void shouldReturnZeroWhenCurrentBlockIsGenesis() {
     assertBlockHash(Bytes32.ZERO, Bytes32.ZERO, 0, block -> Hash.EMPTY_LIST_HASH);
   }
 
   @Test
-  public void shouldReturnZeroWhenRequestedBlockAheadOfCurrent() {
+  void shouldReturnZeroWhenRequestedBlockAheadOfCurrent() {
     assertBlockHash(250, Bytes32.ZERO, 100, block -> Hash.EMPTY_LIST_HASH);
   }
 
   @Test
-  public void shouldReturnZeroWhenRequestedBlockTooFarBehindCurrent() {
+  void shouldReturnZeroWhenRequestedBlockTooFarBehindCurrent() {
     final int requestedBlock = 10;
     // Our block is the one after the chain head (it's a new block), hence the + 1.
     final int importingBlockNumber = MAXIMUM_COMPLETE_BLOCKS_BEHIND + requestedBlock + 1;
@@ -62,17 +62,17 @@ public class BlockHashOperationTest {
   }
 
   @Test
-  public void shouldReturnZeroWhenRequestedBlockGreaterThanImportingBlock() {
+  void shouldReturnZeroWhenRequestedBlockGreaterThanImportingBlock() {
     assertBlockHash(101, Bytes32.ZERO, 100, block -> Hash.EMPTY_LIST_HASH);
   }
 
   @Test
-  public void shouldReturnZeroWhenRequestedBlockEqualToImportingBlock() {
+  void shouldReturnZeroWhenRequestedBlockEqualToImportingBlock() {
     assertBlockHash(100, Bytes32.ZERO, 100, block -> Hash.EMPTY_LIST_HASH);
   }
 
   @Test
-  public void shouldReturnBlockHashUsingLookupFromFrameWhenItIsWithinTheAllowedRange() {
+  void shouldReturnBlockHashUsingLookupFromFrameWhenItIsWithinTheAllowedRange() {
     final Hash blockHash = Hash.hash(Bytes.fromHexString("0x1293487297"));
     assertBlockHash(100, blockHash, 200, block -> block == 100 ? blockHash : Hash.EMPTY_LIST_HASH);
   }

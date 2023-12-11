@@ -20,7 +20,7 @@ import org.hyperledger.besu.evm.frame.Memory;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class MemoryTest {
 
@@ -63,6 +63,22 @@ public class MemoryTest {
     assertThat(memory.getWord(0)).isEqualTo(WORD1);
     assertThat(memory.getWord(32)).isEqualTo(WORD2);
     assertThat(memory.getWord(64)).isEqualTo(Bytes32.ZERO);
+  }
+
+  @Test
+  public void shouldNotIncreaseActiveWordsIfGetBytesWithoutGrowth() {
+    final Bytes value = Bytes.concatenate(WORD1, WORD2);
+    memory.setBytes(0, value.size(), value);
+    final int initialActiveWords = memory.getActiveWords();
+
+    assertThat(memory.getBytesWithoutGrowth(64, Bytes32.SIZE)).isEqualTo((Bytes32.ZERO));
+    assertThat(memory.getActiveWords()).isEqualTo(initialActiveWords);
+
+    assertThat(memory.getBytes(32, Bytes32.SIZE)).isEqualTo((WORD2));
+    assertThat(memory.getActiveWords()).isEqualTo(initialActiveWords);
+
+    assertThat(memory.getBytes(64, Bytes32.SIZE)).isEqualTo((Bytes32.ZERO));
+    assertThat(memory.getActiveWords()).isEqualTo(initialActiveWords + 1);
   }
 
   @Test

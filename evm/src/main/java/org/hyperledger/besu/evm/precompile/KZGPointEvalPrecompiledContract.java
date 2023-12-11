@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
+import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
@@ -27,17 +28,21 @@ import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** The KZGPointEval precompile contract. */
 public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
   private static final AtomicBoolean loaded = new AtomicBoolean(false);
 
+  private static final Logger LOG = LoggerFactory.getLogger(KZGPointEvalPrecompiledContract.class);
+
   private static Bytes successResult;
 
   private static void init() {
-    CKZG4844JNI.loadNativeLibrary(CKZG4844JNI.Preset.MAINNET);
+    CKZG4844JNI.loadNativeLibrary();
     Bytes fieldElementsPerBlob =
-        Bytes32.wrap(Words.intBytes(CKZG4844JNI.getFieldElementsPerBlob()).xor(Bytes32.ZERO));
+        Bytes32.wrap(Words.intBytes(CKZG4844JNI.FIELD_ELEMENTS_PER_BLOB).xor(Bytes32.ZERO));
     Bytes blsModulus =
         Bytes32.wrap(Bytes.of(CKZG4844JNI.BLS_MODULUS.toByteArray()).xor(Bytes32.ZERO));
 
@@ -53,7 +58,9 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
   public static void init(final Path trustedSetupFile) {
     if (loaded.compareAndSet(false, true)) {
       init();
-      CKZG4844JNI.loadTrustedSetup(trustedSetupFile.toAbsolutePath().toString());
+      final String trustedSetupResourceName = trustedSetupFile.toAbsolutePath().toString();
+      LOG.info("Loading trusted setup from user-specified resource {}", trustedSetupResourceName);
+      CKZG4844JNI.loadTrustedSetup(trustedSetupResourceName);
     } else {
       throw new IllegalStateException("KZG trusted setup was already loaded");
     }
@@ -63,7 +70,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
    * Init the C-KZG native lib using a resource identified by the passed network name as trusted
    * setup
    *
-   * @param networkName used to select the resource that contains the trusted setup
+   * @param networkName used to select the resource in /kzg-trusted-setups/ to use.
    * @throws IllegalStateException is the trusted setup was already loaded
    */
   public static void init(final String networkName) {
@@ -71,6 +78,8 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
       init();
       final String trustedSetupResourceName =
           "/kzg-trusted-setups/" + networkName.toLowerCase() + ".txt";
+      LOG.info(
+          "Loading network trusted setup from classpath resource {}", trustedSetupResourceName);
       CKZG4844JNI.loadTrustedSetupFromResource(
           trustedSetupResourceName, KZGPointEvalPrecompiledContract.class);
     } else {
@@ -80,7 +89,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
 
   /** free up resources. */
   @VisibleForTesting
-  void tearDown() {
+  public static void tearDown() {
     CKZG4844JNI.freeTrustedSetup();
     loaded.set(false);
   }
@@ -102,45 +111,41 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
       final Bytes input, @NotNull final MessageFrame messageFrame) {
 
     if (input.size() != 192) {
-      return new PrecompileContractResult(
-          Bytes.EMPTY,
-          false,
-          MessageFrame.State.COMPLETED_FAILED,
-          Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      return PrecompileContractResult.halt(
+          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
+    Bytes32 versionedHash = Bytes32.wrap(input.slice(0, 32));
     Bytes z = input.slice(32, 32);
     Bytes y = input.slice(64, 32);
     Bytes commitment = input.slice(96, 48);
     Bytes proof = input.slice(144, 48);
-
-    PrecompileContractResult result;
+    if (versionedHash.get(0) != 0x01) { // unsupported hash version
+      return PrecompileContractResult.halt(
+          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+    } else {
+      byte[] hash = Hash.sha256(commitment).toArrayUnsafe();
+      hash[0] = 0x01;
+      if (!versionedHash.equals(Bytes32.wrap(hash))) {
+        return PrecompileContractResult.halt(
+            null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      }
+    }
     try {
       boolean proved =
           CKZG4844JNI.verifyKzgProof(
               commitment.toArray(), z.toArray(), y.toArray(), proof.toArray());
 
       if (proved) {
-        result =
-            new PrecompileContractResult(
-                successResult, false, MessageFrame.State.COMPLETED_SUCCESS, Optional.empty());
+        return PrecompileContractResult.success(successResult);
       } else {
-        result =
-            new PrecompileContractResult(
-                Bytes.EMPTY,
-                false,
-                MessageFrame.State.COMPLETED_FAILED,
-                Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+        return PrecompileContractResult.halt(
+            null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
       }
-      return result;
     } catch (RuntimeException kzgFailed) {
       System.out.println(kzgFailed.getMessage());
-      result =
-          new PrecompileContractResult(
-              Bytes.EMPTY,
-              false,
-              MessageFrame.State.COMPLETED_FAILED,
-              Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+
+      return PrecompileContractResult.halt(
+          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
-    return result;
   }
 }

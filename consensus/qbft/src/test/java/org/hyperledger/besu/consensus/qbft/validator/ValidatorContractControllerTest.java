@@ -38,8 +38,8 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.TypeReference;
@@ -64,7 +64,7 @@ public class ValidatorContractControllerTest {
   private final Transaction transaction = Mockito.mock(Transaction.class);
   private CallParameter callParameter;
 
-  @Before
+  @BeforeEach
   public void setup() {
     final Function getValidatorsFunction =
         new Function(

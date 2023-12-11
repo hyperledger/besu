@@ -45,7 +45,7 @@ import java.util.function.Supplier;
 
 public class ProtocolSpecBuilder {
   private Supplier<GasCalculator> gasCalculatorBuilder;
-  private GasLimitCalculator gasLimitCalculator;
+  private Function<FeeMarket, GasLimitCalculator> gasLimitCalculatorBuilder;
   private Wei blockReward;
   private boolean skipZeroBlockRewards;
   private BlockHeaderFunctions blockHeaderFunctions;
@@ -53,8 +53,7 @@ public class ProtocolSpecBuilder {
   private DifficultyCalculator difficultyCalculator;
   private EvmConfiguration evmConfiguration;
   private BiFunction<GasCalculator, EvmConfiguration, EVM> evmBuilder;
-  private BiFunction<GasCalculator, GasLimitCalculator, MainnetTransactionValidator>
-      transactionValidatorBuilder;
+  private TransactionValidatorFactoryBuilder transactionValidatorFactoryBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> ommerHeaderValidatorBuilder;
   private Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
@@ -81,14 +80,16 @@ public class ProtocolSpecBuilder {
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
   private boolean isPoS = false;
+  private boolean isReplayProtectionSupported = false;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
     return this;
   }
 
-  public ProtocolSpecBuilder gasLimitCalculator(final GasLimitCalculator gasLimitCalculator) {
-    this.gasLimitCalculator = gasLimitCalculator;
+  public ProtocolSpecBuilder gasLimitCalculatorBuilder(
+      final Function<FeeMarket, GasLimitCalculator> gasLimitCalculatorBuilder) {
+    this.gasLimitCalculatorBuilder = gasLimitCalculatorBuilder;
     return this;
   }
 
@@ -124,10 +125,9 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder transactionValidatorBuilder(
-      final BiFunction<GasCalculator, GasLimitCalculator, MainnetTransactionValidator>
-          transactionValidatorBuilder) {
-    this.transactionValidatorBuilder = transactionValidatorBuilder;
+  public ProtocolSpecBuilder transactionValidatorFactoryBuilder(
+      final TransactionValidatorFactoryBuilder transactionValidatorFactoryBuilder) {
+    this.transactionValidatorFactoryBuilder = transactionValidatorFactoryBuilder;
     return this;
   }
 
@@ -270,12 +270,18 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder isReplayProtectionSupported(
+      final boolean isReplayProtectionSupported) {
+    this.isReplayProtectionSupported = isReplayProtectionSupported;
+    return this;
+  }
+
   public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
-    checkNotNull(gasLimitCalculator, "Missing gasLimitCalculator");
+    checkNotNull(gasLimitCalculatorBuilder, "Missing gasLimitCalculatorBuilder");
     checkNotNull(evmBuilder, "Missing operation registry");
     checkNotNull(evmConfiguration, "Missing evm configuration");
-    checkNotNull(transactionValidatorBuilder, "Missing transaction validator");
+    checkNotNull(transactionValidatorFactoryBuilder, "Missing transaction validator");
     checkNotNull(privateTransactionValidatorBuilder, "Missing private transaction validator");
     checkNotNull(contractCreationProcessorBuilder, "Missing contract creation processor");
     checkNotNull(precompileContractRegistryBuilder, "Missing precompile contract registry");
@@ -299,11 +305,12 @@ public class ProtocolSpecBuilder {
     checkNotNull(badBlockManager, "Missing bad blocks manager");
 
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();
+    final GasLimitCalculator gasLimitCalculator = gasLimitCalculatorBuilder.apply(feeMarket);
     final EVM evm = evmBuilder.apply(gasCalculator, evmConfiguration);
     final PrecompiledContractConfiguration precompiledContractConfiguration =
         new PrecompiledContractConfiguration(gasCalculator, privacyParameters);
-    final MainnetTransactionValidator transactionValidator =
-        transactionValidatorBuilder.apply(gasCalculator, gasLimitCalculator);
+    final TransactionValidatorFactory transactionValidatorFactory =
+        transactionValidatorFactoryBuilder.apply(gasCalculator, gasLimitCalculator, feeMarket);
     final AbstractMessageProcessor contractCreationProcessor =
         contractCreationProcessorBuilder.apply(gasCalculator, evm);
     final PrecompileContractRegistry precompileContractRegistry =
@@ -312,7 +319,11 @@ public class ProtocolSpecBuilder {
         messageCallProcessorBuilder.apply(evm, precompileContractRegistry);
     final MainnetTransactionProcessor transactionProcessor =
         transactionProcessorBuilder.apply(
-            gasCalculator, transactionValidator, contractCreationProcessor, messageCallProcessor);
+            gasCalculator,
+            feeMarket,
+            transactionValidatorFactory,
+            contractCreationProcessor,
+            messageCallProcessor);
 
     final BlockHeaderValidator blockHeaderValidator =
         createBlockHeaderValidator(blockHeaderValidatorBuilder);
@@ -326,7 +337,7 @@ public class ProtocolSpecBuilder {
     // Set private Tx Processor
     PrivateTransactionProcessor privateTransactionProcessor =
         createPrivateTransactionProcessor(
-            transactionValidator,
+            transactionValidatorFactory,
             contractCreationProcessor,
             messageCallProcessor,
             precompileContractRegistry);
@@ -350,7 +361,7 @@ public class ProtocolSpecBuilder {
     return new ProtocolSpec(
         name,
         evm,
-        transactionValidator,
+        transactionValidatorFactory,
         transactionProcessor,
         privateTransactionProcessor,
         blockHeaderValidator,
@@ -374,11 +385,12 @@ public class ProtocolSpecBuilder {
         withdrawalsValidator,
         Optional.ofNullable(withdrawalsProcessor),
         depositsValidator,
-        isPoS);
+        isPoS,
+        isReplayProtectionSupported);
   }
 
   private PrivateTransactionProcessor createPrivateTransactionProcessor(
-      final MainnetTransactionValidator transactionValidator,
+      final TransactionValidatorFactory transactionValidatorFactory,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
       final PrecompileContractRegistry precompileContractRegistry) {
@@ -388,7 +400,7 @@ public class ProtocolSpecBuilder {
           privateTransactionValidatorBuilder.apply();
       privateTransactionProcessor =
           privateTransactionProcessorBuilder.apply(
-              transactionValidator,
+              transactionValidatorFactory,
               contractCreationProcessor,
               messageCallProcessor,
               privateTransactionValidator);
@@ -435,14 +447,15 @@ public class ProtocolSpecBuilder {
   public interface TransactionProcessorBuilder {
     MainnetTransactionProcessor apply(
         GasCalculator gasCalculator,
-        MainnetTransactionValidator transactionValidator,
+        FeeMarket feeMarket,
+        TransactionValidatorFactory transactionValidatorFactory,
         AbstractMessageProcessor contractCreationProcessor,
         AbstractMessageProcessor messageCallProcessor);
   }
 
   public interface PrivateTransactionProcessorBuilder {
     PrivateTransactionProcessor apply(
-        MainnetTransactionValidator transactionValidator,
+        TransactionValidatorFactory transactionValidatorFactory,
         AbstractMessageProcessor contractCreationProcessor,
         AbstractMessageProcessor messageCallProcessor,
         PrivateTransactionValidator privateTransactionValidator);
@@ -472,5 +485,10 @@ public class ProtocolSpecBuilder {
 
   public interface BlockImporterBuilder {
     BlockImporter apply(BlockValidator blockValidator);
+  }
+
+  public interface TransactionValidatorFactoryBuilder {
+    TransactionValidatorFactory apply(
+        GasCalculator gasCalculator, GasLimitCalculator gasLimitCalculator, FeeMarket feeMarket);
   }
 }

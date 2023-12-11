@@ -107,6 +107,11 @@ public class CapabilityMultiplexer {
       public Bytes getData() {
         return originalMessage.getData();
       }
+
+      @Override
+      public String toString() {
+        return "Message{ code=" + getCode() + ", size=" + getSize() + "}";
+      }
     };
   }
 

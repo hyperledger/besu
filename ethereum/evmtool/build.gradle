@@ -59,10 +59,10 @@ dependencies {
   annotationProcessor 'com.google.dagger:dagger-compiler'
   annotationProcessor 'info.picocli:picocli-codegen'
 
-  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
@@ -102,11 +102,11 @@ tasks.register("dockerDistUntar") {
   }
 }
 
-task distDocker(type: Exec) {
+tasks.register('distDocker', Exec) {
   dependsOn dockerDistUntar
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
   def dockerOrgName = project.hasProperty('dockerOrgName') ? project.getProperty("dockerOrgName") : "hyperledger"
-  def dockerArtifactName = project.hasProperty("dockerArtifactName") ? project.getProperty("dockerArtifactName") : "besu-evmtool"
+  def dockerArtifactName = project.hasProperty("dockerArtifactName") ? "${project.getProperty("dockerArtifactName")}-evmtool" : "besu-evmtool"
   def imageName = "${dockerOrgName}/${dockerArtifactName}"
 
   def image = "${imageName}:${dockerBuildVersion}"
@@ -124,11 +124,11 @@ task distDocker(type: Exec) {
   args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
 }
 
-task dockerUpload(type: Exec) {
+tasks.register('dockerUpload', Exec) {
   dependsOn distDocker
-  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
+  String dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
   def dockerOrgName = project.hasProperty('dockerOrgName') ? project.getProperty("dockerOrgName") : "hyperledger"
-  def dockerArtifactName = project.hasProperty("dockerArtifactName") ? project.getProperty("dockerArtifactName") : "besu-evmtool"
+  def dockerArtifactName = project.hasProperty("dockerArtifactName") ? "${project.getProperty("dockerArtifactName")}-evmtool" : "besu-evmtool"
   def imageName = "${dockerOrgName}/${dockerArtifactName}"
   def image = "${imageName}:${dockerBuildVersion}"
   def cmd = "docker push '${image}'"
@@ -160,7 +160,7 @@ graalvmNative {
 
 
       // Netty drags in older versions of bouncy castle, exclude it so there are no conflicts
-      excludeConfig.put("io.netty:netty-buffer:4.1.74.Final", [".*"])
+      excludeConfig.put("io.netty:netty-buffer", [".*"])
     }
   }
 }
@@ -169,10 +169,12 @@ graalvmNative {
 configurations.nativeImageClasspath {
   // netty statically allocates some problematic classes
   exclude group: 'io.netty', module: 'netty-buffer'
+  exclude group: 'io.netty', module: 'netty-common'
   exclude group: 'io.netty', module: 'netty-transport'
 
   // keep log4j from sneaking in.  GraalVM has an aleric reaction if it sees even one class
   exclude group: 'org.slf4j', module: 'log4j-over-slf4j:1.7.36'
   exclude group: "log4j", module: "log4j"
   exclude group: "org.apache.logging.log4j"
+  exclude group: 'org.bouncycastle', module: 'bcprov-jdk18on'
 }

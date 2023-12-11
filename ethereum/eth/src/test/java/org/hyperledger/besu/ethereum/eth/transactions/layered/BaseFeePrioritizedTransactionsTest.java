@@ -14,21 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
-import static org.hyperledger.besu.plugin.data.TransactionType.EIP1559;
-import static org.hyperledger.besu.plugin.data.TransactionType.FRONTIER;
+import static org.hyperledger.besu.datatypes.TransactionType.EIP1559;
+import static org.hyperledger.besu.datatypes.TransactionType.FRONTIER;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Comparator;
 import java.util.List;
@@ -58,7 +59,8 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
         nextLayer,
         txPoolMetrics,
         transactionReplacementTester,
-        FeeMarket.london(0L));
+        FeeMarket.london(0L),
+        new BlobCache());
   }
 
   @Override

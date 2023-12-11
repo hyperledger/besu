@@ -19,13 +19,14 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.proof.GetProofResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.proof.WorldStateProof;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Arrays;
 import java.util.List;
@@ -57,31 +58,34 @@ public class EthGetProof extends AbstractBlockParameterOrBlockHashMethod {
     final Address address = requestContext.getRequiredParameter(0, Address.class);
     final List<UInt256> storageKeys = getStorageKeys(requestContext);
 
-    return getBlockchainQueries()
-        .getAndMapWorldState(
-            blockHash,
-            worldState -> {
-              Optional<WorldStateProof> proofOptional =
-                  getBlockchainQueries()
-                      .getWorldStateArchive()
-                      .getAccountProof(worldState.rootHash(), address, storageKeys);
-              return proofOptional
-                  .map(
-                      proof ->
-                          (JsonRpcResponse)
-                              new JsonRpcSuccessResponse(
-                                  requestContext.getRequest().getId(),
-                                  GetProofResult.buildGetProofResult(address, proof)))
-                  .or(
-                      () ->
-                          Optional.of(
-                              new JsonRpcErrorResponse(
-                                  requestContext.getRequest().getId(),
-                                  JsonRpcError.NO_ACCOUNT_FOUND)));
+    final Blockchain blockchain = getBlockchainQueries().getBlockchain();
+    final WorldStateArchive worldStateArchive = getBlockchainQueries().getWorldStateArchive();
+    return blockchain
+        .getBlockHeader(blockHash)
+        .flatMap(
+            blockHeader -> {
+              return worldStateArchive.getAccountProof(
+                  blockHeader,
+                  address,
+                  storageKeys,
+                  maybeWorldStateProof ->
+                      maybeWorldStateProof
+                          .map(
+                              proof ->
+                                  (JsonRpcResponse)
+                                      new JsonRpcSuccessResponse(
+                                          requestContext.getRequest().getId(),
+                                          GetProofResult.buildGetProofResult(address, proof)))
+                          .or(
+                              () ->
+                                  Optional.of(
+                                      new JsonRpcErrorResponse(
+                                          requestContext.getRequest().getId(),
+                                          RpcErrorType.NO_ACCOUNT_FOUND))));
             })
         .orElse(
             new JsonRpcErrorResponse(
-                requestContext.getRequest().getId(), JsonRpcError.WORLD_STATE_UNAVAILABLE));
+                requestContext.getRequest().getId(), RpcErrorType.WORLD_STATE_UNAVAILABLE));
   }
 
   @Override

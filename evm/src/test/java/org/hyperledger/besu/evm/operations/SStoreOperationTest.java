@@ -31,59 +31,25 @@ import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.Arrays;
+import java.util.List;
 
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
-public class SStoreOperationTest {
-
-  private final long minimumGasAvailable;
-  private final long initialGas;
-  private final long remainingGas;
-  private final ExceptionalHaltReason expectedHalt;
+class SStoreOperationTest {
 
   private static final GasCalculator gasCalculator = new ConstantinopleGasCalculator();
 
-  private static final Object[][] testData = {
-    {
-      SStoreOperation.FRONTIER_MINIMUM, 200L, 200L, null,
-    },
-    {
-      SStoreOperation.EIP_1706_MINIMUM, 200L, 200L, INSUFFICIENT_GAS,
-    },
-    {
-      SStoreOperation.FRONTIER_MINIMUM, 10_000L, 10_000L, null,
-    },
-    {
-      SStoreOperation.EIP_1706_MINIMUM, 10_000L, 10_000L, null,
-    },
-    {
-      SStoreOperation.FRONTIER_MINIMUM, 10_000L, 200L, null,
-    },
-    {
-      SStoreOperation.EIP_1706_MINIMUM, 10_000L, 200L, INSUFFICIENT_GAS,
-    },
-  };
-
-  public SStoreOperationTest(
-      final long minimumGasAvailable,
-      final long initialGas,
-      final long remainingGas,
-      final ExceptionalHaltReason expectedHalt) {
-    this.minimumGasAvailable = minimumGasAvailable;
-    this.initialGas = initialGas;
-    this.remainingGas = remainingGas;
-    this.expectedHalt = expectedHalt;
-  }
-
-  @Parameterized.Parameters(
-      name = "{index}: minimum gas {0}, initial gas {1}, remaining gas {2}, expected halt {3}")
-  public static Iterable<Object[]> data() {
-    return Arrays.asList(testData);
+  static Iterable<Arguments> data() {
+    return List.of(
+        Arguments.of(SStoreOperation.FRONTIER_MINIMUM, 200L, 200L, null),
+        Arguments.of(SStoreOperation.EIP_1706_MINIMUM, 200L, 200L, INSUFFICIENT_GAS),
+        Arguments.of(SStoreOperation.FRONTIER_MINIMUM, 10_000L, 10_000L, null),
+        Arguments.of(SStoreOperation.EIP_1706_MINIMUM, 10_000L, 10_000L, null),
+        Arguments.of(SStoreOperation.FRONTIER_MINIMUM, 10_000L, 200L, null),
+        Arguments.of(SStoreOperation.EIP_1706_MINIMUM, 10_000L, 200L, INSUFFICIENT_GAS));
   }
 
   private MessageFrame createMessageFrame(
@@ -98,15 +64,21 @@ public class SStoreOperationTest {
             .blockValues(blockHeader)
             .initialGas(initialGas)
             .build();
-    worldStateUpdater.getOrCreate(address).getMutable().setBalance(Wei.of(1));
+    worldStateUpdater.getOrCreate(address).setBalance(Wei.of(1));
     worldStateUpdater.commit();
     frame.setGasRemaining(remainingGas);
 
     return frame;
   }
 
-  @Test
-  public void storeOperation() {
+  @ParameterizedTest(
+      name = "{index}: minimum gas {0}, initial gas {1}, remaining gas {2}, expected halt {3}")
+  @MethodSource("data")
+  void storeOperation(
+      final long minimumGasAvailable,
+      final long initialGas,
+      final long remainingGas,
+      final ExceptionalHaltReason expectedHalt) {
     final SStoreOperation operation = new SStoreOperation(gasCalculator, minimumGasAvailable);
     final MessageFrame frame =
         createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);

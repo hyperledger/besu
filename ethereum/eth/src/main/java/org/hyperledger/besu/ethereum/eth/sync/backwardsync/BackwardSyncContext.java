@@ -19,6 +19,7 @@ import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -46,6 +47,7 @@ public class BackwardSyncContext {
   private static final int DEFAULT_MAX_RETRIES = 20;
   private static final long MILLIS_DELAY_BETWEEN_PROGRESS_LOG = 10_000L;
   private static final long DEFAULT_MILLIS_BETWEEN_RETRIES = 5000;
+  private static final int DEFAULT_MAX_CHAIN_EVENT_ENTRIES = BadBlockManager.MAX_BAD_BLOCKS_SIZE;
 
   protected final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
@@ -55,8 +57,8 @@ public class BackwardSyncContext {
   private final AtomicReference<Status> currentBackwardSyncStatus = new AtomicReference<>();
   private final BackwardChain backwardChain;
   private int batchSize = BATCH_SIZE;
-  private Optional<Hash> maybeHead = Optional.empty();
   private final int maxRetries;
+  private final int maxBadChainEventEntries;
   private final long millisBetweenRetries = DEFAULT_MILLIS_BETWEEN_RETRIES;
   private final Subscribers<BadChainListener> badChainListeners = Subscribers.create();
 
@@ -74,7 +76,8 @@ public class BackwardSyncContext {
         ethContext,
         syncState,
         backwardChain,
-        DEFAULT_MAX_RETRIES);
+        DEFAULT_MAX_RETRIES,
+        DEFAULT_MAX_CHAIN_EVENT_ENTRIES);
   }
 
   public BackwardSyncContext(
@@ -84,7 +87,8 @@ public class BackwardSyncContext {
       final EthContext ethContext,
       final SyncState syncState,
       final BackwardChain backwardChain,
-      final int maxRetries) {
+      final int maxRetries,
+      final int maxBadChainEventEntries) {
 
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
@@ -93,6 +97,7 @@ public class BackwardSyncContext {
     this.syncState = syncState;
     this.backwardChain = backwardChain;
     this.maxRetries = maxRetries;
+    this.maxBadChainEventEntries = maxBadChainEventEntries;
   }
 
   public synchronized boolean isSyncing() {
@@ -101,17 +106,21 @@ public class BackwardSyncContext {
         .orElse(Boolean.FALSE);
   }
 
-  public synchronized void updateHead(final Hash headHash) {
-    if (Hash.ZERO.equals(headHash)) {
-      maybeHead = Optional.empty();
-    } else {
-      maybeHead = Optional.of(headHash);
+  public synchronized void maybeUpdateTargetHeight(final Hash headHash) {
+    if (!Hash.ZERO.equals(headHash)) {
       Optional<Status> maybeCurrentStatus = Optional.ofNullable(currentBackwardSyncStatus.get());
       maybeCurrentStatus.ifPresent(
           status ->
               backwardChain
                   .getBlock(headHash)
-                  .ifPresent(block -> status.updateTargetHeight(block.getHeader().getNumber())));
+                  .ifPresent(
+                      block -> {
+                        LOG.atTrace()
+                            .setMessage("updateTargetHeight to {}")
+                            .addArgument(block::toLogString)
+                            .log();
+                        status.updateTargetHeight(block.getHeader().getNumber());
+                      }));
     }
   }
 
@@ -331,20 +340,12 @@ public class BackwardSyncContext {
   @VisibleForTesting
   protected void possiblyMoveHead(final Block lastSavedBlock) {
     final MutableBlockchain blockchain = getProtocolContext().getBlockchain();
-    if (maybeHead.isEmpty()) {
-      LOG.debug("Nothing to do with the head");
-      return;
-    }
 
-    final Hash head = maybeHead.get();
-    if (blockchain.getChainHead().getHash().equals(head)) {
-      LOG.debug("Head is already properly set");
-      return;
-    }
-
-    if (blockchain.contains(head)) {
-      LOG.debug("Changing head to {}", head);
-      blockchain.rewindToBlock(head);
+    if (blockchain.getChainHead().getHash().equals(lastSavedBlock.getHash())) {
+      LOG.atDebug()
+          .setMessage("Head is already properly set to {}")
+          .addArgument(lastSavedBlock::toLogString)
+          .log();
       return;
     }
 
@@ -373,7 +374,9 @@ public class BackwardSyncContext {
 
     Optional<Hash> descendant = backwardChain.getDescendant(badBlock.getHash());
 
-    while (descendant.isPresent()) {
+    while (descendant.isPresent()
+        && badBlockDescendants.size() < maxBadChainEventEntries
+        && badBlockHeaderDescendants.size() < maxBadChainEventEntries) {
       final Optional<Block> block = backwardChain.getBlock(descendant.get());
       if (block.isPresent()) {
         badBlockDescendants.add(block.get());
@@ -440,10 +443,6 @@ public class BackwardSyncContext {
         return true;
       }
       return false;
-    }
-
-    public CompletableFuture<Void> getCurrentFuture() {
-      return currentFuture;
     }
 
     public long getTargetChainHeight() {

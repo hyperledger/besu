@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
-import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.HashMap;
@@ -35,13 +34,15 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Simple account. */
-public class SimpleAccount implements EvmAccount, MutableAccount {
+public class SimpleAccount implements MutableAccount {
 
   private final Account parent;
 
+  private boolean immutable = false;
+
   private Address address;
   private final Supplier<Hash> addressHash =
-      Suppliers.memoize(() -> address == null ? Hash.ZERO : Hash.hash(address));
+      Suppliers.memoize(() -> address == null ? Hash.ZERO : address.addressHash());
   private long nonce;
   private Wei balance;
   private Bytes code;
@@ -138,38 +139,86 @@ public class SimpleAccount implements EvmAccount, MutableAccount {
   }
 
   @Override
-  public MutableAccount getMutable() throws ModificationNotAllowedException {
-    return this;
-  }
-
-  @Override
   public void setNonce(final long value) {
+    if (immutable) {
+      throw new ModificationNotAllowedException();
+    }
     nonce = value;
   }
 
   @Override
   public void setBalance(final Wei value) {
+    if (immutable) {
+      throw new ModificationNotAllowedException();
+    }
     balance = value;
   }
 
   @Override
   public void setCode(final Bytes code) {
+    if (immutable) {
+      throw new ModificationNotAllowedException();
+    }
     this.code = code;
     codeHash = Suppliers.memoize(() -> this.code == null ? Hash.EMPTY : Hash.hash(this.code));
   }
 
   @Override
   public void setStorageValue(final UInt256 key, final UInt256 value) {
+    if (immutable) {
+      throw new ModificationNotAllowedException();
+    }
     storage.put(key, value);
   }
 
   @Override
   public void clearStorage() {
+    if (immutable) {
+      throw new ModificationNotAllowedException();
+    }
     storage.clear();
   }
 
   @Override
   public Map<UInt256, UInt256> getUpdatedStorage() {
     return storage;
+  }
+
+  @Override
+  public void becomeImmutable() {
+    immutable = true;
+  }
+
+  /**
+   * Commit this simple account entry to the parent.
+   *
+   * @return true if there was a parent account that was committed to
+   */
+  public boolean commit() {
+    if (parent instanceof SimpleAccount simpleAccount) {
+      simpleAccount.balance = balance;
+      simpleAccount.nonce = nonce;
+      simpleAccount.storage.putAll(storage);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * Push changes into the parent account, if one exists
+   *
+   * @return true if a parent account was updated, false if not (this indicates the account should
+   *     be inserted into the parent contact).
+   */
+  public boolean updateParent() {
+    if (parent instanceof SimpleAccount simpleAccount) {
+      simpleAccount.balance = balance;
+      simpleAccount.nonce = nonce;
+      simpleAccount.storage.putAll(storage);
+      return true;
+    } else {
+      return false;
+    }
   }
 }

@@ -64,41 +64,57 @@
   },
   {
     "name": "org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv",
-    "queryAllPublicConstructors" : true,
-    "queryAllPublicMethods" : true,
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
     "allDeclaredConstructors": true,
     "allPublicMethods": true
   },
   {
     "name": "org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv$EnvWithdrawal",
-    "queryAllPublicConstructors" : true,
-    "queryAllPublicMethods" : true,
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
     "allDeclaredConstructors": true,
     "allPublicMethods": true
   },
   {
     "name": "org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState",
-    "queryAllPublicConstructors" : true,
-    "queryAllPublicMethods" : true,
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
     "allDeclaredConstructors": true,
     "allPublicMethods": true
   },
   {
     "name": "org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState$AccountMock",
-    "queryAllPublicConstructors" : true,
-    "queryAllPublicMethods" : true,
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
     "allDeclaredConstructors": true,
     "allPublicMethods": true
   },
   {
     "name": "org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec$ReferenceTestBlockHeader",
-    "queryAllPublicConstructors" : true,
-    "queryAllPublicMethods" : true,
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
     "allDeclaredConstructors": true,
     "allPublicMethods": true
   },
   {
     "name": "org.hyperledger.besu.evm.internal.ReturnStack$ReturnStackItem[]",
     "unsafeAllocated": true
+  },
+  {
+    "name": "org.hyperledger.besu.evmtool.T8nExecutor$RejectedTransaction",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allDeclaredConstructors": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.hyperledger.besu.evm.log.Log",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   }
 ]

@@ -31,12 +31,11 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
-import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
-import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -52,11 +51,15 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.time.Instant;
-import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Deque;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.NavigableMap;
-import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
@@ -64,8 +67,6 @@ import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -84,14 +85,14 @@ import picocli.CommandLine.Option;
     footerHeading = "%n",
     footer = "Hyperledger Besu is licensed under the Apache License 2.0",
     subcommands = {
+      BenchmarkSubCommand.class,
       B11rSubCommand.class,
       CodeValidateSubCommand.class,
       StateTestSubCommand.class,
-      T8nSubCommand.class
+      T8nSubCommand.class,
+      T8nServerSubCommand.class
     })
 public class EvmToolCommand implements Runnable {
-
-  private static final Logger LOG = LoggerFactory.getLogger(EvmToolCommand.class);
 
   @Option(
       names = {"--code"},
@@ -116,16 +117,34 @@ public class EvmToolCommand implements Runnable {
   private final Wei gasPriceGWei = Wei.ZERO;
 
   @Option(
+      names = {"--blob-price"},
+      description = "Price of blob gas for this invocation",
+      paramLabel = "<int>")
+  private final Wei blobGasPrice = Wei.ZERO;
+
+  @Option(
       names = {"--sender"},
       paramLabel = "<address>",
       description = "Calling address for this invocation.")
-  private final Address sender = Address.fromHexString("0x00");
+  private final Address sender = Address.ZERO;
 
   @Option(
       names = {"--receiver"},
       paramLabel = "<address>",
       description = "Receiving address for this invocation.")
-  private final Address receiver = Address.fromHexString("0x00");
+  private final Address receiver = Address.ZERO;
+
+  @Option(
+      names = {"--contract"},
+      paramLabel = "<address>",
+      description = "The address holding the contract code.")
+  private final Address contract = Address.ZERO;
+
+  @Option(
+      names = {"--coinbase"},
+      paramLabel = "<address>",
+      description = "Coinbase for this invocation.")
+  private final Address coinbase = Address.ZERO;
 
   @Option(
       names = {"--input"},
@@ -173,6 +192,14 @@ public class EvmToolCommand implements Runnable {
       scope = INHERIT,
       negatable = true)
   final Boolean showReturnData = false;
+
+  @Option(
+      names = {"--trace.storage"},
+      description =
+          "Show the updated storage slots for the current account. Default is to not show updated storage.",
+      scope = INHERIT,
+      negatable = true)
+  final Boolean showStorage = false;
 
   @Option(
       names = {"--notime"},
@@ -227,6 +254,9 @@ public class EvmToolCommand implements Runnable {
     out = output;
     in = input;
 
+    // don't require exact case to match enum values
+    commandLine.setCaseInsensitiveEnumValuesAllowed(true);
+
     // add dagger-injected options
     commandLine.addMixin("Dagger Options", daggerOptions);
 
@@ -245,8 +275,38 @@ public class EvmToolCommand implements Runnable {
             .addPattern("^--trace.(\\w(-|\\w)*)$", "--trace.no$1", "--trace.[no]$1")
             .build());
 
+    // Enumerate forks to support execution-spec-tests
+    addForkHelp(commandLine.getSubcommands().get("t8n"));
+    addForkHelp(commandLine.getSubcommands().get("t8n-server"));
+
     commandLine.setExecutionStrategy(new CommandLine.RunLast());
     commandLine.execute(args);
+  }
+
+  private static void addForkHelp(final CommandLine subCommandLine) {
+    subCommandLine
+        .getHelpSectionMap()
+        .put("forks_header", help -> help.createHeading("%nKnown Forks:%n"));
+    subCommandLine
+        .getHelpSectionMap()
+        .put(
+            "forks",
+            help ->
+                help.createTextTable(
+                        Arrays.stream(EvmSpecVersion.values())
+                            .collect(
+                                Collectors.toMap(
+                                    EvmSpecVersion::getName,
+                                    EvmSpecVersion::getDescription,
+                                    (a, b) -> b,
+                                    LinkedHashMap::new)))
+                    .toString());
+    List<String> keys = new ArrayList<>(subCommandLine.getHelpSectionKeys());
+    int index = keys.indexOf(CommandLine.Model.UsageMessageSpec.SECTION_KEY_FOOTER_HEADING);
+    keys.add(index, "forks_header");
+    keys.add(index + 1, "forks");
+
+    subCommandLine.setHelpSectionKeys(keys);
   }
 
   @Override
@@ -269,7 +329,7 @@ public class EvmToolCommand implements Runnable {
       final BlockHeader blockHeader =
           BlockHeaderBuilder.create()
               .parentHash(Hash.EMPTY)
-              .coinbase(Address.ZERO)
+              .coinbase(coinbase)
               .difficulty(Difficulty.ONE)
               .number(1)
               .gasLimit(5000)
@@ -290,17 +350,15 @@ public class EvmToolCommand implements Runnable {
       final ProtocolSpec protocolSpec =
           component.getProtocolSpec().apply(BlockHeaderBuilder.createDefault().buildBlockHeader());
       final Transaction tx =
-          new Transaction(
-              0,
-              Wei.ZERO,
-              Long.MAX_VALUE,
-              Optional.ofNullable(receiver),
-              Wei.ZERO,
-              null,
-              callData,
-              sender,
-              Optional.empty(),
-              Optional.empty());
+          new Transaction.Builder()
+              .nonce(0)
+              .gasPrice(Wei.ZERO)
+              .gasLimit(Long.MAX_VALUE)
+              .to(receiver)
+              .value(Wei.ZERO)
+              .payload(callData)
+              .sender(sender)
+              .build();
 
       final long intrinsicGasCost =
           protocolSpec
@@ -312,8 +370,6 @@ public class EvmToolCommand implements Runnable {
               .orElse(0L);
       long txGas = gas - intrinsicGasCost - accessListCost;
 
-      final PrecompileContractRegistry precompileContractRegistry =
-          protocolSpec.getPrecompileContractRegistry();
       final EVM evm = protocolSpec.getEvm();
       Code code = evm.getCode(Hash.hash(codeBytes), codeBytes);
       if (!code.isValid()) {
@@ -327,41 +383,45 @@ public class EvmToolCommand implements Runnable {
 
         final OperationTracer tracer = // You should have picked Mercy.
             lastLoop && showJsonResults
-                ? new StandardJsonTracer(out, showMemory, !hideStack, showReturnData)
+                ? new StandardJsonTracer(out, showMemory, !hideStack, showReturnData, showStorage)
                 : OperationTracer.NO_TRACING;
 
         WorldUpdater updater = component.getWorldUpdater();
         updater.getOrCreate(sender);
         updater.getOrCreate(receiver);
+        var contractAccount = updater.getOrCreate(contract);
+        contractAccount.setCode(codeBytes);
 
-        final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-        messageFrameStack.add(
+        MessageFrame initialMessageFrame =
             MessageFrame.builder()
                 .type(MessageFrame.Type.MESSAGE_CALL)
-                .messageFrameStack(messageFrameStack)
-                .worldUpdater(updater)
+                .worldUpdater(updater.updater())
                 .initialGas(txGas)
                 .contract(Address.ZERO)
                 .address(receiver)
                 .originator(sender)
                 .sender(sender)
                 .gasPrice(gasPriceGWei)
+                .blobGasPrice(blobGasPrice)
                 .inputData(callData)
                 .value(ethValue)
                 .apparentValue(ethValue)
                 .code(code)
                 .blockValues(blockHeader)
-                .depth(0)
                 .completer(c -> {})
                 .miningBeneficiary(blockHeader.getCoinbase())
                 .blockHashLookup(new CachingBlockHashLookup(blockHeader, component.getBlockchain()))
-                .build());
+                .accessListWarmAddresses(
+                    EvmSpecVersion.SHANGHAI.compareTo(evm.getEvmVersion()) <= 0
+                        ? Set.of(coinbase)
+                        : Set.of())
+                .build();
+        Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
 
-        final MessageCallProcessor mcp = new MessageCallProcessor(evm, precompileContractRegistry);
         stopwatch.start();
         while (!messageFrameStack.isEmpty()) {
           final MessageFrame messageFrame = messageFrameStack.peek();
-          mcp.process(messageFrame, tracer);
+          protocolSpec.getTransactionProcessor().process(messageFrame, tracer);
           if (messageFrameStack.isEmpty()) {
             stopwatch.stop();
             if (lastTime == 0) {
@@ -372,7 +432,8 @@ public class EvmToolCommand implements Runnable {
                 out.println(messageFrame.getExceptionalHaltReason().get());
               }
               if (messageFrame.getRevertReason().isPresent()) {
-                out.println(new String(messageFrame.getRevertReason().get().toArray(), UTF_8));
+                out.println(
+                    new String(messageFrame.getRevertReason().get().toArrayUnsafe(), UTF_8));
               }
             }
           }
@@ -401,7 +462,8 @@ public class EvmToolCommand implements Runnable {
       } while (remainingIters-- > 0);
 
     } catch (final IOException e) {
-      LOG.error("Unable to create Genesis module", e);
+      System.err.println("Unable to create Genesis module");
+      e.printStackTrace(System.out);
     }
   }
 
@@ -414,7 +476,7 @@ public class EvmToolCommand implements Runnable {
             account -> {
               out.println(
                   " \"" + account.getAddress().map(Address::toHexString).orElse("-") + "\": {");
-              if (account.getCode() != null && account.getCode().size() > 0) {
+              if (account.getCode() != null && !account.getCode().isEmpty()) {
                 out.println("  \"code\": \"" + account.getCode().toHexString() + "\",");
               }
               NavigableMap<Bytes32, AccountStorageEntry> storageEntries =
@@ -429,10 +491,10 @@ public class EvmToolCommand implements Runnable {
                                     "   \""
                                         + accountStorageEntry
                                             .getKey()
-                                            .map(UInt256::toHexString)
+                                            .map(UInt256::toQuantityHexString)
                                             .orElse("-")
                                         + "\": \""
-                                        + accountStorageEntry.getValue().toHexString()
+                                        + accountStorageEntry.getValue().toQuantityHexString()
                                         + "\"")
                             .toList()));
                 out.println("  },");

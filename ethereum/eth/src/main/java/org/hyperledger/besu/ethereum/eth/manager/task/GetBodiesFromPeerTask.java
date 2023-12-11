@@ -84,11 +84,20 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
   protected PendingPeerRequest sendRequest() {
     final List<Hash> blockHashes =
         headers.stream().map(BlockHeader::getHash).collect(Collectors.toList());
+    LOG.atTrace()
+        .setMessage("Requesting {} bodies with hashes {}.")
+        .addArgument(blockHashes.size())
+        .addArgument(blockHashes)
+        .log();
     final long minimumRequiredBlockNumber = headers.get(headers.size() - 1).getNumber();
 
     return sendRequestToPeer(
         peer -> {
-          LOG.debug("Requesting {} bodies from peer {}.", blockHashes.size(), peer);
+          LOG.atTrace()
+              .setMessage("Requesting {} bodies from peer {}.")
+              .addArgument(blockHashes.size())
+              .addArgument(peer)
+              .log();
           return peer.getBodies(blockHashes);
         },
         minimumRequiredBlockNumber);
@@ -98,7 +107,7 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
   protected Optional<List<Block>> processResponse(
       final boolean streamClosed, final MessageData message, final EthPeer peer) {
     if (streamClosed) {
-      // All outstanding requests have been responded to and we still haven't found the response
+      // All outstanding requests have been responded to, and we still haven't found the response
       // we wanted. It must have been empty or contain data that didn't match.
       peer.recordUselessResponse("bodies");
       return Optional.of(Collections.emptyList());
@@ -128,6 +137,13 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
       // Clear processed headers
       headers.clear();
     }
+    LOG.atTrace()
+        .setMessage("Associated {} bodies with {} headers to get {} blocks with these hashes: {}")
+        .addArgument(bodies.size())
+        .addArgument(headers.size())
+        .addArgument(blocks.size())
+        .addArgument(() -> blocks.stream().map(Block::toLogString).toList())
+        .log();
     return Optional.of(blocks);
   }
 

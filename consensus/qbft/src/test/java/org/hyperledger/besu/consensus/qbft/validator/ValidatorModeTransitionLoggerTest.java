@@ -32,13 +32,13 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ValidatorModeTransitionLoggerTest {
 
   @Mock private ForksSchedule<BftConfigOptions> forksSchedule;

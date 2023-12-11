@@ -7,27 +7,22 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'
-  implementation 'org.apache.tuweni:tuweni-net'
+  implementation 'io.tmio:tuweni-net'
 
-  runtimeOnly('org.bouncycastle:bcpkix-jdk15on')
+  runtimeOnly('org.bouncycastle:bcpkix-jdk18on')
 
   // test dependencies.
   testImplementation project(':testutil')
 
-  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
   // integration test dependencies.
   integrationTestImplementation project(':testutil')
   integrationTestImplementation 'org.assertj:assertj-core'
-  integrationTestImplementation 'org.bouncycastle:bcpkix-jdk15on'
+  integrationTestImplementation 'org.bouncycastle:bcpkix-jdk18on'
   integrationTestImplementation 'org.awaitility:awaitility'
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   integrationTestImplementation 'org.mockito:mockito-core'
   integrationTestImplementation 'org.testcontainers:testcontainers'
-
-  integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 }

@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.evm.AccessListEntry;
 
 import java.util.List;
 import java.util.Objects;

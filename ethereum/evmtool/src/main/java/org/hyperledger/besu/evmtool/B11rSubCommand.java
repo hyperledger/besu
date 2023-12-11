@@ -19,6 +19,7 @@ package org.hyperledger.besu.evmtool;
 import static org.hyperledger.besu.evmtool.B11rSubCommand.COMMAND_ALIAS;
 import static org.hyperledger.besu.evmtool.B11rSubCommand.COMMAND_NAME;
 
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec.ReferenceTestBlockHeader;
@@ -33,21 +34,24 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
 
-import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.util.DefaultIndenter;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.IParameterConsumer;
+import picocli.CommandLine.Model.ArgSpec;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
+import picocli.CommandLine.ParentCommand;
 
 @Command(
     name = COMMAND_NAME,
@@ -56,8 +60,6 @@ import picocli.CommandLine.Option;
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class B11rSubCommand implements Runnable {
-  private static final Logger LOG = LoggerFactory.getLogger(B11rSubCommand.class);
-
   static final String COMMAND_NAME = "block-builder";
   static final String COMMAND_ALIAS = "b11r";
   private static final Path stdoutPath = Path.of("stdout");
@@ -80,6 +82,12 @@ public class B11rSubCommand implements Runnable {
       paramLabel = "full path",
       description = "The ommers for the block")
   private final Path ommers = stdinPath;
+
+  @Option(
+      names = {"--input.withdrawals"},
+      paramLabel = "full path",
+      description = "The withdrawals for the block")
+  private final Path withdrawals = stdinPath;
 
   @Option(
       names = {"--seal.clique"},
@@ -112,9 +120,25 @@ public class B11rSubCommand implements Runnable {
       description = "The account state after the transition")
   private final Path outBlock = Path.of("block.json");
 
-  private static final ObjectMapper objectMapper = new ObjectMapper();
+  @ParentCommand private final EvmToolCommand parentCommand;
 
-  @CommandLine.ParentCommand private final EvmToolCommand parentCommand;
+  @Parameters(parameterConsumer = OnlyEmptyParams.class)
+  @SuppressWarnings("UnusedVariable")
+  private final List<String> parameters = new ArrayList<>();
+
+  static class OnlyEmptyParams implements IParameterConsumer {
+    @Override
+    public void consumeParameters(
+        final Stack<String> args, final ArgSpec argSpec, final CommandSpec commandSpec) {
+      while (!args.isEmpty()) {
+        if (!args.pop().isEmpty()) {
+          throw new CommandLine.ParameterException(
+              argSpec.command().commandLine(),
+              "The block-builder command does not accept any non-empty parameters");
+        }
+      }
+    }
+  }
 
   @SuppressWarnings("unused")
   public B11rSubCommand() {
@@ -131,45 +155,49 @@ public class B11rSubCommand implements Runnable {
   @Override
   public void run() {
     LogConfigurator.setLevel("", "OFF");
-    objectMapper.setDefaultPrettyPrinter(
-        (new DefaultPrettyPrinter())
-            .withSpacesInObjectEntries()
-            .withObjectIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE.withIndent("  "))
-            .withArrayIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE.withIndent("  ")));
-    final ObjectReader t8nReader = objectMapper.reader();
-    objectMapper.disable(Feature.AUTO_CLOSE_SOURCE);
+    // presume ethereum mainnet for reference and state tests
+    SignatureAlgorithmFactory.setDefaultInstance();
+    ObjectMapper objectMapper = JsonUtils.createObjectMapper();
+    final ObjectReader b11rReader = objectMapper.reader();
 
     ObjectNode config;
     try {
       if (header.equals(stdinPath)
           || txs.equals(stdinPath)
           || ommers.equals(stdinPath)
-          || sealClique.equals(stdinPath)) {
+          || sealClique.equals(stdinPath)
+          || withdrawals.equals(stdinPath)) {
         config =
             (ObjectNode)
-                t8nReader.readTree(new InputStreamReader(parentCommand.in, StandardCharsets.UTF_8));
+                b11rReader.readTree(
+                    new InputStreamReader(parentCommand.in, StandardCharsets.UTF_8));
       } else {
         config = objectMapper.createObjectNode();
       }
 
       if (!header.equals(stdinPath)) {
         try (FileReader reader = new FileReader(header.toFile(), StandardCharsets.UTF_8)) {
-          config.set("header", t8nReader.readTree(reader));
+          config.set("header", b11rReader.readTree(reader));
         }
       }
       if (!txs.equals(stdinPath)) {
         try (FileReader reader = new FileReader(txs.toFile(), StandardCharsets.UTF_8)) {
-          config.set("txs", t8nReader.readTree(reader));
+          config.set("txs", b11rReader.readTree(reader));
+        }
+      }
+      if (!withdrawals.equals(stdinPath)) {
+        try (FileReader reader = new FileReader(withdrawals.toFile(), StandardCharsets.UTF_8)) {
+          config.set("withdrawals", b11rReader.readTree(reader));
         }
       }
       if (!ommers.equals(stdinPath)) {
         try (FileReader reader = new FileReader(ommers.toFile(), StandardCharsets.UTF_8)) {
-          config.set("ommers", t8nReader.readTree(reader));
+          config.set("ommers", b11rReader.readTree(reader));
         }
       }
       if (!sealClique.equals(stdinPath)) {
         try (FileReader reader = new FileReader(sealClique.toFile(), StandardCharsets.UTF_8)) {
-          config.set("clique", t8nReader.readTree(reader));
+          config.set("clique", b11rReader.readTree(reader));
         }
       }
     } catch (final JsonProcessingException jpe) {
@@ -177,16 +205,17 @@ public class B11rSubCommand implements Runnable {
       jpe.printStackTrace();
       return;
     } catch (final IOException e) {
-      LOG.error("Unable to read state file", e);
+      System.err.println("Unable to read state file");
+      e.printStackTrace(System.err);
       return;
     }
 
-    var testHeader = this.readHeader(config.get("header"));
+    var testHeader = this.readHeader(config.get("header"), objectMapper);
     Bytes txsBytes = null;
 
     if (config.has("txs")) {
       String txsString = config.get("txs").textValue();
-      if (txsString.length() > 0) {
+      if (!txsString.isEmpty()) {
         txsBytes = Bytes.fromHexString(txsString);
       }
     }
@@ -198,7 +227,7 @@ public class B11rSubCommand implements Runnable {
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     rlpOut.startList();
     newHeader.writeTo(rlpOut);
-    if (txsBytes != null && txsBytes.size() > 0) {
+    if (txsBytes != null && !txsBytes.isEmpty()) {
       rlpOut.writeRaw(txsBytes);
     } else {
       rlpOut.startList();
@@ -238,7 +267,8 @@ public class B11rSubCommand implements Runnable {
     }
   }
 
-  private ReferenceTestBlockHeader readHeader(final JsonNode jsonObject) {
+  private ReferenceTestBlockHeader readHeader(
+      final JsonNode jsonObject, final ObjectMapper objectMapper) {
     ObjectNode objectNode = (ObjectNode) jsonObject;
     maybeMoveField(objectNode, "sha3Uncles", "uncleHash");
     maybeMoveField(objectNode, "miner", "coinbase");

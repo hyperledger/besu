@@ -24,7 +24,8 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class TransactionProcessingResult {
+public class TransactionProcessingResult
+    implements org.hyperledger.besu.plugin.data.TransactionProcessingResult {
 
   /** The status of the transaction after being processed. */
   public enum Status {
@@ -113,6 +114,7 @@ public class TransactionProcessingResult {
    *
    * @return the logs produced by the transaction
    */
+  @Override
   public List<Log> getLogs() {
     return logs;
   }
@@ -124,6 +126,7 @@ public class TransactionProcessingResult {
    *
    * @return the gas remaining after the transaction was processed
    */
+  @Override
   public long getGasRemaining() {
     return gasRemaining;
   }
@@ -134,6 +137,7 @@ public class TransactionProcessingResult {
    *
    * @return the estimate gas used
    */
+  @Override
   public long getEstimateGasUsedByTransaction() {
     return estimateGasUsedByTransaction;
   }
@@ -147,26 +151,39 @@ public class TransactionProcessingResult {
     return status;
   }
 
+  @Override
   public Bytes getOutput() {
     return output;
   }
 
   /**
-   * Returns whether or not the transaction was invalid.
+   * Returns whether the transaction was invalid.
    *
    * @return {@code true} if the transaction was invalid; otherwise {@code false}
    */
+  @Override
   public boolean isInvalid() {
     return getStatus() == Status.INVALID;
   }
 
   /**
-   * Returns whether or not the transaction was successfully processed.
+   * Returns whether the transaction was successfully processed.
    *
    * @return {@code true} if the transaction was successfully processed; otherwise {@code false}
    */
+  @Override
   public boolean isSuccessful() {
     return getStatus() == Status.SUCCESSFUL;
+  }
+
+  /**
+   * Returns whether the transaction failed.
+   *
+   * @return {@code true} if the transaction failed; otherwise {@code false}
+   */
+  @Override
+  public boolean isFailed() {
+    return getStatus() == Status.FAILED;
   }
 
   /**
@@ -183,6 +200,7 @@ public class TransactionProcessingResult {
    *
    * @return the revert reason.
    */
+  @Override
   public Optional<Bytes> getRevertReason() {
     return revertReason;
   }

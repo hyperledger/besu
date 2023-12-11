@@ -24,19 +24,20 @@ import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
+import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.BesuContext;
@@ -61,27 +62,11 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
 
   private final Blockchain blockchain;
 
+  private final CachedWorldStorageManager cachedWorldStorageManager;
   private final TrieLogManager trieLogManager;
   private final BonsaiWorldState persistedState;
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
-
   private final CachedMerkleTrieLoader cachedMerkleTrieLoader;
-
-  public BonsaiWorldStateProvider(
-      final StorageProvider provider,
-      final Blockchain blockchain,
-      final CachedMerkleTrieLoader cachedMerkleTrieLoader,
-      final ObservableMetricsSystem metricsSystem,
-      final BesuContext pluginContext) {
-    this(
-        (BonsaiWorldStateKeyValueStorage)
-            provider.createWorldStateStorage(DataStorageFormat.BONSAI),
-        blockchain,
-        Optional.empty(),
-        cachedMerkleTrieLoader,
-        metricsSystem,
-        pluginContext);
-  }
 
   public BonsaiWorldStateProvider(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
@@ -89,51 +74,57 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
       final Optional<Long> maxLayersToLoad,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
       final ObservableMetricsSystem metricsSystem,
-      final BesuContext pluginContext) {
+      final BesuContext pluginContext,
+      final EvmConfiguration evmConfiguration,
+      final TrieLogPruner trieLogPruner) {
 
+    this.cachedWorldStorageManager =
+        new CachedWorldStorageManager(this, worldStateStorage, metricsSystem);
     // TODO: de-dup constructors
     this.trieLogManager =
-        new CachedWorldStorageManager(
-            this,
+        new TrieLogManager(
             blockchain,
             worldStateStorage,
-            metricsSystem,
             maxLayersToLoad.orElse(RETAINED_LAYERS),
-            pluginContext);
+            pluginContext,
+            trieLogPruner);
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;
-    this.persistedState = new BonsaiWorldState(this, worldStateStorage);
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
+    this.persistedState = new BonsaiWorldState(this, worldStateStorage, evmConfiguration);
     blockchain
-        .getBlockHeader(persistedState.worldStateBlockHash)
+        .getBlockHeader(persistedState.getWorldStateBlockHash())
         .ifPresent(
             blockHeader ->
-                this.trieLogManager.addCachedLayer(
-                    blockHeader, persistedState.worldStateRootHash, persistedState));
+                this.cachedWorldStorageManager.addCachedLayer(
+                    blockHeader, persistedState.getWorldStateRootHash(), persistedState));
   }
 
   @VisibleForTesting
   BonsaiWorldStateProvider(
+      final CachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Blockchain blockchain,
-      final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
+      final CachedMerkleTrieLoader cachedMerkleTrieLoader,
+      final EvmConfiguration evmConfiguration) {
+    this.cachedWorldStorageManager = cachedWorldStorageManager;
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;
-    this.persistedState = new BonsaiWorldState(this, worldStateStorage);
+    this.persistedState = new BonsaiWorldState(this, worldStateStorage, evmConfiguration);
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
     blockchain
-        .getBlockHeader(persistedState.worldStateBlockHash)
+        .getBlockHeader(persistedState.getWorldStateBlockHash())
         .ifPresent(
             blockHeader ->
-                this.trieLogManager.addCachedLayer(
-                    blockHeader, persistedState.worldStateRootHash, persistedState));
+                this.cachedWorldStorageManager.addCachedLayer(
+                    blockHeader, persistedState.getWorldStateRootHash(), persistedState));
   }
 
   @Override
   public Optional<WorldState> get(final Hash rootHash, final Hash blockHash) {
-    return trieLogManager
+    return cachedWorldStorageManager
         .getWorldState(blockHash)
         .or(
             () -> {
@@ -148,7 +139,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
 
   @Override
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
-    return trieLogManager.containWorldStateStorage(blockHash)
+    return cachedWorldStorageManager.containWorldStateStorage(blockHash)
         || persistedState.blockHash().equals(blockHash)
         || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
@@ -167,10 +158,10 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
             trieLogManager.getMaxLayersToLoad());
         return Optional.empty();
       }
-      return trieLogManager
+      return cachedWorldStorageManager
           .getWorldState(blockHeader.getHash())
-          .or(() -> trieLogManager.getNearestWorldState(blockHeader))
-          .or(() -> trieLogManager.getHeadWorldState(blockchain::getBlockHeader))
+          .or(() -> cachedWorldStorageManager.getNearestWorldState(blockHeader))
+          .or(() -> cachedWorldStorageManager.getHeadWorldState(blockchain::getBlockHeader))
           .flatMap(
               bonsaiWorldState ->
                   rollMutableStateToBlockHash(bonsaiWorldState, blockHeader.getHash()))
@@ -291,10 +282,16 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     return persistedState;
   }
 
+  /**
+   * Prepares the state healing process for a given address and location. It prepares the state
+   * healing, including retrieving data from storage, identifying invalid slots or nodes, removing
+   * account and slot from the state trie, and committing the changes. Finally, it downgrades the
+   * world state storage to partial flat database mode.
+   */
   public void prepareStateHealing(final Address address, final Bytes location) {
     final Set<Bytes> keysToDelete = new HashSet<>();
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = worldStateStorage.updater();
-    final Hash accountHash = Hash.hash(address);
+    final Hash accountHash = address.addressHash();
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(
             (l, h) -> {
@@ -304,7 +301,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
               }
               return node;
             },
-            persistedState.worldStateRootHash,
+            persistedState.getWorldStateRootHash(),
             Function.identity(),
             Function.identity());
     try {
@@ -340,31 +337,48 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     }
     keysToDelete.forEach(bytes -> updater.removeAccountStateTrieNode(bytes, null));
     updater.commit();
+
+    worldStateStorage.downgradeToPartialFlatDbMode();
   }
 
   public TrieLogManager getTrieLogManager() {
     return trieLogManager;
   }
 
-  @Override
-  public void resetArchiveStateTo(final BlockHeader blockHeader) {
-    persistedState.resetWorldStateTo(blockHeader);
-    this.trieLogManager.reset();
-    this.trieLogManager.addCachedLayer(
-        blockHeader, persistedState.worldStateRootHash, persistedState);
+  public CachedWorldStorageManager getCachedWorldStorageManager() {
+    return cachedWorldStorageManager;
   }
 
   @Override
-  public Optional<Bytes> getNodeData(final Hash hash) {
+  public void resetArchiveStateTo(final BlockHeader blockHeader) {
+    persistedState.resetWorldStateTo(blockHeader);
+    this.cachedWorldStorageManager.reset();
+    this.cachedWorldStorageManager.addCachedLayer(
+        blockHeader, persistedState.getWorldStateRootHash(), persistedState);
+  }
+
+  @Override
+  public <U> Optional<U> getAccountProof(
+      final BlockHeader blockHeader,
+      final Address accountAddress,
+      final List<UInt256> accountStorageKeys,
+      final Function<Optional<WorldStateProof>, ? extends Optional<U>> mapper) {
+    try (BonsaiWorldState ws = (BonsaiWorldState) getMutable(blockHeader, false).orElse(null)) {
+      if (ws != null) {
+        final WorldStateProofProvider worldStateProofProvider =
+            new WorldStateProofProvider(ws.getWorldStateStorage());
+        return mapper.apply(
+            worldStateProofProvider.getAccountProof(
+                ws.getWorldStateRootHash(), accountAddress, accountStorageKeys));
+      }
+    } catch (Exception ex) {
+      LOG.error("failed proof query for " + blockHeader.getBlockHash().toShortHexString(), ex);
+    }
     return Optional.empty();
   }
 
   @Override
-  public Optional<WorldStateProof> getAccountProof(
-      final Hash worldStateRoot,
-      final Address accountAddress,
-      final List<UInt256> accountStorageKeys) {
-    // FIXME we can do proofs for layered tries and the persisted trie
+  public Optional<Bytes> getNodeData(final Hash hash) {
     return Optional.empty();
   }
 

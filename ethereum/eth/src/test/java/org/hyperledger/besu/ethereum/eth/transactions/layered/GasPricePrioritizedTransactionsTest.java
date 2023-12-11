@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
@@ -44,7 +45,7 @@ public class GasPricePrioritizedTransactionsTest extends AbstractPrioritizedTran
           transactionReplacementTester) {
 
     return new GasPricePrioritizedTransactions(
-        poolConfig, nextLayer, txPoolMetrics, transactionReplacementTester);
+        poolConfig, nextLayer, txPoolMetrics, transactionReplacementTester, new BlobCache());
   }
 
   @Override

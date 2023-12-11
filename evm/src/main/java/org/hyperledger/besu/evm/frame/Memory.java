@@ -14,8 +14,11 @@
  */
 package org.hyperledger.besu.evm.frame;
 
+import org.hyperledger.besu.evm.internal.Words;
+
 import java.util.Arrays;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -100,7 +103,7 @@ public class Memory {
     }
 
     try {
-      final long byteSize = Math.addExact(Math.addExact(location, numBytes), 31);
+      final long byteSize = Words.clampedAdd(Words.clampedAdd(location, numBytes), 31);
       long wordSize = byteSize / 32;
       return Math.max(wordSize, activeWords);
     } catch (ArithmeticException ae) {
@@ -177,7 +180,8 @@ public class Memory {
    *
    * @return The current number of active words stored in memory.
    */
-  int getActiveWords() {
+  @VisibleForTesting
+  public int getActiveWords() {
     return activeWords;
   }
 
@@ -200,9 +204,38 @@ public class Memory {
     }
 
     final int start = asByteIndex(location);
-
     ensureCapacityForBytes(start, length);
     return Bytes.wrap(Arrays.copyOfRange(memBytes, start, start + length));
+  }
+
+  /**
+   * Returns a copy of bytes by peeking into memory without expanding the active words.
+   *
+   * @param location The location in memory to start with.
+   * @param numBytes The number of bytes to get.
+   * @return A fresh copy of the bytes from memory starting at {@code location} and extending {@code
+   *     numBytes}.
+   */
+  public Bytes getBytesWithoutGrowth(final long location, final long numBytes) {
+    // Note: if length == 0, we don't require any memory expansion, whatever location is. So
+    // we must call asByteIndex(location) after this check so as it doesn't throw if the location
+    // is too big but the length is 0 (which is somewhat nonsensical, but is exercise by some
+    // tests).
+    final int length = asByteLength(numBytes);
+    if (length == 0) {
+      return Bytes.EMPTY;
+    }
+
+    final int start = asByteIndex(location);
+
+    // Arrays.copyOfRange would throw if start > memBytes.length, so just return the expected
+    // number of zeros without expanding the memory.
+    // Otherwise, just follow the happy path.
+    if (start > memBytes.length) {
+      return Bytes.wrap(new byte[(int) numBytes]);
+    } else {
+      return Bytes.wrap(Arrays.copyOfRange(memBytes, start, start + length));
+    }
   }
 
   /**
@@ -406,6 +439,20 @@ public class Memory {
     final int start = asByteIndex(location);
     ensureCapacityForBytes(start, Bytes32.SIZE);
     System.arraycopy(bytes.toArrayUnsafe(), 0, memBytes, start, Bytes32.SIZE);
+  }
+
+  /**
+   * Copies one length of bytes to a new memory location, growing memory if needed.
+   *
+   * <p>Copying behaves as if the values are copied to an intermediate buffer before writing.
+   *
+   * @param dst where to copy the bytes _to_
+   * @param src where to copy the bytes _from_
+   * @param length the number of bytes to copy.
+   */
+  public void copy(final long dst, final long src, final long length) {
+    ensureCapacityForBytes(Math.max(dst, src), length);
+    System.arraycopy(memBytes, asByteIndex(src), memBytes, asByteIndex(dst), asByteLength(length));
   }
 
   @Override

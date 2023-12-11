@@ -58,13 +58,9 @@ public class KeyValueStorageProviderBuilder {
     final KeyValueStorage worldStatePreImageStorage =
         new LimitedInMemoryKeyValueStorage(DEFAULT_WORLD_STATE_PRE_IMAGE_CACHE_SIZE);
 
-    // this tickles init needed for isSegmentIsolationSupported
-    storageFactory.create(KeyValueSegmentIdentifier.BLOCKCHAIN, commonConfiguration, metricsSystem);
     return new KeyValueStorageProvider(
-        segment -> storageFactory.create(segment, commonConfiguration, metricsSystem),
+        segments -> storageFactory.create(segments, commonConfiguration, metricsSystem),
         worldStatePreImageStorage,
-        storageFactory.isSegmentIsolationSupported(),
-        storageFactory.isSnapshotIsolationSupported(),
         (ObservableMetricsSystem) metricsSystem);
   }
 }

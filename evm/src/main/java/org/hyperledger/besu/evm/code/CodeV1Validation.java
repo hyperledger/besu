@@ -135,9 +135,9 @@ public final class CodeV1Validation {
     VALID, // 0x59 - MSIZE
     VALID, // 0x5a - GAS
     VALID, // 0x5b - NOOOP (née JUMPDEST)
-    VALID_AND_TERMINAL, // 0X5c - RJUMP
-    VALID, // 0X5d - RJUMPI
-    VALID, // 0X5e - RJUMPV
+    VALID, // 0X5c - TLOAD
+    VALID, // 0X5d - TSTORE
+    VALID, // 0X5e - MCOPY
     VALID, // 0X5f - PUSH0
     VALID, // 0x60 - PUSH1
     VALID, // 0x61 - PUSH2
@@ -219,9 +219,9 @@ public final class CodeV1Validation {
     INVALID, // 0xad
     INVALID, // 0xae
     INVALID, // 0xaf
-    VALID, // 0xb0 - CALLF
-    VALID_AND_TERMINAL, // 0xb1 - RETF
-    INVALID, // 0xb2 - JUMPF
+    INVALID, // 0xb0
+    INVALID, // 0xb1
+    INVALID, // 0xb2
     INVALID, // 0xb3
     INVALID, // 0xb4
     INVALID, // 0xb5
@@ -267,11 +267,11 @@ public final class CodeV1Validation {
     INVALID, // 0xdd
     INVALID, // 0xde
     INVALID, // 0xef
-    INVALID, // 0xe0
-    INVALID, // 0xe1
-    INVALID, // 0xe2
-    INVALID, // 0xe3
-    INVALID, // 0xe4
+    VALID_AND_TERMINAL, // 0xe0 - RJUMP
+    VALID, // 0xe1 - RJUMPI
+    VALID, // 0xe2 - RJUMPV
+    VALID, // 0xe3 - CALLF
+    VALID_AND_TERMINAL, // 0xe4 - RETF
     INVALID, // 0xe5
     INVALID, // 0xe6
     INVALID, // 0xe7
@@ -398,9 +398,9 @@ public final class CodeV1Validation {
     {0, 1, 1}, // 0x59 - MSIZE
     {0, 1, 1}, // 0x5a - GAS
     {0, 0, 1}, // 0x5b - NOOP (née JUMPDEST)
-    {0, 0, -3}, // 0x5c - RJUMP
-    {1, 0, 3}, // 0x5d - RJUMPI
-    {1, 0, 2}, // 0x5e - RJUMPV
+    {1, 1, 1}, // 0x5c - TLOAD
+    {2, 0, 1}, // 0x5d - TSTORE
+    {4, 0, 1}, // 0x5e - MCOPY
     {0, 1, 1}, // 0x5f - PUSH0
     {0, 1, 2}, // 0x60 - PUSH1
     {0, 1, 3}, // 0x61 - PUSH2
@@ -482,9 +482,9 @@ public final class CodeV1Validation {
     {0, 0, 0}, // 0xad
     {0, 0, 0}, // 0xae
     {0, 0, 0}, // 0xaf
-    {0, 0, 3}, // 0xb0 - CALLF
-    {0, 0, -1}, // 0xb1 - RETF
-    {0, 0, 0}, // 0xb2 - JUMPF
+    {0, 0, 0}, // 0xb0
+    {0, 0, 0}, // 0xb1
+    {0, 0, 0}, // 0xb2
     {0, 0, 0}, // 0xb3
     {0, 0, 0}, // 0xb4
     {0, 0, 0}, // 0xb5
@@ -530,12 +530,12 @@ public final class CodeV1Validation {
     {0, 0, 0}, // 0xdd
     {0, 0, 0}, // 0xde
     {0, 0, 0}, // 0xef
-    {0, 0, 0}, // 0xe0
-    {0, 0, 0}, // 0xe1
-    {0, 0, 0}, // 0xe2
-    {0, 0, 0}, // 0xe3
-    {0, 0, 0}, // 0xe4
-    {0, 0, 0}, // 0xe5
+    {0, 0, -3}, // 0xe0 - RJUMP
+    {1, 0, 3}, // 0xe1 - RJUMPI
+    {1, 0, 2}, // 0xe2 - RJUMPV
+    {0, 0, 3}, // 0xe3 - CALLF
+    {0, 0, -1}, // 0xe4 - RETF
+    {0, 0, 0}, // 0xe5 - JUMPF
     {0, 0, 0}, // 0xe6
     {0, 0, 0}, // 0xe7
     {0, 0, 0}, // 0xe8

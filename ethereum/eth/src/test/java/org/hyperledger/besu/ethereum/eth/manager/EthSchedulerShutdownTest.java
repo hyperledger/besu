@@ -21,8 +21,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EthSchedulerShutdownTest {
 
@@ -32,21 +32,24 @@ public class EthSchedulerShutdownTest {
   private ExecutorService txWorkerExecutor;
   private ExecutorService servicesExecutor;
   private ExecutorService computationExecutor;
+  private ExecutorService blockCreationExecutor;
 
-  @Before
+  @BeforeEach
   public void setup() {
     scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
     syncWorkerExecutor = Executors.newSingleThreadExecutor();
     txWorkerExecutor = Executors.newSingleThreadExecutor();
     servicesExecutor = Executors.newSingleThreadExecutor();
     computationExecutor = Executors.newSingleThreadExecutor();
+    blockCreationExecutor = Executors.newSingleThreadExecutor();
     ethScheduler =
         new EthScheduler(
             syncWorkerExecutor,
             scheduledExecutor,
             txWorkerExecutor,
             servicesExecutor,
-            computationExecutor);
+            computationExecutor,
+            blockCreationExecutor);
   }
 
   @Test

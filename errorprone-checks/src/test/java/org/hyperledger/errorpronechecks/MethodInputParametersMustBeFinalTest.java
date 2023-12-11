@@ -15,14 +15,14 @@
 package org.hyperledger.errorpronechecks;
 
 import com.google.errorprone.CompilationTestHelper;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class MethodInputParametersMustBeFinalTest {
 
   private CompilationTestHelper compilationHelper;
 
-  @Before
+  @BeforeEach
   public void setup() {
     compilationHelper =
         CompilationTestHelper.newInstance(MethodInputParametersMustBeFinal.class, getClass());

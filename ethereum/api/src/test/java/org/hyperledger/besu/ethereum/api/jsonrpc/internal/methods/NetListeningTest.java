@@ -26,20 +26,20 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import java.util.List;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class NetListeningTest {
 
   private NetListening method;
 
   @Mock private P2PNetwork p2PNetwork;
 
-  @Before
+  @BeforeEach
   public void before() {
     this.method = new NetListening(p2PNetwork);
   }

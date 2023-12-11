@@ -24,8 +24,10 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BftVanityDataValidationRuleTest {
   private final BftVanityDataValidationRule validationRule = new BftVanityDataValidationRule();
@@ -44,7 +46,8 @@ public class BftVanityDataValidationRuleTest {
         new BftExtraData(Bytes.wrap(new byte[extraDataSize]), emptyList(), empty(), 0, emptyList());
 
     final ProtocolContext context =
-        new ProtocolContext(null, null, setupContextWithBftExtraData(emptyList(), extraData));
+        new ProtocolContext(
+            null, null, setupContextWithBftExtraData(emptyList(), extraData), Optional.empty());
     return validationRule.validate(blockHeader, null, context);
   }
 }

@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
+import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -38,7 +39,9 @@ public class ChainDataPrunerTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final BlockchainStorage blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(
-            new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
+            new InMemoryKeyValueStorage(),
+            new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
+            new MainnetBlockHeaderFunctions());
     final ChainDataPruner chainDataPruner =
         new ChainDataPruner(
             blockchainStorage,
@@ -74,7 +77,9 @@ public class ChainDataPrunerTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final BlockchainStorage blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(
-            new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
+            new InMemoryKeyValueStorage(),
+            new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
+            new MainnetBlockHeaderFunctions());
     final ChainDataPruner chainDataPruner =
         new ChainDataPruner(
             blockchainStorage,

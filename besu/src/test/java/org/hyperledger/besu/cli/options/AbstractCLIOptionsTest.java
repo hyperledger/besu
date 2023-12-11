@@ -16,11 +16,15 @@ package org.hyperledger.besu.cli.options;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.cli.CommandTestAbstract;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.junit.Test;
 
@@ -87,9 +91,9 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
         .isEqualTo(defaultOptions);
   }
 
-  abstract D createDefaultDomainObject();
+  protected abstract D createDefaultDomainObject();
 
-  abstract D createCustomizedDomainObject();
+  protected abstract D createCustomizedDomainObject();
 
   protected List<String> getFieldsWithComputedDefaults() {
     return Collections.emptyList();
@@ -99,7 +103,51 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
     return Collections.emptyList();
   }
 
-  abstract T optionsFromDomainObject(D domainObject);
+  protected abstract T optionsFromDomainObject(D domainObject);
 
-  abstract T getOptionsFromBesuCommand(final TestBesuCommand besuCommand);
+  protected abstract T getOptionsFromBesuCommand(final TestBesuCommand besuCommand);
+
+  protected void internalTestSuccess(final Consumer<D> assertion, final String... args) {
+    final TestBesuCommand cmd = parseCommand(args);
+
+    final T options = getOptionsFromBesuCommand(cmd);
+    final D config = options.toDomainObject();
+    assertion.accept(config);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    verify(mockControllerBuilder).build();
+  }
+
+  protected void internalTestFailure(final String errorMsg, final String... args) {
+    parseCommand(args);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).contains(errorMsg);
+  }
+
+  /**
+   * Check logger calls
+   *
+   * <p>Here we check the calls to logger and not the result of the log line as we don't test the
+   * logger itself but the fact that we call it.
+   *
+   * @param dependentOptions the string representing the list of dependent options names
+   * @param mainOption the main option name
+   */
+  protected void verifyOptionsConstraintLoggerCall(
+      final String mainOption, final String... dependentOptions) {
+    verify(mockLogger, atLeast(1))
+        .warn(
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture());
+    assertThat(stringArgumentCaptor.getAllValues().get(0)).isEqualTo(DEPENDENCY_WARNING_MSG);
+
+    for (final String option : dependentOptions) {
+      assertThat(stringArgumentCaptor.getAllValues().get(1)).contains(option);
+    }
+
+    assertThat(stringArgumentCaptor.getAllValues().get(2)).isEqualTo(mainOption);
+  }
 }

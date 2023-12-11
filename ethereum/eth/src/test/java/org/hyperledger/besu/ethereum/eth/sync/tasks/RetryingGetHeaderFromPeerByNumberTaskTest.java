@@ -22,8 +22,8 @@ import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 
 import java.util.List;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 public class RetryingGetHeaderFromPeerByNumberTaskTest
     extends RetryingMessageTaskTest<List<BlockHeader>> {
@@ -44,6 +44,6 @@ public class RetryingGetHeaderFromPeerByNumberTaskTest
 
   @Test
   @Override
-  @Ignore("It's not possible to return a partial result as we only ever request one header.")
+  @Disabled("It's not possible to return a partial result as we only ever request one header.")
   public void failsWhenPeerReturnsPartialResultThenStops() {}
 }

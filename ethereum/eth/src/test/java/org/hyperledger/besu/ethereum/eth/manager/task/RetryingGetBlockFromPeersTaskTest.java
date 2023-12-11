@@ -26,8 +26,8 @@ import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskR
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 public class RetryingGetBlockFromPeersTaskTest
     extends RetryingSwitchingPeerMessageTaskTest<PeerTaskResult<Block>> {
@@ -60,12 +60,12 @@ public class RetryingGetBlockFromPeersTaskTest
 
   @Test
   @Override
-  @Ignore("GetBlock could not return partial response")
+  @Disabled("GetBlock could not return partial response")
   public void failsWhenPeerReturnsPartialResultThenStops() {}
 
   @Override
   @Test
-  @Ignore("GetBlock could not return partial response")
+  @Disabled("GetBlock could not return partial response")
   public void completesWhenPeerReturnsPartialResult()
       throws ExecutionException, InterruptedException {
     super.completesWhenPeerReturnsPartialResult();
