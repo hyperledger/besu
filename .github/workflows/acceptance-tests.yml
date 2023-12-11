@@ -26,7 +26,8 @@ jobs:
     name: "Acceptance Runner #${{ matrix.runner-index }}: Run acceptance tests in parallel"
     needs:
       - runner-indexes
-    if: ${{ github.actor != 'dependabot[bot]' && github.event.review.state == 'approved'}}
+    # TODO: return check for PR approval here!
+    if: ${{ github.actor != 'dependabot[bot]'}}
     strategy:
       fail-fast: false
       matrix:
