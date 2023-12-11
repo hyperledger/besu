@@ -28,13 +28,14 @@ jobs:
       - name: store generated tests
         uses: actions/upload-artifact@v3
         with:
-          name: reference-tests
+          name: 'reference-tests'
           path: 'ethereum/referencetests/build/generated/sources/reference-test/**/*.java'
 
   referenceTestEthereum:
     runs-on: ubuntu-22.04
     needs:
       - prepareReferenceTestEthereum
+    #TODO: add condition to check pr is approved
     if: ${{ github.actor != 'dependabot[bot]' }}
     strategy:
       fail-fast: false
@@ -53,7 +54,8 @@ jobs:
       - name: retrieve generated tests
         uses: dawidd6/action-download-artifact@v2
         with:
-          name: reference-tests
+          name: 'reference-tests'
+          path: 'ethereum/referencetests/build/generated/sources/reference-test/'
       - name: get reference test report
         uses: dawidd6/action-download-artifact@v2
         with:
