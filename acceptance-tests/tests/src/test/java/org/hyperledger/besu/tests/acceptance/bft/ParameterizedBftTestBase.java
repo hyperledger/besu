@@ -23,15 +23,14 @@ import org.junit.jupiter.params.provider.Arguments;
 
 @Ignore("This is not a test class, it offers BFT parameterization only.")
 public abstract class ParameterizedBftTestBase extends AcceptanceTestBase {
-  protected  String bftType;
-  protected  BftAcceptanceTestParameterization nodeFactory;
+  protected String bftType;
+  protected BftAcceptanceTestParameterization nodeFactory;
 
   public static Stream<Arguments> factoryFunctions() {
     return BftAcceptanceTestParameterization.getFactories();
   }
 
-  protected void setUp(
-      final String bftType, final BftAcceptanceTestParameterization input) {
+  protected void setUp(final String bftType, final BftAcceptanceTestParameterization input) {
     this.bftType = bftType;
     this.nodeFactory = input;
   }

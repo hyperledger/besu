@@ -25,7 +25,7 @@ public class BftProposalRpcAcceptanceTest extends ParameterizedBftTestBase {
   @MethodSource("factoryFunctions")
   public void shouldReturnProposals(
       final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
-    setUp(testName,nodeFactory);
+    setUp(testName, nodeFactory);
     final String[] validators = {"validator1", "validator2", "validator3"};
     final BesuNode validator1 =
         nodeFactory.createNodeWithValidators(besu, "validator1", validators);

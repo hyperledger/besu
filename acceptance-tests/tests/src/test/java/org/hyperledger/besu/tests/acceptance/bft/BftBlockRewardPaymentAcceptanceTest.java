@@ -32,7 +32,6 @@ import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -40,11 +39,10 @@ public class BftBlockRewardPaymentAcceptanceTest extends ParameterizedBftTestBas
 
   private static final Amount BLOCK_REWARD = Amount.wei(new BigInteger("5000000000000000000", 10));
 
-
   @ParameterizedTest(name = "{0} bft node factory type")
   @MethodSource("factoryFunctions")
   public void validatorsArePaidBlockReward(
-          final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
+      final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
     setUp(testName, nodeFactory);
     final String[] validators = {"validator"};
     final BesuNode validator = nodeFactory.createNodeWithValidators(besu, "validator", validators);
@@ -62,11 +60,10 @@ public class BftBlockRewardPaymentAcceptanceTest extends ParameterizedBftTestBas
             Amount.ether(blockRewardEth * blockToCheck), BigInteger.valueOf(blockToCheck)));
   }
 
-
   @ParameterizedTest(name = "{0} bft node factory type")
   @MethodSource("factoryFunctions")
   public void payBlockRewardToConfiguredNode(
-          final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
+      final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
     setUp(testName, nodeFactory);
     final String[] validators = {"validator1"};
     final BesuNode validator1 =
@@ -95,11 +92,10 @@ public class BftBlockRewardPaymentAcceptanceTest extends ParameterizedBftTestBas
             Amount.ether(blockRewardEth * blockToCheck), BigInteger.valueOf(blockToCheck)));
   }
 
-
   @ParameterizedTest(name = "{0} bft node factory type")
   @MethodSource("factoryFunctions")
   public void payBlockRewardAccordingToTransitions_defaultInitialMiningBeneficiary(
-          final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
+      final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
     setUp(testName, nodeFactory);
     final List<Address> addresses = generateAddresses(2);
     final Map<Long, Optional<Address>> transitions =
@@ -111,11 +107,10 @@ public class BftBlockRewardPaymentAcceptanceTest extends ParameterizedBftTestBas
     testMiningBeneficiaryTransitions(Optional.empty(), transitions);
   }
 
-
   @ParameterizedTest(name = "{0} bft node factory type")
   @MethodSource("factoryFunctions")
   public void payBlockRewardAccordingToTransitions_customInitialMiningBeneficiary(
-          final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
+      final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
     setUp(testName, nodeFactory);
     final List<Address> addresses = generateAddresses(4);
     final Map<Long, Optional<Address>> transitions =

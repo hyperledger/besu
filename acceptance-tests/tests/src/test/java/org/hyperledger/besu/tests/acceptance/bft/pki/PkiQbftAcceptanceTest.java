@@ -20,15 +20,16 @@ package org.hyperledger.besu.tests.acceptance.bft.pki;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class PkiQbftAcceptanceTest extends ParameterizedPkiQbftTestBase {
 
-@ParameterizedTest(name = "{index}: {0}")
-@MethodSource("factoryFunctions")
-  public void shouldMineOnSingleNode(final String testName, final PkiQbftAcceptanceTestParameterization nodeFactory) throws Exception {
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("factoryFunctions")
+  public void shouldMineOnSingleNode(
+      final String testName, final PkiQbftAcceptanceTestParameterization nodeFactory)
+      throws Exception {
     final BesuNode minerNode = nodeFactory.createNode(besu, "miner1");
     cluster.start(minerNode);
 
@@ -49,7 +50,9 @@ public class PkiQbftAcceptanceTest extends ParameterizedPkiQbftTestBase {
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("factoryFunctions")
-  public void shouldMineOnMultipleNodes(final String testName, final PkiQbftAcceptanceTestParameterization nodeFactory) throws Exception {
+  public void shouldMineOnMultipleNodes(
+      final String testName, final PkiQbftAcceptanceTestParameterization nodeFactory)
+      throws Exception {
     final BesuNode minerNode1 = nodeFactory.createNode(besu, "miner1");
     final BesuNode minerNode2 = nodeFactory.createNode(besu, "miner2");
     final BesuNode minerNode3 = nodeFactory.createNode(besu, "miner3");
@@ -74,10 +77,11 @@ public class PkiQbftAcceptanceTest extends ParameterizedPkiQbftTestBase {
     cluster.verify(receiver.balanceEquals(6));
   }
 
-
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("factoryFunctions")
-  public void shouldMineWithIgnoringANodeInCRL(final String testName, final PkiQbftAcceptanceTestParameterization nodeFactory) throws Exception {
+  public void shouldMineWithIgnoringANodeInCRL(
+      final String testName, final PkiQbftAcceptanceTestParameterization nodeFactory)
+      throws Exception {
     final BesuNode minerNode1 = nodeFactory.createNode(besu, "miner1");
     final BesuNode minerNode2 = nodeFactory.createNode(besu, "miner2");
     final BesuNode minerNode3 = nodeFactory.createNode(besu, "miner3");

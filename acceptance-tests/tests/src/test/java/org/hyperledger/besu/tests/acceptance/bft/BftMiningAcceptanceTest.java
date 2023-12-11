@@ -28,17 +28,15 @@ import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
 
-
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("factoryFunctions")
   public void shouldMineOnSingleNodeWithPaidGas_Berlin(
-          final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
+      final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
     setUp(testName, nodeFactory);
     final BesuNode minerNode = nodeFactory.createNode(besu, "miner1");
     cluster.start(minerNode);
@@ -61,7 +59,7 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("factoryFunctions")
   public void shouldMineOnSingleNodeWithFreeGas_Berlin(
-          final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
+      final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
     setUp(testName, nodeFactory);
     final BesuNode minerNode = nodeFactory.createNode(besu, "miner1");
     final MiningParameters zeroGasMiningParams =
@@ -97,7 +95,7 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("factoryFunctions")
   public void shouldMineOnSingleNodeWithPaidGas_London(
-          final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
+      final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
     setUp(testName, nodeFactory);
     final BesuNode minerNode = nodeFactory.createNode(besu, "miner1");
     updateGenesisConfigToLondon(minerNode, false);
@@ -125,7 +123,7 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("factoryFunctions")
   public void shouldMineOnSingleNodeWithFreeGas_London(
-          final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
+      final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
     setUp(testName, nodeFactory);
     final BesuNode minerNode = nodeFactory.createNode(besu, "miner1");
     updateGenesisConfigToLondon(minerNode, true);
@@ -155,7 +153,7 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("factoryFunctions")
   public void shouldMineOnMultipleNodes(
-          final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
+      final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
     setUp(testName, nodeFactory);
     final BesuNode minerNode1 = nodeFactory.createNode(besu, "miner1");
     final BesuNode minerNode2 = nodeFactory.createNode(besu, "miner2");
@@ -184,7 +182,7 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("factoryFunctions")
   public void shouldMineOnMultipleNodesEvenWhenClusterContainsNonValidator(
-          final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
+      final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
     setUp(testName, nodeFactory);
     final String[] validators = {"validator1", "validator2", "validator3"};
     final BesuNode validator1 =
@@ -215,7 +213,7 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("factoryFunctions")
   public void shouldStillMineWhenANonProposerNodeFailsAndHasSufficientValidators(
-          final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
+      final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
     setUp(testName, nodeFactory);
     final BesuNode minerNode1 = nodeFactory.createNode(besu, "miner1");
     final BesuNode minerNode2 = nodeFactory.createNode(besu, "miner2");
