@@ -11,7 +11,7 @@ env:
 jobs:
   acceptanceTestEthereum:
     runs-on: ubuntu-22.04
-    name: "Acceptance Runner #${{ matrix.runner-index }}: Run acceptance tests in parallel"
+    name: "Acceptance Runner #${{ matrix.runner_index }}: Run acceptance tests in parallel"
     # TODO: return check for PR approval here!
     if: ${{ github.actor != 'dependabot[bot]'}}
     strategy:
@@ -42,7 +42,7 @@ jobs:
           reports: tmp/junit-xml-reports-downloaded
           glob: 'acceptance-tests/tests/src/test/java/org/hyperledger/besu/tests/acceptance/**/*Test.java'
           total: 16
-          index: ${{ matrix.runner-index }}
+          index: ${{ matrix.runner_index }}
       - name: write out test list
         run: echo "${{ steps.split-tests.outputs.paths }}" >> testList.txt
       - name: format gradle args
