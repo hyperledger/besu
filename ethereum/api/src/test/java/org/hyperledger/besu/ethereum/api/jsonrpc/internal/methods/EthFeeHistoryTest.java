@@ -174,9 +174,9 @@ public class EthFeeHistoryTest {
 
     ApiConfiguration apiConfiguration =
         ImmutableApiConfiguration.builder()
-            .isPriorityFeeLimitingEnabled(true)
-            .lowerBoundPriorityFeeCoefficient(200L) // Min reward = Wei.One * 200L / 100 = 2.0
-            .upperBoundPriorityFeeCoefficient(500L)
+            .isGasAndPriorityFeeLimitingEnabled(true)
+            .lowerBoundGasAndPriorityFeeCoefficient(200L) // Min reward = Wei.One * 200L / 100 = 2.0
+            .upperBoundGasAndPriorityFeeCoefficient(500L)
             .build(); // Max reward = Wei.One * 500L / 100 = 5.0
 
     EthFeeHistory ethFeeHistory =
