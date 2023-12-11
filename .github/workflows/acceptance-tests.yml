@@ -2,11 +2,9 @@ name: acceptance-tests
 on:
   workflow_dispatch:
 
-
-
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
-  total-runners: 32
+  total-runners: 16
 
 jobs:
   acceptanceTestEthereum:
@@ -32,7 +30,7 @@ jobs:
           branch: main
           name: acceptance-test-results
           path: tmp/junit-xml-reports-downloaded
-          continue-on-error: true
+          if_no_artifact_found: true
       - name: setup gradle
         uses: gradle/gradle-build-action@v2
       - name: Split tests
@@ -41,7 +39,7 @@ jobs:
         with:
           reports: tmp/junit-xml-reports-downloaded
           glob: 'acceptance-tests/tests/src/test/java/org/hyperledger/besu/tests/acceptance/**/*Test.java'
-          total: 16
+          total: ${{env.total-runners}}
           index: ${{ matrix.runner_index }}
       - name: write out test list
         run: echo "${{ steps.split-tests.outputs.paths }}" >> testList.txt

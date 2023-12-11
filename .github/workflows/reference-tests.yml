@@ -2,31 +2,15 @@ name: reference-tests
 on:
   workflow_dispatch:
 
-
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
   total-runners: 6
 
 jobs:
-  runner-indexes:
-    runs-on: ubuntu-22.04
-    name: Generate runner indexes
-    outputs:
-      json: ${{ steps.generate-index-list.outputs.json }}
-    steps:
-      - id: generate-index-list
-        run: |
-          MAX_INDEX=$((${{ env.total-runners }}-1))
-          INDEX_LIST=$(seq 0 ${MAX_INDEX})
-          INDEX_JSON=$(jq --null-input --compact-output '. |= [inputs]' <<< ${INDEX_LIST})
-          echo "::set-output name=json::${INDEX_JSON}"
   prepareReferenceTestEthereum:
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
-      - name: export runner UID
-        run: echo "runner_uid=$UID" >> $GITHUB_ENV
       - name: Checkout Repo
         uses: actions/checkout@v3
         with:
@@ -37,38 +21,20 @@ jobs:
         with:
           distribution: adopt
           java-version: 17
-          cache: gradle
-      - name: Restore classes
-        uses: actions/cache@v3
-        with:
-          path: "**/*.class"
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
-      - name: generate ethereum reference tests
+      - name: setup gradle
         uses: gradle/gradle-build-action@v2
-        with:
-          arguments: ethereum:referencetests:blockchainReferenceTests ethereum:referencetests:generalstateReferenceTests ethereum:referencetests:generalstateRegressionReferenceTests
-      - name: Correct Ownership in GITHUB_WORKSPACE directory
-        uses: peter-murray/reset-workspace-ownership-action@v1
-        with:
-          user_id: ${{ env.runner_uid }}
-      - name: Cache reference tests
-        uses: actions/cache@v3
-        with:
-          path: "ethereum/referencetests/build/generated/sources/reference-test/**"
-          key: ${{ runner.os }}-reftests-${{ github.sha }}
+      - name: execute generate reference tests
+        run: ./gradlew ethereum:referencetests:blockchainReferenceTests ethereum:referencetests:generalstateReferenceTests ethereum:referencetests:generalstateRegressionReferenceTests -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
   referenceTestEthereum:
     runs-on: ubuntu-22.04
     needs:
       - prepareReferenceTestEthereum
-      - runner-indexes
-    timeout-minutes: 30
     if: ${{ github.actor != 'dependabot[bot]' }}
     strategy:
+      fail-fast: false
       matrix:
-        runner-index: ${{ fromjson(needs.runner-indexes.outputs.json) }}
+        runner-index: [0,1,2,3,4,5]
     steps:
-      - name: export runner UID
-        run: echo "runner_uid=$UID" >> $GITHUB_ENV
       - name: Checkout Repo
         uses: actions/checkout@v3
         with:
@@ -78,26 +44,27 @@ jobs:
         with:
           distribution: adopt
           java-version: 17
-          cache: gradle
-      - name: Restore classes
-        uses: actions/cache@v3
+      - name: get acceptance test report
+        uses: dawidd6/action-download-artifact@v2
         with:
-          path: "**/*.class"
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
-      - name: Restore reference tests
-        uses: actions/cache@v3
-        with:
-          path: "ethereum/referencetests/build/generated/sources/reference-test/**"
-          key: ${{ runner.os }}-reftests-${{ github.sha }}
+          branch: main
+          name: acceptance-test-results
+          path: tmp/ref-xml-reports-downloaded
+          if_no_artifact_found: true
+      - name: setup gradle
+        uses: gradle/gradle-build-action@v2
       - name: Split tests
         id: split-tests
-        uses: chaosaffe/split-tests@v1-alpha.1
+        uses: r7kamura/split-tests-by-timings@v0
         with:
+          reports: tmp/ref-xml-reports-downloaded
           glob: 'ethereum/referencetests/build/generated/sources/reference-test/**/*.java'
-          split-total: ${{ env.total-runners }}
-          split-index: ${{ matrix.runner-index }}
+          total: ${{env.total-runners}}
+          index: ${{ matrix.runner-index }}
+      - name: compose gradle args
+        run: echo ${{ steps.split-tests.outputs.paths }} | sed -e 's/^.*java\///' -e 's@/@.@g' -e 's/\.java//' -e 's/^/--tests /' > refTestArgs.txt
       - name: run reference tests
-        run: ./gradlew ethereum:referenceTests:referenceTests $(echo ${{ steps.split-tests.outputs.test-suite }} | sed -e 's/^.*java\///' -e 's@/@.@g' -e 's/\.java//' -e 's/^/--tests /')
+        run: ./gradlew ethereum:referenceTests:referenceTests `cat refTestArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Correct Ownership in GITHUB_WORKSPACE directory
         uses: peter-murray/reset-workspace-ownership-action@v1
         with:
@@ -106,43 +73,6 @@ jobs:
         uses: actions/upload-artifact@v3
         if: always() # always run even if the previous step fails
         with:
-          name: junit-reference-${{ matrix.runner-index }}-test-results
+          name: acceptance-test-results
           path: '**/build/test-results/referenceTests/TEST-*.xml'
-          retention-days: 1
-  referenceTestQbft:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 30
-    if: ${{ github.actor != 'dependabot[bot]' }}
-    steps:
-      - name: export runner UID
-        run: echo "runner_uid=$UID" >> $GITHUB_ENV
-      - name: Checkout Repo
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Set up Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: adopt
-          java-version: 17
-          cache: gradle
-      - name: Restore classes
-        uses: actions/cache@v3
-        with:
-          path: "**/*.class"
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
-      - name: qbft reference tests
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: consensus:qbft:referencetests
-      - name: Correct Ownership in GITHUB_WORKSPACE directory
-        uses: peter-murray/reset-workspace-ownership-action@v1
-        with:
-          user_id: ${{ env.runner_uid }}
-      - name: Upload Test Report
-        uses: actions/upload-artifact@v3
-        if: always() # always run even if the previous step fails
-        with:
-          name: junit-qbft-reference-test-results
-          path: '**/build/test-results/referenceTests/TEST-*.xml'
-          retention-days: 1
+
