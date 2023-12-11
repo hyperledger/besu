@@ -48,7 +48,7 @@ jobs:
       - name: format gradle args
         #regex means: first truncate file paths to align with package name, then swap path delimiter with package delimiter,
         #then drop file extension, then insert --tests option between each.
-        run: cat testList.txt | sed -e 's@acceptance-tests/tests/src/test/java/@@g' -e 's@/@.@g' -e 's/\.java//g' -e 's/\ /\ --tests\ /g' >> gradleArgs.txt
+        run: cat testList.txt | sed -e 's@acceptance-tests/tests/src/test/java/@--tests\ @g;s@/@.@g;s/\.java//g'  > gradleArgs.txt
       - name: run acceptance tests
         run: ./gradlew acceptanceTest --tests `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: cleanup tempfiles
