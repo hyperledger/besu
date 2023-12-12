@@ -185,7 +185,7 @@ tx-pool-save-file="txpool.dump"
 tx-pool-layer-max-capacity=12345678
 tx-pool-max-prioritized=9876
 tx-pool-max-future-by-sender=321
-## Legacy
+## Legacy/Sequenced
 tx-pool-retention-hours=999
 tx-pool-max-size=1234
 tx-pool-limit-by-account-percentage=0.017
