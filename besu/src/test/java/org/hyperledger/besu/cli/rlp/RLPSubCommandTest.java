@@ -24,11 +24,12 @@ import org.hyperledger.besu.cli.CommandTestAbstract;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import picocli.CommandLine.Model.CommandSpec;
 
 public class RLPSubCommandTest extends CommandTestAbstract {
@@ -158,31 +159,10 @@ public class RLPSubCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void encodeWithInputFilePathMustReadFromThisFile() throws Exception {
-
-    final File tempJsonFile = temp.newFile("test.json");
-    try (final BufferedWriter fileWriter = Files.newBufferedWriter(tempJsonFile.toPath(), UTF_8)) {
-
-      fileWriter.write(
-          "[\"be068f726a13c8d46c44be6ce9d275600e1735a4\", \"5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193\"]");
-
-      fileWriter.flush();
-
-      parseCommand(
-          RLP_SUBCOMMAND_NAME, RLP_ENCODE_SUBCOMMAND_NAME, "--from", tempJsonFile.getPath());
-
-      final String expectedRlpString =
-          "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d"
-              + "46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0";
-      assertThat(commandOutput.toString(UTF_8)).contains(expectedRlpString);
-      assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    }
-  }
-
-  @Test
-  public void canEncodeToQbftExtraData() throws IOException {
-    final File tempJsonFile = temp.newFile("test.json");
-    try (final BufferedWriter fileWriter = Files.newBufferedWriter(tempJsonFile.toPath(), UTF_8)) {
+  public void encodeWithInputFilePathMustReadFromThisFile(final @TempDir Path dir)
+      throws Exception {
+    final Path tempJsonFile = Files.createTempFile(dir, "input", "json");
+    try (final BufferedWriter fileWriter = Files.newBufferedWriter(tempJsonFile, UTF_8)) {
 
       fileWriter.write(
           "[\"be068f726a13c8d46c44be6ce9d275600e1735a4\", \"5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193\"]");
@@ -193,7 +173,31 @@ public class RLPSubCommandTest extends CommandTestAbstract {
           RLP_SUBCOMMAND_NAME,
           RLP_ENCODE_SUBCOMMAND_NAME,
           "--from",
-          tempJsonFile.getPath(),
+          tempJsonFile.toFile().getAbsolutePath());
+
+      final String expectedRlpString =
+          "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d"
+              + "46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0";
+      assertThat(commandOutput.toString(UTF_8)).contains(expectedRlpString);
+      assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    }
+  }
+
+  @Test
+  public void canEncodeToQbftExtraData(final @TempDir Path dir) throws Exception {
+    final Path tempJsonFile = Files.createTempFile(dir, "qbft", "json");
+    try (final BufferedWriter fileWriter = Files.newBufferedWriter(tempJsonFile, UTF_8)) {
+
+      fileWriter.write(
+          "[\"be068f726a13c8d46c44be6ce9d275600e1735a4\", \"5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193\"]");
+
+      fileWriter.flush();
+
+      parseCommand(
+          RLP_SUBCOMMAND_NAME,
+          RLP_ENCODE_SUBCOMMAND_NAME,
+          "--from",
+          tempJsonFile.toFile().getAbsolutePath(),
           "--type",
           RLP_QBFT_TYPE);
 
@@ -206,17 +210,19 @@ public class RLPSubCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void encodeWithInvalidInputMustRaiseAnError() throws Exception {
-
-    final File tempJsonFile = temp.newFile("invalid_test.json");
-    try (final BufferedWriter fileWriter = Files.newBufferedWriter(tempJsonFile.toPath(), UTF_8)) {
+  public void encodeWithInvalidInputMustRaiseAnError(final @TempDir Path dir) throws Exception {
+    final Path tempJsonFile = Files.createTempFile(dir, "invalid", "json");
+    try (final BufferedWriter fileWriter = Files.newBufferedWriter(tempJsonFile, UTF_8)) {
 
       fileWriter.write("{\"property\":0}");
 
       fileWriter.flush();
 
       parseCommand(
-          RLP_SUBCOMMAND_NAME, RLP_ENCODE_SUBCOMMAND_NAME, "--from", tempJsonFile.getPath());
+          RLP_SUBCOMMAND_NAME,
+          RLP_ENCODE_SUBCOMMAND_NAME,
+          "--from",
+          tempJsonFile.toFile().getAbsolutePath());
 
       assertThat(commandOutput.toString(UTF_8)).isEmpty();
       assertThat(commandErrorOutput.toString(UTF_8))
@@ -226,11 +232,13 @@ public class RLPSubCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void encodeWithEmptyInputMustRaiseAnError() throws Exception {
-
-    final File tempJsonFile = temp.newFile("empty.json");
-
-    parseCommand(RLP_SUBCOMMAND_NAME, RLP_ENCODE_SUBCOMMAND_NAME, "--from", tempJsonFile.getPath());
+  public void encodeWithEmptyInputMustRaiseAnError(final @TempDir Path dir) throws Exception {
+    final Path emptyFile = Files.createTempFile(dir, "empty", "json");
+    parseCommand(
+        RLP_SUBCOMMAND_NAME,
+        RLP_ENCODE_SUBCOMMAND_NAME,
+        "--from",
+        emptyFile.toFile().getAbsolutePath());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
@@ -251,7 +259,7 @@ public class RLPSubCommandTest extends CommandTestAbstract {
         .startsWith("An error occurred while trying to read the JSON data.");
   }
 
-  @After
+  @AfterEach
   public void restoreStdin() {
     System.setIn(System.in);
   }
