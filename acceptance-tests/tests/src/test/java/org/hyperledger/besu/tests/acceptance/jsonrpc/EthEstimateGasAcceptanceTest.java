@@ -28,8 +28,8 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EthEstimateGasAcceptanceTest extends AcceptanceTestBase {
 
@@ -38,7 +38,7 @@ public class EthEstimateGasAcceptanceTest extends AcceptanceTestBase {
 
   List<SimpleEntry<Integer, Long>> testCase = new ArrayList<>();
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     node =
         besu.createMinerNode(

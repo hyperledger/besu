@@ -104,6 +104,11 @@ public class MigratingMiningCoordinator implements MiningCoordinator, BlockAdded
   }
 
   @Override
+  public Wei getMinPriorityFeePerGas() {
+    return activeMiningCoordinator.getMinPriorityFeePerGas();
+  }
+
+  @Override
   public void setExtraData(final Bytes extraData) {
     activeMiningCoordinator.setExtraData(extraData);
   }
