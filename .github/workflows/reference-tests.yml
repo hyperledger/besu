@@ -60,7 +60,8 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         with:
           branch: main
-          name: reference-test-results
+          name_is_regexp: true
+          name: 'reference-test-node-\d*\d-results'
           path: tmp/ref-xml-reports-downloaded
           if_no_artifact_found: true
       - name: setup gradle
@@ -81,6 +82,6 @@ jobs:
         uses: actions/upload-artifact@v3
         if: always() # always run even if the previous step fails
         with:
-          name: reference-test-results
+          name: reference-test-node-${{matrix.runner-index}}-results
           path: '**/build/test-results/referenceTests/TEST-*.xml'
 

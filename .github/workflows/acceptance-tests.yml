@@ -28,7 +28,8 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         with:
           branch: main
-          name: acceptance-test-results
+          name_is_regexp: true
+          name: 'acceptance-node-\d*\d-test-results'
           path: tmp/junit-xml-reports-downloaded
           if_no_artifact_found: true
       - name: setup gradle
@@ -54,7 +55,7 @@ jobs:
       - name: Upload Acceptance Test Results
         uses: actions/upload-artifact@v3.1.0
         with:
-          name: acceptance-test-results
+          name: acceptance-node-${{matrix.runner_index}}-test-results
           path: 'acceptance-tests/tests/build/test-results/acceptanceTest/TEST-*.xml'
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v4
