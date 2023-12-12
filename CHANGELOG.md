@@ -9,6 +9,7 @@
 
 ### Additions and Improvements
 - Add error messages on authentication failures with username and password [#6212](https://github.com/hyperledger/besu/pull/6212)
+- New `Sequenced` transaction pool. The pool is an evolution of the `legacy` pool and is likely to be more suitable to enterprise or permissioned chains than the `layered` transaction pool. Select to use this pool with `--tx-pool=sequenced`. Supports the same options as the `legacy` pool [#6211](https://github.com/hyperledger/besu/issues/6211)
 
 ### Bug fixes
 

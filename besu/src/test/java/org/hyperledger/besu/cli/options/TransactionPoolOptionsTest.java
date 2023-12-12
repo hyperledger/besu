@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli.options;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LEGACY;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.SEQUENCED;
 
 import org.hyperledger.besu.cli.converter.DurationMillisConverter;
 import org.hyperledger.besu.datatypes.Address;
@@ -63,7 +64,7 @@ public class TransactionPoolOptionsTest
   }
 
   @Test
-  public void pendingTransactionRetentionPeriod() {
+  public void pendingTransactionRetentionPeriodLegacy() {
     final int pendingTxRetentionHours = 999;
     internalTestSuccess(
         config ->
@@ -71,6 +72,17 @@ public class TransactionPoolOptionsTest
         "--tx-pool-retention-hours",
         String.valueOf(pendingTxRetentionHours),
         "--tx-pool=legacy");
+  }
+
+  @Test
+  public void pendingTransactionRetentionPeriodSequenced() {
+    final int pendingTxRetentionHours = 999;
+    internalTestSuccess(
+        config ->
+            assertThat(config.getPendingTxRetentionPeriod()).isEqualTo(pendingTxRetentionHours),
+        "--tx-pool-retention-hours",
+        String.valueOf(pendingTxRetentionHours),
+        "--tx-pool=sequenced");
   }
 
   @Test
@@ -194,16 +206,23 @@ public class TransactionPoolOptionsTest
   }
 
   @Test
+  public void selectSequencedImplementationByArg() {
+    internalTestSuccess(
+        config -> assertThat(config.getTxPoolImplementation()).isEqualTo(SEQUENCED),
+        "--tx-pool=sequenced");
+  }
+
+  @Test
   public void failIfLegacyOptionsWhenLayeredSelectedByDefault() {
     internalTestFailure(
-        "Could not use legacy transaction pool options with layered implementation",
+        "Could not use legacy or sequenced transaction pool options with layered implementation",
         "--tx-pool-max-size=1000");
   }
 
   @Test
   public void failIfLegacyOptionsWhenLayeredSelectedByArg() {
     internalTestFailure(
-        "Could not use legacy transaction pool options with layered implementation",
+        "Could not use legacy or sequenced transaction pool options with layered implementation",
         "--tx-pool=layered",
         "--tx-pool-max-size=1000");
   }
@@ -211,8 +230,16 @@ public class TransactionPoolOptionsTest
   @Test
   public void failIfLayeredOptionsWhenLegacySelectedByArg() {
     internalTestFailure(
-        "Could not use layered transaction pool options with legacy implementation",
+        "Could not use layered transaction pool options with legacy or sequenced implementation",
         "--tx-pool=legacy",
+        "--tx-pool-max-prioritized=1000");
+  }
+
+  @Test
+  public void failIfLayeredOptionsWhenSequencedSelectedByArg() {
+    internalTestFailure(
+        "Could not use layered transaction pool options with legacy or sequenced implementation",
+        "--tx-pool=sequenced",
         "--tx-pool-max-prioritized=1000");
   }
 
