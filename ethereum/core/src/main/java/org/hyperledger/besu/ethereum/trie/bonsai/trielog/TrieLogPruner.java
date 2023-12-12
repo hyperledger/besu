@@ -73,12 +73,12 @@ public class TrieLogPruner {
     try (final Stream<byte[]> trieLogKeys = rootWorldStateStorage.streamTrieLogKeys(loadingLimit)) {
       final AtomicLong count = new AtomicLong();
       final AtomicLong orphansPruned = new AtomicLong();
-      trieLogKeys.forEach(
+      trieLogKeys.parallel().forEach(
           blockHashAsBytes -> {
             final Hash blockHash = Hash.wrap(Bytes32.wrap(blockHashAsBytes));
             final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);
             if (header.isPresent()) {
-              trieLogBlocksAndForksByDescendingBlockNumber.put(header.get().getNumber(), blockHash);
+              addToPruneQueue(header.get().getNumber(), blockHash);
               count.getAndIncrement();
             } else {
               // prune orphaned blocks (sometimes created during block production)
