@@ -77,10 +77,6 @@ jobs:
         run: echo ${{ steps.split-tests.outputs.paths }} | sed -e 's/^.*java\///' -e 's@/@.@g' -e 's/\.java//' -e 's/^/--tests /' > refTestArgs.txt
       - name: run reference tests
         run: ./gradlew ethereum:referenceTests:referenceTests `cat refTestArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
-      - name: Correct Ownership in GITHUB_WORKSPACE directory
-        uses: peter-murray/reset-workspace-ownership-action@v1
-        with:
-          user_id: ${{ env.runner_uid }}
       - name: Upload Test Report
         uses: actions/upload-artifact@v3
         if: always() # always run even if the previous step fails
