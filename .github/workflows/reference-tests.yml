@@ -52,7 +52,7 @@ jobs:
           distribution: adopt
           java-version: 17
       - name: retrieve generated tests
-        uses: dawidd6/action-download-artifact@v2
+        uses: actions/download-artifact@v3.0.2
         with:
           name: 'reference-tests'
           path: 'ethereum/referencetests/build/generated/sources/reference-test/'
