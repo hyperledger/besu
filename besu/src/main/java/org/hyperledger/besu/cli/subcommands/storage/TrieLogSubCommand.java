@@ -29,8 +29,8 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import java.io.PrintWriter;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
@@ -126,9 +126,9 @@ public class TrieLogSubCommand implements Runnable {
       BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
       MutableBlockchain blockchain) {}
 
-  @SuppressWarnings("BannedMethod")
+
   private static TrieLogContext getTrieLogContext() {
-    Configurator.setLevel(LogManager.getLogger(TrieLogPruner.class).getName(), Level.DEBUG);
+    Configurator.setLevel(LoggerFactory.getLogger(TrieLogPruner.class).getName(), Level.DEBUG);
     checkNotNull(parentCommand);
     BesuController besuController = createBesuController();
     final DataStorageConfiguration config = besuController.getDataStorageConfiguration();
