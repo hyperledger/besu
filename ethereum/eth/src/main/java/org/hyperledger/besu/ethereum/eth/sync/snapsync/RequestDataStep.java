@@ -143,10 +143,10 @@ public class RequestDataStep {
                   }
                 }
 
-                // if we received no slots, but a proof of exclusion, mark as done:
+                // if we received no slots, but we do get a proof, check the account during heal:
                 else if (response.proofs().size() > 0 && requestTasks.size() > 0) {
                   var lastTask = requestTasks.get(requestTasks.size() - 1);
-                  if (lastTask instanceof StorageRangeDataRequest storageRequest) {
+                  if (lastTask.getData() instanceof StorageRangeDataRequest storageRequest) {
                     storageRequest.addResponse(
                         downloadState,
                         worldStateProofProvider,

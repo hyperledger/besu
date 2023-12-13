@@ -216,6 +216,11 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     this.isProofValid = Optional.of(isProofValid);
   }
 
+  @VisibleForTesting
+  boolean isProofValid() {
+    return isProofValid.orElse(false);
+  }
+
   public void addStackTrie(final Optional<StackTrie> maybeStackTrie) {
     stackTrie =
         maybeStackTrie
