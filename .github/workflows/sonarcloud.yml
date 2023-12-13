@@ -14,7 +14,6 @@ permissions:
 jobs:
   Analysis:
     runs-on: ubuntu-latest
-    if: github.repository == 'hyperledger/besu'
     steps:
       - name: checkout
         uses: actions/checkout@v4
