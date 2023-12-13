@@ -36,6 +36,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.Task;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -129,15 +130,29 @@ public class RequestDataStep {
             (response, error) -> {
               if (response != null) {
                 downloadState.removeOutstandingTask(getStorageRangeTask);
-                for (int i = 0; i < response.slots().size(); i++) {
-                  final StorageRangeDataRequest request =
-                      (StorageRangeDataRequest) requestTasks.get(i).getData();
-                  request.setRootHash(blockHeader.getStateRoot());
-                  request.addResponse(
-                      downloadState,
-                      worldStateProofProvider,
-                      response.slots().get(i),
-                      i < response.slots().size() - 1 ? new ArrayDeque<>() : response.proofs());
+                if (response.slots().size() > 0) {
+                  for (int i = 0; i < response.slots().size(); i++) {
+                    final StorageRangeDataRequest request =
+                        (StorageRangeDataRequest) requestTasks.get(i).getData();
+                    request.setRootHash(blockHeader.getStateRoot());
+                    request.addResponse(
+                        downloadState,
+                        worldStateProofProvider,
+                        response.slots().get(i),
+                        i < response.slots().size() - 1 ? new ArrayDeque<>() : response.proofs());
+                  }
+                }
+
+                // if we received no slots, but a proof of exclusion, mark as done:
+                else if (response.proofs().size() > 0 && requestTasks.size() > 0) {
+                  var lastTask = requestTasks.get(requestTasks.size() - 1);
+                  if (lastTask instanceof StorageRangeDataRequest storageRequest) {
+                    storageRequest.addResponse(
+                        downloadState,
+                        worldStateProofProvider,
+                        Collections.emptyNavigableMap(),
+                        response.proofs());
+                  }
                 }
               }
               return requestTasks;

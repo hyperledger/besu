@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -212,7 +213,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
   }
 
   @VisibleForTesting
-  public TreeMap<Bytes32, Bytes> getAccounts() {
+  public NavigableMap<Bytes32, Bytes> getAccounts() {
     return stackTrie.getElement(startKeyHash).keys();
   }
 
