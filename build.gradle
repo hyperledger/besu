@@ -30,7 +30,7 @@ plugins {
   id 'me.champeau.jmh' version '0.7.0' apply false
   id 'net.ltgt.errorprone' version '2.0.2'
   id 'maven-publish'
-  id 'org.sonarqube' version '3.4.0.2513'
+  id 'org.sonarqube' version '4.4.1.3373'
 }
 
 sonarqube {
