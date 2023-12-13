@@ -78,6 +78,10 @@ import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
+import org.hyperledger.besu.ethereum.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.forest.pruner.MarkSweepPruner;
+import org.hyperledger.besu.ethereum.forest.pruner.Pruner;
+import org.hyperledger.besu.ethereum.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -86,10 +90,6 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
-import org.hyperledger.besu.ethereum.worldstate.MarkSweepPruner;
-import org.hyperledger.besu.ethereum.worldstate.Pruner;
-import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -657,7 +657,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             Optional.of(
                 new Pruner(
                     new MarkSweepPruner(
-                        ((DefaultWorldStateArchive) worldStateArchive).getWorldStateStorage(),
+                        ((ForestWorldStateArchive) worldStateArchive).getWorldStateStorage(),
                         blockchain,
                         storageProvider.getStorageBySegmentIdentifier(
                             KeyValueSegmentIdentifier.PRUNING_STATE),
@@ -1093,7 +1093,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       case FOREST -> {
         final WorldStatePreimageStorage preimageStorage =
             storageProvider.createWorldStatePreimageStorage();
-        yield new DefaultWorldStateArchive(worldStateStorage, preimageStorage, evmConfiguration);
+        yield new ForestWorldStateArchive(worldStateStorage, preimageStorage, evmConfiguration);
       }
     };
   }

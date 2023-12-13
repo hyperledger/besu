@@ -25,12 +25,16 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.forest.pruner.MarkSweepPruner;
+import org.hyperledger.besu.ethereum.forest.pruner.Pruner;
+import org.hyperledger.besu.ethereum.forest.pruner.Pruner.PruningPhase;
+import org.hyperledger.besu.ethereum.forest.pruner.PrunerConfiguration;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.Pruner.PruningPhase;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -57,9 +61,10 @@ public class PrunerIntegrationTest {
   private final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final Map<Bytes, Optional<byte[]>> hashValueStore = new HashMap<>();
   private final InMemoryKeyValueStorage stateStorage = new TestInMemoryStorage(hashValueStore);
-  private final WorldStateStorage worldStateStorage = new WorldStateKeyValueStorage(stateStorage);
+  private final WorldStateStorage worldStateStorage =
+      new ForestWorldStateKeyValueStorage(stateStorage);
   private final WorldStateArchive worldStateArchive =
-      new DefaultWorldStateArchive(
+      new ForestWorldStateArchive(
           worldStateStorage,
           new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
           EvmConfiguration.DEFAULT);
