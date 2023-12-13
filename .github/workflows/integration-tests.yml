@@ -6,7 +6,7 @@ env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
 
 jobs:
-  referenceTestEthereum:
+  integrationTetst:
     runs-on: ubuntu-22.04
     #TODO: add condition to check pr is approved
     if: ${{ github.actor != 'dependabot[bot]' }}
