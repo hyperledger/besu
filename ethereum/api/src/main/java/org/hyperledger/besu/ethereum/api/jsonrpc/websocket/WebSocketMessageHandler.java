@@ -183,7 +183,7 @@ public class WebSocketMessageHandler {
     try {
       LOG.trace(jsonObjectMapper.writeValueAsString(response));
     } catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
+      LOG.error("Error tracing JSON-RPC response", e);
     }
   }
 }
