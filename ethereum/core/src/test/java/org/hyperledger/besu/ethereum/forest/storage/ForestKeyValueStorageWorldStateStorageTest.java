@@ -12,12 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.storage.keyvalue;
+package org.hyperledger.besu.ethereum.forest.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage.Updater;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -26,7 +25,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 
-public class KeyValueStorageWorldStateStorageTest {
+public class ForestKeyValueStorageWorldStateStorageTest {
 
   @Test
   public void getCode_returnsEmpty() {

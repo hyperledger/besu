@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.worldstate;
+package org.hyperledger.besu.ethereum.forest.worldview;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldState;
@@ -22,7 +22,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
@@ -48,7 +47,7 @@ import org.junit.jupiter.api.Test;
 
 // TODO: make that an abstract mutable world state test, and create sub-class for all world state
 // implementations.
-class DefaultMutableWorldStateTest {
+class ForestMutableWorldStateTest {
   // The following test cases are loosely derived from the testTransactionToItself
   // GeneralStateReferenceTest.
 
