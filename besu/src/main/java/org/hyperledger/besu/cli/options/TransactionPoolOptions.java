@@ -19,6 +19,7 @@ import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_INTEGER_FO
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LEGACY;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.SEQUENCED;
 
 import org.hyperledger.besu.cli.converter.DurationMillisConverter;
 import org.hyperledger.besu.cli.converter.FractionConverter;
@@ -171,10 +172,10 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
 
   @CommandLine.ArgGroup(
       validate = false,
-      heading = "@|bold Tx Pool Legacy Implementation Options|@%n")
-  private final Legacy legacyOptions = new Legacy();
+      heading = "@|bold Tx Pool Sequenced Implementation Options|@%n")
+  private final Sequenced sequencedOptions = new Sequenced();
 
-  static class Legacy {
+  static class Sequenced {
     private static final String TX_POOL_RETENTION_HOURS = "--tx-pool-retention-hours";
     private static final String TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE =
         "--tx-pool-limit-by-account-percentage";
@@ -272,10 +273,10 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         config.getPendingTransactionsLayerMaxCapacityBytes();
     options.layeredOptions.txPoolMaxPrioritized = config.getMaxPrioritizedTransactions();
     options.layeredOptions.txPoolMaxFutureBySender = config.getMaxFutureBySender();
-    options.legacyOptions.txPoolLimitByAccountPercentage =
+    options.sequencedOptions.txPoolLimitByAccountPercentage =
         config.getTxPoolLimitByAccountPercentage();
-    options.legacyOptions.txPoolMaxSize = config.getTxPoolMaxSize();
-    options.legacyOptions.pendingTxRetentionPeriod = config.getPendingTxRetentionPeriod();
+    options.sequencedOptions.txPoolMaxSize = config.getTxPoolMaxSize();
+    options.sequencedOptions.pendingTxRetentionPeriod = config.getPendingTxRetentionPeriod();
     options.unstableOptions.txMessageKeepAliveSeconds =
         config.getUnstable().getTxMessageKeepAliveSeconds();
     options.unstableOptions.eth65TrxAnnouncedBufferingPeriod =
@@ -295,14 +296,14 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
       final CommandLine commandLine, final GenesisConfigOptions genesisConfigOptions) {
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
-        "Could not use legacy transaction pool options with layered implementation",
+        "Could not use legacy or sequenced transaction pool options with layered implementation",
         !txPoolImplementation.equals(LAYERED),
-        CommandLineUtils.getCLIOptionNames(Legacy.class));
+        CommandLineUtils.getCLIOptionNames(Sequenced.class));
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
-        "Could not use layered transaction pool options with legacy implementation",
-        !txPoolImplementation.equals(LEGACY),
+        "Could not use layered transaction pool options with legacy or sequenced implementation",
+        !txPoolImplementation.equals(LEGACY) && !txPoolImplementation.equals(SEQUENCED),
         CommandLineUtils.getCLIOptionNames(Layered.class));
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
@@ -327,9 +328,9 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         .pendingTransactionsLayerMaxCapacityBytes(layeredOptions.txPoolLayerMaxCapacity)
         .maxPrioritizedTransactions(layeredOptions.txPoolMaxPrioritized)
         .maxFutureBySender(layeredOptions.txPoolMaxFutureBySender)
-        .txPoolLimitByAccountPercentage(legacyOptions.txPoolLimitByAccountPercentage)
-        .txPoolMaxSize(legacyOptions.txPoolMaxSize)
-        .pendingTxRetentionPeriod(legacyOptions.pendingTxRetentionPeriod)
+        .txPoolLimitByAccountPercentage(sequencedOptions.txPoolLimitByAccountPercentage)
+        .txPoolMaxSize(sequencedOptions.txPoolMaxSize)
+        .pendingTxRetentionPeriod(sequencedOptions.pendingTxRetentionPeriod)
         .unstable(
             ImmutableTransactionPoolConfiguration.Unstable.builder()
                 .txMessageKeepAliveSeconds(unstableOptions.txMessageKeepAliveSeconds)

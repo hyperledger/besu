@@ -289,7 +289,10 @@ public class BonsaiWorldState
           worldStateUpdater.getAccountsToUpdate().get(updatedAddress);
       final BonsaiAccount accountOriginal = accountValue.getPrior();
       final Hash storageRoot =
-          (accountOriginal == null) ? Hash.EMPTY_TRIE_HASH : accountOriginal.getStorageRoot();
+          (accountOriginal == null
+                  || worldStateUpdater.getStorageToClear().contains(updatedAddress))
+              ? Hash.EMPTY_TRIE_HASH
+              : accountOriginal.getStorageRoot();
       final MerkleTrie<Bytes, Bytes> storageTrie =
           createTrie(
               (location, key) ->
