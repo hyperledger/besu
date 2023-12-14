@@ -182,9 +182,8 @@ public class EthPeers {
   }
 
   public boolean registerDisconnect(final PeerConnection connection) {
-    final Bytes id = connection.getPeer().getId();
-    final EthPeer peer = completeConnections.get(id);
-    return registerDisconnect(id, peer, connection);
+    final EthPeer peer = peer(connection);
+    return registerDisconnect(peer.getId(), peer, connection);
   }
 
   private boolean registerDisconnect(
