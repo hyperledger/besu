@@ -51,6 +51,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   private final Set<Capability> agreedCapabilities;
   private final Map<String, Capability> protocolToCapability = new HashMap<>();
   private final AtomicBoolean disconnected = new AtomicBoolean(false);
+  private final AtomicBoolean terminatedImmediately = new AtomicBoolean(false);
   protected final PeerConnectionEventDispatcher connectionEventDispatcher;
   private final LabelledMetric<Counter> outboundMessagesCounter;
   private final long initiatedAt;
@@ -162,17 +163,19 @@ public abstract class AbstractPeerConnection implements PeerConnection {
 
   @Override
   public void terminateConnection(final DisconnectReason reason, final boolean peerInitiated) {
-    if (disconnected.compareAndSet(false, true)) {
-      connectionEventDispatcher.dispatchDisconnect(this, reason, peerInitiated);
+    if (terminatedImmediately.compareAndSet(false, true)) {
+      if (disconnected.compareAndSet(false, true)) {
+        connectionEventDispatcher.dispatchDisconnect(this, reason, peerInitiated);
+      }
+      // Always ensure the context gets closed immediately even if we previously sent a disconnect
+      // message and are waiting to close.
+      closeConnectionImmediately();
+      LOG.atTrace()
+          .setMessage("Terminating connection {}, reason {}")
+          .addArgument(this)
+          .addArgument(reason)
+          .log();
     }
-    // Always ensure the context gets closed immediately even if we previously sent a disconnect
-    // message and are waiting to close.
-    closeConnectionImmediately();
-    LOG.atTrace()
-        .setMessage("Terminating connection {}, reason {}")
-        .addArgument(this)
-        .addArgument(reason)
-        .log();
   }
 
   protected abstract void closeConnectionImmediately();
