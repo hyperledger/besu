@@ -73,7 +73,7 @@ public class TrieLogPruner {
     try (final Stream<byte[]> trieLogKeys = rootWorldStateStorage.streamTrieLogKeys(loadingLimit)) {
       final AtomicLong count = new AtomicLong();
       final AtomicLong orphansPruned = new AtomicLong();
-      trieLogKeys.parallel().forEach(
+      trieLogKeys.forEach(
           blockHashAsBytes -> {
             final Hash blockHash = Hash.wrap(Bytes32.wrap(blockHashAsBytes));
             final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);

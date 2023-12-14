@@ -45,7 +45,11 @@ import picocli.CommandLine.Spec;
     description = "This command provides storage related actions.",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class,
-    subcommands = {StorageSubCommand.RevertVariablesStorage.class, RocksDbSubCommand.class, TrieLogSubCommand.class})
+    subcommands = {
+      StorageSubCommand.RevertVariablesStorage.class,
+      RocksDbSubCommand.class,
+      TrieLogSubCommand.class
+    })
 public class StorageSubCommand implements Runnable {
 
   /** The constant COMMAND_NAME. */

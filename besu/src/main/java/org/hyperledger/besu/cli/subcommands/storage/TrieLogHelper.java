@@ -18,23 +18,47 @@ package org.hyperledger.besu.cli.subcommands.storage;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
 
+import com.google.common.base.Splitter;
+import org.apache.tuweni.bytes.Bytes;
+import org.bouncycastle.util.encoders.Base64;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Helper class for counting and pruning trie logs */
 public class TrieLogHelper {
+    private static final String trieLogFile
+            = "trieLogsToRetain.txt";
+    private static final Logger LOG = LoggerFactory.getLogger(TrieLogHelper.class);
 
   static void countAndPrune(
       final PrintWriter out,
@@ -42,75 +66,67 @@ public class TrieLogHelper {
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
       final MutableBlockchain blockchain,
       final BesuController besuController) {
+
     TrieLogHelper.validatePruneConfiguration(config);
-
-    final TrieLogCount count = getCount(rootWorldStateStorage, Integer.MAX_VALUE, blockchain);
-
-    out.println("Counting trie logs before prune...");
-    printCount(out, count);
-    out.println();
-
-    final int layersToRetain = (int) config.getUnstable().getBonsaiTrieLogRetentionThreshold();
-    final int batchSize = config.getUnstable().getBonsaiTrieLogPruningLimit();
-    final boolean isProofOfStake =
-        besuController.getGenesisConfigOptions().getTerminalTotalDifficulty().isPresent();
-    TrieLogPruner pruner =
-        new TrieLogPruner(
-            rootWorldStateStorage, blockchain, layersToRetain, batchSize, isProofOfStake);
-
-    final int totalToPrune = count.total() - layersToRetain;
-    out.printf(
-        """
-        Total to prune = %d (total) - %d (retention threshold) =
-        => %d
-        """,
-        count.total(), layersToRetain, totalToPrune);
-    final long numBatches = Math.max(totalToPrune / batchSize, 1);
-    out.println();
-    out.printf(
-        "Estimated number of batches = max(%d (total to prune) / %d (batch size), 1) = %d\n",
-        totalToPrune, batchSize, numBatches);
-    out.println();
-
-    int noProgressCounter = 0;
-    int prevTotalNumberPruned = 0;
-    int totalNumberPruned = 0;
-    int numberPrunedInBatch;
-    int batchNumber = 1;
-    while (totalNumberPruned < totalToPrune) {
-      out.printf(
-          """
-          Pruning batch %d
-          -----------------
-          """, batchNumber++);
-      // do prune
-      numberPrunedInBatch = pruner.initialize();
-
-      out.printf("Number pruned in batch = %d \n", numberPrunedInBatch);
-      totalNumberPruned += numberPrunedInBatch;
-      out.printf(
-          """
-          Running total number pruned =
-          => %d of %d
-          """,
-          totalNumberPruned, totalToPrune);
-
-      if (totalNumberPruned == prevTotalNumberPruned) {
-        if (noProgressCounter++ == 5) {
-          out.println("No progress in 5 batches, exiting");
-          return;
-        }
+    final long layersToRetain = config.getUnstable().getBonsaiTrieLogRetentionThreshold();
+    final long chainHeight = blockchain.getChainHeadBlockNumber();
+    final Optional<Hash> finalizedBlockHash = blockchain.getFinalized();
+      if (finalizedBlockHash.isEmpty()) {
+          LOG.debug("No finalized block present, skipping pruning");
+          return ;
       }
 
-      prevTotalNumberPruned = totalNumberPruned;
-      out.println();
-    }
-    out.println("Trie log prune complete!");
-    out.println();
+      final long numberOfTrieLogsToRetain =
+              finalizedBlockHash
+                      .flatMap(blockchain::getBlockHeader)
+                      .map(ProcessableBlockHeader::getNumber)
+                      .map(finalizedBlock -> Math.min(chainHeight-finalizedBlock, layersToRetain))
+                      .orElse(layersToRetain);
 
-    out.println("Counting trie logs after prune...");
-    TrieLogHelper.printCount(
-        out, TrieLogHelper.getCount(rootWorldStateStorage, Integer.MAX_VALUE, blockchain));
+    // retrieve the layersToRetains hashes from blockchain
+    final List<Hash> hashesToRetain = new ArrayList<>();
+
+    final long lastHashToRetain = chainHeight - numberOfTrieLogsToRetain;
+    for (long i = chainHeight; i >= lastHashToRetain; i--) {
+      final Optional<BlockHeader> header = blockchain.getBlockHeader(i);
+      header.ifPresent(blockHeader -> hashesToRetain.add(blockHeader.getHash()));
+    }
+
+    IdentityHashMap<byte[], byte[]> trieLogsToRetain = new IdentityHashMap<>();
+
+    if(hashesToRetain.stream().count() == numberOfTrieLogsToRetain){
+        //save trielogs in a flatfile as a fail-safe
+        saveTrieLogsInFile(trieLogsToRetain);
+
+
+        hashesToRetain.forEach(
+                hash -> {
+                    rootWorldStateStorage
+                            .getTrieLog(hash)
+                            .ifPresent(trieLog -> trieLogsToRetain.put(hash.toArrayUnsafe(), trieLog));
+                });
+    }
+    else{
+        //try to read the triLogs from the flatfile
+        trieLogsToRetain = readTrieLogsFromFile();
+    }
+
+    //clear trielogs storage
+    rootWorldStateStorage.clearTrieLog();
+
+    //get an update and insert the trielogs we retained
+    var updater = rootWorldStateStorage.updater();
+    trieLogsToRetain.forEach(
+        (key, value) -> {
+          System.out.println("key: " + Bytes32.wrap(key).toHexString() + ", value: " + Base64.toBase64String(value));
+          updater.getTrieLogStorageTransaction().put(key, value);
+        });
+    updater.getTrieLogStorageTransaction().commit();
+
+    if(rootWorldStateStorage.streamTrieLogKeys(numberOfTrieLogsToRetain).count() == numberOfTrieLogsToRetain){
+        deleteTrieLogFile();
+    }
+
   }
 
   private static void validatePruneConfiguration(final DataStorageConfiguration config) {
@@ -169,6 +185,107 @@ public class TrieLogHelper {
     return new TrieLogCount(total.get(), canonicalCount.get(), forkCount.get(), orphanCount.get());
   }
 
+    private static boolean saveTrieLogsInFile(final Map<byte[],byte[]> trieLogs){
+
+        File file = new File(trieLogFile);
+
+        BufferedWriter bf = null;
+
+        try {
+
+            bf = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8));
+            for (Map.Entry<byte[], byte[]> entry :
+                    trieLogs.entrySet()) {
+
+                bf.write(Bytes.of(entry.getKey()) + ":"
+                        + Base64.toBase64String(entry.getValue()));
+
+                bf.newLine();
+            }
+
+            bf.flush();
+        }
+        catch (IOException e) {
+            LOG.error(e.getMessage());
+            return false;
+        }
+        finally {
+
+            try {
+
+                bf.close();
+            }
+            catch (Exception e) {
+                LOG.error(e.getMessage());
+            }
+        }
+        return true;
+    }
+
+    private static IdentityHashMap<byte[], byte[]> readTrieLogsFromFile() {
+
+
+        File file = new File(trieLogFile);
+
+        IdentityHashMap<byte[], byte[]> trieLogs = new IdentityHashMap<>();
+
+
+        BufferedReader br = null;
+
+
+        try {
+
+
+            br = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8));
+
+
+            String line;
+
+            while ((line = br.readLine()) != null) {
+
+
+                List<String> parts = Splitter.on(':').splitToList(line);
+
+                byte[] key = Bytes.fromHexString(parts.get(0)).toArrayUnsafe();
+
+                byte[] value = Base64.decode(parts.get(1));
+
+
+                trieLogs.put(key, value);
+
+            }
+
+        } catch (IOException e) {
+
+            LOG.error(e.getMessage());
+
+        } finally {
+
+            try {
+
+                if (br != null) {
+
+                    br.close();
+
+                }
+
+            } catch (Exception e) {
+
+                LOG.error(e.getMessage());
+
+            }
+
+        }
+
+        return trieLogs;
+
+    }
+
+    private static void deleteTrieLogFile(){
+        File file = new File(trieLogFile);
+        file.delete();
+    }
+
   static void printCount(final PrintWriter out, final TrieLogCount count) {
     out.printf(
         "trieLog count: %s\n - canonical count: %s\n - fork count: %s\n - orphaned count: %s\n",
@@ -176,4 +293,6 @@ public class TrieLogHelper {
   }
 
   record TrieLogCount(int total, int canonicalCount, int forkCount, int orphanCount) {}
+
+
 }

@@ -111,12 +111,16 @@ public class TrieLogSubCommand implements Runnable {
     public void run() {
       TrieLogContext context = getTrieLogContext();
 
-      TrieLogHelper.countAndPrune(
-          spec.commandLine().getOut(),
-          context.config(),
-          context.rootWorldStateStorage(),
-          context.blockchain(),
-          context.besuController());
+      try {
+        TrieLogHelper.countAndPrune(
+            spec.commandLine().getOut(),
+            context.config(),
+            context.rootWorldStateStorage(),
+            context.blockchain(),
+            context.besuController());
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
@@ -125,7 +129,6 @@ public class TrieLogSubCommand implements Runnable {
       DataStorageConfiguration config,
       BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
       MutableBlockchain blockchain) {}
-
 
   private static TrieLogContext getTrieLogContext() {
     Configurator.setLevel(LoggerFactory.getLogger(TrieLogPruner.class).getName(), Level.DEBUG);
