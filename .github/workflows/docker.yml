@@ -1,11 +1,11 @@
 name: "Container Images"
 on:
-  workflow_call:
+  workflow_dispatch:
 
 
 jobs:
   buildX64Docker:
-    runs-on: [self-hosted, X64, Linux]
+    runs-on: [X64, Linux]
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: export runner UID
