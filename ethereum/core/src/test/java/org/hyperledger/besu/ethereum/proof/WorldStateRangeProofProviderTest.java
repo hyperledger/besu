@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
@@ -42,7 +42,7 @@ public class WorldStateRangeProofProviderTest {
       Hash.fromHexString("0x0fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
   private static final WorldStateStorage worldStateStorage =
-      new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+      new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
   private static WorldStateProofProvider worldStateProofProvider;
 
