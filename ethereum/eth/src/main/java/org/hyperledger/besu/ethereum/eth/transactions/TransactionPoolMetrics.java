@@ -46,6 +46,9 @@ public class TransactionPoolMetrics {
   private final LabelledMetric<Counter> expiredMessagesCounter;
   private final Map<String, RunnableCounter> expiredMessagesRunnableCounters = new HashMap<>();
   private final LabelledMetric<Counter> alreadySeenTransactionsCounter;
+  private final Map<String, ChangeableDoubleSupplier> spaceUsedSuppliers = new HashMap<>();
+  private final Map<String, ChangeableDoubleSupplier> transactionCountSuppliers = new HashMap<>();
+  private final Map<String, ChangeableDoubleSupplier> uniqueSendersSuppliers = new HashMap<>();
 
   public TransactionPoolMetrics(final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
@@ -120,17 +123,47 @@ public class TransactionPoolMetrics {
   }
 
   public void initSpaceUsed(final DoubleSupplier spaceUsedSupplier, final String layer) {
-    spaceUsed.labels(spaceUsedSupplier, layer);
+    final var supplier =
+        spaceUsedSuppliers.compute(
+            layer,
+            (unused, existingSupplier) -> {
+              if (existingSupplier == null) {
+                return new ChangeableDoubleSupplier(spaceUsedSupplier);
+              }
+              return existingSupplier.changeDoubleSupplier(spaceUsedSupplier);
+            });
+
+    spaceUsed.labels(supplier, layer);
   }
 
   public void initTransactionCount(
       final DoubleSupplier transactionCountSupplier, final String layer) {
-    transactionCount.labels(transactionCountSupplier, layer);
+    final var supplier =
+        transactionCountSuppliers.compute(
+            layer,
+            (unused, existingSupplier) -> {
+              if (existingSupplier == null) {
+                return new ChangeableDoubleSupplier(transactionCountSupplier);
+              }
+              return existingSupplier.changeDoubleSupplier(transactionCountSupplier);
+            });
+
+    transactionCount.labels(supplier, layer);
   }
 
   public void initUniqueSenderCount(
       final DoubleSupplier uniqueSenderCountSupplier, final String layer) {
-    uniqueSenderCount.labels(uniqueSenderCountSupplier, layer);
+    final var supplier =
+        uniqueSendersSuppliers.compute(
+            layer,
+            (unused, existingSupplier) -> {
+              if (existingSupplier == null) {
+                return new ChangeableDoubleSupplier(uniqueSenderCountSupplier);
+              }
+              return existingSupplier.changeDoubleSupplier(uniqueSenderCountSupplier);
+            });
+
+    uniqueSenderCount.labels(supplier, layer);
   }
 
   public void initExpiredMessagesCounter(final String message) {
@@ -202,5 +235,23 @@ public class TransactionPoolMetrics {
 
   private String priority(final boolean hasPriority) {
     return hasPriority ? "yes" : "no";
+  }
+
+  private static class ChangeableDoubleSupplier implements DoubleSupplier {
+    private DoubleSupplier currentSupplier;
+
+    public ChangeableDoubleSupplier(final DoubleSupplier currentSupplier) {
+      this.currentSupplier = currentSupplier;
+    }
+
+    @Override
+    public double getAsDouble() {
+      return currentSupplier.getAsDouble();
+    }
+
+    public ChangeableDoubleSupplier changeDoubleSupplier(final DoubleSupplier newSupplier) {
+      currentSupplier = newSupplier;
+      return this;
+    }
   }
 }
