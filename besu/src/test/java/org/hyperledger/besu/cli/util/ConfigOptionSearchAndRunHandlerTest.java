@@ -91,9 +91,6 @@ public class ConfigOptionSearchAndRunHandlerTest {
 
   @Test
   public void handleWithCommandLineOption() throws Exception {
-    //    when(mockConfigOptionGetter.get()).thenReturn(temp.resolve("temp"));
-    //    Path p = Files.createTempFile("tmp", "txt");
-    //    File f = p.toFile()
     when(mockConfigOptionGetter.get()).thenReturn(Files.createTempFile("tmp", "txt").toFile());
     final List<Object> result = configParsingHandler.handle(mockParseResult);
     verify(mockCommandLine).setDefaultValueProvider(any(IDefaultValueProvider.class));
