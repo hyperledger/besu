@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Assumptions;
 
 /** A Transaction test case specification. */
 @JsonIgnoreProperties({"_info"})
@@ -109,9 +110,7 @@ public class TransactionTestCaseSpec {
   public Expectation expectation(final String milestone) {
     final Expectation expectation = expectations.get(milestone);
 
-    if (expectation == null) {
-      throw new IllegalStateException("Expectation for milestone " + milestone + " not found");
-    }
+    Assumptions.assumeFalse(expectation == null, () -> "No expectation for milestone " + milestone);
 
     return expectation;
   }

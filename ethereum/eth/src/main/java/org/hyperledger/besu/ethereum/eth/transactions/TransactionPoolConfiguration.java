@@ -50,8 +50,9 @@ public interface TransactionPoolConfiguration {
   }
 
   enum Implementation {
-    LEGACY,
-    LAYERED;
+    LEGACY, // Remove in future version
+    LAYERED,
+    SEQUENCED; // Synonym for LEGACY
   }
 
   String DEFAULT_SAVE_FILE_NAME = "txpool.dump";
