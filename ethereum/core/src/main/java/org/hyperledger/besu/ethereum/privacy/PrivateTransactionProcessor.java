@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateUpdater;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
@@ -109,7 +108,7 @@ public class PrivateTransactionProcessor {
           sender.getNonce());
 
       final WorldUpdater mutablePrivateWorldStateUpdater =
-          new DefaultMutablePrivateWorldStateUpdater(publicWorldState, privateWorldState);
+          new PrivateMutableWorldStateUpdater(publicWorldState, privateWorldState);
       final MessageFrame.Builder commonMessageFrameBuilder =
           MessageFrame.builder()
               .maxStackSize(maxStackSize)

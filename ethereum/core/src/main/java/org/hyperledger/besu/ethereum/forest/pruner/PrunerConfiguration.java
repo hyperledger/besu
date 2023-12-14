@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.worldstate;
+package org.hyperledger.besu.ethereum.forest.pruner;
 
 public class PrunerConfiguration {
   public static final int DEFAULT_PRUNING_BLOCKS_RETAINED = 1024;
