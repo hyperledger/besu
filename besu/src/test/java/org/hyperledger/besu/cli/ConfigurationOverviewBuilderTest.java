@@ -58,8 +58,9 @@ class ConfigurationOverviewBuilderTest {
     assertThat(networkSet).contains("Network: foobar");
 
     builder.setHasCustomGenesis(true);
+    builder.setCustomGenesis("file.name");
     final String genesisSet = builder.build();
-    assertThat(genesisSet).contains("Network: Custom genesis file specified");
+    assertThat(genesisSet).contains("Network: Custom genesis file");
     assertThat(genesisSet).doesNotContain("Network: foobar");
   }
 
