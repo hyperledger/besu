@@ -341,7 +341,7 @@ public class TransactionPool implements BlockAddedObserver {
         .scheduleServiceTask(
             () -> {
               int blockProcessed = 0;
-              while (!blockAddedQueue.isEmpty()) {
+              if (!blockAddedQueue.isEmpty()) {
                 if (blockAddedLock.tryLock()) {
                   // no other thread is processing the queue, so start processing it
                   try {
@@ -373,7 +373,7 @@ public class TransactionPool implements BlockAddedObserver {
                   // try to get the lock later
                   ethContext
                       .getScheduler()
-                      .scheduleFutureTask(this::processBlockAddedQueue, Duration.ofMillis(10));
+                      .scheduleFutureTask(this::processBlockAddedQueue, Duration.ofMillis(100));
                   return null;
                 }
               }
