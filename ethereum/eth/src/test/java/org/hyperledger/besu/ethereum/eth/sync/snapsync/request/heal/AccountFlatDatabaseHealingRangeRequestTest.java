@@ -24,9 +24,9 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapsyncMetricsManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
@@ -73,7 +73,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
   @Test
   public void shouldReturnChildRequests() {
     final WorldStateStorage worldStateStorage =
-        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStateProofProvider proofProvider = new WorldStateProofProvider(worldStateStorage);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);
@@ -138,7 +138,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
   @Test
   public void shouldNotReturnChildRequestsWhenNoMoreAccounts() {
     final WorldStateStorage worldStateStorage =
-        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStateProofProvider proofProvider = new WorldStateProofProvider(worldStateStorage);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);
