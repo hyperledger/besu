@@ -70,7 +70,10 @@ public class TrailingPeerLimiter implements BlockAddedObserver {
           .addArgument(minimumHeightToBeUpToDate)
           .addArgument(maxTrailingPeers)
           .addArgument(peerToDisconnect::getShortNodeId)
-          .addArgument(peerToDisconnect.chainState().getEstimatedHeight())
+          .addArgument(
+              peerToDisconnect.chainState() == null
+                  ? "no chain state"
+                  : peerToDisconnect.chainState().getEstimatedHeight())
           .log();
       peerToDisconnect.disconnect(DisconnectReason.USELESS_PEER);
     }
