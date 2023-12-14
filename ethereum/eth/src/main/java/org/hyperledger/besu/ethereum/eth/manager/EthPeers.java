@@ -464,7 +464,7 @@ public class EthPeers {
 
     getActivePrioritizedPeers()
         .filter(p -> p.getConnection().inboundInitiated())
-        .filter(p -> !canExceedPeerLimits(p.getConnection()))
+        .filter(p -> !canExceedPeerLimits(p.getId()))
         .skip(maxRemotelyInitiatedConnections)
         .forEach(
             conn -> {
@@ -491,7 +491,7 @@ public class EthPeers {
         .filter(p -> !p.isDisconnected())
         .skip(peerUpperBound)
         .map(EthPeer::getConnection)
-        .filter(c -> !canExceedPeerLimits(c))
+        .filter(c -> !canExceedPeerLimits(c.getPeer().getId()))
         .forEach(
             conn -> {
               LOG.trace(
@@ -516,7 +516,7 @@ public class EthPeers {
         .map(ep -> ep.getConnection())
         .filter(c -> c.inboundInitiated())
         .filter(c -> !c.isDisconnected())
-        .filter(conn -> !canExceedPeerLimits(conn))
+        .filter(conn -> !canExceedPeerLimits(conn.getPeer().getId()))
         .count();
   }
 
@@ -542,7 +542,7 @@ public class EthPeers {
     final Bytes id = peer.getId();
     if (!randomPeerPriority) {
       // Disconnect if too many peers
-      if (!canExceedPeerLimits(connection) && peerCount() >= peerUpperBound) {
+      if (!canExceedPeerLimits(id) && peerCount() >= peerUpperBound) {
         LOG.trace(
             "Too many peers. Disconnect connection: {}, max connections {}",
             connection,
@@ -552,7 +552,7 @@ public class EthPeers {
       }
       // Disconnect if too many remotely-initiated connections
       if (connection.inboundInitiated()
-          && !canExceedPeerLimits(connection)
+          && !canExceedPeerLimits(id)
           && remoteConnectionLimitReached()) {
         LOG.trace(
             "Too many remotely-initiated connections. Disconnect incoming connection: {}, maxRemote={}",
