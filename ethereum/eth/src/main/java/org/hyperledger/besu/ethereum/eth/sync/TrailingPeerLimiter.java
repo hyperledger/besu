@@ -65,7 +65,7 @@ public class TrailingPeerLimiter implements BlockAddedObserver {
     while (!trailingPeers.isEmpty() && trailingPeers.size() > maxTrailingPeers) {
       final EthPeer peerToDisconnect = trailingPeers.remove(0);
       LOG.atDebug()
-          .addArgument(
+          .setMessage(
               "Enforcing trailing peers limit (minimum height {}, max trailing peers {}) by disconnecting {} with height {}")
           .addArgument(minimumHeightToBeUpToDate)
           .addArgument(maxTrailingPeers)
