@@ -1,0 +1,33 @@
+
+name: artifacts
+
+on:
+  workflow_dispatch:
+
+jobs:
+  artifacts:
+    runs-on: ubuntu-22.04
+    steps:
+      # TODO: ensure all checks have passed already
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+      - name: setup gradle
+        uses: gradle/gradle-build-action@v2
+      - name: assemble distributions
+        run: ./gradlew assemble -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+      - name: upload tarball
+        uses: actions/upload-artifact@v3
+        with:
+          name: 'tarball'
+          path: 'build/distributions/besu*.tar.gz'
+      - name: upload zipfile
+        uses: actions/upload-artifact@v3
+        with:
+          name: 'zipfile'
+          path: 'build/distributions/besu*.zip'
+
