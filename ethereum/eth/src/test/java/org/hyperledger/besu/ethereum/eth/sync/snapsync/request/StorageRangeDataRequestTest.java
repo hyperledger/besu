@@ -18,7 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class StorageRangeDataRequestTest {
-  private static final Hash HASH_LAST = Hash.fromHexString("F".repeat(64));
 
   @Mock WorldStateStorage storage;
   WorldStateProofProvider worldstateProofProvider = new WorldStateProofProvider(storage);
@@ -28,7 +27,7 @@ public class StorageRangeDataRequestTest {
 
     var storageRangeRequest =
         new StorageRangeDataRequest(
-            Hash.EMPTY_TRIE_HASH, Bytes32.ZERO, Hash.EMPTY_TRIE_HASH, Bytes32.ZERO, HASH_LAST);
+            Hash.EMPTY_TRIE_HASH, Bytes32.ZERO, Hash.EMPTY_TRIE_HASH, Bytes32.ZERO, Hash.LAST);
 
     var proofs = new ArrayDeque<Bytes>();
     proofs.add(0, Hash.EMPTY_TRIE_HASH);
@@ -44,7 +43,7 @@ public class StorageRangeDataRequestTest {
   public void assertEmptySlotsWithInvalidProofCompletes() {
     var storageRangeRequest =
         new StorageRangeDataRequest(
-            Hash.EMPTY_TRIE_HASH, Bytes32.ZERO, Hash.EMPTY_TRIE_HASH, Bytes32.ZERO, HASH_LAST);
+            Hash.EMPTY_TRIE_HASH, Bytes32.ZERO, Hash.EMPTY_TRIE_HASH, Bytes32.ZERO, Hash.LAST);
 
     var proofs = new ArrayDeque<Bytes>();
     proofs.add(0, Hash.ZERO);

@@ -29,6 +29,9 @@ public class Hash extends DelegatingBytes32 {
   /** The constant ZERO. */
   public static final Hash ZERO = new Hash(Bytes32.ZERO);
 
+  /** Last hash */
+  public static final Hash LAST = new Hash(Bytes32.fromHexString("F".repeat(64)));
+
   /**
    * Hash of an RLP encoded trie hash with no content, or
    * "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"

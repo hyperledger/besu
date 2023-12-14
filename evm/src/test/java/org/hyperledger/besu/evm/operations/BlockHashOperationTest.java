@@ -38,8 +38,7 @@ class BlockHashOperationTest {
 
   @Test
   void shouldReturnZeroWhenArgIsBiggerThanALong() {
-    assertBlockHash(
-        Bytes32.fromHexString("F".repeat(64)), Bytes32.ZERO, 100, n -> Hash.EMPTY_LIST_HASH);
+    assertBlockHash(Hash.LAST, Bytes32.ZERO, 100, n -> Hash.EMPTY_LIST_HASH);
   }
 
   @Test
