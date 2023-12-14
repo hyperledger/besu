@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.worldstate;
+package org.hyperledger.besu.ethereum.privacy;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -26,12 +26,12 @@ import java.util.Optional;
 // This class uses a public WorldUpdater and a private WorldUpdater to provide a
 // MutableWorldStateUpdater that can read and write from the private world state and can read from
 // the public world state, but cannot write to it.
-public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
+public class PrivateMutableWorldStateUpdater implements WorldUpdater {
 
   protected final WorldUpdater publicWorldUpdater;
   protected final WorldUpdater privateWorldUpdater;
 
-  public DefaultMutablePrivateWorldStateUpdater(
+  public PrivateMutableWorldStateUpdater(
       final WorldUpdater publicWorldUpdater, final WorldUpdater privateWorldUpdater) {
     this.publicWorldUpdater = publicWorldUpdater;
     this.privateWorldUpdater = privateWorldUpdater;

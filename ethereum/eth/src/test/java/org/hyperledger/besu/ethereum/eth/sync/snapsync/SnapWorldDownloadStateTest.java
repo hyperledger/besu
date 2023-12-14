@@ -39,7 +39,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePers
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProcess;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -110,7 +110,7 @@ public class SnapWorldDownloadStateTest {
           new BonsaiWorldStateKeyValueStorage(
               new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
     } else {
-      worldStateStorage = new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+      worldStateStorage = new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     }
     downloadState =
         new SnapWorldDownloadState(

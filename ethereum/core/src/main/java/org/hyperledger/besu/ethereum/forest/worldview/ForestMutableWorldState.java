@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.worldstate;
+package org.hyperledger.besu.ethereum.forest.worldview;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -24,6 +24,9 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -47,7 +50,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class DefaultMutableWorldState implements MutableWorldState {
+public class ForestMutableWorldState implements MutableWorldState {
 
   private final EvmConfiguration evmConfiguration;
   private final WorldStateStorage worldStateStorage;
@@ -59,14 +62,14 @@ public class DefaultMutableWorldState implements MutableWorldState {
   private final Map<Bytes32, UInt256> newStorageKeyPreimages = new HashMap<>();
   private final Map<Bytes32, Address> newAccountKeyPreimages = new HashMap<>();
 
-  public DefaultMutableWorldState(
+  public ForestMutableWorldState(
       final WorldStateStorage storage,
       final WorldStatePreimageStorage preimageStorage,
       final EvmConfiguration evmConfiguration) {
     this(MerkleTrie.EMPTY_TRIE_NODE_HASH, storage, preimageStorage, evmConfiguration);
   }
 
-  public DefaultMutableWorldState(
+  public ForestMutableWorldState(
       final Bytes32 rootHash,
       final WorldStateStorage worldStateStorage,
       final WorldStatePreimageStorage preimageStorage,
@@ -77,12 +80,12 @@ public class DefaultMutableWorldState implements MutableWorldState {
     this.evmConfiguration = evmConfiguration;
   }
 
-  public DefaultMutableWorldState(
+  public ForestMutableWorldState(
       final WorldState worldState, final EvmConfiguration evmConfiguration) {
     // TODO: this is an abstraction leak (and kind of incorrect in that we reuse the underlying
     // storage), but the reason for this is that the accounts() method is unimplemented below and
     // can't be until NC-754.
-    if (!(worldState instanceof DefaultMutableWorldState other)) {
+    if (!(worldState instanceof ForestMutableWorldState other)) {
       throw new UnsupportedOperationException();
     }
 
@@ -156,7 +159,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   @Override
   public final boolean equals(final Object other) {
-    if (!(other instanceof DefaultMutableWorldState that)) {
+    if (!(other instanceof ForestMutableWorldState that)) {
       return false;
     }
 
@@ -288,7 +291,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
     public UInt256 getStorageValue(final UInt256 key) {
       return storageTrie()
           .get(Hash.hash(key))
-          .map(DefaultMutableWorldState::convertToUInt256)
+          .map(ForestMutableWorldState::convertToUInt256)
           .orElse(UInt256.ZERO);
     }
 
@@ -332,16 +335,16 @@ public class DefaultMutableWorldState implements MutableWorldState {
   }
 
   protected static class Updater
-      extends AbstractWorldUpdater<DefaultMutableWorldState, WorldStateAccount> {
+      extends AbstractWorldUpdater<ForestMutableWorldState, WorldStateAccount> {
 
     protected Updater(
-        final DefaultMutableWorldState world, final EvmConfiguration evmConfiguration) {
+        final ForestMutableWorldState world, final EvmConfiguration evmConfiguration) {
       super(world, evmConfiguration);
     }
 
     @Override
     protected WorldStateAccount getForMutation(final Address address) {
-      final DefaultMutableWorldState wrapped = wrappedWorldView();
+      final ForestMutableWorldState wrapped = wrappedWorldView();
       final Hash addressHash = address.addressHash();
       return wrapped
           .accountStateTrie
@@ -368,7 +371,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
     @Override
     public void commit() {
-      final DefaultMutableWorldState wrapped = wrappedWorldView();
+      final ForestMutableWorldState wrapped = wrappedWorldView();
 
       for (final Address address : getDeletedAccounts()) {
         final Hash addressHash = address.addressHash();

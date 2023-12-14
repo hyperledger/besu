@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.storage.keyvalue;
+package org.hyperledger.besu.ethereum.forest.storage;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
@@ -35,13 +35,13 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class WorldStateKeyValueStorage implements WorldStateStorage {
+public class ForestWorldStateKeyValueStorage implements WorldStateStorage {
 
   private final Subscribers<NodesAddedListener> nodeAddedListeners = Subscribers.create();
   private final KeyValueStorage keyValueStorage;
   private final ReentrantLock lock = new ReentrantLock();
 
-  public WorldStateKeyValueStorage(final KeyValueStorage keyValueStorage) {
+  public ForestWorldStateKeyValueStorage(final KeyValueStorage keyValueStorage) {
     this.keyValueStorage = keyValueStorage;
   }
 
