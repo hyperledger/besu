@@ -13,15 +13,19 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.ethereum.worldstate;
+package org.hyperledger.besu.ethereum.forest;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
@@ -32,7 +36,7 @@ import java.util.function.Function;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class DefaultWorldStateArchive implements WorldStateArchive {
+public class ForestWorldStateArchive implements WorldStateArchive {
   private final WorldStateStorage worldStateStorage;
   private final WorldStatePreimageStorage preimageStorage;
   private final WorldStateProofProvider worldStateProof;
@@ -40,7 +44,7 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
 
   private static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
-  public DefaultWorldStateArchive(
+  public ForestWorldStateArchive(
       final WorldStateStorage worldStateStorage,
       final WorldStatePreimageStorage preimageStorage,
       final EvmConfiguration evmConfiguration) {
@@ -72,7 +76,7 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
       return Optional.empty();
     }
     return Optional.of(
-        new DefaultMutableWorldState(
+        new ForestMutableWorldState(
             rootHash, worldStateStorage, preimageStorage, evmConfiguration));
   }
 

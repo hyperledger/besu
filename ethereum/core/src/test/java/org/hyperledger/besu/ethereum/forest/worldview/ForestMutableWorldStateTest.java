@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.worldstate;
+package org.hyperledger.besu.ethereum.forest.worldview;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldState;
@@ -21,7 +21,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
@@ -47,17 +47,17 @@ import org.junit.jupiter.api.Test;
 
 // TODO: make that an abstract mutable world state test, and create sub-class for all world state
 // implementations.
-class DefaultMutableWorldStateTest {
+class ForestMutableWorldStateTest {
   // The following test cases are loosely derived from the testTransactionToItself
   // GeneralStateReferenceTest.
 
   private static final Address ADDRESS =
       Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b");
 
-  private static MutableWorldState createEmpty(final WorldStateKeyValueStorage storage) {
+  private static MutableWorldState createEmpty(final ForestWorldStateKeyValueStorage storage) {
     final WorldStatePreimageKeyValueStorage preimageStorage =
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
-    return new DefaultMutableWorldState(storage, preimageStorage, EvmConfiguration.DEFAULT);
+    return new ForestMutableWorldState(storage, preimageStorage, EvmConfiguration.DEFAULT);
   }
 
   private static MutableWorldState createEmpty() {
@@ -243,7 +243,8 @@ class DefaultMutableWorldStateTest {
   @Test
   void commitAndPersist() {
     final KeyValueStorage storage = new InMemoryKeyValueStorage();
-    final WorldStateKeyValueStorage kvWorldStateStorage = new WorldStateKeyValueStorage(storage);
+    final ForestWorldStateKeyValueStorage kvWorldStateStorage =
+        new ForestWorldStateKeyValueStorage(storage);
     final MutableWorldState worldState = createEmpty(kvWorldStateStorage);
     final WorldUpdater updater = worldState.updater();
     final Wei newBalance = Wei.of(100000);
@@ -274,9 +275,9 @@ class DefaultMutableWorldStateTest {
 
     // Create new world state and check that it can access modified address
     final MutableWorldState newWorldState =
-        new DefaultMutableWorldState(
+        new ForestMutableWorldState(
             expectedRootHash,
-            new WorldStateKeyValueStorage(storage),
+            new ForestWorldStateKeyValueStorage(storage),
             new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
             EvmConfiguration.DEFAULT);
     assertThat(newWorldState.rootHash()).isEqualTo(expectedRootHash);
