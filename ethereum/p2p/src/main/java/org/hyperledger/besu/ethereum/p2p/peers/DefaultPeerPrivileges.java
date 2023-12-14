@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.p2p.peers;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class DefaultPeerPrivileges implements PeerPrivileges {
   private final MaintainedPeers maintainedPeers;
 
@@ -22,7 +24,7 @@ public class DefaultPeerPrivileges implements PeerPrivileges {
   }
 
   @Override
-  public boolean canExceedConnectionLimits(final Peer peer) {
-    return maintainedPeers.contains(peer);
+  public boolean canExceedConnectionLimits(final Bytes peerId) {
+    return maintainedPeers.streamPeers().anyMatch(p -> p.getId().equals(peerId));
   }
 }

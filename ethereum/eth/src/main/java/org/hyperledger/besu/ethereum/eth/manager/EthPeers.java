@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -219,12 +218,9 @@ public class EthPeers {
   }
 
   public EthPeer peer(final PeerConnection connection) {
-    try {
-      return incompleteConnections.get(
-          connection, () -> completeConnections.get(connection.getPeer().getId()));
-    } catch (final ExecutionException e) {
-      throw new RuntimeException(e);
-    }
+      final EthPeer ethPeer = incompleteConnections.getIfPresent(
+              connection);
+      return ethPeer != null ? ethPeer : completeConnections.get(connection.getPeer().getId());
   }
 
   public EthPeer peer(final Bytes peerId) {
@@ -366,10 +362,10 @@ public class EthPeers {
   }
 
   public boolean shouldConnect(final Peer peer, final boolean inbound) {
-    if (peerCount() >= peerUpperBound) {
+    final Bytes id = peer.getId();
+    if (peerCount() >= peerUpperBound && !canExceedPeerLimits(id) ) {
       return false;
     }
-    final Bytes id = peer.getId();
     final EthPeer ethPeer = completeConnections.get(id);
     if (ethPeer != null && !ethPeer.isDisconnected()) {
       return false;
@@ -429,8 +425,8 @@ public class EthPeers {
   private int comparePeerPriorities(final EthPeer p1, final EthPeer p2) {
     final PeerConnection a = p1.getConnection();
     final PeerConnection b = p2.getConnection();
-    final boolean aCanExceedPeerLimits = canExceedPeerLimits(a);
-    final boolean bCanExceedPeerLimits = canExceedPeerLimits(b);
+    final boolean aCanExceedPeerLimits = canExceedPeerLimits(a.getPeer().getId());
+    final boolean bCanExceedPeerLimits = canExceedPeerLimits(b.getPeer().getId());
     if (aCanExceedPeerLimits && !bCanExceedPeerLimits) {
       return -1;
     } else if (bCanExceedPeerLimits && !aCanExceedPeerLimits) {
@@ -442,11 +438,11 @@ public class EthPeers {
     }
   }
 
-  private boolean canExceedPeerLimits(final PeerConnection a) {
+  private boolean canExceedPeerLimits(final Bytes peerId) {
     if (rlpxAgent == null) {
-      return true;
+      return false;
     }
-    return rlpxAgent.canExceedConnectionLimits(a.getPeer());
+    return rlpxAgent.canExceedConnectionLimits(peerId);
   }
 
   private int compareConnectionInitiationTimes(final PeerConnection a, final PeerConnection b) {

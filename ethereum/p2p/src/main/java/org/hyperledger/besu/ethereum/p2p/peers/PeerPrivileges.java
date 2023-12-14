@@ -14,14 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.p2p.peers;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public interface PeerPrivileges {
 
   /**
    * If true, the given peer can connect or remain connected even if the max connection limit or the
    * maximum remote connection limit has been reached or exceeded.
    *
-   * @param peer The peer to be checked.
+   * @param peerId The id of the peer to be checked.
    * @return {@code true} if the peer should be allowed to connect regardless of connection limits.
    */
-  boolean canExceedConnectionLimits(final Peer peer);
+  boolean canExceedConnectionLimits(final Bytes peerId);
 }
