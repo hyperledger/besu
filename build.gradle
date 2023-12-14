@@ -14,6 +14,7 @@
  */
 
 
+import com.github.jk1.license.filter.LicenseBundleNormalizer
 import groovy.transform.CompileStatic
 import groovy.transform.Memoized
 import net.ltgt.gradle.errorprone.CheckSeverity
@@ -24,7 +25,7 @@ import java.util.regex.Pattern
 plugins {
   id 'com.diffplug.spotless' version '6.23.3'
   id 'com.github.ben-manes.versions' version '0.50.0'
-  id 'com.github.hierynomus.license' version '0.16.1-fix'
+  id 'com.github.jk1.dependency-license-report' version '2.5'
   id 'com.jfrog.artifactory' version '5.1.11'
   id 'io.spring.dependency-management' version '1.1.4'
   id 'me.champeau.jmh' version '0.7.2' apply false
@@ -87,13 +88,35 @@ def _strListCmdArg(name) {
   return _strListCmdArg(name, null)
 }
 
+licenseReport {
+  // This is for the allowed-licenses-file in checkLicense Task
+  // Accepts File, URL or String path to local or remote file
+  allowedLicensesFile = new File("$rootDir/gradle/allowed-licenses.json")
+
+  excludes = [
+    // only used for static analysis, not actually shipped
+    'com.google.errorprone:javac',
+    'org.checkerframework:dataflow-shaded',
+    'org.checkerframework:dataflow-errorprone',
+    // exclude Kotlin multiplatform dependencies container, they have the same license of what they contain
+    'com.squareup.okio:okio',
+    'org.jetbrains.kotlinx:kotlinx-coroutines-core'
+  ]
+
+  // If set to true, then all boms will be excluded from the report
+  excludeBoms = true
+
+  filters = [
+    new LicenseBundleNormalizer(bundlePath: "$rootDir/gradle/license-normalizer-bundle.json")
+  ]
+}
+
 allprojects {
   apply plugin: 'java-library'
   apply plugin: 'io.spring.dependency-management'
   apply plugin: 'jacoco'
   apply plugin: 'net.ltgt.errorprone'
   apply from: "${rootDir}/gradle/versions.gradle"
-  apply from: "${rootDir}/gradle/check-licenses.gradle"
 
   version = rootProject.version
 
@@ -623,10 +646,10 @@ task autocomplete(type: JavaExec) {
   }
 }
 
-installDist { dependsOn checkLicenses, untunedStartScripts, evmToolStartScripts }
+installDist { dependsOn checkLicense, untunedStartScripts, evmToolStartScripts }
 
 distTar {
-  dependsOn checkLicenses, autocomplete, untunedStartScripts, evmToolStartScripts
+  dependsOn checkLicense, autocomplete, untunedStartScripts, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
@@ -635,7 +658,7 @@ distTar {
 }
 
 distZip {
-  dependsOn checkLicenses, autocomplete, untunedStartScripts, evmToolStartScripts
+  dependsOn checkLicense, autocomplete, untunedStartScripts, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
