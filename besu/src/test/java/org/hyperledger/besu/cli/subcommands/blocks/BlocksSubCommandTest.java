@@ -36,17 +36,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine.Model.CommandSpec;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class BlocksSubCommandTest extends CommandTestAbstract {
 
-  @Rule public final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir public Path folder;
 
   private static final String EXPECTED_BLOCK_USAGE =
       "Usage: besu blocks [-hV] [COMMAND]"
@@ -187,10 +186,13 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void callingBlockImportSubCommandWithPathMustImportBlocksWithThisPath() throws Exception {
-    final File fileToImport = temp.newFile("blocks.file");
+  public void callingBlockImportSubCommandWithPathMustImportBlocksWithThisPath(
+      final @TempDir File fileToImport) throws Exception {
     parseCommand(
-        BLOCK_SUBCOMMAND_NAME, BLOCK_IMPORT_SUBCOMMAND_NAME, "--from", fileToImport.getPath());
+        BLOCK_SUBCOMMAND_NAME,
+        BLOCK_IMPORT_SUBCOMMAND_NAME,
+        "--from",
+        fileToImport.getAbsolutePath().toString());
 
     verify(rlpBlockImporter)
         .importBlockchain(pathArgumentCaptor.capture(), any(), anyBoolean(), anyLong(), anyLong());
@@ -202,8 +204,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void blocksImport_rlpFormat() throws Exception {
-    final File fileToImport = temp.newFile("blocks.file");
+  public void blocksImport_rlpFormat(final @TempDir File fileToImport) throws Exception {
     parseCommand(
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_IMPORT_SUBCOMMAND_NAME,
@@ -222,10 +223,11 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void blocksImport_rlpFormatMultiple() throws Exception {
-    final File fileToImport = temp.newFile("blocks.file");
-    final File file2ToImport = temp.newFile("blocks2.file");
-    final File file3ToImport = temp.newFile("blocks3.file");
+  public void blocksImport_rlpFormatMultiple(
+      final @TempDir File fileToImport,
+      final @TempDir File file2ToImport,
+      final @TempDir File file3ToImport)
+      throws Exception {
     parseCommand(
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_IMPORT_SUBCOMMAND_NAME,
@@ -247,10 +249,10 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void blocksImport_jsonFormat() throws Exception {
+  public void blocksImport_jsonFormat(final @TempDir Path dir) throws Exception {
     final String fileContent = "test";
-    final File fileToImport = temp.newFile("blocks.file");
-    final Writer fileWriter = Files.newBufferedWriter(fileToImport.toPath(), UTF_8);
+    final Path fileToImport = Files.createTempFile(dir, "tmp", "json");
+    final Writer fileWriter = Files.newBufferedWriter(fileToImport, UTF_8);
     fileWriter.write(fileContent);
     fileWriter.close();
 
@@ -260,7 +262,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
         "--format",
         "JSON",
         "--from",
-        fileToImport.getPath());
+        fileToImport.toFile().getAbsolutePath());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -274,9 +276,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   public void blocksExport_missingFileParam() throws IOException {
     createDbDirectory(true);
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
-        BLOCK_SUBCOMMAND_NAME,
-        BLOCK_EXPORT_SUBCOMMAND_NAME);
+        "--data-path=" + folder.getRoot(), BLOCK_SUBCOMMAND_NAME, BLOCK_EXPORT_SUBCOMMAND_NAME);
     final String expectedErrorOutputStart = "Missing required option: '--to=<FILE>'";
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedErrorOutputStart);
@@ -285,17 +285,17 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void blocksExport_noDbDirectory() throws IOException {
-    final File outputFile = folder.newFile("blocks.bin");
+  public void blocksExport_noDbDirectory(final @TempDir Path noDbDir) throws IOException {
+    final File outputFile = noDbDir.resolve("blocks.bin").toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + noDbDir,
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
-        outputFile.getPath());
+        outputFile.getAbsolutePath());
     final String expectedErrorOutputStart =
         "Chain is empty.  Unable to export blocks from specified data directory: "
-            + folder.getRoot().getAbsolutePath()
+            + noDbDir
             + File.separator
             + BesuController.DATABASE_PATH;
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -307,16 +307,16 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void blocksExport_emptyDbDirectory() throws IOException {
     createDbDirectory(false);
-    final File outputFile = folder.newFile("blocks.bin");
+    final File outputFile = Files.createFile(folder.resolve("empty")).toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder,
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
         outputFile.getPath());
     final String expectedErrorOutputStart =
         "Chain is empty.  Unable to export blocks from specified data directory: "
-            + folder.getRoot().getAbsolutePath()
+            + folder
             + File.separator
             + BesuController.DATABASE_PATH;
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -328,13 +328,13 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void blocksExport_noStartOrEnd() throws IOException {
     createDbDirectory(true);
-    final File outputFile = folder.newFile("blocks.bin");
+    final File outputFile = Files.createTempFile(folder, "blocks", "bin").toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder,
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
-        outputFile.getPath());
+        outputFile.getAbsolutePath());
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
@@ -344,9 +344,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void blocksExport_withStartAndNoEnd() throws IOException {
     createDbDirectory(true);
-    final File outputFile = folder.newFile("blocks.bin");
+    final File outputFile = Files.createFile(folder.resolve("blocks.bin")).toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder,
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
@@ -361,9 +361,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void blocksExport_withEndAndNoStart() throws IOException {
     createDbDirectory(true);
-    final File outputFile = folder.newFile("blocks.bin");
+    final File outputFile = Files.createTempFile(folder, "blocks", "bin").toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder,
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
@@ -378,13 +378,13 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void blocksExport_withStartAndEnd() throws IOException {
     createDbDirectory(true);
-    final File outputFile = folder.newFile("blocks.bin");
+    final File outputFile = Files.createTempFile(folder, "blocks", "bin").toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder,
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
-        outputFile.getPath(),
+        outputFile.getAbsolutePath(),
         "--start-block=1",
         "--end-block=10");
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -396,13 +396,13 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void blocksExport_withOutOfOrderStartAndEnd() throws IOException {
     createDbDirectory(true);
-    final File outputFile = folder.newFile("blocks.bin");
+    final File outputFile = Files.createTempFile(folder, "blocks", "bin").toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder,
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
-        outputFile.getPath(),
+        outputFile.getAbsolutePath(),
         "--start-block=10",
         "--end-block=1");
     assertThat(commandErrorOutput.toString(UTF_8))
@@ -415,9 +415,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void blocksExport_withEmptyRange() throws IOException {
     createDbDirectory(true);
-    final File outputFile = folder.newFile("blocks.bin");
+    final File outputFile = Files.createTempFile(folder, "blocks", "bin").toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder,
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
@@ -434,9 +434,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void blocksExport_withInvalidStart() throws IOException {
     createDbDirectory(true);
-    final File outputFile = folder.newFile("blocks.bin");
+    final File outputFile = Files.createTempFile(folder, "blocks", "bin").toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder.getRoot(),
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
@@ -452,9 +452,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void blocksExport_withInvalidEnd() throws IOException {
     createDbDirectory(true);
-    final File outputFile = folder.newFile("blocks.bin");
+    final File outputFile = Files.createTempFile(folder, "blocks", "bin").toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder.getRoot(),
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
@@ -482,17 +482,18 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   }
 
   private void createDbDirectory(final boolean createDataFiles) throws IOException {
-    final File dbDir = folder.newFolder(BesuController.DATABASE_PATH);
+    final Path dbDir = Files.createDirectory(folder.resolve(BesuController.DATABASE_PATH));
+
     if (createDataFiles) {
-      final Path dataFilePath = Paths.get(dbDir.getAbsolutePath(), "0000001.sst");
-      final boolean success = new File(dataFilePath.toString()).createNewFile();
+      final Path dataFilePath = Paths.get(dbDir.toFile().getAbsolutePath(), "0000001.sst");
+      final boolean success = new File(dataFilePath.toFile().getAbsolutePath()).createNewFile();
       assertThat(success).isTrue();
     }
   }
 
   @Test
-  public void blocksImportWithNoSyncModeDoesNotRaiseNPE() throws IOException {
-    final File fileToImport = temp.newFile("blocks.file");
+  public void blocksImportWithNoSyncModeDoesNotRaiseNPE(final @TempDir File fileToImport)
+      throws IOException {
     parseCommand(
         BLOCK_SUBCOMMAND_NAME, BLOCK_IMPORT_SUBCOMMAND_NAME, "--from", fileToImport.getPath());
 
