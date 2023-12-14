@@ -26,7 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
     extends CommandTestAbstract {
