@@ -195,7 +195,11 @@ public class EthPeers {
         disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
         peer.handleDisconnect();
         abortPendingRequestsAssignedToDisconnectedPeers();
-        LOG.debug("Disconnected EthPeer {}", peer.getShortNodeId());
+        if (System.currentTimeMillis() - peer.getConnection().getInitiatedAt() > 600000) {
+          LOG.debug("Disonnected ESTABLISHED peer {}", peer);
+        } else {
+          LOG.debug("Disconnected EthPeer {}", peer.getShortNodeId());
+        }
         LOG.trace("Disconnected EthPeer {}", peer);
       }
     }
@@ -218,9 +222,8 @@ public class EthPeers {
   }
 
   public EthPeer peer(final PeerConnection connection) {
-      final EthPeer ethPeer = incompleteConnections.getIfPresent(
-              connection);
-      return ethPeer != null ? ethPeer : completeConnections.get(connection.getPeer().getId());
+    final EthPeer ethPeer = incompleteConnections.getIfPresent(connection);
+    return ethPeer != null ? ethPeer : completeConnections.get(connection.getPeer().getId());
   }
 
   public EthPeer peer(final Bytes peerId) {
@@ -363,7 +366,7 @@ public class EthPeers {
 
   public boolean shouldConnect(final Peer peer, final boolean inbound) {
     final Bytes id = peer.getId();
-    if (peerCount() >= peerUpperBound && !canExceedPeerLimits(id) ) {
+    if (peerCount() >= peerUpperBound && !canExceedPeerLimits(id)) {
       return false;
     }
     final EthPeer ethPeer = completeConnections.get(id);
