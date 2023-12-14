@@ -53,6 +53,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -322,49 +323,62 @@ public class TransactionPool implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     if (isPoolEnabled.get()) {
-      final long started = System.currentTimeMillis();
       if (event.getEventType().equals(BlockAddedEvent.EventType.HEAD_ADVANCED)
           || event.getEventType().equals(BlockAddedEvent.EventType.CHAIN_REORG)) {
 
         // add the event to the processing queue
         blockAddedQueue.add(event);
-
-        // we want to process the added block asynchronously,
-        // but at the same time we must ensure that blocks are processed in order one at time
-        ethContext
-            .getScheduler()
-            .scheduleServiceTask(
-                () -> {
-                  while (!blockAddedQueue.isEmpty()) {
-                    if (blockAddedLock.tryLock()) {
-                      // no other thread is processing the queue, so start processing it
-                      try {
-                        BlockAddedEvent e = blockAddedQueue.poll();
-                        // check again since another thread could have stolen our task
-                        if (e != null) {
-                          pendingTransactions.manageBlockAdded(
-                              e.getBlock().getHeader(),
-                              e.getAddedTransactions(),
-                              e.getRemovedTransactions(),
-                              protocolSchedule
-                                  .getByBlockHeader(e.getBlock().getHeader())
-                                  .getFeeMarket());
-                          reAddTransactions(e.getRemovedTransactions());
-                          LOG.atTrace()
-                              .setMessage("Block added event {} processed in {}ms")
-                              .addArgument(e)
-                              .addArgument(() -> System.currentTimeMillis() - started)
-                              .log();
-                        }
-                      } finally {
-                        blockAddedLock.unlock();
-                      }
-                    }
-                  }
-                  return null;
-                });
+        processBlockAddedQueue();
       }
     }
+  }
+
+  private void processBlockAddedQueue() {
+    // we want to process the added block asynchronously,
+    // but at the same time we must ensure that blocks are processed in order one at time
+    ethContext
+        .getScheduler()
+        .scheduleServiceTask(
+            () -> {
+              int blockProcessed = 0;
+              while (!blockAddedQueue.isEmpty()) {
+                if (blockAddedLock.tryLock()) {
+                  // no other thread is processing the queue, so start processing it
+                  try {
+                    BlockAddedEvent e = blockAddedQueue.poll();
+                    // check again since another thread could have stolen our task
+                    if (e != null) {
+                      final long started = System.currentTimeMillis();
+                      pendingTransactions.manageBlockAdded(
+                          e.getBlock().getHeader(),
+                          e.getAddedTransactions(),
+                          e.getRemovedTransactions(),
+                          protocolSchedule
+                              .getByBlockHeader(e.getBlock().getHeader())
+                              .getFeeMarket());
+                      reAddTransactions(e.getRemovedTransactions());
+                      LOG.atTrace()
+                          .setMessage(
+                              "Block added event {} processed in {}ms, block processed by this thread {}")
+                          .addArgument(e)
+                          .addArgument(() -> System.currentTimeMillis() - started)
+                          .addArgument(++blockProcessed)
+                          .log();
+                    }
+                  } finally {
+                    blockAddedLock.unlock();
+                  }
+                } else {
+                  LOG.trace("Block added event queue already being processed, retry later");
+                  // try to get the lock later
+                  ethContext
+                      .getScheduler()
+                      .scheduleFutureTask(this::processBlockAddedQueue, Duration.ofMillis(10));
+                  return null;
+                }
+              }
+              return null;
+            });
   }
 
   private void reAddTransactions(final List<Transaction> reAddTransactions) {
