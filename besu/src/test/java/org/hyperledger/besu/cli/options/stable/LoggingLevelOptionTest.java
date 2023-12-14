@@ -21,8 +21,8 @@ import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 import java.util.Arrays;
 
 import org.apache.logging.log4j.Level;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.ParameterException;
@@ -31,7 +31,7 @@ public class LoggingLevelOptionTest {
 
   private LoggingLevelOption levelOption;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     levelOption = new LoggingLevelOption();
   }
