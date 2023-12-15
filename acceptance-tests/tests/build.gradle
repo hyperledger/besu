@@ -83,8 +83,6 @@ dependencies {
   testImplementation 'org.web3j:abi'
   testImplementation 'org.web3j:besu'
   testImplementation 'org.web3j:core'
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
 
 test.enabled = false
