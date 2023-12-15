@@ -34,17 +34,19 @@ public class RocksDbUsageHelper {
       final RocksDB rocksdb, final ColumnFamilyHandle cfHandle, final PrintWriter out)
       throws RocksDBException, NumberFormatException {
     final String size = rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size");
+    final String numberOfKeys = rocksdb.getProperty(cfHandle, "rocksdb.estimate-num-keys");
     boolean emptyColumnFamily = false;
-    if (!size.isEmpty() && !size.isBlank()) {
+    if (!size.isEmpty() && !size.isBlank() && !numberOfKeys.isEmpty() && !numberOfKeys.isBlank()) {
       try {
         final long sizeLong = Long.parseLong(size);
+        final long numberOfKeysLong = Long.parseLong(numberOfKeys);
         final String totalSstFilesSize =
             rocksdb.getProperty(cfHandle, "rocksdb.total-sst-files-size");
         final long totalSstFilesSizeLong =
             !totalSstFilesSize.isEmpty() && !totalSstFilesSize.isBlank()
                 ? Long.parseLong(totalSstFilesSize)
                 : 0;
-        if (sizeLong == 0) {
+        if (sizeLong == 0 && numberOfKeysLong == 0){
           emptyColumnFamily = true;
         }
 
