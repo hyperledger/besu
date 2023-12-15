@@ -44,9 +44,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -58,7 +55,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
@@ -83,8 +79,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final BlockBroadcaster blockBroadcaster;
   private final List<PeerValidator> peerValidators;
   private final Optional<MergePeerFilter> mergePeerFilter;
-  private final AtomicLong numStatusMessagesSent = new AtomicLong(0L);
-  private final AtomicLong numSuccessStatusMessagesExchanged = new AtomicLong(0L);
 
   public EthProtocolManager(
       final Blockchain blockchain,
@@ -99,7 +93,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final Optional<MergePeerFilter> mergePeerFilter,
       final SynchronizerConfiguration synchronizerConfiguration,
       final EthScheduler scheduler,
-      final MetricsSystem metricsSystem,
       final ForkIdManager forkIdManager) {
     this.networkId = networkId;
     this.peerValidators = peerValidators;
@@ -132,18 +125,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         transactionPool,
         ethMessages,
         ethereumWireProtocolConfiguration);
-
-    metricsSystem.createLongGauge(
-        BesuMetricCategory.PEERS,
-        "sent_status_messages",
-        "Number of status messages sent",
-        numStatusMessagesSent::get);
-
-    metricsSystem.createLongGauge(
-        BesuMetricCategory.PEERS,
-        "peers_successfull_status_exchange",
-        "The number of peers we have successfully exchanged status messages with",
-        numSuccessStatusMessagesExchanged::get);
   }
 
   @VisibleForTesting
@@ -173,7 +154,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         mergePeerFilter,
         synchronizerConfiguration,
         scheduler,
-        new NoOpMetricsSystem(),
         new ForkIdManager(
             blockchain,
             Collections.emptyList(),
@@ -195,8 +175,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final SynchronizerConfiguration synchronizerConfiguration,
       final EthScheduler scheduler,
       final List<Long> blockNumberForks,
-      final List<Long> timestampForks,
-      final MetricsSystem metricsSystem) {
+      final List<Long> timestampForks) {
     this(
         blockchain,
         networkId,
@@ -210,7 +189,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         mergePeerFilter,
         synchronizerConfiguration,
         scheduler,
-        metricsSystem,
         new ForkIdManager(
             blockchain,
             blockNumberForks,
@@ -392,7 +370,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     try {
       LOG.trace("Sending status message to {} for connection {}.", peer.getId(), connection);
       peer.send(status, getSupportedProtocol(), connection);
-      numStatusMessagesSent.getAndIncrement();
       peer.registerStatusSent(connection);
     } catch (final PeerNotConnected peerNotConnected) {
       // Nothing to do.
@@ -467,7 +444,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             .log();
         handleDisconnect(peer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
       } else {
-        numSuccessStatusMessagesExchanged.getAndIncrement();
         LOG.debug(
             "Received status message from {}: {} with connection {}",
             peer,
