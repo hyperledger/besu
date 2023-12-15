@@ -86,7 +86,7 @@ public class TrieLogHelper {
 
     IdentityHashMap<byte[], byte[]> trieLogsToRetain;
 
-    //TODO: maybe stop the method here if we don't find enough hashes to retain
+    // TODO: maybe stop the method here if we don't find enough hashes to retain
     if ((long) hashesToRetain.size() == layersToRetain) {
       trieLogsToRetain = new IdentityHashMap<>();
       // save trielogs in a flatfile as a fail-safe
@@ -105,7 +105,7 @@ public class TrieLogHelper {
     }
     out.println("Clear trielogs...");
     // clear trielogs storage
-    //TODO: Add a check to ensure we have trieLogsToRetain.size() == layersToRetain
+    // TODO: Add a check to ensure we have trieLogsToRetain.size() == layersToRetain
     rootWorldStateStorage.clearTrieLog();
 
     // get an update and insert the trielogs we retained
@@ -120,9 +120,8 @@ public class TrieLogHelper {
     if (rootWorldStateStorage.streamTrieLogKeys(layersToRetain).count() == layersToRetain) {
       out.println("Prune ran successfully. Deleting file...");
       deleteTrieLogFile();
-    }
-    else{
-        out.println("Prune failed. Please check the logs for more details.");
+    } else {
+      out.println("Prune failed. Please check the logs for more details.");
     }
     out.println("Enjoy some GBs of storage back!...");
   }
