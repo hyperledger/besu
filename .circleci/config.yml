@@ -409,26 +409,28 @@ workflows:
       - unitTests:
            requires:
             - assemble
+            - acceptanceTests
       - testWindows:
           requires:
             - assemble
       - referenceTests:
           requires:
             - assemble
+            - acceptanceTests
       - integrationTests:
           requires:
             - assemble
       - acceptanceTests:
           requires:
             - assemble
+            - acceptanceTestsCliqueBft
       - acceptanceTestsCliqueBft:
           requires:
             - assemble
-            - acceptanceTests
+            - acceptanceTestsPermissioning
       - acceptanceTestsPermissioning:
           requires:
             - assemble
-            - acceptanceTestsCliqueBft
       - buildDocker:
           requires:
             - assemble
