@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class DataStorageOptionsTest
     extends AbstractCLIOptionsTest<DataStorageConfiguration, DataStorageOptions> {
