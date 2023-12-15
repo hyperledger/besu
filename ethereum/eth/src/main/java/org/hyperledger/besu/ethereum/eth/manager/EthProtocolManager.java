@@ -480,7 +480,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             message.getConnection());
       }
     } catch (final RLPException e) {
-      LOG.debug("Unable to parse status message from peer {}.", peer, e);
+      LOG.atDebug()
+          .setMessage("Unable to parse status message from peer {}... {}")
+          .addArgument(peer::getShortNodeId)
+          .addArgument(e)
+          .log();
       // Parsing errors can happen when clients broadcast network ids outside the int range,
       // So just disconnect with "subprotocol" error rather than "breach of protocol".
       peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);

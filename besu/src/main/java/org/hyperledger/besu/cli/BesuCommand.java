@@ -78,6 +78,7 @@ import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
 import org.hyperledger.besu.cli.subcommands.RetestethSubCommand;
+import org.hyperledger.besu.cli.subcommands.TxParseSubCommand;
 import org.hyperledger.besu.cli.subcommands.ValidateConfigSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
 import org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand;
@@ -145,7 +146,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
-import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
+import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
@@ -1218,27 +1219,27 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Long apiGasPriceMax = 500_000_000_000L;
 
   @CommandLine.Option(
-      names = {"--api-priority-fee-limiting-enabled"},
+      names = {"--api-gas-and-priority-fee-limiting-enabled"},
       hidden = true,
       description =
-          "Set to enable priority fee limit in eth_feeHistory (default: ${DEFAULT-VALUE})")
-  private final Boolean apiPriorityFeeLimitingEnabled = false;
+          "Set to enable gas price and minimum priority fee limit in eth_getGasPrice and eth_feeHistory (default: ${DEFAULT-VALUE})")
+  private final Boolean apiGasAndPriorityFeeLimitingEnabled = false;
 
   @CommandLine.Option(
-      names = {"--api-priority-fee-lower-bound-coefficient"},
+      names = {"--api-gas-and-priority-fee-lower-bound-coefficient"},
       hidden = true,
       description =
-          "Coefficient for setting the lower limit of minimum priority fee in eth_feeHistory (default: ${DEFAULT-VALUE})")
-  private final Long apiPriorityFeeLowerBoundCoefficient =
-      ApiConfiguration.DEFAULT_LOWER_BOUND_PRIORITY_FEE_COEFFICIENT;
+          "Coefficient for setting the lower limit of gas price and minimum priority fee in eth_getGasPrice and eth_feeHistory (default: ${DEFAULT-VALUE})")
+  private final Long apiGasAndPriorityFeeLowerBoundCoefficient =
+      ApiConfiguration.DEFAULT_LOWER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT;
 
   @CommandLine.Option(
-      names = {"--api-priority-fee-upper-bound-coefficient"},
+      names = {"--api-gas-and-priority-fee-upper-bound-coefficient"},
       hidden = true,
       description =
-          "Coefficient for setting the upper limit of minimum priority fee in eth_feeHistory (default: ${DEFAULT-VALUE})")
-  private final Long apiPriorityFeeUpperBoundCoefficient =
-      ApiConfiguration.DEFAULT_UPPER_BOUND_PRIORITY_FEE_COEFFICIENT;
+          "Coefficient for setting the upper limit of gas price and minimum priority fee in eth_getGasPrice and eth_feeHistory (default: ${DEFAULT-VALUE})")
+  private final Long apiGasAndPriorityFeeUpperBoundCoefficient =
+      ApiConfiguration.DEFAULT_UPPER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT;
 
   @CommandLine.Option(
       names = {"--static-nodes-file"},
@@ -1493,6 +1494,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             jsonBlockImporterFactory,
             rlpBlockExporterFactory,
             commandLine.getOut()));
+    commandLine.addSubcommand(
+        TxParseSubCommand.COMMAND_NAME, new TxParseSubCommand(commandLine.getOut()));
     commandLine.addSubcommand(
         PublicKeySubCommand.COMMAND_NAME, new PublicKeySubCommand(commandLine.getOut()));
     commandLine.addSubcommand(
@@ -1902,11 +1905,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     CommandLineUtils.checkOptionDependencies(
         logger,
         commandLine,
-        "--api-priority-fee-limiting-enabled",
-        !apiPriorityFeeLimitingEnabled,
+        "--api-gas-and-priority-fee-limiting-enabled",
+        !apiGasAndPriorityFeeLimitingEnabled,
         asList(
-            "--api-priority-fee-upper-bound-coefficient",
-            "--api-priority-fee-lower-bound-coefficient"));
+            "--api-gas-and-priority-fee-upper-bound-coefficient",
+            "--api-gas-and-priority-fee-lower-bound-coefficient"));
   }
 
   private void ensureValidPeerBoundParams() {
@@ -2120,8 +2123,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     instantiateSignatureAlgorithmFactory();
 
     logger.info(generateConfigurationOverview());
-    logger.info("Connecting to {} static nodes.", staticNodes.size());
-    logger.trace("Static Nodes = {}", staticNodes);
     logger.info("Security Module: {}", securityModuleName);
   }
 
@@ -2534,16 +2535,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .gasPriceMax(apiGasPriceMax)
             .maxLogsRange(rpcMaxLogsRange)
             .gasCap(rpcGasCap)
-            .isPriorityFeeLimitingEnabled(apiPriorityFeeLimitingEnabled);
-    if (apiPriorityFeeLimitingEnabled) {
-      if (apiPriorityFeeLowerBoundCoefficient > apiPriorityFeeUpperBoundCoefficient) {
+            .isGasAndPriorityFeeLimitingEnabled(apiGasAndPriorityFeeLimitingEnabled);
+    if (apiGasAndPriorityFeeLimitingEnabled) {
+      if (apiGasAndPriorityFeeLowerBoundCoefficient > apiGasAndPriorityFeeUpperBoundCoefficient) {
         throw new ParameterException(
             this.commandLine,
-            "--api-priority-fee-lower-bound-coefficient cannot be greater than the value of --api-priority-fee-upper-bound-coefficient");
+            "--api-gas-and-priority-fee-lower-bound-coefficient cannot be greater than the value of --api-gas-and-priority-fee-upper-bound-coefficient");
       }
       builder
-          .lowerBoundPriorityFeeCoefficient(apiPriorityFeeLowerBoundCoefficient)
-          .upperBoundPriorityFeeCoefficient(apiPriorityFeeUpperBoundCoefficient);
+          .lowerBoundGasAndPriorityFeeCoefficient(apiGasAndPriorityFeeLowerBoundCoefficient)
+          .upperBoundGasAndPriorityFeeCoefficient(apiGasAndPriorityFeeUpperBoundCoefficient);
     }
     return builder.build();
   }
@@ -3119,9 +3120,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (listBootNodes != null) {
       if (!p2PDiscoveryOptionGroup.peerDiscoveryEnabled) {
         logger.warn("Discovery disabled: bootnodes will be ignored.");
+      } else {
+        logger.info("Configured {} bootnodes.", listBootNodes.size());
+        logger.debug("Bootnodes = {}", listBootNodes);
       }
       DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
       builder.setBootNodes(listBootNodes);
+    } else {
+      logger.info("0 Bootnodes configured");
     }
     return builder.build();
   }
@@ -3224,7 +3230,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       staticNodesPath = dataDir().resolve(staticNodesFilename);
     }
     logger.debug("Static Nodes file: {}", staticNodesPath);
-    return StaticNodesParser.fromPath(staticNodesPath, getEnodeDnsConfiguration());
+    final Set<EnodeURL> staticNodes =
+        StaticNodesParser.fromPath(staticNodesPath, getEnodeDnsConfiguration());
+    logger.info("Connecting to {} static nodes.", staticNodes.size());
+    logger.debug("Static Nodes = {}", staticNodes);
+    return staticNodes;
   }
 
   private List<EnodeURL> buildEnodes(
@@ -3236,7 +3246,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   /**
-   * Besu CLI Paramaters exception handler used by VertX. Visible for testing.
+   * Besu CLI Parameters exception handler used by VertX. Visible for testing.
    *
    * @return instance of BesuParameterExceptionHandler
    */
@@ -3516,6 +3526,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     builder.setHasCustomGenesis(genesisFile != null);
+    if (genesisFile != null) {
+      builder.setCustomGenesis(genesisFile.getAbsolutePath());
+    }
     builder.setNetworkId(ethNetworkConfig.getNetworkId());
 
     builder

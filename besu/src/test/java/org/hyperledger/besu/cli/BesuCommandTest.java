@@ -83,8 +83,8 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
+import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
@@ -127,19 +127,18 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class BesuCommandTest extends CommandTestAbstract {
 
   private static final String ENCLAVE_URI = "http://1.2.3.4:5555";
@@ -198,7 +197,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     DEFAULT_API_CONFIGURATION = ImmutableApiConfiguration.builder().build();
   }
 
-  @Before
+  @BeforeEach
   public void setup() {
     try {
       // optimistically tear down a potential previous loaded trusted setup
@@ -210,7 +209,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     MergeConfigOptions.setMergeEnabled(false);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
 
     MergeConfigOptions.setMergeEnabled(false);
@@ -366,10 +365,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void overrideDefaultValuesIfKeyIsPresentInConfigFile() throws IOException {
+  public void overrideDefaultValuesIfKeyIsPresentInConfigFile(final @TempDir File dataFolder)
+      throws IOException {
     final URL configFile = this.getClass().getResource("/complete_config.toml");
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
-    final File dataFolder = temp.newFolder();
     final String updatedConfig =
         Resources.toString(configFile, UTF_8)
             .replace("/opt/besu/genesis.json", escapeTomlString(genesisFile.toString()))
@@ -1611,11 +1610,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void apiPriorityFeeLimitingEnabledOptionMustBeUsed() {
-    parseCommand("--api-priority-fee-limiting-enabled");
+    parseCommand("--api-gas-and-priority-fee-limiting-enabled");
     verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
     verify(mockRunnerBuilder).build();
     assertThat(apiConfigurationCaptor.getValue())
-        .isEqualTo(ImmutableApiConfiguration.builder().isPriorityFeeLimitingEnabled(true).build());
+        .isEqualTo(
+            ImmutableApiConfiguration.builder().isGasAndPriorityFeeLimitingEnabled(true).build());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1625,16 +1625,16 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void apiPriorityFeeLowerBoundCoefficientOptionMustBeUsed() {
     final long lowerBound = 150L;
     parseCommand(
-        "--api-priority-fee-lower-bound-coefficient",
+        "--api-gas-and-priority-fee-lower-bound-coefficient",
         Long.toString(lowerBound),
-        "--api-priority-fee-limiting-enabled");
+        "--api-gas-and-priority-fee-limiting-enabled");
     verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
     verify(mockRunnerBuilder).build();
     assertThat(apiConfigurationCaptor.getValue())
         .isEqualTo(
             ImmutableApiConfiguration.builder()
-                .lowerBoundPriorityFeeCoefficient(lowerBound)
-                .isPriorityFeeLimitingEnabled(true)
+                .lowerBoundGasAndPriorityFeeCoefficient(lowerBound)
+                .isGasAndPriorityFeeLimitingEnabled(true)
                 .build());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -1648,32 +1648,32 @@ public class BesuCommandTest extends CommandTestAbstract {
     final long upperBound = 100L;
 
     parseCommand(
-        "--api-priority-fee-limiting-enabled",
-        "--api-priority-fee-lower-bound-coefficient",
+        "--api-gas-and-priority-fee-limiting-enabled",
+        "--api-gas-and-priority-fee-lower-bound-coefficient",
         Long.toString(lowerBound),
-        "--api-priority-fee-upper-bound-coefficient",
+        "--api-gas-and-priority-fee-upper-bound-coefficient",
         Long.toString(upperBound));
     Mockito.verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "--api-priority-fee-lower-bound-coefficient cannot be greater than the value of --api-priority-fee-upper-bound-coefficient");
+            "--api-gas-and-priority-fee-lower-bound-coefficient cannot be greater than the value of --api-gas-and-priority-fee-upper-bound-coefficient");
   }
 
   @Test
   public void apiPriorityFeeUpperBoundCoefficientsOptionMustBeUsed() {
     final long upperBound = 200L;
     parseCommand(
-        "--api-priority-fee-upper-bound-coefficient",
+        "--api-gas-and-priority-fee-upper-bound-coefficient",
         Long.toString(upperBound),
-        "--api-priority-fee-limiting-enabled");
+        "--api-gas-and-priority-fee-limiting-enabled");
     verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
     verify(mockRunnerBuilder).build();
     assertThat(apiConfigurationCaptor.getValue())
         .isEqualTo(
             ImmutableApiConfiguration.builder()
-                .upperBoundPriorityFeeCoefficient(upperBound)
-                .isPriorityFeeLimitingEnabled(true)
+                .upperBoundGasAndPriorityFeeCoefficient(upperBound)
+                .isGasAndPriorityFeeLimitingEnabled(true)
                 .build());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -3744,7 +3744,7 @@ public class BesuCommandTest extends CommandTestAbstract {
             });
   }
 
-  @Ignore
+  @Disabled
   public void pruningIsEnabledIfSyncModeIsFast() {
     parseCommand("--sync-mode", "FAST");
 
@@ -3755,7 +3755,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
-  @Ignore
+  @Disabled
   public void pruningIsDisabledIfSyncModeIsFull() {
     parseCommand("--sync-mode", "FULL");
 
@@ -3777,7 +3777,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
-  @Ignore
+  @Disabled
   public void pruningDisabledExplicitly() {
     parseCommand("--pruning-enabled=false", "--sync-mode=FAST");
 
@@ -4372,14 +4372,11 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
-  @Rule public TemporaryFolder testFolder = new TemporaryFolder();
-
   @Test
-  public void errorIsRaisedIfStaticNodesAreNotAllowed() throws IOException {
-    final File staticNodesFile = testFolder.newFile("static-nodes.json");
-    staticNodesFile.deleteOnExit();
-    final File permissioningConfig = testFolder.newFile("permissioning");
-    permissioningConfig.deleteOnExit();
+  public void errorIsRaisedIfStaticNodesAreNotAllowed(final @TempDir Path testFolder)
+      throws IOException {
+    final Path staticNodesFile = testFolder.resolve("static-nodes.json");
+    final Path permissioningConfig = testFolder.resolve("permissioning.json");
 
     final EnodeURL staticNodeURI =
         EnodeURLImpl.builder()
@@ -4398,17 +4395,16 @@ public class BesuCommandTest extends CommandTestAbstract {
             .listeningPort(30304)
             .build();
 
+    Files.write(staticNodesFile, ("[\"" + staticNodeURI.toString() + "\"]").getBytes(UTF_8));
     Files.write(
-        staticNodesFile.toPath(), ("[\"" + staticNodeURI.toString() + "\"]").getBytes(UTF_8));
-    Files.write(
-        permissioningConfig.toPath(),
+        permissioningConfig,
         ("nodes-allowlist=[\"" + allowedNode.toString() + "\"]").getBytes(UTF_8));
 
     parseCommand(
-        "--data-path=" + testFolder.getRoot().getPath(),
+        "--data-path=" + testFolder,
         "--bootnodes",
         "--permissions-nodes-config-file-enabled=true",
-        "--permissions-nodes-config-file=" + permissioningConfig.getPath());
+        "--permissions-nodes-config-file=" + permissioningConfig);
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(staticNodeURI.toString(), "not in nodes-allowlist");
   }
@@ -4984,12 +4980,10 @@ public class BesuCommandTest extends CommandTestAbstract {
             "File containing password to unlock keystore is required when PKI Block Creation is enabled");
   }
 
-  @Rule public TemporaryFolder pkiTempFolder = new TemporaryFolder();
-
   @Test
-  public void pkiBlockCreationFullConfig() throws Exception {
+  public void pkiBlockCreationFullConfig(final @TempDir Path pkiTempFolder) throws Exception {
     // Create temp file with password
-    final File pwdFile = pkiTempFolder.newFile("pwd");
+    final File pwdFile = pkiTempFolder.resolve("pwd").toFile();
     FileUtils.writeStringToFile(pwdFile, "foo", UTF_8);
 
     parseCommand(

@@ -68,7 +68,7 @@ public class StaticNodesParserTest {
               .discoveryAndListeningPorts(30306)
               .build());
 
-  @TempDir private static Path testFolder;
+  @TempDir private Path testFolder;
 
   @Test
   public void validFileLoadsWithExpectedEnodes() throws IOException, URISyntaxException {

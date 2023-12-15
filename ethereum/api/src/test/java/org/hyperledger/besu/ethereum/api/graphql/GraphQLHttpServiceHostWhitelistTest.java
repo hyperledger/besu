@@ -46,7 +46,7 @@ import org.mockito.Mockito;
 
 public class GraphQLHttpServiceHostWhitelistTest {
 
-  @TempDir private static Path folder;
+  @TempDir private Path folder;
 
   protected static Vertx vertx;
 
