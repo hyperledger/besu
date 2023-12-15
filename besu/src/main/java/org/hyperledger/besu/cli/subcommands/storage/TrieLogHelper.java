@@ -18,7 +18,6 @@ package org.hyperledger.besu.cli.subcommands.storage;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
 
-import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -57,7 +56,8 @@ public class TrieLogHelper {
       final PrintWriter out,
       final DataStorageConfiguration config,
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
-      final MutableBlockchain blockchain) throws IOException {
+      final MutableBlockchain blockchain)
+      throws IOException {
 
     TrieLogHelper.validatePruneConfiguration(config);
     final long layersToRetain = config.getUnstable().getBonsaiTrieLogRetentionThreshold();
@@ -180,34 +180,34 @@ public class TrieLogHelper {
 
     File file = new File(trieLogFile);
 
-      try (BufferedWriter bf = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
-          for (Map.Entry<byte[], byte[]> entry : trieLogs.entrySet()) {
-              bf.write(Bytes.of(entry.getKey()) + ":" + Base64.toBase64String(entry.getValue()));
-              bf.newLine();
-          }
-          bf.flush();
-      } catch (IOException e) {
-          LOG.error(e.getMessage());
-          throw e;
+    try (BufferedWriter bf = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
+      for (Map.Entry<byte[], byte[]> entry : trieLogs.entrySet()) {
+        bf.write(Bytes.of(entry.getKey()) + ":" + Base64.toBase64String(entry.getValue()));
+        bf.newLine();
       }
+      bf.flush();
+    } catch (IOException e) {
+      LOG.error(e.getMessage());
+      throw e;
+    }
   }
 
   private static IdentityHashMap<byte[], byte[]> readTrieLogsFromFile() throws IOException {
 
     File file = new File(trieLogFile);
     IdentityHashMap<byte[], byte[]> trieLogs = new IdentityHashMap<>();
-      try (BufferedReader br = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {
-          String line;
-          while ((line = br.readLine()) != null) {
-              List<String> parts = Splitter.on(':').splitToList(line);
-              byte[] key = Bytes.fromHexString(parts.get(0)).toArrayUnsafe();
-              byte[] value = Base64.decode(parts.get(1));
-              trieLogs.put(key, value);
-          }
-      } catch (IOException e) {
-          LOG.error(e.getMessage());
-          throw e;
+    try (BufferedReader br = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {
+      String line;
+      while ((line = br.readLine()) != null) {
+        List<String> parts = Splitter.on(':').splitToList(line);
+        byte[] key = Bytes.fromHexString(parts.get(0)).toArrayUnsafe();
+        byte[] value = Base64.decode(parts.get(1));
+        trieLogs.put(key, value);
       }
+    } catch (IOException e) {
+      LOG.error(e.getMessage());
+      throw e;
+    }
 
     return trieLogs;
   }

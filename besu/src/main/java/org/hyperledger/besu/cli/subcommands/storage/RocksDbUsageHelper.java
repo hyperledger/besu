@@ -46,7 +46,7 @@ public class RocksDbUsageHelper {
             !totalSstFilesSize.isEmpty() && !totalSstFilesSize.isBlank()
                 ? Long.parseLong(totalSstFilesSize)
                 : 0;
-        if (sizeLong == 0 && numberOfKeysLong == 0){
+        if (sizeLong == 0 && numberOfKeysLong == 0) {
           emptyColumnFamily = true;
         }
 
