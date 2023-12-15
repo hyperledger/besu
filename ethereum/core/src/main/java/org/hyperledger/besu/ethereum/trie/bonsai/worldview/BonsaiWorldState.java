@@ -59,6 +59,7 @@ import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.rlp.RLP;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -361,14 +362,24 @@ public class BonsaiWorldState
                     (location, key) -> getStorageTrieNode(addressHash, location, key),
                     oldAccount.getStorageRoot());
             try {
+
+              final StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>> storageToDelete =
+                  worldStateUpdater.getStorageToUpdate().get(address);
               Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
               while (!entriesToDelete.isEmpty()) {
-                entriesToDelete
-                    .keySet()
-                    .forEach(
-                        k ->
-                            bonsaiUpdater.removeStorageValueBySlotHash(
-                                address.addressHash(), Hash.wrap(k)));
+                entriesToDelete.forEach(
+                    (k, v) -> {
+                      final StorageSlotKey storageSlotKey =
+                          new StorageSlotKey(Hash.wrap(k), Optional.empty());
+                      final UInt256 slotValue =
+                          UInt256.fromBytes(Bytes32.leftPad(RLP.decodeValue(v)));
+                      bonsaiUpdater.removeStorageValueBySlotHash(
+                          address.addressHash(), storageSlotKey.getSlotHash());
+                      storageToDelete
+                          .computeIfAbsent(
+                              storageSlotKey, key -> new BonsaiValue<>(slotValue, null, true))
+                          .setPrior(slotValue);
+                    });
                 entriesToDelete.keySet().forEach(storageTrie::remove);
                 if (entriesToDelete.size() == 256) {
                   entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
