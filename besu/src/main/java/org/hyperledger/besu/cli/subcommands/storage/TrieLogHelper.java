@@ -77,21 +77,21 @@ public class TrieLogHelper {
     }
 
     // retrieve the layersToRetains hashes from blockchain
-    final List<Hash> hashesToRetain = new ArrayList<>();
+    final List<Hash> trieLogKeys = new ArrayList<>();
 
     for (long i = chainHeight; i > lastBlockToRetainTrieLogsFor; i--) {
       final Optional<BlockHeader> header = blockchain.getBlockHeader(i);
-      header.ifPresent(blockHeader -> hashesToRetain.add(blockHeader.getHash()));
+      header.ifPresent(blockHeader -> trieLogKeys.add(blockHeader.getHash()));
     }
 
     IdentityHashMap<byte[], byte[]> trieLogsToRetain;
 
     // TODO: maybe stop the method here if we don't find enough hashes to retain
-    if ((long) hashesToRetain.size() == layersToRetain) {
+    if ((long) trieLogKeys.size() == layersToRetain) {
       trieLogsToRetain = new IdentityHashMap<>();
-      // save trielogs in a flatfile as a fail-safe
+      // save trielogs in a flatfile in case something goes wrong
       out.println("Obtaining trielogs to retain...");
-      hashesToRetain.forEach(
+      trieLogKeys.forEach(
           hash -> {
             rootWorldStateStorage
                 .getTrieLog(hash)
@@ -100,30 +100,36 @@ public class TrieLogHelper {
       out.println("Saving trielogs to retain in file...");
       saveTrieLogsInFile(trieLogsToRetain);
     } else {
-      // try to read the triLogs from the flatfile
+      // in case something went wrong and we already pruned trielogs
+      // users can re-un the subcommand and we will read trielogs from file
       trieLogsToRetain = readTrieLogsFromFile();
     }
-    out.println("Clear trielogs...");
-    // clear trielogs storage
-    // TODO: Add a check to ensure we have trieLogsToRetain.size() == layersToRetain
-    rootWorldStateStorage.clearTrieLog();
 
-    // get an update and insert the trielogs we retained
+    if (trieLogsToRetain.size() == layersToRetain) {
+      out.println("Clear trielogs...");
+      rootWorldStateStorage.clearTrieLog();
+      out.println("Restoring trielogs retained into db...");
+      recreateTrieLogs(rootWorldStateStorage, trieLogsToRetain);
+    }
+    if (rootWorldStateStorage.streamTrieLogKeys(layersToRetain).count() == layersToRetain) {
+      out.println("Prune ran successfully. Deleting file...");
+      deleteTrieLogFile();
+      out.println("Enjoy some GBs of storage back!...");
+    } else {
+      out.println("Prune failed. Re-run the subcommand to load the trielogs from file.");
+    }
+  }
+
+  private static void recreateTrieLogs(
+      final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
+      final IdentityHashMap<byte[], byte[]> trieLogsToRetain) {
     var updater = rootWorldStateStorage.updater();
-    out.println("restore trielogs retained into db...");
+
     trieLogsToRetain.forEach(
         (key, value) -> {
           updater.getTrieLogStorageTransaction().put(key, value);
         });
     updater.getTrieLogStorageTransaction().commit();
-
-    if (rootWorldStateStorage.streamTrieLogKeys(layersToRetain).count() == layersToRetain) {
-      out.println("Prune ran successfully. Deleting file...");
-      deleteTrieLogFile();
-    } else {
-      out.println("Prune failed. Please check the logs for more details.");
-    }
-    out.println("Enjoy some GBs of storage back!...");
   }
 
   private static void validatePruneConfiguration(final DataStorageConfiguration config) {
@@ -220,7 +226,9 @@ public class TrieLogHelper {
 
   private static void deleteTrieLogFile() {
     File file = new File(trieLogFile);
-    file.delete();
+    if (file.exists()) {
+      file.delete();
+    }
   }
 
   static void printCount(final PrintWriter out, final TrieLogCount count) {
