@@ -36,16 +36,14 @@ public class RocksDbUsageHelper {
     final String size = rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size");
     final String numberOfKeys = rocksdb.getProperty(cfHandle, "rocksdb.estimate-num-keys");
     boolean emptyColumnFamily = false;
-    if (!size.isEmpty() && !size.isBlank() && !numberOfKeys.isEmpty() && !numberOfKeys.isBlank()) {
+    if (!size.isBlank() && !numberOfKeys.isBlank()) {
       try {
         final long sizeLong = Long.parseLong(size);
         final long numberOfKeysLong = Long.parseLong(numberOfKeys);
         final String totalSstFilesSize =
             rocksdb.getProperty(cfHandle, "rocksdb.total-sst-files-size");
         final long totalSstFilesSizeLong =
-            !totalSstFilesSize.isEmpty() && !totalSstFilesSize.isBlank()
-                ? Long.parseLong(totalSstFilesSize)
-                : 0;
+            !totalSstFilesSize.isBlank() ? Long.parseLong(totalSstFilesSize) : 0;
         if (sizeLong == 0 && numberOfKeysLong == 0) {
           emptyColumnFamily = true;
         }
