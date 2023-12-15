@@ -163,7 +163,6 @@ task acceptanceTestCliqueBft(type: Test) {
   setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runBesuAsProcess', 'true'
   systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
-  mustRunAfter rootProject.subprojects*.test
   description = 'Runs Clique and BFT Besu acceptance tests.'
   group = 'verification'
 
@@ -217,7 +216,6 @@ task acceptanceTestPermissioning(type: Test) {
   setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runBesuAsProcess', 'true'
   systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
-  mustRunAfter rootProject.subprojects*.test
   description = 'Runs Permissioning Besu acceptance tests.'
   group = 'verification'
 
