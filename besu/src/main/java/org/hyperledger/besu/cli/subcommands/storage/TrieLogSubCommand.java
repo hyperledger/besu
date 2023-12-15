@@ -112,12 +112,11 @@ public class TrieLogSubCommand implements Runnable {
       TrieLogContext context = getTrieLogContext();
 
       try {
-        TrieLogHelper.countAndPrune(
+        TrieLogHelper.prune(
             spec.commandLine().getOut(),
             context.config(),
             context.rootWorldStateStorage(),
-            context.blockchain(),
-            context.besuController());
+            context.blockchain());
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -125,7 +124,6 @@ public class TrieLogSubCommand implements Runnable {
   }
 
   record TrieLogContext(
-      BesuController besuController,
       DataStorageConfiguration config,
       BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
       MutableBlockchain blockchain) {}
@@ -144,6 +142,6 @@ public class TrieLogSubCommand implements Runnable {
         (BonsaiWorldStateKeyValueStorage)
             storageProvider.createWorldStateStorage(DataStorageFormat.BONSAI);
     final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
-    return new TrieLogContext(besuController, config, rootWorldStateStorage, blockchain);
+    return new TrieLogContext(config, rootWorldStateStorage, blockchain);
   }
 }
