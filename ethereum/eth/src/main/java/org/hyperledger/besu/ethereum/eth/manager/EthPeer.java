@@ -429,7 +429,7 @@ public class EthPeer implements Comparable<EthPeer> {
               messageCode,
               protocolName,
               this,
-              ethMessage.getData());
+              ethMessage.getData().getData());
         });
     return requestManager;
   }
