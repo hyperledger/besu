@@ -69,7 +69,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -149,8 +148,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private final Duration shutdownTimeout = Duration.ofSeconds(15);
   private final Vertx vertx;
   private DNSDaemon dnsDaemon;
-  private final AtomicLong numBondedPeers = new AtomicLong();
-  private final AtomicLong numTrying = new AtomicLong();
 
   /**
    * Creates a peer networking service for production purposes.
@@ -197,18 +194,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     LOG.debug("setting peerLowerBound {}", peerLowerBound);
     peerDiscoveryAgent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= peerLowerBound);
     subscribeDisconnect(reputationManager);
-
-    //    metricsSystem.createLongGauge(
-    //        BesuMetricCategory.PEERS,
-    //        "bonded_peers_streamed_from_peer_table",
-    //        "Bonded peers streamed from PeerTable to try to connect to",
-    //        numBondedPeers::get);
-    //
-    //    metricsSystem.createLongGauge(
-    //        BesuMetricCategory.PEERS,
-    //        "bonded_peers_streamed_actually_trying_to_connect",
-    //        "Bonded peers streamed from PeerTable we are actually trying to connect to",
-    //        numTrying::get);
   }
 
   public static Builder builder() {
@@ -402,9 +387,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     final Stream<DiscoveryPeer> toTry =
         streamDiscoveredPeers()
             .filter(peer -> peer.getStatus() == PeerDiscoveryStatus.BONDED)
-            .peek(peer -> numBondedPeers.getAndIncrement())
             .filter(peerDiscoveryAgent::checkForkId)
-            .peek(peer -> numTrying.getAndIncrement())
             .sorted(Comparator.comparing(DiscoveryPeer::getLastAttemptedConnection));
     toTry.forEach(rlpxAgent::connect);
   }

@@ -46,7 +46,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -133,8 +132,6 @@ public class PeerDiscoveryController {
   private final ForkIdManager forkIdManager;
   private final boolean filterOnEnrForkId;
   private final RlpxAgent rlpxAgent;
-  private final AtomicLong numPeersBonded = new AtomicLong(0L);
-
   private RetryDelayFunction retryDelayFunction = RetryDelayFunction.linear(1.5, 2000, 60000);
 
   private final AsyncExecutor workerExecutor;
@@ -199,12 +196,6 @@ public class PeerDiscoveryController {
             "discovery_interaction_retry_count",
             "Total number of interaction retries performed",
             "type");
-
-    metricsSystem.createLongGauge(
-        BesuMetricCategory.PEERS,
-        "discovery_peers_bonded",
-        "Number of peers we have bonded with",
-        numPeersBonded::get);
 
     this.cachedEnrRequests =
         maybeCacheForEnrRequests.orElse(
@@ -456,7 +447,6 @@ public class PeerDiscoveryController {
       peerTable.tryAdd(peer);
     }
 
-    numPeersBonded.getAndIncrement();
     return true;
   }
 
