@@ -5,11 +5,9 @@ on:
 
 jobs:
   buildX64Docker:
-    runs-on: [X64, Linux]
+    runs-on: ubuntu-22.04
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
-      - name: export runner UID
-        run: echo "runner_uid=$UID" >> $GITHUB_ENV
       - name: Checkout Repo
         uses: actions/checkout@v3
       - name: Set up Java
@@ -17,15 +15,10 @@ jobs:
         with:
           distribution: adopt
           java-version: 17
-          cache: gradle
-      - name: hadoLint_openjdk_11
-        run: docker run --rm -i hadolint/hadolint < docker/openjdk-11/Dockerfile
-      - name: hadoLint_openjdk_11_debug
-        run: docker run --rm -i hadolint/hadolint < docker/openjdk-11-debug/Dockerfile
-      - name: hadoLint_openjdk_latest
-        run: docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
-      - name: hadoLint_graalvm
-        run: docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
+      - name: setup gradle
+        uses: gradle/gradle-build-action@v2
+      - name: hadoLint all Dockerfiles
+        run: find docker -name Dockerfile -exec docker run --rm -i hadolint/hadolint < {} \;
       - name: distDocker
         uses: gradle/gradle-build-action@v2
         with:
@@ -34,31 +27,24 @@ jobs:
         run: |
           mkdir -p docker/reports
           curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-linux-amd64 -o ./docker/tests/goss-linux-amd64
-      - name: distDocker
+      - name: test docker
         uses: gradle/gradle-build-action@v2
         env:
           architecture: amd64
         with:
           arguments: testDocker
       - name: Login to DockerHub
-        if: ${{ github.actor != 'dependabot[bot]' && (contains('refs/heads/release-', github.ref) || github.ref == 'refs/heads/main') }}
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_USER_RW }}
+          username: robocopsgonemad
           password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: publish
         if: ${{ github.actor != 'dependabot[bot]' && (contains('refs/heads/release-', github.ref) || github.ref == 'refs/heads/main') }}
         run: ./gradlew --no-daemon "-Pbranch=${{ github.head_ref || github.ref_name }}" dockerUpload
-      - name: Correct Ownership in GITHUB_WORKSPACE directory
-        uses: peter-murray/reset-workspace-ownership-action@v1
-        with:
-          user_id: ${{ env.runner_uid }}
   buildArm64Docker:
-    runs-on: [self-hosted, ARM64, Linux]
+    runs-on: ubuntu-22.04
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
-      - name: export runner UID
-        run: echo "runner_uid=$UID" >> $GITHUB_ENV
       - name: Checkout Repo
         uses: actions/checkout@v3
       - name: Set up Java
@@ -67,7 +53,6 @@ jobs:
           distribution: zulu
           architecture: arm64
           java-version: 17
-          cache: gradle
       - name: Docker login
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -89,18 +74,12 @@ jobs:
           arguments: testDocker
       - name: Login to DockerHub
         uses: docker/login-action@v2
-        if: ${{ github.actor != 'dependabot[bot]' && (contains('refs/heads/release-', github.ref) || github.ref == 'refs/heads/main') }}
         with:
-          username: ${{ secrets.DOCKER_USER_RW }}
+          username: robocopsgonemad
           password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: publish
-        if: ${{ github.actor != 'dependabot[bot]' && (contains('refs/heads/release-', github.ref) || github.ref == 'refs/heads/main') }}
         uses: gradle/gradle-build-action@v2
         env:
           architecture: arm64
         with:
           arguments: "-Pbranch=${{ github.head_ref || github.ref_name }} dockerUpload"
-      - name: Correct Ownership in GITHUB_WORKSPACE directory
-        uses: peter-murray/reset-workspace-ownership-action@v1
-        with:
-          user_id: ${{ env.runner_uid }}
