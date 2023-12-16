@@ -46,7 +46,7 @@ jobs:
           username: robocopsgonemad
           password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: publish
-        run: ./gradlew --no-daemon "-Pbranch=${{ github.head_ref || github.ref_name }}" dockerUpload
+        run: ./gradlew --no-daemon -PdockerOrgName=${{ secrets.DOCKER_ORG }}
   buildArm64Docker:
     runs-on: [self-hosted, ARM64]
     steps:
@@ -66,7 +66,7 @@ jobs:
         env:
           architecture: arm64
         with:
-          arguments: distDocker
+          arguments: distDocker -PdockerOrgName=${{ secrets.DOCKER_ORG }}
       - name: download image test binary
         run: |
           mkdir -p docker/reports
@@ -76,7 +76,7 @@ jobs:
         env:
           architecture: arm64
         with:
-          arguments: testDocker
+          arguments: testDocker -PdockerOrgName=${{ secrets.DOCKER_ORG }}
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
@@ -87,4 +87,4 @@ jobs:
         env:
           architecture: arm64
         with:
-          arguments: "-Pbranch=${{ github.head_ref || github.ref_name }} dockerUpload"
+          arguments: -PdockerOrgName=${{ secrets.DOCKER_ORG }} dockerUpload
