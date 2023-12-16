@@ -17,8 +17,17 @@ jobs:
           java-version: 17
       - name: setup gradle
         uses: gradle/gradle-build-action@v2
-      - name: hadoLint all Dockerfiles
-        run: find docker -name Dockerfile -exec docker run --rm -i hadolint/hadolint < {} \;
+      - name: hadoLint_openj9-jdk_17
+        run: docker run --rm -i hadolint/hadolint < docker/openj9-jdk-17/Dockerfile
+      - name: hadoLint_openjdk_17
+        run: docker run --rm -i hadolint/hadolint < docker/openjdk-17/Dockerfile
+      - name: hadoLint_openjdk_17_debug
+        run: docker run --rm -i hadolint/hadolint < docker/openjdk-17-debug/Dockerfile
+      - name: hadoLint_openjdk_latest
+        run: docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
+      - name: hadoLint_graalvm
+        run: docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
+
       - name: distDocker
         uses: gradle/gradle-build-action@v2
         with:
