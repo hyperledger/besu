@@ -6,7 +6,6 @@ on:
 jobs:
   buildX64Docker:
     runs-on: ubuntu-22.04
-    if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -27,7 +26,6 @@ jobs:
         run: docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
       - name: hadoLint_graalvm
         run: docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
-
       - name: distDocker
         uses: gradle/gradle-build-action@v2
         with:
@@ -48,11 +46,9 @@ jobs:
           username: robocopsgonemad
           password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: publish
-        if: ${{ github.actor != 'dependabot[bot]' && (contains('refs/heads/release-', github.ref) || github.ref == 'refs/heads/main') }}
         run: ./gradlew --no-daemon "-Pbranch=${{ github.head_ref || github.ref_name }}" dockerUpload
   buildArm64Docker:
-    runs-on: ubuntu-22.04
-    if: ${{ github.actor != 'dependabot[bot]' }}
+    runs-on: [self-hosted, ARM64]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
