@@ -46,7 +46,7 @@ jobs:
           username: robocopsgonemad
           password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: publish
-        run: ./gradlew --no-daemon -PdockerOrgName=${{ secrets.DOCKER_ORG }}
+        run: ./gradlew --no-daemon -PdockerOrgName=${{ secrets.DOCKER_ORG }} dockerUpload
   buildArm64Docker:
     runs-on: [self-hosted, ARM64]
     steps:
