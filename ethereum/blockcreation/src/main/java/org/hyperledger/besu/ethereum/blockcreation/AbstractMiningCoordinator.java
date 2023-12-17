@@ -208,6 +208,11 @@ public abstract class AbstractMiningCoordinator<
   }
 
   @Override
+  public Wei getMinPriorityFeePerGas() {
+    return executor.getMinPriorityFeePerGas();
+  }
+
+  @Override
   public void setExtraData(final Bytes extraData) {
     executor.setExtraData(extraData);
   }

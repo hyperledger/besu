@@ -125,11 +125,11 @@ public abstract class AbstractGetHeadersFromPeerTask
       updatePeerChainState(peer, header);
     }
 
-    LOG.atDebug()
+    LOG.atTrace()
         .setMessage("Received {} of {} headers requested from peer {}...")
-        .addArgument(headersList.size())
+        .addArgument(headersList::size)
         .addArgument(count)
-        .addArgument(peer.getShortNodeId())
+        .addArgument(peer::getShortNodeId)
         .log();
     return Optional.of(headersList);
   }

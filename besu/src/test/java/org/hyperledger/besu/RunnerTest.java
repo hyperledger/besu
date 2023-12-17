@@ -122,7 +122,7 @@ public final class RunnerTest {
     vertx.close();
   }
 
-  @TempDir private static Path temp;
+  @TempDir private Path temp;
 
   @Test
   public void getFixedNodes() {

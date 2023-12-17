@@ -58,6 +58,7 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class BlockchainQueriesLogCacheTest {
 
+  // this tempDir is deliberately static
   @TempDir private static Path cacheDir;
 
   private static LogsQuery logsQuery;

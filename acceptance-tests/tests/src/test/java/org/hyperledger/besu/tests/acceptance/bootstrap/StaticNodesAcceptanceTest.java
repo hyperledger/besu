@@ -20,15 +20,15 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
 import java.util.Arrays;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class StaticNodesAcceptanceTest extends AcceptanceTestBase {
 
   private Node otherNode;
   private Node node;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     otherNode = besu.createNodeWithNoDiscovery("other-node");
     cluster.start(otherNode);

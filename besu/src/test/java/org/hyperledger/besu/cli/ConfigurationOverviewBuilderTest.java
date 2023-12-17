@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LEGACY;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.SEQUENCED;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -57,8 +58,9 @@ class ConfigurationOverviewBuilderTest {
     assertThat(networkSet).contains("Network: foobar");
 
     builder.setHasCustomGenesis(true);
+    builder.setCustomGenesis("file.name");
     final String genesisSet = builder.build();
-    assertThat(genesisSet).contains("Network: Custom genesis file specified");
+    assertThat(genesisSet).contains("Network: Custom genesis file");
     assertThat(genesisSet).doesNotContain("Network: foobar");
   }
 
@@ -178,6 +180,13 @@ class ConfigurationOverviewBuilderTest {
     builder.setTxPoolImplementation(LEGACY);
     final String legacyTxPoolSelected = builder.build();
     assertThat(legacyTxPoolSelected).contains("Using LEGACY transaction pool implementation");
+  }
+
+  @Test
+  void setTxPoolImplementationSequenced() {
+    builder.setTxPoolImplementation(SEQUENCED);
+    final String sequencedTxPoolSelected = builder.build();
+    assertThat(sequencedTxPoolSelected).contains("Using SEQUENCED transaction pool implementation");
   }
 
   @Test

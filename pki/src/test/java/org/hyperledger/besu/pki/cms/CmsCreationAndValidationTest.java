@@ -15,9 +15,10 @@
 
 package org.hyperledger.besu.pki.cms;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.besu.pki.util.TestCertificateUtils.Algorithm.EC;
 import static org.hyperledger.besu.pki.util.TestCertificateUtils.Algorithm.RSA;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.hyperledger.besu.pki.util.TestCertificateUtils.Algorithm;
 
@@ -56,8 +57,7 @@ public class CmsCreationAndValidationTest {
   public void cmsValidationWithEmptyCmsMessage(final Algorithm algorithm) {
     final Bytes data = Bytes.random(32);
 
-    assertThat(getCmsTestKeystores(algorithm).getCmsValidator().validate(Bytes.EMPTY, data))
-        .isFalse();
+    assertFalse(getCmsTestKeystores(algorithm).getCmsValidator().validate(Bytes.EMPTY, data));
   }
 
   @ParameterizedTest
@@ -69,7 +69,7 @@ public class CmsCreationAndValidationTest {
 
     final Bytes cms = cmsCreator.create(data);
 
-    assertThat(getCmsTestKeystores(algorithm).getCmsValidator().validate(cms, data)).isTrue();
+    assertTrue(getCmsTestKeystores(algorithm).getCmsValidator().validate(cms, data));
   }
 
   @ParameterizedTest
@@ -81,7 +81,7 @@ public class CmsCreationAndValidationTest {
 
     final Bytes cms = cmsCreator.create(data);
 
-    assertThat(getCmsTestKeystores(algorithm).getCmsValidator().validate(cms, data)).isFalse();
+    assertFalse(getCmsTestKeystores(algorithm).getCmsValidator().validate(cms, data));
   }
 
   @ParameterizedTest
@@ -93,7 +93,7 @@ public class CmsCreationAndValidationTest {
 
     final Bytes cms = cmsCreator.create(data);
 
-    assertThat(getCmsTestKeystores(algorithm).getCmsValidator().validate(cms, data)).isTrue();
+    assertTrue(getCmsTestKeystores(algorithm).getCmsValidator().validate(cms, data));
   }
 
   @ParameterizedTest
@@ -105,7 +105,7 @@ public class CmsCreationAndValidationTest {
 
     final Bytes cms = cmsCreator.create(data);
 
-    assertThat(getCmsTestKeystores(algorithm).getCmsValidator().validate(cms, data)).isFalse();
+    assertFalse(getCmsTestKeystores(algorithm).getCmsValidator().validate(cms, data));
   }
 
   @ParameterizedTest
@@ -117,7 +117,7 @@ public class CmsCreationAndValidationTest {
 
     final Bytes cms = cmsCreator.create(data);
 
-    assertThat(getCmsTestKeystores(algorithm).getCmsValidator().validate(cms, data)).isFalse();
+    assertFalse(getCmsTestKeystores(algorithm).getCmsValidator().validate(cms, data));
   }
 
   @ParameterizedTest
@@ -129,7 +129,7 @@ public class CmsCreationAndValidationTest {
 
     final Bytes cms = cmsCreator.create(data);
 
-    assertThat(getCmsTestKeystores(algorithm).getCmsValidator().validate(cms, data)).isFalse();
+    assertFalse(getCmsTestKeystores(algorithm).getCmsValidator().validate(cms, data));
   }
 
   @ParameterizedTest
@@ -144,7 +144,7 @@ public class CmsCreationAndValidationTest {
     CmsValidator cmsValidator = getCmsTestKeystores(algorithm).getCmsValidatorWithoutCrl();
 
     // Because we don't have a CRL CertStore, revocation is not checked
-    assertThat(cmsValidator.validate(cms, data)).isTrue();
+    assertTrue(cmsValidator.validate(cms, data));
   }
 
   @ParameterizedTest
@@ -156,8 +156,7 @@ public class CmsCreationAndValidationTest {
     final Bytes cms = cmsCreator.create(otherData);
 
     final Bytes expectedData = Bytes.random(32);
-    assertThat(getCmsTestKeystores(algorithm).getCmsValidator().validate(cms, expectedData))
-        .isFalse();
+    assertFalse(getCmsTestKeystores(algorithm).getCmsValidator().validate(cms, expectedData));
   }
 
   @ParameterizedTest
@@ -198,7 +197,6 @@ public class CmsCreationAndValidationTest {
     final CMSSignedData cmsSignedData = cmsGenerator.generate(cmsData, true);
     final Bytes cmsBytes = Bytes.wrap(cmsSignedData.getEncoded());
 
-    assertThat(getCmsTestKeystores(algorithm).getCmsValidator().validate(cmsBytes, expectedData))
-        .isFalse();
+    assertFalse(getCmsTestKeystores(algorithm).getCmsValidator().validate(cmsBytes, expectedData));
   }
 }
