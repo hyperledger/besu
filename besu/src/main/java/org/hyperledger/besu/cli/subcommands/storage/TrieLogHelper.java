@@ -122,6 +122,7 @@ public class TrieLogHelper {
       out.println("Restoring trielogs retained into db...");
       recreateTrieLogs(rootWorldStateStorage, trieLogsToRetain);
     }
+
     if (rootWorldStateStorage.streamTrieLogKeys(layersToRetain).count() == layersToRetain) {
       out.println("Prune ran successfully. Deleting file...");
       deleteTrieLogFile();
@@ -134,12 +135,32 @@ public class TrieLogHelper {
   private static void recreateTrieLogs(
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
       final IdentityHashMap<byte[], byte[]> trieLogsToRetain) {
-    var updater = rootWorldStateStorage.updater();
+    // process in chunk to avoid OOM
+    final int chunkSize = 1000;
+    List<byte[]> keys = new ArrayList<>(trieLogsToRetain.keySet());
 
-    trieLogsToRetain.forEach(
-        (key, value) -> {
-          updater.getTrieLogStorageTransaction().put(key, value);
-        });
+    for (int startIndex = 0; startIndex < keys.size(); startIndex += chunkSize) {
+      processChunk(startIndex, chunkSize, keys, trieLogsToRetain, rootWorldStateStorage);
+    }
+  }
+
+  private static void processChunk(
+      final int startIndex,
+      final int chunkSize,
+      final List<byte[]> keys,
+      final IdentityHashMap<byte[], byte[]> trieLogsToRetain,
+      final BonsaiWorldStateKeyValueStorage rootWorldStateStorage) {
+
+    var updater = rootWorldStateStorage.updater();
+    int endIndex = Math.min(startIndex + chunkSize, keys.size());
+
+    for (int i = startIndex; i < endIndex; i++) {
+      byte[] key = keys.get(i);
+      byte[] value = trieLogsToRetain.get(key);
+      updater.getTrieLogStorageTransaction().put(key, value);
+      LOG.info("Key({}): {}", i, Bytes32.wrap(key));
+    }
+
     updater.getTrieLogStorageTransaction().commit();
   }
 
