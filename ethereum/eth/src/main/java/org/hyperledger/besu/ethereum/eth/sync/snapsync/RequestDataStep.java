@@ -143,16 +143,19 @@ public class RequestDataStep {
                   }
                 }
 
-                // if we received no slots, but we do get a proof, check the account during heal:
+                // if we received no slots, but do do get a proof of exclusion, add as a response:
                 else if (response.proofs().size() > 0 && requestTasks.size() > 0) {
-                  var lastTask = requestTasks.get(requestTasks.size() - 1);
-                  if (lastTask.getData() instanceof StorageRangeDataRequest storageRequest) {
-                    storageRequest.addResponse(
-                        downloadState,
-                        worldStateProofProvider,
-                        Collections.emptyNavigableMap(),
-                        response.proofs());
-                  }
+                  requestTasks.stream()
+                      .findFirst()
+                      .filter(task -> task instanceof StorageRangeDataRequest)
+                      .map(StorageRangeDataRequest.class::cast)
+                      .ifPresent(
+                          storageRequest ->
+                              storageRequest.addResponse(
+                                  downloadState,
+                                  worldStateProofProvider,
+                                  Collections.emptyNavigableMap(),
+                                  response.proofs()));
                 }
               }
               return requestTasks;
