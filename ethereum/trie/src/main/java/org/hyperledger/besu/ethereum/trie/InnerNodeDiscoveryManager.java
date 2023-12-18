@@ -121,9 +121,9 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
   }
 
   private boolean isInRange(final Bytes location) {
-    return !location.isEmpty()
-        && Arrays.compare(location.toArrayUnsafe(), startKeyHash.toArrayUnsafe()) >= 0
-        && Arrays.compare(location.toArrayUnsafe(), endKeyHash.toArrayUnsafe()) <= 0;
+    return location.isEmpty()
+        || (Arrays.compare(location.toArrayUnsafe(), startKeyHash.toArrayUnsafe()) >= 0
+            && Arrays.compare(location.toArrayUnsafe(), endKeyHash.toArrayUnsafe()) <= 0);
   }
 
   private Bytes createPath(final Bytes bytes) {

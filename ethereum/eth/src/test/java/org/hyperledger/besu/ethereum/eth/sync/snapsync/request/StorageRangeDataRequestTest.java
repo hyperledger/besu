@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
@@ -34,6 +35,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class StorageRangeDataRequestTest {
 
   @Mock WorldStateStorage storage;
+  @Mock SnapWorldDownloadState downloadState;
   WorldStateProofProvider worldstateProofProvider = new WorldStateProofProvider(storage);
 
   @Test
@@ -47,7 +49,7 @@ public class StorageRangeDataRequestTest {
     proofs.add(0, Hash.EMPTY_TRIE_HASH);
 
     storageRangeRequest.addResponse(
-        null, worldstateProofProvider, Collections.emptyNavigableMap(), proofs);
+        downloadState, worldstateProofProvider, Collections.emptyNavigableMap(), proofs);
     // valid proof of exclusion received
     assertThat(storageRangeRequest.isProofValid()).isTrue();
     assertThat(storageRangeRequest.isResponseReceived()).isTrue();
@@ -57,15 +59,15 @@ public class StorageRangeDataRequestTest {
   public void assertEmptySlotsWithInvalidProofCompletes() {
     var storageRangeRequest =
         new StorageRangeDataRequest(
-            Hash.EMPTY_TRIE_HASH, Bytes32.ZERO, Hash.EMPTY_TRIE_HASH, Bytes32.ZERO, Hash.LAST);
+            Hash.ZERO, Bytes32.fromHexString("0x01"), Bytes32.ZERO, Bytes32.ZERO, Hash.LAST);
 
     var proofs = new ArrayDeque<Bytes>();
     proofs.add(0, Hash.ZERO);
 
     storageRangeRequest.addResponse(
-        null, worldstateProofProvider, Collections.emptyNavigableMap(), proofs);
-    // TODO: expect invalid proof, but response received:
-    // assertThat(storageRangeRequest.isProofValid()).isFalse();
+        downloadState, worldstateProofProvider, Collections.emptyNavigableMap(), proofs);
+    // expect invalid proof, but response received:
+    assertThat(storageRangeRequest.isProofValid()).isFalse();
     assertThat(storageRangeRequest.isResponseReceived()).isTrue();
   }
 }
