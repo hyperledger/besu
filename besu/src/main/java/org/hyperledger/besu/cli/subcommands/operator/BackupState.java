@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.api.query.StateBackupService;
 import org.hyperledger.besu.ethereum.api.query.StateBackupService.BackupStatus;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
