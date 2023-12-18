@@ -89,6 +89,11 @@ public class RetryingGetStorageRangeFromPeerTask
   }
 
   @Override
+  protected boolean reportUselessIfEmptyResponse() {
+    return false;
+  }
+
+  @Override
   protected boolean successfulResult(final StorageRangeMessage.SlotRangeData peerResult) {
     return !emptyResult(peerResult);
   }

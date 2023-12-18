@@ -97,12 +97,14 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
                 if (successfulResult(peerResult)) {
                   result.complete(peerResult);
                 } else {
-                  if (emptyResult(peerResult)) {
+                  final boolean emptyResult = emptyResult(peerResult);
+                  if (emptyResult && reportUselessIfEmptyResponse()) {
                     // record this empty response, so that the peer will be disconnected if there
                     // were too many
                     assignedPeer.ifPresent(
                         peer -> peer.recordUselessResponse(getClass().getSimpleName()));
-                  } else {
+                  }
+                  if (!emptyResult) {
                     // If we get a partial success, reset the retry counter
                     retryCount = 0;
                   }
@@ -111,6 +113,10 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
                 }
               }
             });
+  }
+
+  protected boolean reportUselessIfEmptyResponse() {
+    return true;
   }
 
   protected abstract CompletableFuture<T> executePeerTask(Optional<EthPeer> assignedPeer);
