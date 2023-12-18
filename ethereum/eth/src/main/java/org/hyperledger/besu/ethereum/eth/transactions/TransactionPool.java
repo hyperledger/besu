@@ -109,6 +109,7 @@ public class TransactionPool implements BlockAddedObserver {
   private final SaveRestoreManager saveRestoreManager = new SaveRestoreManager();
   private final Set<Address> localSenders = ConcurrentHashMap.newKeySet();
   private final ReentrantLock blockAddedLock = new ReentrantLock();
+  private final AtomicReference<Thread> blockAddedQueuedThread = new AtomicReference<>();
   private final Queue<BlockAddedEvent> blockAddedQueue = new ConcurrentLinkedQueue<>();
 
   public TransactionPool(
@@ -340,14 +341,17 @@ public class TransactionPool implements BlockAddedObserver {
         .getScheduler()
         .scheduleServiceTask(
             () -> {
+              // if we were the thread waiting to be executed, then clear the queued thread
+              blockAddedQueuedThread.compareAndSet(Thread.currentThread(), null);
+
               int blockProcessed = 0;
-              while (!blockAddedQueue.isEmpty()) {
+              if (!blockAddedQueue.isEmpty()) {
                 if (blockAddedLock.tryLock()) {
                   // no other thread is processing the queue, so start processing it
                   try {
-                    BlockAddedEvent e = blockAddedQueue.poll();
-                    // check again since another thread could have stolen our task
-                    if (e != null) {
+                    for (BlockAddedEvent e = blockAddedQueue.poll();
+                        e != null;
+                        e = blockAddedQueue.poll()) {
                       final long started = System.currentTimeMillis();
                       pendingTransactions.manageBlockAdded(
                           e.getBlock().getHeader(),
@@ -369,17 +373,25 @@ public class TransactionPool implements BlockAddedObserver {
                     blockAddedLock.unlock();
                   }
                 } else {
-                  if (blockAddedLock.hasQueuedThreads()) {
-                    LOG.trace(
-                        "Block added event queue already being processed, and queued thread present, nothing to do");
-                  } else {
-                    LOG.trace(
-                        "Block added event queue already being processed, but not queued thread, retry later");
-                    // try to get the lock later
-                    ethContext
-                        .getScheduler()
-                        .scheduleFutureTask(this::processBlockAddedQueue, Duration.ofMillis(100));
-                  }
+                  blockAddedQueuedThread.getAndUpdate(
+                      qt -> {
+                        if (qt == null) {
+                          // if no queued thread, then try later
+                          LOG.trace(
+                              "Block added event queue already being processed, retry later, queue thread {}",
+                              qt);
+                          ethContext
+                              .getScheduler()
+                              .scheduleFutureTask(
+                                  this::processBlockAddedQueue, Duration.ofMillis(100));
+                        } else {
+                          LOG.trace(
+                              "Block added event queue already being processed and an already queued thread present {}, nothing to do",
+                              qt);
+                        }
+                        // record ourselves as queued thread
+                        return Thread.currentThread();
+                      });
                   return null;
                 }
               }
