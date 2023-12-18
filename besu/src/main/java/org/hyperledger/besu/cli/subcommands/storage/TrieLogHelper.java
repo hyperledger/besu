@@ -25,25 +25,20 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.common.base.Splitter;
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.bouncycastle.util.encoders.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,13 +51,17 @@ public class TrieLogHelper {
       final PrintWriter out,
       final DataStorageConfiguration config,
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
-      final MutableBlockchain blockchain)
-      throws IOException {
+      final MutableBlockchain blockchain) {
 
     TrieLogHelper.validatePruneConfiguration(config);
     final long layersToRetain = config.getUnstable().getBonsaiTrieLogRetentionThreshold();
     final long chainHeight = blockchain.getChainHeadBlockNumber();
-    final long lastBlockToRetainTrieLogsFor = chainHeight - layersToRetain;
+    final long lastBlockNumberToRetainTrieLogsFor = chainHeight - layersToRetain;
+    if (lastBlockNumberToRetainTrieLogsFor < 0) {
+      LOG.error(
+          "Trying to retain more trie logs than chain height ({}), skipping pruning", chainHeight);
+      return;
+    }
     final Optional<Hash> finalizedBlockHash = blockchain.getFinalized();
 
     if (finalizedBlockHash.isEmpty()) {
@@ -70,7 +69,7 @@ public class TrieLogHelper {
       return;
     } else {
       if (blockchain.getBlockHeader(finalizedBlockHash.get()).get().getNumber()
-          < lastBlockToRetainTrieLogsFor) {
+          < lastBlockNumberToRetainTrieLogsFor) {
         LOG.error("Trying to prune more layers than the finalized block height, skipping pruning");
         return;
       }
@@ -79,9 +78,11 @@ public class TrieLogHelper {
     // retrieve the layersToRetains hashes from blockchain
     final List<Hash> trieLogKeys = new ArrayList<>();
 
-    for (long i = chainHeight; i > lastBlockToRetainTrieLogsFor; i--) {
+    for (long i = chainHeight; i > lastBlockNumberToRetainTrieLogsFor; i--) {
       final Optional<BlockHeader> header = blockchain.getBlockHeader(i);
-      header.ifPresent(blockHeader -> trieLogKeys.add(blockHeader.getHash()));
+      header.ifPresentOrElse(
+          blockHeader -> trieLogKeys.add(blockHeader.getHash()),
+          () -> LOG.error("Error retrieving block"));
     }
 
     IdentityHashMap<byte[], byte[]> trieLogsToRetain;
@@ -98,11 +99,21 @@ public class TrieLogHelper {
                 .ifPresent(trieLog -> trieLogsToRetain.put(hash.toArrayUnsafe(), trieLog));
           });
       out.println("Saving trielogs to retain in file...");
-      saveTrieLogsInFile(trieLogsToRetain);
+      try {
+        saveTrieLogsInFile(trieLogsToRetain);
+      } catch (IOException e) {
+        LOG.error("Error saving trielogs to file: {}", e.getMessage());
+        return;
+      }
     } else {
       // in case something went wrong and we already pruned trielogs
       // users can re-un the subcommand and we will read trielogs from file
-      trieLogsToRetain = readTrieLogsFromFile();
+      try {
+        trieLogsToRetain = readTrieLogsFromFile();
+      } catch (Exception e) {
+        LOG.error("Error reading trielogs from file: {}", e.getMessage());
+        return;
+      }
     }
 
     if (trieLogsToRetain.size() == layersToRetain) {
@@ -114,7 +125,7 @@ public class TrieLogHelper {
     if (rootWorldStateStorage.streamTrieLogKeys(layersToRetain).count() == layersToRetain) {
       out.println("Prune ran successfully. Deleting file...");
       deleteTrieLogFile();
-      out.println("Enjoy some GBs of storage back!...");
+      out.println("Enjoy some GBs of storage back!");
     } else {
       out.println("Prune failed. Re-run the subcommand to load the trielogs from file.");
     }
@@ -188,35 +199,38 @@ public class TrieLogHelper {
     return new TrieLogCount(total.get(), canonicalCount.get(), forkCount.get(), orphanCount.get());
   }
 
-  private static void saveTrieLogsInFile(final Map<byte[], byte[]> trieLogs) throws IOException {
+  private static void saveTrieLogsInFile(final IdentityHashMap<byte[], byte[]> trieLogs)
+      throws IOException {
 
     File file = new File(trieLogFile);
-
-    try (BufferedWriter bf = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
-      for (Map.Entry<byte[], byte[]> entry : trieLogs.entrySet()) {
-        bf.write(Bytes.of(entry.getKey()) + ":" + Base64.toBase64String(entry.getValue()));
-        bf.newLine();
+    if (file.exists()) {
+      LOG.error("File {} already exists, something went terribly wrong", trieLogFile);
+    }
+    try (FileOutputStream fos = new FileOutputStream(trieLogFile)) {
+      try {
+        ObjectOutputStream oos = new ObjectOutputStream(fos);
+        oos.writeObject(trieLogs);
+      } catch (IOException ex) {
+        throw new RuntimeException(ex);
       }
-      bf.flush();
     } catch (IOException e) {
       LOG.error(e.getMessage());
       throw e;
     }
   }
 
-  private static IdentityHashMap<byte[], byte[]> readTrieLogsFromFile() throws IOException {
+  @SuppressWarnings("unchecked")
+  private static IdentityHashMap<byte[], byte[]> readTrieLogsFromFile()
+      throws IOException, ClassNotFoundException {
 
-    File file = new File(trieLogFile);
-    IdentityHashMap<byte[], byte[]> trieLogs = new IdentityHashMap<>();
-    try (BufferedReader br = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {
-      String line;
-      while ((line = br.readLine()) != null) {
-        List<String> parts = Splitter.on(':').splitToList(line);
-        byte[] key = Bytes.fromHexString(parts.get(0)).toArrayUnsafe();
-        byte[] value = Base64.decode(parts.get(1));
-        trieLogs.put(key, value);
-      }
-    } catch (IOException e) {
+    IdentityHashMap<byte[], byte[]> trieLogs;
+    try (FileInputStream fis = new FileInputStream(trieLogFile);
+        ObjectInputStream ois = new ObjectInputStream(fis)) {
+
+      trieLogs = (IdentityHashMap<byte[], byte[]>) ois.readObject();
+
+    } catch (IOException | ClassNotFoundException e) {
+
       LOG.error(e.getMessage());
       throw e;
     }
