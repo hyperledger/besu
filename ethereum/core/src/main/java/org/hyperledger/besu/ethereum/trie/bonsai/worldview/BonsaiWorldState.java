@@ -91,7 +91,7 @@ public class BonsaiWorldState
         evmConfiguration);
   }
 
-  protected BonsaiWorldState(
+  public BonsaiWorldState(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
       final CachedWorldStorageManager cachedWorldStorageManager,
