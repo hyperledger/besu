@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -29,7 +30,7 @@ class DatabaseMetadataTest {
 
   @Test
   void getVersion() {
-    final DatabaseMetadata databaseMetadata = new DatabaseMetadata(42);
+    final DatabaseMetadata databaseMetadata = new DatabaseMetadata(42, Optional.of("23.10.3"));
     assertThat(databaseMetadata).isNotNull();
     assertThat(databaseMetadata.getVersion()).isEqualTo(42);
   }

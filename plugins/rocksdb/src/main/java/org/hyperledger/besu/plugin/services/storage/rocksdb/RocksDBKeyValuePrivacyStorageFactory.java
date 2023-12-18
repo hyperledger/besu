@@ -130,7 +130,7 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
           dataDir,
           privacyDatabaseVersion);
       Files.createDirectories(dataDir);
-      new DatabaseMetadata(publicFactory.getDefaultVersion(), privacyDatabaseVersion)
+      new DatabaseMetadata(publicFactory.getDefaultVersion(), "23.10.0", privacyDatabaseVersion)
           .writeToDirectory(dataDir);
     }
 

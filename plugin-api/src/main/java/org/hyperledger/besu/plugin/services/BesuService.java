@@ -21,4 +21,8 @@ import org.hyperledger.besu.plugin.BesuContext;
  * All services that can be resolved via {@link BesuContext#getService(Class)} must implement {@link
  * BesuService}
  */
-public interface BesuService {}
+public interface BesuService {
+  default String getBesuVersion() {
+    return BesuService.class.getPackage().getImplementationVersion();
+  }
+}
