@@ -26,31 +26,29 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.ParameterException;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class TomlConfigFileDefaultProviderTest {
   @Mock CommandLine mockCommandLine;
 
   @Mock CommandSpec mockCommandSpec;
 
-  @Rule public final TemporaryFolder temp = new TemporaryFolder();
-
   @Test
-  public void defaultValueForMatchingKey() throws IOException {
+  public void defaultValueForMatchingKey(final @TempDir Path temp) throws IOException {
     when(mockCommandLine.getCommandSpec()).thenReturn(mockCommandSpec);
     Map<String, OptionSpec> validOptionsMap = new HashMap<>();
     validOptionsMap.put("--a-short-option", null);
@@ -58,7 +56,7 @@ public class TomlConfigFileDefaultProviderTest {
     validOptionsMap.put("--a-longer-option", null);
     when(mockCommandSpec.optionsMap()).thenReturn(validOptionsMap);
 
-    final File tempConfigFile = temp.newFile("config.toml");
+    final File tempConfigFile = temp.resolve("config.toml").toFile();
     try (final BufferedWriter fileWriter =
         Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
 
@@ -106,7 +104,7 @@ public class TomlConfigFileDefaultProviderTest {
   }
 
   @Test
-  public void defaultValueForOptionMustMatchType() throws IOException {
+  public void defaultValueForOptionMustMatchType(final @TempDir Path temp) throws IOException {
     when(mockCommandLine.getCommandSpec()).thenReturn(mockCommandSpec);
     Map<String, OptionSpec> validOptionsMap = new HashMap<>();
     validOptionsMap.put("--a-boolean-option", null);
@@ -124,7 +122,7 @@ public class TomlConfigFileDefaultProviderTest {
 
     when(mockCommandSpec.optionsMap()).thenReturn(validOptionsMap);
 
-    final File tempConfigFile = temp.newFile("config.toml");
+    final File tempConfigFile = temp.resolve("config.toml").toFile();
     try (final BufferedWriter fileWriter =
         Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
 
@@ -238,9 +236,9 @@ public class TomlConfigFileDefaultProviderTest {
   }
 
   @Test
-  public void invalidConfigMustThrow() throws IOException {
+  public void invalidConfigMustThrow(final @TempDir Path temp) throws IOException {
 
-    final File tempConfigFile = temp.newFile("config.toml");
+    final File tempConfigFile = Files.createTempFile("invalid", "toml").toFile();
 
     final TomlConfigFileDefaultProvider providerUnderTest =
         new TomlConfigFileDefaultProvider(mockCommandLine, tempConfigFile);
@@ -254,9 +252,9 @@ public class TomlConfigFileDefaultProviderTest {
   }
 
   @Test
-  public void invalidConfigContentMustThrow() throws IOException {
+  public void invalidConfigContentMustThrow(final @TempDir Path temp) throws IOException {
 
-    final File tempConfigFile = temp.newFile("config.toml");
+    final File tempConfigFile = temp.resolve("config.toml").toFile();
     final BufferedWriter fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8);
 
     fileWriter.write("an-invalid-syntax=======....");
@@ -276,13 +274,13 @@ public class TomlConfigFileDefaultProviderTest {
   }
 
   @Test
-  public void unknownOptionMustThrow() throws IOException {
+  public void unknownOptionMustThrow(final @TempDir Path temp) throws IOException {
 
     when(mockCommandLine.getCommandSpec()).thenReturn(mockCommandSpec);
     Map<String, OptionSpec> validOptionsMap = new HashMap<>();
     when(mockCommandSpec.optionsMap()).thenReturn(validOptionsMap);
 
-    final File tempConfigFile = temp.newFile("config.toml");
+    final File tempConfigFile = temp.resolve("config.toml").toFile();
     final BufferedWriter fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8);
 
     fileWriter.write("invalid_option=true");
@@ -300,7 +298,7 @@ public class TomlConfigFileDefaultProviderTest {
   }
 
   @Test
-  public void tomlTableHeadingsMustBeIgnored() throws IOException {
+  public void tomlTableHeadingsMustBeIgnored(final @TempDir Path temp) throws IOException {
 
     when(mockCommandLine.getCommandSpec()).thenReturn(mockCommandSpec);
 
@@ -310,7 +308,7 @@ public class TomlConfigFileDefaultProviderTest {
     validOptionsMap.put("--onemore-valid-option", null);
     when(mockCommandSpec.optionsMap()).thenReturn(validOptionsMap);
 
-    final File tempConfigFile = temp.newFile("config.toml");
+    final File tempConfigFile = temp.resolve("config.toml").toFile();
     final BufferedWriter fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8);
 
     fileWriter.write("a-valid-option=123");
@@ -343,7 +341,8 @@ public class TomlConfigFileDefaultProviderTest {
   }
 
   @Test
-  public void tomlTableHeadingsMustNotSkipValidationOfUnknownOptions() throws IOException {
+  public void tomlTableHeadingsMustNotSkipValidationOfUnknownOptions(final @TempDir Path temp)
+      throws IOException {
 
     when(mockCommandLine.getCommandSpec()).thenReturn(mockCommandSpec);
 
@@ -351,7 +350,7 @@ public class TomlConfigFileDefaultProviderTest {
     validOptionsMap.put("--a-valid-option", null);
     when(mockCommandSpec.optionsMap()).thenReturn(validOptionsMap);
 
-    final File tempConfigFile = temp.newFile("config.toml");
+    final File tempConfigFile = temp.resolve("config.toml").toFile();
     final BufferedWriter fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8);
 
     fileWriter.write("[ignoreme]");
