@@ -2,7 +2,6 @@ name: "Container Images"
 on:
   workflow_dispatch:
 
-
 jobs:
   buildX64Docker:
     runs-on: ubuntu-22.04

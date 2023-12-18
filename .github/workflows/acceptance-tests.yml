@@ -1,6 +1,8 @@
 name: acceptance-tests
 on:
   workflow_dispatch:
+  pull_request_review:
+    types: [submitted]
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
@@ -10,8 +12,8 @@ jobs:
   acceptanceTestEthereum:
     runs-on: ubuntu-22.04
     name: "Acceptance Runner #${{ matrix.runner_index }}: Run acceptance tests in parallel"
-    # TODO: return check for PR approval here!
-    if: ${{ github.actor != 'dependabot[bot]'}}
+    # TODO: don't re-run on subsequent comments on an approved workflow
+    if: ${{ github.actor != 'dependabot[bot]' && github.event.review.state == 'approved' }}
     strategy:
       fail-fast: false
       matrix:

@@ -1,6 +1,9 @@
 name: integration-tests
 on:
   workflow_dispatch:
+  pull_request_review:
+    types:
+      - submitted
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
@@ -8,8 +11,8 @@ env:
 jobs:
   integrationTetst:
     runs-on: ubuntu-22.04
-    #TODO: add condition to check pr is approved
-    if: ${{ github.actor != 'dependabot[bot]' }}
+    # TODO: don't re-run on subsequent comments on an approved workflow
+    if: ${{ github.actor != 'dependabot[bot]' && github.event.review.state == 'approved' }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
