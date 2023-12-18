@@ -108,7 +108,7 @@ public class TransactionPool implements BlockAddedObserver {
   private volatile OptionalLong subscribeConnectId = OptionalLong.empty();
   private final SaveRestoreManager saveRestoreManager = new SaveRestoreManager();
   private final Set<Address> localSenders = ConcurrentHashMap.newKeySet();
-  private final Lock blockAddedLock = new ReentrantLock();
+  private final ReentrantLock blockAddedLock = new ReentrantLock();
   private final Queue<BlockAddedEvent> blockAddedQueue = new ConcurrentLinkedQueue<>();
 
   public TransactionPool(
@@ -341,7 +341,7 @@ public class TransactionPool implements BlockAddedObserver {
         .scheduleServiceTask(
             () -> {
               int blockProcessed = 0;
-              if (!blockAddedQueue.isEmpty()) {
+              while (!blockAddedQueue.isEmpty()) {
                 if (blockAddedLock.tryLock()) {
                   // no other thread is processing the queue, so start processing it
                   try {
@@ -369,11 +369,17 @@ public class TransactionPool implements BlockAddedObserver {
                     blockAddedLock.unlock();
                   }
                 } else {
-                  LOG.trace("Block added event queue already being processed, retry later");
-                  // try to get the lock later
-                  ethContext
-                      .getScheduler()
-                      .scheduleFutureTask(this::processBlockAddedQueue, Duration.ofMillis(100));
+                  if (blockAddedLock.hasQueuedThreads()) {
+                    LOG.trace(
+                        "Block added event queue already being processed, and queued thread present, nothing to do");
+                  } else {
+                    LOG.trace(
+                        "Block added event queue already being processed, but not queued thread, retry later");
+                    // try to get the lock later
+                    ethContext
+                        .getScheduler()
+                        .scheduleFutureTask(this::processBlockAddedQueue, Duration.ofMillis(100));
+                  }
                   return null;
                 }
               }
