@@ -169,6 +169,14 @@ class MainnetTransactionProcessorTest {
     when(worldState.get(toAddresss.get())).thenReturn(receiverAccount);
     when(worldState.getAccount(toAddresss.get())).thenReturn(receiverAccount);
     when(worldState.updater()).thenReturn(worldState);
+    doAnswer(
+            invocation -> {
+              MessageFrame messageFrame = invocation.getArgument(0);
+              messageFrame.getMessageFrameStack().pop();
+              return null;
+            })
+        .when(messageCallProcessor)
+        .process(any(), any());
 
     final TraceEndTxTracer tracer = new TraceEndTxTracer();
     var transactionProcessor = createTransactionProcessor(true);
@@ -186,6 +194,21 @@ class MainnetTransactionProcessorTest {
 
     assertThat(tracer.traceEndTxCalled).isTrue();
   }
+
+  //  static class MockMessageProcessor extends AbstractMessageProcessor {
+  //
+  //    @Override
+  //    protected void start(final MessageFrame frame, final OperationTracer operationTracer) {}
+  //
+  //    @Override
+  //    protected void codeSuccess(final MessageFrame frame, final OperationTracer operationTracer)
+  // {}
+  //
+  //    @Override
+  //    public void process(final MessageFrame frame, final OperationTracer operationTracer) {
+  //      frame.
+  //    }
+  //  }
 
   static class TraceEndTxTracer implements OperationTracer {
     boolean traceEndTxCalled = false;
