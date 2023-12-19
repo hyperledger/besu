@@ -115,10 +115,6 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
             });
   }
 
-  protected boolean reportUselessIfEmptyResponse() {
-    return true;
-  }
-
   protected abstract CompletableFuture<T> executePeerTask(Optional<EthPeer> assignedPeer);
 
   protected void handleTaskError(final Throwable error) {
@@ -188,9 +184,18 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
    * Identify if the result is empty.
    *
    * @param peerResult the result to check
-   * @return true if the result is empty and the peer should be demoted and the request retried
+   * @return true if the result is empty and the request retried
    */
   protected abstract boolean emptyResult(final T peerResult);
+
+  /**
+   * Identify if and empty response can be reported as useless
+   *
+   * @return true if an empty response can be reported useless
+   */
+  protected boolean reportUselessIfEmptyResponse() {
+    return true;
+  }
 
   /**
    * Identify a successful and complete result. Partial results that are not considered successful
