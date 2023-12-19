@@ -9,10 +9,10 @@ env:
 
 jobs:
   pend:
-    - name: Set commit status as pending
-      uses: myrotvorets/set-commit-status-action@master
-      with:
-        status: pending
+    name: Set commit status as pending
+    uses: myrotvorets/set-commit-status-action@master
+    with:
+      status: pending
   repolint:
     name: "Repository Linting"
     runs-on: ubuntu-22.04
