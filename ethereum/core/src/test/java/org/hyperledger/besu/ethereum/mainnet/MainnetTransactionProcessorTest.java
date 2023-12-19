@@ -33,9 +33,13 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
+import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.worldstate.WorldView;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -67,6 +71,7 @@ class MainnetTransactionProcessorTest {
   @Mock private BlockHashLookup blockHashLookup;
 
   @Mock private MutableAccount senderAccount;
+  @Mock private MutableAccount receiverAccount;
 
   MainnetTransactionProcessor createTransactionProcessor(final boolean warmCoinbase) {
     return new MainnetTransactionProcessor(
@@ -139,6 +144,63 @@ class MainnetTransactionProcessorTest {
         Wei.ZERO);
 
     assertThat(coinbaseWarmed).isFalse();
+  }
+
+  @Test
+  void shouldTraceEndTxOnFailingTransaction() {
+    Optional<Address> toAddresss =
+        Optional.of(Address.fromHexString("0x2222222222222222222222222222222222222222"));
+    Address senderAddress = Address.fromHexString("0x5555555555555555555555555555555555555555");
+    Address coinbaseAddress = Address.fromHexString("0x4242424242424242424242424242424242424242");
+
+    when(receiverAccount.getCode()).thenReturn(Bytes.fromHexString("0x600101"));
+
+    when(transaction.getTo()).thenReturn(toAddresss);
+    when(transaction.getHash()).thenReturn(Hash.EMPTY);
+    when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
+    when(transaction.getSender()).thenReturn(senderAddress);
+    when(transaction.getValue()).thenReturn(Wei.ZERO);
+    when(transactionValidatorFactory.get().validate(any(), any(), any()))
+        .thenReturn(ValidationResult.valid());
+    when(transactionValidatorFactory.get().validateForSender(any(), any(), any()))
+        .thenReturn(ValidationResult.valid());
+    when(worldState.getOrCreate(senderAddress)).thenReturn(senderAccount);
+    when(worldState.getOrCreateSenderAccount(senderAddress)).thenReturn(senderAccount);
+    when(worldState.get(toAddresss.get())).thenReturn(receiverAccount);
+    when(worldState.getAccount(toAddresss.get())).thenReturn(receiverAccount);
+    when(worldState.updater()).thenReturn(worldState);
+
+    final TraceEndTxTracer tracer = new TraceEndTxTracer();
+    var transactionProcessor = createTransactionProcessor(true);
+    transactionProcessor.processTransaction(
+        blockchain,
+        worldState,
+        blockHeader,
+        transaction,
+        coinbaseAddress,
+        blockHashLookup,
+        false,
+        ImmutableTransactionValidationParams.builder().build(),
+        tracer,
+        Wei.ZERO);
+
+    assertThat(tracer.traceEndTxCalled).isTrue();
+  }
+
+  static class TraceEndTxTracer implements OperationTracer {
+    boolean traceEndTxCalled = false;
+
+    @Override
+    public void traceEndTransaction(
+        final WorldView worldView,
+        final org.hyperledger.besu.datatypes.Transaction tx,
+        final boolean status,
+        final Bytes output,
+        final List<Log> logs,
+        final long gasUsed,
+        final long timeNs) {
+      this.traceEndTxCalled = true;
+    }
   }
 
   @Test
