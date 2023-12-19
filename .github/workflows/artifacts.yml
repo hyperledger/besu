@@ -23,7 +23,6 @@ jobs:
               repo: context.repo.repo,
               ref: context.sha,
             });
-            console.log(data);
             console.log(statuses);
             console.log(context);
             const otherWorkflow = statuses.find(({ context }) => context === 'pre-review');
