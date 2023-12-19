@@ -11,9 +11,8 @@ jobs:
   artifacts:
     runs-on: ubuntu-22.04
     steps:
-      # TODO: ensure all checks have passed already
-      - name: Check if other workflow has run
-        id: 'confirmPreReview'
+      - name: Check if pre-review workflow has run
+        id: confirmPreReview
         uses: actions/github-script@v7.0.1
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -33,7 +32,8 @@ jobs:
             console.log(otherWorkflow);
             return otherWorkflow && otherWorkflow.state === 'success';
       - name: Run if other workflow was successful
-        if: steps.check.outputs.result == 'true'
+        # TODO: combine unit, acceptance, integration, reference tests before creating artifacts.
+        if: steps.confirmPreReview.outputs.result == 'true'
         run: echo "pre-review was successful, continuing"
       - name: checkout
         uses: actions/checkout@v4
@@ -46,14 +46,19 @@ jobs:
         uses: gradle/gradle-build-action@v2
       - name: assemble distributions
         run: ./gradlew assemble -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+      - name: new version number
+        id: verNum
+        run: |
+          VER_NUM = $(grep "version=" gradle.properties | sed 's/^version=//g')
+          echo "::set-output name=verNum::$VER_NUM"
       - name: upload tarball
         uses: actions/upload-artifact@v3
         with:
-          name: 'tarball'
+          name: besu-${{ steps.verNum.outputs.verNum }}.tar.gz
           path: 'build/distributions/besu*.tar.gz'
       - name: upload zipfile
         uses: actions/upload-artifact@v3
         with:
-          name: 'zipfile'
+          name: besu-${{ steps.verNum.outputs.verNum }}.zip
           path: 'build/distributions/besu*.zip'
 
