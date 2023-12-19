@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonGenerator.Feature;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -45,6 +46,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class WebSocketMessageHandler {
+
+  private static final ObjectMapper jsonObjectMapper =
+      new ObjectMapper()
+          .registerModule(new Jdk8Module()); // Handle JDK8 Optionals (de)serialization
 
   private static final Logger LOG = LoggerFactory.getLogger(WebSocketMessageHandler.class);
   private static final ObjectWriter JSON_OBJECT_WRITER =
@@ -161,6 +166,7 @@ public class WebSocketMessageHandler {
   }
 
   private void replyToClient(final ServerWebSocket websocket, final Object result) {
+    traceResponse(result);
     try {
       // underlying output stream lifecycle is managed by the json object writer
       JSON_OBJECT_WRITER.writeValue(new JsonResponseStreamer(websocket), result);
@@ -171,5 +177,13 @@ public class WebSocketMessageHandler {
 
   private JsonRpcResponse errorResponse(final Object id, final RpcErrorType error) {
     return new JsonRpcErrorResponse(id, error);
+  }
+
+  private void traceResponse(final Object response) {
+    try {
+      LOG.trace(jsonObjectMapper.writeValueAsString(response));
+    } catch (JsonProcessingException e) {
+      LOG.error("Error tracing JSON-RPC response", e);
+    }
   }
 }
