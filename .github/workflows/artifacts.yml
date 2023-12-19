@@ -24,15 +24,16 @@ jobs:
               ref: context.sha,
             });
             console.log(statuses);
-            const anyFailure = statuses.find(( { state }) => state === 'failed');
+            const anyFailure = statuses.find(( { state }) => state === 'failure');
             console.log(anyFailure);
             const prePRWorkflow = statuses.find(({ context }) => context === 'pre-review');
             console.log(prePRWorkflow);
             return prePRWorkflow && prePRWorkflow.state === 'success' && !anyFailure;
-      - name: Run if other workflow was successful
-
-        if: steps.confirmPreReview.outputs.result == 'true'
-        run: echo "pre-review was successful, continuing"
+      - name: Abort on missing status
+        if: steps.confirmPreReview.outputs.result == 'false'
+        run: |
+          echo "::error::required status missing"
+          exit 1
       - name: checkout
         uses: actions/checkout@v4
       - name: Set up JDK 17
