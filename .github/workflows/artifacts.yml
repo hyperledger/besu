@@ -18,19 +18,17 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           # TODO: combine unit, acceptance, integration, reference tests before creating artifacts. also ensure absence of any failed statii
           script: |
-            console.log(context);
-            console.log(context.repo.owner);
-            console.log(context.repo.repo);
-            console.log(context.sha);
             const { data: { statuses } } = await github.rest.repos.getCombinedStatusForRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
               ref: context.sha,
             });
-            console.log(statuses[0]);
-            const otherWorkflow = statuses.find(({ context }) => context === 'pre-review');
-            console.log(otherWorkflow);
-            return otherWorkflow && otherWorkflow.state === 'success';
+            console.log(statuses);
+            const anyFailure = statuses.find(( { state }) => state === 'failed');
+            console.log(anyFailure);
+            const prePRWorkflow = statuses.find(({ context }) => context === 'pre-review');
+            console.log(prePRWorkflow);
+            return prePRWorkflow && prePRWorkflow.state === 'success' && !anyFailure;
       - name: Run if other workflow was successful
 
         if: steps.confirmPreReview.outputs.result == 'true'
@@ -49,7 +47,7 @@ jobs:
       - name: new version number
         id: verNum
         run: |
-          VER_NUM = $(grep "version=" gradle.properties | sed 's/^version=//g')
+          export VER_NUM = $(grep "version=" gradle.properties | sed 's/^version=//g')
           echo "::set-output name=verNum::$VER_NUM"
       - name: upload tarball
         uses: actions/upload-artifact@v3
