@@ -13,7 +13,7 @@ jobs:
     steps:
       # TODO: ensure all checks have passed already
       - name: Check if other workflow has run
-        id: 'check pre-review has run'
+        id: 'confirmPreReview'
         uses: actions/github-script@v3
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -27,7 +27,7 @@ jobs:
             return otherWorkflow && otherWorkflow.state === 'success';
       - name: Run if other workflow was successful
         if: steps.check.outputs.result == 'true'
-        run: echo "Other workflow was successful, running this job"
+        run: echo "pre-review was successful, continuing"
       - name: checkout
         uses: actions/checkout@v4
       - name: Set up JDK 17
