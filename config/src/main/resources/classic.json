@@ -13,10 +13,12 @@
     "thanosBlock": 11700000,
     "magnetoBlock": 13189133,
     "mystiqueBlock": 14525000,
+    "spiralBlock": 19250000,
     "ethash": {
 
     },
     "discovery" : {
+      "dns": "enrtree://AJE62Q4DUX4QMMXEHCSSCSC65TDHZYSMONSD64P3WULVLSF6MRQ3K@all.classic.blockd.info",
       "bootnodes" : [
         "enode://8e73168affd8d445edda09c561d607081ca5d7963317caae2702f701eb6546b06948b7f8687a795de576f6a5f33c44828e25a90aa63de18db380a11e660dd06f@159.203.37.80:30303",
         "enode://2b1ef75e8b7119b6e0294f2e51ead2cf1a5400472452c199e9587727ada99e7e2b1199e36adcad6cbae65dce2410559546e4d83d8c93d45a559e723e56444c03@67.207.93.100:30303",

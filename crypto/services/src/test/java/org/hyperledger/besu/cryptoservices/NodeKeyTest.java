@@ -21,12 +21,12 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class NodeKeyTest {
 
-  @Before
+  @BeforeEach
   public void resetInstance() {
     SignatureAlgorithmFactory.resetInstance();
   }

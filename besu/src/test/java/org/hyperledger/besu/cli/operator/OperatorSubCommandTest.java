@@ -52,13 +52,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine.Model.CommandSpec;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class OperatorSubCommandTest extends CommandTestAbstract {
 
   private static final String EXPECTED_OPERATOR_USAGE =
@@ -80,7 +80,7 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
 
   private Path tmpOutputDirectoryPath;
 
-  @Before
+  @BeforeEach
   public void init() throws IOException {
     SignatureAlgorithmFactory.resetInstance();
     tmpOutputDirectoryPath = createTempDirectory(format("output-%d", currentTimeMillis()));

@@ -66,7 +66,7 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class TransactionTracerTest {
 
-  @TempDir private static Path traceDir;
+  @TempDir private Path traceDir;
 
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private Blockchain blockchain;

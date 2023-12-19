@@ -17,15 +17,15 @@ package org.hyperledger.besu.tests.acceptance.bootstrap;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ClusterAcceptanceTest extends AcceptanceTestBase {
 
   private Node minerNode;
   private Node fullNode;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     minerNode = besu.createMinerNode("node1");
     fullNode = besu.createArchiveNode("node2");

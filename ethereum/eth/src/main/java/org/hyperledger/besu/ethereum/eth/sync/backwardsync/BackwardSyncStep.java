@@ -66,7 +66,7 @@ public class BackwardSyncStep {
     }
 
     final int batchSize = context.getBatchSize();
-    LOG.debug("Requesting headers for hash {}, with batch size {}", hash, batchSize);
+    LOG.trace("Requesting headers for hash {}, with batch size {}", hash, batchSize);
 
     final RetryingGetHeadersEndingAtFromPeerByHashTask
         retryingGetHeadersEndingAtFromPeerByHashTask =

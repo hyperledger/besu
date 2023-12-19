@@ -182,7 +182,7 @@ public class TransactionPool implements BlockAddedObserver {
     final long started = System.currentTimeMillis();
     final int initialCount = transactions.size();
     final List<Transaction> addedTransactions = new ArrayList<>(initialCount);
-    LOG.debug("Adding {} remote transactions", initialCount);
+    LOG.trace("Adding {} remote transactions", initialCount);
 
     final var validationResults =
         sortedBySenderAndNonce(transactions)
@@ -204,7 +204,7 @@ public class TransactionPool implements BlockAddedObserver {
         .addArgument(() -> pendingTransactions.logStats())
         .log();
 
-    LOG.atDebug()
+    LOG.atTrace()
         .setMessage(
             "Added {} transactions to the pool in {}ms, {} not added, current pool stats {}")
         .addArgument(addedTransactions::size)
@@ -350,7 +350,7 @@ public class TransactionPool implements BlockAddedObserver {
                                   .getByBlockHeader(e.getBlock().getHeader())
                                   .getFeeMarket());
                           reAddTransactions(e.getRemovedTransactions());
-                          LOG.atDebug()
+                          LOG.atTrace()
                               .setMessage("Block added event {} processed in {}ms")
                               .addArgument(e)
                               .addArgument(() -> System.currentTimeMillis() - started)
@@ -358,6 +358,13 @@ public class TransactionPool implements BlockAddedObserver {
                         }
                       } finally {
                         blockAddedLock.unlock();
+                      }
+                    } else {
+                      try {
+                        // wait a bit before retrying
+                        Thread.sleep(100);
+                      } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
                       }
                     }
                   }

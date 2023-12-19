@@ -19,9 +19,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -46,7 +46,6 @@ public class WorldStateProofProviderTest {
 
   private static final Address address =
       Address.fromHexString("0x1234567890123456789012345678901234567890");
-
   private final ForestWorldStateKeyValueStorage worldStateKeyValueStorage =
       new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
