@@ -27,7 +27,7 @@ jobs:
               ref: context.sha,
             });
             console.log(refState);
-            console.log(statuses);
+            console.log(refState.statuses[0]);
             const otherWorkflow = statuses.find(({ context }) => context === 'pre-review');
             console.log(otherWorkflow);
             return otherWorkflow && otherWorkflow.state === 'success';
