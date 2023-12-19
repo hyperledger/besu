@@ -2,6 +2,8 @@
 
 ## 23.10.4
 
+- Github Actions based build.
+
 ### Breaking Changes
 
 ### Deprecations
