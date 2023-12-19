@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -33,6 +34,7 @@ import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.testutil.JsonTestParameters;
@@ -54,7 +56,8 @@ public class TransactionTest {
     return REFERENCE_TEST_PROTOCOL_SCHEDULES
         .getByName(name)
         .getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader())
-        .getTransactionValidatorFactory().get();
+        .getTransactionValidatorFactory()
+        .get();
   }
 
   private static final String TEST_CONFIG_FILE_DIR_PATH = "TransactionTests/";
@@ -62,7 +65,9 @@ public class TransactionTest {
   public static Stream<Arguments> getTestParametersForConfig() {
     return JsonTestParameters.create(TransactionTestCaseSpec.class)
         .generator((name, fullPath, spec, collector) -> collector.add(name, fullPath, spec, true))
-        .generate(TEST_CONFIG_FILE_DIR_PATH).stream().map(params -> Arguments.of(params[0], params[1]));
+        .generate(TEST_CONFIG_FILE_DIR_PATH)
+        .stream()
+        .map(params -> Arguments.of(params[0], params[1]));
   }
 
   @ParameterizedTest(name = "Name: {0}")
@@ -125,8 +130,30 @@ public class TransactionTest {
     milestone(spec, name, "London", new LondonGasCalculator(), Optional.of(Wei.of(0)));
   }
 
+  @ParameterizedTest(name = "Name: {0}")
+  @MethodSource("getTestParametersForConfig")
+  public void merge(final String name, final TransactionTestCaseSpec spec) {
+    milestone(spec, name, "Merge", new LondonGasCalculator(), Optional.of(Wei.of(0)));
+  }
+
+  @ParameterizedTest(name = "Name: {0}")
+  @MethodSource("getTestParametersForConfig")
+  public void shanghai(final String name, final TransactionTestCaseSpec spec) {
+    milestone(spec, name, "Shanghai", new ShanghaiGasCalculator(), Optional.of(Wei.of(0)));
+  }
+
+  @ParameterizedTest(name = "Name: {0}")
+  @MethodSource("getTestParametersForConfig")
+  public void cancun(final String name, final TransactionTestCaseSpec spec) {
+    milestone(spec, name, "Cancun", new CancunGasCalculator(), Optional.of(Wei.of(0)));
+  }
+
   public void milestone(
-      final TransactionTestCaseSpec spec, final String name, final String milestone, final GasCalculator gasCalculator, final Optional<Wei> baseFee) {
+      final TransactionTestCaseSpec spec,
+      final String name,
+      final String milestone,
+      final GasCalculator gasCalculator,
+      final Optional<Wei> baseFee) {
 
     final TransactionTestCaseSpec.Expectation expected = spec.expectation(milestone);
 

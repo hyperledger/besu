@@ -2905,7 +2905,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 + getMiningParameters().getMinTransactionGasPrice().toDecimalString()
                 + ", since it cannot be greater than the value of min-gas-price");
         txPoolConfBuilder.minGasPrice(getMiningParameters().getMinTransactionGasPrice());
-        txPoolConfBuilder.minGasPrice(getMiningParameters().getMinTransactionGasPrice());
       }
     }
 
