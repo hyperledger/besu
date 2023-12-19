@@ -111,11 +111,7 @@ public class TrieLogSubCommand implements Runnable {
     public void run() {
       TrieLogContext context = getTrieLogContext();
 
-      TrieLogHelper.prune(
-          spec.commandLine().getOut(),
-          context.config(),
-          context.rootWorldStateStorage(),
-          context.blockchain());
+      TrieLogHelper.prune(context.config(), context.rootWorldStateStorage(), context.blockchain());
     }
   }
 
