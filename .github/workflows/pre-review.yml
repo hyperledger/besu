@@ -72,6 +72,7 @@ jobs:
     needs: [ compile ]
     permissions:
       checks: write
+      statuses: write
     strategy:
       fail-fast: false
       matrix:
