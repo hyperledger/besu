@@ -18,13 +18,13 @@ jobs:
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
+            console.log(context);
             const { data: { statuses } } = await github.rest.repos.getCombinedStatusForRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+              owner: context.repository.owner,
+              repo: context.repository,
               ref: context.sha,
             });
             console.log(statuses);
-            console.log(context);
             const otherWorkflow = statuses.find(({ context }) => context === 'pre-review');
             console.log(otherWorkflow);
             return otherWorkflow && otherWorkflow.state === 'success';
