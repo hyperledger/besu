@@ -73,6 +73,11 @@ public class RetryingGetTrieNodeFromPeerTask
   }
 
   @Override
+  protected boolean reportUselessIfEmptyResponse() {
+    return false;
+  }
+
+  @Override
   protected boolean successfulResult(final Map<Bytes, Bytes> peerResult) {
     return !emptyResult(peerResult);
   }

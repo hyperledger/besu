@@ -78,6 +78,11 @@ public class RetryingGetAccountRangeFromPeerTask
   }
 
   @Override
+  protected boolean reportUselessIfEmptyResponse() {
+    return false;
+  }
+
+  @Override
   protected boolean successfulResult(final AccountRangeMessage.AccountRangeData peerResult) {
     return !emptyResult(peerResult);
   }
