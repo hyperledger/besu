@@ -3,12 +3,31 @@ name: artifacts
 
 on:
   workflow_dispatch:
+  release:
+    types:
+      - created
 
 jobs:
   artifacts:
     runs-on: ubuntu-22.04
     steps:
       # TODO: ensure all checks have passed already
+      - name: Check if other workflow has run
+        id: 'check pre-review has run'
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const { data: { statuses } } = await github.repos.getCombinedStatusForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+            });
+            const otherWorkflow = statuses.find(({ context }) => context === 'pre-review');
+            return otherWorkflow && otherWorkflow.state === 'success';
+      - name: Run if other workflow was successful
+        if: steps.check.outputs.result == 'true'
+        run: echo "Other workflow was successful, running this job"
       - name: checkout
         uses: actions/checkout@v4
       - name: Set up JDK 17
