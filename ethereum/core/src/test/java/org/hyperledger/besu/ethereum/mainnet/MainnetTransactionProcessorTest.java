@@ -195,21 +195,6 @@ class MainnetTransactionProcessorTest {
     assertThat(tracer.traceEndTxCalled).isTrue();
   }
 
-  //  static class MockMessageProcessor extends AbstractMessageProcessor {
-  //
-  //    @Override
-  //    protected void start(final MessageFrame frame, final OperationTracer operationTracer) {}
-  //
-  //    @Override
-  //    protected void codeSuccess(final MessageFrame frame, final OperationTracer operationTracer)
-  // {}
-  //
-  //    @Override
-  //    public void process(final MessageFrame frame, final OperationTracer operationTracer) {
-  //      frame.
-  //    }
-  //  }
-
   static class TraceEndTxTracer implements OperationTracer {
     boolean traceEndTxCalled = false;
 
