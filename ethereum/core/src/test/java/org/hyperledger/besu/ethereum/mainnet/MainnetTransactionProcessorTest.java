@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -42,10 +43,14 @@ import org.hyperledger.besu.evm.worldstate.WorldView;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -88,9 +93,9 @@ class MainnetTransactionProcessorTest {
 
   @Test
   void shouldWarmCoinbaseIfRequested() {
-    Optional<Address> toAddresss =
+    Optional<Address> toAddress =
         Optional.of(Address.fromHexString("0x2222222222222222222222222222222222222222"));
-    when(transaction.getTo()).thenReturn(toAddresss);
+    when(transaction.getTo()).thenReturn(toAddress);
     Address senderAddress = Address.fromHexString("0x5555555555555555555555555555555555555555");
     Address coinbaseAddress = Address.fromHexString("0x4242424242424242424242424242424242424242");
 
@@ -146,16 +151,21 @@ class MainnetTransactionProcessorTest {
     assertThat(coinbaseWarmed).isFalse();
   }
 
-  @Test
-  void shouldTraceEndTxOnFailingTransaction() {
-    Optional<Address> toAddresss =
+  @ParameterizedTest
+  @MethodSource("provideExceptionsForTransactionProcessing")
+  /*
+   This test is to ensure that the OperationTracer.traceEndTxCalled is called even if the transaction processing fails.
+   @param exception will either be of class RuntimeException or MerkleTrieException
+  */
+  void shouldTraceEndTxOnFailingTransaction(final Exception exception) {
+    Optional<Address> toAddress =
         Optional.of(Address.fromHexString("0x2222222222222222222222222222222222222222"));
     Address senderAddress = Address.fromHexString("0x5555555555555555555555555555555555555555");
     Address coinbaseAddress = Address.fromHexString("0x4242424242424242424242424242424242424242");
 
     when(receiverAccount.getCode()).thenReturn(Bytes.fromHexString("0x600101"));
 
-    when(transaction.getTo()).thenReturn(toAddresss);
+    when(transaction.getTo()).thenReturn(toAddress);
     when(transaction.getHash()).thenReturn(Hash.EMPTY);
     when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
     when(transaction.getSender()).thenReturn(senderAddress);
@@ -164,35 +174,42 @@ class MainnetTransactionProcessorTest {
         .thenReturn(ValidationResult.valid());
     when(transactionValidatorFactory.get().validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
-    when(worldState.getOrCreate(senderAddress)).thenReturn(senderAccount);
     when(worldState.getOrCreateSenderAccount(senderAddress)).thenReturn(senderAccount);
-    when(worldState.get(toAddresss.get())).thenReturn(receiverAccount);
-    when(worldState.getAccount(toAddresss.get())).thenReturn(receiverAccount);
+    when(worldState.get(toAddress.get())).thenReturn(receiverAccount);
     when(worldState.updater()).thenReturn(worldState);
+    // throw exception when processing the transaction
     doAnswer(
             invocation -> {
-              MessageFrame messageFrame = invocation.getArgument(0);
-              messageFrame.getMessageFrameStack().pop();
-              return null;
+              throw exception;
             })
         .when(messageCallProcessor)
         .process(any(), any());
 
     final TraceEndTxTracer tracer = new TraceEndTxTracer();
     var transactionProcessor = createTransactionProcessor(true);
-    transactionProcessor.processTransaction(
-        blockchain,
-        worldState,
-        blockHeader,
-        transaction,
-        coinbaseAddress,
-        blockHashLookup,
-        false,
-        ImmutableTransactionValidationParams.builder().build(),
-        tracer,
-        Wei.ZERO);
+    try {
+      transactionProcessor.processTransaction(
+          blockchain,
+          worldState,
+          blockHeader,
+          transaction,
+          coinbaseAddress,
+          blockHashLookup,
+          false,
+          ImmutableTransactionValidationParams.builder().build(),
+          tracer,
+          Wei.ZERO);
+    } catch (final MerkleTrieException e) {
+      // the MerkleTrieException is thrown again in MainnetTransactionProcessor, we ignore it here
+    }
 
     assertThat(tracer.traceEndTxCalled).isTrue();
+  }
+
+  // those two exceptions can be thrown while processing a transaction
+  private static Stream<Arguments> provideExceptionsForTransactionProcessing() {
+    return Stream.of(
+        Arguments.of(new MerkleTrieException("")), Arguments.of(new RuntimeException()));
   }
 
   static class TraceEndTxTracer implements OperationTracer {
