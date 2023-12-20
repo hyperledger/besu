@@ -24,23 +24,41 @@ jobs:
           sha: ${{github.pull_request.head.sha}}
   integrationTest:
     runs-on: ubuntu-22.04
-    # TODO: don't re-run on subsequent comments on an approved workflow
+    permissions:
+      statuses: write
     if: ${{ github.actor != 'dependabot[bot]' && github.event.review.state == 'approved' }}
     steps:
+      - name: already tested
+        id: needsRun
+        uses: actions/github-script@v7.0.1
+        with:
+          script: |
+            const { data: { statuses } } = await github.rest.repos.getCombinedStatusForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+            });
+            const integrationTested = statuses.find(({ context }) => context === 'integration-tests');
+            const needsRun = integrationTested.find(({ state }) => state != 'success' && state != 'pending');
+            return needsRun
       - name: Checkout Repo
+        if: steps.needsRun.outputs.result == 'true'
         uses: actions/checkout@v3
       - name: Set up Java
+        if: steps.needsRun.outputs.result == 'true'
         uses: actions/setup-java@v3
         with:
           distribution: adopt
           java-version: 17
       - name: setup gradle
+        if: steps.needsRun.outputs.result == 'true'
         uses: gradle/gradle-build-action@v2
       - name: run integration tests
+        if: steps.needsRun.outputs.result == 'true'
         run: ./gradlew integrationTest -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v4
-        if: success() || failure() # always run even if the build step fails
+        if: (success() || failure()) && steps.needsRun.outputs.result == 'true'
         with:
           report_paths: '**/build/test-results/integrationTest/TEST-*.xml'
 
