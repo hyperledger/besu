@@ -65,9 +65,10 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
-import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogPruner;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -153,7 +154,7 @@ public abstract class AbstractIsolationTests {
             (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage,
             blockchain,
             Optional.of(16L),
-            new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
+            new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
             new NoOpMetricsSystem(),
             null,
             EvmConfiguration.DEFAULT,

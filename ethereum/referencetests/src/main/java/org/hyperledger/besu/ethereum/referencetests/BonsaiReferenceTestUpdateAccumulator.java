@@ -16,11 +16,12 @@ package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiAccount;
-import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiValue;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiPreImageProxy;
-import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldView;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiPreImageProxy;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.Consumer;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -29,8 +30,8 @@ public class BonsaiReferenceTestUpdateAccumulator extends BonsaiWorldStateUpdate
   private final BonsaiPreImageProxy preImageProxy;
 
   public BonsaiReferenceTestUpdateAccumulator(
-      final BonsaiWorldView world,
-      final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader,
+      final DiffBasedWorldView world,
+      final Consumer<DiffBasedValue<BonsaiAccount>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader,
       final BonsaiPreImageProxy preImageProxy,
       final EvmConfiguration evmConfiguration) {

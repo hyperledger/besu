@@ -18,8 +18,8 @@ package org.hyperledger.besu.ethereum.trie.bonsai;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.BLOCKCHAIN;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
-import static org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
-import static org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
+import static org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
+import static org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
@@ -36,14 +36,15 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedWorldStorageManager;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogFactoryImpl;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogLayer;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogManager;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogPruner;
-import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog.TrieLogFactoryImpl;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogPruner;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -77,7 +78,7 @@ class BonsaiWorldStateProviderTest {
   @Mock SegmentedKeyValueStorageTransaction segmentedKeyValueStorageTransaction;
   BonsaiWorldStateProvider bonsaiWorldStateArchive;
 
-  @Mock CachedWorldStorageManager cachedWorldStorageManager;
+  @Mock BonsaiCachedWorldStorageManager cachedWorldStorageManager;
   @Mock TrieLogManager trieLogManager;
 
   @BeforeEach
@@ -108,7 +109,7 @@ class BonsaiWorldStateProviderTest {
             trieLogManager,
             new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()),
             blockchain,
-            new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
+            new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT);
 
     assertThat(bonsaiWorldStateArchive.getMutable(chainHead, true))
@@ -122,7 +123,7 @@ class BonsaiWorldStateProviderTest {
             new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()),
             blockchain,
             Optional.of(512L),
-            new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
+            new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
             new NoOpMetricsSystem(),
             null,
             EvmConfiguration.DEFAULT,
@@ -143,7 +144,7 @@ class BonsaiWorldStateProviderTest {
             trieLogManager,
             new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()),
             blockchain,
-            new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
+            new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(511).buildHeader();
@@ -175,7 +176,7 @@ class BonsaiWorldStateProviderTest {
                 trieLogManager,
                 worldStateKeyValueStorage,
                 blockchain,
-                new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
+                new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
                 EvmConfiguration.DEFAULT));
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
 
@@ -201,7 +202,7 @@ class BonsaiWorldStateProviderTest {
                 trieLogManager,
                 worldStateKeyValueStorage,
                 blockchain,
-                new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
+                new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
                 EvmConfiguration.DEFAULT));
 
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
@@ -238,7 +239,7 @@ class BonsaiWorldStateProviderTest {
                 trieLogManager,
                 worldStateKeyValueStorage,
                 blockchain,
-                new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
+                new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
                 EvmConfiguration.DEFAULT));
 
     // initial persisted state hash key
@@ -278,7 +279,7 @@ class BonsaiWorldStateProviderTest {
                 trieLogManager,
                 new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()),
                 blockchain,
-                new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
+                new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
                 EvmConfiguration.DEFAULT));
 
     // initial persisted state hash key
