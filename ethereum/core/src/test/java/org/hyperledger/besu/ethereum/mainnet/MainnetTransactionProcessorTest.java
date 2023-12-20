@@ -163,8 +163,6 @@ class MainnetTransactionProcessorTest {
     Address senderAddress = Address.fromHexString("0x5555555555555555555555555555555555555555");
     Address coinbaseAddress = Address.fromHexString("0x4242424242424242424242424242424242424242");
 
-    when(receiverAccount.getCode()).thenReturn(Bytes.fromHexString("0x600101"));
-
     when(transaction.getTo()).thenReturn(toAddress);
     when(transaction.getHash()).thenReturn(Hash.EMPTY);
     when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
