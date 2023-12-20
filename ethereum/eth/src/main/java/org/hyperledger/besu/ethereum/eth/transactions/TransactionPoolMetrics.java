@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.ReplaceableDoubleSupplier;
 import org.hyperledger.besu.metrics.RunnableCounter;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -46,9 +47,9 @@ public class TransactionPoolMetrics {
   private final LabelledMetric<Counter> expiredMessagesCounter;
   private final Map<String, RunnableCounter> expiredMessagesRunnableCounters = new HashMap<>();
   private final LabelledMetric<Counter> alreadySeenTransactionsCounter;
-  private final Map<String, ChangeableDoubleSupplier> spaceUsedSuppliers = new HashMap<>();
-  private final Map<String, ChangeableDoubleSupplier> transactionCountSuppliers = new HashMap<>();
-  private final Map<String, ChangeableDoubleSupplier> uniqueSendersSuppliers = new HashMap<>();
+  private final Map<String, ReplaceableDoubleSupplier> spaceUsedSuppliers = new HashMap<>();
+  private final Map<String, ReplaceableDoubleSupplier> transactionCountSuppliers = new HashMap<>();
+  private final Map<String, ReplaceableDoubleSupplier> uniqueSendersSuppliers = new HashMap<>();
 
   public TransactionPoolMetrics(final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
@@ -123,47 +124,44 @@ public class TransactionPoolMetrics {
   }
 
   public void initSpaceUsed(final DoubleSupplier spaceUsedSupplier, final String layer) {
-    final var supplier =
-        spaceUsedSuppliers.compute(
-            layer,
-            (unused, existingSupplier) -> {
-              if (existingSupplier == null) {
-                return new ChangeableDoubleSupplier(spaceUsedSupplier);
-              }
-              return existingSupplier.changeDoubleSupplier(spaceUsedSupplier);
-            });
-
-    spaceUsed.labels(supplier, layer);
+    spaceUsedSuppliers.compute(
+        layer,
+        (unused, existingSupplier) -> {
+          if (existingSupplier == null) {
+            final var newSupplier = new ReplaceableDoubleSupplier(spaceUsedSupplier);
+            spaceUsed.labels(newSupplier, layer);
+            return newSupplier;
+          }
+          return existingSupplier.replaceDoubleSupplier(spaceUsedSupplier);
+        });
   }
 
   public void initTransactionCount(
       final DoubleSupplier transactionCountSupplier, final String layer) {
-    final var supplier =
-        transactionCountSuppliers.compute(
-            layer,
-            (unused, existingSupplier) -> {
-              if (existingSupplier == null) {
-                return new ChangeableDoubleSupplier(transactionCountSupplier);
-              }
-              return existingSupplier.changeDoubleSupplier(transactionCountSupplier);
-            });
-
-    transactionCount.labels(supplier, layer);
+    transactionCountSuppliers.compute(
+        layer,
+        (unused, existingSupplier) -> {
+          if (existingSupplier == null) {
+            final var newSupplier = new ReplaceableDoubleSupplier(transactionCountSupplier);
+            transactionCount.labels(newSupplier, layer);
+            return newSupplier;
+          }
+          return existingSupplier.replaceDoubleSupplier(transactionCountSupplier);
+        });
   }
 
   public void initUniqueSenderCount(
       final DoubleSupplier uniqueSenderCountSupplier, final String layer) {
-    final var supplier =
-        uniqueSendersSuppliers.compute(
-            layer,
-            (unused, existingSupplier) -> {
-              if (existingSupplier == null) {
-                return new ChangeableDoubleSupplier(uniqueSenderCountSupplier);
-              }
-              return existingSupplier.changeDoubleSupplier(uniqueSenderCountSupplier);
-            });
-
-    uniqueSenderCount.labels(supplier, layer);
+    uniqueSendersSuppliers.compute(
+        layer,
+        (unused, existingSupplier) -> {
+          if (existingSupplier == null) {
+            final var newSupplier = new ReplaceableDoubleSupplier(uniqueSenderCountSupplier);
+            uniqueSenderCount.labels(newSupplier, layer);
+            return newSupplier;
+          }
+          return existingSupplier.replaceDoubleSupplier(uniqueSenderCountSupplier);
+        });
   }
 
   public void initExpiredMessagesCounter(final String message) {
@@ -235,23 +233,5 @@ public class TransactionPoolMetrics {
 
   private String priority(final boolean hasPriority) {
     return hasPriority ? "yes" : "no";
-  }
-
-  private static class ChangeableDoubleSupplier implements DoubleSupplier {
-    private DoubleSupplier currentSupplier;
-
-    public ChangeableDoubleSupplier(final DoubleSupplier currentSupplier) {
-      this.currentSupplier = currentSupplier;
-    }
-
-    @Override
-    public double getAsDouble() {
-      return currentSupplier.getAsDouble();
-    }
-
-    public ChangeableDoubleSupplier changeDoubleSupplier(final DoubleSupplier newSupplier) {
-      currentSupplier = newSupplier;
-      return this;
-    }
   }
 }
