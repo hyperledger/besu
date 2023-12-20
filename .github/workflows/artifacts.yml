@@ -11,8 +11,8 @@ jobs:
   artifacts:
     runs-on: ubuntu-22.04
     steps:
-      - name: Check if pre-review workflow has run
-        id: confirmPreReview
+      - name: confirm tested
+        id: confirmTested
         uses: actions/github-script@v7.0.1
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -26,11 +26,15 @@ jobs:
             console.log(statuses);
             const anyFailure = statuses.find(( { state }) => state === 'failure');
             console.log(anyFailure);
+            const anyPending = statuses.find(( { state }) => state === 'pending');
+            console.log(anyPending);
             const prePRWorkflow = statuses.find(({ context }) => context === 'pre-review');
             console.log(prePRWorkflow);
-            return prePRWorkflow && prePRWorkflow.state === 'success' && !anyFailure;
+            const acceptTests = statuses.find(({context}) => context === 'acceptance-tests');
+            console.log(acceptTests)
+            return prePRWorkflow && prePRWorkflow.state === 'success' && acceptTests && acceptTests.state === 'success' && !anyFailure && !anyPending;
       - name: Abort on missing status
-        if: steps.confirmPreReview.outputs.result == 'false'
+        if: steps.confirmTested.outputs.result == 'false'
         run: |
           echo "::error::required status missing"
           exit 1
