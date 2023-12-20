@@ -31,8 +31,16 @@ jobs:
             const prePRWorkflow = statuses.find(({ context }) => context === 'pre-review');
             console.log(prePRWorkflow);
             const acceptTests = statuses.find(({context}) => context === 'acceptance-tests');
-            console.log(acceptTests)
-            return prePRWorkflow && prePRWorkflow.state === 'success' && acceptTests && acceptTests.state === 'success' && !anyFailure && !anyPending;
+            console.log(acceptTests);
+            const intTests = statuses.find(({context}) => context === 'integration-tests');
+            console.log(intTests);
+            const refTests = statuses.find(({context}) => context === 'reference-tests');
+            console.log(refTests);
+            return prePRWorkflow && prePRWorkflow.state === 'success' && 
+                    acceptTests && acceptTests.state === 'success' &&
+                    intTests && intTests.state === 'success' &&
+                    refTests && refTests.state === 'success'' &&
+                    !anyFailure && !anyPending;
       - name: Abort on missing status
         if: steps.confirmTested.outputs.result == 'false'
         run: |
@@ -43,25 +51,23 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
+          distribution: 'temurin'
           java-version: '17'
       - name: setup gradle
         uses: gradle/gradle-build-action@v2
       - name: assemble distributions
         run: ./gradlew assemble -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
-      - name: new version number
-        id: verNum
-        run: |
-          export VER_NUM = $(grep "version=" gradle.properties | sed 's/^version=//g')
-          echo "::set-output name=verNum::$VER_NUM"
+      - name: short sha
+        id: shortSha
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: upload tarball
         uses: actions/upload-artifact@v3
         with:
-          name: besu-${{ steps.verNum.outputs.verNum }}.tar.gz
+          name: besu-${{ steps.shortSha.outputs.sha }}.tar.gz
           path: 'build/distributions/besu*.tar.gz'
       - name: upload zipfile
         uses: actions/upload-artifact@v3
         with:
-          name: besu-${{ steps.verNum.outputs.verNum }}.zip
+          name: besu-${{ steps.shortSha.outputs.sha }}.zip
           path: 'build/distributions/besu*.zip'
 

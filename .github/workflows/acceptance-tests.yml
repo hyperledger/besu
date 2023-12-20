@@ -15,7 +15,10 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: echo event
-        run: echo ${{github.event}}
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+            echo "$GITHUB_CONTEXT"
   pend:
     name: acceptance testing pending
     runs-on: ubuntu-22.04
