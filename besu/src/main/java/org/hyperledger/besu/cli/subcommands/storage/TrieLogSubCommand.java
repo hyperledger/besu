@@ -27,6 +27,8 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 
 import java.io.PrintWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
@@ -110,8 +112,14 @@ public class TrieLogSubCommand implements Runnable {
     @Override
     public void run() {
       TrieLogContext context = getTrieLogContext();
-
-      TrieLogHelper.prune(context.config(), context.rootWorldStateStorage(), context.blockchain());
+      final Path dataDirectoryPath =
+          Paths.get(
+              TrieLogSubCommand.parentCommand.parentCommand.dataDir().toAbsolutePath().toString());
+      TrieLogHelper.prune(
+          context.config(),
+          context.rootWorldStateStorage(),
+          context.blockchain(),
+          dataDirectoryPath);
     }
   }
 
