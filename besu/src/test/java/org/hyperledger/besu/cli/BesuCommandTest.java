@@ -1990,24 +1990,18 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void parsesValidAllowDowngradeOption() {
-    parseCommand("--allow-dowgrade", "true");
-    verify(mockControllerBuilder)
-        .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
-
-    final DataStorageConfiguration dataStorageConfiguration =
-        dataStorageConfigurationArgumentCaptor.getValue();
-    assertThat(dataStorageConfiguration.getAllowDowngrade()).isEqualTo(Boolean.valueOf("true"));
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void dnsEnabledOptionIsParsedCorrectly() {
     final TestBesuCommand besuCommand = parseCommand("--Xdns-enabled", "true");
 
     assertThat(besuCommand.getEnodeDnsConfiguration().dnsEnabled()).isTrue();
     assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isFalse();
+  }
+
+  @Test
+  public void allowDowngradeTrueOptionIsParsedCorrectly() {
+    final TestBesuCommand besuCommand = parseCommand("--allow-downgrade", "true");
+
+    assertThat(besuCommand.getAllowDowngrade()).isTrue();
   }
 
   @Test

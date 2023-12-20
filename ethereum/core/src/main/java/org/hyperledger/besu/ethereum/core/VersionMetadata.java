@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 public class VersionMetadata {
   private static final Logger LOG = LoggerFactory.getLogger(VersionMetadata.class);
 
-  /** Represents an unknown Besu version in the database metadata file */
+  /** Represents an unknown Besu version in the version metadata file */
   public static final String BESU_VERSION_UNKNOWN = "UNKNOWN";
 
   private static final String METADATA_FILENAME = "VERSION_METADATA.json";
@@ -56,7 +56,7 @@ public class VersionMetadata {
 
   public static VersionMetadata lookUpFrom(final Path dataDir) throws IOException {
     LOG.info("Lookup version metadata file in data directory: {}", dataDir.toString());
-    return resolveDatabaseMetadata(getDefaultMetadataFile(dataDir));
+    return resolveVersionMetadata(getDefaultMetadataFile(dataDir));
   }
 
   public void writeToDirectory(final Path dataDir) throws IOException {
@@ -67,18 +67,18 @@ public class VersionMetadata {
     return dataDir.resolve(METADATA_FILENAME).toFile();
   }
 
-  private static VersionMetadata resolveDatabaseMetadata(final File metadataFile)
+  private static VersionMetadata resolveVersionMetadata(final File metadataFile)
       throws IOException {
-    VersionMetadata databaseMetadata;
+    VersionMetadata versionMetadata;
     try {
-      databaseMetadata = MAPPER.readValue(metadataFile, VersionMetadata.class);
-      LOG.info("Existing version data detected. Besu version {}", databaseMetadata.besuVersion);
+      versionMetadata = MAPPER.readValue(metadataFile, VersionMetadata.class);
+      LOG.info("Existing version data detected. Besu version {}", versionMetadata.besuVersion);
     } catch (FileNotFoundException fnfe) {
-      databaseMetadata = new VersionMetadata(BESU_VERSION_UNKNOWN);
+      versionMetadata = new VersionMetadata(BESU_VERSION_UNKNOWN);
     } catch (JsonProcessingException jpe) {
       throw new IllegalStateException(
           java.lang.String.format("Invalid metadata file %s", metadataFile.getAbsolutePath()), jpe);
     }
-    return databaseMetadata;
+    return versionMetadata;
   }
 }

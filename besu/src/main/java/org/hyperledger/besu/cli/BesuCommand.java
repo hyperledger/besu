@@ -564,7 +564,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--allow-downgrade"},
       description =
-          "Allow an older version of Besu to start if it detects that a more recent version last wrote to the database. Warning - this could result in unrecoverable changes to the database so should only be used if a backup of the data has been taken before the downgrade. (default: ${DEFAULT-VALUE})")
+          "Allow an older version of Besu to start if it detects that a more recent version has started with this data directory. Warning - this could result in unrecoverable changes to the database so should only be used if a backup of the data has been taken before the downgrade. (default: ${DEFAULT-VALUE})")
   private Boolean allowDowngrade = false;
 
   @CommandLine.ArgGroup(validate = false, heading = "@|bold GraphQL Options|@%n")
@@ -1466,11 +1466,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
 
       validateOptions();
+
+      performDowngradeCheck();
+
       configure();
       configureNativeLibs();
       besuController = initController();
-
-      performDowngradeCheck();
 
       besuPluginContext.beforeExternalServices();
 
@@ -1491,6 +1492,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
+  /**
+   * This function is designed to protect a Besu instance from being unintentionally started at a
+   * lower version than the previous instance. Doing so could cause unexpected data corruption
+   * (depending on the storage provider that is in use), so this check prompts the user if a
+   * downgrade is detected and requires them to opt-in by setting --allow-downgrade. The
+   * --allow-downgrade flag only needs to be passed in once, and then the version information is
+   * updated to the lower version number, meaning future restarts will pass the check.
+   */
   private void performDowngradeCheck() throws IOException {
     final VersionMetadata versionMetaData = VersionMetadata.lookUpFrom(dataDir());
     if (versionMetaData.getBesuVersion().equals(VersionMetadata.BESU_VERSION_UNKNOWN)) {
@@ -1528,7 +1537,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                   + " is lower than version "
                   + metadataVersion
                   + " that last started."
-                  + ". Specify --allow-downgrade to allow Besu to start at the lower version (warning - this may have unrecoverable effects on the database).";
+                  + "Specify --allow-downgrade to allow Besu to start at the lower version (warning - this may have unrecoverable effects on the database).";
           logger.error(message);
           throw new StorageException(message);
         }
@@ -3430,6 +3439,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @VisibleForTesting
   String getLogLevel() {
     return loggingLevelOption.getLogLevel();
+  }
+
+  /**
+   * Returns the flag indicating that downgrades are allowed.
+   *
+   * @return true if downgrades are allowed, otherwise false
+   */
+  @VisibleForTesting
+  public Boolean getAllowDowngrade() {
+    return allowDowngrade;
   }
 
   private class BesuCommandConfigurationService implements BesuConfiguration {
