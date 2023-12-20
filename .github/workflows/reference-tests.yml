@@ -1,6 +1,7 @@
 name: reference-tests
 on:
   workflow_dispatch:
+  workflow_call:
   pull_request_review:
     types:
       - submitted
