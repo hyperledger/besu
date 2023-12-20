@@ -63,8 +63,7 @@ public class ForestKeyValueStorageWorldStateStorageTest {
   @Test
   public void getCode_saveAndGetSpecialValues() {
     final ForestWorldStateKeyValueStorage storage = emptyStorage();
-    storage.updater().putCode(MerkleTrie.EMPTY_TRIE_NODE);
-    storage.updater().putCode(Bytes.EMPTY).commit();
+    storage.updater().putCode(MerkleTrie.EMPTY_TRIE_NODE).putCode(Bytes.EMPTY).commit();
 
     assertThat(storage.getCode(MerkleTrie.EMPTY_TRIE_NODE_HASH))
         .contains(MerkleTrie.EMPTY_TRIE_NODE);
