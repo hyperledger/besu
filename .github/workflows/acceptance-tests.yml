@@ -1,6 +1,7 @@
 name: acceptance-tests
 on:
   workflow_dispatch:
+  workflow_call:
   pull_request_review:
     types: [submitted]
 
@@ -20,10 +21,11 @@ jobs:
         uses: myrotvorets/set-commit-status-action@v2.0.0
         with:
           status: pending
+          sha: ${{github.pull_request.head.sha}}
   acceptanceTestEthereum:
     runs-on: ubuntu-22.04
     needs: pend
-    name: "Acceptance Runner #${{ matrix.runner_index }}: Run acceptance tests in parallel"
+    name: "Acceptance Runner"
     permissions:
       statuses: write
     if: ${{ github.actor != 'dependabot[bot]' && github.event.review.state == 'approved' }}
@@ -92,12 +94,14 @@ jobs:
         with:
           status: ${{ job.status }}
           context: acceptance-tests-${{matrix.runner_index}}
+          sha: ${{github.pull_request.head.sha}}
           description: fail acceptance test batch ${{matrix.runner_index}}
       - name: flag passed unit tests
         uses: myrotvorets/set-commit-status-action@v2.0.0
         if: success() && steps.needsRun.outputs.result == 'true'
         with:
           status: ${{ job.status }}
+          sha: ${{github.pull_request.head.sha}}
       - name: cleanup tempfiles
         if: steps.needsRun.outputs.result == 'true'
         run: rm testList.txt gradleArgs.txt
