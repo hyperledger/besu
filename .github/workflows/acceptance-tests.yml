@@ -10,19 +10,46 @@ env:
   total-runners: 16
 
 jobs:
-  debug:
-    name: debugging
+  shouldRun:
+    name: checks to ensure we should run
     runs-on: ubuntu-22.04
+    outputs:
+      shouldRun: ${{steps.shouldRun.outputs.result}}
     steps:
       - name: echo event
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: |
-            echo "$GITHUB_CONTEXT"
+        id: shouldRun
+        uses: actions/github-script@v7.0.1
+        with:
+          script: |
+            const { data: { statuses } } = await github.rest.repos.getCombinedStatusForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+            });
+            const unitTested = statuses.find(({ context }) => context === 'unit-tests');
+            console.log(unitTested)
+            const failedUnits = unitTested.find(({state}) => state === 'failure' || state === 'pending');
+            console.log(failedUnits)
+            const acceptanceTested = statuses.find(({ context }) => context === 'acceptance-tests');
+            console.log(accpetanceTested);
+            const needsRun = acceptanceTested.find(({ state }) => state != 'success' && state != 'pending');
+            console.log(needsRun);
+            console.log(github.actor);
+            
+            const { data: reviews } = await github.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            const approvingReviews = reviews.filter(review => review.state === 'APPROVED');
+            console.log(approvingReviews);
+            
+            return needsRun && github.actor != 'dependabot[bot]' && !failedUnits && (approvingReviews.length > 0;)
   pend:
     name: acceptance testing pending
     runs-on: ubuntu-22.04
-    if: ${{ github.actor != 'dependabot[bot]' && github.event.review.state == 'approved' }}
+    needs: shouldRun
+    if: ${{ needs.shouldRun.outputs.shouldrun }}
     permissions:
       statuses: write
     steps:
@@ -39,7 +66,7 @@ jobs:
     name: "Acceptance Runner"
     permissions:
       statuses: write
-    if: ${{ github.actor != 'dependabot[bot]' && github.event.review.state == 'approved' }}
+    if: ${{ needs.shouldRun.outputs.shouldrun }}
     strategy:
       fail-fast: false
       matrix:
