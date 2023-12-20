@@ -42,7 +42,7 @@ dependencies {
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
-  implementation 'org.apache.maven:maven-artifact:3.9.6'
+  implementation 'org.apache.maven:maven-artifact'
   implementation 'com.google.guava:guava'
   implementation 'info.picocli:picocli'
   implementation 'io.opentelemetry:opentelemetry-api'

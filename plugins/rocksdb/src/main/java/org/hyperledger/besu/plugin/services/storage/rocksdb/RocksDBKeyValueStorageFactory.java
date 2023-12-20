@@ -267,7 +267,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       databaseVersion = dbMetaData.getVersion();
       besuVersion = dbMetaData.getBesuVersion();
       LOG.info(
-          "Existing database detected at {}. DB version {}. Installed version {}. Compacting database...",
+          "Existing database detected at {}. DB version {}. Besu version {}. Compacting database...",
           dataDir,
           databaseVersion,
           besuVersion);
@@ -280,15 +280,29 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
         if (versionComparison == 0) {
           // Versions match - no-op
         } else if (versionComparison < 0) {
-          final String message =
-              "Besu version "
-                  + installedVersion
-                  + " is lower than version "
-                  + dbBesuVersion
-                  + " that last updated the database."
-                  + ". Specify --downgrade to use different version.";
-          LOG.error(message);
-          throw new StorageException(message);
+          if (commonConfiguration.getDowngradeAllowed()) {
+            LOG.warn(
+                "Besu version {} is lower than version {} that last wrote to the database. Allowing startup because --allow-downgrade has been enabled.",
+                installedVersion,
+                dbBesuVersion);
+            // We've allowed startup at an older version of Besu. Since the version in the metadata
+            // file records the latest version of
+            // Besu to write to the database we'll update the metadata version to this
+            // downgraded-version. This avoids the need after a successful
+            // downgrade to keep specifying --allow-downgrade on every startup.
+            writeDatabaseMetadata(
+                databaseVersion, Optional.of(commonConfiguration.getBesuVersion()), dataDir);
+          } else {
+            final String message =
+                "Besu version "
+                    + installedVersion
+                    + " is lower than version "
+                    + dbBesuVersion
+                    + " that last updated the database."
+                    + ". Specify --allow-downgrade to allow Besu to start at the lower version (warning - this may have unrecoverable effects on the node database).";
+            LOG.error(message);
+            throw new StorageException(message);
+          }
         } else if (versionComparison > 0) {
           LOG.info(
               "Besu version {} is higher than version {} that last updated the DB. Updating DB metadata.",
@@ -297,6 +311,12 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
           writeDatabaseMetadata(
               databaseVersion, Optional.of(commonConfiguration.getBesuVersion()), dataDir);
         }
+      } else {
+        // No besu version information was found in the metadata file, so update it with the current
+        // version and carry on
+        LOG.info("Adding Besu version to metadata file.");
+        writeDatabaseMetadata(
+            databaseVersion, Optional.of(commonConfiguration.getBesuVersion()), dataDir);
       }
     } else {
       databaseVersion = commonConfiguration.getDatabaseVersion();

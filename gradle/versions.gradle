@@ -233,5 +233,7 @@ dependencyManagement {
     dependency 'tech.pegasys.discovery:discovery:22.2.0'
 
     dependency 'com.github.oshi:oshi-core:6.4.1'
+
+    dependency 'org.apache.maven:maven-artifact:3.9.6'
   }
 }

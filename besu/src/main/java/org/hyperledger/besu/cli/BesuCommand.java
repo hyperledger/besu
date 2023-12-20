@@ -527,6 +527,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer fastSyncMinPeerCount = FAST_SYNC_MIN_PEER_COUNT;
 
   @Option(
+      names = {"--allow-downgrade"},
+      description =
+          "Allow an older version of Besu to start if it detects that a more recent version last wrote to the database. Warning - this could result in unrecoverable changes to the database so should only be used if a backup of the data has been taken before the downgrade. (default: ${DEFAULT-VALUE})")
+  private final Boolean allowDowngrade = false;
+
+  @Option(
       names = {"--network"},
       paramLabel = MANDATORY_NETWORK_FORMAT_HELP,
       defaultValue = "MAINNET",
@@ -3386,6 +3392,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     @Override
     public int getDatabaseVersion() {
       return dataStorageOptions.toDomainObject().getDataStorageFormat().getDatabaseVersion();
+    }
+
+    @Override
+    public boolean getDowngradeAllowed() {
+      return allowDowngrade;
     }
   }
 
