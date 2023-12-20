@@ -12,7 +12,7 @@ env:
 jobs:
   prepareReferenceTestEthereum:
     runs-on: ubuntu-22.04
-    # TODO: don't re-run on subsequent comments on an approved workflow
+    # TODO: don't re-run on subsequent comments on an approved workflow, check status
     if: ${{ github.actor != 'dependabot[bot]' && github.event.review.state == 'approved' }}
     steps:
       - name: Checkout Repo
