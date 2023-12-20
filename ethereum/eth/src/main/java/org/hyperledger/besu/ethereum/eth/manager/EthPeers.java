@@ -66,6 +66,7 @@ public class EthPeers {
       Comparator.comparing(EthPeer::outstandingRequests)
           .thenComparing(EthPeer::getLastRequestTimestamp);
   public static final int NODE_ID_LENGTH = 64;
+  public static final int USEFULL_PEER_SCORE_THRESHOLD = 102;
 
   private final Map<Bytes, EthPeer> completeConnections = new ConcurrentHashMap<>();
 
@@ -195,7 +196,7 @@ public class EthPeers {
         disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
         peer.handleDisconnect();
         abortPendingRequestsAssignedToDisconnectedPeers();
-        if (peer.getReputation().getScore() > 102) {
+        if (peer.getReputation().getScore() > USEFULL_PEER_SCORE_THRESHOLD) {
           LOG.debug("Disonnected USEFULL peer {}", peer);
         } else if (!LOG.isTraceEnabled()) {
           LOG.debug("Disconnected EthPeer {}", peer.getShortNodeId());
@@ -223,10 +224,6 @@ public class EthPeers {
   public EthPeer peer(final PeerConnection connection) {
     final EthPeer ethPeer = incompleteConnections.getIfPresent(connection);
     return ethPeer != null ? ethPeer : completeConnections.get(connection.getPeer().getId());
-  }
-
-  public EthPeer peer(final Bytes peerId) {
-    return completeConnections.get(peerId);
   }
 
   public PendingPeerRequest executePeerRequest(

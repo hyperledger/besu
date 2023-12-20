@@ -22,7 +22,7 @@ public interface PeerPrivileges {
    * If true, the given peer can connect or remain connected even if the max connection limit or the
    * maximum remote connection limit has been reached or exceeded.
    *
-   * @param peer The peer to be checked.
+   * @param peerId The peer id to be checked.
    * @return {@code true} if the peer should be allowed to connect regardless of connection limits.
    */
   boolean canExceedConnectionLimits(final Bytes peerId);
