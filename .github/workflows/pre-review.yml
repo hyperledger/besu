@@ -117,10 +117,10 @@ jobs:
           annotate_only: true
   acceptanceTest:
     needs: unitTests
-    uses: ./.github/workflows/acceptance-tests.yml
+    uses: ./.github/workflows/acceptance-tests.yml@gha_acceptTest
   integrationTest:
     needs: unitTests
-    uses: ./github/workflows/integration-tests.yml
+    uses: ./github/workflows/integration-tests.yml@gha_acceptTest
   referenceTest:
     needs: unitTests
-    uses: ./github/workflows/reference-tests.yml
+    uses: ./github/workflows/reference-tests.yml@gha_acceptTest
