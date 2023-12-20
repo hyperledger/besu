@@ -16,7 +16,7 @@ jobs:
     outputs:
       shouldRun: ${{steps.shouldRun.outputs.result}}
     steps:
-      - name: echo event
+      - name: required check
         id: shouldRun
         uses: actions/github-script@v7.0.1
         with:
@@ -27,9 +27,9 @@ jobs:
               ref: context.sha,
             });
             const unitTested = statuses.find(({ context }) => context === 'unit-tests');
-            console.log(unitTested)
+            console.log(unitTested);
             const failedUnits = unitTested.find(({state}) => state === 'failure' || state === 'pending');
-            console.log(failedUnits)
+            console.log(failedUnits);
             const acceptanceTested = statuses.find(({ context }) => context === 'acceptance-tests');
             console.log(accpetanceTested);
             const needsRun = acceptanceTested.find(({ state }) => state != 'success' && state != 'pending');
@@ -44,7 +44,7 @@ jobs:
             const approvingReviews = reviews.filter(review => review.state === 'APPROVED');
             console.log(approvingReviews);
             
-            return needsRun && github.actor != 'dependabot[bot]' && !failedUnits && (approvingReviews.length > 0;)
+            return needsRun && github.actor != 'dependabot[bot]' && !failedUnits && (approvingReviews.length > 0);
   pend:
     name: acceptance testing pending
     runs-on: ubuntu-22.04
