@@ -33,6 +33,7 @@ class DatabaseMetadataTest {
     final DatabaseMetadata databaseMetadata = new DatabaseMetadata(42, Optional.of("23.10.3"));
     assertThat(databaseMetadata).isNotNull();
     assertThat(databaseMetadata.getVersion()).isEqualTo(42);
+    assertThat(databaseMetadata.getBesuVersion()).isEqualTo("23.10.3");
   }
 
   @Test
@@ -49,11 +50,39 @@ class DatabaseMetadataTest {
   }
 
   @Test
+  void metaFileWithAllValuesInAnyOrder() throws Exception {
+    final Path tempDataDir =
+        createAndWrite(
+            "data",
+            "DATABASE_METADATA.json",
+            "{\"besuVersion\":\"23.10.4\", \"version\":42 , \"privacyVersion\":55}");
+
+    final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
+    assertThat(databaseMetadata).isNotNull();
+    assertThat(databaseMetadata.getVersion()).isEqualTo(42);
+    assertThat(databaseMetadata.maybePrivacyVersion()).isNotEmpty();
+    assertThat(databaseMetadata.maybePrivacyVersion().get()).isEqualTo(55);
+    assertThat(databaseMetadata.getBesuVersion()).isEqualTo("23.10.4");
+  }
+
+  @Test
   void metaFileShouldBeSoughtIntoDataDirFirst() throws Exception {
     final Path tempDataDir = createAndWrite("data", "DATABASE_METADATA.json", "{\"version\":42}");
     final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
     assertThat(databaseMetadata).isNotNull();
     assertThat(databaseMetadata.getVersion()).isEqualTo(42);
+    assertThat(databaseMetadata.getBesuVersion()).isEqualTo("UNKNOWN");
+  }
+
+  @Test
+  void metaFileShouldBeParsedForBesuVersion() throws Exception {
+    final Path tempDataDir =
+        createAndWrite(
+            "data", "DATABASE_METADATA.json", "{\"version\":42, \"besuVersion\":\"23.10.4\"}");
+    final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
+    assertThat(databaseMetadata).isNotNull();
+    assertThat(databaseMetadata.getVersion()).isEqualTo(42);
+    assertThat(databaseMetadata.getBesuVersion()).isEqualTo("23.10.4");
   }
 
   private Path createAndWrite(final String dir, final String file, final String content)

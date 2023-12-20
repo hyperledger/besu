@@ -272,7 +272,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
           databaseVersion,
           besuVersion);
 
-      if (!besuVersion.equals("UNKNOWN")) {
+      if (!besuVersion.equals(DatabaseMetadata.BESU_VERSION_UNKNOWN)) {
         final String installedVersion = commonConfiguration.getBesuVersion().split("-", 2)[0];
         final String dbBesuVersion = besuVersion.split("-", 2)[0];
         final int versionComparison =
@@ -291,7 +291,9 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
             // downgraded-version. This avoids the need after a successful
             // downgrade to keep specifying --allow-downgrade on every startup.
             writeDatabaseMetadata(
-                databaseVersion, Optional.of(commonConfiguration.getBesuVersion()), dataDir);
+                databaseVersion,
+                Optional.ofNullable(commonConfiguration.getBesuVersion()),
+                dataDir);
           } else {
             final String message =
                 "Besu version "
@@ -299,24 +301,24 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
                     + " is lower than version "
                     + dbBesuVersion
                     + " that last updated the database."
-                    + ". Specify --allow-downgrade to allow Besu to start at the lower version (warning - this may have unrecoverable effects on the node database).";
+                    + ". Specify --allow-downgrade to allow Besu to start at the lower version (warning - this may have unrecoverable effects on the database).";
             LOG.error(message);
             throw new StorageException(message);
           }
-        } else if (versionComparison > 0) {
+        } else {
           LOG.info(
               "Besu version {} is higher than version {} that last updated the DB. Updating DB metadata.",
               installedVersion,
               dbBesuVersion);
           writeDatabaseMetadata(
-              databaseVersion, Optional.of(commonConfiguration.getBesuVersion()), dataDir);
+              databaseVersion, Optional.ofNullable(commonConfiguration.getBesuVersion()), dataDir);
         }
       } else {
         // No besu version information was found in the metadata file, so update it with the current
         // version and carry on
         LOG.info("Adding Besu version to metadata file.");
         writeDatabaseMetadata(
-            databaseVersion, Optional.of(commonConfiguration.getBesuVersion()), dataDir);
+            databaseVersion, Optional.ofNullable(commonConfiguration.getBesuVersion()), dataDir);
       }
     } else {
       databaseVersion = commonConfiguration.getDatabaseVersion();
@@ -329,8 +331,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       if (!dataDirExists) {
         Files.createDirectories(dataDir);
       }
-      writeDatabaseMetadata(databaseVersion, Optional.of(besuVersion), dataDir);
-      // new DatabaseMetadata(databaseVersion, Optional.of(besuVersion)).writeToDirectory(dataDir);
+      writeDatabaseMetadata(databaseVersion, Optional.ofNullable(besuVersion), dataDir);
     }
 
     if (!SUPPORTED_VERSIONS.contains(databaseVersion)) {
