@@ -35,12 +35,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -235,10 +233,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
   private void init(final BesuConfiguration commonConfiguration) {
     try {
-      // This call fails if Besu version doesn't match. If it doesn't fail, write the
-      // current version
       databaseVersion = readDatabaseVersion(commonConfiguration);
-
     } catch (final IOException e) {
       final String message =
           "Failed to retrieve the RocksDB database meta version: "
@@ -261,77 +256,19 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     final boolean databaseExists = commonConfiguration.getStoragePath().toFile().exists();
     final boolean dataDirExists = dataDir.toFile().exists();
     final int databaseVersion;
-    final String besuVersion;
     if (databaseExists) {
-      DatabaseMetadata dbMetaData = DatabaseMetadata.lookUpFrom(dataDir);
-      databaseVersion = dbMetaData.getVersion();
-      besuVersion = dbMetaData.getBesuVersion();
+      databaseVersion = DatabaseMetadata.lookUpFrom(dataDir).getVersion();
       LOG.info(
-          "Existing database detected at {}. DB version {}. Besu version {}. Compacting database...",
+          "Existing database detected at {}. Version {}. Compacting database...",
           dataDir,
-          databaseVersion,
-          besuVersion);
-
-      if (!besuVersion.equals(DatabaseMetadata.BESU_VERSION_UNKNOWN)) {
-        final String installedVersion = commonConfiguration.getBesuVersion().split("-", 2)[0];
-        final String dbBesuVersion = besuVersion.split("-", 2)[0];
-        final int versionComparison =
-            new ComparableVersion(installedVersion).compareTo(new ComparableVersion(dbBesuVersion));
-        if (versionComparison == 0) {
-          // Versions match - no-op
-        } else if (versionComparison < 0) {
-          if (false) {
-            LOG.warn(
-                "Besu version {} is lower than version {} that last wrote to the database. Allowing startup because --allow-downgrade has been enabled.",
-                installedVersion,
-                dbBesuVersion);
-            // We've allowed startup at an older version of Besu. Since the version in the metadata
-            // file records the latest version of
-            // Besu to write to the database we'll update the metadata version to this
-            // downgraded-version. This avoids the need after a successful
-            // downgrade to keep specifying --allow-downgrade on every startup.
-            writeDatabaseMetadata(
-                databaseVersion,
-                Optional.ofNullable(commonConfiguration.getBesuVersion()),
-                dataDir);
-          } else {
-            final String message =
-                "Besu version "
-                    + installedVersion
-                    + " is lower than version "
-                    + dbBesuVersion
-                    + " that last updated the database."
-                    + ". Specify --allow-downgrade to allow Besu to start at the lower version (warning - this may have unrecoverable effects on the database).";
-            LOG.error(message);
-            throw new StorageException(message);
-          }
-        } else {
-          LOG.info(
-              "Besu version {} is higher than version {} that last updated the DB. Updating DB metadata.",
-              installedVersion,
-              dbBesuVersion);
-          writeDatabaseMetadata(
-              databaseVersion, Optional.ofNullable(commonConfiguration.getBesuVersion()), dataDir);
-        }
-      } else {
-        // No besu version information was found in the metadata file, so update it with the current
-        // version and carry on
-        LOG.info("Adding Besu version to metadata file.");
-        writeDatabaseMetadata(
-            databaseVersion, Optional.ofNullable(commonConfiguration.getBesuVersion()), dataDir);
-      }
+          databaseVersion);
     } else {
       databaseVersion = commonConfiguration.getDatabaseVersion();
-      besuVersion = commonConfiguration.getBesuVersion();
-      LOG.info(
-          "No existing database detected at {}. Using version {}. Besu Version {}.",
-          dataDir,
-          databaseVersion,
-          besuVersion);
+      LOG.info("No existing database detected at {}. Using version {}", dataDir, databaseVersion);
       if (!dataDirExists) {
         Files.createDirectories(dataDir);
       }
-      writeDatabaseMetadata(databaseVersion, Optional.ofNullable(besuVersion), dataDir);
+      new DatabaseMetadata(databaseVersion).writeToDirectory(dataDir);
     }
 
     if (!SUPPORTED_VERSIONS.contains(databaseVersion)) {
@@ -341,12 +278,6 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     }
 
     return databaseVersion;
-  }
-
-  private void writeDatabaseMetadata(
-      final int databaseVersion, final Optional<String> besuVersion, final Path dataDir)
-      throws IOException {
-    new DatabaseMetadata(databaseVersion, besuVersion).writeToDirectory(dataDir);
   }
 
   @Override

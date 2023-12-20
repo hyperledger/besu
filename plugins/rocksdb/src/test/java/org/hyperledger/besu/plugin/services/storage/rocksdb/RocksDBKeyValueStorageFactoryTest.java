@@ -32,7 +32,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -138,7 +137,7 @@ public class RocksDBKeyValueStorageFactoryTest {
     Files.createDirectories(tempDataDir);
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
-    new DatabaseMetadata(-1, Optional.of("UNKNOWN")).writeToDirectory(tempDataDir);
+    new DatabaseMetadata(-1).writeToDirectory(tempDataDir);
     assertThatThrownBy(
             () ->
                 new RocksDBKeyValueStorageFactory(

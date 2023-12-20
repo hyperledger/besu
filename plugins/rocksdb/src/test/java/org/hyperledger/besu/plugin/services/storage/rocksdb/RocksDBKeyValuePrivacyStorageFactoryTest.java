@@ -71,8 +71,6 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
 
     assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isEqualTo(DEFAULT_VERSION);
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getBesuVersion()).isEqualTo("UNKNOWN");
-
     assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion().get())
         .isEqualTo(DEFAULT_VERSION);
   }
@@ -84,7 +82,6 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
     when(commonConfiguration.getDatabaseVersion()).thenReturn(DEFAULT_VERSION);
-    when(commonConfiguration.getBesuVersion()).thenReturn("23.10.3");
 
     final RocksDBKeyValuePrivacyStorageFactory storageFactory =
         new RocksDBKeyValuePrivacyStorageFactory(
@@ -99,8 +96,6 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
     assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion()).isNotEmpty();
 
     assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isEqualTo(DEFAULT_VERSION);
-
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getBesuVersion()).isEqualTo("23.10.3");
 
     assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion().get())
         .isEqualTo(DEFAULT_PRIVACY_VERSION);

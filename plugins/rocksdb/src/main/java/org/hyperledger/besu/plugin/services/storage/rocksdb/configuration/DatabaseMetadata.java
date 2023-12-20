@@ -27,7 +27,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,27 +35,19 @@ public class DatabaseMetadata {
   private static final Logger LOG = LoggerFactory.getLogger(DatabaseMetadata.class);
 
   private static final String METADATA_FILENAME = "DATABASE_METADATA.json";
-
-  /** Represents an unknown Besu version in the database metadata file */
-  public static final String BESU_VERSION_UNKNOWN = "UNKNOWN";
-
-  private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
+  private static final ObjectMapper MAPPER = new ObjectMapper();
   private final int version;
 
-  private Optional<String> besuVersion;
   private Optional<Integer> privacyVersion;
 
   /**
    * Instantiates a new Database metadata.
    *
    * @param version the version
-   * @param besuVersion the version of Besu
    */
   @JsonCreator
-  public DatabaseMetadata(
-      @JsonProperty("version") final int version,
-      @JsonProperty("besuVersion") final Optional<String> besuVersion) {
-    this(version, Optional.empty(), besuVersion);
+  public DatabaseMetadata(@JsonProperty("version") final int version) {
+    this(version, Optional.empty());
   }
 
   /**
@@ -64,15 +55,10 @@ public class DatabaseMetadata {
    *
    * @param version the version
    * @param privacyVersion the privacy version
-   * @param besuVersion the Besu version
    */
-  public DatabaseMetadata(
-      final int version,
-      final Optional<Integer> privacyVersion,
-      final Optional<String> besuVersion) {
+  public DatabaseMetadata(final int version, final Optional<Integer> privacyVersion) {
     this.version = version;
     this.privacyVersion = privacyVersion;
-    this.besuVersion = besuVersion;
   }
 
   /**
@@ -80,10 +66,9 @@ public class DatabaseMetadata {
    *
    * @param version the version
    * @param privacyVersion the privacy version
-   * @param besuVersion the Besu version
    */
-  public DatabaseMetadata(final int version, final int privacyVersion, final String besuVersion) {
-    this(version, Optional.of(privacyVersion), Optional.ofNullable(besuVersion));
+  public DatabaseMetadata(final int version, final int privacyVersion) {
+    this(version, Optional.of(privacyVersion));
   }
 
   /**
@@ -93,29 +78,6 @@ public class DatabaseMetadata {
    */
   public int getVersion() {
     return version;
-  }
-
-  /**
-   * Sets Besu version.
-   *
-   * @param besuVersion the Besu version
-   */
-  @JsonSetter("besuVersion")
-  public void setBesuVersion(final String besuVersion) {
-    this.besuVersion = Optional.of(besuVersion);
-  }
-
-  /**
-   * Gets version of Besu.
-   *
-   * @return the version of Besu
-   */
-  @JsonGetter("besuVersion")
-  public String getBesuVersion() {
-    if (besuVersion != null) {
-      return besuVersion.orElse(BESU_VERSION_UNKNOWN);
-    }
-    return BESU_VERSION_UNKNOWN;
   }
 
   /**
@@ -189,7 +151,7 @@ public class DatabaseMetadata {
     try {
       databaseMetadata = MAPPER.readValue(metadataFile, DatabaseMetadata.class);
     } catch (FileNotFoundException fnfe) {
-      databaseMetadata = new DatabaseMetadata(1, 1, BESU_VERSION_UNKNOWN);
+      databaseMetadata = new DatabaseMetadata(1, 1);
     } catch (JsonProcessingException jpe) {
       throw new IllegalStateException(
           String.format("Invalid metadata file %s", metadataFile.getAbsolutePath()), jpe);
