@@ -13,6 +13,7 @@
 - Set Ethereum Classic mainnet activation block for Spiral network upgrade [#6267](https://github.com/hyperledger/besu/pull/6267)
 - Add custom genesis file name to config overview if specified [#6297](https://github.com/hyperledger/besu/pull/6297)
 - Update Gradle plugins and replace unmaintained License Gradle Plugin with the actively maintained Gradle License Report [#6275](https://github.com/hyperledger/besu/pull/6275)
+- Protection against accidental downgrade of Besu version to avoid possible data corruption problems. Downgrade can be enabled with `--allow-downgrade` [6307](https://github.com/hyperledger/besu/pull/6307)
 
 ### Bug fixes
 

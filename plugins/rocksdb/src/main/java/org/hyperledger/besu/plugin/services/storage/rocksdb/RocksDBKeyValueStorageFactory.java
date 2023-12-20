@@ -280,7 +280,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
         if (versionComparison == 0) {
           // Versions match - no-op
         } else if (versionComparison < 0) {
-          if (commonConfiguration.getDowngradeAllowed()) {
+          if (false) {
             LOG.warn(
                 "Besu version {} is lower than version {} that last wrote to the database. Allowing startup because --allow-downgrade has been enabled.",
                 installedVersion,

@@ -126,6 +126,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.VersionMetadata;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -241,6 +242,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.metrics.MetricsOptions;
+import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.jetbrains.annotations.NotNull;
@@ -527,12 +529,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer fastSyncMinPeerCount = FAST_SYNC_MIN_PEER_COUNT;
 
   @Option(
-      names = {"--allow-downgrade"},
-      description =
-          "Allow an older version of Besu to start if it detects that a more recent version last wrote to the database. Warning - this could result in unrecoverable changes to the database so should only be used if a backup of the data has been taken before the downgrade. (default: ${DEFAULT-VALUE})")
-  private final Boolean allowDowngrade = false;
-
-  @Option(
       names = {"--network"},
       paramLabel = MANDATORY_NETWORK_FORMAT_HELP,
       defaultValue = "MAINNET",
@@ -564,6 +560,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               + "optional for overriding named networks default.",
       arity = "1")
   private final Path kzgTrustedSetupFile = null;
+
+  @Option(
+      names = {"--allow-downgrade"},
+      description =
+          "Allow an older version of Besu to start if it detects that a more recent version last wrote to the database. Warning - this could result in unrecoverable changes to the database so should only be used if a backup of the data has been taken before the downgrade. (default: ${DEFAULT-VALUE})")
+  private Boolean allowDowngrade = false;
 
   @CommandLine.ArgGroup(validate = false, heading = "@|bold GraphQL Options|@%n")
   GraphQlOptionGroup graphQlOptionGroup = new GraphQlOptionGroup();
@@ -1468,6 +1470,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       configureNativeLibs();
       besuController = initController();
 
+      performDowngradeCheck();
+
       besuPluginContext.beforeExternalServices();
 
       final var runner = buildRunner();
@@ -1484,6 +1488,57 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } catch (final Exception e) {
       logger.error("Failed to start Besu", e);
       throw new ParameterException(this.commandLine, e.getMessage(), e);
+    }
+  }
+
+  private void performDowngradeCheck() throws IOException {
+    final VersionMetadata versionMetaData = VersionMetadata.lookUpFrom(dataDir());
+    if (versionMetaData.getBesuVersion().equals(VersionMetadata.BESU_VERSION_UNKNOWN)) {
+      // The version isn't known, potentially because the file doesn't exist. Write the latest
+      // version to the metadata file.
+      logger.info(
+          "No version data detected. Writing Besu version {} to metadata file",
+          VersionMetadata.getRuntimeVersion());
+      new VersionMetadata(VersionMetadata.getRuntimeVersion()).writeToDirectory(dataDir());
+    } else {
+      // Check the runtime version against the most recent version as recorded in the version
+      // metadata file
+      final String installedVersion = VersionMetadata.getRuntimeVersion().split("-", 2)[0];
+      final String metadataVersion = versionMetaData.getBesuVersion().split("-", 2)[0];
+      final int versionComparison =
+          new ComparableVersion(installedVersion).compareTo(new ComparableVersion(metadataVersion));
+      if (versionComparison == 0) {
+        // Versions match - no-op
+      } else if (versionComparison < 0) {
+        if (allowDowngrade) {
+          logger.warn(
+              "Besu version {} is lower than version {} that last started. Allowing startup because --allow-downgrade has been enabled.",
+              installedVersion,
+              metadataVersion);
+          // We've allowed startup at an older version of Besu. Since the version in the metadata
+          // file records the latest version of
+          // Besu to write to the database we'll update the metadata version to this
+          // downgraded-version. This avoids the need after a successful
+          // downgrade to keep specifying --allow-downgrade on every startup.
+          new VersionMetadata(VersionMetadata.getRuntimeVersion()).writeToDirectory(dataDir());
+        } else {
+          final String message =
+              "Besu version "
+                  + installedVersion
+                  + " is lower than version "
+                  + metadataVersion
+                  + " that last started."
+                  + ". Specify --allow-downgrade to allow Besu to start at the lower version (warning - this may have unrecoverable effects on the database).";
+          logger.error(message);
+          throw new StorageException(message);
+        }
+      } else {
+        logger.info(
+            "Besu version {} is higher than version {} that last started. Updating version metadata.",
+            installedVersion,
+            metadataVersion);
+        new VersionMetadata(VersionMetadata.getRuntimeVersion()).writeToDirectory(dataDir());
+      }
     }
   }
 
@@ -3392,11 +3447,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     @Override
     public int getDatabaseVersion() {
       return dataStorageOptions.toDomainObject().getDataStorageFormat().getDatabaseVersion();
-    }
-
-    @Override
-    public boolean getDowngradeAllowed() {
-      return allowDowngrade;
     }
   }
 

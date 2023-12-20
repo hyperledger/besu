@@ -44,9 +44,4 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   public Path getDataPath() {
     return dataPath;
   }
-
-  @Override
-  public boolean getDowngradeAllowed() {
-    return false; // TODO
-  }
 }

@@ -44,6 +44,4 @@ public interface BesuConfiguration extends BesuService {
   default int getDatabaseVersion() {
     return 1;
   }
-
-  boolean getDowngradeAllowed();
 }

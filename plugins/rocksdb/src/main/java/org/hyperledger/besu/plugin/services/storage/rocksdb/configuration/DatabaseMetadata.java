@@ -36,7 +36,10 @@ public class DatabaseMetadata {
   private static final Logger LOG = LoggerFactory.getLogger(DatabaseMetadata.class);
 
   private static final String METADATA_FILENAME = "DATABASE_METADATA.json";
+
+  /** Represents an unknown Besu version in the database metadata file */
   public static final String BESU_VERSION_UNKNOWN = "UNKNOWN";
+
   private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
   private final int version;
 

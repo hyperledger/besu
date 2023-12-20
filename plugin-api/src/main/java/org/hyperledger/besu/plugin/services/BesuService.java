@@ -22,6 +22,12 @@ import org.hyperledger.besu.plugin.BesuContext;
  * BesuService}
  */
 public interface BesuService {
+
+  /**
+   * Get the version of Besu that is running.
+   *
+   * @return the version of Besu
+   */
   default String getBesuVersion() {
     return BesuService.class.getPackage().getImplementationVersion();
   }
