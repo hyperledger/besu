@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.p2p.peers;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public interface PeerPrivileges {
 
   /**
@@ -23,5 +25,5 @@ public interface PeerPrivileges {
    * @param peer The peer to be checked.
    * @return {@code true} if the peer should be allowed to connect regardless of connection limits.
    */
-  boolean canExceedConnectionLimits(final Peer peer);
+  boolean canExceedConnectionLimits(final Bytes peerId);
 }
