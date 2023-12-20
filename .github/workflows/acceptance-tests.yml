@@ -10,6 +10,12 @@ env:
   total-runners: 16
 
 jobs:
+  debug:
+    name: debugging
+    runs-on: ubuntu-22.04
+    steps:
+      - name: echo event
+        run: echo ${{github.event}}
   pend:
     name: acceptance testing pending
     runs-on: ubuntu-22.04
@@ -17,6 +23,8 @@ jobs:
     permissions:
       statuses: write
     steps:
+      - name: debug
+        run: echo ${{github.event}}
       - name: pending
         uses: myrotvorets/set-commit-status-action@v2.0.0
         with:
