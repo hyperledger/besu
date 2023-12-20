@@ -1,6 +1,7 @@
 name: integration-tests
 on:
   workflow_dispatch:
+  workflow_call:
   pull_request_review:
     types:
       - submitted
@@ -9,7 +10,19 @@ env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
 
 jobs:
-  integrationTetst:
+  pend:
+    name: integration testing pending
+    runs-on: ubuntu-22.04
+    if: ${{ github.actor != 'dependabot[bot]' && github.event.review.state == 'approved' }}
+    permissions:
+      statuses: write
+    steps:
+      - name: pending
+        uses: myrotvorets/set-commit-status-action@v2.0.0
+        with:
+          status: pending
+          sha: ${{github.pull_request.head.sha}}
+  integrationTest:
     runs-on: ubuntu-22.04
     # TODO: don't re-run on subsequent comments on an approved workflow
     if: ${{ github.actor != 'dependabot[bot]' && github.event.review.state == 'approved' }}
