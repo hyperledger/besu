@@ -95,7 +95,7 @@ jobs:
           description: fail acceptance test batch ${{matrix.runner_index}}
       - name: flag passed unit tests
         uses: myrotvorets/set-commit-status-action@v2.0.0
-        if: success() steps.needsRun.outputs.result == 'true'
+        if: success() && steps.needsRun.outputs.result == 'true'
         with:
           status: ${{ job.status }}
       - name: cleanup tempfiles
