@@ -36,11 +36,19 @@ jobs:
             console.log(intTests);
             const refTests = statuses.find(({context}) => context === 'reference-tests');
             console.log(refTests);
+            
+            const { data: reviews } = await github.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            const approvingReviews = reviews.filter(review => review.state === 'APPROVED');
+            
             return prePRWorkflow && prePRWorkflow.state === 'success' && 
                     acceptTests && acceptTests.state === 'success' &&
                     intTests && intTests.state === 'success' &&
-                    refTests && refTests.state === 'success'' &&
-                    !anyFailure && !anyPending;
+                    refTests && refTests.state === 'success' &&
+                    !anyFailure && !anyPending && (approvingReviews.length > 0);
       - name: Abort on missing status
         if: steps.confirmTested.outputs.result == 'false'
         run: |
