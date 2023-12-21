@@ -26,6 +26,7 @@ jobs:
               repo: context.repo.repo,
               ref: context.sha,
             });
+            console.log(context);
             console.log(statuses);
             const unitTested = statuses && statuses.find(({ context }) => context === 'pre-review');
             console.log(unitTested);
@@ -37,7 +38,7 @@ jobs:
             console.log(needsRun);
             console.log(github.actor);
             
-            const { data: reviews } = await github.pulls.listReviews({
+            const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.issue.number,
