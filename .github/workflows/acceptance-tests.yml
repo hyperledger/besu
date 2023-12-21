@@ -26,13 +26,13 @@ jobs:
               repo: context.repo.repo,
               ref: context.sha,
             });
-            const unitTested = statuses.find(({ context }) => context === 'unit-tests');
+            const unitTested = statuses && statuses.find(({ context }) => context === 'pre-review');
             console.log(unitTested);
-            const failedUnits = unitTested.find(({state}) => state === 'failure' || state === 'pending');
+            const failedUnits = unitTested && unitTested.find(({state}) => state === 'failure' || state === 'pending');
             console.log(failedUnits);
-            const acceptanceTested = statuses.find(({ context }) => context === 'acceptance-tests');
+            const acceptanceTested = statuses && statuses.find(({ context }) => context === 'acceptance-tests');
             console.log(accpetanceTested);
-            const needsRun = acceptanceTested.find(({ state }) => state != 'success' && state != 'pending');
+            const needsRun = acceptanceTested && acceptanceTested.find(({ state }) => state != 'success' && state != 'pending');
             console.log(needsRun);
             console.log(github.actor);
             
@@ -41,7 +41,7 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.issue.number,
             });
-            const approvingReviews = reviews.filter(review => review.state === 'APPROVED');
+            const approvingReviews = reviews && reviews.filter(review => review.state === 'APPROVED');
             console.log(approvingReviews);
             
             return needsRun && github.actor != 'dependabot[bot]' && !failedUnits && (approvingReviews.length > 0);
