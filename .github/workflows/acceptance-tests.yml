@@ -33,18 +33,21 @@ jobs:
               ref: RELEVANT_SHA,
             });
             const unitTested = statuses && statuses.filter(({ context }) => context === 'pre-review');
+            console.log(`unitTested=${unitTested}`);
             const failedUnits = unitTested && unitTested.filter(({state}) => state === 'failure' || state === 'pending');
+            console.log(`failedUnit=${failedUnit}`);
             const acceptanceTested = statuses && statuses.filter(({ context }) => context === 'acceptance-tests');
+            console.log(`acceptanceTested=${acceptanceTested}`);
             const needsRun = acceptanceTested && acceptanceTested.filter(({ state }) => state != 'success' && state != 'pending');
-            
+            console.log(`needsRun=${needsRun}`);
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.issue.number,
             });
-            console.log(reviews)
+            console.log(reviews);
             const approvingReviews = reviews && reviews.filter(review => review.state === 'APPROVED');
-            
+            console.log(`approvingReviews=${approvingReviews}`);
             return needsRun && github.actor != 'dependabot[bot]' && !failedUnits && (approvingReviews.length > 0);
   pend:
     name: acceptance testing pending
@@ -55,7 +58,7 @@ jobs:
       statuses: write
     steps:
       - name: debug
-        run: echo ${{github.event}}
+        run: echo ${{ needs.shouldRun.outputs.shouldRun }}
       - name: pending
         uses: myrotvorets/set-commit-status-action@v2.0.0
         with:
