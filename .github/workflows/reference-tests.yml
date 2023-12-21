@@ -64,6 +64,7 @@ jobs:
           sha: ${{ github.event.pull_request.head.sha || github.sha }}
   prepareReferenceTestEthereum:
     runs-on: ubuntu-22.04
+    needs: shouldRun
     if: ${{ needs.shouldRun.outputs.shouldRun == 'true' }}
     steps:
       - name: Checkout Repo
@@ -88,6 +89,9 @@ jobs:
 
   referenceTestEthereum:
     runs-on: ubuntu-22.04
+    permissions:
+      statuses: write
+      checks: write
     needs:
       - prepareReferenceTestEthereum
     if: ${{ needs.shouldRun.outputs.shouldRun == 'true' }}
