@@ -11,10 +11,55 @@ env:
   total-runners: 6
 
 jobs:
+  shouldRun:
+    name: checks to ensure we should run
+    runs-on: ubuntu-22.04
+    outputs:
+      shouldRun: ${{steps.shouldRun.outputs.result}}
+    steps:
+      - name: required check
+        id: shouldRun
+        uses: actions/github-script@v7.0.1
+        env:
+          # fun fact, this changes based on incoming event, it will be different when we run this on pushes to main
+          RELEVANT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        with:
+          script: | #TODO: could be parameterized and put in a local js file
+            const { RELEVANT_SHA } = process.env;
+            const { data: { statuses } } = await github.rest.repos.getCombinedStatusForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: RELEVANT_SHA,
+            });
+            const unitTested = statuses && statuses.filter(({ context }) => context === 'pre-review');
+            const failedUnits = unitTested && unitTested.filter(({state}) => state === 'failure' || state === 'pending');
+            const refTested = statuses && statuses.filter(({ context }) => context === 'reference-tests');
+            const needsRun = refTested && refTested.filter(({ state }) => state != 'success' && state != 'pending');
+
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            const approvingReviews = reviews && reviews.filter(review => review.state === 'APPROVED');
+
+            return needsRun && github.actor != 'dependabot[bot]' && !failedUnits && (approvingReviews.length > 0);
+  pend:
+    name: reference testing pending
+    needs: shouldRun
+    if: ${{ needs.shouldRun.outputs.shouldRun }}
+    runs-on: ubuntu-22.04
+    permissions:
+      statuses: write
+    steps:
+      - name: pending
+        uses: myrotvorets/set-commit-status-action@v2.0.0
+        with:
+          status: pending
+          sha: ${{ github.event.pull_request.head.sha || github.sha }}
   prepareReferenceTestEthereum:
     runs-on: ubuntu-22.04
-    # TODO: don't re-run on subsequent comments on an approved workflow, check status
-    if: ${{ github.actor != 'dependabot[bot]' && github.event.review.state == 'approved' }}
+    if: ${{ needs.shouldRun.outputs.shouldRun }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -24,7 +69,7 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
-          distribution: adopt
+          distribution: adopt-openj9
           java-version: 17
       - name: setup gradle
         uses: gradle/gradle-build-action@v2
@@ -40,8 +85,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs:
       - prepareReferenceTestEthereum
-    # TODO: don't re-run on subsequent comments on an approved workflow
-    if: ${{ github.actor != 'dependabot[bot]' && github.event.review.state == 'approved' }}
+    if: ${{ needs.shouldRun.outputs.shouldRun }}
     strategy:
       fail-fast: false
       matrix:
@@ -54,7 +98,7 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
-          distribution: adopt
+          distribution: adopt-openj9
           java-version: 17
       - name: retrieve generated tests
         uses: actions/download-artifact@v3.0.2

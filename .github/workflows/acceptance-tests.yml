@@ -20,30 +20,20 @@ jobs:
         id: shouldRun
         uses: actions/github-script@v7.0.1
         env:
+          # fun fact, this changes based on incoming event, it will be different when we run this on pushes to main
           RELEVANT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         with:
           script: |
             const { RELEVANT_SHA } = process.env;
-            console.log(context.repo.owner);
-            console.log(context.repo.repo);
-            console.log(`working on ${RELEVANT_SHA}`);
-            console.log(RELEVANT_SHA);
             const { data: { statuses } } = await github.rest.repos.getCombinedStatusForRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
               ref: RELEVANT_SHA,
             });
-            console.log(context);
-            console.log(statuses);
             const unitTested = statuses && statuses.filter(({ context }) => context === 'pre-review');
-            console.log(unitTested);
             const failedUnits = unitTested && unitTested.filter(({state}) => state === 'failure' || state === 'pending');
-            console.log(failedUnits);
             const acceptanceTested = statuses && statuses.filter(({ context }) => context === 'acceptance-tests');
-            console.log(acceptanceTested);
             const needsRun = acceptanceTested && acceptanceTested.filter(({ state }) => state != 'success' && state != 'pending');
-            console.log(needsRun);
-            console.log(github.actor);
             
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
@@ -51,14 +41,13 @@ jobs:
               pull_number: context.issue.number,
             });
             const approvingReviews = reviews && reviews.filter(review => review.state === 'APPROVED');
-            console.log(approvingReviews);
             
             return needsRun && github.actor != 'dependabot[bot]' && !failedUnits && (approvingReviews.length > 0);
   pend:
     name: acceptance testing pending
     runs-on: ubuntu-22.04
     needs: shouldRun
-    if: ${{ needs.shouldRun.outputs.shouldrun }}
+    if: ${{ needs.shouldRun.outputs.shouldRun }}
     permissions:
       statuses: write
     steps:
@@ -68,14 +57,14 @@ jobs:
         uses: myrotvorets/set-commit-status-action@v2.0.0
         with:
           status: pending
-          sha: ${{github.pull_request.head.sha}}
+          sha: ${{ github.event.pull_request.head.sha || github.sha }}
   acceptanceTestEthereum:
     runs-on: ubuntu-22.04
     needs: pend
     name: "Acceptance Runner"
     permissions:
       statuses: write
-    if: ${{ needs.shouldRun.outputs.shouldrun }}
+    if: ${{ needs.shouldRun.outputs.shouldRun }}
     strategy:
       fail-fast: false
       matrix:
@@ -86,7 +75,7 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
-          distribution: adopt
+          distribution: adopt-openj9
           java-version: 17
       - name: get acceptance test report
         uses: dawidd6/action-download-artifact@v2
