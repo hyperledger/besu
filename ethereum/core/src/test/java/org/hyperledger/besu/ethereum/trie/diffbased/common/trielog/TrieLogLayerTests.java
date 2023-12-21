@@ -13,14 +13,13 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.ethereum.trie.bonsai.trielog;
+package org.hyperledger.besu.ethereum.trie.diffbased.common.trielog;
 
 import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.Optional;

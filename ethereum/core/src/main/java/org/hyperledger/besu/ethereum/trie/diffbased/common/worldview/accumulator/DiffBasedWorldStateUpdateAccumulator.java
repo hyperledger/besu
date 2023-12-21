@@ -23,7 +23,6 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
@@ -582,9 +581,10 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                   "Expected to create account, but the account exists.  Address=%s", address));
         }
       } else {
-        assertCloseEnoughForDiffing(accountValue.getUpdated(),
-                expectedValue,
-                "Address=" + address + " Prior Value in Rolling Change");
+        assertCloseEnoughForDiffing(
+            accountValue.getUpdated(),
+            expectedValue,
+            "Address=" + address + " Prior Value in Rolling Change");
       }
       if (replacementValue == null) {
         if (accountValue.getPrior() == null) {
@@ -807,6 +807,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   protected abstract ACCOUNT createAccount(
       final DiffBasedWorldView context, final UpdateTrackingAccount<ACCOUNT> tracked);
 
-
-  protected abstract void assertCloseEnoughForDiffing(final ACCOUNT source, final AccountValue account, final String context);
+  protected abstract void assertCloseEnoughForDiffing(
+      final ACCOUNT source, final AccountValue account, final String context);
 }

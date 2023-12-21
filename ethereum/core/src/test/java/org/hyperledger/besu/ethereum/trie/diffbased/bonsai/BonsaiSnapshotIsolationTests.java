@@ -14,7 +14,7 @@
  *
  */
 
-package org.hyperledger.besu.ethereum.trie.bonsai;
+package org.hyperledger.besu.ethereum.trie.diffbased.bonsai;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 

@@ -13,7 +13,7 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.ethereum.trie.bonsai.trielog;
+package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -24,7 +24,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
