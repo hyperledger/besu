@@ -16,18 +16,38 @@ package org.hyperledger.besu.metrics;
 
 import java.util.function.DoubleSupplier;
 
+/**
+ * This class provides a replaceable double supplier. It allows to replace the current double
+ * supplier with a new one.
+ */
 public class ReplaceableDoubleSupplier implements DoubleSupplier {
   private DoubleSupplier currentSupplier;
 
+  /**
+   * Constructs a new ReplaceableDoubleSupplier with the given initial supplier.
+   *
+   * @param currentSupplier the initial double supplier
+   */
   public ReplaceableDoubleSupplier(final DoubleSupplier currentSupplier) {
     this.currentSupplier = currentSupplier;
   }
 
+  /**
+   * Gets a double value from the current supplier.
+   *
+   * @return the double value supplied by the current supplier
+   */
   @Override
   public double getAsDouble() {
     return currentSupplier.getAsDouble();
   }
 
+  /**
+   * Replaces the current double supplier with a new one.
+   *
+   * @param newSupplier the new double supplier
+   * @return this ReplaceableDoubleSupplier
+   */
   public ReplaceableDoubleSupplier replaceDoubleSupplier(final DoubleSupplier newSupplier) {
     currentSupplier = newSupplier;
     return this;
