@@ -23,6 +23,7 @@ jobs:
           # fun fact, this changes based on incoming event, it will be different when we run this on pushes to main
           RELEVANT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         with:
+          #TODO: add console logging for skip reason if any
           script: |
             const { RELEVANT_SHA } = process.env;
             const { data: { statuses } } = await github.rest.repos.getCombinedStatusForRef({
@@ -75,7 +76,7 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
-          distribution: adopt-openj9
+          distribution: temurin
           java-version: 17
       - name: get acceptance test report
         uses: dawidd6/action-download-artifact@v2
