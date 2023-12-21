@@ -23,9 +23,7 @@ jobs:
           # fun fact, this changes based on incoming event, it will be different when we run this on pushes to main
           RELEVANT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         with:
-          #TODO: add console logging for skip reason if any
           script: |
-            console.log(context);
             const { RELEVANT_SHA } = process.env;
             const { data: { statuses } } = await github.rest.repos.getCombinedStatusForRef({
               owner: context.repo.owner,
@@ -33,24 +31,18 @@ jobs:
               ref: RELEVANT_SHA,
             });
             const unitTested = statuses && statuses.filter(({ context }) => context === 'pre-review');
-            console.log(`unitTested=`);console.log(unitTested);
             const failedUnits = unitTested && unitTested.filter(({state}) => state === 'failure' || state === 'pending');
-            console.log(`failedUnits=`);console.log(failedUnits.length);
             const acceptanceTested = statuses && statuses.filter(({ context }) => context === 'acceptance-tests');
-            console.log(`acceptanceTested=`);console.log(acceptanceTested);
             const alreadyRun = acceptanceTested && acceptanceTested.find(({ state }) => state === 'success' || state === 'pending') > 0;
-            console.log(`alreadyRun=`);console.log(alreadyRun);
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.issue.number,
             });
-            console.log(reviews);
             const approvingReviews = reviews && reviews.filter(review => review.state === 'APPROVED');
-            console.log(`approvingReviews=`);console.log(approvingReviews);
             const shouldRun = !alreadyRun && github.actor != 'dependabot[bot]' && (failedUnits.length === 0) && (approvingReviews.length > 0);
             
-              console.log("acceptance test should be = %j", shouldRun);
+              console.log("tests should be run = %j", shouldRun);
               console.log("alreadyRun = %j", alreadyRun);
               console.log("failedUnits = %j", failedUnits.length);
               console.log("approvingReviews = %j", approvingReviews.length);
