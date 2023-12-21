@@ -24,7 +24,7 @@ jobs:
           # fun fact, this changes based on incoming event, it will be different when we run this on pushes to main
           RELEVANT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         with:
-          script: | #TODO: could be parameterized and put in a local js file
+          script: |
             const { RELEVANT_SHA } = process.env;
             const { data: { statuses } } = await github.rest.repos.getCombinedStatusForRef({
               owner: context.repo.owner,
@@ -34,20 +34,25 @@ jobs:
             const unitTested = statuses && statuses.filter(({ context }) => context === 'pre-review');
             const failedUnits = unitTested && unitTested.filter(({state}) => state === 'failure' || state === 'pending');
             const refTested = statuses && statuses.filter(({ context }) => context === 'reference-tests');
-            const needsRun = refTested && refTested.filter(({ state }) => state != 'success' && state != 'pending');
-
+            const alreadyRun = refTested && refTested.find(({ state }) => state === 'success' || state === 'pending') > 0;
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.issue.number,
             });
             const approvingReviews = reviews && reviews.filter(review => review.state === 'APPROVED');
+            const shouldRun = !alreadyRun && github.actor != 'dependabot[bot]' && (failedUnits.length === 0) && (approvingReviews.length > 0);
 
-            return needsRun && github.actor != 'dependabot[bot]' && !failedUnits && (approvingReviews.length > 0);
+              console.log("tests should be run = %j", shouldRun);
+              console.log("alreadyRun = %j", alreadyRun);
+              console.log("failedUnits = %j", failedUnits.length);
+              console.log("approvingReviews = %j", approvingReviews.length);
+
+            return shouldRun;
   pend:
     name: reference testing pending
     needs: shouldRun
-    if: ${{ needs.shouldRun.outputs.shouldRun }}
+    if: ${{ needs.shouldRun.outputs.shouldRun == 'true' }}
     runs-on: ubuntu-22.04
     permissions:
       statuses: write
@@ -59,7 +64,7 @@ jobs:
           sha: ${{ github.event.pull_request.head.sha || github.sha }}
   prepareReferenceTestEthereum:
     runs-on: ubuntu-22.04
-    if: ${{ needs.shouldRun.outputs.shouldRun }}
+    if: ${{ needs.shouldRun.outputs.shouldRun == 'true' }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -85,7 +90,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs:
       - prepareReferenceTestEthereum
-    if: ${{ needs.shouldRun.outputs.shouldRun }}
+    if: ${{ needs.shouldRun.outputs.shouldRun == 'true' }}
     strategy:
       fail-fast: false
       matrix:
