@@ -43,7 +43,9 @@ public class VersionMetadata {
    * @return the version of Besu
    */
   public static String getRuntimeVersion() {
-    return VersionMetadata.class.getPackage().getImplementationVersion();
+    return VersionMetadata.class.getPackage().getImplementationVersion() == null
+        ? BESU_VERSION_UNKNOWN
+        : VersionMetadata.class.getPackage().getImplementationVersion();
   }
 
   @JsonCreator
