@@ -43,7 +43,7 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
-          distribution: adopt-openj9
+          distribution: temurin
           java-version: 17
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2.10.0
@@ -59,7 +59,7 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
-          distribution: adopt-openj9
+          distribution: temurin
           java-version: 17
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2.10.0
@@ -89,7 +89,7 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
-          distribution: adopt-openj9
+          distribution: temurin
           java-version: 17
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2.10.0
