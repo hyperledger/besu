@@ -50,7 +50,7 @@ jobs:
             console.log(`approvingReviews=`);console.log(approvingReviews);
             const shouldRun = !alreadyRun && github.actor != 'dependabot[bot]' && (failedUnits.length === 0) && (approvingReviews.length > 0);
             
-              console.log("acceptance test should be skipped");
+              console.log("acceptance test should be = %j", shouldRun);
               console.log("alreadyRun = %j", alreadyRun);
               console.log("failedUnits = %j", failedUnits.length);
               console.log("approvingReviews = %j", approvingReviews.length);
@@ -60,7 +60,7 @@ jobs:
     name: acceptance testing pending
     runs-on: ubuntu-22.04
     needs: shouldRun
-    if: ${{ needs.shouldRun.outputs.shouldRun }}
+    if: ${{ needs.shouldRun.outputs.shouldRun == 'true'}}
     permissions:
       statuses: write
     steps:
@@ -77,7 +77,7 @@ jobs:
     name: "Acceptance Runner"
     permissions:
       statuses: write
-    if: ${{ needs.shouldRun.outputs.shouldRun }}
+    if: ${{ needs.shouldRun.outputs.shouldRun == 'true'}}
     strategy:
       fail-fast: false
       matrix:
