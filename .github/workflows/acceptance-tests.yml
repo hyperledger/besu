@@ -21,6 +21,9 @@ jobs:
         uses: actions/github-script@v7.0.1
         with:
           script: |
+            console.log(context.repo.owner);
+            console.log(context.repo.repo);
+            console.log(context.sha);
             const { data: { statuses } } = await github.rest.repos.getCombinedStatusForRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
