@@ -49,9 +49,12 @@ jobs:
             const approvingReviews = reviews && reviews.filter(review => review.state === 'APPROVED');
             console.log(`approvingReviews=`);console.log(approvingReviews);
             const shouldRun = !alreadyRun && github.actor != 'dependabot[bot]' && (failedUnits.length === 0) && (approvingReviews.length > 0);
-            if(!shouldRun) {
-              
-            }
+            
+              console.log("acceptance test should be skipped");
+              console.log("alreadyRun = %j", alreadyRun);
+              console.log("failedUnits = %j", failedUnits);
+              console.log("approvingReviews = %j", approvingReviews);
+            
             return shouldRun;
   pend:
     name: acceptance testing pending
