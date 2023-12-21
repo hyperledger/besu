@@ -26,11 +26,12 @@ jobs:
             const { RELEVANT_SHA } = process.env;
             console.log(context.repo.owner);
             console.log(context.repo.repo);
-            console.log(${RELEVANT_SHA});
+            console.log(`working on ${RELEVANT_SHA}`);
+            console.log(RELEVANT_SHA);
             const { data: { statuses } } = await github.rest.repos.getCombinedStatusForRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: ${RELEVANT_SHA},
+              ref: RELEVANT_SHA,
             });
             console.log(context);
             console.log(statuses);
