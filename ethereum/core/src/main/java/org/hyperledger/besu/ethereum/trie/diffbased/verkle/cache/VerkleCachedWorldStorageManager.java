@@ -12,23 +12,23 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache;
+package org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache;
 
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateLayerStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleLayeredWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleSnapshotWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldState;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
-public class BonsaiCachedWorldStorageManager extends DiffBasedCachedWorldStorageManager {
+public class VerkleCachedWorldStorageManager extends DiffBasedCachedWorldStorageManager {
 
-  public BonsaiCachedWorldStorageManager(
+  public VerkleCachedWorldStorageManager(
       final DiffBasedWorldStateProvider archive,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final ObservableMetricsSystem metricsSystem) {
@@ -40,24 +40,24 @@ public class BonsaiCachedWorldStorageManager extends DiffBasedCachedWorldStorage
       final DiffBasedWorldStateProvider archive,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final EvmConfiguration evmConfiguration) {
-    return new BonsaiWorldState(
-        (BonsaiWorldStateProvider) archive,
-        (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage,
+    return new VerkleWorldState(
+        (VerkleWorldStateProvider) archive,
+        (VerkleWorldStateKeyValueStorage) worldStateKeyValueStorage,
         evmConfiguration);
   }
 
   @Override
   public DiffBasedWorldStateKeyValueStorage createLayeredKeyValueStorage(
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage) {
-    return new BonsaiWorldStateLayerStorage(
-        (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage);
+    return new VerkleLayeredWorldStateKeyValueStorage(
+        (VerkleWorldStateKeyValueStorage) worldStateKeyValueStorage);
   }
 
   @Override
   public DiffBasedWorldStateKeyValueStorage createSnapshotKeyValueStorage(
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final ObservableMetricsSystem metricsSystem) {
-    return new BonsaiSnapshotWorldStateKeyValueStorage(
-        (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage, metricsSystem);
+    return new VerkleSnapshotWorldStateKeyValueStorage(
+        (VerkleWorldStateKeyValueStorage) worldStateKeyValueStorage, metricsSystem);
   }
 }

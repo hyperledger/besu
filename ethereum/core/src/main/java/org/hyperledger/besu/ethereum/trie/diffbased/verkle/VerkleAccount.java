@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -13,8 +13,7 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-
-package org.hyperledger.besu.ethereum.trie.diffbased.bonsai;
+package org.hyperledger.besu.ethereum.trie.diffbased.verkle;
 
 import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
@@ -37,10 +36,10 @@ import java.util.Objects;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class BonsaiAccount extends DiffBasedAccount {
-  private Hash storageRoot;
+public class VerkleAccount extends DiffBasedAccount {
+  private Hash storageRoot; // TODO REMOVE AS USELESS
 
-  public BonsaiAccount(
+  public VerkleAccount(
       final DiffBasedWorldView context,
       final Address address,
       final Hash addressHash,
@@ -53,7 +52,7 @@ public class BonsaiAccount extends DiffBasedAccount {
     this.storageRoot = storageRoot;
   }
 
-  public BonsaiAccount(
+  public VerkleAccount(
       final DiffBasedWorldView context,
       final Address address,
       final AccountValue stateTrieAccount,
@@ -62,18 +61,18 @@ public class BonsaiAccount extends DiffBasedAccount {
     this.storageRoot = stateTrieAccount.getStorageRoot();
   }
 
-  public BonsaiAccount(final BonsaiAccount toCopy) {
+  public VerkleAccount(final VerkleAccount toCopy) {
     this(toCopy, toCopy.context, false);
   }
 
-  public BonsaiAccount(
-      final BonsaiAccount toCopy, final DiffBasedWorldView context, final boolean mutable) {
+  public VerkleAccount(
+      final VerkleAccount toCopy, final DiffBasedWorldView context, final boolean mutable) {
     super(toCopy, context, !mutable);
     this.storageRoot = toCopy.storageRoot;
   }
 
-  public BonsaiAccount(
-      final DiffBasedWorldView context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
+  public VerkleAccount(
+      final DiffBasedWorldView context, final UpdateTrackingAccount<VerkleAccount> tracked) {
     super(
         context,
         tracked.getAddress(),
@@ -86,7 +85,7 @@ public class BonsaiAccount extends DiffBasedAccount {
     updatedStorage.putAll(tracked.getUpdatedStorage());
   }
 
-  public static BonsaiAccount fromRLP(
+  public static VerkleAccount fromRLP(
       final DiffBasedWorldView context,
       final Address address,
       final Bytes encoded,
@@ -102,7 +101,7 @@ public class BonsaiAccount extends DiffBasedAccount {
 
     in.leaveList();
 
-    return new BonsaiAccount(
+    return new VerkleAccount(
         context, address, address.addressHash(), nonce, balance, storageRoot, codeHash, mutable);
   }
 
@@ -162,7 +161,7 @@ public class BonsaiAccount extends DiffBasedAccount {
    * @throws IllegalStateException if the stored values differ
    */
   public static void assertCloseEnoughForDiffing(
-      final BonsaiAccount source, final AccountValue account, final String context) {
+      final VerkleAccount source, final AccountValue account, final String context) {
     if (source == null) {
       throw new IllegalStateException(context + ": source is null but target isn't");
     } else {

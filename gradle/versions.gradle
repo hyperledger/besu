@@ -170,6 +170,12 @@ dependencyManagement {
       entry 'blake2bf'
     }
 
+    dependencySet(group: 'org.hyperledger.besu', version: '0.8.3-SNAPSHOT') {
+      entry 'ipa-multipoint'
+    }
+
+    dependency 'org.hyperledger.besu:besu-verkle-trie:0.0.1-SNAPSHOT-KT5'
+
     dependencySet(group: 'org.immutables', version: '2.9.3') {
       entry 'value-annotations'
       entry 'value'

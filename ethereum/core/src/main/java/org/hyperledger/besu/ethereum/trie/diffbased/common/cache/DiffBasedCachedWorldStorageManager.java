@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.trie.diffbased.common.cache;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateLayerStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedLayeredWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
@@ -41,7 +41,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
   public static final long RETAINED_LAYERS = 512; // at least 256 + typical rollbacks
   private static final Logger LOG =
       LoggerFactory.getLogger(DiffBasedCachedWorldStorageManager.class);
-  private final BonsaiWorldStateProvider archive;
+  private final DiffBasedWorldStateProvider archive;
   private final ObservableMetricsSystem metricsSystem;
   private final EvmConfiguration evmConfiguration;
 
@@ -49,7 +49,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
   private final Map<Bytes32, DiffBasedCachedWorldView> cachedWorldStatesByHash;
 
   private DiffBasedCachedWorldStorageManager(
-      final BonsaiWorldStateProvider archive,
+      final DiffBasedWorldStateProvider archive,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Map<Bytes32, DiffBasedCachedWorldView> cachedWorldStatesByHash,
       final ObservableMetricsSystem metricsSystem,
@@ -63,7 +63,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
   }
 
   public DiffBasedCachedWorldStorageManager(
-      final BonsaiWorldStateProvider archive,
+      final DiffBasedWorldStateProvider archive,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final ObservableMetricsSystem metricsSystem) {
     this(
@@ -234,7 +234,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
   }
 
   public abstract DiffBasedWorldState createWorldState(
-      final BonsaiWorldStateProvider archive,
+      final DiffBasedWorldStateProvider archive,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final EvmConfiguration evmConfiguration);
 

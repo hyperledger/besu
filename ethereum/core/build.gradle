@@ -39,6 +39,7 @@ dependencies {
   implementation project(':enclave')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
+  implementation project(':ethereum:verkletrie')
   implementation project(':evm')
   implementation project(':metrics:core')
   implementation project(':plugin-api')

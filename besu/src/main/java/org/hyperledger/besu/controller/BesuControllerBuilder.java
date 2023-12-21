@@ -84,6 +84,8 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvi
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogPruner;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.MarkSweepPruner;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.Pruner;
@@ -1088,6 +1090,31 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             blockchain,
             Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
             cachedMerkleTrieLoader,
+            metricsSystem,
+            besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
+            evmConfiguration,
+            trieLogPruner);
+      }
+      case VERKLE -> {
+        final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
+        final boolean isProofOfStake =
+            genesisConfigOptions.getTerminalTotalDifficulty().isPresent();
+        final VerkleWorldStateKeyValueStorage worldStateKeyValueStorage =
+            worldStateStorageCoordinator.getStrategy(VerkleWorldStateKeyValueStorage.class);
+        final TrieLogPruner trieLogPruner =
+            dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningEnabled()
+                ? new TrieLogPruner(
+                    worldStateKeyValueStorage,
+                    blockchain,
+                    dataStorageConfiguration.getUnstable().getBonsaiTrieLogRetentionThreshold(),
+                    dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningLimit(),
+                    isProofOfStake)
+                : TrieLogPruner.noOpTrieLogPruner();
+        trieLogPruner.initialize();
+        yield new VerkleWorldStateProvider(
+            worldStateKeyValueStorage,
+            blockchain,
+            Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
             metricsSystem,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,

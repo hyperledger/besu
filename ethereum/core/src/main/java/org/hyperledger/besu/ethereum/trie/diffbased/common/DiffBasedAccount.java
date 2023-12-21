@@ -25,8 +25,6 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWo
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,8 +40,6 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
   protected long nonce;
   protected Wei balance;
   protected Bytes code;
-
-  private final String stack;
   protected final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
 
   public DiffBasedAccount(
@@ -62,10 +58,6 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
     this.codeHash = codeHash;
 
     this.immutable = mutable;
-
-    StringWriter sw = new StringWriter();
-    new Exception().printStackTrace(new PrintWriter(sw));
-    stack = sw.toString();
   }
 
   public DiffBasedAccount(
@@ -93,12 +85,7 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
     this.codeHash = toCopy.codeHash;
     this.code = toCopy.code;
     updatedStorage.putAll(toCopy.updatedStorage);
-
     this.immutable = mutable;
-
-    StringWriter sw = new StringWriter();
-    new Exception().printStackTrace(new PrintWriter(sw));
-    stack = sw.toString();
   }
 
   @Override
@@ -132,7 +119,6 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
   @Override
   public void setBalance(final Wei value) {
     if (immutable) {
-      System.out.println(stack);
       throw new ModificationNotAllowedException();
     }
     balance = value;

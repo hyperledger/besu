@@ -14,35 +14,35 @@
  *
  */
 
-package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview;
+package org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview;
 
 import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.Consumer;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
-public class BonsaiWorldStateUpdateAccumulator
-    extends DiffBasedWorldStateUpdateAccumulator<BonsaiAccount> {
-  public BonsaiWorldStateUpdateAccumulator(
+public class VerkleWorldStateUpdateAccumulator
+    extends DiffBasedWorldStateUpdateAccumulator<VerkleAccount> {
+  public VerkleWorldStateUpdateAccumulator(
       final DiffBasedWorldView world,
-      final Consumer<DiffBasedValue<BonsaiAccount>> accountPreloader,
+      final Consumer<DiffBasedValue<VerkleAccount>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader,
       final EvmConfiguration evmConfiguration) {
     super(world, accountPreloader, storagePreloader, evmConfiguration);
   }
 
   @Override
-  public DiffBasedWorldStateUpdateAccumulator<BonsaiAccount> copy() {
-    final BonsaiWorldStateUpdateAccumulator copy =
-        new BonsaiWorldStateUpdateAccumulator(
+  public DiffBasedWorldStateUpdateAccumulator<VerkleAccount> copy() {
+    final VerkleWorldStateUpdateAccumulator copy =
+        new VerkleWorldStateUpdateAccumulator(
             wrappedWorldView(),
             getAccountPreloader(),
             getStoragePreloader(),
@@ -52,27 +52,27 @@ public class BonsaiWorldStateUpdateAccumulator
   }
 
   @Override
-  protected BonsaiAccount copyAccount(final BonsaiAccount account) {
-    return new BonsaiAccount(account);
+  protected VerkleAccount copyAccount(final VerkleAccount account) {
+    return new VerkleAccount(account);
   }
 
   @Override
-  protected BonsaiAccount copyAccount(
-      final BonsaiAccount toCopy, final DiffBasedWorldView context, final boolean mutable) {
-    return new BonsaiAccount(toCopy, context, mutable);
+  protected VerkleAccount copyAccount(
+      final VerkleAccount toCopy, final DiffBasedWorldView context, final boolean mutable) {
+    return new VerkleAccount(toCopy, context, mutable);
   }
 
   @Override
-  protected BonsaiAccount createAccount(
+  protected VerkleAccount createAccount(
       final DiffBasedWorldView context,
       final Address address,
       final AccountValue stateTrieAccount,
       final boolean mutable) {
-    return new BonsaiAccount(context, address, stateTrieAccount, mutable);
+    return new VerkleAccount(context, address, stateTrieAccount, mutable);
   }
 
   @Override
-  protected BonsaiAccount createAccount(
+  protected VerkleAccount createAccount(
       final DiffBasedWorldView context,
       final Address address,
       final Hash addressHash,
@@ -81,24 +81,24 @@ public class BonsaiWorldStateUpdateAccumulator
       final Hash storageRoot,
       final Hash codeHash,
       final boolean mutable) {
-    return new BonsaiAccount(
+    return new VerkleAccount(
         context, address, addressHash, nonce, balance, storageRoot, codeHash, mutable);
   }
 
   @Override
-  protected BonsaiAccount createAccount(
-      final DiffBasedWorldView context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
-    return new BonsaiAccount(context, tracked);
+  protected VerkleAccount createAccount(
+      final DiffBasedWorldView context, final UpdateTrackingAccount<VerkleAccount> tracked) {
+    return new VerkleAccount(context, tracked);
   }
 
   @Override
   protected void assertCloseEnoughForDiffing(
-      final BonsaiAccount source, final AccountValue account, final String context) {
-    BonsaiAccount.assertCloseEnoughForDiffing(source, account, context);
+      final VerkleAccount source, final AccountValue account, final String context) {
+    VerkleAccount.assertCloseEnoughForDiffing(source, account, context);
   }
 
   @Override
   protected boolean shouldIgnoreIdenticalValuesDuringAccountRollingUpdate() {
-    return true;
+    return false;
   }
 }

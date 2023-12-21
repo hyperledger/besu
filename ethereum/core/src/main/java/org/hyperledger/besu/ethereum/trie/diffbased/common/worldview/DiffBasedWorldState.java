@@ -26,8 +26,6 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateLayerStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
@@ -87,7 +85,7 @@ public abstract class DiffBasedWorldState
    *
    * @param accumulator accumulator to use.
    */
-  protected void setAccumulator(final BonsaiWorldStateUpdateAccumulator accumulator) {
+  protected void setAccumulator(final DiffBasedWorldStateUpdateAccumulator<?> accumulator) {
     this.accumulator = accumulator;
   }
 
@@ -166,8 +164,7 @@ public abstract class DiffBasedWorldState
               trieLogManager.saveTrieLog(localCopy, newWorldStateRootHash, blockHeader, this);
               // not save a frozen state in the cache
               if (!isFrozen) {
-                cachedWorldStorageManager.addCachedLayer(
-                    blockHeader, newWorldStateRootHash, (BonsaiWorldState) this);
+                cachedWorldStorageManager.addCachedLayer(blockHeader, newWorldStateRootHash, this);
               }
             };
 
