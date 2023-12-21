@@ -104,7 +104,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
+import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -241,7 +241,7 @@ public class TestContextBuilder {
     }
 
     final MutableBlockchain blockChain;
-    final DefaultWorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
+    final ForestWorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
     if (genesisFile.isPresent()) {
       try {
