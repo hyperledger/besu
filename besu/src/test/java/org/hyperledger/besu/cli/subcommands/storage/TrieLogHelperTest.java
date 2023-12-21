@@ -39,7 +39,9 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -65,7 +67,7 @@ class TrieLogHelperTest {
 
   @BeforeAll
   public static void setup() throws IOException {
-    Files.createDirectories(dataDir.resolve("database"));
+
     blockHeader1 = new BlockHeaderTestFixture().number(1).buildHeader();
     blockHeader2 = new BlockHeaderTestFixture().number(2).buildHeader();
     blockHeader3 = new BlockHeaderTestFixture().number(3).buildHeader();
@@ -92,6 +94,16 @@ class TrieLogHelperTest {
         .getTrieLogStorageTransaction()
         .put(blockHeader5.getHash().toArrayUnsafe(), Bytes.fromHexString("0x05").toArrayUnsafe());
     updater.getTrieLogStorageTransaction().commit();
+  }
+
+  @BeforeEach
+  void createDirectory() throws IOException {
+    Files.createDirectories(dataDir.resolve("database"));
+  }
+
+  @AfterEach
+  void deleteDirectory() throws IOException {
+    Files.deleteIfExists(dataDir.resolve("database"));
   }
 
   void mockBlockchainBase() {
