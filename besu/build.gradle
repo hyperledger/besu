@@ -62,7 +62,6 @@ dependencies {
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
   implementation 'com.github.oshi:oshi-core'
-  implementation 'org.apache.maven:maven-artifact'
   implementation 'com.google.guava:guava'
   implementation 'com.google.dagger:dagger'
   implementation 'com.graphql-java:graphql-java'

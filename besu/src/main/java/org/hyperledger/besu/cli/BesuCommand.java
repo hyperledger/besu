@@ -242,7 +242,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.metrics.MetricsOptions;
-import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.jetbrains.annotations.NotNull;
@@ -1467,7 +1466,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       validateOptions();
 
-      performDowngradeCheck();
+      VersionMetadata.performDowngradeCheck(allowDowngrade, dataDir());
 
       configure();
       configureNativeLibs();
@@ -1489,65 +1488,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } catch (final Exception e) {
       logger.error("Failed to start Besu", e);
       throw new ParameterException(this.commandLine, e.getMessage(), e);
-    }
-  }
-
-  /**
-   * This function is designed to protect a Besu instance from being unintentionally started at a
-   * lower version than the previous instance. Doing so could cause unexpected data corruption
-   * (depending on the storage provider that is in use), so this check prompts the user if a
-   * downgrade is detected and requires them to opt-in by setting --allow-downgrade. The
-   * --allow-downgrade flag only needs to be passed in once, and then the version information is
-   * updated to the lower version number, meaning future restarts will pass the check.
-   */
-  private void performDowngradeCheck() throws IOException {
-    final VersionMetadata versionMetaData = VersionMetadata.lookUpFrom(dataDir());
-    if (versionMetaData.getBesuVersion().equals(VersionMetadata.BESU_VERSION_UNKNOWN)) {
-      // The version isn't known, potentially because the file doesn't exist. Write the latest
-      // version to the metadata file.
-      logger.info(
-          "No version data detected. Writing Besu version {} to metadata file",
-          VersionMetadata.getRuntimeVersion());
-      new VersionMetadata(VersionMetadata.getRuntimeVersion()).writeToDirectory(dataDir());
-    } else {
-      // Check the runtime version against the most recent version as recorded in the version
-      // metadata file
-      final String installedVersion = VersionMetadata.getRuntimeVersion().split("-", 2)[0];
-      final String metadataVersion = versionMetaData.getBesuVersion().split("-", 2)[0];
-      final int versionComparison =
-          new ComparableVersion(installedVersion).compareTo(new ComparableVersion(metadataVersion));
-      if (versionComparison == 0) {
-        // Versions match - no-op
-      } else if (versionComparison < 0) {
-        if (allowDowngrade) {
-          logger.warn(
-              "Besu version {} is lower than version {} that last started. Allowing startup because --allow-downgrade has been enabled.",
-              installedVersion,
-              metadataVersion);
-          // We've allowed startup at an older version of Besu. Since the version in the metadata
-          // file records the latest version of
-          // Besu to write to the database we'll update the metadata version to this
-          // downgraded-version. This avoids the need after a successful
-          // downgrade to keep specifying --allow-downgrade on every startup.
-          new VersionMetadata(VersionMetadata.getRuntimeVersion()).writeToDirectory(dataDir());
-        } else {
-          final String message =
-              "Besu version "
-                  + installedVersion
-                  + " is lower than version "
-                  + metadataVersion
-                  + " that last started."
-                  + "Specify --allow-downgrade to allow Besu to start at the lower version (warning - this may have unrecoverable effects on the database).";
-          logger.error(message);
-          throw new StorageException(message);
-        }
-      } else {
-        logger.info(
-            "Besu version {} is higher than version {} that last started. Updating version metadata.",
-            installedVersion,
-            metadataVersion);
-        new VersionMetadata(VersionMetadata.getRuntimeVersion()).writeToDirectory(dataDir());
-      }
     }
   }
 
