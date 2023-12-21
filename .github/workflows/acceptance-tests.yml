@@ -52,8 +52,8 @@ jobs:
             
               console.log("acceptance test should be skipped");
               console.log("alreadyRun = %j", alreadyRun);
-              console.log("failedUnits = %j", failedUnits);
-              console.log("approvingReviews = %j", approvingReviews);
+              console.log("failedUnits = %j", failedUnits.length);
+              console.log("approvingReviews = %j", approvingReviews.length);
             
             return shouldRun;
   pend:
