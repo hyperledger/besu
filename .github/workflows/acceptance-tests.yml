@@ -25,6 +25,7 @@ jobs:
         with:
           #TODO: add console logging for skip reason if any
           script: |
+            console.log(context);
             const { RELEVANT_SHA } = process.env;
             const { data: { statuses } } = await github.rest.repos.getCombinedStatusForRef({
               owner: context.repo.owner,
@@ -41,6 +42,7 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.issue.number,
             });
+            console.log(reviews)
             const approvingReviews = reviews && reviews.filter(review => review.state === 'APPROVED');
             
             return needsRun && github.actor != 'dependabot[bot]' && !failedUnits && (approvingReviews.length > 0);
