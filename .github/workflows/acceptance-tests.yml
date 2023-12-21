@@ -35,13 +35,13 @@ jobs:
             });
             console.log(context);
             console.log(statuses);
-            const unitTested = statuses && statuses.find(({ context }) => context === 'pre-review');
+            const unitTested = statuses && statuses.filter(({ context }) => context === 'pre-review');
             console.log(unitTested);
-            const failedUnits = unitTested && unitTested.find(({state}) => state === 'failure' || state === 'pending');
+            const failedUnits = unitTested && unitTested.filter(({state}) => state === 'failure' || state === 'pending');
             console.log(failedUnits);
-            const acceptanceTested = statuses && statuses.find(({ context }) => context === 'acceptance-tests');
+            const acceptanceTested = statuses && statuses.filter(({ context }) => context === 'acceptance-tests');
             console.log(acceptanceTested);
-            const needsRun = acceptanceTested && acceptanceTested.find(({ state }) => state != 'success' && state != 'pending');
+            const needsRun = acceptanceTested && acceptanceTested.filter(({ state }) => state != 'success' && state != 'pending');
             console.log(needsRun);
             console.log(github.actor);
             
