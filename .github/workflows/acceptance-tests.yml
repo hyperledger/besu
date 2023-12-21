@@ -38,8 +38,8 @@ jobs:
             console.log(`failedUnits=`);console.log(failedUnits.length);
             const acceptanceTested = statuses && statuses.filter(({ context }) => context === 'acceptance-tests');
             console.log(`acceptanceTested=`);console.log(acceptanceTested);
-            const needsRun = acceptanceTested && acceptanceTested.find(({ state }) => state != 'success' && state != 'pending');
-            console.log(`needsRun=`);console.log(needsRun);
+            const alreadyRun = acceptanceTested && acceptanceTested.find(({ state }) => state === 'success' || state === 'pending') > 0;
+            console.log(`alreadyRun=`);console.log(alreadyRun);
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -48,7 +48,11 @@ jobs:
             console.log(reviews);
             const approvingReviews = reviews && reviews.filter(review => review.state === 'APPROVED');
             console.log(`approvingReviews=`);console.log(approvingReviews);
-            return needsRun && github.actor != 'dependabot[bot]' && (failedUnits.length === 0) && (approvingReviews.length > 0);
+            const shouldRun = !alreadyRun && github.actor != 'dependabot[bot]' && (failedUnits.length === 0) && (approvingReviews.length > 0);
+            if(!shouldRun) {
+              
+            }
+            return shouldRun;
   pend:
     name: acceptance testing pending
     runs-on: ubuntu-22.04
