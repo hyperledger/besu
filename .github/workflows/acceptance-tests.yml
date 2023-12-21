@@ -19,15 +19,18 @@ jobs:
       - name: required check
         id: shouldRun
         uses: actions/github-script@v7.0.1
+        env:
+          RELEVANT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         with:
           script: |
+            const { RELEVANT_SHA } = process.env;
             console.log(context.repo.owner);
             console.log(context.repo.repo);
-            console.log(context.sha);
+            console.log(${RELEVANT_SHA});
             const { data: { statuses } } = await github.rest.repos.getCombinedStatusForRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: context.sha,
+              ref: ${RELEVANT_SHA},
             });
             console.log(context);
             console.log(statuses);
