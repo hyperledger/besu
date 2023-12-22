@@ -44,6 +44,11 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -58,11 +63,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -133,7 +133,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         ethMessages,
         ethereumWireProtocolConfiguration);
 
-    this.forkIdCounter = metricsSystem.createLabelledCounter(
+    this.forkIdCounter =
+        metricsSystem.createLabelledCounter(
             BesuMetricCategory.NETWORK,
             "discovery_fork_id_counter",
             "total number of successful, failed fork id checks, as well as fork id not present",
@@ -172,25 +173,25 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             Collections.emptyList(),
             Collections.emptyList(),
             ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()),
-            new NoOpMetricsSystem());
+        new NoOpMetricsSystem());
   }
 
   public EthProtocolManager(
-          final Blockchain blockchain,
-          final BigInteger networkId,
-          final WorldStateArchive worldStateArchive,
-          final TransactionPool transactionPool,
-          final EthProtocolConfiguration ethereumWireProtocolConfiguration,
-          final EthPeers ethPeers,
-          final EthMessages ethMessages,
-          final EthContext ethContext,
-          final List<PeerValidator> peerValidators,
-          final Optional<MergePeerFilter> mergePeerFilter,
-          final SynchronizerConfiguration synchronizerConfiguration,
-          final EthScheduler scheduler,
-          final List<Long> blockNumberForks,
-          final List<Long> timestampForks,
-          final ObservableMetricsSystem metricsSystem) {
+      final Blockchain blockchain,
+      final BigInteger networkId,
+      final WorldStateArchive worldStateArchive,
+      final TransactionPool transactionPool,
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+      final EthPeers ethPeers,
+      final EthMessages ethMessages,
+      final EthContext ethContext,
+      final List<PeerValidator> peerValidators,
+      final Optional<MergePeerFilter> mergePeerFilter,
+      final SynchronizerConfiguration synchronizerConfiguration,
+      final EthScheduler scheduler,
+      final List<Long> blockNumberForks,
+      final List<Long> timestampForks,
+      final ObservableMetricsSystem metricsSystem) {
     this(
         blockchain,
         networkId,
@@ -209,8 +210,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             blockNumberForks,
             timestampForks,
             ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()),
-            metricsSystem
-    );
+        metricsSystem);
   }
 
   public EthContext ethContext() {
@@ -439,7 +439,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         forkIdCounter.labels("FAIL").inc();
         LOG.debug(
             "{} has matching network id ({}), but non-matching fork id: {}",
-                LOG.isTraceEnabled() ? peer : peer.getShortNodeId(),
+            LOG.isTraceEnabled() ? peer : peer.getShortNodeId(),
             networkId,
             forkId);
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
@@ -447,7 +447,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         forkIdCounter.labels("FAIL").inc();
         LOG.debug(
             "{} has matching network id ({}), but non-matching genesis hash: {}",
-                LOG.isTraceEnabled() ? peer : peer.getShortNodeId(),
+            LOG.isTraceEnabled() ? peer : peer.getShortNodeId(),
             networkId,
             status.genesisHash());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);

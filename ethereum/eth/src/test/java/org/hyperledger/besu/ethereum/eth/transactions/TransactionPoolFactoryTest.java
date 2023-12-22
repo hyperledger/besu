@@ -268,7 +268,7 @@ public class TransactionPoolFactoryTest {
             mock(SynchronizerConfiguration.class),
             mock(EthScheduler.class),
             mock(ForkIdManager.class),
-                new NoOpMetricsSystem());
+            new NoOpMetricsSystem());
   }
 
   @Test

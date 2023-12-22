@@ -45,7 +45,8 @@ public class DiscoveryProtocolLogger {
             "discovery_messages_inbound",
             "Total number of P2P discovery messages received",
             "name");
-    forkIdCounter = metricsSystem.createLabelledCounter(
+    forkIdCounter =
+        metricsSystem.createLabelledCounter(
             BesuMetricCategory.NETWORK,
             "discovery_fork_id_counter",
             "total number of successful, failed fork id checks, as well as fork id not present",
@@ -74,17 +75,18 @@ public class DiscoveryProtocolLogger {
 
   void logForkIdSuccess(final Peer peer, final ForkId forkId) {
     forkIdCounter.labels("SUCC").inc();
-    LOG.trace("ForkId successfully checked for peer {}, fork id {}", peer.getId().slice(0,16), forkId);
+    LOG.trace(
+        "ForkId successfully checked for peer {}, fork id {}", peer.getId().slice(0, 16), forkId);
   }
 
   void logForkIdFailure(final Peer peer, final ForkId forkId) {
     forkIdCounter.labels("FAIL").inc();
-    LOG.trace("ForkId check failed for peer {}, fork id {}", peer.getId().slice(0,16), forkId);
+    LOG.trace("ForkId check failed for peer {}, fork id {}", peer.getId().slice(0, 16), forkId);
   }
 
   void logForkIdNotSent(final Peer peer) {
     forkIdCounter.labels("NOSE").inc();
-    LOG.trace("ForkId not sent by peer {}", peer.getId().slice(0,16));
+    LOG.trace("ForkId not sent by peer {}", peer.getId().slice(0, 16));
   }
 
   void logForkIdNotRequestedt(final Peer peer) {
@@ -93,7 +95,7 @@ public class DiscoveryProtocolLogger {
 
   void logForkIdRequestedt(final DiscoveryPeer peer) {
     forkIdCounter.labels("REQU").inc();
-    LOG.trace("ForkId requested from peer {}", peer.getId().slice(0,16));
+    LOG.trace("ForkId requested from peer {}", peer.getId().slice(0, 16));
   }
 
   private String shortenPacketType(final Packet packet) {
@@ -113,5 +115,4 @@ public class DiscoveryProtocolLogger {
     }
     return null;
   }
-
 }
