@@ -6,6 +6,7 @@ on:
 
 permissions:
   statuses: write
+  checks: write
 
 env:
   GRADLE_BUILD_ACTION_CACHE_DEBUG_ENABLED: true
