@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
+import org.hyperledger.besu.ethereum.forkid.ForkId;
+import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -28,6 +30,7 @@ public class DiscoveryProtocolLogger {
   private static final Logger LOG = LoggerFactory.getLogger(DiscoveryProtocolLogger.class);
   private final LabelledMetric<Counter> outgoingMessageCounter;
   private final LabelledMetric<Counter> incomingMessageCounter;
+  private final LabelledMetric<Counter> forkIdCounter;
 
   public DiscoveryProtocolLogger(final MetricsSystem metricsSystem) {
     outgoingMessageCounter =
@@ -41,6 +44,11 @@ public class DiscoveryProtocolLogger {
             BesuMetricCategory.NETWORK,
             "discovery_messages_inbound",
             "Total number of P2P discovery messages received",
+            "name");
+    forkIdCounter = metricsSystem.createLabelledCounter(
+            BesuMetricCategory.NETWORK,
+            "discovery_fork_id_counter",
+            "total number of successful, failed fork id checks, as well as fork id not present",
             "name");
   }
 
@@ -64,6 +72,30 @@ public class DiscoveryProtocolLogger {
         packet);
   }
 
+  void logForkIdSuccess(final Peer peer, final ForkId forkId) {
+    forkIdCounter.labels("SUCC").inc();
+    LOG.trace("ForkId successfully checked for peer {}, fork id {}", peer.getId().slice(0,16), forkId);
+  }
+
+  void logForkIdFailure(final Peer peer, final ForkId forkId) {
+    forkIdCounter.labels("FAIL").inc();
+    LOG.trace("ForkId check failed for peer {}, fork id {}", peer.getId().slice(0,16), forkId);
+  }
+
+  void logForkIdNotSent(final Peer peer) {
+    forkIdCounter.labels("NOSE").inc();
+    LOG.trace("ForkId not sent by peer {}", peer.getId().slice(0,16));
+  }
+
+  void logForkIdNotRequestedt(final Peer peer) {
+    forkIdCounter.labels("NORE").inc();
+  }
+
+  void logForkIdRequestedt(final DiscoveryPeer peer) {
+    forkIdCounter.labels("REQU").inc();
+    LOG.trace("ForkId requested from peer {}", peer.getId().slice(0,16));
+  }
+
   private String shortenPacketType(final Packet packet) {
     switch (packet.getType()) {
       case PING:
@@ -81,4 +113,5 @@ public class DiscoveryProtocolLogger {
     }
     return null;
   }
+
 }

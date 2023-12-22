@@ -105,7 +105,8 @@ public class EthProtocolManagerTestUtil {
         mergePeerFilter,
         mock(SynchronizerConfiguration.class),
         ethScheduler,
-        new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
+        new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false),
+            new NoOpMetricsSystem());
   }
 
   public static EthProtocolManager create(
@@ -154,7 +155,8 @@ public class EthProtocolManagerTestUtil {
         Optional.empty(),
         mock(SynchronizerConfiguration.class),
         ethScheduler,
-        forkIdManager);
+        forkIdManager,
+            new NoOpMetricsSystem());
   }
 
   public static EthProtocolManager create(final Blockchain blockchain) {

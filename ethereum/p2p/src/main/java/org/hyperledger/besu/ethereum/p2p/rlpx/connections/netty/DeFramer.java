@@ -138,7 +138,6 @@ final class DeFramer extends ByteToMessageDecoder {
         Optional<Peer> peer;
         if (expectedPeer.isPresent()) {
           peer = expectedPeer;
-
         } else {
           // This is an inbound "Hello" message. Create peer from information from the Hello message
           peer = createPeer(peerInfo, ctx);
@@ -176,6 +175,7 @@ final class DeFramer extends ByteToMessageDecoder {
           LOG.debug("{}. Disconnecting.", unexpectedMsg);
           connection.disconnect(DisconnectMessage.DisconnectReason.UNEXPECTED_ID);
         }
+
         // Check that we have shared caps
         if (capabilityMultiplexer.getAgreedCapabilities().size() == 0) {
           LOG.debug("Disconnecting because no capabilities are shared: {}", peerInfo);

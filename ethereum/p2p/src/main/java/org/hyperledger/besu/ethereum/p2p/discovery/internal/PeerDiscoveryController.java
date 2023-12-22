@@ -331,7 +331,10 @@ public class PeerDiscoveryController {
             .ifPresent(
                 interaction -> {
                   if (filterOnEnrForkId) {
+                    discoveryProtocolLogger.logForkIdRequestedt(peer);
                     requestENR(peer);
+                  } else {
+                    discoveryProtocolLogger.logForkIdNotRequestedt(peer);
                   }
                   bondingPeers.invalidate(peer.getId());
                   addToPeerTable(peer);
@@ -380,21 +383,15 @@ public class PeerDiscoveryController {
                   final Optional<ForkId> maybeForkId = peer.getForkId();
                   if (maybeForkId.isPresent()) {
                     if (forkIdManager.peerCheck(maybeForkId.get())) {
+                      discoveryProtocolLogger.logForkIdSuccess(peer, maybeForkId.get());
                       connectOnRlpxLayer(peer);
-                      LOG.debug(
-                          "Peer {} PASSED fork id check. ForkId received: {}",
-                          sender.getId(),
-                          maybeForkId.get());
                     } else {
-                      LOG.debug(
-                          "Peer {} FAILED fork id check. ForkId received: {}",
-                          sender.getId(),
-                          maybeForkId.get());
+                      discoveryProtocolLogger.logForkIdFailure(peer, maybeForkId.get());
                     }
                   } else {
+                    discoveryProtocolLogger.logForkIdNotSent(peer);
                     // if the peer hasn't sent the ForkId try to connect to it anyways
                     connectOnRlpxLayer(peer);
-                    LOG.debug("No fork id sent by peer: {}", peer.getId());
                   }
                 });
         break;
