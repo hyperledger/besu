@@ -135,9 +135,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     this.forkIdCounter =
         metricsSystem.createLabelledCounter(
-            BesuMetricCategory.NETWORK,
-            "discovery_fork_id_counter",
-            "total number of successful, failed fork id checks, as well as fork id not present",
+            BesuMetricCategory.PEERS,
+            "eth_manager_fork_id_counter",
+            "total number of successful, failed fork id checks",
             "name");
   }
 
