@@ -43,14 +43,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 
 public class AbstractPreexistingNodeTest extends AcceptanceTestBase {
-  protected final String testName;
-  protected final String dataPath;
   protected Path hostDataPath;
-
-  public AbstractPreexistingNodeTest(final String testName, final String dataPath) {
-    this.testName = testName;
-    this.dataPath = dataPath;
-  }
 
   protected static void extract(final Path path, final String destDirectory) throws IOException {
     try (final TarArchiveInputStream fin =

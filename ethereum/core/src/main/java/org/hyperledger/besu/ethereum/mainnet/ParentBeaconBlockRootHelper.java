@@ -15,9 +15,11 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -25,8 +27,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 public interface ParentBeaconBlockRootHelper {
 
   // Modulus to use for the timestamp to store the root
-  public static final long HISTORY_BUFFER_LENGTH = 8191;
-  public static final Address BEACON_ROOTS_ADDRESS =
+  long HISTORY_BUFFER_LENGTH = 8191;
+  Address BEACON_ROOTS_ADDRESS =
       Address.fromHexString("0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02");
 
   static void storeParentBeaconBlockRoot(
@@ -34,14 +36,19 @@ public interface ParentBeaconBlockRootHelper {
     /*
      see EIP-4788: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4788.md
     */
-    final long timestampReduced = timestamp % HISTORY_BUFFER_LENGTH;
+    // If code is not deployed don't do anything
+    final MutableAccount account = worldUpdater.getOrCreate(BEACON_ROOTS_ADDRESS);
+    if (Hash.EMPTY.equals(account.getCodeHash())) {
+      return;
+    }
+
+    final long timestampReduced = Long.remainderUnsigned(timestamp, HISTORY_BUFFER_LENGTH);
     final long timestampExtended = timestampReduced + HISTORY_BUFFER_LENGTH;
 
     final UInt256 timestampIndex = UInt256.valueOf(timestampReduced);
     final UInt256 rootIndex = UInt256.valueOf(timestampExtended);
 
-    final MutableAccount account = worldUpdater.getOrCreate(BEACON_ROOTS_ADDRESS);
-    account.setStorageValue(timestampIndex, UInt256.valueOf(timestamp));
+    account.setStorageValue(timestampIndex, UInt256.fromBytes(Bytes.ofUnsignedLong(timestamp)));
     account.setStorageValue(rootIndex, UInt256.fromBytes(root));
     worldUpdater.commit();
   }

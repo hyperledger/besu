@@ -34,7 +34,7 @@ public interface Deposit {
    *
    * @return public key of sender
    */
-  PublicKey getPublicKey();
+  PublicKey getPubkey();
 
   /**
    * Withdrawal credential that contains info that will be used for verifying the destination of

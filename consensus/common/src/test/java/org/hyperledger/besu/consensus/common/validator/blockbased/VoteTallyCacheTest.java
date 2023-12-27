@@ -35,7 +35,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import com.google.common.util.concurrent.UncheckedExecutionException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 public class VoteTallyCacheTest extends VoteTallyCacheTestBase {

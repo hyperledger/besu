@@ -25,7 +25,6 @@ import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -36,7 +35,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PayloadWrapper;
-import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator.ProposalBuilderExecutor;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
@@ -57,12 +55,16 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.Unstable;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -98,7 +100,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -129,14 +130,17 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   EthContext ethContext;
 
-  @Mock ProposalBuilderExecutor proposalBuilderExecutor;
+  @Mock EthScheduler ethScheduler;
+
   private final Address coinbase = genesisAllocations(getPosGenesisConfigFile()).findFirst().get();
 
-  @Spy
-  MiningParameters miningParameters =
-      new MiningParameters.Builder()
-          .coinbase(coinbase)
-          .posBlockCreationRepetitionMinDuration(REPETITION_MIN_DURATION)
+  private MiningParameters miningParameters =
+      ImmutableMiningParameters.builder()
+          .mutableInitValues(MutableInitValues.builder().coinbase(coinbase).build())
+          .unstable(
+              Unstable.builder()
+                  .posBlockCreationRepetitionMinDuration(REPETITION_MIN_DURATION)
+                  .build())
           .build();
 
   private MergeCoordinator coordinator;
@@ -202,10 +206,13 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
 
-    when(proposalBuilderExecutor.buildProposal(any()))
+    when(ethScheduler.scheduleBlockCreationTask(any()))
         .thenAnswer(
             invocation -> {
               final Runnable runnable = invocation.getArgument(0);
+              if (!invocation.toString().contains("MergeCoordinator")) {
+                return CompletableFuture.runAsync(runnable);
+              }
               blockCreationTask = CompletableFuture.runAsync(runnable);
               return blockCreationTask;
             });
@@ -220,7 +227,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             protocolContext,
             mock(TransactionBroadcaster.class),
             ethContext,
-            miningParameters,
             new TransactionPoolMetrics(metricsSystem),
             poolConf,
             null);
@@ -231,7 +237,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         new MergeCoordinator(
             protocolContext,
             protocolSchedule,
-            proposalBuilderExecutor,
+            ethScheduler,
             transactionPool,
             miningParameters,
             backwardSyncContext,
@@ -278,16 +284,14 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
           MergeBlockCreator beingSpiedOn =
               spy(
                   new MergeBlockCreator(
-                      address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
-                      () -> Optional.of(30000000L),
+                      miningParameters,
                       parent -> Bytes.EMPTY,
                       transactionPool,
                       protocolContext,
                       protocolSchedule,
-                      this.miningParameters.getMinTransactionGasPrice(),
-                      address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                       parentHeader,
-                      Optional.empty()));
+                      Optional.empty(),
+                      ethScheduler));
 
           doCallRealMethod()
               .doCallRealMethod()
@@ -304,7 +308,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             new MergeCoordinator(
                 protocolContext,
                 protocolSchedule,
-                proposalBuilderExecutor,
+                ethScheduler,
                 miningParameters,
                 backwardSyncContext,
                 mergeBlockCreatorFactory));
@@ -314,8 +318,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             invocation -> {
               if (retries.getAndIncrement() < txPerBlock) {
                 // a new transaction every time a block is built
-                transactions.addLocalTransaction(
-                    createTransaction(retries.get() - 1), Optional.empty());
+                transactions.addTransaction(
+                    createLocalTransaction(retries.get() - 1), Optional.empty());
               } else {
                 // when we have 5 transactions finalize block creation
                 willThrow.finalizeProposalById(
@@ -387,8 +391,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             invocation -> {
               if (retries.getAndIncrement() < 5) {
                 // a new transaction every time a block is built
-                transactions.addLocalTransaction(
-                    createTransaction(retries.get() - 1), Optional.empty());
+                transactions.addTransaction(
+                    createLocalTransaction(retries.get() - 1), Optional.empty());
               } else {
                 // when we have 5 transactions finalize block creation
                 coordinator.finalizeProposalById(
@@ -506,7 +510,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         .when(mergeContext)
         .putPayloadById(any());
 
-    transactions.addLocalTransaction(createTransaction(0), Optional.empty());
+    transactions.addTransaction(createLocalTransaction(0), Optional.empty());
 
     var payloadId =
         coordinator.preparePayload(
@@ -548,7 +552,11 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   @Test
   public void shouldStopRetryBlockCreationIfTimeExpired() throws InterruptedException {
     final AtomicLong retries = new AtomicLong(0);
-    doReturn(100L).when(miningParameters).getPosBlockCreationMaxTime();
+    miningParameters =
+        ImmutableMiningParameters.builder()
+            .from(miningParameters)
+            .unstable(Unstable.builder().posBlockCreationMaxTime(100).build())
+            .build();
     doAnswer(
             invocation -> {
               retries.incrementAndGet();
@@ -642,9 +650,9 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     doAnswer(
             invocation -> {
               if (retries.getAndIncrement() < 5) {
-                // a new transaction every time a block is built
-                transactions.addLocalTransaction(
-                    createTransaction(retries.get() - 1), Optional.empty());
+                // add a new transaction every time a block is built
+                transactions.addTransaction(
+                    createLocalTransaction(retries.get() - 1), Optional.empty());
               } else {
                 // when we have 5 transactions finalize block creation
                 coordinator.finalizeProposalById(
@@ -738,13 +746,16 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void shouldUseExtraDataFromMiningParameters() {
     final Bytes extraData = Bytes.fromHexString("0x1234");
 
-    miningParameters = new MiningParameters.Builder().extraData(extraData).build();
+    miningParameters =
+        ImmutableMiningParameters.builder()
+            .mutableInitValues(MutableInitValues.builder().extraData(extraData).build())
+            .build();
 
     this.coordinator =
         new MergeCoordinator(
             protocolContext,
             protocolSchedule,
-            proposalBuilderExecutor,
+            ethScheduler,
             transactionPool,
             miningParameters,
             backwardSyncContext,
@@ -1022,20 +1033,24 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         .buildHeader();
   }
 
-  private Transaction createTransaction(final long transactionNumber) {
-    return new TransactionTestFixture()
-        .value(Wei.of(transactionNumber + 1))
-        .to(Optional.of(Address.ZERO))
-        .gasLimit(53000L)
-        .gasPrice(
-            Wei.fromHexString("0x00000000000000000000000000000000000000000000000000000013b9aca00"))
-        .maxFeePerGas(
-            Optional.of(
+  private PendingTransaction createLocalTransaction(final long transactionNumber) {
+    return PendingTransaction.newPendingTransaction(
+        new TransactionTestFixture()
+            .value(Wei.of(transactionNumber + 1))
+            .to(Optional.of(Address.ZERO))
+            .gasLimit(53000L)
+            .gasPrice(
                 Wei.fromHexString(
-                    "0x00000000000000000000000000000000000000000000000000000013b9aca00")))
-        .maxPriorityFeePerGas(Optional.of(Wei.of(100_000)))
-        .nonce(transactionNumber)
-        .createTransaction(KEYS1);
+                    "0x00000000000000000000000000000000000000000000000000000013b9aca00"))
+            .maxFeePerGas(
+                Optional.of(
+                    Wei.fromHexString(
+                        "0x00000000000000000000000000000000000000000000000000000013b9aca00")))
+            .maxPriorityFeePerGas(Optional.of(Wei.of(100_000)))
+            .nonce(transactionNumber)
+            .createTransaction(KEYS1),
+        true,
+        true);
   }
 
   private static BlockHeader mockBlockHeader() {

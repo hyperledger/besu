@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterIdGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -33,6 +34,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -102,7 +104,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
   }
 
   protected BlockchainSetupUtil getBlockchainSetupUtil(final DataStorageFormat storageFormat) {
-    return BlockchainSetupUtil.forTesting(storageFormat);
+    return BlockchainSetupUtil.forHiveTesting(storageFormat);
   }
 
   protected BlockchainSetupUtil createBlockchainSetupUtil(
@@ -120,8 +122,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     setupBlockchain();
   }
 
-  protected BlockchainSetupUtil startServiceWithEmptyChain(final DataStorageFormat storageFormat)
-      throws Exception {
+  protected BlockchainSetupUtil startServiceWithEmptyChain(final DataStorageFormat storageFormat) {
     final BlockchainSetupUtil emptySetupUtil = getBlockchainSetupUtil(storageFormat);
     startService(emptySetupUtil);
     return emptySetupUtil;
@@ -133,6 +134,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     final Synchronizer synchronizerMock = mock(Synchronizer.class);
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final TransactionPool transactionPoolMock = mock(TransactionPool.class);
+    final MiningParameters miningParameters = mock(MiningParameters.class);
     final PoWMiningCoordinator miningCoordinatorMock = mock(PoWMiningCoordinator.class);
     when(transactionPoolMock.addTransactionViaApi(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
@@ -173,6 +175,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             protocolContext,
             filterManager,
             transactionPoolMock,
+            miningParameters,
             miningCoordinatorMock,
             new NoOpMetricsSystem(),
             supportedCapabilities,
@@ -188,7 +191,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             folder,
             mock(EthPeers.class),
             syncVertx,
-            Optional.empty(),
+            mock(ApiConfiguration.class),
             Optional.empty());
   }
 
@@ -196,7 +199,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     startService(blockchainSetupUtil);
   }
 
-  private void startService(final BlockchainSetupUtil blockchainSetupUtil) throws Exception {
+  private void startService(final BlockchainSetupUtil blockchainSetupUtil) {
 
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     final Map<String, JsonRpcMethod> methods = getRpcMethods(config, blockchainSetupUtil);

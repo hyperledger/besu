@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -43,7 +44,8 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
 
   private final NavigableSet<PendingTransaction> orderByMaxFee =
       new TreeSet<>(
-          Comparator.comparing((PendingTransaction pt) -> pt.getTransaction().getMaxGasPrice())
+          Comparator.comparing(PendingTransaction::hasPriority)
+              .thenComparing((PendingTransaction pt) -> pt.getTransaction().getMaxGasPrice())
               .thenComparing(PendingTransaction::getSequence));
 
   public ReadyTransactions(
@@ -51,8 +53,9 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
       final TransactionsLayer nextLayer,
       final TransactionPoolMetrics metrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
-          transactionReplacementTester) {
-    super(poolConfig, nextLayer, transactionReplacementTester, metrics);
+          transactionReplacementTester,
+      final BlobCache blobCache) {
+    super(poolConfig, nextLayer, transactionReplacementTester, metrics, blobCache);
   }
 
   @Override

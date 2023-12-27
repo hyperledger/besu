@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.cli;
 
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
@@ -28,7 +27,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
 
 /** The interface Default command values. */
@@ -58,12 +56,6 @@ public interface DefaultCommandValues {
   String MANDATORY_NETWORK_FORMAT_HELP = "<NETWORK>";
   /** The constant MANDATORY_NODE_ID_FORMAT_HELP. */
   String MANDATORY_NODE_ID_FORMAT_HELP = "<NODEID>";
-  /** The constant DEFAULT_MIN_TRANSACTION_GAS_PRICE. */
-  Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
-  /** The constant DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO. */
-  Double DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
-  /** The constant DEFAULT_EXTRA_DATA. */
-  Bytes DEFAULT_EXTRA_DATA = Bytes.EMPTY;
   /** The constant PERMISSIONING_CONFIG_LOCATION. */
   String PERMISSIONING_CONFIG_LOCATION = "permissions_config.toml";
   /** The constant MANDATORY_HOST_FORMAT_HELP. */

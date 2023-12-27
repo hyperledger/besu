@@ -58,7 +58,7 @@ import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.NavigableMap;
-import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Joiner;
@@ -126,13 +126,25 @@ public class EvmToolCommand implements Runnable {
       names = {"--sender"},
       paramLabel = "<address>",
       description = "Calling address for this invocation.")
-  private final Address sender = Address.fromHexString("0x00");
+  private final Address sender = Address.ZERO;
 
   @Option(
       names = {"--receiver"},
       paramLabel = "<address>",
       description = "Receiving address for this invocation.")
-  private final Address receiver = Address.fromHexString("0x00");
+  private final Address receiver = Address.ZERO;
+
+  @Option(
+      names = {"--contract"},
+      paramLabel = "<address>",
+      description = "The address holding the contract code.")
+  private final Address contract = Address.ZERO;
+
+  @Option(
+      names = {"--coinbase"},
+      paramLabel = "<address>",
+      description = "Coinbase for this invocation.")
+  private final Address coinbase = Address.ZERO;
 
   @Option(
       names = {"--input"},
@@ -317,7 +329,7 @@ public class EvmToolCommand implements Runnable {
       final BlockHeader blockHeader =
           BlockHeaderBuilder.create()
               .parentHash(Hash.EMPTY)
-              .coinbase(Address.ZERO)
+              .coinbase(coinbase)
               .difficulty(Difficulty.ONE)
               .number(1)
               .gasLimit(5000)
@@ -338,17 +350,15 @@ public class EvmToolCommand implements Runnable {
       final ProtocolSpec protocolSpec =
           component.getProtocolSpec().apply(BlockHeaderBuilder.createDefault().buildBlockHeader());
       final Transaction tx =
-          new Transaction(
-              0,
-              Wei.ZERO,
-              Long.MAX_VALUE,
-              Optional.ofNullable(receiver),
-              Wei.ZERO,
-              null,
-              callData,
-              sender,
-              Optional.empty(),
-              Optional.empty());
+          new Transaction.Builder()
+              .nonce(0)
+              .gasPrice(Wei.ZERO)
+              .gasLimit(Long.MAX_VALUE)
+              .to(receiver)
+              .value(Wei.ZERO)
+              .payload(callData)
+              .sender(sender)
+              .build();
 
       final long intrinsicGasCost =
           protocolSpec
@@ -379,11 +389,13 @@ public class EvmToolCommand implements Runnable {
         WorldUpdater updater = component.getWorldUpdater();
         updater.getOrCreate(sender);
         updater.getOrCreate(receiver);
+        var contractAccount = updater.getOrCreate(contract);
+        contractAccount.setCode(codeBytes);
 
         MessageFrame initialMessageFrame =
             MessageFrame.builder()
                 .type(MessageFrame.Type.MESSAGE_CALL)
-                .worldUpdater(updater)
+                .worldUpdater(updater.updater())
                 .initialGas(txGas)
                 .contract(Address.ZERO)
                 .address(receiver)
@@ -399,6 +411,10 @@ public class EvmToolCommand implements Runnable {
                 .completer(c -> {})
                 .miningBeneficiary(blockHeader.getCoinbase())
                 .blockHashLookup(new CachingBlockHashLookup(blockHeader, component.getBlockchain()))
+                .accessListWarmAddresses(
+                    EvmSpecVersion.SHANGHAI.compareTo(evm.getEvmVersion()) <= 0
+                        ? Set.of(coinbase)
+                        : Set.of())
                 .build();
         Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
 
@@ -416,7 +432,8 @@ public class EvmToolCommand implements Runnable {
                 out.println(messageFrame.getExceptionalHaltReason().get());
               }
               if (messageFrame.getRevertReason().isPresent()) {
-                out.println(new String(messageFrame.getRevertReason().get().toArray(), UTF_8));
+                out.println(
+                    new String(messageFrame.getRevertReason().get().toArrayUnsafe(), UTF_8));
               }
             }
           }

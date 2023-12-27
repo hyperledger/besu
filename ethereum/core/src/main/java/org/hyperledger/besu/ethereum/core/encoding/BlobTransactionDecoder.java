@@ -32,6 +32,10 @@ public class BlobTransactionDecoder {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
+  private BlobTransactionDecoder() {
+    // private constructor
+  }
+
   /**
    * Decodes a blob transaction from the provided RLP input.
    *
@@ -68,7 +72,7 @@ public class BlobTransactionDecoder {
         .maxPriorityFeePerGas(Wei.of(input.readUInt256Scalar()))
         .maxFeePerGas(Wei.of(input.readUInt256Scalar()))
         .gasLimit(input.readLongScalar())
-        .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
+        .to(input.readBytes(v -> v.isEmpty() ? null : Address.wrap(v)))
         .value(Wei.of(input.readUInt256Scalar()))
         .payload(input.readBytes())
         .accessList(
@@ -86,7 +90,7 @@ public class BlobTransactionDecoder {
         .versionedHashes(
             input.readList(versionedHashes -> new VersionedHash(versionedHashes.readBytes32())));
 
-    final byte recId = (byte) input.readIntScalar();
+    final byte recId = (byte) input.readUnsignedByteScalar();
     builder.signature(
         SIGNATURE_ALGORITHM
             .get()

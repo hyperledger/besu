@@ -72,6 +72,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 public class PrivacyPrecompiledContractIntegrationTest {
 
+  // this tempDir is deliberately static
   @TempDir private static Path folder;
 
   private static final Bytes VALID_PRIVATE_TRANSACTION_RLP =

@@ -15,7 +15,6 @@
 
 package org.hyperledger.besu.ethereum.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import org.hyperledger.besu.datatypes.Blob;
@@ -33,6 +32,7 @@ import java.util.List;
 import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes48;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 
 public class BlobTestFixture {
@@ -45,7 +45,7 @@ public class BlobTestFixture {
       // and ignore errors in case no trusted setup was already loaded
     }
     try {
-      CKZG4844JNI.loadNativeLibrary(CKZG4844JNI.Preset.MAINNET);
+      CKZG4844JNI.loadNativeLibrary();
       CKZG4844JNI.loadTrustedSetupFromResource(
           "/kzg-trusted-setups/mainnet.txt", BlobTestFixture.class);
 
@@ -68,10 +68,10 @@ public class BlobTestFixture {
       fail("Failed to read blob file", e);
     }
 
-    Bytes commitment = Bytes.wrap(CKZG4844JNI.blobToKzgCommitment(rawMaterial));
+    Bytes48 commitment = Bytes48.wrap(CKZG4844JNI.blobToKzgCommitment(rawMaterial));
 
-    assertThat(commitment.size()).isEqualTo(48);
-    Bytes proof = Bytes.wrap(CKZG4844JNI.computeBlobKzgProof(rawMaterial, commitment.toArray()));
+    Bytes48 proof =
+        Bytes48.wrap(CKZG4844JNI.computeBlobKzgProof(rawMaterial, commitment.toArray()));
     VersionedHash versionedHash = hashCommitment(new KZGCommitment(commitment));
     return new BlobTriplet(
         new Blob(Bytes.wrap(rawMaterial)),

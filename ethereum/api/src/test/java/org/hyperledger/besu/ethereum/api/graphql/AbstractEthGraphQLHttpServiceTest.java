@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.plugin.data.SyncStatus;
-import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.nio.file.Path;
 import java.util.Collections;
@@ -57,7 +56,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
 public abstract class AbstractEthGraphQLHttpServiceTest {
-  @TempDir private static Path tempDir;
+  @TempDir private Path tempDir;
 
   private static BlockchainSetupUtil blockchainSetupUtil;
 
@@ -74,9 +73,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
 
   @BeforeAll
   public static void setupConstants() {
-    blockchainSetupUtil =
-        BlockchainSetupUtil.createForEthashChain(
-            BlockTestUtil.getHiveTestChainResources(), DataStorageFormat.BONSAI);
+    blockchainSetupUtil = BlockchainSetupUtil.forHiveTesting(DataStorageFormat.BONSAI);
     blockchainSetupUtil.importAllBlocks();
   }
 
@@ -118,7 +115,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
             context.getWorldStateArchive(),
             Optional.empty(),
             Optional.empty(),
-            ImmutableApiConfiguration.builder().gasPriceMin(0).build());
+            ImmutableApiConfiguration.builder().gasPriceMinSupplier(() -> 0).build());
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);
@@ -146,7 +143,9 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
                 GraphQLContextType.MINING_COORDINATOR,
                 miningCoordinatorMock,
                 GraphQLContextType.SYNCHRONIZER,
-                synchronizerMock),
+                synchronizerMock,
+                GraphQLContextType.GAS_CAP,
+                0L),
             Mockito.mock(EthScheduler.class));
     service.start().join();
 

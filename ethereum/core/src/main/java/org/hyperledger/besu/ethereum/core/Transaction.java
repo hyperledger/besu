@@ -50,7 +50,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import com.google.common.primitives.Longs;
 import org.apache.tuweni.bytes.Bytes;
@@ -100,7 +99,7 @@ public class Transaction
   private final Optional<BigInteger> chainId;
 
   // Caches a "hash" of a portion of the transaction used for sender recovery.
-  // Note that this hash does not include the transaction signature so it does not
+  // Note that this hash does not include the transaction signature, so it does not
   // fully identify the transaction (use the result of the {@code hash()} for that).
   // It is only used to compute said signature and recover the sender from it.
   private volatile Bytes32 hashNoSignature;
@@ -134,6 +133,8 @@ public class Transaction
   /**
    * Instantiates a transaction instance.
    *
+   * @param forCopy true when using to create a copy of an already validated transaction avoid to
+   *     redo the validation
    * @param transactionType the transaction type
    * @param nonce the nonce
    * @param gasPrice the gas price
@@ -154,7 +155,8 @@ public class Transaction
    *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
    *     it will default to any chain.
    */
-  public Transaction(
+  private Transaction(
+      final boolean forCopy,
       final TransactionType transactionType,
       final long nonce,
       final Optional<Wei> gasPrice,
@@ -172,36 +174,40 @@ public class Transaction
       final Optional<List<VersionedHash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments) {
 
-    if (transactionType.requiresChainId()) {
-      checkArgument(
-          chainId.isPresent(), "Chain id must be present for transaction type %s", transactionType);
-    }
+    if (!forCopy) {
+      if (transactionType.requiresChainId()) {
+        checkArgument(
+            chainId.isPresent(),
+            "Chain id must be present for transaction type %s",
+            transactionType);
+      }
 
-    if (maybeAccessList.isPresent()) {
-      checkArgument(
-          transactionType.supportsAccessList(),
-          "Must not specify access list for transaction not supporting it");
-    }
+      if (maybeAccessList.isPresent()) {
+        checkArgument(
+            transactionType.supportsAccessList(),
+            "Must not specify access list for transaction not supporting it");
+      }
 
-    if (Objects.equals(transactionType, TransactionType.ACCESS_LIST)) {
-      checkArgument(
-          maybeAccessList.isPresent(), "Must specify access list for access list transaction");
-    }
+      if (Objects.equals(transactionType, TransactionType.ACCESS_LIST)) {
+        checkArgument(
+            maybeAccessList.isPresent(), "Must specify access list for access list transaction");
+      }
 
-    if (versionedHashes.isPresent() || maxFeePerBlobGas.isPresent()) {
-      checkArgument(
-          transactionType.supportsBlob(),
-          "Must not specify blob versioned hashes or max fee per blob gas for transaction not supporting it");
-    }
+      if (versionedHashes.isPresent() || maxFeePerBlobGas.isPresent()) {
+        checkArgument(
+            transactionType.supportsBlob(),
+            "Must not specify blob versioned hashes or max fee per blob gas for transaction not supporting it");
+      }
 
-    if (transactionType.supportsBlob()) {
-      checkArgument(
-          versionedHashes.isPresent(), "Must specify blob versioned hashes for blob transaction");
-      checkArgument(
-          !versionedHashes.get().isEmpty(),
-          "Blob transaction must have at least one versioned hash");
-      checkArgument(
-          maxFeePerBlobGas.isPresent(), "Must specify max fee per blob gas for blob transaction");
+      if (transactionType.supportsBlob()) {
+        checkArgument(
+            versionedHashes.isPresent(), "Must specify blob versioned hashes for blob transaction");
+        checkArgument(
+            !versionedHashes.get().isEmpty(),
+            "Blob transaction must have at least one versioned hash");
+        checkArgument(
+            maxFeePerBlobGas.isPresent(), "Must specify max fee per blob gas for blob transaction");
+      }
     }
 
     this.transactionType = transactionType;
@@ -220,166 +226,6 @@ public class Transaction
     this.chainId = chainId;
     this.versionedHashes = versionedHashes;
     this.blobsWithCommitments = blobsWithCommitments;
-
-    if (isUpfrontGasCostTooHigh()) {
-      throw new IllegalArgumentException("Upfront gas cost exceeds UInt256");
-    }
-  }
-
-  public Transaction(
-      final long nonce,
-      final Optional<Wei> gasPrice,
-      final Optional<Wei> maxPriorityFeePerGas,
-      final Optional<Wei> maxFeePerGas,
-      final Optional<Wei> maxFeePerBlobGas,
-      final long gasLimit,
-      final Optional<Address> to,
-      final Wei value,
-      final SECPSignature signature,
-      final Bytes payload,
-      final Address sender,
-      final Optional<BigInteger> chainId,
-      final Optional<List<VersionedHash>> versionedHashes,
-      final Optional<BlobsWithCommitments> blobsWithCommitments) {
-    this(
-        TransactionType.FRONTIER,
-        nonce,
-        gasPrice,
-        maxPriorityFeePerGas,
-        maxFeePerGas,
-        maxFeePerBlobGas,
-        gasLimit,
-        to,
-        value,
-        signature,
-        payload,
-        Optional.empty(),
-        sender,
-        chainId,
-        versionedHashes,
-        blobsWithCommitments);
-  }
-
-  public Transaction(
-      final long nonce,
-      final Wei gasPrice,
-      final long gasLimit,
-      final Address to,
-      final Wei value,
-      final SECPSignature signature,
-      final Bytes payload,
-      final Optional<BigInteger> chainId,
-      final Optional<List<VersionedHash>> versionedHashes,
-      final Optional<BlobsWithCommitments> blobsWithCommitments) {
-    this(
-        TransactionType.FRONTIER,
-        nonce,
-        Optional.of(gasPrice),
-        Optional.empty(),
-        Optional.empty(),
-        Optional.empty(),
-        gasLimit,
-        Optional.of(to),
-        value,
-        signature,
-        payload,
-        Optional.empty(),
-        null,
-        chainId,
-        versionedHashes,
-        blobsWithCommitments);
-  }
-
-  /**
-   * Instantiates a transaction instance.
-   *
-   * @param nonce the nonce
-   * @param gasPrice the gas price
-   * @param gasLimit the gas limit
-   * @param to the transaction recipient
-   * @param value the value being transferred to the recipient
-   * @param signature the signature
-   * @param payload the payload
-   * @param sender the transaction sender
-   * @param chainId the chain id to apply the transaction to
-   *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
-   *     otherwise it should contain an address.
-   *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
-   *     it will default to any chain.
-   */
-  public Transaction(
-      final long nonce,
-      final Wei gasPrice,
-      final long gasLimit,
-      final Optional<Address> to,
-      final Wei value,
-      final SECPSignature signature,
-      final Bytes payload,
-      final Address sender,
-      final Optional<BigInteger> chainId,
-      final Optional<List<VersionedHash>> versionedHashes) {
-    this(
-        nonce,
-        Optional.of(gasPrice),
-        Optional.empty(),
-        Optional.empty(),
-        Optional.empty(),
-        gasLimit,
-        to,
-        value,
-        signature,
-        payload,
-        sender,
-        chainId,
-        versionedHashes,
-        Optional.empty());
-  }
-
-  /**
-   * Instantiates a transaction instance.
-   *
-   * @param nonce the nonce
-   * @param gasPrice the gas price
-   * @param gasLimit the gas limit
-   * @param to the transaction recipient
-   * @param value the value being transferred to the recipient
-   * @param signature the signature
-   * @param payload the payload
-   * @param sender the transaction sender
-   * @param chainId the chain id to apply the transaction to
-   *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
-   *     otherwise it should contain an address.
-   *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
-   *     it will default to any chain.
-   */
-  public Transaction(
-      final long nonce,
-      final Wei gasPrice,
-      final long gasLimit,
-      final Optional<Address> to,
-      final Wei value,
-      final SECPSignature signature,
-      final Bytes payload,
-      final Address sender,
-      final Optional<BigInteger> chainId,
-      final Optional<Wei> maxFeePerBlobGas,
-      final Optional<List<VersionedHash>> versionedHashes,
-      final Optional<BlobsWithCommitments> blobsWithCommitments) {
-    this(
-        nonce,
-        Optional.of(gasPrice),
-        Optional.empty(),
-        Optional.empty(),
-        maxFeePerBlobGas,
-        gasLimit,
-        to,
-        value,
-        signature,
-        payload,
-        sender,
-        chainId,
-        versionedHashes,
-        blobsWithCommitments);
   }
 
   /**
@@ -637,18 +483,25 @@ public class Transaction
 
   @Override
   public BigInteger getV() {
+    if (transactionType != null && transactionType != TransactionType.FRONTIER) {
+      // EIP-2718 typed transaction, use yParity:
+      return null;
+    } else {
+      final BigInteger recId = BigInteger.valueOf(signature.getRecId());
+      return chainId
+          .map(bigInteger -> recId.add(REPLAY_PROTECTED_V_BASE).add(TWO.multiply(bigInteger)))
+          .orElseGet(() -> recId.add(REPLAY_UNPROTECTED_V_BASE));
+    }
+  }
 
-    final BigInteger recId = BigInteger.valueOf(signature.getRecId());
-
+  @Override
+  public BigInteger getYParity() {
     if (transactionType != null && transactionType != TransactionType.FRONTIER) {
       // EIP-2718 typed transaction, return yParity:
-      return recId;
+      return BigInteger.valueOf(signature.getRecId());
     } else {
-      if (chainId.isEmpty()) {
-        return recId.add(REPLAY_UNPROTECTED_V_BASE);
-      } else {
-        return recId.add(REPLAY_PROTECTED_V_BASE).add(TWO.multiply(chainId.get()));
-      }
+      // legacy types never return yParity
+      return null;
     }
   }
 
@@ -670,6 +523,7 @@ public class Transaction
    *
    * @return the size in bytes of the encoded transaction.
    */
+  @Override
   public int getSize() {
     if (size == -1) {
       memoizeHashAndSize();
@@ -680,13 +534,11 @@ public class Transaction
   private void memoizeHashAndSize() {
     final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.BLOCK_BODY);
     hash = Hash.hash(bytes);
-    if (transactionType.supportsBlob()) {
-      if (getBlobsWithCommitments().isPresent()) {
-        final Bytes pooledBytes =
-            TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.POOLED_TRANSACTION);
-        size = pooledBytes.size();
-        return;
-      }
+    if (transactionType.supportsBlob() && getBlobsWithCommitments().isPresent()) {
+      final Bytes pooledBytes =
+          TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.POOLED_TRANSACTION);
+      size = pooledBytes.size();
+      return;
     }
     size = bytes.size();
   }
@@ -711,15 +563,6 @@ public class Transaction
   }
 
   /**
-   * Check if the upfront gas cost is over the max allowed
-   *
-   * @return true is upfront data cost overflow uint256 max value
-   */
-  private boolean isUpfrontGasCostTooHigh() {
-    return calculateUpfrontGasCost(getMaxGasPrice(), Wei.ZERO, 0L).bitLength() > 256;
-  }
-
-  /**
    * Calculates the up-front cost for the gas and blob gas the transaction can use.
    *
    * @param gasPrice the gas price to use
@@ -741,7 +584,7 @@ public class Transaction
     }
   }
 
-  private BigInteger calculateUpfrontGasCost(
+  public BigInteger calculateUpfrontGasCost(
       final Wei gasPrice, final Wei blobGasPrice, final long totalBlobGas) {
     var cost =
         new BigInteger(1, Longs.toByteArray(getGasLimit())).multiply(gasPrice.getAsBigInteger());
@@ -763,7 +606,9 @@ public class Transaction
    * @return the up-front gas cost for the transaction
    */
   public Wei getUpfrontCost(final long totalBlobGas) {
-    return getMaxUpfrontGasCost(totalBlobGas).addExact(getValue());
+    Wei maxUpfrontGasCost = getMaxUpfrontGasCost(totalBlobGas);
+    Wei result = maxUpfrontGasCost.add(getValue());
+    return (maxUpfrontGasCost.compareTo(result) > 0) ? Wei.MAX_WEI : result;
   }
 
   /**
@@ -819,7 +664,7 @@ public class Transaction
    * @return the list of transaction hashes
    */
   public static List<Hash> toHashList(final Collection<Transaction> transactions) {
-    return transactions.stream().map(Transaction::getHash).collect(Collectors.toUnmodifiableList());
+    return transactions.stream().map(Transaction::getHash).toList();
   }
 
   private static Bytes32 computeSenderRecoveryHash(
@@ -839,58 +684,44 @@ public class Transaction
     if (transactionType.requiresChainId()) {
       checkArgument(chainId.isPresent(), "Transaction type %s requires chainId", transactionType);
     }
-    final Bytes preimage;
-    switch (transactionType) {
-      case FRONTIER:
-        preimage = frontierPreimage(nonce, gasPrice, gasLimit, to, value, payload, chainId);
-        break;
-      case EIP1559:
-        preimage =
-            eip1559Preimage(
-                nonce,
-                maxPriorityFeePerGas,
-                maxFeePerGas,
-                gasLimit,
-                to,
-                value,
-                payload,
-                chainId,
-                accessList);
-        break;
-      case BLOB:
-        preimage =
-            blobPreimage(
-                nonce,
-                maxPriorityFeePerGas,
-                maxFeePerGas,
-                maxFeePerBlobGas,
-                gasLimit,
-                to,
-                value,
-                payload,
-                chainId,
-                accessList,
-                versionedHashes);
-        break;
-      case ACCESS_LIST:
-        preimage =
-            accessListPreimage(
-                nonce,
-                gasPrice,
-                gasLimit,
-                to,
-                value,
-                payload,
-                accessList.orElseThrow(
-                    () ->
-                        new IllegalStateException(
-                            "Developer error: the transaction should be guaranteed to have an access list here")),
-                chainId);
-        break;
-      default:
-        throw new IllegalStateException(
-            "Developer error. Didn't specify signing hash preimage computation");
-    }
+    final Bytes preimage =
+        switch (transactionType) {
+          case FRONTIER -> frontierPreimage(nonce, gasPrice, gasLimit, to, value, payload, chainId);
+          case EIP1559 -> eip1559Preimage(
+              nonce,
+              maxPriorityFeePerGas,
+              maxFeePerGas,
+              gasLimit,
+              to,
+              value,
+              payload,
+              chainId,
+              accessList);
+          case BLOB -> blobPreimage(
+              nonce,
+              maxPriorityFeePerGas,
+              maxFeePerGas,
+              maxFeePerBlobGas,
+              gasLimit,
+              to,
+              value,
+              payload,
+              chainId,
+              accessList,
+              versionedHashes);
+          case ACCESS_LIST -> accessListPreimage(
+              nonce,
+              gasPrice,
+              gasLimit,
+              to,
+              value,
+              payload,
+              accessList.orElseThrow(
+                  () ->
+                      new IllegalStateException(
+                          "Developer error: the transaction should be guaranteed to have an access list here")),
+              chainId);
+        };
     return keccak256(preimage);
   }
 
@@ -1029,10 +860,9 @@ public class Transaction
 
   @Override
   public boolean equals(final Object other) {
-    if (!(other instanceof Transaction)) {
+    if (!(other instanceof Transaction that)) {
       return false;
     }
-    final Transaction that = (Transaction) other;
     return Objects.equals(this.chainId, that.chainId)
         && this.gasLimit == that.gasLimit
         && Objects.equals(this.gasPrice, that.gasPrice)
@@ -1074,18 +904,18 @@ public class Transaction
     sb.append("type=").append(getType()).append(", ");
     sb.append("nonce=").append(getNonce()).append(", ");
     getGasPrice()
-        .ifPresent(
-            gasPrice -> sb.append("gasPrice=").append(gasPrice.toShortHexString()).append(", "));
+        .ifPresent(gp -> sb.append("gasPrice=").append(gp.toHumanReadableString()).append(", "));
     if (getMaxPriorityFeePerGas().isPresent() && getMaxFeePerGas().isPresent()) {
       sb.append("maxPriorityFeePerGas=")
-          .append(getMaxPriorityFeePerGas().map(Wei::toShortHexString).get())
+          .append(getMaxPriorityFeePerGas().map(Wei::toHumanReadableString).get())
           .append(", ");
       sb.append("maxFeePerGas=")
-          .append(getMaxFeePerGas().map(Wei::toShortHexString).get())
+          .append(getMaxFeePerGas().map(Wei::toHumanReadableString).get())
           .append(", ");
       getMaxFeePerBlobGas()
           .ifPresent(
-              wei -> sb.append("maxFeePerBlobGas=").append(wei.toShortHexString()).append(", "));
+              wei ->
+                  sb.append("maxFeePerBlobGas=").append(wei.toHumanReadableString()).append(", "));
     }
     sb.append("gasLimit=").append(getGasLimit()).append(", ");
     if (getTo().isPresent()) sb.append("to=").append(getTo().get()).append(", ");
@@ -1127,8 +957,7 @@ public class Transaction
     sb.append(getSender()).append(", ");
     sb.append(getType()).append(", ");
     getGasPrice()
-        .ifPresent(
-            gasPrice -> sb.append("gp: ").append(gasPrice.toHumanReadableString()).append(", "));
+        .ifPresent(gp -> sb.append("gp: ").append(gp.toHumanReadableString()).append(", "));
     if (getMaxPriorityFeePerGas().isPresent() && getMaxFeePerGas().isPresent()) {
       sb.append("mf: ")
           .append(getMaxFeePerGas().map(Wei::toHumanReadableString).get())
@@ -1141,7 +970,7 @@ public class Transaction
     }
     sb.append("gl: ").append(getGasLimit()).append(", ");
     sb.append("v: ").append(getValue().toHumanReadableString()).append(", ");
-    getTo().ifPresent(to -> sb.append(to));
+    getTo().ifPresent(t -> sb.append("to: ").append(t));
     return sb.append("}").toString();
   }
 
@@ -1151,6 +980,76 @@ public class Transaction
       return Optional.of(Address.contractAddress(getSender(), getNonce()));
     }
     return Optional.empty();
+  }
+
+  /**
+   * Creates a copy of this transaction that does not share any underlying byte array.
+   *
+   * <p>This is useful in case the transaction is built from a block body and fields, like to or
+   * payload, are wrapping (and so keeping references) sections of the large RPL encoded block body,
+   * and we plan to keep the transaction around for some time, like in the txpool in case of a
+   * reorg, and do not want to keep all the block body in memory for a long time, but only the
+   * actual transaction.
+   *
+   * @return a copy of the transaction
+   */
+  public Transaction detachedCopy() {
+    final Optional<Address> detachedTo = to.map(address -> Address.wrap(address.copy()));
+    final Optional<List<AccessListEntry>> detachedAccessList =
+        maybeAccessList.map(
+            accessListEntries ->
+                accessListEntries.stream().map(this::accessListDetachedCopy).toList());
+    final Optional<List<VersionedHash>> detachedVersionedHashes =
+        versionedHashes.map(
+            hashes -> hashes.stream().map(vh -> new VersionedHash(vh.toBytes().copy())).toList());
+    final Optional<BlobsWithCommitments> detachedBlobsWithCommitments =
+        blobsWithCommitments.map(
+            withCommitments ->
+                blobsWithCommitmentsDetachedCopy(withCommitments, detachedVersionedHashes.get()));
+
+    return new Transaction(
+        true,
+        transactionType,
+        nonce,
+        gasPrice,
+        maxPriorityFeePerGas,
+        maxFeePerGas,
+        maxFeePerBlobGas,
+        gasLimit,
+        detachedTo,
+        value,
+        signature,
+        payload.copy(),
+        detachedAccessList,
+        sender,
+        chainId,
+        detachedVersionedHashes,
+        detachedBlobsWithCommitments);
+  }
+
+  private AccessListEntry accessListDetachedCopy(final AccessListEntry accessListEntry) {
+    final Address detachedAddress = Address.wrap(accessListEntry.address().copy());
+    final var detachedStorage = accessListEntry.storageKeys().stream().map(Bytes32::copy).toList();
+    return new AccessListEntry(detachedAddress, detachedStorage);
+  }
+
+  private BlobsWithCommitments blobsWithCommitmentsDetachedCopy(
+      final BlobsWithCommitments blobsWithCommitments, final List<VersionedHash> versionedHashes) {
+    final var detachedCommitments =
+        blobsWithCommitments.getKzgCommitments().stream()
+            .map(kc -> new KZGCommitment(kc.getData().copy()))
+            .toList();
+    final var detachedBlobs =
+        blobsWithCommitments.getBlobs().stream()
+            .map(blob -> new Blob(blob.getData().copy()))
+            .toList();
+    final var detachedProofs =
+        blobsWithCommitments.getKzgProofs().stream()
+            .map(proof -> new KZGProof(proof.getData().copy()))
+            .toList();
+
+    return new BlobsWithCommitments(
+        detachedCommitments, detachedBlobs, detachedProofs, versionedHashes);
   }
 
   public static class Builder {
@@ -1185,6 +1084,26 @@ public class Transaction
     protected Optional<BigInteger> v = Optional.empty();
     protected List<VersionedHash> versionedHashes = null;
     private BlobsWithCommitments blobsWithCommitments;
+
+    public Builder copiedFrom(final Transaction toCopy) {
+      this.transactionType = toCopy.transactionType;
+      this.nonce = toCopy.nonce;
+      this.gasPrice = toCopy.gasPrice.orElse(null);
+      this.maxPriorityFeePerGas = toCopy.maxPriorityFeePerGas.orElse(null);
+      this.maxFeePerGas = toCopy.maxFeePerGas.orElse(null);
+      this.maxFeePerBlobGas = toCopy.maxFeePerBlobGas.orElse(null);
+      this.gasLimit = toCopy.gasLimit;
+      this.to = toCopy.to;
+      this.value = toCopy.value;
+      this.signature = toCopy.signature;
+      this.payload = toCopy.payload;
+      this.accessList = toCopy.maybeAccessList;
+      this.sender = toCopy.sender;
+      this.chainId = toCopy.chainId;
+      this.versionedHashes = toCopy.versionedHashes.orElse(null);
+      this.blobsWithCommitments = toCopy.blobsWithCommitments.orElse(null);
+      return this;
+    }
 
     public Builder type(final TransactionType transactionType) {
       this.transactionType = transactionType;
@@ -1289,6 +1208,7 @@ public class Transaction
     public Transaction build() {
       if (transactionType == null) guessType();
       return new Transaction(
+          false,
           transactionType,
           nonce,
           Optional.ofNullable(gasPrice),
@@ -1343,10 +1263,15 @@ public class Transaction
         this.versionedHashes =
             kzgCommitments.stream()
                 .map(c -> new VersionedHash(SHA256_VERSION_ID, Sha256Hash.sha256(c.getData())))
-                .collect(Collectors.toList());
+                .toList();
       }
       this.blobsWithCommitments =
           new BlobsWithCommitments(kzgCommitments, blobs, kzgProofs, versionedHashes);
+      return this;
+    }
+
+    public Builder blobsWithCommitments(final BlobsWithCommitments blobsWithCommitments) {
+      this.blobsWithCommitments = blobsWithCommitments;
       return this;
     }
   }

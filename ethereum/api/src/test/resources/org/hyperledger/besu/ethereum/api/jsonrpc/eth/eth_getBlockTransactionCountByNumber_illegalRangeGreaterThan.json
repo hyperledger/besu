@@ -4,7 +4,7 @@
     "jsonrpc": "2.0",
     "method": "eth_getBlockTransactionCountByNumber",
     "params": [
-      "0x21"
+      "0x120"
     ]
   },
   "response": {

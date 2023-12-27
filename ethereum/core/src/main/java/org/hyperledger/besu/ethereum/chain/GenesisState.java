@@ -32,10 +32,11 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -133,12 +134,12 @@ public final class GenesisState {
   }
 
   private static Hash calculateGenesisStateHash(final List<GenesisAccount> genesisAccounts) {
-    final WorldStateKeyValueStorage stateStorage =
-        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+    final ForestWorldStateKeyValueStorage stateStorage =
+        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStatePreimageKeyValueStorage preimageStorage =
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
     final MutableWorldState worldState =
-        new DefaultMutableWorldState(stateStorage, preimageStorage);
+        new ForestMutableWorldState(stateStorage, preimageStorage, EvmConfiguration.DEFAULT);
     writeAccountsTo(worldState, genesisAccounts, null);
     return worldState.rootHash();
   }

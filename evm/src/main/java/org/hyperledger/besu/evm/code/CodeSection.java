@@ -31,7 +31,7 @@ public final class CodeSection {
   final int outputs;
   /** The Max stack height. */
   final int maxStackHeight;
-  /** The byte offset from the begining of the container that the section starts at */
+  /** The byte offset from the beginning of the container that the section starts at */
   final int entryPoint;
 
   /**

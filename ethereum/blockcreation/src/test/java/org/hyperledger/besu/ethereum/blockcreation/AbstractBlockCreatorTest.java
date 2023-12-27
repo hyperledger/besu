@@ -40,6 +40,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -48,6 +49,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
@@ -56,6 +59,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -74,13 +78,13 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.math.BigInteger;
 import java.time.Clock;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -95,13 +99,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 abstract class AbstractBlockCreatorTest {
   private static final Optional<Address> EMPTY_DEPOSIT_CONTRACT_ADDRESS = Optional.empty();
   @Mock private WithdrawalsProcessor withdrawalsProcessor;
+  protected EthScheduler ethScheduler = new DeterministicEthScheduler();
 
   @Test
   void findDepositsFromReceipts() {
     final AbstractBlockCreator blockCreator =
         blockCreatorWithAllowedDeposits(Optional.of(DEFAULT_DEPOSIT_CONTRACT_ADDRESS));
-    final BlockTransactionSelector.TransactionSelectionResults transactionResults =
-        mock(BlockTransactionSelector.TransactionSelectionResults.class);
+    final TransactionSelectionResults transactionResults = mock(TransactionSelectionResults.class);
     BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
     TransactionReceipt receiptWithoutDeposit1 = blockDataGenerator.receipt();
     TransactionReceipt receiptWithoutDeposit2 = blockDataGenerator.receipt();
@@ -379,52 +383,56 @@ abstract class AbstractBlockCreatorTest {
             executionContextTestFixture.getProtocolContext(),
             mock(TransactionBroadcaster.class),
             ethContext,
-            mock(MiningParameters.class),
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
             poolConf,
             null);
     transactionPool.setEnabled();
 
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder()
+            .mutableInitValues(
+                MutableInitValues.builder()
+                    .extraData(Bytes.fromHexString("deadbeef"))
+                    .minTransactionGasPrice(Wei.ONE)
+                    .minBlockOccupancyRatio(0d)
+                    .coinbase(Address.ZERO)
+                    .build())
+            .build();
+
     return new TestBlockCreator(
-        Address.ZERO,
+        miningParameters,
         __ -> Address.ZERO,
-        () -> Optional.of(30_000_000L),
         __ -> Bytes.fromHexString("deadbeef"),
         transactionPool,
         executionContextTestFixture.getProtocolContext(),
         executionContextTestFixture.getProtocolSchedule(),
-        Wei.of(1L),
-        0d,
         blockchain.getChainHeadHeader(),
-        depositContractAddress);
+        depositContractAddress,
+        ethScheduler);
   }
 
   static class TestBlockCreator extends AbstractBlockCreator {
 
     protected TestBlockCreator(
-        final Address coinbase,
+        final MiningParameters miningParameters,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-        final Supplier<Optional<Long>> targetGasLimitSupplier,
         final ExtraDataCalculator extraDataCalculator,
         final TransactionPool transactionPool,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
-        final Wei minTransactionGasPrice,
-        final Double minBlockOccupancyRatio,
         final BlockHeader parentHeader,
-        final Optional<Address> depositContractAddress) {
+        final Optional<Address> depositContractAddress,
+        final EthScheduler ethScheduler) {
       super(
-          coinbase,
+          miningParameters,
           miningBeneficiaryCalculator,
-          targetGasLimitSupplier,
           extraDataCalculator,
           transactionPool,
           protocolContext,
           protocolSchedule,
-          minTransactionGasPrice,
-          minBlockOccupancyRatio,
           parentHeader,
-          depositContractAddress);
+          depositContractAddress,
+          ethScheduler);
     }
 
     @Override

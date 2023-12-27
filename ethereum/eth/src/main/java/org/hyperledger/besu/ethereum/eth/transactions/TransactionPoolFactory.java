@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
@@ -54,9 +53,9 @@ public class TransactionPoolFactory {
       final Clock clock,
       final MetricsSystem metricsSystem,
       final SyncState syncState,
-      final MiningParameters miningParameters,
       final TransactionPoolConfiguration transactionPoolConfiguration,
-      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory) {
+      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory,
+      final BlobCache blobCache) {
 
     final TransactionPoolMetrics metrics = new TransactionPoolMetrics(metricsSystem);
 
@@ -74,12 +73,12 @@ public class TransactionPoolFactory {
         clock,
         metrics,
         syncState,
-        miningParameters,
         transactionPoolConfiguration,
         transactionTracker,
         transactionsMessageSender,
         newPooledTransactionHashesMessageSender,
-        pluginTransactionValidatorFactory);
+        pluginTransactionValidatorFactory,
+        blobCache);
   }
 
   static TransactionPool createTransactionPool(
@@ -89,12 +88,12 @@ public class TransactionPoolFactory {
       final Clock clock,
       final TransactionPoolMetrics metrics,
       final SyncState syncState,
-      final MiningParameters miningParameters,
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
       final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender,
-      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory) {
+      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory,
+      final BlobCache blobCache) {
 
     final TransactionPool transactionPool =
         new TransactionPool(
@@ -104,7 +103,8 @@ public class TransactionPoolFactory {
                     protocolContext,
                     clock,
                     metrics,
-                    transactionPoolConfiguration),
+                    transactionPoolConfiguration,
+                    blobCache),
             protocolSchedule,
             protocolContext,
             new TransactionBroadcaster(
@@ -113,7 +113,6 @@ public class TransactionPoolFactory {
                 transactionsMessageSender,
                 newPooledTransactionHashesMessageSender),
             ethContext,
-            miningParameters,
             metrics,
             transactionPoolConfiguration,
             pluginTransactionValidatorFactory);
@@ -195,7 +194,8 @@ public class TransactionPoolFactory {
       final ProtocolContext protocolContext,
       final Clock clock,
       final TransactionPoolMetrics metrics,
-      final TransactionPoolConfiguration transactionPoolConfiguration) {
+      final TransactionPoolConfiguration transactionPoolConfiguration,
+      final BlobCache blobCache) {
 
     boolean isFeeMarketImplementBaseFee =
         protocolSchedule.anyMatch(
@@ -207,7 +207,8 @@ public class TransactionPoolFactory {
           protocolContext,
           metrics,
           transactionPoolConfiguration,
-          isFeeMarketImplementBaseFee);
+          isFeeMarketImplementBaseFee,
+          blobCache);
     } else {
       return createPendingTransactionSorter(
           protocolContext,
@@ -244,7 +245,8 @@ public class TransactionPoolFactory {
       final ProtocolContext protocolContext,
       final TransactionPoolMetrics metrics,
       final TransactionPoolConfiguration transactionPoolConfiguration,
-      final boolean isFeeMarketImplementBaseFee) {
+      final boolean isFeeMarketImplementBaseFee,
+      final BlobCache blobCache) {
 
     final TransactionPoolReplacementHandler transactionReplacementHandler =
         new TransactionPoolReplacementHandler(transactionPoolConfiguration.getPriceBump());
@@ -258,14 +260,19 @@ public class TransactionPoolFactory {
 
     final SparseTransactions sparseTransactions =
         new SparseTransactions(
-            transactionPoolConfiguration, endLayer, metrics, transactionReplacementTester);
+            transactionPoolConfiguration,
+            endLayer,
+            metrics,
+            transactionReplacementTester,
+            blobCache);
 
     final ReadyTransactions readyTransactions =
         new ReadyTransactions(
             transactionPoolConfiguration,
             sparseTransactions,
             metrics,
-            transactionReplacementTester);
+            transactionReplacementTester,
+            blobCache);
 
     final AbstractPrioritizedTransactions pendingTransactionsSorter;
     if (isFeeMarketImplementBaseFee) {
@@ -281,14 +288,16 @@ public class TransactionPoolFactory {
               readyTransactions,
               metrics,
               transactionReplacementTester,
-              feeMarket);
+              feeMarket,
+              blobCache);
     } else {
       pendingTransactionsSorter =
           new GasPricePrioritizedTransactions(
               transactionPoolConfiguration,
               readyTransactions,
               metrics,
-              transactionReplacementTester);
+              transactionReplacementTester,
+              blobCache);
     }
 
     return new LayeredPendingTransactions(transactionPoolConfiguration, pendingTransactionsSorter);

@@ -14,12 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.io.File;
 import java.time.Duration;
+import java.util.Set;
 
 import org.immutables.value.Value;
 
@@ -48,26 +50,27 @@ public interface TransactionPoolConfiguration {
   }
 
   enum Implementation {
-    LEGACY,
-    LAYERED;
+    LEGACY, // Remove in future version
+    LAYERED,
+    SEQUENCED; // Synonym for LEGACY
   }
 
   String DEFAULT_SAVE_FILE_NAME = "txpool.dump";
-
   int DEFAULT_MAX_PENDING_TRANSACTIONS = 4096;
   Fraction DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE = Fraction.fromFloat(0.001f); // 0.1%
   int DEFAULT_TX_RETENTION_HOURS = 13;
   boolean DEFAULT_STRICT_TX_REPLAY_PROTECTION_ENABLED = false;
   Percentage DEFAULT_PRICE_BUMP = Percentage.fromInt(10);
   Wei DEFAULT_RPC_TX_FEE_CAP = Wei.fromEth(1);
-  boolean DEFAULT_DISABLE_LOCAL_TXS = false;
+  boolean DEFAULT_NO_LOCAL_PRIORITY = false;
   boolean DEFAULT_ENABLE_SAVE_RESTORE = false;
-
   File DEFAULT_SAVE_FILE = new File(DEFAULT_SAVE_FILE_NAME);
-  long DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES = 50_000_000L;
+  long DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES = 12_500_000L;
   int DEFAULT_MAX_PRIORITIZED_TRANSACTIONS = 2000;
   int DEFAULT_MAX_FUTURE_BY_SENDER = 200;
   Implementation DEFAULT_TX_POOL_IMPLEMENTATION = Implementation.LAYERED;
+  Set<Address> DEFAULT_PRIORITY_SENDERS = Set.of();
+  Wei DEFAULT_TX_POOL_MIN_GAS_PRICE = Wei.of(1000);
 
   TransactionPoolConfiguration DEFAULT = ImmutableTransactionPoolConfiguration.builder().build();
 
@@ -107,8 +110,8 @@ public interface TransactionPoolConfiguration {
   }
 
   @Value.Default
-  default Boolean getDisableLocalTransactions() {
-    return DEFAULT_DISABLE_LOCAL_TXS;
+  default Boolean getNoLocalPriority() {
+    return DEFAULT_NO_LOCAL_PRIORITY;
   }
 
   @Value.Default
@@ -139,6 +142,16 @@ public interface TransactionPoolConfiguration {
   @Value.Default
   default int getMaxFutureBySender() {
     return DEFAULT_MAX_FUTURE_BY_SENDER;
+  }
+
+  @Value.Default
+  default Set<Address> getPrioritySenders() {
+    return DEFAULT_PRIORITY_SENDERS;
+  }
+
+  @Value.Default
+  default Wei getMinGasPrice() {
+    return DEFAULT_TX_POOL_MIN_GAS_PRICE;
   }
 
   @Value.Default

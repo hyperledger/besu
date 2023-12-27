@@ -43,7 +43,7 @@ public class GetPooledTransactionsFromPeerTaskTest extends PeerMessageTaskTest<L
       Transaction tx =
           new TransactionTestFixture()
               .nonce(genesisAccountNonce + i)
-              .gasPrice(Wei.ONE)
+              .gasPrice(Wei.of(2000))
               .gasLimit(100000)
               .chainId(Optional.empty())
               .createTransaction(genesisAccountKeyPair);

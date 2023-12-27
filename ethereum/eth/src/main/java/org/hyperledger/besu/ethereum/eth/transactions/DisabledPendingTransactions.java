@@ -41,14 +41,13 @@ public class DisabledPendingTransactions implements PendingTransactions {
   }
 
   @Override
-  public TransactionAddedResult addRemoteTransaction(
-      final Transaction transaction, final Optional<Account> maybeSenderAccount) {
-    return TransactionAddedResult.DISABLED;
+  public List<Transaction> getPriorityTransactions() {
+    return List.of();
   }
 
   @Override
-  public TransactionAddedResult addLocalTransaction(
-      final Transaction transaction, final Optional<Account> maybeSenderAccount) {
+  public TransactionAddedResult addTransaction(
+      final PendingTransaction transaction, final Optional<Account> maybeSenderAccount) {
     return TransactionAddedResult.DISABLED;
   }
 
@@ -119,7 +118,7 @@ public class DisabledPendingTransactions implements PendingTransactions {
   }
 
   @Override
-  public boolean isLocalSender(final Address sender) {
-    return false;
+  public Optional<Transaction> restoreBlob(final Transaction transaction) {
+    return Optional.empty();
   }
 }

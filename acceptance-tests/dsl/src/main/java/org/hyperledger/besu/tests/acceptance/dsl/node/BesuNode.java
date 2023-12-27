@@ -22,6 +22,7 @@ import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
@@ -107,6 +108,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private final MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
+  private final ApiConfiguration apiConfiguration;
   private final GenesisConfigurationProvider genesisConfigProvider;
   private final boolean devMode;
   private final NetworkName network;
@@ -139,6 +141,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final JsonRpcIpcConfiguration jsonRpcIpcConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
+      final ApiConfiguration apiConfiguration,
       final Optional<String> keyfilePath,
       final boolean devMode,
       final NetworkName network,
@@ -187,6 +190,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.jsonRpcIpcConfiguration = jsonRpcIpcConfiguration;
     this.metricsConfiguration = metricsConfiguration;
     this.permissioningConfiguration = permissioningConfiguration;
+    this.apiConfiguration = apiConfiguration;
     this.genesisConfigProvider = genesisConfigProvider;
     this.devMode = devMode;
     this.network = network;
@@ -805,5 +809,9 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public Map<String, String> getEnvironment() {
     return environment;
+  }
+
+  public ApiConfiguration getApiConfiguration() {
+    return apiConfiguration;
   }
 }

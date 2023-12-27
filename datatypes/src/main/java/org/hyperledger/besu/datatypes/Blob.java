@@ -17,6 +17,8 @@ package org.hyperledger.besu.datatypes;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.util.Objects;
+
 import org.apache.tuweni.bytes.Bytes;
 
 /** Arbitrary data for use in the KZG scheme. */
@@ -60,5 +62,18 @@ public class Blob {
    */
   public Bytes getData() {
     return data;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Blob blob = (Blob) o;
+    return Objects.equals(getData(), blob.getData());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getData());
   }
 }

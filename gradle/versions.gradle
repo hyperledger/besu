@@ -15,6 +15,7 @@
 
 dependencyManagement {
   dependencies {
+    applyMavenExclusions = false
 
     dependencySet(group: 'org.antlr', version: '4.11.1') {
       entry 'antlr4'
@@ -27,7 +28,7 @@ dependencyManagement {
       entry 'jackson-datatype-jdk8'
     }
 
-    dependency 'com.github.ben-manes.caffeine:caffeine:3.1.5'
+    dependency 'com.github.ben-manes.caffeine:caffeine:3.1.8'
 
     dependencySet(group: 'com.github.tomakehurst', version: '2.35.0') {
       entry'wiremock-jre8-standalone'
@@ -67,7 +68,7 @@ dependencyManagement {
       entry 'picocli-codegen'
     }
 
-    dependencySet(group: 'io.grpc', version: '1.53.0') {
+    dependencySet(group: 'io.grpc', version: '1.59.0') {
       entry 'grpc-all'
       entry 'grpc-core'
       entry 'grpc-netty'
@@ -76,11 +77,11 @@ dependencyManagement {
 
     dependency 'io.kubernetes:client-java:18.0.0'
 
-    dependency 'io.netty:netty-all:4.1.90.Final'
-    dependency 'io.netty:netty-tcnative-boringssl-static:2.0.59.Final'
-    dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.90.Final', classifier: 'linux-x86_64'
-    dependency group: 'io.netty', name: 'netty-transport-native-kqueue', version:'4.1.90.Final', classifier: 'osx-x86_64'
-    dependency 'io.netty:netty-transport-native-unix-common:4.1.90.Final'
+    dependency 'io.netty:netty-all:4.1.100.Final'
+    dependency 'io.netty:netty-tcnative-boringssl-static:2.0.62.Final'
+    dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.100.Final', classifier: 'linux-x86_64'
+    dependency group: 'io.netty', name: 'netty-transport-native-kqueue', version:'4.1.100.Final', classifier: 'osx-x86_64'
+    dependency 'io.netty:netty-transport-native-unix-common:4.1.100.Final'
 
     dependency 'io.opentelemetry:opentelemetry-api:1.24.0'
     dependency 'io.opentelemetry:opentelemetry-exporter-otlp:1.24.0'
@@ -151,14 +152,14 @@ dependencyManagement {
 
     dependency 'org.awaitility:awaitility:4.2.0'
 
-    dependencySet(group: 'org.bouncycastle', version: '1.75') {
+    dependencySet(group: 'org.bouncycastle', version: '1.76') {
       entry'bcpkix-jdk18on'
       entry'bcprov-jdk18on'
     }
 
     dependency 'org.fusesource.jansi:jansi:2.4.0'
     dependency 'org.openjdk.jol:jol-core:0.17'
-    dependency 'tech.pegasys:jc-kzg-4844:0.7.0'
+    dependency 'tech.pegasys:jc-kzg-4844:0.8.0'
 
     dependencySet(group: 'org.hyperledger.besu', version: '0.8.2') {
       entry 'arithmetic'
