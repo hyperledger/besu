@@ -19,6 +19,7 @@ import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_INTEGER_FO
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LEGACY;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.SEQUENCED;
 
 import org.hyperledger.besu.cli.converter.DurationMillisConverter;
 import org.hyperledger.besu.cli.converter.FractionConverter;
@@ -54,6 +55,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   private static final String STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG =
       "--strict-tx-replay-protection-enabled";
   private static final String TX_POOL_PRIORITY_SENDERS = "--tx-pool-priority-senders";
+  private static final String TX_POOL_MIN_GAS_PRICE = "--tx-pool-min-gas-price";
 
   @CommandLine.Option(
       names = {TX_POOL_IMPLEMENTATION},
@@ -122,6 +124,15 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
       arity = "1..*")
   private Set<Address> prioritySenders = TransactionPoolConfiguration.DEFAULT_PRIORITY_SENDERS;
 
+  @CommandLine.Option(
+      names = {TX_POOL_MIN_GAS_PRICE},
+      paramLabel = "<Wei>",
+      description =
+          "Transactions with gas price (in Wei) lower than this minimum will not be accepted into the txpool"
+              + "(not to be confused with min-gas-price, that is applied on block creation) (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private Wei minGasPrice = TransactionPoolConfiguration.DEFAULT_TX_POOL_MIN_GAS_PRICE;
+
   @CommandLine.ArgGroup(
       validate = false,
       heading = "@|bold Tx Pool Layered Implementation Options|@%n")
@@ -161,10 +172,10 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
 
   @CommandLine.ArgGroup(
       validate = false,
-      heading = "@|bold Tx Pool Legacy Implementation Options|@%n")
-  private final Legacy legacyOptions = new Legacy();
+      heading = "@|bold Tx Pool Sequenced Implementation Options|@%n")
+  private final Sequenced sequencedOptions = new Sequenced();
 
-  static class Legacy {
+  static class Sequenced {
     private static final String TX_POOL_RETENTION_HOURS = "--tx-pool-retention-hours";
     private static final String TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE =
         "--tx-pool-limit-by-account-percentage";
@@ -257,14 +268,15 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     options.saveFile = config.getSaveFile();
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
     options.prioritySenders = config.getPrioritySenders();
+    options.minGasPrice = config.getMinGasPrice();
     options.layeredOptions.txPoolLayerMaxCapacity =
         config.getPendingTransactionsLayerMaxCapacityBytes();
     options.layeredOptions.txPoolMaxPrioritized = config.getMaxPrioritizedTransactions();
     options.layeredOptions.txPoolMaxFutureBySender = config.getMaxFutureBySender();
-    options.legacyOptions.txPoolLimitByAccountPercentage =
+    options.sequencedOptions.txPoolLimitByAccountPercentage =
         config.getTxPoolLimitByAccountPercentage();
-    options.legacyOptions.txPoolMaxSize = config.getTxPoolMaxSize();
-    options.legacyOptions.pendingTxRetentionPeriod = config.getPendingTxRetentionPeriod();
+    options.sequencedOptions.txPoolMaxSize = config.getTxPoolMaxSize();
+    options.sequencedOptions.pendingTxRetentionPeriod = config.getPendingTxRetentionPeriod();
     options.unstableOptions.txMessageKeepAliveSeconds =
         config.getUnstable().getTxMessageKeepAliveSeconds();
     options.unstableOptions.eth65TrxAnnouncedBufferingPeriod =
@@ -284,14 +296,14 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
       final CommandLine commandLine, final GenesisConfigOptions genesisConfigOptions) {
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
-        "Could not use legacy transaction pool options with layered implementation",
+        "Could not use legacy or sequenced transaction pool options with layered implementation",
         !txPoolImplementation.equals(LAYERED),
-        CommandLineUtils.getCLIOptionNames(Legacy.class));
+        CommandLineUtils.getCLIOptionNames(Sequenced.class));
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
-        "Could not use layered transaction pool options with legacy implementation",
-        !txPoolImplementation.equals(LEGACY),
+        "Could not use layered transaction pool options with legacy or sequenced implementation",
+        !txPoolImplementation.equals(LEGACY) && !txPoolImplementation.equals(SEQUENCED),
         CommandLineUtils.getCLIOptionNames(Layered.class));
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
@@ -312,12 +324,13 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         .saveFile(saveFile)
         .strictTransactionReplayProtectionEnabled(strictTxReplayProtectionEnabled)
         .prioritySenders(prioritySenders)
+        .minGasPrice(minGasPrice)
         .pendingTransactionsLayerMaxCapacityBytes(layeredOptions.txPoolLayerMaxCapacity)
         .maxPrioritizedTransactions(layeredOptions.txPoolMaxPrioritized)
         .maxFutureBySender(layeredOptions.txPoolMaxFutureBySender)
-        .txPoolLimitByAccountPercentage(legacyOptions.txPoolLimitByAccountPercentage)
-        .txPoolMaxSize(legacyOptions.txPoolMaxSize)
-        .pendingTxRetentionPeriod(legacyOptions.pendingTxRetentionPeriod)
+        .txPoolLimitByAccountPercentage(sequencedOptions.txPoolLimitByAccountPercentage)
+        .txPoolMaxSize(sequencedOptions.txPoolMaxSize)
+        .pendingTxRetentionPeriod(sequencedOptions.pendingTxRetentionPeriod)
         .unstable(
             ImmutableTransactionPoolConfiguration.Unstable.builder()
                 .txMessageKeepAliveSeconds(unstableOptions.txMessageKeepAliveSeconds)
@@ -339,5 +352,15 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
    */
   public boolean isPriceBumpSet(final CommandLine commandLine) {
     return CommandLineUtils.isOptionSet(commandLine, TransactionPoolOptions.TX_POOL_PRICE_BUMP);
+  }
+
+  /**
+   * Is min gas price option set?
+   *
+   * @param commandLine the command line
+   * @return true if tx-pool-min-gas-price is set
+   */
+  public boolean isMinGasPriceSet(final CommandLine commandLine) {
+    return CommandLineUtils.isOptionSet(commandLine, TransactionPoolOptions.TX_POOL_MIN_GAS_PRICE);
   }
 }

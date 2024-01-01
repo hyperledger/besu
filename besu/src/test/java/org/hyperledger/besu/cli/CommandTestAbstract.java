@@ -51,6 +51,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
@@ -111,22 +112,20 @@ import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.awaitility.Awaitility;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.RunLast;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public abstract class CommandTestAbstract {
   private static final Logger TEST_LOGGER = LoggerFactory.getLogger(CommandTestAbstract.class);
   protected static final JsonObject VALID_GENESIS_QBFT_POST_LONDON =
@@ -155,17 +154,30 @@ public abstract class CommandTestAbstract {
   protected static final RpcEndpointServiceImpl rpcEndpointServiceImpl =
       new RpcEndpointServiceImpl();
 
-  @Mock protected RunnerBuilder mockRunnerBuilder;
+  @Mock(lenient = true)
+  protected RunnerBuilder mockRunnerBuilder;
+
   @Mock protected Runner mockRunner;
 
-  @Mock protected BesuController.Builder mockControllerBuilderFactory;
+  @Mock(lenient = true)
+  protected BesuController.Builder mockControllerBuilderFactory;
 
-  @Mock protected BesuControllerBuilder mockControllerBuilder;
-  @Mock protected EthProtocolManager mockEthProtocolManager;
+  @Mock(lenient = true)
+  protected BesuControllerBuilder mockControllerBuilder;
+
+  @Mock(lenient = true)
+  protected EthProtocolManager mockEthProtocolManager;
+
   @Mock protected ProtocolSchedule mockProtocolSchedule;
-  @Mock protected ProtocolContext mockProtocolContext;
+
+  @Mock(lenient = true)
+  protected ProtocolContext mockProtocolContext;
+
   @Mock protected BlockBroadcaster mockBlockBroadcaster;
-  @Mock protected BesuController mockController;
+
+  @Mock(lenient = true)
+  protected BesuController mockController;
+
   @Mock protected RlpBlockExporter rlpBlockExporter;
   @Mock protected JsonBlockImporter jsonBlockImporter;
   @Mock protected RlpBlockImporter rlpBlockImporter;
@@ -187,7 +199,8 @@ public abstract class CommandTestAbstract {
   @Mock
   protected Logger mockLogger;
 
-  @Mock protected BesuComponent mockBesuComponent;
+  @Mock(lenient = true)
+  protected BesuComponent mockBesuComponent;
 
   @Mock protected PkiBlockCreationConfigurationProvider mockPkiBlockCreationConfigProvider;
   @Mock protected PkiBlockCreationConfiguration mockPkiBlockCreationConfiguration;
@@ -197,7 +210,6 @@ public abstract class CommandTestAbstract {
   @Captor protected ArgumentCaptor<String> stringArgumentCaptor;
   @Captor protected ArgumentCaptor<Integer> intArgumentCaptor;
   @Captor protected ArgumentCaptor<Long> longArgumentCaptor;
-  @Captor protected ArgumentCaptor<Float> floatCaptor;
   @Captor protected ArgumentCaptor<EthNetworkConfig> ethNetworkConfigArgumentCaptor;
   @Captor protected ArgumentCaptor<SynchronizerConfiguration> syncConfigurationCaptor;
   @Captor protected ArgumentCaptor<JsonRpcConfiguration> jsonRpcConfigArgumentCaptor;
@@ -214,12 +226,11 @@ public abstract class CommandTestAbstract {
       permissioningConfigurationArgumentCaptor;
 
   @Captor protected ArgumentCaptor<TransactionPoolConfiguration> transactionPoolConfigCaptor;
+  @Captor protected ArgumentCaptor<ApiConfiguration> apiConfigurationCaptor;
 
   @Captor protected ArgumentCaptor<EthstatsOptions> ethstatsOptionsArgumentCaptor;
 
-  @Rule public final TemporaryFolder temp = new TemporaryFolder();
-
-  @Before
+  @BeforeEach
   public void initMocks() throws Exception {
     // doReturn used because of generic BesuController
     doReturn(mockControllerBuilder)
@@ -313,7 +324,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.storageProvider(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.rpcEndpointService(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.legacyForkId(anyBoolean())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.rpcMaxLogsRange(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.apiConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.enodeDnsConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
 
@@ -352,7 +363,7 @@ public abstract class CommandTestAbstract {
     when(mockBesuComponent.getBesuCommandLogger()).thenReturn(mockLogger);
   }
 
-  @Before
+  @BeforeEach
   public void setUpStreams() {
     // reset the global opentelemetry singleton
     GlobalOpenTelemetry.resetForTest();
@@ -363,7 +374,7 @@ public abstract class CommandTestAbstract {
   }
 
   // Display outputs for debug purpose
-  @After
+  @AfterEach
   public void displayOutput() throws IOException {
     TEST_LOGGER.info("Standard output {}", commandOutput.toString(UTF_8));
     TEST_LOGGER.info("Standard error {}", commandErrorOutput.toString(UTF_8));

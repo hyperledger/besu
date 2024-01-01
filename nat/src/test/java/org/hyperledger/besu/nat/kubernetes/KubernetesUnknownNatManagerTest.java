@@ -21,20 +21,20 @@ import static org.mockito.Mockito.when;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Service;
 import io.kubernetes.client.openapi.models.V1ServiceSpec;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public final class KubernetesUnknownNatManagerTest {
 
   @Mock private V1Service v1Service;
 
   private KubernetesNatManager natManager;
 
-  @Before
+  @BeforeEach
   public void initialize() {
 
     when(v1Service.getSpec()).thenReturn(new V1ServiceSpec().type("Unknown"));

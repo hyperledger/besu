@@ -20,6 +20,7 @@ import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -66,6 +67,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 public class JsonRpcHttpServiceTestBase {
 
+  // this tempDir is deliberately static
   @TempDir private static Path folder;
   protected final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
 
@@ -135,7 +137,7 @@ public class JsonRpcHttpServiceTestBase {
                     folder,
                     ethPeersMock,
                     vertx,
-                    Optional.empty(),
+                    mock(ApiConfiguration.class),
                     Optional.empty()));
     service = createJsonRpcHttpService(createLimitedJsonRpcConfig());
     service.start().join();

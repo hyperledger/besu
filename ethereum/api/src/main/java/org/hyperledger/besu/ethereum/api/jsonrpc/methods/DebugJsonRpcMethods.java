@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.DebugReplayBlock;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugAccountAt;
@@ -63,6 +64,7 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final TransactionPool transactionPool;
   private final Synchronizer synchronizer;
   private final Path dataDir;
+  private final ApiConfiguration apiConfiguration;
 
   DebugJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
@@ -71,7 +73,8 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final ObservableMetricsSystem metricsSystem,
       final TransactionPool transactionPool,
       final Synchronizer synchronizer,
-      final Path dataDir) {
+      final Path dataDir,
+      final ApiConfiguration apiConfiguration) {
     this.blockchainQueries = blockchainQueries;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
@@ -79,6 +82,7 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.transactionPool = transactionPool;
     this.synchronizer = synchronizer;
     this.dataDir = dataDir;
+    this.apiConfiguration = apiConfiguration;
   }
 
   @Override
@@ -122,6 +126,7 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule)));
+                protocolSchedule,
+                apiConfiguration.getGasCap())));
   }
 }

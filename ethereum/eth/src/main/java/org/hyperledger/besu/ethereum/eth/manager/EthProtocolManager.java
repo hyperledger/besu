@@ -394,13 +394,14 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final DisconnectReason reason,
       final boolean initiatedByPeer) {
     if (ethPeers.registerDisconnect(connection)) {
-      LOG.debug(
-          "Disconnect - {} - {} - {}... - {} peers left\n{}",
-          initiatedByPeer ? "Inbound" : "Outbound",
-          reason,
-          connection.getPeer().getId().slice(0, 16),
-          ethPeers.peerCount(),
-          ethPeers);
+      LOG.atDebug()
+          .setMessage("Disconnect - {} - {} - {}... - {} peers left")
+          .addArgument(initiatedByPeer ? "Inbound" : "Outbound")
+          .addArgument(reason)
+          .addArgument(connection.getPeer().getId().slice(0, 8))
+          .addArgument(ethPeers.peerCount())
+          .log();
+      LOG.trace("{}", ethPeers);
     }
   }
 
@@ -410,7 +411,16 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     peer.getConnection().getPeer().setForkId(forkId);
     try {
       if (!status.networkId().equals(networkId)) {
-        LOG.debug("Mismatched network id: {}, EthPeer {}", status.networkId(), peer);
+        LOG.atDebug()
+            .setMessage("Mismatched network id: {}, EthPeer {}...")
+            .addArgument(status.networkId())
+            .addArgument(peer.getShortNodeId())
+            .log();
+        LOG.atTrace()
+            .setMessage("Mismatched network id: {}, EthPeer {}")
+            .addArgument(status.networkId())
+            .addArgument(peer)
+            .log();
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else if (!forkIdManager.peerCheck(forkId) && status.protocolVersion() > 63) {
         LOG.debug(
@@ -428,7 +438,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else if (mergePeerFilter.isPresent()
           && mergePeerFilter.get().disconnectIfPoW(status, peer)) {
-        LOG.debug("Post-merge disconnect: peer still PoW {}", peer);
+        LOG.atDebug()
+            .setMessage("Post-merge disconnect: peer still PoW {}")
+            .addArgument(peer.getShortNodeId())
+            .log();
         handleDisconnect(peer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
       } else {
         LOG.debug(
@@ -443,7 +456,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             message.getConnection());
       }
     } catch (final RLPException e) {
-      LOG.debug("Unable to parse status message from peer {}.", peer, e);
+      LOG.atDebug()
+          .setMessage("Unable to parse status message from peer {}... {}")
+          .addArgument(peer::getShortNodeId)
+          .addArgument(e)
+          .log();
       // Parsing errors can happen when clients broadcast network ids outside the int range,
       // So just disconnect with "subprotocol" error rather than "breach of protocol".
       peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);

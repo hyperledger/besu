@@ -140,12 +140,12 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
       failedPeers.stream()
           .filter(peer -> !peer.isDisconnected())
           .findAny()
-          .or(() -> peers.streamAvailablePeers().sorted(peers.getBestChainComparator()).findFirst())
+          .or(() -> peers.streamAvailablePeers().min(peers.getBestChainComparator()))
           .ifPresent(
               peer -> {
                 LOG.atDebug()
                     .setMessage(
-                        "Refresh peers disconnecting peer {}. Waiting for better peers. Current {} of max {}")
+                        "Refresh peers disconnecting peer {}... Waiting for better peers. Current {} of max {}")
                     .addArgument(peer::getShortNodeId)
                     .addArgument(peers::peerCount)
                     .addArgument(peers::getMaxPeers)

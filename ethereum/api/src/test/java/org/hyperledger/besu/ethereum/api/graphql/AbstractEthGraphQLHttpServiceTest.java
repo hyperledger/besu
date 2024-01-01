@@ -56,7 +56,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
 public abstract class AbstractEthGraphQLHttpServiceTest {
-  @TempDir private static Path tempDir;
+  @TempDir private Path tempDir;
 
   private static BlockchainSetupUtil blockchainSetupUtil;
 
@@ -143,7 +143,9 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
                 GraphQLContextType.MINING_COORDINATOR,
                 miningCoordinatorMock,
                 GraphQLContextType.SYNCHRONIZER,
-                synchronizerMock),
+                synchronizerMock,
+                GraphQLContextType.GAS_CAP,
+                0L),
             Mockito.mock(EthScheduler.class));
     service.start().join();
 

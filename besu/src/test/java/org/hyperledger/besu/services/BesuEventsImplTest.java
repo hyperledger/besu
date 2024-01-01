@@ -17,6 +17,7 @@ package org.hyperledger.besu.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -33,8 +34,6 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
@@ -78,15 +77,15 @@ import java.util.stream.Stream;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @SuppressWarnings("unchecked")
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class BesuEventsImplTest {
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
@@ -115,7 +114,7 @@ public class BesuEventsImplTest {
   private MutableBlockchain blockchain;
   private final BlockDataGenerator gen = new BlockDataGenerator();
 
-  @Before
+  @BeforeEach
   public void setUp() {
     blockchain =
         DefaultBlockchain.createMutable(
@@ -130,24 +129,31 @@ public class BesuEventsImplTest {
     when(mockEthContext.getEthMessages()).thenReturn(mockEthMessages);
     when(mockEthContext.getEthPeers()).thenReturn(mockEthPeers);
     when(mockEthContext.getScheduler()).thenReturn(mockEthScheduler);
-    when(mockEthPeers.streamAvailablePeers()).thenAnswer(z -> Stream.empty());
+    lenient().when(mockEthPeers.streamAvailablePeers()).thenAnswer(z -> Stream.empty());
     when(mockProtocolContext.getBlockchain()).thenReturn(blockchain);
-    when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
-    when(mockProtocolSchedule.getByBlockHeader(any())).thenReturn(mockProtocolSpec);
-    when(mockProtocolSpec.getTransactionValidatorFactory())
+    lenient().when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
+    lenient().when(mockProtocolSchedule.getByBlockHeader(any())).thenReturn(mockProtocolSpec);
+    lenient()
+        .when(mockProtocolSpec.getTransactionValidatorFactory())
         .thenReturn(mockTransactionValidatorFactory);
-    when(mockProtocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0L));
-    when(mockTransactionValidatorFactory.get().validate(any(), any(Optional.class), any()))
+    lenient().when(mockProtocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0L));
+    lenient()
+        .when(mockTransactionValidatorFactory.get().validate(any(), any(Optional.class), any()))
         .thenReturn(ValidationResult.valid());
-    when(mockTransactionValidatorFactory.get().validateForSender(any(), any(), any()))
+    lenient()
+        .when(mockTransactionValidatorFactory.get().validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
-    when(mockWorldStateArchive.getMutable(any(), anyBoolean()))
+    lenient()
+        .when(mockWorldStateArchive.getMutable(any(), anyBoolean()))
         .thenReturn(Optional.of(mockWorldState));
 
     blockBroadcaster = new BlockBroadcaster(mockEthContext);
     syncState = new SyncState(blockchain, mockEthPeers);
     TransactionPoolConfiguration txPoolConfig =
-        ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();
+        ImmutableTransactionPoolConfiguration.builder()
+            .txPoolMaxSize(1)
+            .minGasPrice(Wei.ZERO)
+            .build();
 
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
@@ -157,10 +163,6 @@ public class BesuEventsImplTest {
             TestClock.system(ZoneId.systemDefault()),
             new NoOpMetricsSystem(),
             syncState,
-            ImmutableMiningParameters.builder()
-                .mutableInitValues(
-                    MutableInitValues.builder().minTransactionGasPrice(Wei.ZERO).build())
-                .build(),
             txPoolConfig,
             null,
             new BlobCache());

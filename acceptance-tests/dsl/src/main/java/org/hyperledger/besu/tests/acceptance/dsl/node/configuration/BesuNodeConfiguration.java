@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
@@ -44,6 +45,7 @@ public class BesuNodeConfiguration {
   private final JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private final MetricsConfiguration metricsConfiguration;
   private final Optional<PermissioningConfiguration> permissioningConfiguration;
+  private final ApiConfiguration apiConfiguration;
   private final Optional<String> keyFilePath;
   private final boolean devMode;
   private final GenesisConfigurationProvider genesisConfigProvider;
@@ -78,6 +80,7 @@ public class BesuNodeConfiguration {
       final JsonRpcIpcConfiguration jsonRpcIpcConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
+      final ApiConfiguration apiConfiguration,
       final Optional<String> keyFilePath,
       final boolean devMode,
       final NetworkName network,
@@ -109,6 +112,7 @@ public class BesuNodeConfiguration {
     this.jsonRpcIpcConfiguration = jsonRpcIpcConfiguration;
     this.metricsConfiguration = metricsConfiguration;
     this.permissioningConfiguration = permissioningConfiguration;
+    this.apiConfiguration = apiConfiguration;
     this.keyFilePath = keyFilePath;
     this.dataPath = dataPath;
     this.devMode = devMode;
@@ -165,6 +169,10 @@ public class BesuNodeConfiguration {
 
   public Optional<PermissioningConfiguration> getPermissioningConfiguration() {
     return permissioningConfiguration;
+  }
+
+  public ApiConfiguration getApiConfiguration() {
+    return apiConfiguration;
   }
 
   public Optional<String> getKeyFilePath() {

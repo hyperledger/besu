@@ -93,7 +93,11 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
 
     return sendRequestToPeer(
         peer -> {
-          LOG.debug("Requesting {} bodies from peer {}.", blockHashes.size(), peer);
+          LOG.atTrace()
+              .setMessage("Requesting {} bodies from peer {}.")
+              .addArgument(blockHashes.size())
+              .addArgument(peer)
+              .log();
           return peer.getBodies(blockHashes);
         },
         minimumRequiredBlockNumber);
@@ -103,7 +107,7 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
   protected Optional<List<Block>> processResponse(
       final boolean streamClosed, final MessageData message, final EthPeer peer) {
     if (streamClosed) {
-      // All outstanding requests have been responded to and we still haven't found the response
+      // All outstanding requests have been responded to, and we still haven't found the response
       // we wanted. It must have been empty or contain data that didn't match.
       peer.recordUselessResponse("bodies");
       return Optional.of(Collections.emptyList());

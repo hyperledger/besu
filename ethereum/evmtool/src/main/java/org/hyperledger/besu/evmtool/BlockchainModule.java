@@ -23,9 +23,9 @@ import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -64,12 +64,12 @@ public class BlockchainModule {
       final EvmConfiguration evmConfiguration) {
     if ("memory".equals(keyValueStorageName)) {
       final MutableWorldState mutableWorldState =
-          new DefaultMutableWorldState(
+          new ForestMutableWorldState(
               worldStateStorage, worldStatePreimageStorage, evmConfiguration);
       genesisState.writeStateTo(mutableWorldState);
       return mutableWorldState;
     } else {
-      return new DefaultMutableWorldState(
+      return new ForestMutableWorldState(
           stateRoot, worldStateStorage, worldStatePreimageStorage, evmConfiguration);
     }
   }
@@ -78,7 +78,7 @@ public class BlockchainModule {
   @Singleton
   WorldStateStorage provideWorldStateStorage(
       @Named("worldState") final KeyValueStorage keyValueStorage) {
-    return new WorldStateKeyValueStorage(keyValueStorage);
+    return new ForestWorldStateKeyValueStorage(keyValueStorage);
   }
 
   @Provides

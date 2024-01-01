@@ -17,10 +17,10 @@
 package org.hyperledger.besu.components;
 
 import org.hyperledger.besu.cli.BesuCommand;
-import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoaderModule;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCacheModule;
+import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoaderModule;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.services.BesuPluginContextImpl;

@@ -15,15 +15,13 @@
 package org.hyperledger.besu.tests.acceptance.jsonrpc;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.stream.Stream;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.params.provider.Arguments;
 
-@RunWith(Parameterized.class)
 public class EthGetBlockByNumberAndHashShanghaiAcceptanceTest extends AbstractJsonRpcTest {
   private static final String TEST_RESOURCES_DIR = "/jsonrpc/eth/getBlockBy/";
   private static final String GENESIS_FILE = TEST_RESOURCES_DIR + "genesis.json";
@@ -31,22 +29,20 @@ public class EthGetBlockByNumberAndHashShanghaiAcceptanceTest extends AbstractJs
 
   private static AbstractJsonRpcTest.JsonRpcTestsContext testsContext;
 
-  public EthGetBlockByNumberAndHashShanghaiAcceptanceTest(
-      final String ignored, final URI testCaseFileURI) {
-    super(ignored, testsContext, testCaseFileURI);
+  public EthGetBlockByNumberAndHashShanghaiAcceptanceTest() {
+    super(testsContext);
   }
 
-  @BeforeClass
+  @BeforeAll
   public static void init() throws IOException {
     testsContext = new JsonRpcTestsContext(GENESIS_FILE);
   }
 
-  @Parameterized.Parameters(name = "{0}")
-  public static Iterable<Object[]> testCases() throws URISyntaxException {
-    return testCases(TEST_CASE_PATH);
+  public static Stream<Arguments> testCases() throws URISyntaxException {
+    return testCasesFromPath(TEST_CASE_PATH);
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDown() {
     testsContext.cluster.close();
   }

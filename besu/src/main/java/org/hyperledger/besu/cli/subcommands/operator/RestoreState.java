@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.PersistVisitor;
 import org.hyperledger.besu.ethereum.trie.RestoreVisitor;
-import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
+import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.util.io.RollingFileReader;
@@ -250,7 +250,7 @@ public class RestoreState implements Runnable {
       updater.commit();
     }
     final WorldStateStorage worldStateStorage =
-        ((DefaultWorldStateArchive) besuController.getProtocolContext().getWorldStateArchive())
+        ((ForestWorldStateArchive) besuController.getProtocolContext().getWorldStateArchive())
             .getWorldStateStorage();
     updater = worldStateStorage.updater();
   }

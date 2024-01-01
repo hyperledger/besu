@@ -362,7 +362,6 @@ public class TestContextBuilder {
             protocolContext,
             mock(TransactionBroadcaster.class),
             ethContext,
-            miningParams,
             new TransactionPoolMetrics(metricsSystem),
             poolConf,
             null);

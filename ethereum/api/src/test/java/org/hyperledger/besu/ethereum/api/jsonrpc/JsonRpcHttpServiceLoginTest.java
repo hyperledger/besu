@@ -23,6 +23,7 @@ import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthAccounts;
@@ -89,6 +90,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class JsonRpcHttpServiceLoginTest {
 
+  // this tempDir is deliberately static
   @TempDir private static Path folder;
 
   private static final Vertx vertx = Vertx.vertx();
@@ -156,7 +158,7 @@ public class JsonRpcHttpServiceLoginTest {
                     folder,
                     mock(EthPeers.class),
                     vertx,
-                    Optional.empty(),
+                    mock(ApiConfiguration.class),
                     Optional.empty()));
     service = createJsonRpcHttpService();
     jwtAuth = service.authenticationService.get().getJwtAuthProvider();
@@ -203,6 +205,18 @@ public class JsonRpcHttpServiceLoginTest {
   }
 
   @Test
+  public void loginWithEmptyCredentials() throws IOException {
+    final RequestBody body = RequestBody.create("{}", JSON);
+    final Request request = new Request.Builder().post(body).url(baseUrl + "/login").build();
+    try (final Response resp = client.newCall(request).execute()) {
+      assertThat(resp.code()).isEqualTo(400);
+      assertThat(resp.message()).isEqualTo("Bad Request");
+      final String bodyString = resp.body().string();
+      assertThat(bodyString).containsIgnoringCase("username and password are required");
+    }
+  }
+
+  @Test
   public void loginWithBadCredentials() throws IOException {
     final RequestBody body =
         RequestBody.create("{\"username\":\"user\",\"password\":\"badpass\"}", JSON);
@@ -210,6 +224,8 @@ public class JsonRpcHttpServiceLoginTest {
     try (final Response resp = client.newCall(request).execute()) {
       assertThat(resp.code()).isEqualTo(401);
       assertThat(resp.message()).isEqualTo("Unauthorized");
+      final String bodyString = resp.body().string();
+      assertThat(bodyString).containsIgnoringCase("the username or password is incorrect");
     }
   }
 
