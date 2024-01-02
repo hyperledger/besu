@@ -74,6 +74,7 @@ final class DeFramer extends ByteToMessageDecoder {
   private final boolean inboundInitiated;
   private final PeerTable peerTable;
   private boolean hellosExchanged;
+  private final LabelledMetric<Counter> discPeerRecoveryCounter;
   private final LabelledMetric<Counter> outboundMessagesCounter;
 
   DeFramer(
@@ -102,6 +103,9 @@ final class DeFramer extends ByteToMessageDecoder {
             "protocol",
             "name",
             "code");
+    this.discPeerRecoveryCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.PEERS, "discovery-peer-recovery", "discovery-peer-recovery", "name");
   }
 
   @Override
@@ -152,6 +156,13 @@ final class DeFramer extends ByteToMessageDecoder {
           final Optional<DiscoveryPeer> discoveryPeer = peerTable.get(peer.get());
           if (discoveryPeer.isPresent()) {
             peer = Optional.of(discoveryPeer.get());
+            if (peer.get().getForkId().isPresent()) {
+              discPeerRecoveryCounter.labels("disc-peer-found-with-forkId").inc();
+            } else {
+              discPeerRecoveryCounter.labels("disc-peer-found--without-forkId").inc();
+            }
+          } else {
+            discPeerRecoveryCounter.labels("disc-peer-not-found").inc();
           }
         }
 
