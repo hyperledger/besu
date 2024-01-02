@@ -157,12 +157,12 @@ final class DeFramer extends ByteToMessageDecoder {
           if (discoveryPeer.isPresent()) {
             peer = Optional.of(discoveryPeer.get());
             if (peer.get().getForkId().isPresent()) {
-              discPeerRecoveryCounter.labels("discovery-peer-found-with-forkId").inc();
+              discPeerRecoveryCounter.labels("discovery_peer_found_with_forkId").inc();
             } else {
-              discPeerRecoveryCounter.labels("discovery-peer-found-without-forkId").inc();
+              discPeerRecoveryCounter.labels("discovery_peer_found_without_forkId").inc();
             }
           } else {
-            discPeerRecoveryCounter.labels("discovery-peer-not-found").inc();
+            discPeerRecoveryCounter.labels("discovery_peer_not_found").inc();
           }
         }
 
