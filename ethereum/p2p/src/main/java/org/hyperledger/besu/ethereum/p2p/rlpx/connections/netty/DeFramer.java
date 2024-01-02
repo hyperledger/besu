@@ -105,7 +105,7 @@ final class DeFramer extends ByteToMessageDecoder {
             "code");
     this.discPeerRecoveryCounter =
         metricsSystem.createLabelledCounter(
-            BesuMetricCategory.PEERS, "discovery-peer-recovery", "discovery-peer-recovery", "name");
+            BesuMetricCategory.PEERS, "discovery_peer_recovery", "discovery_peer_recovery", "name");
   }
 
   @Override
@@ -157,12 +157,12 @@ final class DeFramer extends ByteToMessageDecoder {
           if (discoveryPeer.isPresent()) {
             peer = Optional.of(discoveryPeer.get());
             if (peer.get().getForkId().isPresent()) {
-              discPeerRecoveryCounter.labels("disc-peer-found-with-forkId").inc();
+              discPeerRecoveryCounter.labels("discovery-peer-found-with-forkId").inc();
             } else {
-              discPeerRecoveryCounter.labels("disc-peer-found--without-forkId").inc();
+              discPeerRecoveryCounter.labels("discovery-peer-found-without-forkId").inc();
             }
           } else {
-            discPeerRecoveryCounter.labels("disc-peer-not-found").inc();
+            discPeerRecoveryCounter.labels("discovery-peer-not-found").inc();
           }
         }
 
