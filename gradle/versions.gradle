@@ -211,7 +211,7 @@ dependencyManagement {
       entry 'slf4j-nop'
     }
 
-    dependency 'org.springframework.security:spring-security-crypto:6.0.2'
+    dependency 'org.springframework.security:spring-security-crypto:6.2.1'
 
     dependency 'org.testcontainers:testcontainers:1.17.6'
 
