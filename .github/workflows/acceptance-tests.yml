@@ -69,6 +69,7 @@ jobs:
     name: "Acceptance Runner"
     permissions:
       statuses: write
+      checks: write
     if: ${{ needs.shouldRun.outputs.shouldRun == 'true'}}
     strategy:
       fail-fast: false
