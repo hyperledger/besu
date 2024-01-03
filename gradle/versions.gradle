@@ -102,6 +102,20 @@ dependencyManagement {
 
     dependency 'io.reactivex.rxjava2:rxjava:2.2.21'
 
+    dependencySet(group: 'io.tmio', version: '2.4.2') {
+      entry 'tuweni-bytes'
+      entry 'tuweni-config'
+      entry 'tuweni-concurrent'
+      entry 'tuweni-crypto'
+      entry 'tuweni-devp2p'
+      entry 'tuweni-dns-discovery'
+      entry 'tuweni-io'
+      entry 'tuweni-net'
+      entry 'tuweni-rlp'
+      entry 'tuweni-toml'
+      entry 'tuweni-units'
+    }
+
     dependencySet(group: 'io.vertx', version: '4.3.5') {
       entry 'vertx-auth-jwt'
       entry 'vertx-codegen'
@@ -131,20 +145,6 @@ dependencyManagement {
       entry 'log4j-core'
       entry 'log4j-jul'
       entry 'log4j-slf4j2-impl'
-    }
-
-    dependencySet(group: 'io.tmio', version: '2.4.2') {
-      entry 'tuweni-bytes'
-      entry 'tuweni-config'
-      entry 'tuweni-concurrent'
-      entry 'tuweni-crypto'
-      entry 'tuweni-devp2p'
-      entry 'tuweni-dns-discovery'
-      entry 'tuweni-io'
-      entry 'tuweni-net'
-      entry 'tuweni-rlp'
-      entry 'tuweni-toml'
-      entry 'tuweni-units'
     }
 
     dependency 'org.assertj:assertj-core:3.24.2'
