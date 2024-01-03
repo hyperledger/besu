@@ -154,7 +154,7 @@ dependencyManagement {
       entry'bcprov-jdk18on'
     }
 
-    dependency 'org.fusesource.jansi:jansi:2.4.0'
+    dependency 'org.fusesource.jansi:jansi:2.4.1'
     dependency 'org.openjdk.jol:jol-core:0.17'
     dependency 'tech.pegasys:jc-kzg-4844:0.8.0'
 
