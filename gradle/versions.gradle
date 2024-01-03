@@ -176,7 +176,7 @@ dependencyManagement {
 
     dependency 'org.java-websocket:Java-WebSocket:1.5.5'
 
-    dependency 'org.jetbrains.kotlin:kotlin-stdlib:1.8.10'
+    dependency 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'
 
     dependencySet(group: 'org.junit.jupiter', version: '5.8.2') {
       entry 'junit-jupiter'
