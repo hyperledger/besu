@@ -1,9 +1,6 @@
-name: "Container Images"
+name: docker
 on:
   workflow_dispatch:
-  release:
-    types:
-      - created
 
 jobs:
   buildX64Docker:
