@@ -126,7 +126,7 @@ dependencyManagement {
     dependency 'org.apache.commons:commons-lang3:3.14.0'
     dependency 'org.apache.commons:commons-text:1.11.0'
 
-    dependencySet(group: 'org.apache.logging.log4j', version: '2.20.0') {
+    dependencySet(group: 'org.apache.logging.log4j', version: '2.22.1') {
       entry 'log4j-api'
       entry 'log4j-core'
       entry 'log4j-jul'
