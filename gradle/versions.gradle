@@ -65,7 +65,7 @@ dependencyManagement {
       entry 'picocli-codegen'
     }
 
-    dependencySet(group: 'io.grpc', version: '1.59.0') {
+    dependencySet(group: 'io.grpc', version: '1.60.1') {
       entry 'grpc-all'
       entry 'grpc-core'
       entry 'grpc-netty'
