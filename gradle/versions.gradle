@@ -167,7 +167,7 @@ dependencyManagement {
       entry 'blake2bf'
     }
 
-    dependencySet(group: 'org.immutables', version: '2.9.3') {
+    dependencySet(group: 'org.immutables', version: '2.10.0') {
       entry 'value-annotations'
       entry 'value'
     }
