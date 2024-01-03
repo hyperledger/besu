@@ -206,7 +206,7 @@ dependencyManagement {
 
     dependency 'org.owasp.encoder:encoder:1.2.3'
 
-    dependency 'org.rocksdb:rocksdbjni:8.3.2'
+    dependency 'org.rocksdb:rocksdbjni:8.9.1'
 
     dependencySet(group: 'org.slf4j', version:'2.0.7') {
       entry 'slf4j-api'
