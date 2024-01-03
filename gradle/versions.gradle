@@ -46,7 +46,7 @@ dependencyManagement {
       entry 'error_prone_test_helpers'
     }
 
-    dependency 'com.google.guava:guava:31.1-jre'
+    dependency 'com.google.guava:guava:33.0.0-jre'
 
     dependency 'com.graphql-java:graphql-java:20.1'
 
