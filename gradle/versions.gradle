@@ -213,7 +213,7 @@ dependencyManagement {
 
     dependency 'org.springframework.security:spring-security-crypto:6.2.1'
 
-    dependency 'org.testcontainers:testcontainers:1.17.6'
+    dependency 'org.testcontainers:testcontainers:1.19.3'
 
     dependency 'org.web3j:quorum:4.9.5'
     dependencySet(group: 'org.web3j', version: '4.9.7') {
