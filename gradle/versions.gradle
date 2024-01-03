@@ -30,6 +30,8 @@ dependencyManagement {
 
     dependency 'com.github.ben-manes.caffeine:caffeine:3.1.8'
 
+    dependency 'com.github.oshi:oshi-core:6.4.10'
+
     dependencySet(group: 'com.github.tomakehurst', version: '2.35.0') {
       entry'wiremock-jre8-standalone'
       entry'wiremock-jre8'
@@ -231,7 +233,5 @@ dependencyManagement {
     dependency 'org.yaml:snakeyaml:2.0'
 
     dependency 'tech.pegasys.discovery:discovery:22.2.0'
-
-    dependency 'com.github.oshi:oshi-core:6.4.1'
   }
 }
