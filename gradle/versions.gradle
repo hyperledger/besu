@@ -174,7 +174,7 @@ dependencyManagement {
       entry 'value'
     }
 
-    dependency 'org.java-websocket:Java-WebSocket:1.5.3'
+    dependency 'org.java-websocket:Java-WebSocket:1.5.5'
 
     dependency 'org.jetbrains.kotlin:kotlin-stdlib:1.8.10'
 
