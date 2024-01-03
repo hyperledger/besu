@@ -129,8 +129,6 @@ public class AcceptanceTestBase {
     exitedSuccessfully = new ExitedWithCode(0);
   }
 
-  @Rule public final TestName name = new TestName();
-
   @After
   public void tearDownAcceptanceTestBase() {
     reportMemory();
