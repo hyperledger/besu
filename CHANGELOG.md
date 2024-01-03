@@ -1,8 +1,7 @@
 # Changelog
 
-## 24.1.0-SNAPSHOT
-
-### Breaking Changes
+## 24.1.0
+Support for Cancun fork on testnets
 
 ### Deprecations
 - Forest pruning (`pruning-enabled` options) is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format [#6230](https://github.com/hyperledger/besu/pull/6230)
@@ -13,6 +12,7 @@
 - Set Ethereum Classic mainnet activation block for Spiral network upgrade [#6267](https://github.com/hyperledger/besu/pull/6267)
 - Add custom genesis file name to config overview if specified [#6297](https://github.com/hyperledger/besu/pull/6297)
 - Update Gradle plugins and replace unmaintained License Gradle Plugin with the actively maintained Gradle License Report [#6275](https://github.com/hyperledger/besu/pull/6275)
+- Cancun forkids for non-mainnets [#6322](https://github.com/hyperledger/besu/pull/6322)
 
 ### Bug fixes
 
