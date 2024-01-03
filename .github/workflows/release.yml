@@ -7,10 +7,11 @@ jobs:
     runs-on: [besu-research-ubuntu-16]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v3
+      - uses: actions/setup-java@v4
         with:
           distribution: 'temurin' # See 'Supported distributions' for available options
           java-version: '17'
+          cache: gradle
       - name: Login to DockerHub
         run: echo '${{ secrets.DOCKER_PASSWORD_RW }}' | docker login -u '${{ secrets.DOCKER_USER_RW }}' --password-stdin
       - name: Setup Gradle
