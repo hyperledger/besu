@@ -48,7 +48,7 @@ dependencyManagement {
 
     dependency 'com.google.guava:guava:33.0.0-jre'
 
-    dependency 'com.graphql-java:graphql-java:20.1'
+    dependency 'com.graphql-java:graphql-java:21.3'
 
     dependency 'com.splunk.logging:splunk-library-javalogging:1.11.5'
 
