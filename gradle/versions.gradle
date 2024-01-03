@@ -118,7 +118,7 @@ dependencyManagement {
 
     dependency 'junit:junit:4.13.2'
 
-    dependency 'net.java.dev.jna:jna:5.13.0'
+    dependency 'net.java.dev.jna:jna:5.14.0'
 
     dependency 'org.apache.commons:commons-compress:1.23.0'
     dependency 'org.apache.commons:commons-lang3:3.12.0'
