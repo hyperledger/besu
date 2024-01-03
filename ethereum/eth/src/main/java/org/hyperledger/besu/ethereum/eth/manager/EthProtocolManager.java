@@ -399,7 +399,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     // check whether we have a peer on the same chain
     final Optional<ForkId> optionalForkId = peer.getForkId();
     if (optionalForkId.isPresent()) {
-      forkIdCounter.labels("present").inc();
+      if (incoming) {
+        forkIdCounter.labels("incoming_present").inc();
+      } else {
+        forkIdCounter.labels("outgoing_present").inc();
+      }
       if (forkIdManager.peerCheck(optionalForkId.get())) {
         forkIdCounter.labels("check_success").inc();
       } else {
@@ -407,7 +411,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         return false;
       }
     } else {
-      forkIdCounter.labels("not_present").inc();
+      if (incoming) {
+        forkIdCounter.labels("incoming_not_present").inc();
+      } else {
+        forkIdCounter.labels("outgoing_not_present").inc();
+      }
     }
 
     // we are on the same chain or fork id is not present, so check EthPeers
