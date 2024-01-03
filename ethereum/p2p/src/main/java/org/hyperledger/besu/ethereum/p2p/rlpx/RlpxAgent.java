@@ -310,8 +310,8 @@ public class RlpxAgent {
             });
   }
 
-  public boolean canExceedConnectionLimits(final Peer peer) {
-    return peerPrivileges.canExceedConnectionLimits(peer);
+  public boolean canExceedConnectionLimits(final Bytes peerId) {
+    return peerPrivileges.canExceedConnectionLimits(peerId);
   }
 
   private void handleIncomingConnection(final PeerConnection peerConnection) {

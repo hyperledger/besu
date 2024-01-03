@@ -12,6 +12,7 @@
 - New `Sequenced` transaction pool. The pool is an evolution of the `legacy` pool and is likely to be more suitable to enterprise or permissioned chains than the `layered` transaction pool. Select to use this pool with `--tx-pool=sequenced`. Supports the same options as the `legacy` pool [#6211](https://github.com/hyperledger/besu/issues/6211)
 - Set Ethereum Classic mainnet activation block for Spiral network upgrade [#6267](https://github.com/hyperledger/besu/pull/6267)
 - Add custom genesis file name to config overview if specified [#6297](https://github.com/hyperledger/besu/pull/6297)
+- Update Gradle plugins and replace unmaintained License Gradle Plugin with the actively maintained Gradle License Report [#6275](https://github.com/hyperledger/besu/pull/6275)
 
 ### Bug fixes
 
