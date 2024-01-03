@@ -100,8 +100,6 @@ processTestResources.dependsOn(':acceptance-tests:test-plugins:testPluginsJar','
 task acceptanceTest(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
 
-  useJUnitPlatform {}
-
   dependsOn(rootProject.installDist)
   setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runBesuAsProcess', 'true'
@@ -129,8 +127,6 @@ task acceptanceTestMainnet(type: Test) {
   exclude '**/permissioning/**'
   exclude '**/privacy/**'
 
-  useJUnitPlatform {}
-
   dependsOn(rootProject.installDist)
   setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runBesuAsProcess', 'true'
@@ -157,8 +153,6 @@ task acceptanceTestCliqueBft(type: Test) {
   include '**/bft/**'
   include '**/clique/**'
 
-  useJUnitPlatform {}
-
   dependsOn(rootProject.installDist)
   setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runBesuAsProcess', 'true'
@@ -182,8 +176,6 @@ task acceptanceTestCliqueBft(type: Test) {
 task acceptanceTestPrivacy(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
   include '**/privacy/**'
-
-  useJUnitPlatform {}
 
   dependsOn(rootProject.installDist)
   setSystemProperties(test.getSystemProperties())
@@ -209,8 +201,6 @@ task acceptanceTestPrivacy(type: Test) {
 task acceptanceTestPermissioning(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
   include '**/permissioning/**'
-
-  useJUnitPlatform {}
 
   dependsOn(rootProject.installDist)
   setSystemProperties(test.getSystemProperties())
