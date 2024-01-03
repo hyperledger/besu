@@ -147,7 +147,7 @@ dependencyManagement {
       entry 'log4j-slf4j2-impl'
     }
 
-    dependency 'org.assertj:assertj-core:3.24.2'
+    dependency 'org.assertj:assertj-core:3.25.1'
 
     dependency 'org.awaitility:awaitility:4.2.0'
 
