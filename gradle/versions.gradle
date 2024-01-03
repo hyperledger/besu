@@ -52,7 +52,7 @@ dependencyManagement {
 
     dependency 'com.splunk.logging:splunk-library-javalogging:1.11.8'
 
-    dependency 'com.squareup.okhttp3:okhttp:4.10.0'
+    dependency 'com.squareup.okhttp3:okhttp:4.12.0'
 
     dependency 'commons-codec:commons-codec:1.15'
 
