@@ -50,7 +50,7 @@ dependencyManagement {
 
     dependency 'com.graphql-java:graphql-java:21.3'
 
-    dependency 'com.splunk.logging:splunk-library-javalogging:1.11.5'
+    dependency 'com.splunk.logging:splunk-library-javalogging:1.11.8'
 
     dependency 'com.squareup.okhttp3:okhttp:4.10.0'
 
