@@ -17,11 +17,6 @@ dependencyManagement {
   dependencies {
     applyMavenExclusions = false
 
-    dependencySet(group: 'org.antlr', version: '4.11.1') {
-      entry 'antlr4'
-      entry 'antlr4-runtime'
-    }
-
     dependencySet(group:'com.fasterxml.jackson.core', version:'2.16.1') {
       entry 'jackson-databind'
       entry 'jackson-datatype'
@@ -121,6 +116,11 @@ dependencyManagement {
     dependency 'junit:junit:4.13.2'
 
     dependency 'net.java.dev.jna:jna:5.14.0'
+
+    dependencySet(group: 'org.antlr', version: '4.13.1') {
+      entry 'antlr4'
+      entry 'antlr4-runtime'
+    }
 
     dependency 'org.apache.commons:commons-compress:1.23.0'
     dependency 'org.apache.commons:commons-lang3:3.12.0'
