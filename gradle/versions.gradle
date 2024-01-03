@@ -178,7 +178,7 @@ dependencyManagement {
 
     dependency 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'
 
-    dependencySet(group: 'org.junit.jupiter', version: '5.8.2') {
+    dependencySet(group: 'org.junit.jupiter', version: '5.10.1') {
       entry 'junit-jupiter'
       entry 'junit-jupiter-api'
       entry 'junit-jupiter-engine'
