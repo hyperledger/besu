@@ -15,48 +15,47 @@
 
 package org.hyperledger.besu.tests.acceptance.dsl;
 
+import java.io.File;
+import java.util.Optional;
+
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestWatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.util.Optional;
-
 public class AcceptanceTestBaseTestWatcher implements TestWatcher {
-    private static final Logger LOG = LoggerFactory.getLogger(AcceptanceTestBaseTestWatcher.class);
-    @Override
-    public void testAborted(final ExtensionContext extensionContext, final Throwable throwable) {
-        LOG.info("test aborted:" + extensionContext.getDisplayName());
-    }
+  private static final Logger LOG = LoggerFactory.getLogger(AcceptanceTestBaseTestWatcher.class);
 
-    @Override
-    public void testDisabled(final ExtensionContext extensionContext, final Optional<String> optional) {
-        LOG.info("test disabled:" + extensionContext.getDisplayName());
-    }
+  @Override
+  public void testAborted(final ExtensionContext extensionContext, final Throwable throwable) {
+    LOG.info("test aborted:" + extensionContext.getDisplayName());
+  }
 
-    @Override
-    public void testFailed(final ExtensionContext extensionContext, final Throwable e) {
-        // add the result at the end of the log, so it is self-sufficient
-        LOG.error(
-                "==========================================================================================");
-        LOG.error("Test failed. Reported Throwable at the point of failure:", e);
-        LOG.error(e.getMessage());
-    }
+  @Override
+  public void testDisabled(
+      final ExtensionContext extensionContext, final Optional<String> optional) {
+    LOG.info("test disabled:" + extensionContext.getDisplayName());
+  }
 
-    @Override
-    public void testSuccessful(final ExtensionContext extensionContext) {
-        // TODO where is the other side of this - what creates these log files?
+  @Override
+  public void testFailed(final ExtensionContext extensionContext, final Throwable e) {
+    // add the result at the end of the log, so it is self-sufficient
+    LOG.error(
+        "==========================================================================================");
+    LOG.error("Test failed. Reported Throwable at the point of failure:", e);
+    LOG.error(e.getMessage());
+  }
 
-        // if so configured, delete logs of successful tests
-        if (!Boolean.getBoolean("acctests.keepLogsOfPassingTests")) {
-            String pathname =
-                    "build/acceptanceTestLogs/"
-                            + extensionContext.getDisplayName()
-                            + ".log";
-            LOG.info("Test successful, deleting log at {}", pathname);
-            File file = new File(pathname);
-            file.delete();
-        }
+  @Override
+  public void testSuccessful(final ExtensionContext extensionContext) {
+    // TODO where is the other side of this - what creates these log files?
+
+    // if so configured, delete logs of successful tests
+    if (!Boolean.getBoolean("acctests.keepLogsOfPassingTests")) {
+      String pathname = "build/acceptanceTestLogs/" + extensionContext.getDisplayName() + ".log";
+      LOG.info("Test successful, deleting log at {}", pathname);
+      File file = new File(pathname);
+      file.delete();
     }
+  }
 }

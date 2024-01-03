@@ -126,6 +126,7 @@ public class AcceptanceTestBase {
     permissionedNodeBuilder = new PermissionedNodeBuilder();
     exitedSuccessfully = new ExitedWithCode(0);
   }
+
   @AfterEach
   public void tearDownAcceptanceTestBase() {
     reportMemory();
