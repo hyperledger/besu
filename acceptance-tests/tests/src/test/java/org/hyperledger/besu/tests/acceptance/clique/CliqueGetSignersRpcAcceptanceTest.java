@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 @Disabled("flaky test due to hardcoded block numbers")
-public class CliqueGetSignersRpcTest extends AcceptanceTestBase {
+public class CliqueGetSignersRpcAcceptanceTest extends AcceptanceTestBase {
   private BesuNode minerNode1;
   private BesuNode minerNode2;
 

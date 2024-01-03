@@ -19,9 +19,9 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import java.io.IOException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class CliqueZeroValidators extends AcceptanceTestBase {
+public class CliqueZeroValidatorsAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void zeroValidatorsFormValidCluster() throws IOException {
