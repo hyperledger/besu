@@ -227,7 +227,7 @@ dependencyManagement {
       entry 'wiremock'
     }
 
-    dependency 'org.xerial.snappy:snappy-java:1.1.9.1'
+    dependency 'org.xerial.snappy:snappy-java:1.1.10.5'
 
     dependency 'org.yaml:snakeyaml:2.0'
 
