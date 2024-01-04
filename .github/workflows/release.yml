@@ -2,7 +2,7 @@ name: release besu
 on:
   workflow_dispatch:
   release:
-    types: released
+    types: [released]
 jobs:
   dockerPromoteX64:
     runs-on: ubuntu-22.04
