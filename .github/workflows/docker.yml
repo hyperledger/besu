@@ -41,9 +41,10 @@ jobs:
           - linux/arm64
     steps:
       - name: Prepare
+        id: prep
         run: |
             platform=${{ matrix.platform }}
-            echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+            echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_OUTPUT
       - name: Checkout Repo
         uses: actions/checkout@v3
       - name: Set up Java
@@ -56,11 +57,11 @@ jobs:
       - name: distDocker
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: distDocker
+          arguments: distDocker -PdockerOrgName=${{ secrets.DOCKER_ORG }}
       - name: test image
         run: |
           mkdir -p docker/reports
-          curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-$PLATFORM-PAIR -o ./docker/tests/goss-$PLATFORM-PAIR
+          curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-${{ steps.prep.outputs.PLATFORM_PAIR }} -o ./docker/tests/goss-${{ steps.prep.outputs.PLATFORM_PAIR }}
       - name: test docker
         uses: gradle/gradle-build-action@v2
         with:
