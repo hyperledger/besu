@@ -14,15 +14,15 @@
  */
 package org.hyperledger.besu.tests.acceptance.bft.pki;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
 
 import java.util.stream.Stream;
 
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.provider.Arguments;
 
-@Ignore("This is not a test class, it offers PKI QBFT parameterization only.")
-public abstract class ParameterizedPkiQbftTestBase extends AcceptanceTestBase {
+@Disabled("This is not a test class, it offers PKI QBFT parameterization only.")
+public abstract class ParameterizedPkiQbftTestBase extends AcceptanceTestBaseJunit5 {
   public static Stream<Arguments> factoryFunctions() {
     return PkiQbftAcceptanceTestParameterization.getFactories();
   }
