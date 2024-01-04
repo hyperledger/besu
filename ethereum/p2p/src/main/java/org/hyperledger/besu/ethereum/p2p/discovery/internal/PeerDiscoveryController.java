@@ -38,6 +38,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -146,8 +147,8 @@ public class PeerDiscoveryController {
   private final AtomicBoolean peerTableIsDirty = new AtomicBoolean(false);
   private OptionalLong cleanTableTimerId = OptionalLong.empty();
   private RecursivePeerRefreshState recursivePeerRefreshState;
-  private long timerId;
-  private final AtomicBoolean timerCheck = new AtomicBoolean(true);
+  private final Map<Bytes, Long> timerIdMap = new HashMap<>();
+  private final Map<Bytes, AtomicBoolean> timerCheckMap = new HashMap<>();
 
   private PeerDiscoveryController(
       final NodeKey nodeKey,
@@ -317,6 +318,7 @@ public class PeerDiscoveryController {
     }
 
     final DiscoveryPeer peer = resolvePeer(sender);
+    final Bytes peerId = peer.getId();
     switch (packet.getType()) {
       case PING:
         if (peerPermissions.allowInboundBonding(peer)) {
@@ -333,30 +335,37 @@ public class PeerDiscoveryController {
         matchInteraction(packet)
             .ifPresent(
                 interaction -> {
+                  peer.setStatus(PeerDiscoveryStatus.BONDED);
+
                   if (filterOnEnrForkId) {
                     discoveryProtocolLogger.logForkIdRequestedt(peer);
                     requestENR(peer);
-                    // even if we do not get the ENR response we want to do this:
-                    timerId =
+                    timerCheckMap.put(peerId, new AtomicBoolean(true));
+                    // if we do not get the ENR response within 5s we want to do the following:
+                    long timerId =
                         timerUtil.setTimer(
                             FIVE_SECONDS,
                             () -> {
-                              if (timerCheck.getAndSet(false)) {
+                              final AtomicBoolean timerCheck = timerCheckMap.get(peerId);
+                              if (timerCheck != null && timerCheck.getAndSet(false)) {
+                                timerCheckMap.remove(peerId);
+                                timerIdMap.remove(peerId);
                                 discoveryProtocolLogger.logForkIdNotSent(peer);
-                                bondingPeers.invalidate(peer.getId());
+                                bondingPeers.invalidate(peerId);
                                 addToPeerTable(peer);
                                 recursivePeerRefreshState.onBondingComplete(peer);
                                 connectOnRlpxLayer(peer);
                               }
                             });
+                    timerIdMap.put(peerId, timerId);
                   } else {
                     discoveryProtocolLogger.logForkIdNotRequestedt(peer);
-                    bondingPeers.invalidate(peer.getId());
+                    bondingPeers.invalidate(peerId);
                     addToPeerTable(peer);
                     recursivePeerRefreshState.onBondingComplete(peer);
                     connectOnRlpxLayer(peer);
                   }
-                  Optional.ofNullable(cachedEnrRequests.getIfPresent(peer.getId()))
+                  Optional.ofNullable(cachedEnrRequests.getIfPresent(peerId))
                       .ifPresent(cachedEnrRequest -> processEnrRequest(peer, cachedEnrRequest));
                 });
         break;
@@ -380,12 +389,12 @@ public class PeerDiscoveryController {
         if (PeerDiscoveryStatus.BONDED.equals(peer.getStatus())) {
           processEnrRequest(peer, packet);
         } else if (PeerDiscoveryStatus.BONDING.equals(peer.getStatus())) {
-          LOG.trace("ENR_REQUEST cached for bonding peer Id: {}", peer.getId());
+          LOG.trace("ENR_REQUEST cached for bonding peer Id: {}", peerId);
           // Due to UDP, it may happen that we receive the ENR_REQUEST just before the PONG.
           // Because peers want to send the ENR_REQUEST directly after the pong.
           // If this happens we don't want to ignore the request but process when bonded.
           // this cache allows to keep the request and to respond after having processed the PONG
-          cachedEnrRequests.put(peer.getId(), packet);
+          cachedEnrRequests.put(peerId, packet);
         }
         break;
       case ENR_RESPONSE:
@@ -393,10 +402,11 @@ public class PeerDiscoveryController {
             .ifPresent(
                 interaction -> {
                   boolean checkWhetherToConnect = false;
-                  if (timerCheck.getAndSet(false)) {
-                    timerUtil.cancelTimer(timerId);
-                    timerId = 0L;
-                    bondingPeers.invalidate(peer.getId());
+                  final AtomicBoolean timerCheck = timerCheckMap.get(peerId);
+                  if (timerCheck != null && timerCheck.getAndSet(false)) {
+                    timerCheckMap.remove(peerId);
+                    timerUtil.cancelTimer(timerIdMap.remove(peerId));
+                    bondingPeers.invalidate(peerId);
                     addToPeerTable(peer);
                     recursivePeerRefreshState.onBondingComplete(peer);
                     checkWhetherToConnect = true;
@@ -409,6 +419,7 @@ public class PeerDiscoveryController {
                   peer.setNodeRecord(enr);
 
                   if (checkWhetherToConnect) {
+                    LOG.info("STEFAN peer {} checking whether to connect", peerId);
                     final Optional<ForkId> maybeForkId = peer.getForkId();
                     if (maybeForkId.isPresent()) {
                       if (forkIdManager.peerCheck(maybeForkId.get())) {
@@ -455,8 +466,6 @@ public class PeerDiscoveryController {
       peer.setFirstDiscovered(now);
     }
     peer.setLastSeen(now);
-
-    peer.setStatus(PeerDiscoveryStatus.BONDED);
 
     final PeerTable.AddResult result = peerTable.tryAdd(peer);
 
@@ -582,8 +591,6 @@ public class PeerDiscoveryController {
    */
   @VisibleForTesting
   void requestENR(final DiscoveryPeer peer) {
-    peer.setStatus(PeerDiscoveryStatus.ENR_REQUESTED);
-
     final Consumer<PeerInteractionState> action =
         interaction -> {
           final ENRRequestPacketData data = ENRRequestPacketData.create();
