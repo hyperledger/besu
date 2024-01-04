@@ -1,9 +1,12 @@
 name: docker
 on:
   workflow_dispatch:
+  release:
+    types:
+      - created
 
 jobs:
-  buildX64Docker:
+  hadolint:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Repo
@@ -25,6 +28,31 @@ jobs:
         run: docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
       - name: hadoLint_graalvm
         run: docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
+  buildDocker:
+    runs-on: ubuntu-22.04
+    needs: hadolint
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm/v6
+          - linux/arm/v7
+          - linux/arm64
+    steps:
+      - name: Prepare
+        run: |
+            platform=${{ matrix.platform }}
+            echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: adopt
+          java-version: 17
+      - name: setup gradle
+        uses: gradle/gradle-build-action@v2
       - name: distDocker
         uses: gradle/gradle-build-action@v2
         with:
@@ -32,58 +60,15 @@ jobs:
       - name: test image
         run: |
           mkdir -p docker/reports
-          curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-linux-amd64 -o ./docker/tests/goss-linux-amd64
+          curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-$PLATFORM-PAIR -o ./docker/tests/goss-$PLATFORM-PAIR
       - name: test docker
         uses: gradle/gradle-build-action@v2
-        env:
-          architecture: amd64
         with:
           arguments: testDocker
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
-          username: robocopsgonemad
+          username: ${{ secrets.DOCKER_USER_RW }}
           password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: publish
         run: ./gradlew --no-daemon -PdockerOrgName=${{ secrets.DOCKER_ORG }} dockerUpload
-  buildArm64Docker:
-    runs-on: [self-hosted, ARM64]
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v3
-      - name: Set up Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: zulu
-          architecture: arm64
-          java-version: 17
-      - name: Docker login
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-      - name: buildDocker
-        uses: gradle/gradle-build-action@v2
-        env:
-          architecture: arm64
-        with:
-          arguments: distDocker -PdockerOrgName=${{ secrets.DOCKER_ORG }}
-      - name: download image test binary
-        run: |
-          mkdir -p docker/reports
-          curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-linux-arm -o ./docker/tests/goss-linux-arm64
-      - name: testDocker
-        uses: gradle/gradle-build-action@v2
-        env:
-          architecture: arm64
-        with:
-          arguments: testDocker -PdockerOrgName=${{ secrets.DOCKER_ORG }}
-      - name: Login to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: robocopsgonemad
-          password: ${{ secrets.DOCKER_PASSWORD_RW }}
-      - name: publish
-        uses: gradle/gradle-build-action@v2
-        env:
-          architecture: arm64
-        with:
-          arguments: -PdockerOrgName=${{ secrets.DOCKER_ORG }} dockerUpload
