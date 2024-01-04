@@ -56,8 +56,10 @@ public class TrieLogHelper {
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
       final MutableBlockchain blockchain,
       final Path dataDirectoryPath) {
-    final String batchFileNameBase = dataDirectoryPath.resolve(DATABASE_PATH) + "/" + TRIE_LOG_FILE;
-    TrieLogHelper.validatePruneConfiguration(config);
+    final String batchFileNameBase =
+        dataDirectoryPath.resolve(DATABASE_PATH).resolve(TRIE_LOG_FILE).toString();
+
+    validatePruneConfiguration(config);
 
     final long layersToRetain = config.getUnstable().getBonsaiTrieLogRetentionThreshold();
 
