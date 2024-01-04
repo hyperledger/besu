@@ -16,6 +16,7 @@
 package org.hyperledger.besu.cli.subcommands.storage;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -95,16 +96,15 @@ public class TrieLogHelper {
       final String batchFileNameBase) {
 
     for (long batchNumber = 1; batchNumber <= numberOfBatches; batchNumber++) {
-
+      final String batchFileName = batchFileNameBase + "-" + batchNumber;
       final long firstBlockOfBatch = chainHeight - ((batchNumber - 1) * BATCH_SIZE);
-
       final long lastBlockOfBatch =
           Math.max(chainHeight - (batchNumber * BATCH_SIZE), lastBlockNumberToRetainTrieLogsFor);
-
       final List<Hash> trieLogKeys =
           getTrieLogKeysForBlocks(blockchain, firstBlockOfBatch, lastBlockOfBatch);
 
-      saveTrieLogBatches(batchFileNameBase, rootWorldStateStorage, batchNumber, trieLogKeys);
+      LOG.info("Saving trie logs to retain in file (batch {})...", batchNumber);
+      saveTrieLogBatches(batchFileName, rootWorldStateStorage, trieLogKeys);
     }
 
     LOG.info("Clear trie logs...");
@@ -116,15 +116,12 @@ public class TrieLogHelper {
   }
 
   private static void saveTrieLogBatches(
-      final String batchFileNameBase,
+      final String batchFileName,
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
-      final long batchNumber,
       final List<Hash> trieLogKeys) {
 
-    LOG.info("Saving trie logs to retain in file (batch {})...", batchNumber);
-
     try {
-      saveTrieLogsInFile(trieLogKeys, rootWorldStateStorage, batchNumber, batchFileNameBase);
+      saveTrieLogsInFile(trieLogKeys, rootWorldStateStorage, batchFileName);
     } catch (IOException e) {
       LOG.error("Error saving trie logs to file: {}", e.getMessage());
       throw new RuntimeException(e);
@@ -208,9 +205,8 @@ public class TrieLogHelper {
       final String batchFileNameBase)
       throws IOException {
     // process in chunk to avoid OOM
-
-    IdentityHashMap<byte[], byte[]> trieLogsToRetain =
-        readTrieLogsFromFile(batchFileNameBase, batchNumber);
+    final String batchFileName = batchFileNameBase + "-" + batchNumber;
+    IdentityHashMap<byte[], byte[]> trieLogsToRetain = readTrieLogsFromFile(batchFileName);
     final int chunkSize = ROCKSDB_MAX_INSERTS_PER_TRANSACTION;
     List<byte[]> keys = new ArrayList<>(trieLogsToRetain.keySet());
 
@@ -263,11 +259,10 @@ public class TrieLogHelper {
   private static void saveTrieLogsInFile(
       final List<Hash> trieLogsKeys,
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
-      final long batchNumber,
-      final String batchFileNameBase)
+      final String batchFileName)
       throws IOException {
 
-    File file = new File(batchFileNameBase + "-" + batchNumber);
+    File file = new File(batchFileName);
     if (file.exists()) {
       LOG.error("File already exists, skipping file creation");
       return;
@@ -283,11 +278,10 @@ public class TrieLogHelper {
   }
 
   @SuppressWarnings("unchecked")
-  private static IdentityHashMap<byte[], byte[]> readTrieLogsFromFile(
-      final String batchFileNameBase, final long batchNumber) {
+  private static IdentityHashMap<byte[], byte[]> readTrieLogsFromFile(final String batchFileName) {
 
     IdentityHashMap<byte[], byte[]> trieLogs;
-    try (FileInputStream fis = new FileInputStream(batchFileNameBase + "-" + batchNumber);
+    try (FileInputStream fis = new FileInputStream(batchFileName);
         ObjectInputStream ois = new ObjectInputStream(fis)) {
 
       trieLogs = (IdentityHashMap<byte[], byte[]>) ois.readObject();
@@ -353,6 +347,29 @@ public class TrieLogHelper {
     out.printf(
         "trieLog count: %s\n - canonical count: %s\n - fork count: %s\n - orphaned count: %s\n",
         count.total, count.canonicalCount, count.forkCount, count.orphanCount);
+  }
+
+  static void importTrieLog(
+      final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
+      final Path dataDirectoryPath,
+      final Hash trieLogHash) {
+    final String trieLogFile = dataDirectoryPath.resolve(DATABASE_PATH) + "/" + trieLogHash;
+
+    var trieLog = readTrieLogsFromFile(trieLogFile);
+
+    var updater = rootWorldStateStorage.updater();
+    trieLog.forEach((key, value) -> updater.getTrieLogStorageTransaction().put(key, value));
+    updater.getTrieLogStorageTransaction().commit();
+  }
+
+  static void exportTrieLog(
+      final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
+      final Path dataDirectoryPath,
+      final Hash trieLogHash)
+      throws IOException {
+    final String trieLogFile = dataDirectoryPath.resolve(DATABASE_PATH) + "/" + trieLogHash;
+
+    saveTrieLogsInFile(singletonList(trieLogHash), rootWorldStateStorage, trieLogFile);
   }
 
   record TrieLogCount(int total, int canonicalCount, int forkCount, int orphanCount) {}
