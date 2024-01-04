@@ -57,6 +57,11 @@
       "moduleName": "org.reactivestreams:reactive-streams"
     },
     {
+      "moduleLicense": "MIT-0",
+      "moduleVersion": "1.0.4",
+      "moduleName": "org.reactivestreams:reactive-streams"
+    },
+    {
       "moduleLicense": "Eclipse Public License - v 1.0",
       "moduleVersion": "4.13.2",
       "moduleName": "junit:junit"
