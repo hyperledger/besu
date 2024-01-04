@@ -19,7 +19,6 @@ package org.hyperledger.besu.ethereum.bonsai;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE_BY_HASH;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
@@ -62,11 +61,7 @@ public class RollingImport {
     final SegmentedInMemoryKeyValueStorage worldStateStorage =
         (SegmentedInMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifiers(
-                List.of(
-                    ACCOUNT_INFO_STATE,
-                    CODE_STORAGE_BY_HASH,
-                    ACCOUNT_STORAGE_STORAGE,
-                    TRIE_BRANCH_STORAGE));
+                List.of(ACCOUNT_INFO_STATE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE));
 
     final InMemoryKeyValueStorage trieLogStorage =
         (InMemoryKeyValueStorage)

@@ -135,8 +135,7 @@ class LogRollingTests {
             provider, blockchain, cachedMerkleTrieLoader, new NoOpMetricsSystem(), null);
     accountStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
-    codeStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE_BY_HASH);
+    codeStorage = provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
     storageStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);
     trieBranchStorage =
@@ -157,8 +156,7 @@ class LogRollingTests {
     secondAccountStorage =
         secondProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
     secondCodeStorage =
-        secondProvider.getStorageBySegmentIdentifier(
-            KeyValueSegmentIdentifier.CODE_STORAGE_BY_HASH);
+        secondProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
     secondStorageStorage =
         secondProvider.getStorageBySegmentIdentifier(
             KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);

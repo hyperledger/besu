@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.bonsai.storage;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE_BY_HASH;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -86,11 +85,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     this.composedWorldStateStorage =
         provider.getStorageBySegmentIdentifiers(
             List.of(
-                ACCOUNT_INFO_STATE,
-                CODE_STORAGE,
-                CODE_STORAGE_BY_HASH,
-                ACCOUNT_STORAGE_STORAGE,
-                TRIE_BRANCH_STORAGE));
+                ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE));
     this.trieLogStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
     this.metricsSystem = metricsSystem;
@@ -149,7 +144,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public boolean isAccountHashCodeStorageMode() {
-    return composedWorldStateStorage.hasValues(CODE_STORAGE);
+    return true;
   }
 
   @Override

@@ -16,7 +16,7 @@
 package org.hyperledger.besu.ethereum.bonsai.storage.flat;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_HASH_COUNT;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE_BY_HASH;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -31,7 +31,7 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
   @Override
   public Optional<Bytes> getFlatCode(
       final Hash codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
-    return storage.get(CODE_STORAGE_BY_HASH, codeHash.toArrayUnsafe()).map(Bytes::wrap);
+    return storage.get(CODE_STORAGE, codeHash.toArrayUnsafe()).map(Bytes::wrap);
   }
 
   @Override
@@ -44,7 +44,7 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
     updateCodeHashCount(transaction, codeHash, codeHashCount + 1);
 
     if (codeHashCount == 0) {
-      transaction.put(CODE_STORAGE_BY_HASH, codeHash.toArrayUnsafe(), code.toArrayUnsafe());
+      transaction.put(CODE_STORAGE, codeHash.toArrayUnsafe(), code.toArrayUnsafe());
     }
   }
 
@@ -60,14 +60,14 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
     if (updatedCodeHashCount > 0) {
       updateCodeHashCount(transaction, codeHash, updatedCodeHashCount);
     } else {
-      transaction.remove(CODE_STORAGE_BY_HASH, codeHash.toArrayUnsafe());
+      transaction.remove(CODE_STORAGE, codeHash.toArrayUnsafe());
       transaction.remove(CODE_HASH_COUNT, codeHash.toArrayUnsafe());
     }
   }
 
   @Override
   public void clear(final SegmentedKeyValueStorage storage) {
-    storage.clear(CODE_STORAGE_BY_HASH);
+    storage.clear(CODE_STORAGE);
     storage.clear(CODE_HASH_COUNT);
   }
 
