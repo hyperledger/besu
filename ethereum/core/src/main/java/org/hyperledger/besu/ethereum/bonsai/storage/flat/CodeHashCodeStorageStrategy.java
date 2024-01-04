@@ -15,7 +15,6 @@
 
 package org.hyperledger.besu.ethereum.bonsai.storage.flat;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_HASH_COUNT;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -29,6 +28,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
   static final Bytes CODE_PREFIX = Bytes.of(1);
+  static final Bytes COUNT_PREFIX = Bytes.of(2);
 
   @Override
   public Optional<Bytes> getFlatCode(
@@ -63,20 +63,19 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
       updateCodeHashCount(transaction, codeHash, updatedCodeHashCount);
     } else {
       transaction.remove(CODE_STORAGE, prefixKey(CODE_PREFIX, codeHash));
-      transaction.remove(CODE_HASH_COUNT, codeHash.toArrayUnsafe());
+      transaction.remove(CODE_STORAGE, prefixKey(COUNT_PREFIX, codeHash));
     }
   }
 
   @Override
   public void clear(final SegmentedKeyValueStorage storage) {
     storage.clear(CODE_STORAGE);
-    storage.clear(CODE_HASH_COUNT);
   }
 
   private long getCodeHashCount(
       final SegmentedKeyValueStorageTransaction transaction, final Bytes32 codeHash) {
     return transaction
-        .get(CODE_HASH_COUNT, codeHash.toArrayUnsafe())
+        .get(CODE_STORAGE, prefixKey(COUNT_PREFIX, codeHash))
         .map(b -> Bytes.wrap(b).toLong())
         .orElse(0L);
   }
@@ -86,8 +85,8 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
       final Bytes32 codeHash,
       final long updatedCodeHashCount) {
     transaction.put(
-        CODE_HASH_COUNT,
-        codeHash.toArray(),
+        CODE_STORAGE,
+        prefixKey(COUNT_PREFIX, codeHash),
         Bytes.ofUnsignedLong(updatedCodeHashCount).trimLeadingZeros().toArrayUnsafe());
   }
 

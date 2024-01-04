@@ -16,7 +16,6 @@
 package org.hyperledger.besu.ethereum.bonsai.storage.flat;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_HASH_COUNT;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -36,20 +35,21 @@ import org.junit.jupiter.api.Test;
 class CodeHashCodeStorageStrategyTest {
   final CodeHashCodeStorageStrategy codeStorage = new CodeHashCodeStorageStrategy();
   final SegmentedKeyValueStorage keyValueStorage =
-      new InMemoryKeyValueStorageProvider()
-          .getStorageBySegmentIdentifiers(List.of(CODE_STORAGE, CODE_HASH_COUNT));
+      new InMemoryKeyValueStorageProvider().getStorageBySegmentIdentifiers(List.of(CODE_STORAGE));
   private static final Bytes CODE = Bytes.fromHexString("0x10");
   private static final Hash CODE_HASH = Hash.hash(CODE);
 
   private static final Bytes CODE_KEY =
       Bytes.concatenate(CodeHashCodeStorageStrategy.CODE_PREFIX, CODE_HASH);
+  private static final Bytes COUNT_KEY =
+      Bytes.concatenate(CodeHashCodeStorageStrategy.COUNT_PREFIX, CODE_HASH);
 
   @Test
   void updatesCodeCountWhenCodeDoesntAlreadyExist() {
     useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
 
     assertThat(keyValueStorage.get(CODE_STORAGE, CODE_KEY.toArray())).hasValue(CODE.toArray());
-    assertThat(keyValueStorage.get(CODE_HASH_COUNT, CODE_HASH.toArray())).hasValue(codeCount(1));
+    assertThat(keyValueStorage.get(CODE_STORAGE, COUNT_KEY.toArray())).hasValue(codeCount(1));
   }
 
   @Test
@@ -58,7 +58,7 @@ class CodeHashCodeStorageStrategyTest {
     useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
 
     assertThat(keyValueStorage.get(CODE_STORAGE, CODE_KEY.toArray())).hasValue(CODE.toArray());
-    assertThat(keyValueStorage.get(CODE_HASH_COUNT, CODE_HASH.toArray())).hasValue(codeCount(2));
+    assertThat(keyValueStorage.get(CODE_STORAGE, COUNT_KEY.toArray())).hasValue(codeCount(2));
   }
 
   @Test
@@ -70,14 +70,14 @@ class CodeHashCodeStorageStrategyTest {
         });
 
     assertThat(keyValueStorage.get(CODE_STORAGE, CODE_KEY.toArray())).hasValue(CODE.toArray());
-    assertThat(keyValueStorage.get(CODE_HASH_COUNT, CODE_HASH.toArray())).hasValue(codeCount(2));
+    assertThat(keyValueStorage.get(CODE_STORAGE, COUNT_KEY.toArray())).hasValue(codeCount(2));
   }
 
   @Test
   void onlyStoresCodeWhenCodeDoesNotAlreadyExist() {
     useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
     assertThat(keyValueStorage.get(CODE_STORAGE, CODE_KEY.toArray())).hasValue(CODE.toArray());
-    assertThat(keyValueStorage.get(CODE_HASH_COUNT, CODE_HASH.toArray())).hasValue(codeCount(1));
+    assertThat(keyValueStorage.get(CODE_STORAGE, COUNT_KEY.toArray())).hasValue(codeCount(1));
 
     // count will be incremented, but code will not be stored again
     useTransaction(
@@ -86,7 +86,7 @@ class CodeHashCodeStorageStrategyTest {
           codeStorage.putFlatCode(txSpy, Hash.ZERO, CODE_HASH, CODE);
           verify(txSpy, never()).put(CODE_STORAGE, CODE_HASH.toArray(), CODE.toArray());
         });
-    assertThat(keyValueStorage.get(CODE_HASH_COUNT, CODE_HASH.toArray())).hasValue(codeCount(2));
+    assertThat(keyValueStorage.get(CODE_STORAGE, COUNT_KEY.toArray())).hasValue(codeCount(2));
   }
 
   @Test
@@ -95,7 +95,7 @@ class CodeHashCodeStorageStrategyTest {
     useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, CODE_HASH));
 
     assertThat(keyValueStorage.get(CODE_STORAGE, CODE_KEY.toArray())).isEmpty();
-    assertThat(keyValueStorage.get(CODE_HASH_COUNT, CODE_HASH.toArray())).isEmpty();
+    assertThat(keyValueStorage.get(CODE_STORAGE, COUNT_KEY.toArray())).isEmpty();
   }
 
   @Test
@@ -105,7 +105,7 @@ class CodeHashCodeStorageStrategyTest {
     useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, CODE_HASH));
 
     assertThat(keyValueStorage.get(CODE_STORAGE, CODE_KEY.toArray())).hasValue(CODE.toArray());
-    assertThat(keyValueStorage.get(CODE_HASH_COUNT, CODE_HASH.toArray())).hasValue(codeCount(1));
+    assertThat(keyValueStorage.get(CODE_STORAGE, COUNT_KEY.toArray())).hasValue(codeCount(1));
   }
 
   @Test
@@ -114,7 +114,7 @@ class CodeHashCodeStorageStrategyTest {
     useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, CODE_HASH));
 
     assertThat(keyValueStorage.get(CODE_STORAGE, CODE_KEY.toArray())).isEmpty();
-    assertThat(keyValueStorage.get(CODE_HASH_COUNT, CODE_HASH.toArray())).isEmpty();
+    assertThat(keyValueStorage.get(CODE_STORAGE, COUNT_KEY.toArray())).isEmpty();
   }
 
   @Test
@@ -124,7 +124,6 @@ class CodeHashCodeStorageStrategyTest {
     codeStorage.clear(keyValueStorage);
 
     assertThat(keyValueStorage.hasValues(CODE_STORAGE)).isFalse();
-    assertThat(keyValueStorage.hasValues(CODE_HASH_COUNT)).isFalse();
   }
 
   private void useTransaction(
