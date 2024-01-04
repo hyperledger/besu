@@ -16,7 +16,6 @@
 package org.hyperledger.besu.tests.acceptance.dsl;
 
 import java.io.File;
-import java.util.Optional;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestWatcher;
@@ -25,17 +24,6 @@ import org.slf4j.LoggerFactory;
 
 public class AcceptanceTestBaseTestWatcher implements TestWatcher {
   private static final Logger LOG = LoggerFactory.getLogger(AcceptanceTestBaseTestWatcher.class);
-
-  @Override
-  public void testAborted(final ExtensionContext extensionContext, final Throwable throwable) {
-    LOG.info("test aborted:" + extensionContext.getDisplayName());
-  }
-
-  @Override
-  public void testDisabled(
-      final ExtensionContext extensionContext, final Optional<String> optional) {
-    LOG.info("test disabled:" + extensionContext.getDisplayName());
-  }
 
   @Override
   public void testFailed(final ExtensionContext extensionContext, final Throwable e) {
@@ -48,11 +36,16 @@ public class AcceptanceTestBaseTestWatcher implements TestWatcher {
 
   @Override
   public void testSuccessful(final ExtensionContext extensionContext) {
-    // TODO where is the other side of this - what creates these log files?
-
     // if so configured, delete logs of successful tests
     if (!Boolean.getBoolean("acctests.keepLogsOfPassingTests")) {
-      String pathname = "build/acceptanceTestLogs/" + extensionContext.getDisplayName() + ".log";
+      // log4j is configured to create a file per test
+      // build/acceptanceTestLogs/${ctx:class}.${ctx:test}.log
+      String pathname =
+          "build/acceptanceTestLogs/"
+              + extensionContext.getTestClass().get().getSimpleName()
+              + "."
+              + extensionContext.getTestMethod().get().getName()
+              + ".log";
       LOG.info("Test successful, deleting log at {}", pathname);
       File file = new File(pathname);
       file.delete();

@@ -56,7 +56,10 @@ import java.math.BigInteger;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.junit.After;
+import org.apache.logging.log4j.ThreadContext;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,7 +130,15 @@ public class AcceptanceTestBase {
     exitedSuccessfully = new ExitedWithCode(0);
   }
 
-  @After
+  @BeforeEach
+  public void setUp(final TestInfo testInfo) {
+    // log4j is configured to create a file per test
+    // build/acceptanceTestLogs/${ctx:class}.${ctx:test}.log
+    ThreadContext.put("class", this.getClass().getSimpleName());
+    ThreadContext.put("test", testInfo.getTestMethod().get().getName());
+  }
+
+  @AfterEach
   public void tearDownAcceptanceTestBase() {
     reportMemory();
     cluster.close();
