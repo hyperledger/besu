@@ -14,6 +14,7 @@
     "preMergeForkBlock": 0,
     "terminalTotalDifficulty": 0,
     "shanghaiTime": 1696000704,
+    "cancunTime": 1707305664,
     "ethash": {},
     "discovery": {
       "bootnodes": [
