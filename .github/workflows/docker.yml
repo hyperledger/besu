@@ -65,7 +65,7 @@ jobs:
       - name: test docker
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: testDocker
+          arguments: testDocker -PdockerOrgName=${{ secrets.DOCKER_ORG }}
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
