@@ -38,85 +38,88 @@ class CodeHashCodeStorageStrategyTest {
   final SegmentedKeyValueStorage keyValueStorage =
       new InMemoryKeyValueStorageProvider()
           .getStorageBySegmentIdentifiers(List.of(CODE_STORAGE, CODE_HASH_COUNT));
-  final Bytes code = Bytes.fromHexString("0x10");
-  final Hash codeHash = Hash.hash(code);
+  private static final Bytes CODE = Bytes.fromHexString("0x10");
+  private static final Hash CODE_HASH = Hash.hash(CODE);
+
+  private static final Bytes CODE_KEY =
+      Bytes.concatenate(CodeHashCodeStorageStrategy.CODE_PREFIX, CODE_HASH);
 
   @Test
   void updatesCodeCountWhenCodeDoesntAlreadyExist() {
-    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code));
+    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
 
-    assertThat(keyValueStorage.get(CODE_STORAGE, codeHash.toArray())).hasValue(code.toArray());
-    assertThat(keyValueStorage.get(CODE_HASH_COUNT, codeHash.toArray())).hasValue(codeCount(1));
+    assertThat(keyValueStorage.get(CODE_STORAGE, CODE_KEY.toArray())).hasValue(CODE.toArray());
+    assertThat(keyValueStorage.get(CODE_HASH_COUNT, CODE_HASH.toArray())).hasValue(codeCount(1));
   }
 
   @Test
   void updatesCodeCountWhenCodeAlreadyExists() {
-    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code));
-    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code));
+    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
+    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
 
-    assertThat(keyValueStorage.get(CODE_STORAGE, codeHash.toArray())).hasValue(code.toArray());
-    assertThat(keyValueStorage.get(CODE_HASH_COUNT, codeHash.toArray())).hasValue(codeCount(2));
+    assertThat(keyValueStorage.get(CODE_STORAGE, CODE_KEY.toArray())).hasValue(CODE.toArray());
+    assertThat(keyValueStorage.get(CODE_HASH_COUNT, CODE_HASH.toArray())).hasValue(codeCount(2));
   }
 
   @Test
   void updatesCodeCountForMultipleCodeUpdatesInSameTransaction() {
     useTransaction(
         t -> {
-          codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code);
-          codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code);
+          codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE);
+          codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE);
         });
 
-    assertThat(keyValueStorage.get(CODE_STORAGE, codeHash.toArray())).hasValue(code.toArray());
-    assertThat(keyValueStorage.get(CODE_HASH_COUNT, codeHash.toArray())).hasValue(codeCount(2));
+    assertThat(keyValueStorage.get(CODE_STORAGE, CODE_KEY.toArray())).hasValue(CODE.toArray());
+    assertThat(keyValueStorage.get(CODE_HASH_COUNT, CODE_HASH.toArray())).hasValue(codeCount(2));
   }
 
   @Test
   void onlyStoresCodeWhenCodeDoesNotAlreadyExist() {
-    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code));
-    assertThat(keyValueStorage.get(CODE_STORAGE, codeHash.toArray())).hasValue(code.toArray());
-    assertThat(keyValueStorage.get(CODE_HASH_COUNT, codeHash.toArray())).hasValue(codeCount(1));
+    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
+    assertThat(keyValueStorage.get(CODE_STORAGE, CODE_KEY.toArray())).hasValue(CODE.toArray());
+    assertThat(keyValueStorage.get(CODE_HASH_COUNT, CODE_HASH.toArray())).hasValue(codeCount(1));
 
     // count will be incremented, but code will not be stored again
     useTransaction(
         t -> {
           final var txSpy = spy(t);
-          codeStorage.putFlatCode(txSpy, Hash.ZERO, codeHash, code);
-          verify(txSpy, never()).put(CODE_STORAGE, codeHash.toArray(), code.toArray());
+          codeStorage.putFlatCode(txSpy, Hash.ZERO, CODE_HASH, CODE);
+          verify(txSpy, never()).put(CODE_STORAGE, CODE_HASH.toArray(), CODE.toArray());
         });
-    assertThat(keyValueStorage.get(CODE_HASH_COUNT, codeHash.toArray())).hasValue(codeCount(2));
+    assertThat(keyValueStorage.get(CODE_HASH_COUNT, CODE_HASH.toArray())).hasValue(codeCount(2));
   }
 
   @Test
   void removeDeletesWhenZeroReferences() {
-    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code));
-    useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, codeHash));
+    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
+    useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, CODE_HASH));
 
-    assertThat(keyValueStorage.get(CODE_STORAGE, codeHash.toArray())).isEmpty();
-    assertThat(keyValueStorage.get(CODE_HASH_COUNT, codeHash.toArray())).isEmpty();
+    assertThat(keyValueStorage.get(CODE_STORAGE, CODE_KEY.toArray())).isEmpty();
+    assertThat(keyValueStorage.get(CODE_HASH_COUNT, CODE_HASH.toArray())).isEmpty();
   }
 
   @Test
   void removeDoesntDeleteWhenMoreThanZeroReferences() {
-    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code));
-    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code));
-    useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, codeHash));
+    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
+    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
+    useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, CODE_HASH));
 
-    assertThat(keyValueStorage.get(CODE_STORAGE, codeHash.toArray())).hasValue(code.toArray());
-    assertThat(keyValueStorage.get(CODE_HASH_COUNT, codeHash.toArray())).hasValue(codeCount(1));
+    assertThat(keyValueStorage.get(CODE_STORAGE, CODE_KEY.toArray())).hasValue(CODE.toArray());
+    assertThat(keyValueStorage.get(CODE_HASH_COUNT, CODE_HASH.toArray())).hasValue(codeCount(1));
   }
 
   @Test
   void removeDoesntDecrementBelowZero() {
-    useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, codeHash));
-    useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, codeHash));
+    useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, CODE_HASH));
+    useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, CODE_HASH));
 
-    assertThat(keyValueStorage.get(CODE_STORAGE, codeHash.toArray())).isEmpty();
-    assertThat(keyValueStorage.get(CODE_HASH_COUNT, codeHash.toArray())).isEmpty();
+    assertThat(keyValueStorage.get(CODE_STORAGE, CODE_KEY.toArray())).isEmpty();
+    assertThat(keyValueStorage.get(CODE_HASH_COUNT, CODE_HASH.toArray())).isEmpty();
   }
 
   @Test
   void clearDeletesCodeStorageAndCodeHashCount() {
-    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, codeHash, code));
+    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
 
     codeStorage.clear(keyValueStorage);
 

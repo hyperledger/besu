@@ -28,10 +28,12 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
+  static final Bytes CODE_PREFIX = Bytes.of(1);
+
   @Override
   public Optional<Bytes> getFlatCode(
       final Hash codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
-    return storage.get(CODE_STORAGE, codeHash.toArrayUnsafe()).map(Bytes::wrap);
+    return storage.get(CODE_STORAGE, prefixKey(CODE_PREFIX, codeHash)).map(Bytes::wrap);
   }
 
   @Override
@@ -44,7 +46,7 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
     updateCodeHashCount(transaction, codeHash, codeHashCount + 1);
 
     if (codeHashCount == 0) {
-      transaction.put(CODE_STORAGE, codeHash.toArrayUnsafe(), code.toArrayUnsafe());
+      transaction.put(CODE_STORAGE, prefixKey(CODE_PREFIX, codeHash), code.toArrayUnsafe());
     }
   }
 
@@ -60,7 +62,7 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
     if (updatedCodeHashCount > 0) {
       updateCodeHashCount(transaction, codeHash, updatedCodeHashCount);
     } else {
-      transaction.remove(CODE_STORAGE, codeHash.toArrayUnsafe());
+      transaction.remove(CODE_STORAGE, prefixKey(CODE_PREFIX, codeHash));
       transaction.remove(CODE_HASH_COUNT, codeHash.toArrayUnsafe());
     }
   }
@@ -87,5 +89,9 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
         CODE_HASH_COUNT,
         codeHash.toArray(),
         Bytes.ofUnsignedLong(updatedCodeHashCount).trimLeadingZeros().toArrayUnsafe());
+  }
+
+  private byte[] prefixKey(final Bytes prefix, final Bytes key) {
+    return Bytes.concatenate(prefix, key).toArrayUnsafe();
   }
 }
