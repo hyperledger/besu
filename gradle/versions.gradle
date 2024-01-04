@@ -131,7 +131,7 @@ dependencyManagement {
 
     dependency 'net.java.dev.jna:jna:5.14.0'
 
-    dependencySet(group: 'org.antlr', version: '4.13.1') {
+    dependencySet(group: 'org.antlr', version: '4.11.1') {
       entry 'antlr4'
       entry 'antlr4-runtime'
     }
