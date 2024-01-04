@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.operator;
+package org.hyperledger.besu.cli.subcommands.operator;
 
 import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
@@ -22,11 +22,10 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.contentOf;
-import static org.hyperledger.besu.cli.operator.OperatorSubCommandTest.Cmd.cmd;
+import static org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommandTest.Cmd.cmd;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.CommandTestAbstract;
-import org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256R1;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
@@ -72,7 +71,7 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
           + System.lineSeparator()
           + "Commands:"
           + System.lineSeparator()
-          + "  generate-blockchain-config  Generates node keypairs and genesis file with RLP"
+          + "  generate-blockchain-config  Generate node keypairs and genesis file with RLP"
           + System.lineSeparator()
           + "                                encoded extra data."
           + System.lineSeparator()
