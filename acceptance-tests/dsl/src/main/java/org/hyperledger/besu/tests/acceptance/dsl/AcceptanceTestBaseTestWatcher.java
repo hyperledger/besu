@@ -38,17 +38,21 @@ public class AcceptanceTestBaseTestWatcher implements TestWatcher {
   public void testSuccessful(final ExtensionContext extensionContext) {
     // if so configured, delete logs of successful tests
     if (!Boolean.getBoolean("acctests.keepLogsOfPassingTests")) {
-      // log4j is configured to create a file per test
-      // build/acceptanceTestLogs/${ctx:class}.${ctx:test}.log
-      String pathname =
-          "build/acceptanceTestLogs/"
-              + extensionContext.getTestClass().get().getSimpleName()
-              + "."
-              + extensionContext.getTestMethod().get().getName()
-              + ".log";
-      LOG.info("Test successful, deleting log at {}", pathname);
-      File file = new File(pathname);
-      file.delete();
+      try {
+        // log4j is configured to create a file per test
+        // build/acceptanceTestLogs/${ctx:class}.${ctx:test}.log
+        String pathname =
+            "build/acceptanceTestLogs/"
+                + extensionContext.getTestClass().get().getSimpleName()
+                + "."
+                + extensionContext.getTestMethod().get().getName()
+                + ".log";
+        LOG.info("Test successful, deleting log at {}", pathname);
+        final File file = new File(pathname);
+        file.delete();
+      } catch (final Exception e) {
+        LOG.error("could not delete test file", e);
+      }
     }
   }
 }
