@@ -2,7 +2,6 @@
 name: artifacts
 
 on:
-  workflow_dispatch:
   release:
     types:
       - prereleased
@@ -21,22 +20,20 @@ jobs:
       - name: setup gradle
         uses: gradle/gradle-build-action@v2
       - name: assemble distributions
-        run: ./gradlew assemble -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+        run:
+          ./gradlew -Prelease.releaseVersion=${{github.ref_name}} assemble -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: hashes
         id: hashes
         run: |
-          echo "gitSha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "zipSha=$(shasum -a 256 build/distributions/besu*.zip)" >> $GITHUB_OUTPUT
           echo "tarSha=$(shasum -a 256 build/distributions/besu*.tar.gz)" >> $GITHUB_OUTPUT
       - name: upload tarball
         uses: actions/upload-artifact@v3
         with:
-          name: besu-${{ steps.hashes.outputs.gitSha }}.tar.gz
           path: 'build/distributions/besu*.tar.gz'
       - name: upload zipfile
         uses: actions/upload-artifact@v3
         with:
-          name: besu-${{ steps.hashes.outputs.gitSha }}.zip
           path: 'build/distributions/besu*.zip'
       - name: Upload Release assets
         uses: softprops/action-gh-release@v1
