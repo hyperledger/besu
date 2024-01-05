@@ -29,21 +29,26 @@ jobs:
       - name: hadoLint_graalvm
         run: docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
   buildDocker:
-    runs-on: ubuntu-22.04
+    runs-on: ${ matrix.platform }
     needs: hadolint
     strategy:
       fail-fast: false
       matrix:
         platform:
-          - linux/amd64
-          - linux/arm64
+          - ubuntu-22.04
+          - [self-hosted, ARM64, macOS]
     steps:
       - name: Prepare
         id: prep
         run: |
             platform=${{ matrix.platform }}
-            echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_OUTPUT
-            echo "ARCH=${platform//linux\//}" >> $GITHUB_OUTPUT
+            if [ "$platform" = 'ubuntu-22.04' ]; then 
+              echo "PLATFORM_PAIR=linux-amd64" >> $GITHUB_OUTPUT
+              echo "ARCH=amd64" >> $GITHUB_OUTPUT
+            else
+              echo "PLATFORM_PAIR=linux-arm64" >> $GITHUB_OUTPUT
+              echo "ARCH=arm64" >> $GITHUB_OUTPUT
+            fi
       - name: Checkout Repo
         uses: actions/checkout@v3
       - name: Set up Java
