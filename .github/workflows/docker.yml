@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   release:
     types:
-      - created
+      - prereleased
 
 jobs:
   hadolint:
@@ -49,11 +49,11 @@ jobs:
               echo "PLATFORM_PAIR=linux-arm64" >> $GITHUB_OUTPUT
               echo "ARCH=arm64" >> $GITHUB_OUTPUT
             fi
+      - name: Checkout Repo
+        uses: actions/checkout@v3
       - name: short sha
         id: shortSha
         run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-      - name: Checkout Repo
-        uses: actions/checkout@v3
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
