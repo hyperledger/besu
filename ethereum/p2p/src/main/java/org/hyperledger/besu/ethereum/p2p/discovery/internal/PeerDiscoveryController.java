@@ -21,7 +21,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
-import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
@@ -38,7 +37,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -131,9 +129,9 @@ public class PeerDiscoveryController {
   private final DiscoveryProtocolLogger discoveryProtocolLogger;
   private final LabelledMetric<Counter> interactionCounter;
   private final LabelledMetric<Counter> interactionRetryCounter;
-  private final ForkIdManager forkIdManager;
   private final boolean filterOnEnrForkId;
   private final RlpxAgent rlpxAgent;
+
   private RetryDelayFunction retryDelayFunction = RetryDelayFunction.linear(1.5, 2000, 60000);
 
   private final AsyncExecutor workerExecutor;
@@ -147,8 +145,6 @@ public class PeerDiscoveryController {
   private final AtomicBoolean peerTableIsDirty = new AtomicBoolean(false);
   private OptionalLong cleanTableTimerId = OptionalLong.empty();
   private RecursivePeerRefreshState recursivePeerRefreshState;
-  private final Map<Bytes, Long> timerIdMap = new HashMap<>();
-  private final Map<Bytes, AtomicBoolean> timerCheckMap = new HashMap<>();
 
   private PeerDiscoveryController(
       final NodeKey nodeKey,
@@ -164,7 +160,6 @@ public class PeerDiscoveryController {
       final PeerPermissions peerPermissions,
       final MetricsSystem metricsSystem,
       final Optional<Cache<Bytes, Packet>> maybeCacheForEnrRequests,
-      final ForkIdManager forkIdManager,
       final boolean filterOnEnrForkId,
       final RlpxAgent rlpxAgent) {
     this.timerUtil = timerUtil;
@@ -205,7 +200,6 @@ public class PeerDiscoveryController {
         maybeCacheForEnrRequests.orElse(
             CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, SECONDS).build());
 
-    this.forkIdManager = forkIdManager;
     this.filterOnEnrForkId = filterOnEnrForkId;
   }
 
@@ -335,36 +329,12 @@ public class PeerDiscoveryController {
         matchInteraction(packet)
             .ifPresent(
                 interaction -> {
-                  peer.setStatus(PeerDiscoveryStatus.BONDED);
-
                   if (filterOnEnrForkId) {
-                    discoveryProtocolLogger.logForkIdRequestedt(peer);
                     requestENR(peer);
-                    timerCheckMap.put(peerId, new AtomicBoolean(true));
-                    // if we do not get the ENR response within 5s we want to do the following:
-                    long timerId =
-                        timerUtil.setTimer(
-                            FIVE_SECONDS,
-                            () -> {
-                              final AtomicBoolean timerCheck = timerCheckMap.get(peerId);
-                              if (timerCheck != null && timerCheck.getAndSet(false)) {
-                                timerCheckMap.remove(peerId);
-                                timerIdMap.remove(peerId);
-                                discoveryProtocolLogger.logForkIdNotSent(peer);
-                                bondingPeers.invalidate(peerId);
-                                addToPeerTable(peer);
-                                recursivePeerRefreshState.onBondingComplete(peer);
-                                connectOnRlpxLayer(peer);
-                              }
-                            });
-                    timerIdMap.put(peerId, timerId);
-                  } else {
-                    discoveryProtocolLogger.logForkIdNotRequestedt(peer);
-                    bondingPeers.invalidate(peerId);
-                    addToPeerTable(peer);
-                    recursivePeerRefreshState.onBondingComplete(peer);
-                    connectOnRlpxLayer(peer);
                   }
+                  bondingPeers.invalidate(peerId);
+                  addToPeerTable(peer);
+                  recursivePeerRefreshState.onBondingComplete(peer);
                   Optional.ofNullable(cachedEnrRequests.getIfPresent(peerId))
                       .ifPresent(cachedEnrRequest -> processEnrRequest(peer, cachedEnrRequest));
                 });
@@ -401,39 +371,10 @@ public class PeerDiscoveryController {
         matchInteraction(packet)
             .ifPresent(
                 interaction -> {
-                  boolean checkWhetherToConnect = false;
-                  final AtomicBoolean timerCheck = timerCheckMap.get(peerId);
-                  if (timerCheck != null && timerCheck.getAndSet(false)) {
-                    timerCheckMap.remove(peerId);
-                    timerUtil.cancelTimer(timerIdMap.remove(peerId));
-                    bondingPeers.invalidate(peerId);
-                    addToPeerTable(peer);
-                    recursivePeerRefreshState.onBondingComplete(peer);
-                    checkWhetherToConnect = true;
-                  }
-
                   final Optional<ENRResponsePacketData> packetData =
                       packet.getPacketData(ENRResponsePacketData.class);
                   final NodeRecord enr = packetData.get().getEnr();
-
                   peer.setNodeRecord(enr);
-
-                  if (checkWhetherToConnect) {
-                    LOG.info("STEFAN peer {} checking whether to connect", peerId);
-                    final Optional<ForkId> maybeForkId = peer.getForkId();
-                    if (maybeForkId.isPresent()) {
-                      if (forkIdManager.peerCheck(maybeForkId.get())) {
-                        discoveryProtocolLogger.logForkIdSuccess(peer, maybeForkId.get());
-                        connectOnRlpxLayer(peer);
-                      } else {
-                        discoveryProtocolLogger.logForkIdFailure(peer, maybeForkId.get());
-                      }
-                    } else {
-                      discoveryProtocolLogger.logForkIdNotSent(peer);
-                      // if the peer hasn't sent the ForkId try to connect to it anyway
-                      connectOnRlpxLayer(peer);
-                    }
-                  }
                 });
         break;
     }
@@ -466,6 +407,11 @@ public class PeerDiscoveryController {
       peer.setFirstDiscovered(now);
     }
     peer.setLastSeen(now);
+
+    if (peer.getStatus() != PeerDiscoveryStatus.BONDED) {
+      peer.setStatus(PeerDiscoveryStatus.BONDED);
+      connectOnRlpxLayer(peer);
+    }
 
     final PeerTable.AddResult result = peerTable.tryAdd(peer);
 
@@ -889,7 +835,6 @@ public class PeerDiscoveryController {
           peerPermissions,
           metricsSystem,
           Optional.of(cachedEnrRequests),
-          forkIdManager,
           filterOnEnrForkId,
           rlpxAgent);
     }
