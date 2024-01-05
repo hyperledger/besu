@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   release:
     types:
-      - created
+      - prereleased
 
 jobs:
   artifacts:
