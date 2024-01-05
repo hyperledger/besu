@@ -74,10 +74,10 @@ jobs:
           arguments: testDocker -PdockerOrgName=${{ secrets.DOCKER_ORG }}
       - name: Login to DockerHub
         uses: docker/login-action@v2
-        env:
-          architecture: ${{ steps.prep.outputs.ARCH }}
         with:
           username: ${{ secrets.DOCKER_USER_RW }}
           password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: publish
+        env:
+          architecture: ${{ steps.prep.outputs.ARCH }}
         run: ./gradlew --no-daemon -PdockerOrgName=${{ secrets.DOCKER_ORG }} dockerUpload
