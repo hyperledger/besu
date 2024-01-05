@@ -125,7 +125,6 @@ public class BonsaiWorldStateKeyValueStorageTest {
       final FlatDbMode flatDbMode, final boolean accountHashCodeStorage) {
     setUp(flatDbMode, accountHashCodeStorage);
     assertThat(storage.getNodeData(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH)).isEmpty();
-    assertThat(storage.isAccountHashCodeStorageMode()).isEqualTo(accountHashCodeStorage);
   }
 
   @ParameterizedTest
@@ -141,7 +140,6 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
     assertThat(storage.getCode(Hash.hash(MerkleTrie.EMPTY_TRIE_NODE), Hash.EMPTY))
         .contains(MerkleTrie.EMPTY_TRIE_NODE);
-    assertThat(storage.isAccountHashCodeStorageMode()).isEqualTo(accountHashCodeStorage);
   }
 
   @ParameterizedTest
@@ -153,7 +151,6 @@ public class BonsaiWorldStateKeyValueStorageTest {
     storage.updater().putCode(Hash.EMPTY, bytes).commit();
 
     assertThat(storage.getCode(Hash.hash(bytes), Hash.EMPTY)).contains(bytes);
-    assertThat(storage.isAccountHashCodeStorageMode()).isEqualTo(accountHashCodeStorage);
   }
 
   @ParameterizedTest

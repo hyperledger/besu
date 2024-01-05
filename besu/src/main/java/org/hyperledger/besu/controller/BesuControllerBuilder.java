@@ -616,7 +616,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             .orElseGet(() -> new CachedMerkleTrieLoader(metricsSystem));
 
     final WorldStateArchive worldStateArchive =
-        createWorldStateArchive(worldStateStorage, blockchain, cachedMerkleTrieLoader);
+        createWorldStateArchive(
+            worldStateStorage, blockchain, cachedMerkleTrieLoader, variablesStorage);
 
     if (blockchain.getChainHeadBlockNumber() < 1) {
       genesisState.writeStateTo(worldStateArchive.getMutable());
@@ -1064,7 +1065,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   WorldStateArchive createWorldStateArchive(
       final WorldStateStorage worldStateStorage,
       final Blockchain blockchain,
-      final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
+      final CachedMerkleTrieLoader cachedMerkleTrieLoader,
+      final VariablesStorage variablesStorage) {
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI -> {
         final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
@@ -1080,6 +1082,24 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                     isProofOfStake)
                 : TrieLogPruner.noOpTrieLogPruner();
         trieLogPruner.initialize();
+
+        final boolean codeStoredByCodeHashEnabled =
+            dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
+        variablesStorage
+            .isCodeStoredUsingCodeHash()
+            .ifPresentOrElse(
+                codeStoredUsingCodeHash -> {
+                  if (codeStoredByCodeHashEnabled && !codeStoredUsingCodeHash) {
+                    throw new IllegalArgumentException(
+                        "Code stored by code hash enabled but database is not using code stored by code hash");
+                  }
+                },
+                () -> {
+                  final VariablesStorage.Updater updater = variablesStorage.updater();
+                  updater.setCodeStoredUsingCodeHash(codeStoredByCodeHashEnabled);
+                  updater.commit();
+                });
+
         yield new BonsaiWorldStateProvider(
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
             blockchain,

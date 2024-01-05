@@ -32,6 +32,7 @@ import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -124,6 +125,8 @@ public class BesuControllerBuilderTest {
                 new InMemoryKeyValueStorage(),
                 new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
                 new MainnetBlockHeaderFunctions()));
+    when(storageProvider.createVariablesStorage())
+        .thenReturn(new VariablesKeyValueStorage(new InMemoryKeyValueStorage()));
     when(synchronizerConfiguration.getDownloaderParallelism()).thenReturn(1);
     when(synchronizerConfiguration.getTransactionsParallelism()).thenReturn(1);
     when(synchronizerConfiguration.getComputationParallelism()).thenReturn(1);
@@ -170,7 +173,10 @@ public class BesuControllerBuilderTest {
     doReturn(worldStateArchive)
         .when(besuControllerBuilder)
         .createWorldStateArchive(
-            any(WorldStateStorage.class), any(Blockchain.class), any(CachedMerkleTrieLoader.class));
+            any(WorldStateStorage.class),
+            any(Blockchain.class),
+            any(CachedMerkleTrieLoader.class),
+            any(VariablesStorage.class));
     doReturn(mockWorldState).when(worldStateArchive).getMutable();
 
     when(storageProvider.createWorldStateStorage(DataStorageFormat.BONSAI))

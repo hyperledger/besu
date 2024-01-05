@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
@@ -74,6 +75,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   protected final KeyValueStorage trieLogStorage;
 
   protected final ObservableMetricsSystem metricsSystem;
+  protected final boolean useCodeHashStorageMode;
 
   private final AtomicBoolean shouldClose = new AtomicBoolean(false);
 
@@ -90,6 +92,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     this.trieLogStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
     this.metricsSystem = metricsSystem;
+    this.useCodeHashStorageMode = isCodeHashStorageMode(provider.createVariablesStorage());
     loadFlatDbStrategy();
   }
 
@@ -98,25 +101,26 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       final FlatDbStrategy flatDbStrategy,
       final SegmentedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage,
+      final boolean useCodeHashStorageMode,
       final ObservableMetricsSystem metricsSystem) {
     this.flatDbMode = flatDbMode;
     this.flatDbStrategy = flatDbStrategy;
     this.composedWorldStateStorage = composedWorldStateStorage;
     this.trieLogStorage = trieLogStorage;
     this.metricsSystem = metricsSystem;
+    this.useCodeHashStorageMode = useCodeHashStorageMode;
   }
 
   private void loadFlatDbStrategy() {
     // derive our flatdb strategy from db or default:
     var newFlatDbMode = deriveFlatDbStrategy();
-    final boolean useAccountHashCodeStorage = isAccountHashCodeStorageMode();
     // if  flatDbMode is not loaded or has changed, reload flatDbStrategy
     if (this.flatDbMode == null || !this.flatDbMode.equals(newFlatDbMode)) {
       this.flatDbMode = newFlatDbMode;
       if (flatDbMode == FlatDbMode.FULL) {
-        this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem, useAccountHashCodeStorage);
+        this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem, useCodeHashStorageMode);
       } else {
-        this.flatDbStrategy = new PartialFlatDbStrategy(metricsSystem, useAccountHashCodeStorage);
+        this.flatDbStrategy = new PartialFlatDbStrategy(metricsSystem, useCodeHashStorageMode);
       }
     }
   }
@@ -140,12 +144,16 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return flatDbStrategy;
   }
 
-  public SegmentedKeyValueStorage getWorldStateStorage() {
-    return composedWorldStateStorage;
+  private boolean isCodeHashStorageMode(final VariablesStorage variablesStorage) {
+    boolean useCodeHashStorageMode = variablesStorage.isCodeStoredUsingCodeHash().orElse(false);
+    LOG.info(
+        "Bonsai code storage using {}",
+        useCodeHashStorageMode ? "code hash" : "account hash");
+    return useCodeHashStorageMode;
   }
 
-  public boolean isAccountHashCodeStorageMode() {
-    return true;
+  public SegmentedKeyValueStorage getWorldStateStorage() {
+    return composedWorldStateStorage;
   }
 
   @Override
