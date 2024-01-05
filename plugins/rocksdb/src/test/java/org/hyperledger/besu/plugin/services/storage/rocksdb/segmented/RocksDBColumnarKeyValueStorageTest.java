@@ -358,7 +358,8 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
       this(id, false, false);
     }
 
-    TestSegment(final byte[] id, final boolean containsStaticData, final boolean eligibleToHighSpecFlag) {
+    TestSegment(
+        final byte[] id, final boolean containsStaticData, final boolean eligibleToHighSpecFlag) {
       this.id = id;
       this.nameAsUtf8 = new String(id, StandardCharsets.UTF_8);
       this.containsStaticData = containsStaticData;
@@ -384,8 +385,6 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     public boolean isEligibleToHighSpecFlag() {
       return eligibleToHighSpecFlag;
     }
-
-
   }
 
   protected abstract SegmentedKeyValueStorage createSegmentedStore() throws Exception;
