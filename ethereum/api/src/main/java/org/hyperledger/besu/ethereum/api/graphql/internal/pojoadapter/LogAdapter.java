@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
@@ -63,9 +64,9 @@ public class LogAdapter extends AdapterBase {
       blockNumber = bn;
     }
 
+    final Address logger = logWithMetadata.getLogger();
     return query
-        .getAndMapWorldState(
-            blockNumber, ws -> Optional.of(new AccountAdapter(ws.get(logWithMetadata.getLogger()))))
-        .get();
+        .getAndMapWorldState(blockNumber, ws -> Optional.of(new AccountAdapter(ws.get(logger))))
+        .orElse(new EmptyAccountAdapter(logger));
   }
 }

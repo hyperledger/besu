@@ -68,7 +68,7 @@ public class PrivacyTest {
 
   private final Vertx vertx = Vertx.vertx();
 
-  @TempDir private static Path dataDir;
+  @TempDir private Path dataDir;
 
   @AfterEach
   public void cleanUp() {
@@ -111,7 +111,7 @@ public class PrivacyTest {
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .networkId(BigInteger.ONE)
-        .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
+        .miningParameters(MiningParameters.newDefault())
         .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())
         .dataDirectory(dataDir)

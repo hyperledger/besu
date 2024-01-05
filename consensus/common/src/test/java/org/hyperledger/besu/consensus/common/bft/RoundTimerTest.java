@@ -28,20 +28,20 @@ import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
+@ExtendWith(MockitoExtension.class)
 public class RoundTimerTest {
   private BftExecutors bftExecutors;
   private BftEventQueue queue;
   private RoundTimer timer;
 
-  @Before
+  @BeforeEach
   public void initialise() {
     bftExecutors = mock(BftExecutors.class);
     queue = new BftEventQueue(1000);

@@ -53,7 +53,7 @@ public class EthGetLogsTest {
   private EthGetLogs method;
 
   @Mock BlockchainQueries blockchainQueries;
-  @Mock Optional<Long> maxLogRange;
+  long maxLogRange;
 
   @BeforeEach
   public void setUp() {
@@ -276,10 +276,8 @@ public class EthGetLogsTest {
   @Test
   public void shouldFailIfParamsExceedMaxRange() {
     final JsonRpcRequestContext request = buildRequest(0, 50);
-
-    when(maxLogRange.isPresent()).thenReturn(true);
-    when(maxLogRange.get()).thenReturn(20L);
-
+    maxLogRange = 20L;
+    method = new EthGetLogs(blockchainQueries, maxLogRange);
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;

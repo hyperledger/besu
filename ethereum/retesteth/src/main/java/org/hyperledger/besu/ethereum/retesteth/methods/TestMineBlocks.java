@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.retesteth.methods;
 
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -24,13 +23,12 @@ import org.hyperledger.besu.ethereum.blockcreation.PoWBlockCreator;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.retesteth.RetestethClock;
 import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
-
-import java.util.Optional;
 
 public class TestMineBlocks implements JsonRpcMethod {
   private final RetestethContext context;
@@ -62,18 +60,17 @@ public class TestMineBlocks implements JsonRpcMethod {
     final ProtocolContext protocolContext = context.getProtocolContext();
     final MutableBlockchain blockchain = context.getBlockchain();
     final HeaderValidationMode headerValidationMode = context.getHeaderValidationMode();
+    final MiningParameters miningParameters = context.getMiningParameters();
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
-            context.getCoinbase(),
-            () -> Optional.of(blockchain.getChainHeadHeader().getGasLimit()),
-            header -> context.getExtraData(),
+            miningParameters,
+            header -> miningParameters.getExtraData(),
             context.getTransactionPool(),
             protocolContext,
             protocolSchedule,
             context.getEthHashSolver(),
-            Wei.ZERO,
-            0.0,
-            blockchain.getChainHeadHeader());
+            blockchain.getChainHeadHeader(),
+            context.getEthScheduler());
     final Block block =
         blockCreator.createBlock(retesethClock.instant().getEpochSecond()).getBlock();
 

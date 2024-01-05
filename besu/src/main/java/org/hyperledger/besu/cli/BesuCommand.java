@@ -53,19 +53,19 @@ import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
+import org.hyperledger.besu.cli.options.MiningOptions;
+import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
 import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.stable.P2PTLSConfigOptions;
-import org.hyperledger.besu.cli.options.stable.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.unstable.ChainPruningOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EvmOptions;
 import org.hyperledger.besu.cli.options.unstable.IpcOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
-import org.hyperledger.besu.cli.options.unstable.MiningOptions;
 import org.hyperledger.besu.cli.options.unstable.NatOptions;
 import org.hyperledger.besu.cli.options.unstable.NativeLibraryOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
@@ -78,6 +78,7 @@ import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
 import org.hyperledger.besu.cli.subcommands.RetestethSubCommand;
+import org.hyperledger.besu.cli.subcommands.TxParseSubCommand;
 import org.hyperledger.besu.cli.subcommands.ValidateConfigSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
 import org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand;
@@ -122,6 +123,7 @@ import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -144,7 +146,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
-import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
+import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
@@ -283,11 +285,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final SynchronizerOptions unstableSynchronizerOptions = SynchronizerOptions.create();
   final EthProtocolOptions unstableEthProtocolOptions = EthProtocolOptions.create();
   final MetricsCLIOptions unstableMetricsCLIOptions = MetricsCLIOptions.create();
-  final org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions
-      unstableTransactionPoolOptions =
-          org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions.create();
   private final DnsOptions unstableDnsOptions = DnsOptions.create();
-  private final MiningOptions unstableMiningOptions = MiningOptions.create();
   private final NatOptions unstableNatOptions = NatOptions.create();
   private final NativeLibraryOptions unstableNativeLibraryOptions = NativeLibraryOptions.create();
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
@@ -297,15 +295,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final ChainPruningOptions unstableChainPruningOptions = ChainPruningOptions.create();
 
   // stable CLI options
-  private final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
+  final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
   private final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
   private final NodePrivateKeyFileOption nodePrivateKeyFileOption =
       NodePrivateKeyFileOption.create();
   private final LoggingLevelOption loggingLevelOption = LoggingLevelOption.create();
 
   @CommandLine.ArgGroup(validate = false, heading = "@|bold Tx Pool Common Options|@%n")
-  final org.hyperledger.besu.cli.options.stable.TransactionPoolOptions
-      stableTransactionPoolOptions = TransactionPoolOptions.create();
+  final TransactionPoolOptions transactionPoolOptions = TransactionPoolOptions.create();
+
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold Block Builder Options|@%n")
+  final MiningOptions miningOptions = MiningOptions.create();
 
   private final RunnerBuilder runnerBuilder;
   private final BesuController.Builder controllerBuilderFactory;
@@ -1068,63 +1068,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "How deep a chain reorganization must be in order for it to be logged (default: ${DEFAULT-VALUE})")
   private final Long reorgLoggingThreshold = 6L;
 
-  // Miner options group
-  @CommandLine.ArgGroup(validate = false, heading = "@|bold Miner Options|@%n")
-  MinerOptionGroup minerOptionGroup = new MinerOptionGroup();
-
-  static class MinerOptionGroup {
-    @Option(
-        names = {"--miner-enabled"},
-        description = "Set if node will perform mining (default: ${DEFAULT-VALUE})")
-    private final Boolean isMiningEnabled = false;
-
-    @Option(
-        names = {"--miner-stratum-enabled"},
-        description = "Set if node will perform Stratum mining (default: ${DEFAULT-VALUE})")
-    private final Boolean iStratumMiningEnabled = false;
-
-    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-    @Option(
-        names = {"--miner-stratum-host"},
-        description = "Host for Stratum network mining service (default: ${DEFAULT-VALUE})")
-    private String stratumNetworkInterface = "0.0.0.0";
-
-    @Option(
-        names = {"--miner-stratum-port"},
-        description = "Stratum port binding (default: ${DEFAULT-VALUE})")
-    private final Integer stratumPort = 8008;
-
-    @Option(
-        names = {"--miner-coinbase"},
-        description =
-            "Account to which mining rewards are paid. You must specify a valid coinbase if "
-                + "mining is enabled using --miner-enabled option",
-        arity = "1")
-    private final Address coinbase = null;
-
-    @Option(
-        names = {"--miner-extra-data"},
-        description =
-            "A hex string representing the (32) bytes to be included in the extra data "
-                + "field of a mined block (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private final Bytes extraData = DEFAULT_EXTRA_DATA;
-  }
-
-  @Option(
-      names = {"--min-gas-price"},
-      description =
-          "Minimum price (in Wei) offered by a transaction for it to be included in a mined "
-              + "block (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Wei minTransactionGasPrice = DEFAULT_MIN_TRANSACTION_GAS_PRICE;
-
-  @Option(
-      names = {"--min-block-occupancy-ratio"},
-      description = "Minimum occupancy ratio for a mined block (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Double minBlockOccupancyRatio = DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
-
   @Option(
       names = {"--pruning-enabled"},
       description =
@@ -1204,12 +1147,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       split = ",")
   private final Map<Long, Hash> requiredBlocks = new HashMap<>();
 
-  @Option(
-      names = {"--target-gas-limit"},
-      description =
-          "Sets target gas limit per block. If set, each block's gas limit will approach this setting over time if the current gas limit is different.")
-  private final Long targetGasLimit = null;
-
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--key-value-storage"},
@@ -1282,6 +1219,29 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Long apiGasPriceMax = 500_000_000_000L;
 
   @CommandLine.Option(
+      names = {"--api-gas-and-priority-fee-limiting-enabled"},
+      hidden = true,
+      description =
+          "Set to enable gas price and minimum priority fee limit in eth_getGasPrice and eth_feeHistory (default: ${DEFAULT-VALUE})")
+  private final Boolean apiGasAndPriorityFeeLimitingEnabled = false;
+
+  @CommandLine.Option(
+      names = {"--api-gas-and-priority-fee-lower-bound-coefficient"},
+      hidden = true,
+      description =
+          "Coefficient for setting the lower limit of gas price and minimum priority fee in eth_getGasPrice and eth_feeHistory (default: ${DEFAULT-VALUE})")
+  private final Long apiGasAndPriorityFeeLowerBoundCoefficient =
+      ApiConfiguration.DEFAULT_LOWER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT;
+
+  @CommandLine.Option(
+      names = {"--api-gas-and-priority-fee-upper-bound-coefficient"},
+      hidden = true,
+      description =
+          "Coefficient for setting the upper limit of gas price and minimum priority fee in eth_getGasPrice and eth_feeHistory (default: ${DEFAULT-VALUE})")
+  private final Long apiGasAndPriorityFeeUpperBoundCoefficient =
+      ApiConfiguration.DEFAULT_UPPER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT;
+
+  @CommandLine.Option(
       names = {"--static-nodes-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
@@ -1293,6 +1253,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Specifies the maximum number of blocks to retrieve logs from via RPC. Must be >=0. 0 specifies no limit  (default: ${DEFAULT-VALUE})")
   private final Long rpcMaxLogsRange = 5000L;
+
+  @CommandLine.Option(
+      names = {"--rpc-gas-cap"},
+      description =
+          "Specifies the gasLimit cap for transaction simulation RPC methods. Must be >=0. 0 specifies no limit  (default: ${DEFAULT-VALUE})")
+  private final Long rpcGasCap = 0L;
 
   @CommandLine.Option(
       names = {"--cache-last-blocks"},
@@ -1316,6 +1282,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Collection<EnodeURL> staticNodes;
   private BesuController besuController;
   private BesuConfiguration pluginCommonConfiguration;
+  private MiningParameters miningParameters;
 
   private BesuComponent besuComponent;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
@@ -1528,6 +1495,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             rlpBlockExporterFactory,
             commandLine.getOut()));
     commandLine.addSubcommand(
+        TxParseSubCommand.COMMAND_NAME, new TxParseSubCommand(commandLine.getOut()));
+    commandLine.addSubcommand(
         PublicKeySubCommand.COMMAND_NAME, new PublicKeySubCommand(commandLine.getOut()));
     commandLine.addSubcommand(
         PasswordSubCommand.COMMAND_NAME, new PasswordSubCommand(commandLine.getOut()));
@@ -1585,8 +1554,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("NAT Configuration", unstableNatOptions)
             .put("Privacy Plugin Configuration", unstablePrivacyPluginOptions)
             .put("Synchronizer", unstableSynchronizerOptions)
-            .put("TransactionPool", unstableTransactionPoolOptions)
-            .put("Mining", unstableMiningOptions)
             .put("Native Library", unstableNativeLibraryOptions)
             .put("EVM Options", unstableEvmOptions)
             .put("IPC Options", unstableIpcOptions)
@@ -1728,7 +1695,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--privacy-marker-transaction-signing-key-file can not be used in conjunction with a plugin that specifies a PrivateMarkerTransactionFactory");
       }
 
-      if (Wei.ZERO.compareTo(minTransactionGasPrice) < 0
+      if (Wei.ZERO.compareTo(getMiningParameters().getMinTransactionGasPrice()) < 0
           && (privacyOptionGroup.privateMarkerTransactionSigningKeyPath == null
               && (privacyPluginService == null
                   || privacyPluginService.getPrivateMarkerTransactionFactory() == null))) {
@@ -1850,12 +1817,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateChainDataPruningParams();
     validatePostMergeCheckpointBlockRequirements();
     validateTransactionPoolOptions();
+    validateDataStorageOptions();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
     pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
   }
 
   private void validateTransactionPoolOptions() {
-    stableTransactionPoolOptions.validate(commandLine);
+    transactionPoolOptions.validate(commandLine, getActualGenesisConfigOptions());
+  }
+
+  private void validateDataStorageOptions() {
+    dataStorageOptions.validate(commandLine);
   }
 
   private void validateRequiredOptions() {
@@ -1871,35 +1843,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             });
   }
 
-  @SuppressWarnings("ConstantConditions")
   private void validateMiningParams() {
-    if (Boolean.TRUE.equals(minerOptionGroup.isMiningEnabled)
-        && minerOptionGroup.coinbase == null) {
-      throw new ParameterException(
-          this.commandLine,
-          "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled) "
-              + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
-    }
-    if (Boolean.FALSE.equals(minerOptionGroup.isMiningEnabled)
-        && Boolean.TRUE.equals(minerOptionGroup.iStratumMiningEnabled)) {
-      throw new ParameterException(
-          this.commandLine,
-          "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) "
-              + "or specify mining is enabled (--miner-enabled)");
-    }
-    if (unstableMiningOptions.getPosBlockCreationMaxTime() <= 0
-        || unstableMiningOptions.getPosBlockCreationMaxTime()
-            > MiningParameters.DEFAULT_POS_BLOCK_CREATION_MAX_TIME) {
-      throw new ParameterException(
-          this.commandLine, "--Xpos-block-creation-max-time must be positive and ≤ 12000");
-    }
-
-    if (unstableMiningOptions.getPosBlockCreationRepetitionMinDuration() <= 0
-        || unstableMiningOptions.getPosBlockCreationRepetitionMinDuration() > 2000) {
-      throw new ParameterException(
-          this.commandLine,
-          "--Xpos-block-creation-repetition-min-duration must be positive and ≤ 2000");
-    }
+    miningOptions.validate(commandLine, getActualGenesisConfigOptions(), isMergeEnabled(), logger);
   }
 
   /**
@@ -1954,6 +1899,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "The `--Xdns-update-enabled` requires dns to be enabled. Either remove --Xdns-update-enabled"
               + " or specify dns is enabled (--Xdns-enabled)");
     }
+  }
+
+  private void checkApiOptionsDependencies() {
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--api-gas-and-priority-fee-limiting-enabled",
+        !apiGasAndPriorityFeeLimitingEnabled,
+        asList(
+            "--api-gas-and-priority-fee-upper-bound-coefficient",
+            "--api-gas-and-priority-fee-lower-bound-coefficient"));
   }
 
   private void ensureValidPeerBoundParams() {
@@ -2072,31 +2028,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--p2p-port",
             "--remote-connections-max-percentage"));
 
-    // Check that block producer options work
-    if (!isMergeEnabled() && getActualGenesisConfigOptions().isEthHash()) {
-      CommandLineUtils.checkOptionDependencies(
-          logger,
-          commandLine,
-          "--miner-enabled",
-          !minerOptionGroup.isMiningEnabled,
-          asList(
-              "--miner-coinbase",
-              "--min-gas-price",
-              "--min-block-occupancy-ratio",
-              "--miner-extra-data"));
-
-      // Check that mining options are able to work
-      CommandLineUtils.checkOptionDependencies(
-          logger,
-          commandLine,
-          "--miner-enabled",
-          !minerOptionGroup.isMiningEnabled,
-          asList(
-              "--miner-stratum-enabled",
-              "--Xminer-remote-sealers-limit",
-              "--Xminer-remote-sealers-hashrate-ttl"));
-    }
-
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
         "--fast-sync-min-peers can't be used with FULL sync-mode",
@@ -2130,6 +2061,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           DEPRECATION_WARNING_MSG,
           "--privacy-onchain-groups-enabled",
           "--privacy-flexible-groups-enabled");
+    }
+
+    if (isPruningEnabled()) {
+      logger.warn(
+          "Forest pruning is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format.");
     }
   }
 
@@ -2187,8 +2123,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     instantiateSignatureAlgorithmFactory();
 
     logger.info(generateConfigurationOverview());
-    logger.info("Connecting to {} static nodes.", staticNodes.size());
-    logger.trace("Static Nodes = {}", staticNodes);
     logger.info("Security Module: {}", securityModuleName);
   }
 
@@ -2250,26 +2184,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .transactionSelectorFactory(getTransactionSelectorFactory())
         .pluginTransactionValidatorFactory(getPluginTransactionValidatorFactory())
         .dataDirectory(dataDir())
-        .miningParameters(
-            new MiningParameters.Builder()
-                .coinbase(minerOptionGroup.coinbase)
-                .targetGasLimit(targetGasLimit)
-                .minTransactionGasPrice(minTransactionGasPrice)
-                .extraData(minerOptionGroup.extraData)
-                .miningEnabled(minerOptionGroup.isMiningEnabled)
-                .stratumMiningEnabled(minerOptionGroup.iStratumMiningEnabled)
-                .stratumNetworkInterface(minerOptionGroup.stratumNetworkInterface)
-                .stratumPort(minerOptionGroup.stratumPort)
-                .stratumExtranonce(unstableMiningOptions.getStratumExtranonce())
-                .minBlockOccupancyRatio(minBlockOccupancyRatio)
-                .remoteSealersLimit(unstableMiningOptions.getRemoteSealersLimit())
-                .remoteSealersTimeToLive(unstableMiningOptions.getRemoteSealersTimeToLive())
-                .powJobTimeToLive(unstableMiningOptions.getPowJobTimeToLive())
-                .maxOmmerDepth(unstableMiningOptions.getMaxOmmersDepth())
-                .posBlockCreationMaxTime(unstableMiningOptions.getPosBlockCreationMaxTime())
-                .posBlockCreationRepetitionMinDuration(
-                    unstableMiningOptions.getPosBlockCreationRepetitionMinDuration())
-                .build())
+        .miningParameters(getMiningParameters())
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(new NodeKey(securityModule()))
         .metricsSystem(metricsSystem.get())
@@ -2284,9 +2199,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             new PrunerConfiguration(pruningBlockConfirmations, pruningBlocksRetained))
         .genesisConfigOverrides(genesisConfigOverrides)
         .gasLimitCalculator(
-            Optional.ofNullable(targetGasLimit)
-                .<GasLimitCalculator>map(z -> new FrontierTargetingGasLimitCalculator())
-                .orElse(GasLimitCalculator.constant()))
+            getMiningParameters().getTargetGasLimit().isPresent()
+                ? new FrontierTargetingGasLimitCalculator()
+                : GasLimitCalculator.constant())
         .requiredBlocks(requiredBlocks)
         .reorgLoggingThreshold(reorgLoggingThreshold)
         .evmConfiguration(unstableEvmOptions.toDomainObject())
@@ -2610,12 +2525,28 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private ApiConfiguration apiConfiguration() {
-    return ImmutableApiConfiguration.builder()
-        .gasPriceBlocks(apiGasPriceBlocks)
-        .gasPricePercentile(apiGasPricePercentile)
-        .gasPriceMin(minTransactionGasPrice.toLong())
-        .gasPriceMax(apiGasPriceMax)
-        .build();
+    checkApiOptionsDependencies();
+    var builder =
+        ImmutableApiConfiguration.builder()
+            .gasPriceBlocks(apiGasPriceBlocks)
+            .gasPricePercentile(apiGasPricePercentile)
+            .gasPriceMinSupplier(
+                getMiningParameters().getMinTransactionGasPrice().getAsBigInteger()::longValueExact)
+            .gasPriceMax(apiGasPriceMax)
+            .maxLogsRange(rpcMaxLogsRange)
+            .gasCap(rpcGasCap)
+            .isGasAndPriorityFeeLimitingEnabled(apiGasAndPriorityFeeLimitingEnabled);
+    if (apiGasAndPriorityFeeLimitingEnabled) {
+      if (apiGasAndPriorityFeeLowerBoundCoefficient > apiGasAndPriorityFeeUpperBoundCoefficient) {
+        throw new ParameterException(
+            this.commandLine,
+            "--api-gas-and-priority-fee-lower-bound-coefficient cannot be greater than the value of --api-gas-and-priority-fee-upper-bound-coefficient");
+      }
+      builder
+          .lowerBoundGasAndPriorityFeeCoefficient(apiGasAndPriorityFeeLowerBoundCoefficient)
+          .upperBoundGasAndPriorityFeeCoefficient(apiGasAndPriorityFeeUpperBoundCoefficient);
+    }
+    return builder.build();
   }
 
   /**
@@ -2941,12 +2872,75 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private TransactionPoolConfiguration buildTransactionPoolConfiguration() {
-    final var stableTxPoolOption = stableTransactionPoolOptions.toDomainObject();
-    return ImmutableTransactionPoolConfiguration.builder()
-        .from(stableTxPoolOption)
-        .unstable(unstableTransactionPoolOptions.toDomainObject())
-        .saveFile((dataPath.resolve(stableTxPoolOption.getSaveFile().getPath()).toFile()))
-        .build();
+    final var txPoolConf = transactionPoolOptions.toDomainObject();
+    final var txPoolConfBuilder =
+        ImmutableTransactionPoolConfiguration.builder()
+            .from(txPoolConf)
+            .saveFile((dataPath.resolve(txPoolConf.getSaveFile().getPath()).toFile()));
+
+    if (getActualGenesisConfigOptions().isZeroBaseFee()) {
+      logger.info(
+          "Forcing price bump for transaction replacement to 0, since we are on a zero basefee network");
+      txPoolConfBuilder.priceBump(Percentage.ZERO);
+    }
+
+    if (getMiningParameters().getMinTransactionGasPrice().equals(Wei.ZERO)
+        && !transactionPoolOptions.isPriceBumpSet(commandLine)) {
+      logger.info(
+          "Forcing price bump for transaction replacement to 0, since min-gas-price is set to 0");
+      txPoolConfBuilder.priceBump(Percentage.ZERO);
+    }
+
+    if (getMiningParameters().getMinTransactionGasPrice().lessThan(txPoolConf.getMinGasPrice())) {
+      if (transactionPoolOptions.isMinGasPriceSet(commandLine)) {
+        throw new ParameterException(
+            commandLine, "tx-pool-min-gas-price cannot be greater than the value of min-gas-price");
+
+      } else {
+        // for backward compatibility, if tx-pool-min-gas-price is not set, we adjust its value
+        // to be the same as min-gas-price, so the behavior is as before this change, and we notify
+        // the user of the change
+        logger.warn(
+            "Forcing tx-pool-min-gas-price="
+                + getMiningParameters().getMinTransactionGasPrice().toDecimalString()
+                + ", since it cannot be greater than the value of min-gas-price");
+        txPoolConfBuilder.minGasPrice(getMiningParameters().getMinTransactionGasPrice());
+      }
+    }
+
+    return txPoolConfBuilder.build();
+  }
+
+  private MiningParameters getMiningParameters() {
+    if (miningParameters == null) {
+      final var miningParametersBuilder =
+          ImmutableMiningParameters.builder().from(miningOptions.toDomainObject());
+      final var actualGenesisOptions = getActualGenesisConfigOptions();
+      if (actualGenesisOptions.isPoa()) {
+        miningParametersBuilder.unstable(
+            ImmutableMiningParameters.Unstable.builder()
+                .minBlockTime(getMinBlockTime(actualGenesisOptions))
+                .build());
+      }
+      miningParameters = miningParametersBuilder.build();
+    }
+    return miningParameters;
+  }
+
+  private int getMinBlockTime(final GenesisConfigOptions genesisConfigOptions) {
+    if (genesisConfigOptions.isClique()) {
+      return genesisConfigOptions.getCliqueConfigOptions().getBlockPeriodSeconds();
+    }
+
+    if (genesisConfigOptions.isIbft2()) {
+      return genesisConfigOptions.getBftConfigOptions().getBlockPeriodSeconds();
+    }
+
+    if (genesisConfigOptions.isQbft()) {
+      return genesisConfigOptions.getQbftConfigOptions().getBlockPeriodSeconds();
+    }
+
+    throw new IllegalArgumentException("Should only be called for a PoA network");
   }
 
   private boolean isPruningEnabled() {
@@ -3014,7 +3008,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .ethstatsOptions(ethstatsOptions)
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .rpcEndpointService(rpcEndpointServiceImpl)
-            .rpcMaxLogsRange(rpcMaxLogsRange)
             .enodeDnsConfiguration(getEnodeDnsConfiguration())
             .build();
 
@@ -3127,9 +3120,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (listBootNodes != null) {
       if (!p2PDiscoveryOptionGroup.peerDiscoveryEnabled) {
         logger.warn("Discovery disabled: bootnodes will be ignored.");
+      } else {
+        logger.info("Configured {} bootnodes.", listBootNodes.size());
+        logger.debug("Bootnodes = {}", listBootNodes);
       }
       DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
       builder.setBootNodes(listBootNodes);
+    } else {
+      logger.info("0 Bootnodes configured");
     }
     return builder.build();
   }
@@ -3232,7 +3230,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       staticNodesPath = dataDir().resolve(staticNodesFilename);
     }
     logger.debug("Static Nodes file: {}", staticNodesPath);
-    return StaticNodesParser.fromPath(staticNodesPath, getEnodeDnsConfiguration());
+    final Set<EnodeURL> staticNodes =
+        StaticNodesParser.fromPath(staticNodesPath, getEnodeDnsConfiguration());
+    logger.info("Connecting to {} static nodes.", staticNodes.size());
+    logger.debug("Static Nodes = {}", staticNodes);
+    return staticNodes;
   }
 
   private List<EnodeURL> buildEnodes(
@@ -3244,7 +3246,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   /**
-   * Besu CLI Paramaters exception handler used by VertX. Visible for testing.
+   * Besu CLI Parameters exception handler used by VertX. Visible for testing.
    *
    * @return instance of BesuParameterExceptionHandler
    */
@@ -3344,7 +3346,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     addPortIfEnabled(
         effectivePorts, metricsOptionGroup.metricsPort, metricsOptionGroup.isMetricsEnabled);
     addPortIfEnabled(
-        effectivePorts, minerOptionGroup.stratumPort, minerOptionGroup.iStratumMiningEnabled);
+        effectivePorts,
+        getMiningParameters().getStratumPort(),
+        getMiningParameters().isStratumMiningEnabled());
     return effectivePorts;
   }
 
@@ -3522,6 +3526,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     builder.setHasCustomGenesis(genesisFile != null);
+    if (genesisFile != null) {
+      builder.setCustomGenesis(genesisFile.getAbsolutePath());
+    }
     builder.setNetworkId(ethNetworkConfig.getNetworkId());
 
     builder
@@ -3553,7 +3560,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setHighSpecEnabled();
     }
 
+    if (dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningEnabled()) {
+      builder.setTrieLogPruningEnabled();
+      builder.setTrieLogRetentionThreshold(
+          dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogRetentionThreshold());
+      builder.setTrieLogPruningLimit(
+          dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningLimit());
+    }
+
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
+    builder.setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode());
+
+    builder.setPluginContext(besuComponent.getBesuPluginContext());
 
     return builder.build();
   }

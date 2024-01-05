@@ -89,6 +89,7 @@ rpc-http-max-request-content-length = 5242880
 rpc-max-logs-range=100
 json-pretty-print-enabled=false
 cache-last-blocks=512
+rpc-gas-cap = 50000000
 
 # PRIVACY TLS
 privacy-tls-enabled=false
@@ -137,6 +138,7 @@ miner-stratum-enabled=false
 miner-coinbase="0x0000000000000000000000000000000000000002"
 miner-extra-data="0x444F4E27542050414E4943202120484F444C2C20484F444C2C20484F444C2021"
 min-gas-price=1
+min-priority-fee=0
 min-block-occupancy-ratio=0.7
 miner-stratum-host="0.0.0.0"
 miner-stratum-port=8008
@@ -183,10 +185,11 @@ tx-pool-save-file="txpool.dump"
 tx-pool-layer-max-capacity=12345678
 tx-pool-max-prioritized=9876
 tx-pool-max-future-by-sender=321
-## Legacy
+## Legacy/Sequenced
 tx-pool-retention-hours=999
 tx-pool-max-size=1234
 tx-pool-limit-by-account-percentage=0.017
+tx-pool-min-gas-price=1000
 
 # Revert Reason
 revert-reason-enabled=false

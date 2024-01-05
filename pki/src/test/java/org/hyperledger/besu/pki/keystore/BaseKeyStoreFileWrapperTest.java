@@ -14,29 +14,21 @@
  */
 package org.hyperledger.besu.pki.keystore;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.nio.file.Path;
 import java.security.cert.Certificate;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public abstract class BaseKeyStoreFileWrapperTest {
   protected static final String KEYSTORE_VALID_KEY_ALIAS = "partner1client1";
   protected static final String KEYSTORE_INVALID_KEY_ALIAS = "partner1clientinvalid";
   protected static final String TRUSTSTORE_VALID_CERTIFICATE_ALIAS = "interca";
   protected static final String TRUSTSTORE_INVALID_CERTIFICATE_ALIAS = "interca-invalid";
-
-  @Parameterized.Parameter public String keyStoreWrapperDescription;
-
-  @Parameterized.Parameter(1)
-  public boolean keystoreWrapperConfiguredWithTruststore;
-
-  @Parameterized.Parameter(2)
-  public KeyStoreWrapper keyStoreWrapper;
 
   protected static Path toPath(final String path) throws Exception {
     return null == path
@@ -44,83 +36,121 @@ public abstract class BaseKeyStoreFileWrapperTest {
         : Path.of(BaseKeyStoreFileWrapperTest.class.getResource(path).toURI());
   }
 
-  @Test
-  public void getPublicKey_WithValidAlias_ReturnsExpectedValue() {
-    assertThat(keyStoreWrapper.getPublicKey(KEYSTORE_VALID_KEY_ALIAS))
-        .as("Public key is not null")
-        .isNotNull();
+  @ParameterizedTest
+  @MethodSource("data")
+  public void getPublicKey_WithValidAlias_ReturnsExpectedValue(
+      final KeyStoreWrapperTestParameter keyStoreWrapperTestParameter) {
+    assertNotNull(
+        keyStoreWrapperTestParameter.keyStoreWrapper.getPublicKey(KEYSTORE_VALID_KEY_ALIAS));
   }
 
-  @Test
-  public void getPublicKey_WithInvalidAlias_ReturnsExpectedValue() {
-    assertThat(keyStoreWrapper.getPublicKey(KEYSTORE_INVALID_KEY_ALIAS))
-        .as("Public key is null")
-        .isNull();
+  @ParameterizedTest
+  @MethodSource("data")
+  public void getPublicKey_WithInvalidAlias_ReturnsExpectedValue(
+      final KeyStoreWrapperTestParameter keyStoreWrapperTestParameter) {
+    assertNull(
+        keyStoreWrapperTestParameter.keyStoreWrapper.getPublicKey(KEYSTORE_INVALID_KEY_ALIAS));
   }
 
-  @Test
-  public void getPrivateKey_WithValidAlias_ReturnsExpectedValue() {
-    assertThat(keyStoreWrapper.getPrivateKey(KEYSTORE_VALID_KEY_ALIAS))
-        .as("Private key is not null")
-        .isNotNull();
+  @ParameterizedTest
+  @MethodSource("data")
+  public void getPrivateKey_WithValidAlias_ReturnsExpectedValue(
+      final KeyStoreWrapperTestParameter keyStoreWrapperTestParameter) {
+    assertNotNull(
+        keyStoreWrapperTestParameter.keyStoreWrapper.getPrivateKey(KEYSTORE_VALID_KEY_ALIAS),
+        "Private key is not null");
   }
 
-  @Test
-  public void getPrivateKey_WithInvalidAlias_ReturnsExpectedValue() {
-    assertThat(keyStoreWrapper.getPrivateKey(KEYSTORE_INVALID_KEY_ALIAS))
-        .as("Private key is null")
-        .isNull();
+  @ParameterizedTest
+  @MethodSource("data")
+  public void getPrivateKey_WithInvalidAlias_ReturnsExpectedValue(
+      final KeyStoreWrapperTestParameter keyStoreWrapperTestParameter) {
+    assertNull(
+        keyStoreWrapperTestParameter.keyStoreWrapper.getPrivateKey(KEYSTORE_INVALID_KEY_ALIAS),
+        "Private key is null");
   }
 
-  @Test
-  public void getCertificate_WithValidAlias_ReturnsExpectedValue() {
-    assertThat(keyStoreWrapper.getCertificate(KEYSTORE_VALID_KEY_ALIAS))
-        .as("Certificate is not null")
-        .isNotNull();
+  @ParameterizedTest
+  @MethodSource("data")
+  public void getCertificate_WithValidAlias_ReturnsExpectedValue(
+      final KeyStoreWrapperTestParameter keyStoreWrapperTestParameter) {
+    assertNotNull(
+        keyStoreWrapperTestParameter.keyStoreWrapper.getCertificate(KEYSTORE_VALID_KEY_ALIAS),
+        "Certificate is not null");
   }
 
-  @Test
-  public void getCertificate_WithInvalidAlias_ReturnsExpectedValue() {
-    assertThat(keyStoreWrapper.getCertificate(KEYSTORE_INVALID_KEY_ALIAS))
-        .as("Certificate is null")
-        .isNull();
+  @ParameterizedTest
+  @MethodSource("data")
+  public void getCertificate_WithInvalidAlias_ReturnsExpectedValue(
+      final KeyStoreWrapperTestParameter keyStoreWrapperTestParameter) {
+    assertNull(
+        keyStoreWrapperTestParameter.keyStoreWrapper.getCertificate(KEYSTORE_INVALID_KEY_ALIAS),
+        "Certificate is null");
   }
 
-  @Test
-  public void getCertificateChain_WithValidAlias_ReturnsExpectedValue() {
-    assertThat(keyStoreWrapper.getCertificateChain(KEYSTORE_VALID_KEY_ALIAS))
-        .as("Certificate chain is not null")
-        .isNotNull();
+  @ParameterizedTest
+  @MethodSource("data")
+  public void getCertificateChain_WithValidAlias_ReturnsExpectedValue(
+      final KeyStoreWrapperTestParameter keyStoreWrapperTestParameter) {
+    assertNotNull(
+        keyStoreWrapperTestParameter.keyStoreWrapper.getCertificateChain(KEYSTORE_VALID_KEY_ALIAS),
+        "Certificate chain is not null");
   }
 
-  @Test
-  public void getCertificateChain_WithInvalidAlias_ReturnsExpectedValue() {
-    assertThat(keyStoreWrapper.getCertificateChain(KEYSTORE_INVALID_KEY_ALIAS))
-        .as("Certificate is null")
-        .isNull();
+  @ParameterizedTest
+  @MethodSource("data")
+  public void getCertificateChain_WithInvalidAlias_ReturnsExpectedValue(
+      final KeyStoreWrapperTestParameter keyStoreWrapperTestParameter) {
+    assertNull(
+        keyStoreWrapperTestParameter.keyStoreWrapper.getCertificateChain(
+            KEYSTORE_INVALID_KEY_ALIAS),
+        "Certificate is null");
   }
 
-  @Test
-  public void getCertificate_FromTruststore_WithValidAlias_ReturnsExpectedValue() {
+  @ParameterizedTest
+  @MethodSource("data")
+  public void getCertificate_FromTruststore_WithValidAlias_ReturnsExpectedValue(
+      final KeyStoreWrapperTestParameter keyStoreWrapperTestParameter) {
     final Certificate certificate =
-        keyStoreWrapper.getCertificate(TRUSTSTORE_VALID_CERTIFICATE_ALIAS);
-    if (keystoreWrapperConfiguredWithTruststore) {
-      assertThat(certificate).as("Certificate is not null").isNotNull();
+        keyStoreWrapperTestParameter.keyStoreWrapper.getCertificate(
+            TRUSTSTORE_VALID_CERTIFICATE_ALIAS);
+    if (keyStoreWrapperTestParameter.keystoreWrapperConfiguredWithTruststore) {
+      assertNotNull(certificate, "Certificate is not null");
     } else {
-      assertThat(certificate).as("Certificate is null").isNull();
+      assertNull(certificate, "Certificate is null");
     }
   }
 
-  @Test
-  public void getCertificate_FromTruststore_WithInvalidAlias_ReturnsExpectedValue() {
-    assertThat(keyStoreWrapper.getPrivateKey(TRUSTSTORE_INVALID_CERTIFICATE_ALIAS))
-        .as("Certificate is null")
-        .isNull();
+  @ParameterizedTest
+  @MethodSource("data")
+  public void getCertificate_FromTruststore_WithInvalidAlias_ReturnsExpectedValue(
+      final KeyStoreWrapperTestParameter keyStoreWrapperTestParameter) {
+    assertNull(
+        keyStoreWrapperTestParameter.keyStoreWrapper.getPrivateKey(
+            TRUSTSTORE_INVALID_CERTIFICATE_ALIAS),
+        "Certificate is null");
   }
 
-  @Test
-  public void getCRLS_Check() {
-    assertThat(keyStoreWrapper.getCRLs()).as("CRLs is not null").isNotNull();
-    assertThat(keyStoreWrapper.getCRLs().size()).as("CRLs size matches").isEqualTo(2);
+  @ParameterizedTest
+  @MethodSource("data")
+  public void getCRLS_Check(final KeyStoreWrapperTestParameter keyStoreWrapperTestParameter) {
+    assertNotNull(keyStoreWrapperTestParameter.keyStoreWrapper.getCRLs(), "CRLs is not null");
+    assertEquals(
+        keyStoreWrapperTestParameter.keyStoreWrapper.getCRLs().size(), 2, "CRLs size matches");
+  }
+
+  public static class KeyStoreWrapperTestParameter {
+    public String keyStoreWrapperDescription;
+    public boolean keystoreWrapperConfiguredWithTruststore;
+    public KeyStoreWrapper keyStoreWrapper;
+
+    public KeyStoreWrapperTestParameter(
+        final String keyStoreWrapperDescription,
+        final boolean keystoreWrapperConfiguredWithTruststore,
+        final KeyStoreWrapper keyStoreWrapper) {
+      this.keyStoreWrapperDescription = keyStoreWrapperDescription;
+      this.keystoreWrapperConfiguredWithTruststore = keystoreWrapperConfiguredWithTruststore;
+      this.keyStoreWrapper = keyStoreWrapper;
+    }
   }
 }

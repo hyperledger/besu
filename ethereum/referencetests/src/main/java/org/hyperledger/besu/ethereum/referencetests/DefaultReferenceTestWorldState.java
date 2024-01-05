@@ -15,9 +15,10 @@
 package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -26,17 +27,18 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-public class DefaultReferenceTestWorldState extends DefaultMutableWorldState
+public class DefaultReferenceTestWorldState extends ForestMutableWorldState
     implements ReferenceTestWorldState {
 
   DefaultReferenceTestWorldState() {
     super(
-        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
-        new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
+        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
+        new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
+        EvmConfiguration.DEFAULT);
   }
 
   public DefaultReferenceTestWorldState(final WorldState worldState) {
-    super(worldState);
+    super(worldState, EvmConfiguration.DEFAULT);
   }
 
   @Override

@@ -1,0 +1,106 @@
+/**
+ * Copyright 2018 Evgeny Naumenko <jk.vc@mail.ru>
+ * Copyright Hyperledger Besu contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+{
+  "bundles" : [
+    { "bundleName" : "Apache-1.1", "licenseName" : "Apache Software License, Version 1.1", "licenseUrl" : "https://www.apache.org/licenses/LICENSE-1.1" },
+    { "bundleName" : "Apache-2.0", "licenseName" : "Apache License, Version 2.0", "licenseUrl" : "https://www.apache.org/licenses/LICENSE-2.0" },
+    { "bundleName" : "0BSD", "licenseName" : "BSD Zero Clause License", "licenseUrl" : "https://opensource.org/licenses/0BSD" },
+    { "bundleName" : "BSD-2-Clause", "licenseName" : "The 2-Clause BSD License", "licenseUrl" : "https://opensource.org/licenses/BSD-2-Clause" },
+    { "bundleName" : "BSD-3-Clause", "licenseName" : "The 3-Clause BSD License", "licenseUrl" : "https://opensource.org/licenses/BSD-3-Clause" },
+    { "bundleName" : "CC0-1.0", "licenseName" : "Creative Commons Legal Code", "licenseUrl" : "https://creativecommons.org/publicdomain/zero/1.0/legalcode" },
+    { "bundleName" : "CDDL-1.0", "licenseName" : "COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0", "licenseUrl" : "https://oss.oracle.com/licenses/CDDL" },
+    { "bundleName" : "CDDL-1.1", "licenseName" : "COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.1", "licenseUrl" : "https://oss.oracle.com/licenses/CDDL-1.1" },
+    { "bundleName" : "CPL-1.0", "licenseName" : "Common Public License - v 1.0", "licenseUrl" : "https://www.eclipse.org/legal/cpl-v10.html" },
+    { "bundleName" : "EPL-1.0", "licenseName" : "Eclipse Public License - v 1.0", "licenseUrl" : "http://www.eclipse.org/legal/epl-v10.html" },
+    { "bundleName" : "EPL-2.0", "licenseName" : "Eclipse Public License - v 2.0", "licenseUrl" : "https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt" },
+    { "bundleName" : "EDL-1.0", "licenseName" : "Eclipse Distribution License - v 1.0", "licenseUrl" : "https://www.eclipse.org/org/documents/edl-v10.html" },
+    { "bundleName" : "GPL-1.0", "licenseName" : "GNU GENERAL PUBLIC LICENSE, Version 1", "licenseUrl" : "https://www.gnu.org/licenses/gpl-1.0" },
+    { "bundleName" : "GPL-2.0-only", "licenseName" : "GNU GENERAL PUBLIC LICENSE, Version 2", "licenseUrl" : "https://www.gnu.org/licenses/gpl-2.0" },
+    { "bundleName" : "GPL-3.0-only", "licenseName" : "GNU GENERAL PUBLIC LICENSE, Version 3", "licenseUrl" : "https://www.gnu.org/licenses/gpl-3.0" },
+    { "bundleName" : "GPL-2.0 WITH Classpath-exception-2.0", "licenseName" : "GNU GENERAL PUBLIC LICENSE, Version 2 + Classpath Exception", "licenseUrl" : "https://openjdk.java.net/legal/gplv2+ce.html" },
+    { "bundleName" : "LGPL-2.1-only", "licenseName" : "GNU LESSER GENERAL PUBLIC LICENSE, Version 2.1", "licenseUrl" : "https://www.gnu.org/licenses/lgpl-2.1" },
+    { "bundleName" : "LGPL-3.0-only", "licenseName" : "GNU LESSER GENERAL PUBLIC LICENSE, Version 3", "licenseUrl" : "https://www.gnu.org/licenses/lgpl-3.0" },
+    { "bundleName" : "MIT", "licenseName" : "MIT License", "licenseUrl" : "https://opensource.org/licenses/MIT" },
+    { "bundleName" : "MPL-1.1", "licenseName" : "Mozilla Public License Version 1.1", "licenseUrl" : "https://www.mozilla.org/en-US/MPL/1.1" },
+    { "bundleName" : "MPL-2.0", "licenseName" : "Mozilla Public License, Version 2.0", "licenseUrl" : "https://www.mozilla.org/en-US/MPL/2.0" },
+    { "bundleName" : "Public-Domain", "licenseName" : "PUBLIC DOMAIN", "licenseUrl" : "" }
+  ],
+  "transformationRules" : [
+    { "bundleName" : "0BSD", "licenseNamePattern" : "BSD Zero Clause License" },
+    { "bundleName" : "0BSD", "licenseNamePattern" : "BSD$" },
+    { "bundleName" : "0BSD", "licenseNamePattern" : "BSD( |-)clause.*" },
+    { "bundleName" : "0BSD", "licenseNamePattern" : "(The )?BSD( |-)(l|L)icen(s|c)e.*" },
+    { "bundleName" : "Apache-2.0", "licenseNamePattern" : ".*The Apache Software License, Version 2\\.0.*" },
+    { "bundleName" : "Apache-2.0", "licenseNamePattern" : ".*?Apache( |-|_)2.*" },
+    { "bundleName" : "Apache-2.0", "licenseNamePattern" : "ASL 2\\.0" },
+    { "bundleName" : "Apache-2.0", "licenseNamePattern" : ".*Apache License,?( Version)? 2.*" },
+    { "bundleName" : "Apache-2.0", "licenseUrlPattern" : ".*(www\\.)?opensource\\.org/licenses/Apache-2\\.0.*" },
+    { "bundleName" : "Apache-2.0", "licenseUrlPattern" : ".*www\\.apache\\.org/licenses/LICENSE-2\\.0.*" },
+    { "bundleName" : "LGPL-2.1-only", "licenseUrlPattern" : ".*www\\.gnu\\.org/licenses/old-licenses/lgpl-2\\.1\\.html" },
+    { "bundleName" : "Apache-2.0", "licenseFileContentPattern" : ".*Apache License,?( Version)? 2.*" },
+    { "bundleName" : "Apache-1.1", "licenseFileContentPattern" : ".*Apache Software License, Version 1\\.1.*" },
+    { "bundleName" : "CC0-1.0", "licenseNamePattern" : "CC0(( |-)1(\\.0)?)?" },
+    { "bundleName" : "CC0-1.0", "licenseUrlPattern" : ".*(www\\.)?creativecommons\\.org/publicdomain/zero/1\\.0/" },
+    { "bundleName" : "CDDL-1.0", "licenseFileContentPattern" : ".*CDDL.*1\\.0" },
+    { "bundleName" : "CDDL-1.0", "licenseUrlPattern" : ".*CDDL.*.?1\\.0" },
+    { "bundleName" : "CDDL-1.1", "licenseUrlPattern" : ".*CDDL.*.?1\\.1" },
+    { "bundleName" : "CDDL-1.0", "licenseNamePattern" : "Common Development and Distribution License( \\(CDDL\\),?)? (version )?(.?\\s?)?1\\.0" },
+    { "bundleName" : "CDDL-1.1", "licenseNamePattern" : "Common Development and Distribution License( \\(CDDL\\),?)? (version )?(.?\\s?)?1\\.1" },
+    { "bundleName" : "BSD-3-Clause", "licenseNamePattern" : ".*BSD( |-)3-clause.*" },
+    { "bundleName" : "BSD-3-Clause", "licenseUrlPattern" : ".*(www\\.)?opensource\\.org/licenses/BSD-3-Clause" },
+    { "bundleName" : "BSD-3-Clause", "licenseNamePattern" : ".*?(The )New BSD License.*" },
+    { "bundleName" : "BSD-3-Clause", "licenseNamePattern" : ".*?Modified BSD License.*" },
+    { "bundleName" : "BSD-2-Clause", "licenseNamePattern" : "BSD( |-)2-clause.*" },
+    { "bundleName" : "BSD-2-Clause", "licenseUrlPattern" : ".*(www\\.)?opensource\\.org/licenses/BSD-2-Clause" },
+    { "bundleName" : "BSD-2-Clause", "licenseUrlPattern" : ".*(www\\.)?opensource\\.org/licenses/bsd-license(\\.php)?" },
+    { "bundleName" : "CDDL-1.0", "licenseNamePattern" : "Common Development and Distribution( License)?" },
+    { "bundleName" : "CDDL-1.0", "licenseNamePattern" : "CDDL 1(\\.0)" },
+    { "bundleName" : "CDDL-1.1", "licenseNamePattern" : "CDDL 1\\.1" },
+    { "bundleName" : "CDDL-1.1", "licenseUrlPattern" : ".*(www\\.).opensource\\.org/licenses/CDDL-1\\.0" },
+    { "bundleName" : "EPL-1.0", "licenseNamePattern" : "Eclipse Publish License.*(v|version)\\.?\\s?1(\\.?0)?" },
+    { "bundleName" : "EPL-1.0", "licenseNamePattern" : "Eclipse Public License.*(v|version)\\.?\\s?1(\\.?0)?" },
+    { "bundleName" : "EPL-2.0", "licenseNamePattern" : "Eclipse Public License.*(v|version)\\.?\\s?2(\\.?0)?" },
+    { "bundleName" : "EPL-2.0", "licenseUrlPattern" : ".*(www\\.).opensource\\.org/licenses/EPL-2\\.0" },
+    { "bundleName" : "EPL-2.0", "licenseUrlPattern" : ".*http.?://www\\.eclipse\\.org/legal/epl-.?2\\.?0.*" },
+    { "bundleName" : "EPL-2.0", "licenseUrlPattern" : ".*http.?://www\\.eclipse\\.org/org.*/epl-.?2\\.?0.*" },
+    { "bundleName" : "EPL-2.0", "licenseUrlPattern" : ".*http.?://projects\\.eclipse\\.org/.*/epl-.?2\\.?0.*" },
+    { "bundleName" : "EDL-1.0", "licenseNamePattern" : "Eclipse Distribution License.*(v|version)\\.?\\s?1(\\.0)?" },
+    { "bundleName" : "EDL-1.0", "licenseNamePattern" : "Eclipse Distribution License \\(New BSD License\\)" },
+    { "bundleName" : "EDL-1.0", "licenseUrlPattern" : ".*http.?://(www\\.)?eclipse\\.org/org.*/edl-.?1\\.?0.*" },
+    { "bundleName" : "GPL-2.0-only", "licenseUrlPattern" : ".*(www\\.)?opensource\\.org/licenses/GPL-2\\.0" },
+    { "bundleName" : "GPL-2.0 WITH Classpath-exception-2.0", "licenseNamePattern" : "GNU General Public License, version 2.*classpath exception" },
+    { "bundleName" : "GPL-2.0 WITH Classpath-exception-2.0", "licenseNamePattern" : "GNU General Public License, version 2.*cp?e" },
+    { "bundleName" : "GPL-2.0 WITH Classpath-exception-2.0", "licenseNamePattern" : "GNU General Public License, version 2.*, with the classpath exception" },
+    { "bundleName" : "GPL-2.0 WITH Classpath-exception-2.0", "licenseNamePattern" : "GPL2 w/ CPE" },
+    { "bundleName" : "GPL-3.0-only", "licenseUrlPattern" : ".*(www\\.)?opensource\\.org/licenses/GPL-3\\.0" },
+    { "bundleName" : "LGPL-2.1-only", "licenseUrlPattern" : ".*(www\\.)?opensource\\.org/licenses/LGPL-2\\.1" },
+    { "bundleName" : "LGPL-2.1-only", "licenseUrlPattern" : ".*(www\\.)?gnu\\.org/licenses(/old-licenses)?/lgpl-2\\.1(\\.(html|txt))?" },
+    { "bundleName" : "LGPL-2.1-only", "licenseNamePattern" : "LGPL 2\\.1" },
+    { "bundleName" : "LGPL-2.1-only", "licenseNamePattern" : "LGPL.*(v|version)\\.?\\s?2\\.1" },
+    { "bundleName" : "LGPL-2.1-only", "licenseUrlPattern" : ".*(www\\.)?repository.jboss.org/licenses/lgpl-2.1\\.txt" },
+    { "bundleName" : "LGPL-3.0-only", "licenseUrlPattern" : ".*(www\\.).opensource\\.org/licenses/LGPL-3\\.0" },
+    { "bundleName" : "LGPL-3.0-only", "licenseNamePattern" : "lgplv?3" },
+    { "bundleName" : "LGPL-3.0-only", "licenseUrlPattern" : ".*(www\\.)?gnu\\.org/licenses(/old-licenses)?/lgpl(-3)?(\\.(html|txt))?" },
+    { "bundleName" : "MIT", "licenseNamePattern" : "(The\\s)?MIT(\\slicen(c|s)e)?(\\s\\(MIT\\))?" },
+    { "bundleName" : "MIT", "licenseUrlPattern" : ".*(www\\.)?opensource\\.org/licenses/MIT(\\.php)?" },
+    { "bundleName" : "MPL-1.1", "licenseNamePattern" : "MPL 1\\.1" },
+    { "bundleName" : "MPL-2.0", "licenseUrlPattern" : ".*(www\\.).opensource\\.org/licenses/MPL-2\\.0" },
+    { "bundleName" : "Public-Domain", "licenseNamePattern" : "((public)\\s(domain)).*", "transformUrl" : false },
+    { "bundleName" : "Public-Domain", "licenseFileContentPattern" : ".*(Creative)\\s(Commons).*", "transformUrl" : false },
+    { "bundleName" : "Public-Domain", "licenseFileContentPattern" : ".*((Public)\\s(Domain)).*", "transformUrl" : false }
+  ]
+}

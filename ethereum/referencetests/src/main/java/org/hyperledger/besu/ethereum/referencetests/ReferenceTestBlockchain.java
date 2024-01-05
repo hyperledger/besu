@@ -133,6 +133,11 @@ public class ReferenceTestBlockchain implements Blockchain {
   }
 
   @Override
+  public synchronized Optional<BlockHeader> getBlockHeaderSafe(final Hash blockHeaderHash) {
+    return Optional.ofNullable(hashToHeader.get(blockHeaderHash));
+  }
+
+  @Override
   public Optional<BlockBody> getBlockBody(final Hash blockHeaderHash) {
     // Deterministic, but just not implemented.
     throw new UnsupportedOperationException();
@@ -186,7 +191,7 @@ public class ReferenceTestBlockchain implements Blockchain {
   public Comparator<BlockHeader> getBlockChoiceRule() {
     return (a, b) -> {
       throw new NonDeterministicOperationException(
-          "ReferenceTestBlockchian for VMTest Chains do not support fork choice rules");
+          "ReferenceTestBlockchain for VMTest Chains do not support fork choice rules");
     };
   }
 

@@ -15,7 +15,8 @@
 
 package org.hyperledger.besu.pki.keystore;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 
 import java.security.KeyStore;
@@ -23,13 +24,13 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class HardwareKeyStoreWrapperTest {
 
   private static final String KEY_ALIAS = "keyalias";
@@ -43,7 +44,7 @@ public class HardwareKeyStoreWrapperTest {
 
   private HardwareKeyStoreWrapper keyStoreWrapper;
 
-  @Before
+  @BeforeEach
   public void before() {
     keyStoreWrapper = new HardwareKeyStoreWrapper(null, keyStore, new String(PASSWORD));
   }
@@ -52,7 +53,7 @@ public class HardwareKeyStoreWrapperTest {
   public void getPrivateKey() throws Exception {
     when(keyStore.getKey(KEY_ALIAS, PASSWORD)).thenReturn(privateKey);
 
-    assertThat(keyStoreWrapper.getPrivateKey(KEY_ALIAS)).isNotNull();
+    assertNotNull(keyStoreWrapper.getPrivateKey(KEY_ALIAS));
   }
 
   @Test
@@ -61,14 +62,14 @@ public class HardwareKeyStoreWrapperTest {
     when(keyStore.getCertificate(KEY_ALIAS)).thenReturn(certificate);
     when(certificate.getPublicKey()).thenReturn(publicKey);
 
-    assertThat(keyStoreWrapper.getPublicKey(KEY_ALIAS)).isNotNull();
+    assertNotNull(keyStoreWrapper.getPublicKey(KEY_ALIAS));
   }
 
   @Test
   public void getCertificate() throws Exception {
     when(keyStore.getCertificate(CERTIFICATE_ALIAS)).thenReturn(certificate);
 
-    assertThat(keyStoreWrapper.getCertificate(CERTIFICATE_ALIAS)).isNotNull();
+    assertNotNull(keyStoreWrapper.getCertificate(CERTIFICATE_ALIAS));
   }
 
   @Test
@@ -76,6 +77,6 @@ public class HardwareKeyStoreWrapperTest {
     when(keyStore.getCertificateChain(CERTIFICATE_ALIAS))
         .thenReturn(new Certificate[] {certificate});
 
-    assertThat(keyStoreWrapper.getCertificateChain(CERTIFICATE_ALIAS)).hasSize(1);
+    assertEquals(keyStoreWrapper.getCertificateChain(CERTIFICATE_ALIAS).length, 1);
   }
 }

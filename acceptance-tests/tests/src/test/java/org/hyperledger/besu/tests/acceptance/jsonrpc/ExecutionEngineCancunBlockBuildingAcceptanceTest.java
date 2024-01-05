@@ -19,39 +19,35 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.tests.acceptance.dsl.rpc.JsonRpcTestCase;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import okhttp3.Call;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.params.provider.Arguments;
 
-@RunWith(Parameterized.class)
 public class ExecutionEngineCancunBlockBuildingAcceptanceTest extends AbstractJsonRpcTest {
   private static final String GENESIS_FILE = "/jsonrpc/engine/cancun/genesis.json";
   private static final String TEST_CASE_PATH = "/jsonrpc/engine/cancun/test-cases/block-production";
 
   private static JsonRpcTestsContext testsContext;
 
-  public ExecutionEngineCancunBlockBuildingAcceptanceTest(
-      final String ignored, final URI testCaseFileURI) {
-    super(ignored, testsContext, testCaseFileURI);
+  public ExecutionEngineCancunBlockBuildingAcceptanceTest() {
+    super(testsContext);
   }
 
-  @BeforeClass
+  @BeforeAll
   public static void init() throws IOException {
     testsContext = new JsonRpcTestsContext(GENESIS_FILE);
   }
 
-  @Parameterized.Parameters(name = "{0}")
-  public static Iterable<Object[]> testCases() throws URISyntaxException {
-    return testCases(TEST_CASE_PATH);
+  public static Stream<Arguments> testCases() throws URISyntaxException {
+    return testCasesFromPath(TEST_CASE_PATH);
   }
 
   @Override
@@ -83,14 +79,14 @@ public class ExecutionEngineCancunBlockBuildingAcceptanceTest extends AbstractJs
       assertThat(blobsBundle.get("blobs").getNodeType()).isEqualTo(JsonNodeType.ARRAY);
       final ArrayNode blobs = (ArrayNode) blobsBundle.get("blobs");
       final ArrayNode proofs = (ArrayNode) blobsBundle.get("proofs");
-      assertThat(2).isEqualTo(transactions.size());
-      assertThat(6).isEqualTo(commitments.size());
-      assertThat(6).isEqualTo(blobs.size());
-      assertThat(6).isEqualTo(proofs.size());
+      assertThat(3).isEqualTo(transactions.size());
+      assertThat(3).isEqualTo(commitments.size());
+      assertThat(3).isEqualTo(blobs.size());
+      assertThat(3).isEqualTo(proofs.size());
     }
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDown() {
     testsContext.cluster.close();
   }

@@ -20,7 +20,8 @@ import java.lang.reflect.Array;
 import java.util.Arrays;
 
 /**
- * An operand stack for the Ethereum Virtual machine (EVM).
+ * An operand stack for the Ethereum Virtual machine (EVM). This stack allocates the entire stack at
+ * initialization time.
  *
  * <p>The operand stack is responsible for storing the current operands that the EVM can execute. It
  * is assumed to have a fixed size.
@@ -34,30 +35,6 @@ public class FixedStack<T> {
   private final int maxSize;
 
   private int top;
-
-  /** The Underflow exception. */
-  public static class UnderflowException extends RuntimeException {
-    // Don't create a stack trace since these are not "errors" per say but are using exceptions to
-    // throw rare control flow conditions (EVM stack overflow) that are expected to be seen in
-    // normal
-    // operations.
-    @Override
-    public synchronized Throwable fillInStackTrace() {
-      return this;
-    }
-  }
-
-  /** The Overflow exception. */
-  public static class OverflowException extends RuntimeException {
-    // Don't create a stack trace since these are not "errors" per say but are using exceptions to
-    // throw rare control flow conditions (EVM stack overflow) that are expected to be seen in
-    // normal
-    // operations.
-    @Override
-    public synchronized Throwable fillInStackTrace() {
-      return this;
-    }
-  }
 
   /**
    * Instantiates a new Fixed stack.

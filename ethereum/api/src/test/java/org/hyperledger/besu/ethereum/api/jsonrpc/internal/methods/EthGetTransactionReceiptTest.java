@@ -103,7 +103,8 @@ public class EthGetTransactionReceiptTest {
           blockHash,
           4,
           Optional.empty(),
-          Optional.empty());
+          Optional.empty(),
+          0);
   private final TransactionReceiptWithMetadata rootReceiptWithMetaData =
       TransactionReceiptWithMetadata.create(
           rootReceipt,
@@ -115,7 +116,8 @@ public class EthGetTransactionReceiptTest {
           blockHash,
           4,
           Optional.empty(),
-          Optional.empty());
+          Optional.empty(),
+          0);
 
   private final ProtocolSpec rootTransactionTypeSpec =
       new ProtocolSpec(
@@ -243,7 +245,8 @@ public class EthGetTransactionReceiptTest {
             blockHash,
             4,
             Optional.empty(),
-            Optional.empty());
+            Optional.empty(),
+            0);
     when(blockchainQueries.transactionReceiptByTransactionHash(receiptHash, protocolSchedule))
         .thenReturn(Optional.of(transactionReceiptWithMetadata));
     when(protocolSchedule.getByBlockHeader(blockHeader(1))).thenReturn(rootTransactionTypeSpec);

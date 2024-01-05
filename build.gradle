@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,6 +14,7 @@
  */
 
 
+import com.github.jk1.license.filter.LicenseBundleNormalizer
 import groovy.transform.CompileStatic
 import groovy.transform.Memoized
 import net.ltgt.gradle.errorprone.CheckSeverity
@@ -22,15 +23,15 @@ import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
 plugins {
-  id 'com.diffplug.spotless' version '6.12.0'
-  id 'com.github.ben-manes.versions' version '0.42.0'
-  id 'com.github.hierynomus.license' version '0.16.1-fix'
-  id 'com.jfrog.artifactory' version '4.28.3'
-  id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-  id 'me.champeau.jmh' version '0.7.0' apply false
-  id 'net.ltgt.errorprone' version '2.0.2'
+  id 'com.diffplug.spotless' version '6.23.3'
+  id 'com.github.ben-manes.versions' version '0.50.0'
+  id 'com.github.jk1.dependency-license-report' version '2.5'
+  id 'com.jfrog.artifactory' version '5.1.11'
+  id 'io.spring.dependency-management' version '1.1.4'
+  id 'me.champeau.jmh' version '0.7.2' apply false
+  id 'net.ltgt.errorprone' version '3.0.1'
   id 'maven-publish'
-  id 'org.sonarqube' version '3.4.0.2513'
+  id 'org.sonarqube' version '4.4.1.3373'
 }
 
 sonarqube {
@@ -87,13 +88,35 @@ def _strListCmdArg(name) {
   return _strListCmdArg(name, null)
 }
 
+licenseReport {
+  // This is for the allowed-licenses-file in checkLicense Task
+  // Accepts File, URL or String path to local or remote file
+  allowedLicensesFile = new File("$rootDir/gradle/allowed-licenses.json")
+
+  excludes = [
+    // only used for static analysis, not actually shipped
+    'com.google.errorprone:javac',
+    'org.checkerframework:dataflow-shaded',
+    'org.checkerframework:dataflow-errorprone',
+    // exclude Kotlin multiplatform dependencies container, they have the same license of what they contain
+    'com.squareup.okio:okio',
+    'org.jetbrains.kotlinx:kotlinx-coroutines-core'
+  ]
+
+  // If set to true, then all boms will be excluded from the report
+  excludeBoms = true
+
+  filters = [
+    new LicenseBundleNormalizer(bundlePath: "$rootDir/gradle/license-normalizer-bundle.json")
+  ]
+}
+
 allprojects {
   apply plugin: 'java-library'
   apply plugin: 'io.spring.dependency-management'
   apply plugin: 'jacoco'
   apply plugin: 'net.ltgt.errorprone'
   apply from: "${rootDir}/gradle/versions.gradle"
-  apply from: "${rootDir}/gradle/check-licenses.gradle"
 
   version = rootProject.version
 
@@ -177,7 +200,7 @@ allprojects {
     }
     groovyGradle {
       target '*.gradle'
-      greclipse('4.21.0').configFile(rootProject.file('gradle/formatter.properties'))
+      greclipse('4.21').configFile(rootProject.file('gradle/formatter.properties'))
       endWithNewline()
     }
     // Below this line are currently only license header tasks
@@ -225,6 +248,13 @@ allprojects {
     }
 
     options.encoding = 'UTF-8'
+  }
+
+  // IntelliJ workaround to allow repeated debugging of unchanged code
+  tasks.withType(JavaExec) {
+    if (it.name.contains(".")) {
+      outputs.upToDateWhen { false }
+    }
   }
 
   /*
@@ -316,7 +346,6 @@ allprojects {
     options.addStringOption('Xwerror', '-html5')
     options.encoding = 'UTF-8'
   }
-
 }
 
 task deploy() {}
@@ -617,10 +646,10 @@ task autocomplete(type: JavaExec) {
   }
 }
 
-installDist { dependsOn checkLicenses, untunedStartScripts, evmToolStartScripts }
+installDist { dependsOn checkLicense, untunedStartScripts, evmToolStartScripts }
 
 distTar {
-  dependsOn checkLicenses, autocomplete, untunedStartScripts, evmToolStartScripts
+  dependsOn checkLicense, autocomplete, untunedStartScripts, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
@@ -629,7 +658,7 @@ distTar {
 }
 
 distZip {
-  dependsOn checkLicenses, autocomplete, untunedStartScripts, evmToolStartScripts
+  dependsOn checkLicense, autocomplete, untunedStartScripts, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
@@ -951,7 +980,6 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
     "(.*${sep}build${sep}.*)",
     "(.*${sep}src${sep}[^${sep}]+${sep}generated${sep}.*)"
   ].join("|")
-
 }
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {

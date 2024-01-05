@@ -24,22 +24,51 @@ import java.util.Optional;
  */
 public class TransactionSelectionResult {
 
-  private enum Status {
+  /**
+   * Represent the status of a transaction selection result. Plugin can extend this to implement its
+   * own statuses.
+   */
+  protected interface Status {
+    /**
+     * Should the selection process be stopped?
+     *
+     * @return true if the selection process needs to be stopped
+     */
+    boolean stop();
+
+    /**
+     * Should the current transaction be removed from the txpool?
+     *
+     * @return yes if the transaction should be removed from the txpool
+     */
+    boolean discard();
+
+    /**
+     * Name of this status
+     *
+     * @return the name
+     */
+    String name();
+  }
+
+  private enum BaseStatus implements Status {
     SELECTED,
     BLOCK_FULL(true, false),
     BLOCK_OCCUPANCY_ABOVE_THRESHOLD(true, false),
+    BLOCK_SELECTION_TIMEOUT(true, false),
+    TX_EVALUATION_TOO_LONG(false, true),
     INVALID_TRANSIENT(false, false),
     INVALID(false, true);
 
     private final boolean stop;
     private final boolean discard;
 
-    Status() {
+    BaseStatus() {
       this.stop = false;
       this.discard = false;
     }
 
-    Status(final boolean stop, final boolean discard) {
+    BaseStatus(final boolean stop, final boolean discard) {
       this.stop = stop;
       this.discard = discard;
     }
@@ -48,20 +77,36 @@ public class TransactionSelectionResult {
     public String toString() {
       return name() + " (stop=" + stop + ", discard=" + discard + ")";
     }
+
+    @Override
+    public boolean stop() {
+      return stop;
+    }
+
+    @Override
+    public boolean discard() {
+      return discard;
+    }
   }
 
   /** The transaction has been selected to be included in the new block */
   public static final TransactionSelectionResult SELECTED =
-      new TransactionSelectionResult(Status.SELECTED);
+      new TransactionSelectionResult(BaseStatus.SELECTED);
   /** The transaction has not been selected since the block is full. */
   public static final TransactionSelectionResult BLOCK_FULL =
-      new TransactionSelectionResult(Status.BLOCK_FULL);
+      new TransactionSelectionResult(BaseStatus.BLOCK_FULL);
+  /** There was no more time to add transaction to the block */
+  public static final TransactionSelectionResult BLOCK_SELECTION_TIMEOUT =
+      new TransactionSelectionResult(BaseStatus.BLOCK_SELECTION_TIMEOUT);
+  /** Transaction took too much to evaluate */
+  public static final TransactionSelectionResult TX_EVALUATION_TOO_LONG =
+      new TransactionSelectionResult(BaseStatus.TX_EVALUATION_TOO_LONG);
   /**
    * The transaction has not been selected since too large and the occupancy of the block is enough
    * to stop the selection.
    */
   public static final TransactionSelectionResult BLOCK_OCCUPANCY_ABOVE_THRESHOLD =
-      new TransactionSelectionResult(Status.BLOCK_OCCUPANCY_ABOVE_THRESHOLD);
+      new TransactionSelectionResult(BaseStatus.BLOCK_OCCUPANCY_ABOVE_THRESHOLD);
   /**
    * The transaction has not been selected since its gas limit is greater than the block remaining
    * gas, but the selection should continue.
@@ -75,20 +120,38 @@ public class TransactionSelectionResult {
   public static final TransactionSelectionResult CURRENT_TX_PRICE_BELOW_MIN =
       TransactionSelectionResult.invalidTransient("CURRENT_TX_PRICE_BELOW_MIN");
   /**
-   * The transaction has not been selected since its data price is below the current network data
+   * The transaction has not been selected since its blob price is below the current network blob
    * price, but the selection should continue.
    */
   public static final TransactionSelectionResult BLOB_PRICE_BELOW_CURRENT_MIN =
       TransactionSelectionResult.invalidTransient("BLOB_PRICE_BELOW_CURRENT_MIN");
 
+  /**
+   * The transaction has not been selected since its priority fee is below the configured min
+   * priority fee per gas, but the selection should continue.
+   */
+  public static final TransactionSelectionResult PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN =
+      TransactionSelectionResult.invalidTransient("PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN");
+
   private final Status status;
   private final Optional<String> maybeInvalidReason;
 
-  private TransactionSelectionResult(final Status status) {
+  /**
+   * Create a new transaction selection result with the passed status
+   *
+   * @param status the selection result status
+   */
+  protected TransactionSelectionResult(final Status status) {
     this(status, null);
   }
 
-  private TransactionSelectionResult(final Status status, final String invalidReason) {
+  /**
+   * Create a new transaction selection result with the passed status and invalid reason
+   *
+   * @param status the selection result status
+   * @param invalidReason string with a custom invalid reason
+   */
+  protected TransactionSelectionResult(final Status status, final String invalidReason) {
     this.status = status;
     this.maybeInvalidReason = Optional.ofNullable(invalidReason);
   }
@@ -101,7 +164,7 @@ public class TransactionSelectionResult {
    * @return the selection result
    */
   public static TransactionSelectionResult invalidTransient(final String invalidReason) {
-    return new TransactionSelectionResult(Status.INVALID_TRANSIENT, invalidReason);
+    return new TransactionSelectionResult(BaseStatus.INVALID_TRANSIENT, invalidReason);
   }
 
   /**
@@ -112,7 +175,7 @@ public class TransactionSelectionResult {
    * @return the selection result
    */
   public static TransactionSelectionResult invalid(final String invalidReason) {
-    return new TransactionSelectionResult(Status.INVALID, invalidReason);
+    return new TransactionSelectionResult(BaseStatus.INVALID, invalidReason);
   }
 
   /**
@@ -121,7 +184,7 @@ public class TransactionSelectionResult {
    * @return true if the selection process should stop, false otherwise
    */
   public boolean stop() {
-    return status.stop;
+    return status.stop();
   }
 
   /**
@@ -131,7 +194,7 @@ public class TransactionSelectionResult {
    *     otherwise
    */
   public boolean discard() {
-    return status.discard;
+    return status.discard();
   }
 
   /**
@@ -140,7 +203,7 @@ public class TransactionSelectionResult {
    * @return true if the candidate transaction is included in the new block, false otherwise
    */
   public boolean selected() {
-    return Status.SELECTED.equals(status);
+    return BaseStatus.SELECTED.equals(status);
   }
 
   /**
