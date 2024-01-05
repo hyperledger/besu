@@ -26,8 +26,8 @@ jobs:
         id: hashes
         run: |
           echo "gitSha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-          echo "zipSha=$(md5sum -a 256 build/distributions/besu*.zip)" >> $GITHUB_OUTPUT
-          echo "tarSha=$(md5sum -a 256 build/distributions/besu*.tar.gz)" >> $GITHUB_OUTPUT
+          echo "zipSha=$(shasum -a 256 build/distributions/besu*.zip)" >> $GITHUB_OUTPUT
+          echo "tarSha=$(shasum -a 256 build/distributions/besu*.tar.gz)" >> $GITHUB_OUTPUT
       - name: upload tarball
         uses: actions/upload-artifact@v3
         with:
