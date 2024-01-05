@@ -36,7 +36,7 @@ jobs:
         platform:
           - ubuntu-22.04
           - [self-hosted, ARM64, macOS]
-    runs-on: ${ matrix.platform }
+    runs-on: ${{ matrix.platform }}
     steps:
       - name: Prepare
         id: prep
