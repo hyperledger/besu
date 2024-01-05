@@ -21,7 +21,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
-import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
@@ -812,7 +811,6 @@ public class PeerDiscoveryController {
 
     private Cache<Bytes, Packet> cachedEnrRequests =
         CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, SECONDS).build();
-    private ForkIdManager forkIdManager;
     private RlpxAgent rlpxAgent;
 
     private Builder() {}
@@ -844,7 +842,6 @@ public class PeerDiscoveryController {
       validateRequiredDependency(timerUtil, "TimerUtil");
       validateRequiredDependency(workerExecutor, "AsyncExecutor");
       validateRequiredDependency(metricsSystem, "MetricsSystem");
-      validateRequiredDependency(forkIdManager, "ForkIdManager");
       validateRequiredDependency(rlpxAgent, "RlpxAgent");
       validateRequiredDependency(peerTable, "PeerTable");
     }
@@ -938,12 +935,6 @@ public class PeerDiscoveryController {
     public Builder rlpxAgent(final RlpxAgent rlpxAgent) {
       checkNotNull(rlpxAgent);
       this.rlpxAgent = rlpxAgent;
-      return this;
-    }
-
-    public Builder forkIdManager(final ForkIdManager forkIdManager) {
-      checkNotNull(forkIdManager);
-      this.forkIdManager = forkIdManager;
       return this;
     }
   }

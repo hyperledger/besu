@@ -267,7 +267,6 @@ public abstract class PeerDiscoveryAgent {
         .peerRequirement(PeerRequirement.combine(peerRequirements))
         .peerPermissions(peerPermissions)
         .metricsSystem(metricsSystem)
-        .forkIdManager(forkIdManager)
         .filterOnEnrForkId((config.isFilterOnEnrForkIdEnabled()))
         .rlpxAgent(rlpxAgent)
         .peerTable(peerTable)
