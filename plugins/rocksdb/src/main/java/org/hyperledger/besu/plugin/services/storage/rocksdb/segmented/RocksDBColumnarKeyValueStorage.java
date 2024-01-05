@@ -147,7 +147,6 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
     this.rocksDBMetricsFactory = rocksDBMetricsFactory;
 
     try {
-      final ColumnFamilyOptions columnFamilyOptions = new ColumnFamilyOptions();
       trimmedSegments = new ArrayList<>(defaultSegments);
       final List<byte[]> existingColumnFamilies =
           RocksDB.listColumnFamilies(new Options(), configuration.getDatabaseDir().toString());
@@ -162,15 +161,6 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
           trimmedSegments.stream()
               .map(segment -> createColumnDescriptor(segment, configuration))
               .collect(Collectors.toList());
-      columnDescriptors.add(
-          new ColumnFamilyDescriptor(
-              KeyValueSegmentIdentifier.DEFAULT.getId(),
-              columnFamilyOptions
-                  .setTtl(0)
-                  .setCompressionType(CompressionType.LZ4_COMPRESSION)
-                  .setTableFormatConfig(
-                      createBlockBasedTableConfig(
-                          configuration, KeyValueSegmentIdentifier.DEFAULT))));
 
       setGlobalOptions(configuration, stats);
 
@@ -192,7 +182,7 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
   private ColumnFamilyDescriptor createColumnDescriptor(
       final SegmentIdentifier segment, final RocksDBConfiguration configuration) {
 
-    BlockBasedTableConfig basedTableConfig = createBlockBasedTableConfig(configuration, segment);
+    BlockBasedTableConfig basedTableConfig = createBlockBasedTableConfig(segment, configuration);
 
     final var options =
         new ColumnFamilyOptions()
@@ -219,12 +209,11 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
    * Create a Block Base Table configuration for each segment, depending on the configuration in place
    * and the segment itself
    *
-   * @param config RocksDB configuration
    * @param segment The segment related to the column family
+   * @param config RocksDB configuration
    * @return Block Base Table configuration
    */
-  private BlockBasedTableConfig createBlockBasedTableConfig(
-      final RocksDBConfiguration config, final SegmentIdentifier segment) {
+  private BlockBasedTableConfig createBlockBasedTableConfig(final SegmentIdentifier segment, final RocksDBConfiguration config) {
     final LRUCache cache =
         new LRUCache(
             config.isHighSpec() && segment.isEligibleToHighSpecFlag()
