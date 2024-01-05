@@ -65,6 +65,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelId;
 import io.netty.channel.ChannelPipeline;
@@ -196,7 +197,7 @@ public class DeFramerTest {
     assertThat(out).isEmpty();
 
     // Next phase of pipeline should be setup
-    verify(pipeline, times(1)).addLast(any());
+    verify(pipeline, times(1)).addLast(any(ChannelHandler[].class));
 
     // Next message should be pushed out
     final PingMessage nextMessage = PingMessage.get();
@@ -204,7 +205,7 @@ public class DeFramerTest {
     when(framer.deframe(eq(nextData)))
         .thenReturn(new RawMessage(nextMessage.getCode(), nextMessage.getData()))
         .thenReturn(null);
-    verify(pipeline, times(1)).addLast(any());
+    verify(pipeline, times(1)).addLast(any(ChannelHandler[].class));
     deFramer.decode(ctx, nextData, out);
     assertThat(out.size()).isEqualTo(1);
   }
@@ -246,7 +247,7 @@ public class DeFramerTest {
     assertThat(peerConnection.getPeer().getEnodeURL()).isEqualTo(expectedEnode);
 
     // Next phase of pipeline should be setup
-    verify(pipeline, times(1)).addLast(any());
+    verify(pipeline, times(1)).addLast(any(ChannelHandler[].class));
 
     // Next message should be pushed out
     final PingMessage nextMessage = PingMessage.get();
@@ -254,7 +255,7 @@ public class DeFramerTest {
     when(framer.deframe(eq(nextData)))
         .thenReturn(new RawMessage(nextMessage.getCode(), nextMessage.getData()))
         .thenReturn(null);
-    verify(pipeline, times(1)).addLast(any());
+    verify(pipeline, times(1)).addLast(any(ChannelHandler[].class));
     deFramer.decode(ctx, nextData, out);
     assertThat(out.size()).isEqualTo(1);
   }
@@ -292,7 +293,7 @@ public class DeFramerTest {
     assertThat(out).isEmpty();
 
     // Next phase of pipeline should be setup
-    verify(pipeline, times(1)).addLast(any());
+    verify(pipeline, times(1)).addLast(any(ChannelHandler[].class));
   }
 
   @Test
@@ -321,7 +322,7 @@ public class DeFramerTest {
     assertThat(out).isEmpty();
 
     // Next phase of pipeline should be setup
-    verify(pipeline, times(1)).addLast(any());
+    verify(pipeline, times(1)).addLast(any(ChannelHandler[].class));
   }
 
   @Test
