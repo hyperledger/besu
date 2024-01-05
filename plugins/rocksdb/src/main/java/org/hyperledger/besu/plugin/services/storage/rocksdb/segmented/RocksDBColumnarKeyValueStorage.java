@@ -16,6 +16,7 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -70,18 +71,20 @@ import org.slf4j.LoggerFactory;
 public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValueStorage {
 
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBColumnarKeyValueStorage.class);
-  static final String DEFAULT_COLUMN = "default";
   private static final int ROCKSDB_FORMAT_VERSION = 5;
   private static final long ROCKSDB_BLOCK_SIZE = 32768;
   /** RocksDb blockcache size when using the high spec option */
   protected static final long ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC = 1_073_741_824L;
   /** RocksDb memtable size when using the high spec option */
-  protected static final long ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC = 1_073_741_824L;
+  protected static final long ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC = 536_870_912L;
   /** Max total size of all WAL file, after which a flush is triggered */
   protected static final long WAL_MAX_TOTAL_SIZE = 1_073_741_824L;
   /** Expected size of a single WAL file, to determine how many WAL files to keep around */
   protected static final long EXPECTED_WAL_FILE_SIZE = 67_108_864L;
-
+  /** Max total size of all WAL file, after which a flush is triggered */
+  protected static final long WAL_MAX_TOTAL_SIZE_HIGH_SPEC = 10_737_418_240L;
+  /** Expected size of a single WAL file, to determine how many WAL files to keep around */
+  protected static final long EXPECTED_WAL_FILE_SIZE_HIGH_SPEC = 536_870_912L;
   /** RocksDb number of log files to keep on disk */
   private static final long NUMBER_OF_LOG_FILES_TO_KEEP = 7;
   /** RocksDb Time to roll a log file (1 day = 3600 * 24 seconds) */
@@ -156,14 +159,18 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
                       .noneMatch(existed -> Arrays.equals(existed, ignorableSegment.getId())))
           .forEach(trimmedSegments::remove);
       columnDescriptors =
-          trimmedSegments.stream().map(this::createColumnDescriptor).collect(Collectors.toList());
+          trimmedSegments.stream()
+              .map(segment -> createColumnDescriptor(segment, configuration))
+              .collect(Collectors.toList());
       columnDescriptors.add(
           new ColumnFamilyDescriptor(
-              DEFAULT_COLUMN.getBytes(StandardCharsets.UTF_8),
+              KeyValueSegmentIdentifier.DEFAULT.getId(),
               columnFamilyOptions
                   .setTtl(0)
                   .setCompressionType(CompressionType.LZ4_COMPRESSION)
-                  .setTableFormatConfig(createBlockBasedTableConfig(configuration))));
+                  .setTableFormatConfig(
+                      createBlockBasedTableConfig(
+                          configuration, KeyValueSegmentIdentifier.DEFAULT))));
 
       setGlobalOptions(configuration, stats);
 
@@ -171,6 +178,92 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
       columnHandles = new ArrayList<>(columnDescriptors.size());
     } catch (RocksDBException e) {
       throw parseRocksDBException(e, defaultSegments, ignorableSegments);
+    }
+  }
+
+  /**
+   * Create a Column Family Descriptor for a given segment It defines basically the different
+   * options to apply to the corresponding Column Family
+   *
+   * @param segment the segment identifier
+   * @param configuration RocksDB configuration
+   * @return a column family descriptor
+   */
+  private ColumnFamilyDescriptor createColumnDescriptor(
+      final SegmentIdentifier segment, final RocksDBConfiguration configuration) {
+
+    BlockBasedTableConfig basedTableConfig = createBlockBasedTableConfig(configuration, segment);
+
+    final var options =
+        new ColumnFamilyOptions()
+            .setTtl(0)
+            .setCompressionType(CompressionType.LZ4_COMPRESSION)
+            .setTableFormatConfig(basedTableConfig);
+
+    if (segment.containsStaticData()) {
+      options
+          .setEnableBlobFiles(true)
+          .setEnableBlobGarbageCollection(false)
+          .setMinBlobSize(100)
+          .setBlobCompressionType(CompressionType.LZ4_COMPRESSION);
+    }
+
+    if (this.configuration.isHighSpec() && segment.isEligibleToHighSpecFlag()) {
+      options.setWriteBufferSize(ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC);
+    }
+
+    return new ColumnFamilyDescriptor(segment.getId(), options);
+  }
+
+  /***
+   * Create a Block Base Table configuration for each segment, depending on the configuration in place
+   * and the segment itself
+   *
+   * @param config RocksDB configuration
+   * @param segment The segment related to the column family
+   * @return Block Base Table configuration
+   */
+  private BlockBasedTableConfig createBlockBasedTableConfig(
+      final RocksDBConfiguration config, final SegmentIdentifier segment) {
+    final LRUCache cache =
+        new LRUCache(
+            config.isHighSpec() && segment.isEligibleToHighSpecFlag()
+                ? ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC
+                : config.getCacheCapacity());
+    return new BlockBasedTableConfig()
+        .setFormatVersion(ROCKSDB_FORMAT_VERSION)
+        .setBlockCache(cache)
+        .setFilterPolicy(new BloomFilter(10, false))
+        .setPartitionFilters(true)
+        .setCacheIndexAndFilterBlocks(false)
+        .setBlockSize(ROCKSDB_BLOCK_SIZE);
+  }
+
+  /***
+   * Set Global options (DBOptions)
+   *
+   * @param configuration RocksDB configuration
+   * @param stats The statistics object
+   */
+  private void setGlobalOptions(final RocksDBConfiguration configuration, final Statistics stats) {
+    options = new DBOptions();
+    options
+        .setCreateIfMissing(true)
+        .setMaxOpenFiles(configuration.getMaxOpenFiles())
+        .setStatistics(stats)
+        .setCreateMissingColumnFamilies(true)
+        .setLogFileTimeToRoll(TIME_TO_ROLL_LOG_FILE)
+        .setKeepLogFileNum(NUMBER_OF_LOG_FILES_TO_KEEP)
+        .setEnv(Env.getDefault().setBackgroundThreads(configuration.getBackgroundThreadCount()));
+
+    if (configuration.isHighSpec()) {
+      options
+          .setMaxTotalWalSize(WAL_MAX_TOTAL_SIZE_HIGH_SPEC)
+          .setRecycleLogFileNum(WAL_MAX_TOTAL_SIZE_HIGH_SPEC / EXPECTED_WAL_FILE_SIZE_HIGH_SPEC);
+    } else {
+      options
+          .setMaxTotalWalSize(WAL_MAX_TOTAL_SIZE)
+          .setRecycleLogFileNum(WAL_MAX_TOTAL_SIZE / EXPECTED_WAL_FILE_SIZE);
     }
   }
 
@@ -219,42 +312,6 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
     }
   }
 
-  private ColumnFamilyDescriptor createColumnDescriptor(final SegmentIdentifier segment) {
-    final var options =
-        new ColumnFamilyOptions()
-            .setTtl(0)
-            .setCompressionType(CompressionType.LZ4_COMPRESSION)
-            .setTableFormatConfig(createBlockBasedTableConfig(configuration));
-
-    if (segment.containsStaticData()) {
-      options
-          .setEnableBlobFiles(true)
-          .setEnableBlobGarbageCollection(false)
-          .setMinBlobSize(100)
-          .setBlobCompressionType(CompressionType.LZ4_COMPRESSION);
-    }
-
-    return new ColumnFamilyDescriptor(segment.getId(), options);
-  }
-
-  private void setGlobalOptions(final RocksDBConfiguration configuration, final Statistics stats) {
-    options = new DBOptions();
-    options
-        .setCreateIfMissing(true)
-        .setMaxOpenFiles(configuration.getMaxOpenFiles())
-        .setMaxTotalWalSize(WAL_MAX_TOTAL_SIZE)
-        .setRecycleLogFileNum(WAL_MAX_TOTAL_SIZE / EXPECTED_WAL_FILE_SIZE)
-        .setStatistics(stats)
-        .setCreateMissingColumnFamilies(true)
-        .setLogFileTimeToRoll(TIME_TO_ROLL_LOG_FILE)
-        .setKeepLogFileNum(NUMBER_OF_LOG_FILES_TO_KEEP)
-        .setEnv(Env.getDefault().setBackgroundThreads(configuration.getBackgroundThreadCount()));
-
-    if (configuration.isHighSpec()) {
-      options.setDbWriteBufferSize(ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC);
-    }
-  }
-
   void initMetrics() {
     metrics = rocksDBMetricsFactory.create(metricsSystem, configuration, getDB(), stats);
   }
@@ -285,19 +342,6 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
                                               + segment.getName()));
                       return new RocksDbSegmentIdentifier(getDB(), columnHandle);
                     }));
-  }
-
-  BlockBasedTableConfig createBlockBasedTableConfig(final RocksDBConfiguration config) {
-    final LRUCache cache =
-        new LRUCache(
-            config.isHighSpec() ? ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC : config.getCacheCapacity());
-    return new BlockBasedTableConfig()
-        .setFormatVersion(ROCKSDB_FORMAT_VERSION)
-        .setBlockCache(cache)
-        .setFilterPolicy(new BloomFilter(10, false))
-        .setPartitionFilters(true)
-        .setCacheIndexAndFilterBlocks(false)
-        .setBlockSize(ROCKSDB_BLOCK_SIZE);
   }
 
   /**
