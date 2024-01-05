@@ -28,12 +28,11 @@ public class BftAcceptanceTestParameterization {
         Arguments.of(
             "ibft2",
             new BftAcceptanceTestParameterization(
-                BesuNodeFactory::createIbft2Node, BesuNodeFactory::createIbft2NodeWithValidators),
-            Arguments.of(
-                "qbft",
-                new BftAcceptanceTestParameterization(
-                    BesuNodeFactory::createQbftNode,
-                    BesuNodeFactory::createQbftNodeWithValidators))));
+                BesuNodeFactory::createIbft2Node, BesuNodeFactory::createIbft2NodeWithValidators)),
+        Arguments.of(
+            "qbft",
+            new BftAcceptanceTestParameterization(
+                BesuNodeFactory::createQbftNode, BesuNodeFactory::createQbftNodeWithValidators)));
   }
 
   @FunctionalInterface
