@@ -84,3 +84,9 @@ jobs:
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
         run: ./gradlew --no-daemon -PdockerOrgName=${{ secrets.DOCKER_ORG }} dockerUpload -Prelease.releaseVersion=${{ steps.shortSha.outputs.sha }}-SNAPSHOT
+  multiArch:
+    needs: buildDocker
+    runs-on: ubuntu-22.04
+    steps:
+      - name: multi-arch docker
+        run: ./gradlew -PdockerOrgName=${{secrets.DOCKER_ORG }} -Prelease.releaseVersion=${{ steps.shortSha.outputs.sha }}-SNAPSHOT manifestDocker
