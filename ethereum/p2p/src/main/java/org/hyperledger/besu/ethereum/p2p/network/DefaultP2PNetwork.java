@@ -273,12 +273,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     // Periodically initiate outgoing connections to discovered peers
     final int checkConnectionsSec = config.getInitiateConnectionsFrequencySec();
     peerConnectionScheduler.scheduleWithFixedDelay(
-        this::attemptPeerConnections,
-        checkConnectionsSec,
-        checkConnectionsSec,
-        TimeUnit
-            .SECONDS); // TODO: stefan: if we do have max peers we could stop doing this. We would
-    // still try to connect to every node that we just bonded with
+        this::attemptPeerConnections, checkConnectionsSec, checkConnectionsSec, TimeUnit.SECONDS);
   }
 
   @Override

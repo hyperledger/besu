@@ -204,7 +204,7 @@ public class PeerTable {
    * Calculates the XOR distance between the keccak-256 hashes of our node ID and the provided
    * {@link DiscoveryPeer}.
    *
-   * @param peer The node id of the target peer.
+   * @param peer The target peer.
    * @return The distance.
    */
   private int distanceFrom(final PeerId peer) {

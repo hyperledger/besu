@@ -103,7 +103,6 @@ import org.slf4j.LoggerFactory;
  * condition, the peer will be physically dropped (eliminated) from the table.
  */
 public class PeerDiscoveryController {
-  public static final int FIVE_SECONDS = 5000;
   private static final Logger LOG = LoggerFactory.getLogger(PeerDiscoveryController.class);
   private static final long REFRESH_CHECK_INTERVAL_MILLIS = MILLISECONDS.convert(30, SECONDS);
   private static final int PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS = 5;

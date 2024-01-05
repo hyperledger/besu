@@ -1232,8 +1232,7 @@ public final class EthProtocolManagerTest {
             Optional.empty(),
             syncConfig,
             mock(EthScheduler.class),
-            mock(ForkIdManager.class),
-            new NoOpMetricsSystem())) {
+            mock(ForkIdManager.class))) {
 
       return ethManager;
     }

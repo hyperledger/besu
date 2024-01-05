@@ -74,7 +74,6 @@ final class DeFramer extends ByteToMessageDecoder {
   private final boolean inboundInitiated;
   private final PeerTable peerTable;
   private boolean hellosExchanged;
-  private final LabelledMetric<Counter> discPeerRecoveryCounter;
   private final LabelledMetric<Counter> outboundMessagesCounter;
 
   DeFramer(
@@ -103,9 +102,6 @@ final class DeFramer extends ByteToMessageDecoder {
             "protocol",
             "name",
             "code");
-    this.discPeerRecoveryCounter =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.PEERS, "discovery_peer_recovery", "discovery_peer_recovery", "name");
   }
 
   @Override
@@ -114,8 +110,11 @@ final class DeFramer extends ByteToMessageDecoder {
     while ((message = framer.deframe(in)) != null) {
 
       if (hellosExchanged) {
+
         out.add(message);
+
       } else if (message.getCode() == WireMessageCodes.HELLO) {
+
         hellosExchanged = true;
         // Decode first hello and use the payload to modify pipeline
         final PeerInfo peerInfo;
@@ -156,13 +155,6 @@ final class DeFramer extends ByteToMessageDecoder {
           final Optional<DiscoveryPeer> discoveryPeer = peerTable.get(peer.get());
           if (discoveryPeer.isPresent()) {
             peer = Optional.of(discoveryPeer.get());
-            if (peer.get().getForkId().isPresent()) {
-              discPeerRecoveryCounter.labels("discovery_peer_found_with_forkId").inc();
-            } else {
-              discPeerRecoveryCounter.labels("discovery_peer_found_without_forkId").inc();
-            }
-          } else {
-            discPeerRecoveryCounter.labels("discovery_peer_not_found").inc();
           }
         }
 

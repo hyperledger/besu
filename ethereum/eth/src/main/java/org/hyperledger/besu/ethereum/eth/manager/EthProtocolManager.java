@@ -44,11 +44,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -84,7 +79,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final BlockBroadcaster blockBroadcaster;
   private final List<PeerValidator> peerValidators;
   private final Optional<MergePeerFilter> mergePeerFilter;
-  private final LabelledMetric<Counter> forkIdCounter;
 
   public EthProtocolManager(
       final Blockchain blockchain,
@@ -99,8 +93,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final Optional<MergePeerFilter> mergePeerFilter,
       final SynchronizerConfiguration synchronizerConfiguration,
       final EthScheduler scheduler,
-      final ForkIdManager forkIdManager,
-      final ObservableMetricsSystem metricsSystem) {
+      final ForkIdManager forkIdManager) {
     this.networkId = networkId;
     this.peerValidators = peerValidators;
     this.scheduler = scheduler;
@@ -132,13 +125,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         transactionPool,
         ethMessages,
         ethereumWireProtocolConfiguration);
-
-    this.forkIdCounter =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.PEERS,
-            "eth_manager_fork_id_counter",
-            "total number of successful, failed fork id checks",
-            "name");
   }
 
   @VisibleForTesting
@@ -172,8 +158,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             blockchain,
             Collections.emptyList(),
             Collections.emptyList(),
-            ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()),
-        new NoOpMetricsSystem());
+            ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()));
   }
 
   public EthProtocolManager(
@@ -190,8 +175,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final SynchronizerConfiguration synchronizerConfiguration,
       final EthScheduler scheduler,
       final List<Long> blockNumberForks,
-      final List<Long> timestampForks,
-      final ObservableMetricsSystem metricsSystem) {
+      final List<Long> timestampForks) {
     this(
         blockchain,
         networkId,
@@ -209,8 +193,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             blockchain,
             blockNumberForks,
             timestampForks,
-            ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()),
-        metricsSystem);
+            ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()));
   }
 
   public EthContext ethContext() {
@@ -396,30 +379,14 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
   @Override
   public boolean shouldConnect(final Peer peer, final boolean incoming) {
-    // check whether we have a peer on the same chain
-    final Optional<ForkId> optionalForkId = peer.getForkId();
-    if (optionalForkId.isPresent()) {
-      if (incoming) {
-        forkIdCounter.labels("incoming_present").inc();
-      } else {
-        forkIdCounter.labels("outgoing_present").inc();
-      }
-      if (forkIdManager.peerCheck(optionalForkId.get())) {
-        forkIdCounter.labels("check_success").inc();
-      } else {
-        forkIdCounter.labels("check_failed").inc();
-        return false;
-      }
-    } else {
-      if (incoming) {
-        forkIdCounter.labels("incoming_not_present").inc();
-      } else {
-        forkIdCounter.labels("outgoing_not_present").inc();
+    if (peer.getForkId().map(forkId -> forkIdManager.peerCheck(forkId)).orElse(true)) {
+      LOG.debug("ForkId OK or not available for peer {}", peer.getId());
+      if (ethPeers.shouldConnect(peer, incoming)) {
+        return true;
       }
     }
-
-    // we are on the same chain or fork id is not present, so check EthPeers
-    return ethPeers.shouldConnect(peer, incoming);
+    LOG.debug("ForkId check failed for peer {}", peer.getId());
+    return false;
   }
 
   @Override
