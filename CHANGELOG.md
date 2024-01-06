@@ -15,6 +15,8 @@ Support for Cancun fork on testnets
 - Cancun forkids for non-mainnets [#6322](https://github.com/hyperledger/besu/pull/6322)
 
 ### Bug fixes
+- Hotfix for selfdestruct preimages on bonsai [#6359]((https://github.com/hyperledger/besu/pull/6359)
+- mitigation for trielog failure [#6315]((https://github.com/hyperledger/besu/pull/6315)
 
 ## 23.10.3
 
