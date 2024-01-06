@@ -1,27 +1,10 @@
 # Changelog
 
-## 23.10.4
-
-### Breaking Changes
-
-### Deprecations
-- Forest pruning (`pruning-enabled` options) is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format [#6230](https://github.com/hyperledger/besu/pull/6230)
-
-### Additions and Improvements
-- Add error messages on authentication failures with username and password [#6212](https://github.com/hyperledger/besu/pull/6212)
-- New `Sequenced` transaction pool. The pool is an evolution of the `legacy` pool and is likely to be more suitable to enterprise or permissioned chains than the `layered` transaction pool. Select to use this pool with `--tx-pool=sequenced`. Supports the same options as the `legacy` pool [#6211](https://github.com/hyperledger/besu/issues/6211)
-- Set Ethereum Classic mainnet activation block for Spiral network upgrade [#6267](https://github.com/hyperledger/besu/pull/6267)
-- Add custom genesis file name to config overview if specified [#6297](https://github.com/hyperledger/besu/pull/6297)
-- Update Gradle plugins and replace unmaintained License Gradle Plugin with the actively maintained Gradle License Report [#6275](https://github.com/hyperledger/besu/pull/6275)
-
-### Bug fixes
-
+## 23.10.3-hotfix
+- Hotfix for selfdestruct preimages on bonsai [#6359]((https://github.com/hyperledger/besu/pull/6359)
+- mitigation for trielog failure [#6315]((https://github.com/hyperledger/besu/pull/6315)
 
 ## 23.10.3
-
-### Breaking Changes
-
-### Deprecations
 
 ### Additions and Improvements
 - Implement debug_traceCall [#5885](https://github.com/hyperledger/besu/pull/5885)
@@ -34,10 +17,15 @@
 - Update OpenJ9 Docker image to latest version [#6226](https://github.com/hyperledger/besu/pull/6226)
 - Add error messages on authentication failures with username and password [#6212](https://github.com/hyperledger/besu/pull/6212)
 - Add `rocksdb usage` to the `storage` subcommand to allow users and dev to check columns families usage [#6185](https://github.com/hyperledger/besu/pull/6185)
+- Ethereum Classic Spiral network upgrade [#6078](https://github.com/hyperledger/besu/pull/6078)
 
 ### Bug fixes
 - Fix Docker image name clash between Besu and evmtool [#6194](https://github.com/hyperledger/besu/pull/6194)
 - Fix `logIndex` in `eth_getTransactionReceipt` JSON RPC method [#6206](https://github.com/hyperledger/besu/pull/6206)
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.10.3/besu-23.10.3.zip / sha256 da7ef8a6ceb88d3e327cacddcdb32218d1750b464c14165a74068f6dc6e0871a
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.10.3/besu-23.10.3.tar.gz / sha256 73c834cf32c7bbe255d7d8cc7ca5d1eb0df8430b9114935c8dcf3a675b2acbc2
 
 ## 23.10.2
 
