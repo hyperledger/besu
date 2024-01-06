@@ -33,6 +33,8 @@ public class DockerDetector implements NatMethodDetector {
       return stream
           .filter(line -> line.contains("/docker"))
           .findFirst()
+          // fallback to looking for /.dockerenv in case we are running on Docker for Mac
+          .or(() -> Optional.ofNullable(Files.exists(Paths.get("/.dockerenv")) ? "docker" : null))
           .map(__ -> NatMethod.DOCKER);
     } catch (IOException e) {
       return Optional.empty();
