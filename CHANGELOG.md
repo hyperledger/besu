@@ -1,6 +1,6 @@
 # Changelog
 
-## 23.10.4
+## 23.10.3-hotfix
 - Hotfix for selfdestruct preimages on bonsai [#6359]((https://github.com/hyperledger/besu/pull/6359)
 - mitigation for trielog failure [#6315]((https://github.com/hyperledger/besu/pull/6315)
 
