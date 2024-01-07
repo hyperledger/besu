@@ -15,7 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.permissioning;
 
 import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor;
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
@@ -32,7 +32,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-public class AccountLocalConfigPermissioningImportAcceptanceTest extends AcceptanceTestBase {
+public class AccountLocalConfigPermissioningImportAcceptanceTest extends AcceptanceTestBaseJunit5 {
 
   @TempDir public Path folder;
 

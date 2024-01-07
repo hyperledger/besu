@@ -15,7 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.permissioning;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.perm.AccountSmartContractPermissioningConditions;
@@ -30,7 +30,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.AccountSmartCo
 import java.io.IOException;
 import java.util.List;
 
-class AccountSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBase {
+class AccountSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBaseJunit5 {
 
   private final AccountSmartContractPermissioningTransactions smartContractAccountPermissioning;
   private final AccountSmartContractPermissioningConditions
