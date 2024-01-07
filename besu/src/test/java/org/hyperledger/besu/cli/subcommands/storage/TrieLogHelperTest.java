@@ -262,4 +262,43 @@ class TrieLogHelperTest {
         inMemoryWorldState.getTrieLog(blockHeader5.getHash()).get(),
         Bytes.fromHexString("0x05").toArrayUnsafe());
   }
+
+  @Test
+  public void exportedTrieMatchesDbTrieLog() throws IOException {
+    TrieLogHelper.exportTrieLog(inMemoryWorldState, dataDir, blockHeader1.getHash());
+    Path trieLogFile = dataDir.resolve("database").resolve(blockHeader1.getHash().toString());
+
+    var trieLog =
+        TrieLogHelper.readTrieLogsFromFile(trieLogFile.toString()).entrySet().stream()
+            .findFirst()
+            .get();
+
+    assertArrayEquals(trieLog.getKey(), blockHeader1.getHash().toArrayUnsafe());
+    assertArrayEquals(trieLog.getValue(), Bytes.fromHexString("0x01").toArrayUnsafe());
+
+    Files.delete(trieLogFile);
+  }
+
+  @Test
+  public void importedTrieLogMatchesDbTrieLog() throws IOException {
+    StorageProvider tempStorageProvider = new InMemoryKeyValueStorageProvider();
+    BonsaiWorldStateKeyValueStorage inMemoryWorldState2 =
+        new BonsaiWorldStateKeyValueStorage(tempStorageProvider, new NoOpMetricsSystem());
+
+    TrieLogHelper.exportTrieLog(inMemoryWorldState, dataDir, blockHeader1.getHash());
+    Path trieLogFile = dataDir.resolve("database").resolve(blockHeader1.getHash().toString());
+
+    var trieLog = TrieLogHelper.readTrieLogsFromFile(trieLogFile.toString());
+    var updater = inMemoryWorldState2.updater();
+
+    trieLog.forEach((k, v) -> updater.getTrieLogStorageTransaction().put(k, v));
+
+    updater.getTrieLogStorageTransaction().commit();
+
+    assertArrayEquals(
+        inMemoryWorldState2.getTrieLog(blockHeader1.getHash()).get(),
+        Bytes.fromHexString("0x01").toArrayUnsafe());
+
+    Files.delete(trieLogFile);
+  }
 }

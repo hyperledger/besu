@@ -280,7 +280,7 @@ public class TrieLogHelper {
   }
 
   @SuppressWarnings("unchecked")
-  private static IdentityHashMap<byte[], byte[]> readTrieLogsFromFile(final String batchFileName) {
+  static IdentityHashMap<byte[], byte[]> readTrieLogsFromFile(final String batchFileName) {
 
     IdentityHashMap<byte[], byte[]> trieLogs;
     try (FileInputStream fis = new FileInputStream(batchFileName);
@@ -355,7 +355,8 @@ public class TrieLogHelper {
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
       final Path dataDirectoryPath,
       final Hash trieLogHash) {
-    final String trieLogFile = dataDirectoryPath.resolve(DATABASE_PATH) + "/" + trieLogHash;
+    final String trieLogFile =
+        dataDirectoryPath.resolve(DATABASE_PATH).resolve(trieLogHash.toString()).toString();
 
     var trieLog = readTrieLogsFromFile(trieLogFile);
 
@@ -369,7 +370,8 @@ public class TrieLogHelper {
       final Path dataDirectoryPath,
       final Hash trieLogHash)
       throws IOException {
-    final String trieLogFile = dataDirectoryPath.resolve(DATABASE_PATH) + "/" + trieLogHash;
+    final String trieLogFile =
+        dataDirectoryPath.resolve(DATABASE_PATH).resolve(trieLogHash.toString()).toString();
 
     saveTrieLogsInFile(singletonList(trieLogHash), rootWorldStateStorage, trieLogFile);
   }
