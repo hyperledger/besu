@@ -16,7 +16,7 @@ package org.hyperledger.besu.tests.acceptance.permissioning;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.plugin.data.EnodeURL;
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.perm.NodeSmartContractPermissioningV2Conditions;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
@@ -29,7 +29,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.NodeSmartContr
 
 import java.io.IOException;
 
-class NodeSmartContractPermissioningV2AcceptanceTestBase extends AcceptanceTestBase {
+class NodeSmartContractPermissioningV2AcceptanceTestBase extends AcceptanceTestBaseJunit5 {
 
   private final NodeSmartContractPermissioningV2Transactions smartContractNodePermissioningV2;
   private final NodeSmartContractPermissioningV2Conditions
