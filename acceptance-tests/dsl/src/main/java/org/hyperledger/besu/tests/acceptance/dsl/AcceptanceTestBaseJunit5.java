@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,6 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package org.hyperledger.besu.tests.acceptance.dsl;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -51,24 +52,27 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.web3.Web3Transactio
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.ProcessBuilder.Redirect;
 import java.math.BigInteger;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.junit.After;
+import org.apache.logging.log4j.ThreadContext;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Superclass for acceptance tests. For now (transition to junit5 is ongoing) this class supports
- * junit4 format.
+ * junit5 format. Once the transition is complete, this class can be removed and recombined with
+ * AcceptanceTestBase (original).
  */
 @ExtendWith(AcceptanceTestBaseTestWatcher.class)
-public class AcceptanceTestBase {
+public class AcceptanceTestBaseJunit5 {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AcceptanceTestBase.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AcceptanceTestBaseJunit5.class);
 
   protected final Accounts accounts;
   protected final AccountTransactions accountTransactions;
@@ -100,7 +104,7 @@ public class AcceptanceTestBase {
 
   private final ExecutorService outputProcessorExecutor = Executors.newCachedThreadPool();
 
-  protected AcceptanceTestBase() {
+  protected AcceptanceTestBaseJunit5() {
     ethTransactions = new EthTransactions();
     accounts = new Accounts(ethTransactions);
     adminTransactions = new AdminTransactions();
@@ -131,7 +135,15 @@ public class AcceptanceTestBase {
     exitedSuccessfully = new ExitedWithCode(0);
   }
 
-  @After
+  @BeforeEach
+  public void setUp(final TestInfo testInfo) {
+    // log4j is configured to create a file per test
+    // build/acceptanceTestLogs/${ctx:class}.${ctx:test}.log
+    ThreadContext.put("class", this.getClass().getSimpleName());
+    ThreadContext.put("test", testInfo.getTestMethod().get().getName());
+  }
+
+  @AfterEach
   public void tearDownAcceptanceTestBase() {
     reportMemory();
     cluster.close();
@@ -149,7 +161,9 @@ public class AcceptanceTestBase {
     if (command != null) {
       LOG.info("Memory usage at end of test:");
       final ProcessBuilder processBuilder =
-          new ProcessBuilder(command).redirectErrorStream(true).redirectInput(Redirect.INHERIT);
+          new ProcessBuilder(command)
+              .redirectErrorStream(true)
+              .redirectInput(ProcessBuilder.Redirect.INHERIT);
       try {
         final Process memInfoProcess = processBuilder.start();
         outputProcessorExecutor.execute(() -> printOutput(memInfoProcess));
