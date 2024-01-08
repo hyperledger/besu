@@ -65,7 +65,7 @@ class TrieLogHelperTest {
   static BlockHeader blockHeader5;
 
   @BeforeEach
-  public static void setup() throws IOException {
+  public void setup() throws IOException {
 
     blockHeader1 = new BlockHeaderTestFixture().number(1).buildHeader();
     blockHeader2 = new BlockHeaderTestFixture().number(2).buildHeader();
