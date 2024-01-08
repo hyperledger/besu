@@ -38,11 +38,12 @@ jobs:
       - name: Upload Release assets
         uses: softprops/action-gh-release@v1
         with:
+          append_body: true
           files: |
             build/distributions/besu*.tar.gz
             build/distributions/besu*.zip
           body: |
-            tarball: ${{steps.hashes.outputs.tarSha}}
-            zipfile: ${{steps.hashes.outputs.zipSha}}
+            ${{steps.hashes.outputs.tarSha}}
+            ${{steps.hashes.outputs.zipSha}}
 
 
