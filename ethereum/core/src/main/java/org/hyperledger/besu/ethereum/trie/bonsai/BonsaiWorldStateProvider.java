@@ -252,7 +252,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
         } catch (final Exception e) {
           // if we fail we must clean up the updater
           bonsaiUpdater.reset();
-          LOG.debug(
+          LOG.error(
               "State rolling failed on "
                   + mutableState.getWorldStateStorage().getClass().getSimpleName()
                   + " for block hash "
