@@ -20,21 +20,23 @@ import static org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALL
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase {
+public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBaseJunit5 {
 
   public static final String ENODE_PREFIX =
       "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@";
@@ -46,9 +48,12 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
 
   private Node node;
   private Account senderA;
-  private Path tempFile;
+  @TempDir private Path tempDir;
 
-  @Before
+  @TempDir private Path nodesConfigFile;
+  @TempDir private Path accountsConfigFile;
+
+  @BeforeEach
   public void setUp() throws Exception {
     ENODE_LOCALHOST_DNS = ENODE_PREFIX + InetAddress.getLocalHost().getHostName() + PORT_SUFFIX;
     ENODE_LOCALHOST_IP = ENODE_PREFIX + "127.0.0.1" + PORT_SUFFIX;
@@ -56,14 +61,16 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
         "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:1234";
 
     senderA = accounts.getPrimaryBenefactor();
-    tempFile = Files.createTempFile("test", "perm-dns-test");
+
+    nodesConfigFile = Files.createFile(tempDir.resolve("nodesConfigFile.txt"));
+    accountsConfigFile = Files.createFile(tempDir.resolve("accountsConfigFile.txt"));
 
     this.node =
         permissionedNodeBuilder
             .name("node")
-            .nodesConfigFile(tempFile)
+            .nodesConfigFile(nodesConfigFile)
             .nodesPermittedInConfig(new ArrayList<>())
-            .accountsConfigFile(tempFile)
+            .accountsConfigFile(accountsConfigFile)
             .accountsPermittedInConfig(Collections.singletonList(senderA.getAddress()))
             .dnsEnabled(true)
             .build();
@@ -72,12 +79,13 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
   }
 
   @Test
-  public void addingEnodeWithIp_andThenAddingSameEnodeWithHostname_shouldThrow() {
+  public void addingEnodeWithIp_andThenAddingSameEnodeWithHostname_shouldThrow()
+      throws IOException {
 
     node.verify(perm.addNodesToAllowlist(ENODE_LOCALHOST_IP));
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, ENODE_LOCALHOST_DNS));
+            ALLOWLIST_TYPE.NODES, nodesConfigFile, ENODE_LOCALHOST_DNS));
 
     // expect an exception when adding using hostname, since this node is already added with IP
     final Condition condition = perm.addNodesToAllowlist(ENODE_LOCALHOST_DNS);
@@ -90,7 +98,7 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
     node.verify(perm.addNodesToAllowlist(ENODE_LOCALHOST_DNS));
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, ENODE_LOCALHOST_DNS));
+            ALLOWLIST_TYPE.NODES, nodesConfigFile, ENODE_LOCALHOST_DNS));
 
     // expect an exception when adding using IP, since this node is already added with hostname
     final Condition condition = perm.addNodesToAllowlist(ENODE_LOCALHOST_IP);
@@ -106,7 +114,7 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
     // With DNS enabled, the ENODE with the DNS hostname in it should remain as is.
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, ENODE_LOCALHOST_DNS));
+            ALLOWLIST_TYPE.NODES, nodesConfigFile, ENODE_LOCALHOST_DNS));
   }
 
   @Test
@@ -121,11 +129,11 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
     final String enode2ResolvedToDns = enodeURL0.toString();
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, ENODE_LOCALHOST_DNS, enode2ResolvedToDns));
+            ALLOWLIST_TYPE.NODES, nodesConfigFile, ENODE_LOCALHOST_DNS, enode2ResolvedToDns));
 
     node.verify(perm.removeNodesFromAllowlist(ENODE_LOCALHOST_DNS));
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, enode2ResolvedToDns));
+            ALLOWLIST_TYPE.NODES, nodesConfigFile, enode2ResolvedToDns));
   }
 }
