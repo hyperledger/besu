@@ -32,7 +32,12 @@ import org.hyperledger.besu.evm.tracing.EstimateGasOperationTracer;
 
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class EthEstimateGas extends AbstractEstimateGas {
+
+  private static final Logger LOG = LoggerFactory.getLogger(EthEstimateGas.class);
 
   public EthEstimateGas(
       final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
@@ -50,6 +55,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
 
     final BlockHeader blockHeader = blockHeader();
     if (blockHeader == null) {
+      LOG.error("Chain head block not found");
       return errorResponse(requestContext, RpcErrorType.INTERNAL_ERROR);
     }
     if (!blockchainQueries
@@ -70,6 +76,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
             blockHeader, modifiedCallParams, operationTracer, isAllowExceedingBalance);
 
     if (gasUsed.isEmpty()) {
+      LOG.error("gasUsed is empty after simulating transaction.");
       return errorResponse(requestContext, RpcErrorType.INTERNAL_ERROR);
     }
 
