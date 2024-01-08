@@ -227,7 +227,6 @@ class TrieLogHelperTest {
 
   @Test
   public void exceptionWhileSavingFileStopsPruneProcess() throws IOException {
-    Files.delete(dataDir.resolve("database"));
 
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
@@ -243,7 +242,11 @@ class TrieLogHelperTest {
     assertThrows(
         RuntimeException.class,
         () ->
-            TrieLogHelper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir));
+            TrieLogHelper.prune(
+                dataStorageConfiguration,
+                inMemoryWorldState,
+                blockchain,
+                dataDir.resolve("unknownPath")));
 
     // assert all trie logs are still in the DB
     assertArrayEquals(
