@@ -32,7 +32,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableSet;
@@ -48,6 +47,7 @@ import io.prometheus.client.hotspot.GarbageCollectorExports;
 import io.prometheus.client.hotspot.MemoryPoolsExports;
 import io.prometheus.client.hotspot.StandardExports;
 import io.prometheus.client.hotspot.ThreadExports;
+import io.vertx.core.impl.ConcurrentHashSet;
 
 /** The Prometheus metrics system. */
 public class PrometheusMetricsSystem implements ObservableMetricsSystem {
@@ -58,6 +58,7 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
       cachedCounters = new ConcurrentHashMap<>();
   private final Map<String, LabelledMetric<OperationTimer>> cachedTimers =
       new ConcurrentHashMap<>();
+  private final Set<String> totalSuffixedCounters = new ConcurrentHashSet<>();
 
   private final Set<MetricCategory> enabledCategories;
   private final boolean timersEnabled;
@@ -95,7 +96,7 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
       final String name,
       final String help,
       final String... labelNames) {
-    final String metricName = convertToPrometheusName(category, name);
+    final String metricName = convertToPrometheusCounterName(category, name);
     return cachedCounters.computeIfAbsent(
         metricName,
         (k) -> {
@@ -185,9 +186,7 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
             category, key -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
 
     final List<String> newSamples =
-        metric.collect().stream()
-            .map(metricFamilySamples -> metricFamilySamples.name)
-            .collect(Collectors.toList());
+        metric.collect().stream().map(metricFamilySamples -> metricFamilySamples.name).toList();
 
     metrics.stream()
         .filter(
@@ -230,11 +229,28 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
     if (familySamples.type == Collector.Type.SUMMARY) {
       return convertSummarySampleNamesToLabels(category, sample, familySamples);
     }
+    if (familySamples.type == Collector.Type.COUNTER) {
+      return convertCounterNamesToLabels(category, sample, familySamples);
+    }
     return new Observation(
         category,
         convertFromPrometheusName(category, sample.name),
         sample.value,
         sample.labelValues);
+  }
+
+  private Observation convertCounterNamesToLabels(
+      final MetricCategory category, final Sample sample, final MetricFamilySamples familySamples) {
+    final List<String> labelValues = new ArrayList<>(sample.labelValues);
+    if (sample.name.endsWith("_created")) {
+      labelValues.add("created");
+    }
+
+    return new Observation(
+        category,
+        convertFromPrometheusCounterName(category, familySamples.name),
+        sample.value,
+        labelValues);
   }
 
   private Observation convertHistogramSampleNamesToLabels(
@@ -259,6 +275,8 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
       labelValues.add("sum");
     } else if (sample.name.endsWith("_count")) {
       labelValues.add("count");
+    } else if (sample.name.endsWith("_created")) {
+      labelValues.add("created");
     } else {
       labelValues.add(labelValues.size() - 1, "quantile");
     }
@@ -280,9 +298,34 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
     return prometheusPrefix(category) + name;
   }
 
+  /**
+   * Convert to prometheus counter name. Prometheus adds a _total suffix to the name if not present,
+   * so we remember if the original name already has it, to be able to covert back correctly
+   *
+   * @param category the category
+   * @param name the name
+   * @return the name as string
+   */
+  public String convertToPrometheusCounterName(final MetricCategory category, final String name) {
+    if (name.endsWith("_total")) {
+      totalSuffixedCounters.add(name);
+    }
+    return convertFromPrometheusName(category, name);
+  }
+
   private String convertFromPrometheusName(final MetricCategory category, final String metricName) {
     final String prefix = prometheusPrefix(category);
     return metricName.startsWith(prefix) ? metricName.substring(prefix.length()) : metricName;
+  }
+
+  private String convertFromPrometheusCounterName(
+      final MetricCategory category, final String metricName) {
+    final String prefix = prometheusPrefix(category);
+    final String unPrefixedName =
+        metricName.startsWith(prefix) ? metricName.substring(prefix.length()) : metricName;
+    return totalSuffixedCounters.contains(unPrefixedName + "_total")
+        ? unPrefixedName + "_total"
+        : unPrefixedName;
   }
 
   private String prometheusPrefix(final MetricCategory category) {
