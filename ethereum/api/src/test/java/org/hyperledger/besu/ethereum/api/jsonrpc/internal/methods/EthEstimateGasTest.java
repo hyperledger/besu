@@ -216,10 +216,13 @@ public class EthEstimateGasTest {
     final JsonRpcRequestContext request =
         ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
     mockTransientProcessorResultTxInvalidReason(
-        TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE);
+        TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
+        "transaction up-front cost 10 exceeds transaction sender account balance 5");
 
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
+    final RpcErrorType rpcErrorType = RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
+    final JsonRpcError rpcError = new JsonRpcError(rpcErrorType);
+    rpcError.setReason("transaction up-front cost 10 exceeds transaction sender account balance 5");
+    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, rpcError);
 
     Assertions.assertThat(method.response(request))
         .usingRecursiveComparison()
@@ -230,10 +233,13 @@ public class EthEstimateGasTest {
   public void shouldReturnErrorWhenEip1559TransactionProcessorReturnsTxInvalidReason() {
     final JsonRpcRequestContext request = ethEstimateGasRequest(eip1559TransactionCallParameter());
     mockTransientProcessorResultTxInvalidReason(
-        TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE);
+        TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
+        "transaction up-front cost 10 exceeds transaction sender account balance 5");
 
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
+    final RpcErrorType rpcErrorType = RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
+    final JsonRpcError rpcError = new JsonRpcError(rpcErrorType);
+    rpcError.setReason("transaction up-front cost 10 exceeds transaction sender account balance 5");
+    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, rpcError);
 
     Assertions.assertThat(method.response(request))
         .usingRecursiveComparison()
@@ -250,9 +256,9 @@ public class EthEstimateGasTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, RpcErrorType.WORLD_STATE_UNAVAILABLE);
 
-    Assertions.assertThat(method.response(request))
-        .usingRecursiveComparison()
-        .isEqualTo(expectedResponse);
+    JsonRpcResponse theResponse = method.response(request);
+
+    Assertions.assertThat(theResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -371,10 +377,32 @@ public class EthEstimateGasTest {
             eq(1L));
   }
 
-  private void mockTransientProcessorResultTxInvalidReason(final TransactionInvalidReason reason) {
+  @Test
+  public void shouldIncludeHaltReasonWhenExecutionHalts() {
+    final JsonRpcRequestContext request =
+        ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
+    mockTransientProcessorResultTxInvalidReason(
+        TransactionInvalidReason.EXECUTION_HALTED, "INVALID_OPERATION");
+
+    final RpcErrorType rpcErrorType = RpcErrorType.EXECUTION_HALTED;
+    final JsonRpcError rpcError = new JsonRpcError(rpcErrorType);
+    rpcError.setReason("INVALID_OPERATION");
+    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, rpcError);
+
+    Assertions.assertThat(method.response(request))
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
+  }
+
+  private void mockTransientProcessorResultTxInvalidReason(
+      final TransactionInvalidReason reason, final String validationFailedErrorMessage) {
     final TransactionSimulatorResult mockTxSimResult =
         getMockTransactionSimulatorResult(false, 0, Wei.ZERO, Optional.empty());
-    when(mockTxSimResult.getValidationResult()).thenReturn(ValidationResult.invalid(reason));
+    when(mockTxSimResult.getValidationResult())
+        .thenReturn(
+            validationFailedErrorMessage == null
+                ? ValidationResult.invalid(reason)
+                : ValidationResult.invalid(reason, validationFailedErrorMessage));
   }
 
   private void mockTransientProcessorTxReverted(
