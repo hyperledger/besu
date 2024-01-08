@@ -2848,6 +2848,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                       .toDomainObject()
                       .getUnstable()
                       .getBonsaiCodeStoredByCodeHashEnabled())
+              .withDeleteCodeInCodeHashStorageMode(
+                  dataStorageOptions
+                      .toDomainObject()
+                      .getUnstable()
+                      .getBonsaiCodeStoredByCodeHashDeletionEnabled())
               .build();
     }
     return this.keyValueStorageProvider;

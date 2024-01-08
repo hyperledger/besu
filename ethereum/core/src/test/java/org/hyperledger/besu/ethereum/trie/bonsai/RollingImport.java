@@ -55,7 +55,7 @@ public class RollingImport {
     final BonsaiWorldState bonsaiState =
         new BonsaiWorldState(
             archive,
-            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem(), false),
+            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem(), false, false),
             EvmConfiguration.DEFAULT);
     final SegmentedInMemoryKeyValueStorage worldStateStorage =
         (SegmentedInMemoryKeyValueStorage)

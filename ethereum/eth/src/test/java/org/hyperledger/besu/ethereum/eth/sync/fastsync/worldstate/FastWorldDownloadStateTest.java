@@ -80,7 +80,7 @@ public class FastWorldDownloadStateTest {
     if (storageFormat == DataStorageFormat.BONSAI) {
       worldStateStorage =
           new BonsaiWorldStateKeyValueStorage(
-              new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem(), false);
+              new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem(), false, false);
     } else {
       worldStateStorage = new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     }

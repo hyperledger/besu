@@ -161,7 +161,7 @@ class LogRollingTests {
     final BonsaiWorldState worldState =
         new BonsaiWorldState(
             archive,
-            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem(), false),
+            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem(), false, false),
             EvmConfiguration.DEFAULT);
     final WorldUpdater updater = worldState.updater();
 
@@ -174,7 +174,8 @@ class LogRollingTests {
     final BonsaiWorldState secondWorldState =
         new BonsaiWorldState(
             secondArchive,
-            new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem(), false),
+            new BonsaiWorldStateKeyValueStorage(
+                secondProvider, new NoOpMetricsSystem(), false, false),
             EvmConfiguration.DEFAULT);
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
@@ -205,7 +206,7 @@ class LogRollingTests {
     final BonsaiWorldState worldState =
         new BonsaiWorldState(
             archive,
-            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem(), false),
+            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem(), false, false),
             EvmConfiguration.DEFAULT);
 
     final WorldUpdater updater = worldState.updater();
@@ -226,7 +227,8 @@ class LogRollingTests {
     final BonsaiWorldState secondWorldState =
         new BonsaiWorldState(
             secondArchive,
-            new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem(), false),
+            new BonsaiWorldStateKeyValueStorage(
+                secondProvider, new NoOpMetricsSystem(), false, false),
             EvmConfiguration.DEFAULT);
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
@@ -258,7 +260,7 @@ class LogRollingTests {
     final BonsaiWorldState worldState =
         new BonsaiWorldState(
             archive,
-            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem(), false),
+            new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem(), false, false),
             EvmConfiguration.DEFAULT);
 
     final WorldUpdater updater = worldState.updater();
@@ -286,7 +288,8 @@ class LogRollingTests {
     final BonsaiWorldState secondWorldState =
         new BonsaiWorldState(
             secondArchive,
-            new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem(), false),
+            new BonsaiWorldStateKeyValueStorage(
+                secondProvider, new NoOpMetricsSystem(), false, false),
             EvmConfiguration.DEFAULT);
 
     final WorldUpdater secondUpdater = secondWorldState.updater();

@@ -50,16 +50,19 @@ public class KeyValueStorageProvider implements StorageProvider {
       new HashMap<>();
   private final ObservableMetricsSystem metricsSystem;
   private final boolean useCodeHashStorageMode;
+  private final boolean deleteCodeInCodeHashStorageMode;
 
   public KeyValueStorageProvider(
       final Function<List<SegmentIdentifier>, SegmentedKeyValueStorage> segmentedStorageCreator,
       final KeyValueStorage worldStatePreimageStorage,
       final ObservableMetricsSystem metricsSystem,
-      final boolean useCodeHashStorageMode) {
+      final boolean useCodeHashStorageMode,
+      final boolean deleteCodeInCodeHashStorageMode) {
     this.segmentedStorageCreator = segmentedStorageCreator;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
     this.metricsSystem = metricsSystem;
     this.useCodeHashStorageMode = useCodeHashStorageMode;
+    this.deleteCodeInCodeHashStorageMode = deleteCodeInCodeHashStorageMode;
   }
 
   @Override
@@ -80,7 +83,8 @@ public class KeyValueStorageProvider implements StorageProvider {
   @Override
   public WorldStateStorage createWorldStateStorage(final DataStorageFormat dataStorageFormat) {
     if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
-      return new BonsaiWorldStateKeyValueStorage(this, metricsSystem, useCodeHashStorageMode);
+      return new BonsaiWorldStateKeyValueStorage(
+          this, metricsSystem, useCodeHashStorageMode, deleteCodeInCodeHashStorageMode);
     } else {
       return new ForestWorldStateKeyValueStorage(
           getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.WORLD_STATE));
