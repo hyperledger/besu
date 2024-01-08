@@ -132,8 +132,6 @@ task acceptanceTestMainnet(type: Test) {
   exclude '**/permissioning/**'
   exclude '**/privacy/**'
 
-  useJUnitPlatform {}
-
   dependsOn(rootProject.installDist)
   setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runBesuAsProcess', 'true'
