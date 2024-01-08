@@ -1438,7 +1438,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (network != null && network.isDeprecated()) {
       logger.warn(NetworkDeprecationMessage.generate(network));
     }
-
     try {
       configureLogging(true);
 
@@ -3121,14 +3120,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (listBootNodes != null) {
       if (!p2PDiscoveryOptionGroup.peerDiscoveryEnabled) {
         logger.warn("Discovery disabled: bootnodes will be ignored.");
-      } else {
-        logger.info("Configured {} bootnodes.", listBootNodes.size());
-        logger.debug("Bootnodes = {}", listBootNodes);
       }
       DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
       builder.setBootNodes(listBootNodes);
-    } else {
-      logger.info("0 Bootnodes configured");
     }
     return builder.build();
   }

@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -161,8 +162,12 @@ public class EthEstimateGasIntegrationTest {
             true,
             null);
     final JsonRpcRequestContext request = requestWithParams(callParameter);
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
+
+    final RpcErrorType rpcErrorType = RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
+    final JsonRpcError rpcError = new JsonRpcError(rpcErrorType);
+    rpcError.setReason(
+        "transaction up-front cost 0x1cc31b3333167018 exceeds transaction sender account balance 0x140");
+    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, rpcError);
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);

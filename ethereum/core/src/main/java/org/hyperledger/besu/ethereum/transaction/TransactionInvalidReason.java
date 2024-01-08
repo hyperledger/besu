@@ -50,6 +50,7 @@ public enum TransactionInvalidReason {
   TX_POOL_DISABLED,
   INVALID_BLOBS,
   PLUGIN_TX_VALIDATOR,
+  EXECUTION_HALTED,
   // Private Transaction Invalid Reasons
   PRIVATE_TRANSACTION_INVALID,
   PRIVATE_TRANSACTION_FAILED,
