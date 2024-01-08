@@ -1795,7 +1795,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (kzgTrustedSetupFile != null) {
         KZGPointEvalPrecompiledContract.init(kzgTrustedSetupFile);
       } else {
-        KZGPointEvalPrecompiledContract.init(network.name());
+        KZGPointEvalPrecompiledContract.init();
       }
     } else if (kzgTrustedSetupFile != null) {
       throw new ParameterException(
