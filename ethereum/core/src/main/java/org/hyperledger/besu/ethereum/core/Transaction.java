@@ -19,6 +19,10 @@ import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.datatypes.VersionedHash.SHA256_VERSION_ID;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SECPSignature;
@@ -74,6 +78,8 @@ public class Transaction
   public static final BigInteger REPLAY_PROTECTED_V_MIN = BigInteger.valueOf(36);
 
   public static final BigInteger TWO = BigInteger.valueOf(2);
+
+  public static final Cache<Hash, Address> senderCache = CacheBuilder.newBuilder().recordStats().maximumSize(100_000L).build();
 
   private final long nonce;
 
@@ -409,16 +415,21 @@ public class Transaction
    * @return the transaction sender
    */
   @Override
-  public Address getSender() {
+  public synchronized Address getSender() {
     if (sender == null) {
-      final SECPPublicKey publicKey =
-          signatureAlgorithm
-              .recoverPublicKeyFromSignature(getOrComputeSenderRecoveryHash(), signature)
-              .orElseThrow(
-                  () ->
-                      new IllegalStateException(
-                          "Cannot recover public key from signature for " + this));
-      sender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
+      Optional<Address> cachedSender = Optional.ofNullable(senderCache.getIfPresent(this.hash));
+      sender = cachedSender.orElseGet(() -> {
+        final SECPPublicKey publicKey =
+                signatureAlgorithm
+                        .recoverPublicKeyFromSignature(getOrComputeSenderRecoveryHash(), signature)
+                        .orElseThrow(
+                                () ->
+                                        new IllegalStateException(
+                                                "Cannot recover public key from signature for " + this));
+        Address calculatedSender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
+        senderCache.put(this.hash, calculatedSender);
+        return calculatedSender;
+      });
     }
     return sender;
   }
