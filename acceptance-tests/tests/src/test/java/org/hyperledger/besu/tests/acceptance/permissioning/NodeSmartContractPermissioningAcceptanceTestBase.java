@@ -15,7 +15,6 @@
 package org.hyperledger.besu.tests.acceptance.permissioning;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.perm.NodeSmartContractPermissioningConditions;
