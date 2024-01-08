@@ -16,17 +16,16 @@ package org.hyperledger.besu.tests.acceptance.bft;
 
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
-import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class BftProposalRpcAcceptanceTest extends ParameterizedBftTestBase {
 
-  public BftProposalRpcAcceptanceTest(
-      final String testName, final BftAcceptanceTestParameterization nodeFactory) {
-    super(testName, nodeFactory);
-  }
-
-  @Test
-  public void shouldReturnProposals() throws Exception {
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("factoryFunctions")
+  public void shouldReturnProposals(
+      final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
+    setUp(testName, nodeFactory);
     final String[] validators = {"validator1", "validator2", "validator3"};
     final BesuNode validator1 =
         nodeFactory.createNodeWithValidators(besu, "validator1", validators);

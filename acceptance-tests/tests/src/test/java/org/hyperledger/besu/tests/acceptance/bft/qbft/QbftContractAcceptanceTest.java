@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.tests.acceptance.bft.qbft;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class QbftContractAcceptanceTest extends AcceptanceTestBase {
+public class QbftContractAcceptanceTest extends AcceptanceTestBaseJunit5 {
 
   @Test
   public void shouldMineOnMultipleNodesEvenWhenClusterContainsNonValidator() throws Exception {
