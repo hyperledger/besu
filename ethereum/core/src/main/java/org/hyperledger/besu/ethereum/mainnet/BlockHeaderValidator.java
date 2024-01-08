@@ -87,7 +87,7 @@ public class BlockHeaderValidator {
                 String canonicalName = rule.innerRuleClass().getCanonicalName();
                 LOG.debug(
                     "{} rule failed",
-                    canonicalName == null ? rule.innerRuleClass().getSimpleName() : canonicalName);
+                    canonicalName == null ? rule.innerRuleClass().getName() : canonicalName);
               }
               return worked;
             });
