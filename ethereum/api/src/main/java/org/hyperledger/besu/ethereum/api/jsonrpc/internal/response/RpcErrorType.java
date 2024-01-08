@@ -75,6 +75,7 @@ public enum RpcErrorType {
       -32000, "An invalid transaction with a lower nonce exists"),
   TOTAL_BLOB_GAS_TOO_HIGH(-32000, "Total blob gas too high"),
   PLUGIN_TX_VALIDATOR(-32000, "Plugin has marked the transaction as invalid"),
+  EXECUTION_HALTED(-32000, "Transaction processing could not be completed due to an exception"),
 
   // Execution engine failures
   UNKNOWN_PAYLOAD(-32001, "Payload does not exist / is not available"),
@@ -213,7 +214,9 @@ public enum RpcErrorType {
   BLOCK_RLP_IMPORT_ERROR(-32000, "Could not decode RLP for Block"),
   BLOCK_IMPORT_ERROR(-32000, "Could not import Block"),
 
-  UNKNOWN(-32603, "Unknown internal error");
+  UNKNOWN(-32603, "Unknown internal error"),
+
+  INVALID_BLOBS(-32603, "blobs failed kzg validation");
 
   private final int code;
   private final String message;

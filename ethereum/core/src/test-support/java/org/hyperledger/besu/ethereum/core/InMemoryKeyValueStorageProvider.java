@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -27,11 +24,15 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogPruner;
+import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
-import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -77,9 +78,9 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         0);
   }
 
-  public static DefaultWorldStateArchive createInMemoryWorldStateArchive() {
-    return new DefaultWorldStateArchive(
-        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
+  public static ForestWorldStateArchive createInMemoryWorldStateArchive() {
+    return new ForestWorldStateArchive(
+        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
         EvmConfiguration.DEFAULT);
   }
@@ -103,12 +104,13 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         cachedMerkleTrieLoader,
         new NoOpMetricsSystem(),
         null,
-        evmConfiguration);
+        evmConfiguration,
+        TrieLogPruner.noOpTrieLogPruner());
   }
 
   public static MutableWorldState createInMemoryWorldState() {
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
-    return new DefaultMutableWorldState(
+    return new ForestMutableWorldState(
         provider.createWorldStateStorage(DataStorageFormat.FOREST),
         provider.createWorldStatePreimageStorage(),
         EvmConfiguration.DEFAULT);

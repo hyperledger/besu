@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.pki.keystore;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import org.hyperledger.besu.pki.PkiException;
 
@@ -26,11 +27,9 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.OS;
-import org.junit.runners.Parameterized;
 
 public class HardwareKeyStoreFileWrapperTest extends BaseKeyStoreFileWrapperTest {
 
@@ -39,16 +38,12 @@ public class HardwareKeyStoreFileWrapperTest extends BaseKeyStoreFileWrapperTest
   private static final String configName = "NSScrypto-partner1client1";
   private static final String validKeystorePassword = "test123";
 
-  @Parameterized.Parameters(name = "{index}: {0}")
-  public static Collection<Object[]> data() {
+  public static Collection<KeyStoreWrapperTestParameter> data() {
     return Arrays.asList(
-        new Object[][] {
-          {
+        new KeyStoreWrapperTestParameter(
             "HardwareKeyStoreWrapper[PKCS11 keystore/truststore]",
             true,
-            CryptoTestUtil.isNSSLibInstalled() ? getHardwareKeyStoreWrapper(configName) : null
-          }
-        });
+            CryptoTestUtil.isNSSLibInstalled() ? getHardwareKeyStoreWrapper(configName) : null));
   }
 
   private static KeyStoreWrapper getHardwareKeyStoreWrapper(final String cfgName) {
@@ -66,26 +61,26 @@ public class HardwareKeyStoreFileWrapperTest extends BaseKeyStoreFileWrapperTest
       if (OS.MAC.isCurrentOs()) {
         // nss3 is difficult to setup on mac correctly, don't let it break unit tests for dev
         // machines.
-        Assume.assumeNoException("Failed to initialize hardware keystore", e);
+        System.out.println("Failed to initialize hardware keystore " + e.getLocalizedMessage());
       }
       // Not a mac, probably a production build. Full failure.
       throw new PkiException("Failed to initialize hardware keystore", e);
     }
   }
 
-  @Before
+  @BeforeEach
   public void beforeMethod() {
-    Assume.assumeTrue(
-        "Test ignored due to NSS library not being installed/detected.",
-        CryptoTestUtil.isNSSLibInstalled());
+    assumeTrue(
+        CryptoTestUtil.isNSSLibInstalled(),
+        "Test ignored due to NSS library not being installed/detected.");
   }
 
   @Test
   public void getPkcs11Provider() throws Exception {
     final HardwareKeyStoreWrapper sut =
         (HardwareKeyStoreWrapper) getHardwareKeyStoreWrapper(configName);
-    assertThatThrownBy(() -> sut.getPkcs11ProviderForConfig("no-library"))
-        .isInstanceOf(IllegalArgumentException.class);
+    assertThrows(
+        IllegalArgumentException.class, () -> sut.getPkcs11ProviderForConfig("no-library"));
   }
 
   @Test
@@ -96,21 +91,22 @@ public class HardwareKeyStoreFileWrapperTest extends BaseKeyStoreFileWrapperTest
   @Test
   public void init_keystorePassword_config_invalid() throws Exception {
     final String config = "invalid";
-    assertThatThrownBy(
-            () -> new HardwareKeyStoreWrapper(validKeystorePassword, toPath(config), toPath(crl)))
-        .isInstanceOf(NullPointerException.class);
+    assertThrows(
+        NullPointerException.class,
+        () -> new HardwareKeyStoreWrapper(validKeystorePassword, toPath(config), toPath(crl)));
   }
 
   @Test
   public void init_keystorePassword_config_missing_pw() throws Exception {
-    assertThatThrownBy(() -> new HardwareKeyStoreWrapper(null, toPath(config), toPath(crl)))
-        .isInstanceOf(PkiException.class);
+    assertThrows(
+        PkiException.class, () -> new HardwareKeyStoreWrapper(null, toPath(config), toPath(crl)));
   }
 
   @Test
   public void init_keystorePassword_provider_missing_pw() throws Exception {
     final Provider p = null;
-    assertThatThrownBy(() -> new HardwareKeyStoreWrapper(validKeystorePassword, p, toPath(crl)))
-        .isInstanceOf(PkiException.class);
+    assertThrows(
+        PkiException.class,
+        () -> new HardwareKeyStoreWrapper(validKeystorePassword, p, toPath(crl)));
   }
 }

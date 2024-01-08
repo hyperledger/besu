@@ -44,7 +44,7 @@ public abstract class PendingTransaction
   static final int BASE_OPTIONAL_SIZE = 16;
   static final int KZG_COMMITMENT_OR_PROOF_SIZE = 112;
   static final int BLOB_SIZE = 131136;
-  static final int BLOBS_WITH_COMMITMENTS_SIZE = 32;
+  static final int BLOBS_WITH_COMMITMENTS_SIZE = 40;
   static final int PENDING_TRANSACTION_MEMORY_SIZE = 40;
   private static final AtomicLong TRANSACTIONS_ADDED = new AtomicLong();
   private final Transaction transaction;

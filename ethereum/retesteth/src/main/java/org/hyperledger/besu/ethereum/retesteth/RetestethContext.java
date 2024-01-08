@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -58,9 +59,9 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
+import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -165,8 +166,8 @@ public class RetestethContext {
     mixHash = Optional.ofNullable(genesisState.getBlock().getHeader().getMixHashOrPrevRandao());
 
     final WorldStateArchive worldStateArchive =
-        new DefaultWorldStateArchive(
-            new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
+        new ForestWorldStateArchive(
+            new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
             new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
             EvmConfiguration.DEFAULT);
     final MutableWorldState worldState = worldStateArchive.getMutable();
@@ -250,9 +251,9 @@ public class RetestethContext {
             retestethClock,
             metricsSystem,
             syncState,
-            miningParameters,
             transactionPoolConfiguration,
-            null);
+            null,
+            new BlobCache());
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("Genesis Block {} ", genesisState.getBlock());
@@ -288,6 +289,14 @@ public class RetestethContext {
 
   public ProtocolContext getProtocolContext() {
     return protocolContext;
+  }
+
+  public EthScheduler getEthScheduler() {
+    return ethScheduler;
+  }
+
+  public void setEthScheduler(final EthScheduler ethScheduler) {
+    this.ethScheduler = ethScheduler;
   }
 
   public long getBlockHeight() {

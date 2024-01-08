@@ -44,7 +44,7 @@ public class KZGPointEvalPrecompileContractTest {
 
   @BeforeAll
   public static void init() {
-    KZGPointEvalPrecompiledContract.init("foo");
+    KZGPointEvalPrecompiledContract.init();
     contract = new KZGPointEvalPrecompiledContract();
   }
 
@@ -55,7 +55,7 @@ public class KZGPointEvalPrecompileContractTest {
 
   @ParameterizedTest(name = "{index}")
   @MethodSource("getPointEvaluationPrecompileTestVectors")
-  public void testComputePrecompile(final PrecompileTestParameters parameters) {
+  void testComputePrecompile(final PrecompileTestParameters parameters) {
     when(toRun.getVersionedHashes()).thenReturn(Optional.of(List.of(parameters.versionedHash)));
     PrecompiledContract.PrecompileContractResult result =
         contract.computePrecompile(parameters.input, toRun);

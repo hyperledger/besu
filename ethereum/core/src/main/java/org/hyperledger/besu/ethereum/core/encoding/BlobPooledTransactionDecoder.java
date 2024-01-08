@@ -30,6 +30,10 @@ import java.util.List;
  */
 public class BlobPooledTransactionDecoder {
 
+  private BlobPooledTransactionDecoder() {
+    // no instances
+  }
+
   /**
    * Decodes a blob transaction from the provided RLP input.
    *
@@ -44,7 +48,6 @@ public class BlobPooledTransactionDecoder {
     List<KZGCommitment> commitments = input.readList(KZGCommitment::readFrom);
     List<KZGProof> proofs = input.readList(KZGProof::readFrom);
     input.leaveList();
-    builder.kzgBlobs(commitments, blobs, proofs);
-    return builder.build();
+    return builder.kzgBlobs(commitments, blobs, proofs).build();
   }
 }

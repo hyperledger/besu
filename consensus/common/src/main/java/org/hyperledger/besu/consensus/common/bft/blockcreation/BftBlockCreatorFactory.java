@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -61,6 +62,8 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
   protected final ProtocolSchedule protocolSchedule;
   /** The Bft extra data codec. */
   protected final BftExtraDataCodec bftExtraDataCodec;
+  /** The scheduler for asynchronous block creation tasks */
+  protected final EthScheduler ethScheduler;
 
   private final Address localAddress;
 
@@ -74,6 +77,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
    * @param miningParams the mining params
    * @param localAddress the local address
    * @param bftExtraDataCodec the bft extra data codec
+   * @param ethScheduler the scheduler for asynchronous block creation tasks
    */
   public BftBlockCreatorFactory(
       final TransactionPool transactionPool,
@@ -82,7 +86,8 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
       final ForksSchedule<T> forksSchedule,
       final MiningParameters miningParams,
       final Address localAddress,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final BftExtraDataCodec bftExtraDataCodec,
+      final EthScheduler ethScheduler) {
     this.transactionPool = transactionPool;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
@@ -90,6 +95,7 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
     this.localAddress = localAddress;
     this.miningParameters = miningParams;
     this.bftExtraDataCodec = bftExtraDataCodec;
+    this.ethScheduler = ethScheduler;
   }
 
   /**
@@ -109,7 +115,8 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
         protocolContext,
         protocolSchedule,
         parentHeader,
-        bftExtraDataCodec);
+        bftExtraDataCodec,
+        ethScheduler);
   }
 
   /**
@@ -138,6 +145,15 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
    */
   public Wei getMinTransactionGasPrice() {
     return miningParameters.getMinTransactionGasPrice();
+  }
+
+  /**
+   * Gets min priority fee per gas
+   *
+   * @return min priority fee per gas
+   */
+  public Wei getMinPriorityFeePerGas() {
+    return miningParameters.getMinPriorityFeePerGas();
   }
 
   /**

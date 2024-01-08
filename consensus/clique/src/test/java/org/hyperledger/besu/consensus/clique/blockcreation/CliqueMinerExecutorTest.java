@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitV
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -51,6 +52,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.ZoneId;
@@ -78,6 +80,7 @@ public class CliqueMinerExecutorTest {
   private BlockHeaderTestFixture blockHeaderBuilder;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
+  private final EthScheduler ethScheduler = new DeterministicEthScheduler();
 
   @BeforeEach
   public void setup() {
@@ -114,7 +117,8 @@ public class CliqueMinerExecutorTest {
             miningParameters,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
-            true);
+            true,
+            ethScheduler);
 
     // NOTE: Passing in the *parent* block, so must be 1 less than EPOCH
     final BlockHeader header = blockHeaderBuilder.number(EPOCH_LENGTH - 1).buildHeader();
@@ -149,7 +153,8 @@ public class CliqueMinerExecutorTest {
             miningParameters,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
-            true);
+            true,
+            ethScheduler);
 
     // Parent block was epoch, so the next block should contain no validators.
     final BlockHeader header = blockHeaderBuilder.number(EPOCH_LENGTH).buildHeader();
@@ -184,7 +189,8 @@ public class CliqueMinerExecutorTest {
             miningParameters,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
-            true);
+            true,
+            ethScheduler);
 
     executor.setExtraData(modifiedVanityData);
     final Bytes extraDataBytes = executor.calculateExtraData(blockHeaderBuilder.buildHeader());
@@ -216,7 +222,6 @@ public class CliqueMinerExecutorTest {
             cliqueProtocolContext,
             mock(TransactionBroadcaster.class),
             cliqueEthContext,
-            mock(MiningParameters.class),
             new TransactionPoolMetrics(metricsSystem),
             conf,
             null);

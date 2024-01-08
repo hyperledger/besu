@@ -355,6 +355,8 @@ public class MainnetTransactionProcessor {
         contextVariablesBuilder.put(KEY_PRIVATE_METADATA_UPDATER, privateMetadataUpdater);
       }
 
+      operationTracer.traceStartTransaction(worldUpdater, transaction);
+
       final MessageFrame.Builder commonMessageFrameBuilder =
           MessageFrame.builder()
               .maxStackSize(maxStackSize)
@@ -424,6 +426,13 @@ public class MainnetTransactionProcessor {
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         worldUpdater.commit();
+      } else {
+        if (initialFrame.getExceptionalHaltReason().isPresent()) {
+          validationResult =
+              ValidationResult.invalid(
+                  TransactionInvalidReason.EXECUTION_HALTED,
+                  initialFrame.getExceptionalHaltReason().get().toString());
+        }
       }
 
       if (LOG.isTraceEnabled()) {
@@ -450,6 +459,15 @@ public class MainnetTransactionProcessor {
           .addArgument(sender.getBalance())
           .log();
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
+
+      operationTracer.traceEndTransaction(
+          worldUpdater,
+          transaction,
+          initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS,
+          initialFrame.getOutputData(),
+          initialFrame.getLogs(),
+          gasUsedByTransaction,
+          0L);
 
       // update the coinbase
       final var coinbase = worldState.getOrCreate(miningBeneficiary);
@@ -494,9 +512,15 @@ public class MainnetTransactionProcessor {
             gasUsedByTransaction, refundedGas, validationResult, initialFrame.getRevertReason());
       }
     } catch (final MerkleTrieException re) {
+      operationTracer.traceEndTransaction(
+          worldState.updater(), transaction, false, Bytes.EMPTY, List.of(), 0, 0L);
+
       // need to throw to trigger the heal
       throw re;
     } catch (final RuntimeException re) {
+      operationTracer.traceEndTransaction(
+          worldState.updater(), transaction, false, Bytes.EMPTY, List.of(), 0, 0L);
+
       LOG.error("Critical Exception Processing Transaction", re);
       return TransactionProcessingResult.invalid(
           ValidationResult.invalid(

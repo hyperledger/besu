@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BadChainListener;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -86,7 +87,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   /** The Protocol context. */
   protected final ProtocolContext protocolContext;
   /** The Block builder executor. */
-  protected final ProposalBuilderExecutor blockBuilderExecutor;
+  protected final EthScheduler ethScheduler;
   /** The Backward sync context. */
   protected final BackwardSyncContext backwardSyncContext;
   /** The Protocol schedule. */
@@ -100,7 +101,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
    *
    * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
-   * @param blockBuilderExecutor the block builder executor
+   * @param ethScheduler the block builder executor
    * @param transactionPool the pending transactions
    * @param miningParams the mining params
    * @param backwardSyncContext the backward sync context
@@ -109,14 +110,14 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   public MergeCoordinator(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final ProposalBuilderExecutor blockBuilderExecutor,
+      final EthScheduler ethScheduler,
       final TransactionPool transactionPool,
       final MiningParameters miningParams,
       final BackwardSyncContext backwardSyncContext,
       final Optional<Address> depositContractAddress) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
-    this.blockBuilderExecutor = blockBuilderExecutor;
+    this.ethScheduler = ethScheduler;
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     this.backwardSyncContext = backwardSyncContext;
 
@@ -140,7 +141,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
               protocolContext,
               protocolSchedule,
               parentHeader,
-              depositContractAddress);
+              depositContractAddress,
+              ethScheduler);
         };
 
     this.backwardSyncContext.subscribeBadChainListener(this);
@@ -151,7 +153,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
    *
    * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
-   * @param blockBuilderExecutor the block builder executor
+   * @param ethScheduler the block builder executor
    * @param miningParams the mining params
    * @param backwardSyncContext the backward sync context
    * @param mergeBlockCreatorFactory the merge block creator factory
@@ -159,14 +161,14 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   public MergeCoordinator(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final ProposalBuilderExecutor blockBuilderExecutor,
+      final EthScheduler ethScheduler,
       final MiningParameters miningParams,
       final BackwardSyncContext backwardSyncContext,
       final MergeBlockCreatorFactory mergeBlockCreatorFactory) {
 
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
-    this.blockBuilderExecutor = blockBuilderExecutor;
+    this.ethScheduler = ethScheduler;
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     this.backwardSyncContext = backwardSyncContext;
     if (miningParams.getTargetGasLimit().isEmpty()) {
@@ -207,6 +209,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   @Override
   public Wei getMinTransactionGasPrice() {
     return miningParameters.getMinTransactionGasPrice();
+  }
+
+  @Override
+  public Wei getMinPriorityFeePerGas() {
+    return miningParameters.getMinPriorityFeePerGas();
   }
 
   @Override
@@ -366,8 +373,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         payloadIdentifier,
         miningParameters.getUnstable().getPosBlockCreationMaxTime());
 
-    blockBuilderExecutor
-        .buildProposal(() -> retryBlockCreationUntilUseful(payloadIdentifier, blockCreator))
+    ethScheduler
+        .scheduleBlockCreationTask(
+            () -> retryBlockCreationUntilUseful(payloadIdentifier, blockCreator))
         .orTimeout(
             miningParameters.getUnstable().getPosBlockCreationMaxTime(), TimeUnit.MILLISECONDS)
         .whenComplete(
@@ -488,7 +496,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     if (maybeHeadHeader.isPresent()) {
       LOG.atDebug()
-          .setMessage("BlockHeader {} is already present")
+          .setMessage("BlockHeader {} is already present in blockchain")
           .addArgument(maybeHeadHeader.get()::toLogString)
           .log();
     } else {
@@ -894,16 +902,5 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       cancelled.set(true);
       blockCreator.cancel();
     }
-  }
-
-  /** The interface Proposal builder executor. */
-  public interface ProposalBuilderExecutor {
-    /**
-     * Build proposal and return completable future.
-     *
-     * @param task the task
-     * @return the completable future
-     */
-    CompletableFuture<Void> buildProposal(final Runnable task);
   }
 }

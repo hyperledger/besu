@@ -115,7 +115,8 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
-            executionContextTestFixture.getBlockchain().getChainHeadHeader());
+            executionContextTestFixture.getBlockchain().getChainHeadHeader(),
+            ethScheduler);
 
     // A Hashrate should not exist in the block creator prior to creating a block
     assertThat(blockCreator.getHashesPerSecond()).isNotPresent();
@@ -168,7 +169,8 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
-            executionContextTestFixture.getBlockchain().getChainHeadHeader());
+            executionContextTestFixture.getBlockchain().getChainHeadHeader(),
+            ethScheduler);
 
     assertThat(blockCreator.createBlock(BLOCK_1_TIMESTAMP)).isNotNull();
     // If we weren't setting difficulty to 2^256-1 a difficulty of 1 would have caused a
@@ -212,7 +214,8 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
-            executionContextTestFixture.getBlockchain().getChainHeadHeader());
+            executionContextTestFixture.getBlockchain().getChainHeadHeader(),
+            ethScheduler);
 
     final MutableWorldState mutableWorldState =
         executionContextTestFixture.getStateArchive().getMutable();
@@ -278,7 +281,8 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
-            executionContextTestFixture.getBlockchain().getChainHeadHeader());
+            executionContextTestFixture.getBlockchain().getChainHeadHeader(),
+            ethScheduler);
 
     final MutableWorldState mutableWorldState =
         executionContextTestFixture.getStateArchive().getMutable();
@@ -328,7 +332,6 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             executionContextTestFixture.getProtocolContext(),
             mock(TransactionBroadcaster.class),
             ethContext,
-            mock(MiningParameters.class),
             new TransactionPoolMetrics(metricsSystem),
             poolConf,
             null);

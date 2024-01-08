@@ -63,6 +63,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -81,8 +83,8 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
+import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
@@ -125,19 +127,18 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class BesuCommandTest extends CommandTestAbstract {
 
   private static final String ENCLAVE_URI = "http://1.2.3.4:5555";
@@ -149,6 +150,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   private static final GraphQLConfiguration DEFAULT_GRAPH_QL_CONFIGURATION;
   private static final WebSocketConfiguration DEFAULT_WEB_SOCKET_CONFIGURATION;
   private static final MetricsConfiguration DEFAULT_METRICS_CONFIGURATION;
+  private static final ApiConfiguration DEFAULT_API_CONFIGURATION;
+
   private static final int GENESIS_CONFIG_TEST_CHAINID = 3141592;
   private static final JsonObject GENESIS_VALID_JSON =
       (new JsonObject())
@@ -183,14 +186,18 @@ public class BesuCommandTest extends CommandTestAbstract {
   private static final JsonObject GENESIS_WITH_DATA_BLOBS_ENABLED =
       new JsonObject().put("config", new JsonObject().put("cancunTime", 1L));
 
+  private static final JsonObject GENESIS_WITH_ZERO_BASE_FEE_MARKET =
+      new JsonObject().put("config", new JsonObject().put("zeroBaseFee", true));
+
   static {
     DEFAULT_JSON_RPC_CONFIGURATION = JsonRpcConfiguration.createDefault();
     DEFAULT_GRAPH_QL_CONFIGURATION = GraphQLConfiguration.createDefault();
     DEFAULT_WEB_SOCKET_CONFIGURATION = WebSocketConfiguration.createDefault();
     DEFAULT_METRICS_CONFIGURATION = MetricsConfiguration.builder().build();
+    DEFAULT_API_CONFIGURATION = ImmutableApiConfiguration.builder().build();
   }
 
-  @Before
+  @BeforeEach
   public void setup() {
     try {
       // optimistically tear down a potential previous loaded trusted setup
@@ -202,7 +209,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     MergeConfigOptions.setMergeEnabled(false);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
 
     MergeConfigOptions.setMergeEnabled(false);
@@ -255,7 +262,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).metricsConfiguration(eq(DEFAULT_METRICS_CONFIGURATION));
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkArg.capture());
     verify(mockRunnerBuilder).autoLogBloomCaching(eq(true));
-    verify(mockRunnerBuilder).rpcMaxLogsRange(eq(5000L));
+    verify(mockRunnerBuilder).apiConfiguration(DEFAULT_API_CONFIGURATION);
     verify(mockRunnerBuilder).build();
 
     verify(mockControllerBuilderFactory)
@@ -358,10 +365,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void overrideDefaultValuesIfKeyIsPresentInConfigFile() throws IOException {
+  public void overrideDefaultValuesIfKeyIsPresentInConfigFile(final @TempDir File dataFolder)
+      throws IOException {
     final URL configFile = this.getClass().getResource("/complete_config.toml");
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
-    final File dataFolder = temp.newFolder();
     final String updatedConfig =
         Resources.toString(configFile, UTF_8)
             .replace("/opt/besu/genesis.json", escapeTomlString(genesisFile.toString()))
@@ -1572,13 +1579,102 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void rpcMaxLogsRangeOptionMustBeUsed() {
+
     final long rpcMaxLogsRange = 150L;
     parseCommand("--rpc-max-logs-range", Long.toString(rpcMaxLogsRange));
 
-    verify(mockRunnerBuilder).rpcMaxLogsRange(longArgumentCaptor.capture());
+    verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(longArgumentCaptor.getValue()).isEqualTo(rpcMaxLogsRange);
+    assertThat(apiConfigurationCaptor.getValue())
+        .isEqualTo(ImmutableApiConfiguration.builder().maxLogsRange((rpcMaxLogsRange)).build());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcGasCapOptionMustBeUsed() {
+    final long rpcGasCap = 150L;
+    parseCommand("--rpc-gas-cap", Long.toString(rpcGasCap));
+
+    verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(apiConfigurationCaptor.getValue())
+        .isEqualTo(ImmutableApiConfiguration.builder().gasCap((rpcGasCap)).build());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void apiPriorityFeeLimitingEnabledOptionMustBeUsed() {
+    parseCommand("--api-gas-and-priority-fee-limiting-enabled");
+    verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
+    verify(mockRunnerBuilder).build();
+    assertThat(apiConfigurationCaptor.getValue())
+        .isEqualTo(
+            ImmutableApiConfiguration.builder().isGasAndPriorityFeeLimitingEnabled(true).build());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void apiPriorityFeeLowerBoundCoefficientOptionMustBeUsed() {
+    final long lowerBound = 150L;
+    parseCommand(
+        "--api-gas-and-priority-fee-lower-bound-coefficient",
+        Long.toString(lowerBound),
+        "--api-gas-and-priority-fee-limiting-enabled");
+    verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
+    verify(mockRunnerBuilder).build();
+    assertThat(apiConfigurationCaptor.getValue())
+        .isEqualTo(
+            ImmutableApiConfiguration.builder()
+                .lowerBoundGasAndPriorityFeeCoefficient(lowerBound)
+                .isGasAndPriorityFeeLimitingEnabled(true)
+                .build());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void
+      apiPriorityFeeLowerBoundCoefficients_MustNotBeGreaterThan_apiPriorityFeeUpperBoundCoefficient() {
+    final long lowerBound = 200L;
+    final long upperBound = 100L;
+
+    parseCommand(
+        "--api-gas-and-priority-fee-limiting-enabled",
+        "--api-gas-and-priority-fee-lower-bound-coefficient",
+        Long.toString(lowerBound),
+        "--api-gas-and-priority-fee-upper-bound-coefficient",
+        Long.toString(upperBound));
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "--api-gas-and-priority-fee-lower-bound-coefficient cannot be greater than the value of --api-gas-and-priority-fee-upper-bound-coefficient");
+  }
+
+  @Test
+  public void apiPriorityFeeUpperBoundCoefficientsOptionMustBeUsed() {
+    final long upperBound = 200L;
+    parseCommand(
+        "--api-gas-and-priority-fee-upper-bound-coefficient",
+        Long.toString(upperBound),
+        "--api-gas-and-priority-fee-limiting-enabled");
+    verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
+    verify(mockRunnerBuilder).build();
+    assertThat(apiConfigurationCaptor.getValue())
+        .isEqualTo(
+            ImmutableApiConfiguration.builder()
+                .upperBoundGasAndPriorityFeeCoefficient(upperBound)
+                .isGasAndPriorityFeeLimitingEnabled(true)
+                .build());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -3648,7 +3744,7 @@ public class BesuCommandTest extends CommandTestAbstract {
             });
   }
 
-  @Ignore
+  @Disabled
   public void pruningIsEnabledIfSyncModeIsFast() {
     parseCommand("--sync-mode", "FAST");
 
@@ -3659,7 +3755,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
-  @Ignore
+  @Disabled
   public void pruningIsDisabledIfSyncModeIsFull() {
     parseCommand("--sync-mode", "FULL");
 
@@ -3681,7 +3777,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
-  @Ignore
+  @Disabled
   public void pruningDisabledExplicitly() {
     parseCommand("--pruning-enabled=false", "--sync-mode=FAST");
 
@@ -3717,6 +3813,21 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(pruningArg.getValue().getBlocksRetained()).isEqualTo(15);
     assertThat(pruningArg.getValue().getBlockConfirmations()).isEqualTo(4);
+  }
+
+  @Test
+  public void pruningLogsDeprecationWarning() {
+    parseCommand("--pruning-enabled");
+
+    verify(mockControllerBuilder).isPruningEnabled(true);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    verify(mockLogger)
+        .warn(
+            contains(
+                "Forest pruning is deprecated and will be removed soon."
+                    + " To save disk space consider switching to Bonsai data storage format."));
   }
 
   @Test
@@ -4261,14 +4372,11 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
-  @Rule public TemporaryFolder testFolder = new TemporaryFolder();
-
   @Test
-  public void errorIsRaisedIfStaticNodesAreNotAllowed() throws IOException {
-    final File staticNodesFile = testFolder.newFile("static-nodes.json");
-    staticNodesFile.deleteOnExit();
-    final File permissioningConfig = testFolder.newFile("permissioning");
-    permissioningConfig.deleteOnExit();
+  public void errorIsRaisedIfStaticNodesAreNotAllowed(final @TempDir Path testFolder)
+      throws IOException {
+    final Path staticNodesFile = testFolder.resolve("static-nodes.json");
+    final Path permissioningConfig = testFolder.resolve("permissioning.json");
 
     final EnodeURL staticNodeURI =
         EnodeURLImpl.builder()
@@ -4287,17 +4395,16 @@ public class BesuCommandTest extends CommandTestAbstract {
             .listeningPort(30304)
             .build();
 
+    Files.write(staticNodesFile, ("[\"" + staticNodeURI.toString() + "\"]").getBytes(UTF_8));
     Files.write(
-        staticNodesFile.toPath(), ("[\"" + staticNodeURI.toString() + "\"]").getBytes(UTF_8));
-    Files.write(
-        permissioningConfig.toPath(),
+        permissioningConfig,
         ("nodes-allowlist=[\"" + allowedNode.toString() + "\"]").getBytes(UTF_8));
 
     parseCommand(
-        "--data-path=" + testFolder.getRoot().getPath(),
+        "--data-path=" + testFolder,
         "--bootnodes",
         "--permissions-nodes-config-file-enabled=true",
-        "--permissions-nodes-config-file=" + permissioningConfig.getPath());
+        "--permissions-nodes-config-file=" + permissioningConfig);
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(staticNodeURI.toString(), "not in nodes-allowlist");
   }
@@ -4873,12 +4980,10 @@ public class BesuCommandTest extends CommandTestAbstract {
             "File containing password to unlock keystore is required when PKI Block Creation is enabled");
   }
 
-  @Rule public TemporaryFolder pkiTempFolder = new TemporaryFolder();
-
   @Test
-  public void pkiBlockCreationFullConfig() throws Exception {
+  public void pkiBlockCreationFullConfig(final @TempDir Path pkiTempFolder) throws Exception {
     // Create temp file with password
-    final File pwdFile = pkiTempFolder.newFile("pwd");
+    final File pwdFile = pkiTempFolder.resolve("pwd").toFile();
     FileUtils.writeStringToFile(pwdFile, "foo", UTF_8);
 
     parseCommand(
@@ -5193,6 +5298,81 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void txpoolForcePriceBumpToZeroWhenZeroBaseFeeMarket() throws IOException {
+    final Path genesisFile = createFakeGenesisFile(GENESIS_WITH_ZERO_BASE_FEE_MARKET);
+    parseCommand("--genesis-file", genesisFile.toString());
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+
+    final Percentage priceBump = transactionPoolConfigCaptor.getValue().getPriceBump();
+    assertThat(priceBump).isEqualTo(Percentage.ZERO);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void txpoolPriceBumpOptionIncompatibleWithZeroWhenZeroBaseFeeMarket() throws IOException {
+    final Path genesisFile = createFakeGenesisFile(GENESIS_WITH_ZERO_BASE_FEE_MARKET);
+    parseCommand("--genesis-file", genesisFile.toString(), "--tx-pool-price-bump", "5");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Price bump option is not compatible with zero base fee market");
+  }
+
+  @Test
+  public void txpoolForcePriceBumpToZeroWhenMinGasPriceZero() {
+    parseCommand("--min-gas-price", "0");
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+
+    final Percentage priceBump = transactionPoolConfigCaptor.getValue().getPriceBump();
+    assertThat(priceBump).isEqualTo(Percentage.ZERO);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void txpoolPriceBumpKeepItsValueIfSetEvenWhenMinGasPriceZero() {
+    parseCommand("--min-gas-price", "0", "--tx-pool-price-bump", "1");
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+
+    final Percentage priceBump = transactionPoolConfigCaptor.getValue().getPriceBump();
+    assertThat(priceBump).isEqualTo(Percentage.fromInt(1));
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void txpoolWhenNotSetForceTxPoolMinGasPriceToZeroWhenMinGasPriceZero() {
+    parseCommand("--min-gas-price", "0");
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+
+    final Wei txPoolMinGasPrice = transactionPoolConfigCaptor.getValue().getMinGasPrice();
+    assertThat(txPoolMinGasPrice).isEqualTo(Wei.ZERO);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    verify(mockLogger, atLeast(1))
+        .warn(
+            contains(
+                "Forcing tx-pool-min-gas-price=0, since it cannot be greater than the value of min-gas-price"));
+  }
+
+  @Test
+  public void txpoolTxPoolMinGasPriceMustNotBeGreaterThanMinGasPriceZero() {
+    parseCommand("--min-gas-price", "100", "--tx-pool-min-gas-price", "101");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("tx-pool-min-gas-price cannot be greater than the value of min-gas-price");
   }
 
   @Test

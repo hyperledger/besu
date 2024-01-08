@@ -36,11 +36,11 @@ import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
 
 import java.util.List;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
 public class StorageSubCommandTest extends CommandTestAbstract {
 
   @Test

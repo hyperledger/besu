@@ -44,6 +44,7 @@ import org.mockito.Answers;
 
 public class DebugStandardTraceBlockToFileTest {
 
+  // this tempDir is deliberately static
   @TempDir private static Path folder;
 
   private final WorldStateArchive archive =

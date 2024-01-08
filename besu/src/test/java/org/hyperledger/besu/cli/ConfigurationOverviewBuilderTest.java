@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LEGACY;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.SEQUENCED;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -57,8 +58,9 @@ class ConfigurationOverviewBuilderTest {
     assertThat(networkSet).contains("Network: foobar");
 
     builder.setHasCustomGenesis(true);
+    builder.setCustomGenesis("file.name");
     final String genesisSet = builder.build();
-    assertThat(genesisSet).contains("Network: Custom genesis file specified");
+    assertThat(genesisSet).contains("Network: Custom genesis file");
     assertThat(genesisSet).doesNotContain("Network: foobar");
   }
 
@@ -149,6 +151,24 @@ class ConfigurationOverviewBuilderTest {
   }
 
   @Test
+  void setTrieLogPruningEnabled() {
+    final String noTrieLogRetentionThresholdSet = builder.build();
+    assertThat(noTrieLogRetentionThresholdSet).doesNotContain("Trie log pruning enabled");
+
+    builder.setTrieLogPruningEnabled();
+    builder.setTrieLogRetentionThreshold(42);
+    String trieLogRetentionThresholdSet = builder.build();
+    assertThat(trieLogRetentionThresholdSet)
+        .contains("Trie log pruning enabled")
+        .contains("retention: 42");
+    assertThat(trieLogRetentionThresholdSet).doesNotContain("prune limit");
+
+    builder.setTrieLogPruningLimit(1000);
+    trieLogRetentionThresholdSet = builder.build();
+    assertThat(trieLogRetentionThresholdSet).contains("prune limit: 1000");
+  }
+
+  @Test
   void setTxPoolImplementationLayered() {
     builder.setTxPoolImplementation(LAYERED);
     final String layeredTxPoolSelected = builder.build();
@@ -160,6 +180,13 @@ class ConfigurationOverviewBuilderTest {
     builder.setTxPoolImplementation(LEGACY);
     final String legacyTxPoolSelected = builder.build();
     assertThat(legacyTxPoolSelected).contains("Using LEGACY transaction pool implementation");
+  }
+
+  @Test
+  void setTxPoolImplementationSequenced() {
+    builder.setTxPoolImplementation(SEQUENCED);
+    final String sequencedTxPoolSelected = builder.build();
+    assertThat(sequencedTxPoolSelected).contains("Using SEQUENCED transaction pool implementation");
   }
 
   @Test

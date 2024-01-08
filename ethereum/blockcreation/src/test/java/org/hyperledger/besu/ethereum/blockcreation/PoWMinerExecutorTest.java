@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -34,6 +35,7 @@ import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -44,12 +46,13 @@ import org.junit.jupiter.api.Test;
 
 public class PoWMinerExecutorTest {
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
+  private final EthScheduler ethScheduler = new DeterministicEthScheduler();
 
   @Test
   public void startingMiningWithoutCoinbaseThrowsException() {
     final MiningParameters miningParameters = MiningParameters.newDefault();
 
-    final TransactionPool transactionPool = createTransactionPool(miningParameters);
+    final TransactionPool transactionPool = createTransactionPool();
 
     final PoWMinerExecutor executor =
         new PoWMinerExecutor(
@@ -58,7 +61,8 @@ public class PoWMinerExecutorTest {
             transactionPool,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
-            new EpochCalculator.DefaultEpochCalculator());
+            new EpochCalculator.DefaultEpochCalculator(),
+            ethScheduler);
 
     assertThatExceptionOfType(CoinbaseNotSetException.class)
         .isThrownBy(() -> executor.startAsyncMining(Subscribers.create(), Subscribers.none(), null))
@@ -69,7 +73,7 @@ public class PoWMinerExecutorTest {
   public void settingCoinbaseToNullThrowsException() {
     final MiningParameters miningParameters = MiningParameters.newDefault();
 
-    final TransactionPool transactionPool = createTransactionPool(miningParameters);
+    final TransactionPool transactionPool = createTransactionPool();
 
     final PoWMinerExecutor executor =
         new PoWMinerExecutor(
@@ -78,7 +82,8 @@ public class PoWMinerExecutorTest {
             transactionPool,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
-            new EpochCalculator.DefaultEpochCalculator());
+            new EpochCalculator.DefaultEpochCalculator(),
+            ethScheduler);
 
     assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> executor.setCoinbase(null))
@@ -91,7 +96,7 @@ public class PoWMinerExecutorTest {
     return blockHeader;
   }
 
-  private TransactionPool createTransactionPool(final MiningParameters miningParameters) {
+  private TransactionPool createTransactionPool() {
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();
     final GasPricePendingTransactionsSorter pendingTransactions =
@@ -111,7 +116,6 @@ public class PoWMinerExecutorTest {
             mock(ProtocolContext.class),
             mock(TransactionBroadcaster.class),
             ethContext,
-            miningParameters,
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
             poolConf,
             null);

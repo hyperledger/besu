@@ -96,6 +96,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -103,11 +104,12 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
+import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -239,7 +241,7 @@ public class TestContextBuilder {
     }
 
     final MutableBlockchain blockChain;
-    final DefaultWorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
+    final ForestWorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
     if (genesisFile.isPresent()) {
       try {
@@ -412,7 +414,7 @@ public class TestContextBuilder {
 
     final BftValidatorOverrides validatorOverrides = convertBftForks(qbftForks);
     final TransactionSimulator transactionSimulator =
-        new TransactionSimulator(blockChain, worldStateArchive, protocolSchedule);
+        new TransactionSimulator(blockChain, worldStateArchive, protocolSchedule, 0L);
 
     final BlockValidatorProvider blockValidatorProvider =
         BlockValidatorProvider.forkingValidatorProvider(
@@ -448,12 +450,13 @@ public class TestContextBuilder {
             protocolContext,
             mock(TransactionBroadcaster.class),
             ethContext,
-            miningParams,
             new TransactionPoolMetrics(metricsSystem),
             poolConf,
             null);
 
     transactionPool.setEnabled();
+
+    final EthScheduler ethScheduler = new DeterministicEthScheduler();
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final BftBlockCreatorFactory<?> blockCreatorFactory =
@@ -464,7 +467,8 @@ public class TestContextBuilder {
             forksSchedule,
             miningParams,
             localAddress,
-            BFT_EXTRA_DATA_ENCODER);
+            BFT_EXTRA_DATA_ENCODER,
+            ethScheduler);
 
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockChain, blockInterface, true, validatorProvider);

@@ -59,6 +59,7 @@ import org.mockito.Mockito;
 
 public class GraphQLHttpServiceTest {
 
+  // this tempDir is deliberately static
   @TempDir private static Path folder;
 
   private static final Vertx vertx = Vertx.vertx();

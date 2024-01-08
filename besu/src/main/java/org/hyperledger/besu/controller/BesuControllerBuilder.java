@@ -31,9 +31,6 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
@@ -73,6 +70,7 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.ImmutableCheckpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
@@ -82,12 +80,16 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogPruner;
+import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.trie.forest.pruner.MarkSweepPruner;
+import org.hyperledger.besu.ethereum.trie.forest.pruner.Pruner;
+import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
-import org.hyperledger.besu.ethereum.worldstate.MarkSweepPruner;
-import org.hyperledger.besu.ethereum.worldstate.Pruner;
-import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -655,7 +657,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             Optional.of(
                 new Pruner(
                     new MarkSweepPruner(
-                        ((DefaultWorldStateArchive) worldStateArchive).getWorldStateStorage(),
+                        ((ForestWorldStateArchive) worldStateArchive).getWorldStateStorage(),
                         blockchain,
                         storageProvider.getStorageBySegmentIdentifier(
                             KeyValueSegmentIdentifier.PRUNING_STATE),
@@ -720,9 +722,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             clock,
             metricsSystem,
             syncState,
-            miningParameters,
             transactionPoolConfiguration,
-            pluginTransactionValidatorFactory);
+            pluginTransactionValidatorFactory,
+            besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()));
 
     final List<PeerValidator> peerValidators = createPeerValidators(protocolSchedule);
 
@@ -1064,18 +1066,34 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final Blockchain blockchain,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
-      case BONSAI -> new BonsaiWorldStateProvider(
-          (BonsaiWorldStateKeyValueStorage) worldStateStorage,
-          blockchain,
-          Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
-          cachedMerkleTrieLoader,
-          metricsSystem,
-          besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
-          evmConfiguration);
+      case BONSAI -> {
+        final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
+        final boolean isProofOfStake =
+            genesisConfigOptions.getTerminalTotalDifficulty().isPresent();
+        final TrieLogPruner trieLogPruner =
+            dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningEnabled()
+                ? new TrieLogPruner(
+                    (BonsaiWorldStateKeyValueStorage) worldStateStorage,
+                    blockchain,
+                    dataStorageConfiguration.getUnstable().getBonsaiTrieLogRetentionThreshold(),
+                    dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningLimit(),
+                    isProofOfStake)
+                : TrieLogPruner.noOpTrieLogPruner();
+        trieLogPruner.initialize();
+        yield new BonsaiWorldStateProvider(
+            (BonsaiWorldStateKeyValueStorage) worldStateStorage,
+            blockchain,
+            Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
+            cachedMerkleTrieLoader,
+            metricsSystem,
+            besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
+            evmConfiguration,
+            trieLogPruner);
+      }
       case FOREST -> {
         final WorldStatePreimageStorage preimageStorage =
             storageProvider.createWorldStatePreimageStorage();
-        yield new DefaultWorldStateArchive(worldStateStorage, preimageStorage, evmConfiguration);
+        yield new ForestWorldStateArchive(worldStateStorage, preimageStorage, evmConfiguration);
       }
     };
   }

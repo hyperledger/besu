@@ -59,6 +59,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.ZoneId;
@@ -145,7 +146,6 @@ public class BftBlockCreatorTest {
             protContext,
             mock(TransactionBroadcaster.class),
             ethContext,
-            mock(MiningParameters.class),
             new TransactionPoolMetrics(metricsSystem),
             poolConf,
             null);
@@ -186,7 +186,8 @@ public class BftBlockCreatorTest {
             protContext,
             protocolSchedule,
             parentHeader,
-            bftExtraDataEncoder);
+            bftExtraDataEncoder,
+            new DeterministicEthScheduler());
 
     final int secondsBetweenBlocks = 1;
     final Block block = blockCreator.createBlock(parentHeader.getTimestamp() + 1).getBlock();

@@ -555,7 +555,8 @@ type Transaction {
   logs: [Log!]
   r: BigInt!
   s: BigInt!
-  v: BigInt!
+  v: BigInt
+  yParity: BigInt
 
   """Envelope transaction support"""
   type: Long

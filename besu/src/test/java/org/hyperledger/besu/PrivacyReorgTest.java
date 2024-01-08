@@ -81,7 +81,7 @@ import org.junit.jupiter.api.io.TempDir;
 @SuppressWarnings("rawtypes")
 public class PrivacyReorgTest {
 
-  @TempDir private static Path folder;
+  @TempDir private Path folder;
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);

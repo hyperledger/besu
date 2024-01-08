@@ -52,6 +52,7 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitV
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -63,6 +64,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.ZoneId;
@@ -83,7 +85,7 @@ public class CliqueBlockCreatorTest {
   private final List<Address> validatorList = Lists.newArrayList();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
-
+  private final EthScheduler ethScheduler = new DeterministicEthScheduler();
   private ProtocolSchedule protocolSchedule;
   private final WorldStateArchive stateArchive = createInMemoryWorldStateArchive();
 
@@ -148,7 +150,8 @@ public class CliqueBlockCreatorTest {
             protocolSchedule,
             proposerNodeKey,
             blockchain.getChainHeadHeader(),
-            epochManager);
+            epochManager,
+            ethScheduler);
 
     final Block createdBlock = blockCreator.createBlock(5L).getBlock();
 
@@ -176,7 +179,8 @@ public class CliqueBlockCreatorTest {
             protocolSchedule,
             proposerNodeKey,
             blockchain.getChainHeadHeader(),
-            epochManager);
+            epochManager,
+            ethScheduler);
 
     final Block createdBlock = blockCreator.createBlock(0L).getBlock();
     assertThat(createdBlock.getHeader().getNonce()).isEqualTo(CliqueBlockInterface.ADD_NONCE);
@@ -209,7 +213,8 @@ public class CliqueBlockCreatorTest {
             protocolSchedule,
             proposerNodeKey,
             blockchain.getChainHeadHeader(),
-            epochManager);
+            epochManager,
+            ethScheduler);
 
     final Block createdBlock = blockCreator.createBlock(0L).getBlock();
     assertThat(createdBlock.getHeader().getNonce()).isEqualTo(CliqueBlockInterface.DROP_NONCE);
@@ -233,7 +238,6 @@ public class CliqueBlockCreatorTest {
             protocolContext,
             mock(TransactionBroadcaster.class),
             ethContext,
-            mock(MiningParameters.class),
             new TransactionPoolMetrics(metricsSystem),
             conf,
             null);

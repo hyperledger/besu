@@ -16,16 +16,17 @@ package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManager;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiPreImageProxy;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogAddedEvent;
-import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
-import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiPreImageProxy;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogAddedEvent;
+import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogManager;
+import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogPruner;
+import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -197,7 +198,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   static class NoOpTrieLogManager extends TrieLogManager {
 
     public NoOpTrieLogManager() {
-      super(null, null, 0, null);
+      super(null, null, 0, null, TrieLogPruner.noOpTrieLogPruner());
     }
 
     @SuppressWarnings({"UnsynchronizedOverridesSynchronized", "squid:S3551"})
