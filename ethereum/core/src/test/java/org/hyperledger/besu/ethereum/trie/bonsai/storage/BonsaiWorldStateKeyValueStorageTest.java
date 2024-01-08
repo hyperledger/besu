@@ -62,12 +62,14 @@ public class BonsaiWorldStateKeyValueStorageTest {
     return Arrays.asList(new Object[][] {{FlatDbMode.FULL}, {FlatDbMode.PARTIAL}});
   }
 
-  public static Collection<Object[]> codeStorageMode() {
+  public static Collection<Object[]> flatDbModeAndCodeStorageMode() {
     return Arrays.asList(
-        new Object[][] {
-          {FlatDbMode.FULL, true},
-          {FlatDbMode.PARTIAL, true}
-        });
+            new Object[][] {
+                    {FlatDbMode.FULL, false},
+                    {FlatDbMode.PARTIAL, false},
+                    {FlatDbMode.FULL, true},
+                    {FlatDbMode.PARTIAL, true}
+            });
   }
 
   BonsaiWorldStateKeyValueStorage storage;
@@ -119,7 +121,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   }
 
   @ParameterizedTest
-  @MethodSource("codeStorageMode")
+  @MethodSource("flatDbModeAndCodeStorageMode")
   void getNodeData_returnsEmptyNode(
       final FlatDbMode flatDbMode, final boolean accountHashCodeStorage) {
     setUp(flatDbMode, accountHashCodeStorage);
@@ -127,7 +129,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   }
 
   @ParameterizedTest
-  @MethodSource("codeStorageMode")
+  @MethodSource("flatDbModeAndCodeStorageMode")
   void getCode_saveAndGetSpecialValues(
       final FlatDbMode flatDbMode, final boolean accountHashCodeStorage) {
     setUp(flatDbMode, accountHashCodeStorage);
@@ -142,7 +144,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   }
 
   @ParameterizedTest
-  @MethodSource("codeStorageMode")
+  @MethodSource("flatDbModeAndCodeStorageMode")
   void getCode_saveAndGetRegularValue(
       final FlatDbMode flatDbMode, final boolean accountHashCodeStorage) {
     setUp(flatDbMode, accountHashCodeStorage);
