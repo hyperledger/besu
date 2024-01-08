@@ -51,5 +51,4 @@ public class AccountHashCodeStorageStrategy implements CodeStorageStrategy {
       final Hash codeHash) {
     transaction.remove(CODE_STORAGE, accountHash.toArrayUnsafe());
   }
-
 }

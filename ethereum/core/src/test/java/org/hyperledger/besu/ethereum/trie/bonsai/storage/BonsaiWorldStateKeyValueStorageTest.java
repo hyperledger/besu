@@ -64,12 +64,12 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
   public static Collection<Object[]> flatDbModeAndCodeStorageMode() {
     return Arrays.asList(
-            new Object[][] {
-                    {FlatDbMode.FULL, false},
-                    {FlatDbMode.PARTIAL, false},
-                    {FlatDbMode.FULL, true},
-                    {FlatDbMode.PARTIAL, true}
-            });
+        new Object[][] {
+          {FlatDbMode.FULL, false},
+          {FlatDbMode.PARTIAL, false},
+          {FlatDbMode.FULL, true},
+          {FlatDbMode.PARTIAL, true}
+        });
   }
 
   BonsaiWorldStateKeyValueStorage storage;

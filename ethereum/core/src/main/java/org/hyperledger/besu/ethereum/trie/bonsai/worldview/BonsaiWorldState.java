@@ -552,10 +552,7 @@ public class BonsaiWorldState
     return calculateRootHash(
         Optional.of(
             new BonsaiWorldStateKeyValueStorage.Updater(
-                noOpSegmentedTx,
-                noOpTx,
-                worldStateStorage.getFlatDbStrategy(),
-                worldStateStorage.getWorldStateStorage())),
+                noOpSegmentedTx, noOpTx, worldStateStorage.getFlatDbStrategy())),
         accumulator.copy());
   }
 

@@ -352,8 +352,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return new Updater(
         composedWorldStateStorage.startTransaction(),
         trieLogStorage.startTransaction(),
-        flatDbStrategy,
-        composedWorldStateStorage);
+        flatDbStrategy);
   }
 
   @Override
@@ -402,23 +401,19 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     private final SegmentedKeyValueStorageTransaction composedWorldStateTransaction;
     private final KeyValueStorageTransaction trieLogStorageTransaction;
     private final FlatDbStrategy flatDbStrategy;
-    private final SegmentedKeyValueStorage composedWorldStateStorage;
 
     public Updater(
         final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
         final KeyValueStorageTransaction trieLogStorageTransaction,
-        final FlatDbStrategy flatDbStrategy,
-        final SegmentedKeyValueStorage composedWorldStateStorage) {
+        final FlatDbStrategy flatDbStrategy) {
       this.composedWorldStateTransaction = composedWorldStateTransaction;
       this.trieLogStorageTransaction = trieLogStorageTransaction;
       this.flatDbStrategy = flatDbStrategy;
-      this.composedWorldStateStorage = composedWorldStateStorage;
     }
 
     @Override
     public BonsaiUpdater removeCode(final Hash accountHash, final Hash codeHash) {
-      flatDbStrategy.removeFlatCode(
-          composedWorldStateTransaction, accountHash, codeHash, composedWorldStateStorage);
+      flatDbStrategy.removeFlatCode(composedWorldStateTransaction, accountHash, codeHash);
       return this;
     }
 
@@ -428,8 +423,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         // Don't save empty values
         return this;
       }
-      flatDbStrategy.putFlatCode(
-          composedWorldStateTransaction, accountHash, codeHash, code, composedWorldStateStorage);
+      flatDbStrategy.putFlatCode(composedWorldStateTransaction, accountHash, codeHash, code);
       return this;
     }
 
