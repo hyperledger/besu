@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.permissioning;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.TransferTransaction;
@@ -22,16 +22,16 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.TransferTra
 import java.math.BigInteger;
 import java.util.Collections;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class AccountLocalConfigPermissioningAcceptanceTest extends AcceptanceTestBase {
+public class AccountLocalConfigPermissioningAcceptanceTest extends AcceptanceTestBaseJunit5 {
 
   private Node node;
   private Account senderA;
   private Account senderB;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     senderA = accounts.getPrimaryBenefactor();
     senderB = accounts.getSecondaryBenefactor();

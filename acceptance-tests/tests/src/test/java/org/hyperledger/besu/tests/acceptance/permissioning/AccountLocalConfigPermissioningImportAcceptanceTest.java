@@ -15,7 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.permissioning;
 
 import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor;
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
@@ -23,18 +23,18 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurati
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-public class AccountLocalConfigPermissioningImportAcceptanceTest extends AcceptanceTestBase {
+public class AccountLocalConfigPermissioningImportAcceptanceTest extends AcceptanceTestBaseJunit5 {
 
-  @Rule public TemporaryFolder folder = new TemporaryFolder();
+  @TempDir public Path folder;
 
   private static final String GENESIS_FILE = "/ibft/ibft.json";
 
@@ -45,12 +45,12 @@ public class AccountLocalConfigPermissioningImportAcceptanceTest extends Accepta
   private BesuNode nodeB;
   private Cluster permissionedCluster;
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
     sender = accounts.getPrimaryBenefactor();
     beneficiary = accounts.createAccount("beneficiary");
     final List<String> allowList = List.of(sender.getAddress(), beneficiary.getAddress());
-    final File sharedFile = folder.newFile();
+    final File sharedFile = Files.createFile(folder.resolve("shared.txt")).toFile();
     persistAllowList(allowList, sharedFile.toPath());
     bootnode = besu.createIbft2NonValidatorBootnode("bootnode", GENESIS_FILE);
     nodeA =
@@ -67,7 +67,7 @@ public class AccountLocalConfigPermissioningImportAcceptanceTest extends Accepta
 
   @Test
   public void transactionFromDeniedAccountShouldNotBreakBlockImport() throws IOException {
-    final File newPermissionsFile = folder.newFile();
+    final File newPermissionsFile = Files.createFile(folder.resolve("new.txt")).toFile();
     final List<String> allowList = List.of(beneficiary.getAddress());
     persistAllowList(allowList, newPermissionsFile.toPath());
     final BesuNode nodeC =
@@ -91,7 +91,7 @@ public class AccountLocalConfigPermissioningImportAcceptanceTest extends Accepta
         AllowlistPersistor.ALLOWLIST_TYPE.ACCOUNTS, allowList, path);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     permissionedCluster.stop();
   }
