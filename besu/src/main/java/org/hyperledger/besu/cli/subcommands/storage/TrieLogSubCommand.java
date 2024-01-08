@@ -46,7 +46,12 @@ import picocli.CommandLine.ParentCommand;
     description = "Manipulate trie logs",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class,
-    subcommands = {TrieLogSubCommand.CountTrieLog.class, TrieLogSubCommand.PruneTrieLog.class})
+    subcommands = {
+      TrieLogSubCommand.CountTrieLog.class,
+      TrieLogSubCommand.PruneTrieLog.class,
+      TrieLogSubCommand.ExportTrieLog.class,
+      TrieLogSubCommand.ImportTrieLog.class
+    })
 public class TrieLogSubCommand implements Runnable {
 
   @SuppressWarnings("UnusedVariable")
