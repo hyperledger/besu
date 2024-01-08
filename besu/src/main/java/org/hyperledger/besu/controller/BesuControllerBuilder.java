@@ -1087,18 +1087,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
         variablesStorage
             .isCodeStoredUsingCodeHash()
-            .ifPresentOrElse(
+            .ifPresent(
                 codeStoredUsingCodeHash -> {
                   if (codeStoredByCodeHashEnabled && !codeStoredUsingCodeHash) {
                     throw new IllegalArgumentException(
                         "Code stored by code hash enabled but database is not using code stored by code hash");
                   }
-                },
-                () -> {
-                  final VariablesStorage.Updater updater = variablesStorage.updater();
-                  updater.setCodeStoredUsingCodeHash(codeStoredByCodeHashEnabled);
-                  updater.commit();
                 });
+
+        final VariablesStorage.Updater updater = variablesStorage.updater();
+        updater.setCodeStoredUsingCodeHash(codeStoredByCodeHashEnabled);
+        updater.commit();
 
         yield new BonsaiWorldStateProvider(
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
