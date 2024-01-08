@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.storage.keyvalue;
 
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.CHAIN_HEAD_HASH;
-import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.CODE_USING_CODE_HASH;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.FINALIZED_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.FORK_HEADS;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.SAFE_BLOCK_HASH;
@@ -69,11 +68,6 @@ public class VariablesKeyValueStorage implements VariablesStorage {
   }
 
   @Override
-  public Optional<Boolean> isCodeStoredUsingCodeHash() {
-    return getVariable(CODE_USING_CODE_HASH).map(b -> b.toInt() == 1);
-  }
-
-  @Override
   public Updater updater() {
     return new Updater(variables.startTransaction());
   }
@@ -122,19 +116,12 @@ public class VariablesKeyValueStorage implements VariablesStorage {
     }
 
     @Override
-    public void setCodeStoredUsingCodeHash(final boolean isCodeHash) {
-      final Bytes codeModeAsBytes = isCodeHash ? Bytes.minimalBytes(1) : Bytes.minimalBytes(0);
-      setVariable(CODE_USING_CODE_HASH, codeModeAsBytes);
-    }
-
-    @Override
     public void removeAll() {
       removeVariable(CHAIN_HEAD_HASH);
       removeVariable(FINALIZED_BLOCK_HASH);
       removeVariable(SAFE_BLOCK_HASH);
       removeVariable(FORK_HEADS);
       removeVariable(SEQ_NO_STORE);
-      removeVariable(CODE_USING_CODE_HASH);
     }
 
     @Override
