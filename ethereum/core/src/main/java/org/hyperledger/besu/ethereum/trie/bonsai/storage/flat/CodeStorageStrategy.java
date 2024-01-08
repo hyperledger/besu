@@ -39,5 +39,4 @@ public interface CodeStorageStrategy {
       final Hash accountHash,
       final Hash codeHash);
 
-  void clear(SegmentedKeyValueStorage storage);
 }

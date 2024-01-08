@@ -133,16 +133,6 @@ class CodeHashCodeStorageStrategyTest {
     assertThat(keyValueStorage.get(CODE_STORAGE, COUNT_KEY.toArray())).isEmpty();
   }
 
-  @Test
-  void clearDeletesCodeStorageAndCodeHashCount() {
-    final CodeHashCodeStorageStrategy codeStorage = new CodeHashCodeStorageStrategy(false);
-    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
-
-    codeStorage.clear(keyValueStorage);
-
-    assertThat(keyValueStorage.hasValues(CODE_STORAGE)).isFalse();
-  }
-
   private void useTransaction(
       final Consumer<SegmentedKeyValueStorageTransaction> transactionAction) {
     var transaction = keyValueStorage.startTransaction();

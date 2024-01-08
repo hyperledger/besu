@@ -52,8 +52,4 @@ public class AccountHashCodeStorageStrategy implements CodeStorageStrategy {
     transaction.remove(CODE_STORAGE, accountHash.toArrayUnsafe());
   }
 
-  @Override
-  public void clear(final SegmentedKeyValueStorage storage) {
-    storage.clear(CODE_STORAGE);
-  }
 }

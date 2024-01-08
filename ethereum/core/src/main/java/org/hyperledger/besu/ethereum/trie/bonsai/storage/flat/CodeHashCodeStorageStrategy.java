@@ -72,11 +72,6 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
     }
   }
 
-  @Override
-  public void clear(final SegmentedKeyValueStorage storage) {
-    storage.clear(CODE_STORAGE);
-  }
-
   private long getCodeHashCount(
       final SegmentedKeyValueStorageTransaction transaction, final Bytes32 codeHash) {
     return transaction
