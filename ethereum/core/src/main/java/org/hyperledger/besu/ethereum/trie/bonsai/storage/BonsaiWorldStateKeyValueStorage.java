@@ -146,9 +146,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   private boolean isCodeHashStorageMode(final VariablesStorage variablesStorage) {
     boolean useCodeHashStorageMode = variablesStorage.isCodeStoredUsingCodeHash().orElse(false);
-    LOG.info(
-        "Bonsai code storage using {}",
-        useCodeHashStorageMode ? "code hash" : "account hash");
+    LOG.info("Bonsai code storage using {}", useCodeHashStorageMode ? "code hash" : "account hash");
     return useCodeHashStorageMode;
   }
 

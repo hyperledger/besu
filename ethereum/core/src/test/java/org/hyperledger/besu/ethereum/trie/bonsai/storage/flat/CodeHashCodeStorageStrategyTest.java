@@ -33,7 +33,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
 class CodeHashCodeStorageStrategyTest {
-  final CodeHashCodeStorageStrategy codeStorage = new CodeHashCodeStorageStrategy();
   final SegmentedKeyValueStorage keyValueStorage =
       new InMemoryKeyValueStorageProvider().getStorageBySegmentIdentifiers(List.of(CODE_STORAGE));
   private static final Bytes CODE = Bytes.fromHexString("0x10");
@@ -45,7 +44,8 @@ class CodeHashCodeStorageStrategyTest {
       Bytes.concatenate(CodeHashCodeStorageStrategy.COUNT_PREFIX, CODE_HASH);
 
   @Test
-  void updatesCodeCountWhenCodeDoesntAlreadyExist() {
+  void updatesCodeAndCountWhenCodeDoesntAlreadyExist() {
+    final CodeHashCodeStorageStrategy codeStorage = new CodeHashCodeStorageStrategy(false);
     useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
 
     assertThat(keyValueStorage.get(CODE_STORAGE, CODE_KEY.toArray())).hasValue(CODE.toArray());
@@ -54,6 +54,7 @@ class CodeHashCodeStorageStrategyTest {
 
   @Test
   void updatesCodeCountWhenCodeAlreadyExists() {
+    final CodeHashCodeStorageStrategy codeStorage = new CodeHashCodeStorageStrategy(false);
     useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
     useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
 
@@ -63,6 +64,7 @@ class CodeHashCodeStorageStrategyTest {
 
   @Test
   void updatesCodeCountForMultipleCodeUpdatesInSameTransaction() {
+    final CodeHashCodeStorageStrategy codeStorage = new CodeHashCodeStorageStrategy(false);
     useTransaction(
         t -> {
           codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE);
@@ -75,6 +77,7 @@ class CodeHashCodeStorageStrategyTest {
 
   @Test
   void onlyStoresCodeWhenCodeDoesNotAlreadyExist() {
+    final CodeHashCodeStorageStrategy codeStorage = new CodeHashCodeStorageStrategy(false);
     useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
     assertThat(keyValueStorage.get(CODE_STORAGE, CODE_KEY.toArray())).hasValue(CODE.toArray());
     assertThat(keyValueStorage.get(CODE_STORAGE, COUNT_KEY.toArray())).hasValue(codeCount(1));
@@ -90,7 +93,18 @@ class CodeHashCodeStorageStrategyTest {
   }
 
   @Test
-  void removeDeletesWhenZeroReferences() {
+  void removeDeletesWhenZeroReferencesAndDeleteCodeTrue() {
+    final CodeHashCodeStorageStrategy codeStorage = new CodeHashCodeStorageStrategy(true);
+    useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
+    useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, CODE_HASH));
+
+    assertThat(keyValueStorage.get(CODE_STORAGE, CODE_KEY.toArray())).isEmpty();
+    assertThat(keyValueStorage.get(CODE_STORAGE, COUNT_KEY.toArray())).isEmpty();
+  }
+
+  @Test
+  void removeDoesntDeleteWhenZeroReferencesAndDeleteCodeFalse() {
+    final CodeHashCodeStorageStrategy codeStorage = new CodeHashCodeStorageStrategy(true);
     useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
     useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, CODE_HASH));
 
@@ -100,6 +114,7 @@ class CodeHashCodeStorageStrategyTest {
 
   @Test
   void removeDoesntDeleteWhenMoreThanZeroReferences() {
+    final CodeHashCodeStorageStrategy codeStorage = new CodeHashCodeStorageStrategy(false);
     useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
     useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
     useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, CODE_HASH));
@@ -110,6 +125,7 @@ class CodeHashCodeStorageStrategyTest {
 
   @Test
   void removeDoesntDecrementBelowZero() {
+    final CodeHashCodeStorageStrategy codeStorage = new CodeHashCodeStorageStrategy(false);
     useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, CODE_HASH));
     useTransaction(t -> codeStorage.removeFlatCode(t, Hash.ZERO, CODE_HASH));
 
@@ -119,6 +135,7 @@ class CodeHashCodeStorageStrategyTest {
 
   @Test
   void clearDeletesCodeStorageAndCodeHashCount() {
+    final CodeHashCodeStorageStrategy codeStorage = new CodeHashCodeStorageStrategy(false);
     useTransaction(t -> codeStorage.putFlatCode(t, Hash.ZERO, CODE_HASH, CODE));
 
     codeStorage.clear(keyValueStorage);

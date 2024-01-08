@@ -29,6 +29,11 @@ import org.apache.tuweni.bytes.Bytes32;
 public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
   static final Bytes CODE_PREFIX = Bytes.of(1);
   static final Bytes COUNT_PREFIX = Bytes.of(2);
+  private final boolean deleteCode;
+
+  public CodeHashCodeStorageStrategy(final boolean deleteCode) {
+    this.deleteCode = deleteCode;
+  }
 
   @Override
   public Optional<Bytes> getFlatCode(
@@ -61,7 +66,7 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
 
     if (updatedCodeHashCount > 0) {
       updateCodeHashCount(transaction, codeHash, updatedCodeHashCount);
-    } else {
+    } else if (deleteCode) {
       transaction.remove(CODE_STORAGE, prefixKey(CODE_PREFIX, codeHash));
       transaction.remove(CODE_STORAGE, prefixKey(COUNT_PREFIX, codeHash));
     }
