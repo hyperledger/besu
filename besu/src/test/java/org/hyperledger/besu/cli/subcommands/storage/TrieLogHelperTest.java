@@ -40,7 +40,6 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,7 +64,7 @@ class TrieLogHelperTest {
   static BlockHeader blockHeader4;
   static BlockHeader blockHeader5;
 
-  @BeforeAll
+  @BeforeEach
   public static void setup() throws IOException {
 
     blockHeader1 = new BlockHeaderTestFixture().number(1).buildHeader();
@@ -94,10 +93,11 @@ class TrieLogHelperTest {
         .getTrieLogStorageTransaction()
         .put(blockHeader5.getHash().toArrayUnsafe(), Bytes.fromHexString("0x05").toArrayUnsafe());
     updater.getTrieLogStorageTransaction().commit();
+
+    createDirectory();
   }
 
-  @BeforeEach
-  void createDirectory() throws IOException {
+  static void createDirectory() throws IOException {
     Files.createDirectories(dataDir.resolve("database"));
   }
 
