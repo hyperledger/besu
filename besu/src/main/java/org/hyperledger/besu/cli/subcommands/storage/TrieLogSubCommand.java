@@ -150,7 +150,7 @@ public class TrieLogSubCommand implements Runnable {
     @CommandLine.Option(
         names = "--trie-log-hash",
         paramLabel = DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP,
-        description = "The of the block you want the trie log for.",
+        description = "The hash of the block you want to export the trie log.",
         arity = "1..1")
     private String trieLogHash;
 
@@ -186,9 +186,9 @@ public class TrieLogSubCommand implements Runnable {
     private CommandLine.Model.CommandSpec spec; // Picocli injects reference to command spec
 
     @CommandLine.Option(
-        names = "--trie-log-key-hash",
+        names = "--trie-log-hash",
         paramLabel = DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP,
-        description = "The of the block you want the trie log for.",
+        description = "The hash of the block you want to import the trie log.",
         arity = "1..1")
     private String trieLogHash;
 
