@@ -28,7 +28,7 @@ executors:
     resource_class: xlarge
     working_directory: ~/project
     environment:
-      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4 -XX:+HeapDumpOnOutOfMemoryError
 
   xl_machine_executor:
     machine: #https://circleci.com/developer/machine/image/ubuntu-2204
@@ -227,7 +227,8 @@ jobs:
               | sed 's/.\{5\}$//' \
               | circleci tests split --split-by=timings --timings-type=classname)
             # Format the arguments to "./gradlew test"
-            GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
+            GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}') \
+            echo "calling gradle w args $GRADLE_ARGS"\
             ./gradlew --no-daemon acceptanceTestMainnet $GRADLE_ARGS
       - capture_test_results
       - capture_test_logs
@@ -239,7 +240,7 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-          name: AcceptanceTests (Non-Mainnet)
+          name: AcceptanceTests (Clique + BFT)
           no_output_timeout: 20m
           command: |
             ./gradlew --no-daemon acceptanceTestCliqueBft
@@ -254,7 +255,7 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-          name: AcceptanceTests (Non-Mainnet)
+          name: AcceptanceTests (Privacy)
           no_output_timeout: 20m
           command: |
             CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
@@ -263,7 +264,8 @@ jobs:
               | sed 's/.\{5\}$//' \
               | circleci tests split --split-by=timings --timings-type=classname)
             # Format the arguments to "./gradlew test"
-            GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
+            GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}') \
+            echo "calling gradle acceptanceTestPrivacy w args $GRADLE_ARGS"\
             ./gradlew --no-daemon acceptanceTestPrivacy $GRADLE_ARGS
       - capture_test_results
       - capture_test_logs
@@ -275,7 +277,7 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-          name: AcceptanceTests (Non-Mainnet)
+          name: AcceptanceTests (Permissioning)
           no_output_timeout: 20m
           command: |
             ./gradlew --no-daemon acceptanceTestPermissioning
@@ -409,12 +411,14 @@ workflows:
       - unitTests:
            requires:
             - assemble
+            - acceptanceTests
       - testWindows:
           requires:
             - assemble
       - referenceTests:
           requires:
             - assemble
+            - acceptanceTests
       - integrationTests:
           requires:
             - assemble
@@ -424,11 +428,11 @@ workflows:
       - acceptanceTestsCliqueBft:
           requires:
             - assemble
-            - acceptanceTests
+            - acceptanceTestsPermissioning
       - acceptanceTestsPermissioning:
           requires:
+            - acceptanceTests
             - assemble
-            - acceptanceTestsCliqueBft
       - buildDocker:
           requires:
             - assemble
