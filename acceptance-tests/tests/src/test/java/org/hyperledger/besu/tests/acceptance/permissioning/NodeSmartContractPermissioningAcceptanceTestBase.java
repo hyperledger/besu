@@ -118,10 +118,6 @@ class NodeSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBas
     return smartContractNodePermissioning.forbidNode(CONTRACT_ADDRESS, node);
   }
 
-  protected Condition nodeIsForbidden(final Node node) {
-    return nodeSmartContractPermissioningConditions.nodeIsForbidden(CONTRACT_ADDRESS, node);
-  }
-
   protected Condition connectionIsAllowed(final Node source, final Node target) {
     return nodeSmartContractPermissioningConditions.connectionIsAllowed(
         CONTRACT_ADDRESS, source, target);
