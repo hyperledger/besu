@@ -407,25 +407,49 @@ workflows:
     jobs:
       - assemble
       - unitTests:
-           requires:
+          filters:
+            branches:
+              exclude:
+                - main
+          requires:
             - assemble
       - testWindows:
           requires:
             - assemble
       - referenceTests:
+          filters:
+            branches:
+              exclude:
+                - main
           requires:
             - assemble
       - integrationTests:
+          filters:
+            branches:
+              exclude:
+                - main
           requires:
             - assemble
       - acceptanceTests:
+          filters:
+            branches:
+              exclude:
+                - main
           requires:
             - assemble
       - acceptanceTestsCliqueBft:
+          filters:
+            branches:
+              exclude:
+                - main
           requires:
             - assemble
             - acceptanceTests
       - acceptanceTestsPermissioning:
+          filters:
+            branches:
+              exclude:
+                - main
           requires:
             - assemble
             - acceptanceTestsCliqueBft
@@ -443,10 +467,6 @@ workflows:
                 - /^release-.*/
           requires:
             - assemble
-            - integrationTests
-            - unitTests
-            - acceptanceTests
-            - referenceTests
             - buildDocker
       - publishDocker:
           filters:
@@ -456,10 +476,6 @@ workflows:
                 - /^release-.*/
           requires:
             - assemble
-            - integrationTests
-            - unitTests
-            - acceptanceTests
-            - referenceTests
             - buildDocker
           context:
             - besu-dockerhub-rw
@@ -470,10 +486,6 @@ workflows:
                 - main
                 - /^release-.*/
           requires:
-            - integrationTests
-            - unitTests
-            - acceptanceTests
-            - referenceTests
             - buildArm64Docker
           context:
             - besu-dockerhub-rw
