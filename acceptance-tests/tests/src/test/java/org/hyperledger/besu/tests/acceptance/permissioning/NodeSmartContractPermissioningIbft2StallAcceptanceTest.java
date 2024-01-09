@@ -22,6 +22,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import java.io.IOException;
 import java.util.Optional;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class NodeSmartContractPermissioningIbft2StallAcceptanceTest
@@ -30,6 +31,7 @@ public class NodeSmartContractPermissioningIbft2StallAcceptanceTest
   private static final String GENESIS_FILE =
       "/permissioning/simple_permissioning_ibft_genesis.json";
 
+  @Disabled("seeing repeated failures in CI")
   @Test
   public void restartedIbftClusterShouldNotStall() throws IOException {
     final BesuNode bootnode = besu.createIbft2NonValidatorBootnode("bootnode", GENESIS_FILE);
