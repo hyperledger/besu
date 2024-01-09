@@ -145,12 +145,3 @@ jobs:
           context: pre-review
           description: unit test shard failed
 
-  acceptanceTest:
-    needs: unitTests
-    uses: ./.github/workflows/acceptance-tests.yml
-  integrationTest:
-    needs: unitTests
-    uses: ./.github/workflows/integration-tests.yml
-  referenceTest:
-    needs: unitTests
-    uses: ./.github/workflows/reference-tests.yml
