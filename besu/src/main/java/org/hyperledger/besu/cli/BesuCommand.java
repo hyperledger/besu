@@ -23,6 +23,7 @@ import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPa
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT;
@@ -2027,11 +2028,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--p2p-port",
             "--remote-connections-max-percentage"));
 
-    CommandLineUtils.failIfOptionDoesntMeetRequirement(
-        commandLine,
-        "--fast-sync-min-peers can't be used with FULL sync-mode",
-        !SyncMode.isFullSync(getDefaultSyncModeIfNotSet()),
-        singletonList("--fast-sync-min-peers"));
+    if (SyncMode.isFullSync(getDefaultSyncModeIfNotSet())
+        && isOptionSet(commandLine, "--sync-min-peers")) {
+      logger.warn("--sync-min-peers is ignored in FULL sync-mode");
+    }
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
