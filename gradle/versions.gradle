@@ -54,7 +54,7 @@ dependencyManagement {
 
     dependency 'com.squareup.okhttp3:okhttp:4.12.0'
 
-    dependency 'commons-codec:commons-codec:1.15'
+    dependency 'commons-codec:commons-codec:1.16.0'
 
     dependency 'commons-io:commons-io:2.15.1'
 
