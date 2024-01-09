@@ -122,7 +122,7 @@ jobs:
         if: failure()
         with:
           status: ${{ job.status }}
-          context: pre-review
+          context: unit-tested
           description: unit test shard failed
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v4
@@ -139,9 +139,8 @@ jobs:
     steps:
       - name: status success
         uses: myrotvorets/set-commit-status-action@v2.0.0
-        if: ${{needs.unitTests.steps.unitTest.result == 'success' }}
         with:
           status: success
-          context: pre-review
-          description: unit test shard failed
+          context: unit-tested
+          description: unit tests passed
 
