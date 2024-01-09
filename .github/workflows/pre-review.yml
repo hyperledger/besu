@@ -139,7 +139,7 @@ jobs:
     steps:
       - name: status success
         uses: myrotvorets/set-commit-status-action@v2.0.0
-        if: ${{jobs.unitTests.status == 'success' }}
+        if: ${{job.unitTests.status == 'success' }}
         with:
           status: success
           context: pre-review
