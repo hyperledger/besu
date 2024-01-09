@@ -520,11 +520,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private SyncMode syncMode = null;
 
   @Option(
-      names = {"--fast-sync-min-peers"},
+      names = {"--sync-min-peers", "--fast-sync-min-peers"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
-          "Minimum number of peers required before starting fast sync. Has only effect on PoW networks. (default: ${DEFAULT-VALUE})")
-  private final Integer fastSyncMinPeerCount = FAST_SYNC_MIN_PEER_COUNT;
+          "Minimum number of peers required before starting sync. Has effect only on non-PoS networks. (default: ${DEFAULT-VALUE})")
+  private final Integer syncMinPeerCount = SYNC_MIN_PEER_COUNT;
 
   @Option(
       names = {"--network"},
@@ -2866,7 +2866,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return unstableSynchronizerOptions
         .toDomainObject()
         .syncMode(syncMode)
-        .fastSyncMinimumPeerCount(fastSyncMinPeerCount)
+        .fastSyncMinimumPeerCount(syncMinPeerCount)
         .build();
   }
 
