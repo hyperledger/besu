@@ -17,7 +17,6 @@ package org.hyperledger.besu.cli.subcommands.storage;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.datatypes.Hash;
@@ -133,8 +132,7 @@ public class TrieLogSubCommand implements Runnable {
 
   @Command(
       name = "export",
-      description =
-          "This command prunes all trie log layers below the retention threshold, including orphaned trie logs.",
+      description = "This command exports the trie log of a determined block to a binary file",
       mixinStandardHelpOptions = true,
       versionProvider = VersionProvider.class)
   static class ExportTrieLog implements Runnable {
@@ -148,11 +146,10 @@ public class TrieLogSubCommand implements Runnable {
     private CommandLine.Model.CommandSpec spec; // Picocli injects reference to command spec
 
     @CommandLine.Option(
-        names = "--trie-log-hash",
-        paramLabel = DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP,
-        description = "The hash of the block you want to export the trie log.",
+        names = "--trie-log-block-hash",
+        description = "The hash of the block you want to export the trie log of.",
         arity = "1..1")
-    private String trieLogHash;
+    private String trieLogBlockHash;
 
     @Override
     public void run() {
@@ -162,7 +159,9 @@ public class TrieLogSubCommand implements Runnable {
               TrieLogSubCommand.parentCommand.parentCommand.dataDir().toAbsolutePath().toString());
       try {
         TrieLogHelper.exportTrieLog(
-            context.rootWorldStateStorage(), dataDirectoryPath, Hash.fromHexString(trieLogHash));
+            context.rootWorldStateStorage(),
+            dataDirectoryPath,
+            Hash.fromHexString(trieLogBlockHash));
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -171,8 +170,7 @@ public class TrieLogSubCommand implements Runnable {
 
   @Command(
       name = "import",
-      description =
-          "This command prunes all trie log layers below the retention threshold, including orphaned trie logs.",
+      description = "This command imports a trie log exported by another besu node",
       mixinStandardHelpOptions = true,
       versionProvider = VersionProvider.class)
   static class ImportTrieLog implements Runnable {
@@ -186,11 +184,10 @@ public class TrieLogSubCommand implements Runnable {
     private CommandLine.Model.CommandSpec spec; // Picocli injects reference to command spec
 
     @CommandLine.Option(
-        names = "--trie-log-hash",
-        paramLabel = DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP,
-        description = "The hash of the block you want to import the trie log.",
+        names = "--trie-log-block-hash",
+        description = "The hash of the block you want to import the trie log of",
         arity = "1..1")
-    private String trieLogHash;
+    private String trieLogBlockHash;
 
     @Override
     public void run() {
@@ -199,7 +196,7 @@ public class TrieLogSubCommand implements Runnable {
           Paths.get(
               TrieLogSubCommand.parentCommand.parentCommand.dataDir().toAbsolutePath().toString());
       TrieLogHelper.importTrieLog(
-          context.rootWorldStateStorage(), dataDirectoryPath, Hash.fromHexString(trieLogHash));
+          context.rootWorldStateStorage(), dataDirectoryPath, Hash.fromHexString(trieLogBlockHash));
     }
   }
 
