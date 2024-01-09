@@ -427,10 +427,8 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
 
     for (int count = 0; count < pubKeysPaths.size(); count++) {
       final HashMap<String, String> stringStringHashMap = new HashMap<>();
-      stringStringHashMap.put(
-          "publicKeyPath", pubKeysPaths.get(count).toString());
-      stringStringHashMap.put(
-          "privateKeyPath", privKeyPaths.get(count).toString());
+      stringStringHashMap.put("publicKeyPath", pubKeysPaths.get(count).toString());
+      stringStringHashMap.put("privateKeyPath", privKeyPaths.get(count).toString());
       keyArray.add(stringStringHashMap);
     }
 
