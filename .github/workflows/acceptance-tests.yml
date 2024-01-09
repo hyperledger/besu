@@ -117,7 +117,7 @@ jobs:
           context: acceptance-tests-${{matrix.runner_index}}
           sha: ${{ github.event.pull_request.head.sha || github.sha }}
           description: fail acceptance test batch ${{matrix.runner_index}}
-      - name: flag passed unit tests
+      - name: flag passed acceptance tests
         uses: myrotvorets/set-commit-status-action@v2.0.0
         if: success()
         with:
