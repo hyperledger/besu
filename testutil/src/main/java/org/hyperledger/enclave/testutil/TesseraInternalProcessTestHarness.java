@@ -17,13 +17,10 @@ package org.hyperledger.enclave.testutil;
 import static com.google.common.io.Files.readLines;
 import static io.netty.util.internal.ObjectUtil.checkNonEmpty;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.io.UncheckedIOException;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -49,7 +46,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.google.common.base.Charsets;
 import io.vertx.core.json.JsonArray;
@@ -75,11 +71,6 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
 
   private URI q2TUri;
   private URI nodeURI;
-  //
-  //    private final int thirdPartyPort = 9081;
-  //    private final int q2TPort = 9082;
-  /** The constant p2pPort. */
-  //  public static final int p2pPort = 9001;
 
   /**
    * Instantiates a news Tessera test harness as internal process.
@@ -119,25 +110,12 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
     final ProcessBuilder processBuilder = new ProcessBuilder(args);
     processBuilder.environment().put("JAVA_OPTS", String.join(" ", jvmArgs));
 
-    long currentTimeMillis = System.currentTimeMillis();
-
-    // Convert to LocalDateTime
-    LocalDateTime currentDateTime =
-        LocalDateTime.ofInstant(
-            java.time.Instant.ofEpochMilli(currentTimeMillis), java.time.ZoneId.systemDefault());
-
-    // Format the LocalDateTime as a string
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    String formattedDateTime = currentDateTime.format(formatter);
-
-    final String path = String.format("build/tessera/%s-tessera-output.txt", formattedDateTime);
-    processBuilder.redirectOutput(new File(path));
+    processBuilder.redirectOutput(new File(getRedirectOutputPath()));
 
     try {
       final Process process = processBuilder.redirectErrorStream(true).start();
       tesseraProcess.set(process);
       tesseraProcesses.put(enclaveConfiguration.getName(), process);
-      redirectTesseraOutput();
     } catch (final NullPointerException ex) {
       ex.printStackTrace();
       throw new NullPointerException("Check that application.jar property has been set");
@@ -151,25 +129,18 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
     }
   }
 
-  private void redirectTesseraOutput() {
-    final Logger LOG = LoggerFactory.getLogger(Process.class);
-    executorService.submit(
-        () -> {
-          try (final BufferedReader reader =
-              Stream.of(tesseraProcess.get().getInputStream())
-                  .map(InputStreamReader::new)
-                  .map(BufferedReader::new)
-                  .findAny()
-                  .get()) {
+  private String getRedirectOutputPath() {
+    long currentTimeMillis = System.currentTimeMillis();
+    // Convert to LocalDateTime
+    LocalDateTime currentDateTime =
+        LocalDateTime.ofInstant(
+            java.time.Instant.ofEpochMilli(currentTimeMillis), java.time.ZoneId.systemDefault());
 
-            String line;
-            while ((line = reader.readLine()) != null) {
-              LOG.info(line);
-            }
-          } catch (final IOException ex) {
-            throw new UncheckedIOException(ex);
-          }
-        });
+    // Format the LocalDateTime as a string
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    String formattedDateTime = currentDateTime.format(formatter);
+
+    return String.format("build/tessera/%s-tessera-output.txt", formattedDateTime);
   }
 
   private Optional<Path> waitForTesseraUris() throws InterruptedException {
