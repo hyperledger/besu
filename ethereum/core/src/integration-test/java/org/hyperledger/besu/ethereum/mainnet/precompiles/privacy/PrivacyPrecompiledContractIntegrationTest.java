@@ -128,8 +128,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
             new EnclaveKeyConfiguration(
                 new String[] {"enclave_key_0.pub"},
                 new String[] {"enclave_key_1.key"},
-                EnclaveEncryptorType.NOOP),
-            Optional.empty());
+                EnclaveEncryptorType.NOOP));
 
     testHarness.start();
 

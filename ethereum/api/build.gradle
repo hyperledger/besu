@@ -123,6 +123,8 @@ dependencies {
   integrationTestImplementation 'org.testcontainers:testcontainers'
 
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
+
+  tessera 'net.consensys.quorum.tessera:tessera-dist:23.4.0@tar'
 }
 
 artifacts { testSupportArtifacts testSupportJar }
