@@ -94,8 +94,6 @@ jobs:
     permissions:
       checks: write
       statuses: write
-    outputs:
-      unitShardFailed: ${{ steps.unitTest.outputs.
     strategy:
       fail-fast: false
       matrix:
