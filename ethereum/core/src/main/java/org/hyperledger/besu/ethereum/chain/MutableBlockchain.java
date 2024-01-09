@@ -37,6 +37,7 @@ public interface MutableBlockchain extends Blockchain {
    */
   void appendBlock(Block block, List<TransactionReceipt> receipts);
 
+
   /**
    * Adds a block to the blockchain, without updating the chain state.
    *
@@ -55,6 +56,8 @@ public interface MutableBlockchain extends Blockchain {
       final Optional<Difficulty> maybeTotalDifficulty);
 
   void unsafeSetChainHead(final BlockHeader blockHeader, final Difficulty totalDifficulty);
+
+  Difficulty calculateTotalDifficulty(BlockHeader blockHeader);
 
   /**
    * Rolls back the canonical chainhead to the specified block number.

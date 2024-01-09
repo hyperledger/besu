@@ -42,6 +42,7 @@ public class ConfigurationOverviewBuilder {
   private String network;
   private BigInteger networkId;
   private boolean hasCustomGenesis;
+  private String customGenesisFileName;
   private String dataStorage;
   private String syncMode;
   private Integer rpcPort;
@@ -95,6 +96,17 @@ public class ConfigurationOverviewBuilder {
    */
   public ConfigurationOverviewBuilder setHasCustomGenesis(final boolean hasCustomGenesis) {
     this.hasCustomGenesis = hasCustomGenesis;
+    return this;
+  }
+
+  /**
+   * Sets location of custom genesis file specified.
+   *
+   * @param customGenesisFileName the filename of the custom genesis file, only set if specified
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setCustomGenesis(final String customGenesisFileName) {
+    this.customGenesisFileName = customGenesisFileName;
     return this;
   }
 
@@ -269,7 +281,9 @@ public class ConfigurationOverviewBuilder {
     }
 
     if (hasCustomGenesis) {
-      lines.add("Network: Custom genesis file specified");
+      lines.add("Network: Custom genesis file");
+      lines.add(
+          customGenesisFileName == null ? "Custom genesis file is null" : customGenesisFileName);
     }
 
     if (networkId != null) {
