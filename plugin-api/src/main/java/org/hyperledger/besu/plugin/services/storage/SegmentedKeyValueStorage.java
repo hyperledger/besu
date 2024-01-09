@@ -64,17 +64,6 @@ public interface SegmentedKeyValueStorage extends Closeable {
   }
 
   /**
-   * Has stored values for the segment identifier
-   *
-   * @param segment the segment
-   * @return the boolean
-   * @throws StorageException the storage exception
-   */
-  default boolean hasValues(final SegmentIdentifier segment) {
-    return stream(segment).findAny().isPresent();
-  }
-
-  /**
    * Begins a transaction. Returns a transaction object that can be updated and committed.
    *
    * @return An object representing the transaction.

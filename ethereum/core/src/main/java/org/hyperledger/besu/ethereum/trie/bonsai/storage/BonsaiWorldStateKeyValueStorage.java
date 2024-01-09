@@ -156,10 +156,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return flatDbStrategy;
   }
 
-  public SegmentedKeyValueStorage getWorldStateStorage() {
-    return composedWorldStateStorage;
-  }
-
   @Override
   public DataStorageFormat getDataStorageFormat() {
     return DataStorageFormat.BONSAI;

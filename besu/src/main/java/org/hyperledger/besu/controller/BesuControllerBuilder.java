@@ -616,8 +616,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             .orElseGet(() -> new CachedMerkleTrieLoader(metricsSystem));
 
     final WorldStateArchive worldStateArchive =
-        createWorldStateArchive(
-            worldStateStorage, blockchain, cachedMerkleTrieLoader, variablesStorage);
+        createWorldStateArchive(worldStateStorage, blockchain, cachedMerkleTrieLoader);
 
     if (blockchain.getChainHeadBlockNumber() < 1) {
       genesisState.writeStateTo(worldStateArchive.getMutable());
@@ -1065,8 +1064,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   WorldStateArchive createWorldStateArchive(
       final WorldStateStorage worldStateStorage,
       final Blockchain blockchain,
-      final CachedMerkleTrieLoader cachedMerkleTrieLoader,
-      final VariablesStorage variablesStorage) {
+      final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI -> {
         final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
@@ -1082,7 +1080,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                     isProofOfStake)
                 : TrieLogPruner.noOpTrieLogPruner();
         trieLogPruner.initialize();
-
         yield new BonsaiWorldStateProvider(
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
             blockchain,
