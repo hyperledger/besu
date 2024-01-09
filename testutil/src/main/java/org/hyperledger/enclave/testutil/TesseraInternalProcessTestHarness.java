@@ -24,11 +24,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UncheckedIOException;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -37,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -48,6 +52,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.base.Charsets;
+import io.vertx.core.json.JsonArray;
 import org.assertj.core.util.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,11 +75,11 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
 
   private URI q2TUri;
   private URI nodeURI;
-
-  private final int thirdPartyPort = 9081;
-  private final int q2TPort = 9082;
+  //
+  //    private final int thirdPartyPort = 9081;
+  //    private final int q2TPort = 9082;
   /** The constant p2pPort. */
-  public static final int p2pPort = 9001;
+  //  public static final int p2pPort = 9001;
 
   /**
    * Instantiates a news Tessera test harness as internal process.
@@ -114,8 +119,18 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
     final ProcessBuilder processBuilder = new ProcessBuilder(args);
     processBuilder.environment().put("JAVA_OPTS", String.join(" ", jvmArgs));
 
-    final String path =
-        String.format("build/tessera/%s-tessera-output.txt", System.currentTimeMillis());
+    long currentTimeMillis = System.currentTimeMillis();
+
+    // Convert to LocalDateTime
+    LocalDateTime currentDateTime =
+        LocalDateTime.ofInstant(
+            java.time.Instant.ofEpochMilli(currentTimeMillis), java.time.ZoneId.systemDefault());
+
+    // Format the LocalDateTime as a string
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    String formattedDateTime = currentDateTime.format(formatter);
+
+    final String path = String.format("build/tessera/%s-tessera-output.txt", formattedDateTime);
     processBuilder.redirectOutput(new File(path));
 
     try {
@@ -311,15 +326,16 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
   }
 
   private String createConfigFile() {
+
+    final int thirdPartyPort = generatePort();
+    final int q2TPort = generatePort();
+    final int p2pPort = generatePort();
+
+    String node = "127.0.0.1";
     String confString =
         "{\n"
             + "    \"mode\": \"orion\","
-            + "    \"encryptor\":{\n"
-            + "        \"type\":\"NACL\",\n"
-            + "        \"properties\":{\n"
-            + "\n"
-            + "        }\n"
-            + "    },\n"
+            + enclaveConfiguration.getEnclaveEncryptorType().toTesseraEncryptorConfigJSON()
             + "    \"useWhiteList\": false,\n"
             + "    \"jdbc\": {\n"
             + "        \"username\": \"sa\",\n"
@@ -333,9 +349,11 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
             + "        {\n"
             + "            \"app\":\"ThirdParty\",\n"
             + "            \"enabled\": true,\n"
-            + "            \"serverAddress\":\"http://127.0.0.1:"
+            + "            \"serverAddress\":\"http://"
+            + node
+            + ":"
             + thirdPartyPort
-            + ",\n"
+            + "\",\n"
             + "            \"cors\" : {\n"
             + "                \"allowedMethods\" : [\"GET\", \"OPTIONS\"],\n"
             + "                \"allowedOrigins\" : [\"*\"]\n"
@@ -345,32 +363,29 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
             + "        {\n"
             + "            \"app\":\"Q2T\",\n"
             + "            \"enabled\": true,\n"
-            + "            \"serverAddress\":\"http://127.0.0.1:"
+            + "            \"serverAddress\":\"http://"
+            + node
+            + ":"
             + q2TPort
-            + ",\n"
+            + "\",\n"
             + "            \"communicationType\" : \"REST\"\n"
             + "        },\n"
             + "        {\n"
             + "            \"app\":\"P2P\",\n"
             + "            \"enabled\": true,\n"
-            + "            \"serverAddress\":\"http://127.0.0.1:"
+            + "            \"serverAddress\":\"http://"
+            + node
+            + ":"
             + p2pPort
-            + ",\n"
+            + "\",\n"
             + "            \"communicationType\" : \"REST\"\n"
             + "        }\n"
             + "    ],\n"
             + "    \"keys\": {\n"
             + "        \"passwords\": [],\n"
-            + "        \"keyData\": [\n"
-            + "            {\n"
-            + "                \"privateKeyPath\": \""
-            + enclaveConfiguration.getPrivateKeys()[0].toString()
-            + "\",\n"
-            + "                \"publicKeyPath\": \""
-            + enclaveConfiguration.getPublicKeys()[0].toString()
-            + "\"\n"
-            + "            }\n"
-            + "        ]\n"
+            + "        \"keyData\": "
+            + buildKeyConfig()
+            + "\n"
             + "    },\n"
             + "    \"alwaysSendTo\": []";
 
@@ -405,6 +420,45 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
     return configFile.getAbsolutePath();
   }
 
+  private String buildKeyConfig() {
+    final JsonArray keyArray = new JsonArray();
+    final List<Path> pubKeysPaths = Arrays.asList(enclaveConfiguration.getPublicKeys());
+    final List<Path> privKeyPaths = Arrays.asList(enclaveConfiguration.getPrivateKeys());
+
+    for (int count = 0; count < pubKeysPaths.size(); count++) {
+      final HashMap<String, String> stringStringHashMap = new HashMap<>();
+      stringStringHashMap.put(
+          "publicKeyPath", pubKeysPaths.get(count).toString());
+      stringStringHashMap.put(
+          "privateKeyPath", privKeyPaths.get(count).toString());
+      keyArray.add(stringStringHashMap);
+    }
+
+    return keyArray.toString();
+  }
+
+  private static int generatePort() {
+    int minPort = 8000;
+    int maxPort = 10000;
+
+    while (true) {
+      int port = new Random().nextInt(maxPort - minPort + 1) + minPort;
+
+      if (isPortAvailable(port)) {
+        return port;
+      }
+    }
+  }
+
+  private static boolean isPortAvailable(final int port) {
+    try (ServerSocket ignored = new ServerSocket(port)) {
+      return true;
+    } catch (IOException e) {
+      // Port is already in use
+      return false;
+    }
+  }
+
   private Optional<String> findTesseraStartScript() {
     final String path = System.getProperty("tessera-dist");
     return Optional.ofNullable(path);
@@ -413,7 +467,7 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
   private List<String> createCommandArgs(final String pathToConfigFile, final String startScript) {
     final List<String> command = new ArrayList<>();
     command.add(startScript);
-    command.add("-configfile");
+    command.add("--configfile");
     command.add(pathToConfigFile);
     command.add("--debug");
     command.add("--XoutputServerURIPath");
