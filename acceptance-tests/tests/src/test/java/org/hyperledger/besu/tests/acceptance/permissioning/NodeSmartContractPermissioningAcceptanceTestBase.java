@@ -28,6 +28,9 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.NodeSmartContr
 
 import java.io.IOException;
 
+import org.junit.jupiter.api.Disabled;
+
+@Disabled("abstract class")
 class NodeSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBaseJunit5 {
 
   private final NodeSmartContractPermissioningTransactions smartContractNodePermissioning;
