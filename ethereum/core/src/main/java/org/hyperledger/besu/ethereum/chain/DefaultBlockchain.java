@@ -405,7 +405,6 @@ public class DefaultBlockchain implements MutableBlockchain {
     return true;
   }
 
-
   private void appendBlockHelper(
       final BlockWithReceipts blockWithReceipts, final boolean storeOnly) {
 

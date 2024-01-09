@@ -37,7 +37,6 @@ public interface MutableBlockchain extends Blockchain {
    */
   void appendBlock(Block block, List<TransactionReceipt> receipts);
 
-
   /**
    * Adds a block to the blockchain, without updating the chain state.
    *
