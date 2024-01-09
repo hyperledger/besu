@@ -197,7 +197,7 @@ public class EthPeers {
         peer.handleDisconnect();
         abortPendingRequestsAssignedToDisconnectedPeers();
         if (peer.getReputation().getScore() > USEFULL_PEER_SCORE_THRESHOLD) {
-          LOG.debug("Disonnected USEFULL peer {}", peer);
+          LOG.debug("Disconnected USEFULL peer {}", peer);
         } else {
           LOG.debug("Disconnected EthPeer {}", peer.getShortNodeId());
         }
