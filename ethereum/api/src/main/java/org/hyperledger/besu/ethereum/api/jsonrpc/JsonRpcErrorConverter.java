@@ -79,6 +79,8 @@ public class JsonRpcErrorConverter {
         return RpcErrorType.PLUGIN_TX_VALIDATOR;
       case INVALID_BLOBS:
         return RpcErrorType.INVALID_BLOBS;
+      case EXECUTION_HALTED:
+        return RpcErrorType.EXECUTION_HALTED;
       default:
         return RpcErrorType.INTERNAL_ERROR;
     }

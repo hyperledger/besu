@@ -47,4 +47,5 @@ dependencies {
   implementation 'org.web3j:crypto'
 
   implementation 'org.testcontainers:testcontainers'
+  implementation 'org.junit.jupiter:junit-jupiter'
 }
