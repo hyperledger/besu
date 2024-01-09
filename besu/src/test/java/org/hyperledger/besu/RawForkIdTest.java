@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ConsenSys AG.
+ * Copyright Hyperledger Besu contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,19 +11,24 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.tests.acceptance.bft.pki;
+package org.hyperledger.besu;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.stream.Stream;
+import org.hyperledger.besu.ethereum.forkid.ForkId;
 
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.params.provider.Arguments;
+import java.util.List;
 
-@Disabled("This is not a test class, it offers PKI QBFT parameterization only.")
-public abstract class ParameterizedPkiQbftTestBase extends AcceptanceTestBaseJunit5 {
-  public static Stream<Arguments> factoryFunctions() {
-    return PkiQbftAcceptanceTestParameterization.getFactories();
+import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
+
+public class RawForkIdTest {
+  @Test
+  public void testFromRaw() {
+    final ForkId forkId = new ForkId(Bytes.ofUnsignedInt(0xfe3366e7L), 1735371L);
+    final List<List<Bytes>> forkIdAsBytesList = List.of(forkId.getForkIdAsBytesList());
+    assertThat(ForkId.fromRawForkId(forkIdAsBytesList).get()).isEqualTo(forkId);
   }
 }
