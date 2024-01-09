@@ -47,7 +47,7 @@ Instructions for how to get started with developing on the Besu codebase. Please
 * [Checking Out and Building](https://wiki.hyperledger.org/display/BESU/Building+from+source)
 * [Running Developer Builds](https://wiki.hyperledger.org/display/BESU/Building+from+source#running-developer-builds)
 * [Code Coverage](https://wiki.hyperledger.org/display/BESU/Code+coverage)
-* [Logging](https://wiki.hyperledger.org/display/BESU/Logging) or the [Documentation's Logging section](https://besu.hyperledger.org/en/stable/HowTo/Monitor/Logging/)
+* [Logging](https://wiki.hyperledger.org/display/BESU/Logging) or the [Documentation's Logging section](https://besu.hyperledger.org/public-networks/how-to/monitor/logging)
 
 
 ## Release Notes

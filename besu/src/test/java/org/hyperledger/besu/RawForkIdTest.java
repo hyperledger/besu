@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,19 +11,24 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.p2p.peers;
+package org.hyperledger.besu;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.hyperledger.besu.ethereum.forkid.ForkId;
+
+import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
 
-public interface PeerPrivileges {
-
-  /**
-   * If true, the given peer can connect or remain connected even if the max connection limit or the
-   * maximum remote connection limit has been reached or exceeded.
-   *
-   * @param peerId The peer id to be checked.
-   * @return {@code true} if the peer should be allowed to connect regardless of connection limits.
-   */
-  boolean canExceedConnectionLimits(final Bytes peerId);
+public class RawForkIdTest {
+  @Test
+  public void testFromRaw() {
+    final ForkId forkId = new ForkId(Bytes.ofUnsignedInt(0xfe3366e7L), 1735371L);
+    final List<List<Bytes>> forkIdAsBytesList = List.of(forkId.getForkIdAsBytesList());
+    assertThat(ForkId.fromRawForkId(forkIdAsBytesList).get()).isEqualTo(forkId);
+  }
 }

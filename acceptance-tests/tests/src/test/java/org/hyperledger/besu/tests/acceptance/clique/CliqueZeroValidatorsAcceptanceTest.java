@@ -12,24 +12,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.bft;
+package org.hyperledger.besu.tests.acceptance.clique;
 
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
-import org.junit.Test;
+import java.io.IOException;
 
-public class BftZeroValidators extends ParameterizedBftTestBase {
+import org.junit.jupiter.api.Test;
 
-  public BftZeroValidators(
-      final String testName, final BftAcceptanceTestParameterization nodeFactory) {
-    super(testName, nodeFactory);
-  }
+public class CliqueZeroValidatorsAcceptanceTest extends AcceptanceTestBaseJunit5 {
 
   @Test
-  public void zeroValidatorsFormValidCluster() throws Exception {
-    final String[] validators = {};
-    final BesuNode node1 = nodeFactory.createNodeWithValidators(besu, "node1", validators);
-    final BesuNode node2 = nodeFactory.createNodeWithValidators(besu, "node2", validators);
+  public void zeroValidatorsFormValidCluster() throws IOException {
+    final String[] signers = {};
+    final BesuNode node1 = besu.createCliqueNodeWithValidators("node1", signers);
+    final BesuNode node2 = besu.createCliqueNodeWithValidators("node2", signers);
 
     cluster.start(node1, node2);
 

@@ -61,7 +61,7 @@ import picocli.CommandLine.ParentCommand;
 
 @Command(
     name = "generate-blockchain-config",
-    description = "Generates node keypairs and genesis file with RLP encoded extra data.",
+    description = "Generate node keypairs and genesis file with RLP encoded extra data.",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 class GenerateBlockchainConfig implements Runnable {

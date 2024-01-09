@@ -14,6 +14,7 @@
     "mergeNetSplitBlock": 1735371,
     "terminalTotalDifficulty": 17000000000000000,
     "shanghaiTime": 1677557088,
+    "cancunTime": 1706655072,
     "ethash":{},
     "discovery": {
       "dns": "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.sepolia.ethdisco.net",
