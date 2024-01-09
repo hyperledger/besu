@@ -359,6 +359,13 @@ public class TransactionPool implements BlockAddedObserver {
                       } finally {
                         blockAddedLock.unlock();
                       }
+                    } else {
+                      try {
+                        // wait a bit before retrying
+                        Thread.sleep(100);
+                      } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                      }
                     }
                   }
                   return null;

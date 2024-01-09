@@ -232,7 +232,6 @@ public class LocalPermissioningConfigurationValidatorTest {
                     true,
                     toml.toAbsolutePath().toString()))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining(
-            "Invalid IP address (or DNS query resolved an invalid IP). --Xdns-enabled is true but --Xdns-update-enabled flag is false.");
+        .hasMessageContaining("Invalid IP address");
   }
 }

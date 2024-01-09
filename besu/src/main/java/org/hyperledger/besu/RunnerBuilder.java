@@ -608,6 +608,8 @@ public class RunnerBuilder {
         bootstrap = ethNetworkConfig.getBootNodes();
       }
       discoveryConfiguration.setBootnodes(bootstrap);
+      LOG.info("Resolved {} bootnodes.", bootstrap.size());
+      LOG.debug("Bootnodes = {}", bootstrap);
       discoveryConfiguration.setDnsDiscoveryURL(ethNetworkConfig.getDnsDiscoveryUrl());
       discoveryConfiguration.setDiscoveryV5Enabled(
           networkingConfiguration.getDiscovery().isDiscoveryV5Enabled());
