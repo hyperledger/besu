@@ -230,7 +230,8 @@ public class BonsaiWorldState
   }
 
   private Hash unsafeRootHashUpdate(
-      final BlockHeader blockHeader, BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater) {
+      final BlockHeader blockHeader,
+      final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater) {
     // calling calculateRootHash in order to update the state
     calculateRootHash(
         bonsaiWorldStateConfig.isFrozen() ? Optional.empty() : Optional.of(stateUpdater),
