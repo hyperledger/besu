@@ -977,6 +977,7 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
     "(.*${sep}.gradle${sep}.*)",
     "(.*${sep}.idea${sep}.*)",
     "(.*${sep}out${sep}.*)",
+    "(.*${sep}bin${sep}.*)",
     "(.*${sep}build${sep}.*)",
     "(.*${sep}src${sep}[^${sep}]+${sep}generated${sep}.*)"
   ].join("|")
