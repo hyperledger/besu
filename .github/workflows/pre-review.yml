@@ -101,5 +101,6 @@ jobs:
     permissions:
       checks: write
       statuses: write
-
-
+    steps:
+      - name: consolidation
+        run: echo "consolidating statuses"
