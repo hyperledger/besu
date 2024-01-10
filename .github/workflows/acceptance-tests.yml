@@ -11,6 +11,7 @@ env:
 jobs:
   shouldRun:
     name: checks to ensure we should run
+    # necessary because there is no single PR approved event, need to check all comments/approvals/denials
     runs-on: ubuntu-22.04
     outputs:
       shouldRun: ${{steps.shouldRun.outputs.result}}
@@ -29,9 +30,7 @@ jobs:
               repo: context.repo.repo,
               ref: RELEVANT_SHA,
             });
-            const unitTested = statuses && statuses.filter(({ context }) => context === 'pre-review');
-            const failedUnits = unitTested && unitTested.filter(({state}) => state === 'failure' || state === 'pending');
-            const acceptanceTested = statuses && statuses.filter(({ context }) => context === 'acceptance-tests');
+            const acceptanceTested = statuses && statuses.filter(({ context }) => context === 'acceptance-tested');
             const alreadyRun = acceptanceTested && acceptanceTested.find(({ state }) => state === 'success' || state === 'pending') > 0;
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
@@ -39,11 +38,10 @@ jobs:
               pull_number: context.issue.number,
             });
             const approvingReviews = reviews && reviews.filter(review => review.state === 'APPROVED');
-            const shouldRun = !alreadyRun && github.actor != 'dependabot[bot]' && (failedUnits.length === 0) && (approvingReviews.length > 0);
+            const shouldRun = !alreadyRun && github.actor != 'dependabot[bot]' &&  (approvingReviews.length > 0);
             
               console.log("tests should be run = %j", shouldRun);
               console.log("alreadyRun = %j", alreadyRun);
-              console.log("failedUnits = %j", failedUnits.length);
               console.log("approvingReviews = %j", approvingReviews.length);
             
             return shouldRun;
@@ -113,15 +111,9 @@ jobs:
         if: failure()
         with:
           status: ${{ job.status }}
-          context: acceptance-tests-${{matrix.runner_index}}
+          context: acceptance-tested
           sha: ${{ github.event.pull_request.head.sha || github.sha }}
           description: fail acceptance test batch ${{matrix.runner_index}}
-      - name: flag passed acceptance tests
-        uses: myrotvorets/set-commit-status-action@v2.0.0
-        if: success()
-        with:
-          status: ${{ job.status }}
-          sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: cleanup tempfiles
         run: rm testList.txt gradleArgs.txt
       - name: Upload Acceptance Test Results
@@ -134,3 +126,16 @@ jobs:
         if: (success() || failure()) # always run even if the build step fails
         with:
           report_paths: 'acceptance-tests/tests/build/test-results/acceptanceTest/TEST-*.xml'
+  consolidateStatus:
+    runs-on: ubuntu-22.04
+    needs: acceptanceTestEthereum
+    permissions:
+      statuses: write
+      checks: write
+    steps:
+      - name: status success
+        uses: myrotvorets/set-commit-status-action@v2.0.0
+        with:
+          status: success
+          context: acceptance-tested
+          description: acceptance tests passed
