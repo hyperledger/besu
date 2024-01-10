@@ -170,7 +170,7 @@ dependencyManagement {
       entry 'blake2bf'
     }
 
-    dependencySet(group: 'org.hyperledger.besu', version: '0.8.3-SNAPSHOT') {
+    dependencySet(group: 'org.hyperledger.besu', version: '0.8.4-SNAPSHOT') {
       entry 'ipa-multipoint'
     }
 
