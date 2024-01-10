@@ -81,7 +81,7 @@ public class BackupState implements Runnable {
 
     final BesuController besuController = createBesuController();
     final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
-    final ForestWorldStateKeyValueStorage worldStateKeyValueStorage =
+    final ForestWorldStateKeyValueStorage forestWorldStateKeyValueStorage =
         ((ForestWorldStateArchive) besuController.getProtocolContext().getWorldStateArchive())
             .getWorldStateStorage();
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
@@ -93,7 +93,7 @@ public class BackupState implements Runnable {
               blockchain,
               backupDir.toPath(),
               scheduler,
-              worldStateKeyValueStorage);
+              forestWorldStateKeyValueStorage);
       final BackupStatus status = backup.requestBackup(targetBlock, compress, Optional.empty());
 
       final double refValue = Math.pow(2, 256) / 100.0d;

@@ -179,11 +179,11 @@ public class Pruner {
     }
   }
 
-  public PruningPhase getPruningPhase() {
+  PruningPhase getPruningPhase() {
     return pruningPhase.get();
   }
 
-  public enum PruningPhase {
+  enum PruningPhase {
     IDLE,
     MARK_BLOCK_CONFIRMATIONS_AWAITING,
     MARKING,

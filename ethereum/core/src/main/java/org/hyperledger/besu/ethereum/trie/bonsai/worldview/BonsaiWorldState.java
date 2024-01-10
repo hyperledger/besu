@@ -557,7 +557,7 @@ public class BonsaiWorldState
     return worldStateKeyValueStorage.getAccountStateTrieNode(location, nodeHash);
   }
 
-  protected void writeTrieNode(
+  private void writeTrieNode(
       final SegmentIdentifier segmentId,
       final SegmentedKeyValueStorageTransaction tx,
       final Bytes location,

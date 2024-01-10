@@ -219,8 +219,7 @@ public class AccountHealingTrackingTest {
             accountHash,
             Hash.wrap(accountStateTrie.getRootHash()),
             Bytes.EMPTY);
-    storageTrieNodeHealingRequest.getExistingData(
-        snapWorldDownloadState, worldStateStorageCoordinator);
+    storageTrieNodeHealingRequest.getExistingData(worldStateStorageCoordinator);
     verify(snapWorldDownloadState, never()).addAccountToHealingList(any(Bytes.class));
   }
 }
