@@ -30,7 +30,7 @@ jobs:
               ref: RELEVANT_SHA,
             });
             
-            const intTested = statuses && statuses.filter(({ context }) => context === 'integration-tested');
+            const intTested = statuses && statuses.filter(({ context }) => context === 'integration-tests');
             const alreadyRun = intTested && intTested.find(({ state }) => state === 'success' || state === 'pending') > 0;
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
@@ -57,7 +57,6 @@ jobs:
         uses: myrotvorets/set-commit-status-action@v2.0.0
         with:
           status: pending
-          context: integration-tested
           sha: ${{ github.event.pull_request.head.sha || github.sha }}
   integrationTest:
     runs-on: ubuntu-22.04
@@ -78,12 +77,6 @@ jobs:
         uses: gradle/gradle-build-action@v2
       - name: run integration tests
         run: ./gradlew integrationTest -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
-      - name: flag passed integration tests
-        uses: myrotvorets/set-commit-status-action@v2.0.0
-        with:
-          status: ${{ job.status }}
-          context: integration-tested
-          sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v4
         if: (success() || failure())
