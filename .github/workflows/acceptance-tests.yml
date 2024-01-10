@@ -12,6 +12,7 @@ jobs:
   shouldRun:
     name: checks to ensure we should run
     # necessary because there is no single PR approved event, need to check all comments/approvals/denials
+    # might also be a job running, and additional approvals
     runs-on: ubuntu-22.04
     outputs:
       shouldRun: ${{steps.shouldRun.outputs.result}}
@@ -60,6 +61,7 @@ jobs:
         with:
           status: pending
           sha: ${{ github.event.pull_request.head.sha || github.sha }}
+          context: acceptance-tested
   acceptanceTestEthereum:
     runs-on: ubuntu-22.04
     needs: pend
@@ -136,6 +138,7 @@ jobs:
       - name: status success
         uses: myrotvorets/set-commit-status-action@v2.0.0
         with:
+          sha: ${{ github.event.pull_request.head.sha || github.sha }}
           status: success
           context: acceptance-tested
           description: acceptance tests passed
