@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
@@ -100,6 +101,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   private final String name;
   private MiningParameters miningParameters;
+  private TransactionPoolConfiguration txPoolConfiguration;
   private final List<String> runCommand;
   private PrivacyParameters privacyParameters = PrivacyParameters.DEFAULT;
   private final JsonRpcConfiguration jsonRpcConfiguration;
@@ -135,6 +137,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final String name,
       final Optional<Path> dataPath,
       final MiningParameters miningParameters,
+      final TransactionPoolConfiguration txPoolConfiguration,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final Optional<JsonRpcConfiguration> engineRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
@@ -184,6 +187,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
         () -> this.keyPair = KeyPairUtil.loadKeyPair(homeDirectory));
     this.name = name;
     this.miningParameters = miningParameters;
+    this.txPoolConfiguration = txPoolConfiguration;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
     this.engineRpcConfiguration = engineRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
@@ -667,6 +671,15 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public void setMiningParameters(final MiningParameters miningParameters) {
     this.miningParameters = miningParameters;
+  }
+
+  public TransactionPoolConfiguration getTransactionPoolConfiguration() {
+    return txPoolConfiguration;
+  }
+
+  public void setTransactionPoolConfiguration(
+      final TransactionPoolConfiguration txPoolConfiguration) {
+    this.txPoolConfiguration = txPoolConfiguration;
   }
 
   public PrivacyParameters getPrivacyParameters() {
