@@ -77,6 +77,10 @@ public class EthConditions {
     return new MiningStatusCondition(transactions.mining(), isMining);
   }
 
+  public Condition syncingStatus(final boolean isSyncing) {
+    return new SyncingStatusCondition(transactions.syncing(), isSyncing);
+  }
+
   public Condition expectNewPendingTransactions(
       final BigInteger filterId, final List<String> transactionHashes) {
     return new NewPendingTransactionFilterChangesCondition(
