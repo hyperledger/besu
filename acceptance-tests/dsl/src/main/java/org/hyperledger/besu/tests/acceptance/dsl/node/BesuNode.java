@@ -665,7 +665,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.bootnodes.addAll(bootnodes);
   }
 
-  MiningParameters getMiningParameters() {
+  public MiningParameters getMiningParameters() {
     return miningParameters;
   }
 
