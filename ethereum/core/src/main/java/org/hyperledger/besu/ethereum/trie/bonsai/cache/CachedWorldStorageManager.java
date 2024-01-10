@@ -45,7 +45,7 @@ public class CachedWorldStorageManager
   private final BonsaiWorldStateProvider archive;
   private final ObservableMetricsSystem metricsSystem;
   private final Supplier<BonsaiWorldStateConfig> defaultBonsaiWorldStateConfigSupplier;
-  // TODO: make part of BonsaiWorldStateConfig
+
   private final EvmConfiguration evmConfiguration;
 
   private final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;

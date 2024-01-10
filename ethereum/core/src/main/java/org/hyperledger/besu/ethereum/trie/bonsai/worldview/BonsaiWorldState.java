@@ -86,7 +86,6 @@ public class BonsaiWorldState
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
-      // TODO: merge evmConfiguration into BonsaiWorldStateConfig:
       final EvmConfiguration evmConfiguration,
       final BonsaiWorldStateConfig bonsaiWorldStateConfig) {
     this(
@@ -228,6 +227,15 @@ public class BonsaiWorldState
                         value)));
     final Bytes32 rootHash = accountTrie.getRootHash();
     return Hash.wrap(rootHash);
+  }
+
+  private Hash unsafeRootHashUpdate(
+      final BlockHeader blockHeader, BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater) {
+    // calling calculateRootHash in order to update the state
+    calculateRootHash(
+        bonsaiWorldStateConfig.isFrozen() ? Optional.empty() : Optional.of(stateUpdater),
+        accumulator);
+    return blockHeader.getStateRoot();
   }
 
   private void updateTheAccounts(
@@ -421,17 +429,20 @@ public class BonsaiWorldState
     try {
       final Hash calculatedRootHash;
 
-      if (blockHeader != null && bonsaiWorldStateConfig.isTrieDisabled()) {
-        calculateRootHash(
-            bonsaiWorldStateConfig.isFrozen() ? Optional.empty() : Optional.of(stateUpdater),
-            accumulator);
-        calculatedRootHash = blockHeader.getStateRoot();
-      } else {
+      if (blockHeader == null || !bonsaiWorldStateConfig.isTrieDisabled()) {
         calculatedRootHash =
             calculateRootHash(
                 bonsaiWorldStateConfig.isFrozen() ? Optional.empty() : Optional.of(stateUpdater),
                 accumulator);
+      } else {
+        // if the trie is disabled, we cannot calculate the state root, so we directly use the root
+        // of the block. It's important to understand that in all networks,
+        // the state root must be validated independently and the block should not be trusted
+        // implicitly. This mode
+        // can be used in cases where Besu would just be a follower of another trusted client.
+        calculatedRootHash = unsafeRootHashUpdate(blockHeader, stateUpdater);
       }
+
       // if we are persisted with a block header, and the prior state is the parent
       // then persist the TrieLog for that transition.
       // If specified but not a direct descendant simply store the new block hash.

@@ -500,7 +500,6 @@ public class DefaultBlockchain implements MutableBlockchain {
         // New block represents a chain reorganization
         return handleChainReorg(updater, blockWithReceipts);
       } else {
-        System.out.println("handleFork " + chainHeader);
         // New block represents a fork
         return handleFork(updater, newBlock);
       }
