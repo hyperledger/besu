@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
 
 import java.util.Comparator;
 import java.util.Optional;
@@ -33,7 +34,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TrieLogPruner {
+public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
 
   private static final Logger LOG = LoggerFactory.getLogger(TrieLogPruner.class);
 
@@ -164,6 +165,22 @@ public class TrieLogPruner {
 
   public static TrieLogPruner noOpTrieLogPruner() {
     return new NoOpTrieLogPruner(null, null, 0, 0);
+  }
+
+  @Override
+  public void onTrieLogAdded(TrieLogEvent event) {
+    if (event.getType() == TrieLogEvent.Type.ADDED) {
+      final TrieLogAddedEvent addedEvent = (TrieLogAddedEvent) event;
+      final Hash blockHash = addedEvent.layer().getBlockHash();
+      final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);
+      if (header.isPresent()) {
+        addToPruneQueue(header.get().getNumber(), blockHash);
+        pruneFromQueue();
+      } else {
+        // prune orphaned blocks (sometimes created during block production)
+        rootWorldStateStorage.pruneTrieLog(blockHash);
+      }
+    }
   }
 
   public static class NoOpTrieLogPruner extends TrieLogPruner {
