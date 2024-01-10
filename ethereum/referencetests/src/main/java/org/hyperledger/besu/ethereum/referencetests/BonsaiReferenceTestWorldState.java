@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogAddedEvent;
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogManager;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -198,7 +197,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   static class NoOpTrieLogManager extends TrieLogManager {
 
     public NoOpTrieLogManager() {
-      super(null, null, 0, null, TrieLogPruner.noOpTrieLogPruner());
+      super(null, null, 0, null);
     }
 
     @SuppressWarnings({"UnsynchronizedOverridesSynchronized", "squid:S3551"})
