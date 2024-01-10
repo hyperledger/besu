@@ -34,6 +34,6 @@ Besu reports only the actual cost of the precompiled contract call in the
 
 ### Out of Gas 
 
-Besu reports the operation that causes out fo gas exceptions, including 
+Besu reports the operation that causes out of gas exceptions, including 
 calculated gas cost.  The operation is not executed so no `ex` values are 
 reported.

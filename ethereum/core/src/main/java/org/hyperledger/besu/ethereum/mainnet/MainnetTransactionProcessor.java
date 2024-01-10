@@ -426,6 +426,13 @@ public class MainnetTransactionProcessor {
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         worldUpdater.commit();
+      } else {
+        if (initialFrame.getExceptionalHaltReason().isPresent()) {
+          validationResult =
+              ValidationResult.invalid(
+                  TransactionInvalidReason.EXECUTION_HALTED,
+                  initialFrame.getExceptionalHaltReason().get().toString());
+        }
       }
 
       if (LOG.isTraceEnabled()) {
