@@ -95,14 +95,19 @@ public class MessageValidatorFactory {
    *
    * @param roundIdentifier the round identifier
    * @param parentHeader the parent header
+   * @param headerTimestamp the timestamp of the header
    * @return the message validator
    */
   public MessageValidator createMessageValidator(
-      final ConsensusRoundIdentifier roundIdentifier, final BlockHeader parentHeader) {
+      final ConsensusRoundIdentifier roundIdentifier,
+      final BlockHeader parentHeader,
+      final long headerTimestamp) {
 
     final Collection<Address> validatorsForHeight = getValidatorsAfterBlock(parentHeader);
     final BlockValidator blockValidator =
-        protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockValidator();
+        protocolSchedule
+            .getByBlockNumberAndTimestamp(roundIdentifier.getSequenceNumber(), headerTimestamp)
+            .getBlockValidator();
 
     final ProposalValidator proposalValidator =
         new ProposalValidator(

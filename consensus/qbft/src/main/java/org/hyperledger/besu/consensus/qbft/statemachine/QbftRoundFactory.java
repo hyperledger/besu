@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.util.Subscribers;
 
 /** The Qbft round factory. */
@@ -74,9 +75,12 @@ public class QbftRoundFactory {
    *
    * @param parentHeader the parent header
    * @param round the round
+   * @param blockTimestamp the timestamp of the new round, and hence the timestamp of the protocol
+   *     schedule to use to create the block
    * @return the qbft round
    */
-  public QbftRound createNewRound(final BlockHeader parentHeader, final int round) {
+  public QbftRound createNewRound(
+      final BlockHeader parentHeader, final int round, final long blockTimestamp) {
     long nextBlockHeight = parentHeader.getNumber() + 1;
     final ConsensusRoundIdentifier roundIdentifier =
         new ConsensusRoundIdentifier(nextBlockHeight, round);
@@ -85,9 +89,10 @@ public class QbftRoundFactory {
         new RoundState(
             roundIdentifier,
             finalState.getQuorum(),
-            messageValidatorFactory.createMessageValidator(roundIdentifier, parentHeader));
+            messageValidatorFactory.createMessageValidator(
+                roundIdentifier, parentHeader, blockTimestamp));
 
-    return createNewRoundWithState(parentHeader, roundState);
+    return createNewRoundWithState(parentHeader, roundState, blockTimestamp);
   }
 
   /**
@@ -95,10 +100,12 @@ public class QbftRoundFactory {
    *
    * @param parentHeader the parent header
    * @param roundState the round state
+   * @param blockTimestamp the timestamp of the new round, and hence the timestamp of the protocol
+   *     schedule to use to create the block
    * @return the qbft round
    */
   public QbftRound createNewRoundWithState(
-      final BlockHeader parentHeader, final RoundState roundState) {
+      final BlockHeader parentHeader, final RoundState roundState, final long blockTimestamp) {
     final ConsensusRoundIdentifier roundIdentifier = roundState.getRoundIdentifier();
     final BlockCreator blockCreator = blockCreatorFactory.create(parentHeader, 0);
 
@@ -106,11 +113,16 @@ public class QbftRoundFactory {
     final QbftMessageTransmitter messageTransmitter =
         new QbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster());
 
+    final BlockImporter theImporter =
+        protocolSchedule
+            .getByBlockNumberAndTimestamp(roundIdentifier.getSequenceNumber(), blockTimestamp)
+            .getBlockImporter();
+
     return new QbftRound(
         roundState,
         blockCreator,
         protocolContext,
-        protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockImporter(),
+        theImporter,
         minedBlockObservers,
         finalState.getNodeKey(),
         messageFactory,

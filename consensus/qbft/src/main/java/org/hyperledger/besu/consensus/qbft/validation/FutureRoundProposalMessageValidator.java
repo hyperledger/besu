@@ -52,7 +52,8 @@ public class FutureRoundProposalMessageValidator {
         new ConsensusRoundIdentifier(chainHeight, msg.getRoundIdentifier().getRoundNumber());
 
     final MessageValidator messageValidator =
-        messageValidatorFactory.createMessageValidator(roundIdentifier, parentHeader);
+        messageValidatorFactory.createMessageValidator(
+            roundIdentifier, parentHeader, msg.getBlock().getHeader().getTimestamp());
 
     return messageValidator.validateProposal(msg);
   }
