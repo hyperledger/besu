@@ -2018,11 +2018,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void validateChainDataPruningParams() {
     if (unstableChainPruningOptions.getChainDataPruningEnabled()
         && unstableChainPruningOptions.getChainDataPruningBlocksRetained()
-            < ChainPruningOptions.DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED) {
+            < unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit()) {
       throw new ParameterException(
           this.commandLine,
           "--Xchain-pruning-blocks-retained must be >= "
-              + ChainPruningOptions.DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED);
+              + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
     }
   }
 

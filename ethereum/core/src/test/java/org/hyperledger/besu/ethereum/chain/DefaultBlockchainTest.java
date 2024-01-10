@@ -243,10 +243,8 @@ public class DefaultBlockchainTest {
         new BlockDataGenerator.BlockOptions().setBlockNumber(1L).setParentHash(Hash.ZERO);
     final Block newBlock = gen.block(options);
     final List<TransactionReceipt> receipts = gen.receipts(newBlock);
-    // TODO: before merging fleet-mode, change back to IllegalArgumentException
     assertThatThrownBy(() -> blockchain.appendBlock(newBlock, receipts))
-        // .isInstanceOf(IllegalArgumentException.class);
-        .isInstanceOf(IllegalStateException.class);
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
@@ -266,10 +264,8 @@ public class DefaultBlockchainTest {
     final Block newBlock = gen.block(options);
     final List<TransactionReceipt> receipts = gen.receipts(newBlock);
     receipts.add(gen.receipt());
-    // TODO: before merging fleet-mode, change back to IllegalArgumentException
     assertThatThrownBy(() -> blockchain.appendBlock(newBlock, receipts))
-        // .isInstanceOf(IllegalArgumentException.class);
-        .isInstanceOf(IndexOutOfBoundsException.class);
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
