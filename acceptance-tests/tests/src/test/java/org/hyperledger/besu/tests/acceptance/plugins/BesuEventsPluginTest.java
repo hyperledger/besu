@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.plugins;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import java.io.File;
@@ -28,7 +28,7 @@ import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class BesuEventsPluginTest extends AcceptanceTestBase {
+public class BesuEventsPluginTest extends AcceptanceTestBaseJunit5 {
   private BesuNode pluginNode;
   private BesuNode minerNode;
 

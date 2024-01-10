@@ -17,7 +17,7 @@ package org.hyperledger.besu.tests.acceptance.plugins;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import java.io.File;
@@ -33,7 +33,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-public class BadCLIOptionsPluginTest extends AcceptanceTestBase {
+public class BadCLIOptionsPluginTest extends AcceptanceTestBaseJunit5 {
   private BesuNode node;
 
   @BeforeEach
