@@ -31,7 +31,7 @@ jobs:
               repo: context.repo.repo,
               ref: RELEVANT_SHA,
             });
-            const acceptanceTested = statuses && statuses.filter(({ context }) => context === 'acceptance-tested');
+            const acceptanceTested = statuses && statuses.filter(({ context }) => context === 'acceptance-tests');
             const alreadyRun = acceptanceTested && acceptanceTested.find(({ state }) => state === 'success' || state === 'pending') > 0;
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
@@ -61,7 +61,6 @@ jobs:
         with:
           status: pending
           sha: ${{ github.event.pull_request.head.sha || github.sha }}
-          context: acceptance-tested
   acceptanceTestEthereum:
     runs-on: ubuntu-22.04
     needs: pend
@@ -108,14 +107,6 @@ jobs:
         run: cat testList.txt | sed -e 's@acceptance-tests/tests/src/test/java/@--tests\ @g;s@/@.@g;s/\.java//g'  > gradleArgs.txt
       - name: run acceptance tests
         run: ./gradlew acceptanceTest `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
-      - name: flag failed acceptance tests
-        uses: myrotvorets/set-commit-status-action@v2.0.0
-        if: failure()
-        with:
-          status: ${{ job.status }}
-          context: acceptance-tested
-          sha: ${{ github.event.pull_request.head.sha || github.sha }}
-          description: fail acceptance test batch ${{matrix.runner_index}}
       - name: cleanup tempfiles
         run: rm testList.txt gradleArgs.txt
       - name: Upload Acceptance Test Results
@@ -128,17 +119,3 @@ jobs:
         if: (success() || failure()) # always run even if the build step fails
         with:
           report_paths: 'acceptance-tests/tests/build/test-results/acceptanceTest/TEST-*.xml'
-  consolidateStatus:
-    runs-on: ubuntu-22.04
-    needs: acceptanceTestEthereum
-    permissions:
-      statuses: write
-      checks: write
-    steps:
-      - name: status success
-        uses: myrotvorets/set-commit-status-action@v2.0.0
-        with:
-          sha: ${{ github.event.pull_request.head.sha || github.sha }}
-          status: success
-          context: acceptance-tested
-          description: acceptance tests passed
