@@ -147,4 +147,13 @@ jobs:
         if: success() || failure() # always run even if the build step fails
         with:
           report_paths: '**/build/test-results/referenceTest/TEST-*.xml'
+  reference-tests:
+    runs-on: ubuntu-22.04
+    needs: [ referenceTestEthereum ]
+    permissions:
+      checks: write
+      statuses: write
+    steps:
+      - name: consolidation
+        run: echo "consolidating statuses"
 
