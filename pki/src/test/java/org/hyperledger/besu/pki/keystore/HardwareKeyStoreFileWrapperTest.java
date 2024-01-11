@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.OS;
 
 public class HardwareKeyStoreFileWrapperTest extends BaseKeyStoreFileWrapperTest {
 
@@ -67,8 +68,9 @@ public class HardwareKeyStoreFileWrapperTest extends BaseKeyStoreFileWrapperTest
     } catch (final Exception e) {
       // nss3 is difficult to setup on mac correctly, don't let it break unit tests for dev
       // machines.
-      Assumptions.assumeTrue(
-          false, "Failed to initialize hardware keystore: " + e.getLocalizedMessage());
+      Assumptions.assumeFalse(
+          OS.MAC.isCurrentOs(),
+          "Failed to initialize hardware keystore: " + e.getLocalizedMessage());
       // Not a mac, probably a production build. Full failure.
       throw new PkiException("Failed to initialize hardware keystore", e);
     }
