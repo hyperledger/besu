@@ -3915,7 +3915,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     assertThat(networkArg.getValue())
-        .isNotEqualTo(EthNetworkConfig.getNetworkConfig(EXPERIMENTAL_EIPS));
+        .isEqualTo(EthNetworkConfig.getNetworkConfig(EXPERIMENTAL_EIPS));
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
