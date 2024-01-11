@@ -18,6 +18,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -107,7 +108,7 @@ public class EthGetFilterChangesIntegrationTest {
             blockchain::getChainHeadHeader);
     final ProtocolContext protocolContext = executionContext.getProtocolContext();
 
-    EthContext ethContext = mock(EthContext.class);
+    EthContext ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
     EthPeers ethPeers = mock(EthPeers.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
 

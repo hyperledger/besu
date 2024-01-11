@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
@@ -61,11 +62,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -107,8 +106,7 @@ public class TransactionPool implements BlockAddedObserver {
   private volatile OptionalLong subscribeConnectId = OptionalLong.empty();
   private final SaveRestoreManager saveRestoreManager = new SaveRestoreManager();
   private final Set<Address> localSenders = ConcurrentHashMap.newKeySet();
-  private final Lock blockAddedLock = new ReentrantLock();
-  private final Queue<BlockAddedEvent> blockAddedQueue = new ConcurrentLinkedQueue<>();
+  private final EthScheduler.OrderedProcessor<BlockAddedEvent> blockAddedEventOrderedProcessor;
 
   public TransactionPool(
       final Supplier<PendingTransactions> pendingTransactionsSupplier,
@@ -130,6 +128,8 @@ public class TransactionPool implements BlockAddedObserver {
         pluginTransactionValidatorFactory == null
             ? null
             : pluginTransactionValidatorFactory.create();
+    this.blockAddedEventOrderedProcessor =
+        ethContext.getScheduler().createOrderedProcessor(this::processBlockAddedEvent);
     initLogForReplay();
   }
 
@@ -322,56 +322,27 @@ public class TransactionPool implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     if (isPoolEnabled.get()) {
-      final long started = System.currentTimeMillis();
       if (event.getEventType().equals(BlockAddedEvent.EventType.HEAD_ADVANCED)
           || event.getEventType().equals(BlockAddedEvent.EventType.CHAIN_REORG)) {
 
-        // add the event to the processing queue
-        blockAddedQueue.add(event);
-
-        // we want to process the added block asynchronously,
-        // but at the same time we must ensure that blocks are processed in order one at time
-        ethContext
-            .getScheduler()
-            .scheduleServiceTask(
-                () -> {
-                  while (!blockAddedQueue.isEmpty()) {
-                    if (blockAddedLock.tryLock()) {
-                      // no other thread is processing the queue, so start processing it
-                      try {
-                        BlockAddedEvent e = blockAddedQueue.poll();
-                        // check again since another thread could have stolen our task
-                        if (e != null) {
-                          pendingTransactions.manageBlockAdded(
-                              e.getBlock().getHeader(),
-                              e.getAddedTransactions(),
-                              e.getRemovedTransactions(),
-                              protocolSchedule
-                                  .getByBlockHeader(e.getBlock().getHeader())
-                                  .getFeeMarket());
-                          reAddTransactions(e.getRemovedTransactions());
-                          LOG.atTrace()
-                              .setMessage("Block added event {} processed in {}ms")
-                              .addArgument(e)
-                              .addArgument(() -> System.currentTimeMillis() - started)
-                              .log();
-                        }
-                      } finally {
-                        blockAddedLock.unlock();
-                      }
-                    } else {
-                      try {
-                        // wait a bit before retrying
-                        Thread.sleep(100);
-                      } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                      }
-                    }
-                  }
-                  return null;
-                });
+        blockAddedEventOrderedProcessor.submit(event);
       }
     }
+  }
+
+  private void processBlockAddedEvent(final BlockAddedEvent e) {
+    final long started = System.currentTimeMillis();
+    pendingTransactions.manageBlockAdded(
+        e.getBlock().getHeader(),
+        e.getAddedTransactions(),
+        e.getRemovedTransactions(),
+        protocolSchedule.getByBlockHeader(e.getBlock().getHeader()).getFeeMarket());
+    reAddTransactions(e.getRemovedTransactions());
+    LOG.atTrace()
+        .setMessage("Block added event {} processed in {}ms")
+        .addArgument(e)
+        .addArgument(() -> System.currentTimeMillis() - started)
+        .log();
   }
 
   private void reAddTransactions(final List<Transaction> reAddTransactions) {
