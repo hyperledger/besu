@@ -31,7 +31,7 @@ jobs:
             });
             
             const intTested = statuses && statuses.filter(({ context }) => context === 'integration-tests');
-            const alreadyRun = intTested && intTested.find(({ state }) => state === 'success' || state === 'pending') > 0;
+            const alreadyRun = intTested && intTested.find(({ state }) => state === 'success') > 0;
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -45,19 +45,6 @@ jobs:
               console.log("approvingReviews = %j", approvingReviews.length);
 
             return shouldRun;
-  pend:
-    name: integration testing pending
-    needs: shouldRun
-    if: ${{ needs.shouldRun.outputs.shouldRun == 'true' }}
-    runs-on: ubuntu-22.04
-    permissions:
-      statuses: write
-    steps:
-      - name: pending
-        uses: myrotvorets/set-commit-status-action@v2.0.0
-        with:
-          status: pending
-          sha: ${{ github.event.pull_request.head.sha || github.sha }}
   integration-tests:
     runs-on: ubuntu-22.04
     needs: pend
