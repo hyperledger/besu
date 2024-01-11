@@ -15,7 +15,6 @@
 package org.hyperledger.besu.pki.keystore;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import org.hyperledger.besu.pki.PkiException;
 
@@ -29,7 +28,6 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.OS;
 
@@ -73,13 +71,6 @@ public class HardwareKeyStoreFileWrapperTest extends BaseKeyStoreFileWrapperTest
       // Not a mac, probably a production build. Full failure.
       throw new PkiException("Failed to initialize hardware keystore", e);
     }
-  }
-
-  @BeforeEach
-  public void beforeMethod() {
-    assumeTrue(
-        CryptoTestUtil.isNSSLibInstalled(),
-        "Test ignored due to NSS library not being installed/detected.");
   }
 
   @Test
