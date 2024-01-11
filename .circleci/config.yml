@@ -429,6 +429,9 @@ workflows:
           requires:
             - assemble
             - acceptanceTestsCliqueBft
+      - acceptanceTestsPrivacy:
+          requires:
+            - assemble
       - buildDocker:
           requires:
             - assemble
