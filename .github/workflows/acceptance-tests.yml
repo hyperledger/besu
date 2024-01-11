@@ -49,6 +49,7 @@ jobs:
   acceptanceTestEthereum:
     runs-on: ubuntu-22.04
     name: "Acceptance Runner"
+    needs: shouldRun
     permissions:
       statuses: write
       checks: write
