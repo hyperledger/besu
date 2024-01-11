@@ -48,7 +48,6 @@ jobs:
             return shouldRun;
   acceptanceTestEthereum:
     runs-on: ubuntu-22.04
-    needs: pend
     name: "Acceptance Runner"
     permissions:
       statuses: write

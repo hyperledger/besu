@@ -47,7 +47,6 @@ jobs:
             return shouldRun;
   integration-tests:
     runs-on: ubuntu-22.04
-    needs: pend
     if: ${{ needs.shouldRun.outputs.shouldRun == 'true' }}
     permissions:
       statuses: write
