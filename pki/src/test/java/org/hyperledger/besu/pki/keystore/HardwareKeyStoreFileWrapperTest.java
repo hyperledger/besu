@@ -66,8 +66,7 @@ public class HardwareKeyStoreFileWrapperTest extends BaseKeyStoreFileWrapperTest
           .map(provider -> new HardwareKeyStoreWrapper(validKeystorePassword, provider, crlPath))
           .orElseGet(() -> new HardwareKeyStoreWrapper(validKeystorePassword, path, crlPath));
     } catch (final Exception e) {
-      // nss3 is difficult to setup on mac correctly, don't let it break unit tests for dev
-      // machines.
+      // nss3 is difficult to setup on mac, don't let it break unit tests for dev machines.
       Assumptions.assumeFalse(
           OS.MAC.isCurrentOs(),
           "Failed to initialize hardware keystore: " + e.getLocalizedMessage());
