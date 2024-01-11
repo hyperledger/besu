@@ -5066,8 +5066,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void logWarnIfFastSyncMinPeersUsedWithFullSync() {
     parseCommand("--sync-mode", "FULL", "--fast-sync-min-peers", "1");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("--fast-sync-min-peers can't be used with FULL sync-mode");
+    verify(mockLogger).warn("--sync-min-peers is ignored in FULL sync-mode");
   }
 
   @Test
