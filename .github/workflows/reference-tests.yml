@@ -96,7 +96,7 @@ jobs:
       - prepareReferenceTestEthereum
     if: ${{ needs.shouldRun.outputs.shouldRun == 'true' }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         runner_index: [0,1,2,3,4,5]
     steps:
