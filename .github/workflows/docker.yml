@@ -87,5 +87,9 @@ jobs:
     needs: buildDocker
     runs-on: ubuntu-22.04
     steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      - name: setup gradle
+        uses: gradle/gradle-build-action@v2
       - name: multi-arch docker
         run: ./gradlew manifestDocker -PdockerOrgName=${{secrets.DOCKER_ORG }} -Prelease.releaseVersion=${{ github.ref_name }}

@@ -12,7 +12,6 @@ jobs:
   shouldRun:
     name: checks to ensure we should run
     # necessary because there is no single PR approved event, need to check all comments/approvals/denials
-    # might also be a job running, and additional approvals
     runs-on: ubuntu-22.04
     outputs:
       shouldRun: ${{steps.shouldRun.outputs.result}}
