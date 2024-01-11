@@ -32,7 +32,7 @@ jobs:
               ref: RELEVANT_SHA,
             });
             const acceptanceTested = statuses && statuses.filter(({ context }) => context === 'acceptance-tests');
-            const alreadyRun = acceptanceTested && acceptanceTested.find(({ state }) => state === 'success' || state === 'pending') > 0;
+            const alreadyRun = acceptanceTested && acceptanceTested.find(({ state }) => state === 'success') > 0;
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -46,21 +46,6 @@ jobs:
               console.log("approvingReviews = %j", approvingReviews.length);
             
             return shouldRun;
-  pend:
-    name: acceptance testing pending
-    runs-on: ubuntu-22.04
-    needs: shouldRun
-    if: ${{ needs.shouldRun.outputs.shouldRun == 'true'}}
-    permissions:
-      statuses: write
-    steps:
-      - name: debug
-        run: echo ${{ needs.shouldRun.outputs.shouldRun }}
-      - name: pending
-        uses: myrotvorets/set-commit-status-action@v2.0.0
-        with:
-          status: pending
-          sha: ${{ github.event.pull_request.head.sha || github.sha }}
   acceptanceTestEthereum:
     runs-on: ubuntu-22.04
     needs: pend
