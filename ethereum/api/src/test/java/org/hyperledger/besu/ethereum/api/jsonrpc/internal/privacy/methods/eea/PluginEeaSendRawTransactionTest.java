@@ -23,17 +23,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PluginEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
 
   PluginEeaSendRawTransaction method;
 
-  @Before
+  @BeforeEach
   public void before() {
     method =
         new PluginEeaSendRawTransaction(
@@ -53,7 +53,7 @@ public class PluginEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
 
-    when(transactionPool.addLocalTransaction(any())).thenReturn(ValidationResult.valid());
+    when(transactionPool.addTransactionViaApi(any())).thenReturn(ValidationResult.valid());
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
@@ -64,6 +64,6 @@ public class PluginEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
         method.response(validUnrestrictedPrivacyGroupTransactionRequest);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionPool).addLocalTransaction(PUBLIC_PLUGIN_TRANSACTION);
+    verify(transactionPool).addTransactionViaApi(PUBLIC_PLUGIN_TRANSACTION);
   }
 }

@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class EthServerTest {
 
@@ -379,7 +379,7 @@ public class EthServerTest {
   }
 
   private int calculateRlpEncodedSize(final BlockBody blockBody) {
-    return RLP.encode(blockBody::writeTo).size();
+    return RLP.encode(blockBody::writeWrappedBodyTo).size();
   }
 
   private int calculateRlpEncodedSize(final BlockHeader header) {

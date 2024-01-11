@@ -31,7 +31,7 @@ public class PendingTransactionResult implements TransactionResult {
   public PendingTransactionResult(final PendingTransaction pendingTransaction) {
     hash = pendingTransaction.getHash().toString();
     isReceivedFromLocalSource = pendingTransaction.isReceivedFromLocalSource();
-    addedToPoolAt = pendingTransaction.getAddedToPoolAt();
+    addedToPoolAt = Instant.ofEpochMilli(pendingTransaction.getAddedAt());
   }
 
   @JsonGetter(value = "hash")

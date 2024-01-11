@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_LIMIT;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_TTL;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_REMOTE_SEALERS_LIMIT;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_REMOTE_SEALERS_TTL;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -29,8 +29,8 @@ import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PoWMiningCoordinatorTest {
 
@@ -39,7 +39,7 @@ public class PoWMiningCoordinatorTest {
   private final PoWMinerExecutor executor = mock(PoWMinerExecutor.class);
   private final PoWBlockMiner miner = mock(PoWBlockMiner.class);
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(syncState.isInSync()).thenReturn(true);
   }

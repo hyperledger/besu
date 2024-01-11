@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 
-import java.util.Optional;
-
 import graphql.schema.DataFetchingEnvironment;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -32,27 +30,27 @@ public class EmptyAccountAdapter extends AccountAdapter {
   }
 
   @Override
-  public Optional<Address> getAddress() {
-    return Optional.of(address);
+  public Address getAddress() {
+    return address;
   }
 
   @Override
-  public Optional<Wei> getBalance() {
-    return Optional.of(Wei.ZERO);
+  public Wei getBalance() {
+    return Wei.ZERO;
   }
 
   @Override
-  public Optional<Long> getTransactionCount() {
-    return Optional.of(0L);
+  public Long getTransactionCount() {
+    return 0L;
   }
 
   @Override
-  public Optional<Bytes> getCode() {
-    return Optional.of(Bytes.EMPTY);
+  public Bytes getCode(final DataFetchingEnvironment environment) {
+    return Bytes.EMPTY;
   }
 
   @Override
-  public Optional<Bytes32> getStorage(final DataFetchingEnvironment environment) {
-    return Optional.of(Bytes32.ZERO);
+  public Bytes32 getStorage(final DataFetchingEnvironment environment) {
+    return Bytes32.ZERO;
   }
 }

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -25,9 +24,9 @@ import java.util.Optional;
 public class GasPricePendingTransactionsTest extends AbstractPendingTransactionsTestBase {
 
   @Override
-  PendingTransactions getPendingTransactions(
+  AbstractPendingTransactionsSorter getPendingTransactions(
       final TransactionPoolConfiguration poolConfig, final Optional<Clock> clock) {
-    return new BaseFeePendingTransactionsSorter(
+    return new GasPricePendingTransactionsSorter(
         poolConfig,
         clock.orElse(TestClock.system(ZoneId.systemDefault())),
         metricsSystem,

@@ -4,6 +4,7 @@
  [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3174/badge)](https://bestpractices.coreinfrastructure.org/projects/3174)
  [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/hyperledger/besu/blob/main/LICENSE)
  [![Discord](https://img.shields.io/discord/905194001349627914?logo=Hyperledger&style=plastic)](https://discord.gg/hyperledger)
+ [![Twitter Follow](https://img.shields.io/twitter/follow/HyperledgerBesu)](https://twitter.com/HyperledgerBesu)
 
 [Download](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/)
 
@@ -15,7 +16,7 @@ Besu is an Apache 2.0 licensed, MainNet compatible, Ethereum client written in J
 * [Besu Issues]
 * [Besu Wiki](https://wiki.hyperledger.org/display/BESU/Hyperledger+Besu)
 * [How to Contribute to Besu](https://wiki.hyperledger.org/display/BESU/How+to+Contribute)
-* [Besu Roadmap](https://wiki.hyperledger.org/display/BESU/Roadmap)
+* [Besu Roadmap & Planning](https://wiki.hyperledger.org/pages/viewpage.action?pageId=24781786)
 
 
 ## Issues 
@@ -28,7 +29,7 @@ If you have any questions, queries or comments, [Besu channel on Hyperledger Dis
 
 ## Besu Users
 
-To install the Besu binary, follow [these instructions](https://besu.hyperledger.org/HowTo/Get-Started/Install-Binaries/).    
+To install the Besu binary, follow [these instructions](https://besu.hyperledger.org/public-networks/get-started/install/binary-distribution).    
 
 ## Besu Developers
 
@@ -46,7 +47,7 @@ Instructions for how to get started with developing on the Besu codebase. Please
 * [Checking Out and Building](https://wiki.hyperledger.org/display/BESU/Building+from+source)
 * [Running Developer Builds](https://wiki.hyperledger.org/display/BESU/Building+from+source#running-developer-builds)
 * [Code Coverage](https://wiki.hyperledger.org/display/BESU/Code+coverage)
-* [Logging](https://wiki.hyperledger.org/display/BESU/Logging) or the [Documentation's Logging section](https://besu.hyperledger.org/en/stable/HowTo/Monitor/Logging/)
+* [Logging](https://wiki.hyperledger.org/display/BESU/Logging) or the [Documentation's Logging section](https://besu.hyperledger.org/public-networks/how-to/monitor/logging)
 
 
 ## Release Notes

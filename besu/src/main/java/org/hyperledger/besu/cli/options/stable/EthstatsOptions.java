@@ -33,8 +33,8 @@ public class EthstatsOptions implements CLIOptions<EthStatsConnectOptions> {
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @CommandLine.Option(
       names = {ETHSTATS},
-      paramLabel = "<nodename:secret@host:port>",
-      description = "Reporting URL of a ethstats server",
+      paramLabel = "<[ws://|wss://]nodename:secret@host:[port]>",
+      description = "Reporting URL of a ethstats server. Scheme and port can be omitted.",
       arity = "1")
   private String ethstatsUrl = "";
 

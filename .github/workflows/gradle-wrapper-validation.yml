@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   validation:
     name: "Gradle Wrapper Validation"
-    runs-on: [besu,Linux,self-hosted,nodocker]
+    runs-on: [besu-research-ubuntu-8]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: gradle/wrapper-validation-action@v1

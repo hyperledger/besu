@@ -20,7 +20,6 @@ import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.checkpointsync.CheckpointDownloaderFactory;
@@ -30,12 +29,13 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloader
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDownloaderFactory;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapPersistedContext;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.worldstate.Pruner;
+import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.forest.pruner.Pruner;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.SyncStatus;
@@ -146,7 +146,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       this.fastSyncFactory =
           () ->
               CheckpointDownloaderFactory.createCheckpointDownloader(
-                  new SnapPersistedContext(storageProvider),
+                  new SnapSyncStatePersistenceManager(storageProvider),
                   pivotBlockSelector,
                   syncConfig,
                   dataDirectory,
@@ -161,7 +161,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       this.fastSyncFactory =
           () ->
               SnapDownloaderFactory.createSnapDownloader(
-                  new SnapPersistedContext(storageProvider),
+                  new SnapSyncStatePersistenceManager(storageProvider),
                   pivotBlockSelector,
                   syncConfig,
                   dataDirectory,

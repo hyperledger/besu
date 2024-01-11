@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -45,29 +46,30 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /** Tests for {@link BlockExporter}. */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public final class RlpBlockExporterTest {
 
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir public static Path folder;
   private static Blockchain blockchain;
   private static long chainHead;
   private static ProtocolSchedule protocolSchedule;
 
-  @BeforeClass
+  @BeforeAll
   public static void setupBlockchain() throws IOException {
-    final BesuController controller = createController();
-    final Path blocks = folder.newFile("1000.blocks").toPath();
+    final BesuController controller =
+        createController(Files.createTempDirectory(folder, "rlpBlockExporterTestData"));
+    final Path blocks = Files.createTempFile(folder, "1000", "blocks");
     BlockTestUtil.write1000Blocks(blocks);
     blockchain = importBlocks(controller, blocks);
     chainHead = blockchain.getChainHeadBlockNumber();
@@ -82,15 +84,14 @@ public final class RlpBlockExporterTest {
     return controller.getProtocolContext().getBlockchain();
   }
 
-  private static BesuController createController() throws IOException {
-    final Path dataDir = folder.newFolder().toPath();
+  private static BesuController createController(final @TempDir Path dataDir) throws IOException {
     return new BesuController.Builder()
         .fromGenesisConfig(GenesisConfigFile.mainnet(), SyncMode.FAST)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .networkId(BigInteger.ONE)
-        .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
+        .miningParameters(MiningParameters.newDefault())
         .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())
         .privacyParameters(PrivacyParameters.DEFAULT)
@@ -104,13 +105,13 @@ public final class RlpBlockExporterTest {
   }
 
   @Test
-  public void exportBlocks_noBounds() throws IOException {
-    final File outputPath = folder.newFile();
+  public void exportBlocks_noBounds(final @TempDir Path outputDir) throws IOException {
+    final Path outputPath = outputDir.resolve("output");
     final RlpBlockExporter exporter = new RlpBlockExporter(blockchain);
-    exporter.exportBlocks(outputPath, Optional.empty(), Optional.empty());
+    exporter.exportBlocks(outputPath.toFile(), Optional.empty(), Optional.empty());
 
     // Iterate over blocks and check that they match expectations
-    final RawBlockIterator blockIterator = getBlockIterator(outputPath.toPath());
+    final RawBlockIterator blockIterator = getBlockIterator(outputPath);
     long currentBlockNumber = 0;
     while (blockIterator.hasNext()) {
       final Block actual = blockIterator.next();
@@ -124,15 +125,15 @@ public final class RlpBlockExporterTest {
   }
 
   @Test
-  public void exportBlocks_withLowerBound() throws IOException {
-    final File outputPath = folder.newFile();
+  public void exportBlocks_withLowerBound(final @TempDir Path outputDir) throws IOException {
+    final Path outputPath = outputDir.resolve("output");
     final RlpBlockExporter exporter = new RlpBlockExporter(blockchain);
 
     final long lowerBound = 990;
-    exporter.exportBlocks(outputPath, Optional.of(lowerBound), Optional.empty());
+    exporter.exportBlocks(outputPath.toFile(), Optional.of(lowerBound), Optional.empty());
 
     // Iterate over blocks and check that they match expectations
-    final RawBlockIterator blockIterator = getBlockIterator(outputPath.toPath());
+    final RawBlockIterator blockIterator = getBlockIterator(outputPath);
     long currentBlockNumber = lowerBound;
     while (blockIterator.hasNext()) {
       final Block actual = blockIterator.next();
@@ -146,15 +147,15 @@ public final class RlpBlockExporterTest {
   }
 
   @Test
-  public void exportBlocks_withUpperBound() throws IOException {
-    final File outputPath = folder.newFile();
+  public void exportBlocks_withUpperBound(final @TempDir Path outputDir) throws IOException {
+    final Path outputPath = outputDir.resolve("output");
     final RlpBlockExporter exporter = new RlpBlockExporter(blockchain);
 
     final long upperBound = 10;
-    exporter.exportBlocks(outputPath, Optional.empty(), Optional.of(upperBound));
+    exporter.exportBlocks(outputPath.toFile(), Optional.empty(), Optional.of(upperBound));
 
     // Iterate over blocks and check that they match expectations
-    final RawBlockIterator blockIterator = getBlockIterator(outputPath.toPath());
+    final RawBlockIterator blockIterator = getBlockIterator(outputPath);
     long currentBlockNumber = 0;
     while (blockIterator.hasNext()) {
       final Block actual = blockIterator.next();
@@ -168,16 +169,17 @@ public final class RlpBlockExporterTest {
   }
 
   @Test
-  public void exportBlocks_withUpperAndLowerBounds() throws IOException {
-    final File outputPath = folder.newFile();
+  public void exportBlocks_withUpperAndLowerBounds(final @TempDir Path outputDir)
+      throws IOException {
+    final Path outputPath = outputDir.resolve("output");
     final RlpBlockExporter exporter = new RlpBlockExporter(blockchain);
 
     final long lowerBound = 5;
     final long upperBound = 10;
-    exporter.exportBlocks(outputPath, Optional.of(lowerBound), Optional.of(upperBound));
+    exporter.exportBlocks(outputPath.toFile(), Optional.of(lowerBound), Optional.of(upperBound));
 
     // Iterate over blocks and check that they match expectations
-    final RawBlockIterator blockIterator = getBlockIterator(outputPath.toPath());
+    final RawBlockIterator blockIterator = getBlockIterator(outputPath);
     long currentBlockNumber = lowerBound;
     while (blockIterator.hasNext()) {
       final Block actual = blockIterator.next();
@@ -191,16 +193,17 @@ public final class RlpBlockExporterTest {
   }
 
   @Test
-  public void exportBlocks_withRangeBeyondChainHead() throws IOException {
-    final File outputPath = folder.newFile();
+  public void exportBlocks_withRangeBeyondChainHead(final @TempDir Path outputDir)
+      throws IOException {
+    final Path outputPath = outputDir.resolve("output");
     final RlpBlockExporter exporter = new RlpBlockExporter(blockchain);
 
     final long lowerBound = chainHead - 10;
     final long upperBound = chainHead + 10;
-    exporter.exportBlocks(outputPath, Optional.of(lowerBound), Optional.of(upperBound));
+    exporter.exportBlocks(outputPath.toFile(), Optional.of(lowerBound), Optional.of(upperBound));
 
     // Iterate over blocks and check that they match expectations
-    final RawBlockIterator blockIterator = getBlockIterator(outputPath.toPath());
+    final RawBlockIterator blockIterator = getBlockIterator(outputPath);
     long currentBlockNumber = lowerBound;
     while (blockIterator.hasNext()) {
       final Block actual = blockIterator.next();
@@ -214,8 +217,7 @@ public final class RlpBlockExporterTest {
   }
 
   @Test
-  public void exportBlocks_negativeStartNumber() throws IOException {
-    final File outputPath = folder.newFile();
+  public void exportBlocks_negativeStartNumber(final @TempDir File outputPath) throws IOException {
     final RlpBlockExporter exporter = new RlpBlockExporter(blockchain);
 
     assertThatThrownBy(() -> exporter.exportBlocks(outputPath, Optional.of(-1L), Optional.empty()))
@@ -224,8 +226,7 @@ public final class RlpBlockExporterTest {
   }
 
   @Test
-  public void exportBlocks_negativeEndNumber() throws IOException {
-    final File outputPath = folder.newFile();
+  public void exportBlocks_negativeEndNumber(final @TempDir File outputPath) throws IOException {
     final RlpBlockExporter exporter = new RlpBlockExporter(blockchain);
 
     assertThatThrownBy(() -> exporter.exportBlocks(outputPath, Optional.empty(), Optional.of(-1L)))
@@ -234,8 +235,7 @@ public final class RlpBlockExporterTest {
   }
 
   @Test
-  public void exportBlocks_outOfOrderBounds() throws IOException {
-    final File outputPath = folder.newFile();
+  public void exportBlocks_outOfOrderBounds(final @TempDir File outputPath) throws IOException {
     final RlpBlockExporter exporter = new RlpBlockExporter(blockchain);
 
     assertThatThrownBy(() -> exporter.exportBlocks(outputPath, Optional.of(10L), Optional.of(2L)))
@@ -244,10 +244,9 @@ public final class RlpBlockExporterTest {
   }
 
   private RawBlockIterator getBlockIterator(final Path blocks) throws IOException {
-    return new RawBlockIterator(
-        blocks,
-        rlp ->
-            BlockHeader.readFrom(rlp, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
+    final BlockHeaderFunctions blockHeaderFunctions =
+        ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
+    return new RawBlockIterator(blocks, blockHeaderFunctions);
   }
 
   private Block getBlock(final Blockchain blockchain, final long blockNumber) {

@@ -23,24 +23,24 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class EnclaveFactoryTest {
-  @ClassRule public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir File tempDir;
   private static final String EMPTY_FILE_ERROR_MSG = "Keystore password file is empty: %s";
 
   @Test
   public void passwordCanBeReadFromFile() throws IOException {
-    final File passwordFile = temporaryFolder.newFile();
+    File passwordFile = new File(tempDir, "password.txt");
     Files.writeString(passwordFile.toPath(), "test" + System.lineSeparator() + "test2");
     assertThat(EnclaveFactory.readSecretFromFile(passwordFile.toPath())).isEqualTo("test");
   }
 
   @Test
   public void emptyFileThrowsException() throws IOException {
-    final File passwordFile = temporaryFolder.newFile();
+    File passwordFile = new File(tempDir, "password.txt");
+    Files.createFile(passwordFile.toPath()); // Create an empty file
     assertThatExceptionOfType(InvalidConfigurationException.class)
         .isThrownBy(() -> EnclaveFactory.readSecretFromFile(passwordFile.toPath()))
         .withMessage(EMPTY_FILE_ERROR_MSG, passwordFile);
@@ -48,7 +48,7 @@ public class EnclaveFactoryTest {
 
   @Test
   public void fileWithOnlyEoLThrowsException() throws IOException {
-    final File passwordFile = temporaryFolder.newFile();
+    File passwordFile = new File(tempDir, "password.txt");
     Files.writeString(passwordFile.toPath(), System.lineSeparator());
     assertThatExceptionOfType(InvalidConfigurationException.class)
         .isThrownBy(() -> EnclaveFactory.readSecretFromFile(passwordFile.toPath()))

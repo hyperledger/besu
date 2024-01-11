@@ -18,7 +18,8 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.BYTECO
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
@@ -53,14 +54,19 @@ public class BytecodeRequest extends SnapDataRequest {
       final WorldStateStorage worldStateStorage,
       final Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncState snapSyncState) {
+      final SnapSyncProcessState snapSyncState,
+      final SnapSyncConfiguration snapSyncConfiguration) {
     updater.putCode(Hash.wrap(accountHash), code);
     downloadState.getMetricsManager().notifyCodeDownloaded();
     return possibleParent
         .map(
             trieNodeDataRequest ->
                 trieNodeDataRequest.saveParent(
-                        worldStateStorage, updater, downloadState, snapSyncState)
+                        worldStateStorage,
+                        updater,
+                        downloadState,
+                        snapSyncState,
+                        snapSyncConfiguration)
                     + 1)
         .orElse(1);
   }
@@ -74,12 +80,17 @@ public class BytecodeRequest extends SnapDataRequest {
   public Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
       final WorldStateStorage worldStateStorage,
-      final SnapSyncState snapSyncState) {
+      final SnapSyncProcessState snapSyncState) {
     return Stream.empty();
   }
 
   public Bytes32 getAccountHash() {
     return accountHash;
+  }
+
+  @Override
+  public void clear() {
+    setCode(Bytes.EMPTY);
   }
 
   public Bytes32 getCodeHash() {

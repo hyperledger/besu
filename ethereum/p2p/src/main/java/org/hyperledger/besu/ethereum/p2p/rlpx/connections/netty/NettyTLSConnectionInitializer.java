@@ -20,12 +20,14 @@ import static org.hyperledger.besu.ethereum.p2p.rlpx.RlpxFrameConstants.LENGTH_M
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
+import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.plain.PlainFramer;
 import org.hyperledger.besu.ethereum.p2p.plain.PlainHandshaker;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
 import org.hyperledger.besu.ethereum.p2p.rlpx.framing.Framer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakeSecrets;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.security.GeneralSecurityException;
@@ -40,10 +42,12 @@ import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.codec.compression.SnappyFrameDecoder;
 import io.netty.handler.codec.compression.SnappyFrameEncoder;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslHandler;
 
 public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
 
   private final Optional<Supplier<TLSContextFactory>> tlsContextFactorySupplier;
+  private final Boolean clientHelloSniHeaderEnabled;
 
   public NettyTLSConnectionInitializer(
       final NodeKey nodeKey,
@@ -58,7 +62,8 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
         localNode,
         eventDispatcher,
         metricsSystem,
-        defaultTlsContextFactorySupplier(p2pTLSConfiguration));
+        defaultTlsContextFactorySupplier(p2pTLSConfiguration),
+        p2pTLSConfiguration.getClientHelloSniHeaderEnabled());
   }
 
   @VisibleForTesting
@@ -68,7 +73,8 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
       final LocalNode localNode,
       final PeerConnectionEventDispatcher eventDispatcher,
       final MetricsSystem metricsSystem,
-      final Supplier<TLSContextFactory> tlsContextFactorySupplier) {
+      final Supplier<TLSContextFactory> tlsContextFactorySupplier,
+      final Boolean clientHelloSniHeaderEnabled) {
     super(nodeKey, config, localNode, eventDispatcher, metricsSystem);
     if (tlsContextFactorySupplier != null) {
       this.tlsContextFactorySupplier =
@@ -76,14 +82,28 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
     } else {
       this.tlsContextFactorySupplier = Optional.empty();
     }
+    this.clientHelloSniHeaderEnabled = clientHelloSniHeaderEnabled;
   }
 
   @Override
-  void addAdditionalOutboundHandlers(final Channel ch) throws GeneralSecurityException {
+  void addAdditionalOutboundHandlers(final Channel ch, final Peer peer)
+      throws GeneralSecurityException {
     if (tlsContextFactorySupplier.isPresent()) {
       final SslContext clientSslContext =
           tlsContextFactorySupplier.get().get().createNettyClientSslContext();
-      addHandlersToChannelPipeline(ch, clientSslContext);
+      final EnodeURL enode = peer.getEnodeURL();
+      final SslHandler sslHandler = createClientSslHandler(ch, clientSslContext, enode);
+      addHandlersToChannelPipeline(ch, sslHandler);
+    }
+  }
+
+  private SslHandler createClientSslHandler(
+      final Channel ch, final SslContext sslContext, final EnodeURL enode) {
+    if (this.clientHelloSniHeaderEnabled) {
+      return sslContext.newHandler(
+          ch.alloc(), enode.getHost(), enode.getListeningPort().orElseThrow());
+    } else {
+      return sslContext.newHandler(ch.alloc());
     }
   }
 
@@ -92,12 +112,12 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
     if (tlsContextFactorySupplier.isPresent()) {
       final SslContext serverSslContext =
           tlsContextFactorySupplier.get().get().createNettyServerSslContext();
-      addHandlersToChannelPipeline(ch, serverSslContext);
+      addHandlersToChannelPipeline(ch, serverSslContext.newHandler(ch.alloc()));
     }
   }
 
-  private void addHandlersToChannelPipeline(final Channel ch, final SslContext sslContext) {
-    ch.pipeline().addLast(sslContext.newHandler(ch.alloc()));
+  private void addHandlersToChannelPipeline(final Channel ch, final SslHandler sslHandler) {
+    ch.pipeline().addLast(sslHandler);
     ch.pipeline().addLast(new SnappyFrameDecoder());
     ch.pipeline().addLast(new SnappyFrameEncoder());
     ch.pipeline()

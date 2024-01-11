@@ -16,7 +16,7 @@
 package org.hyperledger.besu.plugin.services.storage;
 
 /** The interface Snappable key value storage. */
-public interface SnappableKeyValueStorage extends KeyValueStorage {
+public interface SnappableKeyValueStorage extends SegmentedKeyValueStorage {
 
   /**
    * Take snapshot.

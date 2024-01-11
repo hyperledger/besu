@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests ethTasks that interact with a single peer to retrieve data from the network.
@@ -58,7 +58,7 @@ public abstract class PeerMessageTaskTest<T>
             protocolSchedule,
             0.5f);
     final RespondingEthPeer respondingEthPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 32);
 
     // Execute task and wait for response
     final AtomicReference<T> actualResult = new AtomicReference<>();
@@ -109,7 +109,7 @@ public abstract class PeerMessageTaskTest<T>
     // Setup a unresponsive peer
     final RespondingEthPeer.Responder responder = RespondingEthPeer.emptyResponder();
     final RespondingEthPeer respondingEthPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 32);
 
     // Setup data to be requested
     final T requestedData = generateDataToBeRequested();
@@ -129,7 +129,7 @@ public abstract class PeerMessageTaskTest<T>
     peersDoTimeout.set(true);
     // Setup a unresponsive peer
     final RespondingEthPeer respondingEthPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 32);
 
     // Setup data to be requested
     final T requestedData = generateDataToBeRequested();

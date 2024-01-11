@@ -45,23 +45,30 @@ dependencies {
   implementation 'io.prometheus:simpleclient'
   implementation 'io.vertx:vertx-core'
 
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-crypto'
-  implementation('org.apache.tuweni:tuweni-devp2p') {
+  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.tmio:tuweni-crypto'
+  implementation('io.tmio:tuweni-devp2p') {
     exclude group:'ch.qos.logback', module:'logback-classic'
   }
-  implementation('org.apache.tuweni:tuweni-dns-discovery'){
+  implementation('io.tmio:tuweni-dns-discovery'){
     exclude group:'ch.qos.logback', module:'logback-classic'
   }
-  implementation 'org.apache.tuweni:tuweni-io'
-  implementation 'org.apache.tuweni:tuweni-rlp'
-  implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'io.tmio:tuweni-io'
+  implementation 'io.tmio:tuweni-rlp'
+  implementation 'io.tmio:tuweni-units'
   implementation 'org.jetbrains.kotlin:kotlin-stdlib'
+  implementation 'org.owasp.encoder:encoder'
   implementation 'org.xerial.snappy:snappy-java'
 
   annotationProcessor "org.immutables:value"
   implementation "org.immutables:value-annotations"
-  implementation 'tech.pegasys.discovery:discovery'
+  implementation('tech.pegasys.discovery:discovery') {
+    // version conflicts, prefer ours
+    exclude group: 'org.apache.tuweni', module:'tuweni-bytes'
+    exclude group: 'org.apache.tuweni', module:'tuweni-crypto'
+    exclude group: 'org.apache.tuweni', module:'tuweni-rlp'
+    exclude group: 'org.apache.tuweni', module:'tuweni-units'
+  }
 
   // test dependencies.
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
@@ -76,11 +83,9 @@ dependencies {
   }
   testImplementation 'io.vertx:vertx-codegen'
   testImplementation 'io.vertx:vertx-unit'
-  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
 }

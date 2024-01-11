@@ -14,15 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import static org.hyperledger.besu.datatypes.TransactionType.BLOB;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.toTransactionList;
-import static org.hyperledger.besu.plugin.data.TransactionType.BLOB;
 
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -44,7 +43,6 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
   private static final Boolean HASH_ONLY_BROADCAST = Boolean.TRUE;
   private static final Boolean FULL_BROADCAST = Boolean.FALSE;
 
-  private final PendingTransactions pendingTransactions;
   private final PeerTransactionTracker transactionTracker;
   private final TransactionsMessageSender transactionsMessageSender;
   private final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
@@ -52,25 +50,22 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
 
   public TransactionBroadcaster(
       final EthContext ethContext,
-      final PendingTransactions pendingTransactions,
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
       final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender) {
-    this.pendingTransactions = pendingTransactions;
     this.transactionTracker = transactionTracker;
     this.transactionsMessageSender = transactionsMessageSender;
     this.newPooledTransactionHashesMessageSender = newPooledTransactionHashesMessageSender;
     this.ethContext = ethContext;
   }
 
-  public void relayTransactionPoolTo(final EthPeer peer) {
-    Set<PendingTransaction> pendingPendingTransaction =
-        pendingTransactions.getPendingTransactions();
-    if (!pendingPendingTransaction.isEmpty()) {
+  public void relayTransactionPoolTo(
+      final EthPeer peer, final Collection<PendingTransaction> pendingTransactions) {
+    if (!pendingTransactions.isEmpty()) {
       if (peer.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES)) {
-        sendTransactionHashes(toTransactionList(pendingPendingTransaction), List.of(peer));
+        sendTransactionHashes(toTransactionList(pendingTransactions), List.of(peer));
       } else {
-        sendFullTransactions(toTransactionList(pendingPendingTransaction), List.of(peer));
+        sendFullTransactions(toTransactionList(pendingTransactions), List.of(peer));
       }
     }
   }

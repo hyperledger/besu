@@ -42,21 +42,19 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class DetermineCommonAncestorTaskParameterizedTest {
   private final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
@@ -65,18 +63,10 @@ public class DetermineCommonAncestorTaskParameterizedTest {
   private static Block genesisBlock;
   private static MutableBlockchain localBlockchain;
   private static final int chainHeight = 50;
-  private final int headerRequestSize;
-  private final int commonAncestorHeight;
 
   private MutableBlockchain remoteBlockchain;
 
-  public DetermineCommonAncestorTaskParameterizedTest(
-      final int headerRequestSize, final int commonAncestorHeight) {
-    this.headerRequestSize = headerRequestSize;
-    this.commonAncestorHeight = commonAncestorHeight;
-  }
-
-  @BeforeClass
+  @BeforeAll
   public static void setupClass() {
     genesisBlock = blockDataGenerator.genesisBlock();
     localBlockchain = createInMemoryBlockchain(genesisBlock);
@@ -93,25 +83,25 @@ public class DetermineCommonAncestorTaskParameterizedTest {
     }
   }
 
-  @Before
+  @BeforeEach
   public void setup() {
     remoteBlockchain = createInMemoryBlockchain(genesisBlock);
   }
 
-  @Parameters(name = "requestSize={0}, commonAncestor={1}")
-  public static Collection<Object[]> parameters() throws IOException {
+  public static Stream<Arguments> parameters() throws IOException {
     final int[] requestSizes = {5, 12, chainHeight, chainHeight * 2};
-    final List<Object[]> params = new ArrayList<>();
+    final Stream.Builder<Arguments> builder = Stream.builder();
     for (final int requestSize : requestSizes) {
       for (int i = 0; i <= chainHeight; i++) {
-        params.add(new Object[] {requestSize, i});
+        builder.add(Arguments.of(requestSize, i));
       }
     }
-    return params;
+    return builder.build();
   }
 
-  @Test
-  public void searchesAgainstNetwork() {
+  @ParameterizedTest(name = "requestSize={0}, commonAncestor={1}")
+  @MethodSource("parameters")
+  public void searchesAgainstNetwork(final int headerRequestSize, final int commonAncestorHeight) {
     BlockHeader commonHeader = genesisBlock.getHeader();
     for (long i = 1; i <= commonAncestorHeight; i++) {
       commonHeader = localBlockchain.getBlockHeader(i).get();
@@ -160,7 +150,7 @@ public class DetermineCommonAncestorTaskParameterizedTest {
 
     final EthContext ethContext = ethProtocolManager.ethContext();
     final ProtocolContext protocolContext =
-        new ProtocolContext(localBlockchain, worldStateArchive, null);
+        new ProtocolContext(localBlockchain, worldStateArchive, null, Optional.empty());
 
     final EthTask<BlockHeader> task =
         DetermineCommonAncestorTask.create(

@@ -15,6 +15,9 @@
 package org.hyperledger.besu.cli;
 
 import org.hyperledger.besu.BesuInfo;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.util.log.FramedLogMessage;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
@@ -39,6 +42,7 @@ public class ConfigurationOverviewBuilder {
   private String network;
   private BigInteger networkId;
   private boolean hasCustomGenesis;
+  private String customGenesisFileName;
   private String dataStorage;
   private String syncMode;
   private Integer rpcPort;
@@ -47,7 +51,13 @@ public class ConfigurationOverviewBuilder {
   private Collection<String> engineApis;
   private String engineJwtFilePath;
   private boolean isHighSpec = false;
+  private boolean isTrieLogPruningEnabled = false;
+  private long trieLogRetentionThreshold = 0;
+  private Integer trieLogPruningLimit = null;
+  private TransactionPoolConfiguration.Implementation txPoolImplementation;
+  private EvmConfiguration.WorldUpdaterMode worldStateUpdateMode;
   private Map<String, String> environment;
+  private BesuPluginContextImpl besuPluginContext;
 
   /**
    * @param logger the logger
@@ -86,6 +96,17 @@ public class ConfigurationOverviewBuilder {
    */
   public ConfigurationOverviewBuilder setHasCustomGenesis(final boolean hasCustomGenesis) {
     this.hasCustomGenesis = hasCustomGenesis;
+    return this;
+  }
+
+  /**
+   * Sets location of custom genesis file specified.
+   *
+   * @param customGenesisFileName the filename of the custom genesis file, only set if specified
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setCustomGenesis(final String customGenesisFileName) {
+    this.customGenesisFileName = customGenesisFileName;
     return this;
   }
 
@@ -166,6 +187,62 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets trie log pruning enabled
+   *
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setTrieLogPruningEnabled() {
+    isTrieLogPruningEnabled = true;
+    return this;
+  }
+
+  /**
+   * Sets trie log retention threshold
+   *
+   * @param threshold the number of blocks to retain trie logs for
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setTrieLogRetentionThreshold(final long threshold) {
+    trieLogRetentionThreshold = threshold;
+    return this;
+  }
+
+  /**
+   * Sets trie log pruning limit
+   *
+   * @param limit the max number of blocks to load and prune trie logs for at startup
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setTrieLogPruningLimit(final int limit) {
+    trieLogPruningLimit = limit;
+    return this;
+  }
+
+  /**
+   * Sets the txpool implementation in use.
+   *
+   * @param implementation the txpool implementation
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setTxPoolImplementation(
+      final TransactionPoolConfiguration.Implementation implementation) {
+    txPoolImplementation = implementation;
+    return this;
+  }
+
+  /**
+   * Sets the world state updater mode
+   *
+   * @param worldStateUpdateMode the world state updater mode
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setWorldStateUpdateMode(
+      final EvmConfiguration.WorldUpdaterMode worldStateUpdateMode) {
+    this.worldStateUpdateMode = worldStateUpdateMode;
+    return this;
+  }
+
+  /**
    * Sets the engine jwt file path.
    *
    * @param engineJwtFilePath the engine apis
@@ -179,7 +256,7 @@ public class ConfigurationOverviewBuilder {
   /**
    * Sets the environment variables.
    *
-   * @param environment the enveironment variables
+   * @param environment the environment variables
    * @return the builder
    */
   public ConfigurationOverviewBuilder setEnvironment(final Map<String, String> environment) {
@@ -204,7 +281,9 @@ public class ConfigurationOverviewBuilder {
     }
 
     if (hasCustomGenesis) {
-      lines.add("Network: Custom genesis file specified");
+      lines.add("Network: Custom genesis file");
+      lines.add(
+          customGenesisFileName == null ? "Custom genesis file is null" : customGenesisFileName);
     }
 
     if (networkId != null) {
@@ -236,8 +315,23 @@ public class ConfigurationOverviewBuilder {
       lines.add("Engine JWT: " + engineJwtFilePath);
     }
 
+    lines.add("Using " + txPoolImplementation + " transaction pool implementation");
+
     if (isHighSpec) {
-      lines.add("High spec configuration enabled");
+      lines.add("Experimental high spec configuration enabled");
+    }
+
+    lines.add("Using " + worldStateUpdateMode + " worldstate update mode");
+
+    if (isTrieLogPruningEnabled) {
+      final StringBuilder trieLogPruningString = new StringBuilder();
+      trieLogPruningString
+          .append("Trie log pruning enabled: retention: ")
+          .append(trieLogRetentionThreshold);
+      if (trieLogPruningLimit != null) {
+        trieLogPruningString.append("; prune limit: ").append(trieLogPruningLimit);
+      }
+      lines.add(trieLogPruningString.toString());
     }
 
     lines.add("");
@@ -260,6 +354,12 @@ public class ConfigurationOverviewBuilder {
 
     lines.add("Total memory: " + normalizeSize(hardwareInfo.getMemory().getTotal()));
     lines.add("CPU cores: " + hardwareInfo.getProcessor().getLogicalProcessorCount());
+
+    lines.add("");
+
+    if (besuPluginContext != null) {
+      lines.addAll(besuPluginContext.getPluginsSummaryLog());
+    }
 
     return FramedLogMessage.generate(lines);
   }
@@ -291,5 +391,14 @@ public class ConfigurationOverviewBuilder {
 
   private String normalizeSize(final long size) {
     return String.format("%.02f", (double) (size) / 1024 / 1024 / 1024) + " GB";
+  }
+
+  /**
+   * set the plugin context
+   *
+   * @param besuPluginContext the plugin context
+   */
+  public void setPluginContext(final BesuPluginContextImpl besuPluginContext) {
+    this.besuPluginContext = besuPluginContext;
   }
 }

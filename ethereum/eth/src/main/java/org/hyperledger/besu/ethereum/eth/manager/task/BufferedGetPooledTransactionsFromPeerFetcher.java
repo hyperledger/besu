@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.DEFAULT_MAX_PENDING_TRANSACTIONS;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -22,9 +22,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,16 +40,15 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
   private static final Logger LOG =
       LoggerFactory.getLogger(BufferedGetPooledTransactionsFromPeerFetcher.class);
   private static final int MAX_HASHES = 256;
-  private static final String HASHES = "hashes";
 
   private final TransactionPool transactionPool;
   private final PeerTransactionTracker transactionTracker;
   private final EthContext ethContext;
-  private final MetricsSystem metricsSystem;
+  private final TransactionPoolMetrics metrics;
+  private final String metricLabel;
   private final ScheduledFuture<?> scheduledFuture;
   private final EthPeer peer;
   private final Queue<Hash> txAnnounces;
-  private final Counter alreadySeenTransactionsCounter;
 
   public BufferedGetPooledTransactionsFromPeerFetcher(
       final EthContext ethContext,
@@ -59,23 +56,17 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
       final EthPeer peer,
       final TransactionPool transactionPool,
       final PeerTransactionTracker transactionTracker,
-      final MetricsSystem metricsSystem) {
+      final TransactionPoolMetrics metrics,
+      final String metricLabel) {
     this.ethContext = ethContext;
     this.scheduledFuture = scheduledFuture;
     this.peer = peer;
     this.transactionPool = transactionPool;
     this.transactionTracker = transactionTracker;
-    this.metricsSystem = metricsSystem;
-    this.txAnnounces = Queues.synchronizedQueue(EvictingQueue.create(MAX_PENDING_TRANSACTIONS));
-
-    this.alreadySeenTransactionsCounter =
-        metricsSystem
-            .createLabelledCounter(
-                BesuMetricCategory.TRANSACTION_POOL,
-                "remote_already_seen_total",
-                "Total number of received transactions already seen",
-                "source")
-            .labels(HASHES);
+    this.metrics = metrics;
+    this.metricLabel = metricLabel;
+    this.txAnnounces =
+        Queues.synchronizedQueue(EvictingQueue.create(DEFAULT_MAX_PENDING_TRANSACTIONS));
   }
 
   public ScheduledFuture<?> getScheduledFuture() {
@@ -86,7 +77,8 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
     List<Hash> txHashesAnnounced;
     while (!(txHashesAnnounced = getTxHashesAnnounced()).isEmpty()) {
       final GetPooledTransactionsFromPeerTask task =
-          GetPooledTransactionsFromPeerTask.forHashes(ethContext, txHashesAnnounced, metricsSystem);
+          GetPooledTransactionsFromPeerTask.forHashes(
+              ethContext, txHashesAnnounced, metrics.getMetricsSystem());
       task.assignPeer(peer);
       ethContext
           .getScheduler()
@@ -97,10 +89,10 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
                 transactionTracker.markTransactionsAsSeen(peer, retrievedTransactions);
 
                 LOG.atTrace()
-                    .setMessage("Got {} transactions of {} hashes requested from peer {}")
+                    .setMessage("Got {} transactions of {} hashes requested from peer {}...")
                     .addArgument(retrievedTransactions::size)
                     .addArgument(task.getTransactionHashes()::size)
-                    .addArgument(peer)
+                    .addArgument(peer::getShortNodeId)
                     .log();
 
                 transactionPool.addRemoteTransactions(retrievedTransactions);
@@ -125,11 +117,11 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
     }
 
     final int alreadySeenCount = discarded;
-    alreadySeenTransactionsCounter.inc(alreadySeenCount);
+    metrics.incrementAlreadySeenTransactions(metricLabel, alreadySeenCount);
     LOG.atTrace()
         .setMessage(
-            "Transaction hashes to request from peer {}, fresh count {}, already seen count {}")
-        .addArgument(peer)
+            "Transaction hashes to request from peer {}... fresh count {}, already seen count {}")
+        .addArgument(peer::getShortNodeId)
         .addArgument(toRetrieve::size)
         .addArgument(alreadySeenCount)
         .log();

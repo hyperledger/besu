@@ -37,6 +37,8 @@ public class JsonRpcConfiguration {
   public static final int DEFAULT_ENGINE_JSON_RPC_PORT = 8551;
   public static final int DEFAULT_MAX_ACTIVE_CONNECTIONS = 80;
   public static final int DEFAULT_MAX_BATCH_SIZE = 1024;
+  public static final long DEFAULT_MAX_REQUEST_CONTENT_LENGTH = 5 * 1024 * 1024; // 5MB
+  public static final boolean DEFAULT_PRETTY_JSON_ENABLED = false;
 
   private boolean enabled;
   private int port;
@@ -53,6 +55,8 @@ public class JsonRpcConfiguration {
   private long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
   private int maxActiveConnections;
   private int maxBatchSize;
+  private long maxRequestContentLength;
+  private boolean prettyJsonEnabled;
 
   public static JsonRpcConfiguration createDefault() {
     final JsonRpcConfiguration config = new JsonRpcConfiguration();
@@ -63,6 +67,8 @@ public class JsonRpcConfiguration {
     config.httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
     config.setMaxActiveConnections(DEFAULT_MAX_ACTIVE_CONNECTIONS);
     config.setMaxBatchSize(DEFAULT_MAX_BATCH_SIZE);
+    config.setMaxRequestContentLength(DEFAULT_MAX_REQUEST_CONTENT_LENGTH);
+    config.setPrettyJsonEnabled(DEFAULT_PRETTY_JSON_ENABLED);
     return config;
   }
 
@@ -193,6 +199,14 @@ public class JsonRpcConfiguration {
     this.httpTimeoutSec = httpTimeoutSec;
   }
 
+  public boolean isPrettyJsonEnabled() {
+    return prettyJsonEnabled;
+  }
+
+  public void setPrettyJsonEnabled(final boolean prettyJsonEnabled) {
+    this.prettyJsonEnabled = prettyJsonEnabled;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -262,5 +276,13 @@ public class JsonRpcConfiguration {
 
   public void setMaxBatchSize(final int maxBatchSize) {
     this.maxBatchSize = maxBatchSize;
+  }
+
+  public long getMaxRequestContentLength() {
+    return maxRequestContentLength;
+  }
+
+  public void setMaxRequestContentLength(final long maxRequestContentLength) {
+    this.maxRequestContentLength = maxRequestContentLength;
   }
 }

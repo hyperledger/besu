@@ -42,8 +42,8 @@ public class NormalBlockAdapter extends BlockAdapterBase {
     return Optional.of(blockWithMetaData.getTransactions().size());
   }
 
-  public Optional<Difficulty> getTotalDifficulty() {
-    return Optional.of(blockWithMetaData.getTotalDifficulty());
+  public Difficulty getTotalDifficulty() {
+    return blockWithMetaData.getTotalDifficulty();
   }
 
   public Optional<Integer> getOmmerCount() {
@@ -65,7 +65,7 @@ public class NormalBlockAdapter extends BlockAdapterBase {
 
   public Optional<UncleBlockAdapter> getOmmerAt(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
-    final int index = environment.getArgument("index");
+    final int index = ((Number) environment.getArgument("index")).intValue();
     final List<Hash> ommers = blockWithMetaData.getOmmers();
     if (ommers.size() > index) {
       final Hash hash = blockWithMetaData.getHeader().getHash();
@@ -85,7 +85,7 @@ public class NormalBlockAdapter extends BlockAdapterBase {
   }
 
   public Optional<TransactionAdapter> getTransactionAt(final DataFetchingEnvironment environment) {
-    final int index = environment.getArgument("index");
+    final int index = ((Number) environment.getArgument("index")).intValue();
     final List<TransactionWithMetadata> trans = blockWithMetaData.getTransactions();
 
     if (trans.size() > index) {

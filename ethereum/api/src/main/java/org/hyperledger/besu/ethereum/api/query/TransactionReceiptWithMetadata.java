@@ -30,6 +30,9 @@ public class TransactionReceiptWithMetadata {
   private final long blockNumber;
   private final Hash blockHash;
   private final Transaction transaction;
+  private final Optional<Long> blobGasUsed;
+  private final Optional<Wei> blobGasPrice;
+  private final int logIndexOffset;
 
   private TransactionReceiptWithMetadata(
       final TransactionReceipt receipt,
@@ -39,7 +42,10 @@ public class TransactionReceiptWithMetadata {
       final long gasUsed,
       final Optional<Wei> baseFee,
       final Hash blockHash,
-      final long blockNumber) {
+      final long blockNumber,
+      final Optional<Long> blobGasUsed,
+      final Optional<Wei> blobGasPrice,
+      final int logIndexOffset) {
     this.receipt = receipt;
     this.transactionHash = transactionHash;
     this.transactionIndex = transactionIndex;
@@ -48,6 +54,9 @@ public class TransactionReceiptWithMetadata {
     this.blockHash = blockHash;
     this.blockNumber = blockNumber;
     this.transaction = transaction;
+    this.blobGasUsed = blobGasUsed;
+    this.blobGasPrice = blobGasPrice;
+    this.logIndexOffset = logIndexOffset;
   }
 
   public static TransactionReceiptWithMetadata create(
@@ -58,7 +67,10 @@ public class TransactionReceiptWithMetadata {
       final long gasUsed,
       final Optional<Wei> baseFee,
       final Hash blockHash,
-      final long blockNumber) {
+      final long blockNumber,
+      final Optional<Long> blobGasUsed,
+      final Optional<Wei> blobGasPrice,
+      final int logIndexOffset) {
     return new TransactionReceiptWithMetadata(
         receipt,
         transaction,
@@ -67,7 +79,10 @@ public class TransactionReceiptWithMetadata {
         gasUsed,
         baseFee,
         blockHash,
-        blockNumber);
+        blockNumber,
+        blobGasUsed,
+        blobGasPrice,
+        logIndexOffset);
   }
 
   public TransactionReceipt getReceipt() {
@@ -102,5 +117,17 @@ public class TransactionReceiptWithMetadata {
 
   public Optional<Wei> getBaseFee() {
     return baseFee;
+  }
+
+  public Optional<Long> getBlobGasUsed() {
+    return blobGasUsed;
+  }
+
+  public Optional<Wei> getBlobGasPrice() {
+    return blobGasPrice;
+  }
+
+  public int getLogIndexOffset() {
+    return logIndexOffset;
   }
 }

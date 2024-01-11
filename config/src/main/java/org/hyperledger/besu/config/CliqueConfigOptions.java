@@ -28,6 +28,7 @@ public class CliqueConfigOptions {
 
   private static final long DEFAULT_EPOCH_LENGTH = 30_000;
   private static final int DEFAULT_BLOCK_PERIOD_SECONDS = 15;
+  private static final boolean DEFAULT_CREATE_EMPTY_BLOCKS = true;
 
   private final ObjectNode cliqueConfigRoot;
 
@@ -41,7 +42,7 @@ public class CliqueConfigOptions {
   }
 
   /**
-   * Gets epoch length.
+   * The number of blocks in an epoch.
    *
    * @return the epoch length
    */
@@ -60,12 +61,26 @@ public class CliqueConfigOptions {
   }
 
   /**
+   * Whether the creation of empty blocks is allowed.
+   *
+   * @return the create empty block status
+   */
+  public boolean getCreateEmptyBlocks() {
+    return JsonUtil.getBoolean(cliqueConfigRoot, "createemptyblocks", DEFAULT_CREATE_EMPTY_BLOCKS);
+  }
+
+  /**
    * As map.
    *
    * @return the map
    */
   Map<String, Object> asMap() {
     return ImmutableMap.of(
-        "epochLength", getEpochLength(), "blockPeriodSeconds", getBlockPeriodSeconds());
+        "epochLength",
+        getEpochLength(),
+        "blockPeriodSeconds",
+        getBlockPeriodSeconds(),
+        "createemptyblocks",
+        getCreateEmptyBlocks());
   }
 }

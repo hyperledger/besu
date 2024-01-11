@@ -17,24 +17,28 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import org.checkerframework.checker.signedness.qual.Unsigned;
 
 public class UnsignedLongParameter {
 
-  private final long value;
+  @Unsigned private final long value;
 
   @JsonCreator
   public UnsignedLongParameter(final String value) {
-    this.value = Long.decode(value);
-    checkArgument(this.value >= 0);
+    checkArgument(value != null);
+    if (value.startsWith("0x")) {
+      this.value = Long.parseUnsignedLong(value.substring(2), 16);
+    } else {
+      this.value = Long.parseUnsignedLong(value, 16);
+    }
   }
 
   @JsonCreator
-  public UnsignedLongParameter(final long value) {
+  public UnsignedLongParameter(final @Unsigned long value) {
     this.value = value;
-    checkArgument(this.value >= 0);
   }
 
-  public long getValue() {
+  public @Unsigned long getValue() {
     return value;
   }
 }

@@ -16,10 +16,8 @@ package org.hyperledger.besu.ethstats.util;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.net.URI;
 import java.nio.file.Path;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 import org.immutables.value.Value;
@@ -27,8 +25,8 @@ import org.slf4j.LoggerFactory;
 
 @Value.Immutable
 public interface EthStatsConnectOptions {
-
-  Pattern NETSTATS_URL_REGEX = Pattern.compile("([-\\w]+):([-\\w]+)?@([-.\\w]+)(:([\\d]+))?");
+  @Nullable
+  String getScheme();
 
   String getNodeName();
 
@@ -48,22 +46,48 @@ public interface EthStatsConnectOptions {
     try {
       checkArgument(url != null && !url.trim().isEmpty(), "Invalid empty value.");
 
-      final Matcher netStatsUrl = NETSTATS_URL_REGEX.matcher(url);
-      if (netStatsUrl.matches()) {
-        return ImmutableEthStatsConnectOptions.builder()
-            .nodeName(netStatsUrl.group(1))
-            .secret(netStatsUrl.group(2))
-            .host(netStatsUrl.group(3))
-            .port(Integer.parseInt(Optional.ofNullable(netStatsUrl.group(5)).orElse("-1")))
-            .contact(contact)
-            .caCert(caCert)
-            .build();
+      // if scheme is not specified in the URI, user info (nodename) gets converted to scheme.
+      final URI uri;
+      final String scheme;
+      if (url.matches("^.*://.*$")) {
+        // construct URI
+        uri = URI.create(url);
+        scheme = uri.getScheme();
+      } else {
+        // prepend ws:// to make a valid URI while keeping scheme as null
+        uri = URI.create("ws://" + url);
+        scheme = null;
       }
 
+      if (scheme != null) {
+        // make sure that scheme is either ws or wss
+        if (!scheme.equalsIgnoreCase("ws") && !scheme.equalsIgnoreCase("wss")) {
+          throw new IllegalArgumentException("Ethstats URI only support ws:// or wss:// scheme.");
+        }
+      }
+
+      final String userInfo = uri.getUserInfo();
+
+      // make sure user info is specified
+      if (userInfo == null || !userInfo.contains(":")) {
+        throw new IllegalArgumentException("Ethstats URI missing user info.");
+      }
+      final String nodeName = userInfo.substring(0, userInfo.indexOf(":"));
+      final String secret = userInfo.substring(userInfo.indexOf(":") + 1);
+
+      return ImmutableEthStatsConnectOptions.builder()
+          .scheme(scheme)
+          .nodeName(nodeName)
+          .secret(secret)
+          .host(uri.getHost())
+          .port(uri.getPort())
+          .contact(contact)
+          .caCert(caCert)
+          .build();
     } catch (IllegalArgumentException e) {
       LoggerFactory.getLogger(EthStatsConnectOptions.class).error(e.getMessage());
     }
     throw new IllegalArgumentException(
-        "Invalid netstats URL syntax. Netstats URL should have the following format 'nodename:secret@host:port' or 'nodename:secret@host'.");
+        "Invalid ethstats URL syntax. Ethstats URL should have the following format '[ws://|wss://]nodename:secret@host[:port]'.");
   }
 }

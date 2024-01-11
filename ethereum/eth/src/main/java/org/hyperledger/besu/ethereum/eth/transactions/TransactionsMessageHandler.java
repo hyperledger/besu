@@ -30,7 +30,7 @@ class TransactionsMessageHandler implements EthMessages.MessageCallback {
   private final TransactionsMessageProcessor transactionsMessageProcessor;
   private final EthScheduler scheduler;
   private final Duration txMsgKeepAlive;
-  private final AtomicBoolean isEnabled = new AtomicBoolean(true);
+  private final AtomicBoolean isEnabled = new AtomicBoolean(false);
 
   public TransactionsMessageHandler(
       final EthScheduler scheduler,

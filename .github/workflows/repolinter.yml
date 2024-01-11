@@ -15,10 +15,10 @@ on:
 
 jobs:
   build:
-    runs-on: [besu,Linux,self-hosted,X64,docker]
+    runs-on: [besu-research-ubuntu-16]
     container: ghcr.io/todogroup/repolinter:v0.10.1
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Lint Repo
         run: bundle exec /app/bin/repolinter.js --rulesetUrl https://raw.githubusercontent.com/hyperledger-labs/hyperledger-community-management-tools/main/repo_structure/repolint.json --format markdown

@@ -29,7 +29,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URL;
 import java.nio.file.Files;
@@ -37,74 +36,42 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class BackupRoundTripAcceptanceTest extends AbstractPreexistingNodeTest {
 
-  private final Path backupPath;
-  private final Path restorePath;
-  private final Path rebackupPath;
+  private Path backupPath;
+  private Path restorePath;
+  private Path rebackupPath;
 
-  @SuppressWarnings({"unused", "FieldCanBeLocal"})
-  private final List<AccountData> testAccounts;
+  public static Stream<Arguments> getParameters() {
+    // First 10 blocks of ropsten
+    return Stream.of(
+        Arguments.of(
+            "After versioning was enabled and using multiple RocksDB columns",
+            "version1",
+            0xA,
+            singletonList(
+                new AccountData(
+                    "0xd1aeb42885a43b72b518182ef893125814811048",
+                    BigInteger.valueOf(0xA),
+                    Wei.fromHexString("0x2B5E3AF16B1880000")))));
+  }
 
-  @SuppressWarnings({"unused", "FieldCanBeLocal"})
-  private final long expectedChainHeight;
-
-  public BackupRoundTripAcceptanceTest(
-      final String testName,
-      final String dataPath,
-      final long expectedChainHeight,
-      final List<AccountData> testAccounts)
-      throws IOException {
-    super(testName, dataPath);
-    this.expectedChainHeight = expectedChainHeight;
-    this.testAccounts = testAccounts;
+  public void setUp(final String testName, final String dataPath) throws Exception {
     backupPath = Files.createTempDirectory("backup");
     backupPath.toFile().deleteOnExit();
     restorePath = Files.createTempDirectory("restore");
     restorePath.toFile().deleteOnExit();
     rebackupPath = Files.createTempDirectory("rebackup");
     rebackupPath.toFile().deleteOnExit();
-  }
 
-  @Parameters(name = "{0}")
-  public static Object[][] getParameters() {
-    return new Object[][] {
-      // First 10 blocks of ropsten
-      new Object[] {
-        "Before versioning was enabled",
-        "version0",
-        0xA,
-        singletonList(
-            new AccountData(
-                "0xd1aeb42885a43b72b518182ef893125814811048",
-                BigInteger.valueOf(0xA),
-                Wei.fromHexString("0x2B5E3AF16B1880000"))),
-      },
-      new Object[] {
-        "After versioning was enabled and using multiple RocksDB columns",
-        "version1",
-        0xA,
-        singletonList(
-            new AccountData(
-                "0xd1aeb42885a43b72b518182ef893125814811048",
-                BigInteger.valueOf(0xA),
-                Wei.fromHexString("0x2B5E3AF16B1880000")))
-      }
-    };
-  }
-
-  @Before
-  public void setUp() throws Exception {
     final URL rootURL = DatabaseMigrationAcceptanceTest.class.getResource(dataPath);
     hostDataPath = copyDataDir(rootURL);
     final Path databaseArchive =
@@ -115,8 +82,16 @@ public class BackupRoundTripAcceptanceTest extends AbstractPreexistingNodeTest {
     extract(databaseArchive, hostDataPath.toAbsolutePath().toString());
   }
 
-  @Test
-  public void backupRoundtripAndBack() throws IOException {
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("getParameters")
+  public void backupRoundtripAndBack(
+      final String testName,
+      final String dataPath,
+      final long expectedChainHeight,
+      final List<AccountData> testAccounts)
+      throws Exception {
+
+    setUp(testName, dataPath);
 
     // backup from existing files
     final BesuNode backupNode =

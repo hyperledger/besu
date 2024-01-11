@@ -14,15 +14,16 @@
  */
 package org.hyperledger.besu.tests.acceptance.clique;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory.CliqueOptions;
 
 import java.io.IOException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
+public class CliqueMiningAcceptanceTest extends AcceptanceTestBaseJunit5 {
 
   @Test
   public void shouldMineTransactionsOnSingleNode() throws IOException {
@@ -40,6 +41,35 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
 
     minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2));
     cluster.verify(receiver.balanceEquals(3));
+  }
+
+  @Test
+  public void shouldNotMineBlocksIfNoTransactionsWhenCreateEmptyBlockIsFalse() throws IOException {
+    final var cliqueOptionsNoEmptyBlocks =
+        new CliqueOptions(
+            CliqueOptions.DEFAULT.blockPeriodSeconds(), CliqueOptions.DEFAULT.epochLength(), false);
+    final BesuNode minerNode = besu.createCliqueNode("miner1", cliqueOptionsNoEmptyBlocks);
+    cluster.start(minerNode);
+
+    cluster.verify(clique.noNewBlockCreated(minerNode));
+  }
+
+  @Test
+  public void shouldMineBlocksOnlyWhenTransactionsArePresentWhenCreateEmptyBlockIsFalse()
+      throws IOException {
+    final var cliqueOptionsNoEmptyBlocks =
+        new CliqueOptions(
+            CliqueOptions.DEFAULT.blockPeriodSeconds(), CliqueOptions.DEFAULT.epochLength(), false);
+    final BesuNode minerNode = besu.createCliqueNode("miner1", cliqueOptionsNoEmptyBlocks);
+    cluster.start(minerNode);
+
+    final Account sender = accounts.createAccount("account1");
+
+    cluster.verify(clique.noNewBlockCreated(minerNode));
+
+    minerNode.execute(accountTransactions.createTransfer(sender, 50));
+
+    minerNode.verify(clique.blockIsCreatedByProposer(minerNode));
   }
 
   @Test

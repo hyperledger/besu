@@ -15,8 +15,9 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 
 import static java.util.function.Predicate.isEqual;
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
@@ -32,7 +33,6 @@ import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
-import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.io.File;
@@ -68,24 +68,22 @@ public class TransactionTracer {
       final Hash blockHash,
       final Hash transactionHash,
       final DebugOperationTracer tracer) {
-    Optional<TransactionTrace> transactionTrace =
-        blockReplay.beforeTransactionInBlock(
-            mutableWorldState,
-            blockHash,
-            transactionHash,
-            (transaction, header, blockchain, transactionProcessor, dataGasPrice) -> {
-              final TransactionProcessingResult result =
-                  processTransaction(
-                      header,
-                      blockchain,
-                      mutableWorldState.updater(),
-                      transaction,
-                      transactionProcessor,
-                      tracer,
-                      dataGasPrice);
-              return new TransactionTrace(transaction, result, tracer.getTraceFrames());
-            });
-    return transactionTrace;
+    return blockReplay.beforeTransactionInBlock(
+        mutableWorldState,
+        blockHash,
+        transactionHash,
+        (transaction, header, blockchain, transactionProcessor, blobGasPrice) -> {
+          final TransactionProcessingResult result =
+              processTransaction(
+                  header,
+                  blockchain,
+                  mutableWorldState.updater(),
+                  transaction,
+                  transactionProcessor,
+                  tracer,
+                  blobGasPrice);
+          return new TransactionTrace(transaction, result, tracer.getTraceFrames());
+        });
   }
 
   public List<String> traceTransactionToFile(
@@ -115,16 +113,16 @@ public class TransactionTracer {
             (body, header, blockchain, transactionProcessor, protocolSpec) -> {
               WorldUpdater stackedUpdater = mutableWorldState.updater().updater();
               final List<String> traces = new ArrayList<>();
-              final Wei dataGasPrice =
+              final Wei blobGasPrice =
                   protocolSpec
                       .getFeeMarket()
-                      .dataPrice(
+                      .blobGasPricePerGas(
                           blockchain
                               .getBlockHeader(header.getParentHash())
-                              .flatMap(BlockHeader::getExcessDataGas)
-                              .orElse(DataGas.ZERO));
+                              .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
+                              .orElse(BlobGas.ZERO));
               for (int i = 0; i < body.getTransactions().size(); i++) {
-                ((StackedUpdater<?, ?>) stackedUpdater).markTransactionBoundary();
+                stackedUpdater.markTransactionBoundary();
                 final Transaction transaction = body.getTransactions().get(i);
                 if (selectedHash.isEmpty()
                     || selectedHash.filter(isEqual(transaction.getHash())).isPresent()) {
@@ -138,8 +136,8 @@ public class TransactionTracer {
                             stackedUpdater,
                             transaction,
                             transactionProcessor,
-                            new StandardJsonTracer(out, showMemory, true, true),
-                            dataGasPrice);
+                            new StandardJsonTracer(out, showMemory, true, true, false),
+                            blobGasPrice);
                     out.println(
                         summaryTrace(
                             transaction, timer.stop().elapsed(TimeUnit.NANOSECONDS), result));
@@ -156,7 +154,7 @@ public class TransactionTracer {
                       transaction,
                       transactionProcessor,
                       OperationTracer.NO_TRACING,
-                      dataGasPrice);
+                      blobGasPrice);
                 }
               }
               return Optional.of(traces);
@@ -187,7 +185,7 @@ public class TransactionTracer {
       final Transaction transaction,
       final MainnetTransactionProcessor transactionProcessor,
       final OperationTracer tracer,
-      final Wei dataGasPrice) {
+      final Wei blobGasPrice) {
     return transactionProcessor.processTransaction(
         blockchain,
         worldUpdater,
@@ -198,7 +196,7 @@ public class TransactionTracer {
         new CachingBlockHashLookup(header, blockchain),
         false,
         ImmutableTransactionValidationParams.builder().isAllowFutureNonce(true).build(),
-        dataGasPrice);
+        blobGasPrice);
   }
 
   public static String summaryTrace(

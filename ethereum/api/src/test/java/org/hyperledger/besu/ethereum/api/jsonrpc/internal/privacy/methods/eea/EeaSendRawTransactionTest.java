@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.PRIVATE_TRANSACTION_FAILED;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.PRIVATE_TRANSACTION_INVALID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -28,20 +28,20 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
 
   // RLP encode fails creating a transaction without privateFrom so must be manually encoded
@@ -58,7 +58,7 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
 
   RestrictedOffchainEeaSendRawTransaction method;
 
-  @Before
+  @BeforeEach
   public void before() {
 
     method =
@@ -111,7 +111,7 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
             new JsonRpcRequest("2.0", "eea_sendRawTransaction", new String[] {rawTransaction}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.DECODE_ERROR);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.DECODE_ERROR);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -128,7 +128,7 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
                 new String[] {PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP_NO_PRIVATE_FROM}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.DECODE_ERROR);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.DECODE_ERROR);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -139,11 +139,12 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
   @Test
   public void invalidTransactionIsNotSentToEnclaveAndIsNotAddedToTransactionPool() {
     when(privacyController.validatePrivateTransaction(any(), anyString()))
-        .thenReturn(ValidationResult.invalid(PRIVATE_TRANSACTION_FAILED));
+        .thenReturn(ValidationResult.invalid(PRIVATE_TRANSACTION_INVALID));
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            validPrivateForTransactionRequest.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+            validPrivateForTransactionRequest.getRequest().getId(),
+            RpcErrorType.PRIVATE_TRANSACTION_INVALID);
 
     final JsonRpcResponse actualResponse = method.response(validPrivateForTransactionRequest);
 
@@ -162,7 +163,7 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            validPrivateForTransactionRequest.getRequest().getId(), JsonRpcError.ENCLAVE_ERROR);
+            validPrivateForTransactionRequest.getRequest().getId(), RpcErrorType.ENCLAVE_ERROR);
 
     final JsonRpcResponse actualResponse = method.response(validPrivateForTransactionRequest);
 
@@ -173,55 +174,55 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
   @Test
   public void transactionWithNonceBelowAccountNonceIsRejected() {
     verifyErrorForInvalidTransaction(
-        TransactionInvalidReason.NONCE_TOO_LOW, JsonRpcError.NONCE_TOO_LOW);
+        TransactionInvalidReason.NONCE_TOO_LOW, RpcErrorType.NONCE_TOO_LOW);
   }
 
   @Test
   public void transactionWithNonceAboveAccountNonceIsRejected() {
     verifyErrorForInvalidTransaction(
-        TransactionInvalidReason.NONCE_TOO_HIGH, JsonRpcError.NONCE_TOO_HIGH);
+        TransactionInvalidReason.NONCE_TOO_HIGH, RpcErrorType.NONCE_TOO_HIGH);
   }
 
   @Test
   public void transactionWithInvalidSignatureIsRejected() {
     verifyErrorForInvalidTransaction(
-        TransactionInvalidReason.INVALID_SIGNATURE, JsonRpcError.INVALID_TRANSACTION_SIGNATURE);
+        TransactionInvalidReason.INVALID_SIGNATURE, RpcErrorType.INVALID_TRANSACTION_SIGNATURE);
   }
 
   @Test
   public void transactionWithIntrinsicGasExceedingGasLimitIsRejected() {
     verifyErrorForInvalidTransaction(
         TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
-        JsonRpcError.PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT);
+        RpcErrorType.PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT);
   }
 
   @Test
   public void transactionWithUpfrontGasExceedingAccountBalanceIsRejected() {
     verifyErrorForInvalidTransaction(
         TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
-        JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
+        RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
   }
 
   @Test
   public void transactionWithGasLimitExceedingBlockGasLimitIsRejected() {
     verifyErrorForInvalidTransaction(
-        TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT, JsonRpcError.EXCEEDS_BLOCK_GAS_LIMIT);
+        TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT, RpcErrorType.EXCEEDS_BLOCK_GAS_LIMIT);
   }
 
   @Test
   public void transactionWithNotWhitelistedSenderAccountIsRejected() {
     verifyErrorForInvalidTransaction(
-        TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED, JsonRpcError.TX_SENDER_NOT_AUTHORIZED);
+        TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED, RpcErrorType.TX_SENDER_NOT_AUTHORIZED);
   }
 
   private void verifyErrorForInvalidTransaction(
-      final TransactionInvalidReason transactionInvalidReason, final JsonRpcError expectedError) {
+      final TransactionInvalidReason transactionInvalidReason, final RpcErrorType expectedError) {
 
     when(privacyController.createPrivateMarkerTransactionPayload(any(), any(), any()))
         .thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(any(), anyString()))
         .thenReturn(ValidationResult.valid());
-    when(transactionPool.addLocalTransaction(any()))
+    when(transactionPool.addTransactionViaApi(any()))
         .thenReturn(ValidationResult.invalid(transactionInvalidReason));
 
     final JsonRpcResponse expectedResponse =

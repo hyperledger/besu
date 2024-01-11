@@ -797,12 +797,14 @@ public class PeerDiscoveryController {
                       execute();
                     }));
       } else {
-        final Map<PacketType, PeerInteractionState> peerInteractionStateMap =
-            inflightInteractions.get(peerId);
-        peerInteractionStateMap.remove(expectedType);
-        if (peerInteractionStateMap.isEmpty()) {
-          inflightInteractions.remove(peerId);
-        }
+        Optional.ofNullable(inflightInteractions.get(peerId))
+            .ifPresent(
+                peerInterationStateMap -> {
+                  peerInterationStateMap.remove(expectedType);
+                  if (peerInterationStateMap.isEmpty()) {
+                    inflightInteractions.remove(peerId);
+                  }
+                });
       }
     }
 

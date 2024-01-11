@@ -19,13 +19,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.ethereum.api.graphql.internal.Scalars;
 
+import java.util.Locale;
+
+import graphql.GraphQLContext;
+import graphql.execution.CoercedVariables;
 import graphql.language.StringValue;
 import graphql.schema.CoercingParseLiteralException;
 import graphql.schema.CoercingParseValueException;
 import graphql.schema.CoercingSerializeException;
 import graphql.schema.GraphQLScalarType;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class LongScalarTest {
 
@@ -38,55 +42,105 @@ public class LongScalarTest {
 
   @Test
   public void parseLongValueTest() {
-    assertThat(scalar.getCoercing().parseValue(value)).isEqualTo(value);
+    assertThat(
+            scalar
+                .getCoercing()
+                .parseValue(value, GraphQLContext.newContext().build(), Locale.ENGLISH))
+        .isEqualTo(value);
   }
 
   @Test
   public void parseStringValueTest() {
-    assertThat(scalar.getCoercing().parseValue(str)).isEqualTo(value);
+    assertThat(
+            scalar
+                .getCoercing()
+                .parseValue(str, GraphQLContext.newContext().build(), Locale.ENGLISH))
+        .isEqualTo(value);
   }
 
   @Test
   public void parseValueErrorTest() {
-    assertThatThrownBy(() -> scalar.getCoercing().parseValue(invalidStrValue))
+    assertThatThrownBy(
+            () ->
+                scalar
+                    .getCoercing()
+                    .parseValue(
+                        invalidStrValue, GraphQLContext.newContext().build(), Locale.ENGLISH))
         .isInstanceOf(CoercingParseValueException.class);
   }
 
   @Test
   public void serializeLongTest() {
-    assertThat(scalar.getCoercing().serialize(value)).isEqualTo(value);
+    assertThat(
+            scalar
+                .getCoercing()
+                .serialize(value, GraphQLContext.newContext().build(), Locale.ENGLISH))
+        .isEqualTo(str);
   }
 
   @Test
   public void serializeStringTest() {
-    assertThat(scalar.getCoercing().serialize(str)).isEqualTo(value);
+    assertThat(
+            scalar
+                .getCoercing()
+                .serialize(str, GraphQLContext.newContext().build(), Locale.ENGLISH))
+        .isEqualTo(str);
   }
 
   @Test
   public void serializeErrorTest() {
-    assertThatThrownBy(() -> scalar.getCoercing().serialize(invalidStrValue))
+    assertThatThrownBy(
+            () ->
+                scalar
+                    .getCoercing()
+                    .serialize(
+                        invalidStrValue, GraphQLContext.newContext().build(), Locale.ENGLISH))
         .isInstanceOf(CoercingSerializeException.class);
   }
 
   @Test
   public void parseLiteralTest() {
-    final Long result = (Long) scalar.getCoercing().parseLiteral(strValue);
+    final Long result =
+        (Long)
+            scalar
+                .getCoercing()
+                .parseLiteral(
+                    strValue,
+                    CoercedVariables.emptyVariables(),
+                    GraphQLContext.newContext().build(),
+                    Locale.ENGLISH);
     assertThat(result).isEqualTo(value);
   }
 
   @Test
-  public void parseLiteralErrorTest() {
-    assertThatThrownBy(() -> scalar.getCoercing().parseLiteral(str))
-        .isInstanceOf(CoercingParseLiteralException.class);
+  public void parseLiteralStringTest() {
+    final Long result =
+        (Long)
+            scalar
+                .getCoercing()
+                .parseLiteral(
+                    strValue,
+                    CoercedVariables.emptyVariables(),
+                    GraphQLContext.newContext().build(),
+                    Locale.ENGLISH);
+    assertThat(result).isEqualTo(value);
   }
 
   @Test
   public void parseLiteralErrorTest2() {
-    assertThatThrownBy(() -> scalar.getCoercing().parseLiteral(invalidStrValue))
+    assertThatThrownBy(
+            () ->
+                scalar
+                    .getCoercing()
+                    .parseLiteral(
+                        invalidStrValue,
+                        CoercedVariables.emptyVariables(),
+                        GraphQLContext.newContext().build(),
+                        Locale.ENGLISH))
         .isInstanceOf(CoercingParseLiteralException.class);
   }
 
-  @Before
+  @BeforeEach
   public void before() {
     scalar = Scalars.longScalar();
   }

@@ -23,21 +23,21 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionPen
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.transaction.pool.PendingTransactionFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.transaction.pool.PendingTransactionFilter.Filter;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class TxPoolBesuPendingTransactions implements JsonRpcMethod {
 
   final PendingTransactionFilter pendingTransactionFilter;
 
-  private final PendingTransactions pendingTransactions;
+  private final TransactionPool transactionPool;
 
-  public TxPoolBesuPendingTransactions(final PendingTransactions pendingTransactions) {
-    this.pendingTransactions = pendingTransactions;
+  public TxPoolBesuPendingTransactions(final TransactionPool transactionPool) {
+    this.transactionPool = transactionPool;
     this.pendingTransactionFilter = new PendingTransactionFilter();
   }
 
@@ -56,9 +56,8 @@ public class TxPoolBesuPendingTransactions implements JsonRpcMethod {
             .map(PendingTransactionsParams::filters)
             .orElse(Collections.emptyList());
 
-    final Set<Transaction> pendingTransactionsFiltered =
-        pendingTransactionFilter.reduce(
-            pendingTransactions.getPendingTransactions(), filters, limit);
+    final Collection<Transaction> pendingTransactionsFiltered =
+        pendingTransactionFilter.reduce(transactionPool.getPendingTransactions(), filters, limit);
 
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(),

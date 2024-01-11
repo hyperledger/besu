@@ -15,8 +15,9 @@
 package org.hyperledger.besu.services;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceBlock.ChainUpdater;
@@ -25,18 +26,24 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.data.BlockTraceResult;
+import org.hyperledger.besu.plugin.data.TransactionTraceResult;
 import org.hyperledger.besu.plugin.services.TraceService;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.stream.LongStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,10 +75,9 @@ public class TraceServiceImpl implements TraceService {
    * @param tracer an instance of OperationTracer
    */
   @Override
-  public void traceBlock(final long blockNumber, final OperationTracer tracer) {
-    checkArgument(tracer != null);
-    final Optional<Block> block = blockchainQueries.getBlockchain().getBlockByNumber(blockNumber);
-    block.ifPresent(value -> trace(value, tracer));
+  public BlockTraceResult traceBlock(
+      final long blockNumber, final BlockAwareOperationTracer tracer) {
+    return traceBlock(blockchainQueries.getBlockchain().getBlockByNumber(blockNumber), tracer);
   }
 
   /**
@@ -81,53 +87,146 @@ public class TraceServiceImpl implements TraceService {
    * @param tracer an instance of OperationTracer
    */
   @Override
-  public void traceBlock(final Hash hash, final OperationTracer tracer) {
-    checkArgument(tracer != null);
-    final Optional<Block> block = blockchainQueries.getBlockchain().getBlockByHash(hash);
-    block.ifPresent(value -> trace(value, tracer));
+  public BlockTraceResult traceBlock(final Hash hash, final BlockAwareOperationTracer tracer) {
+    return traceBlock(blockchainQueries.getBlockchain().getBlockByHash(hash), tracer);
   }
 
-  private void trace(final Block block, final OperationTracer tracer) {
-    LOG.debug("Tracing block {}", block.toLogString());
-    final List<TransactionProcessingResult> results = new ArrayList<>();
+  private BlockTraceResult traceBlock(
+      final Optional<Block> maybeBlock, final BlockAwareOperationTracer tracer) {
+    checkArgument(tracer != null);
+    if (maybeBlock.isEmpty()) {
+      return BlockTraceResult.empty();
+    }
+
+    final Optional<List<TransactionProcessingResult>> results = trace(maybeBlock.get(), tracer);
+
+    if (results.isEmpty()) {
+      return BlockTraceResult.empty();
+    }
+
+    final BlockTraceResult.Builder builder = BlockTraceResult.builder();
+
+    final List<TransactionProcessingResult> transactionProcessingResults = results.get();
+    final List<Transaction> transactions = maybeBlock.get().getBody().getTransactions();
+    for (int i = 0; i < transactionProcessingResults.size(); i++) {
+      final TransactionProcessingResult transactionProcessingResult =
+          transactionProcessingResults.get(i);
+      final TransactionTraceResult transactionTraceResult =
+          transactionProcessingResult.isInvalid()
+              ? TransactionTraceResult.error(
+                  transactions.get(i).getHash(),
+                  transactionProcessingResult.getValidationResult().getErrorMessage())
+              : TransactionTraceResult.success(transactions.get(i).getHash());
+
+      builder.addTransactionTraceResult(transactionTraceResult);
+    }
+
+    return builder.build();
+  }
+
+  /**
+   * Traces range of blocks
+   *
+   * @param fromBlockNumber the beginning of the range (inclusive)
+   * @param toBlockNumber the end of the range (inclusive)
+   * @param beforeTracing Function which performs an operation on a MutableWorldState before tracing
+   * @param afterTracing Function which performs an operation on a MutableWorldState after tracing
+   * @param tracer an instance of OperationTracer
+   */
+  @Override
+  public void trace(
+      final long fromBlockNumber,
+      final long toBlockNumber,
+      final Consumer<WorldUpdater> beforeTracing,
+      final Consumer<WorldUpdater> afterTracing,
+      final BlockAwareOperationTracer tracer) {
+    checkArgument(tracer != null);
+    LOG.debug("Tracing from block {} to block {}", fromBlockNumber, toBlockNumber);
+    final Blockchain blockchain = blockchainQueries.getBlockchain();
+    final List<Block> blocks =
+        LongStream.rangeClosed(fromBlockNumber, toBlockNumber)
+            .mapToObj(
+                number ->
+                    blockchain
+                        .getBlockByNumber(number)
+                        .orElseThrow(() -> new RuntimeException("Block not found " + number)))
+            .toList();
     Tracer.processTracing(
         blockchainQueries,
-        block.getHash(),
+        blocks.get(0).getHash(),
         traceableState -> {
-          final Blockchain blockchain = blockchainQueries.getBlockchain();
-          final ChainUpdater chainUpdater = new ChainUpdater(traceableState);
-          final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
-          final MainnetTransactionProcessor transactionProcessor =
-              protocolSpec.getTransactionProcessor();
-          final BlockHeader header = block.getHeader();
-          block
-              .getBody()
-              .getTransactions()
-              .forEach(
-                  transaction -> {
-                    final Optional<BlockHeader> maybeParentHeader =
-                        blockchain.getBlockHeader(header.getParentHash());
-                    final Wei dataGasPrice =
-                        protocolSpec
-                            .getFeeMarket()
-                            .dataPrice(
-                                maybeParentHeader
-                                    .flatMap(BlockHeader::getExcessDataGas)
-                                    .orElse(DataGas.ZERO));
-                    final TransactionProcessingResult result =
-                        transactionProcessor.processTransaction(
-                            blockchain,
-                            chainUpdater.getNextUpdater(),
-                            header,
-                            transaction,
-                            header.getCoinbase(),
-                            tracer,
-                            new CachingBlockHashLookup(header, blockchain),
-                            false,
-                            dataGasPrice);
-                    results.add(result);
-                  });
+          final WorldUpdater worldStateUpdater = traceableState.updater();
+          final ChainUpdater chainUpdater = new ChainUpdater(traceableState, worldStateUpdater);
+          beforeTracing.accept(worldStateUpdater);
+          final List<TransactionProcessingResult> results = new ArrayList<>();
+          blocks.forEach(
+              block -> {
+                results.addAll(trace(blockchain, block, chainUpdater, tracer));
+              });
+          afterTracing.accept(chainUpdater.getNextUpdater());
           return Optional.of(results);
         });
+  }
+
+  private Optional<List<TransactionProcessingResult>> trace(
+      final Block block, final BlockAwareOperationTracer tracer) {
+    LOG.debug("Tracing block {}", block.toLogString());
+    final Blockchain blockchain = blockchainQueries.getBlockchain();
+
+    final Optional<List<TransactionProcessingResult>> results =
+        Tracer.processTracing(
+            blockchainQueries,
+            block.getHash(),
+            traceableState ->
+                Optional.of(trace(blockchain, block, new ChainUpdater(traceableState), tracer)));
+
+    return results;
+  }
+
+  private List<TransactionProcessingResult> trace(
+      final Blockchain blockchain,
+      final Block block,
+      final ChainUpdater chainUpdater,
+      final BlockAwareOperationTracer tracer) {
+    final List<TransactionProcessingResult> results = new ArrayList<>();
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
+    final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
+    final BlockHeader header = block.getHeader();
+    tracer.traceStartBlock(block.getHeader(), block.getBody());
+
+    block
+        .getBody()
+        .getTransactions()
+        .forEach(
+            transaction -> {
+              final Optional<BlockHeader> maybeParentHeader =
+                  blockchain.getBlockHeader(header.getParentHash());
+              final Wei blobGasPrice =
+                  protocolSpec
+                      .getFeeMarket()
+                      .blobGasPricePerGas(
+                          maybeParentHeader
+                              .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
+                              .orElse(BlobGas.ZERO));
+
+              final WorldUpdater worldUpdater = chainUpdater.getNextUpdater();
+              final TransactionProcessingResult result =
+                  transactionProcessor.processTransaction(
+                      blockchain,
+                      worldUpdater,
+                      header,
+                      transaction,
+                      header.getCoinbase(),
+                      tracer,
+                      new CachingBlockHashLookup(header, blockchain),
+                      false,
+                      blobGasPrice);
+
+              results.add(result);
+            });
+
+    tracer.traceEndBlock(block.getHeader(), block.getBody());
+
+    return results;
   }
 }

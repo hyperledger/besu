@@ -27,18 +27,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.OptionalLong;
 
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-class EthGetTransactionCountTest {
+public class EthGetTransactionCountTest {
   private final Blockchain blockchain = mock(Blockchain.class);
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final ChainHead chainHead = mock(ChainHead.class);
@@ -46,22 +42,19 @@ class EthGetTransactionCountTest {
   private EthGetTransactionCount ethGetTransactionCount;
   private final String pendingTransactionString = "0x00000000000000000000000000000000000000AA";
   private final Object[] pendingParams = new Object[] {pendingTransactionString, "pending"};
+  private TransactionPool transactionPool;
 
-  public static Collection<Object[]> data() {
-    return Arrays.asList(
-        new Object[][] {
-          {mock(GasPricePendingTransactionsSorter.class)},
-          {mock(BaseFeePendingTransactionsSorter.class)}
-        });
+  @BeforeEach
+  public void setup() {
+    transactionPool = mock(TransactionPool.class);
+    ethGetTransactionCount = new EthGetTransactionCount(blockchainQueries, transactionPool);
   }
 
-  @ParameterizedTest
-  @MethodSource("data")
-  void shouldUsePendingTransactionsWhenToldTo(final PendingTransactions pendingTransactions) {
-    setup(pendingTransactions);
+  @Test
+  public void shouldUsePendingTransactionsWhenToldTo() {
 
     final Address address = Address.fromHexString(pendingTransactionString);
-    when(pendingTransactions.getNextNonceForSender(address)).thenReturn(OptionalLong.of(12));
+    when(transactionPool.getNextNonceForSender(address)).thenReturn(OptionalLong.of(12));
     mockGetTransactionCount(address, 7L);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -71,14 +64,11 @@ class EthGetTransactionCountTest {
     assertThat(response.getResult()).isEqualTo("0xc");
   }
 
-  @ParameterizedTest
-  @MethodSource("data")
-  void shouldUseLatestTransactionsWhenNoPendingTransactions(
-      final PendingTransactions pendingTransactions) {
-    setup(pendingTransactions);
+  @Test
+  public void shouldUseLatestTransactionsWhenNoPendingTransactions() {
 
     final Address address = Address.fromHexString(pendingTransactionString);
-    when(pendingTransactions.getNextNonceForSender(address)).thenReturn(OptionalLong.empty());
+    when(transactionPool.getNextNonceForSender(address)).thenReturn(OptionalLong.empty());
     mockGetTransactionCount(address, 7L);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -88,14 +78,12 @@ class EthGetTransactionCountTest {
     assertThat(response.getResult()).isEqualTo("0x7");
   }
 
-  @ParameterizedTest
-  @MethodSource("data")
-  void shouldUseLatestWhenItIsBiggerThanPending(final PendingTransactions pendingTransactions) {
-    setup(pendingTransactions);
+  @Test
+  public void shouldUseLatestWhenItIsBiggerThanPending() {
 
     final Address address = Address.fromHexString(pendingTransactionString);
     mockGetTransactionCount(address, 8);
-    when(pendingTransactions.getNextNonceForSender(Address.fromHexString(pendingTransactionString)))
+    when(transactionPool.getNextNonceForSender(Address.fromHexString(pendingTransactionString)))
         .thenReturn(OptionalLong.of(4));
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -105,14 +93,11 @@ class EthGetTransactionCountTest {
     assertThat(response.getResult()).isEqualTo("0x8");
   }
 
-  @ParameterizedTest
-  @MethodSource("data")
-  void shouldReturnPendingWithHighNonce(final PendingTransactions pendingTransactions) {
-    setup(pendingTransactions);
+  @Test
+  public void shouldReturnPendingWithHighNonce() {
 
     final Address address = Address.fromHexString(pendingTransactionString);
-    when(pendingTransactions.getNextNonceForSender(address))
-        .thenReturn(OptionalLong.of(MAX_NONCE - 1));
+    when(transactionPool.getNextNonceForSender(address)).thenReturn(OptionalLong.of(MAX_NONCE - 1));
     mockGetTransactionCount(address, 7L);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -122,14 +107,11 @@ class EthGetTransactionCountTest {
     assertThat(response.getResult()).isEqualTo("0xfffffffffffffffe");
   }
 
-  @ParameterizedTest
-  @MethodSource("data")
-  void shouldReturnLatestWithHighNonce(final PendingTransactions pendingTransactions) {
-    setup(pendingTransactions);
+  @Test
+  public void shouldReturnLatestWithHighNonce() {
 
     final Address address = Address.fromHexString(pendingTransactionString);
-    when(pendingTransactions.getNextNonceForSender(address))
-        .thenReturn(OptionalLong.of(MAX_NONCE - 2));
+    when(transactionPool.getNextNonceForSender(address)).thenReturn(OptionalLong.of(MAX_NONCE - 2));
     mockGetTransactionCount(address, MAX_NONCE - 1);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -137,10 +119,6 @@ class EthGetTransactionCountTest {
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) ethGetTransactionCount.response(request);
     assertThat(response.getResult()).isEqualTo("0xfffffffffffffffe");
-  }
-
-  private void setup(final PendingTransactions pendingTransactions) {
-    ethGetTransactionCount = new EthGetTransactionCount(blockchainQueries, pendingTransactions);
   }
 
   private void mockGetTransactionCount(final Address address, final long transactionCount) {

@@ -29,52 +29,46 @@ import java.util.stream.Collectors;
 
 import com.google.common.io.CharStreams;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 
-@RunWith(Parameterized.class)
-public class BLS12G2MulPrecompiledContractTest {
+class BLS12G2MulPrecompiledContractTest {
 
   final BLS12G2MulPrecompiledContract contract = new BLS12G2MulPrecompiledContract();
 
   private final MessageFrame messageFrame = mock(MessageFrame.class);
 
-  @Parameterized.Parameters
-  public static Iterable<String[]> parameters() throws IOException {
+  static Iterable<Arguments> parameters() throws IOException {
     return CharStreams.readLines(
             new InputStreamReader(
                 Objects.requireNonNull(
                     BLS12G2MulPrecompiledContractTest.class.getResourceAsStream("g2_mul.csv")),
                 UTF_8))
         .stream()
-        .map(line -> line.split(",", 4))
+        .map(line -> Arguments.of((Object[]) line.split(",", 4)))
         .collect(Collectors.toList());
   }
 
-  @Parameterized.Parameter(0)
-  public String input;
+  @ParameterizedTest
+  @MethodSource("parameters")
+  void shouldCalculate(
+      final String inputString,
+      final String expectedResult,
+      final String expectedGasUsed,
+      final String notes) {
 
-  @Parameterized.Parameter(1)
-  public String expectedResult;
-
-  @Parameterized.Parameter(2)
-  public String expectedGasUsed;
-
-  @Parameterized.Parameter(3)
-  public String notes;
-
-  @Test
-  public void shouldCalculate() {
-    if ("input".equals(input)) {
+    if ("input".equals(inputString)) {
       // skip the header row
       return;
     }
-    final Bytes input = Bytes.fromHexString(this.input);
+    final Bytes input = Bytes.fromHexString(inputString);
     final Bytes expectedComputation =
         expectedResult == null ? null : Bytes.fromHexString(expectedResult);
-    final Bytes actualComputation = contract.compute(input, messageFrame);
+    final PrecompiledContract.PrecompileContractResult result =
+        contract.computePrecompile(input, messageFrame);
+    Bytes actualComputation = result.getOutput();
     if (actualComputation == null) {
       final ArgumentCaptor<Bytes> revertReason = ArgumentCaptor.forClass(Bytes.class);
       verify(messageFrame).setRevertReason(revertReason.capture());

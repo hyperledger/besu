@@ -164,11 +164,16 @@ public class EthStatsService {
 
   private static WebSocketConnectOptions buildWebSocketConnectOptions(
       final EthStatsConnectOptions ethStatsConnectOptions) {
+    // if user specified scheme is null, default ssl to true, otherwise set ssl to true for wss
+    // scheme.
+    final boolean isSSL =
+        ethStatsConnectOptions.getScheme() == null
+            || ethStatsConnectOptions.getScheme().equalsIgnoreCase("wss");
     return new WebSocketConnectOptions()
         .setURI("/api")
-        .setSsl(true)
+        .setSsl(isSSL)
         .setHost(ethStatsConnectOptions.getHost())
-        .setPort(getWsPort(ethStatsConnectOptions, true));
+        .setPort(getWsPort(ethStatsConnectOptions, isSSL));
   }
 
   private static int getWsPort(
@@ -181,7 +186,7 @@ public class EthStatsService {
 
   /** Start. */
   public void start() {
-    LOG.debug("Connecting to EthStats: {}", getEthStatsHost());
+    LOG.debug("Connecting to EthStats: {}", getEthStatsURI());
     try {
       enodeURL = p2PNetwork.getLocalEnode().orElseThrow();
       vertx
@@ -229,7 +234,7 @@ public class EthStatsService {
     }
   }
 
-  private String getEthStatsHost() {
+  private String getEthStatsURI() {
     return String.format(
         "%s://%s:%s",
         webSocketConnectOptions.isSsl() ? "wss" : "ws",
@@ -237,11 +242,17 @@ public class EthStatsService {
         getWsPort(ethStatsConnectOptions, webSocketConnectOptions.isSsl()));
   }
 
-  /** Switch from ssl to non-ssl and vice-versa. Sets port to 443 or 80 if not specified. */
+  /**
+   * Switch from ssl to non-ssl and vice-versa if user specified scheme is null. Sets port to 443 or
+   * 80 if not specified.
+   */
   private void updateSSLProtocol() {
-    final boolean updatedSSL = !webSocketConnectOptions.isSsl();
-    webSocketConnectOptions.setSsl(updatedSSL);
-    webSocketConnectOptions.setPort(getWsPort(ethStatsConnectOptions, updatedSSL));
+    if (ethStatsConnectOptions.getScheme() == null) {
+      final boolean updatedSSL = !webSocketConnectOptions.isSsl();
+      webSocketConnectOptions.setSsl(updatedSSL);
+    }
+    webSocketConnectOptions.setPort(
+        getWsPort(ethStatsConnectOptions, webSocketConnectOptions.isSsl()));
   }
 
   /** Ends the current web socket connection, observers and schedulers */
@@ -259,6 +270,7 @@ public class EthStatsService {
     if (retryInProgress.getAndSet(true) == FALSE) {
       stop();
       updateSSLProtocol(); // switch from ssl:true to ssl:false and vice-versa
+      LOG.info("Attempting to reconnect to ethstats server in approximately 10 seconds.");
       protocolManager
           .ethContext()
           .getScheduler()
@@ -390,7 +402,7 @@ public class EthStatsService {
 
   /** Sends the number of pending transactions in the pool */
   private void sendPendingTransactionReport() {
-    final int pendingTransactionsNumber = transactionPool.getPendingTransactions().size();
+    final int pendingTransactionsNumber = transactionPool.count();
 
     final PendingTransactionsReport pendingTransactionsReport =
         ImmutablePendingTransactionsReport.builder()
@@ -412,7 +424,9 @@ public class EthStatsService {
     final boolean isSyncing = syncState.isInSync();
     final long gasPrice = suggestGasPrice(blockchainQueries.getBlockchain().getChainHeadBlock());
     final long hashrate = miningCoordinator.hashesPerSecond().orElse(0L);
-    final int peersNumber = protocolManager.ethContext().getEthPeers().peerCount();
+    // safe to cast to int since it isn't realistic to have more than max int peers
+    final int peersNumber =
+        (int) protocolManager.ethContext().getEthPeers().streamAvailablePeers().count();
 
     final NodeStatsReport nodeStatsReport =
         ImmutableNodeStatsReport.builder()
@@ -427,7 +441,7 @@ public class EthStatsService {
       final EthStatsRequest message,
       final Consumer<Boolean> handlerResult) {
     try {
-      LOG.debug("Send ethstats request {}", message.generateCommand());
+      LOG.trace("Send ethstats request {}", message.generateCommand());
       webSocket.writeTextMessage(
           message.generateCommand(),
           handler -> {

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 
@@ -63,6 +64,13 @@ public interface GenesisConfigOptions {
    * @return the boolean
    */
   boolean isClique();
+
+  /**
+   * Is a Proof of Authority network.
+   *
+   * @return the boolean
+   */
+  boolean isPoa();
 
   /**
    * Is consensus migration boolean.
@@ -412,6 +420,15 @@ public interface GenesisConfigOptions {
   OptionalLong getMystiqueBlockNumber();
 
   /**
+   * Block number to activate Spiral on Classic networks.
+   *
+   * @return block number of Spiral fork on Classic networks
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1109">https://ecips.ethereumclassic.org/ECIPs/ecip-1109</a>
+   */
+  OptionalLong getSpiralBlockNumber();
+
+  /**
    * Gets chain id.
    *
    * @return the chain id
@@ -459,21 +476,6 @@ public interface GenesisConfigOptions {
   TransitionsConfigOptions getTransitions();
 
   /**
-   * Set Besu in Quorum-compatibility mode
-   *
-   * @return true, if Besu is running on Quorum-compatibility mode, false, otherwise.
-   */
-  boolean isQuorum();
-
-  /**
-   * Block number to activate Quorum Permissioning. This option is used on Quorum-compatibility
-   * mode.
-   *
-   * @return block number to activate Quorum Permissioning
-   */
-  OptionalLong getQip714BlockNumber();
-
-  /**
    * The PoW algorithm associated with the genesis file.
    *
    * @return the PoW algorithm in use.
@@ -494,4 +496,12 @@ public interface GenesisConfigOptions {
    * @return true, if you want the next block to use zero for the base fee.
    */
   boolean isZeroBaseFee();
+
+  /**
+   * The deposit contract address that should be in the logger field in Receipt of Deposit
+   * transaction
+   *
+   * @return the deposit address
+   */
+  Optional<Address> getDepositContractAddress();
 }

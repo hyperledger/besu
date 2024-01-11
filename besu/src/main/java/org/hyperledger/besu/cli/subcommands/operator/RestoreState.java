@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.PersistVisitor;
 import org.hyperledger.besu.ethereum.trie.RestoreVisitor;
-import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
+import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.util.io.RollingFileReader;
@@ -145,7 +145,7 @@ public class RestoreState implements Runnable {
             BlockHeader.readFrom(
                 new BytesValueRLPInput(Bytes.wrap(headerEntry), false, true), functions);
         final BlockBody body =
-            BlockBody.readFrom(
+            BlockBody.readWrappedBodyFrom(
                 new BytesValueRLPInput(Bytes.wrap(bodyEntry), false, true), functions);
         final RLPInput receiptsRlp = new BytesValueRLPInput(Bytes.wrap(receiptEntry), false, true);
         final int receiptsCount = receiptsRlp.enterList();
@@ -250,7 +250,7 @@ public class RestoreState implements Runnable {
       updater.commit();
     }
     final WorldStateStorage worldStateStorage =
-        ((DefaultWorldStateArchive) besuController.getProtocolContext().getWorldStateArchive())
+        ((ForestWorldStateArchive) besuController.getProtocolContext().getWorldStateArchive())
             .getWorldStateStorage();
     updater = worldStateStorage.updater();
   }

@@ -31,31 +31,31 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.ArrayList;
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EthGetLogsTest {
 
   private EthGetLogs method;
 
   @Mock BlockchainQueries blockchainQueries;
-  @Mock Optional<Long> maxLogRange;
+  long maxLogRange;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     method = new EthGetLogs(blockchainQueries, maxLogRange);
   }
@@ -276,14 +276,12 @@ public class EthGetLogsTest {
   @Test
   public void shouldFailIfParamsExceedMaxRange() {
     final JsonRpcRequestContext request = buildRequest(0, 50);
-
-    when(maxLogRange.isPresent()).thenReturn(true);
-    when(maxLogRange.get()).thenReturn(20L);
-
+    maxLogRange = 20L;
+    method = new EthGetLogs(blockchainQueries, maxLogRange);
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
-    assertThat(errorResponse.getError()).isEqualTo(JsonRpcError.EXCEEDS_RPC_MAX_BLOCK_RANGE);
+    assertThat(errorResponse.getErrorType()).isEqualTo(RpcErrorType.EXCEEDS_RPC_MAX_BLOCK_RANGE);
   }
 
   private JsonRpcRequestContext buildRequest(final long fromBlock, final long toBlock) {

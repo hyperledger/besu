@@ -30,8 +30,8 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jupnp.UpnpService;
 import org.jupnp.controlpoint.ControlPoint;
 import org.jupnp.model.meta.DeviceDetails;
@@ -54,7 +54,7 @@ public final class UpnpNatManagerTest {
 
   private UpnpNatManager upnpManager;
 
-  @Before
+  @BeforeEach
   public void initialize() {
 
     mockedRegistry = mock(Registry.class);

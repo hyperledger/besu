@@ -88,7 +88,7 @@ public class GraphQLDataFetchers {
 
         final Transaction transaction = Transaction.readFrom(RLP.input(rawTran));
         final ValidationResult<TransactionInvalidReason> validationResult =
-            transactionPool.addLocalTransaction(transaction);
+            transactionPool.addTransactionViaApi(transaction);
         if (validationResult.isValid()) {
           return Optional.of(transaction.getHash());
         } else {
@@ -113,7 +113,7 @@ public class GraphQLDataFetchers {
     return dataFetchingEnvironment -> {
       final TransactionPool txPool =
           dataFetchingEnvironment.getGraphQlContext().get(GraphQLContextType.TRANSACTION_POOL);
-      return Optional.of(new PendingStateAdapter(txPool.getPendingTransactions()));
+      return Optional.of(new PendingStateAdapter(txPool));
     };
   }
 

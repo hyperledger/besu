@@ -20,13 +20,13 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
-public class AltBN128PairingPrecompiledContractTest {
+@ExtendWith(MockitoExtension.class)
+class AltBN128PairingPrecompiledContractTest {
 
   @Mock MessageFrame messageFrame;
   @Mock GasCalculator gasCalculator;
@@ -37,13 +37,13 @@ public class AltBN128PairingPrecompiledContractTest {
       AltBN128PairingPrecompiledContract.istanbul(gasCalculator);
 
   @Test
-  public void compute_validPoints() {
+  void compute_validPoints() {
     final Bytes input = validPointBytes();
-    final Bytes result = byzantiumContract.compute(input, messageFrame);
+    final Bytes result = byzantiumContract.computePrecompile(input, messageFrame).getOutput();
     assertThat(result).isEqualTo(AltBN128PairingPrecompiledContract.TRUE);
   }
 
-  public Bytes validPointBytes() {
+  Bytes validPointBytes() {
     final Bytes g1Point0 =
         Bytes.concatenate(
             Bytes.fromHexString(
@@ -81,7 +81,7 @@ public class AltBN128PairingPrecompiledContractTest {
   }
 
   @Test
-  public void compute_invalidPointsOutsideSubgroupG2() {
+  void compute_invalidPointsOutsideSubgroupG2() {
     final Bytes g1Point0 =
         Bytes.concatenate(
             Bytes.fromHexString(
@@ -116,17 +116,17 @@ public class AltBN128PairingPrecompiledContractTest {
                 "0x1fbf8045ce3e79b5cde4112d38bcd0efbdb1295d2eefdf58151ae309d7ded7db"));
 
     final Bytes input = Bytes.concatenate(g1Point0, g2Point0, g1Point1, g2Point1);
-    final Bytes result = byzantiumContract.compute(input, messageFrame);
+    final Bytes result = byzantiumContract.computePrecompile(input, messageFrame).getOutput();
     assertThat(result).isNull();
   }
 
   @Test
-  public void gasPrice_byzantium() {
+  void gasPrice_byzantium() {
     assertThat(byzantiumContract.gasRequirement(validPointBytes())).isEqualTo(260_000L);
   }
 
   @Test
-  public void gasPrice_istanbul() {
+  void gasPrice_istanbul() {
     assertThat(istanbulContract.gasRequirement(validPointBytes())).isEqualTo(113_000L);
   }
 }

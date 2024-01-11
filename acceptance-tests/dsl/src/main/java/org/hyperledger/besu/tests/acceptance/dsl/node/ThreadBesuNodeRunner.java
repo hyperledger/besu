@@ -43,17 +43,24 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
+import org.hyperledger.besu.plugin.services.PluginTransactionValidatorService;
+import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
+import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
+import org.hyperledger.besu.services.PluginTransactionValidatorServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
+import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -63,6 +70,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -91,14 +99,24 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
     besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
-
-    final Path pluginsPath = node.homeDirectory().resolve("plugins");
-    final File pluginsDirFile = pluginsPath.toFile();
-    if (!pluginsDirFile.isDirectory()) {
-      pluginsDirFile.mkdirs();
-      pluginsDirFile.deleteOnExit();
+    besuPluginContext.addService(RpcEndpointService.class, new RpcEndpointServiceImpl());
+    besuPluginContext.addService(
+        TransactionSelectionService.class, new TransactionSelectionServiceImpl());
+    besuPluginContext.addService(
+        PluginTransactionValidatorService.class, new PluginTransactionValidatorServiceImpl());
+    final Path pluginsPath;
+    final String pluginDir = System.getProperty("besu.plugins.dir");
+    if (pluginDir == null || pluginDir.isEmpty()) {
+      pluginsPath = node.homeDirectory().resolve("plugins");
+      final File pluginsDirFile = pluginsPath.toFile();
+      if (!pluginsDirFile.isDirectory()) {
+        pluginsDirFile.mkdirs();
+        pluginsDirFile.deleteOnExit();
+      }
+      System.setProperty("besu.plugins.dir", pluginsPath.toString());
+    } else {
+      pluginsPath = Path.of(pluginDir);
     }
-    System.setProperty("besu.plugins.dir", pluginsPath.toString());
     besuPluginContext.registerPlugins(pluginsPath);
 
     commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
@@ -169,6 +187,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final int maxPeers = 25;
 
+    final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory =
+        getTransactionSelectorFactory(besuPluginContext);
+
+    final PluginTransactionValidatorFactory pluginTransactionValidatorFactory =
+        getPluginTransactionValidatorFactory(besuPluginContext);
     builder
         .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
         .dataDirectory(node.homeDirectory())
@@ -190,7 +213,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .lowerBoundPeers(maxPeers)
         .maxRemotelyInitiatedPeers(15)
         .networkConfiguration(node.getNetworkingConfiguration())
-        .randomPeerPriority(false);
+        .randomPeerPriority(false)
+        .transactionSelectorFactory(transactionSelectorFactory)
+        .pluginTransactionValidatorFactory(pluginTransactionValidatorFactory);
 
     node.getGenesisConfig()
         .map(GenesisConfigFile::fromConfig)
@@ -200,6 +225,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
     runnerBuilder.permissioningConfiguration(node.getPermissioningConfiguration());
+    runnerBuilder.apiConfiguration(node.getApiConfiguration());
 
     runnerBuilder
         .vertx(Vertx.vertx())
@@ -298,5 +324,19 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   @Override
   public String getConsoleContents() {
     throw new RuntimeException("Console contents can only be captured in process execution");
+  }
+
+  private Optional<PluginTransactionSelectorFactory> getTransactionSelectorFactory(
+      final BesuPluginContextImpl besuPluginContext) {
+    final Optional<TransactionSelectionService> txSelectionService =
+        besuPluginContext.getService(TransactionSelectionService.class);
+    return txSelectionService.isPresent() ? txSelectionService.get().get() : Optional.empty();
+  }
+
+  private PluginTransactionValidatorFactory getPluginTransactionValidatorFactory(
+      final BesuPluginContextImpl besuPluginContext) {
+    final Optional<PluginTransactionValidatorService> txValidatorService =
+        besuPluginContext.getService(PluginTransactionValidatorService.class);
+    return txValidatorService.map(PluginTransactionValidatorService::get).orElse(null);
   }
 }

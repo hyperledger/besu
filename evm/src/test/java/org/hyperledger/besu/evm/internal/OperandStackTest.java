@@ -17,28 +17,27 @@ package org.hyperledger.besu.evm.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
-import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
-
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
-public class OperandStackTest {
+class OperandStackTest {
 
   @Test
-  public void construction() {
+  void construction() {
     final OperandStack stack = new OperandStack(1);
     assertThat(stack.size()).isZero();
   }
 
   @Test
-  public void construction_NegativeMaximumSize() {
+  void construction_NegativeMaximumSize() {
     assertThatThrownBy(() -> new OperandStack(-1)).isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
-  public void push_StackOverflow() {
+  void push_StackOverflow() {
     final OperandStack stack = new OperandStack(1);
     stack.push(UInt256.fromHexString("0x01"));
     final UInt256 operand = UInt256.fromHexString("0x02");
@@ -46,13 +45,13 @@ public class OperandStackTest {
   }
 
   @Test
-  public void pop_StackUnderflow() {
+  void pop_StackUnderflow() {
     final OperandStack stack = new OperandStack(1);
     assertThatThrownBy(stack::pop).isInstanceOf(UnderflowException.class);
   }
 
   @Test
-  public void pushPop() {
+  void pushPop() {
     final OperandStack stack = new OperandStack(1);
     stack.push(UInt256.fromHexString("0x01"));
     assertThat(stack.size()).isEqualTo(1);
@@ -60,20 +59,20 @@ public class OperandStackTest {
   }
 
   @Test
-  public void get_NegativeOffset() {
+  void get_NegativeOffset() {
     final OperandStack stack = new OperandStack(1);
     assertThatThrownBy(() -> stack.get(-1)).isInstanceOf(UnderflowException.class);
   }
 
   @Test
-  public void get_IndexGreaterThanSize() {
+  void get_IndexGreaterThanSize() {
     final OperandStack stack = new OperandStack(1);
     stack.push(UInt256.fromHexString("0x01"));
     assertThatThrownBy(() -> stack.get(2)).isInstanceOf(UnderflowException.class);
   }
 
   @Test
-  public void get() {
+  void get() {
     final OperandStack stack = new OperandStack(3);
     stack.push(UInt256.fromHexString("0x01"));
     stack.push(UInt256.fromHexString("0x02"));
@@ -85,14 +84,14 @@ public class OperandStackTest {
   }
 
   @Test
-  public void set_NegativeOffset() {
+  void set_NegativeOffset() {
     final OperandStack stack = new OperandStack(1);
     final Bytes32 operand = Bytes32.fromHexString("0x01");
     assertThatThrownBy(() -> stack.set(-1, operand)).isInstanceOf(UnderflowException.class);
   }
 
   @Test
-  public void set_IndexGreaterThanSize() {
+  void set_IndexGreaterThanSize() {
     final OperandStack stack = new OperandStack(1);
     stack.push(UInt256.fromHexString("0x01"));
     final Bytes32 operand = Bytes32.fromHexString("0x01");
@@ -100,7 +99,15 @@ public class OperandStackTest {
   }
 
   @Test
-  public void set() {
+  void set_IndexGreaterThanCurrentSize() {
+    final OperandStack stack = new OperandStack(1024);
+    stack.push(UInt256.fromHexString("0x01"));
+    final Bytes32 operand = Bytes32.fromHexString("0x01");
+    assertThatThrownBy(() -> stack.set(2, operand)).isInstanceOf(OverflowException.class);
+  }
+
+  @Test
+  void set() {
     final OperandStack stack = new OperandStack(3);
     stack.push(UInt256.fromHexString("0x01"));
     stack.push(UInt256.fromHexString("0x02"));
@@ -113,7 +120,7 @@ public class OperandStackTest {
   }
 
   @Test
-  public void bulkPop() {
+  void bulkPop() {
     final OperandStack stack = new OperandStack(8);
     stack.push(UInt256.fromHexString("0x01"));
     stack.push(UInt256.fromHexString("0x02"));
@@ -131,7 +138,7 @@ public class OperandStackTest {
   }
 
   @Test
-  public void preserveTop() {
+  void preserveTop() {
     final OperandStack stack = new OperandStack(8);
     stack.push(UInt256.fromHexString("0x01"));
     stack.push(UInt256.fromHexString("0x02"));
@@ -164,5 +171,15 @@ public class OperandStackTest {
 
     assertThatThrownBy(() -> stack.preserveTop(5, 1)).isInstanceOf(UnderflowException.class);
     assertThatThrownBy(() -> stack.preserveTop(1, 5)).isInstanceOf(UnderflowException.class);
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {5, 31, 32, 33, 1023, 1024, 1025})
+  void largeOverflows(final int n) {
+    final OperandStack stack = new OperandStack(n);
+    for (int i = 0; i < n; i++) {
+      stack.push(UInt256.ONE);
+    }
+    assertThatThrownBy(() -> stack.push(UInt256.ONE)).isInstanceOf(OverflowException.class);
   }
 }

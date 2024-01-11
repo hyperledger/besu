@@ -111,9 +111,9 @@ public final class StatusMessage extends AbstractMessageData {
   }
 
   /**
-   * Return The hash of the head of the associated node's local blockchian.
+   * Return The hash of the head of the associated node's local blockchain.
    *
-   * @return The hash of the head of the associated node's local blockchian.
+   * @return The hash of the head of the associated node's local blockchain.
    */
   public Hash bestHash() {
     return status().bestHash;
@@ -218,7 +218,7 @@ public final class StatusMessage extends AbstractMessageData {
 
     @Override
     public String toString() {
-      return "EthStatus{"
+      return "{"
           + "protocolVersion="
           + protocolVersion
           + ", networkId="
@@ -236,7 +236,7 @@ public final class StatusMessage extends AbstractMessageData {
   }
 
   @Override
-  public String toString() {
+  public String toStringDecoded() {
     return status().toString();
   }
 }

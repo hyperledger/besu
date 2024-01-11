@@ -38,14 +38,21 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.immutables.value.Value;
 
+/**
+ * StackTrie represents a stack-based Merkle Patricia Trie used in the context of snapsync
+ * synchronization. It allows adding elements, retrieving elements, and committing the trie changes
+ * to a node updater and flat database updater. The trie operates on a stack of segments and commits
+ * the changes once the number of segments reaches a threshold. It utilizes proofs and keys to build
+ * and update the trie structure.
+ */
 public class StackTrie {
 
   private final Bytes32 rootHash;
   private final AtomicInteger nbSegments;
   private final int maxSegments;
   private final Bytes32 startKeyHash;
-  private final Map<Bytes32, TaskElement> elements;
-  private final AtomicLong elementsCount;
+  private Map<Bytes32, TaskElement> elements;
+  private AtomicLong elementsCount;
 
   public StackTrie(final Hash rootHash, final Bytes32 startKeyHash) {
     this(rootHash, 1, 1, startKeyHash);
@@ -71,6 +78,12 @@ public class StackTrie {
         taskIdentifier, ImmutableTaskElement.builder().proofs(proofs).keys(keys).build());
   }
 
+  public void removeElement(final Bytes32 taskIdentifier) {
+    if (this.elements.containsKey(taskIdentifier)) {
+      this.elementsCount.addAndGet(-this.elements.remove(taskIdentifier).keys().size());
+    }
+  }
+
   public TaskElement getElement(final Bytes32 taskIdentifier) {
     return this.elements.get(taskIdentifier);
   }
@@ -80,6 +93,10 @@ public class StackTrie {
   }
 
   public void commit(final NodeUpdater nodeUpdater) {
+    commit((key, value) -> {}, nodeUpdater);
+  }
+
+  public void commit(final FlatDatabaseUpdater flatDatabaseUpdater, final NodeUpdater nodeUpdater) {
 
     if (nbSegments.decrementAndGet() <= 0 && !elements.isEmpty()) {
 
@@ -112,9 +129,12 @@ public class StackTrie {
           new StoredMerklePatriciaTrie<>(
               snapStoredNodeFactory, proofs.isEmpty() ? MerkleTrie.EMPTY_TRIE_NODE_HASH : rootHash);
 
-      for (Map.Entry<Bytes32, Bytes> account : keys.entrySet()) {
-        trie.put(account.getKey(), new SnapPutVisitor<>(snapStoredNodeFactory, account.getValue()));
+      for (Map.Entry<Bytes32, Bytes> entry : keys.entrySet()) {
+        trie.put(entry.getKey(), new SnapPutVisitor<>(snapStoredNodeFactory, entry.getValue()));
       }
+
+      keys.forEach(flatDatabaseUpdater::update);
+
       trie.commit(
           nodeUpdater,
           (new CommitVisitor<>(nodeUpdater) {
@@ -128,6 +148,11 @@ public class StackTrie {
     }
   }
 
+  public void clear() {
+    this.elements = new LinkedHashMap<>();
+    this.elementsCount = new AtomicLong();
+  }
+
   public boolean addSegment() {
     if (nbSegments.get() > maxSegments) {
       return false;
@@ -135,6 +160,15 @@ public class StackTrie {
       nbSegments.incrementAndGet();
       return true;
     }
+  }
+
+  public interface FlatDatabaseUpdater {
+
+    static FlatDatabaseUpdater noop() {
+      return (key, value) -> {};
+    }
+
+    void update(final Bytes32 key, final Bytes value);
   }
 
   @Value.Immutable

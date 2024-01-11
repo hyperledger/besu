@@ -26,7 +26,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PrepareTest {
 

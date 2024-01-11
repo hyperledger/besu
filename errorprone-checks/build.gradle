@@ -35,11 +35,8 @@ dependencies {
   implementation 'info.picocli:picocli'
 
   testImplementation 'com.google.errorprone:error_prone_test_helpers'
-  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
   epJavac 'com.google.errorprone:error_prone_check_api'
 }

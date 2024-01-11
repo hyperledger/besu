@@ -18,21 +18,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 import org.hyperledger.besu.cli.converter.exception.PercentageConversionException;
+import org.hyperledger.besu.util.number.Percentage;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PercentageConverterTest {
 
   private final PercentageConverter percentageConverter = new PercentageConverter();
 
   @Test
   public void assertThatConvertHandlesProperlyAValidString() throws PercentageConversionException {
-    final int percentage = percentageConverter.convert("58");
+    final Percentage percentage = percentageConverter.convert("58");
     assertThat(percentage).isNotNull();
-    assertThat(percentage).isEqualTo(58);
+    assertThat(percentage.getValue()).isEqualTo(58);
   }
 
   @Test

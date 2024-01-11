@@ -21,11 +21,11 @@ import java.math.BigInteger;
 
 import com.google.common.collect.Range;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class OptionParserTest {
 
   @Test
@@ -102,6 +102,27 @@ public class OptionParserTest {
   public void format_negativeLong() {
     final long input = -1233L;
     final String expected = "-1233";
+    assertThat(OptionParser.format(input)).isEqualTo(expected);
+  }
+
+  @Test
+  public void format_object_int() {
+    final Object input = 1233;
+    final String expected = "1233";
+    assertThat(OptionParser.format(input)).isEqualTo(expected);
+  }
+
+  @Test
+  public void format_object_Integer() {
+    final Object input = Integer.valueOf(1233);
+    final String expected = "1233";
+    assertThat(OptionParser.format(input)).isEqualTo(expected);
+  }
+
+  @Test
+  public void format_object_uint256() {
+    final Object input = UInt256.valueOf(new BigInteger("123456789", 10));
+    final String expected = "123456789";
     assertThat(OptionParser.format(input)).isEqualTo(expected);
   }
 }

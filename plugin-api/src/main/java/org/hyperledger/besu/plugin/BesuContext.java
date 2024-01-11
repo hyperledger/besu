@@ -22,6 +22,15 @@ import java.util.Optional;
 public interface BesuContext {
 
   /**
+   * Add service.
+   *
+   * @param <T> the type parameter
+   * @param serviceType the service type
+   * @param service the service
+   */
+  <T extends BesuService> void addService(final Class<T> serviceType, final T service);
+
+  /**
    * Get the requested service, if it is available. There are a number of reasons that a service may
    * not be available:
    *

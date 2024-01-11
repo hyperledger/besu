@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
+import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -22,6 +23,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+
+import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
@@ -43,9 +46,12 @@ public class EngineGetPayloadV1 extends AbstractEngineGetPayload {
 
   @Override
   protected JsonRpcResponse createResponse(
-      final JsonRpcRequestContext request, final BlockWithReceipts blockWithReceipts) {
-    return new JsonRpcSuccessResponse(
-        request.getRequest().getId(),
-        blockResultFactory.payloadTransactionCompleteV1(blockWithReceipts.getBlock()));
+      final JsonRpcRequestContext request,
+      final PayloadIdentifier payloadId,
+      final BlockWithReceipts blockWithReceipts) {
+    final var result =
+        blockResultFactory.payloadTransactionCompleteV1(blockWithReceipts.getBlock());
+    logProposal(payloadId, blockWithReceipts, Optional.empty());
+    return new JsonRpcSuccessResponse(request.getRequest().getId(), result);
   }
 }

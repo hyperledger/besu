@@ -30,7 +30,7 @@ public class TStoreOperation extends AbstractOperation {
    * @param gasCalculator gas calculator for costing
    */
   public TStoreOperation(final GasCalculator gasCalculator) {
-    super(0xb4, "TSTORE", 2, 0, gasCalculator);
+    super(0x5D, "TSTORE", 2, 0, gasCalculator);
   }
 
   @Override

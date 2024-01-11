@@ -78,8 +78,8 @@ public final class NewBlockHashesMessage extends AbstractMessageData {
   }
 
   @Override
-  public String toString() {
-    return String.format("NewBlockHashesMessage: [%s]", Iterators.toString(getNewHashes()));
+  public String toStringDecoded() {
+    return Iterators.toString(getNewHashes());
   }
 
   public static final class NewBlockHash {

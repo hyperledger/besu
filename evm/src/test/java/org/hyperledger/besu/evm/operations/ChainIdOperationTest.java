@@ -23,44 +23,34 @@ import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.operation.ChainIdOperation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 
+import java.util.List;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
-@RunWith(Parameterized.class)
-public class ChainIdOperationTest {
+class ChainIdOperationTest {
 
-  private final Bytes32 chainId;
-  private final int expectedGas;
   private final MessageFrame messageFrame = mock(MessageFrame.class);
-  private final ChainIdOperation operation;
 
-  @Parameters(name = "chainId: {0}, expectedGas: {1}")
-  public static Object[][] params() {
-    return new Object[][] {
-      {"0x01", 2},
-      {"0x03", 2},
-      {"0x04", 2},
-      {"0x05", 2},
-    };
+  static Iterable<Arguments> params() {
+    return List.of(
+        Arguments.of("0x01", 2),
+        Arguments.of("0x03", 2),
+        Arguments.of("0x04", 2),
+        Arguments.of("0x05", 2));
   }
 
-  public ChainIdOperationTest(final String chainIdString, final int expectedGas) {
-    chainId = Bytes32.fromHexString(chainIdString);
-    this.expectedGas = expectedGas;
-    operation = new ChainIdOperation(new ConstantinopleGasCalculator(), chainId);
-    when(messageFrame.getRemainingGas()).thenReturn(100L);
-  }
-
-  @SuppressWarnings("ResultOfMethodCallIgnored")
-  @Test
-  public void shouldReturnChainId() {
+  @ParameterizedTest
+  @MethodSource("params")
+  void shouldReturnChainId(final String chainIdString, final int expectedGas) {
+    Bytes32 chainId = Bytes32.fromHexString(chainIdString);
+    ChainIdOperation operation = new ChainIdOperation(new ConstantinopleGasCalculator(), chainId);
     final ArgumentCaptor<Bytes> arg = ArgumentCaptor.forClass(UInt256.class);
     when(messageFrame.getRemainingGas()).thenReturn(100L);
     operation.execute(messageFrame, null);
@@ -70,8 +60,11 @@ public class ChainIdOperationTest {
     assertThat(arg.getValue()).isEqualTo(chainId);
   }
 
-  @Test
-  public void shouldCalculateGasPrice() {
+  @ParameterizedTest
+  @MethodSource("params")
+  void shouldCalculateGasPrice(final String chainIdString, final int expectedGas) {
+    Bytes32 chainId = Bytes32.fromHexString(chainIdString);
+    ChainIdOperation operation = new ChainIdOperation(new ConstantinopleGasCalculator(), chainId);
     final OperationResult result = operation.execute(messageFrame, null);
     assertThat(result.getGasCost()).isEqualTo(expectedGas);
   }

@@ -21,6 +21,7 @@ import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpe
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createPreparePayloads;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
@@ -50,13 +51,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ProposalValidatorTest {
 
   private enum ROUND_ID {
@@ -90,14 +91,15 @@ public class ProposalValidatorTest {
   private final Map<ROUND_ID, RoundSpecificItems> roundItems = new HashMap<>();
   final QbftExtraDataCodec bftExtraDataEncoder = new QbftExtraDataCodec();
 
-  @Before
+  @BeforeEach
   public void setup() {
     protocolContext =
         new ProtocolContext(
             blockChain,
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(
-                QbftContext.class, emptyList(), bftExtraDataEncoder));
+                QbftContext.class, emptyList(), bftExtraDataEncoder),
+            Optional.empty());
 
     // typically tests require the blockValidation to be successful
     when(blockValidator.validateAndProcessBlock(
@@ -152,6 +154,7 @@ public class ProposalValidatorTest {
     final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ZERO);
     final Proposal proposal = createProposal(roundItem, emptyList(), emptyList());
 
+    reset(blockValidator);
     when(blockValidator.validateAndProcessBlock(
             eq(protocolContext),
             any(),

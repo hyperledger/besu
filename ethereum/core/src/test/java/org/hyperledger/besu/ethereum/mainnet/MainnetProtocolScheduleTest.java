@@ -24,7 +24,7 @@ import java.nio.charset.StandardCharsets;
 
 import com.google.common.io.Resources;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class MainnetProtocolScheduleTest {
 
@@ -132,37 +132,6 @@ public class MainnetProtocolScheduleTest {
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(4_460_644L)).getName())
         .isEqualTo("Berlin");
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(5_062_605L)).getName())
-        .isEqualTo("London");
-    Assertions.assertThat(sched.getByBlockHeader(blockHeader(Long.MAX_VALUE)).getName())
-        .isEqualTo("London");
-  }
-
-  @Test
-  public void shouldCreateRinkebyConfig() throws Exception {
-    final ProtocolSchedule sched =
-        MainnetProtocolSchedule.fromConfig(
-            GenesisConfigFile.fromConfig(
-                    Resources.toString(
-                        this.getClass().getResource("/rinkeby.json"), StandardCharsets.UTF_8))
-                .getConfigOptions(),
-            EvmConfiguration.DEFAULT);
-    Assertions.assertThat(sched.getByBlockHeader(blockHeader(0L)).getName()).isEqualTo("Frontier");
-    Assertions.assertThat(sched.getByBlockHeader(blockHeader(1L)).getName()).isEqualTo("Homestead");
-    Assertions.assertThat(sched.getByBlockHeader(blockHeader(2L)).getName())
-        .isEqualTo("TangerineWhistle");
-    Assertions.assertThat(sched.getByBlockHeader(blockHeader(3L)).getName())
-        .isEqualTo("SpuriousDragon");
-    Assertions.assertThat(sched.getByBlockHeader(blockHeader(1_035_301L)).getName())
-        .isEqualTo("Byzantium");
-    Assertions.assertThat(sched.getByBlockHeader(blockHeader(3_660_663L)).getName())
-        .isEqualTo("Constantinople");
-    Assertions.assertThat(sched.getByBlockHeader(blockHeader(4_321_234L)).getName())
-        .isEqualTo("Petersburg");
-    Assertions.assertThat(sched.getByBlockHeader(blockHeader(5_435_345L)).getName())
-        .isEqualTo("Istanbul");
-    Assertions.assertThat(sched.getByBlockHeader(blockHeader(8_290_928L)).getName())
-        .isEqualTo("Berlin");
-    Assertions.assertThat(sched.getByBlockHeader(blockHeader(8_897_988L)).getName())
         .isEqualTo("London");
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(Long.MAX_VALUE)).getName())
         .isEqualTo("London");

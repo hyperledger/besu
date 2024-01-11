@@ -22,20 +22,20 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RestrictedOffchainEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
   static final String ENCLAVE_PUBLIC_KEY = "S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXo=";
 
@@ -43,7 +43,7 @@ public class RestrictedOffchainEeaSendRawTransactionTest extends BaseEeaSendRawT
 
   RestrictedOffchainEeaSendRawTransaction method;
 
-  @Before
+  @BeforeEach
   public void before() {
     method =
         new RestrictedOffchainEeaSendRawTransaction(
@@ -60,7 +60,7 @@ public class RestrictedOffchainEeaSendRawTransactionTest extends BaseEeaSendRawT
         .thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
-    when(transactionPool.addLocalTransaction(any())).thenReturn(ValidationResult.valid());
+    when(transactionPool.addTransactionViaApi(any())).thenReturn(ValidationResult.valid());
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
@@ -70,7 +70,7 @@ public class RestrictedOffchainEeaSendRawTransactionTest extends BaseEeaSendRawT
     final JsonRpcResponse actualResponse = method.response(validPrivateForTransactionRequest);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionPool).addLocalTransaction(PUBLIC_OFF_CHAIN_TRANSACTION);
+    verify(transactionPool).addTransactionViaApi(PUBLIC_OFF_CHAIN_TRANSACTION);
   }
 
   @Test
@@ -87,7 +87,7 @@ public class RestrictedOffchainEeaSendRawTransactionTest extends BaseEeaSendRawT
 
     when(privacyController.findPrivacyGroupByGroupId(any(), any()))
         .thenReturn(pantheonPrivacyGroup);
-    when(transactionPool.addLocalTransaction(any())).thenReturn(ValidationResult.valid());
+    when(transactionPool.addTransactionViaApi(any())).thenReturn(ValidationResult.valid());
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
@@ -107,7 +107,8 @@ public class RestrictedOffchainEeaSendRawTransactionTest extends BaseEeaSendRawT
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            validPrivacyGroupTransactionRequest.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+            validPrivacyGroupTransactionRequest.getRequest().getId(),
+            RpcErrorType.UNSUPPORTED_PRIVATE_TRANSACTION_TYPE);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
@@ -120,7 +121,8 @@ public class RestrictedOffchainEeaSendRawTransactionTest extends BaseEeaSendRawT
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            validPrivacyGroupTransactionRequest.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+            validPrivacyGroupTransactionRequest.getRequest().getId(),
+            RpcErrorType.UNSUPPORTED_PRIVATE_TRANSACTION_TYPE);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }

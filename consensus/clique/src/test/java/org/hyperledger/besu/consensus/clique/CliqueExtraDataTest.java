@@ -36,7 +36,6 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.bouncycastle.util.encoders.Hex;
 import org.junit.jupiter.api.Test;
 
 public class CliqueExtraDataTest {
@@ -65,26 +64,6 @@ public class CliqueExtraDataTest {
     assertThat(decodedExtraData.getValidators()).isEqualTo(validators);
     assertThat(decodedExtraData.getProposerSeal().get()).isEqualTo(proposerSeal);
     assertThat(decodedExtraData.getVanityData()).isEqualTo(vanityData);
-  }
-
-  @Test
-  public void parseRinkebyGenesisBlockExtraData() {
-    // Rinkeby genesis block extra data text found @ rinkeby.io
-    final byte[] genesisBlockExtraData =
-        Hex.decode(
-            "52657370656374206d7920617574686f7269746168207e452e436172746d616e42eb768f2244c8811c63729a21a3569731535f067ffc57839b00206d1ad20c69a1981b489f772031b279182d99e65703f0076e4812653aab85fca0f00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
-
-    final Bytes bufferToInject = Bytes.wrap(genesisBlockExtraData);
-
-    final CliqueExtraData extraData =
-        CliqueExtraData.decodeRaw(
-            new BlockHeaderTestFixture()
-                .number(BlockHeader.GENESIS_BLOCK_NUMBER)
-                .blockHeaderFunctions(new CliqueBlockHeaderFunctions())
-                .extraData(bufferToInject)
-                .buildHeader());
-    assertThat(extraData.getProposerSeal()).isEmpty();
-    assertThat(extraData.getValidators().size()).isEqualTo(3);
   }
 
   @Test

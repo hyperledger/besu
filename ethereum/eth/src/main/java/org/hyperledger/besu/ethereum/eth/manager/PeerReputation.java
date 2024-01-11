@@ -56,7 +56,8 @@ public class PeerReputation implements Comparable<PeerReputation> {
   }
 
   public PeerReputation(final int initialScore, final int maxScore) {
-    checkArgument(initialScore <= maxScore, "Inital score must be less than or equal to max score");
+    checkArgument(
+        initialScore <= maxScore, "Initial score must be less than or equal to max score");
     this.maxScore = maxScore;
     this.score = initialScore;
   }
@@ -64,7 +65,10 @@ public class PeerReputation implements Comparable<PeerReputation> {
   public Optional<DisconnectReason> recordRequestTimeout(final int requestCode) {
     final int newTimeoutCount = getOrCreateTimeoutCount(requestCode).incrementAndGet();
     if (newTimeoutCount >= TIMEOUT_THRESHOLD) {
-      LOG.debug("Disconnection triggered by repeated timeouts");
+      LOG.debug(
+          "Disconnection triggered by {} repeated timeouts for requestCode {}",
+          newTimeoutCount,
+          requestCode);
       score -= LARGE_ADJUSTMENT;
       return Optional.of(DisconnectReason.TIMEOUT);
     } else {
@@ -112,7 +116,9 @@ public class PeerReputation implements Comparable<PeerReputation> {
 
   @Override
   public String toString() {
-    return String.format("PeerReputation " + score);
+    return String.format(
+        "PeerReputation score: %d, timeouts: %s, useless: %s",
+        score, timeoutCounts(), uselessResponseTimes.size());
   }
 
   @Override

@@ -23,10 +23,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * This class allows to filter a list of pending transactions
@@ -43,8 +42,8 @@ public class PendingTransactionFilter {
   public static final String VALUE_FIELD = "value";
   public static final String NONCE_FIELD = "nonce";
 
-  public Set<Transaction> reduce(
-      final Set<PendingTransaction> pendingTransactions,
+  public Collection<Transaction> reduce(
+      final Collection<PendingTransaction> pendingTransactions,
       final List<Filter> filters,
       final int limit)
       throws InvalidJsonRpcParameters {
@@ -52,7 +51,7 @@ public class PendingTransactionFilter {
         .filter(pendingTx -> applyFilters(pendingTx, filters))
         .limit(limit)
         .map(PendingTransaction::getTransaction)
-        .collect(Collectors.toSet());
+        .toList();
   }
 
   private boolean applyFilters(

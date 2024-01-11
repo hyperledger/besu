@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthAccounts;
@@ -28,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGasPrice;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetBalance;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetBlockByHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetBlockByNumber;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetBlockReceipts;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetBlockTransactionCountByHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetBlockTransactionCountByNumber;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetCode;
@@ -71,7 +73,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
@@ -85,7 +86,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final TransactionPool transactionPool;
   private final MiningCoordinator miningCoordinator;
   private final Set<Capability> supportedCapabilities;
-  private final Optional<Long> maxLogRange;
+  private final ApiConfiguration apiConfiguration;
 
   public EthJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
@@ -95,7 +96,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
       final Set<Capability> supportedCapabilities,
-      final Optional<Long> maxLogRange) {
+      final ApiConfiguration apiConfiguration) {
     this.blockchainQueries = blockchainQueries;
     this.synchronizer = synchronizer;
     this.protocolSchedule = protocolSchedule;
@@ -103,7 +104,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.transactionPool = transactionPool;
     this.miningCoordinator = miningCoordinator;
     this.supportedCapabilities = supportedCapabilities;
-    this.maxLogRange = maxLogRange;
+    this.apiConfiguration = apiConfiguration;
   }
 
   @Override
@@ -119,6 +120,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthGetBalance(blockchainQueries),
         new EthGetBlockByHash(blockchainQueries, blockResult),
         new EthGetBlockByNumber(blockchainQueries, blockResult, synchronizer),
+        new EthGetBlockReceipts(blockchainQueries, protocolSchedule),
         new EthGetBlockTransactionCountByNumber(blockchainQueries),
         new EthGetBlockTransactionCountByHash(blockchainQueries),
         new EthCall(
@@ -126,10 +128,15 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule)),
-        new EthFeeHistory(protocolSchedule, blockchainQueries.getBlockchain()),
+                protocolSchedule,
+                apiConfiguration.getGasCap())),
+        new EthFeeHistory(
+            protocolSchedule,
+            blockchainQueries.getBlockchain(),
+            miningCoordinator,
+            apiConfiguration),
         new EthGetCode(blockchainQueries),
-        new EthGetLogs(blockchainQueries, maxLogRange),
+        new EthGetLogs(blockchainQueries, apiConfiguration.getMaxLogsRange()),
         new EthGetProof(blockchainQueries),
         new EthGetUncleCountByBlockHash(blockchainQueries),
         new EthGetUncleCountByBlockNumber(blockchainQueries),
@@ -138,11 +145,11 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthNewBlockFilter(filterManager),
         new EthNewPendingTransactionFilter(filterManager),
         new EthNewFilter(filterManager),
-        new EthGetTransactionByHash(blockchainQueries, transactionPool.getPendingTransactions()),
+        new EthGetTransactionByHash(blockchainQueries, transactionPool),
         new EthGetTransactionByBlockHashAndIndex(blockchainQueries),
         new EthGetTransactionByBlockNumberAndIndex(blockchainQueries),
-        new EthGetTransactionCount(blockchainQueries, transactionPool.getPendingTransactions()),
-        new EthGetTransactionReceipt(blockchainQueries),
+        new EthGetTransactionCount(blockchainQueries, transactionPool),
+        new EthGetTransactionReceipt(blockchainQueries, protocolSchedule),
         new EthUninstallFilter(filterManager),
         new EthGetFilterChanges(filterManager),
         new EthGetFilterLogs(filterManager),
@@ -155,17 +162,19 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule)),
+                protocolSchedule,
+                apiConfiguration.getGasCap())),
         new EthCreateAccessList(
             blockchainQueries,
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule)),
+                protocolSchedule,
+                apiConfiguration.getGasCap())),
         new EthMining(miningCoordinator),
         new EthCoinbase(miningCoordinator),
         new EthProtocolVersion(supportedCapabilities),
-        new EthGasPrice(blockchainQueries, miningCoordinator),
+        new EthGasPrice(blockchainQueries, miningCoordinator, apiConfiguration),
         new EthGetWork(miningCoordinator),
         new EthSubmitWork(miningCoordinator),
         new EthHashrate(miningCoordinator),

@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -27,20 +28,20 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Function;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class RawBlockIteratorTest {
 
-  @Rule public final TemporaryFolder tmp = new TemporaryFolder();
+  @TempDir private Path tmp;
   private BlockDataGenerator gen;
 
-  @Before
+  @BeforeEach
   public void setup() {
     gen = new BlockDataGenerator(1);
   }
@@ -67,7 +68,7 @@ public class RawBlockIteratorTest {
 
     // Write a few blocks to a tmp file
     byte[] firstSerializedBlock = null;
-    final File blocksFile = tmp.newFolder().toPath().resolve("blocks").toFile();
+    final File blocksFile = tmp.resolve("blocks").toFile();
     final DataOutputStream writer = new DataOutputStream(new FileOutputStream(blocksFile));
     for (Block block : blocks) {
       final byte[] serializedBlock = serializeBlock(block);
@@ -77,14 +78,11 @@ public class RawBlockIteratorTest {
       }
     }
     writer.close();
-
+    final BlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
     // Read blocks
     final int initialCapacity = initialCapacityFromBlockSize.apply(firstSerializedBlock.length);
     final RawBlockIterator iterator =
-        new RawBlockIterator(
-            blocksFile.toPath(),
-            rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()),
-            initialCapacity);
+        new RawBlockIterator(blocksFile.toPath(), blockHeaderFunctions, initialCapacity);
 
     // Read blocks and check that they match
     for (int i = 0; i < blockCount; i++) {

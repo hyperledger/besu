@@ -16,14 +16,16 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Set;
 
 public interface PendingTransactions {
 
@@ -33,54 +35,47 @@ public interface PendingTransactions {
 
   List<Transaction> getLocalTransactions();
 
-  TransactionAddedStatus addRemoteTransaction(
-      final Transaction transaction, final Optional<Account> maybeSenderAccount);
+  List<Transaction> getPriorityTransactions();
 
-  TransactionAddedStatus addLocalTransaction(
-      final Transaction transaction, final Optional<Account> maybeSenderAccount);
+  TransactionAddedResult addTransaction(
+      PendingTransaction transaction, Optional<Account> maybeSenderAccount);
 
-  void removeTransaction(final Transaction transaction);
-
-  void transactionAddedToBlock(final Transaction transaction);
-
-  void selectTransactions(final TransactionSelector selector);
+  void selectTransactions(TransactionSelector selector);
 
   long maxSize();
 
   int size();
 
-  boolean containsTransaction(final Hash transactionHash);
+  boolean containsTransaction(Transaction transaction);
 
-  Optional<Transaction> getTransactionByHash(final Hash transactionHash);
+  Optional<Transaction> getTransactionByHash(Hash transactionHash);
 
-  Set<PendingTransaction> getPendingTransactions();
+  Collection<PendingTransaction> getPendingTransactions();
 
-  long subscribePendingTransactions(final PendingTransactionListener listener);
+  long subscribePendingTransactions(PendingTransactionAddedListener listener);
 
-  void unsubscribePendingTransactions(final long id);
+  void unsubscribePendingTransactions(long id);
 
-  long subscribeDroppedTransactions(final PendingTransactionDroppedListener listener);
+  long subscribeDroppedTransactions(PendingTransactionDroppedListener listener);
 
-  void unsubscribeDroppedTransactions(final long id);
+  void unsubscribeDroppedTransactions(long id);
 
-  OptionalLong getNextNonceForSender(final Address sender);
+  OptionalLong getNextNonceForSender(Address sender);
 
-  void manageBlockAdded(final Block block);
+  void manageBlockAdded(
+      BlockHeader blockHeader,
+      List<Transaction> confirmedTransactions,
+      final List<Transaction> reorgTransactions,
+      FeeMarket feeMarket);
 
-  String toTraceLog(final boolean withTransactionsBySender, final boolean withLowestInvalidNonce);
+  String toTraceLog();
 
-  List<Transaction> signalInvalidAndGetDependentTransactions(final Transaction transaction);
+  String logStats();
 
-  boolean isLocalSender(final Address sender);
-
-  enum TransactionSelectionResult {
-    DELETE_TRANSACTION_AND_CONTINUE,
-    CONTINUE,
-    COMPLETE_OPERATION
-  }
+  Optional<Transaction> restoreBlob(Transaction transaction);
 
   @FunctionalInterface
   interface TransactionSelector {
-    TransactionSelectionResult evaluateTransaction(final Transaction transaction);
+    TransactionSelectionResult evaluateTransaction(PendingTransaction pendingTransaction);
   }
 }

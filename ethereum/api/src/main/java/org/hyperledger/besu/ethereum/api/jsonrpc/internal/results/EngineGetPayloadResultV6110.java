@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -29,22 +29,24 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes32;
 
-@JsonPropertyOrder({
-  "executionPayload",
-  "blockValue",
-})
+@JsonPropertyOrder({"executionPayload", "blockValue", "blobsBundle", "shouldOverrideBuilder"})
 public class EngineGetPayloadResultV6110 {
   protected final PayloadResult executionPayload;
   private final String blockValue;
+  private final BlobsBundleV1 blobsBundle;
+  private final boolean shouldOverrideBuilder;
 
   public EngineGetPayloadResultV6110(
       final BlockHeader header,
       final List<String> transactions,
       final Optional<List<Withdrawal>> withdrawals,
       final Optional<List<Deposit>> deposits,
-      final String blockValue) {
+      final String blockValue,
+      final BlobsBundleV1 blobsBundle) {
     this.executionPayload = new PayloadResult(header, transactions, withdrawals, deposits);
     this.blockValue = blockValue;
+    this.blobsBundle = blobsBundle;
+    this.shouldOverrideBuilder = false;
   }
 
   @JsonGetter(value = "executionPayload")
@@ -55,6 +57,16 @@ public class EngineGetPayloadResultV6110 {
   @JsonGetter(value = "blockValue")
   public String getBlockValue() {
     return blockValue;
+  }
+
+  @JsonGetter(value = "blobsBundle")
+  public BlobsBundleV1 getBlobsBundle() {
+    return blobsBundle;
+  }
+
+  @JsonGetter(value = "shouldOverrideBuilder")
+  public boolean shouldOverrideBuilder() {
+    return shouldOverrideBuilder;
   }
 
   public static class PayloadResult {
@@ -72,9 +84,12 @@ public class EngineGetPayloadResultV6110 {
     private final String timestamp;
     private final String extraData;
     private final String baseFeePerGas;
+    private final String excessBlobGas;
+    private final String blobGasUsed;
+    private final String parentBeaconBlockRoot;
+
     protected final List<String> transactions;
     private final List<WithdrawalParameter> withdrawals;
-
     private final List<DepositParameter> deposits;
 
     public PayloadResult(
@@ -107,8 +122,13 @@ public class EngineGetPayloadResultV6110 {
       this.deposits =
           deposits
               .map(
-                  ws -> ws.stream().map(DepositParameter::fromDeposit).collect(Collectors.toList()))
+                  ds -> ds.stream().map(DepositParameter::fromDeposit).collect(Collectors.toList()))
               .orElse(null);
+      this.blobGasUsed = header.getBlobGasUsed().map(Quantity::create).orElse(Quantity.HEX_ZERO);
+      this.excessBlobGas =
+          header.getExcessBlobGas().map(Quantity::create).orElse(Quantity.HEX_ZERO);
+      this.parentBeaconBlockRoot =
+          header.getParentBeaconBlockRoot().map(Bytes32::toHexString).orElse(null);
     }
 
     @JsonGetter(value = "blockNumber")
@@ -181,7 +201,7 @@ public class EngineGetPayloadResultV6110 {
       return withdrawals;
     }
 
-    @JsonGetter(value = "deposits")
+    @JsonGetter(value = "depositReceipts")
     public List<DepositParameter> getDeposits() {
       return deposits;
     }
@@ -190,6 +210,21 @@ public class EngineGetPayloadResultV6110 {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String getFeeRecipient() {
       return feeRecipient;
+    }
+
+    @JsonGetter(value = "excessBlobGas")
+    public String getExcessBlobGas() {
+      return excessBlobGas;
+    }
+
+    @JsonGetter(value = "blobGasUsed")
+    public String getBlobGasUseds() {
+      return blobGasUsed;
+    }
+
+    @JsonGetter(value = "parentBeaconBlockRoot")
+    public String getParentBeaconBlockRoot() {
+      return parentBeaconBlockRoot;
     }
   }
 }

@@ -16,20 +16,21 @@
 package org.hyperledger.besu.evm.internal;
 
 /** The Evm configuration. */
-public class EvmConfiguration {
-  /** The constant DEFAULT. */
-  public static final EvmConfiguration DEFAULT = new EvmConfiguration(32_000L);
+public record EvmConfiguration(long jumpDestCacheWeightKB, WorldUpdaterMode worldUpdaterMode) {
 
-  private final long jumpDestCacheWeightKB;
-
-  /**
-   * Instantiates a new Evm configuration.
-   *
-   * @param jumpDestCacheWeightKB the jump dest cache weight kb
-   */
-  public EvmConfiguration(final long jumpDestCacheWeightKB) {
-    this.jumpDestCacheWeightKB = jumpDestCacheWeightKB;
+  /** How should the world state update be handled within transactions? */
+  public enum WorldUpdaterMode {
+    /**
+     * Stack updates, requiring original account and storage values to read through the whole stack
+     */
+    STACKED,
+    /** Share a single state for accounts and storage values, undoing changes on reverts. */
+    JOURNALED
   }
+
+  /** The constant DEFAULT. */
+  public static final EvmConfiguration DEFAULT =
+      new EvmConfiguration(32_000L, WorldUpdaterMode.STACKED);
 
   /**
    * Gets jump dest cache weight bytes.
@@ -38,14 +39,5 @@ public class EvmConfiguration {
    */
   public long getJumpDestCacheWeightBytes() {
     return jumpDestCacheWeightKB * 1024L;
-  }
-
-  /**
-   * Gets jump dest cache weight kb.
-   *
-   * @return the jump dest cache weight kb
-   */
-  public long getJumpDestCacheWeightKB() {
-    return jumpDestCacheWeightKB;
   }
 }

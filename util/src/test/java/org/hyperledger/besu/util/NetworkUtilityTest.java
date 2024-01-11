@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class NetworkUtilityTest {
 

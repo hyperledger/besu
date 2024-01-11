@@ -14,19 +14,31 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
+
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.AbstractPrioritizedTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.BaseFeePrioritizedTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.EndLayer;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.GasPricePrioritizedTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredPendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.ReadyTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.SparseTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 
 import java.time.Clock;
+import java.util.function.BiFunction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,12 +53,11 @@ public class TransactionPoolFactory {
       final Clock clock,
       final MetricsSystem metricsSystem,
       final SyncState syncState,
-      final MiningParameters miningParameters,
-      final TransactionPoolConfiguration transactionPoolConfiguration) {
+      final TransactionPoolConfiguration transactionPoolConfiguration,
+      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory,
+      final BlobCache blobCache) {
 
-    final PendingTransactions pendingTransactions =
-        createPendingTransactions(
-            protocolSchedule, protocolContext, clock, metricsSystem, transactionPoolConfiguration);
+    final TransactionPoolMetrics metrics = new TransactionPoolMetrics(metricsSystem);
 
     final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
     final TransactionsMessageSender transactionsMessageSender =
@@ -59,49 +70,58 @@ public class TransactionPoolFactory {
         protocolSchedule,
         protocolContext,
         ethContext,
-        metricsSystem,
+        clock,
+        metrics,
         syncState,
-        miningParameters,
         transactionPoolConfiguration,
-        pendingTransactions,
         transactionTracker,
         transactionsMessageSender,
-        newPooledTransactionHashesMessageSender);
+        newPooledTransactionHashesMessageSender,
+        pluginTransactionValidatorFactory,
+        blobCache);
   }
 
   static TransactionPool createTransactionPool(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final MetricsSystem metricsSystem,
+      final Clock clock,
+      final TransactionPoolMetrics metrics,
       final SyncState syncState,
-      final MiningParameters miningParameters,
       final TransactionPoolConfiguration transactionPoolConfiguration,
-      final PendingTransactions pendingTransactions,
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
-      final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender) {
+      final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender,
+      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory,
+      final BlobCache blobCache) {
+
     final TransactionPool transactionPool =
         new TransactionPool(
-            pendingTransactions,
+            () ->
+                createPendingTransactions(
+                    protocolSchedule,
+                    protocolContext,
+                    clock,
+                    metrics,
+                    transactionPoolConfiguration,
+                    blobCache),
             protocolSchedule,
             protocolContext,
             new TransactionBroadcaster(
                 ethContext,
-                pendingTransactions,
                 transactionTracker,
                 transactionsMessageSender,
                 newPooledTransactionHashesMessageSender),
             ethContext,
-            miningParameters,
-            metricsSystem,
-            transactionPoolConfiguration);
+            metrics,
+            transactionPoolConfiguration,
+            pluginTransactionValidatorFactory);
 
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(
             ethContext.getScheduler(),
-            new TransactionsMessageProcessor(transactionTracker, transactionPool, metricsSystem),
-            transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
+            new TransactionsMessageProcessor(transactionTracker, transactionPool, metrics),
+            transactionPoolConfiguration.getUnstable().getTxMessageKeepAliveSeconds());
 
     final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler =
         new NewPooledTransactionHashesMessageHandler(
@@ -111,8 +131,8 @@ public class TransactionPoolFactory {
                 transactionPool,
                 transactionPoolConfiguration,
                 ethContext,
-                metricsSystem),
-            transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
+                metrics),
+            transactionPoolConfiguration.getUnstable().getTxMessageKeepAliveSeconds());
 
     subscribeTransactionHandlers(
         protocolContext,
@@ -122,11 +142,13 @@ public class TransactionPoolFactory {
         transactionsMessageHandler,
         pooledTransactionsMessageHandler);
 
-    if (!syncState.isInitialSyncPhaseDone()) {
-      LOG.info("Disabling transaction handling during initial sync");
-      pooledTransactionsMessageHandler.setDisabled();
-      transactionsMessageHandler.setDisabled();
-      transactionPool.setDisabled();
+    if (syncState.isInitialSyncPhaseDone()) {
+      LOG.info("Enabling transaction pool");
+      pooledTransactionsMessageHandler.setEnabled();
+      transactionsMessageHandler.setEnabled();
+      transactionPool.setEnabled();
+    } else {
+      LOG.info("Transaction pool disabled while initial sync in progress");
     }
 
     syncState.subscribeCompletionReached(
@@ -134,23 +156,60 @@ public class TransactionPoolFactory {
           @Override
           public void onInitialSyncCompleted() {
             LOG.info("Enabling transaction handling following initial sync");
-            transactionPool.reset();
-            transactionTracker.reset();
-            transactionPool.setEnabled();
-            transactionsMessageHandler.setEnabled();
-            pooledTransactionsMessageHandler.setEnabled();
+            enableTransactionHandling(
+                transactionTracker,
+                transactionPool,
+                transactionsMessageHandler,
+                pooledTransactionsMessageHandler);
           }
 
           @Override
           public void onInitialSyncRestart() {
             LOG.info("Disabling transaction handling during re-sync");
-            pooledTransactionsMessageHandler.setDisabled();
-            transactionsMessageHandler.setDisabled();
-            transactionPool.setDisabled();
+            disableTransactionHandling(
+                transactionPool, transactionsMessageHandler, pooledTransactionsMessageHandler);
+          }
+        });
+
+    syncState.subscribeInSync(
+        isInSync -> {
+          if (isInSync != transactionPool.isEnabled()) {
+            if (isInSync) {
+              LOG.info("Node is in sync, enabling transaction handling");
+              enableTransactionHandling(
+                  transactionTracker,
+                  transactionPool,
+                  transactionsMessageHandler,
+                  pooledTransactionsMessageHandler);
+            } else {
+              LOG.info("Node out of sync, disabling transaction handling");
+              disableTransactionHandling(
+                  transactionPool, transactionsMessageHandler, pooledTransactionsMessageHandler);
+            }
           }
         });
 
     return transactionPool;
+  }
+
+  private static void enableTransactionHandling(
+      final PeerTransactionTracker transactionTracker,
+      final TransactionPool transactionPool,
+      final TransactionsMessageHandler transactionsMessageHandler,
+      final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler) {
+    transactionTracker.reset();
+    transactionPool.setEnabled();
+    transactionsMessageHandler.setEnabled();
+    pooledTransactionsMessageHandler.setEnabled();
+  }
+
+  private static void disableTransactionHandling(
+      final TransactionPool transactionPool,
+      final TransactionsMessageHandler transactionsMessageHandler,
+      final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler) {
+    transactionPool.setDisabled();
+    transactionsMessageHandler.setDisabled();
+    pooledTransactionsMessageHandler.setDisabled();
   }
 
   private static void subscribeTransactionHandlers(
@@ -160,7 +219,6 @@ public class TransactionPoolFactory {
       final TransactionPool transactionPool,
       final TransactionsMessageHandler transactionsMessageHandler,
       final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler) {
-    LOG.info("Enabling transaction pool");
     ethContext.getEthPeers().subscribeDisconnect(transactionTracker);
     protocolContext.getBlockchain().observeBlockAdded(transactionPool);
     ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
@@ -173,11 +231,38 @@ public class TransactionPoolFactory {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final Clock clock,
-      final MetricsSystem metricsSystem,
-      final TransactionPoolConfiguration transactionPoolConfiguration) {
+      final TransactionPoolMetrics metrics,
+      final TransactionPoolConfiguration transactionPoolConfiguration,
+      final BlobCache blobCache) {
+
     boolean isFeeMarketImplementBaseFee =
         protocolSchedule.anyMatch(
             scheduledSpec -> scheduledSpec.spec().getFeeMarket().implementsBaseFee());
+
+    if (transactionPoolConfiguration.getTxPoolImplementation().equals(LAYERED)) {
+      return createLayeredPendingTransactions(
+          protocolSchedule,
+          protocolContext,
+          metrics,
+          transactionPoolConfiguration,
+          isFeeMarketImplementBaseFee,
+          blobCache);
+    } else {
+      return createPendingTransactionSorter(
+          protocolContext,
+          clock,
+          metrics.getMetricsSystem(),
+          transactionPoolConfiguration,
+          isFeeMarketImplementBaseFee);
+    }
+  }
+
+  private static AbstractPendingTransactionsSorter createPendingTransactionSorter(
+      final ProtocolContext protocolContext,
+      final Clock clock,
+      final MetricsSystem metricsSystem,
+      final TransactionPoolConfiguration transactionPoolConfiguration,
+      final boolean isFeeMarketImplementBaseFee) {
     if (isFeeMarketImplementBaseFee) {
       return new BaseFeePendingTransactionsSorter(
           transactionPoolConfiguration,
@@ -191,5 +276,68 @@ public class TransactionPoolFactory {
           metricsSystem,
           protocolContext.getBlockchain()::getChainHeadHeader);
     }
+  }
+
+  private static PendingTransactions createLayeredPendingTransactions(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final TransactionPoolMetrics metrics,
+      final TransactionPoolConfiguration transactionPoolConfiguration,
+      final boolean isFeeMarketImplementBaseFee,
+      final BlobCache blobCache) {
+
+    final TransactionPoolReplacementHandler transactionReplacementHandler =
+        new TransactionPoolReplacementHandler(transactionPoolConfiguration.getPriceBump());
+
+    final BiFunction<PendingTransaction, PendingTransaction, Boolean> transactionReplacementTester =
+        (t1, t2) ->
+            transactionReplacementHandler.shouldReplace(
+                t1, t2, protocolContext.getBlockchain().getChainHeadHeader());
+
+    final EndLayer endLayer = new EndLayer(metrics);
+
+    final SparseTransactions sparseTransactions =
+        new SparseTransactions(
+            transactionPoolConfiguration,
+            endLayer,
+            metrics,
+            transactionReplacementTester,
+            blobCache);
+
+    final ReadyTransactions readyTransactions =
+        new ReadyTransactions(
+            transactionPoolConfiguration,
+            sparseTransactions,
+            metrics,
+            transactionReplacementTester,
+            blobCache);
+
+    final AbstractPrioritizedTransactions pendingTransactionsSorter;
+    if (isFeeMarketImplementBaseFee) {
+      final FeeMarket feeMarket =
+          protocolSchedule
+              .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
+              .getFeeMarket();
+
+      pendingTransactionsSorter =
+          new BaseFeePrioritizedTransactions(
+              transactionPoolConfiguration,
+              protocolContext.getBlockchain()::getChainHeadHeader,
+              readyTransactions,
+              metrics,
+              transactionReplacementTester,
+              feeMarket,
+              blobCache);
+    } else {
+      pendingTransactionsSorter =
+          new GasPricePrioritizedTransactions(
+              transactionPoolConfiguration,
+              readyTransactions,
+              metrics,
+              transactionReplacementTester,
+              blobCache);
+    }
+
+    return new LayeredPendingTransactions(transactionPoolConfiguration, pendingTransactionsSorter);
   }
 }

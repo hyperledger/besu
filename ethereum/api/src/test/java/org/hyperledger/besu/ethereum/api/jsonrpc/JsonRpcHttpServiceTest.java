@@ -27,7 +27,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.api.util.TestJsonRpcMethodsUtil;
@@ -58,14 +58,14 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 
 public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
 
-  @BeforeClass
+  @BeforeAll
   public static void setup() throws Exception {
     initServerAndClient();
   }
@@ -78,7 +78,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
   }
 
   /** Tears down the HTTP server. */
-  @AfterClass
+  @AfterAll
   public static void shutdownServer() {
     service.stop().join();
   }
@@ -762,7 +762,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
+      final RpcErrorType expectedError = RpcErrorType.INVALID_PARAMS;
       testHelper.assertValidJsonRpcError(
           json, id, expectedError.getCode(), expectedError.getMessage());
     }
@@ -786,7 +786,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
+      final RpcErrorType expectedError = RpcErrorType.INVALID_PARAMS;
       testHelper.assertValidJsonRpcError(
           json, id, expectedError.getCode(), expectedError.getMessage());
     }
@@ -809,7 +809,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
+      final RpcErrorType expectedError = RpcErrorType.INVALID_PARAMS;
       testHelper.assertValidJsonRpcError(
           json, id, expectedError.getCode(), expectedError.getMessage());
     }
@@ -832,7 +832,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
+      final RpcErrorType expectedError = RpcErrorType.INVALID_PARAMS;
       testHelper.assertValidJsonRpcError(
           json, id, expectedError.getCode(), expectedError.getMessage());
     }
@@ -856,7 +856,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
+      final RpcErrorType expectedError = RpcErrorType.INVALID_PARAMS;
       testHelper.assertValidJsonRpcError(
           json, id, expectedError.getCode(), expectedError.getMessage());
     }
@@ -876,7 +876,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
+      final RpcErrorType expectedError = RpcErrorType.INVALID_PARAMS;
       testHelper.assertValidJsonRpcError(
           json, id, expectedError.getCode(), expectedError.getMessage());
     }
@@ -896,7 +896,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
+      final RpcErrorType expectedError = RpcErrorType.INVALID_PARAMS;
       testHelper.assertValidJsonRpcError(
           json, id, expectedError.getCode(), expectedError.getMessage());
     }
@@ -982,7 +982,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       // Check general format of result
       final String respBody = resp.body().string();
       final JsonObject json = new JsonObject(respBody);
-      final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
+      final RpcErrorType expectedError = RpcErrorType.INVALID_PARAMS;
       testHelper.assertValidJsonRpcError(
           json, id, expectedError.getCode(), expectedError.getMessage());
     }
@@ -1304,7 +1304,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(400);
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.INVALID_REQUEST;
+      final RpcErrorType expectedError = RpcErrorType.INVALID_REQUEST;
       testHelper.assertValidJsonRpcError(
           json, null, expectedError.getCode(), expectedError.getMessage());
     }
@@ -1319,7 +1319,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(400);
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.INVALID_REQUEST;
+      final RpcErrorType expectedError = RpcErrorType.INVALID_REQUEST;
       testHelper.assertValidJsonRpcError(
           json, null, expectedError.getCode(), expectedError.getMessage());
     }
@@ -1334,7 +1334,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(400);
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.INVALID_REQUEST;
+      final RpcErrorType expectedError = RpcErrorType.INVALID_REQUEST;
       testHelper.assertValidJsonRpcError(
           json, id, expectedError.getCode(), expectedError.getMessage());
     }
@@ -1369,7 +1369,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.METHOD_NOT_FOUND;
+      final RpcErrorType expectedError = RpcErrorType.METHOD_NOT_FOUND;
       testHelper.assertValidJsonRpcError(
           json, id, expectedError.getCode(), expectedError.getMessage());
     }
@@ -1395,7 +1395,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.METHOD_NOT_ENABLED;
+      final RpcErrorType expectedError = RpcErrorType.METHOD_NOT_ENABLED;
       testHelper.assertValidJsonRpcError(
           json, id, expectedError.getCode(), expectedError.getMessage());
     }
@@ -1420,7 +1420,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.INTERNAL_ERROR;
+      final RpcErrorType expectedError = RpcErrorType.INTERNAL_ERROR;
       testHelper.assertValidJsonRpcError(
           json, "666", expectedError.getCode(), expectedError.getMessage());
     }
@@ -1444,7 +1444,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       assertThat(resp.code()).isEqualTo(200);
       final JsonArray array = new JsonArray(resp.body().string());
       testHelper.assertValidJsonRpcResult(array.getJsonObject(0), "000");
-      final JsonRpcError expectedError = JsonRpcError.INTERNAL_ERROR;
+      final RpcErrorType expectedError = RpcErrorType.INTERNAL_ERROR;
       testHelper.assertValidJsonRpcError(
           array.getJsonObject(1), "111", expectedError.getCode(), expectedError.getMessage());
       testHelper.assertValidJsonRpcResult(array.getJsonObject(2), "222");
@@ -1488,7 +1488,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
 
       // Check result unknown method
       final JsonObject jsonError = responses.get(brokenRequestId);
-      final JsonRpcError expectedError = JsonRpcError.METHOD_NOT_FOUND;
+      final RpcErrorType expectedError = RpcErrorType.METHOD_NOT_FOUND;
       testHelper.assertValidJsonRpcError(
           jsonError, brokenRequestId, expectedError.getCode(), expectedError.getMessage());
 
@@ -1543,7 +1543,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
 
       // Check invalid request
       final JsonObject jsonError = responses.get(invalidId);
-      final JsonRpcError expectedError = JsonRpcError.INVALID_REQUEST;
+      final RpcErrorType expectedError = RpcErrorType.INVALID_REQUEST;
       testHelper.assertValidJsonRpcError(
           jsonError, null, expectedError.getCode(), expectedError.getMessage());
 
@@ -1567,7 +1567,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(400);
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.PARSE_ERROR;
+      final RpcErrorType expectedError = RpcErrorType.PARSE_ERROR;
       testHelper.assertValidJsonRpcError(
           json, null, expectedError.getCode(), expectedError.getMessage());
     }
@@ -1624,7 +1624,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(400);
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.INVALID_REQUEST;
+      final RpcErrorType expectedError = RpcErrorType.INVALID_REQUEST;
       testHelper.assertValidJsonRpcError(
           json, null, expectedError.getCode(), expectedError.getMessage());
     }
@@ -2032,7 +2032,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.INVALID_PARAMS;
+      final RpcErrorType expectedError = RpcErrorType.INVALID_PARAMS;
       testHelper.assertValidJsonRpcError(
           json, id, expectedError.getCode(), expectedError.getMessage());
     }

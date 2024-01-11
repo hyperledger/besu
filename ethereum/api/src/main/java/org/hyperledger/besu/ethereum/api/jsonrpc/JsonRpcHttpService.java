@@ -320,6 +320,7 @@ public class JsonRpcHttpService {
         .route()
         .handler(
             BodyHandler.create()
+                .setBodyLimit(config.getMaxRequestContentLength())
                 .setUploadsDirectory(dataDir.resolve("uploads").toString())
                 .setDeleteUploadedFilesOnEnd(true));
     router.route("/").method(HttpMethod.GET).handler(this::handleEmptyRequest);

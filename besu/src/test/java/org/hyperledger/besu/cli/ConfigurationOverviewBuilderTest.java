@@ -15,7 +15,12 @@
 package org.hyperledger.besu.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LEGACY;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.SEQUENCED;
 import static org.mockito.Mockito.mock;
+
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -53,8 +58,9 @@ class ConfigurationOverviewBuilderTest {
     assertThat(networkSet).contains("Network: foobar");
 
     builder.setHasCustomGenesis(true);
+    builder.setCustomGenesis("file.name");
     final String genesisSet = builder.build();
-    assertThat(genesisSet).contains("Network: Custom genesis file specified");
+    assertThat(genesisSet).contains("Network: Custom genesis file");
     assertThat(genesisSet).doesNotContain("Network: foobar");
   }
 
@@ -137,10 +143,70 @@ class ConfigurationOverviewBuilderTest {
   @Test
   void setHighSpecEnabled() {
     final String highSpecNotEnabled = builder.build();
-    assertThat(highSpecNotEnabled).doesNotContain("High spec configuration enabled");
+    assertThat(highSpecNotEnabled).doesNotContain("Experimental high spec configuration enabled");
 
     builder.setHighSpecEnabled();
     final String highSpecEnabled = builder.build();
-    assertThat(highSpecEnabled).contains("High spec configuration enabled");
+    assertThat(highSpecEnabled).contains("Experimental high spec configuration enabled");
+  }
+
+  @Test
+  void setTrieLogPruningEnabled() {
+    final String noTrieLogRetentionThresholdSet = builder.build();
+    assertThat(noTrieLogRetentionThresholdSet).doesNotContain("Trie log pruning enabled");
+
+    builder.setTrieLogPruningEnabled();
+    builder.setTrieLogRetentionThreshold(42);
+    String trieLogRetentionThresholdSet = builder.build();
+    assertThat(trieLogRetentionThresholdSet)
+        .contains("Trie log pruning enabled")
+        .contains("retention: 42");
+    assertThat(trieLogRetentionThresholdSet).doesNotContain("prune limit");
+
+    builder.setTrieLogPruningLimit(1000);
+    trieLogRetentionThresholdSet = builder.build();
+    assertThat(trieLogRetentionThresholdSet).contains("prune limit: 1000");
+  }
+
+  @Test
+  void setTxPoolImplementationLayered() {
+    builder.setTxPoolImplementation(LAYERED);
+    final String layeredTxPoolSelected = builder.build();
+    assertThat(layeredTxPoolSelected).contains("Using LAYERED transaction pool implementation");
+  }
+
+  @Test
+  void setTxPoolImplementationLegacy() {
+    builder.setTxPoolImplementation(LEGACY);
+    final String legacyTxPoolSelected = builder.build();
+    assertThat(legacyTxPoolSelected).contains("Using LEGACY transaction pool implementation");
+  }
+
+  @Test
+  void setTxPoolImplementationSequenced() {
+    builder.setTxPoolImplementation(SEQUENCED);
+    final String sequencedTxPoolSelected = builder.build();
+    assertThat(sequencedTxPoolSelected).contains("Using SEQUENCED transaction pool implementation");
+  }
+
+  @Test
+  void setWorldStateUpdateModeDefault() {
+    builder.setWorldStateUpdateMode(EvmConfiguration.DEFAULT.worldUpdaterMode());
+    final String layeredTxPoolSelected = builder.build();
+    assertThat(layeredTxPoolSelected).contains("Using STACKED worldstate update mode");
+  }
+
+  @Test
+  void setWorldStateUpdateModeStacked() {
+    builder.setWorldStateUpdateMode(EvmConfiguration.WorldUpdaterMode.STACKED);
+    final String layeredTxPoolSelected = builder.build();
+    assertThat(layeredTxPoolSelected).contains("Using STACKED worldstate update mode");
+  }
+
+  @Test
+  void setWorldStateUpdateModeJournaled() {
+    builder.setWorldStateUpdateMode(EvmConfiguration.WorldUpdaterMode.JOURNALED);
+    final String layeredTxPoolSelected = builder.build();
+    assertThat(layeredTxPoolSelected).contains("Using JOURNALED worldstate update mode");
   }
 }

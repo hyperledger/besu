@@ -16,9 +16,11 @@ package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockValueCalculator;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -59,7 +61,7 @@ public class PostMergeContext implements MergeContext {
   private final Subscribers<UnverifiedForkchoiceListener>
       newUnverifiedForkchoiceCallbackSubscribers = Subscribers.create();
 
-  private final EvictingQueue<PayloadTuple> blocksInProgress =
+  private final EvictingQueue<PayloadWrapper> blocksInProgress =
       EvictingQueue.create(MAX_BLOCKS_IN_PROGRESS);
 
   // latest finalized block
@@ -67,6 +69,7 @@ public class PostMergeContext implements MergeContext {
   private final AtomicReference<BlockHeader> lastSafeBlock = new AtomicReference<>();
   private final AtomicReference<Optional<BlockHeader>> terminalPoWBlock =
       new AtomicReference<>(Optional.empty());
+  private final BlockValueCalculator blockValueCalculator = new BlockValueCalculator();
   private boolean isCheckpointPostMergeSync;
   private boolean isPostMergeAtGenesis;
 
@@ -229,51 +232,67 @@ public class PostMergeContext implements MergeContext {
   }
 
   @Override
-  public void putPayloadById(
-      final PayloadIdentifier payloadId, final BlockWithReceipts newBlockWithReceipts) {
+  public void putPayloadById(final PayloadWrapper payloadWrapper) {
     synchronized (blocksInProgress) {
-      final Optional<BlockWithReceipts> maybeCurrBestBlock = retrieveBlockById(payloadId);
+      final Optional<BlockWithReceipts> maybeCurrBestBlock =
+          retrieveBlockById(payloadWrapper.payloadIdentifier());
 
       maybeCurrBestBlock.ifPresentOrElse(
           currBestBlock -> {
-            if (compareByGasUsedDesc.compare(newBlockWithReceipts, currBestBlock) < 0) {
+            if (compareByGasUsedDesc.compare(payloadWrapper.blockWithReceipts(), currBestBlock)
+                < 0) {
               LOG.atDebug()
                   .setMessage("New proposal for payloadId {} {} is better than the previous one {}")
-                  .addArgument(payloadId)
-                  .addArgument(() -> logBlockProposal(newBlockWithReceipts.getBlock()))
+                  .addArgument(payloadWrapper.payloadIdentifier())
+                  .addArgument(
+                      () -> logBlockProposal(payloadWrapper.blockWithReceipts().getBlock()))
                   .addArgument(() -> logBlockProposal(currBestBlock.getBlock()))
                   .log();
               blocksInProgress.removeAll(
-                  retrieveTuplesById(payloadId).collect(Collectors.toUnmodifiableList()));
-              blocksInProgress.add(new PayloadTuple(payloadId, newBlockWithReceipts));
+                  retrievePayloadsById(payloadWrapper.payloadIdentifier())
+                      .collect(Collectors.toUnmodifiableList()));
+              blocksInProgress.add(
+                  new PayloadWrapper(
+                      payloadWrapper.payloadIdentifier(), payloadWrapper.blockWithReceipts()));
+              logCurrentBestBlock(payloadWrapper.blockWithReceipts());
             }
           },
-          () -> blocksInProgress.add(new PayloadTuple(payloadId, newBlockWithReceipts)));
+          () ->
+              blocksInProgress.add(
+                  new PayloadWrapper(
+                      payloadWrapper.payloadIdentifier(), payloadWrapper.blockWithReceipts())));
+    }
+  }
 
-      LOG.atDebug()
-          .setMessage("Current best proposal for payloadId {} {}")
-          .addArgument(payloadId)
-          .addArgument(
-              () ->
-                  retrieveBlockById(payloadId)
-                      .map(bb -> logBlockProposal(bb.getBlock()))
-                      .orElse("N/A"))
-          .log();
+  private void logCurrentBestBlock(final BlockWithReceipts blockWithReceipts) {
+    if (LOG.isDebugEnabled()) {
+      final Block block = blockWithReceipts.getBlock();
+      final float gasUsedPerc =
+          100.0f * block.getHeader().getGasUsed() / block.getHeader().getGasLimit();
+      final int txsNum = block.getBody().getTransactions().size();
+      final Wei reward = blockValueCalculator.calculateBlockValue(blockWithReceipts);
+
+      LOG.debug(
+          "Current best proposal for block {}: txs {}, gas used {}%, reward {}",
+          blockWithReceipts.getNumber(),
+          txsNum,
+          String.format("%1.2f", gasUsedPerc),
+          reward.toHumanReadableString());
     }
   }
 
   @Override
   public Optional<BlockWithReceipts> retrieveBlockById(final PayloadIdentifier payloadId) {
     synchronized (blocksInProgress) {
-      return retrieveTuplesById(payloadId)
-          .map(tuple -> tuple.blockWithReceipts)
+      return retrievePayloadsById(payloadId)
+          .map(payloadWrapper -> payloadWrapper.blockWithReceipts())
           .sorted(compareByGasUsedDesc)
           .findFirst();
     }
   }
 
-  private Stream<PayloadTuple> retrieveTuplesById(final PayloadIdentifier payloadId) {
-    return blocksInProgress.stream().filter(z -> z.payloadIdentifier.equals(payloadId));
+  private Stream<PayloadWrapper> retrievePayloadsById(final PayloadIdentifier payloadId) {
+    return blocksInProgress.stream().filter(z -> z.payloadIdentifier().equals(payloadId));
   }
 
   private String logBlockProposal(final Block block) {
@@ -283,25 +302,6 @@ public class PostMergeContext implements MergeContext {
         + block.getHeader().getGasUsed()
         + " transactions "
         + block.getBody().getTransactions().size();
-  }
-
-  private static class PayloadTuple {
-    /** The Payload identifier. */
-    final PayloadIdentifier payloadIdentifier;
-    /** The Block with receipts. */
-    final BlockWithReceipts blockWithReceipts;
-
-    /**
-     * Instantiates a new Payload tuple.
-     *
-     * @param payloadIdentifier the payload identifier
-     * @param blockWithReceipts the block with receipts
-     */
-    PayloadTuple(
-        final PayloadIdentifier payloadIdentifier, final BlockWithReceipts blockWithReceipts) {
-      this.payloadIdentifier = payloadIdentifier;
-      this.blockWithReceipts = blockWithReceipts;
-    }
   }
 
   @Override

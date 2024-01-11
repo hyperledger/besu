@@ -29,15 +29,11 @@ import io.vertx.core.Vertx;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class MetricsHttpServiceTest {
-
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
   private static final Vertx vertx = Vertx.vertx();
 
@@ -45,7 +41,7 @@ public class MetricsHttpServiceTest {
   private static OkHttpClient client;
   private static String baseUrl;
 
-  @BeforeClass
+  @BeforeAll
   public static void initServerAndClient() {
     service = createMetricsHttpService();
     service.start().join();
@@ -76,7 +72,7 @@ public class MetricsHttpServiceTest {
   }
 
   /** Tears down the HTTP server. */
-  @AfterClass
+  @AfterAll
   public static void shutdownServer() {
     service.stop().join();
     vertx.close();

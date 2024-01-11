@@ -15,22 +15,22 @@
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -40,39 +40,32 @@ class MergeBlockCreator extends AbstractBlockCreator {
   /**
    * Instantiates a new Merge block creator.
    *
-   * @param coinbase the coinbase
-   * @param targetGasLimitSupplier the target gas limit supplier
+   * @param miningParameters the mining parameters
    * @param extraDataCalculator the extra data calculator
-   * @param pendingTransactions the pending transactions
+   * @param transactionPool the pending transactions
    * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
-   * @param minTransactionGasPrice the min transaction gas price
-   * @param miningBeneficiary the mining beneficiary
-   * @param minBlockOccupancyRatio the min block occupancy ratio
    * @param parentHeader the parent header
    */
   public MergeBlockCreator(
-      final Address coinbase,
-      final Supplier<Optional<Long>> targetGasLimitSupplier,
+      final MiningParameters miningParameters,
       final ExtraDataCalculator extraDataCalculator,
-      final PendingTransactions pendingTransactions,
+      final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final Wei minTransactionGasPrice,
-      final Address miningBeneficiary,
-      final Double minBlockOccupancyRatio,
-      final BlockHeader parentHeader) {
+      final BlockHeader parentHeader,
+      final Optional<Address> depositContractAddress,
+      final EthScheduler ethScheduler) {
     super(
-        miningBeneficiary,
-        __ -> miningBeneficiary,
-        targetGasLimitSupplier,
+        miningParameters,
+        __ -> miningParameters.getCoinbase().orElseThrow(),
         extraDataCalculator,
-        pendingTransactions,
+        transactionPool,
         protocolContext,
         protocolSchedule,
-        minTransactionGasPrice,
-        minBlockOccupancyRatio,
-        parentHeader);
+        parentHeader,
+        depositContractAddress,
+        ethScheduler);
   }
 
   /**
@@ -82,19 +75,22 @@ class MergeBlockCreator extends AbstractBlockCreator {
    * @param random the random
    * @param timestamp the timestamp
    * @param withdrawals optional list of withdrawals
+   * @param parentBeaconBlockRoot optional root hash of the parent beacon block
    * @return the block creation result
    */
   public BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Bytes32 random,
       final long timestamp,
-      final Optional<List<Withdrawal>> withdrawals) {
+      final Optional<List<Withdrawal>> withdrawals,
+      final Optional<Bytes32> parentBeaconBlockRoot) {
 
     return createBlock(
         maybeTransactions,
         Optional.of(Collections.emptyList()),
         withdrawals,
         Optional.of(random),
+        parentBeaconBlockRoot,
         timestamp,
         false);
   }

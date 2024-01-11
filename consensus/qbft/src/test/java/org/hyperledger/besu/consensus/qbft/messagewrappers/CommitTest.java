@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.core.Util;
 
 import java.math.BigInteger;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class CommitTest {
 

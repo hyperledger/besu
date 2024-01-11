@@ -43,7 +43,7 @@ public final class BlockBodiesMessage extends AbstractMessageData {
 
   public static BlockBodiesMessage create(final Iterable<BlockBody> bodies) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
-    tmp.writeList(bodies, BlockBody::writeTo);
+    tmp.writeList(bodies, BlockBody::writeWrappedBodyTo);
     return new BlockBodiesMessage(tmp.encoded());
   }
 
@@ -71,6 +71,6 @@ public final class BlockBodiesMessage extends AbstractMessageData {
     final BlockHeaderFunctions blockHeaderFunctions =
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
     return new BytesValueRLPInput(data, false)
-        .readList(rlp -> BlockBody.readFrom(rlp, blockHeaderFunctions, true));
+        .readList(rlp -> BlockBody.readWrappedBodyFrom(rlp, blockHeaderFunctions, true));
   }
 }

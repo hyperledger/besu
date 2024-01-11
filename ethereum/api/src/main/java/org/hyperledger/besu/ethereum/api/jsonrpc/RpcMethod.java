@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 
 public enum RpcMethod {
   ADMIN_ADD_PEER("admin_addPeer"),
@@ -44,16 +44,24 @@ public enum RpcMethod {
   DEBUG_STANDARD_TRACE_BLOCK_TO_FILE("debug_standardTraceBlockToFile"),
   DEBUG_STANDARD_TRACE_BAD_BLOCK_TO_FILE("debug_standardTraceBadBlockToFile"),
   DEBUG_TRACE_TRANSACTION("debug_traceTransaction"),
+  DEBUG_TRACE_CALL("debug_traceCall"),
   DEBUG_BATCH_RAW_TRANSACTION("debug_batchSendRawTransaction"),
   DEBUG_GET_BAD_BLOCKS("debug_getBadBlocks"),
   DEBUG_GET_RAW_HEADER("debug_getRawHeader"),
   DEBUG_GET_RAW_BLOCK("debug_getRawBlock"),
+  DEBUG_GET_RAW_RECEIPTS("debug_getRawReceipts"),
+  DEBUG_GET_RAW_TRANSACTION("debug_getRawTransaction"),
   ENGINE_GET_PAYLOAD_V1("engine_getPayloadV1"),
   ENGINE_GET_PAYLOAD_V2("engine_getPayloadV2"),
+  ENGINE_GET_PAYLOAD_V3("engine_getPayloadV3"),
+  ENGINE_GET_PAYLOAD_V6110("engine_getPayloadV6110"),
   ENGINE_NEW_PAYLOAD_V1("engine_newPayloadV1"),
   ENGINE_NEW_PAYLOAD_V2("engine_newPayloadV2"),
+  ENGINE_NEW_PAYLOAD_V3("engine_newPayloadV3"),
+  ENGINE_NEW_PAYLOAD_V6110("engine_newPayloadV6110"),
   ENGINE_FORKCHOICE_UPDATED_V1("engine_forkchoiceUpdatedV1"),
   ENGINE_FORKCHOICE_UPDATED_V2("engine_forkchoiceUpdatedV2"),
+  ENGINE_FORKCHOICE_UPDATED_V3("engine_forkchoiceUpdatedV3"),
   ENGINE_EXCHANGE_TRANSITION_CONFIGURATION("engine_exchangeTransitionConfigurationV1"),
   ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1("engine_getPayloadBodiesByHashV1"),
   ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1("engine_getPayloadBodiesByRangeV1"),
@@ -93,6 +101,7 @@ public enum RpcMethod {
   ETH_GET_BALANCE("eth_getBalance"),
   ETH_GET_BLOCK_BY_HASH("eth_getBlockByHash"),
   ETH_GET_BLOCK_BY_NUMBER("eth_getBlockByNumber"),
+  ETH_GET_BLOCK_RECEIPTS("eth_getBlockReceipts"),
   ETH_GET_BLOCK_TRANSACTION_COUNT_BY_HASH("eth_getBlockTransactionCountByHash"),
   ETH_GET_BLOCK_TRANSACTION_COUNT_BY_NUMBER("eth_getBlockTransactionCountByNumber"),
   ETH_GET_CODE("eth_getCode"),
@@ -145,6 +154,10 @@ public enum RpcMethod {
   MINER_SET_ETHERBASE("miner_setEtherbase"),
   MINER_START("miner_start"),
   MINER_STOP("miner_stop"),
+  MINER_GET_MIN_PRIORITY_FEE("miner_getMinPriorityFee"),
+  MINER_SET_MIN_PRIORITY_FEE("miner_setMinPriorityFee"),
+  MINER_GET_MIN_GAS_PRICE("miner_getMinGasPrice"),
+  MINER_SET_MIN_GAS_PRICE("miner_setMinGasPrice"),
   NET_ENODE("net_enode"),
   NET_LISTENING("net_listening"),
   NET_PEER_COUNT("net_peerCount"),
@@ -188,7 +201,7 @@ public enum RpcMethod {
   }
 
   static {
-    allMethodNames = new ArrayList<>();
+    allMethodNames = new HashSet<>();
     for (RpcMethod m : RpcMethod.values()) {
       allMethodNames.add(m.getMethodName());
     }

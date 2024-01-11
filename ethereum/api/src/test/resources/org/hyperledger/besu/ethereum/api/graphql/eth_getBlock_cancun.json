@@ -1,0 +1,36 @@
+{
+  "request": "{block (number: 34) { baseFeePerGas difficulty extraData miner { address } mixHash nonce stateRoot totalDifficulty withdrawalsRoot withdrawals { address amount index validator } blobGasUsed excessBlobGas transactions { maxFeePerBlobGas blobGasUsed blobGasPrice type yParity v r s} }} ",
+  "response": {
+    "data": {
+      "block": {
+        "baseFeePerGas": "0x3437004a",
+        "difficulty": "0x0",
+        "extraData": "0x",
+        "miner": {
+          "address": "0x0000000000000000000000000000000000000000"
+        },
+        "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "nonce": "0x0000000000000000",
+        "stateRoot": "0x34727aff24d1c51cd63fdc14515b15ddaa156fa0671c58a96c72b1553819945d",
+        "totalDifficulty": "0x427c00",
+        "withdrawalsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+        "withdrawals": [],
+        "blobGasUsed": "0x40000",
+        "excessBlobGas": "0x0",
+        "transactions": [
+          {
+            "maxFeePerBlobGas": "0x3b9aca00",
+            "blobGasUsed": "0x40000",
+            "blobGasPrice": "0x1",
+            "type": "0x3",
+            "yParity": "0x0",
+            "v": null,
+            "r": "0x6ae0612cfda43a9b464b10b4881c6fc2e4c24533cf89bbe07934da65c3ae49ce",
+            "s": "0x125387aeb222ec51130cf99cbdabf24bd4a881914faed69f254e4a3f4bc507fc"
+          }
+        ]
+      }
+    }
+  },
+  "statusCode": 200
+}

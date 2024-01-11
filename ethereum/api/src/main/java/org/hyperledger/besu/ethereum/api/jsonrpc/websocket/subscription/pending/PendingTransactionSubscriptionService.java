@@ -18,11 +18,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.Subscrip
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionListener;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
 
 import java.util.List;
 
-public class PendingTransactionSubscriptionService implements PendingTransactionListener {
+public class PendingTransactionSubscriptionService implements PendingTransactionAddedListener {
 
   private final SubscriptionManager subscriptionManager;
 

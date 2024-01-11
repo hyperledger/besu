@@ -14,6 +14,11 @@
  */
 package org.hyperledger.besu.crypto;
 
+import static org.hyperledger.besu.crypto.MessageDigestFactory.BLAKE2BF_ALG;
+import static org.hyperledger.besu.crypto.MessageDigestFactory.KECCAK256_ALG;
+import static org.hyperledger.besu.crypto.MessageDigestFactory.RIPEMD160_ALG;
+import static org.hyperledger.besu.crypto.MessageDigestFactory.SHA256_ALG;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.function.Supplier;
@@ -25,13 +30,6 @@ import org.apache.tuweni.bytes.Bytes32;
 /** Various utilities for providing hashes (digests) of arbitrary data. */
 public abstract class Hash {
   private Hash() {}
-
-  /** The constant KECCAK256_ALG. */
-  public static final String KECCAK256_ALG = "KECCAK-256";
-
-  private static final String SHA256_ALG = "SHA-256";
-  private static final String RIPEMD160_ALG = "RIPEMD160";
-  private static final String BLAKE2BF_ALG = "BLAKE2BF";
 
   private static final Supplier<MessageDigest> KECCAK256_SUPPLIER =
       Suppliers.memoize(() -> messageDigest(KECCAK256_ALG));

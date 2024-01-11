@@ -16,11 +16,16 @@
 
 package org.hyperledger.besu.ethereum.api;
 
+import java.util.function.LongSupplier;
+
 import org.immutables.value.Value;
 
 @Value.Immutable
 @Value.Style(allParameters = true)
 public abstract class ApiConfiguration {
+
+  public static final long DEFAULT_LOWER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT = 0L;
+  public static final long DEFAULT_UPPER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT = Long.MAX_VALUE;
 
   @Value.Default
   public long getGasPriceBlocks() {
@@ -33,8 +38,9 @@ public abstract class ApiConfiguration {
   }
 
   @Value.Default
-  public long getGasPriceMin() {
-    return 1_000_000_000L; // 1 GWei
+  @Value.Auxiliary
+  public LongSupplier getGasPriceMinSupplier() {
+    return () -> 1_000_000_000L; // 1 GWei
   }
 
   @Value.Default
@@ -45,5 +51,30 @@ public abstract class ApiConfiguration {
   @Value.Derived
   public double getGasPriceFraction() {
     return getGasPricePercentile() / 100.0;
+  }
+
+  @Value.Default
+  public Long getMaxLogsRange() {
+    return 5000L;
+  }
+
+  @Value.Default
+  public Long getGasCap() {
+    return 0L;
+  }
+
+  @Value.Default
+  public boolean isGasAndPriorityFeeLimitingEnabled() {
+    return false;
+  }
+
+  @Value.Default
+  public Long getLowerBoundGasAndPriorityFeeCoefficient() {
+    return DEFAULT_LOWER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT;
+  }
+
+  @Value.Default
+  public Long getUpperBoundGasAndPriorityFeeCoefficient() {
+    return DEFAULT_UPPER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT;
   }
 }

@@ -36,9 +36,9 @@ dependencies {
   implementation 'io.vertx:vertx-core'
   implementation 'junit:junit'
   implementation 'io.opentelemetry:opentelemetry-api'
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-io'
-  implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.tmio:tuweni-io'
+  implementation 'io.tmio:tuweni-units'
   implementation 'org.assertj:assertj-core'
   implementation 'org.awaitility:awaitility'
   implementation 'org.java-websocket:Java-WebSocket'
@@ -47,4 +47,5 @@ dependencies {
   implementation 'org.web3j:crypto'
 
   implementation 'org.testcontainers:testcontainers'
+  implementation 'org.junit.jupiter:junit-jupiter'
 }

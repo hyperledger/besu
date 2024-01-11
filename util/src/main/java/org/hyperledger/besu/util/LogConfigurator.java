@@ -16,6 +16,8 @@ package org.hyperledger.besu.util;
 
 import java.util.NoSuchElementException;
 
+import org.slf4j.LoggerFactory;
+
 /** The library independent logger configurator util. */
 @SuppressWarnings("CatchAndPrintStackTrace")
 public interface LogConfigurator {
@@ -28,6 +30,8 @@ public interface LogConfigurator {
    */
   static void setLevel(final String parentLogger, final String level) {
     try {
+      // ensure we have at least one log context, to load configs
+      LoggerFactory.getLogger(LogConfigurator.class);
       Log4j2ConfiguratorUtil.setAllLevels(parentLogger, level);
     } catch (NoClassDefFoundError | ClassCastException | NoSuchElementException e) {
       // This is expected when Log4j support is not in the classpath, so ignore

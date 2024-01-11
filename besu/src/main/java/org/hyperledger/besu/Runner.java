@@ -154,6 +154,9 @@ public class Runner implements AutoCloseable {
             waitForServiceToStart(
                 "stratum", server.start().toCompletionStage().toCompletableFuture()));
     autoTransactionLogBloomCachingService.ifPresent(AutoTransactionLogBloomCachingService::start);
+  }
+
+  private void startExternalServicePostMainLoop() {
     ethStatsService.ifPresent(EthStatsService::start);
   }
 
@@ -174,6 +177,9 @@ public class Runner implements AutoCloseable {
       writeBesuPortsToFile();
       writeBesuNetworksToFile();
       writePidFile();
+
+      // start external service that depends on information from main loop
+      startExternalServicePostMainLoop();
     } catch (final Exception ex) {
       LOG.error("unable to start main loop", ex);
       throw new IllegalStateException("Startup failed", ex);
@@ -191,6 +197,7 @@ public class Runner implements AutoCloseable {
         service ->
             waitForServiceToStop(
                 "ipcJsonRpc", service.stop().toCompletionStage().toCompletableFuture()));
+    waitForServiceToStop("Transaction Pool", besuController.getTransactionPool().setDisabled());
     metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));
     ethStatsService.ifPresent(EthStatsService::stop);
     besuController.getMiningCoordinator().stop();

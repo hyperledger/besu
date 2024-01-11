@@ -15,25 +15,43 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
+import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+
+import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
 public class EngineGetPayloadV2 extends AbstractEngineGetPayload {
+
+  private final Optional<ScheduledProtocolSpec.Hardfork> cancun;
 
   public EngineGetPayloadV2(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeMiningCoordinator,
       final BlockResultFactory blockResultFactory,
-      final EngineCallListener engineCallListener) {
-    super(vertx, protocolContext, mergeMiningCoordinator, blockResultFactory, engineCallListener);
+      final EngineCallListener engineCallListener,
+      final ProtocolSchedule schedule) {
+    super(
+        vertx,
+        schedule,
+        protocolContext,
+        mergeMiningCoordinator,
+        blockResultFactory,
+        engineCallListener);
+    this.cancun = schedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
   }
 
   @Override
@@ -43,9 +61,31 @@ public class EngineGetPayloadV2 extends AbstractEngineGetPayload {
 
   @Override
   protected JsonRpcResponse createResponse(
-      final JsonRpcRequestContext request, final BlockWithReceipts blockWithReceipts) {
-    return new JsonRpcSuccessResponse(
-        request.getRequest().getId(),
-        blockResultFactory.payloadTransactionCompleteV2(blockWithReceipts));
+      final JsonRpcRequestContext request,
+      final PayloadIdentifier payloadId,
+      final BlockWithReceipts blockWithReceipts) {
+    final var result = blockResultFactory.payloadTransactionCompleteV2(blockWithReceipts);
+    logProposal(
+        payloadId, blockWithReceipts, Optional.of(Wei.fromHexString(result.getBlockValue())));
+    return new JsonRpcSuccessResponse(request.getRequest().getId(), result);
+  }
+
+  @Override
+  protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
+    if (protocolSchedule.isPresent()) {
+      if (cancun.isPresent() && blockTimestamp >= cancun.get().milestone()) {
+        return ValidationResult.invalid(
+            RpcErrorType.UNSUPPORTED_FORK,
+            "Cancun configured to start at timestamp: "
+                + cancun.get().milestone()
+                + " please call engine_getPayloadV3");
+      } else {
+        return ValidationResult.valid();
+      }
+    } else {
+      return ValidationResult.invalid(
+          RpcErrorType.UNSUPPORTED_FORK,
+          "Configuration error, no schedule for Cancun fork set, not sure when to stop honoring use of V2");
+    }
   }
 }

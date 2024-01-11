@@ -83,7 +83,9 @@ public class EnodeURLImpl implements EnodeURL {
       String message = "";
       if (enodeDnsConfiguration.dnsEnabled() && !enodeDnsConfiguration.updateEnabled()) {
         message =
-            "Invalid IP address (or DNS query resolved an invalid IP). --Xdns-enabled is true but --Xdns-update-enabled flag is false.";
+            String.format(
+                "Invalid IP address '%s' (or DNS query resolved an invalid IP). --Xdns-enabled is true but --Xdns-update-enabled flag is false.",
+                value);
       } else {
         message =
             String.format(
@@ -280,6 +282,24 @@ public class EnodeURLImpl implements EnodeURL {
   @Override
   public int getDiscoveryPortOrZero() {
     return discoveryPort.orElse(0);
+  }
+
+  @Override
+  public String getHost() {
+    final URI uriWithoutDiscoveryPort = toURIWithoutDiscoveryPort();
+    String host = uriWithoutDiscoveryPort.getHost();
+    if (host == null) {
+      host = "";
+      final String uriString = uriWithoutDiscoveryPort.toString();
+      int indexOfAt = uriString.indexOf("@");
+      if (indexOfAt > -1) {
+        int lastIndexOfColon = uriString.lastIndexOf(":");
+        if (lastIndexOfColon > indexOfAt) {
+          host = uriString.substring(indexOfAt + 1, lastIndexOfColon);
+        }
+      }
+    }
+    return host;
   }
 
   @Override

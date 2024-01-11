@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -49,7 +50,11 @@ public class BlockHeaderTestFixture {
   private Hash mixHash = Hash.EMPTY;
   private long nonce = 0;
   private Optional<Hash> withdrawalsRoot = Optional.empty();
+  private Optional<Hash> depositsRoot = Optional.empty();
   private BlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
+  private Optional<BlobGas> excessBlobGas = Optional.empty();
+  private Optional<Long> blobGasUsed = Optional.empty();
+  private Optional<Bytes32> parentBeaconBlockRoot = Optional.empty();
 
   public BlockHeader buildHeader() {
     final BlockHeaderBuilder builder = BlockHeaderBuilder.create();
@@ -71,6 +76,10 @@ public class BlockHeaderTestFixture {
     builder.mixHash(mixHash);
     builder.nonce(nonce);
     withdrawalsRoot.ifPresent(builder::withdrawalsRoot);
+    excessBlobGas.ifPresent(builder::excessBlobGas);
+    blobGasUsed.ifPresent(builder::blobGasUsed);
+    depositsRoot.ifPresent(builder::depositsRoot);
+    parentBeaconBlockRoot.ifPresent(builder::parentBeaconBlockRoot);
     builder.blockHeaderFunctions(blockHeaderFunctions);
 
     return builder.buildBlockHeader();
@@ -166,9 +175,30 @@ public class BlockHeaderTestFixture {
     return this;
   }
 
+  public BlockHeaderTestFixture depositsRoot(final Hash depositsRoot) {
+    this.depositsRoot = Optional.ofNullable(depositsRoot);
+    return this;
+  }
+
+  public BlockHeaderTestFixture excessBlobGas(final BlobGas excessBlobGas) {
+    this.excessBlobGas = Optional.ofNullable(excessBlobGas);
+    return this;
+  }
+
+  public BlockHeaderTestFixture blobGasUsed(final Long blobGasUsed) {
+    this.blobGasUsed = Optional.ofNullable(blobGasUsed);
+    return this;
+  }
+
   public BlockHeaderTestFixture blockHeaderFunctions(
       final BlockHeaderFunctions blockHeaderFunctions) {
     this.blockHeaderFunctions = blockHeaderFunctions;
+    return this;
+  }
+
+  public BlockHeaderTestFixture parentBeaconBlockRoot(
+      final Optional<Bytes32> parentBeaconBlockRoot) {
+    this.parentBeaconBlockRoot = parentBeaconBlockRoot;
     return this;
   }
 }

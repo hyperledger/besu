@@ -29,6 +29,7 @@ jar {
 
 dependencies {
   api 'org.slf4j:slf4j-api'
+  api 'org.web3j:core'
 
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
 
@@ -50,14 +51,16 @@ dependencies {
   annotationProcessor 'com.google.dagger:dagger-compiler'
   implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'io.vertx:vertx-core'
+
   implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.commons:commons-lang3'
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-concurrent'
-  implementation 'org.apache.tuweni:tuweni-units'
-  implementation 'org.apache.tuweni:tuweni-rlp'
+  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.tmio:tuweni-concurrent'
+  implementation 'io.tmio:tuweni-units'
+  implementation 'io.tmio:tuweni-rlp'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
+  implementation 'tech.pegasys:jc-kzg-4844'
 
   implementation 'io.prometheus:simpleclient_guava'
 
@@ -73,20 +76,16 @@ dependencies {
   testImplementation project(':testutil')
   testImplementation project(path: ':plugins:rocksdb')
 
-
-  testImplementation 'junit:junit'
   testImplementation 'org.apache.logging.log4j:log4j-core'
-  testImplementation 'org.apache.tuweni:tuweni-bytes'
-  testImplementation 'org.apache.tuweni:tuweni-io'
-  testImplementation 'org.apache.tuweni:tuweni-units'
+  testImplementation 'io.tmio:tuweni-bytes'
+  testImplementation 'io.tmio:tuweni-io'
+  testImplementation 'io.tmio:tuweni-units'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.junit.jupiter:junit-jupiter-params'
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation 'org.awaitility:awaitility'
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(':testutil')
@@ -95,6 +94,7 @@ dependencies {
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   integrationTestImplementation 'org.mockito:mockito-core'
   integrationTestImplementation 'org.testcontainers:testcontainers'
+  integrationTestImplementation 'io.tmio:tuweni-bytes'
 
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 
@@ -102,7 +102,7 @@ dependencies {
   testSupportImplementation project(':ethereum:eth')
   testSupportImplementation project(':testutil')
 
-  testSupportImplementation 'junit:junit'
+  testSupportImplementation 'org.junit.jupiter:junit-jupiter'
   testSupportImplementation 'org.assertj:assertj-core'
   testSupportImplementation 'org.mockito:mockito-core'
 

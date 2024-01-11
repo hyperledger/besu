@@ -17,10 +17,13 @@
 package org.hyperledger.besu.components;
 
 import org.hyperledger.besu.cli.BesuCommand;
-import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoaderModule;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCacheModule;
+import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoaderModule;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.services.BesuPluginContextImpl;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -34,7 +37,9 @@ import org.slf4j.Logger;
     modules = {
       BesuCommandModule.class,
       MetricsSystemModule.class,
-      CachedMerkleTrieLoaderModule.class
+      CachedMerkleTrieLoaderModule.class,
+      BesuPluginContextModule.class,
+      BlobCacheModule.class
     })
 public interface BesuComponent {
 
@@ -66,4 +71,19 @@ public interface BesuComponent {
    */
   @Named("besuCommandLogger")
   Logger getBesuCommandLogger();
+
+  /**
+   * Besu plugin context for doing plugin service discovery.
+   *
+   * @return BesuPluginContextImpl
+   */
+  @Named("besuPluginContext")
+  BesuPluginContextImpl getBesuPluginContext();
+
+  /**
+   * Cache to store blobs in for re-use after reorgs.
+   *
+   * @return BlobCache
+   */
+  BlobCache getBlobCache();
 }

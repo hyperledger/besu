@@ -3,7 +3,9 @@
   "response": {
     "data": {
       "pending": {
-        "account": null
+        "account": {
+          "balance": "0x0"
+        }
       }
     }
   },

@@ -35,13 +35,16 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import java.util.Collections;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
-public class ContractCreationProcessorTest {
+@Nested
+@ExtendWith(MockitoExtension.class)
+class ContractCreationProcessorTest
+    extends AbstractMessageProcessorTest<ContractCreationProcessor> {
 
   @Mock GasCalculator gasCalculator;
   @Mock EVM evm;
@@ -49,7 +52,7 @@ public class ContractCreationProcessorTest {
   private ContractCreationProcessor processor;
 
   @Test
-  public void shouldThrowAnExceptionWhenCodeContractFormatInvalidPreEOF() {
+  void shouldThrowAnExceptionWhenCodeContractFormatInvalidPreEOF() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -71,7 +74,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void shouldNotThrowAnExceptionWhenCodeContractIsValid() {
+  void shouldNotThrowAnExceptionWhenCodeContractIsValid() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -91,7 +94,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void shouldNotThrowAnExceptionWhenPrefixCodeRuleNotAdded() {
+  void shouldNotThrowAnExceptionWhenPrefixCodeRuleNotAdded() {
     processor =
         new ContractCreationProcessor(
             gasCalculator, evm, true, Collections.emptyList(), 1, Collections.emptyList());
@@ -106,7 +109,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void shouldThrowAnExceptionWhenCodeContractFormatInvalidPostEOF() {
+  void shouldThrowAnExceptionWhenCodeContractFormatInvalidPostEOF() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -128,7 +131,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void eofValidationShouldAllowLegacyCode() {
+  void eofValidationShouldAllowLegacyCode() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -148,7 +151,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void eofValidationShouldAllowEOFCode() {
+  void eofValidationShouldAllowEOFCode() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -159,7 +162,7 @@ public class ContractCreationProcessorTest {
             Collections.emptyList());
     final Bytes contractCode =
         Bytes.fromHexString(
-            "0xEF000101000C020003000b000200080300000000000002020100020100000260016002b00001b00002b101b160005360106000f3");
+            "0xEF000101000C020003000b000200080300000000000002020100020100000260016002e30001e30002e401e460005360106000f3");
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(100L);
@@ -170,7 +173,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void eofValidationShouldPreventLegacyCodeDeployment() {
+  void eofValidationShouldPreventLegacyCodeDeployment() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -182,7 +185,7 @@ public class ContractCreationProcessorTest {
     final Bytes contractCode = Bytes.fromHexString("6030602001");
     final Bytes initCode =
         Bytes.fromHexString(
-            "0xEF000101000C020003000b000200080300000000000002020100020100000260016002b00001b00002b101b160005360106000f3");
+            "0xEF000101000C020003000b000200080300000000000002020100020100000260016002e30001e30002e401e460005360106000f3");
     final MessageFrame messageFrame =
         new TestMessageFrameBuilder().code(CodeFactory.createCode(initCode, 1, true)).build();
     messageFrame.setOutputData(contractCode);
@@ -194,7 +197,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void eofValidationPreventsInvalidEOFCode() {
+  void eofValidationPreventsInvalidEOFCode() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -216,7 +219,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void shouldThrowAnExceptionWhenCodeContractTooLarge() {
+  void shouldThrowAnExceptionWhenCodeContractTooLarge() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -238,8 +241,8 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void shouldThrowAnExceptionWhenDeployingInvalidContract() {
-    EvmSpecVersion evmSpecVersion = EvmSpecVersion.CANCUN;
+  void shouldThrowAnExceptionWhenDeployingInvalidContract() {
+    EvmSpecVersion evmSpecVersion = EvmSpecVersion.FUTURE_EIPS;
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -261,7 +264,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void shouldNotThrowAnExceptionWhenCodeContractTooLarge() {
+  void shouldNotThrowAnExceptionWhenCodeContractTooLarge() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -281,7 +284,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void shouldNotThrowAnExceptionWhenCodeSizeRuleNotAdded() {
+  void shouldNotThrowAnExceptionWhenCodeSizeRuleNotAdded() {
     processor =
         new ContractCreationProcessor(
             gasCalculator, evm, true, Collections.emptyList(), 1, Collections.emptyList());
@@ -293,5 +296,11 @@ public class ContractCreationProcessorTest {
     when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
+  }
+
+  @Override
+  protected ContractCreationProcessor getAbstractMessageProcessor() {
+    return new ContractCreationProcessor(
+        gasCalculator, evm, true, Collections.emptyList(), 1, Collections.emptyList());
   }
 }

@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.worldstate;
 import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -27,13 +29,22 @@ public interface WorldStateStorage {
 
   Optional<Bytes> getCode(Bytes32 codeHash, Hash accountHash);
 
-  Optional<Bytes> getAccountTrieNodeData(Bytes location, Bytes32 hash);
-
   Optional<Bytes> getAccountStateTrieNode(Bytes location, Bytes32 nodeHash);
 
   Optional<Bytes> getAccountStorageTrieNode(Hash accountHash, Bytes location, Bytes32 nodeHash);
 
+  /**
+   * This method allows obtaining a TrieNode in an unsafe manner, without verifying the consistency
+   * of the obtained node. Checks such as node hash verification are not performed here.
+   *
+   * @param key of the trie node
+   * @return value of the trie node
+   */
+  Optional<Bytes> getTrieNodeUnsafe(Bytes key);
+
   Optional<Bytes> getNodeData(Bytes location, Bytes32 hash);
+
+  FlatDbMode getFlatDbMode();
 
   boolean isWorldStateAvailable(Bytes32 rootHash, Hash blockHash);
 
@@ -41,6 +52,35 @@ public interface WorldStateStorage {
     // we don't have location info
     return getNodeData(null, hash).isPresent();
   }
+
+  /**
+   * Streams flat accounts within a specified range.
+   *
+   * @param startKeyHash The start key hash of the range.
+   * @param endKeyHash The end key hash of the range.
+   * @param max The maximum number of entries to stream.
+   * @return A map of flat accounts. (Empty map in this default implementation)
+   */
+  default Map<Bytes32, Bytes> streamFlatAccounts(
+      final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
+    return Collections.emptyMap();
+  }
+
+  /**
+   * Streams flat storages within a specified range.
+   *
+   * @param accountHash The account hash.
+   * @param startKeyHash The start key hash of the range.
+   * @param endKeyHash The end key hash of the range.
+   * @param max The maximum number of entries to stream.
+   * @return A map of flat storages. (Empty map in this default implementation)
+   */
+  default Map<Bytes32, Bytes> streamFlatStorages(
+      final Hash accountHash, final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
+    return Collections.emptyMap();
+  }
+
+  DataStorageFormat getDataStorageFormat();
 
   void clear();
 

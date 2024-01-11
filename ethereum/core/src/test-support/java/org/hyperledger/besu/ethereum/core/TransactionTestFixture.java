@@ -15,11 +15,15 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobsWithCommitments;
+import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -30,7 +34,7 @@ public class TransactionTestFixture {
 
   private long nonce = 0;
 
-  private Wei gasPrice = Wei.of(5000);
+  private Optional<Wei> gasPrice = Optional.empty();
 
   private long gasLimit = 5000;
 
@@ -45,7 +49,12 @@ public class TransactionTestFixture {
 
   private Optional<Wei> maxPriorityFeePerGas = Optional.empty();
   private Optional<Wei> maxFeePerGas = Optional.empty();
+  private Optional<Wei> maxFeePerBlobGas = Optional.empty();
 
+  private Optional<List<AccessListEntry>> accessListEntries = Optional.empty();
+  private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
+
+  private Optional<BlobsWithCommitments> blobs = Optional.empty();
   private Optional<BigInteger> v = Optional.empty();
 
   public Transaction createTransaction(final KeyPair keys) {
@@ -53,18 +62,40 @@ public class TransactionTestFixture {
     builder
         .type(transactionType)
         .gasLimit(gasLimit)
-        .gasPrice(gasPrice)
         .nonce(nonce)
         .payload(payload)
         .value(value)
         .sender(sender);
 
+    switch (transactionType) {
+      case FRONTIER:
+        builder.gasPrice(gasPrice.orElse(Wei.of(5000)));
+        break;
+      case ACCESS_LIST:
+        builder.gasPrice(gasPrice.orElse(Wei.of(5000)));
+        builder.accessList(accessListEntries.orElse(List.of()));
+        break;
+      case EIP1559:
+        builder.maxPriorityFeePerGas(maxPriorityFeePerGas.orElse(Wei.of(500)));
+        builder.maxFeePerGas(maxFeePerGas.orElse(Wei.of(5000)));
+        builder.accessList(accessListEntries.orElse(List.of()));
+        break;
+      case BLOB:
+        builder.maxPriorityFeePerGas(maxPriorityFeePerGas.orElse(Wei.of(500)));
+        builder.maxFeePerGas(maxFeePerGas.orElse(Wei.of(5000)));
+        builder.accessList(accessListEntries.orElse(List.of()));
+        builder.maxFeePerBlobGas(maxFeePerBlobGas.orElse(Wei.ONE));
+        if (blobs.isPresent()) {
+          builder.kzgBlobs(
+              blobs.get().getKzgCommitments(), blobs.get().getBlobs(), blobs.get().getKzgProofs());
+        } else if (versionedHashes.isPresent()) {
+          builder.versionedHashes(versionedHashes.get());
+        }
+        break;
+    }
+
     to.ifPresent(builder::to);
     chainId.ifPresent(builder::chainId);
-
-    maxPriorityFeePerGas.ifPresent(builder::maxPriorityFeePerGas);
-    maxFeePerGas.ifPresent(builder::maxFeePerGas);
-
     v.ifPresent(builder::v);
 
     return builder.signAndBuild(keys);
@@ -81,7 +112,7 @@ public class TransactionTestFixture {
   }
 
   public TransactionTestFixture gasPrice(final Wei gasPrice) {
-    this.gasPrice = gasPrice;
+    this.gasPrice = Optional.ofNullable(gasPrice);
     return this;
   }
 
@@ -125,8 +156,29 @@ public class TransactionTestFixture {
     return this;
   }
 
+  public TransactionTestFixture maxFeePerBlobGas(final Optional<Wei> maxFeePerBlobGas) {
+    this.maxFeePerBlobGas = maxFeePerBlobGas;
+    return this;
+  }
+
+  public TransactionTestFixture accessList(final List<AccessListEntry> accessListEntries) {
+    this.accessListEntries = Optional.ofNullable(accessListEntries);
+    return this;
+  }
+
+  public TransactionTestFixture versionedHashes(
+      final Optional<List<VersionedHash>> versionedHashes) {
+    this.versionedHashes = versionedHashes;
+    return this;
+  }
+
   public TransactionTestFixture v(final Optional<BigInteger> v) {
     this.v = v;
+    return this;
+  }
+
+  public TransactionTestFixture blobsWithCommitments(final Optional<BlobsWithCommitments> blobs) {
+    this.blobs = blobs;
     return this;
   }
 }

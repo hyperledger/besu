@@ -18,7 +18,6 @@ import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toUnmodifiableList;
 
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -64,7 +63,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
    */
   private final NavigableSet<PendingTransaction> prioritizedTransactionsStaticRange =
       new TreeSet<>(
-          comparing(PendingTransaction::isReceivedFromLocalSource)
+          comparing(PendingTransaction::hasPriority)
               .thenComparing(
                   pendingTx ->
                       pendingTx
@@ -74,13 +73,12 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                           .orElse(Wei.ZERO)
                           .getAsBigInteger()
                           .longValue())
-              .thenComparing(PendingTransaction::getAddedToPoolAt)
-              .thenComparing(PendingTransaction::getSequence)
+              .thenComparing(PendingTransaction::getSequence, Comparator.reverseOrder())
               .reversed());
 
   private final NavigableSet<PendingTransaction> prioritizedTransactionsDynamicRange =
       new TreeSet<>(
-          comparing(PendingTransaction::isReceivedFromLocalSource)
+          comparing(PendingTransaction::hasPriority)
               .thenComparing(
                   pendingTx ->
                       pendingTx
@@ -88,8 +86,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                           .getMaxFeePerGas()
                           .map(maxFeePerGas -> maxFeePerGas.getAsBigInteger().longValue())
                           .orElse(pendingTx.getGasPrice().toLong()))
-              .thenComparing(PendingTransaction::getAddedToPoolAt)
-              .thenComparing(PendingTransaction::getSequence)
+              .thenComparing(PendingTransaction::getSequence, Comparator.reverseOrder())
               .reversed());
 
   @Override
@@ -100,8 +97,8 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
   }
 
   @Override
-  public void manageBlockAdded(final Block block) {
-    block.getHeader().getBaseFee().ifPresent(this::updateBaseFee);
+  public void manageBlockAdded(final BlockHeader blockHeader) {
+    blockHeader.getBaseFee().ifPresent(this::updateBaseFee);
   }
 
   @Override

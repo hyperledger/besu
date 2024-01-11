@@ -88,7 +88,7 @@ public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
 
   private <T> Set<T> createTransactionsSet() {
     return Collections.newSetFromMap(
-        new LinkedHashMap<T, Boolean>(1 << 4, 0.75f, true) {
+        new LinkedHashMap<>(1 << 4, 0.75f, true) {
           @Override
           protected boolean removeEldestEntry(final Map.Entry<T, Boolean> eldest) {
             return size() > MAX_TRACKED_SEEN_TRANSACTIONS;

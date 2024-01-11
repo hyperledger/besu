@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages;
 
+import static org.hyperledger.besu.ethereum.rlp.RLP.EMPTY_LIST;
+
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -23,11 +25,16 @@ abstract class EmptyMessage implements MessageData {
 
   @Override
   public final int getSize() {
-    return 0;
+    return EMPTY_LIST.size();
   }
 
   @Override
   public Bytes getData() {
-    return Bytes.EMPTY;
+    return EMPTY_LIST;
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "{ code=" + getCode() + ", size=0}";
   }
 }

@@ -25,9 +25,25 @@ public interface ScheduledProtocolSpec {
 
   boolean isOnMilestoneBoundary(ProcessableBlockHeader header);
 
-  long milestone();
+  Hardfork fork();
 
   ProtocolSpec spec();
+
+  public record Hardfork(String name, long milestone) implements Comparable<Hardfork> {
+    @Override
+    public int compareTo(final Hardfork h) {
+      if (h == null) { // all non-null hardforks are greater than null
+        return 1;
+      }
+      return this.milestone == h.milestone ? 0 : this.milestone < h.milestone ? -1 : 1;
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%s:%d", name, milestone);
+    }
+  }
+  ;
 
   class TimestampProtocolSpec implements ScheduledProtocolSpec {
 
@@ -46,7 +62,7 @@ public interface ScheduledProtocolSpec {
 
     @Override
     public boolean isOnOrAfterMilestoneBoundary(final ProcessableBlockHeader header) {
-      return header.getTimestamp() >= timestamp;
+      return Long.compareUnsigned(header.getTimestamp(), timestamp) >= 0;
     }
 
     @Override
@@ -55,8 +71,8 @@ public interface ScheduledProtocolSpec {
     }
 
     @Override
-    public long milestone() {
-      return timestamp;
+    public Hardfork fork() {
+      return new Hardfork(protocolSpec.getName(), timestamp);
     }
 
     @Override
@@ -90,8 +106,8 @@ public interface ScheduledProtocolSpec {
     }
 
     @Override
-    public long milestone() {
-      return blockNumber;
+    public Hardfork fork() {
+      return new Hardfork(protocolSpec.getName(), blockNumber);
     }
 
     @Override

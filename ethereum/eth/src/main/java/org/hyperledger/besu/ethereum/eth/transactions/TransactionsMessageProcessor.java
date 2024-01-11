@@ -22,10 +22,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.metrics.RunnableCounter;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -38,40 +34,20 @@ import org.slf4j.LoggerFactory;
 
 class TransactionsMessageProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionsMessageProcessor.class);
-  private static final int SKIPPED_MESSAGES_LOGGING_THRESHOLD = 1000;
-  private static final String TRANSACTIONS = "transactions";
-
+  static final String METRIC_LABEL = "transactions";
   private final PeerTransactionTracker transactionTracker;
   private final TransactionPool transactionPool;
-  private final Counter totalSkippedTransactionsMessageCounter;
-  private final Counter alreadySeenTransactionsCounter;
+
+  private final TransactionPoolMetrics metrics;
 
   public TransactionsMessageProcessor(
       final PeerTransactionTracker transactionTracker,
       final TransactionPool transactionPool,
-      final MetricsSystem metricsSystem) {
+      final TransactionPoolMetrics metrics) {
     this.transactionTracker = transactionTracker;
     this.transactionPool = transactionPool;
-    this.totalSkippedTransactionsMessageCounter =
-        new RunnableCounter(
-            metricsSystem.createCounter(
-                BesuMetricCategory.TRANSACTION_POOL,
-                "transactions_messages_skipped_total",
-                "Total number of transactions messages skipped by the processor."),
-            () ->
-                LOG.warn(
-                    "{} expired transaction messages have been skipped.",
-                    SKIPPED_MESSAGES_LOGGING_THRESHOLD),
-            SKIPPED_MESSAGES_LOGGING_THRESHOLD);
-
-    alreadySeenTransactionsCounter =
-        metricsSystem
-            .createLabelledCounter(
-                BesuMetricCategory.TRANSACTION_POOL,
-                "remote_already_seen_total",
-                "Total number of received transactions already seen",
-                "source")
-            .labels(TRANSACTIONS);
+    this.metrics = metrics;
+    metrics.initExpiredMessagesCounter(METRIC_LABEL);
   }
 
   void processTransactionsMessage(
@@ -83,7 +59,7 @@ class TransactionsMessageProcessor {
     if (startedAt.plus(keepAlive).isAfter(now())) {
       this.processTransactionsMessage(peer, transactionsMessage);
     } else {
-      totalSkippedTransactionsMessageCounter.inc();
+      metrics.incrementExpiredMessages(METRIC_LABEL);
     }
   }
 
@@ -95,8 +71,8 @@ class TransactionsMessageProcessor {
 
       transactionTracker.markTransactionsAsSeen(peer, incomingTransactions);
 
-      alreadySeenTransactionsCounter.inc(
-          (long) incomingTransactions.size() - freshTransactions.size());
+      metrics.incrementAlreadySeenTransactions(
+          METRIC_LABEL, incomingTransactions.size() - freshTransactions.size());
       LOG.atTrace()
           .setMessage(
               "Received transactions message from {}, incoming transactions {}, incoming list {}"

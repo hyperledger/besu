@@ -62,6 +62,7 @@ public class PayloadIdentifier implements Quantity {
    * @param prevRandao the prev randao
    * @param feeRecipient the fee recipient
    * @param withdrawals the withdrawals
+   * @param parentBeaconBlockRoot the parent beacon block root
    * @return the payload identifier
    */
   public static PayloadIdentifier forPayloadParams(
@@ -69,7 +70,8 @@ public class PayloadIdentifier implements Quantity {
       final Long timestamp,
       final Bytes32 prevRandao,
       final Address feeRecipient,
-      final Optional<List<Withdrawal>> withdrawals) {
+      final Optional<List<Withdrawal>> withdrawals,
+      final Optional<Bytes32> parentBeaconBlockRoot) {
 
     return new PayloadIdentifier(
         timestamp
@@ -84,7 +86,8 @@ public class PayloadIdentifier implements Quantity {
                                 .sorted(Comparator.comparing(Withdrawal::getIndex))
                                 .map(Withdrawal::hashCode)
                                 .reduce(1, (a, b) -> a ^ (b * 31)))
-                    .orElse(0));
+                    .orElse(0)
+            ^ ((long) parentBeaconBlockRoot.hashCode()) << 40);
   }
 
   @Override

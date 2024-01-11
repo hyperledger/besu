@@ -29,10 +29,13 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
 
   private static final Logger LOG = LoggerFactory.getLogger(ApiHandler.class);
+  private static final Marker P2P_MESSAGE_MARKER = MarkerFactory.getMarker("P2PMSG");
 
   private final CapabilityMultiplexer multiplexer;
   private final AtomicBoolean waitingForPong;
@@ -96,6 +99,16 @@ final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
       }
       return;
     }
+    LOG.atTrace()
+        .addMarker(P2P_MESSAGE_MARKER)
+        .setMessage("Received {} from {} via protocol {}")
+        .addArgument(message)
+        .addArgument(connection.getPeerInfo())
+        .addArgument(demultiplexed.getCapability())
+        .addKeyValue("rawData", message.getData())
+        .addKeyValue("decodedData", message::toStringDecoded)
+        .log();
+
     connectionEventDispatcher.dispatchMessage(demultiplexed.getCapability(), connection, message);
   }
 

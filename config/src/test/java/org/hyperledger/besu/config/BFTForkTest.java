@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BFTForkTest {
   private final String BENEFICIARY = "0x1111111111111111111111111111111111111111";

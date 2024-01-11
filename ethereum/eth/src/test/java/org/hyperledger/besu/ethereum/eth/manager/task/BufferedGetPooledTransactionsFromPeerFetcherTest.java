@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 
 import java.util.List;
@@ -40,13 +41,16 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import io.netty.util.concurrent.ScheduledFuture;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BufferedGetPooledTransactionsFromPeerFetcherTest {
 
   @Mock EthPeer ethPeer;
@@ -60,7 +64,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
   private StubMetricsSystem metricsSystem;
   private PeerTransactionTracker transactionTracker;
 
-  @Before
+  @BeforeEach
   public void setup() {
     metricsSystem = new StubMetricsSystem();
     transactionTracker = new PeerTransactionTracker();
@@ -68,7 +72,13 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
     ScheduledFuture<?> mock = mock(ScheduledFuture.class);
     fetcher =
         new BufferedGetPooledTransactionsFromPeerFetcher(
-            ethContext, mock, ethPeer, transactionPool, transactionTracker, metricsSystem);
+            ethContext,
+            mock,
+            ethPeer,
+            transactionPool,
+            transactionTracker,
+            new TransactionPoolMetrics(metricsSystem),
+            "new_pooled_transaction_hashes");
   }
 
   @Test
@@ -123,6 +133,9 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
 
     verifyNoInteractions(ethScheduler);
     verify(transactionPool, never()).addRemoteTransactions(List.of(transaction));
-    assertThat(metricsSystem.getCounterValue("remote_already_seen_total", "hashes")).isEqualTo(1);
+    assertThat(
+            metricsSystem.getCounterValue(
+                "remote_transactions_already_seen_total", "new_pooled_transaction_hashes"))
+        .isEqualTo(1);
   }
 }

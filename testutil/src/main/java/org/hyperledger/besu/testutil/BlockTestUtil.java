@@ -32,8 +32,14 @@ import com.google.common.io.Resources;
 /** The Block test util. */
 public final class BlockTestUtil {
 
+  private BlockTestUtil() {
+    throw new RuntimeException("Utility Class");
+  }
+
   private static final Supplier<ChainResources> testChainSupplier =
       Suppliers.memoize(BlockTestUtil::supplyTestChainResources);
+  private static final Supplier<ChainResources> hiveTestChainSupplier =
+      Suppliers.memoize(BlockTestUtil::supplyHiveTestChainResources);
   private static final Supplier<ChainResources> testChainLondonSupplier =
       Suppliers.memoize(BlockTestUtil::supplyTestChainLondonResources);
   private static final Supplier<ChainResources> mainnetChainSupplier =
@@ -93,6 +99,15 @@ public final class BlockTestUtil {
   }
 
   /**
+   * Gets test chain resources for hive tests.
+   *
+   * @return the test chain resources
+   */
+  public static ChainResources getHiveTestChainResources() {
+    return hiveTestChainSupplier.get();
+  }
+
+  /**
    * Gets test chain london resources.
    *
    * @return the test chain london resources
@@ -145,6 +160,15 @@ public final class BlockTestUtil {
         ensureFileUrl(BlockTestUtil.class.getClassLoader().getResource("testGenesis.json"));
     final URL blocksURL =
         ensureFileUrl(BlockTestUtil.class.getClassLoader().getResource("testBlockchain.blocks"));
+    return new ChainResources(genesisURL, blocksURL);
+  }
+
+  private static ChainResources supplyHiveTestChainResources() {
+    final URL genesisURL =
+        ensureFileUrl(BlockTestUtil.class.getClassLoader().getResource("hive/testGenesis.json"));
+    final URL blocksURL =
+        ensureFileUrl(
+            BlockTestUtil.class.getClassLoader().getResource("hive/testBlockchain.blocks"));
     return new ChainResources(genesisURL, blocksURL);
   }
 

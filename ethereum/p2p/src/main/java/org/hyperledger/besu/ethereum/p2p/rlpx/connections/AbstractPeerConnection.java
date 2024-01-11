@@ -35,10 +35,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 public abstract class AbstractPeerConnection implements PeerConnection {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractPeerConnection.class);
-
+  private static final Marker P2P_MESSAGE_MARKER = MarkerFactory.getMarker("P2PMSG");
   private final Peer peer;
   private final PeerInfo peerInfo;
   private final InetSocketAddress localAddress;
@@ -49,6 +51,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   private final Set<Capability> agreedCapabilities;
   private final Map<String, Capability> protocolToCapability = new HashMap<>();
   private final AtomicBoolean disconnected = new AtomicBoolean(false);
+  private final AtomicBoolean terminatedImmediately = new AtomicBoolean(false);
   protected final PeerConnectionEventDispatcher connectionEventDispatcher;
   private final LabelledMetric<Counter> outboundMessagesCounter;
   private final long initiatedAt;
@@ -82,7 +85,11 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     this.inboundInitiated = inboundInitiated;
     this.initiatedAt = System.currentTimeMillis();
 
-    LOG.debug("New PeerConnection ({}) established with peer {}", this, peer.getId());
+    LOG.atDebug()
+        .setMessage("New PeerConnection ({}) established with peer {}...")
+        .addArgument(this)
+        .addArgument(peer.getId().slice(0, 16))
+        .log();
   }
 
   @Override
@@ -120,7 +127,15 @@ public abstract class AbstractPeerConnection implements PeerConnection {
           .inc();
     }
 
-    LOG.trace("Writing {} to {} via protocol {}", message, peerInfo, capability);
+    LOG.atTrace()
+        .addMarker(P2P_MESSAGE_MARKER)
+        .setMessage("Writing {} to {} via protocol {}")
+        .addArgument(message)
+        .addArgument(peerInfo)
+        .addArgument(capability)
+        .addKeyValue("rawData", message.getData())
+        .addKeyValue("decodedData", message::toStringDecoded)
+        .log();
     doSendMessage(capability, message);
   }
 
@@ -148,13 +163,19 @@ public abstract class AbstractPeerConnection implements PeerConnection {
 
   @Override
   public void terminateConnection(final DisconnectReason reason, final boolean peerInitiated) {
-    if (disconnected.compareAndSet(false, true)) {
-      connectionEventDispatcher.dispatchDisconnect(this, reason, peerInitiated);
+    if (terminatedImmediately.compareAndSet(false, true)) {
+      if (disconnected.compareAndSet(false, true)) {
+        connectionEventDispatcher.dispatchDisconnect(this, reason, peerInitiated);
+      }
+      // Always ensure the context gets closed immediately even if we previously sent a disconnect
+      // message and are waiting to close.
+      closeConnectionImmediately();
+      LOG.atTrace()
+          .setMessage("Terminating connection {}, reason {}")
+          .addArgument(this)
+          .addArgument(reason)
+          .log();
     }
-    // Always ensure the context gets closed immediately even if we previously sent a disconnect
-    // message and are waiting to close.
-    closeConnectionImmediately();
-    LOG.debug("Terminating connection {}, reason {}", this, reason);
   }
 
   protected abstract void closeConnectionImmediately();
@@ -166,7 +187,12 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     if (disconnected.compareAndSet(false, true)) {
       connectionEventDispatcher.dispatchDisconnect(this, reason, false);
       doSend(null, DisconnectMessage.create(reason));
-      LOG.debug("Disconnecting connection {}, reason {}", System.identityHashCode(this), reason);
+      LOG.atDebug()
+          .setMessage("Disconnecting connection {}, peer {}... reason {}")
+          .addArgument(this.hashCode())
+          .addArgument(peer.getId().slice(0, 16))
+          .addArgument(reason)
+          .log();
       closeConnection();
     }
   }
@@ -233,9 +259,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   public String toString() {
     return "[Connection with hashCode "
         + hashCode()
-        + " with peer "
-        + this.peer.getId()
-        + " inboundInitiated "
+        + " inboundInitiated? "
         + inboundInitiated
         + " initAt "
         + initiatedAt

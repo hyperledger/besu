@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BlockParameterTest {
   @Test
@@ -105,6 +105,34 @@ public class BlockParameterTest {
     final BlockParameter blockParameter = new BlockParameter(5);
     assertThat(blockParameter.getNumber()).isPresent();
     assertThat(blockParameter.getNumber().get()).isEqualTo(5L);
+
+    assertThat(blockParameter.isNumeric()).isTrue();
+    assertThat(blockParameter.isEarliest()).isFalse();
+    assertThat(blockParameter.isFinalized()).isFalse();
+    assertThat(blockParameter.isLatest()).isFalse();
+    assertThat(blockParameter.isPending()).isFalse();
+    assertThat(blockParameter.isSafe()).isFalse();
+  }
+
+  @Test
+  public void numberStringShouldReturnLongNumberValue() {
+    final BlockParameter blockParameter = new BlockParameter("55");
+    assertThat(blockParameter.getNumber()).isPresent();
+    assertThat(blockParameter.getNumber().get()).isEqualTo(55L);
+
+    assertThat(blockParameter.isNumeric()).isTrue();
+    assertThat(blockParameter.isEarliest()).isFalse();
+    assertThat(blockParameter.isFinalized()).isFalse();
+    assertThat(blockParameter.isLatest()).isFalse();
+    assertThat(blockParameter.isPending()).isFalse();
+    assertThat(blockParameter.isSafe()).isFalse();
+  }
+
+  @Test
+  public void hexShouldReturnLongNumberValue() {
+    final BlockParameter blockParameter = new BlockParameter("0x55");
+    assertThat(blockParameter.getNumber()).isPresent();
+    assertThat(blockParameter.getNumber().get()).isEqualTo(85L);
 
     assertThat(blockParameter.isNumeric()).isTrue();
     assertThat(blockParameter.isEarliest()).isFalse();

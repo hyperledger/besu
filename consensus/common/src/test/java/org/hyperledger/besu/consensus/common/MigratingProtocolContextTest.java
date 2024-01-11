@@ -23,8 +23,9 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.List;
+import java.util.Optional;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 public class MigratingProtocolContextTest {
@@ -43,7 +44,8 @@ public class MigratingProtocolContextTest {
     final ForksSchedule<ConsensusContext> contextSchedule =
         new ForksSchedule<>(List.of(new ForkSpec<>(0L, context1), new ForkSpec<>(10L, context2)));
     final MigratingProtocolContext migratingProtocolContext =
-        new MigratingProtocolContext(blockchain, worldStateArchive, contextSchedule);
+        new MigratingProtocolContext(
+            blockchain, worldStateArchive, contextSchedule, Optional.empty());
 
     assertThat(migratingProtocolContext.getConsensusContext(ConsensusContext.class))
         .isSameAs(context1);

@@ -16,14 +16,12 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.PeerMessageTaskTest;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -40,18 +38,16 @@ public class GetPooledTransactionsFromPeerTaskTest extends PeerMessageTaskTest<L
 
   @Override
   protected List<Transaction> generateDataToBeRequested() {
-
-    final List<Transaction> requestedData = new ArrayList<>();
-    KeyPair keyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
+    final List<Transaction> requestedData = new ArrayList<>(3);
     for (int i = 0; i < 3; i++) {
       Transaction tx =
           new TransactionTestFixture()
-              .nonce(i)
+              .nonce(genesisAccountNonce + i)
+              .gasPrice(Wei.of(2000))
               .gasLimit(100000)
               .chainId(Optional.empty())
-              .createTransaction(keyPair);
-      assertThat(transactionPool.getPendingTransactions().addLocalTransaction(tx, Optional.empty()))
-          .isEqualTo(TransactionAddedStatus.ADDED);
+              .createTransaction(genesisAccountKeyPair);
+      assertThat(transactionPool.addTransactionViaApi(tx).isValid()).isTrue();
       requestedData.add(tx);
     }
     return requestedData;

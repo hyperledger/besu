@@ -21,30 +21,31 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EthSendRawTransactionTest {
 
   private static final String VALID_TRANSACTION =
       "0xf86d0485174876e800830222e0945aae326516b4f8fe08074b7e972e40a713048d62880de0b6b3a7640000801ba05d4e7998757264daab67df2ce6f7e7a0ae36910778a406ca73898c9899a32b9ea0674700d5c3d1d27f2e6b4469957dfd1a1c49bf92383d80717afc84eb05695d5b";
+
   @Mock private TransactionPool transactionPool;
   private EthSendRawTransaction method;
 
-  @Before
+  @BeforeEach
   public void before() {
     method = new EthSendRawTransaction(transactionPool);
   }
@@ -56,7 +57,7 @@ public class EthSendRawTransactionTest {
             new JsonRpcRequest("2.0", "eth_sendRawTransaction", new String[] {}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -69,7 +70,7 @@ public class EthSendRawTransactionTest {
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "eth_sendRawTransaction", null));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -83,7 +84,7 @@ public class EthSendRawTransactionTest {
             new JsonRpcRequest("2.0", "eth_sendRawTransaction", new String[] {null}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -99,7 +100,7 @@ public class EthSendRawTransactionTest {
             new JsonRpcRequest("2.0", "eth_sendRawTransaction", new String[] {rawTransaction}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -108,7 +109,7 @@ public class EthSendRawTransactionTest {
 
   @Test
   public void validTransactionIsSentToTransactionPool() {
-    when(transactionPool.addLocalTransaction(any(Transaction.class)))
+    when(transactionPool.addTransactionViaApi(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
 
     final JsonRpcRequestContext request =
@@ -123,62 +124,68 @@ public class EthSendRawTransactionTest {
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionPool).addLocalTransaction(any(Transaction.class));
+    verify(transactionPool).addTransactionViaApi(any(Transaction.class));
   }
 
   @Test
   public void transactionWithNonceBelowAccountNonceIsRejected() {
     verifyErrorForInvalidTransaction(
-        TransactionInvalidReason.NONCE_TOO_LOW, JsonRpcError.NONCE_TOO_LOW);
+        TransactionInvalidReason.NONCE_TOO_LOW, RpcErrorType.NONCE_TOO_LOW);
   }
 
   @Test
   public void transactionWithNonceAboveAccountNonceIsRejected() {
     verifyErrorForInvalidTransaction(
-        TransactionInvalidReason.NONCE_TOO_HIGH, JsonRpcError.NONCE_TOO_HIGH);
+        TransactionInvalidReason.NONCE_TOO_HIGH, RpcErrorType.NONCE_TOO_HIGH);
   }
 
   @Test
   public void transactionWithInvalidSignatureIsRejected() {
     verifyErrorForInvalidTransaction(
-        TransactionInvalidReason.INVALID_SIGNATURE, JsonRpcError.INVALID_TRANSACTION_SIGNATURE);
+        TransactionInvalidReason.INVALID_SIGNATURE, RpcErrorType.INVALID_TRANSACTION_SIGNATURE);
   }
 
   @Test
   public void transactionWithIntrinsicGasExceedingGasLimitIsRejected() {
     verifyErrorForInvalidTransaction(
         TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
-        JsonRpcError.INTRINSIC_GAS_EXCEEDS_LIMIT);
+        RpcErrorType.INTRINSIC_GAS_EXCEEDS_LIMIT);
   }
 
   @Test
   public void transactionWithUpfrontGasExceedingAccountBalanceIsRejected() {
     verifyErrorForInvalidTransaction(
         TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
-        JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
+        RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
   }
 
   @Test
   public void transactionWithGasLimitExceedingBlockGasLimitIsRejected() {
     verifyErrorForInvalidTransaction(
-        TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT, JsonRpcError.EXCEEDS_BLOCK_GAS_LIMIT);
+        TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT, RpcErrorType.EXCEEDS_BLOCK_GAS_LIMIT);
   }
 
   @Test
   public void transactionWithNotWhitelistedSenderAccountIsRejected() {
     verifyErrorForInvalidTransaction(
-        TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED, JsonRpcError.TX_SENDER_NOT_AUTHORIZED);
+        TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED, RpcErrorType.TX_SENDER_NOT_AUTHORIZED);
+  }
+
+  @Test
+  public void transactionWithIncorrectTransactionTypeIsRejected() {
+    verifyErrorForInvalidTransaction(
+        TransactionInvalidReason.INVALID_TRANSACTION_FORMAT, RpcErrorType.INVALID_TRANSACTION_TYPE);
   }
 
   @Test
   public void transactionWithFeeCapExceededIsRejected() {
     verifyErrorForInvalidTransaction(
-        TransactionInvalidReason.TX_FEECAP_EXCEEDED, JsonRpcError.TX_FEECAP_EXCEEDED);
+        TransactionInvalidReason.TX_FEECAP_EXCEEDED, RpcErrorType.TX_FEECAP_EXCEEDED);
   }
 
   private void verifyErrorForInvalidTransaction(
-      final TransactionInvalidReason transactionInvalidReason, final JsonRpcError expectedError) {
-    when(transactionPool.addLocalTransaction(any(Transaction.class)))
+      final TransactionInvalidReason transactionInvalidReason, final RpcErrorType expectedError) {
+    when(transactionPool.addTransactionViaApi(any(Transaction.class)))
         .thenReturn(ValidationResult.invalid(transactionInvalidReason));
 
     final JsonRpcRequestContext request =
@@ -191,7 +198,7 @@ public class EthSendRawTransactionTest {
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionPool).addLocalTransaction(any(Transaction.class));
+    verify(transactionPool).addTransactionViaApi(any(Transaction.class));
   }
 
   @Test

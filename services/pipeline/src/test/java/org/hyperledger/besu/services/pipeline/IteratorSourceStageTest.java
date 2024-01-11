@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.metrics.noop.NoOpMetricsSystem.NO_OP_COUNTER;
 
 import com.google.common.collect.Iterators;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class IteratorSourceStageTest {
 

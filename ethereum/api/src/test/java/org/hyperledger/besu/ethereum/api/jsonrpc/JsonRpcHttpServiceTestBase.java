@@ -20,6 +20,7 @@ import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -29,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -45,6 +47,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
 
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -59,13 +62,13 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
-import org.junit.AfterClass;
-import org.junit.ClassRule;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.io.TempDir;
 
 public class JsonRpcHttpServiceTestBase {
 
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+  // this tempDir is deliberately static
+  @TempDir private static Path folder;
   protected final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
 
   private static final Vertx vertx = Vertx.vertx();
@@ -118,6 +121,7 @@ public class JsonRpcHttpServiceTestBase {
                     mock(ProtocolContext.class),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
+                    mock(MiningParameters.class),
                     mock(PoWMiningCoordinator.class),
                     new NoOpMetricsSystem(),
                     supportedCapabilities,
@@ -130,9 +134,10 @@ public class JsonRpcHttpServiceTestBase {
                     mock(MetricsConfiguration.class),
                     natService,
                     new HashMap<>(),
-                    folder.getRoot().toPath(),
+                    folder,
                     ethPeersMock,
                     vertx,
+                    mock(ApiConfiguration.class),
                     Optional.empty()));
     service = createJsonRpcHttpService(createLimitedJsonRpcConfig());
     service.start().join();
@@ -146,7 +151,7 @@ public class JsonRpcHttpServiceTestBase {
       throws Exception {
     return new JsonRpcHttpService(
         vertx,
-        folder.newFolder().toPath(),
+        folder,
         config,
         new NoOpMetricsSystem(),
         natService,
@@ -158,7 +163,7 @@ public class JsonRpcHttpServiceTestBase {
   protected static JsonRpcHttpService createJsonRpcHttpService() throws Exception {
     return new JsonRpcHttpService(
         vertx,
-        folder.newFolder().toPath(),
+        folder,
         createLimitedJsonRpcConfig(),
         new NoOpMetricsSystem(),
         natService,
@@ -185,7 +190,7 @@ public class JsonRpcHttpServiceTestBase {
   }
 
   /** Tears down the HTTP server. */
-  @AfterClass
+  @AfterAll
   public static void shutdownServer() {
     service.stop().join();
   }

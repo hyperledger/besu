@@ -23,7 +23,7 @@ import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import org.apache.tuweni.units.bigints.UInt64;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class WithdrawalParameterTest {
 

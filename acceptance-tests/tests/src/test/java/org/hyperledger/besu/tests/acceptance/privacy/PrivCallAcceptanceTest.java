@@ -139,7 +139,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
         privCall(privacyGroupId, revertReasonContract, false, false, true);
 
     EthCall resp = priv_call.send();
-    assertThat(resp.getRevertReason()).isEqualTo("Execution reverted");
+    assertThat(resp.getRevertReason()).isEqualTo("Execution reverted: RevertReason");
 
     byte[] bytes = Hex.decode(resp.getError().getData().substring(3, 203));
     String revertMessage =
@@ -200,7 +200,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
         privCall(privacyGroupId, eventEmitter, true, false, false);
 
     final String errorMessage = priv_call.send().getError().getMessage();
-    assertThat(errorMessage).isEqualTo("Invalid params");
+    assertThat(errorMessage).isEqualTo("Private transaction failed");
   }
 
   @Test

@@ -42,15 +42,15 @@ import java.util.List;
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link BlockBodiesMessage}. */
 public final class BlockBodiesMessageTest {
 
   private ProtocolSchedule protocolSchedule;
 
-  @Before
+  @BeforeEach
   public void setup() {
     protocolSchedule =
         FixedDifficultyProtocolSchedule.create(
@@ -99,7 +99,7 @@ public final class BlockBodiesMessageTest {
   @Test
   public void shouldNotThrowRLPExceptionIfAllowedEmptyBody() {
     final Bytes bytes = Bytes.fromHexString("0xc0");
-    final BlockBody empty = BlockBody.readFrom(RLP.input(bytes), null, true);
+    final BlockBody empty = BlockBody.readWrappedBodyFrom(RLP.input(bytes), null, true);
     Assertions.assertThat(empty.isEmpty()).isTrue();
   }
 
@@ -111,7 +111,7 @@ public final class BlockBodiesMessageTest {
     assertThrows(
         RLPException.class,
         () -> {
-          BlockBody.readFrom(RLP.input(bytes), blockHeaderFunctions, false);
+          BlockBody.readWrappedBodyFrom(RLP.input(bytes), blockHeaderFunctions, false);
         });
   }
 }

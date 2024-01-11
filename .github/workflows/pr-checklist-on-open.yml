@@ -6,7 +6,7 @@ on:
 jobs:
   checklist:
     name: "add checklist as a comment on newly opened PRs"
-    runs-on: [besu,Linux,self-hosted,nodocker]
+    runs-on: [besu-research-ubuntu-8]
     steps:
       - uses: actions/github-script@v5
         with:
@@ -16,5 +16,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '- [ ] I thought about documentation and added the `doc-change-required` label to this PR if [updates are required](https://wiki.hyperledger.org/display/BESU/Documentation).\n- [ ] I have considered running `./gradlew acceptanceTestNonMainnet` locally if my PR affects non-mainnet modules.\n- [ ] I thought about the changelog and included a [changelog update if required](https://wiki.hyperledger.org/display/BESU/Changelog).\n- [ ] If my PR includes database changes (e.g. KeyValueSegmentIdentifier) I have thought about compatibility and performed forwards and backwards compatibility tests'
+              body: '- [ ] I thought about documentation and added the `doc-change-required` label to this PR if [updates are required](https://wiki.hyperledger.org/display/BESU/Documentation).\n- [ ] I thought about the changelog and included a [changelog update if required](https://wiki.hyperledger.org/display/BESU/Changelog).\n- [ ] If my PR includes database changes (e.g. KeyValueSegmentIdentifier) I have thought about compatibility and performed forwards and backwards compatibility tests'
             })

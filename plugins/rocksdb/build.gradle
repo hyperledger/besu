@@ -45,16 +45,17 @@ dependencies {
   implementation 'info.picocli:picocli'
   implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'io.prometheus:simpleclient'
-  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'io.tmio:tuweni-bytes'
   implementation 'org.rocksdb:rocksdbjni'
   implementation project(path: ':ethereum:core')
 
   testImplementation project(':testutil')
 
-  testImplementation 'junit:junit'
-  testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }

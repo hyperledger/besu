@@ -16,30 +16,21 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.bonsai;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.AbstractJsonRpcHttpBySpecTest;
 
-import java.net.URL;
+import org.junit.jupiter.api.BeforeEach;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
-
-@RunWith(Parameterized.class)
 public class DebugJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
 
-  public DebugJsonRpcHttpBySpecTest(final String specName, final URL specURL) {
-    super(specName, specURL);
-  }
-
   @Override
+  @BeforeEach
   public void setup() throws Exception {
     setupBonsaiBlockchain();
     startService();
   }
 
-  @Parameters(name = "{index}: {0}")
   public static Object[][] specs() {
-    return findSpecFiles(
-        new String[] {"debug"},
-        "storageRange",
-        "accountRange"); // storageRange and accountRange are not working with bonsai trie
+    return AbstractJsonRpcHttpBySpecTest.findSpecFiles(
+        new String[] {
+          "debug/account-at", "debug/batch-send-raw-transaction", "debug/trace-transaction"
+        }); // storageRange and accountRange are not working with bonsai trie
   }
 }

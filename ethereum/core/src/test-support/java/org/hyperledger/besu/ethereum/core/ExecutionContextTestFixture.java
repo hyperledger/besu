@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
+import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -34,12 +35,14 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
+import java.util.Optional;
 import java.util.function.Function;
 
 public class ExecutionContextTestFixture {
 
   private final Block genesis;
-  private final KeyValueStorage keyValueStorage;
+  private final KeyValueStorage blockchainKeyValueStorage;
+  private final KeyValueStorage variablesKeyValueStorage;
   private final MutableBlockchain blockchain;
   private final WorldStateArchive stateArchive;
 
@@ -48,20 +51,25 @@ public class ExecutionContextTestFixture {
   private static final GenesisConfigFile genesisConfigFile = GenesisConfigFile.mainnet();
 
   private ExecutionContextTestFixture(
-      final ProtocolSchedule protocolSchedule, final KeyValueStorage keyValueStorage) {
+      final ProtocolSchedule protocolSchedule,
+      final KeyValueStorage blockchainKeyValueStorage,
+      final KeyValueStorage variablesKeyValueStorage) {
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, protocolSchedule);
     this.genesis = genesisState.getBlock();
-    this.keyValueStorage = keyValueStorage;
+    this.blockchainKeyValueStorage = blockchainKeyValueStorage;
+    this.variablesKeyValueStorage = variablesKeyValueStorage;
     this.blockchain =
         DefaultBlockchain.createMutable(
             genesis,
             new KeyValueStoragePrefixedKeyBlockchainStorage(
-                keyValueStorage, new MainnetBlockHeaderFunctions()),
+                blockchainKeyValueStorage,
+                new VariablesKeyValueStorage(variablesKeyValueStorage),
+                new MainnetBlockHeaderFunctions()),
             new NoOpMetricsSystem(),
             0);
     this.stateArchive = createInMemoryWorldStateArchive();
     this.protocolSchedule = protocolSchedule;
-    this.protocolContext = new ProtocolContext(blockchain, stateArchive, null);
+    this.protocolContext = new ProtocolContext(blockchain, stateArchive, null, Optional.empty());
     genesisState.writeStateTo(stateArchive.getMutable());
   }
 
@@ -77,8 +85,12 @@ public class ExecutionContextTestFixture {
     return genesis;
   }
 
-  public KeyValueStorage getKeyValueStorage() {
-    return keyValueStorage;
+  public KeyValueStorage getBlockchainKeyValueStorage() {
+    return blockchainKeyValueStorage;
+  }
+
+  public KeyValueStorage getVariablesKeyValueStorage() {
+    return variablesKeyValueStorage;
   }
 
   public MutableBlockchain getBlockchain() {
@@ -98,12 +110,17 @@ public class ExecutionContextTestFixture {
   }
 
   public static class Builder {
-
-    private KeyValueStorage keyValueStorage;
+    private KeyValueStorage variablesKeyValueStorage;
+    private KeyValueStorage blockchainKeyValueStorage;
     private ProtocolSchedule protocolSchedule;
 
-    public Builder keyValueStorage(final KeyValueStorage keyValueStorage) {
-      this.keyValueStorage = keyValueStorage;
+    public Builder variablesKeyValueStorage(final KeyValueStorage keyValueStorage) {
+      this.variablesKeyValueStorage = keyValueStorage;
+      return this;
+    }
+
+    public Builder blockchainKeyValueStorage(final KeyValueStorage keyValueStorage) {
+      this.blockchainKeyValueStorage = keyValueStorage;
       return this;
     }
 
@@ -124,10 +141,14 @@ public class ExecutionContextTestFixture {
                     EvmConfiguration.DEFAULT)
                 .createProtocolSchedule();
       }
-      if (keyValueStorage == null) {
-        keyValueStorage = new InMemoryKeyValueStorage();
+      if (blockchainKeyValueStorage == null) {
+        blockchainKeyValueStorage = new InMemoryKeyValueStorage();
       }
-      return new ExecutionContextTestFixture(protocolSchedule, keyValueStorage);
+      if (variablesKeyValueStorage == null) {
+        variablesKeyValueStorage = new InMemoryKeyValueStorage();
+      }
+      return new ExecutionContextTestFixture(
+          protocolSchedule, variablesKeyValueStorage, blockchainKeyValueStorage);
     }
   }
 }

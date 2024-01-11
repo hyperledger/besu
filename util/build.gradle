@@ -38,10 +38,8 @@ dependencies {
   implementation 'org.apache.logging.log4j:log4j-slf4j2-impl'
   implementation 'org.xerial.snappy:snappy-java'
 
-  testImplementation 'junit:junit'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }

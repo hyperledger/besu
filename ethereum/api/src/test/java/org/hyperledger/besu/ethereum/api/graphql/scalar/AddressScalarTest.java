@@ -20,13 +20,18 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.graphql.internal.Scalars;
 
+import java.util.Locale;
+
+import graphql.GraphQLContext;
+import graphql.execution.CoercedVariables;
+import graphql.language.FloatValue;
 import graphql.language.StringValue;
 import graphql.schema.CoercingParseLiteralException;
 import graphql.schema.CoercingParseValueException;
 import graphql.schema.CoercingSerializeException;
 import graphql.schema.GraphQLScalarType;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AddressScalarTest {
 
@@ -40,47 +45,87 @@ public class AddressScalarTest {
 
   @Test
   public void parseValueTest() {
-    final Address result = (Address) scalar.getCoercing().parseValue(addrStr);
+    final Address result =
+        (Address)
+            scalar
+                .getCoercing()
+                .parseValue(addrStr, GraphQLContext.newContext().build(), Locale.ENGLISH);
     assertThat(result).isEqualTo(addr);
   }
 
   @Test
   public void parseValueErrorTest() {
-    assertThatThrownBy(() -> scalar.getCoercing().parseValue(3.4f))
+    assertThatThrownBy(
+            () ->
+                scalar
+                    .getCoercing()
+                    .parseValue(3.4f, GraphQLContext.newContext().build(), Locale.ENGLISH))
         .isInstanceOf(CoercingParseValueException.class);
   }
 
   @Test
   public void serializeTest() {
-    final String result = (String) scalar.getCoercing().serialize(addr);
+    final String result =
+        (String)
+            scalar
+                .getCoercing()
+                .serialize(addr, GraphQLContext.newContext().build(), Locale.ENGLISH);
     assertThat(result).isEqualTo(addrStr);
   }
 
   @Test
   public void serializeErrorTest() {
-    assertThatThrownBy(() -> scalar.getCoercing().serialize(3.4f))
+    assertThatThrownBy(
+            () ->
+                scalar
+                    .getCoercing()
+                    .serialize(3.4f, GraphQLContext.newContext().build(), Locale.ENGLISH))
         .isInstanceOf(CoercingSerializeException.class);
   }
 
   @Test
   public void parseLiteralTest() {
-    final Address result = (Address) scalar.getCoercing().parseLiteral(addrValue);
+    final Address result =
+        (Address)
+            scalar
+                .getCoercing()
+                .parseLiteral(
+                    addrValue,
+                    CoercedVariables.emptyVariables(),
+                    GraphQLContext.newContext().build(),
+                    Locale.ENGLISH);
     assertThat(result).isEqualTo(addr);
   }
 
   @Test
   public void parseLiteralErrorTest() {
-    assertThatThrownBy(() -> scalar.getCoercing().parseLiteral(3.4f))
+    assertThatThrownBy(
+            () ->
+                scalar
+                    .getCoercing()
+                    .parseLiteral(
+                        FloatValue.of(3.4f),
+                        CoercedVariables.emptyVariables(),
+                        GraphQLContext.newContext().build(),
+                        Locale.ENGLISH))
         .isInstanceOf(CoercingParseLiteralException.class);
   }
 
   @Test
   public void parseLiteralErrorTest2() {
-    assertThatThrownBy(() -> scalar.getCoercing().parseLiteral(invalidAddrValue))
+    assertThatThrownBy(
+            () ->
+                scalar
+                    .getCoercing()
+                    .parseLiteral(
+                        invalidAddrValue,
+                        CoercedVariables.emptyVariables(),
+                        GraphQLContext.newContext().build(),
+                        Locale.ENGLISH))
         .isInstanceOf(CoercingParseLiteralException.class);
   }
 
-  @Before
+  @BeforeEach
   public void before() {
     scalar = Scalars.addressScalar();
   }

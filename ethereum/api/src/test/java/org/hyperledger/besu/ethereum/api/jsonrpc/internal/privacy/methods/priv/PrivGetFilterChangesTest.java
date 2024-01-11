@@ -31,10 +31,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivGetFilterChanges;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
@@ -46,13 +46,13 @@ import java.util.List;
 import com.google.common.collect.Lists;
 import io.vertx.ext.auth.User;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PrivGetFilterChangesTest {
 
   private final String FILTER_ID = "0xdbdb02abb65a2ba57a1cc0336c17ef75";
@@ -65,7 +65,7 @@ public class PrivGetFilterChangesTest {
 
   private PrivGetFilterChanges method;
 
-  @Before
+  @BeforeEach
   public void before() {
     method = new PrivGetFilterChanges(filterManager, privacyController, privacyIdProvider);
   }
@@ -150,7 +150,7 @@ public class PrivGetFilterChangesTest {
     when(filterManager.logsChanges(eq(FILTER_ID))).thenReturn(null);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.FILTER_NOT_FOUND);
+        new JsonRpcErrorResponse(null, RpcErrorType.FILTER_NOT_FOUND);
 
     final JsonRpcRequestContext request = privGetFilterChangesRequest(PRIVACY_GROUP_ID, FILTER_ID);
     final JsonRpcResponse response = method.response(request);

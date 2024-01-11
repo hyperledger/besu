@@ -33,6 +33,9 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
+import io.vertx.ext.auth.authentication.Credentials;
+import io.vertx.ext.auth.authentication.TokenCredentials;
+import io.vertx.ext.auth.authentication.UsernamePasswordCredentials;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.web.RoutingContext;
@@ -43,6 +46,7 @@ import org.slf4j.LoggerFactory;
 public class DefaultAuthenticationService implements AuthenticationService {
 
   public static final String USERNAME = "username";
+  public static final String PASSWORD = "password";
   private final JWTAuth jwtAuthProvider;
   @VisibleForTesting public final JWTAuthOptions jwtAuthOptions;
   private final Optional<AuthenticationProvider> credentialAuthProvider;
@@ -166,30 +170,34 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
   private void login(
       final RoutingContext routingContext, final AuthenticationProvider credentialAuthProvider) {
-    final JsonObject requestBody = routingContext.getBodyAsJson();
+    final JsonObject requestBody = routingContext.body().asJsonObject();
 
-    if (requestBody == null) {
+    if (requestBody == null
+        || requestBody.getValue(USERNAME) == null
+        || requestBody.getValue(PASSWORD) == null) {
       routingContext
           .response()
           .setStatusCode(HttpResponseStatus.BAD_REQUEST.code())
           .setStatusMessage(HttpResponseStatus.BAD_REQUEST.reasonPhrase())
-          .end();
+          .end("Authentication failed: username and password are required.");
       return;
     }
 
     // Check user
     final JsonObject authParams = new JsonObject();
     authParams.put(USERNAME, requestBody.getValue(USERNAME));
-    authParams.put("password", requestBody.getValue("password"));
+    authParams.put(PASSWORD, requestBody.getValue(PASSWORD));
+    final Credentials credentials = new UsernamePasswordCredentials(authParams);
+
     credentialAuthProvider.authenticate(
-        authParams,
+        credentials,
         r -> {
           if (r.failed()) {
             routingContext
                 .response()
                 .setStatusCode(HttpResponseStatus.UNAUTHORIZED.code())
                 .setStatusMessage(HttpResponseStatus.UNAUTHORIZED.reasonPhrase())
-                .end();
+                .end("Authentication failed: the username or password is incorrect.");
           } else {
             final User user = r.result();
 
@@ -227,7 +235,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
     try {
       getJwtAuthProvider()
           .authenticate(
-              new JsonObject().put("token", token),
+              new TokenCredentials(new JsonObject().put("token", token)),
               r -> {
                 if (r.succeeded()) {
                   final Optional<User> user = Optional.ofNullable(r.result());

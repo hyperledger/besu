@@ -16,19 +16,22 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.api.graphql.GraphQLContextType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
 import graphql.schema.DataFetchingEnvironment;
@@ -47,91 +50,101 @@ public class TransactionAdapter extends AdapterBase {
       final DataFetchingEnvironment environment) {
     if (transactionReceiptWithMetadata == null) {
       final BlockchainQueries query = getBlockchainQueries(environment);
+      final ProtocolSchedule protocolSchedule =
+          environment.getGraphQlContext().get(GraphQLContextType.PROTOCOL_SCHEDULE);
+
       final Transaction transaction = transactionWithMetadata.getTransaction();
       if (transaction == null) {
         transactionReceiptWithMetadata = Optional.empty();
       } else {
         transactionReceiptWithMetadata =
-            query.transactionReceiptByTransactionHash(transaction.getHash());
+            query.transactionReceiptByTransactionHash(transaction.getHash(), protocolSchedule);
       }
     }
     return transactionReceiptWithMetadata;
   }
 
-  public Optional<Hash> getHash() {
-    return Optional.of(transactionWithMetadata.getTransaction().getHash());
+  public Hash getHash() {
+    return transactionWithMetadata.getTransaction().getHash();
   }
 
   public Optional<Integer> getType() {
     return Optional.of(transactionWithMetadata.getTransaction().getType().ordinal());
   }
 
-  public Optional<Long> getNonce() {
-    final long nonce = transactionWithMetadata.getTransaction().getNonce();
-    return Optional.of(nonce);
+  public Long getNonce() {
+    return transactionWithMetadata.getTransaction().getNonce();
   }
 
   public Optional<Integer> getIndex() {
     return transactionWithMetadata.getTransactionIndex();
   }
 
-  public Optional<AccountAdapter> getFrom(final DataFetchingEnvironment environment) {
+  public AccountAdapter getFrom(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
-    Long blockNumber = environment.getArgument("block");
-    if (blockNumber == null) {
-      blockNumber = transactionWithMetadata.getBlockNumber().orElseGet(query::headBlockNumber);
-    }
-    return query.getAndMapWorldState(
-        blockNumber,
-        mutableWorldState ->
-            Optional.of(
-                new AccountAdapter(
-                    mutableWorldState.get(transactionWithMetadata.getTransaction().getSender()))));
+    final Long blockNumber =
+        Optional.<Long>ofNullable(environment.getArgument("block"))
+            .or(transactionWithMetadata::getBlockNumber)
+            .orElseGet(query::headBlockNumber);
+
+    final Address addr = transactionWithMetadata.getTransaction().getSender();
+    return query
+        .getAndMapWorldState(
+            blockNumber,
+            mutableWorldState -> Optional.of(new AccountAdapter(mutableWorldState.get(addr))))
+        .orElse(new EmptyAccountAdapter(addr));
   }
 
   public Optional<AccountAdapter> getTo(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
-    Long blockNumber = environment.getArgument("block");
-    if (blockNumber == null) {
-      blockNumber = transactionWithMetadata.getBlockNumber().orElseGet(query::headBlockNumber);
-    }
+    final Long blockNumber =
+        Optional.<Long>ofNullable(environment.getArgument("block"))
+            .or(transactionWithMetadata::getBlockNumber)
+            .orElseGet(query::headBlockNumber);
 
-    return query.getAndMapWorldState(
-        blockNumber,
-        ws ->
-            transactionWithMetadata
-                .getTransaction()
-                .getTo()
-                .map(address -> new AccountAdapter(address, ws.get(address))));
+    return transactionWithMetadata
+        .getTransaction()
+        .getTo()
+        .flatMap(
+            address ->
+                query
+                    .getAndMapWorldState(
+                        blockNumber,
+                        ws -> Optional.of(new AccountAdapter(address, ws.get(address))))
+                    .or(() -> Optional.of(new EmptyAccountAdapter(address))));
   }
 
-  public Optional<Wei> getValue() {
-    return Optional.of(transactionWithMetadata.getTransaction().getValue());
+  public Wei getValue() {
+    return transactionWithMetadata.getTransaction().getValue();
   }
 
-  public Optional<Wei> getGasPrice() {
-    return transactionWithMetadata.getTransaction().getGasPrice();
-  }
-
-  public Optional<Wei> getMaxPriorityFeePerGas() {
-    return transactionWithMetadata.getTransaction().getMaxPriorityFeePerGas();
+  public Wei getGasPrice() {
+    return transactionWithMetadata.getTransaction().getGasPrice().orElse(Wei.ZERO);
   }
 
   public Optional<Wei> getMaxFeePerGas() {
     return transactionWithMetadata.getTransaction().getMaxFeePerGas();
   }
 
-  public Optional<Wei> getEffectiveGasPrice(final DataFetchingEnvironment environment) {
+  public Optional<Wei> getMaxPriorityFeePerGas() {
+    return transactionWithMetadata.getTransaction().getMaxPriorityFeePerGas();
+  }
+
+  public Optional<Wei> getMaxFeePerBlobGas() {
+    return transactionWithMetadata.getTransaction().getMaxFeePerBlobGas();
+  }
+
+  public Optional<Wei> getEffectiveTip(final DataFetchingEnvironment environment) {
     return getReceipt(environment)
-        .map(rwm -> rwm.getTransaction().getEffectiveGasPrice(rwm.getBaseFee()));
+        .map(rwm -> rwm.getTransaction().getEffectivePriorityFeePerGas(rwm.getBaseFee()));
   }
 
-  public Optional<Long> getGas() {
-    return Optional.of(transactionWithMetadata.getTransaction().getGasLimit());
+  public Long getGas() {
+    return transactionWithMetadata.getTransaction().getGasLimit();
   }
 
-  public Optional<Bytes> getInputData() {
-    return Optional.of(transactionWithMetadata.getTransaction().getPayload());
+  public Bytes getInputData() {
+    return transactionWithMetadata.getTransaction().getPayload();
   }
 
   public Optional<NormalBlockAdapter> getBlock(final DataFetchingEnvironment environment) {
@@ -159,6 +172,19 @@ public class TransactionAdapter extends AdapterBase {
     return getReceipt(environment).map(rpt -> rpt.getReceipt().getCumulativeGasUsed());
   }
 
+  public Optional<Wei> getEffectiveGasPrice(final DataFetchingEnvironment environment) {
+    return getReceipt(environment)
+        .map(rwm -> rwm.getTransaction().getEffectiveGasPrice(rwm.getBaseFee()));
+  }
+
+  public Optional<Long> getBlobGasUsed(final DataFetchingEnvironment environment) {
+    return getReceipt(environment).flatMap(TransactionReceiptWithMetadata::getBlobGasUsed);
+  }
+
+  public Optional<Wei> getBlobGasPrice(final DataFetchingEnvironment environment) {
+    return getReceipt(environment).flatMap(TransactionReceiptWithMetadata::getBlobGasPrice);
+  }
+
   public Optional<AccountAdapter> getCreatedContract(final DataFetchingEnvironment environment) {
     final boolean contractCreated = transactionWithMetadata.getTransaction().isContractCreation();
     if (contractCreated) {
@@ -172,8 +198,10 @@ public class TransactionAdapter extends AdapterBase {
           return Optional.empty();
         }
         final long blockNumber = bn.orElseGet(txBlockNumber::get);
-        return query.getAndMapWorldState(
-            blockNumber, ws -> Optional.of(new AccountAdapter(ws.get(addr.get()))));
+        return query
+            .getAndMapWorldState(
+                blockNumber, ws -> Optional.of(new AccountAdapter(ws.get(addr.get()))))
+            .or(() -> Optional.of(new EmptyAccountAdapter(addr.get())));
       }
     }
     return Optional.empty();
@@ -181,6 +209,9 @@ public class TransactionAdapter extends AdapterBase {
 
   public List<LogAdapter> getLogs(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
+    final ProtocolSchedule protocolSchedule =
+        environment.getGraphQlContext().get(GraphQLContextType.PROTOCOL_SCHEDULE);
+
     final Hash hash = transactionWithMetadata.getTransaction().getHash();
 
     final Optional<BlockHeader> maybeBlockHeader =
@@ -195,7 +226,7 @@ public class TransactionAdapter extends AdapterBase {
     }
 
     final Optional<TransactionReceiptWithMetadata> maybeTransactionReceiptWithMetadata =
-        query.transactionReceiptByTransactionHash(hash);
+        query.transactionReceiptByTransactionHash(hash, protocolSchedule);
     final List<LogAdapter> results = new ArrayList<>();
     if (maybeTransactionReceiptWithMetadata.isPresent()) {
       final List<LogWithMetadata> logs =
@@ -208,11 +239,27 @@ public class TransactionAdapter extends AdapterBase {
     return results;
   }
 
+  public BigInteger getR() {
+    return transactionWithMetadata.getTransaction().getR();
+  }
+
+  public BigInteger getS() {
+    return transactionWithMetadata.getTransaction().getS();
+  }
+
+  public Optional<BigInteger> getV() {
+    return Optional.ofNullable(transactionWithMetadata.getTransaction().getV());
+  }
+
+  public Optional<BigInteger> getYParity() {
+    return Optional.ofNullable(transactionWithMetadata.getTransaction().getYParity());
+  }
+
   public List<AccessListEntryAdapter> getAccessList() {
     return transactionWithMetadata
         .getTransaction()
         .getAccessList()
-        .map(l -> l.stream().map(AccessListEntryAdapter::new).collect(Collectors.toList()))
+        .map(l -> l.stream().map(AccessListEntryAdapter::new).toList())
         .orElse(List.of());
   }
 
@@ -230,5 +277,9 @@ public class TransactionAdapter extends AdapterBase {
               receipt.getReceipt().writeTo(rlpOutput);
               return rlpOutput.encoded();
             });
+  }
+
+  public List<VersionedHash> getBlobVersionedHashes() {
+    return transactionWithMetadata.getTransaction().getVersionedHashes().orElse(List.of());
   }
 }

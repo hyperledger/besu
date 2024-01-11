@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,15 +28,38 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
 
   public EngineGetPayloadV2Test() {
-    super(EngineGetPayloadV2::new);
+    super();
+  }
+
+  @BeforeEach
+  @Override
+  public void before() {
+    super.before();
+    lenient()
+        .when(mergeContext.retrieveBlockById(mockPid))
+        .thenReturn(Optional.of(mockBlockWithReceipts));
+    when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
+    this.method =
+        new EngineGetPayloadV2(
+            vertx,
+            protocolContext,
+            mergeMiningCoordinator,
+            factory,
+            engineCallListener,
+            protocolSchedule);
   }
 
   @Override

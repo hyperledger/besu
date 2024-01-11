@@ -31,12 +31,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class FutureRoundProposalMessageValidatorTest {
 
   private final MessageFactory messageFactoy = new MessageFactory(NodeKeyUtils.generate());
@@ -50,7 +50,7 @@ public class FutureRoundProposalMessageValidatorTest {
       mock(MessageValidatorFactory.class);
   private final MessageValidator messageValidator = mock(MessageValidator.class);
 
-  @Before
+  @BeforeEach
   public void setup() {
 
     when(messageValidatorFactory.createMessageValidator(any(), any())).thenReturn(messageValidator);

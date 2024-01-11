@@ -64,19 +64,26 @@ dependencies {
   implementation 'io.vertx:vertx-web'
   implementation 'io.vertx:vertx-codegen'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-net'
-  implementation 'org.apache.tuweni:tuweni-toml'
-  implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.tmio:tuweni-net'
+  implementation 'io.tmio:tuweni-toml'
+  implementation 'io.tmio:tuweni-units'
   implementation 'org.antlr:antlr4-runtime'
-  implementation 'org.bouncycastle:bcprov-jdk15on'
+  implementation 'org.bouncycastle:bcprov-jdk18on'
   implementation 'org.springframework.security:spring-security-crypto'
   implementation 'org.xerial.snappy:snappy-java'
+  implementation 'com.google.guava:guava'
+  implementation 'io.vertx:vertx-core'
+  implementation 'com.fasterxml.jackson.core:jackson-databind'
+  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.tmio:tuweni-units'
+  implementation 'org.web3j:abi'
+  implementation 'com.github.ben-manes.caffeine:caffeine'
 
   annotationProcessor "org.immutables:value"
   implementation "org.immutables:value-annotations"
 
-  runtimeOnly 'org.bouncycastle:bcpkix-jdk15on'
+  runtimeOnly 'org.bouncycastle:bcpkix-jdk18on'
   runtimeOnly 'io.netty:netty-transport-native-epoll'
   runtimeOnly 'io.netty:netty-transport-native-kqueue'
 
@@ -93,20 +100,15 @@ dependencies {
   testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'io.vertx:vertx-auth-jwt'
   testImplementation 'io.vertx:vertx-junit5'
-  testImplementation 'io.vertx:vertx-unit'
   testImplementation 'io.vertx:vertx-web-client'
-  testImplementation 'junit:junit'
   testImplementation 'org.apache.logging.log4j:log4j-core'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
-  testImplementation 'org.junit.jupiter:junit-jupiter-params'
-  testImplementation 'org.junit.platform:junit-platform-runner'
+
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
 
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
-
-  testSupportImplementation 'org.bouncycastle:bcpkix-jdk15on'
+  testSupportImplementation 'org.bouncycastle:bcpkix-jdk18on'
 
   integrationTestImplementation project(':config')
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
@@ -115,7 +117,7 @@ dependencies {
   integrationTestImplementation project(':testutil')
 
   integrationTestImplementation 'org.assertj:assertj-core'
-  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
+  integrationTestImplementation 'org.junit.jupiter:junit-jupiter'
   integrationTestImplementation 'org.mockito:mockito-core'
   integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
   integrationTestImplementation 'org.testcontainers:testcontainers'
@@ -125,7 +127,7 @@ dependencies {
 
 artifacts { testSupportArtifacts testSupportJar }
 
-task generateTestBlockchain() {
+tasks.register('generateTestBlockchain') {
   def srcFiles = 'src/test/resources/org/hyperledger/besu/ethereum/api/jsonrpc/trace/chain-data'
   def dataPath = "$buildDir/generated/data"
   def blocksBin = "$buildDir/resources/test/org/hyperledger/besu/ethereum/api/jsonrpc/trace/chain-data/blocks.bin"

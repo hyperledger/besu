@@ -1,13 +1,11 @@
 {
-  "request":     
-    "{ syncing {startingBlock currentBlock highestBlock } }",
-
+  "request": "{ syncing {startingBlock currentBlock highestBlock } }",
   "response": {
-    "data" : {
-      "syncing" : {
-        "startingBlock" : 1,
-        "currentBlock" : 2,
-        "highestBlock" : 3
+    "data": {
+      "syncing": {
+        "startingBlock": "0x1",
+        "currentBlock": "0x2",
+        "highestBlock": "0x3"
       }
     }
   },

@@ -258,6 +258,7 @@ public class ProtocolScheduleBuilder {
     lastForkBlock = validateForkOrder("Thanos", config.getThanosBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Magneto", config.getMagnetoBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Mystique", config.getMystiqueBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Spiral", config.getSpiralBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 
@@ -329,7 +330,8 @@ public class ProtocolScheduleBuilder {
         blockNumberMilestone(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
         blockNumberMilestone(config.getThanosBlockNumber(), specFactory.thanosDefinition()),
         blockNumberMilestone(config.getMagnetoBlockNumber(), specFactory.magnetoDefinition()),
-        blockNumberMilestone(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()));
+        blockNumberMilestone(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()),
+        blockNumberMilestone(config.getSpiralBlockNumber(), specFactory.spiralDefinition()));
   }
 
   private Optional<BuilderMapEntry> timestampMilestone(

@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.file.Path;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -30,13 +30,14 @@ public class EthStatsConnectOptionsTest {
   private final String CONTACT = "contact@mail.fr";
 
   private final String ERROR_MESSAGE =
-      "Invalid netstats URL syntax. Netstats URL should have the following format 'nodename:secret@host:port' or 'nodename:secret@host'.";
+      "Invalid ethstats URL syntax. Ethstats URL should have the following format '[ws://|wss://]nodename:secret@host[:port]'.";
 
   @Test
   public void buildWithValidParams() {
     final Path caCert = Path.of("./test.pem");
     final EthStatsConnectOptions ethStatsConnectOptions =
         EthStatsConnectOptions.fromParams(VALID_NETSTATS_URL, CONTACT, caCert);
+    assertThat(ethStatsConnectOptions.getScheme()).isNull();
     assertThat(ethStatsConnectOptions.getHost()).isEqualTo("127.0.0.1");
     assertThat(ethStatsConnectOptions.getNodeName()).isEqualTo("Dev-Node-1");
     assertThat(ethStatsConnectOptions.getPort()).isEqualTo(3001);
@@ -50,7 +51,9 @@ public class EthStatsConnectOptionsTest {
   public void buildWithValidHost(final String host) {
     final EthStatsConnectOptions ethStatsConnectOptions =
         EthStatsConnectOptions.fromParams("Dev-Node-1:secret@" + host + ":3001", CONTACT, null);
+    assertThat(ethStatsConnectOptions.getScheme()).isNull();
     assertThat(ethStatsConnectOptions.getHost()).isEqualTo(host);
+    assertThat(ethStatsConnectOptions.getPort()).isEqualTo(3001);
   }
 
   @ParameterizedTest(name = "#{index} - With Host {0}")
@@ -58,8 +61,32 @@ public class EthStatsConnectOptionsTest {
   public void buildWithValidHostWithoutPort(final String host) {
     final EthStatsConnectOptions ethStatsConnectOptions =
         EthStatsConnectOptions.fromParams("Dev-Node-1:secret@" + host, CONTACT, null);
+    assertThat(ethStatsConnectOptions.getScheme()).isNull();
     assertThat(ethStatsConnectOptions.getHost()).isEqualTo(host);
     assertThat(ethStatsConnectOptions.getPort()).isEqualTo(-1);
+  }
+
+  @ParameterizedTest(name = "#{index} - With Scheme {0}")
+  @ValueSource(strings = {"ws", "wss", "WSS", "WS"})
+  public void buildWithValidScheme(final String scheme) {
+    final EthStatsConnectOptions ethStatsConnectOptions =
+        EthStatsConnectOptions.fromParams(
+            scheme + "://Dev-Node-1:secret@url-test.test.com:3001", CONTACT, null);
+    assertThat(ethStatsConnectOptions.getScheme()).isEqualTo(scheme);
+    assertThat(ethStatsConnectOptions.getHost()).isEqualTo("url-test.test.com");
+    assertThat(ethStatsConnectOptions.getPort()).isEqualTo(3001);
+  }
+
+  @ParameterizedTest(name = "#{index} - With Scheme {0}")
+  @ValueSource(strings = {"http", "https", "ftp"})
+  public void shouldRaiseErrorOnInvalidScheme(final String scheme) {
+    // missing node name
+    assertThatThrownBy(
+            () ->
+                EthStatsConnectOptions.fromParams(
+                    scheme + "://Dev-Node-1:secret@url-test.test.com:3001", CONTACT, null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageEndingWith(ERROR_MESSAGE);
   }
 
   @Test
@@ -82,11 +109,10 @@ public class EthStatsConnectOptionsTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageEndingWith(ERROR_MESSAGE);
 
-    // missing port
-    assertThatThrownBy(
-            () -> EthStatsConnectOptions.fromParams("Dev-Node-1:secret@127.0.0.1:", CONTACT, null))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageEndingWith(ERROR_MESSAGE);
+    // missing port in URL should default to -1
+    EthStatsConnectOptions ethStatsConnectOptions =
+        EthStatsConnectOptions.fromParams("Dev-Node-1:secret@127.0.0.1:", CONTACT, null);
+    assertThat(ethStatsConnectOptions.getPort()).isEqualTo(-1);
   }
 
   @Test

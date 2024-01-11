@@ -1,8 +1,9 @@
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 ARG VERSION="dev"
 
 RUN apt-get update && \
+ apt-get install --no-install-recommends -q --assume-yes ca-certificates-java=20190909* && \
  apt-get install --no-install-recommends -q --assume-yes openjdk-17-jre-headless=17* libjemalloc-dev=5.* && \
  apt-get clean  && \
  rm -rf /var/lib/apt/lists/*  && \

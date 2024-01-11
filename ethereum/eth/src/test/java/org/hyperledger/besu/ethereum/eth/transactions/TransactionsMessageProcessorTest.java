@@ -28,13 +28,13 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class TransactionsMessageProcessorTest {
 
   @Mock private TransactionPool transactionPool;
@@ -49,12 +49,13 @@ public class TransactionsMessageProcessorTest {
   private TransactionsMessageProcessor messageHandler;
   private StubMetricsSystem metricsSystem;
 
-  @Before
+  @BeforeEach
   public void setup() {
     metricsSystem = new StubMetricsSystem();
 
     messageHandler =
-        new TransactionsMessageProcessor(transactionTracker, transactionPool, metricsSystem);
+        new TransactionsMessageProcessor(
+            transactionTracker, transactionPool, new TransactionPoolMetrics(metricsSystem));
   }
 
   @Test
@@ -87,7 +88,11 @@ public class TransactionsMessageProcessorTest {
         now().minus(ofMinutes(1)),
         ofMillis(1));
     verifyNoInteractions(transactionTracker);
-    assertThat(metricsSystem.getCounterValue("transactions_messages_skipped_total")).isEqualTo(1);
+    assertThat(
+            metricsSystem.getCounterValue(
+                TransactionPoolMetrics.EXPIRED_MESSAGES_COUNTER_NAME,
+                TransactionsMessageProcessor.METRIC_LABEL))
+        .isEqualTo(1);
   }
 
   @Test
@@ -98,6 +103,10 @@ public class TransactionsMessageProcessorTest {
         now().minus(ofMinutes(1)),
         ofMillis(1));
     verifyNoInteractions(transactionPool);
-    assertThat(metricsSystem.getCounterValue("transactions_messages_skipped_total")).isEqualTo(1);
+    assertThat(
+            metricsSystem.getCounterValue(
+                TransactionPoolMetrics.EXPIRED_MESSAGES_COUNTER_NAME,
+                TransactionsMessageProcessor.METRIC_LABEL))
+        .isEqualTo(1);
   }
 }
