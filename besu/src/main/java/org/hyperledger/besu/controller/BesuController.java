@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -77,6 +78,7 @@ public class BesuController implements java.io.Closeable {
   private final SyncState syncState;
   private final EthPeers ethPeers;
   private final StorageProvider storageProvider;
+  private final DataStorageConfiguration dataStorageConfiguration;
 
   /**
    * Instantiates a new Besu controller.
@@ -96,6 +98,9 @@ public class BesuController implements java.io.Closeable {
    * @param nodeKey the node key
    * @param closeables the closeables
    * @param additionalPluginServices the additional plugin services
+   * @param ethPeers the eth peers
+   * @param storageProvider the storage provider
+   * @param dataStorageConfiguration the data storage configuration
    */
   BesuController(
       final ProtocolSchedule protocolSchedule,
@@ -114,7 +119,8 @@ public class BesuController implements java.io.Closeable {
       final List<Closeable> closeables,
       final PluginServiceFactory additionalPluginServices,
       final EthPeers ethPeers,
-      final StorageProvider storageProvider) {
+      final StorageProvider storageProvider,
+      final DataStorageConfiguration dataStorageConfiguration) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -132,6 +138,7 @@ public class BesuController implements java.io.Closeable {
     this.additionalPluginServices = additionalPluginServices;
     this.ethPeers = ethPeers;
     this.storageProvider = storageProvider;
+    this.dataStorageConfiguration = dataStorageConfiguration;
   }
 
   /**
@@ -291,6 +298,15 @@ public class BesuController implements java.io.Closeable {
    */
   public PluginServiceFactory getAdditionalPluginServices() {
     return additionalPluginServices;
+  }
+
+  /**
+   * Gets data storage configuration.
+   *
+   * @return the data storage configuration
+   */
+  public DataStorageConfiguration getDataStorageConfiguration() {
+    return dataStorageConfiguration;
   }
 
   /** The type Builder. */
