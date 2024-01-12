@@ -77,7 +77,7 @@ public class Transaction
 
   public static final BigInteger TWO = BigInteger.valueOf(2);
 
-  public static final Cache<Hash, Address> senderCache =
+  private static final Cache<Hash, Address> senderCache =
       CacheBuilder.newBuilder().recordStats().maximumSize(100_000L).build();
 
   private final long nonce;

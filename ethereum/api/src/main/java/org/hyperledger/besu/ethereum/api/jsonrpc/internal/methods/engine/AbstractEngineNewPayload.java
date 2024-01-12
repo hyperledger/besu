@@ -188,7 +188,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                     LOG.atTrace()
                         .setMessage("The sender for transaction {} is calculated : {}")
                         .addArgument(transaction.getHash())
-                        .addArgument(sender).log();
+                        .addArgument(sender)
+                        .log();
                   }));
     } catch (final RLPException | IllegalArgumentException e) {
       return respondWithInvalid(
