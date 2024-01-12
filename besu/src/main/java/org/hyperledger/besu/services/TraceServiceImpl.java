@@ -216,7 +216,7 @@ public class TraceServiceImpl implements TraceService {
                       worldUpdater,
                       header,
                       transaction,
-                      header.getCoinbase(),
+                      protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
                       tracer,
                       new CachingBlockHashLookup(header, blockchain),
                       false,

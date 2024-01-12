@@ -60,6 +60,10 @@
       "moduleLicense": "Eclipse Public License - v 1.0",
       "moduleVersion": "4.13.2",
       "moduleName": "junit:junit"
+    },
+    {
+      "moduleName": "org.jetbrains.kotlin:kotlin-stdlib-common",
+      "moduleVersion": "1.9.22"
     }
   ]
 }

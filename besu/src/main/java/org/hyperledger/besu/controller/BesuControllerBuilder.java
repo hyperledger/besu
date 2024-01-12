@@ -812,7 +812,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         closeables,
         additionalPluginServices,
         ethPeers,
-        storageProvider);
+        storageProvider,
+        dataStorageConfiguration);
   }
 
   private TrieLogPruner createTrieLogPruner(
