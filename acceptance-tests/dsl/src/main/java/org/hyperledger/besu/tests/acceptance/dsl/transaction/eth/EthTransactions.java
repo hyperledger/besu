@@ -73,6 +73,10 @@ public class EthTransactions {
     return new EthMiningTransaction();
   }
 
+  public EthSyncingTransaction syncing() {
+    return new EthSyncingTransaction();
+  }
+
   public EthNewPendingTransactionFilterTransaction newPendingTransactionsFilter() {
     return new EthNewPendingTransactionFilterTransaction();
   }
