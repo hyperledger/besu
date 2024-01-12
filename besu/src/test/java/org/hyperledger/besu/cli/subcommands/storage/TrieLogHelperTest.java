@@ -15,6 +15,7 @@
 
 package org.hyperledger.besu.cli.subcommands.storage;
 
+import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageFormat.BONSAI;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -39,7 +40,6 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -93,17 +93,6 @@ class TrieLogHelperTest {
         .getTrieLogStorageTransaction()
         .put(blockHeader5.getHash().toArrayUnsafe(), Bytes.fromHexString("0x05").toArrayUnsafe());
     updater.getTrieLogStorageTransaction().commit();
-
-    createDirectory();
-  }
-
-  static void createDirectory() throws IOException {
-    Files.createDirectories(dataDir.resolve("database"));
-  }
-
-  @AfterEach
-  void deleteDirectory() throws IOException {
-    Files.deleteIfExists(dataDir.resolve("database"));
   }
 
   void mockBlockchainBase() {
@@ -113,7 +102,8 @@ class TrieLogHelperTest {
   }
 
   @Test
-  public void prune() {
+  public void prune() throws IOException {
+    Files.createDirectories(dataDir.resolve("database"));
 
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
@@ -268,18 +258,20 @@ class TrieLogHelperTest {
 
   @Test
   public void exportedTrieMatchesDbTrieLog() throws IOException {
-    TrieLogHelper.exportTrieLog(inMemoryWorldState, dataDir, blockHeader1.getHash());
-    Path trieLogFile = dataDir.resolve("database").resolve(blockHeader1.getHash().toString());
+    TrieLogHelper.exportTrieLog(
+        inMemoryWorldState,
+        singletonList(blockHeader1.getHash()),
+        dataDir.resolve("trie-log-dump"));
 
     var trieLog =
-        TrieLogHelper.readTrieLogsFromFile(trieLogFile.toString()).entrySet().stream()
+        TrieLogHelper.readTrieLogsFromFile(dataDir.resolve("trie-log-dump").toString())
+            .entrySet()
+            .stream()
             .findFirst()
             .get();
 
     assertArrayEquals(trieLog.getKey(), blockHeader1.getHash().toArrayUnsafe());
     assertArrayEquals(trieLog.getValue(), Bytes.fromHexString("0x01").toArrayUnsafe());
-
-    Files.delete(trieLogFile);
   }
 
   @Test
@@ -288,10 +280,12 @@ class TrieLogHelperTest {
     BonsaiWorldStateKeyValueStorage inMemoryWorldState2 =
         new BonsaiWorldStateKeyValueStorage(tempStorageProvider, new NoOpMetricsSystem());
 
-    TrieLogHelper.exportTrieLog(inMemoryWorldState, dataDir, blockHeader1.getHash());
-    Path trieLogFile = dataDir.resolve("database").resolve(blockHeader1.getHash().toString());
+    TrieLogHelper.exportTrieLog(
+        inMemoryWorldState,
+        singletonList(blockHeader1.getHash()),
+        dataDir.resolve("trie-log-dump"));
 
-    var trieLog = TrieLogHelper.readTrieLogsFromFile(trieLogFile.toString());
+    var trieLog = TrieLogHelper.readTrieLogsFromFile(dataDir.resolve("trie-log-dump").toString());
     var updater = inMemoryWorldState2.updater();
 
     trieLog.forEach((k, v) -> updater.getTrieLogStorageTransaction().put(k, v));
@@ -301,7 +295,5 @@ class TrieLogHelperTest {
     assertArrayEquals(
         inMemoryWorldState2.getTrieLog(blockHeader1.getHash()).get(),
         Bytes.fromHexString("0x01").toArrayUnsafe());
-
-    Files.delete(trieLogFile);
   }
 }

@@ -16,7 +16,6 @@
 package org.hyperledger.besu.cli.subcommands.storage;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -352,13 +351,9 @@ public class TrieLogHelper {
   }
 
   static void importTrieLog(
-      final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
-      final Path dataDirectoryPath,
-      final Hash trieLogHash) {
-    final String trieLogFile =
-        dataDirectoryPath.resolve(DATABASE_PATH).resolve(trieLogHash.toString()).toString();
+      final BonsaiWorldStateKeyValueStorage rootWorldStateStorage, final Path trieLogFilePath) {
 
-    var trieLog = readTrieLogsFromFile(trieLogFile);
+    var trieLog = readTrieLogsFromFile(trieLogFilePath.toString());
 
     var updater = rootWorldStateStorage.updater();
     trieLog.forEach((key, value) -> updater.getTrieLogStorageTransaction().put(key, value));
@@ -367,13 +362,12 @@ public class TrieLogHelper {
 
   static void exportTrieLog(
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
-      final Path dataDirectoryPath,
-      final Hash trieLogHash)
+      final List<Hash> trieLogHash,
+      final Path directoryPath)
       throws IOException {
-    final String trieLogFile =
-        dataDirectoryPath.resolve(DATABASE_PATH).resolve(trieLogHash.toString()).toString();
+    final String trieLogFile = directoryPath.toString();
 
-    saveTrieLogsInFile(singletonList(trieLogHash), rootWorldStateStorage, trieLogFile);
+    saveTrieLogsInFile(trieLogHash, rootWorldStateStorage, trieLogFile);
   }
 
   record TrieLogCount(int total, int canonicalCount, int forkCount, int orphanCount) {}

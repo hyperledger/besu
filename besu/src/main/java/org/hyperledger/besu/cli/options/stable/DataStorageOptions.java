@@ -42,8 +42,6 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   private static final String BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD =
       "--bonsai-historical-block-limit";
 
-
-
   // Use Bonsai DB
   @Option(
       names = {DATA_STORAGE_FORMAT},
@@ -64,10 +62,12 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   private final DataStorageOptions.Unstable unstableOptions = new Unstable();
 
   static class Unstable {
-    private static final String BONSAI_LIMIT_TRIE_LOGS_ENABLED = "--Xbonsai-limit-trie-logs-enabled";
+    private static final String BONSAI_LIMIT_TRIE_LOGS_ENABLED =
+        "--Xbonsai-limit-trie-logs-enabled";
     private static final String BONSAI_TRIE_LOGS_RETENTION_THRESHOLD =
         "--Xbonsai-trie-logs-retention-threshold";
     private static final String BONSAI_TRIE_LOG_PRUNING_LIMIT = "--Xbonsai-trie-logs-pruning-limit";
+
     @CommandLine.Option(
         hidden = true,
         names = {BONSAI_LIMIT_TRIE_LOGS_ENABLED},

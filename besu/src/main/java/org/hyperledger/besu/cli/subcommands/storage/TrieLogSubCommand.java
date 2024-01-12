@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
@@ -147,21 +148,38 @@ public class TrieLogSubCommand implements Runnable {
 
     @CommandLine.Option(
         names = "--trie-log-block-hash",
-        description = "The hash of the block you want to export the trie log of.",
+        description = "The hash of the block you want to import the trie log of",
+        split = " {0,1}, {0,1}",
+        arity = "1..*")
+    private List<String> trieLogBlockHashList;
+
+    @CommandLine.Option(
+        names = "--trie-log-file-path",
+        description = "The hash of the block you want to import the trie log of",
         arity = "1..1")
-    private String trieLogBlockHash;
+    private Path trieLogFilePath = null;
 
     @Override
     public void run() {
+      if (trieLogFilePath == null) {
+        trieLogFilePath =
+            Paths.get(
+                TrieLogSubCommand.parentCommand
+                    .parentCommand
+                    .dataDir()
+                    .resolve("trie-logs.bin")
+                    .toAbsolutePath()
+                    .toString());
+      }
+
       TrieLogContext context = getTrieLogContext();
-      final Path dataDirectoryPath =
-          Paths.get(
-              TrieLogSubCommand.parentCommand.parentCommand.dataDir().toAbsolutePath().toString());
+
+      final List<Hash> listOfBlockHashes =
+          trieLogBlockHashList.stream().map(Hash::fromHexString).toList();
+
       try {
         TrieLogHelper.exportTrieLog(
-            context.rootWorldStateStorage(),
-            dataDirectoryPath,
-            Hash.fromHexString(trieLogBlockHash));
+            context.rootWorldStateStorage(), listOfBlockHashes, trieLogFilePath);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -184,19 +202,27 @@ public class TrieLogSubCommand implements Runnable {
     private CommandLine.Model.CommandSpec spec; // Picocli injects reference to command spec
 
     @CommandLine.Option(
-        names = "--trie-log-block-hash",
+        names = "--trie-log-file-path",
         description = "The hash of the block you want to import the trie log of",
         arity = "1..1")
-    private String trieLogBlockHash;
+    private Path trieLogFilePath = null;
 
     @Override
     public void run() {
+      if (trieLogFilePath == null) {
+        trieLogFilePath =
+            Paths.get(
+                TrieLogSubCommand.parentCommand
+                    .parentCommand
+                    .dataDir()
+                    .resolve("trie-logs.bin")
+                    .toAbsolutePath()
+                    .toString());
+      }
+
       TrieLogContext context = getTrieLogContext();
-      final Path dataDirectoryPath =
-          Paths.get(
-              TrieLogSubCommand.parentCommand.parentCommand.dataDir().toAbsolutePath().toString());
-      TrieLogHelper.importTrieLog(
-          context.rootWorldStateStorage(), dataDirectoryPath, Hash.fromHexString(trieLogBlockHash));
+
+      TrieLogHelper.importTrieLog(context.rootWorldStateStorage(), trieLogFilePath);
     }
   }
 
