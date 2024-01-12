@@ -45,5 +45,27 @@ jobs:
           body: |
             ${{steps.hashes.outputs.tarSha}}
             ${{steps.hashes.outputs.zipSha}}
-
+  testWindows:
+    runs-on: windows-2022
+    needs: assemble
+    timeout-minutes: 10
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    steps:
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: adopt
+          java-version: 17
+      - name: Download zip
+        uses: actions/download-artifact@v3
+        with:
+          name: besu*.zip
+      - name: test Besu
+        run: |
+          unzip besu-*.zip -d besu-tmp
+          cd besu-tmp
+          mv besu-* ../besu
+          cd ..
+          besu\bin\besu.bat --help
+          besu\bin\besu.bat --version
 
