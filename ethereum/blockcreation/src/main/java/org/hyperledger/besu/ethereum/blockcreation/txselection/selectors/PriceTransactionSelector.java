@@ -14,10 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionEvaluationContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
@@ -41,14 +40,15 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
    * Evaluates a transaction considering its price. If the transaction's current price is below the
    * minimum, it returns a selection result indicating the reason.
    *
-   * @param pendingTransaction The transaction to be evaluated.
+   * @param evaluationContext The current selection session data.
    * @param ignored The results of other transaction evaluations in the same block.
    * @return The result of the transaction selection.
    */
   @Override
   public TransactionSelectionResult evaluateTransactionPreProcessing(
-      final PendingTransaction pendingTransaction, final TransactionSelectionResults ignored) {
-    if (transactionCurrentPriceBelowMin(pendingTransaction)) {
+      final TransactionEvaluationContext evaluationContext,
+      final TransactionSelectionResults ignored) {
+    if (transactionCurrentPriceBelowMin(evaluationContext)) {
       return TransactionSelectionResult.CURRENT_TX_PRICE_BELOW_MIN;
     }
     return TransactionSelectionResult.SELECTED;
@@ -56,7 +56,7 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
 
   @Override
   public TransactionSelectionResult evaluateTransactionPostProcessing(
-      final PendingTransaction pendingTransaction,
+      final TransactionEvaluationContext evaluationContext,
       final TransactionSelectionResults blockTransactionResults,
       final TransactionProcessingResult processingResult) {
     // All necessary checks were done in the pre-processing method, so nothing to do here.
@@ -66,30 +66,25 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
   /**
    * Checks if the transaction's current price is below the minimum.
    *
-   * @param pendingTransaction The transaction to be checked.
+   * @param evaluationContext The current selection session data.
    * @return True if the transaction's current price is below the minimum, false otherwise.
    */
-  private boolean transactionCurrentPriceBelowMin(final PendingTransaction pendingTransaction) {
-    final Transaction transaction = pendingTransaction.getTransaction();
+  private boolean transactionCurrentPriceBelowMin(
+      final TransactionEvaluationContext evaluationContext) {
+    final PendingTransaction pendingTransaction = evaluationContext.getPendingTransaction();
     // Priority txs are exempt from this check
     if (!pendingTransaction.hasPriority()) {
-      // since the minGasPrice can change at runtime, we need to recheck it everytime
-      final Wei transactionGasPriceInBlock =
-          context
-              .feeMarket()
-              .getTransactionPriceCalculator()
-              .price(transaction, context.processableBlockHeader().getBaseFee());
 
       if (context
               .miningParameters()
               .getMinTransactionGasPrice()
-              .compareTo(transactionGasPriceInBlock)
+              .compareTo(evaluationContext.getTransactionGasPrice())
           > 0) {
         LOG.atTrace()
             .setMessage(
                 "Current gas price of {} is {} and lower than the configured minimum {}, skipping")
             .addArgument(pendingTransaction::toTraceLog)
-            .addArgument(transactionGasPriceInBlock::toHumanReadableString)
+            .addArgument(evaluationContext.getTransactionGasPrice()::toHumanReadableString)
             .addArgument(
                 context.miningParameters().getMinTransactionGasPrice()::toHumanReadableString)
             .log();
