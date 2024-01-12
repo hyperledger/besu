@@ -222,7 +222,7 @@ public class EVMExecutor {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.tangerineWhistle(evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.frontier(executor.evm.getGasCalculator());
-    executor.contractValidationRules = List.of(MaxCodeSizeRule.of(0x6000));
+    executor.contractValidationRules = List.of();
     executor.initialNonce = 0;
     return executor;
   }
