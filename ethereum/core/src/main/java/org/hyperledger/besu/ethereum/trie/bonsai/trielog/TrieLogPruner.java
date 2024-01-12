@@ -168,7 +168,7 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
   }
 
   @Override
-  public void onTrieLogAdded(TrieLogEvent event) {
+  public void onTrieLogAdded(final TrieLogEvent event) {
     if (event.getType() == TrieLogEvent.Type.ADDED) {
       final TrieLogAddedEvent addedEvent = (TrieLogAddedEvent) event;
       final Hash blockHash = addedEvent.layer().getBlockHash();

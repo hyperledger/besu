@@ -816,7 +816,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   private TrieLogPruner createTrieLogPruner(
-      WorldStateStorage worldStateStorage, Blockchain blockchain) {
+      final WorldStateStorage worldStateStorage, final Blockchain blockchain) {
     final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
     final boolean isProofOfStake = genesisConfigOptions.getTerminalTotalDifficulty().isPresent();
     final TrieLogPruner trieLogPruner =
