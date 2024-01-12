@@ -89,6 +89,11 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: adopt
+          java-version: 17
       - name: setup gradle
         uses: gradle/gradle-build-action@v2
       - name: multi-arch docker
