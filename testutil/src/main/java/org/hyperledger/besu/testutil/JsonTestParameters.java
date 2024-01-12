@@ -37,6 +37,8 @@ import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonFactoryBuilder;
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -121,7 +123,12 @@ public class JsonTestParameters<S, T> {
   }
 
   private static final ObjectMapper objectMapper =
-      new ObjectMapper().registerModule(new Jdk8Module());
+      new ObjectMapper(
+              new JsonFactoryBuilder()
+                  .streamReadConstraints(
+                      StreamReadConstraints.builder().maxStringLength(Integer.MAX_VALUE).build())
+                  .build())
+          .registerModule(new Jdk8Module());
 
   // The type to which the json file is directly mapped
   private final Class<S> jsonFileMappedType;

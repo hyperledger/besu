@@ -23,6 +23,7 @@ import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPa
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT;
@@ -521,11 +522,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private SyncMode syncMode = null;
 
   @Option(
-      names = {"--fast-sync-min-peers"},
+      names = {"--sync-min-peers", "--fast-sync-min-peers"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
-          "Minimum number of peers required before starting fast sync. Has only effect on PoW networks. (default: ${DEFAULT-VALUE})")
-  private final Integer fastSyncMinPeerCount = FAST_SYNC_MIN_PEER_COUNT;
+          "Minimum number of peers required before starting sync. Has effect only on non-PoS networks. (default: ${DEFAULT-VALUE})")
+  private final Integer syncMinPeerCount = SYNC_MIN_PEER_COUNT;
 
   @Option(
       names = {"--network"},
@@ -2028,11 +2029,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--p2p-port",
             "--remote-connections-max-percentage"));
 
-    CommandLineUtils.failIfOptionDoesntMeetRequirement(
-        commandLine,
-        "--fast-sync-min-peers can't be used with FULL sync-mode",
-        !SyncMode.isFullSync(getDefaultSyncModeIfNotSet()),
-        singletonList("--fast-sync-min-peers"));
+    if (SyncMode.isFullSync(getDefaultSyncModeIfNotSet())
+        && isOptionSet(commandLine, "--sync-min-peers")) {
+      logger.warn("--sync-min-peers is ignored in FULL sync-mode");
+    }
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
@@ -2867,7 +2867,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return unstableSynchronizerOptions
         .toDomainObject()
         .syncMode(syncMode)
-        .fastSyncMinimumPeerCount(fastSyncMinPeerCount)
+        .fastSyncMinimumPeerCount(syncMinPeerCount)
         .build();
   }
 

@@ -5,6 +5,10 @@
       "moduleLicenseUrl": "https://www.apache.org/licenses/LICENSE-2.0"
     },
     {
+      "moduleLicense": "Apache License 2.0",
+      "moduleLicenseUrl": "https://www.apache.org/licenses/LICENSE-2.0"
+    },
+    {
       "moduleLicense": "BSD Zero Clause License",
       "moduleLicenseUrl": "https://opensource.org/licenses/0BSD"
     },
@@ -60,6 +64,10 @@
       "moduleLicense": "Eclipse Public License - v 1.0",
       "moduleVersion": "4.13.2",
       "moduleName": "junit:junit"
+    },
+    {
+      "moduleName": "org.jetbrains.kotlin:kotlin-stdlib-common",
+      "moduleVersion": "1.9.22"
     }
   ]
 }
