@@ -86,11 +86,8 @@ public class Cluster implements AutoCloseable {
     final Optional<? extends RunnableNode> bootnode = selectAndStartBootnode(nodes);
 
     nodes.parallelStream()
-        .filter(
-            node -> {
-              LOG.info("starting non-bootnode {}", node.getName());
-              return bootnode.map(boot -> boot != node).orElse(true);
-            })
+        .filter(node -> bootnode.map(boot -> boot != node).orElse(true))
+        .peek(node -> LOG.info("starting non-bootnode {}", node.getName()))
         .forEach(this::startNode);
 
     if (clusterConfiguration.isAwaitPeerDiscovery()) {
