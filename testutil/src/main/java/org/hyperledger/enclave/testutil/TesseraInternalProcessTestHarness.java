@@ -14,21 +14,23 @@
  */
 package org.hyperledger.enclave.testutil;
 
+import static com.google.common.base.Charsets.UTF_8;
 import static com.google.common.io.Files.readLines;
 import static io.netty.util.internal.ObjectUtil.checkNonEmpty;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -37,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -47,7 +48,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import com.google.common.base.Charsets;
 import io.vertx.core.json.JsonArray;
 import org.assertj.core.util.Files;
 import org.slf4j.Logger;
@@ -110,12 +110,11 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
     final ProcessBuilder processBuilder = new ProcessBuilder(args);
     processBuilder.environment().put("JAVA_OPTS", String.join(" ", jvmArgs));
 
-    processBuilder.redirectOutput(new File(getRedirectOutputPath()));
-
     try {
       final Process process = processBuilder.redirectErrorStream(true).start();
       tesseraProcess.set(process);
       tesseraProcesses.put(enclaveConfiguration.getName(), process);
+      redirectTesseraOutput();
     } catch (final NullPointerException ex) {
       ex.printStackTrace();
       throw new NullPointerException("Check that application.jar property has been set");
@@ -129,18 +128,32 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
     }
   }
 
-  private String getRedirectOutputPath() {
-    long currentTimeMillis = System.currentTimeMillis();
-    // Convert to LocalDateTime
-    LocalDateTime currentDateTime =
-        LocalDateTime.ofInstant(
-            java.time.Instant.ofEpochMilli(currentTimeMillis), java.time.ZoneId.systemDefault());
+  private void redirectTesseraOutput() {
+    final Logger LOG = LoggerFactory.getLogger(Process.class);
+    executorService.submit(
+        () -> {
+          try (final InputStreamReader iReader =
+                  new InputStreamReader(tesseraProcess.get().getInputStream(), UTF_8);
+              final BufferedReader reader = new BufferedReader(iReader)) {
 
-    // Format the LocalDateTime as a string
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    String formattedDateTime = currentDateTime.format(formatter);
+            LOG.info(
+                enclaveConfiguration.getName()
+                    + " redirectTesseraOutput for :"
+                    + Thread.currentThread().getName());
 
-    return String.format("build/tessera/%s-tessera-output.txt", formattedDateTime);
+            String line;
+            while ((line = reader.readLine()) != null) {
+              LOG.info(
+                  Thread.currentThread().getName()
+                      + " "
+                      + enclaveConfiguration.getName()
+                      + " "
+                      + line);
+            }
+          } catch (final IOException ex) {
+            throw new UncheckedIOException(ex);
+          }
+        });
   }
 
   private Optional<Path> waitForTesseraUris() throws InterruptedException {
@@ -407,11 +420,11 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
   }
 
   private static int generatePort() {
-    int minPort = 8000;
-    int maxPort = 10000;
+    int minPort = 9000;
+    int maxPort = 50000;
 
     while (true) {
-      int port = new Random().nextInt(maxPort - minPort + 1) + minPort;
+      int port = SecureRandomProvider.createSecureRandom().nextInt(maxPort - minPort + 1) + minPort;
 
       if (isPortAvailable(port)) {
         return port;
@@ -453,7 +466,7 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
 
   private static String readFile(final Path path) {
     try {
-      return readLines(path.toFile(), Charsets.UTF_8).get(0);
+      return readLines(path.toFile(), UTF_8).get(0);
     } catch (final IOException e) {
       LOG.error(e.getMessage());
       return "";
