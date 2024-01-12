@@ -96,5 +96,10 @@ jobs:
           java-version: 17
       - name: setup gradle
         uses: gradle/gradle-build-action@v2
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USER_RW }}
+          password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: multi-arch docker
         run: ./gradlew manifestDocker -PdockerOrgName=${{secrets.DOCKER_ORG }} -Prelease.releaseVersion=${{ github.ref_name }}
