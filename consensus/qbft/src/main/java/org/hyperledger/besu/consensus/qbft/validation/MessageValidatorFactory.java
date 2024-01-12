@@ -23,7 +23,6 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidator.SubsequentMessageValidator;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -78,16 +77,13 @@ public class MessageValidatorFactory {
     final RoundChangePayloadValidator roundChangePayloadValidator =
         new RoundChangePayloadValidator(validatorsForHeight, chainHeight);
 
-    final BlockValidator blockValidator =
-        protocolSchedule.getByBlockNumber(chainHeight).getBlockValidator();
-
     return new RoundChangeMessageValidator(
         roundChangePayloadValidator,
         BftHelpers.calculateRequiredValidatorQuorum(validatorsForHeight.size()),
         chainHeight,
         validatorsForHeight,
-        blockValidator,
-        protocolContext);
+        protocolContext,
+        protocolSchedule);
   }
 
   /**
@@ -95,24 +91,17 @@ public class MessageValidatorFactory {
    *
    * @param roundIdentifier the round identifier
    * @param parentHeader the parent header
-   * @param headerTimestamp the timestamp of the header
    * @return the message validator
    */
   public MessageValidator createMessageValidator(
-      final ConsensusRoundIdentifier roundIdentifier,
-      final BlockHeader parentHeader,
-      final long headerTimestamp) {
+      final ConsensusRoundIdentifier roundIdentifier, final BlockHeader parentHeader) {
 
     final Collection<Address> validatorsForHeight = getValidatorsAfterBlock(parentHeader);
-    final BlockValidator blockValidator =
-        protocolSchedule
-            .getByBlockNumberAndTimestamp(roundIdentifier.getSequenceNumber(), headerTimestamp)
-            .getBlockValidator();
 
     final ProposalValidator proposalValidator =
         new ProposalValidator(
-            blockValidator,
             protocolContext,
+            protocolSchedule,
             BftHelpers.calculateRequiredValidatorQuorum(validatorsForHeight.size()),
             validatorsForHeight,
             roundIdentifier,

@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -33,6 +34,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -49,8 +51,8 @@ public class ProposalValidator {
   private static final Logger LOG = LoggerFactory.getLogger(ProposalValidator.class);
   private static final String ERROR_PREFIX = "Invalid Proposal Payload";
 
-  private final BlockValidator blockValidator;
   private final ProtocolContext protocolContext;
+  private final ProtocolSchedule protocolSchedule;
   private final int quorumMessageCount;
   private final Collection<Address> validators;
   private final ConsensusRoundIdentifier roundIdentifier;
@@ -60,8 +62,8 @@ public class ProposalValidator {
   /**
    * Instantiates a new Proposal validator.
    *
-   * @param blockValidator the block validator
    * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol schedule
    * @param quorumMessageCount the quorum message count
    * @param validators the validators
    * @param roundIdentifier the round identifier
@@ -69,15 +71,15 @@ public class ProposalValidator {
    * @param bftExtraDataCodec the bft extra data codec
    */
   public ProposalValidator(
-      final BlockValidator blockValidator,
       final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
       final int quorumMessageCount,
       final Collection<Address> validators,
       final ConsensusRoundIdentifier roundIdentifier,
       final Address expectedProposer,
       final BftExtraDataCodec bftExtraDataCodec) {
-    this.blockValidator = blockValidator;
     this.protocolContext = protocolContext;
+    this.protocolSchedule = protocolSchedule;
     this.quorumMessageCount = quorumMessageCount;
     this.validators = validators;
     this.roundIdentifier = roundIdentifier;
@@ -92,6 +94,16 @@ public class ProposalValidator {
    * @return the boolean
    */
   public boolean validate(final Proposal msg) {
+
+    if (!(protocolSchedule instanceof BftProtocolSchedule)) {
+      throw new RuntimeException("Wrong class type for protocol schedule");
+    }
+
+    final BlockValidator blockValidator =
+        ((BftProtocolSchedule) protocolSchedule)
+            .getByBlockNumberAndTimestamp(
+                roundIdentifier.getSequenceNumber(), msg.getBlock().getHeader().getTimestamp())
+            .getBlockValidator();
 
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(

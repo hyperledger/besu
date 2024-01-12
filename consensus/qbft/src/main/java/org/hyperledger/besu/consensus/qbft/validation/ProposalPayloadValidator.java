@@ -55,7 +55,8 @@ public class ProposalPayloadValidator {
    *
    * @param expectedProposer the expected proposer
    * @param targetRound the target round
-   * @param blockValidator the block validator
+   * @param blockValidator the optional block validator (not all proposal validation requires block
+   *     validation)
    * @param protocolContext the protocol context
    * @param bftExtraDataCodec the bft extra data codec
    */
@@ -144,6 +145,10 @@ public class ProposalPayloadValidator {
   }
 
   private boolean validateBlock(final Block block) {
+    if (blockValidator == null) {
+      throw new RuntimeException("Block validation not possible, no block validator.");
+    }
+
     final var validationResult =
         blockValidator.validateAndProcessBlock(
             protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL);

@@ -31,8 +31,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
@@ -60,20 +62,26 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
+import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
+import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.math.BigInteger;
 import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
@@ -104,9 +112,9 @@ public class QbftBlockHeightManagerTest {
   @Mock private Clock clock;
   @Mock private MessageValidatorFactory messageValidatorFactory;
   @Mock private BftBlockCreator blockCreator;
-  @Mock private BlockImporter blockImporter;
   @Mock private BlockTimer blockTimer;
   @Mock private RoundTimer roundTimer;
+  @Mock private DefaultBlockchain blockchain;
   @Mock private FutureRoundProposalMessageValidator futureRoundProposalMessageValidator;
   @Mock private ValidatorMulticaster validatorMulticaster;
 
@@ -152,20 +160,31 @@ public class QbftBlockHeightManagerTest {
     when(futureRoundProposalMessageValidator.validateProposalMessage(any())).thenReturn(true);
     when(messageValidatorFactory.createFutureRoundProposalMessageValidator(anyLong(), any()))
         .thenReturn(futureRoundProposalMessageValidator);
-    when(messageValidatorFactory.createMessageValidator(any(), any(), anyLong()))
-        .thenReturn(messageValidator);
-    when(blockImporter.importBlock(any(), any(), any())).thenReturn(new BlockImportResult(false));
+    when(messageValidatorFactory.createMessageValidator(any(), any())).thenReturn(messageValidator);
 
     protocolContext =
         new ProtocolContext(
-            null,
+            blockchain,
             null,
             setupContextWithBftExtraDataEncoder(
                 QbftContext.class, validators, new QbftExtraDataCodec()),
             Optional.empty());
 
+    final ProtocolScheduleBuilder protocolScheduleBuilder =
+        new ProtocolScheduleBuilder(
+            new StubGenesisConfigOptions(),
+            BigInteger.ONE,
+            ProtocolSpecAdapters.create(0, Function.identity()),
+            new PrivacyParameters(),
+            false,
+            EvmConfiguration.DEFAULT);
+
+    ProtocolSchedule protocolSchedule =
+        new BftProtocolSchedule(
+            (DefaultProtocolSchedule) protocolScheduleBuilder.createProtocolSchedule());
+
     // Ensure the created QbftRound has the valid ConsensusRoundIdentifier;
-    when(roundFactory.createNewRound(any(), anyInt(), anyLong()))
+    when(roundFactory.createNewRound(any(), anyInt()))
         .thenAnswer(
             invocation -> {
               final int round = invocation.getArgument(1);
@@ -175,7 +194,7 @@ public class QbftBlockHeightManagerTest {
                   createdRoundState,
                   blockCreator,
                   protocolContext,
-                  blockImporter,
+                  protocolSchedule,
                   Subscribers.create(),
                   nodeKey,
                   messageFactory,
@@ -184,7 +203,7 @@ public class QbftBlockHeightManagerTest {
                   bftExtraDataCodec);
             });
 
-    when(roundFactory.createNewRoundWithState(any(), any(), anyLong()))
+    when(roundFactory.createNewRoundWithState(any(), any()))
         .thenAnswer(
             invocation -> {
               final RoundState providedRoundState = invocation.getArgument(1);
@@ -192,7 +211,7 @@ public class QbftBlockHeightManagerTest {
                   providedRoundState,
                   blockCreator,
                   protocolContext,
-                  blockImporter,
+                  protocolSchedule,
                   Subscribers.create(),
                   nodeKey,
                   messageFactory,
@@ -324,13 +343,13 @@ public class QbftBlockHeightManagerTest {
             messageValidatorFactory,
             messageFactory);
     manager.handleBlockTimerExpiry(roundIdentifier);
-    verify(roundFactory).createNewRound(any(), eq(0), anyLong());
+    verify(roundFactory).createNewRound(any(), eq(0));
 
     manager.handleRoundChangePayload(roundChange);
 
     verify(roundChangeManager, times(1)).appendRoundChangeMessage(roundChange);
     verify(roundFactory, times(1))
-        .createNewRound(any(), eq(futureRoundIdentifier.getRoundNumber()), anyLong());
+        .createNewRound(any(), eq(futureRoundIdentifier.getRoundNumber()));
   }
 
   @Test
@@ -345,10 +364,10 @@ public class QbftBlockHeightManagerTest {
             messageValidatorFactory,
             messageFactory);
     manager.handleBlockTimerExpiry(roundIdentifier);
-    verify(roundFactory).createNewRound(any(), eq(0), anyLong());
+    verify(roundFactory).createNewRound(any(), eq(0));
 
     manager.roundExpired(new RoundExpiry(roundIdentifier));
-    verify(roundFactory).createNewRound(any(), eq(1), anyLong());
+    verify(roundFactory).createNewRound(any(), eq(1));
   }
 
   @Test
@@ -543,6 +562,6 @@ public class QbftBlockHeightManagerTest {
     reset(roundFactory); // Discard the existing createNewRound invocation.
 
     manager.handleProposalPayload(futureRoundProposal);
-    verify(roundFactory, never()).createNewRound(any(), anyInt(), anyLong());
+    verify(roundFactory, never()).createNewRound(any(), anyInt());
   }
 }

@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.HashMap;
@@ -86,6 +87,7 @@ public class ProposalValidatorTest {
   @Mock private BlockValidator blockValidator;
   @Mock private MutableBlockchain blockChain;
   @Mock private WorldStateArchive worldStateArchive;
+  @Mock private ProtocolSchedule protocolSchedule;
   private ProtocolContext protocolContext;
 
   private final Map<ROUND_ID, RoundSpecificItems> roundItems = new HashMap<>();
@@ -121,8 +123,8 @@ public class ProposalValidatorTest {
             validators.getNodeAddresses(), roundIdentifier, bftExtraDataEncoder),
         roundIdentifier,
         new ProposalValidator(
-            blockValidator,
             protocolContext,
+            protocolSchedule,
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             validators.getNodeAddresses(),
             roundIdentifier,

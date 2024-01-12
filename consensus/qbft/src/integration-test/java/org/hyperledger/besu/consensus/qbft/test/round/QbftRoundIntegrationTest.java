@@ -50,6 +50,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
@@ -77,6 +78,7 @@ public class QbftRoundIntegrationTest {
   private final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
   private ProtocolContext protocolContext;
 
+  @Mock private ProtocolSchedule protocolSchedule;
   @Mock private MutableBlockchain blockChain;
   @Mock private WorldStateArchive worldStateArchive;
   @Mock private BlockImporter blockImporter;
@@ -135,7 +137,7 @@ public class QbftRoundIntegrationTest {
             roundState,
             blockCreator,
             protocolContext,
-            blockImporter,
+            protocolSchedule,
             subscribers,
             nodeKey,
             throwingMessageFactory,
@@ -163,7 +165,7 @@ public class QbftRoundIntegrationTest {
             roundState,
             blockCreator,
             protocolContext,
-            blockImporter,
+            protocolSchedule,
             subscribers,
             nodeKey,
             throwingMessageFactory,

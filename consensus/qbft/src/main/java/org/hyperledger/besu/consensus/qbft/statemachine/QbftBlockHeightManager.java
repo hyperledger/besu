@@ -104,7 +104,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
             new RoundState(
                 roundIdentifier,
                 finalState.getQuorum(),
-                messageValidatorFactory.createMessageValidator(roundIdentifier, parentHeader, 0L));
+                messageValidatorFactory.createMessageValidator(roundIdentifier, parentHeader));
 
     final long nextBlockHeight = parentHeader.getNumber() + 1;
     final ConsensusRoundIdentifier roundIdentifier =
@@ -280,18 +280,15 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
 
   private void startNewRound(final int roundNumber) {
     LOG.debug("Starting new round {}", roundNumber);
-    final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
     // validate the current round
     if (futureRoundStateBuffer.containsKey(roundNumber)) {
       currentRound =
           Optional.of(
               roundFactory.createNewRoundWithState(
-                  parentHeader, futureRoundStateBuffer.get(roundNumber), headerTimeStampSeconds));
+                  parentHeader, futureRoundStateBuffer.get(roundNumber)));
       futureRoundStateBuffer.keySet().removeIf(k -> k <= roundNumber);
     } else {
-      currentRound =
-          Optional.of(
-              roundFactory.createNewRound(parentHeader, roundNumber, headerTimeStampSeconds));
+      currentRound = Optional.of(roundFactory.createNewRound(parentHeader, roundNumber));
     }
     // discard roundChange messages from the current and previous rounds
     roundChangeManager.discardRoundsPriorTo(currentRound.get().getRoundIdentifier());
