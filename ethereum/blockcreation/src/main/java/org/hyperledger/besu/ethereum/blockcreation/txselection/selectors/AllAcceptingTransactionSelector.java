@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.PendingTransaction;
 import org.hyperledger.besu.plugin.data.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
+import org.hyperledger.besu.plugin.services.txselection.TransactionEvaluationContext;
 
 /** A TransactionSelector that unconditionally selects all transactions. */
 public class AllAcceptingTransactionSelector implements PluginTransactionSelector {
@@ -29,25 +30,25 @@ public class AllAcceptingTransactionSelector implements PluginTransactionSelecto
   /**
    * Always selects the transaction in the pre-processing stage.
    *
-   * @param pendingTransaction The transaction to be evaluated.
+   * @param evaluationContext The current selection context.
    * @return Always SELECTED.
    */
   @Override
   public TransactionSelectionResult evaluateTransactionPreProcessing(
-      final PendingTransaction pendingTransaction) {
+      final TransactionEvaluationContext<? extends PendingTransaction> evaluationContext) {
     return TransactionSelectionResult.SELECTED;
   }
 
   /**
    * Always selects the transaction in the post-processing stage.
    *
-   * @param pendingTransaction The transaction to be evaluated.
+   * @param evaluationContext The current selection context.
    * @param processingResult The result of the transaction processing.
    * @return Always SELECTED.
    */
   @Override
   public TransactionSelectionResult evaluateTransactionPostProcessing(
-      final PendingTransaction pendingTransaction,
+      final TransactionEvaluationContext<? extends PendingTransaction> evaluationContext,
       final TransactionProcessingResult processingResult) {
     return TransactionSelectionResult.SELECTED;
   }
