@@ -14,6 +14,7 @@
 - Introduce TransactionEvaluationContext to pass data between transaction selectors and plugin, during block creation [#6381](https://github.com/hyperledger/besu/pull/6381) 
 - Upgrade dependencies [#6377](https://github.com/hyperledger/besu/pull/6377)
 - Upgrade `com.fasterxml.jackson` dependencies [#6378](https://github.com/hyperledger/besu/pull/6378) 
+- Upgrade Guava dependency [#6396](https://github.com/hyperledger/besu/pull/6396)
 
 ### Bug fixes
 - INTERNAL_ERROR from `eth_estimateGas` JSON/RPC calls [#6344](https://github.com/hyperledger/besu/issues/6344)
