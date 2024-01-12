@@ -414,7 +414,7 @@ public class Transaction
    * @return the transaction sender
    */
   @Override
-  public synchronized Address getSender() {
+  public Address getSender() {
     if (sender == null) {
       Optional<Address> cachedSender = Optional.ofNullable(senderCache.getIfPresent(getHash()));
       sender =
