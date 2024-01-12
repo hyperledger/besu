@@ -148,14 +148,15 @@ public class TrieLogSubCommand implements Runnable {
 
     @CommandLine.Option(
         names = "--trie-log-block-hash",
-        description = "The hash of the block you want to import the trie log of",
+        description =
+            "Comma separated list of hashes from the blocks you want to export the trie logs of",
         split = " {0,1}, {0,1}",
         arity = "1..*")
     private List<String> trieLogBlockHashList;
 
     @CommandLine.Option(
         names = "--trie-log-file-path",
-        description = "The hash of the block you want to import the trie log of",
+        description = "The file you want to export the trie logs to",
         arity = "1..1")
     private Path trieLogFilePath = null;
 
@@ -203,7 +204,7 @@ public class TrieLogSubCommand implements Runnable {
 
     @CommandLine.Option(
         names = "--trie-log-file-path",
-        description = "The hash of the block you want to import the trie log of",
+        description = "The file you want to import the trie logs from",
         arity = "1..1")
     private Path trieLogFilePath = null;
 
