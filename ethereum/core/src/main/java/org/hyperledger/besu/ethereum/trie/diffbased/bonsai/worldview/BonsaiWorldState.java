@@ -71,7 +71,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
         evmConfiguration);
   }
 
-  protected BonsaiWorldState(
+  public BonsaiWorldState(
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final BonsaiCachedMerkleTrieLoader cachedMerkleTrieLoader,
       final DiffBasedCachedWorldStorageManager cachedWorldStorageManager,

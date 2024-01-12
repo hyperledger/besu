@@ -47,6 +47,7 @@ public class AuthenticatedJsonRpcProcessor implements JsonRpcProcessor {
       final JsonRpcMethod method,
       final Span metricSpan,
       final JsonRpcRequestContext request) {
+    System.out.println("iici ?");
     if (authenticationService.isPermitted(request.getUser(), method, noAuthRpcApis)) {
       return rpcProcessor.process(id, method, metricSpan, request);
     }

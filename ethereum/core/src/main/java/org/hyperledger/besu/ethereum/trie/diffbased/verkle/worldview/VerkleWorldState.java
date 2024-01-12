@@ -71,7 +71,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
         evmConfiguration);
   }
 
-  protected VerkleWorldState(
+  public VerkleWorldState(
       final VerkleWorldStateKeyValueStorage worldStateKeyValueStorage,
       final DiffBasedCachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
@@ -137,7 +137,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
                 }));
 
     LOG.info("end commit ");
-    LOG.info(stateTrie.toDotTree());
+    //LOG.info(stateTrie.toDotTree());
     final Bytes32 rootHash = stateTrie.getRootHash();
 
     LOG.info("end commit ");
