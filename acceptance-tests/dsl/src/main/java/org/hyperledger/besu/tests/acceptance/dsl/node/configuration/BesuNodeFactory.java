@@ -64,6 +64,7 @@ public class BesuNodeFactory {
         config.getName(),
         config.getDataPath(),
         config.getMiningParameters(),
+        config.getTransactionPoolConfiguration(),
         config.getJsonRpcConfiguration(),
         config.getEngineRpcConfiguration(),
         config.getWebSocketConfiguration(),
