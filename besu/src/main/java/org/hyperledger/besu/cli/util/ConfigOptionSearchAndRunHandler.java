@@ -14,7 +14,11 @@
  */
 package org.hyperledger.besu.cli.util;
 
+import org.hyperledger.besu.cli.config.ProfileName;
+
 import java.io.File;
+import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -54,24 +58,18 @@ public class ConfigOptionSearchAndRunHandler extends CommandLine.RunLast {
   @Override
   public List<Object> handle(final ParseResult parseResult) throws ParameterException {
     final CommandLine commandLine = parseResult.commandSpec().commandLine();
+
     final Optional<File> configFile = findConfigFile(parseResult, commandLine);
-    validatePrivacyOptions(parseResult, commandLine);
-    commandLine.setDefaultValueProvider(createDefaultValueProvider(commandLine, configFile));
+    final Optional<InputStream> profileFile = findProfileFile(parseResult, commandLine);
+
+    commandLine.setDefaultValueProvider(
+        createDefaultValueProvider(commandLine, configFile, profileFile));
+
     commandLine.setExecutionStrategy(resultHandler);
     commandLine.setParameterExceptionHandler(parameterExceptionHandler);
     commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
 
     return new ArrayList<>();
-  }
-
-  private void validatePrivacyOptions(
-      final ParseResult parseResult, final CommandLine commandLine) {
-    if (parseResult.hasMatchedOption("--privacy-onchain-groups-enabled")
-        && parseResult.hasMatchedOption("--privacy-flexible-groups-enabled")) {
-      throw new ParameterException(
-          commandLine,
-          "The `--privacy-onchain-groups-enabled` option is deprecated and you should only use `--privacy-flexible-groups-enabled`");
-    }
   }
 
   private Optional<File> findConfigFile(
@@ -106,6 +104,52 @@ public class ConfigOptionSearchAndRunHandler extends CommandLine.RunLast {
     return Optional.empty();
   }
 
+  private Optional<InputStream> findProfileFile(
+      final ParseResult parseResult, final CommandLine commandLine) {
+    final String profileOption = "--profile";
+    final String profileEnvironmentKey = "BESU_PROFILE";
+
+    if (parseResult.hasMatchedOption(profileOption)
+        && environment.containsKey(profileEnvironmentKey)) {
+      throw new ParameterException(
+          commandLine,
+          String.format(
+              "Profile specified using %s=%s and %s %s",
+              profileEnvironmentKey,
+              environment.get(profileEnvironmentKey),
+              profileOption,
+              parseResult.matchedOption(profileOption).stringValues()));
+    }
+
+    if (parseResult.hasMatchedOption(profileOption)) {
+      try {
+        ProfileName profileName = parseResult.matchedOption(profileOption).getter().get();
+        return Optional.of(getTomlFile(commandLine, profileName.getConfigFile()));
+      } catch (Exception e) {
+        throw new ParameterException(commandLine, e.getMessage(), e);
+      }
+    }
+
+    if (environment.containsKey(profileEnvironmentKey)) {
+      try {
+        ProfileName profileName = ProfileName.valueOf(environment.get(profileEnvironmentKey));
+        return Optional.of(getTomlFile(commandLine, profileName.getConfigFile()));
+      } catch (Exception e) {
+        throw new ParameterException(commandLine, e.getMessage(), e);
+      }
+    }
+    return Optional.empty();
+  }
+
+  private InputStream getTomlFile(final CommandLine commandLine, final String file)
+      throws URISyntaxException {
+    InputStream resourceUrl = getClass().getClassLoader().getResourceAsStream(file);
+    if (resourceUrl == null) {
+      throw new ParameterException(commandLine, String.format("TOML file %s not found", file));
+    }
+    return resourceUrl;
+  }
+
   /**
    * Create default value provider default value provider.
    *
@@ -115,14 +159,16 @@ public class ConfigOptionSearchAndRunHandler extends CommandLine.RunLast {
    */
   @VisibleForTesting
   IDefaultValueProvider createDefaultValueProvider(
-      final CommandLine commandLine, final Optional<File> configFile) {
-    if (configFile.isPresent()) {
-      return new CascadingDefaultProvider(
-          new EnvironmentVariableDefaultProvider(environment),
-          new TomlConfigFileDefaultProvider(commandLine, configFile.get()));
-    } else {
-      return new EnvironmentVariableDefaultProvider(environment);
-    }
+      final CommandLine commandLine,
+      final Optional<File> configFile,
+      final Optional<InputStream> profileFile) {
+    List<IDefaultValueProvider> providers = new ArrayList<>();
+    providers.add(new EnvironmentVariableDefaultProvider(environment));
+    configFile.ifPresent(
+        config -> providers.add(new TomlConfigFileDefaultProvider(commandLine, config)));
+    profileFile.ifPresent(
+        profile -> providers.add(new TomlConfigFileDefaultProvider(commandLine, profile)));
+    return new CascadingDefaultProvider(providers);
   }
 
   @Override

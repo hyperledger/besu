@@ -47,6 +47,7 @@ import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.cli.config.ProfileName;
 import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
@@ -535,6 +536,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Synchronize against the indicated network, possible values are ${COMPLETION-CANDIDATES}."
               + " (default: ${DEFAULT-VALUE})")
   private final NetworkName network = null;
+
+  @SuppressWarnings("UnusedVariable")
+  @Option(
+      names = {"--profile"},
+      paramLabel = PROFILE_FORMAT_HELP,
+      description =
+          "Overwrite default values, possible values are ${COMPLETION-CANDIDATES}. (default: none)")
+  private final ProfileName profile = null;
 
   @Option(
       names = {"--nat-method"},
@@ -1820,6 +1829,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateDataStorageOptions();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
     pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
+    validatePrivacyOptions(commandLine);
   }
 
   private void validateTransactionPoolOptions() {
@@ -2065,6 +2075,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (isPruningEnabled()) {
       logger.warn(
           "Forest pruning is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format.");
+    }
+  }
+
+  private void validatePrivacyOptions(final CommandLine commandLine) {
+    if (Boolean.TRUE.equals(privacyOptionGroup.isOnchainPrivacyGroupsEnabled)) {
+      throw new ParameterException(
+          commandLine,
+          "The `--privacy-onchain-groups-enabled` option is deprecated and you should only use `--privacy-flexible-groups-enabled`");
     }
   }
 

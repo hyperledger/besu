@@ -19,7 +19,10 @@ import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,8 +47,8 @@ import picocli.CommandLine.ParameterException;
 public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
 
   private final CommandLine commandLine;
-  private final File configFile;
-  private TomlParseResult result;
+  private final InputStream configurationInputStream;
+  private TomlParseResult tomlParseResult;
 
   /**
    * Instantiates a new Toml config file default value provider.
@@ -55,7 +58,18 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
    */
   public TomlConfigFileDefaultProvider(final CommandLine commandLine, final File configFile) {
     this.commandLine = commandLine;
-    this.configFile = configFile;
+    try {
+      this.configurationInputStream = new FileInputStream(configFile);
+    } catch (final FileNotFoundException e) {
+      throw new ParameterException(
+          commandLine, "Unable to read TOML configuration, file not found.");
+    }
+  }
+
+  public TomlConfigFileDefaultProvider(
+      final CommandLine commandLine, final InputStream inputStream) {
+    this.commandLine = commandLine;
+    this.configurationInputStream = inputStream;
   }
 
   @Override
@@ -68,43 +82,38 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
   }
 
   private String getConfigurationValue(final OptionSpec optionSpec) {
-    // NOTE: This temporary fix is necessary to make certain options be treated as a multi-value.
-    // This can be done automatically by picocli if the object implements Collection.
-    final boolean isArray =
-        getKeyName(optionSpec).map(keyName -> result.isArray(keyName)).orElse(false);
-    final String defaultValue;
+    final boolean isArray = getKeyName(optionSpec).map(tomlParseResult::isArray).orElse(false);
 
-    // Convert config values to the right string representation for default string value
     if (optionSpec.type().equals(Boolean.class) || optionSpec.type().equals(boolean.class)) {
-      defaultValue = getBooleanEntryAsString(optionSpec);
+      return getBooleanEntryAsString(optionSpec);
     } else if (optionSpec.isMultiValue() || isArray) {
-      defaultValue = getListEntryAsString(optionSpec);
-    } else if (optionSpec.type().equals(Integer.class) || optionSpec.type().equals(int.class)) {
-      defaultValue = getNumericEntryAsString(optionSpec);
-    } else if (optionSpec.type().equals(Long.class) || optionSpec.type().equals(long.class)) {
-      defaultValue = getNumericEntryAsString(optionSpec);
-    } else if (optionSpec.type().equals(Wei.class)) {
-      defaultValue = getNumericEntryAsString(optionSpec);
-    } else if (optionSpec.type().equals(BigInteger.class)) {
-      defaultValue = getNumericEntryAsString(optionSpec);
-    } else if (optionSpec.type().equals(Double.class) || optionSpec.type().equals(double.class)) {
-      defaultValue = getNumericEntryAsString(optionSpec);
-    } else if (optionSpec.type().equals(Float.class) || optionSpec.type().equals(float.class)) {
-      defaultValue = getNumericEntryAsString(optionSpec);
-    } else if (optionSpec.type().equals(Percentage.class)) {
-      defaultValue = getNumericEntryAsString(optionSpec);
-    } else if (optionSpec.type().equals(Fraction.class)) {
-      defaultValue = getNumericEntryAsString(optionSpec);
+      return getListEntryAsString(optionSpec);
+    } else if (isNumericType(optionSpec.type())) {
+      return getNumericEntryAsString(optionSpec);
     } else { // else will be treated as String
-      defaultValue = getEntryAsString(optionSpec);
+      return getEntryAsString(optionSpec);
     }
-    return defaultValue;
+  }
+
+  private boolean isNumericType(Class<?> type) {
+    return type.equals(Integer.class)
+        || type.equals(int.class)
+        || type.equals(Long.class)
+        || type.equals(long.class)
+        || type.equals(Wei.class)
+        || type.equals(BigInteger.class)
+        || type.equals(Double.class)
+        || type.equals(double.class)
+        || type.equals(Float.class)
+        || type.equals(float.class)
+        || type.equals(Percentage.class)
+        || type.equals(Fraction.class);
   }
 
   private String getEntryAsString(final OptionSpec spec) {
     // returns the string value of the config line corresponding to the option in toml file
     // or null if not present in the config
-    return getKeyName(spec).map(result::getString).orElse(null);
+    return getKeyName(spec).map(tomlParseResult::getString).orElse(null);
   }
 
   private Optional<String> getKeyName(final OptionSpec spec) {
@@ -114,7 +123,7 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
         Arrays.stream(spec.names())
             // remove leading dashes on option name as we can have "--" or "-" options
             .map(name -> name.replaceFirst("^-+", ""))
-            .filter(result::contains)
+            .filter(tomlParseResult::contains)
             .findFirst();
 
     if (keyName.isEmpty()) {
@@ -141,7 +150,7 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
         .forEach(
             nextSpecName -> {
               String specName =
-                  result.keyPathSet().stream()
+                  tomlParseResult.keyPathSet().stream()
                       .filter(option -> option.contains(nextSpecName.replaceFirst("^-+", "")))
                       .findFirst()
                       .orElse(new ArrayList<>())
@@ -160,7 +169,10 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
     // corresponding to the option in toml file
     // or null if not present in the config
     return decodeTomlArray(
-        getKeyName(spec).map(result::getArray).map(tomlArray -> tomlArray.toList()).orElse(null));
+        getKeyName(spec)
+            .map(tomlParseResult::getArray)
+            .map(tomlArray -> tomlArray.toList())
+            .orElse(null));
   }
 
   private String decodeTomlArray(final List<Object> tomlArrayElements) {
@@ -181,7 +193,7 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
     // return the string representation of the boolean value corresponding to the option in toml
     // file
     // or null if not present in the config
-    return getKeyName(spec).map(result::getBoolean).map(Object::toString).orElse(null);
+    return getKeyName(spec).map(tomlParseResult::getBoolean).map(Object::toString).orElse(null);
   }
 
   private String getNumericEntryAsString(final OptionSpec spec) {
@@ -189,21 +201,22 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
     // file - this works for integer, double, and float
     // or null if not present in the config
 
-    return getKeyName(spec).map(result::get).map(Object::toString).orElse(null);
+    return getKeyName(spec).map(tomlParseResult::get).map(Object::toString).orElse(null);
   }
 
   private void checkConfigurationValidity() {
-    if (result == null || result.isEmpty())
+    if (tomlParseResult == null || tomlParseResult.isEmpty())
       throw new ParameterException(
-          commandLine, String.format("Unable to read TOML configuration file %s", configFile));
+          commandLine,
+          String.format("Unable to read TOML configuration file %s", configurationInputStream));
   }
 
   /** Load configuration from file. */
   public void loadConfigurationFromFile() {
 
-    if (result == null) {
+    if (tomlParseResult == null) {
       try {
-        final TomlParseResult result = Toml.parse(configFile.toPath());
+        final TomlParseResult result = Toml.parse(configurationInputStream);
 
         if (result.hasErrors()) {
           final String errors =
@@ -217,14 +230,13 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
 
         checkUnknownOptions(result);
 
-        this.result = result;
+        this.tomlParseResult = result;
 
       } catch (final IOException e) {
         throw new ParameterException(
             commandLine, "Unable to read TOML configuration, file not found.");
       }
     }
-
     checkConfigurationValidity();
   }
 
