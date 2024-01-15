@@ -148,6 +148,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
@@ -2063,8 +2064,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (isPruningEnabled()) {
-      logger.warn(
-          "Forest pruning is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format.");
+      if (dataStorageOptions
+          .toDomainObject()
+          .getDataStorageFormat()
+          .equals(DataStorageFormat.BONSAI)) {
+        logger.warn("Forest pruning is ignored with Bonsai data storage format.");
+      } else {
+        logger.warn(
+            "Forest pruning is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format.");
+      }
     }
   }
 
