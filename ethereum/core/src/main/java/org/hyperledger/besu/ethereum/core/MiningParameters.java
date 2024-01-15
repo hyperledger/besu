@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.util.number.Percentage;
+import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.time.Duration;
 import java.util.Objects;
@@ -267,7 +267,7 @@ public abstract class MiningParameters {
     long DEFAULT_POS_BLOCK_CREATION_MAX_TIME = Duration.ofSeconds(12).toMillis();
     long DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION = Duration.ofMillis(500).toMillis();
     long DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME = Duration.ofSeconds(5).toMillis();
-    Percentage DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME = Percentage.fromInt(75);
+    PositiveNumber DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME = PositiveNumber.fromInt(75);
 
     MiningParameters.Unstable DEFAULT = ImmutableMiningParameters.Unstable.builder().build();
 
@@ -312,7 +312,7 @@ public abstract class MiningParameters {
     }
 
     @Value.Default
-    default Percentage getPoaBlockTxsSelectionMaxTime() {
+    default PositiveNumber getPoaBlockTxsSelectionMaxTime() {
       return DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
     }
 
