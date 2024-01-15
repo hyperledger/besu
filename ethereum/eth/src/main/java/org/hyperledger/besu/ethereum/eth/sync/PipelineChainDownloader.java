@@ -43,7 +43,7 @@ public class PipelineChainDownloader implements ChainDownloader {
   private static final Logger LOG = LoggerFactory.getLogger(PipelineChainDownloader.class);
   static final Duration PAUSE_AFTER_ERROR_DURATION = Duration.ofSeconds(2);
   private final SyncState syncState;
-  private final SyncTargetManager syncTargetManager;
+  private final AbstractSyncTargetManager syncTargetManager;
   private final DownloadPipelineFactory downloadPipelineFactory;
   private final EthScheduler scheduler;
 
@@ -55,7 +55,7 @@ public class PipelineChainDownloader implements ChainDownloader {
 
   public PipelineChainDownloader(
       final SyncState syncState,
-      final SyncTargetManager syncTargetManager,
+      final AbstractSyncTargetManager syncTargetManager,
       final DownloadPipelineFactory downloadPipelineFactory,
       final EthScheduler scheduler,
       final MetricsSystem metricsSystem) {

@@ -14,21 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
-public class FastSyncException extends RuntimeException {
+public class SyncException extends RuntimeException {
 
-  private final FastSyncError error;
+  private final SyncError error;
 
-  public FastSyncException(final FastSyncError error) {
-    super("Fast sync failed: " + error);
+  public SyncException(final SyncError error) {
+    super("Sync failed: " + error);
     this.error = error;
   }
 
-  public FastSyncError getError() {
+  public SyncError getError() {
     return error;
   }
 
-  public FastSyncException(final Throwable error) {
+  public SyncException(final Throwable error) {
     super(error);
-    this.error = FastSyncError.UNEXPECTED_ERROR;
+    this.error = SyncError.UNEXPECTED_ERROR;
   }
 }
