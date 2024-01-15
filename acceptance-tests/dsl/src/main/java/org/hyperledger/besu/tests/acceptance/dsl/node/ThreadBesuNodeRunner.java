@@ -182,6 +182,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final TransactionPoolConfiguration txPoolConfig =
         ImmutableTransactionPoolConfiguration.builder()
+            .from(node.getTransactionPoolConfiguration())
             .strictTransactionReplayProtectionEnabled(node.isStrictTxReplayProtectionEnabled())
             .build();
 

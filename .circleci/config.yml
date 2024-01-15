@@ -233,7 +233,7 @@ jobs:
       - capture_test_logs
 
   acceptanceTestsCliqueBft:
-    executor: besu_executor_xl
+    executor: besu_executor_med
     steps:
       - prepare
       - attach_workspace:
@@ -242,7 +242,7 @@ jobs:
           name: AcceptanceTests (Non-Mainnet)
           no_output_timeout: 20m
           command: |
-            ./gradlew --no-daemon acceptanceTestCliqueBft
+            ./gradlew --no-daemon --max-workers=1 acceptanceTestCliqueBft
       - capture_test_results
       - capture_test_logs
 
@@ -269,7 +269,7 @@ jobs:
       - capture_test_logs
 
   acceptanceTestsPermissioning:
-    executor: besu_executor_xl
+    executor: besu_executor_med
     steps:
       - prepare
       - attach_workspace:
@@ -278,7 +278,7 @@ jobs:
           name: AcceptanceTests (Non-Mainnet)
           no_output_timeout: 20m
           command: |
-            ./gradlew --no-daemon acceptanceTestPermissioning
+            ./gradlew --no-daemon --max-workers=1 acceptanceTestPermissioning
       - capture_test_results
       - capture_test_logs
 
@@ -437,6 +437,7 @@ workflows:
             - assemble
       - buildArm64Docker:
           requires:
+            - buildDocker
             - assemble
       - publish:
           filters:
