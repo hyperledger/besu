@@ -25,6 +25,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 
 import java.nio.charset.StandardCharsets;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,5 +98,10 @@ public class FlatDbStrategyProvider {
         TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.PARTIAL.getVersion().toArrayUnsafe());
     transaction.commit();
     loadFlatDbStrategy(composedWorldStateStorage); // force reload of flat db reader strategy
+  }
+
+  @VisibleForTesting
+  FlatDbMode getFlatDbMode() {
+    return flatDbMode;
   }
 }
