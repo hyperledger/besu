@@ -44,6 +44,7 @@ public class EnginePayloadParameter {
   private final Long blobGasUsed;
   private final String excessBlobGas;
   private final List<DepositParameter> deposits;
+  private final ExecutionWitnessParameter executionWitness;
 
   /**
    * Creates an instance of EnginePayloadParameter.
@@ -66,6 +67,7 @@ public class EnginePayloadParameter {
    * @param blobGasUsed QUANTITY, 64 Bits
    * @param excessBlobGas QUANTITY, 64 Bits
    * @param deposits List of deposit parameters.
+   * @param executionWitness OBJECT executionWitness.
    */
   @JsonCreator
   public EnginePayloadParameter(
@@ -86,7 +88,8 @@ public class EnginePayloadParameter {
       @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals,
       @JsonProperty("blobGasUsed") final UnsignedLongParameter blobGasUsed,
       @JsonProperty("excessBlobGas") final String excessBlobGas,
-      @JsonProperty("depositReceipts") final List<DepositParameter> deposits) {
+      @JsonProperty("depositReceipts") final List<DepositParameter> deposits,
+      @JsonProperty("executionWitness") final ExecutionWitnessParameter executionWitness) {
     this.blockHash = blockHash;
     this.parentHash = parentHash;
     this.feeRecipient = feeRecipient;
@@ -105,6 +108,7 @@ public class EnginePayloadParameter {
     this.blobGasUsed = blobGasUsed == null ? null : blobGasUsed.getValue();
     this.excessBlobGas = excessBlobGas;
     this.deposits = deposits;
+    this.executionWitness = executionWitness;
   }
 
   public Hash getBlockHash() {
@@ -177,5 +181,9 @@ public class EnginePayloadParameter {
 
   public List<DepositParameter> getDeposits() {
     return deposits;
+  }
+
+  public ExecutionWitnessParameter getExecutionWitness() {
+    return executionWitness;
   }
 }

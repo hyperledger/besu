@@ -469,7 +469,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     if (localAccountStorage != null) {
       final DiffBasedValue<UInt256> value = localAccountStorage.get(storageSlotKey);
       if (value != null) {
-        if (value.isCleared()) {
+        if (value.isLastStepCleared()) {
           return UInt256.ZERO;
         }
         final UInt256 updated = value.getUpdated();

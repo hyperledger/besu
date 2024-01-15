@@ -21,9 +21,6 @@ pluginManagement {
 }
 
 rootProject.name='besu'
-include 'acceptance-tests:test-plugins'
-include 'acceptance-tests:dsl'
-include 'acceptance-tests:tests'
 include 'besu'
 include 'config'
 include 'consensus:clique'

@@ -235,6 +235,7 @@ public class ProtocolScheduleBuilder {
     // Begin timestamp forks
     lastForkBlock = validateForkOrder("Shanghai", config.getShanghaiTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("Cancun", config.getCancunTime(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Prague", config.getPragueTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("FutureEips", config.getFutureEipsTime(), lastForkBlock);
     lastForkBlock =
         validateForkOrder("ExperimentalEips", config.getExperimentalEipsTime(), lastForkBlock);

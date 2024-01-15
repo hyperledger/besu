@@ -86,6 +86,7 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
         original.getWithdrawalsValidator(),
         original.getWithdrawalsProcessor(),
         original.getDepositsValidator(),
+        original.getExecutionWitnessValidator(),
         original.isPoS(),
         original.isReplayProtectionSupported());
   }

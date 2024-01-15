@@ -147,6 +147,7 @@ dependencies {
   implementation project(':crypto:algorithms')
   implementation project(':datatypes')
   implementation project(':ethereum:core')
+  implementation project(':ethereum:trie')
   implementation project(':metrics:core')
   implementation project(':util')
   implementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')

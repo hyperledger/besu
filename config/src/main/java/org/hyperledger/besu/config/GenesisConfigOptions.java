@@ -241,6 +241,12 @@ public interface GenesisConfigOptions {
    * @return the cancun time
    */
   OptionalLong getCancunTime();
+  /**
+   * Gets prague time.
+   *
+   * @return the prague time
+   */
+  OptionalLong getPragueTime();
 
   /**
    * Gets future eips time.

@@ -24,18 +24,22 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 public class DiffBasedValue<T> implements TrieLog.LogTuple<T> {
   private T prior;
   private T updated;
-  private boolean cleared;
+  private boolean lastStepCleared;
+
+  private boolean clearedAtLeastOnce;
 
   public DiffBasedValue(final T prior, final T updated) {
     this.prior = prior;
     this.updated = updated;
-    this.cleared = false;
+    this.lastStepCleared = false;
+    this.clearedAtLeastOnce = false;
   }
 
-  public DiffBasedValue(final T prior, final T updated, final boolean cleared) {
+  public DiffBasedValue(final T prior, final T updated, final boolean lastStepCleared) {
     this.prior = prior;
     this.updated = updated;
-    this.cleared = cleared;
+    this.lastStepCleared = lastStepCleared;
+    this.clearedAtLeastOnce = lastStepCleared;
   }
 
   @Override
@@ -54,30 +58,39 @@ public class DiffBasedValue<T> implements TrieLog.LogTuple<T> {
   }
 
   public DiffBasedValue<T> setUpdated(final T updated) {
-    this.cleared = updated == null;
+    this.lastStepCleared = updated == null;
+    if (lastStepCleared) {
+      this.clearedAtLeastOnce = true;
+    }
     this.updated = updated;
     return this;
   }
 
   public void setCleared() {
-    this.cleared = true;
+    this.lastStepCleared = true;
+    this.clearedAtLeastOnce = true;
   }
 
   @Override
-  public boolean isCleared() {
-    return cleared;
+  public boolean isLastStepCleared() {
+    return lastStepCleared;
+  }
+
+  @Override
+  public boolean isClearedAtLeastOnce() {
+    return clearedAtLeastOnce;
   }
 
   @Override
   public String toString() {
     return "BonsaiValue{"
-        + "prior="
-        + prior
-        + ", updated="
-        + updated
-        + ", cleared="
-        + cleared
-        + '}';
+            + "prior="
+            + prior
+            + ", updated="
+            + updated
+            + ", cleared="
+            + lastStepCleared
+            + '}';
   }
 
   @Override
@@ -90,14 +103,18 @@ public class DiffBasedValue<T> implements TrieLog.LogTuple<T> {
     }
     DiffBasedValue<?> that = (DiffBasedValue<?>) o;
     return new EqualsBuilder()
-        .append(cleared, that.cleared)
-        .append(prior, that.prior)
-        .append(updated, that.updated)
-        .isEquals();
+            .append(lastStepCleared, that.lastStepCleared)
+            .append(prior, that.prior)
+            .append(updated, that.updated)
+            .isEquals();
   }
 
   @Override
   public int hashCode() {
-    return new HashCodeBuilder(17, 37).append(prior).append(updated).append(cleared).toHashCode();
+    return new HashCodeBuilder(17, 37)
+            .append(prior)
+            .append(updated)
+            .append(lastStepCleared)
+            .toHashCode();
   }
 }

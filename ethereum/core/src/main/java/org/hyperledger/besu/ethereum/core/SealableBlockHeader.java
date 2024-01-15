@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.trie.verkle.ExecutionWitness;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.Optional;
@@ -48,6 +49,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
   protected final Long blobGasUsed;
 
   protected final BlobGas excessBlobGas;
+  protected final ExecutionWitness executionWitness;
 
   protected SealableBlockHeader(
       final Hash parentHash,
@@ -69,7 +71,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final Long blobGasUsed,
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
-      final Hash depositsRoot) {
+      final Hash depositsRoot,
+      final ExecutionWitness executionWitness) {
     super(
         parentHash,
         coinbase,
@@ -91,6 +94,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
     this.extraData = extraData;
     this.blobGasUsed = blobGasUsed;
     this.excessBlobGas = excessBlobGas;
+    this.executionWitness = executionWitness;
   }
 
   /**
@@ -190,5 +194,14 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    */
   public Optional<BlobGas> getExcessBlobGas() {
     return Optional.ofNullable(excessBlobGas);
+  }
+
+  /**
+   * Returns the execution witness if available.
+   *
+   * @return the execution witness if available.
+   */
+  public Optional<ExecutionWitness> getExecutionWitness() {
+    return Optional.ofNullable(executionWitness);
   }
 }
