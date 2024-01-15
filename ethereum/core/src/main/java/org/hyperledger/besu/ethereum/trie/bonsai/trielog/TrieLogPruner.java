@@ -167,24 +167,22 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
     return wasPruned.size();
   }
 
-  public static TrieLogPruner noOpTrieLogPruner() {
-    return new NoOpTrieLogPruner(null, null, 0, 0);
-  }
-
   @Override
   public void onTrieLogAdded(final TrieLogEvent event) {
-    if (event.getType() == TrieLogEvent.Type.ADDED) {
+    if (TrieLogEvent.Type.ADDED.equals(event.getType())) {
       final TrieLogAddedEvent addedEvent = (TrieLogAddedEvent) event;
+
       final Hash blockHash = addedEvent.layer().getBlockHash();
-      final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);
-      if (header.isPresent()) {
-        addToPruneQueue(header.get().getNumber(), blockHash);
+      final Optional<Long> blockNumber = addedEvent.layer().getBlockNumber();
+      if (blockNumber.isPresent()) {
+        addToPruneQueue(blockNumber.get(), blockHash);
         pruneFromQueue();
-      } else {
-        // prune orphaned blocks (sometimes created during block production)
-        rootWorldStateStorage.pruneTrieLog(blockHash);
       }
     }
+  }
+
+  public static TrieLogPruner noOpTrieLogPruner() {
+    return new NoOpTrieLogPruner(null, null, 0, 0);
   }
 
   public static class NoOpTrieLogPruner extends TrieLogPruner {
