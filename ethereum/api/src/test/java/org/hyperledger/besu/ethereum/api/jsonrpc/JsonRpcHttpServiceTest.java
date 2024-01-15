@@ -17,10 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -1389,65 +1386,68 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
                 + "\"}",
             JSON);
 
-    when(rpcMethods.get(any(String.class))).thenReturn(null);
-    when(rpcMethods.containsKey(any(String.class))).thenReturn(false);
+    try (var unused = disableRpcMethod(methodName)) {
 
-    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(200);
-      final JsonObject json = new JsonObject(resp.body().string());
-      final RpcErrorType expectedError = RpcErrorType.METHOD_NOT_ENABLED;
-      testHelper.assertValidJsonRpcError(
-          json, id, expectedError.getCode(), expectedError.getMessage());
+      try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
+        assertThat(resp.code()).isEqualTo(200);
+        final JsonObject json = new JsonObject(resp.body().string());
+        final RpcErrorType expectedError = RpcErrorType.METHOD_NOT_ENABLED;
+        testHelper.assertValidJsonRpcError(
+            json, id, expectedError.getCode(), expectedError.getMessage());
+      }
     }
-
-    verify(rpcMethods).containsKey(methodName);
-    verify(rpcMethods).get(methodName);
-
-    reset(rpcMethods);
   }
 
   @Test
   public void exceptionallyHandleJsonSingleRequest() throws Exception {
+    final String methodName = "foo";
     final JsonRpcMethod jsonRpcMethod = mock(JsonRpcMethod.class);
-    when(jsonRpcMethod.getName()).thenReturn("foo");
+    when(jsonRpcMethod.getName()).thenReturn(methodName);
     when(jsonRpcMethod.response(any())).thenThrow(new RuntimeException("test exception"));
 
-    doReturn(jsonRpcMethod).when(rpcMethods).get("foo");
+    try (var unused = addRpcMethod(methodName, jsonRpcMethod)) {
 
-    final RequestBody body =
-        RequestBody.create("{\"jsonrpc\":\"2.0\",\"id\":\"666\",\"method\":\"foo\"}", JSON);
+      final RequestBody body =
+          RequestBody.create(
+              "{\"jsonrpc\":\"2.0\",\"id\":\"666\",\"method\":\"" + methodName + "\"}", JSON);
 
-    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(200);
-      final JsonObject json = new JsonObject(resp.body().string());
-      final RpcErrorType expectedError = RpcErrorType.INTERNAL_ERROR;
-      testHelper.assertValidJsonRpcError(
-          json, "666", expectedError.getCode(), expectedError.getMessage());
+      try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
+        assertThat(resp.code()).isEqualTo(200);
+        final JsonObject json = new JsonObject(resp.body().string());
+        final RpcErrorType expectedError = RpcErrorType.INTERNAL_ERROR;
+        testHelper.assertValidJsonRpcError(
+            json, "666", expectedError.getCode(), expectedError.getMessage());
+      }
     }
   }
 
   @Test
   public void exceptionallyHandleJsonBatchRequest() throws Exception {
+    final String methodName = "foo";
     final JsonRpcMethod jsonRpcMethod = mock(JsonRpcMethod.class);
-    when(jsonRpcMethod.getName()).thenReturn("foo");
+    when(jsonRpcMethod.getName()).thenReturn(methodName);
     when(jsonRpcMethod.response(any())).thenThrow(new RuntimeException("test exception"));
-    doReturn(jsonRpcMethod).when(rpcMethods).get("foo");
 
-    final RequestBody body =
-        RequestBody.create(
-            "[{\"jsonrpc\":\"2.0\",\"id\":\"000\",\"method\":\"web3_clientVersion\"},"
-                + "{\"jsonrpc\":\"2.0\",\"id\":\"111\",\"method\":\"foo\"},"
-                + "{\"jsonrpc\":\"2.0\",\"id\":\"222\",\"method\":\"net_version\"}]",
-            JSON);
+    try (var unused = addRpcMethod(methodName, jsonRpcMethod)) {
 
-    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(200);
-      final JsonArray array = new JsonArray(resp.body().string());
-      testHelper.assertValidJsonRpcResult(array.getJsonObject(0), "000");
-      final RpcErrorType expectedError = RpcErrorType.INTERNAL_ERROR;
-      testHelper.assertValidJsonRpcError(
-          array.getJsonObject(1), "111", expectedError.getCode(), expectedError.getMessage());
-      testHelper.assertValidJsonRpcResult(array.getJsonObject(2), "222");
+      final RequestBody body =
+          RequestBody.create(
+              "[{\"jsonrpc\":\"2.0\",\"id\":\"000\",\"method\":\"web3_clientVersion\"},"
+                  + "{\"jsonrpc\":\"2.0\",\"id\":\"111\",\"method\":\""
+                  + methodName
+                  + "\"},"
+                  + "{\"jsonrpc\":\"2.0\",\"id\":\"222\",\"method\":\"net_version\"}]",
+              JSON);
+
+      try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
+        assertThat(resp.code()).isEqualTo(200);
+        final JsonArray array = new JsonArray(resp.body().string());
+        testHelper.assertValidJsonRpcResult(array.getJsonObject(0), "000");
+        final RpcErrorType expectedError = RpcErrorType.INTERNAL_ERROR;
+        testHelper.assertValidJsonRpcError(
+            array.getJsonObject(1), "111", expectedError.getCode(), expectedError.getMessage());
+        testHelper.assertValidJsonRpcResult(array.getJsonObject(2), "222");
+      }
     }
   }
 
