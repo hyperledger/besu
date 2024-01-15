@@ -18,7 +18,6 @@ import org.hyperledger.besu.cli.config.ProfileName;
 
 import java.io.File;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -141,8 +140,7 @@ public class ConfigOptionSearchAndRunHandler extends CommandLine.RunLast {
     return Optional.empty();
   }
 
-  private InputStream getTomlFile(final CommandLine commandLine, final String file)
-      throws URISyntaxException {
+  private InputStream getTomlFile(final CommandLine commandLine, final String file) {
     InputStream resourceUrl = getClass().getClassLoader().getResourceAsStream(file);
     if (resourceUrl == null) {
       throw new ParameterException(commandLine, String.format("TOML file %s not found", file));
@@ -165,9 +163,10 @@ public class ConfigOptionSearchAndRunHandler extends CommandLine.RunLast {
     List<IDefaultValueProvider> providers = new ArrayList<>();
     providers.add(new EnvironmentVariableDefaultProvider(environment));
     configFile.ifPresent(
-        config -> providers.add(new TomlConfigFileDefaultProvider(commandLine, config)));
+        config -> providers.add(TomlConfigurationDefaultProvider.fromFile(commandLine, config)));
     profileFile.ifPresent(
-        profile -> providers.add(new TomlConfigFileDefaultProvider(commandLine, profile)));
+        profile ->
+            providers.add(TomlConfigurationDefaultProvider.fromInputStream(commandLine, profile)));
     return new CascadingDefaultProvider(providers);
   }
 

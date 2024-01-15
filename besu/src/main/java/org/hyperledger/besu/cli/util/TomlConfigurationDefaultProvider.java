@@ -44,7 +44,7 @@ import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.ParameterException;
 
 /** The Toml config file default value provider used by PicoCli. */
-public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
+public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
 
   private final CommandLine commandLine;
   private final InputStream configurationInputStream;
@@ -54,22 +54,27 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
    * Instantiates a new Toml config file default value provider.
    *
    * @param commandLine the command line
-   * @param configFile the config file
+   * @param configurationInputStream the input stream
    */
-  public TomlConfigFileDefaultProvider(final CommandLine commandLine, final File configFile) {
+  private TomlConfigurationDefaultProvider(
+      final CommandLine commandLine, final InputStream configurationInputStream) {
     this.commandLine = commandLine;
+    this.configurationInputStream = configurationInputStream;
+  }
+
+  public static TomlConfigurationDefaultProvider fromFile(
+      final CommandLine commandLine, final File configFile) {
     try {
-      this.configurationInputStream = new FileInputStream(configFile);
+      return new TomlConfigurationDefaultProvider(commandLine, new FileInputStream(configFile));
     } catch (final FileNotFoundException e) {
       throw new ParameterException(
           commandLine, "Unable to read TOML configuration, file not found.");
     }
   }
 
-  public TomlConfigFileDefaultProvider(
+  public static TomlConfigurationDefaultProvider fromInputStream(
       final CommandLine commandLine, final InputStream inputStream) {
-    this.commandLine = commandLine;
-    this.configurationInputStream = inputStream;
+    return new TomlConfigurationDefaultProvider(commandLine, inputStream);
   }
 
   @Override
@@ -95,7 +100,7 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
     }
   }
 
-  private boolean isNumericType(Class<?> type) {
+  private boolean isNumericType(final Class<?> type) {
     return type.equals(Integer.class)
         || type.equals(int.class)
         || type.equals(Long.class)
