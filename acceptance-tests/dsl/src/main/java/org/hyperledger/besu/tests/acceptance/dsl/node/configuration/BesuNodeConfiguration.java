@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
@@ -39,6 +40,7 @@ public class BesuNodeConfiguration {
   private final String name;
   private final Optional<Path> dataPath;
   private final MiningParameters miningParameters;
+  private final TransactionPoolConfiguration transactionPoolConfiguration;
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final Optional<JsonRpcConfiguration> engineRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
@@ -74,6 +76,7 @@ public class BesuNodeConfiguration {
       final String name,
       final Optional<Path> dataPath,
       final MiningParameters miningParameters,
+      final TransactionPoolConfiguration transactionPoolConfiguration,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final Optional<JsonRpcConfiguration> engineRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
@@ -106,6 +109,7 @@ public class BesuNodeConfiguration {
       final Map<String, String> environment) {
     this.name = name;
     this.miningParameters = miningParameters;
+    this.transactionPoolConfiguration = transactionPoolConfiguration;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
     this.engineRpcConfiguration = engineRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
@@ -145,6 +149,10 @@ public class BesuNodeConfiguration {
 
   public MiningParameters getMiningParameters() {
     return miningParameters;
+  }
+
+  public TransactionPoolConfiguration getTransactionPoolConfiguration() {
+    return transactionPoolConfiguration;
   }
 
   public JsonRpcConfiguration getJsonRpcConfiguration() {
