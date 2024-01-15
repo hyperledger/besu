@@ -52,7 +52,7 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -144,8 +144,7 @@ public class MergeBesuControllerBuilderTest {
         .when(synchronizerConfiguration.getBlockPropagationRange())
         .thenReturn(Range.closed(1L, 2L));
 
-    lenient()
-        .when(storageProvider.createWorldStateStorage(DataStorageFormat.FOREST))
+    when(storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG))
         .thenReturn(worldStateStorage);
     lenient()
         .when(storageProvider.createWorldStatePreimageStorage())

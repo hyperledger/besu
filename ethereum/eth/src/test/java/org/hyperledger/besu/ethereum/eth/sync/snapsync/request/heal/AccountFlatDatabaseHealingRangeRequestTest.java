@@ -30,7 +30,9 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.flat.FlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -179,7 +181,10 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
     final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
     final WorldStateStorage worldStateStorage =
-        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
+        new BonsaiWorldStateKeyValueStorage(
+            storageProvider,
+            new FlatDbStrategyProvider(
+                new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
     final WorldStateProofProvider proofProvider = new WorldStateProofProvider(worldStateStorage);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);
@@ -233,7 +238,10 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
     final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
     final WorldStateStorage worldStateStorage =
-        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
+        new BonsaiWorldStateKeyValueStorage(
+            storageProvider,
+            new FlatDbStrategyProvider(
+                new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
     final WorldStateProofProvider proofProvider = new WorldStateProofProvider(worldStateStorage);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);

@@ -35,7 +35,9 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.StorageEntriesCollector;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.flat.FlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -452,7 +454,9 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
   private BonsaiWorldStateKeyValueStorage emptyStorage() {
     return new BonsaiWorldStateKeyValueStorage(
-        new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
+        new InMemoryKeyValueStorageProvider(),
+        new FlatDbStrategyProvider(
+            new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
   }
 
   @Test
@@ -487,6 +491,9 @@ public class BonsaiWorldStateKeyValueStorageTest {
         .thenReturn(mockTrieLogStorage);
     when(mockStorageProvider.getStorageBySegmentIdentifiers(any()))
         .thenReturn(mock(SegmentedKeyValueStorage.class));
-    return new BonsaiWorldStateKeyValueStorage(mockStorageProvider, new NoOpMetricsSystem());
+    return new BonsaiWorldStateKeyValueStorage(
+        mockStorageProvider,
+        new FlatDbStrategyProvider(
+            new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
   }
 }
