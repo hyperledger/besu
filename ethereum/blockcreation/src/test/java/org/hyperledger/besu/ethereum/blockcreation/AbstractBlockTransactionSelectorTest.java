@@ -85,7 +85,7 @@ import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelecto
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.plugin.services.txselection.TransactionEvaluationContext;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
-import org.hyperledger.besu.util.number.Percentage;
+import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.math.BigInteger;
 import java.time.Instant;
@@ -987,7 +987,10 @@ public abstract class AbstractBlockTransactionSelectorTest {
         createBlockSelectorAndSetupTxPool(
             isPoa
                 ? createMiningParameters(
-                    Wei.ZERO, MIN_OCCUPANCY_100_PERCENT, poaMinBlockTime, Percentage.fromInt(75))
+                    Wei.ZERO,
+                    MIN_OCCUPANCY_100_PERCENT,
+                    poaMinBlockTime,
+                    PositiveNumber.fromInt(75))
                 : createMiningParameters(
                     Wei.ZERO, MIN_OCCUPANCY_100_PERCENT, blockTxsSelectionMaxTime),
             transactionProcessor,
@@ -1191,7 +1194,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final Wei minGasPrice,
       final double minBlockOccupancyRatio,
       final int minBlockTime,
-      final Percentage minBlockTimePercentage) {
+      final PositiveNumber minBlockTimePercentage) {
     return ImmutableMiningParameters.builder()
         .mutableInitValues(
             MutableInitValues.builder()

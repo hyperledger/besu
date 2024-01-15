@@ -29,7 +29,7 @@ import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAU
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_REMOTE_SEALERS_LIMIT;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_REMOTE_SEALERS_TTL;
 
-import org.hyperledger.besu.cli.converter.PercentageConverter;
+import org.hyperledger.besu.cli.converter.PositiveNumberConverter;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
@@ -37,7 +37,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.util.number.Percentage;
+import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.util.List;
 
@@ -181,12 +181,12 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
     @CommandLine.Option(
         hidden = true,
         names = {"--Xpoa-block-txs-selection-max-time"},
-        converter = PercentageConverter.class,
+        converter = PositiveNumberConverter.class,
         description =
             "Specifies the maximum time that could be spent selecting transactions to be included in the block, as a percentage of the fixed block time of the PoA network."
                 + " To be only used on PoA networks, for other networks see Xblock-txs-selection-max-time."
                 + " (default: ${DEFAULT-VALUE})")
-    private Percentage poaBlockTxsSelectionMaxTime = DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+    private PositiveNumber poaBlockTxsSelectionMaxTime = DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
   }
 
   private MiningOptions() {}

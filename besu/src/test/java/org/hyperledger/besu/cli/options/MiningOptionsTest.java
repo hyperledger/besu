@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.Unstable;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.util.number.Percentage;
+import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -361,7 +361,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
     internalTestSuccess(
         miningParams ->
             assertThat(miningParams.getUnstable().getPoaBlockTxsSelectionMaxTime())
-                .isEqualTo(Percentage.fromInt(80)),
+                .isEqualTo(PositiveNumber.fromInt(80)),
         "--genesis-file",
         genesisFileIBFT2.toString(),
         "--Xpoa-block-txs-selection-max-time",
@@ -369,11 +369,16 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   }
 
   @Test
-  public void poaBlockTxsSelectionMaxTimeOutOfAllowedRange() {
-    internalTestFailure(
-        "Invalid value for option '--Xpoa-block-txs-selection-max-time': cannot convert '110' to Percentage",
+  public void poaBlockTxsSelectionMaxTimeOptionOver100Percent() throws IOException {
+    final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
+    internalTestSuccess(
+        miningParams ->
+            assertThat(miningParams.getUnstable().getPoaBlockTxsSelectionMaxTime())
+                .isEqualTo(PositiveNumber.fromInt(200)),
+        "--genesis-file",
+        genesisFileIBFT2.toString(),
         "--Xpoa-block-txs-selection-max-time",
-        "110");
+        "200");
   }
 
   @Test
