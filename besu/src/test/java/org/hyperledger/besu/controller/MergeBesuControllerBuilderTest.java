@@ -144,7 +144,8 @@ public class MergeBesuControllerBuilderTest {
         .when(synchronizerConfiguration.getBlockPropagationRange())
         .thenReturn(Range.closed(1L, 2L));
 
-    when(storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG))
+    lenient()
+        .when(storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG))
         .thenReturn(worldStateStorage);
     lenient()
         .when(storageProvider.createWorldStatePreimageStorage())

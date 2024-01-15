@@ -113,7 +113,8 @@ public class QbftBesuControllerBuilderTest {
                 new InMemoryKeyValueStorage(),
                 new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
                 new MainnetBlockHeaderFunctions()));
-    when(storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG))
+    lenient()
+        .when(storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG))
         .thenReturn(worldStateStorage);
     lenient().when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
     lenient().when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));
