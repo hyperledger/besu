@@ -30,8 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SnapSyncDownloader extends FastSyncDownloader<SnapDataRequest> {
-
-  private static final Logger LOG = LoggerFactory.getLogger(SnapSyncDownloader.class);
+  @SuppressWarnings("PrivateStaticFinalLoggers")
+  private final Logger LOG = LoggerFactory.getLogger(getClass());
 
   public SnapSyncDownloader(
       final FastSyncActions fastSyncActions,
