@@ -24,7 +24,7 @@ public enum SyncMode {
   // Perform light validation on older blocks, and switch to full validation for more recent blocks
   FAST,
   // Perform snapsync
-  X_SNAP,
+  SNAP,
   // Perform snapsync but starting from a checkpoint instead of starting from genesis
   X_CHECKPOINT;
 
@@ -38,7 +38,7 @@ public enum SyncMode {
   }
 
   public static boolean isFullSync(final SyncMode syncMode) {
-    return !EnumSet.of(SyncMode.FAST, SyncMode.X_SNAP, SyncMode.X_CHECKPOINT).contains(syncMode);
+    return !EnumSet.of(SyncMode.FAST, SyncMode.SNAP, SyncMode.X_CHECKPOINT).contains(syncMode);
   }
 
   public static boolean isCheckpointSync(final SyncMode syncMode) {

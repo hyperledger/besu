@@ -1830,7 +1830,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Invalid value for option '--sync-mode': expected one of [FULL, FAST, X_SNAP, X_CHECKPOINT] (case-insensitive) but was 'bogus'");
+            "Invalid value for option '--sync-mode': expected one of [FULL, FAST, SNAP, X_CHECKPOINT] (case-insensitive) but was 'bogus'");
   }
 
   @Test
@@ -1883,11 +1883,11 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void parsesValidSnapSyncMinPeersOption() {
-    parseCommand("--sync-mode", "X_SNAP", "--sync-min-peers", "11");
+    parseCommand("--sync-mode", "SNAP", "--sync-min-peers", "11");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.X_SNAP);
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.SNAP);
     assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(11);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -5163,7 +5163,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void checkpointPostMergeShouldFailWhenSyncModeIsNotCheckpoint() {
 
-    parseCommand("--sync-mode", "X_SNAP", "--Xcheckpoint-post-merge-enabled");
+    parseCommand("--sync-mode", "SNAP", "--Xcheckpoint-post-merge-enabled");
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("--Xcheckpoint-post-merge-enabled can only be used with X_CHECKPOINT sync-mode");
   }

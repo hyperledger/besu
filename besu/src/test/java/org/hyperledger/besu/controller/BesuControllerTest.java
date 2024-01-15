@@ -165,7 +165,7 @@ public class BesuControllerTest {
   public void nonCheckpointSyncUsesTransitionControllerBuild() {
     final BesuControllerBuilder besuControllerBuilder =
         new BesuController.Builder()
-            .fromGenesisConfig(genesisConfigFile, Collections.emptyMap(), SyncMode.X_SNAP);
+            .fromGenesisConfig(genesisConfigFile, Collections.emptyMap(), SyncMode.SNAP);
 
     assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
   }
