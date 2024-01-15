@@ -32,6 +32,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
@@ -56,6 +57,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
@@ -83,14 +85,16 @@ public class IbftRoundTest {
   private final BftExtraDataCodec bftExtraDataCodec = new IbftExtraDataCodec();
   private ProtocolContext protocolContext;
 
+  @Mock private BftProtocolSchedule protocolSchedule;
   @Mock private MutableBlockchain blockChain;
   @Mock private WorldStateArchive worldStateArchive;
-  @Mock private BlockImporter blockImporter;
   @Mock private IbftMessageTransmitter transmitter;
   @Mock private MinedBlockObserver minedBlockObserver;
   @Mock private BftBlockCreator blockCreator;
   @Mock private MessageValidator messageValidator;
   @Mock private RoundTimer roundTimer;
+  @Mock private ProtocolSpec protocolSpec;
+  @Mock private BlockImporter blockImporter;
 
   @Captor private ArgumentCaptor<Block> blockCaptor;
 
@@ -128,8 +132,13 @@ public class IbftRoundTest {
         .thenReturn(new BlockCreationResult(proposedBlock, new TransactionSelectionResults()));
 
     lenient()
+        .when(protocolSchedule.getByBlockNumberAndTimestamp(anyLong(), anyLong()))
+        .thenReturn(protocolSpec);
+    lenient().when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
+
+    lenient()
         .when(blockImporter.importBlock(any(), any(), any()))
-        .thenReturn(new BlockImportResult(true));
+        .thenReturn(new BlockImportResult(BlockImportResult.BlockImportStatus.IMPORTED));
 
     subscribers.subscribe(minedBlockObserver);
   }
@@ -141,7 +150,7 @@ public class IbftRoundTest {
         roundState,
         blockCreator,
         protocolContext,
-        blockImporter,
+        protocolSchedule,
         subscribers,
         nodeKey,
         messageFactory,
@@ -159,7 +168,7 @@ public class IbftRoundTest {
             roundState,
             blockCreator,
             protocolContext,
-            blockImporter,
+            protocolSchedule,
             subscribers,
             nodeKey,
             messageFactory,
@@ -181,7 +190,7 @@ public class IbftRoundTest {
             roundState,
             blockCreator,
             protocolContext,
-            blockImporter,
+            protocolSchedule,
             subscribers,
             nodeKey,
             messageFactory,
@@ -204,7 +213,7 @@ public class IbftRoundTest {
             roundState,
             blockCreator,
             protocolContext,
-            blockImporter,
+            protocolSchedule,
             subscribers,
             nodeKey,
             messageFactory,
@@ -227,7 +236,7 @@ public class IbftRoundTest {
             roundState,
             blockCreator,
             protocolContext,
-            blockImporter,
+            protocolSchedule,
             subscribers,
             nodeKey,
             messageFactory,
@@ -271,7 +280,7 @@ public class IbftRoundTest {
             roundState,
             blockCreator,
             protocolContext,
-            blockImporter,
+            protocolSchedule,
             subscribers,
             nodeKey,
             messageFactory,
@@ -308,7 +317,7 @@ public class IbftRoundTest {
             roundState,
             blockCreator,
             protocolContext,
-            blockImporter,
+            protocolSchedule,
             subscribers,
             nodeKey,
             messageFactory,
@@ -332,7 +341,7 @@ public class IbftRoundTest {
             roundState,
             blockCreator,
             protocolContext,
-            blockImporter,
+            protocolSchedule,
             subscribers,
             nodeKey,
             messageFactory,
@@ -379,7 +388,7 @@ public class IbftRoundTest {
             roundState,
             blockCreator,
             protocolContext,
-            blockImporter,
+            protocolSchedule,
             subscribers,
             nodeKey,
             messageFactory,
@@ -413,7 +422,7 @@ public class IbftRoundTest {
             roundState,
             blockCreator,
             protocolContext,
-            blockImporter,
+            protocolSchedule,
             subscribers,
             nodeKey,
             messageFactory,
@@ -434,7 +443,7 @@ public class IbftRoundTest {
             roundState,
             blockCreator,
             protocolContext,
-            blockImporter,
+            protocolSchedule,
             subscribers,
             nodeKey,
             messageFactory,
@@ -460,7 +469,7 @@ public class IbftRoundTest {
             roundState,
             blockCreator,
             protocolContext,
-            blockImporter,
+            protocolSchedule,
             subscribers,
             nodeKey,
             messageFactory,
@@ -490,7 +499,7 @@ public class IbftRoundTest {
             roundState,
             blockCreator,
             protocolContext,
-            blockImporter,
+            protocolSchedule,
             subscribers,
             throwingNodeKey,
             throwingMessageFactory,

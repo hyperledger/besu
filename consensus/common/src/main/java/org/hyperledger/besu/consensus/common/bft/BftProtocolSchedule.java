@@ -79,10 +79,12 @@ public class BftProtocolSchedule extends DefaultProtocolSchedule {
     // the requested level will be the most appropriate spec
     ProtocolSpec theSpec = null;
     for (final ScheduledProtocolSpec s : protocolSpecs) {
-      if (number >= s.fork().milestone()) {
+      if ((s instanceof ScheduledProtocolSpec.BlockNumberProtocolSpec)
+          && (number >= s.fork().milestone())) {
         theSpec = s.spec();
         break;
-      } else if (timestamp >= s.fork().milestone()) {
+      } else if ((s instanceof ScheduledProtocolSpec.TimestampProtocolSpec)
+          && (timestamp >= s.fork().milestone())) {
         theSpec = s.spec();
         break;
       }

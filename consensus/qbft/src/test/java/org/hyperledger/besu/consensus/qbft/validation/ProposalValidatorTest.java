@@ -20,11 +20,13 @@ import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupC
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createEmptyRoundChangePayloads;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createPreparePayloads;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
@@ -44,7 +46,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.HashMap;
@@ -87,7 +89,8 @@ public class ProposalValidatorTest {
   @Mock private BlockValidator blockValidator;
   @Mock private MutableBlockchain blockChain;
   @Mock private WorldStateArchive worldStateArchive;
-  @Mock private ProtocolSchedule protocolSchedule;
+  @Mock private BftProtocolSchedule protocolSchedule;
+  @Mock private ProtocolSpec protocolSpec;
   private ProtocolContext protocolContext;
 
   private final Map<ROUND_ID, RoundSpecificItems> roundItems = new HashMap<>();
@@ -110,6 +113,11 @@ public class ProposalValidatorTest {
             eq(HeaderValidationMode.LIGHT),
             eq(HeaderValidationMode.FULL)))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
+
+    when(protocolSchedule.getByBlockNumberAndTimestamp(anyLong(), anyLong()))
+        .thenReturn(protocolSpec);
+
+    when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);
 
     roundItems.put(ROUND_ID.ZERO, createRoundSpecificItems(0));
     roundItems.put(ROUND_ID.ONE, createRoundSpecificItems(1));
