@@ -14,12 +14,16 @@
  */
 package org.hyperledger.besu.plugin.services.trielogs;
 
+import com.google.common.annotations.VisibleForTesting;
+
 /** A TrieLog event. */
 public interface TrieLogEvent {
   /** The type of the event. */
   enum Type {
     /** TrieLog added event type */
-    ADDED
+    ADDED,
+    @VisibleForTesting
+    UNKNOWN
   }
 
   /**

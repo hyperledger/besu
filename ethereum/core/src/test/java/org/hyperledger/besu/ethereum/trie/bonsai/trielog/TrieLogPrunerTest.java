@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -226,6 +227,66 @@ public class TrieLogPrunerTest {
     // Subsequent run should prune previously skipped trieLog
     when(worldState.pruneTrieLog(key(2))).thenReturn(true);
     assertThat(trieLogPruner.pruneFromQueue()).isEqualTo(1);
+  }
+
+  @Test
+  public void onTrieLogAdded_should_prune() {
+    // Given
+    TrieLogPruner trieLogPruner = new TrieLogPruner(worldState, blockchain, 0, 1, false);
+    assertThat(trieLogPruner.pruneFromQueue()).isEqualTo(0);
+
+    final TrieLogLayer layer = new TrieLogLayer();
+    layer.setBlockNumber(1L);
+    layer.setBlockHash(key(1));
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(1L);
+
+    // When
+    trieLogPruner.onTrieLogAdded(new TrieLogAddedEvent(layer));
+
+    // Then
+    verify(worldState, times(1)).pruneTrieLog(key(1));
+  }
+
+  @Test
+  public void onTrieLogAdded_should_not_prune_when_not_added_event() {
+    // Given
+    TrieLogPruner trieLogPruner = new TrieLogPruner(worldState, blockchain, 0, 1, false);
+    assertThat(trieLogPruner.pruneFromQueue()).isEqualTo(0);
+
+    final TrieLogLayer layer = new TrieLogLayer();
+    layer.setBlockNumber(1L);
+    layer.setBlockHash(key(1));
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(1L);
+
+    // When
+    trieLogPruner.onTrieLogAdded(new TrieLogUnknownEvent(layer));
+
+    // Then
+    verify(worldState, never()).pruneTrieLog(key(1));
+  }
+
+  @Test
+  public void onTrieLogAdded_should_not_prune_when_no_blockNumber() {
+    // Given
+    TrieLogPruner trieLogPruner = new TrieLogPruner(worldState, blockchain, 0, 1, false);
+    assertThat(trieLogPruner.pruneFromQueue()).isEqualTo(0);
+
+    final TrieLogLayer layer = new TrieLogLayer();
+    layer.setBlockHash(key(1));
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(1L);
+
+    // When
+    trieLogPruner.onTrieLogAdded(new TrieLogAddedEvent(layer));
+
+    // Then
+    verify(worldState, never()).pruneTrieLog(key(1));
+  }
+
+  record TrieLogUnknownEvent(TrieLogLayer layer) implements TrieLogEvent {
+    @Override
+    public Type getType() {
+      return Type.UNKNOWN;
+    }
   }
 
   private TrieLogPruner setupPrunerAndFinalizedBlock(
