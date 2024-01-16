@@ -537,7 +537,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               + " (default: ${DEFAULT-VALUE})")
   private final NetworkName network = null;
 
-  @SuppressWarnings("UnusedVariable")
   @Option(
       names = {"--profile"},
       paramLabel = PROFILE_FORMAT_HELP,
@@ -1821,7 +1820,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateDataStorageOptions();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
     pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
-    validatePrivacyOptions(commandLine);
   }
 
   private void validateTransactionPoolOptions() {
@@ -2067,14 +2065,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger.warn(
             "Forest pruning is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format.");
       }
-    }
-  }
-
-  private void validatePrivacyOptions(final CommandLine commandLine) {
-    if (Boolean.TRUE.equals(privacyOptionGroup.isOnchainPrivacyGroupsEnabled)) {
-      throw new ParameterException(
-          commandLine,
-          "The `--privacy-onchain-groups-enabled` option is deprecated and you should only use `--privacy-flexible-groups-enabled`");
     }
   }
 
