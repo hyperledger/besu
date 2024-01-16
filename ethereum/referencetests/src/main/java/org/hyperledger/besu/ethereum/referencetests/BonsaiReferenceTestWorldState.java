@@ -100,45 +100,40 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   private void validateStateRolling(final BlockHeader blockHeader) {
     if (blockHeader != null) {
       final Hash parentStateRoot = getWorldStateRootHash();
-      BonsaiReferenceTestUpdateAccumulator originalUpdater =
+      final BonsaiReferenceTestUpdateAccumulator originalUpdater =
           ((BonsaiReferenceTestUpdateAccumulator) updater()).createDetachedAccumulator();
 
-      // generate trie from persisted state
-      generateTrieLogFromState(blockHeader, originalUpdater, false);
-      final TrieLog trieLogFromPersistedState =
-          trieLogManager
-              .getTrieLogLayer(blockHeader.getBlockHash())
-              .orElseThrow(() -> new RuntimeException("trielog not found during test"));
-
-      // generate trie from frozen state
-      generateTrieLogFromState(blockHeader, originalUpdater, true);
-      final TrieLog trieLogFromFrozenState =
-          trieLogManager
-              .getTrieLogLayer(blockHeader.getBlockHash())
-              .orElseThrow(() -> new RuntimeException("trielog not found during test"));
-
-      // trying rollback rollfoward with frozen and persisted state
-      validateTrieLog(parentStateRoot, blockHeader, trieLogFromPersistedState);
-      validateTrieLog(parentStateRoot, blockHeader, trieLogFromFrozenState);
+      validatePersistedStateRolling(parentStateRoot, originalUpdater, blockHeader);
+      validateFrozenStateRolling(parentStateRoot, originalUpdater, blockHeader);
     }
   }
 
-  /**
-   * For reference tests world state root validation is handled in the harness, this stubs out the
-   * behavior to always pass.
-   *
-   * @param calculatedStateRoot state root calculated during bonsai persist step.
-   * @param header supplied reference test block header.
-   */
-  @Override
-  protected void verifyWorldStateRoot(final Hash calculatedStateRoot, final BlockHeader header) {
-    // The test harness validates the root hash, no need to validate in-line for reference test
+  private void validateFrozenStateRolling(
+      final Hash parentStateRoot,
+      final BonsaiReferenceTestUpdateAccumulator originalUpdater,
+      final BlockHeader blockHeader) {
+    // generate trie from frozen state
+    generateTrieLogFromState(blockHeader, originalUpdater, true);
+    final TrieLog trieLogFromFrozenState =
+        trieLogManager
+            .getTrieLogLayer(blockHeader.getBlockHash())
+            .orElseThrow(() -> new RuntimeException("trielog not found during test"));
+    // trying rollback rollfoward with frozen and persisted state
+    validateTrieLog(parentStateRoot, blockHeader, trieLogFromFrozenState);
   }
 
-  @Override
-  public void persist(final BlockHeader blockHeader) {
-    validateStateRolling(blockHeader);
-    super.persist(null);
+  private void validatePersistedStateRolling(
+      final Hash parentStateRoot,
+      final BonsaiReferenceTestUpdateAccumulator originalUpdater,
+      final BlockHeader blockHeader) {
+    // generate trie from persisted state
+    generateTrieLogFromState(blockHeader, originalUpdater, false);
+    final TrieLog trieLogFromPersistedState =
+        trieLogManager
+            .getTrieLogLayer(blockHeader.getBlockHash())
+            .orElseThrow(() -> new RuntimeException("trielog not found during test"));
+    // trying rollback rollfoward with frozen and persisted state
+    validateTrieLog(parentStateRoot, blockHeader, trieLogFromPersistedState);
   }
 
   private void validateTrieLog(
@@ -150,17 +145,23 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     updaterForState.rollForward(trieLog);
     updaterForState.commit();
     bonsaiWorldState.persist(blockHeader);
-    validateStateRoot(
-        blockHeader.getStateRoot(),
-        bonsaiWorldState,
-        "state root becomes invalid following a rollback");
+    Hash generatedRootHash = bonsaiWorldState.rootHash();
+    if (!bonsaiWorldState.rootHash().equals(blockHeader.getStateRoot())) {
+      throw new RuntimeException(
+          "state root becomes invalid following a rollForward %s != %s"
+              .formatted(blockHeader.getStateRoot(), generatedRootHash));
+    }
 
     updaterForState = (BonsaiWorldStateUpdateAccumulator) bonsaiWorldState.updater();
     updaterForState.rollBack(trieLog);
     updaterForState.commit();
     bonsaiWorldState.persist(null);
-    validateStateRoot(
-        parentStateRoot, bonsaiWorldState, "state root becomes invalid following a rollfoward");
+    generatedRootHash = bonsaiWorldState.rootHash();
+    if (!bonsaiWorldState.rootHash().equals(parentStateRoot)) {
+      throw new RuntimeException(
+          "state root becomes invalid following a rollForward %s != %s"
+              .formatted(parentStateRoot, generatedRootHash));
+    }
   }
 
   private void generateTrieLogFromState(
@@ -190,14 +191,22 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     return bonsaiWorldState;
   }
 
-  private void validateStateRoot(
-      final Hash expectedStateRoot,
-      final BonsaiWorldState bonsaiWorldState,
-      final String errorMessage) {
-    final Hash foundRootHash = bonsaiWorldState.rootHash();
-    if (!bonsaiWorldState.rootHash().equals(expectedStateRoot)) {
-      throw new RuntimeException(errorMessage + " " + expectedStateRoot + " != " + foundRootHash);
-    }
+  /**
+   * For reference tests world state root validation is handled in the harness, this stubs out the
+   * behavior to always pass.
+   *
+   * @param calculatedStateRoot state root calculated during bonsai persist step.
+   * @param header supplied reference test block header.
+   */
+  @Override
+  protected void verifyWorldStateRoot(final Hash calculatedStateRoot, final BlockHeader header) {
+    // The test harness validates the root hash, no need to validate in-line for reference test
+  }
+
+  @Override
+  public void persist(final BlockHeader blockHeader) {
+    validateStateRolling(blockHeader);
+    super.persist(null);
   }
 
   @JsonCreator
