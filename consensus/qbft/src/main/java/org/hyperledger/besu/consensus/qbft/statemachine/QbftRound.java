@@ -132,13 +132,6 @@ public class QbftRound {
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
     final Block block = blockCreator.createBlock(headerTimeStampSeconds).getBlock();
 
-    // We've created a block because we are the proposer.
-    // We might have been configured with a block importer for an earlier timestamp, which
-    // is fine if all we are doing is importing, but if we're creating a block ourselves
-    // then the importer will need to check it first.
-
-    // We probably need to overide the block importer here so the timestamps are consistent.
-
     LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
     updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
   }
