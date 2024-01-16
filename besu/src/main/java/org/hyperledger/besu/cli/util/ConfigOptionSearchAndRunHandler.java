@@ -63,7 +63,6 @@ public class ConfigOptionSearchAndRunHandler extends CommandLine.RunLast {
     return new ArrayList<>();
   }
 
-
   private Optional<File> findConfigFile(
       final ParseResult parseResult, final CommandLine commandLine) {
     if (parseResult.hasMatchedOption("--config-file")

@@ -29,7 +29,6 @@ import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ENGINE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
@@ -4192,7 +4191,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
     assertThat(privacyParameters.isFlexiblePrivacyGroupsEnabled()).isEqualTo(false);
   }
-
 
   @Test
   public void flexiblePrivacyGroupEnabledFlagValueIsSet() {
