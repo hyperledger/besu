@@ -646,7 +646,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     }
 
     if (dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningEnabled()
-        && dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
+        && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
       final TrieLogManager trieLogManager =
           ((BonsaiWorldStateProvider) worldStateArchive).getTrieLogManager();
       final TrieLogPruner trieLogPruner = createTrieLogPruner(worldStateStorage, blockchain);
@@ -821,14 +821,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
     final boolean isProofOfStake = genesisConfigOptions.getTerminalTotalDifficulty().isPresent();
     final TrieLogPruner trieLogPruner =
-        dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningEnabled()
-            ? new TrieLogPruner(
-                (BonsaiWorldStateKeyValueStorage) worldStateStorage,
-                blockchain,
-                dataStorageConfiguration.getUnstable().getBonsaiTrieLogRetentionThreshold(),
-                dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningLimit(),
-                isProofOfStake)
-            : TrieLogPruner.noOpTrieLogPruner();
+        new TrieLogPruner(
+            (BonsaiWorldStateKeyValueStorage) worldStateStorage,
+            blockchain,
+            dataStorageConfiguration.getUnstable().getBonsaiTrieLogRetentionThreshold(),
+            dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningLimit(),
+            isProofOfStake);
     trieLogPruner.initialize();
 
     return trieLogPruner;

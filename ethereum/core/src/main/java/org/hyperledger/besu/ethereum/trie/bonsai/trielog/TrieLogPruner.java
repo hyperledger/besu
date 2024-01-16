@@ -180,35 +180,4 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
       }
     }
   }
-
-  public static TrieLogPruner noOpTrieLogPruner() {
-    return new NoOpTrieLogPruner(null, null, 0, 0);
-  }
-
-  public static class NoOpTrieLogPruner extends TrieLogPruner {
-    private NoOpTrieLogPruner(
-        final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
-        final Blockchain blockchain,
-        final long numBlocksToRetain,
-        final int pruningLimit) {
-      super(rootWorldStateStorage, blockchain, numBlocksToRetain, pruningLimit, true);
-    }
-
-    @Override
-    public int initialize() {
-      // no-op
-      return -1;
-    }
-
-    @Override
-    void addToPruneQueue(final long blockNumber, final Hash blockHash) {
-      // no-op
-    }
-
-    @Override
-    int pruneFromQueue() {
-      // no-op
-      return -1;
-    }
-  }
 }
