@@ -3537,6 +3537,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setNetwork(network.normalize());
     }
 
+    if (profile != null) {
+      builder.setProfile(profile.name());
+    }
+
     builder.setHasCustomGenesis(genesisFile != null);
     if (genesisFile != null) {
       builder.setCustomGenesis(genesisFile.getAbsolutePath());

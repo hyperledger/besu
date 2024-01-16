@@ -41,6 +41,7 @@ public class ConfigurationOverviewBuilder {
 
   private String network;
   private BigInteger networkId;
+  private String profile;
   private boolean hasCustomGenesis;
   private String customGenesisFileName;
   private String dataStorage;
@@ -85,6 +86,17 @@ public class ConfigurationOverviewBuilder {
    */
   public ConfigurationOverviewBuilder setNetworkId(final BigInteger networkId) {
     this.networkId = networkId;
+    return this;
+  }
+
+  /**
+   * Sets profile.
+   *
+   * @param profile the profile
+   * @return the profile
+   */
+  public ConfigurationOverviewBuilder setProfile(final String profile) {
+    this.profile = profile;
     return this;
   }
 
@@ -273,7 +285,8 @@ public class ConfigurationOverviewBuilder {
     final List<String> lines = new ArrayList<>();
     lines.add("Besu version " + BesuInfo.class.getPackage().getImplementationVersion());
     lines.add("");
-    lines.add("Configuration:");
+    String profileInfo = (profile != null) ? String.format(" %s", profile) : "";
+    lines.add(String.format("Configuration%s:", profileInfo));
 
     // Don't include the default network if a genesis file has been supplied
     if (network != null && !hasCustomGenesis) {

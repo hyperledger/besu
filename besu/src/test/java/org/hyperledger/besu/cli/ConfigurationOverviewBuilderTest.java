@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConf
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.SEQUENCED;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.cli.config.ProfileName;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -208,5 +209,12 @@ class ConfigurationOverviewBuilderTest {
     builder.setWorldStateUpdateMode(EvmConfiguration.WorldUpdaterMode.JOURNALED);
     final String layeredTxPoolSelected = builder.build();
     assertThat(layeredTxPoolSelected).contains("Using JOURNALED worldstate update mode");
+  }
+
+  @Test
+  void setProfile() {
+    builder.setProfile(ProfileName.STAKER.name());
+    final String layeredTxPoolSelected = builder.build();
+    assertThat(layeredTxPoolSelected).contains("Configuration STAKER:");
   }
 }
