@@ -156,22 +156,60 @@ public class TransactionPoolFactory {
           @Override
           public void onInitialSyncCompleted() {
             LOG.info("Enabling transaction handling following initial sync");
-            transactionTracker.reset();
-            transactionPool.setEnabled();
-            transactionsMessageHandler.setEnabled();
-            pooledTransactionsMessageHandler.setEnabled();
+            enableTransactionHandling(
+                transactionTracker,
+                transactionPool,
+                transactionsMessageHandler,
+                pooledTransactionsMessageHandler);
           }
 
           @Override
           public void onInitialSyncRestart() {
             LOG.info("Disabling transaction handling during re-sync");
-            pooledTransactionsMessageHandler.setDisabled();
-            transactionsMessageHandler.setDisabled();
-            transactionPool.setDisabled();
+            disableTransactionHandling(
+                transactionPool, transactionsMessageHandler, pooledTransactionsMessageHandler);
+          }
+        });
+
+    syncState.subscribeInSync(
+        isInSync -> {
+          if (isInSync != transactionPool.isEnabled()) {
+            if (isInSync) {
+              LOG.info("Node is in sync, enabling transaction handling");
+              enableTransactionHandling(
+                  transactionTracker,
+                  transactionPool,
+                  transactionsMessageHandler,
+                  pooledTransactionsMessageHandler);
+            } else {
+              LOG.info("Node out of sync, disabling transaction handling");
+              disableTransactionHandling(
+                  transactionPool, transactionsMessageHandler, pooledTransactionsMessageHandler);
+            }
           }
         });
 
     return transactionPool;
+  }
+
+  private static void enableTransactionHandling(
+      final PeerTransactionTracker transactionTracker,
+      final TransactionPool transactionPool,
+      final TransactionsMessageHandler transactionsMessageHandler,
+      final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler) {
+    transactionTracker.reset();
+    transactionPool.setEnabled();
+    transactionsMessageHandler.setEnabled();
+    pooledTransactionsMessageHandler.setEnabled();
+  }
+
+  private static void disableTransactionHandling(
+      final TransactionPool transactionPool,
+      final TransactionsMessageHandler transactionsMessageHandler,
+      final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler) {
+    transactionPool.setDisabled();
+    transactionsMessageHandler.setDisabled();
+    pooledTransactionsMessageHandler.setDisabled();
   }
 
   private static void subscribeTransactionHandlers(
