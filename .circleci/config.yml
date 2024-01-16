@@ -256,7 +256,7 @@ jobs:
           name: AcceptanceTests (Privacy)
           no_output_timeout: 30m
           command: |
-            ./gradlew --no-daemon acceptanceTestPrivacy
+            ./gradlew --no-daemon --max-workers=1 acceptanceTestPrivacy
       - capture_test_results
       - capture_test_logs
 
