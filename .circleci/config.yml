@@ -255,7 +255,7 @@ jobs:
           at: ~/project
       - run:
           name: AcceptanceTests (Privacy)
-          no_output_timeout: 30m
+          no_output_timeout: 40m
           command: |
             ./gradlew --no-daemon acceptanceTestPrivacy
       - capture_test_results
