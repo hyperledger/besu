@@ -5,6 +5,7 @@
 ### Breaking Changes
 - New `EXECUTION_HALTED` error returned if there is an error executing or simulating a transaction, with the reason for execution being halted. Replaces the generic `INTERNAL_ERROR` return code in certain cases which some applications may be checking for [#6343](https://github.com/hyperledger/besu/pull/6343)
 - The Besu Docker images with `openjdk-latest` tags since 23.10.3 were incorrectly using UID 1001 instead of 1000 for the container's `besu` user. The user now uses 1000 again. Containers created from or migrated to images using UID 1001 will need to chown their persistent database files to UID 1000 [#6360](https://github.com/hyperledger/besu/pull/6360)
+- The deprecated `--privacy-onchain-groups-enabled` option has now been removed. Use the `--privacy-flexible-groups-enabled` option instead. [#6411](https://github.com/hyperledger/besu/pull/6411)
 
 ### Deprecations
 
@@ -15,6 +16,7 @@
 - Upgrade dependencies [#6377](https://github.com/hyperledger/besu/pull/6377)
 - Upgrade `com.fasterxml.jackson` dependencies [#6378](https://github.com/hyperledger/besu/pull/6378) 
 - Upgrade Guava dependency [#6396](https://github.com/hyperledger/besu/pull/6396)
+- Upgrade Mockito [#6397](https://github.com/hyperledger/besu/pull/6397)
 
 ### Bug fixes
 - INTERNAL_ERROR from `eth_estimateGas` JSON/RPC calls [#6344](https://github.com/hyperledger/besu/issues/6344)
@@ -30,7 +32,7 @@
 ### Breaking Changes
 
 ### Deprecations
-- Forest pruning (`pruning-enabled` options) is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format [#6230](https://github.com/hyperledger/besu/pull/6230)
+- Forest pruning (`pruning-enabled` option) is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format [#6230](https://github.com/hyperledger/besu/pull/6230)
 
 ### Additions and Improvements
 - Add error messages on authentication failures with username and password [#6212](https://github.com/hyperledger/besu/pull/6212)

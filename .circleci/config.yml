@@ -240,7 +240,7 @@ jobs:
           at: ~/project
       - run:
           name: AcceptanceTests (Non-Mainnet)
-          no_output_timeout: 25m
+          no_output_timeout: 30m
           command: |
             ./gradlew --no-daemon --max-workers=1 acceptanceTestCliqueBft
       - capture_test_results
