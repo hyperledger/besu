@@ -140,28 +140,29 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   private void validateTrieLog(
       final Hash parentStateRoot, final BlockHeader blockHeader, final TrieLog trieLog) {
 
-    BonsaiWorldState bonsaiWorldState = createBonsaiWorldState(false);
-    BonsaiWorldStateUpdateAccumulator updaterForState =
-        (BonsaiWorldStateUpdateAccumulator) bonsaiWorldState.updater();
-    updaterForState.rollForward(trieLog);
-    updaterForState.commit();
-    bonsaiWorldState.persist(blockHeader);
-    Hash generatedRootHash = bonsaiWorldState.rootHash();
-    if (!bonsaiWorldState.rootHash().equals(blockHeader.getStateRoot())) {
-      throw new RuntimeException(
-          "state root becomes invalid following a rollForward %s != %s"
-              .formatted(blockHeader.getStateRoot(), generatedRootHash));
-    }
+    try (var bonsaiWorldState = createBonsaiWorldState(false)) {
+      BonsaiWorldStateUpdateAccumulator updaterForState =
+          (BonsaiWorldStateUpdateAccumulator) bonsaiWorldState.updater();
+      updaterForState.rollForward(trieLog);
+      updaterForState.commit();
+      bonsaiWorldState.persist(blockHeader);
+      Hash generatedRootHash = bonsaiWorldState.rootHash();
+      if (!bonsaiWorldState.rootHash().equals(blockHeader.getStateRoot())) {
+        throw new RuntimeException(
+            "state root becomes invalid following a rollForward %s != %s"
+                .formatted(blockHeader.getStateRoot(), generatedRootHash));
+      }
 
-    updaterForState = (BonsaiWorldStateUpdateAccumulator) bonsaiWorldState.updater();
-    updaterForState.rollBack(trieLog);
-    updaterForState.commit();
-    bonsaiWorldState.persist(null);
-    generatedRootHash = bonsaiWorldState.rootHash();
-    if (!bonsaiWorldState.rootHash().equals(parentStateRoot)) {
-      throw new RuntimeException(
-          "state root becomes invalid following a rollBackward %s != %s"
-              .formatted(parentStateRoot, generatedRootHash));
+      updaterForState = (BonsaiWorldStateUpdateAccumulator) bonsaiWorldState.updater();
+      updaterForState.rollBack(trieLog);
+      updaterForState.commit();
+      bonsaiWorldState.persist(null);
+      generatedRootHash = bonsaiWorldState.rootHash();
+      if (!bonsaiWorldState.rootHash().equals(parentStateRoot)) {
+        throw new RuntimeException(
+            "state root becomes invalid following a rollBackward %s != %s"
+                .formatted(parentStateRoot, generatedRootHash));
+      }
     }
   }
 
@@ -172,10 +173,11 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     // generate trielog
     BonsaiReferenceTestUpdateAccumulator updaterForState =
         originalUpdater.createDetachedAccumulator();
-    BonsaiWorldState bonsaiWorldState = createBonsaiWorldState(isFrozen);
-    bonsaiWorldState.setAccumulator(updaterForState);
-    updaterForState.commit();
-    bonsaiWorldState.persist(blockHeader);
+    try (var bonsaiWorldState = createBonsaiWorldState(isFrozen)) {
+      bonsaiWorldState.setAccumulator(updaterForState);
+      updaterForState.commit();
+      bonsaiWorldState.persist(blockHeader);
+    }
   }
 
   private BonsaiWorldState createBonsaiWorldState(final boolean isFrozen) {
