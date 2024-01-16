@@ -78,7 +78,7 @@ class StorageFlatDatabaseHealingRangeRequestTest {
   public void setup() {
     final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
     worldStateStorage =
-        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false, false);
+        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false);
     proofProvider = new WorldStateProofProvider(worldStateStorage);
     trie =
         TrieGenerator.generateTrie(

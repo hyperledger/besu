@@ -48,7 +48,6 @@ public interface DataStorageConfiguration {
     long MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD = DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
     int DEFAULT_BONSAI_TRIE_LOG_PRUNING_LIMIT = 30_000;
     boolean DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED = false;
-    boolean DEFAULT_BONSAI_CODE_USING_CODE_HASH_DELETION_ENABLED = true;
 
     DataStorageConfiguration.Unstable DEFAULT =
         ImmutableDataStorageConfiguration.Unstable.builder().build();
@@ -71,11 +70,6 @@ public interface DataStorageConfiguration {
     @Value.Default
     default boolean getBonsaiCodeStoredByCodeHashEnabled() {
       return DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
-    }
-
-    @Value.Default
-    default boolean getBonsaiCodeStoredByCodeHashDeletionEnabled() {
-      return DEFAULT_BONSAI_CODE_USING_CODE_HASH_DELETION_ENABLED;
     }
   }
 }

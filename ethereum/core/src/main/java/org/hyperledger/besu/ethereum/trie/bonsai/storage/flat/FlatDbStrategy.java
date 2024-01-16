@@ -56,14 +56,12 @@ public abstract class FlatDbStrategy {
   private final CodeStorageStrategy codeStorageStrategy;
 
   public FlatDbStrategy(
-      final MetricsSystem metricsSystem,
-      final boolean useAccountHashCodeStorage,
-      final boolean deleteCodeInCodeHashStorageMode) {
+      final MetricsSystem metricsSystem, final boolean useAccountHashCodeStorage) {
     this.metricsSystem = metricsSystem;
     this.codeStorageStrategy =
         useAccountHashCodeStorage
             ? new AccountHashCodeStorageStrategy()
-            : new CodeHashCodeStorageStrategy(deleteCodeInCodeHashStorageMode);
+            : new CodeHashCodeStorageStrategy();
 
     getAccountCounter =
         metricsSystem.createCounter(

@@ -75,7 +75,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   protected final ObservableMetricsSystem metricsSystem;
   protected final boolean useCodeHashStorageMode;
-  protected final boolean deleteCodeInCodeHashStorageMode;
 
   private final AtomicBoolean shouldClose = new AtomicBoolean(false);
 
@@ -86,8 +85,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   public BonsaiWorldStateKeyValueStorage(
       final StorageProvider provider,
       final ObservableMetricsSystem metricsSystem,
-      final boolean useCodeHashStorageMode,
-      final boolean deleteCodeInCodeHashStorageMode) {
+      final boolean useCodeHashStorageMode) {
     this.composedWorldStateStorage =
         provider.getStorageBySegmentIdentifiers(
             List.of(
@@ -96,7 +94,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
     this.metricsSystem = metricsSystem;
     this.useCodeHashStorageMode = useCodeHashStorageMode;
-    this.deleteCodeInCodeHashStorageMode = deleteCodeInCodeHashStorageMode;
     loadFlatDbStrategy();
   }
 
@@ -106,15 +103,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       final SegmentedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage,
       final ObservableMetricsSystem metricsSystem,
-      final boolean useCodeHashStorageMode,
-      final boolean deleteCodeInCodeHashStorageMode) {
+      final boolean useCodeHashStorageMode) {
     this.flatDbMode = flatDbMode;
     this.flatDbStrategy = flatDbStrategy;
     this.composedWorldStateStorage = composedWorldStateStorage;
     this.trieLogStorage = trieLogStorage;
     this.metricsSystem = metricsSystem;
     this.useCodeHashStorageMode = useCodeHashStorageMode;
-    this.deleteCodeInCodeHashStorageMode = deleteCodeInCodeHashStorageMode;
   }
 
   private void loadFlatDbStrategy() {
@@ -126,13 +121,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       LOG.info(
           "Bonsai code storage using {}", useCodeHashStorageMode ? "code hash" : "account hash");
       if (flatDbMode == FlatDbMode.FULL) {
-        this.flatDbStrategy =
-            new FullFlatDbStrategy(
-                metricsSystem, useCodeHashStorageMode, deleteCodeInCodeHashStorageMode);
+        this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem, useCodeHashStorageMode);
       } else {
-        this.flatDbStrategy =
-            new PartialFlatDbStrategy(
-                metricsSystem, useCodeHashStorageMode, deleteCodeInCodeHashStorageMode);
+        this.flatDbStrategy = new PartialFlatDbStrategy(metricsSystem, useCodeHashStorageMode);
       }
     }
   }

@@ -101,32 +101,6 @@ public class DataStorageOptionsTest
         "false");
   }
 
-  @Test
-  public void bonsaiCodeUsingCodeHashDeletionEnabledCanBeEnabled() {
-    internalTestSuccess(
-        dataStorageConfiguration ->
-            assertThat(
-                    dataStorageConfiguration
-                        .getUnstable()
-                        .getBonsaiCodeStoredByCodeHashDeletionEnabled())
-                .isEqualTo(true),
-        "--Xbonsai-code-using-code-hash-deletion-enabled",
-        "true");
-  }
-
-  @Test
-  public void bonsaiCodeUsingCodeHashDeletionEnabledCanBeDisabled() {
-    internalTestSuccess(
-        dataStorageConfiguration ->
-            assertThat(
-                    dataStorageConfiguration
-                        .getUnstable()
-                        .getBonsaiCodeStoredByCodeHashDeletionEnabled())
-                .isEqualTo(false),
-        "--Xbonsai-code-using-code-hash-deletion-enabled",
-        "false");
-  }
-
   @Override
   protected DataStorageConfiguration createDefaultDomainObject() {
     return DataStorageConfiguration.DEFAULT_CONFIG;

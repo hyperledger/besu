@@ -473,15 +473,12 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
   private BonsaiWorldStateKeyValueStorage emptyStorage() {
     return new BonsaiWorldStateKeyValueStorage(
-        new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem(), false, false);
+        new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem(), false);
   }
 
   private BonsaiWorldStateKeyValueStorage emptyStorage(final boolean useAccountHashCodeStorage) {
     return new BonsaiWorldStateKeyValueStorage(
-        new InMemoryKeyValueStorageProvider(),
-        new NoOpMetricsSystem(),
-        useAccountHashCodeStorage,
-        false);
+        new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem(), useAccountHashCodeStorage);
   }
 
   @Test
@@ -516,7 +513,6 @@ public class BonsaiWorldStateKeyValueStorageTest {
         .thenReturn(mockTrieLogStorage);
     when(mockStorageProvider.getStorageBySegmentIdentifiers(any()))
         .thenReturn(mock(SegmentedKeyValueStorage.class));
-    return new BonsaiWorldStateKeyValueStorage(
-        mockStorageProvider, new NoOpMetricsSystem(), false, false);
+    return new BonsaiWorldStateKeyValueStorage(mockStorageProvider, new NoOpMetricsSystem(), false);
   }
 }

@@ -179,7 +179,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
     final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
     final WorldStateStorage worldStateStorage =
-        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false, false);
+        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false);
     final WorldStateProofProvider proofProvider = new WorldStateProofProvider(worldStateStorage);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);
@@ -233,7 +233,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
     final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
     final WorldStateStorage worldStateStorage =
-        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false, false);
+        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false);
     final WorldStateProofProvider proofProvider = new WorldStateProofProvider(worldStateStorage);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);

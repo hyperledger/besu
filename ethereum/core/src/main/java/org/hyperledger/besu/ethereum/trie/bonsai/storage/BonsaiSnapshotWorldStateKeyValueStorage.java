@@ -51,8 +51,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
         segmentedWorldStateStorage,
         trieLogStorage,
         metricsSystem,
-        parentWorldStateStorage.useCodeHashStorageMode,
-        parentWorldStateStorage.deleteCodeInCodeHashStorageMode);
+        parentWorldStateStorage.useCodeHashStorageMode);
     this.parentWorldStateStorage = parentWorldStateStorage;
     this.subscribeParentId = parentWorldStateStorage.subscribe(this);
   }

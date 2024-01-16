@@ -106,8 +106,7 @@ class BonsaiWorldStateArchiveTest {
         new BonsaiWorldStateProvider(
             cachedWorldStorageManager,
             trieLogManager,
-            new BonsaiWorldStateKeyValueStorage(
-                storageProvider, new NoOpMetricsSystem(), false, false),
+            new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false),
             blockchain,
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT);
@@ -120,8 +119,7 @@ class BonsaiWorldStateArchiveTest {
   void testGetMutableReturnEmptyWhenLoadMoreThanLimitLayersBack() {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateProvider(
-            new BonsaiWorldStateKeyValueStorage(
-                storageProvider, new NoOpMetricsSystem(), false, false),
+            new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false),
             blockchain,
             Optional.of(512L),
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
@@ -143,8 +141,7 @@ class BonsaiWorldStateArchiveTest {
         new BonsaiWorldStateProvider(
             cachedWorldStorageManager,
             trieLogManager,
-            new BonsaiWorldStateKeyValueStorage(
-                storageProvider, new NoOpMetricsSystem(), false, false),
+            new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false),
             blockchain,
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT);
@@ -170,7 +167,7 @@ class BonsaiWorldStateArchiveTest {
         .getTrieLogLayer(any(Hash.class));
 
     var worldStateStorage =
-        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false, false);
+        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false);
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateProvider(
@@ -196,7 +193,7 @@ class BonsaiWorldStateArchiveTest {
   void testGetMutableWithStorageConsistencyNotRollbackTheState() {
 
     var worldStateStorage =
-        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false, false);
+        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false);
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateProvider(
@@ -232,7 +229,7 @@ class BonsaiWorldStateArchiveTest {
         .getTrieLogLayer(any(Hash.class));
 
     var worldStateStorage =
-        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false, false);
+        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem(), false);
 
     bonsaiWorldStateArchive =
         spy(
@@ -280,7 +277,7 @@ class BonsaiWorldStateArchiveTest {
                 cachedWorldStorageManager,
                 trieLogManager,
                 new BonsaiWorldStateKeyValueStorage(
-                    storageProvider, new NoOpMetricsSystem(), false, false),
+                    storageProvider, new NoOpMetricsSystem(), false),
                 blockchain,
                 new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
                 EvmConfiguration.DEFAULT));
