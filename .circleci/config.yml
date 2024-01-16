@@ -247,6 +247,7 @@ jobs:
       - capture_test_logs
 
   acceptanceTestsPrivacy:
+    parallelism: 4
     executor: besu_executor_med
     steps:
       - prepare
@@ -256,7 +257,7 @@ jobs:
           name: AcceptanceTests (Privacy)
           no_output_timeout: 30m
           command: |
-            ./gradlew --no-daemon --max-workers=1 acceptanceTestPrivacy
+            ./gradlew --no-daemon acceptanceTestPrivacy
       - capture_test_results
       - capture_test_logs
 
