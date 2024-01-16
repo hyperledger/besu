@@ -46,7 +46,7 @@ dependencyManagement {
       entry 'error_prone_test_helpers'
     }
 
-    dependency 'com.google.guava:guava:31.1-jre'
+    dependency 'com.google.guava:guava:33.0.0-jre'
 
     dependency 'com.graphql-java:graphql-java:21.3'
 
@@ -192,7 +192,7 @@ dependencyManagement {
       entry 'org.jupnp'
     }
 
-    dependencySet(group: 'org.mockito', version:'4.11.0') {
+    dependencySet(group: 'org.mockito', version:'5.8.0') {
       entry 'mockito-core'
       entry 'mockito-junit-jupiter'
     }
