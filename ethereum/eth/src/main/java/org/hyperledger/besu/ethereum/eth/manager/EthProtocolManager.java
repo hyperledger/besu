@@ -385,7 +385,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         return true;
       }
     }
-    LOG.debug("ForkId check failed for peer {}", peer.getId());
+    LOG.atDebug().setMessage("ForkId check failed for peer {}").addArgument(peer.getId()).log();
     return false;
   }
 
@@ -415,36 +415,39 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         LOG.atDebug()
             .setMessage("Mismatched network id: {}, peer {}")
             .addArgument(status.networkId())
-            .addArgument(LOG.isTraceEnabled() ? peer : peer.getShortNodeId())
+            .addArgument(getPeerOrPeerId(peer))
             .log();
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else if (!forkIdManager.peerCheck(forkId) && status.protocolVersion() > 63) {
-        LOG.debug(
-            "{} has matching network id ({}), but non-matching fork id: {}",
-            LOG.isTraceEnabled() ? peer : peer.getShortNodeId(),
-            networkId,
-            forkId);
+        LOG.atDebug()
+            .setMessage("{} has matching network id ({}), but non-matching fork id: {}")
+            .addArgument(getPeerOrPeerId(peer))
+            .addArgument(networkId)
+            .addArgument(forkId)
+            .log();
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else if (forkIdManager.peerCheck(status.genesisHash())) {
-        LOG.debug(
-            "{} has matching network id ({}), but non-matching genesis hash: {}",
-            LOG.isTraceEnabled() ? peer : peer.getShortNodeId(),
-            networkId,
-            status.genesisHash());
+        LOG.atDebug()
+            .setMessage("{} has matching network id ({}), but non-matching genesis hash: {}")
+            .addArgument(getPeerOrPeerId(peer))
+            .addArgument(networkId)
+            .addArgument(status.genesisHash())
+            .log();
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else if (mergePeerFilter.isPresent()
           && mergePeerFilter.get().disconnectIfPoW(status, peer)) {
         LOG.atDebug()
             .setMessage("Post-merge disconnect: peer still PoW {}")
-            .addArgument(LOG.isTraceEnabled() ? peer : peer.getShortNodeId())
+            .addArgument(getPeerOrPeerId(peer))
             .log();
         handleDisconnect(peer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
       } else {
-        LOG.debug(
-            "Received status message from {}: {} with connection {}",
-            peer,
-            status,
-            message.getConnection());
+        LOG.atDebug()
+            .setMessage("Received status message from {}: {} with connection {}")
+            .addArgument(peer)
+            .addArgument(status)
+            .addArgument(message.getConnection())
+            .log();
         peer.registerStatusReceived(
             status.bestHash(),
             status.totalDifficulty(),
@@ -461,6 +464,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       // So just disconnect with "subprotocol" error rather than "breach of protocol".
       peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
     }
+  }
+
+  private static Object getPeerOrPeerId(final EthPeer peer) {
+    return LOG.isTraceEnabled() ? peer : peer.getShortNodeId();
   }
 
   @Override
