@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_LIMIT;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
@@ -99,14 +98,14 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
    */
   public void validate(final CommandLine commandLine) {
     if (unstableOptions.bonsaiTrieLogPruningEnabled) {
-      if (unstableOptions.bonsaiTrieLogRetentionThreshold
-          < MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD) {
-        throw new CommandLine.ParameterException(
-            commandLine,
-            String.format(
-                "--Xbonsai-trie-log-retention-threshold minimum value is %d",
-                MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD));
-      }
+      //      if (unstableOptions.bonsaiTrieLogRetentionThreshold
+      //          < MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD) {
+      //        throw new CommandLine.ParameterException(
+      //            commandLine,
+      //            String.format(
+      //                "--Xbonsai-trie-log-retention-threshold minimum value is %d",
+      //                MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD));
+      //      }
       if (unstableOptions.bonsaiTrieLogPruningLimit <= 0) {
         throw new CommandLine.ParameterException(
             commandLine,
