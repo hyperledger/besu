@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
@@ -63,7 +64,8 @@ public class BesuNodeConfigurationBuilder {
           .mutableInitValues(
               MutableInitValues.builder().coinbase(AddressHelpers.ofValue(1)).build())
           .build();
-
+  private TransactionPoolConfiguration transactionPoolConfiguration =
+      TransactionPoolConfiguration.DEFAULT;
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
   private JsonRpcConfiguration engineRpcConfiguration = JsonRpcConfiguration.createEngineDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
@@ -125,6 +127,12 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfigurationBuilder miningConfiguration(final MiningParameters miningParameters) {
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER.name());
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder transactionPoolConfiguration(
+      final TransactionPoolConfiguration transactionPoolConfiguration) {
+    this.transactionPoolConfiguration = transactionPoolConfiguration;
     return this;
   }
 
@@ -503,6 +511,7 @@ public class BesuNodeConfigurationBuilder {
         name,
         dataPath,
         miningParameters,
+        transactionPoolConfiguration,
         jsonRpcConfiguration,
         Optional.of(engineRpcConfiguration),
         webSocketConfiguration,
