@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionEvaluationContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AbstractTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.MinPriorityFeePerGasTransactionSelector;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -29,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
+import com.google.common.base.Stopwatch;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -56,44 +58,47 @@ public class MinPriorityFeePerGasTransactionSelectorTest {
 
   @Test
   public void shouldNotSelectWhen_PriorityFeePerGas_IsLessThan_MinPriorityFeePerGas() {
-    var transaction = mockTransactionWithPriorityFee(minPriorityFeeParameter - 1);
+    var transaction = mockTransactionEvaluationContext(minPriorityFeeParameter - 1);
     assertSelectionResult(
         transaction, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN);
   }
 
   @Test
   public void shouldSelectWhen_PriorityFeePerGas_IsEqual_MinPriorityFeePerGas() {
-    var transaction = mockTransactionWithPriorityFee(minPriorityFeeParameter);
+    var transaction = mockTransactionEvaluationContext(minPriorityFeeParameter);
     assertSelectionResult(transaction, TransactionSelectionResult.SELECTED);
   }
 
   @Test
   public void shouldSelectWhen_PriorityFeePerGas_IsGreaterThan_MinPriorityFeePerGas() {
-    var transaction = mockTransactionWithPriorityFee(minPriorityFeeParameter + 1);
+    var transaction = mockTransactionEvaluationContext(minPriorityFeeParameter + 1);
     assertSelectionResult(transaction, TransactionSelectionResult.SELECTED);
   }
 
   @Test
   public void shouldSelectWhenPrioritySender() {
-    var prioritySenderTransaction = mockTransactionWithPriorityFee(minPriorityFeeParameter - 1);
+    final var evaluationContext = mockTransactionEvaluationContext(minPriorityFeeParameter - 1);
     assertSelectionResult(
-        prioritySenderTransaction,
-        TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN);
-    when(prioritySenderTransaction.hasPriority()).thenReturn(true);
-    assertSelectionResult(prioritySenderTransaction, TransactionSelectionResult.SELECTED);
+        evaluationContext, TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN);
+    when(evaluationContext.getPendingTransaction().hasPriority()).thenReturn(true);
+    assertSelectionResult(evaluationContext, TransactionSelectionResult.SELECTED);
   }
 
   private void assertSelectionResult(
-      final PendingTransaction transaction, final TransactionSelectionResult expectedResult) {
-    var actualResult = transactionSelector.evaluateTransactionPreProcessing(transaction, null);
+      final TransactionEvaluationContext evaluationContext,
+      final TransactionSelectionResult expectedResult) {
+    var actualResult =
+        transactionSelector.evaluateTransactionPreProcessing(evaluationContext, null);
     assertThat(actualResult).isEqualTo(expectedResult);
   }
 
-  private PendingTransaction mockTransactionWithPriorityFee(final int priorityFeePerGas) {
-    PendingTransaction mockTransaction = mock(PendingTransaction.class);
+  private TransactionEvaluationContext mockTransactionEvaluationContext(
+      final int priorityFeePerGas) {
+    PendingTransaction pendingTransaction = mock(PendingTransaction.class);
     Transaction transaction = mock(Transaction.class);
-    when(mockTransaction.getTransaction()).thenReturn(transaction);
+    when(pendingTransaction.getTransaction()).thenReturn(transaction);
     when(transaction.getEffectivePriorityFeePerGas(any())).thenReturn(Wei.of(priorityFeePerGas));
-    return mockTransaction;
+    return new TransactionEvaluationContext(
+        pendingTransaction, Stopwatch.createStarted(), Wei.ONE, Wei.ONE);
   }
 }
