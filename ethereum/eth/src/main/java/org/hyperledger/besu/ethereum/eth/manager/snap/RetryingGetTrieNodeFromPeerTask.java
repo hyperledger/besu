@@ -73,7 +73,7 @@ public class RetryingGetTrieNodeFromPeerTask
   }
 
   @Override
-  protected boolean reportUselessIfEmptyResponse(final long currentBlockHight) {
+  protected boolean reportUselessIfEmptyResponse() {
     return false;
   }
 

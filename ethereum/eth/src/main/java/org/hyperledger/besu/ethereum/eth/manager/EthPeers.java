@@ -66,6 +66,7 @@ public class EthPeers {
       Comparator.comparing(EthPeer::outstandingRequests)
           .thenComparing(EthPeer::getLastRequestTimestamp);
   public static final int NODE_ID_LENGTH = 64;
+  public static final int USEFULL_PEER_SCORE_THRESHOLD = 102;
 
   private final Map<Bytes, EthPeer> completeConnections = new ConcurrentHashMap<>();
 
@@ -195,12 +196,11 @@ public class EthPeers {
         disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
         peer.handleDisconnect();
         abortPendingRequestsAssignedToDisconnectedPeers();
-        if (System.currentTimeMillis() - peer.getConnection().getInitiatedAt() > 600000) {
-          LOG.debug("Disonnected ESTABLISHED peer {}", peer);
+        if (peer.getReputation().getScore() > USEFULL_PEER_SCORE_THRESHOLD) {
+          LOG.debug("Disconnected USEFULL peer {}", peer);
         } else {
           LOG.debug("Disconnected EthPeer {}", peer.getShortNodeId());
         }
-        LOG.trace("Disconnected EthPeer {}", peer);
       }
     }
     reattemptPendingPeerRequests();
@@ -488,7 +488,6 @@ public class EthPeers {
       return;
     }
     getActivePrioritizedPeers()
-        .filter(p -> !p.isDisconnected())
         .skip(peerUpperBound)
         .map(EthPeer::getConnection)
         .filter(c -> !canExceedPeerLimits(c.getPeer().getId()))
