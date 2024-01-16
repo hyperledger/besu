@@ -443,10 +443,6 @@ workflows:
                 - /^release-.*/
           requires:
             - assemble
-            - integrationTests
-            - unitTests
-            - acceptanceTests
-            - referenceTests
             - buildDocker
       - publishDocker:
           filters:
@@ -456,10 +452,6 @@ workflows:
                 - /^release-.*/
           requires:
             - assemble
-            - integrationTests
-            - unitTests
-            - acceptanceTests
-            - referenceTests
             - buildDocker
           context:
             - besu-dockerhub-rw
@@ -470,10 +462,6 @@ workflows:
                 - main
                 - /^release-.*/
           requires:
-            - integrationTests
-            - unitTests
-            - acceptanceTests
-            - referenceTests
             - buildArm64Docker
           context:
             - besu-dockerhub-rw
