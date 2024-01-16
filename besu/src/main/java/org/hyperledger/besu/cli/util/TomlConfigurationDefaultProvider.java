@@ -87,6 +87,8 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
   }
 
   private String getConfigurationValue(final OptionSpec optionSpec) {
+    // NOTE: This temporary fix is necessary to make certain options be treated as a multi-value.
+    // This can be done automatically by picocli if the object implements Collection.
     final boolean isArray = getKeyName(optionSpec).map(tomlParseResult::isArray).orElse(false);
 
     if (optionSpec.type().equals(Boolean.class) || optionSpec.type().equals(boolean.class)) {
