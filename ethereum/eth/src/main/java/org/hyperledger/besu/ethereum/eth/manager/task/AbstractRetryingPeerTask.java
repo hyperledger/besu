@@ -193,7 +193,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
    *
    * @return true if an empty response can be reported useless
    */
-  protected boolean reportUselessIfEmptyResponse() {
+  protected boolean reportUselessIfEmptyResponse(final long currentBlockHight) {
     return true;
   }
 

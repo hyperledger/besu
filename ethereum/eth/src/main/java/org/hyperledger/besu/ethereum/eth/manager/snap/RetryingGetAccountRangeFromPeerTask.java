@@ -78,7 +78,7 @@ public class RetryingGetAccountRangeFromPeerTask
   }
 
   @Override
-  protected boolean reportUselessIfEmptyResponse() {
+  protected boolean reportUselessIfEmptyResponse(final long currentBlockHight) {
     return false;
   }
 

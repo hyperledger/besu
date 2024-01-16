@@ -316,6 +316,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       return;
     }
 
+    // TODO: stefan: find out whether ethMessage is a response or a request
+    // There are some annoying TRACE messages in the following call if this is not a response
     // This will handle responses
     ethPeers.dispatchMessage(ethPeer, ethMessage, getSupportedProtocol());
 

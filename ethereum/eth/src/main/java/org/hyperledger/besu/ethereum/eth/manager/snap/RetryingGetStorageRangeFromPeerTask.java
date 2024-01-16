@@ -89,7 +89,7 @@ public class RetryingGetStorageRangeFromPeerTask
   }
 
   @Override
-  protected boolean reportUselessIfEmptyResponse() {
+  protected boolean reportUselessIfEmptyResponse(final long currentBlockHight) {
     return false;
   }
 
