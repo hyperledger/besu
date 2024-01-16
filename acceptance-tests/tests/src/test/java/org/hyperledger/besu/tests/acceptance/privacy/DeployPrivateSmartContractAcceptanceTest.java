@@ -49,6 +49,7 @@ public class DeployPrivateSmartContractAcceptanceTest extends ParameterizedEncla
             restriction == UNRESTRICTED);
 
     privacyCluster.start(minerNode);
+    minerNode.verify(priv.syncingStatus(false));
   }
 
   @Test

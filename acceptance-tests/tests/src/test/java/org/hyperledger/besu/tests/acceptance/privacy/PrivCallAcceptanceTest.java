@@ -74,6 +74,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
             restriction == UNRESTRICTED);
 
     privacyCluster.start(minerNode);
+    minerNode.verify(priv.syncingStatus(false));
   }
 
   @Test

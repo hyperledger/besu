@@ -91,6 +91,8 @@ public class PluginPrivacySigningAcceptanceTest extends PrivacyAcceptanceTestBas
             EnclaveType.NOOP);
 
     privacyCluster.start(minerNode);
+
+    minerNode.verify(priv.syncingStatus(false));
   }
 
   @Test

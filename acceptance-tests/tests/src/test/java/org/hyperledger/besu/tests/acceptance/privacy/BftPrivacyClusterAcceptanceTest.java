@@ -108,6 +108,9 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     charlie = createNode("node3", 2);
 
     privacyCluster.start(alice, bob, charlie);
+    alice.verify(priv.syncingStatus(false));
+    bob.verify(priv.syncingStatus(false));
+    charlie.verify(priv.syncingStatus(false));
   }
 
   private PrivacyNode createNode(final String nodeName, final int privacyAccount)

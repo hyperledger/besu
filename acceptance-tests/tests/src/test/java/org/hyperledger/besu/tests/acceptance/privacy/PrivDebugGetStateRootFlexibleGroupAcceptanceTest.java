@@ -71,6 +71,9 @@ public class PrivDebugGetStateRootFlexibleGroupAcceptanceTest
             enclaveType);
 
     privacyCluster.start(aliceNode, bobNode);
+
+    aliceNode.verify(priv.syncingStatus(false));
+    bobNode.verify(priv.syncingStatus(false));
   }
 
   @Test

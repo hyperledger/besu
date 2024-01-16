@@ -58,6 +58,7 @@ public class PrivateGenesisAcceptanceTest extends ParameterizedEnclaveTestBase {
             "AA");
 
     privacyCluster.start(alice);
+    alice.verify(priv.syncingStatus(false));
   }
 
   @Test

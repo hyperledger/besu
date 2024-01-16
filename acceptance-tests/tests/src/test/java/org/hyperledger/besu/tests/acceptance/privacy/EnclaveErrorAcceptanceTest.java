@@ -88,6 +88,9 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
             "0xBB");
     privacyCluster.start(alice, bob);
 
+    alice.verify(priv.syncingStatus(false));
+    bob.verify(priv.syncingStatus(false));
+
     final byte[] wrongPublicKeyBytes =
         EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
             ? getSECP256r1PublicKeyByteArray()
