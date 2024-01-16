@@ -22,7 +22,6 @@ import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
@@ -953,13 +952,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         names = {"--privacy-flexible-groups-enabled"},
         description = "Enable flexible privacy groups (default: ${DEFAULT-VALUE})")
     private final Boolean isFlexiblePrivacyGroupsEnabled = false;
-
-    @Option(
-        hidden = true,
-        names = {"--privacy-onchain-groups-enabled"},
-        description =
-            "!!DEPRECATED!! Use `--privacy-flexible-groups-enabled` instead. Enable flexible (onchain) privacy groups (default: ${DEFAULT-VALUE})")
-    private final Boolean isOnchainPrivacyGroupsEnabled = false;
   }
 
   // Metrics Option Group
@@ -1716,8 +1708,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
 
       if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
-          && (privacyOptionGroup.isFlexiblePrivacyGroupsEnabled
-              || privacyOptionGroup.isOnchainPrivacyGroupsEnabled)) {
+          && privacyOptionGroup.isFlexiblePrivacyGroupsEnabled) {
         throw new ParameterException(
             commandLine, "Privacy Plugin can not be used with flexible privacy groups");
       }
@@ -2054,13 +2045,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           DEPENDENCY_WARNING_MSG,
           "--node-private-key-file",
           "--security-module=" + DEFAULT_SECURITY_MODULE);
-    }
-
-    if (Boolean.TRUE.equals(privacyOptionGroup.isOnchainPrivacyGroupsEnabled)) {
-      logger.warn(
-          DEPRECATION_WARNING_MSG,
-          "--privacy-onchain-groups-enabled",
-          "--privacy-flexible-groups-enabled");
     }
 
     if (isPruningEnabled()) {
@@ -2750,8 +2734,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setMultiTenancyEnabled(
           privacyOptionGroup.isPrivacyMultiTenancyEnabled);
       privacyParametersBuilder.setFlexiblePrivacyGroupsEnabled(
-          privacyOptionGroup.isFlexiblePrivacyGroupsEnabled
-              || privacyOptionGroup.isOnchainPrivacyGroupsEnabled);
+          privacyOptionGroup.isFlexiblePrivacyGroupsEnabled);
       privacyParametersBuilder.setPrivacyPluginEnabled(
           unstablePrivacyPluginOptions.isPrivacyPluginEnabled());
 
