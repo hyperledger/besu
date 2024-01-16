@@ -15,7 +15,7 @@
 
 package org.hyperledger.besu.cli.subcommands.storage;
 
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageFormat.BONSAI;
+import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

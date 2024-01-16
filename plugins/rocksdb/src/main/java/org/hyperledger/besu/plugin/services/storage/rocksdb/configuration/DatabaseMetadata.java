@@ -14,61 +14,88 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DatabindException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Optional;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSetter;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.OptionalInt;
 
 /** The Database metadata. */
 public class DatabaseMetadata {
   private static final Logger LOG = LoggerFactory.getLogger(DatabaseMetadata.class);
 
   private static final String METADATA_FILENAME = "DATABASE_METADATA.json";
-  private static final ObjectMapper MAPPER = new ObjectMapper();
+  private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
+  private final DataStorageFormat format;
   private final int version;
 
-  private Optional<Integer> privacyVersion;
+  private final OptionalInt maybePrivacyVersion;
+//
+//  /**
+//   * Instantiates a new Database metadata.
+//   *
+//   * @param version the version
+//   */
+//  @JsonCreator
+//  public DatabaseMetadata(final DataStorageFormat format, @JsonProperty("version") final int version) {
+//    this(format, version, Optional.empty());
+//  }
 
   /**
    * Instantiates a new Database metadata.
    *
+   * @param format the format
    * @param version the version
    */
-  @JsonCreator
-  public DatabaseMetadata(@JsonProperty("version") final int version) {
-    this(version, Optional.empty());
+  public DatabaseMetadata(final DataStorageFormat format, final int version) {
+    this(format, version, OptionalInt.empty());
   }
 
   /**
    * Instantiates a new Database metadata.
    *
+   * @param format the format
    * @param version the version
    * @param privacyVersion the privacy version
    */
-  public DatabaseMetadata(final int version, final Optional<Integer> privacyVersion) {
+  public DatabaseMetadata(final DataStorageFormat format, final int version, final int privacyVersion) {
+    this(format, version, OptionalInt.of(privacyVersion));
+  }
+
+  /**
+   * Instantiates a new Database metadata.
+   *
+   * @param format the format
+   * @param version the version
+   * @param maybePrivacyVersion the optional privacy version
+   */
+  private DatabaseMetadata(final DataStorageFormat format, final int version, final OptionalInt maybePrivacyVersion) {
+    this.format = format;
     this.version = version;
-    this.privacyVersion = privacyVersion;
+    this.maybePrivacyVersion = maybePrivacyVersion;
   }
+//
+//  /**
+//   * Instantiates a new Database metadata.
+//   *
+//   * @param version the version
+//   * @param privacyVersion the privacy version
+//   */
+//  public DatabaseMetadata(final DataStorageFormat format, final int version, final int privacyVersion) {
+//    this(format, version, Optional.of(privacyVersion));
+//  }
 
-  /**
-   * Instantiates a new Database metadata.
-   *
-   * @param version the version
-   * @param privacyVersion the privacy version
-   */
-  public DatabaseMetadata(final int version, final int privacyVersion) {
-    this(version, Optional.of(privacyVersion));
+  public DataStorageFormat getFormat() {
+    return format;
   }
 
   /**
@@ -81,33 +108,12 @@ public class DatabaseMetadata {
   }
 
   /**
-   * Sets privacy version.
-   *
-   * @param privacyVersion the privacy version
-   */
-  @JsonSetter("privacyVersion")
-  public void setPrivacyVersion(final int privacyVersion) {
-    this.privacyVersion = Optional.of(privacyVersion);
-  }
-
-  /**
-   * Gets privacy version.
-   *
-   * @return the privacy version
-   */
-  @JsonInclude(JsonInclude.Include.NON_NULL)
-  @JsonGetter("privacyVersion")
-  public Integer getPrivacyVersion() {
-    return privacyVersion.orElse(null);
-  }
-
-  /**
    * Maybe privacy version.
    *
    * @return the optional
    */
-  public Optional<Integer> maybePrivacyVersion() {
-    return privacyVersion;
+  public OptionalInt maybePrivacyVersion() {
+    return maybePrivacyVersion;
   }
 
   /**
@@ -129,16 +135,11 @@ public class DatabaseMetadata {
    * @throws IOException the io exception
    */
   public void writeToDirectory(final Path dataDir) throws IOException {
-    try {
-      final DatabaseMetadata currentMetadata =
-          MAPPER.readValue(getDefaultMetadataFile(dataDir), DatabaseMetadata.class);
-      if (currentMetadata.maybePrivacyVersion().isPresent()) {
-        setPrivacyVersion(currentMetadata.getPrivacyVersion());
-      }
-      MAPPER.writeValue(getDefaultMetadataFile(dataDir), this);
-    } catch (FileNotFoundException fnfe) {
-      MAPPER.writeValue(getDefaultMetadataFile(dataDir), this);
-    }
+    writeToFile(getDefaultMetadataFile(dataDir));
+  }
+
+  private void writeToFile(final File file) throws IOException {
+    MAPPER.writeValue(file, new V2(new MetadataV2(format, version, maybePrivacyVersion)));
   }
 
   private static File getDefaultMetadataFile(final Path dataDir) {
@@ -146,16 +147,66 @@ public class DatabaseMetadata {
   }
 
   private static DatabaseMetadata resolveDatabaseMetadata(final File metadataFile)
-      throws IOException {
+          throws IOException {
     DatabaseMetadata databaseMetadata;
     try {
-      databaseMetadata = MAPPER.readValue(metadataFile, DatabaseMetadata.class);
+      try {
+        return tryReadAndMigrateV1(metadataFile);
+      } catch (DatabindException dbe) {
+        return tryReadV2(metadataFile);
+      }
     } catch (FileNotFoundException fnfe) {
-      databaseMetadata = new DatabaseMetadata(1, 1);
+      databaseMetadata = new DatabaseMetadata(DataStorageFormat.FOREST, 2);
     } catch (JsonProcessingException jpe) {
       throw new IllegalStateException(
-          String.format("Invalid metadata file %s", metadataFile.getAbsolutePath()), jpe);
+              String.format("Invalid metadata file %s", metadataFile.getAbsolutePath()), jpe);
     }
     return databaseMetadata;
+  }
+
+  private static DatabaseMetadata tryReadAndMigrateV1(final File metadataFile) throws IOException {
+    final V1 v1 = MAPPER.readValue(metadataFile, V1.class);
+    final DatabaseMetadata metadataV1 = new DatabaseMetadata(DataStorageFormat.fromLegacyVersion(v1.version), 2, v1.privacyVersion);
+    // writing the metadata will migrate to v2
+    metadataV1.writeToFile(metadataFile);
+    return metadataV1;
+  }
+
+  private static DatabaseMetadata tryReadV2(final File metadataFile) throws IOException {
+    final V2 v2 = MAPPER.readValue(metadataFile, V2.class);
+    return new DatabaseMetadata(v2.v2.format, v2.v2.version, v2.v2.privacyVersion);
+  }
+
+  @Override
+  public String toString() {
+    return "format=" + format +
+            ", version=" + version + ((maybePrivacyVersion.isPresent()) ? ", privacyVersion=" + maybePrivacyVersion : "");
+  }
+
+  private static class V1 {
+    @JsonProperty
+    int version;
+    @JsonProperty
+    OptionalInt privacyVersion;
+  }
+
+  private static class V2 {
+    private final MetadataV2 v2;
+
+    public V2(final MetadataV2 v2) {
+      this.v2 = v2;
+    }
+  }
+
+  private static class MetadataV2 {
+    private final DataStorageFormat format;
+    private final int version;
+    private final OptionalInt privacyVersion;
+
+    public MetadataV2(final DataStorageFormat format, final int version, final OptionalInt privacyVersion) {
+      this.format = format;
+      this.version = version;
+      this.privacyVersion = privacyVersion;
+    }
   }
 }

@@ -27,8 +27,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.Set;
 
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.VersionedStorageFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,15 +124,16 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
     if (privacyDatabaseExists) {
       privacyDatabaseVersion = DatabaseMetadata.lookUpFrom(dataDir).maybePrivacyVersion().orElse(1);
       LOG.info(
-          "Existing private database detected at {}. Version {}", dataDir, privacyDatabaseVersion);
+          "Existing private database detected at {}. Metadata {}", dataDir, privacyDatabaseVersion);
     } else {
       privacyDatabaseVersion = DEFAULT_VERSION;
       LOG.info(
-          "No existing private database detected at {}. Using version {}",
+          "No existing private database detected at {}. Using metadata {}",
           dataDir,
           privacyDatabaseVersion);
       Files.createDirectories(dataDir);
-      new DatabaseMetadata(publicFactory.getDefaultVersion(), privacyDatabaseVersion)
+      final VersionedStorageFormat format = VersionedStorageFormat.fromFormat(commonConfiguration.getDatabaseFormat());
+      new DatabaseMetadata(format.getFormat(), format.getVersion(), privacyDatabaseVersion)
           .writeToDirectory(dataDir);
     }
 

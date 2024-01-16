@@ -39,12 +39,12 @@ public interface SegmentIdentifier {
 
   /**
    * Not all segments are in all DB versions. This queries the segment to see if it is in the DB
-   * version.
+   * format.
    *
-   * @param version Version of the DB
-   * @return true if the segment is in that DB version
+   * @param format Version of the DB
+   * @return true if the segment is in that DB format
    */
-  default boolean includeInDatabaseVersion(final int version) {
+  default boolean includeInDatabaseFormat(final DataStorageFormat format) {
     return true;
   }
 

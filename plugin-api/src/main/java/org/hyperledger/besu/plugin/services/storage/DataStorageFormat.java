@@ -14,19 +14,26 @@
  *
  */
 
-package org.hyperledger.besu.ethereum.worldstate;
+package org.hyperledger.besu.plugin.services.storage;
+
+import java.util.Arrays;
 
 public enum DataStorageFormat {
   FOREST(1), // Original format.  Store all tries
   BONSAI(2); // New format.  Store one trie, and trie logs to roll forward and backward.
 
-  private final int databaseVersion;
+  @Deprecated
+  private final int legacyVersion;
 
-  DataStorageFormat(final int databaseVersion) {
-    this.databaseVersion = databaseVersion;
+  DataStorageFormat(final int legacyVersion) {
+    this.legacyVersion = legacyVersion;
   }
 
-  public int getDatabaseVersion() {
-    return databaseVersion;
+  public int getLegacyVersion() {
+    return legacyVersion;
+  }
+
+  public static DataStorageFormat fromLegacyVersion(final int i) {
+    return Arrays.stream(values()).filter(v -> v.legacyVersion == i).findFirst().orElseThrow();
   }
 }

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.nio.file.Path;
 
@@ -36,12 +37,12 @@ public interface BesuConfiguration extends BesuService {
   Path getDataPath();
 
   /**
-   * Database version. This sets the list of segmentIdentifiers that should be initialized.
+   * Database format. This sets the list of segmentIdentifiers that should be initialized.
    *
-   * @return Database version.
+   * @return Database format.
    */
   @Unstable
-  default int getDatabaseVersion() {
-    return 1;
+  default DataStorageFormat getDatabaseFormat() {
+    return DataStorageFormat.FOREST;
   }
 }

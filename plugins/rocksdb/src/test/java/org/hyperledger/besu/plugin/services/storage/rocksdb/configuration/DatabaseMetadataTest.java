@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -28,23 +29,15 @@ class DatabaseMetadataTest {
   @TempDir public Path temporaryFolder;
 
   @Test
-  void getVersion() {
-    final DatabaseMetadata databaseMetadata = new DatabaseMetadata(42);
-    assertThat(databaseMetadata).isNotNull();
-    assertThat(databaseMetadata.getVersion()).isEqualTo(42);
-  }
-
-  @Test
-  void metaFileShouldMayContain() throws Exception {
+  void readingMetadataV1() throws Exception {
     final Path tempDataDir =
         createAndWrite(
-            "data", "DATABASE_METADATA.json", "{\"version\":42 , \"privacyVersion\":55}");
+            "data", "DATABASE_METADATA.json", "{\"version\":2 , \"privacyVersion\":1}");
 
     final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
-    assertThat(databaseMetadata).isNotNull();
-    assertThat(databaseMetadata.getVersion()).isEqualTo(42);
+    assertThat(databaseMetadata.getFormat()).isEqualTo(DataStorageFormat.BONSAI);
     assertThat(databaseMetadata.maybePrivacyVersion()).isNotEmpty();
-    assertThat(databaseMetadata.maybePrivacyVersion().get()).isEqualTo(55);
+    assertThat(databaseMetadata.maybePrivacyVersion().getAsInt()).isEqualTo(1);
   }
 
   @Test

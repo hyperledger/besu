@@ -68,7 +68,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBui
 import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogPruner;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
@@ -188,7 +188,7 @@ public abstract class AbstractIsolationTests {
                         8388608 /*CACHE_CAPACITY*/,
                         false),
                 Arrays.asList(KeyValueSegmentIdentifier.values()),
-                2,
+                DataStorageFormat.BONSAI,
                 RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
         .withCommonConfiguration(
             new BesuConfiguration() {
@@ -204,8 +204,8 @@ public abstract class AbstractIsolationTests {
               }
 
               @Override
-              public int getDatabaseVersion() {
-                return 2;
+              public DataStorageFormat getDatabaseFormat() {
+                return DataStorageFormat.BONSAI;
               }
             })
         .withMetricsSystem(new NoOpMetricsSystem())

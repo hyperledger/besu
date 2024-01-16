@@ -24,6 +24,7 @@ import java.util.function.Predicate;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 public interface WorldStateStorage {
 

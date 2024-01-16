@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.DatabaseMetadata;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
@@ -71,7 +72,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
 
     assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isEqualTo(DEFAULT_VERSION);
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion().get())
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion().getAsInt())
         .isEqualTo(DEFAULT_VERSION);
   }
 
@@ -81,7 +82,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
     final Path tempDatabaseDir = temporaryFolder.resolve("db");
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
-    when(commonConfiguration.getDatabaseVersion()).thenReturn(DEFAULT_VERSION);
+    when(commonConfiguration.getDatabaseFormat()).thenReturn(DataStorageFormat.FOREST);
 
     final RocksDBKeyValuePrivacyStorageFactory storageFactory =
         new RocksDBKeyValuePrivacyStorageFactory(
@@ -97,7 +98,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
 
     assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isEqualTo(DEFAULT_VERSION);
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion().get())
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion().getAsInt())
         .isEqualTo(DEFAULT_PRIVACY_VERSION);
   }
 
@@ -107,7 +108,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
     final Path tempDatabaseDir = temporaryFolder.resolve("db");
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
-    when(commonConfiguration.getDatabaseVersion()).thenReturn(DEFAULT_VERSION);
+    when(commonConfiguration.getDatabaseFormat()).thenReturn(DataStorageFormat.FOREST);
 
     final RocksDBKeyValueStorageFactory storageFactory =
         new RocksDBKeyValueStorageFactory(
@@ -126,7 +127,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
 
     assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion()).isNotEmpty();
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion().get())
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion().getAsInt())
         .isEqualTo(DEFAULT_PRIVACY_VERSION);
   }
 }
