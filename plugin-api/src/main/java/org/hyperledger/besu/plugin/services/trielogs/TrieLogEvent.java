@@ -22,6 +22,7 @@ public interface TrieLogEvent {
   enum Type {
     /** TrieLog added event type */
     ADDED,
+    /** dummy value (this comment required by javadoc) * */
     @VisibleForTesting
     UNKNOWN
   }
