@@ -1978,16 +1978,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void privacyOnchainGroupsEnabledCannotBeUsedWithPrivacyFlexibleGroupsEnabled() {
-    parseCommand("--privacy-onchain-groups-enabled", "--privacy-flexible-groups-enabled");
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "The `--privacy-onchain-groups-enabled` option is deprecated and you should only use `--privacy-flexible-groups-enabled`");
-  }
-
-  @Test
   public void parsesValidBonsaiTrieLimitBackLayersOption() {
     parseCommand("--data-storage-format", "BONSAI", "--bonsai-historical-block-limit", "11");
     verify(mockControllerBuilder)
@@ -4203,45 +4193,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(privacyParameters.isFlexiblePrivacyGroupsEnabled()).isEqualTo(false);
   }
 
-  @Test
-  public void onchainPrivacyGroupEnabledFlagValueIsSet() {
-    parseCommand(
-        "--privacy-enabled",
-        "--privacy-public-key-file",
-        ENCLAVE_PUBLIC_KEY_PATH,
-        "--privacy-onchain-groups-enabled",
-        "--min-gas-price",
-        "0");
-
-    final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
-        ArgumentCaptor.forClass(PrivacyParameters.class);
-
-    verify(mockControllerBuilder).privacyParameters(privacyParametersArgumentCaptor.capture());
-    verify(mockControllerBuilder).build();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
-    final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
-    assertThat(privacyParameters.isFlexiblePrivacyGroupsEnabled()).isEqualTo(true);
-  }
-
-  @Test
-  public void onchainPrivacyGroupEnabledOptionIsDeprecated() {
-    parseCommand(
-        "--privacy-enabled",
-        "--privacy-public-key-file",
-        ENCLAVE_PUBLIC_KEY_PATH,
-        "--privacy-onchain-groups-enabled",
-        "--min-gas-price",
-        "0");
-
-    verify(mockLogger)
-        .warn(
-            DEPRECATION_WARNING_MSG,
-            "--privacy-onchain-groups-enabled",
-            "--privacy-flexible-groups-enabled");
-  }
 
   @Test
   public void flexiblePrivacyGroupEnabledFlagValueIsSet() {

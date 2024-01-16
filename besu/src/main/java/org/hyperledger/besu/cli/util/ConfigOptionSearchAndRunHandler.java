@@ -55,7 +55,6 @@ public class ConfigOptionSearchAndRunHandler extends CommandLine.RunLast {
   public List<Object> handle(final ParseResult parseResult) throws ParameterException {
     final CommandLine commandLine = parseResult.commandSpec().commandLine();
     final Optional<File> configFile = findConfigFile(parseResult, commandLine);
-    validatePrivacyOptions(parseResult, commandLine);
     commandLine.setDefaultValueProvider(createDefaultValueProvider(commandLine, configFile));
     commandLine.setExecutionStrategy(resultHandler);
     commandLine.setParameterExceptionHandler(parameterExceptionHandler);
@@ -64,15 +63,6 @@ public class ConfigOptionSearchAndRunHandler extends CommandLine.RunLast {
     return new ArrayList<>();
   }
 
-  private void validatePrivacyOptions(
-      final ParseResult parseResult, final CommandLine commandLine) {
-    if (parseResult.hasMatchedOption("--privacy-onchain-groups-enabled")
-        && parseResult.hasMatchedOption("--privacy-flexible-groups-enabled")) {
-      throw new ParameterException(
-          commandLine,
-          "The `--privacy-onchain-groups-enabled` option is deprecated and you should only use `--privacy-flexible-groups-enabled`");
-    }
-  }
 
   private Optional<File> findConfigFile(
       final ParseResult parseResult, final CommandLine commandLine) {
