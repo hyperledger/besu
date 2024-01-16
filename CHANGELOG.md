@@ -14,7 +14,9 @@
 - Introduce TransactionEvaluationContext to pass data between transaction selectors and plugin, during block creation [#6381](https://github.com/hyperledger/besu/pull/6381) 
 - Upgrade dependencies [#6377](https://github.com/hyperledger/besu/pull/6377)
 - Upgrade `com.fasterxml.jackson` dependencies [#6378](https://github.com/hyperledger/besu/pull/6378) 
-- Optimize acceptance tests by eliminating docker and executing them as a processes [#5968](https://github.com/hyperledger/besu/pull/5968)
+- Upgrade Guava dependency [#6396](https://github.com/hyperledger/besu/pull/6396)
+- Upgrade Mockito [#6397](https://github.com/hyperledger/besu/pull/6397)
+- Optimize privacy acceptance tests by eliminating docker and executing them as a processes [#5968](https://github.com/hyperledger/besu/pull/5968)
 
 ### Bug fixes
 - INTERNAL_ERROR from `eth_estimateGas` JSON/RPC calls [#6344](https://github.com/hyperledger/besu/issues/6344)
@@ -30,7 +32,7 @@
 ### Breaking Changes
 
 ### Deprecations
-- Forest pruning (`pruning-enabled` options) is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format [#6230](https://github.com/hyperledger/besu/pull/6230)
+- Forest pruning (`pruning-enabled` option) is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format [#6230](https://github.com/hyperledger/besu/pull/6230)
 
 ### Additions and Improvements
 - Add error messages on authentication failures with username and password [#6212](https://github.com/hyperledger/besu/pull/6212)
