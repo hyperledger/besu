@@ -213,8 +213,8 @@ class ConfigurationOverviewBuilderTest {
 
   @Test
   void setProfile() {
-    builder.setProfile(ProfileName.STAKER.name());
+    builder.setProfile(ProfileName.DEV.name());
     final String layeredTxPoolSelected = builder.build();
-    assertThat(layeredTxPoolSelected).contains("Configuration STAKER:");
+    assertThat(layeredTxPoolSelected).contains("Configuration DEV:");
   }
 }

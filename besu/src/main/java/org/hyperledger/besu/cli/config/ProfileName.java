@@ -15,8 +15,7 @@
 package org.hyperledger.besu.cli.config;
 
 public enum ProfileName {
-  STAKER("profiles/staker.toml"),
-  ENTERPRISE("profiles/enterprise.toml");
+  DEV("profiles/dev.toml");
 
   private final String configFile;
 
