@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogAddedEvent;
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogPruner;
@@ -33,6 +34,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -90,6 +92,38 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   }
 
   /**
+   * TrieLog is an important part of Bonsai, so it's important to verify the generation of the
+   * TrieLog by performing rollbacks and rollforwards.
+   *
+   * @param blockHeader header of the block to import
+   */
+  private void validateStateRolling(final BlockHeader blockHeader) {
+    if (blockHeader != null) {
+      final Hash parentStateRoot = getWorldStateRootHash();
+      BonsaiReferenceTestUpdateAccumulator originalUpdater =
+          ((BonsaiReferenceTestUpdateAccumulator) updater()).createDetachedAccumulator();
+
+      // generate trie from persisted state
+      generateTrieLogFromState(blockHeader, originalUpdater, false);
+      final TrieLog trieLogFromPersistedState =
+          trieLogManager
+              .getTrieLogLayer(blockHeader.getBlockHash())
+              .orElseThrow(() -> new RuntimeException("trielog not found during test"));
+
+      // generate trie from frozen state
+      generateTrieLogFromState(blockHeader, originalUpdater, true);
+      final TrieLog trieLogFromFrozenState =
+          trieLogManager
+              .getTrieLogLayer(blockHeader.getBlockHash())
+              .orElseThrow(() -> new RuntimeException("trielog not found during test"));
+
+      // trying rollback rollfoward with frozen and persisted state
+      validateTrieLog(parentStateRoot, blockHeader, trieLogFromPersistedState);
+      validateTrieLog(parentStateRoot, blockHeader, trieLogFromFrozenState);
+    }
+  }
+
+  /**
    * For reference tests world state root validation is handled in the harness, this stubs out the
    * behavior to always pass.
    *
@@ -99,6 +133,71 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   @Override
   protected void verifyWorldStateRoot(final Hash calculatedStateRoot, final BlockHeader header) {
     // The test harness validates the root hash, no need to validate in-line for reference test
+  }
+
+  @Override
+  public void persist(final BlockHeader blockHeader) {
+    validateStateRolling(blockHeader);
+    super.persist(null);
+  }
+
+  private void validateTrieLog(
+      final Hash parentStateRoot, final BlockHeader blockHeader, final TrieLog trieLog) {
+
+    BonsaiWorldState bonsaiWorldState = createBonsaiWorldState(false);
+    BonsaiWorldStateUpdateAccumulator updaterForState =
+        (BonsaiWorldStateUpdateAccumulator) bonsaiWorldState.updater();
+    updaterForState.rollForward(trieLog);
+    updaterForState.commit();
+    bonsaiWorldState.persist(blockHeader);
+    validateStateRoot(
+        blockHeader.getStateRoot(),
+        bonsaiWorldState,
+        "state root becomes invalid following a rollback");
+
+    updaterForState = (BonsaiWorldStateUpdateAccumulator) bonsaiWorldState.updater();
+    updaterForState.rollBack(trieLog);
+    updaterForState.commit();
+    bonsaiWorldState.persist(null);
+    validateStateRoot(
+        parentStateRoot, bonsaiWorldState, "state root becomes invalid following a rollfoward");
+  }
+
+  private void generateTrieLogFromState(
+      final BlockHeader blockHeader,
+      final BonsaiReferenceTestUpdateAccumulator originalUpdater,
+      final boolean isFrozen) {
+    // generate trielog
+    BonsaiReferenceTestUpdateAccumulator updaterForState =
+        originalUpdater.createDetachedAccumulator();
+    BonsaiWorldState bonsaiWorldState = createBonsaiWorldState(isFrozen);
+    bonsaiWorldState.setAccumulator(updaterForState);
+    updaterForState.commit();
+    bonsaiWorldState.persist(blockHeader);
+  }
+
+  private BonsaiWorldState createBonsaiWorldState(final boolean isFrozen) {
+    BonsaiWorldState bonsaiWorldState =
+        new BonsaiWorldState(
+            new BonsaiWorldStateLayerStorage(worldStateStorage),
+            cachedMerkleTrieLoader,
+            cachedWorldStorageManager,
+            trieLogManager,
+            evmConfiguration);
+    if (isFrozen) {
+      bonsaiWorldState.freeze(); // freeze state
+    }
+    return bonsaiWorldState;
+  }
+
+  private void validateStateRoot(
+      final Hash expectedStateRoot,
+      final BonsaiWorldState bonsaiWorldState,
+      final String errorMessage) {
+    final Hash foundRootHash = bonsaiWorldState.rootHash();
+    if (!bonsaiWorldState.rootHash().equals(expectedStateRoot)) {
+      throw new RuntimeException(errorMessage + " " + expectedStateRoot + " != " + foundRootHash);
+    }
   }
 
   @JsonCreator
@@ -197,6 +296,8 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
 
   static class NoOpTrieLogManager extends TrieLogManager {
 
+    final Map<Hash, byte[]> trieLogMap = new HashMap<>();
+
     public NoOpTrieLogManager() {
       super(null, null, 0, null, TrieLogPruner.noOpTrieLogPruner());
     }
@@ -210,6 +311,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
         final BonsaiWorldState forWorldState) {
       // notify trie log added observers, synchronously
       TrieLog trieLog = trieLogFactory.create(localUpdater, forBlockHeader);
+      trieLogMap.put(forBlockHeader.getHash(), trieLogFactory.serialize(trieLog));
       trieLogObservers.forEach(o -> o.onTrieLogAdded(new TrieLogAddedEvent(trieLog)));
     }
 
@@ -220,7 +322,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
 
     @Override
     public Optional<TrieLog> getTrieLogLayer(final Hash blockHash) {
-      return Optional.empty();
+      return Optional.ofNullable(trieLogFactory.deserialize(trieLogMap.remove(blockHash)));
     }
   }
 
