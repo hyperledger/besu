@@ -22,7 +22,7 @@ import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT;
@@ -78,6 +78,7 @@ import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
 import org.hyperledger.besu.cli.subcommands.RetestethSubCommand;
+import org.hyperledger.besu.cli.subcommands.TxParseSubCommand;
 import org.hyperledger.besu.cli.subcommands.ValidateConfigSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
 import org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand;
@@ -145,7 +146,8 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
-import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
+import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
@@ -519,11 +521,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private SyncMode syncMode = null;
 
   @Option(
-      names = {"--fast-sync-min-peers"},
+      names = {"--sync-min-peers", "--fast-sync-min-peers"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
-          "Minimum number of peers required before starting fast sync. Has only effect on PoW networks. (default: ${DEFAULT-VALUE})")
-  private final Integer fastSyncMinPeerCount = FAST_SYNC_MIN_PEER_COUNT;
+          "Minimum number of peers required before starting sync. Has effect only on non-PoS networks. (default: ${DEFAULT-VALUE})")
+  private final Integer syncMinPeerCount = SYNC_MIN_PEER_COUNT;
 
   @Option(
       names = {"--network"},
@@ -950,13 +952,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         names = {"--privacy-flexible-groups-enabled"},
         description = "Enable flexible privacy groups (default: ${DEFAULT-VALUE})")
     private final Boolean isFlexiblePrivacyGroupsEnabled = false;
-
-    @Option(
-        hidden = true,
-        names = {"--privacy-onchain-groups-enabled"},
-        description =
-            "!!DEPRECATED!! Use `--privacy-flexible-groups-enabled` instead. Enable flexible (onchain) privacy groups (default: ${DEFAULT-VALUE})")
-    private final Boolean isOnchainPrivacyGroupsEnabled = false;
   }
 
   // Metrics Option Group
@@ -1218,27 +1213,27 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Long apiGasPriceMax = 500_000_000_000L;
 
   @CommandLine.Option(
-      names = {"--api-priority-fee-limiting-enabled"},
+      names = {"--api-gas-and-priority-fee-limiting-enabled"},
       hidden = true,
       description =
-          "Set to enable priority fee limit in eth_feeHistory (default: ${DEFAULT-VALUE})")
-  private final Boolean apiPriorityFeeLimitingEnabled = false;
+          "Set to enable gas price and minimum priority fee limit in eth_getGasPrice and eth_feeHistory (default: ${DEFAULT-VALUE})")
+  private final Boolean apiGasAndPriorityFeeLimitingEnabled = false;
 
   @CommandLine.Option(
-      names = {"--api-priority-fee-lower-bound-coefficient"},
+      names = {"--api-gas-and-priority-fee-lower-bound-coefficient"},
       hidden = true,
       description =
-          "Coefficient for setting the lower limit of minimum priority fee in eth_feeHistory (default: ${DEFAULT-VALUE})")
-  private final Long apiPriorityFeeLowerBoundCoefficient =
-      ApiConfiguration.DEFAULT_LOWER_BOUND_PRIORITY_FEE_COEFFICIENT;
+          "Coefficient for setting the lower limit of gas price and minimum priority fee in eth_getGasPrice and eth_feeHistory (default: ${DEFAULT-VALUE})")
+  private final Long apiGasAndPriorityFeeLowerBoundCoefficient =
+      ApiConfiguration.DEFAULT_LOWER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT;
 
   @CommandLine.Option(
-      names = {"--api-priority-fee-upper-bound-coefficient"},
+      names = {"--api-gas-and-priority-fee-upper-bound-coefficient"},
       hidden = true,
       description =
-          "Coefficient for setting the upper limit of minimum priority fee in eth_feeHistory (default: ${DEFAULT-VALUE})")
-  private final Long apiPriorityFeeUpperBoundCoefficient =
-      ApiConfiguration.DEFAULT_UPPER_BOUND_PRIORITY_FEE_COEFFICIENT;
+          "Coefficient for setting the upper limit of gas price and minimum priority fee in eth_getGasPrice and eth_feeHistory (default: ${DEFAULT-VALUE})")
+  private final Long apiGasAndPriorityFeeUpperBoundCoefficient =
+      ApiConfiguration.DEFAULT_UPPER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT;
 
   @CommandLine.Option(
       names = {"--static-nodes-file"},
@@ -1436,7 +1431,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (network != null && network.isDeprecated()) {
       logger.warn(NetworkDeprecationMessage.generate(network));
     }
-
     try {
       configureLogging(true);
 
@@ -1493,6 +1487,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             jsonBlockImporterFactory,
             rlpBlockExporterFactory,
             commandLine.getOut()));
+    commandLine.addSubcommand(
+        TxParseSubCommand.COMMAND_NAME, new TxParseSubCommand(commandLine.getOut()));
     commandLine.addSubcommand(
         PublicKeySubCommand.COMMAND_NAME, new PublicKeySubCommand(commandLine.getOut()));
     commandLine.addSubcommand(
@@ -1712,8 +1708,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
 
       if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
-          && (privacyOptionGroup.isFlexiblePrivacyGroupsEnabled
-              || privacyOptionGroup.isOnchainPrivacyGroupsEnabled)) {
+          && privacyOptionGroup.isFlexiblePrivacyGroupsEnabled) {
         throw new ParameterException(
             commandLine, "Privacy Plugin can not be used with flexible privacy groups");
       }
@@ -1792,7 +1787,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (kzgTrustedSetupFile != null) {
         KZGPointEvalPrecompiledContract.init(kzgTrustedSetupFile);
       } else {
-        KZGPointEvalPrecompiledContract.init(network.name());
+        KZGPointEvalPrecompiledContract.init();
       }
     } else if (kzgTrustedSetupFile != null) {
       throw new ParameterException(
@@ -1902,11 +1897,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     CommandLineUtils.checkOptionDependencies(
         logger,
         commandLine,
-        "--api-priority-fee-limiting-enabled",
-        !apiPriorityFeeLimitingEnabled,
+        "--api-gas-and-priority-fee-limiting-enabled",
+        !apiGasAndPriorityFeeLimitingEnabled,
         asList(
-            "--api-priority-fee-upper-bound-coefficient",
-            "--api-priority-fee-lower-bound-coefficient"));
+            "--api-gas-and-priority-fee-upper-bound-coefficient",
+            "--api-gas-and-priority-fee-lower-bound-coefficient"));
   }
 
   private void ensureValidPeerBoundParams() {
@@ -2025,11 +2020,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--p2p-port",
             "--remote-connections-max-percentage"));
 
-    CommandLineUtils.failIfOptionDoesntMeetRequirement(
-        commandLine,
-        "--fast-sync-min-peers can't be used with FULL sync-mode",
-        !SyncMode.isFullSync(getDefaultSyncModeIfNotSet()),
-        singletonList("--fast-sync-min-peers"));
+    if (SyncMode.isFullSync(getDefaultSyncModeIfNotSet())
+        && isOptionSet(commandLine, "--sync-min-peers")) {
+      logger.warn("--sync-min-peers is ignored in FULL sync-mode");
+    }
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
@@ -2053,16 +2047,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "--security-module=" + DEFAULT_SECURITY_MODULE);
     }
 
-    if (Boolean.TRUE.equals(privacyOptionGroup.isOnchainPrivacyGroupsEnabled)) {
-      logger.warn(
-          DEPRECATION_WARNING_MSG,
-          "--privacy-onchain-groups-enabled",
-          "--privacy-flexible-groups-enabled");
-    }
-
     if (isPruningEnabled()) {
-      logger.warn(
-          "Forest pruning is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format.");
+      if (dataStorageOptions
+          .toDomainObject()
+          .getDataStorageFormat()
+          .equals(DataStorageFormat.BONSAI)) {
+        logger.warn("Forest pruning is ignored with Bonsai data storage format.");
+      } else {
+        logger.warn(
+            "Forest pruning is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format.");
+      }
     }
   }
 
@@ -2120,8 +2114,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     instantiateSignatureAlgorithmFactory();
 
     logger.info(generateConfigurationOverview());
-    logger.info("Connecting to {} static nodes.", staticNodes.size());
-    logger.trace("Static Nodes = {}", staticNodes);
     logger.info("Security Module: {}", securityModuleName);
   }
 
@@ -2534,16 +2526,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .gasPriceMax(apiGasPriceMax)
             .maxLogsRange(rpcMaxLogsRange)
             .gasCap(rpcGasCap)
-            .isPriorityFeeLimitingEnabled(apiPriorityFeeLimitingEnabled);
-    if (apiPriorityFeeLimitingEnabled) {
-      if (apiPriorityFeeLowerBoundCoefficient > apiPriorityFeeUpperBoundCoefficient) {
+            .isGasAndPriorityFeeLimitingEnabled(apiGasAndPriorityFeeLimitingEnabled);
+    if (apiGasAndPriorityFeeLimitingEnabled) {
+      if (apiGasAndPriorityFeeLowerBoundCoefficient > apiGasAndPriorityFeeUpperBoundCoefficient) {
         throw new ParameterException(
             this.commandLine,
-            "--api-priority-fee-lower-bound-coefficient cannot be greater than the value of --api-priority-fee-upper-bound-coefficient");
+            "--api-gas-and-priority-fee-lower-bound-coefficient cannot be greater than the value of --api-gas-and-priority-fee-upper-bound-coefficient");
       }
       builder
-          .lowerBoundPriorityFeeCoefficient(apiPriorityFeeLowerBoundCoefficient)
-          .upperBoundPriorityFeeCoefficient(apiPriorityFeeUpperBoundCoefficient);
+          .lowerBoundGasAndPriorityFeeCoefficient(apiGasAndPriorityFeeLowerBoundCoefficient)
+          .upperBoundGasAndPriorityFeeCoefficient(apiGasAndPriorityFeeUpperBoundCoefficient);
     }
     return builder.build();
   }
@@ -2742,8 +2734,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setMultiTenancyEnabled(
           privacyOptionGroup.isPrivacyMultiTenancyEnabled);
       privacyParametersBuilder.setFlexiblePrivacyGroupsEnabled(
-          privacyOptionGroup.isFlexiblePrivacyGroupsEnabled
-              || privacyOptionGroup.isOnchainPrivacyGroupsEnabled);
+          privacyOptionGroup.isFlexiblePrivacyGroupsEnabled);
       privacyParametersBuilder.setPrivacyPluginEnabled(
           unstablePrivacyPluginOptions.isPrivacyPluginEnabled());
 
@@ -2866,7 +2857,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return unstableSynchronizerOptions
         .toDomainObject()
         .syncMode(syncMode)
-        .fastSyncMinimumPeerCount(fastSyncMinPeerCount)
+        .fastSyncMinimumPeerCount(syncMinPeerCount)
         .build();
   }
 
@@ -3224,7 +3215,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       staticNodesPath = dataDir().resolve(staticNodesFilename);
     }
     logger.debug("Static Nodes file: {}", staticNodesPath);
-    return StaticNodesParser.fromPath(staticNodesPath, getEnodeDnsConfiguration());
+    final Set<EnodeURL> staticNodes =
+        StaticNodesParser.fromPath(staticNodesPath, getEnodeDnsConfiguration());
+    logger.info("Connecting to {} static nodes.", staticNodes.size());
+    logger.debug("Static Nodes = {}", staticNodes);
+    return staticNodes;
   }
 
   private List<EnodeURL> buildEnodes(
@@ -3236,7 +3231,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   /**
-   * Besu CLI Paramaters exception handler used by VertX. Visible for testing.
+   * Besu CLI Parameters exception handler used by VertX. Visible for testing.
    *
    * @return instance of BesuParameterExceptionHandler
    */
@@ -3516,6 +3511,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     builder.setHasCustomGenesis(genesisFile != null);
+    if (genesisFile != null) {
+      builder.setCustomGenesis(genesisFile.getAbsolutePath());
+    }
     builder.setNetworkId(ethNetworkConfig.getNetworkId());
 
     builder

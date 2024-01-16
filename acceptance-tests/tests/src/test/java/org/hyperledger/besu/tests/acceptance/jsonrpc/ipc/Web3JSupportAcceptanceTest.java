@@ -29,8 +29,8 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Locale;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.methods.response.NetVersion;
@@ -41,7 +41,7 @@ public class Web3JSupportAcceptanceTest extends AcceptanceTestBase {
   private Node node;
   private Path socketPath;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     socketPath = Files.createTempFile("besu-test-", ".ipc");
     node =

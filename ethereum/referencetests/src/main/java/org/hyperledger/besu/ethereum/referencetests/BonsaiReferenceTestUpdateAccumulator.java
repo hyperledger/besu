@@ -16,11 +16,11 @@ package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiPreImageProxy;
-import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldView;
+import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiValue;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiPreImageProxy;
+import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldView;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import org.apache.tuweni.bytes.Bytes;

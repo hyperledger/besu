@@ -162,7 +162,6 @@ public class TraceServiceImpl implements TraceService {
           blocks.forEach(
               block -> {
                 results.addAll(trace(blockchain, block, chainUpdater, tracer));
-                tracer.traceEndBlock(block.getHeader(), block.getBody());
               });
           afterTracing.accept(chainUpdater.getNextUpdater());
           return Optional.of(results);
@@ -180,7 +179,6 @@ public class TraceServiceImpl implements TraceService {
             block.getHash(),
             traceableState ->
                 Optional.of(trace(blockchain, block, new ChainUpdater(traceableState), tracer)));
-    tracer.traceEndBlock(block.getHeader(), block.getBody());
 
     return results;
   }
@@ -212,28 +210,17 @@ public class TraceServiceImpl implements TraceService {
                               .orElse(BlobGas.ZERO));
 
               final WorldUpdater worldUpdater = chainUpdater.getNextUpdater();
-              tracer.traceStartTransaction(worldUpdater, transaction);
               final TransactionProcessingResult result =
                   transactionProcessor.processTransaction(
                       blockchain,
                       worldUpdater,
                       header,
                       transaction,
-                      header.getCoinbase(),
+                      protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
                       tracer,
                       new CachingBlockHashLookup(header, blockchain),
                       false,
                       blobGasPrice);
-
-              long transactionGasUsed = transaction.getGasLimit() - result.getGasRemaining();
-              tracer.traceEndTransaction(
-                  worldUpdater,
-                  transaction,
-                  result.isSuccessful(),
-                  result.getOutput(),
-                  result.getLogs(),
-                  transactionGasUsed,
-                  0);
 
               results.add(result);
             });

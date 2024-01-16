@@ -7,7 +7,7 @@ Welcome to the Besu repository! The following links are a set of guidelines for 
 Having Github, Discord, and Linux Foundation accounts is necessary for obtaining support for Besu through the community channels, wiki and issue management.  
 * If you want to raise an issue, you can do so [on the github issue tab](https://github.com/hyperledger/besu/issues).   
 * Hyperledger Discord requires a [Discord account].
-* The Hyperlegder wiki also requires a [Linux Foundation (LF) account] in order to edit pages.
+* The Hyperledger wiki also requires a [Linux Foundation (LF) account] in order to edit pages.
 
 ### Useful support links
 

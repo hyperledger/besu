@@ -24,8 +24,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.crypto.params.ECDomainParameters;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SECPPublicKeyTest {
   public static final String ALGORITHM = SignatureAlgorithm.ALGORITHM;
@@ -33,7 +33,7 @@ public class SECPPublicKeyTest {
 
   public ECDomainParameters curve;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     final X9ECParameters params = SECNamedCurves.getByName(CURVE_NAME);
     curve = new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());

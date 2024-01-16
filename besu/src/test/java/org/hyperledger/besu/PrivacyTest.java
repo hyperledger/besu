@@ -68,7 +68,7 @@ public class PrivacyTest {
 
   private final Vertx vertx = Vertx.vertx();
 
-  @TempDir private static Path dataDir;
+  @TempDir private Path dataDir;
 
   @AfterEach
   public void cleanUp() {
