@@ -97,7 +97,6 @@ public class RocksDBSnapshotTransaction
    * @param key the key
    * @return the optional data
    */
-  @Override
   public Optional<byte[]> get(final SegmentIdentifier segmentId, final byte[] key) {
     throwIfClosed();
 

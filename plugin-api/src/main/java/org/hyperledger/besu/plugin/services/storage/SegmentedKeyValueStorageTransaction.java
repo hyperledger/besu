@@ -17,23 +17,11 @@ package org.hyperledger.besu.plugin.services.storage;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
-import java.util.Optional;
-
 /**
  * A transaction that can atomically commit a sequence of operations to a segmented key-value store.
  */
 @Unstable
 public interface SegmentedKeyValueStorageTransaction {
-
-  /**
-   * Get the value from the associated segment and key.
-   *
-   * @param segment the segment
-   * @param key Index into persistent data repository.
-   * @return The value persisted at the key index.
-   * @throws StorageException the storage exception
-   */
-  Optional<byte[]> get(SegmentIdentifier segment, byte[] key) throws StorageException;
 
   /**
    * Associates the specified value with the specified key.

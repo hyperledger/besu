@@ -21,7 +21,6 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
-import java.util.Optional;
 import java.util.function.Supplier;
 
 /** The Key value storage transaction validator decorator. */
@@ -42,14 +41,6 @@ public class SegmentedKeyValueStorageTransactionValidatorDecorator
       final SegmentedKeyValueStorageTransaction toDecorate, final Supplier<Boolean> isClosed) {
     this.isClosed = isClosed;
     this.transaction = toDecorate;
-  }
-
-  @Override
-  public Optional<byte[]> get(final SegmentIdentifier segmentId, final byte[] key)
-      throws StorageException {
-    checkState(active, "Cannot invoke get() on a completed transaction.");
-    checkState(!isClosed.get(), "Cannot invoke get() on a closed storage.");
-    return transaction.get(segmentId, key);
   }
 
   @Override
