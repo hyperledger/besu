@@ -28,9 +28,8 @@ public class NoOpTrieLogManager extends TrieLogManager {
     super(null, null, 0, null, TrieLogPruner.noOpTrieLogPruner());
   }
 
-  @SuppressWarnings({"UnsynchronizedOverridesSynchronized", "squid:S3551"})
   @Override
-  public void saveTrieLog(
+  public synchronized void saveTrieLog(
       final BonsaiWorldStateUpdateAccumulator localUpdater,
       final Hash forWorldStateRootHash,
       final BlockHeader forBlockHeader,
