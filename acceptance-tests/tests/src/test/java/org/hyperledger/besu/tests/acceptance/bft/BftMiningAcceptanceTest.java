@@ -143,6 +143,33 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
   }
 
   @Test
+  public void shouldMineOnSingleNodeWithFreeGas_Shanghai() throws Exception {
+    final BesuNode minerNode = nodeFactory.createNode(besu, "miner1");
+    updateGenesisConfigToShanghai(minerNode, true);
+
+    cluster.start(minerNode);
+
+    cluster.verify(blockchain.reachesHeight(minerNode, 1));
+
+    final Account sender = accounts.createAccount("account1");
+    final Account receiver = accounts.createAccount("account2");
+
+    minerNode.execute(accountTransactions.createTransfer(sender, 50, Amount.ZERO));
+    cluster.verify(sender.balanceEquals(50));
+
+    minerNode.execute(accountTransactions.create1559Transfer(sender, 50, 4, Amount.ZERO));
+    cluster.verify(sender.balanceEquals(100));
+
+    minerNode.execute(
+        accountTransactions.createIncrementalTransfers(sender, receiver, 1, Amount.ZERO));
+    cluster.verify(receiver.balanceEquals(1));
+
+    minerNode.execute(
+        accountTransactions.create1559IncrementalTransfers(sender, receiver, 2, 4, Amount.ZERO));
+    cluster.verify(receiver.balanceEquals(3));
+  }
+
+  @Test
   public void shouldMineOnMultipleNodes() throws Exception {
     final BesuNode minerNode1 = nodeFactory.createNode(besu, "miner1");
     final BesuNode minerNode2 = nodeFactory.createNode(besu, "miner2");
@@ -226,6 +253,18 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
     final ObjectNode config = (ObjectNode) genesisConfigNode.get("config");
     config.remove("berlinBlock");
     config.put("londonBlock", 0);
+    config.put("zeroBaseFee", zeroBaseFeeEnabled);
+    minerNode.setGenesisConfig(genesisConfigNode.toString());
+  }
+
+  private static void updateGenesisConfigToShanghai(
+      final BesuNode minerNode, final boolean zeroBaseFeeEnabled) {
+    final Optional<String> genesisConfig =
+        minerNode.getGenesisConfigProvider().create(List.of(minerNode));
+    final ObjectNode genesisConfigNode = JsonUtil.objectNodeFromString(genesisConfig.orElseThrow());
+    final ObjectNode config = (ObjectNode) genesisConfigNode.get("config");
+    config.remove("berlinBlock");
+    config.put("shanghaiTime", 0);
     config.put("zeroBaseFee", zeroBaseFeeEnabled);
     minerNode.setGenesisConfig(genesisConfigNode.toString());
   }
