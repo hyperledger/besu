@@ -30,45 +30,16 @@ public class ProfileFinder extends AbstractConfigurationFinder<InputStream> {
   private static final String PROFILE_ENV_NAME = nameToEnvVarSuffix(CONFIG_FILE_OPTION_NAME);
 
   @Override
-  public Optional<InputStream> findConfiguration(
-      final Map<String, String> environment, final CommandLine.ParseResult parseResult) {
-    final CommandLine commandLine = parseResult.commandSpec().commandLine();
-
-    if (isConfigSpecifiedInBothSources(environment, parseResult)) {
-      throwExceptionForBothSourcesSpecified(environment, parseResult, commandLine);
-    }
-
-    if (parseResult.hasMatchedOption(PROFILE_OPTION_NAME)) {
-      return getConfigFromOption(parseResult, commandLine);
-    }
-
-    if (environment.containsKey(PROFILE_ENV_NAME)) {
-      return getConfigFromEnvironment(environment, commandLine);
-    }
-    return Optional.empty();
+  protected String getConfigOptionName() {
+    return CONFIG_FILE_OPTION_NAME;
   }
 
   @Override
-  public boolean isConfigSpecifiedInBothSources(
-      final Map<String, String> environment, final CommandLine.ParseResult parseResult) {
-    return parseResult.hasMatchedOption(PROFILE_OPTION_NAME)
-        && environment.containsKey(PROFILE_ENV_NAME);
+  protected String getConfigEnvName() {
+    return PROFILE_ENV_NAME;
   }
 
-  public void throwExceptionForBothSourcesSpecified(
-      final Map<String, String> environment,
-      final CommandLine.ParseResult parseResult,
-      final CommandLine commandLine) {
-    throw new CommandLine.ParameterException(
-        commandLine,
-        String.format(
-            "Profile specified using %s=%s and %s %s",
-            PROFILE_ENV_NAME,
-            environment.get(PROFILE_ENV_NAME),
-            PROFILE_OPTION_NAME,
-            parseResult.matchedOption(PROFILE_OPTION_NAME).stringValues()));
-  }
-
+  @Override
   public Optional<InputStream> getConfigFromOption(
       final CommandLine.ParseResult parseResult, final CommandLine commandLine) {
     try {
@@ -78,6 +49,7 @@ public class ProfileFinder extends AbstractConfigurationFinder<InputStream> {
     }
   }
 
+  @Override
   public Optional<InputStream> getConfigFromEnvironment(
       final Map<String, String> environment, final CommandLine commandLine) {
     return getProfile(ProfileName.valueOf(environment.get(PROFILE_ENV_NAME)), commandLine);

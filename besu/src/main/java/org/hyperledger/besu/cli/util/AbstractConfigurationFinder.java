@@ -28,6 +28,10 @@ import picocli.CommandLine;
  */
 public abstract class AbstractConfigurationFinder<T> {
 
+  protected abstract String getConfigOptionName();
+
+  protected abstract String getConfigEnvName();
+
   /**
    * Finds the configuration resource based on command line options and environment variables.
    *
@@ -36,31 +40,20 @@ public abstract class AbstractConfigurationFinder<T> {
    * @return an Optional containing the configuration resource, or an empty Optional if no
    *     configuration resource was found
    */
-  protected abstract Optional<T> findConfiguration(
-      final Map<String, String> environment, final CommandLine.ParseResult parseResult);
-  /**
-   * Checks if the configuration resource is specified in both command line options and environment
-   * variables.
-   *
-   * @param environment the environment variables
-   * @param parseResult the command line parse result
-   * @return true if the configuration resource is specified in both places, false otherwise
-   */
-  protected abstract boolean isConfigSpecifiedInBothSources(
-      final Map<String, String> environment, final CommandLine.ParseResult parseResult);
-
-  /**
-   * Throws an exception if the configuration resource is specified in both command line options and
-   * environment variables.
-   *
-   * @param environment the environment variables
-   * @param parseResult the command line parse result
-   * @param commandLine the command line
-   */
-  protected abstract void throwExceptionForBothSourcesSpecified(
-      final Map<String, String> environment,
-      final CommandLine.ParseResult parseResult,
-      final CommandLine commandLine);
+  public Optional<T> findConfiguration(
+      final Map<String, String> environment, final CommandLine.ParseResult parseResult) {
+    final CommandLine commandLine = parseResult.commandSpec().commandLine();
+    if (isConfigSpecifiedInBothSources(environment, parseResult)) {
+      throwExceptionForBothSourcesSpecified(environment, parseResult, commandLine);
+    }
+    if (parseResult.hasMatchedOption(getConfigOptionName())) {
+      return getConfigFromOption(parseResult, commandLine);
+    }
+    if (environment.containsKey(getConfigEnvName())) {
+      return getConfigFromEnvironment(environment, commandLine);
+    }
+    return Optional.empty();
+  }
 
   /**
    * Gets the configuration resource from the command line option.
@@ -83,4 +76,40 @@ public abstract class AbstractConfigurationFinder<T> {
    */
   protected abstract Optional<T> getConfigFromEnvironment(
       final Map<String, String> environment, final CommandLine commandLine);
+
+  /**
+   * Checks if the configuration resource is specified in both command line options and environment
+   * variables.
+   *
+   * @param environment the environment variables
+   * @param parseResult the command line parse result
+   * @return true if the configuration resource is specified in both places, false otherwise
+   */
+  public boolean isConfigSpecifiedInBothSources(
+      final Map<String, String> environment, final CommandLine.ParseResult parseResult) {
+    return parseResult.hasMatchedOption(getConfigOptionName())
+        && environment.containsKey(getConfigEnvName());
+  }
+
+  /**
+   * Throws an exception if the configuration resource is specified in both command line options and
+   * environment variables.
+   *
+   * @param environment the environment variables
+   * @param parseResult the command line parse result
+   * @param commandLine the command line
+   */
+  public void throwExceptionForBothSourcesSpecified(
+      final Map<String, String> environment,
+      final CommandLine.ParseResult parseResult,
+      final CommandLine commandLine) {
+    throw new CommandLine.ParameterException(
+        commandLine,
+        String.format(
+            "TOML file specified using both %s=%s and %s %s",
+            getConfigEnvName(),
+            getConfigOptionName(),
+            environment.get(getConfigEnvName()),
+            parseResult.matchedOption(getConfigOptionName()).stringValues()));
+  }
 }

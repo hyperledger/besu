@@ -28,26 +28,13 @@ public class ConfigFileFinder extends AbstractConfigurationFinder<File> {
   private static final String CONFIG_FILE_ENV_NAME = nameToEnvVarSuffix(CONFIG_FILE_OPTION_NAME);
 
   @Override
-  public Optional<File> findConfiguration(
-      final Map<String, String> environment, final CommandLine.ParseResult parseResult) {
-    final CommandLine commandLine = parseResult.commandSpec().commandLine();
-    if (isConfigSpecifiedInBothSources(environment, parseResult)) {
-      throwExceptionForBothSourcesSpecified(environment, parseResult, commandLine);
-    }
-    if (parseResult.hasMatchedOption(CONFIG_FILE_OPTION_NAME)) {
-      return getConfigFromOption(parseResult, commandLine);
-    }
-    if (environment.containsKey(CONFIG_FILE_ENV_NAME)) {
-      return getConfigFromEnvironment(environment, commandLine);
-    }
-    return Optional.empty();
+  protected String getConfigOptionName() {
+    return CONFIG_FILE_OPTION_NAME;
   }
 
   @Override
-  public boolean isConfigSpecifiedInBothSources(
-      final Map<String, String> environment, final CommandLine.ParseResult parseResult) {
-    return parseResult.hasMatchedOption(CONFIG_FILE_OPTION_NAME)
-        && environment.containsKey(CONFIG_FILE_ENV_NAME);
+  protected String getConfigEnvName() {
+    return CONFIG_FILE_ENV_NAME;
   }
 
   @Override
@@ -74,20 +61,5 @@ public class ConfigFileFinder extends AbstractConfigurationFinder<File> {
               CONFIG_FILE_ENV_NAME, environment.get(CONFIG_FILE_ENV_NAME)));
     }
     return Optional.of(toml);
-  }
-
-  @Override
-  public void throwExceptionForBothSourcesSpecified(
-      final Map<String, String> environment,
-      final CommandLine.ParseResult parseResult,
-      final CommandLine commandLine) {
-    throw new CommandLine.ParameterException(
-        commandLine,
-        String.format(
-            "TOML file specified using both %s=%s and %s %s",
-            CONFIG_FILE_ENV_NAME,
-            CONFIG_FILE_OPTION_NAME,
-            environment.get(CONFIG_FILE_ENV_NAME),
-            parseResult.matchedOption(CONFIG_FILE_OPTION_NAME).stringValues()));
   }
 }
