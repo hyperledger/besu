@@ -209,7 +209,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   @Override
   public void persist(final BlockHeader blockHeader) {
     validateStateRolling(blockHeader);
-    super.persist(null);
+    super.persist(blockHeader);
   }
 
   @JsonCreator
