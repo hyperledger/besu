@@ -25,8 +25,9 @@ jobs:
       - name: hashes
         id: hashes
         run: |
-          echo "zipSha=$(shasum -a 256 build/distributions/besu*.zip)" >> $GITHUB_OUTPUT
-          echo "tarSha=$(shasum -a 256 build/distributions/besu*.tar.gz)" >> $GITHUB_OUTPUT
+          cd build/distributions
+          echo "zipSha=$(shasum -a 256 besu*.zip)" >> $GITHUB_OUTPUT
+          echo "tarSha=$(shasum -a 256 besu*.tar.gz)" >> $GITHUB_OUTPUT
       - name: upload tarball
         uses: actions/upload-artifact@v3
         with:

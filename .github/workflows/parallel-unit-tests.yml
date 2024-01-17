@@ -1,6 +1,7 @@
 name: parallel-unit-tests
+#experimental work in progress - trying to figure out how to split tests across multi-modules by runtime
 on:
-  workflow_call:
+  workflow_dispatch:
 
 env:
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
