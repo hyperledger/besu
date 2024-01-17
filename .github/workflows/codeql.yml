@@ -13,8 +13,14 @@ name: "CodeQL"
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+    pull_request:
+      branches: [ main ]
+      paths-ignore:
+        - '**/*.json'
+        - '**/*.md'
+        - '**/*.properties'
+        - '**/*.txt'
 jobs:
   analyze:
     name: Analyze

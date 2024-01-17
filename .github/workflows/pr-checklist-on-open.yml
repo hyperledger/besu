@@ -16,5 +16,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '- [ ] I thought about documentation and added the `doc-change-required` label to this PR if [updates are required](https://wiki.hyperledger.org/display/BESU/Documentation).\n- [ ] I thought about the changelog and included a [changelog update if required](https://wiki.hyperledger.org/display/BESU/Changelog).\n- [ ] If my PR includes database changes (e.g. KeyValueSegmentIdentifier) I have thought about compatibility and performed forwards and backwards compatibility tests'
+              body: '- [ ] I thought about documentation and added the `doc-change-required` label to this PR if [updates are required](https://wiki.hyperledger.org/display/BESU/Documentation).\n- [ ] I thought about the changelog and included a [changelog update if required](https://wiki.hyperledger.org/display/BESU/Changelog).\n- [ ] If my PR includes database changes (e.g. KeyValueSegmentIdentifier) I have thought about compatibility and performed forwards and backwards compatibility tests\n- [ ] I thought about running CI.\n- [ ] If I didn't run CI, I ran as much locally as possible before pushing.\n-'
             })
