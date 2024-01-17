@@ -28,8 +28,18 @@ import picocli.CommandLine;
  */
 public abstract class AbstractConfigurationFinder<T> {
 
+  /**
+   * Returns the name of the configuration option.
+   *
+   * @return the name of the configuration option
+   */
   protected abstract String getConfigOptionName();
 
+  /**
+   * Returns the name of the environment variable for the configuration.
+   *
+   * @return the name of the environment variable for the configuration
+   */
   protected abstract String getConfigEnvName();
 
   /**

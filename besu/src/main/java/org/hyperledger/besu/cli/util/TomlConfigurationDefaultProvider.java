@@ -62,6 +62,14 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
     this.configurationInputStream = configurationInputStream;
   }
 
+  /**
+   * Creates a new TomlConfigurationDefaultProvider from a file.
+   *
+   * @param commandLine the command line
+   * @param configFile the configuration file
+   * @return a new TomlConfigurationDefaultProvider
+   * @throws ParameterException if the configuration file is not found
+   */
   public static TomlConfigurationDefaultProvider fromFile(
       final CommandLine commandLine, final File configFile) {
     try {
@@ -72,6 +80,13 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
     }
   }
 
+  /**
+   * Creates a new TomlConfigurationDefaultProvider from an input stream.
+   *
+   * @param commandLine the command line
+   * @param inputStream the input stream
+   * @return a new TomlConfigurationDefaultProvider
+   */
   public static TomlConfigurationDefaultProvider fromInputStream(
       final CommandLine commandLine, final InputStream inputStream) {
     return new TomlConfigurationDefaultProvider(commandLine, inputStream);

@@ -14,15 +14,27 @@
  */
 package org.hyperledger.besu.cli.config;
 
+/** Enum for profile names. Each profile corresponds to a configuration file. */
 public enum ProfileName {
+  /** The 'DEV' profile. Corresponds to the 'profiles/dev.toml' configuration file. */
   DEV("profiles/dev.toml");
 
   private final String configFile;
 
+  /**
+   * Constructs a new ProfileName.
+   *
+   * @param configFile the configuration file corresponding to the profile
+   */
   ProfileName(final String configFile) {
     this.configFile = configFile;
   }
 
+  /**
+   * Gets the configuration file corresponding to the profile.
+   *
+   * @return the configuration file
+   */
   public String getConfigFile() {
     return configFile;
   }

@@ -24,6 +24,13 @@ import java.util.Optional;
 
 import picocli.CommandLine;
 
+/**
+ * Class for finding profile configurations. This class extends the AbstractConfigurationFinder and
+ * provides methods for finding profile configurations based on command line options and environment
+ * variables. Each profile corresponds to a TOML configuration file that contains settings for
+ * various options. The profile to use can be specified with the '--profile' command line option or
+ * the 'BESU_PROFILE' environment variable.
+ */
 public class ProfileFinder extends AbstractConfigurationFinder<InputStream> {
   private static final String PROFILE_ENV_NAME = "BESU_PROFILE";
 
