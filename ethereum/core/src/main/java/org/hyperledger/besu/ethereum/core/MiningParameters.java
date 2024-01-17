@@ -32,15 +32,15 @@ import org.immutables.value.Value;
 @Value.Immutable
 @Value.Enclosing
 public abstract class MiningParameters {
+  public static final PositiveNumber DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME =
+      PositiveNumber.fromInt((int) Duration.ofSeconds(5).toMillis());
+  public static final PositiveNumber DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME =
+      PositiveNumber.fromInt(75);
   public static final MiningParameters MINING_DISABLED =
       ImmutableMiningParameters.builder()
           .mutableInitValues(
               ImmutableMiningParameters.MutableInitValues.builder().isMiningEnabled(false).build())
           .build();
-  public static final PositiveNumber DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME =
-      PositiveNumber.fromInt((int) Duration.ofSeconds(5).toMillis());
-  public static final PositiveNumber DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME =
-      PositiveNumber.fromInt(75);
 
   @VisibleForTesting
   public static final MiningParameters newDefault() {
