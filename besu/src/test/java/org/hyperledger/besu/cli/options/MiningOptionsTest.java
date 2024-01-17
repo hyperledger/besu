@@ -315,7 +315,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   public void blockTxsSelectionMaxTimeDefaultValue() {
     internalTestSuccess(
         miningParams ->
-            assertThat(miningParams.getBlockTxsSelectionMaxTime())
+            assertThat(miningParams.getNonPoaBlockTxsSelectionMaxTime())
                 .isEqualTo(DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME));
   }
 
