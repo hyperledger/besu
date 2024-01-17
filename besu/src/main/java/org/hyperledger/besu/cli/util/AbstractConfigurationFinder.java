@@ -106,7 +106,7 @@ public abstract class AbstractConfigurationFinder<T> {
     throw new CommandLine.ParameterException(
         commandLine,
         String.format(
-            "TOML file specified using both %s=%s and %s %s",
+            "Both %s=%s and %s %s specified. Please specify only one.",
             getConfigEnvName(),
             getConfigOptionName(),
             environment.get(getConfigEnvName()),

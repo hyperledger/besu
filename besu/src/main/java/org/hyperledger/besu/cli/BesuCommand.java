@@ -541,7 +541,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {PROFILE_OPTION_NAME},
       paramLabel = PROFILE_FORMAT_HELP,
       description =
-          "Overwrite default values, possible values are ${COMPLETION-CANDIDATES}. (default: none)")
+          "Overwrite default settings. Possible values are ${COMPLETION-CANDIDATES}. (default: none)")
   private final ProfileName profile = null;
 
   @Option(
