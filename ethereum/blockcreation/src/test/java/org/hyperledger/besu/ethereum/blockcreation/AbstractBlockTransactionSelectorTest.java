@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.blockcreation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.awaitility.Awaitility.await;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
@@ -54,7 +54,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.Unstable;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -956,7 +955,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final ProcessableBlockHeader blockHeader = createBlock(301_000);
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
-    final int poaMinBlockTime = 1;
+    final int poaGenesisBlockPeriod = 1;
     final long blockTxsSelectionMaxTime = 750;
 
     final List<Transaction> transactionsToInject = new ArrayList<>(3);
@@ -989,7 +988,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
                 ? createMiningParameters(
                     Wei.ZERO,
                     MIN_OCCUPANCY_100_PERCENT,
-                    poaMinBlockTime,
+                    poaGenesisBlockPeriod,
                     PositiveNumber.fromInt(75))
                 : createMiningParameters(
                     Wei.ZERO, MIN_OCCUPANCY_100_PERCENT, blockTxsSelectionMaxTime),
@@ -1186,14 +1185,14 @@ public abstract class AbstractBlockTransactionSelectorTest {
                 .minTransactionGasPrice(minGasPrice)
                 .minBlockOccupancyRatio(minBlockOccupancyRatio)
                 .build())
-        .unstable(Unstable.builder().nonPoaBlockTxsSelectionMaxTime(txsSelectionMaxTime).build())
+        .nonPoaBlockTxsSelectionMaxTime(txsSelectionMaxTime)
         .build();
   }
 
   protected MiningParameters createMiningParameters(
       final Wei minGasPrice,
       final double minBlockOccupancyRatio,
-      final int minBlockTime,
+      final int genesisBlockPeriodSeconds,
       final PositiveNumber minBlockTimePercentage) {
     return ImmutableMiningParameters.builder()
         .mutableInitValues(
@@ -1201,11 +1200,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
                 .minTransactionGasPrice(minGasPrice)
                 .minBlockOccupancyRatio(minBlockOccupancyRatio)
                 .build())
-        .unstable(
-            Unstable.builder()
-                .minBlockTime(minBlockTime)
-                .poaBlockTxsSelectionMaxTime(minBlockTimePercentage)
-                .build())
+        .genesisBlockPeriodSeconds(genesisBlockPeriodSeconds)
+        .poaBlockTxsSelectionMaxTime(minBlockTimePercentage)
         .build();
   }
 
