@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.chain;
 
 import static java.util.Collections.emptyList;
+import static org.hyperledger.besu.ethereum.trie.common.GenesisWorldStateProvider.createGenesisWorldState;
 
 import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -32,23 +33,10 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.bonsai.cache.NoOpCachedWorldStorageManager;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.NoOpTrieLogManager;
-import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
-import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -177,37 +165,11 @@ public final class GenesisState {
 
   private static Hash calculateGenesisStateHash(
       final DataStorageFormat dataStorageFormat, final List<GenesisAccount> genesisAccounts) {
-    final MutableWorldState worldState = loadWorldState(dataStorageFormat);
-    writeAccountsTo(worldState, genesisAccounts, null);
-    return worldState.rootHash();
-  }
-
-  private static MutableWorldState loadWorldState(final DataStorageFormat dataStorageFormat) {
-    switch (dataStorageFormat) {
-      case BONSAI -> {
-        final CachedMerkleTrieLoader cachedMerkleTrieLoader =
-            new CachedMerkleTrieLoader(new NoOpMetricsSystem());
-        final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
-            new BonsaiWorldStateKeyValueStorage(
-                new KeyValueStorageProvider(
-                    segmentIdentifiers -> new SegmentedInMemoryKeyValueStorage(),
-                    new InMemoryKeyValueStorage(),
-                    new NoOpMetricsSystem()),
-                new NoOpMetricsSystem());
-        return new BonsaiWorldState(
-            bonsaiWorldStateKeyValueStorage,
-            cachedMerkleTrieLoader,
-            new NoOpCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
-            new NoOpTrieLogManager(),
-            EvmConfiguration.DEFAULT);
-      }
-      default -> {
-        final ForestWorldStateKeyValueStorage stateStorage =
-            new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-        final WorldStatePreimageKeyValueStorage preimageStorage =
-            new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
-        return new ForestMutableWorldState(stateStorage, preimageStorage, EvmConfiguration.DEFAULT);
-      }
+    try (var worldState = createGenesisWorldState(dataStorageFormat)) {
+      writeAccountsTo(worldState, genesisAccounts, null);
+      return worldState.rootHash();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
