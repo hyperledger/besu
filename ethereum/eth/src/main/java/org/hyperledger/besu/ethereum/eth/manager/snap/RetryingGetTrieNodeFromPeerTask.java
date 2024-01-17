@@ -86,6 +86,8 @@ public class RetryingGetTrieNodeFromPeerTask
 
   @Override
   protected Predicate<EthPeer> getPeerFilter() {
-    return (peer) -> peer.getConnection().getAgreedCapabilities().stream().anyMatch( (c) -> c.getName().equals(SnapProtocol.NAME));
+    return (peer) ->
+        peer.getConnection().getAgreedCapabilities().stream()
+            .anyMatch((c) -> c.getName().equals(SnapProtocol.NAME));
   }
 }
