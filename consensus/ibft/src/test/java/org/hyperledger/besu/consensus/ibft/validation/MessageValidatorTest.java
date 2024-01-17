@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.ibft.validation;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -26,6 +27,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
@@ -42,6 +44,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.List;
@@ -66,6 +69,8 @@ public class MessageValidatorTest {
   private final ProposalBlockConsistencyValidator proposalBlockConsistencyValidator =
       mock(ProposalBlockConsistencyValidator.class);
 
+  @Mock private BftProtocolSchedule protocolSchedule;
+  @Mock private ProtocolSpec protocolSpec;
   @Mock private BlockValidator blockValidator;
   private ProtocolContext protocolContext;
   private final RoundChangeCertificateValidator roundChangeCertificateValidator =
@@ -101,6 +106,11 @@ public class MessageValidatorTest {
             mockBftCtx,
             Optional.empty());
 
+    lenient()
+        .when(protocolSchedule.getByBlockNumberAndTimestamp(anyLong(), anyLong()))
+        .thenReturn(protocolSpec);
+
+    lenient().when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
 
@@ -115,8 +125,8 @@ public class MessageValidatorTest {
         new MessageValidator(
             signedDataValidator,
             proposalBlockConsistencyValidator,
-            blockValidator,
             protocolContext,
+            protocolSchedule,
             roundChangeCertificateValidator);
   }
 

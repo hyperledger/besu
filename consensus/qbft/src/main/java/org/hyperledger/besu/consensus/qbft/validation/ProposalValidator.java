@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft.validation;
 
+import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHelpers.hasDuplicateAuthors;
 import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHelpers.hasSufficientEntries;
 
@@ -95,9 +96,9 @@ public class ProposalValidator {
    */
   public boolean validate(final Proposal msg) {
 
-    if (!(protocolSchedule instanceof BftProtocolSchedule)) {
-      throw new RuntimeException("Wrong class type for protocol schedule");
-    }
+    checkState(
+        protocolSchedule instanceof BftProtocolSchedule,
+        "Wrong class type for protocol schedule, requires BftProtocolSchedule");
 
     final BlockValidator blockValidator =
         ((BftProtocolSchedule) protocolSchedule)

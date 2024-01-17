@@ -55,8 +55,7 @@ public class ProposalPayloadValidator {
    *
    * @param expectedProposer the expected proposer
    * @param targetRound the target round
-   * @param blockValidator the optional block validator (not all proposal validation requires block
-   *     validation)
+   * @param blockValidator the block validator
    * @param protocolContext the protocol context
    * @param bftExtraDataCodec the bft extra data codec
    */

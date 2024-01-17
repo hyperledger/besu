@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.ibft.validation;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
@@ -25,6 +26,7 @@ import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Optional;
 
@@ -38,7 +40,7 @@ public class MessageValidator {
 
   private final SignedDataValidator signedDataValidator;
   private final ProposalBlockConsistencyValidator proposalConsistencyValidator;
-  private final BlockValidator blockValidator;
+  private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final RoundChangeCertificateValidator roundChangeCertificateValidator;
 
@@ -47,19 +49,19 @@ public class MessageValidator {
    *
    * @param signedDataValidator the signed data validator
    * @param proposalConsistencyValidator the proposal consistency validator
-   * @param blockValidator the block validator
+   * @param protocolSchedule the proposal schedule
    * @param protocolContext the protocol context
    * @param roundChangeCertificateValidator the round change certificate validator
    */
   public MessageValidator(
       final SignedDataValidator signedDataValidator,
       final ProposalBlockConsistencyValidator proposalConsistencyValidator,
-      final BlockValidator blockValidator,
       final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
       final RoundChangeCertificateValidator roundChangeCertificateValidator) {
     this.signedDataValidator = signedDataValidator;
     this.proposalConsistencyValidator = proposalConsistencyValidator;
-    this.blockValidator = blockValidator;
+    this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.roundChangeCertificateValidator = roundChangeCertificateValidator;
   }
@@ -93,6 +95,13 @@ public class MessageValidator {
   }
 
   private boolean validateBlock(final Block block) {
+
+    final BlockValidator blockValidator =
+        ((BftProtocolSchedule) protocolSchedule)
+            .getByBlockNumberAndTimestamp(
+                block.getHeader().getNumber(), block.getHeader().getTimestamp())
+            .getBlockValidator();
+
     final var validationResult =
         blockValidator.validateAndProcessBlock(
             protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL);

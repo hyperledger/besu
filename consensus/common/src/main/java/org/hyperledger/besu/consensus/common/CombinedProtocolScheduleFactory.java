@@ -53,14 +53,22 @@ public class CombinedProtocolScheduleFactory {
       protocolSchedule.getScheduledProtocolSpecs().stream()
           .filter(protocolSpecMatchesConsensusBlockRange(spec.getBlock(), endBlock))
           .forEach(
-              s ->
-                  combinedProtocolSchedule.putBlockNumberMilestone(s.fork().milestone(), s.spec()));
+              s -> {
+                if (s instanceof ScheduledProtocolSpec.TimestampProtocolSpec) {
+                  combinedProtocolSchedule.putTimestampMilestone(s.fork().milestone(), s.spec());
+                } else if (s instanceof ScheduledProtocolSpec.BlockNumberProtocolSpec) {
+                  combinedProtocolSchedule.putBlockNumberMilestone(s.fork().milestone(), s.spec());
+                } else {
+                  throw new IllegalStateException(
+                      "Unexpected milestone: " + s + " for milestone: " + s.fork().milestone());
+                }
+              });
 
       // When moving to a new consensus mechanism we want to use the last milestone but created by
       // our consensus mechanism's BesuControllerBuilder so any additional rules are applied
       if (spec.getBlock() > 0) {
         combinedProtocolSchedule.putBlockNumberMilestone(
-            spec.getBlock(), protocolSchedule.getByBlockNumber(spec.getBlock()));
+            spec.getBlock(), protocolSchedule.getByBlockNumberAndTimestamp(spec.getBlock(), 0L));
       }
     }
     return combinedProtocolSchedule;

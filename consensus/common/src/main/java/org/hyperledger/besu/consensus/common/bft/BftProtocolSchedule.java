@@ -39,29 +39,6 @@ public class BftProtocolSchedule extends DefaultProtocolSchedule {
   }
 
   /**
-   * Look up ProtocolSpec by block number
-   *
-   * @param number block number
-   * @return the protocol spec for that block number
-   */
-  public ProtocolSpec getByBlockNumber(final long number) {
-    checkArgument(number >= 0, "number must be non-negative");
-    checkArgument(
-        !protocolSpecs.isEmpty(), "At least 1 milestone must be provided to the protocol schedule");
-    checkArgument(
-        protocolSpecs.last().fork().milestone() == 0,
-        "There must be a milestone starting from block 0");
-    // protocolSpecs is sorted in descending block order, so the first one we find that's lower than
-    // the requested level will be the most appropriate spec
-    for (final ScheduledProtocolSpec s : protocolSpecs) {
-      if (number >= s.fork().milestone()) {
-        return s.spec();
-      }
-    }
-    return null;
-  }
-
-  /**
    * Look up ProtocolSpec by block number and timestamp
    *
    * @param number block number
