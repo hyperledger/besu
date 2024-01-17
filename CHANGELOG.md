@@ -1,26 +1,70 @@
 # Changelog
 
-## 23.10.4
+## 24.1.1-SNAPSHOT
+
+### Breaking Changes
+- New `EXECUTION_HALTED` error returned if there is an error executing or simulating a transaction, with the reason for execution being halted. Replaces the generic `INTERNAL_ERROR` return code in certain cases which some applications may be checking for [#6343](https://github.com/hyperledger/besu/pull/6343)
+- The Besu Docker images with `openjdk-latest` tags since 23.10.3 were incorrectly using UID 1001 instead of 1000 for the container's `besu` user. The user now uses 1000 again. Containers created from or migrated to images using UID 1001 will need to chown their persistent database files to UID 1000 [#6360](https://github.com/hyperledger/besu/pull/6360)
+- The deprecated `--privacy-onchain-groups-enabled` option has now been removed. Use the `--privacy-flexible-groups-enabled` option instead. [#6411](https://github.com/hyperledger/besu/pull/6411)
+
+### Deprecations
+
+### Additions and Improvements
+- Optimize RocksDB WAL files, allows for faster restart and a more linear disk space utilization [#6328](https://github.com/hyperledger/besu/pull/6328)
+- Disable transaction handling when the node is not in sync, to avoid unnecessary transaction validation work [#6302](https://github.com/hyperledger/besu/pull/6302)
+- Introduce TransactionEvaluationContext to pass data between transaction selectors and plugin, during block creation [#6381](https://github.com/hyperledger/besu/pull/6381) 
+- Upgrade dependencies [#6377](https://github.com/hyperledger/besu/pull/6377)
+- Upgrade `com.fasterxml.jackson` dependencies [#6378](https://github.com/hyperledger/besu/pull/6378) 
+- Upgrade Guava dependency [#6396](https://github.com/hyperledger/besu/pull/6396)
+- Upgrade Mockito [#6397](https://github.com/hyperledger/besu/pull/6397)
+- Upgrade `tech.pegasys.discovery:discovery` [#6414](https://github.com/hyperledger/besu/pull/6414)
+
+### Bug fixes
+- INTERNAL_ERROR from `eth_estimateGas` JSON/RPC calls [#6344](https://github.com/hyperledger/besu/issues/6344)
+- Fix Besu Docker images with `openjdk-latest` tags since 23.10.3 using UID 1001 instead of 1000 for the `besu` user [#6360](https://github.com/hyperledger/besu/pull/6360)
+- Fluent EVM API definition for Tangerine Whistle had incorrect code size validation configured [#6382](https://github.com/hyperledger/besu/pull/6382)
+- Correct mining beneficiary for Clique networks in TraceServiceImpl [#6390](https://github.com/hyperledger/besu/pull/6390)
+
+### Download Links
+
+
+## 24.1.0
 
 ### Breaking Changes
 
 ### Deprecations
-- Forest pruning (`pruning-enabled` options) is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format [#6230](https://github.com/hyperledger/besu/pull/6230)
+- Forest pruning (`pruning-enabled` option) is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format [#6230](https://github.com/hyperledger/besu/pull/6230)
 
 ### Additions and Improvements
 - Add error messages on authentication failures with username and password [#6212](https://github.com/hyperledger/besu/pull/6212)
-- New `Sequenced` transaction pool. The pool is an evolution of the `legacy` pool and is likely to be more suitable to enterprise or permissioned chains than the `layered` transaction pool. Select to use this pool with `--tx-pool=sequenced`. Supports the same options as the `legacy` pool [#6211](https://github.com/hyperledger/besu/issues/6211)
+- New `Sequenced` transaction pool. The pool is an evolution of the `legacy` pool and is likely to be more suitable to enterprise or permissioned chains than the `layered` transaction pool. Select to use this pool with `--tx-pool=sequenced`. Supports the same options as the `legacy` pool [#6274](https://github.com/hyperledger/besu/issues/6274)
 - Set Ethereum Classic mainnet activation block for Spiral network upgrade [#6267](https://github.com/hyperledger/besu/pull/6267)
 - Add custom genesis file name to config overview if specified [#6297](https://github.com/hyperledger/besu/pull/6297)
+- Update Gradle plugins and replace unmaintained License Gradle Plugin with the actively maintained Gradle License Report [#6275](https://github.com/hyperledger/besu/pull/6275)
 
 ### Bug fixes
+- Hotfix for selfdestruct preimages on bonsai [#6359]((https://github.com/hyperledger/besu/pull/6359)
+- Fix trielog shipping issue during self destruct [#6340]((https://github.com/hyperledger/besu/pull/6340)
+- mitigation for trielog failure [#6315]((https://github.com/hyperledger/besu/pull/6315)
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/24.1.0/besu-24.1.0.zip / sha256 TBA
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/24.1.0/besu-24.1.0.tar.gz / sha256 TBA
+
+
+## 23.10.3-hotfix
+This is a hotfix for a selfdestruct defect that occurred on mainnet at block [18947893](https://etherscan.io/block/18947893)
+
+### Bug fixes
+- Hotfix for selfdestruct preimages on bonsai [#6359]((https://github.com/hyperledger/besu/pull/6359)
+- mitigation for trielog failure [#6315]((https://github.com/hyperledger/besu/pull/6315)
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.10.3-hotfix/besu-23.10.3-hotfix.zip / sha256 1c37762909858a40eca749fb85b77fb4d1e918f247aff56d518144828bd85378
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.10.3-hotfix/besu-23.10.3-hotfix.tar.gz / sha256 8e38e9fd0c16e049aa324effc96f9ec31dc06e82ea4995e9dd75d571394667af
 
 
 ## 23.10.3
-
-### Breaking Changes
-
-### Deprecations
 
 ### Additions and Improvements
 - Implement debug_traceCall [#5885](https://github.com/hyperledger/besu/pull/5885)
@@ -33,10 +77,17 @@
 - Update OpenJ9 Docker image to latest version [#6226](https://github.com/hyperledger/besu/pull/6226)
 - Add error messages on authentication failures with username and password [#6212](https://github.com/hyperledger/besu/pull/6212)
 - Add `rocksdb usage` to the `storage` subcommand to allow users and dev to check columns families usage [#6185](https://github.com/hyperledger/besu/pull/6185)
+- Ethereum Classic Spiral network upgrade [#6078](https://github.com/hyperledger/besu/pull/6078)
+- Fix self destruct collision [#6205](https://github.com/hyperledger/besu/pull/6205)
+- Mark deleted storage on cleared [#6305](https://github.com/hyperledger/besu/pull/6305)
 
 ### Bug fixes
 - Fix Docker image name clash between Besu and evmtool [#6194](https://github.com/hyperledger/besu/pull/6194)
 - Fix `logIndex` in `eth_getTransactionReceipt` JSON RPC method [#6206](https://github.com/hyperledger/besu/pull/6206)
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.10.3/besu-23.10.3.zip / sha256 da7ef8a6ceb88d3e327cacddcdb32218d1750b464c14165a74068f6dc6e0871a
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.10.3/besu-23.10.3.tar.gz / sha256 73c834cf32c7bbe255d7d8cc7ca5d1eb0df8430b9114935c8dcf3a675b2acbc2
 
 ## 23.10.2
 
@@ -59,6 +110,7 @@
 - Force tx replacement price bump to zero when zero base fee market is configured or `--min-gas-price` is set to 0. This allows for easier tx replacement in networks where there is not gas price. [#6079](https://github.com/hyperledger/besu/pull/6079)
 - Introduce the possibility to limit the time spent selecting pending transactions during block creation, using the new experimental option `Xblock-txs-selection-max-time` on PoS and PoW networks (by default set to 5000ms) or `Xpoa-block-txs-selection-max-time` on PoA networks (by default 75% of the min block time) [#6044](https://github.com/hyperledger/besu/pull/6044)
 - Remove LowestInvalidNonceCache from `legacy` transaction pool to make it more private networks friendly [#6148](https://github.com/hyperledger/besu/pull/6148)
+- Optimization: Delete leftPad when capturing the stack before and after a frame execution [#6102](https://github.com/hyperledger/besu/pull/6102)
 
 ### Bug fixes
 - Upgrade netty to address CVE-2023-44487, CVE-2023-34462 [#6100](https://github.com/hyperledger/besu/pull/6100)

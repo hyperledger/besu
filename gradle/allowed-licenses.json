@@ -1,0 +1,74 @@
+{
+  "allowedLicenses": [
+    {
+      "moduleLicense": "Apache License, Version 2.0",
+      "moduleLicenseUrl": "https://www.apache.org/licenses/LICENSE-2.0"
+    },
+    {
+      "moduleLicense": "BSD Zero Clause License",
+      "moduleLicenseUrl": "https://opensource.org/licenses/0BSD"
+    },
+    {
+      "moduleLicense" : "The 2-Clause BSD License",
+      "moduleLicenseUrl" : "https://opensource.org/licenses/BSD-2-Clause"
+    },
+    {
+      "moduleLicense": "The 3-Clause BSD License",
+      "moduleLicenseUrl": "https://opensource.org/licenses/BSD-3-Clause"
+    },
+    {
+      "moduleLicense": "Bouncy Castle Licence",
+      "moduleLicenseUrl": "https://www.bouncycastle.org/licence.html"
+    },
+    {
+      "moduleLicense": "COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0",
+      "moduleLicenseUrl": "https://oss.oracle.com/licenses/CDDL"
+    },
+    {
+      "moduleLicense" : "COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.1",
+      "moduleLicenseUrl" : "https://oss.oracle.com/licenses/CDDL-1.1"
+    },
+    {
+      "moduleLicense": "Eclipse Distribution License - v 1.0",
+      "moduleLicenseUrl": "http://www.eclipse.org/legal/epl-v10.html"
+    },
+    {
+      "moduleLicense": "Eclipse Public License - v 2.0",
+      "moduleLicenseUrl": "https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt"
+    },
+    {
+      "moduleLicense": "MIT License",
+      "moduleLicenseUrl": "https://opensource.org/licenses/MIT"
+    },
+    {
+      "moduleLicense": "CC0-1.0",
+      "moduleLicenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/legalcode"
+    },
+    {
+      "moduleLicense": "Public-Domain"
+    },
+    {
+      "moduleLicense": "Unicode/ICU License",
+      "moduleLicenseUrl": "https://raw.githubusercontent.com/unicode-org/icu/main/icu4c/LICENSE"
+    },
+    {
+      "moduleLicense": "Creative Commons Legal Code",
+      "moduleVersion": "1.0.3",
+      "moduleName": "org.reactivestreams:reactive-streams"
+    },
+    {
+      "moduleLicense": "MIT-0",
+      "moduleVersion": "1.0.4",
+      "moduleName": "org.reactivestreams:reactive-streams"
+    },
+    {
+      "moduleLicense": "Eclipse Public License - v 1.0",
+      "moduleVersion": "4.13.2",
+      "moduleName": "junit:junit"
+    },
+    {
+      "moduleName": "org.jetbrains.kotlin:kotlin-stdlib-common",
+      "moduleVersion": "1.9.22"
+    }
+  ]
+}

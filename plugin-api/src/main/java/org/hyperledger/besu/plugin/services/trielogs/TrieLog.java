@@ -167,10 +167,17 @@ public interface TrieLog {
     }
 
     /**
-     * Checks if the updated value represents a cleared state.
+     * Checks if the last step performed a 'clear'.
      *
-     * @return true if the updated value is cleared, false otherwise
+     * @return true if the last step performed a 'clear', false otherwise.
      */
-    boolean isCleared();
+    boolean isLastStepCleared();
+
+    /**
+     * Checks if a 'clear' has been performed at least once.
+     *
+     * @return true if a 'clear' has been performed at least once, false otherwise.
+     */
+    boolean isClearedAtLeastOnce();
   }
 }
