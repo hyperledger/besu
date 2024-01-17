@@ -48,7 +48,7 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
 
   private final CommandLine commandLine;
   private final InputStream configurationInputStream;
-  private TomlParseResult tomlParseResult;
+  private TomlParseResult result;
 
   /**
    * Instantiates a new Toml config file default value provider.
@@ -89,7 +89,7 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
   private String getConfigurationValue(final OptionSpec optionSpec) {
     // NOTE: This temporary fix is necessary to make certain options be treated as a multi-value.
     // This can be done automatically by picocli if the object implements Collection.
-    final boolean isArray = getKeyName(optionSpec).map(tomlParseResult::isArray).orElse(false);
+    final boolean isArray = getKeyName(optionSpec).map(result::isArray).orElse(false);
 
     if (optionSpec.type().equals(Boolean.class) || optionSpec.type().equals(boolean.class)) {
       return getBooleanEntryAsString(optionSpec);
@@ -120,7 +120,7 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
   private String getEntryAsString(final OptionSpec spec) {
     // returns the string value of the config line corresponding to the option in toml file
     // or null if not present in the config
-    return getKeyName(spec).map(tomlParseResult::getString).orElse(null);
+    return getKeyName(spec).map(result::getString).orElse(null);
   }
 
   private Optional<String> getKeyName(final OptionSpec spec) {
@@ -130,7 +130,7 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
         Arrays.stream(spec.names())
             // remove leading dashes on option name as we can have "--" or "-" options
             .map(name -> name.replaceFirst("^-+", ""))
-            .filter(tomlParseResult::contains)
+            .filter(result::contains)
             .findFirst();
 
     if (keyName.isEmpty()) {
@@ -157,7 +157,7 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
         .forEach(
             nextSpecName -> {
               String specName =
-                  tomlParseResult.keyPathSet().stream()
+                  result.keyPathSet().stream()
                       .filter(option -> option.contains(nextSpecName.replaceFirst("^-+", "")))
                       .findFirst()
                       .orElse(new ArrayList<>())
@@ -177,7 +177,7 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
     // or null if not present in the config
     return decodeTomlArray(
         getKeyName(spec)
-            .map(tomlParseResult::getArray)
+            .map(result::getArray)
             .map(tomlArray -> tomlArray.toList())
             .orElse(null));
   }
@@ -200,7 +200,7 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
     // return the string representation of the boolean value corresponding to the option in toml
     // file
     // or null if not present in the config
-    return getKeyName(spec).map(tomlParseResult::getBoolean).map(Object::toString).orElse(null);
+    return getKeyName(spec).map(result::getBoolean).map(Object::toString).orElse(null);
   }
 
   private String getNumericEntryAsString(final OptionSpec spec) {
@@ -208,11 +208,11 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
     // file - this works for integer, double, and float
     // or null if not present in the config
 
-    return getKeyName(spec).map(tomlParseResult::get).map(Object::toString).orElse(null);
+    return getKeyName(spec).map(result::get).map(Object::toString).orElse(null);
   }
 
   private void checkConfigurationValidity() {
-    if (tomlParseResult == null || tomlParseResult.isEmpty())
+    if (result == null || result.isEmpty())
       throw new ParameterException(
           commandLine,
           String.format("Unable to read TOML configuration file %s", configurationInputStream));
@@ -221,7 +221,7 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
   /** Load configuration from file. */
   public void loadConfigurationFromFile() {
 
-    if (tomlParseResult == null) {
+    if (result == null) {
       try {
         final TomlParseResult result = Toml.parse(configurationInputStream);
 
@@ -237,7 +237,7 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
 
         checkUnknownOptions(result);
 
-        this.tomlParseResult = result;
+        this.result = result;
 
       } catch (final IOException e) {
         throw new ParameterException(
