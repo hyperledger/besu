@@ -956,7 +956,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final ProcessableBlockHeader blockHeader = createBlock(301_000);
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final int poaGenesisBlockPeriod = 1;
-    final long blockTxsSelectionMaxTime = 750;
+    final int blockTxsSelectionMaxTime = 750;
 
     final List<Transaction> transactionsToInject = new ArrayList<>(3);
     for (int i = 0; i < 2; i++) {
@@ -991,7 +991,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
                     poaGenesisBlockPeriod,
                     PositiveNumber.fromInt(75))
                 : createMiningParameters(
-                    Wei.ZERO, MIN_OCCUPANCY_100_PERCENT, blockTxsSelectionMaxTime),
+                    Wei.ZERO,
+                    MIN_OCCUPANCY_100_PERCENT,
+                    PositiveNumber.fromInt(blockTxsSelectionMaxTime)),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -1178,7 +1180,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
   }
 
   protected MiningParameters createMiningParameters(
-      final Wei minGasPrice, final double minBlockOccupancyRatio, final long txsSelectionMaxTime) {
+      final Wei minGasPrice,
+      final double minBlockOccupancyRatio,
+      final PositiveNumber txsSelectionMaxTime) {
     return ImmutableMiningParameters.builder()
         .mutableInitValues(
             MutableInitValues.builder()

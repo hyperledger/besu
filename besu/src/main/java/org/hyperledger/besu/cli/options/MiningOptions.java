@@ -116,16 +116,15 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
   private Long targetGasLimit = null;
 
   @Option(
-      hidden = true,
       names = {"--block-txs-selection-max-time"},
+      converter = PositiveNumberConverter.class,
       description =
           "Specifies the maximum time, in milliseconds, that could be spent selecting transactions to be included in the block."
-              + " Not compatible with PoA networks, see poa-block-txs-selection-max-time."
-              + " Must be positive and ≤ (default: ${DEFAULT-VALUE})")
-  private Long nonPoaBlockTxsSelectionMaxTime = DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+              + " Not compatible with PoA networks, see poa-block-txs-selection-max-time. (default: ${DEFAULT-VALUE})")
+  private PositiveNumber nonPoaBlockTxsSelectionMaxTime =
+      DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 
   @Option(
-      hidden = true,
       names = {"--poa-block-txs-selection-max-time"},
       converter = PositiveNumberConverter.class,
       description =
@@ -270,10 +269,10 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
     if (genesisConfigOptions.isPoa()) {
       CommandLineUtils.failIfOptionDoesntMeetRequirement(
           commandLine,
-          "--Xblock-txs-selection-max-time can't be used with PoA networks,"
-              + " see Xpoa-block-txs-selection-max-time instead",
+          "--block-txs-selection-max-time can't be used with PoA networks,"
+              + " see poa-block-txs-selection-max-time instead",
           false,
-          singletonList("--Xblock-txs-selection-max-time"));
+          singletonList("--block-txs-selection-max-time"));
     } else {
       CommandLineUtils.failIfOptionDoesntMeetRequirement(
           commandLine,
@@ -281,14 +280,6 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
               + " see --block-txs-selection-max-time instead",
           false,
           singletonList("--poa-block-txs-selection-max-time"));
-
-      if (nonPoaBlockTxsSelectionMaxTime <= 0
-          || nonPoaBlockTxsSelectionMaxTime > DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME) {
-        throw new ParameterException(
-            commandLine,
-            "--block-txs-selection-max-time must be positive and ≤ "
-                + DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME);
-      }
     }
   }
 
@@ -302,7 +293,8 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
     miningOptions.minTransactionGasPrice = miningParameters.getMinTransactionGasPrice();
     miningOptions.minPriorityFeePerGas = miningParameters.getMinPriorityFeePerGas();
     miningOptions.minBlockOccupancyRatio = miningParameters.getMinBlockOccupancyRatio();
-    miningOptions.nonPoaBlockTxsSelectionMaxTime = miningParameters.getBlockTxsSelectionMaxTime();
+    miningOptions.nonPoaBlockTxsSelectionMaxTime =
+        miningParameters.getNonPoaBlockTxsSelectionMaxTime();
     miningOptions.poaBlockTxsSelectionMaxTime = miningParameters.getPoaBlockTxsSelectionMaxTime();
 
     miningOptions.unstableOptions.remoteSealersLimit =

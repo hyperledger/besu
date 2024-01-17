@@ -37,8 +37,8 @@ public abstract class MiningParameters {
           .mutableInitValues(
               ImmutableMiningParameters.MutableInitValues.builder().isMiningEnabled(false).build())
           .build();
-  public static final long DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME =
-      Duration.ofSeconds(5).toMillis();
+  public static final PositiveNumber DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME =
+      PositiveNumber.fromInt((int) Duration.ofSeconds(5).toMillis());
   public static final PositiveNumber DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME =
       PositiveNumber.fromInt(75);
 
@@ -135,7 +135,7 @@ public abstract class MiningParameters {
   }
 
   @Value.Default
-  public long getNonPoaBlockTxsSelectionMaxTime() {
+  public PositiveNumber getNonPoaBlockTxsSelectionMaxTime() {
     return DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
   }
 
@@ -153,7 +153,7 @@ public abstract class MiningParameters {
               * getPoaBlockTxsSelectionMaxTime().getValue())
           / 100;
     }
-    return getNonPoaBlockTxsSelectionMaxTime();
+    return getNonPoaBlockTxsSelectionMaxTime().getValue();
   }
 
   @Value.Default

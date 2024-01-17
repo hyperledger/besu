@@ -328,14 +328,6 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   }
 
   @Test
-  public void blockTxsSelectionMaxTimeOutOfAllowedRange() {
-    internalTestFailure(
-        "--block-txs-selection-max-time must be positive and ≤ 5000",
-        "--block-txs-selection-max-time",
-        "6000");
-  }
-
-  @Test
   public void blockTxsSelectionMaxTimeIncompatibleWithPoaNetworks() throws IOException {
     final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
     internalTestFailure(
