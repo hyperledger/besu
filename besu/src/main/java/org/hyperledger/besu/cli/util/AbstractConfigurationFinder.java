@@ -47,10 +47,10 @@ public abstract class AbstractConfigurationFinder<T> {
       throwExceptionForBothSourcesSpecified(environment, parseResult, commandLine);
     }
     if (parseResult.hasMatchedOption(getConfigOptionName())) {
-      return getConfigFromOption(parseResult, commandLine);
+      return getFromOption(parseResult, commandLine);
     }
     if (environment.containsKey(getConfigEnvName())) {
-      return getConfigFromEnvironment(environment, commandLine);
+      return getFromEnvironment(environment, commandLine);
     }
     return Optional.empty();
   }
@@ -63,7 +63,7 @@ public abstract class AbstractConfigurationFinder<T> {
    * @return an Optional containing the configuration resource, or an empty Optional if the
    *     configuration resource was not specified in the command line option
    */
-  protected abstract Optional<T> getConfigFromOption(
+  protected abstract Optional<T> getFromOption(
       final CommandLine.ParseResult parseResult, final CommandLine commandLine);
 
   /**
@@ -74,7 +74,7 @@ public abstract class AbstractConfigurationFinder<T> {
    * @return an Optional containing the configuration resource, or an empty Optional if the
    *     configuration resource was not specified in the environment variable
    */
-  protected abstract Optional<T> getConfigFromEnvironment(
+  protected abstract Optional<T> getFromEnvironment(
       final Map<String, String> environment, final CommandLine commandLine);
 
   /**

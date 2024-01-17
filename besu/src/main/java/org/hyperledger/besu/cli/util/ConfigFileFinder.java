@@ -15,7 +15,6 @@
 package org.hyperledger.besu.cli.util;
 
 import static org.hyperledger.besu.cli.DefaultCommandValues.CONFIG_FILE_OPTION_NAME;
-import static org.hyperledger.besu.cli.util.EnvironmentVariableDefaultProvider.nameToEnvVarSuffix;
 
 import java.io.File;
 import java.util.Map;
@@ -24,8 +23,7 @@ import java.util.Optional;
 import picocli.CommandLine;
 
 public class ConfigFileFinder extends AbstractConfigurationFinder<File> {
-
-  private static final String CONFIG_FILE_ENV_NAME = nameToEnvVarSuffix(CONFIG_FILE_OPTION_NAME);
+  private static final String CONFIG_FILE_ENV_NAME = "BESU_CONFIG_FILE";
 
   @Override
   protected String getConfigOptionName() {
@@ -38,7 +36,7 @@ public class ConfigFileFinder extends AbstractConfigurationFinder<File> {
   }
 
   @Override
-  public Optional<File> getConfigFromOption(
+  public Optional<File> getFromOption(
       final CommandLine.ParseResult parseResult, final CommandLine commandLine) {
     final CommandLine.Model.OptionSpec configFileOption =
         parseResult.matchedOption(CONFIG_FILE_OPTION_NAME);
@@ -55,7 +53,7 @@ public class ConfigFileFinder extends AbstractConfigurationFinder<File> {
   }
 
   @Override
-  public Optional<File> getConfigFromEnvironment(
+  public Optional<File> getFromEnvironment(
       final Map<String, String> environment, final CommandLine commandLine) {
     final File toml = new File(environment.get(CONFIG_FILE_ENV_NAME));
     if (!toml.exists()) {

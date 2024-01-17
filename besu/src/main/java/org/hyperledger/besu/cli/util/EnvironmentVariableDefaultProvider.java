@@ -62,7 +62,7 @@ public class EnvironmentVariableDefaultProvider implements IDefaultValueProvider
                     .map(prefix -> prefix + nameToEnvVarSuffix(name)));
   }
 
-  static String nameToEnvVarSuffix(final String name) {
+  private String nameToEnvVarSuffix(final String name) {
     return name.substring("--".length()).replace('-', '_').toUpperCase(Locale.US);
   }
 }
