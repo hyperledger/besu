@@ -6,7 +6,6 @@
 - New `EXECUTION_HALTED` error returned if there is an error executing or simulating a transaction, with the reason for execution being halted. Replaces the generic `INTERNAL_ERROR` return code in certain cases which some applications may be checking for [#6343](https://github.com/hyperledger/besu/pull/6343)
 - The Besu Docker images with `openjdk-latest` tags since 23.10.3 were incorrectly using UID 1001 instead of 1000 for the container's `besu` user. The user now uses 1000 again. Containers created from or migrated to images using UID 1001 will need to chown their persistent database files to UID 1000 [#6360](https://github.com/hyperledger/besu/pull/6360)
 - The deprecated `--privacy-onchain-groups-enabled` option has now been removed. Use the `--privacy-flexible-groups-enabled` option instead. [#6411](https://github.com/hyperledger/besu/pull/6411)
-- Early access flag removed from X_SNAP sync mode - now simply SNAP [#6405](https://github.com/hyperledger/besu/pull/6405)
 
 ### Deprecations
 
@@ -14,10 +13,13 @@
 - Optimize RocksDB WAL files, allows for faster restart and a more linear disk space utilization [#6328](https://github.com/hyperledger/besu/pull/6328)
 - Disable transaction handling when the node is not in sync, to avoid unnecessary transaction validation work [#6302](https://github.com/hyperledger/besu/pull/6302)
 - Introduce TransactionEvaluationContext to pass data between transaction selectors and plugin, during block creation [#6381](https://github.com/hyperledger/besu/pull/6381) 
-- Upgrade dependencies [#6377](https://github.com/hyperledger/besu/pull/6377)
-- Upgrade `com.fasterxml.jackson` dependencies [#6378](https://github.com/hyperledger/besu/pull/6378) 
-- Upgrade Guava dependency [#6396](https://github.com/hyperledger/besu/pull/6396)
-- Upgrade Mockito [#6397](https://github.com/hyperledger/besu/pull/6397)
+- SNAP and CHECKPOINT sync - early access flag removed so X_SNAP is now simply SNAP and X_CHECKPOINT is now simply CHECKPOINT [#6405](https://github.com/hyperledger/besu/pull/6405)
+  - X_SNAP and X_CHECKPOINT are still supported for now, but marked for deprecation and will be removed in 24.4.0
+- Dependency updates
+  - Upgrade several dependencies [#6377](https://github.com/hyperledger/besu/pull/6377)
+  - Upgrade `com.fasterxml.jackson` dependencies [#6378](https://github.com/hyperledger/besu/pull/6378) 
+  - Upgrade Guava dependency [#6396](https://github.com/hyperledger/besu/pull/6396)
+  - Upgrade Mockito [#6397](https://github.com/hyperledger/besu/pull/6397)
 
 ### Bug fixes
 - INTERNAL_ERROR from `eth_estimateGas` JSON/RPC calls [#6344](https://github.com/hyperledger/besu/issues/6344)

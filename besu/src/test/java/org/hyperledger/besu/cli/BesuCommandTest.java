@@ -1829,7 +1829,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Invalid value for option '--sync-mode': expected one of [FULL, FAST, SNAP, X_CHECKPOINT] (case-insensitive) but was 'bogus'");
+            "Invalid value for option '--sync-mode': expected one of [FULL, FAST, SNAP, CHECKPOINT, X_SNAP, X_CHECKPOINT] (case-insensitive) but was 'bogus'");
   }
 
   @Test
@@ -5090,7 +5090,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--genesis-file",
         genesisFile.toString(),
         "--sync-mode",
-        "X_CHECKPOINT",
+        "CHECKPOINT",
         "--Xcheckpoint-post-merge-enabled");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -5101,7 +5101,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void checkpointPostMergeShouldFailWhenGenesisUsesCheckpointFromPreMerge() {
     // using the default genesis which has a checkpoint sync block prior to the merge
-    parseCommand("--sync-mode", "X_CHECKPOINT", "--Xcheckpoint-post-merge-enabled");
+    parseCommand("--sync-mode", "CHECKPOINT", "--Xcheckpoint-post-merge-enabled");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
@@ -5114,7 +5114,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand("--sync-mode", "SNAP", "--Xcheckpoint-post-merge-enabled");
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("--Xcheckpoint-post-merge-enabled can only be used with X_CHECKPOINT sync-mode");
+        .contains("--Xcheckpoint-post-merge-enabled can only be used with CHECKPOINT sync-mode");
   }
 
   @Test
@@ -5129,7 +5129,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--genesis-file",
         genesisFile.toString(),
         "--sync-mode",
-        "X_CHECKPOINT",
+        "CHECKPOINT",
         "--Xcheckpoint-post-merge-enabled");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -5148,7 +5148,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--genesis-file",
         genesisFile.toString(),
         "--sync-mode",
-        "X_CHECKPOINT",
+        "CHECKPOINT",
         "--Xcheckpoint-post-merge-enabled");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -5167,7 +5167,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--genesis-file",
         genesisFile.toString(),
         "--sync-mode",
-        "X_CHECKPOINT",
+        "CHECKPOINT",
         "--Xcheckpoint-post-merge-enabled");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();

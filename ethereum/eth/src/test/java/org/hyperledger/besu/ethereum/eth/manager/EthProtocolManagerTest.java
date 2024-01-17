@@ -1154,7 +1154,7 @@ public final class EthProtocolManagerTest {
   public void shouldUseRightCapabilityDependingOnSyncMode() {
     assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH68);
     assertHighestCapability(SyncMode.FULL, EthProtocol.ETH68);
-    assertHighestCapability(SyncMode.X_CHECKPOINT, EthProtocol.ETH68);
+    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH68);
     /* Eth67 does not support fast sync, see EIP-4938 */
     assertHighestCapability(SyncMode.FAST, EthProtocol.ETH66);
   }
@@ -1168,7 +1168,7 @@ public final class EthProtocolManagerTest {
 
     assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH65, configuration);
     assertHighestCapability(SyncMode.FULL, EthProtocol.ETH65, configuration);
-    assertHighestCapability(SyncMode.X_CHECKPOINT, EthProtocol.ETH65, configuration);
+    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH65, configuration);
     /* Eth67 does not support fast sync, see EIP-4938 */
     assertHighestCapability(SyncMode.FAST, EthProtocol.ETH65, configuration);
   }
@@ -1195,7 +1195,7 @@ public final class EthProtocolManagerTest {
 
     assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH67, configuration);
     assertHighestCapability(SyncMode.FULL, EthProtocol.ETH67, configuration);
-    assertHighestCapability(SyncMode.X_CHECKPOINT, EthProtocol.ETH67, configuration);
+    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH67, configuration);
     /* Eth67 does not support fast sync, see EIP-4938 */
     assertHighestCapability(SyncMode.FAST, EthProtocol.ETH66, configuration);
   }

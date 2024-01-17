@@ -130,7 +130,7 @@ public class BesuControllerTest {
 
     final BesuControllerBuilder besuControllerBuilder =
         new BesuController.Builder()
-            .fromGenesisConfig(postMergeGenesisFile, Collections.emptyMap(), SyncMode.X_CHECKPOINT);
+            .fromGenesisConfig(postMergeGenesisFile, Collections.emptyMap(), SyncMode.CHECKPOINT);
 
     assertThat(besuControllerBuilder).isInstanceOf(MergeBesuControllerBuilder.class);
   }
@@ -147,7 +147,7 @@ public class BesuControllerTest {
 
     final BesuControllerBuilder besuControllerBuilder =
         new BesuController.Builder()
-            .fromGenesisConfig(mergeAtGenesisFile, Collections.emptyMap(), SyncMode.X_CHECKPOINT);
+            .fromGenesisConfig(mergeAtGenesisFile, Collections.emptyMap(), SyncMode.CHECKPOINT);
 
     assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
   }
@@ -156,7 +156,7 @@ public class BesuControllerTest {
   public void preMergeCheckpointSyncUsesTransitionControllerBuilder() {
     final BesuControllerBuilder besuControllerBuilder =
         new BesuController.Builder()
-            .fromGenesisConfig(genesisConfigFile, Collections.emptyMap(), SyncMode.X_CHECKPOINT);
+            .fromGenesisConfig(genesisConfigFile, Collections.emptyMap(), SyncMode.CHECKPOINT);
 
     assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
   }

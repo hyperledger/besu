@@ -2027,8 +2027,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
-        "--Xcheckpoint-post-merge-enabled can only be used with X_CHECKPOINT sync-mode",
-        SyncMode.X_CHECKPOINT.equals(getDefaultSyncModeIfNotSet()),
+        "--Xcheckpoint-post-merge-enabled can only be used with CHECKPOINT sync-mode",
+        SyncMode.isCheckpointSync(getDefaultSyncModeIfNotSet()),
         singletonList("--Xcheckpoint-post-merge-enabled"));
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
