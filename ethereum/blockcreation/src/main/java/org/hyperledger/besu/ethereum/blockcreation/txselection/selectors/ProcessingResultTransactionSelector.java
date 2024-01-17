@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionEvaluationContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -41,7 +41,7 @@ public class ProcessingResultTransactionSelector extends AbstractTransactionSele
 
   @Override
   public TransactionSelectionResult evaluateTransactionPreProcessing(
-      final PendingTransaction pendingTransaction,
+      final TransactionEvaluationContext evaluationContext,
       final TransactionSelectionResults blockTransactionResults) {
     // All checks depend on processingResult and will be done in the post-processing method, so
     // nothing to do here.
@@ -53,20 +53,20 @@ public class ProcessingResultTransactionSelector extends AbstractTransactionSele
    * result. If the processing result is invalid, it determines the selection result for the invalid
    * result.
    *
-   * @param pendingTransaction The transaction to be evaluated.
+   * @param evaluationContext The current selection session data.
    * @param blockTransactionResults The results of other transaction evaluations in the same block.
    * @param processingResult The processing result of the transaction.
    * @return The result of the transaction selection.
    */
   @Override
   public TransactionSelectionResult evaluateTransactionPostProcessing(
-      final PendingTransaction pendingTransaction,
+      final TransactionEvaluationContext evaluationContext,
       final TransactionSelectionResults blockTransactionResults,
       final TransactionProcessingResult processingResult) {
 
     if (processingResult.isInvalid()) {
       return transactionSelectionResultForInvalidResult(
-          pendingTransaction.getTransaction(), processingResult.getValidationResult());
+          evaluationContext.getTransaction(), processingResult.getValidationResult());
     }
     return TransactionSelectionResult.SELECTED;
   }
