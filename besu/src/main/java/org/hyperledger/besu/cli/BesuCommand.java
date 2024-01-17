@@ -538,7 +538,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final NetworkName network = null;
 
   @Option(
-      names = {"--profile"},
+      names = {PROFILE_OPTION_NAME},
       paramLabel = PROFILE_FORMAT_HELP,
       description =
           "Overwrite default values, possible values are ${COMPLETION-CANDIDATES}. (default: none)")

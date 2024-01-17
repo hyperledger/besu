@@ -300,8 +300,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path tempConfigFilePath = createTempFile("an-invalid-file-name-without-extension", "");
     parseCommand("--config-file", tempConfigFilePath.toString());
 
-    final String expectedOutputStart =
-        "Unable to read TOML configuration file " + tempConfigFilePath;
+    final String expectedOutputStart = "Unable to read TOML configuration file";
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }

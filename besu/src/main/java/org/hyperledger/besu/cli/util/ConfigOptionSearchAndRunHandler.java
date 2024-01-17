@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.cli.util;
 
-import org.hyperledger.besu.cli.config.ProfileName;
-
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -28,7 +26,6 @@ import picocli.CommandLine;
 import picocli.CommandLine.IDefaultValueProvider;
 import picocli.CommandLine.IExecutionStrategy;
 import picocli.CommandLine.IParameterExceptionHandler;
-import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.ParseResult;
 
@@ -58,94 +55,17 @@ public class ConfigOptionSearchAndRunHandler extends CommandLine.RunLast {
   public List<Object> handle(final ParseResult parseResult) throws ParameterException {
     final CommandLine commandLine = parseResult.commandSpec().commandLine();
 
-    final Optional<File> configFile = findConfigurationFile(parseResult, commandLine);
-    final Optional<InputStream> profileFile = findProfileConfiguration(parseResult, commandLine);
-
     commandLine.setDefaultValueProvider(
-        createDefaultValueProvider(commandLine, configFile, profileFile));
+        createDefaultValueProvider(
+            commandLine,
+            new ConfigFileFinder().findConfiguration(environment, parseResult),
+            new ProfileFinder().findConfiguration(environment, parseResult)));
 
     commandLine.setExecutionStrategy(resultHandler);
     commandLine.setParameterExceptionHandler(parameterExceptionHandler);
     commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
 
     return new ArrayList<>();
-  }
-
-  private Optional<File> findConfigurationFile(
-      final ParseResult parseResult, final CommandLine commandLine) {
-    if (parseResult.hasMatchedOption("--config-file")
-        && environment.containsKey("BESU_CONFIG_FILE")) {
-      throw new ParameterException(
-          commandLine,
-          String.format(
-              "TOML file specified using BESU_CONFIG_FILE=%s and --config-file %s",
-              environment.get("BESU_CONFIG_FILE"),
-              parseResult.matchedOption("--config-file").stringValues()));
-    } else if (parseResult.hasMatchedOption("--config-file")) {
-      final OptionSpec configFileOption = parseResult.matchedOption("--config-file");
-      try {
-        return Optional.of(configFileOption.getter().get());
-      } catch (final Exception e) {
-        throw new ParameterException(commandLine, e.getMessage(), e);
-      }
-    } else if (environment.containsKey("BESU_CONFIG_FILE")) {
-      final File toml = new File(environment.get("BESU_CONFIG_FILE"));
-      if (!toml.exists()) {
-        throw new ParameterException(
-            commandLine,
-            String.format(
-                "TOML file %s specified in environment variable BESU_CONFIG_FILE not found",
-                environment.get("BESU_CONFIG_FILE")));
-      }
-      return Optional.of(toml);
-    }
-
-    return Optional.empty();
-  }
-
-  private Optional<InputStream> findProfileConfiguration(
-      final ParseResult parseResult, final CommandLine commandLine) {
-    final String profileOption = "--profile";
-    final String profileEnvironmentKey = "BESU_PROFILE";
-
-    if (parseResult.hasMatchedOption(profileOption)
-        && environment.containsKey(profileEnvironmentKey)) {
-      throw new ParameterException(
-          commandLine,
-          String.format(
-              "Profile specified using %s=%s and %s %s",
-              profileEnvironmentKey,
-              environment.get(profileEnvironmentKey),
-              profileOption,
-              parseResult.matchedOption(profileOption).stringValues()));
-    }
-
-    if (parseResult.hasMatchedOption(profileOption)) {
-      try {
-        ProfileName profileName = parseResult.matchedOption(profileOption).getter().get();
-        return Optional.of(getTomlFile(commandLine, profileName.getConfigFile()));
-      } catch (Exception e) {
-        throw new ParameterException(commandLine, e.getMessage(), e);
-      }
-    }
-
-    if (environment.containsKey(profileEnvironmentKey)) {
-      try {
-        ProfileName profileName = ProfileName.valueOf(environment.get(profileEnvironmentKey));
-        return Optional.of(getTomlFile(commandLine, profileName.getConfigFile()));
-      } catch (Exception e) {
-        throw new ParameterException(commandLine, e.getMessage(), e);
-      }
-    }
-    return Optional.empty();
-  }
-
-  private InputStream getTomlFile(final CommandLine commandLine, final String file) {
-    InputStream resourceUrl = getClass().getClassLoader().getResourceAsStream(file);
-    if (resourceUrl == null) {
-      throw new ParameterException(commandLine, String.format("TOML file %s not found", file));
-    }
-    return resourceUrl;
   }
 
   /**
@@ -159,20 +79,19 @@ public class ConfigOptionSearchAndRunHandler extends CommandLine.RunLast {
   IDefaultValueProvider createDefaultValueProvider(
       final CommandLine commandLine,
       final Optional<File> configFile,
-      final Optional<InputStream> profileFile) {
+      final Optional<InputStream> profile) {
     List<IDefaultValueProvider> providers = new ArrayList<>();
     providers.add(new EnvironmentVariableDefaultProvider(environment));
 
-    // If a configuration file is present, add its provider
     configFile.ifPresent(
-        config -> providers.add(TomlConfigurationDefaultProvider.fromFile(commandLine, config)));
+        config -> {
+          if (config.exists()) {
+            providers.add(TomlConfigurationDefaultProvider.fromFile(commandLine, config));
+          }
+        });
 
-    // If a profile file is present (i.e., --profile option is set), add its provider
-    // This will provide additional defaults, but will not override values set in the configuration
-    // file, command options or environment variables
-    profileFile.ifPresent(
-        profile ->
-            providers.add(TomlConfigurationDefaultProvider.fromInputStream(commandLine, profile)));
+    profile.ifPresent(
+        p -> providers.add(TomlConfigurationDefaultProvider.fromInputStream(commandLine, p)));
     return new CascadingDefaultProvider(providers);
   }
 
