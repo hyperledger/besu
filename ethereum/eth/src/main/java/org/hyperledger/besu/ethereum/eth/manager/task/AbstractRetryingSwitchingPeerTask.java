@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -119,7 +120,12 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
     return getEthContext()
         .getEthPeers()
         .streamBestPeers()
+        .filter(getPeerFilter())
         .filter(peer -> !triedPeers.contains(peer));
+  }
+
+  protected Predicate<EthPeer> getPeerFilter() {
+    return (p) -> true;
   }
 
   private void refreshPeers() {

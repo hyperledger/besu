@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
@@ -25,6 +26,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -80,5 +82,10 @@ public class RetryingGetTrieNodeFromPeerTask
   @Override
   protected boolean successfulResult(final Map<Bytes, Bytes> peerResult) {
     return !emptyResult(peerResult);
+  }
+
+  @Override
+  protected Predicate<EthPeer> getPeerFilter() {
+    return (peer) -> peer.getConnection().getAgreedCapabilities().stream().anyMatch( (c) -> c.getName().equals(SnapProtocol.NAME));
   }
 }
