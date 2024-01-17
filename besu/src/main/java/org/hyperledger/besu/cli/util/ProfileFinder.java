@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.cli.util;
 
-import static org.hyperledger.besu.cli.DefaultCommandValues.CONFIG_FILE_OPTION_NAME;
 import static org.hyperledger.besu.cli.DefaultCommandValues.PROFILE_OPTION_NAME;
 import static org.hyperledger.besu.cli.util.EnvironmentVariableDefaultProvider.nameToEnvVarSuffix;
 
@@ -27,11 +26,11 @@ import java.util.Optional;
 import picocli.CommandLine;
 
 public class ProfileFinder extends AbstractConfigurationFinder<InputStream> {
-  private static final String PROFILE_ENV_NAME = nameToEnvVarSuffix(CONFIG_FILE_OPTION_NAME);
+  private static final String PROFILE_ENV_NAME = nameToEnvVarSuffix(PROFILE_OPTION_NAME);
 
   @Override
   protected String getConfigOptionName() {
-    return CONFIG_FILE_OPTION_NAME;
+    return PROFILE_OPTION_NAME;
   }
 
   @Override

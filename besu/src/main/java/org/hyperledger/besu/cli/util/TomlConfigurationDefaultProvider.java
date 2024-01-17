@@ -176,10 +176,7 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
     // corresponding to the option in toml file
     // or null if not present in the config
     return decodeTomlArray(
-        getKeyName(spec)
-            .map(result::getArray)
-            .map(tomlArray -> tomlArray.toList())
-            .orElse(null));
+        getKeyName(spec).map(result::getArray).map(tomlArray -> tomlArray.toList()).orElse(null));
   }
 
   private String decodeTomlArray(final List<Object> tomlArrayElements) {

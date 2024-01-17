@@ -43,7 +43,12 @@ public class ConfigFileFinder extends AbstractConfigurationFinder<File> {
     final CommandLine.Model.OptionSpec configFileOption =
         parseResult.matchedOption(CONFIG_FILE_OPTION_NAME);
     try {
-      return Optional.of(configFileOption.getter().get());
+      File file = configFileOption.getter().get();
+      if (!file.exists()) {
+        throw new CommandLine.ParameterException(
+            commandLine, "Unable to read TOML configuration, file not found.");
+      }
+      return Optional.of(file);
     } catch (final Exception e) {
       throw new CommandLine.ParameterException(commandLine, e.getMessage(), e);
     }
