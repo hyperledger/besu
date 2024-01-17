@@ -65,11 +65,11 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.security.InvalidParameterException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
@@ -182,15 +182,18 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               .collect(Collectors.toList());
       transactions.forEach(
           transaction ->
-              CompletableFuture.runAsync(
-                  () -> {
-                    Address sender = transaction.getSender();
-                    LOG.atTrace()
-                        .setMessage("The sender for transaction {} is calculated : {}")
-                        .addArgument(transaction.getHash())
-                        .addArgument(sender)
-                        .log();
-                  }));
+              mergeCoordinator
+                  .getEthScheduler()
+                  .scheduleFutureTask(
+                      () -> {
+                        Address sender = transaction.getSender();
+                        LOG.atTrace()
+                            .setMessage("The sender for transaction {} is calculated : {}")
+                            .addArgument(transaction.getHash())
+                            .addArgument(sender)
+                            .log();
+                      },
+                      Duration.ofSeconds(1)));
     } catch (final RLPException | IllegalArgumentException e) {
       return respondWithInvalid(
           reqId,
