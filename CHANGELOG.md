@@ -18,6 +18,7 @@
 - Upgrade Guava dependency [#6396](https://github.com/hyperledger/besu/pull/6396)
 - Upgrade Mockito [#6397](https://github.com/hyperledger/besu/pull/6397)
 - Moving trielog to RocksDB's blobdb to improve write amplications [#6289](https://github.com/hyperledger/besu/pull/6289)
+- Upgrade `tech.pegasys.discovery:discovery` [#6414](https://github.com/hyperledger/besu/pull/6414)
 
 ### Bug fixes
 - INTERNAL_ERROR from `eth_estimateGas` JSON/RPC calls [#6344](https://github.com/hyperledger/besu/issues/6344)
