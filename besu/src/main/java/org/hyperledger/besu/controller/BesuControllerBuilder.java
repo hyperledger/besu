@@ -645,14 +645,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
               + chainPrunerConfiguration.getChainPruningBlocksFrequency());
     }
 
-    if (dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningEnabled()
-        && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
-      final TrieLogManager trieLogManager =
-          ((BonsaiWorldStateProvider) worldStateArchive).getTrieLogManager();
-      final TrieLogPruner trieLogPruner = createTrieLogPruner(worldStateStorage, blockchain);
-      trieLogManager.subscribe(trieLogPruner);
-    }
-
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
         protocolContext.getWorldStateArchive());
 
@@ -788,6 +780,15 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final JsonRpcMethods additionalJsonRpcMethodFactory =
         createAdditionalJsonRpcMethodFactory(protocolContext);
 
+    if (dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningEnabled()
+        && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
+      final TrieLogManager trieLogManager =
+          ((BonsaiWorldStateProvider) worldStateArchive).getTrieLogManager();
+      final TrieLogPruner trieLogPruner =
+          createTrieLogPruner(worldStateStorage, blockchain, scheduler);
+      trieLogManager.subscribe(trieLogPruner);
+    }
+
     final List<Closeable> closeables = new ArrayList<>();
     closeables.add(protocolContext.getWorldStateArchive());
     closeables.add(storageProvider);
@@ -817,13 +818,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   private TrieLogPruner createTrieLogPruner(
-      final WorldStateStorage worldStateStorage, final Blockchain blockchain) {
+      final WorldStateStorage worldStateStorage,
+      final Blockchain blockchain,
+      final EthScheduler scheduler) {
     final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
     final boolean isProofOfStake = genesisConfigOptions.getTerminalTotalDifficulty().isPresent();
+
     final TrieLogPruner trieLogPruner =
         new TrieLogPruner(
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
             blockchain,
+            scheduler::executeServiceTask,
             dataStorageConfiguration.getUnstable().getBonsaiTrieLogRetentionThreshold(),
             dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningLimit(),
             isProofOfStake);

@@ -25,6 +25,7 @@ import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -42,6 +43,7 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
   private final int loadingLimit;
   private final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
   private final Blockchain blockchain;
+  private final Consumer<Runnable> executeAsync;
   private final long numBlocksToRetain;
   private final boolean requireFinalizedBlock;
 
@@ -51,11 +53,13 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
   public TrieLogPruner(
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
       final Blockchain blockchain,
+      final Consumer<Runnable> executeAsync,
       final long numBlocksToRetain,
       final int pruningLimit,
       final boolean requireFinalizedBlock) {
     this.rootWorldStateStorage = rootWorldStateStorage;
     this.blockchain = blockchain;
+    this.executeAsync = executeAsync;
     this.numBlocksToRetain = numBlocksToRetain;
     this.pruningLimit = pruningLimit;
     this.loadingLimit = pruningLimit; // same as pruningLimit for now
@@ -172,10 +176,13 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
     if (TrieLogEvent.Type.ADDED.equals(event.getType())) {
       final Hash blockHash = event.layer().getBlockHash();
       final Optional<Long> blockNumber = event.layer().getBlockNumber();
-      if (blockNumber.isPresent()) {
-        addToPruneQueue(blockNumber.get(), blockHash);
-        pruneFromQueue();
-      }
+      blockNumber.ifPresent(
+          blockNum ->
+              executeAsync.accept(
+                  () -> {
+                    addToPruneQueue(blockNum, blockHash);
+                    pruneFromQueue();
+                  }));
     }
   }
 }

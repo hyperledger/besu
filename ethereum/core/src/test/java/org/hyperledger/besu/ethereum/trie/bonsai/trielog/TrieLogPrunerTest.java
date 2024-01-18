@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.Level;
@@ -44,6 +45,7 @@ public class TrieLogPrunerTest {
 
   private BonsaiWorldStateKeyValueStorage worldState;
   private Blockchain blockchain;
+  private final Consumer<Runnable> executeAsync = Runnable::run;
 
   @SuppressWarnings("BannedMethod")
   @BeforeEach
@@ -67,7 +69,8 @@ public class TrieLogPrunerTest {
     when(blockchain.getBlockHeader(header2.getBlockHash())).thenReturn(Optional.empty());
 
     // When
-    TrieLogPruner trieLogPruner = new TrieLogPruner(worldState, blockchain, 3, loadingLimit, false);
+    TrieLogPruner trieLogPruner =
+        new TrieLogPruner(worldState, blockchain, executeAsync, 3, loadingLimit, false);
     trieLogPruner.initialize();
 
     // Then
@@ -86,7 +89,8 @@ public class TrieLogPrunerTest {
     when(worldState.pruneTrieLog(any(Hash.class))).thenReturn(true);
     // requireFinalizedBlock = false means this is not a PoS chain
     TrieLogPruner trieLogPruner =
-        new TrieLogPruner(worldState, blockchain, blocksToRetain, pruningWindowSize, false);
+        new TrieLogPruner(
+            worldState, blockchain, executeAsync, blocksToRetain, pruningWindowSize, false);
 
     trieLogPruner.addToPruneQueue(0, key(0)); // older block outside prune window
     trieLogPruner.addToPruneQueue(1, key(1)); // block inside the prune window
@@ -194,7 +198,8 @@ public class TrieLogPrunerTest {
     final int pruningWindowSize = (int) chainHeight;
     when(blockchain.getChainHeadBlockNumber()).thenReturn(chainHeight);
     TrieLogPruner trieLogPruner =
-        new TrieLogPruner(worldState, blockchain, blocksToRetain, pruningWindowSize, true);
+        new TrieLogPruner(
+            worldState, blockchain, executeAsync, blocksToRetain, pruningWindowSize, true);
 
     trieLogPruner.addToPruneQueue(1, key(1));
     trieLogPruner.addToPruneQueue(2, key(2));
@@ -231,7 +236,9 @@ public class TrieLogPrunerTest {
   @Test
   public void onTrieLogAdded_should_prune() {
     // Given
-    TrieLogPruner trieLogPruner = new TrieLogPruner(worldState, blockchain, 0, 1, false);
+    final TriggerableConsumer triggerableConsumer = new TriggerableConsumer();
+    TrieLogPruner trieLogPruner =
+        new TrieLogPruner(worldState, blockchain, triggerableConsumer, 0, 1, false);
     assertThat(trieLogPruner.pruneFromQueue()).isEqualTo(0);
 
     final TrieLogLayer layer = new TrieLogLayer();
@@ -241,6 +248,8 @@ public class TrieLogPrunerTest {
 
     // When
     trieLogPruner.onTrieLogAdded(new TrieLogAddedEvent(layer));
+    verify(worldState, never()).pruneTrieLog(key(1));
+    triggerableConsumer.run();
 
     // Then
     verify(worldState, times(1)).pruneTrieLog(key(1));
@@ -249,7 +258,8 @@ public class TrieLogPrunerTest {
   @Test
   public void onTrieLogAdded_should_not_prune_when_no_blockNumber() {
     // Given
-    TrieLogPruner trieLogPruner = new TrieLogPruner(worldState, blockchain, 0, 1, false);
+    TrieLogPruner trieLogPruner =
+        new TrieLogPruner(worldState, blockchain, executeAsync, 0, 1, false);
     assertThat(trieLogPruner.pruneFromQueue()).isEqualTo(0);
 
     final TrieLogLayer layer = new TrieLogLayer();
@@ -276,7 +286,8 @@ public class TrieLogPrunerTest {
         .thenReturn(Optional.of(finalizedHeader));
     when(blockchain.getChainHeadBlockNumber()).thenReturn(chainHeight);
     TrieLogPruner trieLogPruner =
-        new TrieLogPruner(worldState, blockchain, blocksToRetain, pruningWindowSize, true);
+        new TrieLogPruner(
+            worldState, blockchain, executeAsync, blocksToRetain, pruningWindowSize, true);
 
     trieLogPruner.addToPruneQueue(1, key(1));
     trieLogPruner.addToPruneQueue(2, key(2));
@@ -289,5 +300,19 @@ public class TrieLogPrunerTest {
 
   private Hash key(final int k) {
     return Hash.hash(Bytes.of(k));
+  }
+
+  private static class TriggerableConsumer implements Consumer<Runnable> {
+
+    private Runnable runnable;
+
+    @Override
+    public void accept(final Runnable runnable) {
+      this.runnable = runnable;
+    }
+
+    public void run() {
+      runnable.run();
+    }
   }
 }
