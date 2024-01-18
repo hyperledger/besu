@@ -184,7 +184,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           transaction ->
               mergeCoordinator
                   .getEthScheduler()
-                  .scheduleFutureTask(
+                  .scheduleTxWorkerTask(
                       () -> {
                         Address sender = transaction.getSender();
                         LOG.atTrace()
@@ -192,8 +192,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                             .addArgument(transaction.getHash())
                             .addArgument(sender)
                             .log();
-                      },
-                      Duration.ofSeconds(1)));
+                      }));
     } catch (final RLPException | IllegalArgumentException e) {
       return respondWithInvalid(
           reqId,
