@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,38 +14,41 @@
  */
 package org.hyperledger.besu.metrics.prometheus;
 
-import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.ExternalSummary;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
-import java.util.Map;
+import java.util.function.Supplier;
 
-import io.prometheus.metrics.core.datapoints.DistributionDataPoint;
-import io.prometheus.metrics.core.metrics.Summary;
+import io.prometheus.metrics.core.metrics.SummaryWithCallback;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
+import io.prometheus.metrics.model.snapshots.Quantile;
+import io.prometheus.metrics.model.snapshots.Quantiles;
 import io.prometheus.metrics.model.snapshots.SummarySnapshot;
 
-class PrometheusTimer extends AbstractPrometheusSummary implements LabelledMetric<OperationTimer> {
+class PrometheusExternalSummary extends AbstractPrometheusSummary {
 
-  private final io.prometheus.metrics.core.metrics.Summary summary;
+  private final SummaryWithCallback summary;
 
-  public PrometheusTimer(
+  public PrometheusExternalSummary(
       final MetricCategory category,
       final String name,
       final String help,
-      final Map<Double, Double> quantiles,
-      final String... labelNames) {
+      final Supplier<ExternalSummary> summarySupplier) {
     super(category, name);
-    final var summaryBuilder =
-        Summary.builder().name(this.prefixedName).help(help).labelNames(labelNames);
-    quantiles.forEach(summaryBuilder::quantile);
-    this.summary = summaryBuilder.build();
-  }
-
-  @Override
-  public OperationTimer labels(final String... labels) {
-    final DistributionDataPoint metric = summary.labelValues(labels);
-    return () -> metric.startTimer()::observeDuration;
+    summary =
+        SummaryWithCallback.builder()
+            .name(name)
+            .help(help)
+            .callback(
+                cb -> {
+                  final var externalSummary = summarySupplier.get();
+                  final var quantilesBuilder = Quantiles.builder();
+                  externalSummary.quantiles().stream()
+                      .map(pq -> new Quantile(pq.quantile(), pq.value()))
+                      .forEach(quantilesBuilder::quantile);
+                  cb.call(externalSummary.count(), externalSummary.sum(), quantilesBuilder.build());
+                })
+            .build();
   }
 
   @Override

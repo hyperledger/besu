@@ -14,68 +14,110 @@
  */
 package org.hyperledger.besu.metrics.prometheus;
 
+import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
+import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.DoubleSupplier;
+import java.util.stream.Stream;
 
-import io.prometheus.client.Collector;
+import io.prometheus.metrics.core.metrics.GaugeWithCallback;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
+import io.prometheus.metrics.model.snapshots.GaugeSnapshot;
 
 /** The Prometheus gauge. */
-public class PrometheusGauge extends Collector implements LabelledGauge {
-  private final String metricName;
-  private final String help;
-  private final List<String> labelNames;
-  private final Map<List<String>, DoubleSupplier> observationsMap = new ConcurrentHashMap<>();
+public class PrometheusGauge extends CategorizedPrometheusCollector implements LabelledGauge {
+  private final GaugeWithCallback gauge;
+  private final Map<List<String>, CallbackData> labelledCallbackData = new ConcurrentHashMap<>();
 
   /**
-   * Instantiates a new Prometheus gauge.
+   * Instantiates a new labelled Prometheus gauge.
    *
-   * @param metricName the metric name
+   * @param category the {@link MetricCategory} this gauge is assigned to
+   * @param name the metric name
    * @param help the help
    * @param labelNames the label names
    */
   public PrometheusGauge(
-      final String metricName, final String help, final List<String> labelNames) {
-    this.metricName = metricName;
-    this.help = help;
-    this.labelNames = labelNames;
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    super(category, name);
+    this.gauge =
+        GaugeWithCallback.builder()
+            .name(this.prefixedName)
+            .help(help)
+            .labelNames(labelNames)
+            .callback(this::callback)
+            .build();
+  }
+
+  /**
+   * Instantiates a new unlabelled Prometheus gauge.
+   *
+   * @param category the {@link MetricCategory} this gauge is assigned to
+   * @param name the metric name
+   * @param help the help
+   * @param valueSupplier the supplier of the value
+   */
+  public PrometheusGauge(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final DoubleSupplier valueSupplier) {
+    this(category, name, help);
+    labelledCallbackData.put(List.of(), new CallbackData(valueSupplier, new String[0]));
+  }
+
+  private void callback(final GaugeWithCallback.Callback callback) {
+    labelledCallbackData
+        .values()
+        .forEach(
+            callbackData ->
+                callback.call(callbackData.valueSupplier.getAsDouble(), callbackData.labelValues));
   }
 
   @Override
   public synchronized void labels(final DoubleSupplier valueSupplier, final String... labelValues) {
-    validateLabelsCardinality(labelValues);
-    if (observationsMap.putIfAbsent(List.of(labelValues), valueSupplier) != null) {
-      final String labelValuesString = String.join(",", labelValues);
+    final var valueList = List.of(labelValues);
+    if (labelledCallbackData.containsKey(valueList)) {
       throw new IllegalArgumentException(
-          String.format("A gauge has already been created for label values %s", labelValuesString));
+          String.format("A gauge has already been created for label values %s", valueList));
     }
+
+    labelledCallbackData.put(valueList, new CallbackData(valueSupplier, labelValues));
   }
 
   @Override
-  public boolean isLabelsObserved(final String... labelValues) {
-    validateLabelsCardinality(labelValues);
-    return observationsMap.containsKey(List.of(labelValues));
+  public String getName() {
+    return gauge.getPrometheusName();
   }
 
   @Override
-  public List<MetricFamilySamples> collect() {
-    final List<MetricFamilySamples.Sample> samples = new ArrayList<>();
-    observationsMap.forEach(
-        (labels, valueSupplier) ->
-            samples.add(
-                new MetricFamilySamples.Sample(
-                    metricName, labelNames, labels, valueSupplier.getAsDouble())));
-    return List.of(new MetricFamilySamples(metricName, Type.GAUGE, help, samples));
+  public void register(final PrometheusRegistry registry) {
+    registry.register(gauge);
   }
 
-  private void validateLabelsCardinality(final String... labelValues) {
-    if (labelValues.length != labelNames.size()) {
-      throw new IllegalArgumentException(
-          "Label values and label names must be the same cardinality");
-    }
+  @Override
+  public void unregister(final PrometheusRegistry registry) {
+    registry.unregister(gauge);
   }
+
+  private Observation convertToObservation(final GaugeSnapshot.GaugeDataPointSnapshot sample) {
+    final List<String> labelValues = PrometheusCollector.getLabelValues(sample.getLabels());
+
+    return new Observation(category, name, sample.getValue(), labelValues);
+  }
+
+  @Override
+  public Stream<Observation> streamObservations() {
+    final var snapshot = gauge.collect();
+    return snapshot.getDataPoints().stream().map(this::convertToObservation);
+  }
+
+  private record CallbackData(DoubleSupplier valueSupplier, String[] labelValues) {}
 }
