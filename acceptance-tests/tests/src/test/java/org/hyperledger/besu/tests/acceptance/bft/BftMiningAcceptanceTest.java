@@ -150,8 +150,11 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
     cluster.verify(receiver.balanceEquals(3));
   }
 
-  @Test
-  public void shouldMineOnSingleNodeWithFreeGas_Shanghai() throws Exception {
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("factoryFunctions")
+  public void shouldMineOnSingleNodeWithFreeGas_Shanghai(
+      final String testName, final BftAcceptanceTestParameterization nodeFactory) throws Exception {
+    setUp(testName, nodeFactory);
     final BesuNode minerNode = nodeFactory.createNode(besu, "miner1");
     updateGenesisConfigToShanghai(minerNode, true);
 
@@ -177,8 +180,6 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
     cluster.verify(receiver.balanceEquals(3));
   }
 
-  @Test
-  public void shouldMineOnMultipleNodes() throws Exception {
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("factoryFunctions")
   public void shouldMineOnMultipleNodes(
