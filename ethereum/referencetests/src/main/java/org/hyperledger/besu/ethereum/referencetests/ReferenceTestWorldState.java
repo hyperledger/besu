@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -89,6 +90,8 @@ public interface ReferenceTestWorldState extends MutableWorldState {
   }
 
   ReferenceTestWorldState copy();
+
+  void processExtraStorageFormatValidation(final BlockHeader blockHeader);
 
   @JsonCreator
   static ReferenceTestWorldState create(final Map<String, AccountMock> accounts) {

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
@@ -27,28 +28,41 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-public class DefaultReferenceTestWorldState extends ForestMutableWorldState
+public class ForestReferenceTestWorldState extends ForestMutableWorldState
     implements ReferenceTestWorldState {
 
-  DefaultReferenceTestWorldState() {
+  ForestReferenceTestWorldState() {
     super(
         new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
         EvmConfiguration.DEFAULT);
   }
 
-  public DefaultReferenceTestWorldState(final WorldState worldState) {
+  public ForestReferenceTestWorldState(final WorldState worldState) {
     super(worldState, EvmConfiguration.DEFAULT);
   }
 
   @Override
   public ReferenceTestWorldState copy() {
-    return new DefaultReferenceTestWorldState(this);
+    return new ForestReferenceTestWorldState(this);
+  }
+
+  /**
+   * Executes additional validation checks that are specific to the storage format.
+   *
+   * <p>Depending on the storage format (e.g., Bonsai, etc.), this method performs additional checks
+   * to validate the state. This could include validating the TrieLog and rolling for Bonsai, or
+   * potentially other checks for other modes. This method is intended to be used before the state
+   * root has been validated, to ensure the integrity of other aspects of the state.
+   */
+  @Override
+  public void processExtraStorageFormatValidation(final BlockHeader blockHeader) {
+    // nothing more to verify with forest
   }
 
   @JsonCreator
   public static ReferenceTestWorldState create(final Map<String, AccountMock> accounts) {
-    final ReferenceTestWorldState worldState = new DefaultReferenceTestWorldState();
+    final ReferenceTestWorldState worldState = new ForestReferenceTestWorldState();
     final WorldUpdater updater = worldState.updater();
 
     for (final Map.Entry<String, AccountMock> entry : accounts.entrySet()) {
