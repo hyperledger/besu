@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.chain;
 
 import static java.util.Collections.emptyList;
+import static org.hyperledger.besu.ethereum.trie.common.GenesisWorldStateProvider.createGenesisWorldState;
 
 import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -32,14 +33,10 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -78,6 +75,21 @@ public final class GenesisState {
   }
 
   /**
+   * Construct a {@link GenesisState} from a JSON string.
+   *
+   * @param dataStorageFormat A {@link DataStorageFormat} describing the storage format to use
+   * @param json A JSON string describing the genesis block
+   * @param protocolSchedule A protocol Schedule associated with
+   * @return A new {@link GenesisState}.
+   */
+  public static GenesisState fromJson(
+      final DataStorageFormat dataStorageFormat,
+      final String json,
+      final ProtocolSchedule protocolSchedule) {
+    return fromConfig(dataStorageFormat, GenesisConfigFile.fromConfig(json), protocolSchedule);
+  }
+
+  /**
    * Construct a {@link GenesisState} from a JSON object.
    *
    * @param config A {@link GenesisConfigFile} describing the genesis block.
@@ -86,10 +98,28 @@ public final class GenesisState {
    */
   public static GenesisState fromConfig(
       final GenesisConfigFile config, final ProtocolSchedule protocolSchedule) {
+    return fromConfig(DataStorageFormat.FOREST, config, protocolSchedule);
+  }
+
+  /**
+   * Construct a {@link GenesisState} from a JSON object.
+   *
+   * @param dataStorageFormat A {@link DataStorageFormat} describing the storage format to use
+   * @param config A {@link GenesisConfigFile} describing the genesis block.
+   * @param protocolSchedule A protocol Schedule associated with
+   * @return A new {@link GenesisState}.
+   */
+  public static GenesisState fromConfig(
+      final DataStorageFormat dataStorageFormat,
+      final GenesisConfigFile config,
+      final ProtocolSchedule protocolSchedule) {
     final List<GenesisAccount> genesisAccounts = parseAllocations(config).toList();
     final Block block =
         new Block(
-            buildHeader(config, calculateGenesisStateHash(genesisAccounts), protocolSchedule),
+            buildHeader(
+                config,
+                calculateGenesisStateHash(dataStorageFormat, genesisAccounts),
+                protocolSchedule),
             buildBody(config));
     return new GenesisState(block, genesisAccounts);
   }
@@ -133,15 +163,14 @@ public final class GenesisState {
     target.persist(rootHeader);
   }
 
-  private static Hash calculateGenesisStateHash(final List<GenesisAccount> genesisAccounts) {
-    final ForestWorldStateKeyValueStorage stateStorage =
-        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStatePreimageKeyValueStorage preimageStorage =
-        new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
-    final MutableWorldState worldState =
-        new ForestMutableWorldState(stateStorage, preimageStorage, EvmConfiguration.DEFAULT);
-    writeAccountsTo(worldState, genesisAccounts, null);
-    return worldState.rootHash();
+  private static Hash calculateGenesisStateHash(
+      final DataStorageFormat dataStorageFormat, final List<GenesisAccount> genesisAccounts) {
+    try (var worldState = createGenesisWorldState(dataStorageFormat)) {
+      writeAccountsTo(worldState, genesisAccounts, null);
+      return worldState.rootHash();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static BlockHeader buildHeader(
