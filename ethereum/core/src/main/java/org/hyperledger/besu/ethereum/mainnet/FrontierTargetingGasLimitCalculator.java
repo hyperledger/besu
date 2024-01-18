@@ -26,13 +26,12 @@ public class FrontierTargetingGasLimitCalculator extends AbstractGasLimitSpecifi
   private final long maxConstantAdjustmentIncrement;
 
   public FrontierTargetingGasLimitCalculator() {
-    this(DEFAULT_MAX_CONSTANT_ADMUSTMENT_INCREMENT, DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT);
+    this(DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT);
   }
 
   public FrontierTargetingGasLimitCalculator(
-      final long maxConstantAdjustmentIncrement, final long minGasLimit, final long maxGasLimit) {
+      final long minGasLimit, final long maxGasLimit) {
     super(minGasLimit, maxGasLimit);
-    this.maxConstantAdjustmentIncrement = maxConstantAdjustmentIncrement;
   }
 
   @Override
@@ -56,7 +55,7 @@ public class FrontierTargetingGasLimitCalculator extends AbstractGasLimitSpecifi
 
   private long adjustAmount(final long currentGasLimit) {
     final long maxProportionalAdjustmentLimit = Math.max(deltaBound(currentGasLimit) - 1, 0);
-    return Math.min(maxConstantAdjustmentIncrement, maxProportionalAdjustmentLimit);
+    return maxProportionalAdjustmentLimit;
   }
 
   protected long safeAddAtMost(final long gasLimit) {
