@@ -28,7 +28,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -151,7 +150,7 @@ public class GeneralStateReferenceTestTools {
       return;
     }
 
-    final MutableWorldState worldState = initialWorldState.copy();
+    final ReferenceTestWorldState worldState = initialWorldState.copy();
     // Several of the GeneralStateTests check if the transaction could potentially
     // consume more gas than is left for the block it's attempted to be included in.
     // This check is performed within the `BlockImporter` rather than inside the
@@ -193,6 +192,7 @@ public class GeneralStateReferenceTestTools {
       worldStateUpdater.deleteAccount(coinbase.getAddress());
     }
     worldStateUpdater.commit();
+    worldState.processExtraStorageFormatValidation(blockHeader);
     worldState.persist(blockHeader);
 
     // Check the world state root hash.
