@@ -29,8 +29,7 @@ public class FrontierTargetingGasLimitCalculator extends AbstractGasLimitSpecifi
     this(DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT);
   }
 
-  public FrontierTargetingGasLimitCalculator(
-      final long minGasLimit, final long maxGasLimit) {
+  public FrontierTargetingGasLimitCalculator(final long minGasLimit, final long maxGasLimit) {
     super(minGasLimit, maxGasLimit);
   }
 
