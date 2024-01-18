@@ -29,7 +29,6 @@ import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ENGINE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
@@ -96,6 +95,7 @@ import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFact
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
+import org.hyperledger.besu.util.number.PositiveNumber;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
 import java.io.File;
@@ -846,6 +846,8 @@ public class BesuCommandTest extends CommandTestAbstract {
       } else if (Fraction.class.isAssignableFrom(optionSpec.type())) {
         tomlResult.getDouble(tomlKey);
       } else if (Percentage.class.isAssignableFrom(optionSpec.type())) {
+        tomlResult.getLong(tomlKey);
+      } else if (PositiveNumber.class.isAssignableFrom(optionSpec.type())) {
         tomlResult.getLong(tomlKey);
       } else {
         tomlResult.getString(tomlKey);
@@ -1975,16 +1977,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "The `--ethstats-contact` requires ethstats server URL to be provided. Either remove --ethstats-contact or provide a URL (via --ethstats=nodename:secret@host:port)");
-  }
-
-  @Test
-  public void privacyOnchainGroupsEnabledCannotBeUsedWithPrivacyFlexibleGroupsEnabled() {
-    parseCommand("--privacy-onchain-groups-enabled", "--privacy-flexible-groups-enabled");
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "The `--privacy-onchain-groups-enabled` option is deprecated and you should only use `--privacy-flexible-groups-enabled`");
   }
 
   @Test
@@ -4201,46 +4193,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
     assertThat(privacyParameters.isFlexiblePrivacyGroupsEnabled()).isEqualTo(false);
-  }
-
-  @Test
-  public void onchainPrivacyGroupEnabledFlagValueIsSet() {
-    parseCommand(
-        "--privacy-enabled",
-        "--privacy-public-key-file",
-        ENCLAVE_PUBLIC_KEY_PATH,
-        "--privacy-onchain-groups-enabled",
-        "--min-gas-price",
-        "0");
-
-    final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
-        ArgumentCaptor.forClass(PrivacyParameters.class);
-
-    verify(mockControllerBuilder).privacyParameters(privacyParametersArgumentCaptor.capture());
-    verify(mockControllerBuilder).build();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
-    final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
-    assertThat(privacyParameters.isFlexiblePrivacyGroupsEnabled()).isEqualTo(true);
-  }
-
-  @Test
-  public void onchainPrivacyGroupEnabledOptionIsDeprecated() {
-    parseCommand(
-        "--privacy-enabled",
-        "--privacy-public-key-file",
-        ENCLAVE_PUBLIC_KEY_PATH,
-        "--privacy-onchain-groups-enabled",
-        "--min-gas-price",
-        "0");
-
-    verify(mockLogger)
-        .warn(
-            DEPRECATION_WARNING_MSG,
-            "--privacy-onchain-groups-enabled",
-            "--privacy-flexible-groups-enabled");
   }
 
   @Test
