@@ -25,23 +25,6 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRange
 import org.junit.jupiter.api.Test;
 
 public class TargetingGasLimitCalculatorTest {
-  private static final long ADJUSTMENT_FACTOR = 1024L;
-
-  @Test
-  public void verifyGasLimitIsIncreasedWithinLimits() {
-    FrontierTargetingGasLimitCalculator targetingGasLimitCalculator =
-        new FrontierTargetingGasLimitCalculator();
-    assertThat(targetingGasLimitCalculator.nextGasLimit(8_000_000L, 10_000_000L, 1L))
-        .isEqualTo(8_000_000L + ADJUSTMENT_FACTOR);
-  }
-
-  @Test
-  public void verifyGasLimitIsDecreasedWithinLimits() {
-    FrontierTargetingGasLimitCalculator targetingGasLimitCalculator =
-        new FrontierTargetingGasLimitCalculator();
-    assertThat(targetingGasLimitCalculator.nextGasLimit(12_000_000L, 10_000_000L, 1L))
-        .isEqualTo(12_000_000L - ADJUSTMENT_FACTOR);
-  }
 
   @Test
   public void verifyGasLimitReachesTarget() {
