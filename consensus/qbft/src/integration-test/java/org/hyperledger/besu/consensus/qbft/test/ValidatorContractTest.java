@@ -156,7 +156,9 @@ public class ValidatorContractTest {
             .useZeroBaseFee(true)
             .buildAndStart();
 
-    createNewBlockAsProposer(context, 1);
+    createNewBlockAsProposerFixedTime(
+        context, 1,
+        266L); // 10s ahead of genesis timestamp in genesis_validator_contract_shanghai.json
 
     final ValidatorProvider validatorProvider = context.getValidatorProvider();
     final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
@@ -413,6 +415,24 @@ public class ValidatorContractTest {
     // peers commit proposed block
     Block proposedBlock =
         context.createBlockForProposalFromChainHead(clock.instant().getEpochSecond());
+    RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
+    peers.commitForNonProposing(roundId, proposedBlock);
+
+    assertThat(context.getCurrentChainHeight()).isEqualTo(blockNumber);
+    context
+        .getController()
+        .handleNewBlockEvent(new NewChainHead(context.getBlockchain().getChainHeadHeader()));
+  }
+
+  private void createNewBlockAsProposerFixedTime(
+      final TestContext context, final long blockNumber, final long timestamp) {
+    ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(blockNumber, 0);
+
+    // trigger proposal
+    context.getController().handleBlockTimerExpiry(new BlockTimerExpiry(roundId));
+
+    // peers commit proposed block
+    Block proposedBlock = context.createBlockForProposalFromChainHead(timestamp);
     RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
     peers.commitForNonProposing(roundId, proposedBlock);
 

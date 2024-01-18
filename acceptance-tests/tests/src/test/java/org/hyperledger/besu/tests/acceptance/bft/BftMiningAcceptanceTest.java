@@ -283,7 +283,7 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
     final ObjectNode genesisConfigNode = JsonUtil.objectNodeFromString(genesisConfig.orElseThrow());
     final ObjectNode config = (ObjectNode) genesisConfigNode.get("config");
     config.remove("berlinBlock");
-    config.put("shanghaiTime", 0);
+    config.put("shanghaiTime", 100);
     config.put("zeroBaseFee", zeroBaseFeeEnabled);
     minerNode.setGenesisConfig(genesisConfigNode.toString());
   }
