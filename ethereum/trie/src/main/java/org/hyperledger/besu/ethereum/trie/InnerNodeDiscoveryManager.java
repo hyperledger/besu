@@ -97,7 +97,8 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
       final Supplier<String> errMessage) {
     final LeafNode<V> vLeafNode = super.decodeLeaf(location, path, valueRlp, errMessage);
     final Bytes concatenatePath = Bytes.concatenate(location, path);
-    if (isInRange(concatenatePath.slice(0, concatenatePath.size() - 1))) {
+    if (!concatenatePath.isEmpty()
+        && isInRange(concatenatePath.slice(0, concatenatePath.size() - 1))) {
       innerNodes.add(ImmutableInnerNode.builder().location(location).path(path).build());
     }
     return vLeafNode;

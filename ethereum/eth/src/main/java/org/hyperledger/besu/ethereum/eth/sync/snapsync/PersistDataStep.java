@@ -56,6 +56,19 @@ public class PersistDataStep {
       final WorldStateStorage.Updater updater = worldStateStorage.updater();
       for (Task<SnapDataRequest> task : tasks) {
         if (task.getData().isResponseReceived()) {
+          // enqueue child requests
+          final Stream<SnapDataRequest> childRequests =
+              task.getData().getChildRequests(downloadState, worldStateStorage, snapSyncState);
+          if (!(task.getData() instanceof TrieNodeHealingRequest)) {
+            enqueueChildren(childRequests);
+          } else {
+            if (!task.getData().isExpired(snapSyncState)) {
+              enqueueChildren(childRequests);
+            } else {
+              continue;
+            }
+          }
+
           // persist nodes
           final int persistedNodes =
               task.getData()
@@ -70,19 +83,6 @@ public class PersistDataStep {
               downloadState.getMetricsManager().notifyTrieNodesHealed(persistedNodes);
             } else {
               downloadState.getMetricsManager().notifyNodesGenerated(persistedNodes);
-            }
-          }
-
-          // enqueue child requests
-          final Stream<SnapDataRequest> childRequests =
-              task.getData().getChildRequests(downloadState, worldStateStorage, snapSyncState);
-          if (!(task.getData() instanceof TrieNodeHealingRequest)) {
-            enqueueChildren(childRequests);
-          } else {
-            if (!task.getData().isExpired(snapSyncState)) {
-              enqueueChildren(childRequests);
-            } else {
-              continue;
             }
           }
         }

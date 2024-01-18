@@ -143,13 +143,12 @@ public class RequestDataStep {
                   }
                 }
 
-                // if we received no slots, but do do get a proof of exclusion, add as a response:
+                // if we received no slots, but do get a proof of exclusion, add as a response:
                 else if (response.proofs().size() > 0 && requestTasks.size() > 0) {
                   requestTasks.stream()
-                      .findFirst()
                       .filter(task -> task instanceof StorageRangeDataRequest)
                       .map(StorageRangeDataRequest.class::cast)
-                      .ifPresent(
+                      .forEach(
                           storageRequest ->
                               storageRequest.addResponse(
                                   downloadState,

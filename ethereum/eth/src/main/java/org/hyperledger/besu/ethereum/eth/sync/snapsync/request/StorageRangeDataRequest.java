@@ -97,6 +97,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     final NodeUpdater nodeUpdater =
         (location, hash, value) -> {
           updater.putAccountStorageTrieNode(accountHash, location, hash, value);
+          nbNodesSaved.getAndIncrement();
         };
 
     StackTrie.FlatDatabaseUpdater flatDatabaseUpdater = noop();

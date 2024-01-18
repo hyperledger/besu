@@ -39,7 +39,7 @@ import org.junit.jupiter.api.Test;
 public class PersistDataStepTest {
 
   private final WorldStateStorage worldStateStorage =
-      new InMemoryKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.FOREST);
+      new InMemoryKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.BONSAI);
   private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
   private final SnapWorldDownloadState downloadState = mock(SnapWorldDownloadState.class);
 

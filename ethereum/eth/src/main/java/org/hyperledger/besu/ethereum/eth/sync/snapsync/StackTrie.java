@@ -125,7 +125,7 @@ public class StackTrie {
               Function.identity(),
               Function.identity(),
               startKeyHash,
-              keys.size() > 0 ? keys.lastKey() : Hash.LAST,
+              keys.size() > 0 ? keys.lastKey() : RangeManager.MAX_RANGE,
               true);
 
       final MerkleTrie<Bytes, Bytes> trie =

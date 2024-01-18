@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -43,7 +44,11 @@ public class StorageRangeDataRequestTest {
 
     var storageRangeRequest =
         new StorageRangeDataRequest(
-            Hash.EMPTY_TRIE_HASH, Bytes32.ZERO, Hash.EMPTY_TRIE_HASH, Bytes32.ZERO, Hash.LAST);
+            Hash.EMPTY_TRIE_HASH,
+            Bytes32.ZERO,
+            Hash.EMPTY_TRIE_HASH,
+            Bytes32.ZERO,
+            RangeManager.MAX_RANGE);
 
     var proofs = new ArrayDeque<Bytes>();
     proofs.add(0, Hash.EMPTY_TRIE_HASH);
@@ -59,7 +64,11 @@ public class StorageRangeDataRequestTest {
   public void assertEmptySlotsWithInvalidProofCompletes() {
     var storageRangeRequest =
         new StorageRangeDataRequest(
-            Hash.ZERO, Bytes32.fromHexString("0x01"), Bytes32.ZERO, Bytes32.ZERO, Hash.LAST);
+            Hash.ZERO,
+            Bytes32.fromHexString("0x01"),
+            Bytes32.ZERO,
+            Bytes32.ZERO,
+            RangeManager.MAX_RANGE);
 
     var proofs = new ArrayDeque<Bytes>();
     proofs.add(0, Hash.ZERO);
