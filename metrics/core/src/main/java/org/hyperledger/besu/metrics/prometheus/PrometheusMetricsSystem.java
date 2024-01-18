@@ -310,7 +310,7 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
     if (name.endsWith("_total")) {
       totalSuffixedCounters.add(name);
     }
-    return convertFromPrometheusName(category, name);
+    return convertToPrometheusName(category, name);
   }
 
   private String convertFromPrometheusName(final MetricCategory category, final String metricName) {
