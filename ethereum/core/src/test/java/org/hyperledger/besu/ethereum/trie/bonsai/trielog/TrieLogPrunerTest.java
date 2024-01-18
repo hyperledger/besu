@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -248,24 +247,6 @@ public class TrieLogPrunerTest {
   }
 
   @Test
-  public void onTrieLogAdded_should_not_prune_when_not_added_event() {
-    // Given
-    TrieLogPruner trieLogPruner = new TrieLogPruner(worldState, blockchain, 0, 1, false);
-    assertThat(trieLogPruner.pruneFromQueue()).isEqualTo(0);
-
-    final TrieLogLayer layer = new TrieLogLayer();
-    layer.setBlockNumber(1L);
-    layer.setBlockHash(key(1));
-    when(blockchain.getChainHeadBlockNumber()).thenReturn(1L);
-
-    // When
-    trieLogPruner.onTrieLogAdded(new TrieLogUnknownEvent(layer));
-
-    // Then
-    verify(worldState, never()).pruneTrieLog(key(1));
-  }
-
-  @Test
   public void onTrieLogAdded_should_not_prune_when_no_blockNumber() {
     // Given
     TrieLogPruner trieLogPruner = new TrieLogPruner(worldState, blockchain, 0, 1, false);
@@ -280,13 +261,6 @@ public class TrieLogPrunerTest {
 
     // Then
     verify(worldState, never()).pruneTrieLog(key(1));
-  }
-
-  record TrieLogUnknownEvent(TrieLogLayer layer) implements TrieLogEvent {
-    @Override
-    public Type getType() {
-      return Type.UNKNOWN;
-    }
   }
 
   private TrieLogPruner setupPrunerAndFinalizedBlock(
