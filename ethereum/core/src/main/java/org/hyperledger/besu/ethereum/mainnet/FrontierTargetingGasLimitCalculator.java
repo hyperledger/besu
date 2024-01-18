@@ -52,8 +52,7 @@ public class FrontierTargetingGasLimitCalculator extends AbstractGasLimitSpecifi
   }
 
   private long adjustAmount(final long currentGasLimit) {
-    final long maxProportionalAdjustmentLimit = Math.max(deltaBound(currentGasLimit) - 1, 0);
-    return maxProportionalAdjustmentLimit;
+    return Math.max(deltaBound(currentGasLimit) - 1, 0);
   }
 
   protected long safeAddAtMost(final long gasLimit) {
