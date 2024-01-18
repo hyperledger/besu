@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.trie.bonsai.trielog.NoOpTrieLogManager;
 import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -65,7 +66,8 @@ public class GenesisWorldStateProvider {
                 segmentIdentifiers -> new SegmentedInMemoryKeyValueStorage(),
                 new InMemoryKeyValueStorage(),
                 new NoOpMetricsSystem()),
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            DataStorageConfiguration.DEFAULT_CONFIG);
     return new BonsaiWorldState(
         bonsaiWorldStateKeyValueStorage,
         cachedMerkleTrieLoader,

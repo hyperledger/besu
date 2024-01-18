@@ -115,7 +115,10 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
         new BonsaiPreImageProxy.BonsaiReferenceTestPreImageProxy();
 
     final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
-        new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider(), metricsSystem, DataStorageConfiguration.DEFAULT_CONFIG);
+        new BonsaiWorldStateKeyValueStorage(
+            new InMemoryKeyValueStorageProvider(),
+            metricsSystem,
+            DataStorageConfiguration.DEFAULT_CONFIG);
 
     final BonsaiReferenceTestWorldStateStorage worldStateStorage =
         new BonsaiReferenceTestWorldStateStorage(bonsaiWorldStateKeyValueStorage, preImageProxy);
