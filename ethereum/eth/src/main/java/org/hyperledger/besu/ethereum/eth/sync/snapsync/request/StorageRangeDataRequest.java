@@ -164,6 +164,11 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
     final StackTrie.TaskElement taskElement = stackTrie.getElement(startKeyHash);
 
+    // if the proof is valid, but there are no entries, that implies the range is complete
+    if (taskElement.proofs().isEmpty()) {
+      return Stream.empty();
+    }
+
     findNewBeginElementInRange(storageRoot, taskElement.proofs(), taskElement.keys(), endKeyHash)
         .ifPresent(
             missingRightElement -> {

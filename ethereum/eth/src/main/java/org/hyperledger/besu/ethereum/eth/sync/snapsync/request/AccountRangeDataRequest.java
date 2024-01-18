@@ -167,7 +167,17 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       final SnapSyncProcessState snapSyncState) {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
 
+    if (!isProofValid.orElse(false)) {
+      return Stream.empty();
+    }
+
     final StackTrie.TaskElement taskElement = stackTrie.getElement(startKeyHash);
+
+    // if the proof is valid, but there are no entries, that implies the range is complete
+    if (taskElement.proofs().isEmpty()) {
+      return Stream.empty();
+    }
+
     // new request is added if the response does not match all the requested range
     findNewBeginElementInRange(getRootHash(), taskElement.proofs(), taskElement.keys(), endKeyHash)
         .ifPresentOrElse(
