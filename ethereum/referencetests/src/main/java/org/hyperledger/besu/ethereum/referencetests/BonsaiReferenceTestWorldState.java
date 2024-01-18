@@ -105,7 +105,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   }
 
   @Override
-  public void processExtraStorageFormatValidation(final BlockHeader blockHeader) {
+  public void processExtraStateStorageFormatValidation(final BlockHeader blockHeader) {
     if (blockHeader != null) {
       final Hash parentStateRoot = getWorldStateRootHash();
       final BonsaiReferenceTestUpdateAccumulator originalUpdater =

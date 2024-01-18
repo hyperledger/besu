@@ -56,7 +56,7 @@ public class ForestReferenceTestWorldState extends ForestMutableWorldState
    * root has been validated, to ensure the integrity of other aspects of the state.
    */
   @Override
-  public void processExtraStorageFormatValidation(final BlockHeader blockHeader) {
+  public void processExtraStateStorageFormatValidation(final BlockHeader blockHeader) {
     // nothing more to verify with forest
   }
 

@@ -192,7 +192,7 @@ public class GeneralStateReferenceTestTools {
       worldStateUpdater.deleteAccount(coinbase.getAddress());
     }
     worldStateUpdater.commit();
-    worldState.processExtraStorageFormatValidation(blockHeader);
+    worldState.processExtraStateStorageFormatValidation(blockHeader);
     worldState.persist(blockHeader);
 
     // Check the world state root hash.

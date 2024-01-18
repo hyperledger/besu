@@ -91,7 +91,7 @@ public interface ReferenceTestWorldState extends MutableWorldState {
 
   ReferenceTestWorldState copy();
 
-  void processExtraStorageFormatValidation(final BlockHeader blockHeader);
+  void processExtraStateStorageFormatValidation(final BlockHeader blockHeader);
 
   @JsonCreator
   static ReferenceTestWorldState create(final Map<String, AccountMock> accounts) {
