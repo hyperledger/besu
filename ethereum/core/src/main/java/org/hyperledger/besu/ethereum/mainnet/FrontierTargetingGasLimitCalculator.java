@@ -23,7 +23,6 @@ public class FrontierTargetingGasLimitCalculator extends AbstractGasLimitSpecifi
     implements GasLimitCalculator {
   private static final Logger LOG =
       LoggerFactory.getLogger(FrontierTargetingGasLimitCalculator.class);
-  private final long maxConstantAdjustmentIncrement;
 
   public FrontierTargetingGasLimitCalculator() {
     this(DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT);
