@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.flat.FlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
@@ -81,9 +80,7 @@ class StorageFlatDatabaseHealingRangeRequestTest {
     final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
     worldStateStorage =
         new BonsaiWorldStateKeyValueStorage(
-            storageProvider,
-            new FlatDbStrategyProvider(
-                new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+            storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
     proofProvider = new WorldStateProofProvider(worldStateStorage);
     trie =
         TrieGenerator.generateTrie(

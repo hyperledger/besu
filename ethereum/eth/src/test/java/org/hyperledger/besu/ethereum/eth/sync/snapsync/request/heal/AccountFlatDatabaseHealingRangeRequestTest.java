@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.flat.FlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -182,9 +181,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
 
     final WorldStateStorage worldStateStorage =
         new BonsaiWorldStateKeyValueStorage(
-            storageProvider,
-            new FlatDbStrategyProvider(
-                new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+            storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
     final WorldStateProofProvider proofProvider = new WorldStateProofProvider(worldStateStorage);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);
@@ -239,9 +236,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
 
     final WorldStateStorage worldStateStorage =
         new BonsaiWorldStateKeyValueStorage(
-            storageProvider,
-            new FlatDbStrategyProvider(
-                new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+            storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
     final WorldStateProofProvider proofProvider = new WorldStateProofProvider(worldStateStorage);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);

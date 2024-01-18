@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.flat.FlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogAddedEvent;
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogPruner;
@@ -123,8 +122,8 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
         new BonsaiReferenceTestWorldStateStorage(
             new BonsaiWorldStateKeyValueStorage(
                 new InMemoryKeyValueStorageProvider(),
-                new FlatDbStrategyProvider(
-                    new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)),
+                new NoOpMetricsSystem(),
+                DataStorageConfiguration.DEFAULT_CONFIG),
             preImageProxy);
 
     final NoOpCachedWorldStorageManager noOpCachedWorldStorageManager =
@@ -160,8 +159,8 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
           null,
           new BonsaiWorldStateKeyValueStorage(
               new InMemoryKeyValueStorageProvider(),
-              new FlatDbStrategyProvider(
-                  new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)));
+              new NoOpMetricsSystem(),
+              DataStorageConfiguration.DEFAULT_CONFIG));
     }
 
     @SuppressWarnings({"UnsynchronizedOverridesSynchronized", "squid:S3551"})

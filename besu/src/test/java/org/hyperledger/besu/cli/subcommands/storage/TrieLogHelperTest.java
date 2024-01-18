@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.flat.FlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -77,9 +76,7 @@ class TrieLogHelperTest {
 
     inMemoryWorldState =
         new BonsaiWorldStateKeyValueStorage(
-            storageProvider,
-            new FlatDbStrategyProvider(
-                new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+            storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
 
     var updater = inMemoryWorldState.updater();
     updater

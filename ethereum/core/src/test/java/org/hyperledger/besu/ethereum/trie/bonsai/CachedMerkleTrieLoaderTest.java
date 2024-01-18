@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.flat.FlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
@@ -52,9 +51,7 @@ class CachedMerkleTrieLoaderTest {
   private final BonsaiWorldStateKeyValueStorage inMemoryWorldState =
       Mockito.spy(
           new BonsaiWorldStateKeyValueStorage(
-              storageProvider,
-              new FlatDbStrategyProvider(
-                  new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG)));
+              storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
 
   final List<Address> accounts =
       List.of(Address.fromHexString("0xdeadbeef"), Address.fromHexString("0xdeadbeee"));
@@ -78,8 +75,8 @@ class CachedMerkleTrieLoaderTest {
     final BonsaiWorldStateKeyValueStorage emptyStorage =
         new BonsaiWorldStateKeyValueStorage(
             new InMemoryKeyValueStorageProvider(),
-            new FlatDbStrategyProvider(
-                new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+            new NoOpMetricsSystem(),
+            DataStorageConfiguration.DEFAULT_CONFIG);
     StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
@@ -119,8 +116,8 @@ class CachedMerkleTrieLoaderTest {
     final BonsaiWorldStateKeyValueStorage emptyStorage =
         new BonsaiWorldStateKeyValueStorage(
             new InMemoryKeyValueStorageProvider(),
-            new FlatDbStrategyProvider(
-                new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+            new NoOpMetricsSystem(),
+            DataStorageConfiguration.DEFAULT_CONFIG);
     final StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->

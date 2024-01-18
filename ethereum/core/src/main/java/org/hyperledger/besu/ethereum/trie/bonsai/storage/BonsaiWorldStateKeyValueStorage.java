@@ -26,11 +26,13 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.flat.FlatDbStrategyProvider;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -74,14 +76,17 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   protected final Subscribers<BonsaiStorageSubscriber> subscribers = Subscribers.create();
 
   public BonsaiWorldStateKeyValueStorage(
-      final StorageProvider provider, final FlatDbStrategyProvider flatDbStrategyProvider) {
+      final StorageProvider provider,
+      final MetricsSystem metricsSystem,
+      final DataStorageConfiguration dataStorageConfiguration) {
     this.composedWorldStateStorage =
         provider.getStorageBySegmentIdentifiers(
             List.of(
                 ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE));
     this.trieLogStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
-    this.flatDbStrategyProvider = flatDbStrategyProvider;
+    this.flatDbStrategyProvider =
+        new FlatDbStrategyProvider(metricsSystem, dataStorageConfiguration);
     flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
   }
 
