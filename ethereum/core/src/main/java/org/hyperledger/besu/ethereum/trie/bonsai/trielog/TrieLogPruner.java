@@ -170,10 +170,8 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
   @Override
   public void onTrieLogAdded(final TrieLogEvent event) {
     if (TrieLogEvent.Type.ADDED.equals(event.getType())) {
-      final TrieLogAddedEvent addedEvent = (TrieLogAddedEvent) event;
-
-      final Hash blockHash = addedEvent.layer().getBlockHash();
-      final Optional<Long> blockNumber = addedEvent.layer().getBlockNumber();
+      final Hash blockHash = event.layer().getBlockHash();
+      final Optional<Long> blockNumber = event.layer().getBlockNumber();
       if (blockNumber.isPresent()) {
         addToPruneQueue(blockNumber.get(), blockHash);
         pruneFromQueue();
