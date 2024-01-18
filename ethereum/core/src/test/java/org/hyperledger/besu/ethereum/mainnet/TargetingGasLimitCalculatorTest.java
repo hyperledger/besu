@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRange
 import org.junit.jupiter.api.Test;
 
 public class TargetingGasLimitCalculatorTest {
+  private static final long ADJUSTMENT_FACTOR = 1024L;
 
   @Test
   public void verifyGasLimitReachesTarget() {
