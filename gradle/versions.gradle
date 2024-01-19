@@ -192,7 +192,7 @@ dependencyManagement {
       entry 'org.jupnp'
     }
 
-    dependencySet(group: 'org.mockito', version:'4.11.0') {
+    dependencySet(group: 'org.mockito', version:'5.8.0') {
       entry 'mockito-core'
       entry 'mockito-junit-jupiter'
     }
@@ -204,7 +204,7 @@ dependencyManagement {
 
     dependency 'org.owasp.encoder:encoder:1.2.3'
 
-    dependency 'org.rocksdb:rocksdbjni:8.9.1'
+    dependency 'org.rocksdb:rocksdbjni:8.3.2' // 8.9.1 causes a bug with a FOREST canary
 
     dependencySet(group: 'org.slf4j', version:'2.0.10') {
       entry 'slf4j-api'
@@ -231,6 +231,6 @@ dependencyManagement {
 
     dependency 'org.yaml:snakeyaml:2.0'
 
-    dependency 'tech.pegasys.discovery:discovery:22.2.0'
+    dependency 'tech.pegasys.discovery:discovery:22.12.0'
   }
 }
