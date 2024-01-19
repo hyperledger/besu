@@ -40,8 +40,12 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,9 +61,6 @@ class TrieLogHelperTest {
 
   @Mock private MutableBlockchain blockchain;
 
-  @TempDir static Path dataDir;
-
-  Path test;
   static BlockHeader blockHeader1;
   static BlockHeader blockHeader2;
   static BlockHeader blockHeader3;
@@ -114,7 +115,7 @@ class TrieLogHelperTest {
   }
 
   @Test
-  public void prune() throws IOException {
+  public void prune(final @TempDir Path dataDir) throws IOException {
     Files.createDirectories(dataDir.resolve("database"));
 
     DataStorageConfiguration dataStorageConfiguration =
@@ -157,7 +158,7 @@ class TrieLogHelperTest {
   }
 
   @Test
-  public void cantPruneIfNoFinalizedIsFound() {
+  public void cantPruneIfNoFinalizedIsFound(final @TempDir Path dataDir) {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
@@ -179,7 +180,7 @@ class TrieLogHelperTest {
   }
 
   @Test
-  public void cantPruneIfUserRetainsMoreLayerThanExistingChainLength() {
+  public void cantPruneIfUserRetainsMoreLayerThanExistingChainLength(final @TempDir Path dataDir) {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
@@ -200,7 +201,7 @@ class TrieLogHelperTest {
   }
 
   @Test
-  public void cantPruneIfUserRequiredFurtherThanFinalized() {
+  public void cantPruneIfUserRequiredFurtherThanFinalized(final @TempDir Path dataDir) {
 
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
@@ -222,7 +223,7 @@ class TrieLogHelperTest {
   }
 
   @Test
-  public void exceptionWhileSavingFileStopsPruneProcess() throws IOException {
+  public void exceptionWhileSavingFileStopsPruneProcess(final @TempDir Path dataDir) {
 
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
@@ -258,7 +259,7 @@ class TrieLogHelperTest {
   }
 
   @Test
-  public void exportedTrieMatchesDbTrieLog() throws IOException {
+  public void exportedTrieMatchesDbTrieLog(final @TempDir Path dataDir) throws IOException {
     TrieLogHelper.exportTrieLog(
         inMemoryWorldState,
         singletonList(blockHeader1.getHash()),
@@ -277,7 +278,31 @@ class TrieLogHelperTest {
   }
 
   @Test
-  public void importedTrieLogMatchesDbTrieLog() throws IOException {
+  public void exportedMultipleTriesMatchDbTrieLogs(final @TempDir Path dataDir) throws IOException {
+    TrieLogHelper.exportTrieLog(
+        inMemoryWorldState,
+        List.of(blockHeader1.getHash(), blockHeader2.getHash(), blockHeader3.getHash()),
+        dataDir.resolve("trie-log-dump"));
+
+    var trieLogs =
+        TrieLogHelper.readTrieLogsAsRlpFromFile(dataDir.resolve("trie-log-dump").toString())
+            .entrySet()
+            .stream()
+            .collect(Collectors.toMap(e -> Bytes.wrap(e.getKey()), Map.Entry::getValue));
+
+    assertArrayEquals(
+        trieLogs.get(blockHeader1.getHash()),
+        inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get());
+    assertArrayEquals(
+        trieLogs.get(blockHeader2.getHash()),
+        inMemoryWorldState.getTrieLog(blockHeader2.getHash()).get());
+    assertArrayEquals(
+        trieLogs.get(blockHeader3.getHash()),
+        inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get());
+  }
+
+  @Test
+  public void importedTrieLogMatchesDbTrieLog(final @TempDir Path dataDir) throws IOException {
     StorageProvider tempStorageProvider = new InMemoryKeyValueStorageProvider();
     BonsaiWorldStateKeyValueStorage inMemoryWorldState2 =
         new BonsaiWorldStateKeyValueStorage(tempStorageProvider, new NoOpMetricsSystem());
@@ -298,5 +323,35 @@ class TrieLogHelperTest {
     assertArrayEquals(
         inMemoryWorldState2.getTrieLog(blockHeader1.getHash()).get(),
         inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get());
+  }
+
+  @Test
+  public void importedMultipleTriesMatchDbTrieLogs(final @TempDir Path dataDir) throws IOException {
+    StorageProvider tempStorageProvider = new InMemoryKeyValueStorageProvider();
+    BonsaiWorldStateKeyValueStorage inMemoryWorldState2 =
+        new BonsaiWorldStateKeyValueStorage(tempStorageProvider, new NoOpMetricsSystem());
+
+    TrieLogHelper.exportTrieLog(
+        inMemoryWorldState,
+        List.of(blockHeader1.getHash(), blockHeader2.getHash(), blockHeader3.getHash()),
+        dataDir.resolve("trie-log-dump"));
+
+    var trieLog =
+        TrieLogHelper.readTrieLogsAsRlpFromFile(dataDir.resolve("trie-log-dump").toString());
+    var updater = inMemoryWorldState2.updater();
+
+    trieLog.forEach((k, v) -> updater.getTrieLogStorageTransaction().put(k, v));
+
+    updater.getTrieLogStorageTransaction().commit();
+
+    assertArrayEquals(
+        inMemoryWorldState2.getTrieLog(blockHeader1.getHash()).get(),
+        inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get());
+    assertArrayEquals(
+        inMemoryWorldState2.getTrieLog(blockHeader2.getHash()).get(),
+        inMemoryWorldState.getTrieLog(blockHeader2.getHash()).get());
+    assertArrayEquals(
+        inMemoryWorldState2.getTrieLog(blockHeader3.getHash()).get(),
+        inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get());
   }
 }
