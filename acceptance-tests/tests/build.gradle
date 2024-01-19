@@ -55,7 +55,6 @@ dependencies {
   testImplementation project(':testutil')
   testImplementation project(':util')
 
-  testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
   testImplementation 'commons-io:commons-io'
   testImplementation 'io.grpc:grpc-all'
   testImplementation 'io.grpc:grpc-core'
@@ -84,6 +83,7 @@ dependencies {
   testImplementation 'org.web3j:abi'
   testImplementation 'org.web3j:besu'
   testImplementation 'org.web3j:core'
+  testImplementation 'org.wiremock:wiremock'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
