@@ -28,8 +28,13 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Collection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** The Message validator factory. */
 public class MessageValidatorFactory {
+
+  private static final Logger LOG = LoggerFactory.getLogger(MessageValidatorFactory.class);
 
   private final ProposerSelector proposerSelector;
   private final ProtocolContext protocolContext;
@@ -62,6 +67,13 @@ public class MessageValidatorFactory {
         .getValidatorsAfterBlock(parentHeader);
   }
 
+  private Collection<Address> getValidatorsForBlock(final BlockHeader parentHeader) {
+    return protocolContext
+        .getConsensusContext(BftContext.class)
+        .getValidatorProvider()
+        .getValidatorsForBlock(parentHeader);
+  }
+
   private SignedDataValidator createSignedDataValidator(
       final ConsensusRoundIdentifier roundIdentifier, final BlockHeader parentHeader) {
 
@@ -83,6 +95,18 @@ public class MessageValidatorFactory {
     final BlockValidator blockValidator =
         protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockValidator();
     final Collection<Address> validators = getValidatorsAfterBlock(parentHeader);
+    final Collection<Address> previousValidators = getValidatorsForBlock(parentHeader);
+
+    // Log any change in validators
+    if (!(validators.containsAll(previousValidators))
+        || !(previousValidators.containsAll(validators))) {
+      LOG.info(
+          "Validator list change. Previous chain height {}: {}. Current chain height {}: {}.",
+          parentHeader.getNumber(),
+          previousValidators,
+          parentHeader.getNumber() + 1,
+          validators);
+    }
 
     final BftBlockInterface bftBlockInterface =
         protocolContext.getConsensusContext(BftContext.class).getBlockInterface();

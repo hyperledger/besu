@@ -29,8 +29,13 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Collection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** The Message validator factory. */
 public class MessageValidatorFactory {
+
+  private static final Logger LOG = LoggerFactory.getLogger(MessageValidatorFactory.class);
 
   private final ProposerSelector proposerSelector;
   private final BftProtocolSchedule protocolSchedule;
@@ -63,6 +68,13 @@ public class MessageValidatorFactory {
         .getValidatorsAfterBlock(parentHeader);
   }
 
+  private Collection<Address> getValidatorsForBlock(final BlockHeader parentHeader) {
+    return protocolContext
+        .getConsensusContext(BftContext.class)
+        .getValidatorProvider()
+        .getValidatorsForBlock(parentHeader);
+  }
+
   /**
    * Create round change message validator.
    *
@@ -74,6 +86,18 @@ public class MessageValidatorFactory {
       final long chainHeight, final BlockHeader parentHeader) {
 
     final Collection<Address> validatorsForHeight = getValidatorsAfterBlock(parentHeader);
+
+    // Log any change in validators
+    final Collection<Address> previousValidators = getValidatorsForBlock(parentHeader);
+    if (!(validatorsForHeight.containsAll(previousValidators))
+        || !(previousValidators.containsAll(validatorsForHeight))) {
+      LOG.info(
+          "Validator list change. Previous chain height {}: {}. Current chain height {}: {}.",
+          parentHeader.getNumber(),
+          previousValidators,
+          parentHeader.getNumber() + 1,
+          validatorsForHeight);
+    }
 
     final RoundChangePayloadValidator roundChangePayloadValidator =
         new RoundChangePayloadValidator(validatorsForHeight, chainHeight);
