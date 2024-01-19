@@ -28,22 +28,6 @@ public class TargetingGasLimitCalculatorTest {
   private static final long ADJUSTMENT_FACTOR = 1024L;
 
   @Test
-  public void verifyGasLimitIsIncreasedWithinLimits() {
-    FrontierTargetingGasLimitCalculator targetingGasLimitCalculator =
-        new FrontierTargetingGasLimitCalculator();
-    assertThat(targetingGasLimitCalculator.nextGasLimit(8_000_000L, 10_000_000L, 1L))
-        .isEqualTo(8_000_000L + ADJUSTMENT_FACTOR);
-  }
-
-  @Test
-  public void verifyGasLimitIsDecreasedWithinLimits() {
-    FrontierTargetingGasLimitCalculator targetingGasLimitCalculator =
-        new FrontierTargetingGasLimitCalculator();
-    assertThat(targetingGasLimitCalculator.nextGasLimit(12_000_000L, 10_000_000L, 1L))
-        .isEqualTo(12_000_000L - ADJUSTMENT_FACTOR);
-  }
-
-  @Test
   public void verifyGasLimitReachesTarget() {
     final long target = 10_000_000L;
     final long offset = ADJUSTMENT_FACTOR / 2;
@@ -53,6 +37,33 @@ public class TargetingGasLimitCalculatorTest {
         .isEqualTo(target);
     assertThat(targetingGasLimitCalculator.nextGasLimit(target + offset, target, 1L))
         .isEqualTo(target);
+  }
+
+  @Test
+  public void verifyAdjustmentDeltas() {
+    assertDeltas(20000000L, 20019530L, 19980470L);
+    assertDeltas(40000000L, 40039061L, 39960939L);
+  }
+
+  private void assertDeltas(
+      final long gasLimit, final long expectedIncrease, final long expectedDecrease) {
+    FrontierTargetingGasLimitCalculator targetingGasLimitCalculator =
+        new FrontierTargetingGasLimitCalculator();
+    // increase
+    assertThat(targetingGasLimitCalculator.nextGasLimit(gasLimit, gasLimit * 2, 1L))
+        .isEqualTo(expectedIncrease);
+    // decrease
+    assertThat(targetingGasLimitCalculator.nextGasLimit(gasLimit, 0, 1L))
+        .isEqualTo(expectedDecrease);
+    // small decrease
+    assertThat(targetingGasLimitCalculator.nextGasLimit(gasLimit, gasLimit - 1, 1L))
+        .isEqualTo(gasLimit - 1);
+    // small increase
+    assertThat(targetingGasLimitCalculator.nextGasLimit(gasLimit, gasLimit + 1, 1L))
+        .isEqualTo(gasLimit + 1);
+    // no change
+    assertThat(targetingGasLimitCalculator.nextGasLimit(gasLimit, gasLimit, 1L))
+        .isEqualTo(gasLimit);
   }
 
   @Test
