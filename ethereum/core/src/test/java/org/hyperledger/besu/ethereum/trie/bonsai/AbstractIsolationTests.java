@@ -67,7 +67,9 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
@@ -146,14 +148,19 @@ public abstract class AbstractIsolationTests {
   public void createStorage() {
     bonsaiWorldStateStorage =
         (BonsaiWorldStateKeyValueStorage)
-            createKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.BONSAI);
+            createKeyValueStorageProvider()
+                .createWorldStateStorage(
+                    ImmutableDataStorageConfiguration.builder()
+                        .dataStorageFormat(DataStorageFormat.BONSAI)
+                        .bonsaiMaxLayersToLoad(
+                            DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+                        .build());
     archive =
         new BonsaiWorldStateProvider(
             bonsaiWorldStateStorage,
             blockchain,
             Optional.of(16L),
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
-            new NoOpMetricsSystem(),
             null,
             EvmConfiguration.DEFAULT);
     var ws = archive.getMutable();

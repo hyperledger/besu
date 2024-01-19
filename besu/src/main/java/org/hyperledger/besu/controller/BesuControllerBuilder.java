@@ -599,7 +599,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
 
     final WorldStateStorage worldStateStorage =
-        storageProvider.createWorldStateStorage(dataStorageConfiguration.getDataStorageFormat());
+        storageProvider.createWorldStateStorage(dataStorageConfiguration);
 
     final BlockchainStorage blockchainStorage =
         storageProvider.createBlockchainStorage(protocolSchedule, variablesStorage);
@@ -1104,7 +1104,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           blockchain,
           Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
           cachedMerkleTrieLoader,
-          metricsSystem,
           besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
           evmConfiguration);
       case FOREST -> {

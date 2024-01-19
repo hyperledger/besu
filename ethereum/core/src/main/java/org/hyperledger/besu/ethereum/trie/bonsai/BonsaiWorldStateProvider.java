@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
@@ -72,12 +71,10 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
-      final ObservableMetricsSystem metricsSystem,
       final BesuContext pluginContext,
       final EvmConfiguration evmConfiguration) {
 
-    this.cachedWorldStorageManager =
-        new CachedWorldStorageManager(this, worldStateStorage, metricsSystem);
+    this.cachedWorldStorageManager = new CachedWorldStorageManager(this, worldStateStorage);
     // TODO: de-dup constructors
     this.trieLogManager =
         new TrieLogManager(
