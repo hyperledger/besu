@@ -371,6 +371,9 @@ public class EvmToolCommand implements Runnable {
       long txGas = gas - intrinsicGasCost - accessListCost;
 
       final EVM evm = protocolSpec.getEvm();
+      if (codeBytes.isEmpty()) {
+        codeBytes = component.getWorldState().get(receiver).getCode();
+      }
       Code code = evm.getCode(Hash.hash(codeBytes), codeBytes);
       if (!code.isValid()) {
         out.println(((CodeInvalid) code).getInvalidReason());
