@@ -122,6 +122,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
         operationTracer.traceAccountCreationResult(
             frame, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       } else {
+        frame.addCreate(contractAddress);
         contract.incrementBalance(frame.getValue());
         contract.setNonce(initialContractNonce);
         contract.clearStorage();
