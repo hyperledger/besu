@@ -3,10 +3,12 @@
 ## 24.1.2-SNAPSHOT
 
 ### Breaking Changes
+- Following the OpenMetrics convention, the update Prometheus client add the `_total` suffix to every metrics of type counter, with the effect that some existing metrics have been renamed to have this suffix, if you are using the official Besu Grafana dashboard [(available here)](https://grafana.com/grafana/dashboards/16455-besu-full/), just update it to the latest revision, that accept the old and the name of the affected metrics, if you have custom dashboards or use the metrics in other ways, then you need to manually update it to support the new naming.
 
 ### Deprecations
 
 ### Additions and Improvements
+- Upgrade Prometheus and Opentelemetry dependencies [#6422](https://github.com/hyperledger/besu/pull/6422)
 
 ### Bug fixes
 - Fix the way an advertised host configured with `--p2p-host` is treated when communicating with the originator of a PING packet [#6225](https://github.com/hyperledger/besu/pull/6225)
@@ -46,6 +48,7 @@
 - Fix to gas limit delta calculations used in block production. Besu should now increment or decrement the block gas limit towards its target correctly (thanks @arbora) #6425
 
 ### Download Links
+
 
 ## 24.1.0
 
