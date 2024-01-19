@@ -2833,11 +2833,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                                   "No KeyValueStorageFactory found for key: " + name)))
               .withCommonConfiguration(pluginCommonConfiguration)
               .withMetricsSystem(getMetricsSystem())
-              .withUseCodeHashStorageMode(
-                  dataStorageOptions
-                      .toDomainObject()
-                      .getUnstable()
-                      .getBonsaiCodeStoredByCodeHashEnabled())
               .build();
     }
     return this.keyValueStorageProvider;

@@ -35,12 +35,14 @@ public class FlatDbStrategyProvider {
   // 0x666C61744462537461747573
   public static final byte[] FLAT_DB_MODE = "flatDbStatus".getBytes(StandardCharsets.UTF_8);
   private final MetricsSystem metricsSystem;
+  private final DataStorageConfiguration dataStorageConfiguration;
   protected FlatDbMode flatDbMode;
   protected FlatDbStrategy flatDbStrategy;
 
   public FlatDbStrategyProvider(
       final MetricsSystem metricsSystem, final DataStorageConfiguration dataStorageConfiguration) {
     this.metricsSystem = metricsSystem;
+    this.dataStorageConfiguration = dataStorageConfiguration;
   }
 
   public void loadFlatDbStrategy(final SegmentedKeyValueStorage composedWorldStateStorage) {
@@ -50,10 +52,12 @@ public class FlatDbStrategyProvider {
     // if  flatDbMode is not loaded or has changed, reload flatDbStrategy
     if (this.flatDbMode == null || !this.flatDbMode.equals(newFlatDbMode)) {
       this.flatDbMode = newFlatDbMode;
+      final boolean isCodeStoredByHashEnabled =
+          dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
       if (flatDbMode == FlatDbMode.FULL) {
-        this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem);
+        this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem, isCodeStoredByHashEnabled);
       } else {
-        this.flatDbStrategy = new PartialFlatDbStrategy(metricsSystem);
+        this.flatDbStrategy = new PartialFlatDbStrategy(metricsSystem, isCodeStoredByHashEnabled);
       }
     }
   }
