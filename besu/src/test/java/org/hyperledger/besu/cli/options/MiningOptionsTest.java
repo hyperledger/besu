@@ -15,8 +15,8 @@
 package org.hyperledger.besu.cli.options;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.verify;
@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.Unstable;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.util.number.Percentage;
+import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -315,35 +315,26 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   public void blockTxsSelectionMaxTimeDefaultValue() {
     internalTestSuccess(
         miningParams ->
-            assertThat(miningParams.getUnstable().getBlockTxsSelectionMaxTime())
+            assertThat(miningParams.getNonPoaBlockTxsSelectionMaxTime())
                 .isEqualTo(DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME));
   }
 
   @Test
   public void blockTxsSelectionMaxTimeOption() {
     internalTestSuccess(
-        miningParams ->
-            assertThat(miningParams.getUnstable().getBlockTxsSelectionMaxTime()).isEqualTo(1700L),
-        "--Xblock-txs-selection-max-time",
+        miningParams -> assertThat(miningParams.getBlockTxsSelectionMaxTime()).isEqualTo(1700L),
+        "--block-txs-selection-max-time",
         "1700");
-  }
-
-  @Test
-  public void blockTxsSelectionMaxTimeOutOfAllowedRange() {
-    internalTestFailure(
-        "--Xblock-txs-selection-max-time must be positive and ≤ 5000",
-        "--Xblock-txs-selection-max-time",
-        "6000");
   }
 
   @Test
   public void blockTxsSelectionMaxTimeIncompatibleWithPoaNetworks() throws IOException {
     final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
     internalTestFailure(
-        "--Xblock-txs-selection-max-time can't be used with PoA networks, see Xpoa-block-txs-selection-max-time instead",
+        "--block-txs-selection-max-time can't be used with PoA networks, see poa-block-txs-selection-max-time instead",
         "--genesis-file",
         genesisFileIBFT2.toString(),
-        "--Xblock-txs-selection-max-time",
+        "--block-txs-selection-max-time",
         "2");
   }
 
@@ -351,7 +342,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   public void poaBlockTxsSelectionMaxTimeDefaultValue() {
     internalTestSuccess(
         miningParams ->
-            assertThat(miningParams.getUnstable().getPoaBlockTxsSelectionMaxTime())
+            assertThat(miningParams.getPoaBlockTxsSelectionMaxTime())
                 .isEqualTo(DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME));
   }
 
@@ -360,27 +351,32 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
     final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
     internalTestSuccess(
         miningParams ->
-            assertThat(miningParams.getUnstable().getPoaBlockTxsSelectionMaxTime())
-                .isEqualTo(Percentage.fromInt(80)),
+            assertThat(miningParams.getPoaBlockTxsSelectionMaxTime())
+                .isEqualTo(PositiveNumber.fromInt(80)),
         "--genesis-file",
         genesisFileIBFT2.toString(),
-        "--Xpoa-block-txs-selection-max-time",
+        "--poa-block-txs-selection-max-time",
         "80");
   }
 
   @Test
-  public void poaBlockTxsSelectionMaxTimeOutOfAllowedRange() {
-    internalTestFailure(
-        "Invalid value for option '--Xpoa-block-txs-selection-max-time': cannot convert '110' to Percentage",
-        "--Xpoa-block-txs-selection-max-time",
-        "110");
+  public void poaBlockTxsSelectionMaxTimeOptionOver100Percent() throws IOException {
+    final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
+    internalTestSuccess(
+        miningParams ->
+            assertThat(miningParams.getPoaBlockTxsSelectionMaxTime())
+                .isEqualTo(PositiveNumber.fromInt(200)),
+        "--genesis-file",
+        genesisFileIBFT2.toString(),
+        "--poa-block-txs-selection-max-time",
+        "200");
   }
 
   @Test
   public void poaBlockTxsSelectionMaxTimeOnlyCompatibleWithPoaNetworks() {
     internalTestFailure(
-        "--Xpoa-block-txs-selection-max-time can be only used with PoA networks, see --Xblock-txs-selection-max-time instead",
-        "--Xpoa-block-txs-selection-max-time",
+        "--poa-block-txs-selection-max-time can be only used with PoA networks, see --block-txs-selection-max-time instead",
+        "--poa-block-txs-selection-max-time",
         "90");
   }
 
