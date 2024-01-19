@@ -49,7 +49,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -120,7 +120,9 @@ public class QbftBesuControllerBuilderTest {
                 new MainnetBlockHeaderFunctions()));
 
     lenient()
-        .when(storageProvider.createWorldStateStorageCoordinator(DataStorageFormat.FOREST))
+        .when(
+            storageProvider.createWorldStateStorageCoordinator(
+                DataStorageConfiguration.DEFAULT_CONFIG))
         .thenReturn(worldStateStorageCoordinator);
     lenient().when(worldStateKeyValueStorage.isWorldStateAvailable(any())).thenReturn(true);
     lenient()

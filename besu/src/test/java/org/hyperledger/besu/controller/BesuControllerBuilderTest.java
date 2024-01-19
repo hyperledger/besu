@@ -137,8 +137,11 @@ public class BesuControllerBuilderTest {
     when(synchronizerConfiguration.getBlockPropagationRange()).thenReturn(Range.closed(1L, 2L));
 
     lenient()
-        .when(storageProvider.createWorldStateStorageCoordinator(DataStorageFormat.FOREST))
+        .when(
+            storageProvider.createWorldStateStorageCoordinator(
+                DataStorageConfiguration.DEFAULT_CONFIG))
         .thenReturn(worldStateStorageCoordinator);
+
     lenient()
         .when(storageProvider.createWorldStatePreimageStorage())
         .thenReturn(worldStatePreimageStorage);
@@ -175,6 +178,11 @@ public class BesuControllerBuilderTest {
 
   @Test
   public void shouldDisablePruningIfBonsaiIsEnabled() {
+    DataStorageConfiguration dataStorageConfiguration =
+        ImmutableDataStorageConfiguration.builder()
+            .dataStorageFormat(DataStorageFormat.BONSAI)
+            .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+            .build();
     BonsaiWorldState mockWorldState = mock(BonsaiWorldState.class, Answers.RETURNS_DEEP_STUBS);
     doReturn(worldStateArchive)
         .when(besuControllerBuilder)
@@ -184,15 +192,10 @@ public class BesuControllerBuilderTest {
             any(CachedMerkleTrieLoader.class));
     doReturn(mockWorldState).when(worldStateArchive).getMutable();
 
-    when(storageProvider.createWorldStateStorageCoordinator(DataStorageFormat.BONSAI))
+    when(storageProvider.createWorldStateStorageCoordinator(dataStorageConfiguration))
         .thenReturn(new WorldStateStorageCoordinator(bonsaiWorldStateStorage));
-    besuControllerBuilder
-        .isPruningEnabled(true)
-        .dataStorageConfiguration(
-            ImmutableDataStorageConfiguration.builder()
-                .dataStorageFormat(DataStorageFormat.BONSAI)
-                .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
-                .build());
+    besuControllerBuilder.isPruningEnabled(true).dataStorageConfiguration(dataStorageConfiguration);
+
     besuControllerBuilder.build();
 
     verify(storageProvider, never())

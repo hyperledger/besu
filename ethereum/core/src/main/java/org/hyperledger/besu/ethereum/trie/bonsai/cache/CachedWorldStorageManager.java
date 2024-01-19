@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValu
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -41,7 +40,6 @@ public class CachedWorldStorageManager
   public static final long RETAINED_LAYERS = 512; // at least 256 + typical rollbacks
   private static final Logger LOG = LoggerFactory.getLogger(CachedWorldStorageManager.class);
   private final BonsaiWorldStateProvider archive;
-  private final ObservableMetricsSystem metricsSystem;
   private final EvmConfiguration evmConfiguration;
 
   private final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
@@ -51,26 +49,18 @@ public class CachedWorldStorageManager
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash,
-      final ObservableMetricsSystem metricsSystem,
       final EvmConfiguration evmConfiguration) {
     worldStateKeyValueStorage.subscribe(this);
     this.rootWorldStateStorage = worldStateKeyValueStorage;
     this.cachedWorldStatesByHash = cachedWorldStatesByHash;
     this.archive = archive;
-    this.metricsSystem = metricsSystem;
     this.evmConfiguration = evmConfiguration;
   }
 
   public CachedWorldStorageManager(
       final BonsaiWorldStateProvider archive,
-      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final ObservableMetricsSystem metricsSystem) {
-    this(
-        archive,
-        worldStateKeyValueStorage,
-        new ConcurrentHashMap<>(),
-        metricsSystem,
-        EvmConfiguration.DEFAULT);
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage) {
+    this(archive, worldStateKeyValueStorage, new ConcurrentHashMap<>(), EvmConfiguration.DEFAULT);
   }
 
   public synchronized void addCachedLayer(
@@ -92,8 +82,7 @@ public class CachedWorldStorageManager
         cachedBonsaiWorldView
             .get()
             .updateWorldStateStorage(
-                new BonsaiSnapshotWorldStateKeyValueStorage(
-                    forWorldState.getWorldStateStorage(), metricsSystem));
+                new BonsaiSnapshotWorldStateKeyValueStorage(forWorldState.getWorldStateStorage()));
       }
     } else {
       LOG.atDebug()
@@ -106,8 +95,7 @@ public class CachedWorldStorageManager
             blockHeader.getHash(),
             new CachedBonsaiWorldView(
                 blockHeader,
-                new BonsaiSnapshotWorldStateKeyValueStorage(
-                    forWorldState.getWorldStateStorage(), metricsSystem)));
+                new BonsaiSnapshotWorldStateKeyValueStorage(forWorldState.getWorldStateStorage())));
       } else {
         // otherwise, add the layer to the cache
         cachedWorldStatesByHash.put(

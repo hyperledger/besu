@@ -20,22 +20,19 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.bonsai.cache.NoOpCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogAddedEvent;
+import org.hyperledger.besu.ethereum.trie.bonsai.trielog.NoOpTrieLogManager;
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogManager;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -118,14 +115,17 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     final BonsaiPreImageProxy preImageProxy =
         new BonsaiPreImageProxy.BonsaiReferenceTestPreImageProxy();
 
+    final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
+        new BonsaiWorldStateKeyValueStorage(
+            new InMemoryKeyValueStorageProvider(),
+            metricsSystem,
+            DataStorageConfiguration.DEFAULT_CONFIG);
+
     final BonsaiReferenceTestWorldStateStorage worldStateKeyValueStorage =
-        new BonsaiReferenceTestWorldStateStorage(
-            new BonsaiWorldStateKeyValueStorage(
-                new InMemoryKeyValueStorageProvider(), metricsSystem),
-            preImageProxy);
+        new BonsaiReferenceTestWorldStateStorage(bonsaiWorldStateKeyValueStorage, preImageProxy);
 
     final NoOpCachedWorldStorageManager noOpCachedWorldStorageManager =
-        new NoOpCachedWorldStorageManager();
+        new NoOpCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage);
 
     final BonsaiReferenceTestWorldState worldState =
         new BonsaiReferenceTestWorldState(
@@ -148,81 +148,6 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   @Override
   public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
     return this.refTestStorage.streamAccounts(this, startKeyHash, limit);
-  }
-
-  static class NoOpCachedWorldStorageManager extends CachedWorldStorageManager {
-
-    public NoOpCachedWorldStorageManager() {
-      super(
-          null,
-          new BonsaiWorldStateKeyValueStorage(
-              new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem()),
-          new NoOpMetricsSystem());
-    }
-
-    @SuppressWarnings({"UnsynchronizedOverridesSynchronized", "squid:S3551"})
-    @Override
-    public void addCachedLayer(
-        final BlockHeader blockHeader,
-        final Hash worldStateRootHash,
-        final BonsaiWorldState forWorldState) {
-      // reference test world states are not cached
-    }
-
-    @Override
-    public boolean containWorldStateStorage(final Hash blockHash) {
-      return false;
-    }
-
-    @Override
-    public Optional<BonsaiWorldState> getWorldState(final Hash blockHash) {
-      return Optional.empty();
-    }
-
-    @Override
-    public Optional<BonsaiWorldState> getNearestWorldState(final BlockHeader blockHeader) {
-      return Optional.empty();
-    }
-
-    @Override
-    public Optional<BonsaiWorldState> getHeadWorldState(
-        final Function<Hash, Optional<BlockHeader>> hashBlockHeaderFunction) {
-      return Optional.empty();
-    }
-
-    @Override
-    public void reset() {
-      // reference test world states are not re-used
-    }
-  }
-
-  static class NoOpTrieLogManager extends TrieLogManager {
-
-    public NoOpTrieLogManager() {
-      super(null, null, 0, null, TrieLogPruner.noOpTrieLogPruner());
-    }
-
-    @SuppressWarnings({"UnsynchronizedOverridesSynchronized", "squid:S3551"})
-    @Override
-    public void saveTrieLog(
-        final BonsaiWorldStateUpdateAccumulator localUpdater,
-        final Hash forWorldStateRootHash,
-        final BlockHeader forBlockHeader,
-        final BonsaiWorldState forWorldState) {
-      // notify trie log added observers, synchronously
-      TrieLog trieLog = trieLogFactory.create(localUpdater, forBlockHeader);
-      trieLogObservers.forEach(o -> o.onTrieLogAdded(new TrieLogAddedEvent(trieLog)));
-    }
-
-    @Override
-    public long getMaxLayersToLoad() {
-      return 0;
-    }
-
-    @Override
-    public Optional<TrieLog> getTrieLogLayer(final Hash blockHash) {
-      return Optional.empty();
-    }
   }
 
   @Override
