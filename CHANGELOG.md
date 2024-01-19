@@ -1,6 +1,19 @@
 # Changelog
 
-## 24.1.1-SNAPSHOT
+## 24.1.2-SNAPSHOT
+
+### Breaking Changes
+
+### Deprecations
+
+### Additions and Improvements
+
+### Bug fixes
+- Fix the way an advertised host configured with `--p2p-host` is treated when communicating with the originator of a PING packet [#6225](https://github.com/hyperledger/besu/pull/6225)
+
+### Download Links
+
+## 24.1.1
 
 ### Breaking Changes
 - New `EXECUTION_HALTED` error returned if there is an error executing or simulating a transaction, with the reason for execution being halted. Replaces the generic `INTERNAL_ERROR` return code in certain cases which some applications may be checking for [#6343](https://github.com/hyperledger/besu/pull/6343)
@@ -29,7 +42,6 @@
 - Fix to gas limit delta calculations used in block production. Besu should now increment or decrement the block gas limit towards its target correctly (thanks @arbora) #6425
 
 ### Download Links
-
 
 ## 24.1.0
 
@@ -87,7 +99,6 @@ https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.10.3-hotfix/besu-
 ### Bug fixes
 - Fix Docker image name clash between Besu and evmtool [#6194](https://github.com/hyperledger/besu/pull/6194)
 - Fix `logIndex` in `eth_getTransactionReceipt` JSON RPC method [#6206](https://github.com/hyperledger/besu/pull/6206)
-- Fix the way an advertised host configured with `--p2p-host` is treated when communicating with the originator of a PING packet [#6225](https://github.com/hyperledger/besu/pull/6225)
 
 ### Download Links
 https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.10.3/besu-23.10.3.zip / sha256 da7ef8a6ceb88d3e327cacddcdb32218d1750b464c14165a74068f6dc6e0871a
