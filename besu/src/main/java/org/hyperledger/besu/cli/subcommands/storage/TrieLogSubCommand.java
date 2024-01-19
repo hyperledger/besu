@@ -139,8 +139,7 @@ public class TrieLogSubCommand implements Runnable {
 
     final StorageProvider storageProvider = besuController.getStorageProvider();
     final BonsaiWorldStateKeyValueStorage rootWorldStateStorage =
-        (BonsaiWorldStateKeyValueStorage)
-            storageProvider.createWorldStateStorage(DataStorageFormat.BONSAI);
+        (BonsaiWorldStateKeyValueStorage) storageProvider.createWorldStateStorage(config);
     final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
     return new TrieLogContext(config, rootWorldStateStorage, blockchain);
   }
