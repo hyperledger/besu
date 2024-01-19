@@ -54,6 +54,9 @@ public class FlatDbStrategyProvider {
       this.flatDbMode = newFlatDbMode;
       final boolean isCodeStoredByHashEnabled =
           dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
+      LOG.info(
+          "Bonsai flat db mode with code stored using code hash enabled = {}",
+          isCodeStoredByHashEnabled);
       if (flatDbMode == FlatDbMode.FULL) {
         this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem, isCodeStoredByHashEnabled);
       } else {
