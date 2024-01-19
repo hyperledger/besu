@@ -22,11 +22,13 @@ import org.hyperledger.besu.pki.PkiException;
 import java.nio.file.Path;
 import java.security.Provider;
 import java.security.Security;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.OS;
@@ -37,13 +39,19 @@ public class HardwareKeyStoreFileWrapperTest extends BaseKeyStoreFileWrapperTest
   private static final String crl = "/keystore/partner1client1/crl.pem";
   private static final String configName = "NSScrypto-partner1client1";
   private static final String validKeystorePassword = "test123";
+  private static KeyStoreWrapperTestParameter keyStoreWrapperTestParameter;
 
-  public static Collection<KeyStoreWrapperTestParameter> data() {
-    return Arrays.asList(
+  @BeforeAll
+  public static void setup() {
+    keyStoreWrapperTestParameter =
         new KeyStoreWrapperTestParameter(
             "HardwareKeyStoreWrapper[PKCS11 keystore/truststore]",
             true,
-            CryptoTestUtil.isNSSLibInstalled() ? getHardwareKeyStoreWrapper(configName) : null));
+            CryptoTestUtil.isNSSLibInstalled() ? getHardwareKeyStoreWrapper(configName) : null);
+  }
+
+  public static Collection<KeyStoreWrapperTestParameter> data() {
+    return List.of(keyStoreWrapperTestParameter);
   }
 
   private static KeyStoreWrapper getHardwareKeyStoreWrapper(final String cfgName) {
@@ -58,11 +66,10 @@ public class HardwareKeyStoreFileWrapperTest extends BaseKeyStoreFileWrapperTest
           .map(provider -> new HardwareKeyStoreWrapper(validKeystorePassword, provider, crlPath))
           .orElseGet(() -> new HardwareKeyStoreWrapper(validKeystorePassword, path, crlPath));
     } catch (final Exception e) {
-      if (OS.MAC.isCurrentOs()) {
-        // nss3 is difficult to setup on mac correctly, don't let it break unit tests for dev
-        // machines.
-        System.out.println("Failed to initialize hardware keystore " + e.getLocalizedMessage());
-      }
+      // nss3 is difficult to setup on mac, don't let it break unit tests for dev machines.
+      Assumptions.assumeFalse(
+          OS.MAC.isCurrentOs(),
+          "Failed to initialize hardware keystore: " + e.getLocalizedMessage());
       // Not a mac, probably a production build. Full failure.
       throw new PkiException("Failed to initialize hardware keystore", e);
     }
