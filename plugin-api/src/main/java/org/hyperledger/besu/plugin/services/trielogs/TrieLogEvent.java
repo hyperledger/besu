@@ -19,7 +19,7 @@ public interface TrieLogEvent {
   /** The type of the event. */
   enum Type {
     /** TrieLog added event type */
-    ADDED,
+    ADDED
   }
 
   /**
