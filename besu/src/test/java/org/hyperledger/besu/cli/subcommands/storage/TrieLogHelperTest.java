@@ -306,7 +306,8 @@ class TrieLogHelperTest {
   public void importedTrieLogMatchesDbTrieLog(final @TempDir Path dataDir) throws IOException {
     StorageProvider tempStorageProvider = new InMemoryKeyValueStorageProvider();
     BonsaiWorldStateKeyValueStorage inMemoryWorldState2 =
-        new BonsaiWorldStateKeyValueStorage(tempStorageProvider, new NoOpMetricsSystem());
+        new BonsaiWorldStateKeyValueStorage(
+            tempStorageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
 
     TrieLogHelper.exportTrieLog(
         inMemoryWorldState,
@@ -330,7 +331,8 @@ class TrieLogHelperTest {
   public void importedMultipleTriesMatchDbTrieLogs(final @TempDir Path dataDir) throws IOException {
     StorageProvider tempStorageProvider = new InMemoryKeyValueStorageProvider();
     BonsaiWorldStateKeyValueStorage inMemoryWorldState2 =
-        new BonsaiWorldStateKeyValueStorage(tempStorageProvider, new NoOpMetricsSystem());
+        new BonsaiWorldStateKeyValueStorage(
+            tempStorageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
 
     TrieLogHelper.exportTrieLog(
         inMemoryWorldState,
