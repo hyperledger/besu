@@ -184,7 +184,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           transaction ->
               mergeCoordinator
                   .getEthScheduler()
-                  .scheduleTxWorkerTask(
+                  .scheduleServiceTask(
                       () -> {
                         Address sender = transaction.getSender();
                         LOG.atTrace()
