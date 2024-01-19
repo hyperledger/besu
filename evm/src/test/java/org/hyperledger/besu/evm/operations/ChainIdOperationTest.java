@@ -27,7 +27,6 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -51,7 +50,7 @@ class ChainIdOperationTest {
   void shouldReturnChainId(final String chainIdString, final int expectedGas) {
     Bytes32 chainId = Bytes32.fromHexString(chainIdString);
     ChainIdOperation operation = new ChainIdOperation(new ConstantinopleGasCalculator(), chainId);
-    final ArgumentCaptor<Bytes> arg = ArgumentCaptor.forClass(UInt256.class);
+    final ArgumentCaptor<Bytes> arg = ArgumentCaptor.forClass(Bytes.class);
     when(messageFrame.getRemainingGas()).thenReturn(100L);
     operation.execute(messageFrame, null);
     Mockito.verify(messageFrame).getRemainingGas();

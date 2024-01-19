@@ -26,7 +26,6 @@ dependencies {
   implementation project(':testutil')
   implementation project(':util')
 
-  implementation 'com.github.tomakehurst:wiremock-jre8'
   implementation 'com.google.guava:guava'
   implementation 'com.google.dagger:dagger'
   annotationProcessor 'com.google.dagger:dagger-compiler'
@@ -45,6 +44,7 @@ dependencies {
   implementation 'org.web3j:abi'
   implementation 'org.web3j:besu'
   implementation 'org.web3j:crypto'
+  implementation 'org.wiremock:wiremock'
 
   implementation 'org.testcontainers:testcontainers'
   implementation 'org.junit.jupiter:junit-jupiter'
