@@ -293,7 +293,9 @@ public abstract class PeerDiscoveryAgent {
             .getPacketData(PingPacketData.class)
             .flatMap(PingPacketData::getFrom)
             .map(Endpoint::getHost)
-            .filter(abc -> !abc.equals("127.0.0.1"))
+            .filter(
+                fromAddr ->
+                    (!fromAddr.equals("127.0.0.1") && InetAddresses.isInetAddress(fromAddr)))
             .stream()
             .peek(
                 h ->
