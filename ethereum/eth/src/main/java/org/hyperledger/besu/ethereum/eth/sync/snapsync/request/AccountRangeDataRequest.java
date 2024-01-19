@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -166,7 +167,17 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       final SnapSyncProcessState snapSyncState) {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
 
+    if (!isProofValid.orElse(false)) {
+      return Stream.empty();
+    }
+
     final StackTrie.TaskElement taskElement = stackTrie.getElement(startKeyHash);
+
+    // if the proof is valid, but there are no entries, that implies the range is complete
+    if (taskElement.proofs().isEmpty()) {
+      return Stream.empty();
+    }
+
     // new request is added if the response does not match all the requested range
     findNewBeginElementInRange(getRootHash(), taskElement.proofs(), taskElement.keys(), endKeyHash)
         .ifPresentOrElse(
@@ -212,7 +223,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
   }
 
   @VisibleForTesting
-  public TreeMap<Bytes32, Bytes> getAccounts() {
+  public NavigableMap<Bytes32, Bytes> getAccounts() {
     return stackTrie.getElement(startKeyHash).keys();
   }
 

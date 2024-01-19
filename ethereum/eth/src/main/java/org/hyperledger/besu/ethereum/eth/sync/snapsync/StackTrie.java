@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -72,7 +73,9 @@ public class StackTrie {
   }
 
   public void addElement(
-      final Bytes32 taskIdentifier, final List<Bytes> proofs, final TreeMap<Bytes32, Bytes> keys) {
+      final Bytes32 taskIdentifier,
+      final List<Bytes> proofs,
+      final NavigableMap<Bytes32, Bytes> keys) {
     this.elementsCount.addAndGet(keys.size());
     this.elements.put(
         taskIdentifier, ImmutableTaskElement.builder().proofs(proofs).keys(keys).build());
@@ -122,7 +125,7 @@ public class StackTrie {
               Function.identity(),
               Function.identity(),
               startKeyHash,
-              keys.lastKey(),
+              keys.size() > 0 ? keys.lastKey() : RangeManager.MAX_RANGE,
               true);
 
       final MerkleTrie<Bytes, Bytes> trie =
@@ -180,7 +183,7 @@ public class StackTrie {
     }
 
     @Value.Default
-    public TreeMap<Bytes32, Bytes> keys() {
+    public NavigableMap<Bytes32, Bytes> keys() {
       return new TreeMap<>();
     }
   }

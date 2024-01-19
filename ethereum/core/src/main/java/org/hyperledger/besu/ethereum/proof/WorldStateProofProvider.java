@@ -153,7 +153,7 @@ public class WorldStateProofProvider {
       final SortedMap<Bytes32, Bytes> keys) {
 
     // check if it's monotonic increasing
-    if (!Ordering.natural().isOrdered(keys.keySet())) {
+    if (keys.size() > 1 && !Ordering.natural().isOrdered(keys.keySet())) {
       return false;
     }
 

@@ -37,8 +37,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NavigableMap;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
@@ -97,6 +97,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     final NodeUpdater nodeUpdater =
         (location, hash, value) -> {
           updater.putAccountStorageTrieNode(accountHash, location, hash, value);
+          nbNodesSaved.getAndIncrement();
         };
 
     StackTrie.FlatDatabaseUpdater flatDatabaseUpdater = noop();
@@ -119,7 +120,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   public void addResponse(
       final SnapWorldDownloadState downloadState,
       final WorldStateProofProvider worldStateProofProvider,
-      final TreeMap<Bytes32, Bytes> slots,
+      final NavigableMap<Bytes32, Bytes> slots,
       final ArrayDeque<Bytes> proofs) {
     if (!slots.isEmpty() || !proofs.isEmpty()) {
       if (!worldStateProofProvider.isValidRangeProof(
@@ -163,6 +164,11 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
     final StackTrie.TaskElement taskElement = stackTrie.getElement(startKeyHash);
 
+    // if the proof is valid, but there are no entries, that implies the range is complete
+    if (taskElement.proofs().isEmpty()) {
+      return Stream.empty();
+    }
+
     findNewBeginElementInRange(storageRoot, taskElement.proofs(), taskElement.keys(), endKeyHash)
         .ifPresent(
             missingRightElement -> {
@@ -193,7 +199,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     return storageRoot;
   }
 
-  public TreeMap<Bytes32, Bytes> getSlots() {
+  public NavigableMap<Bytes32, Bytes> getSlots() {
     return stackTrie.getElement(startKeyHash).keys();
   }
 
@@ -214,6 +220,11 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   @VisibleForTesting
   public void setProofValid(final boolean isProofValid) {
     this.isProofValid = Optional.of(isProofValid);
+  }
+
+  @VisibleForTesting
+  boolean isProofValid() {
+    return isProofValid.orElse(false);
   }
 
   public void addStackTrie(final Optional<StackTrie> maybeStackTrie) {
