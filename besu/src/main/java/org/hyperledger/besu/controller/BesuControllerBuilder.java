@@ -572,6 +572,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final GenesisState genesisState =
         GenesisState.fromConfig(dataStorageConfiguration, genesisConfig, protocolSchedule);
 
+    // System.out.println("MRW: Protocol schedule for state generation: " + protocolSchedule.listMilestones());
+
+    //System.out.println("MRW: Genesis config block numbers for state generation: " + genesisConfig.getForkBlockNumbers());
+
+    //System.out.println("MRW: Building besu controller. The genesis config is: " + genesisConfig.getConfigOptions());
+
+    //System.out.println("MRW: Building besu controller. The genesis state is: " + genesisState);
+
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
 
     final WorldStateStorage worldStateStorage =

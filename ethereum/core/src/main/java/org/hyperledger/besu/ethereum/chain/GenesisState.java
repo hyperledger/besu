@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.trie.common.GenesisWorldStateProvide
 
 import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
@@ -117,6 +118,14 @@ public final class GenesisState {
       final GenesisConfigFile config,
       final ProtocolSchedule protocolSchedule) {
     final List<GenesisAccount> genesisAccounts = parseAllocations(config).toList();
+    //try {
+      //System.out.println("MRW: Config for state generation" + JsonUtil.getJson(config, true));
+    //} catch (Exception e) {
+    //  System.out.println("Got an error: " + e);
+   // }
+    //System.out.println("MRW: Genesis accounts: " + genesisAccounts);
+    //System.out.println("MRW: Genesis state hash from calculation: " + calculateGenesisStateHash(dataStorageConfiguration, genesisAccounts));
+    //System.out.println("MRW: Config extra data: " + config.getExtraData());
     final Block block =
         new Block(
             buildHeader(
@@ -124,6 +133,9 @@ public final class GenesisState {
                 calculateGenesisStateHash(dataStorageConfiguration, genesisAccounts),
                 protocolSchedule),
             buildBody(config));
+    //System.out.println("MRW: Block header: " + block.getHeader());
+    //System.out.println("MRW: Block hash: " + block.getHash());
+    //System.out.println("MRW: Block body: " + block.getBody());
     return new GenesisState(block, genesisAccounts);
   }
 

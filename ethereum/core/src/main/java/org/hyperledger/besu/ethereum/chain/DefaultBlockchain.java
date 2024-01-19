@@ -760,6 +760,8 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   private void setGenesis(final Block genesisBlock, final String dataDirectory) {
+    //new Exception().printStackTrace();
+    //System.out.println("MRW: Setting genesis block to " + genesisBlock);
     checkArgument(
         genesisBlock.getHeader().getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER,
         "Invalid genesis block.");
@@ -781,6 +783,8 @@ public class DefaultBlockchain implements MutableBlockchain {
       if (genesisHash.isEmpty()) {
         throw new IllegalStateException("Blockchain is missing genesis block data.");
       }
+      //System.out.println("MRW: Genesis hash from the chain: " + genesisHash.get());
+      //System.out.println("MRW: Genesis hash from the file: " + genesisBlock.getHash());
       if (!genesisHash.get().equals(genesisBlock.getHash())) {
         throw new InvalidConfigurationException(
             "Supplied genesis block does not match chain data stored in "

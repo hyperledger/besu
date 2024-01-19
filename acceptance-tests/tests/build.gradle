@@ -210,6 +210,34 @@ task acceptanceTestCliqueBft(type: Test) {
   doFirst { mkdir "${buildDir}/jvmErrorLogs" }
 }
 
+task acceptanceTestBftSoak(type: Test) {
+  inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
+  include '**/bftsoak/**'
+
+  useJUnitPlatform {}
+
+  dependsOn(rootProject.installDist)
+  setSystemProperties(test.getSystemProperties())
+  systemProperty 'acctests.runBesuAsProcess', 'true'
+  systemProperty 'acctests.soakTimeMins', '20'
+  systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
+  mustRunAfter rootProject.subprojects*.test
+  description = 'Runs BFT soak test.'
+  group = 'verification'
+
+  jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"
+
+  testLogging {
+    exceptionFormat = 'full'
+    showStackTraces = true
+    showStandardStreams = true
+    showExceptions = true
+    showCauses = true
+  }
+
+  doFirst { mkdir "${buildDir}/jvmErrorLogs" }
+}
+
 task acceptanceTestPrivacy(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
   include '**/privacy/**'

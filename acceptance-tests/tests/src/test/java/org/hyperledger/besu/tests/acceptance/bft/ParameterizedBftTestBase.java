@@ -18,6 +18,9 @@ import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
 
 import java.util.stream.Stream;
 
+import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
+import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
+import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.provider.Arguments;
 
