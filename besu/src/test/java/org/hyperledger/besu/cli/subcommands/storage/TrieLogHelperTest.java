@@ -77,7 +77,8 @@ class TrieLogHelperTest {
     blockHeader5 = new BlockHeaderTestFixture().number(5).buildHeader();
 
     inMemoryWorldState =
-        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
+        new BonsaiWorldStateKeyValueStorage(
+            storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
 
     createTrieLog(blockHeader1);
 
