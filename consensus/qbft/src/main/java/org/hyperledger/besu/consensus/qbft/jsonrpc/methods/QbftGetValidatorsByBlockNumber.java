@@ -54,6 +54,21 @@ public class QbftGetValidatorsByBlockNumber extends AbstractBlockParameterMethod
   }
 
   @Override
+  protected Object pendingResult(final JsonRpcRequestContext request) {
+    final long blockNumber = blockchainQueriesSupplier.get().headBlockNumber();
+    final Optional<BlockHeader> blockHeader =
+        getBlockchainQueries().getBlockHeaderByNumber(blockNumber);
+    LOG.trace("Received RPC rpcName={} block={}", getName(), blockNumber);
+    return blockHeader
+        .map(
+            header ->
+                validatorProvider.getValidatorsAfterBlock(header).stream()
+                    .map(Address::toString)
+                    .collect(Collectors.toList()))
+        .orElse(null);
+  }
+
+  @Override
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext request, final long blockNumber) {
     final Optional<BlockHeader> blockHeader =

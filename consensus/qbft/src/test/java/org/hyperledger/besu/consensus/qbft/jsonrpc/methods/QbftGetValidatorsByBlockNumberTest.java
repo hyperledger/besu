@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -72,5 +73,35 @@ public class QbftGetValidatorsByBlockNumberTest {
     when(validatorProvider.getValidatorsForBlock(any())).thenReturn(addresses);
     Object result = method.resultByBlockNumber(request, 12);
     assertThat(result).isEqualTo(expectedOutput);
+  }
+
+  @Test
+  public void shouldReturnListOfValidatorsFromLatestBlock() {
+    request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "qbft_getValidatorsByBlockNumber", new String[] {"latest"}));
+    when(blockchainQueries.headBlockNumber()).thenReturn(12L);
+    when(blockchainQueries.getBlockHeaderByNumber(12)).thenReturn(Optional.of(blockHeader));
+    final List<Address> addresses = Collections.singletonList(Address.ID);
+    final List<String> expectedOutput = Collections.singletonList(Address.ID.toString());
+    when(validatorProvider.getValidatorsForBlock(any())).thenReturn(addresses);
+    Object result = method.response(request);
+    assertThat(result).isInstanceOf(JsonRpcSuccessResponse.class);
+    assertThat(((JsonRpcSuccessResponse) result).getResult()).isEqualTo(expectedOutput);
+  }
+
+  @Test
+  public void shouldReturnListOfValidatorsFromPendingBlock() {
+    request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "qbft_getValidatorsByBlockNumber", new String[] {"pending"}));
+    when(blockchainQueries.headBlockNumber()).thenReturn(12L);
+    when(blockchainQueries.getBlockHeaderByNumber(12)).thenReturn(Optional.of(blockHeader));
+    final List<Address> addresses = Collections.singletonList(Address.ID);
+    final List<String> expectedOutput = Collections.singletonList(Address.ID.toString());
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(addresses);
+    Object result = method.response(request);
+    assertThat(result).isInstanceOf(JsonRpcSuccessResponse.class);
+    assertThat(((JsonRpcSuccessResponse) result).getResult()).isEqualTo(expectedOutput);
   }
 }
