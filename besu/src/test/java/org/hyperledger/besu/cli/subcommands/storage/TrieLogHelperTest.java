@@ -28,8 +28,11 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogFactoryImpl;
+import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -39,7 +42,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -76,23 +78,33 @@ class TrieLogHelperTest {
     inMemoryWorldState =
         new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
 
+    createTrieLog(blockHeader1);
+
     var updater = inMemoryWorldState.updater();
     updater
         .getTrieLogStorageTransaction()
-        .put(blockHeader1.getHash().toArrayUnsafe(), Bytes.fromHexString("0x01").toArrayUnsafe());
+        .put(blockHeader1.getHash().toArrayUnsafe(), createTrieLog(blockHeader1));
     updater
         .getTrieLogStorageTransaction()
-        .put(blockHeader2.getHash().toArrayUnsafe(), Bytes.fromHexString("0x02").toArrayUnsafe());
+        .put(blockHeader2.getHash().toArrayUnsafe(), createTrieLog(blockHeader2));
     updater
         .getTrieLogStorageTransaction()
-        .put(blockHeader3.getHash().toArrayUnsafe(), Bytes.fromHexString("0x03").toArrayUnsafe());
+        .put(blockHeader3.getHash().toArrayUnsafe(), createTrieLog(blockHeader3));
     updater
         .getTrieLogStorageTransaction()
-        .put(blockHeader4.getHash().toArrayUnsafe(), Bytes.fromHexString("0x04").toArrayUnsafe());
+        .put(blockHeader4.getHash().toArrayUnsafe(), createTrieLog(blockHeader4));
     updater
         .getTrieLogStorageTransaction()
-        .put(blockHeader5.getHash().toArrayUnsafe(), Bytes.fromHexString("0x05").toArrayUnsafe());
+        .put(blockHeader5.getHash().toArrayUnsafe(), createTrieLog(blockHeader5));
     updater.getTrieLogStorageTransaction().commit();
+  }
+
+  private static byte[] createTrieLog(final BlockHeader blockHeader) {
+    TrieLogLayer trieLogLayer = new TrieLogLayer();
+    trieLogLayer.setBlockHash(blockHeader.getBlockHash());
+    final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
+    TrieLogFactoryImpl.writeTo(trieLogLayer, rlpLog);
+    return rlpLog.encoded().toArrayUnsafe();
   }
 
   void mockBlockchainBase() {
@@ -123,14 +135,11 @@ class TrieLogHelperTest {
 
     // assert trie logs that will be pruned exist before prune call
     assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get(),
-        Bytes.fromHexString("0x01").toArrayUnsafe());
+        inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get(), createTrieLog(blockHeader1));
     assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader2.getHash()).get(),
-        Bytes.fromHexString("0x02").toArrayUnsafe());
+        inMemoryWorldState.getTrieLog(blockHeader2.getHash()).get(), createTrieLog(blockHeader2));
     assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get(),
-        Bytes.fromHexString("0x03").toArrayUnsafe());
+        inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get(), createTrieLog(blockHeader3));
 
     TrieLogHelper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir);
 
@@ -140,14 +149,11 @@ class TrieLogHelperTest {
 
     // assert retained trie logs are in the DB
     assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get(),
-        Bytes.fromHexString("0x03").toArrayUnsafe());
+        inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get(), createTrieLog(blockHeader3));
     assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader4.getHash()).get(),
-        Bytes.fromHexString("0x04").toArrayUnsafe());
+        inMemoryWorldState.getTrieLog(blockHeader4.getHash()).get(), createTrieLog(blockHeader4));
     assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader5.getHash()).get(),
-        Bytes.fromHexString("0x05").toArrayUnsafe());
+        inMemoryWorldState.getTrieLog(blockHeader5.getHash()).get(), createTrieLog(blockHeader5));
   }
 
   @Test
@@ -240,20 +246,15 @@ class TrieLogHelperTest {
 
     // assert all trie logs are still in the DB
     assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get(),
-        Bytes.fromHexString("0x01").toArrayUnsafe());
+        inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get(), createTrieLog(blockHeader1));
     assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader2.getHash()).get(),
-        Bytes.fromHexString("0x02").toArrayUnsafe());
+        inMemoryWorldState.getTrieLog(blockHeader2.getHash()).get(), createTrieLog(blockHeader2));
     assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get(),
-        Bytes.fromHexString("0x03").toArrayUnsafe());
+        inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get(), createTrieLog(blockHeader3));
     assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader4.getHash()).get(),
-        Bytes.fromHexString("0x04").toArrayUnsafe());
+        inMemoryWorldState.getTrieLog(blockHeader4.getHash()).get(), createTrieLog(blockHeader4));
     assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader5.getHash()).get(),
-        Bytes.fromHexString("0x05").toArrayUnsafe());
+        inMemoryWorldState.getTrieLog(blockHeader5.getHash()).get(), createTrieLog(blockHeader5));
   }
 
   @Test
@@ -264,14 +265,15 @@ class TrieLogHelperTest {
         dataDir.resolve("trie-log-dump"));
 
     var trieLog =
-        TrieLogHelper.readTrieLogsFromFile(dataDir.resolve("trie-log-dump").toString())
+        TrieLogHelper.readTrieLogsAsRlpFromFile(dataDir.resolve("trie-log-dump").toString())
             .entrySet()
             .stream()
             .findFirst()
             .get();
 
     assertArrayEquals(trieLog.getKey(), blockHeader1.getHash().toArrayUnsafe());
-    assertArrayEquals(trieLog.getValue(), Bytes.fromHexString("0x01").toArrayUnsafe());
+    assertArrayEquals(
+        trieLog.getValue(), inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get());
   }
 
   @Test
@@ -285,7 +287,8 @@ class TrieLogHelperTest {
         singletonList(blockHeader1.getHash()),
         dataDir.resolve("trie-log-dump"));
 
-    var trieLog = TrieLogHelper.readTrieLogsFromFile(dataDir.resolve("trie-log-dump").toString());
+    var trieLog =
+        TrieLogHelper.readTrieLogsAsRlpFromFile(dataDir.resolve("trie-log-dump").toString());
     var updater = inMemoryWorldState2.updater();
 
     trieLog.forEach((k, v) -> updater.getTrieLogStorageTransaction().put(k, v));
@@ -294,6 +297,6 @@ class TrieLogHelperTest {
 
     assertArrayEquals(
         inMemoryWorldState2.getTrieLog(blockHeader1.getHash()).get(),
-        Bytes.fromHexString("0x01").toArrayUnsafe());
+        inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get());
   }
 }
