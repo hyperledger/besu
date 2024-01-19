@@ -15,7 +15,7 @@
 - Disable transaction handling when the node is not in sync, to avoid unnecessary transaction validation work [#6302](https://github.com/hyperledger/besu/pull/6302)
 - Introduce TransactionEvaluationContext to pass data between transaction selectors and plugin, during block creation [#6381](https://github.com/hyperledger/besu/pull/6381)
 - SNAP and CHECKPOINT sync - early access flag removed so X_SNAP is now simply SNAP and X_CHECKPOINT is now simply CHECKPOINT [#6405](https://github.com/hyperledger/besu/pull/6405)
-  - X_SNAP and X_CHECKPOINT are still supported for now, but marked for deprecation and will be removed in 24.4.0
+  - X_SNAP and X_CHECKPOINT are marked for deprecation and will be removed in 24.4.0
 - Dependency updates
   - Upgrade several dependencies [#6377](https://github.com/hyperledger/besu/pull/6377)
   - Upgrade `com.fasterxml.jackson` dependencies [#6378](https://github.com/hyperledger/besu/pull/6378)
