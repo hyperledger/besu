@@ -26,12 +26,7 @@ import org.hyperledger.besu.services.tasks.TaskCollection;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class SnapSyncDownloader extends FastSyncDownloader<SnapDataRequest> {
-  @SuppressWarnings("PrivateStaticFinalLoggers")
-  private final Logger LOG = LoggerFactory.getLogger(getClass());
 
   public SnapSyncDownloader(
       final FastSyncActions fastSyncActions,

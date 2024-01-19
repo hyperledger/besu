@@ -45,7 +45,7 @@ public class FastSyncDownloader<REQUEST> {
   private static final Duration FAST_SYNC_RETRY_DELAY = Duration.ofSeconds(5);
 
   @SuppressWarnings("PrivateStaticFinalLoggers")
-  private final Logger LOG = LoggerFactory.getLogger(getClass());
+  protected final Logger LOG = LoggerFactory.getLogger(getClass());
 
   private final WorldStateStorage worldStateStorage;
   private final WorldStateDownloader worldStateDownloader;
