@@ -16,7 +16,11 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -31,10 +35,13 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.Task;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 public class PersistDataStepTest {
 
@@ -42,7 +49,6 @@ public class PersistDataStepTest {
       new InMemoryKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.BONSAI);
   private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
   private final SnapWorldDownloadState downloadState = mock(SnapWorldDownloadState.class);
-
   private final SnapSyncConfiguration snapSyncConfiguration = mock(SnapSyncConfiguration.class);
 
   private final PersistDataStep persistDataStep =
@@ -72,6 +78,59 @@ public class PersistDataStepTest {
     assertThat(worldStateStorage.getNodeData(Bytes.EMPTY, tasks.get(0).getData().getRootHash()))
         .isEmpty();
   }
+
+  @Test
+  public void shouldHealWhenIncompleteStorageDataWithoutProof() {
+    // in normal operation this case would likely be triggered by a repivot.
+    // for simplicity, we limit the storage slots returned and return the partial
+    // range without a proof, implying the slots should be the complete storage range
+
+    final List<Task<SnapDataRequest>> tasks =
+        TaskGenerator.createAccountRequest(1, 1, 1, true, downloadState, false);
+    final List<Task<SnapDataRequest>> result = persistDataStep.persist(tasks);
+
+    assertThat(result).isSameAs(tasks);
+    // assert incomplete storage data without proof causes the account to be added to the heal list
+    verify(downloadState, times(1)).addAccountToHealingList(any(Bytes.class));
+    verify(downloadState, times(1)).enqueueRequest(any(AccountRangeDataRequest.class));
+    assertThat(worldStateStorage.getNodeData(Bytes.EMPTY, tasks.get(0).getData().getRootHash()))
+        .isEmpty();
+  }
+
+  @Test
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  public void shouldEnqueueChildRequestWhenIncompleteStorageDataWithProof() {
+
+    final List<Task<SnapDataRequest>> tasks =
+        TaskGenerator.createAccountRequest(1, 1, 1, true, downloadState, true);
+    final List<Task<SnapDataRequest>> result = persistDataStep.persist(tasks);
+
+    assertThat(result).isSameAs(tasks);
+    // assert the current heal behavior of account marked, without new account request
+    verify(downloadState, times(1)).addAccountToHealingList(any(Bytes.class));
+    verify(downloadState, times(0)).enqueueRequest(any(AccountRangeDataRequest.class));
+
+    // assert that the incomplete storage data with proof enqueues a child storage request.
+    // verification is messy due to the stream generic parameter
+    ArgumentCaptor<Stream> rawArgumentCaptor = ArgumentCaptor.forClass(Stream.class);
+    verify(downloadState, atLeast(1)).enqueueRequests(rawArgumentCaptor.capture());
+    var enqueuedChildRequests =
+        rawArgumentCaptor.getAllValues().stream()
+            .map(stream -> stream.collect(Collectors.toList()))
+            .map(List.class::cast)
+            .filter(list -> !list.isEmpty())
+            .filter(list -> list.get(0) instanceof StorageRangeDataRequest)
+            .findFirst();
+    assertThat(enqueuedChildRequests).isPresent();
+    assertThat(enqueuedChildRequests.get()).isNotEmpty();
+
+    // assert the parent storage request is not persisted, child requests should complete first
+    assertThat(worldStateStorage.getNodeData(Bytes.EMPTY, tasks.get(0).getData().getRootHash()))
+        .isEmpty();
+  }
+
+  @Test
+  public void shouldHealWhenProofInvalid() {}
 
   private void assertDataPersisted(final List<Task<SnapDataRequest>> tasks) {
     tasks.forEach(

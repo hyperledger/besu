@@ -42,17 +42,26 @@ import org.apache.tuweni.bytes.Bytes32;
 public class TaskGenerator {
 
   public static List<Task<SnapDataRequest>> createAccountRequest(final boolean withData) {
+    return createAccountRequest(1, 1, 100, withData, null, false);
+  }
 
+  static List<Task<SnapDataRequest>> createAccountRequest(
+      final int nbAccounts,
+      final int accountLimit,
+      final int storageLimit,
+      final boolean withData,
+      final SnapWorldDownloadState downloadState,
+      final boolean includeProof) {
     final WorldStateStorage worldStateStorage =
-        new InMemoryKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.FOREST);
+        new InMemoryKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.BONSAI);
 
     final WorldStateProofProvider worldStateProofProvider =
         new WorldStateProofProvider(worldStateStorage);
 
-    final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(worldStateStorage, 1);
+    final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(worldStateStorage, nbAccounts);
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
-            Bytes32.ZERO, RangeManager.MAX_RANGE, 1, Integer.MAX_VALUE);
+            Bytes32.ZERO, RangeManager.MAX_RANGE, accountLimit, Integer.MAX_VALUE);
     final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
@@ -81,7 +90,10 @@ public class TaskGenerator {
             rootHash,
             accountHash,
             stateTrieAccountValue.getStorageRoot(),
-            withData);
+            withData,
+            storageLimit,
+            downloadState,
+            includeProof);
     final BytecodeRequest bytecodeRequest =
         createBytecodeDataRequest(
             worldStateStorage,
@@ -102,11 +114,14 @@ public class TaskGenerator {
       final Hash rootHash,
       final Hash accountHash,
       final Bytes32 storageRoot,
-      final boolean withData) {
+      final boolean withData,
+      final int storageLimit,
+      final SnapWorldDownloadState downloadState,
+      final boolean includeProof) {
 
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
-            Bytes32.ZERO, RangeManager.MAX_RANGE, 100, Integer.MAX_VALUE);
+            Bytes32.ZERO, RangeManager.MAX_RANGE, storageLimit, Integer.MAX_VALUE);
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
@@ -128,7 +143,16 @@ public class TaskGenerator {
             rootHash, accountHash, storageRoot, RangeManager.MIN_RANGE, RangeManager.MAX_RANGE);
     if (withData) {
       request.setProofValid(true);
-      request.addResponse(null, worldStateProofProvider, slots, new ArrayDeque<>());
+      ArrayDeque<Bytes> proofNodes = new ArrayDeque<>();
+      if (includeProof) {
+        proofNodes.addAll(
+            worldStateProofProvider.getStorageProofRelatedNodes(
+                storageRoot, accountHash, RangeManager.MIN_RANGE));
+        proofNodes.addAll(
+            worldStateProofProvider.getStorageProofRelatedNodes(
+                storageRoot, accountHash, slots.lastKey()));
+      }
+      request.addResponse(downloadState, worldStateProofProvider, slots, proofNodes);
     }
     return request;
   }
