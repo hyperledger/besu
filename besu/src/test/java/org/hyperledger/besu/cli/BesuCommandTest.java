@@ -307,9 +307,11 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void callingWithConfigOptionButTomlFileNotFoundShouldDisplayHelp() {
-    parseCommand("--config-file", "./an-invalid-file-name-sdsd87sjhqoi34io23.toml");
+    String invalidFile = "./an-invalid-file-name-sdsd87sjhqoi34io23.toml";
+    parseCommand("--config-file", invalidFile);
 
-    final String expectedOutputStart = "Unable to read TOML configuration, file not found.";
+    final String expectedOutputStart =
+        String.format("Unable to read TOML configuration, file not found: %s", invalidFile);
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }

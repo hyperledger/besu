@@ -215,6 +215,6 @@ class ConfigurationOverviewBuilderTest {
   void setProfile() {
     builder.setProfile(ProfileName.DEV.name());
     final String profileSelected = builder.build();
-    assertThat(profileSelected).contains("Configuration DEV:");
+    assertThat(profileSelected).contains("Profile: DEV");
   }
 }
