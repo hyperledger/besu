@@ -371,7 +371,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Identification for this node in the Client ID",
       arity = "1")
   private final Optional<String> identityString = Optional.empty();
-
   // P2P Discovery Option Group
   @CommandLine.ArgGroup(validate = false, heading = "@|bold P2P Discovery Options|@%n")
   P2PDiscoveryOptionGroup p2PDiscoveryOptionGroup = new P2PDiscoveryOptionGroup();
@@ -1451,7 +1450,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
 
-      postCreationOptionSetup();
       validateOptions();
       configure();
       configureNativeLibs();
@@ -1796,13 +1794,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           this.commandLine,
           "--kzg-trusted-setup can only be specified on networks with data blobs enabled");
     }
-  }
-
-  /** Use this method to pass data, that was not yet available, at options object creation time */
-  private void postCreationOptionSetup() {
-    // set the optional genesis block period time needed by mining options
-    final var actualGenesisOptions = getActualGenesisConfigOptions();
-    miningOptions.setGenesisBlockPeriodSeconds(getGenesisBlockPeriodSeconds(actualGenesisOptions));
   }
 
   private void validateOptions() {
@@ -2912,6 +2903,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private MiningParameters getMiningParameters() {
     if (miningParameters == null) {
+      miningOptions.setGenesisBlockPeriodSeconds(
+          getGenesisBlockPeriodSeconds(getActualGenesisConfigOptions()));
       miningParameters = miningOptions.toDomainObject();
     }
     return miningParameters;
@@ -3405,6 +3398,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return genesisConfigOptions.getEcCurve();
   }
 
+  /**
+   * Return the genesis config options after applying any specified config overrides
+   *
+   * @return the genesis config options after applying any specified config overrides
+   */
   protected GenesisConfigOptions getActualGenesisConfigOptions() {
     return Optional.ofNullable(genesisConfigOptions)
         .orElseGet(

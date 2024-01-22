@@ -202,6 +202,12 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
     return new MiningOptions();
   }
 
+  /**
+   * Set the optional genesis block period per seconds
+   *
+   * @param genesisBlockPeriodSeconds if the network is PoA then the block period in seconds
+   *     specified in the genesis file, otherwise empty.
+   */
   public void setGenesisBlockPeriodSeconds(final OptionalInt genesisBlockPeriodSeconds) {
     maybeGenesisBlockPeriodSeconds = genesisBlockPeriodSeconds;
   }
@@ -220,10 +226,6 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
       final GenesisConfigOptions genesisConfigOptions,
       final boolean isMergeEnabled,
       final Logger logger) {
-    if (maybeGenesisBlockPeriodSeconds == null) {
-      throw new IllegalStateException(
-          "genesisBlockPeriodSeconds must be set before using this object");
-    }
 
     if (Boolean.TRUE.equals(isMiningEnabled) && coinbase == null) {
       throw new ParameterException(
