@@ -57,7 +57,7 @@ public class RecursivePeerRefreshStateTest {
           neighborFinder,
           timerUtil,
           localPeer,
-          new PeerTable(createId(999), 16),
+          new PeerTable(createId(999)),
           peerPermissions,
           5,
           100);
@@ -180,7 +180,7 @@ public class RecursivePeerRefreshStateTest {
             neighborFinder,
             timerUtil,
             localPeer,
-            new PeerTable(createId(999), 16),
+            new PeerTable(createId(999)),
             peerPermissions,
             5,
             1);
@@ -466,7 +466,7 @@ public class RecursivePeerRefreshStateTest {
             neighborFinder,
             timerUtil,
             localPeer,
-            new PeerTable(createId(999), 16),
+            new PeerTable(createId(999)),
             peerPermissions,
             5,
             100);

@@ -20,6 +20,8 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.crypto.SECP256K1;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.ethereum.beacon.discovery.schema.EnrField;
 import org.ethereum.beacon.discovery.schema.IdentitySchema;
@@ -34,8 +36,10 @@ public class ENRResponsePacketDataTest {
     final Bytes requestHash = Bytes.fromHexStringLenient("0x1234");
     final Bytes nodeId =
         Bytes.fromHexString("a448f24c6d18e575453db13171562b71999873db5b286df957af199ec94617f7");
-    final Bytes privateKey =
-        Bytes.fromHexString("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291");
+    final SECP256K1.SecretKey privateKey =
+        SECP256K1.SecretKey.fromBytes(
+            Bytes32.fromHexString(
+                "b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291"));
 
     NodeRecord nodeRecord =
         NodeRecordFactory.DEFAULT.createFromValues(
@@ -48,7 +52,8 @@ public class ENRResponsePacketDataTest {
             new EnrField(EnrField.TCP, 8080),
             new EnrField(EnrField.TCP_V6, 8080),
             new EnrField(
-                EnrField.PKEY_SECP256K1, Functions.derivePublicKeyFromPrivate(privateKey)));
+                EnrField.PKEY_SECP256K1,
+                Functions.deriveCompressedPublicKeyFromPrivate(privateKey)));
     nodeRecord.sign(privateKey);
 
     assertThat(nodeRecord.getNodeId()).isEqualTo(nodeId);
@@ -72,8 +77,10 @@ public class ENRResponsePacketDataTest {
     final Bytes requestHash = Bytes.fromHexStringLenient("0x1234");
     final Bytes nodeId =
         Bytes.fromHexString("a448f24c6d18e575453db13171562b71999873db5b286df957af199ec94617f7");
-    final Bytes privateKey =
-        Bytes.fromHexString("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291");
+    final SECP256K1.SecretKey privateKey =
+        SECP256K1.SecretKey.fromBytes(
+            Bytes32.fromHexString(
+                "b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291"));
 
     NodeRecord nodeRecord =
         NodeRecordFactory.DEFAULT.createFromValues(
@@ -82,7 +89,8 @@ public class ENRResponsePacketDataTest {
             new EnrField(EnrField.IP_V4, Bytes.fromHexString("0x7F000001")),
             new EnrField(EnrField.UDP, 30303),
             new EnrField(
-                EnrField.PKEY_SECP256K1, Functions.derivePublicKeyFromPrivate(privateKey)));
+                EnrField.PKEY_SECP256K1,
+                Functions.deriveCompressedPublicKeyFromPrivate(privateKey)));
     nodeRecord.sign(privateKey);
 
     assertThat(nodeRecord.getNodeId()).isEqualTo(nodeId);
@@ -109,8 +117,10 @@ public class ENRResponsePacketDataTest {
     final Bytes requestHash = Bytes.fromHexStringLenient("0x1234");
     final Bytes nodeId =
         Bytes.fromHexString("a448f24c6d18e575453db13171562b71999873db5b286df957af199ec94617f7");
-    final Bytes privateKey =
-        Bytes.fromHexString("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291");
+    final SECP256K1.SecretKey privateKey =
+        SECP256K1.SecretKey.fromBytes(
+            Bytes32.fromHexString(
+                "b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291"));
 
     NodeRecord nodeRecord =
         NodeRecordFactory.DEFAULT.createFromValues(
@@ -119,7 +129,8 @@ public class ENRResponsePacketDataTest {
             new EnrField(EnrField.IP_V4, Bytes.fromHexString("0x7F000001")),
             new EnrField(EnrField.UDP, 30303),
             new EnrField(
-                EnrField.PKEY_SECP256K1, Functions.derivePublicKeyFromPrivate(privateKey)));
+                EnrField.PKEY_SECP256K1,
+                Functions.deriveCompressedPublicKeyFromPrivate(privateKey)));
     nodeRecord.sign(privateKey);
 
     assertThat(nodeRecord.getNodeId()).isEqualTo(nodeId);
@@ -144,8 +155,10 @@ public class ENRResponsePacketDataTest {
     final Bytes requestHash = Bytes.fromHexStringLenient("0x1234");
     final Bytes nodeId =
         Bytes.fromHexString("a448f24c6d18e575453db13171562b71999873db5b286df957af199ec94617f7");
-    final Bytes privateKey =
-        Bytes.fromHexString("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291");
+    final SECP256K1.SecretKey privateKey =
+        SECP256K1.SecretKey.fromBytes(
+            Bytes32.fromHexString(
+                "b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291"));
 
     NodeRecord nodeRecord =
         NodeRecordFactory.DEFAULT.createFromValues(
@@ -153,7 +166,9 @@ public class ENRResponsePacketDataTest {
             new EnrField(EnrField.ID, IdentitySchema.V4),
             new EnrField(EnrField.IP_V4, Bytes.fromHexString("0x7F000001")),
             new EnrField(EnrField.UDP, 30303),
-            new EnrField(EnrField.PKEY_SECP256K1, Functions.derivePublicKeyFromPrivate(privateKey)),
+            new EnrField(
+                EnrField.PKEY_SECP256K1,
+                Functions.deriveCompressedPublicKeyFromPrivate(privateKey)),
             new EnrField("foo", Bytes.fromHexString("0x1234")));
     nodeRecord.sign(privateKey);
 
@@ -181,8 +196,10 @@ public class ENRResponsePacketDataTest {
   @Test
   public void readFrom_invalidSignature() {
     final Bytes requestHash = Bytes.fromHexStringLenient("0x1234");
-    final Bytes privateKey =
-        Bytes.fromHexString("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f292");
+    final SECP256K1.SecretKey privateKey =
+        SECP256K1.SecretKey.fromBytes(
+            Bytes32.fromHexString(
+                "b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f292"));
 
     NodeRecord nodeRecord =
         NodeRecordFactory.DEFAULT.createFromValues(
@@ -191,7 +208,8 @@ public class ENRResponsePacketDataTest {
             new EnrField(EnrField.IP_V4, Bytes.fromHexString("0x7F000001")),
             new EnrField(EnrField.UDP, 30303),
             new EnrField(
-                EnrField.PKEY_SECP256K1, Functions.derivePublicKeyFromPrivate(privateKey)));
+                EnrField.PKEY_SECP256K1,
+                Functions.deriveCompressedPublicKeyFromPrivate(privateKey)));
     nodeRecord.sign(privateKey);
     nodeRecord.set(EnrField.UDP, 1234);
 
