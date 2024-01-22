@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.VertxPeerDiscoveryAgent;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeerPrivileges;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
@@ -383,11 +384,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
   @VisibleForTesting
   void attemptPeerConnections() {
     LOG.trace("Initiating connections to discovered peers.");
-    rlpxAgent.connect(
+    final Stream<DiscoveryPeer> toTry =
         streamDiscoveredPeers()
             .filter(peer -> peer.getStatus() == PeerDiscoveryStatus.BONDED)
             .filter(peerDiscoveryAgent::checkForkId)
-            .sorted(Comparator.comparing(DiscoveryPeer::getLastAttemptedConnection)));
+            .sorted(Comparator.comparing(DiscoveryPeer::getLastAttemptedConnection));
+    toTry.forEach(rlpxAgent::connect);
   }
 
   @Override
@@ -511,6 +513,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private Supplier<Stream<PeerConnection>> allConnectionsSupplier;
     private Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
     private int peersLowerBound;
+    private PeerTable peerTable;
 
     public P2PNetwork build() {
       validate();
@@ -528,6 +531,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final MutableLocalNode localNode =
           MutableLocalNode.create(config.getRlpx().getClientId(), 5, supportedCapabilities);
       final PeerPrivileges peerPrivileges = new DefaultPeerPrivileges(maintainedPeers);
+      peerTable = new PeerTable(nodeKey.getPublicKey().getEncodedBytes());
       rlpxAgent = rlpxAgent == null ? createRlpxAgent(localNode, peerPrivileges) : rlpxAgent;
       peerDiscoveryAgent = peerDiscoveryAgent == null ? createDiscoveryAgent() : peerDiscoveryAgent;
 
@@ -572,7 +576,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
           metricsSystem,
           storageProvider,
           forkIdManager,
-          rlpxAgent);
+          rlpxAgent,
+          peerTable);
     }
 
     private RlpxAgent createRlpxAgent(
@@ -589,6 +594,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
           .allConnectionsSupplier(allConnectionsSupplier)
           .allActiveConnectionsSupplier(allActiveConnectionsSupplier)
           .peersLowerBound(peersLowerBound)
+          .peerTable(peerTable)
           .build();
     }
 
