@@ -38,14 +38,18 @@ public record EOFLayout(
 
   /** header terminator */
   static final int SECTION_TERMINATOR = 0x00;
+
   /** type data (stack heights, inputs/outputs) */
   static final int SECTION_TYPES = 0x01;
+
   /** code */
   static final int SECTION_CODE = 0x02;
-  /** data */
-  static final int SECTION_DATA = 0x03;
+
   /** sub-EOF containers for create */
-  static final int SECTION_CONTAINER = 0x04;
+  static final int SECTION_CONTAINER = 0x03;
+
+  /** data */
+  static final int SECTION_DATA = 0x04;
 
   /** The Max supported section. */
   static final int MAX_SUPPORTED_VERSION = 1;
@@ -151,15 +155,6 @@ public record EOFLayout(
       codeSectionSizes[i] = size;
     }
 
-    error = readKind(inputStream, SECTION_DATA);
-    if (error != null) {
-      return invalidLayout(container, version, error);
-    }
-    int dataSize = readUnsignedShort(inputStream);
-    if (dataSize < 0) {
-      return invalidLayout(container, version, "Invalid Data section size");
-    }
-
     int containerSectionCount;
     int[] containerSectionSizes;
     if (checkKind(inputStream, SECTION_CONTAINER)) {
@@ -198,6 +193,15 @@ public record EOFLayout(
     } else {
       containerSectionCount = 0;
       containerSectionSizes = new int[0];
+    }
+
+    error = readKind(inputStream, SECTION_DATA);
+    if (error != null) {
+      return invalidLayout(container, version, error);
+    }
+    int dataSize = readUnsignedShort(inputStream);
+    if (dataSize < 0) {
+      return invalidLayout(container, version, "Invalid Data section size");
     }
 
     error = readKind(inputStream, SECTION_TERMINATOR);

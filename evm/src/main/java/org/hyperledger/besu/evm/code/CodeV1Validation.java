@@ -315,7 +315,7 @@ public final class CodeV1Validation {
     OpcodeInfo.validOpcode("DUPN", 0xe6, 1, 1, 1),
     OpcodeInfo.validOpcode("SWAPN", 0xe7, 1, 0, 1),
     OpcodeInfo.validOpcode("DATALOAD", 0xe8, 1, 1, 1),
-    OpcodeInfo.validOpcode("DATALOAD", 0xe9, 0, 1, 1),
+    OpcodeInfo.validOpcode("DATALOADN", 0xe9, 0, 1, 1),
     OpcodeInfo.validOpcode("DATACOPY", 0xea, 3, 0, 1),
     OpcodeInfo.validOpcode("DATALOADN", 0xeb, 0, 1, 3),
     OpcodeInfo.unallocatedOpcode(0xec),
@@ -336,7 +336,7 @@ public final class CodeV1Validation {
     OpcodeInfo.validOpcode("STATICCALL2", 0xfb, 3, 1, 1),
     OpcodeInfo.unallocatedOpcode(0xfc),
     OpcodeInfo.terminalOpcode("REVERT", 0xfd, 2, 0, -1),
-    OpcodeInfo.terminalOpcode("INVALID", 0xfe, 0, 0, -1),
+    OpcodeInfo.terminalOpcode("0xef", 0xfe, 0, 0, -1),
     OpcodeInfo.invalidOpcode("SELFDESTRUCT", 0xff),
   };
 
@@ -398,20 +398,19 @@ public final class CodeV1Validation {
         }
         rjumpdests.set(rjumpdest);
       } else if (operationNum == RelativeJumpVectorOperation.OPCODE) {
-        if (pos + 1 > size) {
-          return "Truncated jump table";
-        }
-        final int jumpTableSize = RelativeJumpVectorOperation.getVectorSize(code, pos);
-        if (jumpTableSize == 0) {
-          return "Empty jump table";
-        }
-        pcPostInstruction += 1 + 2 * jumpTableSize;
+        pcPostInstruction += 1;
         if (pcPostInstruction > size) {
           return "Truncated jump table";
         }
-        for (int offsetPos = pos + 1; offsetPos < pcPostInstruction; offsetPos += 2) {
+        int jumpBasis = pcPostInstruction;
+        final int jumpTableSize = RelativeJumpVectorOperation.getVectorSize(code, pos);
+        pcPostInstruction += 2 * jumpTableSize;
+        if (pcPostInstruction > size) {
+          return "Truncated jump table";
+        }
+        for (int offsetPos = jumpBasis; offsetPos < pcPostInstruction; offsetPos += 2) {
           final int offset = readBigEndianI16(offsetPos, rawCode);
-          final int rjumpdest = pcPostInstruction + offset;
+          final int rjumpdest = jumpBasis + offset;
           if (rjumpdest < 0 || rjumpdest >= size) {
             return "Relative jump destination out of bounds";
           }
@@ -531,8 +530,8 @@ public final class CodeV1Validation {
             maxWork++;
           } else if (thisOp == RelativeJumpVectorOperation.OPCODE) {
             int immediateDataSize = (code[currentPC + 1] & 0xff) * 2;
-            unusedBytes -= immediateDataSize;
-            int tableEnd = immediateDataSize + currentPC + 2;
+            unusedBytes -= immediateDataSize + 2;
+            int tableEnd = immediateDataSize + currentPC + 4;
             for (int i = currentPC + 2; i < tableEnd; i += 2) {
               int rvalue = readBigEndianI16(i, code);
               workList[maxWork] = new int[] {tableEnd + rvalue, currentStackHeight};

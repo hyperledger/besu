@@ -45,7 +45,7 @@ public class RelativeJumpVectorOperation extends AbstractFixedCostOperation {
     }
     int offsetCase;
     try {
-      offsetCase = frame.popStackItem().toInt();
+      offsetCase = frame.popStackItem().trimLeadingZeros().toInt();
       if (offsetCase < 0) {
         offsetCase = Integer.MAX_VALUE;
       }
@@ -58,10 +58,10 @@ public class RelativeJumpVectorOperation extends AbstractFixedCostOperation {
         null,
         1
             + 2 * vectorSize
-            + ((offsetCase >= vectorSize)
+            + ((offsetCase > vectorSize)
                 ? 0
                 : code.readBigEndianI16(frame.getPC() + 2 + offsetCase * 2))
-            + 1);
+            + 3);
   }
 
   /**
@@ -72,6 +72,6 @@ public class RelativeJumpVectorOperation extends AbstractFixedCostOperation {
    * @return the vector size
    */
   public static int getVectorSize(final Bytes code, final int offsetCountByteIndex) {
-    return code.get(offsetCountByteIndex) & 0xff;
+    return (code.get(offsetCountByteIndex) & 0xff) + 1;
   }
 }

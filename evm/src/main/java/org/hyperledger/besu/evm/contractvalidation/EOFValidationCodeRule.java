@@ -56,6 +56,7 @@ public class EOFValidationCodeRule implements ContractValidationRule {
     Code code = CodeFactory.createCode(contractCode, maxEofVersion, inCreateTransaction);
     if (!code.isValid()) {
       LOG.trace("EOF Validation Error: {}", ((CodeInvalid) code).getInvalidReason());
+      System.out.printf("EOF Validation Error: %s%n", ((CodeInvalid) code).getInvalidReason());
       return Optional.of(ExceptionalHaltReason.INVALID_CODE);
     }
 

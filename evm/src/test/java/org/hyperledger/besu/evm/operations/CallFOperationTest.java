@@ -93,7 +93,7 @@ class CallFOperationTest {
   @Test
   void callFTooMuchStack() {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
-    final Code mockCode = mockCode("00" + "b0" + "0001" + "00");
+    final Code mockCode = mockCode("00" + "e3" + "0001" + "00");
 
     final CodeSection codeSection = new CodeSection(0, 1, 2, 1023, 0);
     when(mockCode.getCodeSection(1)).thenReturn(codeSection);
@@ -103,6 +103,7 @@ class CallFOperationTest {
             .code(mockCode)
             .pc(1)
             .initialGas(10L)
+            .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
             .build();

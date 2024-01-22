@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -422,6 +423,7 @@ public class MainnetTransactionProcessor {
           process(messageFrameStack.peekFirst(), operationTracer);
         }
       } else {
+        System.out.println(((CodeInvalid) initialFrame.getCode()).getInvalidReason());
         initialFrame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
         initialFrame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INVALID_CODE));
       }

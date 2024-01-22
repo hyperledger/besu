@@ -162,7 +162,7 @@ class ContractCreationProcessorTest
             Collections.emptyList());
     final Bytes contractCode =
         Bytes.fromHexString(
-            "0xEF000101000C020003000b000200080300000000000002020100020100000260016002e30001e30002e401e460005360106000f3");
+            "0xEF000101000C020003000b000200080400000000000002020100020100000260016002e30001e30002e401e460005360106000f3");
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(100L);
@@ -185,7 +185,7 @@ class ContractCreationProcessorTest
     final Bytes contractCode = Bytes.fromHexString("6030602001");
     final Bytes initCode =
         Bytes.fromHexString(
-            "0xEF000101000C020003000b000200080300000000000002020100020100000260016002e30001e30002e401e460005360106000f3");
+            "0xEF000101000C020003000b000200080400000000000002020100020100000260016002e30001e30002e401e460005360106000f3");
     final MessageFrame messageFrame =
         new TestMessageFrameBuilder().code(CodeFactory.createCode(initCode, 1, true)).build();
     messageFrame.setOutputData(contractCode);
@@ -208,7 +208,7 @@ class ContractCreationProcessorTest
             Collections.emptyList());
     final Bytes contractCode =
         Bytes.fromHexString(
-            "0xEF000101000C020003000b000200080300000000000000020100020100000260016002b00001b00002b101b160005360106000f3");
+            "0xEF000101000C020003000b000200080400000000000000020100020100000260016002b00001b00002b101b160005360106000f3");
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(100L);

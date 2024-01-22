@@ -24,14 +24,14 @@ import java.io.PrintStream;
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
 
-public class CodeValidationSubCommandTest {
+class CodeValidationSubCommandTest {
 
-  static final String CODE_STOP_ONLY = "0xef0001 010004 020001-0001 030000 00 00000000 00";
-  static final String CODE_RETF_ONLY = "0xef0001 010004 020001-0001 030000 00 00000000 e4";
-  static final String CODE_BAD_MAGIC = "0xefffff 010004 020001-0001 030000 00 00000000 e4";
+  static final String CODE_STOP_ONLY = "0xef0001 010004 020001-0001 040000 00 00000000 00";
+  static final String CODE_RETF_ONLY = "0xef0001 010004 020001-0001 040000 00 00000000 e4";
+  static final String CODE_BAD_MAGIC = "0xefffff 010004 020001-0001 040000 00 00000000 e4";
   static final String CODE_INTERIOR_COMMENTS =
       """
-                  0xef0001 010008 020002-000c-0002 030000 00
+                  0xef0001 010008 020002-000c-0002 040000 00
                   # 7 inputs 1 output,
                   00000007-07010007
                   59-59-59-59-59-59-59-e30001-50-e4
@@ -41,7 +41,7 @@ public class CodeValidationSubCommandTest {
       CODE_STOP_ONLY + "\n" + CODE_BAD_MAGIC + "\n" + CODE_RETF_ONLY + "\n";
 
   @Test
-  public void testSingleValidViaInput() {
+  void testSingleValidViaInput() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais = new ByteArrayInputStream(CODE_STOP_ONLY.getBytes(UTF_8));
     final CodeValidateSubCommand codeValidateSubCommand =
@@ -51,7 +51,7 @@ public class CodeValidationSubCommandTest {
   }
 
   @Test
-  public void testSingleInvalidViaInput() {
+  void testSingleInvalidViaInput() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais = new ByteArrayInputStream(CODE_BAD_MAGIC.getBytes(UTF_8));
     final CodeValidateSubCommand codeValidateSubCommand =
@@ -61,7 +61,7 @@ public class CodeValidationSubCommandTest {
   }
 
   @Test
-  public void testMultipleViaInput() {
+  void testMultipleViaInput() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais = new ByteArrayInputStream(CODE_MULTIPLE.getBytes(UTF_8));
     final CodeValidateSubCommand codeValidateSubCommand =
@@ -77,7 +77,7 @@ public class CodeValidationSubCommandTest {
   }
 
   @Test
-  public void testSingleValidViaCli() {
+  void testSingleValidViaCli() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais = new ByteArrayInputStream(new byte[0]);
     final CodeValidateSubCommand codeValidateSubCommand =
@@ -89,7 +89,7 @@ public class CodeValidationSubCommandTest {
   }
 
   @Test
-  public void testSingleInvalidViaCli() {
+  void testSingleInvalidViaCli() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais = new ByteArrayInputStream(new byte[0]);
     final CodeValidateSubCommand codeValidateSubCommand =
@@ -101,7 +101,7 @@ public class CodeValidationSubCommandTest {
   }
 
   @Test
-  public void testMultipleViaCli() {
+  void testMultipleViaCli() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais = new ByteArrayInputStream(new byte[0]);
     final CodeValidateSubCommand codeValidateSubCommand =
@@ -119,7 +119,7 @@ public class CodeValidationSubCommandTest {
   }
 
   @Test
-  public void testCliEclipsesInput() {
+  void testCliEclipsesInput() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais = new ByteArrayInputStream(CODE_STOP_ONLY.getBytes(UTF_8));
     final CodeValidateSubCommand codeValidateSubCommand =
@@ -131,7 +131,7 @@ public class CodeValidationSubCommandTest {
   }
 
   @Test
-  public void testInteriorCommentsSkipped() {
+  void testInteriorCommentsSkipped() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais = new ByteArrayInputStream(new byte[0]);
     final CodeValidateSubCommand codeValidateSubCommand =
@@ -143,7 +143,7 @@ public class CodeValidationSubCommandTest {
   }
 
   @Test
-  public void testBlankLinesAndCommentsSkipped() {
+  void testBlankLinesAndCommentsSkipped() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais =
         new ByteArrayInputStream(("# comment\n\n#blank line\n\n" + CODE_MULTIPLE).getBytes(UTF_8));

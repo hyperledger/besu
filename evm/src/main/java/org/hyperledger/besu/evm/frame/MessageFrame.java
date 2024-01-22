@@ -347,7 +347,8 @@ public class MessageFrame {
     CodeSection info = code.getCodeSection(calledSection);
     if (info == null) {
       return ExceptionalHaltReason.CODE_SECTION_MISSING;
-    } else if (stack.size() + info.getMaxStackHeight() > txValues.maxStackSize()) {
+    } else if (stack.size() + info.getMaxStackHeight() - info.getInputs()
+        > txValues.maxStackSize()) {
       return ExceptionalHaltReason.TOO_MANY_STACK_ITEMS;
     } else if (stack.size() < info.getInputs()) {
       return ExceptionalHaltReason.TOO_FEW_INPUTS_FOR_CODE_SECTION;

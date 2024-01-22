@@ -114,16 +114,16 @@ public class CodeV1 implements Code {
 
   @Override
   public int readBigEndianI16(final int index) {
-    return Words.readBigEndianI16(index, eofLayout.data().toArrayUnsafe());
+    return Words.readBigEndianI16(index, eofLayout.container().toArrayUnsafe());
   }
 
   @Override
   public int readBigEndianU16(final int index) {
-    return Words.readBigEndianU16(index, eofLayout.data().toArrayUnsafe());
+    return Words.readBigEndianU16(index, eofLayout.container().toArrayUnsafe());
   }
 
   @Override
   public int readU8(final int index) {
-    return eofLayout.data().toArrayUnsafe()[index] & 0xff;
+    return eofLayout.container().toArrayUnsafe()[index] & 0xff;
   }
 }

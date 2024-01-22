@@ -107,7 +107,7 @@ class RelativeJumpOperationTest {
     final Code mockCode =
         mockCode(
             "00".repeat(rjumpOperationIndex)
-                + String.format("5e%02x%04x", jumpVectorSize, jumpLength));
+                + String.format("e2%02x%04x", jumpVectorSize - 1, jumpLength));
 
     MessageFrame messageFrame =
         new TestMessageFrameBuilder()
@@ -156,7 +156,7 @@ class RelativeJumpOperationTest {
     final Code mockCode =
         mockCode(
             "00".repeat(rjumpOperationIndex)
-                + String.format("5e%02x", jumpVectorSize)
+                + String.format("e2%02x", jumpVectorSize - 1)
                 + String.format("%04x", jumpLength).repeat(jumpVectorSize));
 
     RelativeJumpVectorOperation rjumpv = new RelativeJumpVectorOperation(gasCalculator);
@@ -183,7 +183,7 @@ class RelativeJumpOperationTest {
     final Code mockCode =
         mockCode(
             "00".repeat(rjumpOperationIndex)
-                + String.format("5e%02x", jumpVectorSize)
+                + String.format("e2%02x", jumpVectorSize - 1)
                 + String.format("%04x", jumpLength).repeat(jumpVectorSize));
 
     RelativeJumpVectorOperation rjumpv = new RelativeJumpVectorOperation(gasCalculator);
@@ -206,7 +206,7 @@ class RelativeJumpOperationTest {
     final int rjumpOperationIndex = 3;
     final int jumpVectorSize = 2;
     final Code mockCode =
-        mockCode("00".repeat(rjumpOperationIndex) + "5e" + "02" + "1234" + "5678");
+        mockCode("00".repeat(rjumpOperationIndex) + "e2" + "01" + "1234" + "5678");
 
     MessageFrame messageFrame =
         new TestMessageFrameBuilder()
