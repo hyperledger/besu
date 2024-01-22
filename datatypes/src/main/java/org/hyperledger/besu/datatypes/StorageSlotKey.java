@@ -16,6 +16,7 @@ package org.hyperledger.besu.datatypes;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class StorageSlotKey implements Comparable<StorageSlotKey> {
 
-  private final Hash slotHash;
+  private final Supplier<Hash> slotHash;
   private final Optional<UInt256> slotKey;
 
   /**
@@ -41,6 +42,11 @@ public class StorageSlotKey implements Comparable<StorageSlotKey> {
    * @param slotKey Optional UInt256 storage slot key.
    */
   public StorageSlotKey(final Hash slotHash, final Optional<UInt256> slotKey) {
+    this.slotHash = () -> slotHash;
+    this.slotKey = slotKey;
+  }
+
+  public StorageSlotKey(final Supplier<Hash> slotHash, final Optional<UInt256> slotKey) {
     this.slotHash = slotHash;
     this.slotKey = slotKey;
   }
@@ -60,7 +66,7 @@ public class StorageSlotKey implements Comparable<StorageSlotKey> {
    * @return the hash of the storage slot key.
    */
   public Hash getSlotHash() {
-    return slotHash;
+    return slotHash.get();
   }
 
   /**
@@ -89,19 +95,22 @@ public class StorageSlotKey implements Comparable<StorageSlotKey> {
       return false;
     }
     StorageSlotKey that = (StorageSlotKey) o;
-    return Objects.equals(slotHash, that.slotHash);
+    if (slotKey.isPresent() && that.slotKey.isPresent()) {
+      return slotKey.map(key -> key.equals(that.slotKey.get())).get();
+    }
+    return Objects.equals(getSlotHash(), that.getSlotHash());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(slotHash.hashCode());
+    return Objects.hash(getSlotHash().hashCode());
   }
 
   @Override
   public String toString() {
     return String.format(
         "StorageSlotKey{slotHash=%s, slotKey=%s}",
-        slotHash, slotKey.map(UInt256::toString).orElse("null"));
+        getSlotHash(), slotKey.map(UInt256::toString).orElse("null"));
   }
 
   @Override
@@ -109,6 +118,6 @@ public class StorageSlotKey implements Comparable<StorageSlotKey> {
     if (getSlotKey().isPresent() && other.getSlotKey().isPresent()) {
       return getSlotKey().map(key -> key.compareTo(other.slotKey.get())).get();
     }
-    return this.slotHash.compareTo(other.slotHash);
+    return this.getSlotHash().compareTo(other.getSlotHash());
   }
 }

@@ -366,13 +366,13 @@ public class BonsaiWorldStateUpdateAccumulator
                     final UInt256 keyUInt = storageUpdate.getKey();
                     final StorageSlotKey slotKey =
                         new StorageSlotKey(
-                            Hash.EMPTY, Optional.of(keyUInt)); // no compute Hash in this case
+                            () -> hashAndSavePreImage(keyUInt),
+                            Optional.of(keyUInt)); // no compute Hash in this case
                     final UInt256 value = storageUpdate.getValue();
                     final BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(slotKey);
                     if (pendingValue == null) {
-                      final Hash slotHash = hashAndSavePreImage(keyUInt);
                       pendingStorageUpdates.put(
-                          new StorageSlotKey(slotHash, Optional.of(keyUInt)),
+                          slotKey,
                           new BonsaiValue<>(
                               updatedAccount.getOriginalStorageValue(keyUInt), value));
                     } else {
