@@ -60,7 +60,8 @@ public class EthPeers {
       Comparator.comparing((final EthPeer p) -> p.chainState().getEstimatedHeight());
 
   public static final Comparator<EthPeer> MOST_USEFUL_PEER =
-          Comparator.comparing((final EthPeer p) -> p.getReputation().getScore()).thenComparing(CHAIN_HEIGHT);
+      Comparator.comparing((final EthPeer p) -> p.getReputation().getScore())
+          .thenComparing(CHAIN_HEIGHT);
 
   public static final Comparator<EthPeer> HEAVIEST_CHAIN =
       TOTAL_DIFFICULTY.thenComparing(CHAIN_HEIGHT);
