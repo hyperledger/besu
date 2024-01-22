@@ -22,7 +22,11 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogFactoryImpl;
+import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 
 import java.io.File;
@@ -32,6 +36,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -39,6 +44,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,16 +103,15 @@ public class TrieLogHelper {
       final String batchFileNameBase) {
 
     for (long batchNumber = 1; batchNumber <= numberOfBatches; batchNumber++) {
-
+      final String batchFileName = batchFileNameBase + "-" + batchNumber;
       final long firstBlockOfBatch = chainHeight - ((batchNumber - 1) * BATCH_SIZE);
-
       final long lastBlockOfBatch =
           Math.max(chainHeight - (batchNumber * BATCH_SIZE), lastBlockNumberToRetainTrieLogsFor);
-
       final List<Hash> trieLogKeys =
           getTrieLogKeysForBlocks(blockchain, firstBlockOfBatch, lastBlockOfBatch);
 
-      saveTrieLogBatches(batchFileNameBase, rootWorldStateStorage, batchNumber, trieLogKeys);
+      LOG.info("Saving trie logs to retain in file (batch {})...", batchNumber);
+      saveTrieLogBatches(batchFileName, rootWorldStateStorage, trieLogKeys);
     }
 
     LOG.info("Clear trie logs...");
@@ -118,15 +123,12 @@ public class TrieLogHelper {
   }
 
   private static void saveTrieLogBatches(
-      final String batchFileNameBase,
+      final String batchFileName,
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
-      final long batchNumber,
       final List<Hash> trieLogKeys) {
 
-    LOG.info("Saving trie logs to retain in file (batch {})...", batchNumber);
-
     try {
-      saveTrieLogsInFile(trieLogKeys, rootWorldStateStorage, batchNumber, batchFileNameBase);
+      saveTrieLogsInFile(trieLogKeys, rootWorldStateStorage, batchFileName);
     } catch (IOException e) {
       LOG.error("Error saving trie logs to file: {}", e.getMessage());
       throw new RuntimeException(e);
@@ -210,9 +212,8 @@ public class TrieLogHelper {
       final String batchFileNameBase)
       throws IOException {
     // process in chunk to avoid OOM
-
-    IdentityHashMap<byte[], byte[]> trieLogsToRetain =
-        readTrieLogsFromFile(batchFileNameBase, batchNumber);
+    final String batchFileName = batchFileNameBase + "-" + batchNumber;
+    IdentityHashMap<byte[], byte[]> trieLogsToRetain = readTrieLogsFromFile(batchFileName);
     final int chunkSize = ROCKSDB_MAX_INSERTS_PER_TRANSACTION;
     List<byte[]> keys = new ArrayList<>(trieLogsToRetain.keySet());
 
@@ -265,11 +266,10 @@ public class TrieLogHelper {
   private static void saveTrieLogsInFile(
       final List<Hash> trieLogsKeys,
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
-      final long batchNumber,
-      final String batchFileNameBase)
+      final String batchFileName)
       throws IOException {
 
-    File file = new File(batchFileNameBase + "-" + batchNumber);
+    File file = new File(batchFileName);
     if (file.exists()) {
       LOG.error("File already exists, skipping file creation");
       return;
@@ -285,22 +285,65 @@ public class TrieLogHelper {
   }
 
   @SuppressWarnings("unchecked")
-  private static IdentityHashMap<byte[], byte[]> readTrieLogsFromFile(
-      final String batchFileNameBase, final long batchNumber) {
+  static IdentityHashMap<byte[], byte[]> readTrieLogsFromFile(final String batchFileName) {
 
     IdentityHashMap<byte[], byte[]> trieLogs;
-    try (FileInputStream fis = new FileInputStream(batchFileNameBase + "-" + batchNumber);
+    try (FileInputStream fis = new FileInputStream(batchFileName);
         ObjectInputStream ois = new ObjectInputStream(fis)) {
 
       trieLogs = (IdentityHashMap<byte[], byte[]>) ois.readObject();
-
     } catch (IOException | ClassNotFoundException e) {
-
       LOG.error(e.getMessage());
       throw new RuntimeException(e);
     }
 
     return trieLogs;
+  }
+
+  private static void saveTrieLogsAsRlpInFile(
+      final List<Hash> trieLogsKeys,
+      final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
+      final String batchFileName) {
+    File file = new File(batchFileName);
+    if (file.exists()) {
+      LOG.error("File already exists, skipping file creation");
+      return;
+    }
+
+    final IdentityHashMap<byte[], byte[]> trieLogs =
+        getTrieLogs(trieLogsKeys, rootWorldStateStorage);
+    final Bytes rlp =
+        RLP.encode(
+            o ->
+                o.writeList(
+                    trieLogs.entrySet(), (val, out) -> out.writeRaw(Bytes.wrap(val.getValue()))));
+    try {
+      Files.write(file.toPath(), rlp.toArrayUnsafe());
+    } catch (IOException e) {
+      LOG.error(e.getMessage());
+      throw new RuntimeException(e);
+    }
+  }
+
+  static IdentityHashMap<byte[], byte[]> readTrieLogsAsRlpFromFile(final String batchFileName) {
+    try {
+      final Bytes file = Bytes.wrap(Files.readAllBytes(Path.of(batchFileName)));
+      final BytesValueRLPInput input = new BytesValueRLPInput(file, false);
+
+      input.enterList();
+      final IdentityHashMap<byte[], byte[]> trieLogs = new IdentityHashMap<>();
+      while (!input.isEndOfCurrentList()) {
+        final Bytes trieLogBytes = input.currentListAsBytes();
+        TrieLogLayer trieLogLayer =
+            TrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(trieLogBytes), false));
+        trieLogs.put(trieLogLayer.getBlockHash().toArrayUnsafe(), trieLogBytes.toArrayUnsafe());
+      }
+      input.leaveList();
+
+      return trieLogs;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static IdentityHashMap<byte[], byte[]> getTrieLogs(
@@ -355,6 +398,26 @@ public class TrieLogHelper {
     out.printf(
         "trieLog count: %s\n - canonical count: %s\n - fork count: %s\n - orphaned count: %s\n",
         count.total, count.canonicalCount, count.forkCount, count.orphanCount);
+  }
+
+  static void importTrieLog(
+      final BonsaiWorldStateKeyValueStorage rootWorldStateStorage, final Path trieLogFilePath) {
+
+    var trieLog = readTrieLogsAsRlpFromFile(trieLogFilePath.toString());
+
+    var updater = rootWorldStateStorage.updater();
+    trieLog.forEach((key, value) -> updater.getTrieLogStorageTransaction().put(key, value));
+    updater.getTrieLogStorageTransaction().commit();
+  }
+
+  static void exportTrieLog(
+      final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
+      final List<Hash> trieLogHash,
+      final Path directoryPath)
+      throws IOException {
+    final String trieLogFile = directoryPath.toString();
+
+    saveTrieLogsAsRlpInFile(trieLogHash, rootWorldStateStorage, trieLogFile);
   }
 
   record TrieLogCount(int total, int canonicalCount, int forkCount, int orphanCount) {}
