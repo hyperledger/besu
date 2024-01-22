@@ -19,7 +19,7 @@ import static org.hyperledger.besu.cli.subcommands.ValidateConfigSubCommand.COMM
 
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.DefaultCommandValues;
-import org.hyperledger.besu.cli.util.TomlConfigFileDefaultProvider;
+import org.hyperledger.besu.cli.util.TomlConfigurationDefaultProvider;
 import org.hyperledger.besu.cli.util.VersionProvider;
 
 import java.io.PrintWriter;
@@ -69,7 +69,8 @@ public class ValidateConfigSubCommand implements Runnable {
   public void run() {
     checkNotNull(parentCommand);
     try {
-      new TomlConfigFileDefaultProvider(commandLine, dataPath.toFile()).loadConfigurationFromFile();
+      TomlConfigurationDefaultProvider.fromFile(commandLine, dataPath.toFile())
+          .loadConfigurationFromFile();
     } catch (Exception e) {
       this.out.println(e);
       return;

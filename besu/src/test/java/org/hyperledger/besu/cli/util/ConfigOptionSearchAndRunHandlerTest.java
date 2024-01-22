@@ -145,7 +145,7 @@ public class ConfigOptionSearchAndRunHandlerTest {
   public void shouldRetrieveConfigFromEnvironmentWhenConfigFileSpecified() throws Exception {
     final IDefaultValueProvider defaultValueProvider =
         configParsingHandler.createDefaultValueProvider(
-            mockCommandLine, Optional.of(new File("foo")));
+            mockCommandLine, Optional.of(new File("foo")), Optional.empty());
     final String value = defaultValueProvider.defaultValue(OptionSpec.builder("--logging").build());
     assertThat(value).isEqualTo("ERROR");
   }
@@ -153,7 +153,8 @@ public class ConfigOptionSearchAndRunHandlerTest {
   @Test
   public void shouldRetrieveConfigFromEnvironmentWhenConfigFileNotSpecified() throws Exception {
     final IDefaultValueProvider defaultValueProvider =
-        configParsingHandler.createDefaultValueProvider(mockCommandLine, Optional.empty());
+        configParsingHandler.createDefaultValueProvider(
+            mockCommandLine, Optional.empty(), Optional.empty());
     final String value = defaultValueProvider.defaultValue(OptionSpec.builder("--logging").build());
     assertThat(value).isEqualTo("ERROR");
   }
