@@ -80,10 +80,6 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
   protected static final long WAL_MAX_TOTAL_SIZE = 1_073_741_824L;
   /** Expected size of a single WAL file, to determine how many WAL files to keep around */
   protected static final long EXPECTED_WAL_FILE_SIZE = 67_108_864L;
-  /** Max total size of all WAL file, after which a flush is triggered */
-  protected static final long WAL_MAX_TOTAL_SIZE_HIGH_SPEC = 10_737_418_240L;
-  /** Expected size of a single WAL file, to determine how many WAL files to keep around */
-  protected static final long EXPECTED_WAL_FILE_SIZE_HIGH_SPEC = 536_870_912L;
   /** RocksDb number of log files to keep on disk */
   private static final long NUMBER_OF_LOG_FILES_TO_KEEP = 7;
   /** RocksDb Time to roll a log file (1 day = 3600 * 24 seconds) */
@@ -197,10 +193,6 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
           .setBlobCompressionType(CompressionType.LZ4_COMPRESSION);
     }
 
-    if (this.configuration.isHighSpec() && segment.isEligibleToHighSpecFlag()) {
-      options.setWriteBufferSize(ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC);
-    }
-
     return new ColumnFamilyDescriptor(segment.getId(), options);
   }
 
@@ -243,17 +235,9 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
         .setCreateMissingColumnFamilies(true)
         .setLogFileTimeToRoll(TIME_TO_ROLL_LOG_FILE)
         .setKeepLogFileNum(NUMBER_OF_LOG_FILES_TO_KEEP)
-        .setEnv(Env.getDefault().setBackgroundThreads(configuration.getBackgroundThreadCount()));
-
-    if (configuration.isHighSpec()) {
-      options
-          .setMaxTotalWalSize(WAL_MAX_TOTAL_SIZE_HIGH_SPEC)
-          .setRecycleLogFileNum(WAL_MAX_TOTAL_SIZE_HIGH_SPEC / EXPECTED_WAL_FILE_SIZE_HIGH_SPEC);
-    } else {
-      options
-          .setMaxTotalWalSize(WAL_MAX_TOTAL_SIZE)
-          .setRecycleLogFileNum(WAL_MAX_TOTAL_SIZE / EXPECTED_WAL_FILE_SIZE);
-    }
+        .setEnv(Env.getDefault().setBackgroundThreads(configuration.getBackgroundThreadCount()))
+        .setMaxTotalWalSize(WAL_MAX_TOTAL_SIZE)
+        .setRecycleLogFileNum(WAL_MAX_TOTAL_SIZE / EXPECTED_WAL_FILE_SIZE);
   }
 
   /**
