@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
@@ -140,7 +141,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
     //LOG.info(stateTrie.toDotTree());
     final Bytes32 rootHash = stateTrie.getRootHash();
 
-    LOG.info("end commit ");
+    LOG.info("end commit "+rootHash);
     return Hash.wrap(rootHash);
   }
 
@@ -177,7 +178,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
                   updatedAccount.getCodeHash())
               .forEach(
                   (bytes, bytes2) -> {
-                    System.out.println("add " + bytes + " " + bytes2);
+                    System.out.println("add " +accountKey+" "+bytes + " " + bytes2+" "+updatedAccount.getBalance());
                     stateTrie.put(bytes, bytes2);
                   });
           maybeStateUpdater.ifPresent(
@@ -186,6 +187,48 @@ public class VerkleWorldState extends DiffBasedWorldState {
         }
       }
     }
+  }
+
+  53200
+  1900*4 (WITNESS_BRANCH_COST)
+      + 200*10 (access) WITNESS_CHUNK_COST*5 for 0x7e454a14b8e7528465eef86f0dc1da4f235d9d79
+              (tx.origin, 0, VERSION_LEAF_KEY)
+              (tx.origin, 0, BALANCE_LEAF_KEY)
+              (tx.origin, 0, NONCE_LEAF_KEY)
+              (tx.origin, 0, CODE_SIZE_LEAF_KEY)
+              (tx.origin, 0, CODE_KECCAK_LEAF_KEY)
+      + 200*10 (access) WITNESS_CHUNK_COST (because none) *5 for 0x6177843db3138ae69679a54b95cf345ed759450d
+              (tx.origin, 0, VERSION_LEAF_KEY)
+              (tx.origin, 0, BALANCE_LEAF_KEY)
+              (tx.origin, 0, NONCE_LEAF_KEY)
+              (tx.origin, 0, CODE_SIZE_LEAF_KEY)
+              (tx.origin, 0, CODE_KECCAK_LEAF_KEY)
+       + 200*10 (access) WITNESS_CHUNK_COST (because none) *5 for 0x687704db07e902e9a8b3754031d168d46e3d586e
+              (tx.origin, 0, VERSION_LEAF_KEY)
+              (tx.origin, 0, BALANCE_LEAF_KEY)
+              (tx.origin, 0, NONCE_LEAF_KEY)
+              (tx.origin, 0, CODE_SIZE_LEAF_KEY)
+              (tx.origin, 0, CODE_KECCAK_LEAF_KEY)
+  +3000*4 (SUBTREE_EDIT_COST )
+          + 500*3 (write) CHUNK_EDIT_COST*3 for 0x7e454a14b8e7528465eef86f0dc1da4f235d9d79
+          (tx.origin, 0, VERSION_LEAF_KEY)
+          (tx.origin, 0, BALANCE_LEAF_KEY)
+          (tx.origin, 0, NONCE_LEAF_KEY)
+          + 500*3 (write) CHUNK_EDIT_COST*3  for 0x6177843db3138ae69679a54b95cf345ed759450d
+          (tx.origin, 0, VERSION_LEAF_KEY)
+          (tx.origin, 0, BALANCE_LEAF_KEY)
+          (tx.origin, 0, NONCE_LEAF_KEY)
+          + 500*3 (write) CHUNK_EDIT_COST*3 for 0x687704db07e902e9a8b3754031d168d46e3d586e
+          (tx.origin, 0, VERSION_LEAF_KEY)
+          (tx.origin, 0, BALANCE_LEAF_KEY)
+          (tx.origin, 0, NONCE_LEAF_KEY)
+
+  public static void main(final String[] args) {
+    System.out.println(Wei.fromHexString(Bytes.fromHexString("0x00a015ae7cb2ba9f3c2e3b030000000000000000000000000000000000000000").reverse().toShortHexString()).toBigInteger());
+    System.out.println(Wei.fromHexString(Bytes.fromHexString("0x00c02f45dfe2ba9f3c2e3b030000000000000000000000000000000000000000").reverse().toShortHexString()).toBigInteger().subtract(
+            Wei.fromHexString(Bytes.fromHexString("0x00a015ae7cb2ba9f3c2e3b030000000000000000000000000000000000000000").reverse().toShortHexString()).toBigInteger()
+    ));
+    System.out.println(Bytes.fromHexString("0x00c02f45dfe2ba9f3c2e3b030000000000000000000000000000000000000000").reverse().toBigInteger());
   }
 
   private void updateCode(

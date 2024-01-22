@@ -367,7 +367,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             blockchain.getChainHeadHash(),
             genesisHash,
             latestForkId);
-    System.out.println(blockchain.getChainHeadHash()+" "+latestForkId+" "+cap.getVersion());
     try {
       LOG.trace("Sending status message to {} for connection {}.", peer.getId(), connection);
       peer.send(status, getSupportedProtocol(), connection);
