@@ -256,7 +256,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       scheduler.stop();
       shutdown.countDown();
     } else {
-      LOG.atInfo().setMessage("Attempted to stop already stopped {} Subprotocol.").addArgument(this::getSupportedProtocol).log();
+      LOG.atInfo()
+          .setMessage("Attempted to stop already stopped {} Subprotocol.")
+          .addArgument(this::getSupportedProtocol)
+          .log();
     }
   }
 
@@ -264,7 +267,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   public void awaitStop() throws InterruptedException {
     shutdown.await();
     scheduler.awaitStop();
-    LOG.atInfo().setMessage("{} Subprotocol stopped.").addArgument(this::getSupportedProtocol).log();
+    LOG.atInfo()
+        .setMessage("{} Subprotocol stopped.")
+        .addArgument(this::getSupportedProtocol)
+        .log();
   }
 
   @Override
@@ -278,8 +284,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     final EthPeer ethPeer = ethPeers.peer(message.getConnection());
     if (ethPeer == null) {
       LOG.atDebug()
-              .setMessage("Ignoring message received from unknown peer connection: {}")
-              .addArgument(message::getConnection).log();
+          .setMessage("Ignoring message received from unknown peer connection: {}")
+          .addArgument(message::getConnection)
+          .log();
       return;
     }
 
@@ -290,11 +297,13 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     } else if (!ethPeer.statusHasBeenReceived()) {
       // Peers are required to send status messages before any other message type
       LOG.atDebug()
-              .setMessage("{} requires a Status ({}) message to be sent first.  Instead, received message {} (BREACH_OF_PROTOCOL).  Disconnecting from {}.")
-              .addArgument(() -> this.getClass().getSimpleName())
-              .addArgument(EthPV62.STATUS)
-              .addArgument(code)
-              .addArgument(ethPeer::toString).log();
+          .setMessage(
+              "{} requires a Status ({}) message to be sent first.  Instead, received message {} (BREACH_OF_PROTOCOL).  Disconnecting from {}.")
+          .addArgument(() -> this.getClass().getSimpleName())
+          .addArgument(EthPV62.STATUS)
+          .addArgument(code)
+          .addArgument(ethPeer::toString)
+          .log();
       ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
     }
@@ -302,7 +311,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     if (this.mergePeerFilter.isPresent()) {
       if (this.mergePeerFilter.get().disconnectIfGossipingBlocks(message, ethPeer)) {
         LOG.atDebug()
-                .setMessage("Post-merge disconnect: peer still gossiping blocks {}").addArgument(ethPeer::toString).log();
+            .setMessage("Post-merge disconnect: peer still gossiping blocks {}")
+            .addArgument(ethPeer::toString)
+            .log();
         handleDisconnect(ethPeer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
         return;
       }
@@ -336,10 +347,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       }
     } catch (final RLPException e) {
       LOG.atDebug()
-              .setMessage("Received malformed message {} (BREACH_OF_PROTOCOL), disconnecting: {}, {}")
-              .addArgument(messageData::getData)
-              .addArgument(ethPeer::toString)
-              .addArgument(e::toString).log();
+          .setMessage("Received malformed message {} (BREACH_OF_PROTOCOL), disconnecting: {}, {}")
+          .addArgument(messageData::getData)
+          .addArgument(ethPeer::toString)
+          .addArgument(e::toString)
+          .log();
 
       ethPeer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
     }
@@ -370,7 +382,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             genesisHash,
             latestForkId);
     try {
-      LOG.atTrace().setMessage("Sending status message to {} for connection {}.").addArgument(peer::getId).addArgument(connection::toString).log();
+      LOG.atTrace()
+          .setMessage("Sending status message to {} for connection {}.")
+          .addArgument(peer::getId)
+          .addArgument(connection::toString)
+          .log();
       peer.send(status, getSupportedProtocol(), connection);
       peer.registerStatusSent(connection);
     } catch (final PeerNotConnected peerNotConnected) {
@@ -383,7 +399,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   public boolean shouldConnect(final Peer peer, final boolean incoming) {
     if (peer.getForkId().map(forkIdManager::peerCheck).orElse(true)) {
       LOG.atDebug()
-              .setMessage("ForkId OK or not available for peer {}").addArgument(peer::getId).log();
+          .setMessage("ForkId OK or not available for peer {}")
+          .addArgument(peer::getId)
+          .log();
       if (ethPeers.shouldConnect(peer, incoming)) {
         return true;
       }
