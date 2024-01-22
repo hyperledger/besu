@@ -62,23 +62,28 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   private final DataStorageOptions.Unstable unstableOptions = new Unstable();
 
   static class Unstable {
+    private static final String BONSAI_LIMIT_TRIE_LOGS_ENABLED =
+        "--Xbonsai-limit-trie-logs-enabled";
+    private static final String BONSAI_TRIE_LOGS_RETENTION_THRESHOLD =
+        "--Xbonsai-trie-logs-retention-threshold";
+    private static final String BONSAI_TRIE_LOG_PRUNING_LIMIT = "--Xbonsai-trie-logs-pruning-limit";
 
     @CommandLine.Option(
         hidden = true,
-        names = {"--Xbonsai-trie-log-pruning-enabled"},
+        names = {BONSAI_LIMIT_TRIE_LOGS_ENABLED},
         description = "Enable trie log pruning. (default: ${DEFAULT-VALUE})")
     private boolean bonsaiTrieLogPruningEnabled = DEFAULT_BONSAI_TRIE_LOG_PRUNING_ENABLED;
 
     @CommandLine.Option(
         hidden = true,
-        names = {"--Xbonsai-trie-log-retention-threshold"},
+        names = {BONSAI_TRIE_LOGS_RETENTION_THRESHOLD},
         description =
             "The number of blocks for which to retain trie logs. (default: ${DEFAULT-VALUE})")
     private long bonsaiTrieLogRetentionThreshold = DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
 
     @CommandLine.Option(
         hidden = true,
-        names = {"--Xbonsai-trie-log-pruning-limit"},
+        names = {BONSAI_TRIE_LOG_PRUNING_LIMIT},
         description =
             "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
     private int bonsaiTrieLogPruningLimit = DEFAULT_BONSAI_TRIE_LOG_PRUNING_LIMIT;
