@@ -1,6 +1,19 @@
 # Changelog
 
-## 24.1.1-SNAPSHOT
+## 24.1.2-SNAPSHOT
+
+### Breaking Changes
+
+### Deprecations
+
+### Additions and Improvements
+
+### Bug fixes
+- Fix the way an advertised host configured with `--p2p-host` is treated when communicating with the originator of a PING packet [#6225](https://github.com/hyperledger/besu/pull/6225)
+
+### Download Links
+
+## 24.1.1
 
 ### Breaking Changes
 - New `EXECUTION_HALTED` error returned if there is an error executing or simulating a transaction, with the reason for execution being halted. Replaces the generic `INTERNAL_ERROR` return code in certain cases which some applications may be checking for [#6343](https://github.com/hyperledger/besu/pull/6343)
@@ -29,7 +42,6 @@
 - Fix to gas limit delta calculations used in block production. Besu should now increment or decrement the block gas limit towards its target correctly (thanks @arbora) #6425
 
 ### Download Links
-
 
 ## 24.1.0
 
