@@ -91,6 +91,7 @@ import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFact
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
+import org.hyperledger.besu.util.number.PositiveNumber;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
 import java.io.File;
@@ -764,6 +765,8 @@ public class BesuCommandTest extends CommandTestAbstract {
       } else if (Fraction.class.isAssignableFrom(optionSpec.type())) {
         tomlResult.getDouble(tomlKey);
       } else if (Percentage.class.isAssignableFrom(optionSpec.type())) {
+        tomlResult.getLong(tomlKey);
+      } else if (PositiveNumber.class.isAssignableFrom(optionSpec.type())) {
         tomlResult.getLong(tomlKey);
       } else {
         tomlResult.getString(tomlKey);

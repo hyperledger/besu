@@ -2915,17 +2915,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           ImmutableMiningParameters.builder().from(miningOptions.toDomainObject());
       final var actualGenesisOptions = getActualGenesisConfigOptions();
       if (actualGenesisOptions.isPoa()) {
-        miningParametersBuilder.unstable(
-            ImmutableMiningParameters.Unstable.builder()
-                .minBlockTime(getMinBlockTime(actualGenesisOptions))
-                .build());
+        miningParametersBuilder.genesisBlockPeriodSeconds(
+            getGenesisBlockPeriodSeconds(actualGenesisOptions));
       }
       miningParameters = miningParametersBuilder.build();
     }
     return miningParameters;
   }
 
-  private int getMinBlockTime(final GenesisConfigOptions genesisConfigOptions) {
+  private int getGenesisBlockPeriodSeconds(final GenesisConfigOptions genesisConfigOptions) {
     if (genesisConfigOptions.isClique()) {
       return genesisConfigOptions.getCliqueConfigOptions().getBlockPeriodSeconds();
     }
