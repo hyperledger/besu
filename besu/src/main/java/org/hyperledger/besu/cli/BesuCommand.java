@@ -3546,7 +3546,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningEnabled()) {
       builder.setTrieLogPruningEnabled();
       builder.setTrieLogRetentionThreshold(
-          dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogRetentionThreshold());
+          dataStorageOptions.toDomainObject().getBonsaiMaxLayersToLoad());
       builder.setTrieLogPruningLimit(
           dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningLimit());
     }

@@ -44,8 +44,7 @@ public interface DataStorageConfiguration {
   interface Unstable {
 
     boolean DEFAULT_BONSAI_TRIE_LOG_PRUNING_ENABLED = false;
-    long DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD = 512L;
-    long MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD = DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
+    long MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
     int DEFAULT_BONSAI_TRIE_LOG_PRUNING_LIMIT = 30_000;
 
     DataStorageConfiguration.Unstable DEFAULT =
@@ -54,11 +53,6 @@ public interface DataStorageConfiguration {
     @Value.Default
     default boolean getBonsaiTrieLogPruningEnabled() {
       return DEFAULT_BONSAI_TRIE_LOG_PRUNING_ENABLED;
-    }
-
-    @Value.Default
-    default long getBonsaiTrieLogRetentionThreshold() {
-      return DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
     }
 
     @Value.Default

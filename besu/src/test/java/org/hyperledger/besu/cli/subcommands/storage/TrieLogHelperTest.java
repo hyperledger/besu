@@ -58,6 +58,7 @@ class TrieLogHelperTest {
 
   private static final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
   private static BonsaiWorldStateKeyValueStorage inMemoryWorldState;
+  private TrieLogHelper trieLogHelper;
 
   @Mock private MutableBlockchain blockchain;
 
@@ -66,6 +67,11 @@ class TrieLogHelperTest {
   static BlockHeader blockHeader3;
   static BlockHeader blockHeader4;
   static BlockHeader blockHeader5;
+
+  private static class NonValidatingTrieLogHelper extends TrieLogHelper {
+    @Override
+    void validatePruneConfiguration(final DataStorageConfiguration config) {}
+  }
 
   @BeforeEach
   public void setup() throws IOException {
@@ -99,6 +105,8 @@ class TrieLogHelperTest {
         .getTrieLogStorageTransaction()
         .put(blockHeader5.getHash().toArrayUnsafe(), createTrieLog(blockHeader5));
     updater.getTrieLogStorageTransaction().commit();
+
+    trieLogHelper = new NonValidatingTrieLogHelper();
   }
 
   private static byte[] createTrieLog(final BlockHeader blockHeader) {
@@ -122,12 +130,11 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .bonsaiMaxLayersToLoad(2L)
+            .bonsaiMaxLayersToLoad(3L)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiTrieLogRetentionThreshold(3)
-                    .build()
-                    .withBonsaiTrieLogRetentionThreshold(3))
+                    .bonsaiTrieLogPruningEnabled(true)
+                    .build())
             .build();
 
     mockBlockchainBase();
@@ -143,7 +150,7 @@ class TrieLogHelperTest {
     assertArrayEquals(
         inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get(), createTrieLog(blockHeader3));
 
-    TrieLogHelper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir);
+    trieLogHelper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir);
 
     // assert pruned trie logs are not in the DB
     assertEquals(inMemoryWorldState.getTrieLog(blockHeader1.getHash()), Optional.empty());
@@ -159,16 +166,15 @@ class TrieLogHelperTest {
   }
 
   @Test
-  public void cantPruneIfNoFinalizedIsFound(final @TempDir Path dataDir) {
+  public void cannotPruneIfNoFinalizedIsFound(final @TempDir Path dataDir) {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
             .bonsaiMaxLayersToLoad(2L)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiTrieLogRetentionThreshold(2)
-                    .build()
-                    .withBonsaiTrieLogRetentionThreshold(2))
+                    .bonsaiTrieLogPruningEnabled(true)
+                    .build())
             .build();
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(5L);
@@ -177,7 +183,7 @@ class TrieLogHelperTest {
     assertThrows(
         RuntimeException.class,
         () ->
-            TrieLogHelper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir));
+            trieLogHelper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir));
   }
 
   @Test
@@ -185,12 +191,11 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .bonsaiMaxLayersToLoad(2L)
+            .bonsaiMaxLayersToLoad(10L)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiTrieLogRetentionThreshold(10)
-                    .build()
-                    .withBonsaiTrieLogRetentionThreshold(10))
+                    .bonsaiTrieLogPruningEnabled(true)
+                    .build())
             .build();
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(5L);
@@ -198,7 +203,7 @@ class TrieLogHelperTest {
     assertThrows(
         IllegalArgumentException.class,
         () ->
-            TrieLogHelper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir));
+            trieLogHelper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir));
   }
 
   @Test
@@ -210,9 +215,8 @@ class TrieLogHelperTest {
             .bonsaiMaxLayersToLoad(2L)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiTrieLogRetentionThreshold(2)
-                    .build()
-                    .withBonsaiTrieLogRetentionThreshold(2))
+                    .bonsaiTrieLogPruningEnabled(true)
+                    .build())
             .build();
 
     mockBlockchainBase();
@@ -220,7 +224,7 @@ class TrieLogHelperTest {
     assertThrows(
         IllegalArgumentException.class,
         () ->
-            TrieLogHelper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir));
+            trieLogHelper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir));
   }
 
   @Test
@@ -232,15 +236,14 @@ class TrieLogHelperTest {
             .bonsaiMaxLayersToLoad(2L)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiTrieLogRetentionThreshold(2)
-                    .build()
-                    .withBonsaiTrieLogRetentionThreshold(2))
+                    .bonsaiTrieLogPruningEnabled(true)
+                    .build())
             .build();
 
     assertThrows(
         RuntimeException.class,
         () ->
-            TrieLogHelper.prune(
+            trieLogHelper.prune(
                 dataStorageConfiguration,
                 inMemoryWorldState,
                 blockchain,
@@ -261,13 +264,14 @@ class TrieLogHelperTest {
 
   @Test
   public void exportedTrieMatchesDbTrieLog(final @TempDir Path dataDir) throws IOException {
-    TrieLogHelper.exportTrieLog(
+    trieLogHelper.exportTrieLog(
         inMemoryWorldState,
         singletonList(blockHeader1.getHash()),
         dataDir.resolve("trie-log-dump"));
 
     var trieLog =
-        TrieLogHelper.readTrieLogsAsRlpFromFile(dataDir.resolve("trie-log-dump").toString())
+        trieLogHelper
+            .readTrieLogsAsRlpFromFile(dataDir.resolve("trie-log-dump").toString())
             .entrySet()
             .stream()
             .findFirst()
@@ -280,13 +284,14 @@ class TrieLogHelperTest {
 
   @Test
   public void exportedMultipleTriesMatchDbTrieLogs(final @TempDir Path dataDir) throws IOException {
-    TrieLogHelper.exportTrieLog(
+    trieLogHelper.exportTrieLog(
         inMemoryWorldState,
         List.of(blockHeader1.getHash(), blockHeader2.getHash(), blockHeader3.getHash()),
         dataDir.resolve("trie-log-dump"));
 
     var trieLogs =
-        TrieLogHelper.readTrieLogsAsRlpFromFile(dataDir.resolve("trie-log-dump").toString())
+        trieLogHelper
+            .readTrieLogsAsRlpFromFile(dataDir.resolve("trie-log-dump").toString())
             .entrySet()
             .stream()
             .collect(Collectors.toMap(e -> Bytes.wrap(e.getKey()), Map.Entry::getValue));
@@ -309,13 +314,13 @@ class TrieLogHelperTest {
         new BonsaiWorldStateKeyValueStorage(
             tempStorageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
 
-    TrieLogHelper.exportTrieLog(
+    trieLogHelper.exportTrieLog(
         inMemoryWorldState,
         singletonList(blockHeader1.getHash()),
         dataDir.resolve("trie-log-dump"));
 
     var trieLog =
-        TrieLogHelper.readTrieLogsAsRlpFromFile(dataDir.resolve("trie-log-dump").toString());
+        trieLogHelper.readTrieLogsAsRlpFromFile(dataDir.resolve("trie-log-dump").toString());
     var updater = inMemoryWorldState2.updater();
 
     trieLog.forEach((k, v) -> updater.getTrieLogStorageTransaction().put(k, v));
@@ -334,13 +339,13 @@ class TrieLogHelperTest {
         new BonsaiWorldStateKeyValueStorage(
             tempStorageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
 
-    TrieLogHelper.exportTrieLog(
+    trieLogHelper.exportTrieLog(
         inMemoryWorldState,
         List.of(blockHeader1.getHash(), blockHeader2.getHash(), blockHeader3.getHash()),
         dataDir.resolve("trie-log-dump"));
 
     var trieLog =
-        TrieLogHelper.readTrieLogsAsRlpFromFile(dataDir.resolve("trie-log-dump").toString());
+        trieLogHelper.readTrieLogsAsRlpFromFile(dataDir.resolve("trie-log-dump").toString());
     var updater = inMemoryWorldState2.updater();
 
     trieLog.forEach((k, v) -> updater.getTrieLogStorageTransaction().put(k, v));

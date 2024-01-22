@@ -42,7 +42,7 @@ public class DataStorageOptionsTest
   @Test
   public void bonsaiTrieLogPruningLimitShouldBePositive() {
     internalTestFailure(
-        "--Xbonsai-trie-log-pruning-limit=0 must be greater than 0",
+        "--Xbonsai-trie-logs-pruning-limit=0 must be greater than 0",
         "--Xbonsai-limit-trie-logs-enabled",
         "--Xbonsai-trie-logs-pruning-limit",
         "0");
@@ -52,10 +52,10 @@ public class DataStorageOptionsTest
   public void bonsaiTrieLogRetentionThresholdOption() {
     internalTestSuccess(
         dataStorageConfiguration ->
-            assertThat(dataStorageConfiguration.getUnstable().getBonsaiTrieLogRetentionThreshold())
+            assertThat(dataStorageConfiguration.getBonsaiMaxLayersToLoad())
                 .isEqualTo(MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD + 1),
         "--Xbonsai-limit-trie-logs-enabled",
-        "--Xbonsai-trie-logs-retention-threshold",
+        "--bonsai-historical-block-limit",
         "513");
   }
 
@@ -63,19 +63,19 @@ public class DataStorageOptionsTest
   public void bonsaiTrieLogRetentionThresholdOption_boundaryTest() {
     internalTestSuccess(
         dataStorageConfiguration ->
-            assertThat(dataStorageConfiguration.getUnstable().getBonsaiTrieLogRetentionThreshold())
+            assertThat(dataStorageConfiguration.getBonsaiMaxLayersToLoad())
                 .isEqualTo(MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD),
         "--Xbonsai-limit-trie-logs-enabled",
-        "--Xbonsai-trie-logs-retention-threshold",
+        "--bonsai-historical-block-limit",
         "512");
   }
 
   @Test
   public void bonsaiTrieLogRetentionThresholdShouldBeAboveMinimum() {
     internalTestFailure(
-        "--Xbonsai-trie-log-retention-threshold minimum value is 512",
+        "--bonsai-historical-block-limit minimum value is 512",
         "--Xbonsai-limit-trie-logs-enabled",
-        "--Xbonsai-trie-logs-retention-threshold",
+        "--bonsai-historical-block-limit",
         "511");
   }
 
@@ -88,11 +88,10 @@ public class DataStorageOptionsTest
   protected DataStorageConfiguration createCustomizedDomainObject() {
     return ImmutableDataStorageConfiguration.builder()
         .dataStorageFormat(DataStorageFormat.BONSAI)
-        .bonsaiMaxLayersToLoad(100L)
+        .bonsaiMaxLayersToLoad(513L)
         .unstable(
             ImmutableDataStorageConfiguration.Unstable.builder()
                 .bonsaiTrieLogPruningEnabled(true)
-                .bonsaiTrieLogRetentionThreshold(1000L)
                 .bonsaiTrieLogPruningLimit(20)
                 .build())
         .build();
