@@ -40,6 +40,7 @@ import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
 import org.hyperledger.besu.components.BesuComponent;
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
@@ -129,20 +130,37 @@ import picocli.CommandLine.RunLast;
 @ExtendWith(MockitoExtension.class)
 public abstract class CommandTestAbstract {
   private static final Logger TEST_LOGGER = LoggerFactory.getLogger(CommandTestAbstract.class);
+
+  protected static final int POA_BLOCK_PERIOD_SECONDS = 5;
   protected static final JsonObject VALID_GENESIS_QBFT_POST_LONDON =
       (new JsonObject())
           .put(
               "config",
               new JsonObject()
                   .put("londonBlock", 0)
-                  .put("qbft", new JsonObject().put("blockperiodseconds", 5)));
+                  .put(
+                      "qbft",
+                      new JsonObject().put("blockperiodseconds", POA_BLOCK_PERIOD_SECONDS)));
   protected static final JsonObject VALID_GENESIS_IBFT2_POST_LONDON =
       (new JsonObject())
           .put(
               "config",
               new JsonObject()
                   .put("londonBlock", 0)
-                  .put("ibft2", new JsonObject().put("blockperiodseconds", 5)));
+                  .put(
+                      "ibft2",
+                      new JsonObject().put("blockperiodseconds", POA_BLOCK_PERIOD_SECONDS)));
+
+  protected static final JsonObject VALID_GENESIS_CLIQUE_POST_LONDON =
+      (new JsonObject())
+          .put(
+              "config",
+              new JsonObject()
+                  .put("londonBlock", 0)
+                  .put(
+                      "clique",
+                      new JsonObject().put("blockperiodseconds", POA_BLOCK_PERIOD_SECONDS)));
+
   protected final PrintStream originalOut = System.out;
   protected final PrintStream originalErr = System.err;
   protected final ByteArrayOutputStream commandOutput = new ByteArrayOutputStream();
@@ -555,6 +573,11 @@ public abstract class CommandTestAbstract {
     protected Vertx createVertx(final VertxOptions vertxOptions) {
       vertx = super.createVertx(vertxOptions);
       return vertx;
+    }
+
+    @Override
+    public GenesisConfigOptions getActualGenesisConfigOptions() {
+      return super.getActualGenesisConfigOptions();
     }
 
     public CommandSpec getSpec() {
