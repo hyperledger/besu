@@ -1259,6 +1259,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
   private final Integer numberOfblocksToCache = 0;
 
+  @Option(
+      names = {"--rpc-max-trace-range"},
+      description =
+          "Specifies the maximum number of blocks for the trace_filter method (default: $DEFAULT-VALUE)")
+  private final Long maxTraceRange = 1000L;
+
   @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
 
   @Mixin private PkiBlockCreationOptions pkiBlockCreationOptions;
@@ -2526,7 +2532,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .gasPriceMax(apiGasPriceMax)
             .maxLogsRange(rpcMaxLogsRange)
             .gasCap(rpcGasCap)
-            .isGasAndPriorityFeeLimitingEnabled(apiGasAndPriorityFeeLimitingEnabled);
+            .isGasAndPriorityFeeLimitingEnabled(apiGasAndPriorityFeeLimitingEnabled)
+            .maxTraceRange(maxTraceRange);
     if (apiGasAndPriorityFeeLimitingEnabled) {
       if (apiGasAndPriorityFeeLowerBoundCoefficient > apiGasAndPriorityFeeUpperBoundCoefficient) {
         throw new ParameterException(

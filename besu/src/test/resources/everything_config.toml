@@ -90,6 +90,7 @@ rpc-max-logs-range=100
 json-pretty-print-enabled=false
 cache-last-blocks=512
 rpc-gas-cap = 50000000
+rpc-max-trace-range=100
 
 # PRIVACY TLS
 privacy-tls-enabled=false
