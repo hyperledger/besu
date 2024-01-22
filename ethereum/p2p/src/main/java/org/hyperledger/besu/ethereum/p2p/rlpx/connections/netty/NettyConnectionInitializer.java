@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
@@ -68,6 +69,7 @@ public class NettyConnectionInitializer
   private final PeerConnectionEventDispatcher eventDispatcher;
   private final MetricsSystem metricsSystem;
   private final Subscribers<ConnectCallback> connectSubscribers = Subscribers.create();
+  private final PeerTable peerTable;
 
   private ChannelFuture server;
   private final EventLoopGroup boss = new NioEventLoopGroup(1);
@@ -80,12 +82,14 @@ public class NettyConnectionInitializer
       final RlpxConfiguration config,
       final LocalNode localNode,
       final PeerConnectionEventDispatcher eventDispatcher,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final PeerTable peerTable) {
     this.nodeKey = nodeKey;
     this.config = config;
     this.localNode = localNode;
     this.eventDispatcher = eventDispatcher;
     this.metricsSystem = metricsSystem;
+    this.peerTable = peerTable;
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.NETWORK,
@@ -244,7 +248,8 @@ public class NettyConnectionInitializer
         eventDispatcher,
         metricsSystem,
         this,
-        this);
+        this,
+        peerTable);
   }
 
   @Nonnull
@@ -259,7 +264,8 @@ public class NettyConnectionInitializer
         eventDispatcher,
         metricsSystem,
         this,
-        this);
+        this,
+        peerTable);
   }
 
   @Nonnull
