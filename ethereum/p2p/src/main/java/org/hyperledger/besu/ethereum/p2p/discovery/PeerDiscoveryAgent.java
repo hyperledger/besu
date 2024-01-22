@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerRequirement;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.TimerUtil;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
@@ -81,6 +82,7 @@ public abstract class PeerDiscoveryAgent {
   private final MetricsSystem metricsSystem;
   private final RlpxAgent rlpxAgent;
   private final ForkIdManager forkIdManager;
+  private final PeerTable peerTable;
 
   /* The peer controller, which takes care of the state machine of peers. */
   protected Optional<PeerDiscoveryController> controller = Optional.empty();
@@ -109,7 +111,8 @@ public abstract class PeerDiscoveryAgent {
       final MetricsSystem metricsSystem,
       final StorageProvider storageProvider,
       final ForkIdManager forkIdManager,
-      final RlpxAgent rlpxAgent) {
+      final RlpxAgent rlpxAgent,
+      final PeerTable peerTable) {
     this.metricsSystem = metricsSystem;
     checkArgument(nodeKey != null, "nodeKey cannot be null");
     checkArgument(config != null, "provided configuration cannot be null");
@@ -130,6 +133,7 @@ public abstract class PeerDiscoveryAgent {
     this.forkIdManager = forkIdManager;
     this.forkIdSupplier = () -> forkIdManager.getForkIdForChainHead().getForkIdAsBytesList();
     this.rlpxAgent = rlpxAgent;
+    this.peerTable = peerTable;
   }
 
   protected abstract TimerUtil createTimer();
@@ -263,9 +267,9 @@ public abstract class PeerDiscoveryAgent {
         .peerRequirement(PeerRequirement.combine(peerRequirements))
         .peerPermissions(peerPermissions)
         .metricsSystem(metricsSystem)
-        .forkIdManager(forkIdManager)
         .filterOnEnrForkId((config.isFilterOnEnrForkIdEnabled()))
         .rlpxAgent(rlpxAgent)
+        .peerTable(peerTable)
         .build();
   }
 

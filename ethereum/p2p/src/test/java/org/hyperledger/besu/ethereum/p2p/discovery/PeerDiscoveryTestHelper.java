@@ -295,6 +295,7 @@ public class PeerDiscoveryTestHelper {
       config.setAdvertisedHost(advertisedHost);
       config.setBindPort(port);
       config.setActive(active);
+      config.setFilterOnEnrForkId(false);
 
       final ForkIdManager mockForkIdManager = mock(ForkIdManager.class);
       final ForkId forkId = new ForkId(Bytes.EMPTY, Bytes.EMPTY);
