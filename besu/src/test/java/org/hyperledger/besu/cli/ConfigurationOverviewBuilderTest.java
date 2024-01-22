@@ -214,7 +214,7 @@ class ConfigurationOverviewBuilderTest {
   @Test
   void setProfile() {
     builder.setProfile(ProfileName.DEV.name());
-    final String layeredTxPoolSelected = builder.build();
-    assertThat(layeredTxPoolSelected).contains("Configuration DEV:");
+    final String profileSelected = builder.build();
+    assertThat(profileSelected).contains("Configuration DEV:");
   }
 }

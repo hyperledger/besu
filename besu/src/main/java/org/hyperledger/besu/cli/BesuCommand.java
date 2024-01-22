@@ -3519,7 +3519,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (profile != null) {
-      builder.setProfile(profile.name());
+      builder.setProfile(profile.toString());
     }
 
     builder.setHasCustomGenesis(genesisFile != null);

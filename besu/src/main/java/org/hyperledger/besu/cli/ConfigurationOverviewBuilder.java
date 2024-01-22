@@ -285,8 +285,7 @@ public class ConfigurationOverviewBuilder {
     final List<String> lines = new ArrayList<>();
     lines.add("Besu version " + BesuInfo.class.getPackage().getImplementationVersion());
     lines.add("");
-    String profileInfo = (profile != null) ? String.format(" %s", profile) : "";
-    lines.add(String.format("Configuration%s:", profileInfo));
+    lines.add("Configuration:");
 
     // Don't include the default network if a genesis file has been supplied
     if (network != null && !hasCustomGenesis) {
@@ -301,6 +300,10 @@ public class ConfigurationOverviewBuilder {
 
     if (networkId != null) {
       lines.add("Network Id: " + networkId);
+    }
+
+    if (profile != null) {
+      lines.add("Profile: " + profile);
     }
 
     if (dataStorage != null) {
