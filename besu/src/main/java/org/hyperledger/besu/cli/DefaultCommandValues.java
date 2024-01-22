@@ -54,6 +54,10 @@ public interface DefaultCommandValues {
   String MANDATORY_MODE_FORMAT_HELP = "<MODE>";
   /** The constant MANDATORY_NETWORK_FORMAT_HELP. */
   String MANDATORY_NETWORK_FORMAT_HELP = "<NETWORK>";
+  /** The constant PROFILE_OPTION_NAME. */
+  String PROFILE_OPTION_NAME = "--profile";
+  /** The constant PROFILE_FORMAT_HELP. */
+  String PROFILE_FORMAT_HELP = "<PROFILE>";
   /** The constant MANDATORY_NODE_ID_FORMAT_HELP. */
   String MANDATORY_NODE_ID_FORMAT_HELP = "<NODEID>";
   /** The constant PERMISSIONING_CONFIG_LOCATION. */
