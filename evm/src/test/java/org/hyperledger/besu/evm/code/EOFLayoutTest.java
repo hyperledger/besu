@@ -276,15 +276,15 @@ public class EOFLayoutTest {
             1
           },
           {
-            "EF0001 010010 0200040001000200020002 030000 00 00000000 80000000 00010000 02030000 FE 5000 3000 8000",
+            "EF0001 010010 0200040001000200020002 030000 00 00000000 F0000000 00010000 02030000 FE 5000 3000 8000",
             "inputs too large",
-            "Type data input stack too large - 0x80",
+            "Type data input stack too large - 0xf0",
             1
           },
           {
-            "EF0001 010010 0200040001000200020002 030000 00 00000000 01000000 00800000 02030000 FE 5000 3000 8000",
+            "EF0001 010010 0200040001000200020002 030000 00 00000000 01000000 00F00000 02030000 FE 5000 3000 8000",
             "outputs too large",
-            "Type data output stack too large - 0x80",
+            "Type data output stack too large - 0xf0",
             1
           },
           {
