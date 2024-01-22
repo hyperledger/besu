@@ -286,8 +286,31 @@ public abstract class PeerDiscoveryAgent {
             .flatMap(Endpoint::getTcpPort)
             .orElse(udpPort);
 
+    // If the host is present in the P2P PING packet itself, use that as the endpoint. If the P2P
+    // PING packet specifies 127.0.0.1 (the default if a custom value is not specified with
+    // --p2p-host or via a suitable --nat-method) we ignore it in favour of the UDP source address.
+    // The likelihood is that the UDP source will be 127.0.0.1 anyway, but this reduces the chance
+    // of an unexpected change in behaviour as a result of
+    // https://github.com/hyperledger/besu/issues/6224 being fixed.
+    final String host =
+        packet
+            .getPacketData(PingPacketData.class)
+            .flatMap(PingPacketData::getFrom)
+            .map(Endpoint::getHost)
+            .filter(
+                fromAddr ->
+                    (!fromAddr.equals("127.0.0.1") && InetAddresses.isInetAddress(fromAddr)))
+            .stream()
+            .peek(
+                h ->
+                    LOG.trace(
+                        "Using \"From\" endpoint {} specified in ping packet. Ignoring UDP source host {}",
+                        h,
+                        sourceEndpoint.getHost()))
+            .findFirst()
+            .orElseGet(sourceEndpoint::getHost);
+
     // Notify the peer controller.
-    final String host = sourceEndpoint.getHost();
     final DiscoveryPeer peer =
         DiscoveryPeer.fromEnode(
             EnodeURLImpl.builder()
