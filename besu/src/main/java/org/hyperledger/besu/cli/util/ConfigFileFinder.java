@@ -67,7 +67,8 @@ public class ConfigFileFinder extends AbstractConfigurationFinder<File> {
       File file = configFileOption.getter().get();
       if (!file.exists()) {
         throw new CommandLine.ParameterException(
-            commandLine, "Unable to read TOML configuration, file not found.");
+            commandLine,
+            String.format("Unable to read TOML configuration, file not found: %s", file));
       }
       return Optional.of(file);
     } catch (final Exception e) {
