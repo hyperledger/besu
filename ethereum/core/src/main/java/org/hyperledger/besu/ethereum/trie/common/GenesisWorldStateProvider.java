@@ -67,7 +67,7 @@ public class GenesisWorldStateProvider {
                 new InMemoryKeyValueStorage(),
                 new NoOpMetricsSystem()),
             new NoOpMetricsSystem(),
-            DataStorageConfiguration.DEFAULT_CONFIG);
+            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
     return new BonsaiWorldState(
         bonsaiWorldStateKeyValueStorage,
         cachedMerkleTrieLoader,
