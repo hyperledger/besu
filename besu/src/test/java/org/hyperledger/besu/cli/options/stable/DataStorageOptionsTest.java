@@ -34,8 +34,8 @@ public class DataStorageOptionsTest
         dataStorageConfiguration ->
             assertThat(dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningLimit())
                 .isEqualTo(1),
-        "--Xbonsai-trie-log-pruning-enabled",
-        "--Xbonsai-trie-log-pruning-limit",
+        "--Xbonsai-limit-trie-logs-enabled",
+        "--Xbonsai-trie-logs-pruning-limit",
         "1");
   }
 
@@ -43,8 +43,8 @@ public class DataStorageOptionsTest
   public void bonsaiTrieLogPruningLimitShouldBePositive() {
     internalTestFailure(
         "--Xbonsai-trie-log-pruning-limit=0 must be greater than 0",
-        "--Xbonsai-trie-log-pruning-enabled",
-        "--Xbonsai-trie-log-pruning-limit",
+        "--Xbonsai-limit-trie-logs-enabled",
+        "--Xbonsai-trie-logs-pruning-limit",
         "0");
   }
 
@@ -54,8 +54,8 @@ public class DataStorageOptionsTest
         dataStorageConfiguration ->
             assertThat(dataStorageConfiguration.getUnstable().getBonsaiTrieLogRetentionThreshold())
                 .isEqualTo(MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD + 1),
-        "--Xbonsai-trie-log-pruning-enabled",
-        "--Xbonsai-trie-log-retention-threshold",
+        "--Xbonsai-limit-trie-logs-enabled",
+        "--Xbonsai-trie-logs-retention-threshold",
         "513");
   }
 
@@ -65,8 +65,8 @@ public class DataStorageOptionsTest
         dataStorageConfiguration ->
             assertThat(dataStorageConfiguration.getUnstable().getBonsaiTrieLogRetentionThreshold())
                 .isEqualTo(MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD),
-        "--Xbonsai-trie-log-pruning-enabled",
-        "--Xbonsai-trie-log-retention-threshold",
+        "--Xbonsai-limit-trie-logs-enabled",
+        "--Xbonsai-trie-logs-retention-threshold",
         "512");
   }
 
@@ -74,8 +74,8 @@ public class DataStorageOptionsTest
   public void bonsaiTrieLogRetentionThresholdShouldBeAboveMinimum() {
     internalTestFailure(
         "--Xbonsai-trie-log-retention-threshold minimum value is 512",
-        "--Xbonsai-trie-log-pruning-enabled",
-        "--Xbonsai-trie-log-retention-threshold",
+        "--Xbonsai-limit-trie-logs-enabled",
+        "--Xbonsai-trie-logs-retention-threshold",
         "511");
   }
 
