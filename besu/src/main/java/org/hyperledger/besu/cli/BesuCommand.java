@@ -123,7 +123,6 @@ import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -224,6 +223,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -1451,6 +1451,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
 
+      postCreationOptionSetup();
       validateOptions();
       configure();
       configureNativeLibs();
@@ -1795,6 +1796,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           this.commandLine,
           "--kzg-trusted-setup can only be specified on networks with data blobs enabled");
     }
+  }
+
+  /** Use this method to pass data, that was not yet available, at options object creation time */
+  private void postCreationOptionSetup() {
+    // set the optional genesis block period time needed by mining options
+    final var actualGenesisOptions = getActualGenesisConfigOptions();
+    miningOptions.setGenesisBlockPeriodSeconds(getGenesisBlockPeriodSeconds(actualGenesisOptions));
   }
 
   private void validateOptions() {
@@ -2904,32 +2912,26 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private MiningParameters getMiningParameters() {
     if (miningParameters == null) {
-      final var miningParametersBuilder =
-          ImmutableMiningParameters.builder().from(miningOptions.toDomainObject());
-      final var actualGenesisOptions = getActualGenesisConfigOptions();
-      if (actualGenesisOptions.isPoa()) {
-        miningParametersBuilder.genesisBlockPeriodSeconds(
-            getGenesisBlockPeriodSeconds(actualGenesisOptions));
-      }
-      miningParameters = miningParametersBuilder.build();
+      miningParameters = miningOptions.toDomainObject();
     }
     return miningParameters;
   }
 
-  private int getGenesisBlockPeriodSeconds(final GenesisConfigOptions genesisConfigOptions) {
+  private OptionalInt getGenesisBlockPeriodSeconds(
+      final GenesisConfigOptions genesisConfigOptions) {
     if (genesisConfigOptions.isClique()) {
-      return genesisConfigOptions.getCliqueConfigOptions().getBlockPeriodSeconds();
+      return OptionalInt.of(genesisConfigOptions.getCliqueConfigOptions().getBlockPeriodSeconds());
     }
 
     if (genesisConfigOptions.isIbft2()) {
-      return genesisConfigOptions.getBftConfigOptions().getBlockPeriodSeconds();
+      return OptionalInt.of(genesisConfigOptions.getBftConfigOptions().getBlockPeriodSeconds());
     }
 
     if (genesisConfigOptions.isQbft()) {
-      return genesisConfigOptions.getQbftConfigOptions().getBlockPeriodSeconds();
+      return OptionalInt.of(genesisConfigOptions.getQbftConfigOptions().getBlockPeriodSeconds());
     }
 
-    throw new IllegalArgumentException("Should only be called for a PoA network");
+    return OptionalInt.empty();
   }
 
   private boolean isPruningEnabled() {
@@ -3403,7 +3405,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return genesisConfigOptions.getEcCurve();
   }
 
-  private GenesisConfigOptions getActualGenesisConfigOptions() {
+  protected GenesisConfigOptions getActualGenesisConfigOptions() {
     return Optional.ofNullable(genesisConfigOptions)
         .orElseGet(
             () ->

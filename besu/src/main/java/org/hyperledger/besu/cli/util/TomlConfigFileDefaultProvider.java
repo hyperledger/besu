@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli.util;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
+import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.io.File;
 import java.io.IOException;
@@ -94,6 +95,8 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
     } else if (optionSpec.type().equals(Percentage.class)) {
       defaultValue = getNumericEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(Fraction.class)) {
+      defaultValue = getNumericEntryAsString(optionSpec);
+    } else if (optionSpec.type().equals(PositiveNumber.class)) {
       defaultValue = getNumericEntryAsString(optionSpec);
     } else { // else will be treated as String
       defaultValue = getEntryAsString(optionSpec);
