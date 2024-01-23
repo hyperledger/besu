@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValu
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogAddedEvent;
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogManager;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -210,7 +209,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
       final EvmConfiguration evmConfiguration) {
     final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
     final CachedMerkleTrieLoader cachedMerkleTrieLoader = new CachedMerkleTrieLoader(metricsSystem);
-    final TrieLogManager trieLogManager = new InMemoryTrieLogManager();
+    final TrieLogManager trieLogManager = new ReferenceTestsInMemoryTrieLogManager();
     final BonsaiPreImageProxy preImageProxy =
         new BonsaiPreImageProxy.BonsaiReferenceTestPreImageProxy();
 
@@ -249,13 +248,13 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     return this.refTestStorage.streamAccounts(this, startKeyHash, limit);
   }
 
-  static class InMemoryTrieLogManager extends TrieLogManager {
+  static class ReferenceTestsInMemoryTrieLogManager extends TrieLogManager {
 
     private final Cache<Hash, byte[]> trieLogCache =
         CacheBuilder.newBuilder().maximumSize(5).build();
 
-    public InMemoryTrieLogManager() {
-      super(null, null, 0, null, TrieLogPruner.noOpTrieLogPruner());
+    public ReferenceTestsInMemoryTrieLogManager() {
+      super(null, null, 0, null);
     }
 
     @Override
