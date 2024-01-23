@@ -130,7 +130,24 @@ public class RequestDataStep {
             (response, error) -> {
               if (response != null) {
                 downloadState.removeOutstandingTask(getStorageRangeTask);
-                for (int i = 0; i < response.slots().size(); i++) {
+                final ArrayDeque<TreeMap<Bytes32, Bytes>> slots = new ArrayDeque<>();
+                // Check if we have an empty range
+
+                /*
+                 * Checks if the response represents an "empty range".
+                 *
+                 * An "empty range" is defined as a response where either no slots are present,
+                 * or the first slot is empty, but at least one proof exists
+                 */
+                final boolean isEmptyRange =
+                    (response.slots().isEmpty() || response.slots().get(0).isEmpty())
+                        && !response.proofs().isEmpty();
+                if (isEmptyRange) { // empty range detected
+                  slots.add(new TreeMap<>());
+                } else {
+                  slots.addAll(response.slots());
+                }
+                for (int i = 0; i < slots.size(); i++) {
                   final StorageRangeDataRequest request =
                       (StorageRangeDataRequest) requestTasks.get(i).getData();
                   request.setRootHash(blockHeader.getStateRoot());
