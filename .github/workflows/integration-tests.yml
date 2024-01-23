@@ -63,7 +63,7 @@ jobs:
       - name: setup gradle
         uses: gradle/gradle-build-action@v2
       - name: run integration tests
-        run: ./gradlew integrationTest -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+        run: ./gradlew integrationTest compileJmh -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v4
         if: (success() || failure())
