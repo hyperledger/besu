@@ -46,6 +46,7 @@ import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.cli.config.ProfileName;
 import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
@@ -535,6 +536,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Synchronize against the indicated network, possible values are ${COMPLETION-CANDIDATES}."
               + " (default: ${DEFAULT-VALUE})")
   private final NetworkName network = null;
+
+  @Option(
+      names = {PROFILE_OPTION_NAME},
+      paramLabel = PROFILE_FORMAT_HELP,
+      description =
+          "Overwrite default settings. Possible values are ${COMPLETION-CANDIDATES}. (default: none)")
+  private final ProfileName profile = null;
 
   @Option(
       names = {"--nat-method"},
@@ -3506,6 +3514,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (network != null) {
       builder.setNetwork(network.normalize());
+    }
+
+    if (profile != null) {
+      builder.setProfile(profile.toString());
     }
 
     builder.setHasCustomGenesis(genesisFile != null);
