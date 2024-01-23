@@ -93,14 +93,12 @@ public class TraceFilter extends TraceBlock {
     final long toBlock = resolveBlockNumber(filterParameter.getToBlock());
     LOG.trace("Received RPC rpcName={} fromBlock={} toBlock={}", getName(), fromBlock, toBlock);
 
-    try {
-      if (maxRange > 0 && toBlock - fromBlock > maxRange)
-        throw new IllegalArgumentException(RpcErrorType.EXCEEDS_RPC_MAX_BLOCK_RANGE.getMessage());
-    } catch (IllegalArgumentException ex) {
+    if (maxRange > 0 && toBlock - fromBlock > maxRange) {
       LOG.atDebug()
           .setMessage("trace_filter request {} failed:")
           .addArgument(requestContext.getRequest())
-          .setCause(ex.getCause())
+          .setCause(
+              new IllegalArgumentException(RpcErrorType.EXCEEDS_RPC_MAX_BLOCK_RANGE.getMessage()))
           .log();
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), RpcErrorType.EXCEEDS_RPC_MAX_BLOCK_RANGE);
