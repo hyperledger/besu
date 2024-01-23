@@ -1,5 +1,5 @@
 sync-mode="X_SNAP"
-sync-min-peers=3
+sync-min-peers=1
 remote-connections-limit-enabled=false
 tx-pool="SEQUENCED"
 tx-pool-no-local-priority=true

@@ -16,17 +16,11 @@ package org.hyperledger.besu.cli.config;
 
 /** Enum for profile names. Each profile corresponds to a configuration file. */
 public enum ProfileName {
-  /**
-   * The 'ENTERPRISE' profile. Corresponds to the 'profiles/enterprise-private.toml' configuration
-   * file.
-   */
+  /** The 'ENTERPRISE' profile */
   ENTERPRISE("profiles/enterprise-private.toml"),
-  /**
-   * The 'PRIVATE' profile. Corresponds to the 'profiles/enterprise-private.toml' configuration
-   * file.
-   */
+  /** The 'PRIVATE' profile */
   PRIVATE("profiles/enterprise-private.toml"),
-  /** The 'DEV' profile. Corresponds to the 'profiles/dev.toml' configuration file. */
+  /** The 'DEV' profile. */
   DEV("profiles/dev.toml");
 
   private final String configFile;
