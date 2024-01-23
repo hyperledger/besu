@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValue
 import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
@@ -104,8 +103,7 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         Optional.empty(),
         cachedMerkleTrieLoader,
         null,
-        evmConfiguration,
-        TrieLogPruner.noOpTrieLogPruner());
+        evmConfiguration);
   }
 
   public static MutableWorldState createInMemoryWorldState() {
