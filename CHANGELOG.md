@@ -3,6 +3,7 @@
 ## 24.1.2-SNAPSHOT
 
 ### Breaking Changes
+- A Limit on the range of blocks passed to the JSON-RPC API `trace-filter` method, that defaults to 1000 and can be set with `--rpc-max-logs-range`, has been enabled [#6446](https://github.com/hyperledger/besu/pull/6446)
 
 ### Deprecations
 
