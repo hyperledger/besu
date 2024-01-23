@@ -98,7 +98,7 @@ public class TraceFilter extends TraceBlock {
         throw new IllegalArgumentException(RpcErrorType.EXCEEDS_RPC_MAX_BLOCK_RANGE.getMessage());
     } catch (IllegalArgumentException ex) {
       LOG.atDebug()
-          .setMessage("eth_getLogs request {} failed:")
+          .setMessage("trace_filter request {} failed:")
           .addArgument(requestContext.getRequest())
           .setCause(ex.getCause())
           .log();

@@ -64,7 +64,7 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
             () -> new BlockTracer(blockReplay),
             protocolSchedule,
             blockchainQueries,
-            apiConfiguration.getMaxTraceRange()),
+            apiConfiguration.getMaxTraceFilterRange()),
         new TraceGet(() -> new BlockTracer(blockReplay), blockchainQueries, protocolSchedule),
         new TraceTransaction(
             () -> new BlockTracer(blockReplay), protocolSchedule, blockchainQueries),

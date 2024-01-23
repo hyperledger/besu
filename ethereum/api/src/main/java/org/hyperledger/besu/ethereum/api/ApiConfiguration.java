@@ -79,7 +79,7 @@ public abstract class ApiConfiguration {
   }
 
   @Value.Default
-  public Long getMaxTraceRange() {
+  public Long getMaxTraceFilterRange() {
     return 1000L;
   }
 }
