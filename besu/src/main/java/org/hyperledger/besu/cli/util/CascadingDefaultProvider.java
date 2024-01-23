@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.cli.util;
 
-import static java.util.Arrays.asList;
-
 import java.util.List;
 
 import picocli.CommandLine.IDefaultValueProvider;
@@ -34,8 +32,8 @@ public class CascadingDefaultProvider implements IDefaultValueProvider {
    *
    * @param defaultValueProviders List of default value providers
    */
-  public CascadingDefaultProvider(final IDefaultValueProvider... defaultValueProviders) {
-    this.defaultValueProviders = asList(defaultValueProviders);
+  public CascadingDefaultProvider(final List<IDefaultValueProvider> defaultValueProviders) {
+    this.defaultValueProviders = defaultValueProviders;
   }
 
   @Override
