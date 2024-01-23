@@ -1,0 +1,6 @@
+sync-mode="X_SNAP"
+sync-min-peers=3
+remote-connections-limit-enabled=false
+tx-pool="SEQUENCED"
+tx-pool-no-local-priority=true
+tx-pool-limit-by-account-percentage=0.1220703125
