@@ -320,9 +320,7 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
 
   private String convertFromPrometheusCounterName(
       final MetricCategory category, final String metricName) {
-    final String prefix = prometheusPrefix(category);
-    final String unPrefixedName =
-        metricName.startsWith(prefix) ? metricName.substring(prefix.length()) : metricName;
+    final String unPrefixedName = convertFromPrometheusName(category, metricName);
     return totalSuffixedCounters.contains(unPrefixedName + "_total")
         ? unPrefixedName + "_total"
         : unPrefixedName;
