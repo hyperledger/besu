@@ -1,0 +1,6 @@
+sync-mode="X_CHECKPOINT"
+data-storage-format="BONSAI"
+bonsai-historical-block-limit=128
+max-peers=25
+Xp2p-peer-lower-bound=10
+Xbonsai-trie-log-pruning-enabled=true
