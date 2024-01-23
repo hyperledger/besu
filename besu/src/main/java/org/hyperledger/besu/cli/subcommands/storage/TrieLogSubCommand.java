@@ -105,7 +105,7 @@ public class TrieLogSubCommand implements Runnable {
   @Command(
       name = "prune",
       description =
-          "This command prunes all trie log layers below the retention threshold, including orphaned trie logs.",
+          "This command prunes all trie log layers below the retention limit, including orphaned trie logs.",
       mixinStandardHelpOptions = true,
       versionProvider = VersionProvider.class)
   static class PruneTrieLog implements Runnable {
@@ -148,6 +148,7 @@ public class TrieLogSubCommand implements Runnable {
     @CommandLine.Spec
     private CommandLine.Model.CommandSpec spec; // Picocli injects reference to command spec
 
+    @SuppressWarnings("unused")
     @CommandLine.Option(
         names = "--trie-log-block-hash",
         description =

@@ -51,9 +51,9 @@ public class ConfigurationOverviewBuilder {
   private Collection<String> engineApis;
   private String engineJwtFilePath;
   private boolean isHighSpec = false;
-  private boolean isTrieLogPruningEnabled = false;
-  private long trieLogRetentionThreshold = 0;
-  private Integer trieLogPruningLimit = null;
+  private boolean isBonsaiLimitTrieLogsEnabled = false;
+  private long trieLogRetentionLimit = 0;
+  private Integer trieLogsPruningWindowSize = null;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
   private EvmConfiguration.WorldUpdaterMode worldStateUpdateMode;
   private Map<String, String> environment;
@@ -187,34 +187,34 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
-   * Sets trie log pruning enabled
+   * Sets limit trie logs enabled
    *
    * @return the builder
    */
-  public ConfigurationOverviewBuilder setTrieLogPruningEnabled() {
-    isTrieLogPruningEnabled = true;
+  public ConfigurationOverviewBuilder setLimitTrieLogsEnabled() {
+    isBonsaiLimitTrieLogsEnabled = true;
     return this;
   }
 
   /**
-   * Sets trie log retention threshold
+   * Sets trie log retention limit
    *
-   * @param threshold the number of blocks to retain trie logs for
+   * @param limit the number of blocks to retain trie logs for
    * @return the builder
    */
-  public ConfigurationOverviewBuilder setTrieLogRetentionThreshold(final long threshold) {
-    trieLogRetentionThreshold = threshold;
+  public ConfigurationOverviewBuilder setTrieLogRetentionLimit(final long limit) {
+    trieLogRetentionLimit = limit;
     return this;
   }
 
   /**
-   * Sets trie log pruning limit
+   * Sets trie logs pruning window size
    *
-   * @param limit the max number of blocks to load and prune trie logs for at startup
+   * @param size the max number of blocks to load and prune trie logs for at startup
    * @return the builder
    */
-  public ConfigurationOverviewBuilder setTrieLogPruningLimit(final int limit) {
-    trieLogPruningLimit = limit;
+  public ConfigurationOverviewBuilder setTrieLogsPruningWindowSize(final int size) {
+    trieLogsPruningWindowSize = size;
     return this;
   }
 
@@ -323,13 +323,13 @@ public class ConfigurationOverviewBuilder {
 
     lines.add("Using " + worldStateUpdateMode + " worldstate update mode");
 
-    if (isTrieLogPruningEnabled) {
+    if (isBonsaiLimitTrieLogsEnabled) {
       final StringBuilder trieLogPruningString = new StringBuilder();
       trieLogPruningString
-          .append("Trie log pruning enabled: retention: ")
-          .append(trieLogRetentionThreshold);
-      if (trieLogPruningLimit != null) {
-        trieLogPruningString.append("; prune limit: ").append(trieLogPruningLimit);
+          .append("Limit trie logs enabled: retention: ")
+          .append(trieLogRetentionLimit);
+      if (trieLogsPruningWindowSize != null) {
+        trieLogPruningString.append("; prune window: ").append(trieLogsPruningWindowSize);
       }
       lines.add(trieLogPruningString.toString());
     }

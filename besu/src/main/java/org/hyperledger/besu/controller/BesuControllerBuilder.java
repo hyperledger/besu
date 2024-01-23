@@ -1074,12 +1074,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         final boolean isProofOfStake =
             genesisConfigOptions.getTerminalTotalDifficulty().isPresent();
         final TrieLogPruner trieLogPruner =
-            dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningEnabled()
+            dataStorageConfiguration.getUnstable().getBonsaiLimitTrieLogsEnabled()
                 ? new TrieLogPruner(
                     (BonsaiWorldStateKeyValueStorage) worldStateStorage,
                     blockchain,
                     dataStorageConfiguration.getBonsaiMaxLayersToLoad(),
-                    dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningLimit(),
+                    dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningWindowSize(),
                     isProofOfStake)
                 : TrieLogPruner.noOpTrieLogPruner();
         trieLogPruner.initialize();

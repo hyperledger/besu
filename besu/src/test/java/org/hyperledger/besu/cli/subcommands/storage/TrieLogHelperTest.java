@@ -16,10 +16,9 @@
 package org.hyperledger.besu.cli.subcommands.storage;
 
 import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageFormat.BONSAI;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -37,6 +36,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -60,18 +60,18 @@ class TrieLogHelperTest {
   private static BonsaiWorldStateKeyValueStorage inMemoryWorldState;
   private TrieLogHelper trieLogHelper;
 
-  @Mock private MutableBlockchain blockchain;
-
-  static BlockHeader blockHeader1;
-  static BlockHeader blockHeader2;
-  static BlockHeader blockHeader3;
-  static BlockHeader blockHeader4;
-  static BlockHeader blockHeader5;
-
   private static class NonValidatingTrieLogHelper extends TrieLogHelper {
     @Override
     void validatePruneConfiguration(final DataStorageConfiguration config) {}
   }
+
+  @Mock private MutableBlockchain blockchain;
+  static BlockHeader blockHeader1;
+  static BlockHeader blockHeader2;
+  static BlockHeader blockHeader3;
+  static BlockHeader blockHeader4;
+
+  static BlockHeader blockHeader5;
 
   @BeforeEach
   public void setup() throws IOException {
@@ -133,7 +133,7 @@ class TrieLogHelperTest {
             .bonsaiMaxLayersToLoad(3L)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiTrieLogPruningEnabled(true)
+                    .bonsaiLimitTrieLogsEnabled(true)
                     .build())
             .build();
 
@@ -143,71 +143,75 @@ class TrieLogHelperTest {
     when(blockchain.getBlockHeader(3)).thenReturn(Optional.of(blockHeader3));
 
     // assert trie logs that will be pruned exist before prune call
-    assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get(), createTrieLog(blockHeader1));
-    assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader2.getHash()).get(), createTrieLog(blockHeader2));
-    assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get(), createTrieLog(blockHeader3));
+    assertThat(inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get())
+        .isEqualTo(createTrieLog(blockHeader1));
+    assertThat(inMemoryWorldState.getTrieLog(blockHeader2.getHash()).get())
+        .isEqualTo(createTrieLog(blockHeader2));
+    assertThat(inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get())
+        .isEqualTo(createTrieLog(blockHeader3));
 
     trieLogHelper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir);
 
     // assert pruned trie logs are not in the DB
-    assertEquals(inMemoryWorldState.getTrieLog(blockHeader1.getHash()), Optional.empty());
-    assertEquals(inMemoryWorldState.getTrieLog(blockHeader2.getHash()), Optional.empty());
+    assertThat(inMemoryWorldState.getTrieLog(blockHeader1.getHash())).isEqualTo(Optional.empty());
+    assertThat(inMemoryWorldState.getTrieLog(blockHeader2.getHash())).isEqualTo(Optional.empty());
 
     // assert retained trie logs are in the DB
-    assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get(), createTrieLog(blockHeader3));
-    assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader4.getHash()).get(), createTrieLog(blockHeader4));
-    assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader5.getHash()).get(), createTrieLog(blockHeader5));
+    assertThat(inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get())
+        .isEqualTo(createTrieLog(blockHeader3));
+    assertThat(inMemoryWorldState.getTrieLog(blockHeader4.getHash()).get())
+        .isEqualTo(createTrieLog(blockHeader4));
+    assertThat(inMemoryWorldState.getTrieLog(blockHeader5.getHash()).get())
+        .isEqualTo(createTrieLog(blockHeader5));
   }
 
   @Test
-  public void cannotPruneIfNoFinalizedIsFound(final @TempDir Path dataDir) {
+  public void cannotPruneIfNoFinalizedIsFound() {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
             .bonsaiMaxLayersToLoad(2L)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiTrieLogPruningEnabled(true)
+                    .bonsaiLimitTrieLogsEnabled(true)
                     .build())
             .build();
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(5L);
     when(blockchain.getFinalized()).thenReturn(Optional.empty());
 
-    assertThrows(
-        RuntimeException.class,
-        () ->
-            trieLogHelper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir));
+    assertThatThrownBy(
+            () ->
+                trieLogHelper.prune(
+                    dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("No finalized block present, can't safely run trie log prune");
   }
 
   @Test
-  public void cantPruneIfUserRetainsMoreLayerThanExistingChainLength(final @TempDir Path dataDir) {
+  public void cannotPruneIfUserRetainsMoreLayersThanExistingChainLength() {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
             .bonsaiMaxLayersToLoad(10L)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiTrieLogPruningEnabled(true)
+                    .bonsaiLimitTrieLogsEnabled(true)
                     .build())
             .build();
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(5L);
 
-    assertThrows(
-        IllegalArgumentException.class,
-        () ->
-            trieLogHelper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir));
+    assertThatThrownBy(
+            () ->
+                trieLogHelper.prune(
+                    dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Trying to retain more trie logs than chain length (5), skipping pruning");
   }
 
   @Test
-  public void cantPruneIfUserRequiredFurtherThanFinalized(final @TempDir Path dataDir) {
+  public void cannotPruneIfUserRequiredFurtherThanFinalized(final @TempDir Path dataDir) {
 
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
@@ -215,16 +219,84 @@ class TrieLogHelperTest {
             .bonsaiMaxLayersToLoad(2L)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiTrieLogPruningEnabled(true)
+                    .bonsaiLimitTrieLogsEnabled(true)
                     .build())
             .build();
 
     mockBlockchainBase();
 
-    assertThrows(
-        IllegalArgumentException.class,
-        () ->
-            trieLogHelper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir));
+    assertThatThrownBy(
+            () ->
+                trieLogHelper.prune(
+                    dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Trying to prune more layers than the finalized block height, skipping pruning");
+  }
+
+  @Test
+  public void trieLogRetentionLimitShouldBeAboveMinimum() {
+
+    DataStorageConfiguration dataStorageConfiguration =
+        ImmutableDataStorageConfiguration.builder()
+            .dataStorageFormat(BONSAI)
+            .bonsaiMaxLayersToLoad(511L)
+            .unstable(
+                ImmutableDataStorageConfiguration.Unstable.builder()
+                    .bonsaiLimitTrieLogsEnabled(true)
+                    .build())
+            .build();
+
+    TrieLogHelper helper = new TrieLogHelper();
+    assertThatThrownBy(
+            () ->
+                helper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("--bonsai-historical-block-limit minimum value is 512");
+  }
+
+  @Test
+  public void trieLogPruningWindowSizeShouldBePositive() {
+
+    DataStorageConfiguration dataStorageConfiguration =
+        ImmutableDataStorageConfiguration.builder()
+            .dataStorageFormat(BONSAI)
+            .bonsaiMaxLayersToLoad(512L)
+            .unstable(
+                ImmutableDataStorageConfiguration.Unstable.builder()
+                    .bonsaiLimitTrieLogsEnabled(true)
+                    .bonsaiTrieLogPruningWindowSize(0)
+                    .build())
+            .build();
+
+    TrieLogHelper helper = new TrieLogHelper();
+    assertThatThrownBy(
+            () ->
+                helper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("--Xbonsai-trie-logs-pruning-window-size=0 must be greater than 0");
+  }
+
+  @Test
+  public void trieLogPruningWindowSizeShouldBeAboveRetentionLimit() {
+    DataStorageConfiguration dataStorageConfiguration =
+        ImmutableDataStorageConfiguration.builder()
+            .dataStorageFormat(BONSAI)
+            .bonsaiMaxLayersToLoad(512L)
+            .unstable(
+                ImmutableDataStorageConfiguration.Unstable.builder()
+                    .bonsaiLimitTrieLogsEnabled(true)
+                    .bonsaiTrieLogPruningWindowSize(512)
+                    .build())
+            .build();
+
+    TrieLogHelper helper = new TrieLogHelper();
+    assertThatThrownBy(
+            () ->
+                helper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage(
+            "--Xbonsai-trie-logs-pruning-window-size=512 must be greater than --bonsai-historical-block-limit=512");
   }
 
   @Test
@@ -233,33 +305,39 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .bonsaiMaxLayersToLoad(2L)
+            .bonsaiMaxLayersToLoad(3L)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiTrieLogPruningEnabled(true)
+                    .bonsaiLimitTrieLogsEnabled(true)
                     .build())
             .build();
 
-    assertThrows(
-        RuntimeException.class,
-        () ->
-            trieLogHelper.prune(
-                dataStorageConfiguration,
-                inMemoryWorldState,
-                blockchain,
-                dataDir.resolve("unknownPath")));
+    mockBlockchainBase();
+    when(blockchain.getBlockHeader(5)).thenReturn(Optional.of(blockHeader5));
+    when(blockchain.getBlockHeader(4)).thenReturn(Optional.of(blockHeader4));
+    when(blockchain.getBlockHeader(3)).thenReturn(Optional.of(blockHeader3));
+
+    assertThatThrownBy(
+            () ->
+                trieLogHelper.prune(
+                    dataStorageConfiguration,
+                    inMemoryWorldState,
+                    blockchain,
+                    dataDir.resolve("unknownPath")))
+        .isInstanceOf(RuntimeException.class)
+        .hasCauseExactlyInstanceOf(FileNotFoundException.class);
 
     // assert all trie logs are still in the DB
-    assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get(), createTrieLog(blockHeader1));
-    assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader2.getHash()).get(), createTrieLog(blockHeader2));
-    assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get(), createTrieLog(blockHeader3));
-    assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader4.getHash()).get(), createTrieLog(blockHeader4));
-    assertArrayEquals(
-        inMemoryWorldState.getTrieLog(blockHeader5.getHash()).get(), createTrieLog(blockHeader5));
+    assertThat(inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get())
+        .isEqualTo(createTrieLog(blockHeader1));
+    assertThat(inMemoryWorldState.getTrieLog(blockHeader2.getHash()).get())
+        .isEqualTo(createTrieLog(blockHeader2));
+    assertThat(inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get())
+        .isEqualTo(createTrieLog(blockHeader3));
+    assertThat(inMemoryWorldState.getTrieLog(blockHeader4.getHash()).get())
+        .isEqualTo(createTrieLog(blockHeader4));
+    assertThat(inMemoryWorldState.getTrieLog(blockHeader5.getHash()).get())
+        .isEqualTo(createTrieLog(blockHeader5));
   }
 
   @Test
@@ -277,9 +355,9 @@ class TrieLogHelperTest {
             .findFirst()
             .get();
 
-    assertArrayEquals(trieLog.getKey(), blockHeader1.getHash().toArrayUnsafe());
-    assertArrayEquals(
-        trieLog.getValue(), inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get());
+    assertThat(trieLog.getKey()).isEqualTo(blockHeader1.getHash().toArrayUnsafe());
+    assertThat(trieLog.getValue())
+        .isEqualTo(inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get());
   }
 
   @Test
@@ -296,15 +374,12 @@ class TrieLogHelperTest {
             .stream()
             .collect(Collectors.toMap(e -> Bytes.wrap(e.getKey()), Map.Entry::getValue));
 
-    assertArrayEquals(
-        trieLogs.get(blockHeader1.getHash()),
-        inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get());
-    assertArrayEquals(
-        trieLogs.get(blockHeader2.getHash()),
-        inMemoryWorldState.getTrieLog(blockHeader2.getHash()).get());
-    assertArrayEquals(
-        trieLogs.get(blockHeader3.getHash()),
-        inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get());
+    assertThat(trieLogs.get(blockHeader1.getHash()))
+        .isEqualTo(inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get());
+    assertThat(trieLogs.get(blockHeader2.getHash()))
+        .isEqualTo(inMemoryWorldState.getTrieLog(blockHeader2.getHash()).get());
+    assertThat(trieLogs.get(blockHeader3.getHash()))
+        .isEqualTo(inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get());
   }
 
   @Test
@@ -327,9 +402,8 @@ class TrieLogHelperTest {
 
     updater.getTrieLogStorageTransaction().commit();
 
-    assertArrayEquals(
-        inMemoryWorldState2.getTrieLog(blockHeader1.getHash()).get(),
-        inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get());
+    assertThat(inMemoryWorldState2.getTrieLog(blockHeader1.getHash()).get())
+        .isEqualTo(inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get());
   }
 
   @Test
@@ -352,14 +426,11 @@ class TrieLogHelperTest {
 
     updater.getTrieLogStorageTransaction().commit();
 
-    assertArrayEquals(
-        inMemoryWorldState2.getTrieLog(blockHeader1.getHash()).get(),
-        inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get());
-    assertArrayEquals(
-        inMemoryWorldState2.getTrieLog(blockHeader2.getHash()).get(),
-        inMemoryWorldState.getTrieLog(blockHeader2.getHash()).get());
-    assertArrayEquals(
-        inMemoryWorldState2.getTrieLog(blockHeader3.getHash()).get(),
-        inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get());
+    assertThat(inMemoryWorldState2.getTrieLog(blockHeader1.getHash()).get())
+        .isEqualTo(inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get());
+    assertThat(inMemoryWorldState2.getTrieLog(blockHeader2.getHash()).get())
+        .isEqualTo(inMemoryWorldState.getTrieLog(blockHeader2.getHash()).get());
+    assertThat(inMemoryWorldState2.getTrieLog(blockHeader3.getHash()).get())
+        .isEqualTo(inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get());
   }
 }

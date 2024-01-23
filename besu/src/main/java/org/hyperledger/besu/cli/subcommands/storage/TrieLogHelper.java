@@ -248,24 +248,25 @@ public class TrieLogHelper {
   void validatePruneConfiguration(final DataStorageConfiguration config) {
     checkArgument(
         config.getBonsaiMaxLayersToLoad()
-            >= DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD,
+            >= DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT,
         String.format(
             DataStorageOptions.BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD + " minimum value is %d",
-            DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD));
+            DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT));
     checkArgument(
-        config.getUnstable().getBonsaiTrieLogPruningLimit() > 0,
+        config.getUnstable().getBonsaiTrieLogPruningWindowSize() > 0,
         String.format(
-            DataStorageOptions.Unstable.BONSAI_TRIE_LOG_PRUNING_LIMIT
+            DataStorageOptions.Unstable.BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE
                 + "=%d must be greater than 0",
-            config.getUnstable().getBonsaiTrieLogPruningLimit()));
+            config.getUnstable().getBonsaiTrieLogPruningWindowSize()));
     checkArgument(
-        config.getUnstable().getBonsaiTrieLogPruningLimit() > config.getBonsaiMaxLayersToLoad(),
+        config.getUnstable().getBonsaiTrieLogPruningWindowSize()
+            > config.getBonsaiMaxLayersToLoad(),
         String.format(
-            DataStorageOptions.Unstable.BONSAI_TRIE_LOG_PRUNING_LIMIT
-                + "=%d must greater than "
+            DataStorageOptions.Unstable.BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE
+                + "=%d must be greater than "
                 + DataStorageOptions.BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
                 + "=%d",
-            config.getUnstable().getBonsaiTrieLogPruningLimit(),
+            config.getUnstable().getBonsaiTrieLogPruningWindowSize(),
             config.getBonsaiMaxLayersToLoad()));
   }
 
