@@ -86,7 +86,6 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         description =
             "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
     private int bonsaiTrieLogPruningWindowSize = DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
-    private int bonsaiTrieLogPruningLimit = DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
 
     @CommandLine.Option(
         hidden = true,
@@ -148,8 +147,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         domainObject.getUnstable().getBonsaiLimitTrieLogsEnabled();
     dataStorageOptions.unstableOptions.bonsaiTrieLogPruningWindowSize =
         domainObject.getUnstable().getBonsaiTrieLogPruningWindowSize();
-      dataStorageOptions.unstableOptions.bonsaiCodeUsingCodeHashEnabled =
-              domainObject.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
+    dataStorageOptions.unstableOptions.bonsaiCodeUsingCodeHashEnabled =
+        domainObject.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
 
     return dataStorageOptions;
   }
