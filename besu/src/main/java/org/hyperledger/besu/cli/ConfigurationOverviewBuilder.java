@@ -41,6 +41,7 @@ public class ConfigurationOverviewBuilder {
 
   private String network;
   private BigInteger networkId;
+  private String profile;
   private boolean hasCustomGenesis;
   private String customGenesisFileName;
   private String dataStorage;
@@ -85,6 +86,17 @@ public class ConfigurationOverviewBuilder {
    */
   public ConfigurationOverviewBuilder setNetworkId(final BigInteger networkId) {
     this.networkId = networkId;
+    return this;
+  }
+
+  /**
+   * Sets profile.
+   *
+   * @param profile the profile
+   * @return the profile
+   */
+  public ConfigurationOverviewBuilder setProfile(final String profile) {
+    this.profile = profile;
     return this;
   }
 
@@ -288,6 +300,10 @@ public class ConfigurationOverviewBuilder {
 
     if (networkId != null) {
       lines.add("Network Id: " + networkId);
+    }
+
+    if (profile != null) {
+      lines.add("Profile: " + profile);
     }
 
     if (dataStorage != null) {
