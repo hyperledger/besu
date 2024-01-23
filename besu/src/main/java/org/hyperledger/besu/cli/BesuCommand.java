@@ -3555,12 +3555,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setHighSpecEnabled();
     }
 
-    if (dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningEnabled()) {
-      builder.setTrieLogPruningEnabled();
-      builder.setTrieLogRetentionThreshold(
-          dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogRetentionThreshold());
-      builder.setTrieLogPruningLimit(
-          dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningLimit());
+    if (dataStorageOptions.toDomainObject().getUnstable().getBonsaiLimitTrieLogsEnabled()) {
+      builder.setLimitTrieLogsEnabled();
+      builder.setTrieLogRetentionLimit(
+          dataStorageOptions.toDomainObject().getBonsaiMaxLayersToLoad());
+      builder.setTrieLogsPruningWindowSize(
+          dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningWindowSize());
     }
 
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
