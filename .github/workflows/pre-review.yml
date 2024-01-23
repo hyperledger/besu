@@ -93,7 +93,7 @@ jobs:
         uses: mikepenz/action-junit-report@v4
         if: success() || failure() # always run even if the build step fails
         with:
-          report_paths: '**/test-results/test/TEST-*.xml'
+          report_paths: '**/test-results/**/TEST-*.xml'
           annotate_only: true
   pre-review:
     runs-on: ubuntu-22.04
