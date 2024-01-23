@@ -17,10 +17,7 @@ package org.hyperledger.besu.cli.config;
 /** Enum for profile names. Each profile corresponds to a configuration file. */
 public enum ProfileName {
 
-  /**
-   * The 'SELFISHSTAKER' profile. Corresponds to the 'profiles/selfish-staker.toml' configuration
-   * file.
-   */
+  /** The 'SELFISHSTAKER' profile */
   SELFISHSTAKER("profiles/selfish-staker.toml"),
   /** The 'DEV' profile. Corresponds to the 'profiles/dev.toml' configuration file. */
   DEV("profiles/dev.toml");
