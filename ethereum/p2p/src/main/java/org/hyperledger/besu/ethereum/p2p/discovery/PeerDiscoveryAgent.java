@@ -74,6 +74,8 @@ public abstract class PeerDiscoveryAgent {
   // The devp2p specification says only accept packets up to 1280, but some
   // clients ignore that, so we add in a little extra padding.
   private static final int MAX_PACKET_SIZE_BYTES = 1600;
+  private static final List<String> PING_PACKET_SOURCE_IGNORED =
+      List.of("127.0.0.1", "255.255.255.255");
 
   protected final List<DiscoveryPeer> bootstrapPeers;
   private final List<PeerRequirement> peerRequirements = new CopyOnWriteArrayList<>();
@@ -299,7 +301,8 @@ public abstract class PeerDiscoveryAgent {
             .map(Endpoint::getHost)
             .filter(
                 fromAddr ->
-                    (!fromAddr.equals("127.0.0.1") && InetAddresses.isInetAddress(fromAddr)))
+                    (!PING_PACKET_SOURCE_IGNORED.contains(fromAddr)
+                        && InetAddresses.isInetAddress(fromAddr)))
             .stream()
             .peek(
                 h ->
