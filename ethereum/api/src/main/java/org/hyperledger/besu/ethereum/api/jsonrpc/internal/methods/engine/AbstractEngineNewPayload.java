@@ -65,7 +65,6 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.security.InvalidParameterException;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -184,7 +183,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           transaction ->
               mergeCoordinator
                   .getEthScheduler()
-                  .scheduleServiceTask(
+                  .scheduleTxWorkerTask(
                       () -> {
                         Address sender = transaction.getSender();
                         LOG.atTrace()
