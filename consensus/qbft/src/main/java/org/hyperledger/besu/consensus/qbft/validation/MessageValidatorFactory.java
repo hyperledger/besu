@@ -61,14 +61,16 @@ public class MessageValidatorFactory {
     this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
-  private Collection<Address> getValidatorsAfterBlock(final BlockHeader parentHeader) {
+  public static Collection<Address> getValidatorsAfterBlock(
+      final ProtocolContext protocolContext, final BlockHeader parentHeader) {
     return protocolContext
         .getConsensusContext(BftContext.class)
         .getValidatorProvider()
         .getValidatorsAfterBlock(parentHeader);
   }
 
-  private Collection<Address> getValidatorsForBlock(final BlockHeader parentHeader) {
+  public static Collection<Address> getValidatorsForBlock(
+      final ProtocolContext protocolContext, final BlockHeader parentHeader) {
     return protocolContext
         .getConsensusContext(BftContext.class)
         .getValidatorProvider()
@@ -85,19 +87,8 @@ public class MessageValidatorFactory {
   public RoundChangeMessageValidator createRoundChangeMessageValidator(
       final long chainHeight, final BlockHeader parentHeader) {
 
-    final Collection<Address> validatorsForHeight = getValidatorsAfterBlock(parentHeader);
-
-    // Log any change in validators
-    final Collection<Address> previousValidators = getValidatorsForBlock(parentHeader);
-    if (!(validatorsForHeight.containsAll(previousValidators))
-        || !(previousValidators.containsAll(validatorsForHeight))) {
-      LOG.info(
-          "Validator list change. Previous chain height {}: {}. Current chain height {}: {}.",
-          parentHeader.getNumber(),
-          previousValidators,
-          parentHeader.getNumber() + 1,
-          validatorsForHeight);
-    }
+    final Collection<Address> validatorsForHeight =
+        getValidatorsAfterBlock(protocolContext, parentHeader);
 
     final RoundChangePayloadValidator roundChangePayloadValidator =
         new RoundChangePayloadValidator(validatorsForHeight, chainHeight);
@@ -124,7 +115,8 @@ public class MessageValidatorFactory {
   public MessageValidator createMessageValidator(
       final ConsensusRoundIdentifier roundIdentifier, final BlockHeader parentHeader) {
 
-    final Collection<Address> validatorsForHeight = getValidatorsAfterBlock(parentHeader);
+    final Collection<Address> validatorsForHeight =
+        getValidatorsAfterBlock(protocolContext, parentHeader);
     final BlockValidator blockValidator =
         protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockValidator();
 

@@ -56,7 +56,7 @@ public class IbftRound {
   private final Subscribers<MinedBlockObserver> observers;
   private final RoundState roundState;
   private final BlockCreator blockCreator;
-  private final ProtocolContext protocolContext;
+  protected final ProtocolContext protocolContext;
   private final BlockImporter blockImporter;
   private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
