@@ -46,10 +46,6 @@ public enum ProfileName {
 
   @Override
   public String toString() {
-    return normalize();
-  }
-
-  public String normalize() {
     return StringUtils.capitalize(name().replaceAll("_", " ").toLowerCase());
   }
 }
