@@ -55,6 +55,13 @@ public class MessageValidatorFactory {
     this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
+  /**
+   * Get the list of validators that are applicable after the given block
+   *
+   * @param protocolContext the protocol context
+   * @param parentHeader the parent header
+   * @return the list of validators
+   */
   public static Collection<Address> getValidatorsAfterBlock(
       final ProtocolContext protocolContext, final BlockHeader parentHeader) {
     return protocolContext
@@ -63,6 +70,13 @@ public class MessageValidatorFactory {
         .getValidatorsAfterBlock(parentHeader);
   }
 
+  /**
+   * Get the list of validators that are applicable for the given block
+   *
+   * @param protocolContext the protocol context
+   * @param parentHeader the parent header
+   * @return the list of validators
+   */
   public static Collection<Address> getValidatorsForBlock(
       final ProtocolContext protocolContext, final BlockHeader parentHeader) {
     return protocolContext
