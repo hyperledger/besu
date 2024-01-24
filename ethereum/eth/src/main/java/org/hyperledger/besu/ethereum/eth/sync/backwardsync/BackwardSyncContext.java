@@ -137,7 +137,7 @@ public class BackwardSyncContext {
               newTargetBlock -> status.updateTargetHeight(newTargetBlock.getHeader().getNumber()));
       return status.currentFuture;
     } else {
-      return CompletableFuture.completedFuture(null);
+      return CompletableFuture.failedFuture(new Throwable("Backward sync is not ready"));
     }
   }
 
@@ -151,7 +151,7 @@ public class BackwardSyncContext {
       status.updateTargetHeight(newPivot.getHeader().getNumber());
       return status.currentFuture;
     } else {
-      return CompletableFuture.completedFuture(null);
+      return CompletableFuture.failedFuture(new Throwable("Backward sync is not ready"));
     }
   }
 
