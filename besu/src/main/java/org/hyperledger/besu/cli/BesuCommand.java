@@ -3382,9 +3382,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   /**
-   * Returns the flag indicating that downgrades are allowed.
+   * Returns the flag indicating that version compatiblity checks will be made.
    *
-   * @return true if downgrades are allowed, otherwise false
+   * @return true if compatibility checks should be made, otherwise false
    */
   @VisibleForTesting
   public Boolean getVersionCompatibilityProtection() {

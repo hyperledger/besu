@@ -121,8 +121,7 @@ public class VersionMetadata {
           // We've allowed startup at an older version of Besu. Since the version in the metadata
           // file records the latest version of
           // Besu to write to the database we'll update the metadata version to this
-          // downgraded-version. This avoids the need after a successful
-          // downgrade to keep specifying --allow-downgrade on every startup.
+          // downgraded-version.
           new VersionMetadata(VersionMetadata.getRuntimeVersion()).writeToDirectory(dataDir);
         } else {
           final String message =
@@ -130,7 +129,7 @@ public class VersionMetadata {
                   + installedVersion
                   + " is lower than version "
                   + metadataVersion
-                  + " that last started. Specify --allow-downgrade to allow Besu to start at "
+                  + " that last started. Remove --version-compatibility-protection option to allow Besu to start at "
                   + " the lower version (warning - this may have unrecoverable effects on the database).";
           LOG.error(message, installedVersion, metadataVersion);
           throw new IllegalStateException(message);

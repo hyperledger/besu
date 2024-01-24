@@ -3,7 +3,6 @@
 ## 23.10.4
 
 ### Breaking Changes
-- Protection against accidental downgrade of Besu version to avoid possible data corruption problems. Starting an older version of Besu with a given data directory is now only possible with the `--allow-downgrade` configuration option [6307](https://github.com/hyperledger/besu/pull/6307)
 
 ### Deprecations
 - Forest pruning (`pruning-enabled` options) is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format [#6230](https://github.com/hyperledger/besu/pull/6230)
@@ -14,6 +13,7 @@
 - Set Ethereum Classic mainnet activation block for Spiral network upgrade [#6267](https://github.com/hyperledger/besu/pull/6267)
 - Add custom genesis file name to config overview if specified [#6297](https://github.com/hyperledger/besu/pull/6297)
 - Update Gradle plugins and replace unmaintained License Gradle Plugin with the actively maintained Gradle License Report [#6275](https://github.com/hyperledger/besu/pull/6275)
+- Option to perform version incompatibility checks when starting Besu. In this first release of the feature, if `--version-compatibility-protection` is set to true it checks that the version of Besu being started is the same or higher than the previous version. [6307](https://github.com/hyperledger/besu/pull/6307)
 
 ### Bug fixes
 

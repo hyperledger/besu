@@ -50,7 +50,7 @@ class VersionMetadataTest {
   }
 
   @Test
-  void downgradeCheckShouldThrowExceptionIfNotAllowed() throws Exception {
+  void compatibilityCheckShouldThrowExceptionIfEnabled() throws Exception {
     // The version file says the last version to start was 23.10.3
     final Path tempDataDir =
         createAndWrite("data", "VERSION_METADATA.json", "{\"besuVersion\":\"23.10.3\"}");
@@ -76,13 +76,13 @@ class VersionMetadataTest {
   }
 
   @Test
-  void downgradeCheckShouldNotThrowExceptionIfAllowed() throws Exception {
+  void compatibilityCheckShouldNotThrowExceptionIfDisabled() throws Exception {
     // The version file says the last version to start was 23.10.3
     final Path tempDataDir =
         createAndWrite("data", "VERSION_METADATA.json", "{\"besuVersion\":\"23.10.3\"}");
 
     // The runtime says the current version is 23.10.2 (i.e. a downgrade) but we're setting
-    // allow-downgrade = true so no exception should be thrown
+    // version-compatibility-protection = false so no exception should be thrown
     try (MockedStatic<VersionMetadata> mocked =
         Mockito.mockStatic(VersionMetadata.class, Mockito.CALLS_REAL_METHODS)) {
       mocked.when(VersionMetadata::getRuntimeVersion).thenReturn("23.10.2");
@@ -104,7 +104,7 @@ class VersionMetadataTest {
   }
 
   @Test
-  void downgradeCheckShouldNotThrowExceptionIfResultIsUpgrade() throws Exception {
+  void compatibilityCheckShouldNotThrowExceptionIfResultIsUpgrade() throws Exception {
     final Path tempDataDir =
         createAndWrite("data", "VERSION_METADATA.json", "{\"besuVersion\":\"23.10.3\"}");
 
