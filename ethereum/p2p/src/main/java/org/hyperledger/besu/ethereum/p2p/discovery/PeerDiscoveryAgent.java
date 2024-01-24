@@ -74,6 +74,8 @@ public abstract class PeerDiscoveryAgent {
   // The devp2p specification says only accept packets up to 1280, but some
   // clients ignore that, so we add in a little extra padding.
   private static final int MAX_PACKET_SIZE_BYTES = 1600;
+  private static final List<String> PING_PACKET_SOURCE_IGNORED =
+      List.of("127.0.0.1", "255.255.255.255");
 
   protected final List<DiscoveryPeer> bootstrapPeers;
   private final List<PeerRequirement> peerRequirements = new CopyOnWriteArrayList<>();
@@ -286,29 +288,7 @@ public abstract class PeerDiscoveryAgent {
             .flatMap(Endpoint::getTcpPort)
             .orElse(udpPort);
 
-    // If the host is present in the P2P PING packet itself, use that as the endpoint. If the P2P
-    // PING packet specifies 127.0.0.1 (the default if a custom value is not specified with
-    // --p2p-host or via a suitable --nat-method) we ignore it in favour of the UDP source address.
-    // The likelihood is that the UDP source will be 127.0.0.1 anyway, but this reduces the chance
-    // of an unexpected change in behaviour as a result of
-    // https://github.com/hyperledger/besu/issues/6224 being fixed.
-    final String host =
-        packet
-            .getPacketData(PingPacketData.class)
-            .flatMap(PingPacketData::getFrom)
-            .map(Endpoint::getHost)
-            .filter(
-                fromAddr ->
-                    (!fromAddr.equals("127.0.0.1") && InetAddresses.isInetAddress(fromAddr)))
-            .stream()
-            .peek(
-                h ->
-                    LOG.trace(
-                        "Using \"From\" endpoint {} specified in ping packet. Ignoring UDP source host {}",
-                        h,
-                        sourceEndpoint.getHost()))
-            .findFirst()
-            .orElseGet(sourceEndpoint::getHost);
+    final String host = deriveHost(sourceEndpoint, packet);
 
     // Notify the peer controller.
     final DiscoveryPeer peer =
@@ -321,6 +301,38 @@ public abstract class PeerDiscoveryAgent {
                 .build());
 
     controller.ifPresent(c -> c.onMessage(packet, peer));
+  }
+
+  /**
+   * method to derive the host from the source endpoint and the P2P PING packet. If the host is
+   * present in the P2P PING packet itself, use that as the endpoint. If the P2P PING packet
+   * specifies 127.0.0.1 (the default if a custom value is not specified with --p2p-host or via a
+   * suitable --nat-method) we ignore it in favour of the UDP source address. Some implementations
+   * send 127.0.0.1 or 255.255.255.255 anyway, but this reduces the chance of an unexpected change
+   * in behaviour as a result of https://github.com/hyperledger/besu/issues/6224 being fixed.
+   *
+   * @param sourceEndpoint source endpoint of the packet
+   * @param packet P2P PING packet
+   * @return host address as string
+   */
+  static String deriveHost(final Endpoint sourceEndpoint, final Packet packet) {
+    return packet
+        .getPacketData(PingPacketData.class)
+        .flatMap(PingPacketData::getFrom)
+        .map(Endpoint::getHost)
+        .filter(
+            fromAddr ->
+                (!PING_PACKET_SOURCE_IGNORED.contains(fromAddr)
+                    && InetAddresses.isInetAddress(fromAddr)))
+        .stream()
+        .peek(
+            h ->
+                LOG.trace(
+                    "Using \"From\" endpoint {} specified in ping packet. Ignoring UDP source host {}",
+                    h,
+                    sourceEndpoint.getHost()))
+        .findFirst()
+        .orElseGet(sourceEndpoint::getHost);
   }
 
   /**
