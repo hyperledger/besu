@@ -152,21 +152,21 @@ class ConfigurationOverviewBuilderTest {
   }
 
   @Test
-  void setTrieLogPruningEnabled() {
-    final String noTrieLogRetentionThresholdSet = builder.build();
-    assertThat(noTrieLogRetentionThresholdSet).doesNotContain("Trie log pruning enabled");
+  void setBonsaiLimitTrieLogsEnabled() {
+    final String noTrieLogRetentionLimitSet = builder.build();
+    assertThat(noTrieLogRetentionLimitSet).doesNotContain("Limit trie logs enabled");
 
-    builder.setTrieLogPruningEnabled();
-    builder.setTrieLogRetentionThreshold(42);
-    String trieLogRetentionThresholdSet = builder.build();
-    assertThat(trieLogRetentionThresholdSet)
-        .contains("Trie log pruning enabled")
+    builder.setLimitTrieLogsEnabled();
+    builder.setTrieLogRetentionLimit(42);
+    String trieLogRetentionLimitSet = builder.build();
+    assertThat(trieLogRetentionLimitSet)
+        .contains("Limit trie logs enabled")
         .contains("retention: 42");
-    assertThat(trieLogRetentionThresholdSet).doesNotContain("prune limit");
+    assertThat(trieLogRetentionLimitSet).doesNotContain("prune window");
 
-    builder.setTrieLogPruningLimit(1000);
-    trieLogRetentionThresholdSet = builder.build();
-    assertThat(trieLogRetentionThresholdSet).contains("prune limit: 1000");
+    builder.setTrieLogsPruningWindowSize(1000);
+    trieLogRetentionLimitSet = builder.build();
+    assertThat(trieLogRetentionLimitSet).contains("prune window: 1000");
   }
 
   @Test
