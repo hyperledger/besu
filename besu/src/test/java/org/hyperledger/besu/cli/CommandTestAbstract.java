@@ -110,6 +110,7 @@ import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.awaitility.Awaitility;
@@ -704,5 +705,9 @@ public abstract class CommandTestAbstract {
     REQUIRED_OPTION,
     PORT_CHECK,
     NO_PORT_CHECK
+  }
+
+  protected static String escapeTomlString(final String s) {
+    return StringEscapeUtils.escapeJava(s);
   }
 }
