@@ -166,7 +166,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
         RespondingEthPeer.blockchainResponder(
             blockchain, protocolContext.getWorldStateArchive(), transactionPool);
     final RespondingEthPeer respondingPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 32);
 
     // Setup data to be requested and expected response
     final T requestedData = generateDataToBeRequested();
@@ -190,7 +190,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
   @Test
   public void doesNotCompleteWhenPeersDoNotRespond() {
     // Setup a unresponsive peer
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 32);
 
     // Setup data to be requested
     final T requestedData = generateDataToBeRequested();
@@ -209,7 +209,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
   @Test
   public void cancel() {
     // Setup a unresponsive peer
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 32);
 
     // Setup data to be requested
     final T requestedData = generateDataToBeRequested();

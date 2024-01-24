@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -48,8 +49,16 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
   }
 
   protected BlockHeader blockHeader() {
-    final long headBlockNumber = blockchainQueries.headBlockNumber();
-    return blockchainQueries.getBlockchain().getBlockHeader(headBlockNumber).orElse(null);
+    final Blockchain theChain = blockchainQueries.getBlockchain();
+
+    // Optimistically get the block header for the chain head without taking a lock,
+    // but revert to the safe implementation if it returns an empty optional. (It's
+    // possible the chain head has been updated but the block is still being persisted
+    // to storage/cache under the lock).
+    return theChain
+        .getBlockHeader(theChain.getChainHeadHash())
+        .or(() -> theChain.getBlockHeaderSafe(theChain.getChainHeadHash()))
+        .orElse(null);
   }
 
   protected CallParameter overrideGasLimitAndPrice(
@@ -101,6 +110,14 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
     final ValidationResult<TransactionInvalidReason> validationResult =
         result.getValidationResult();
     if (validationResult != null && !validationResult.isValid()) {
+      if (validationResult.getErrorMessage().length() > 0) {
+        final RpcErrorType rpcErrorType =
+            JsonRpcErrorConverter.convertTransactionInvalidReason(
+                validationResult.getInvalidReason());
+        final JsonRpcError rpcError = new JsonRpcError(rpcErrorType);
+        rpcError.setReason(validationResult.getErrorMessage());
+        return errorResponse(request, rpcError);
+      }
       return errorResponse(
           request,
           JsonRpcErrorConverter.convertTransactionInvalidReason(

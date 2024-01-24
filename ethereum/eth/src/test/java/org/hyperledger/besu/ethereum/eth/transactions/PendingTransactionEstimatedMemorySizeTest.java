@@ -58,7 +58,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
   private static final Set<Class<?>> SHARED_CLASSES =
       Set.of(SignatureAlgorithm.class, TransactionType.class);
   private static final Set<String> COMMON_CONSTANT_FIELD_PATHS =
-      Set.of(".value.ctor", ".hashNoSignature");
+      Set.of(".value.ctor", ".hashNoSignature", ".signature.encoded.delegate");
   private static final Set<String> EIP1559_EIP4844_CONSTANT_FIELD_PATHS =
       Sets.union(COMMON_CONSTANT_FIELD_PATHS, Set.of(".gasPrice"));
   private static final Set<String> FRONTIER_ACCESS_LIST_CONSTANT_FIELD_PATHS =

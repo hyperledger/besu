@@ -22,7 +22,7 @@ import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT;
@@ -46,6 +46,7 @@ import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.cli.config.ProfileName;
 import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
@@ -147,6 +148,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
@@ -520,11 +522,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private SyncMode syncMode = null;
 
   @Option(
-      names = {"--fast-sync-min-peers"},
+      names = {"--sync-min-peers", "--fast-sync-min-peers"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
-          "Minimum number of peers required before starting fast sync. Has only effect on PoW networks. (default: ${DEFAULT-VALUE})")
-  private final Integer fastSyncMinPeerCount = FAST_SYNC_MIN_PEER_COUNT;
+          "Minimum number of peers required before starting sync. Has effect only on non-PoS networks. (default: ${DEFAULT-VALUE})")
+  private final Integer syncMinPeerCount = SYNC_MIN_PEER_COUNT;
 
   @Option(
       names = {"--network"},
@@ -534,6 +536,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Synchronize against the indicated network, possible values are ${COMPLETION-CANDIDATES}."
               + " (default: ${DEFAULT-VALUE})")
   private final NetworkName network = null;
+
+  @Option(
+      names = {PROFILE_OPTION_NAME},
+      paramLabel = PROFILE_FORMAT_HELP,
+      description =
+          "Overwrite default settings. Possible values are ${COMPLETION-CANDIDATES}. (default: none)")
+  private final ProfileName profile = null;
 
   @Option(
       names = {"--nat-method"},
@@ -951,13 +960,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         names = {"--privacy-flexible-groups-enabled"},
         description = "Enable flexible privacy groups (default: ${DEFAULT-VALUE})")
     private final Boolean isFlexiblePrivacyGroupsEnabled = false;
-
-    @Option(
-        hidden = true,
-        names = {"--privacy-onchain-groups-enabled"},
-        description =
-            "!!DEPRECATED!! Use `--privacy-flexible-groups-enabled` instead. Enable flexible (onchain) privacy groups (default: ${DEFAULT-VALUE})")
-    private final Boolean isOnchainPrivacyGroupsEnabled = false;
   }
 
   // Metrics Option Group
@@ -1437,7 +1439,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (network != null && network.isDeprecated()) {
       logger.warn(NetworkDeprecationMessage.generate(network));
     }
-
     try {
       configureLogging(true);
 
@@ -1715,8 +1716,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
 
       if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
-          && (privacyOptionGroup.isFlexiblePrivacyGroupsEnabled
-              || privacyOptionGroup.isOnchainPrivacyGroupsEnabled)) {
+          && privacyOptionGroup.isFlexiblePrivacyGroupsEnabled) {
         throw new ParameterException(
             commandLine, "Privacy Plugin can not be used with flexible privacy groups");
       }
@@ -2028,11 +2028,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--p2p-port",
             "--remote-connections-max-percentage"));
 
-    CommandLineUtils.failIfOptionDoesntMeetRequirement(
-        commandLine,
-        "--fast-sync-min-peers can't be used with FULL sync-mode",
-        !SyncMode.isFullSync(getDefaultSyncModeIfNotSet()),
-        singletonList("--fast-sync-min-peers"));
+    if (SyncMode.isFullSync(getDefaultSyncModeIfNotSet())
+        && isOptionSet(commandLine, "--sync-min-peers")) {
+      logger.warn("--sync-min-peers is ignored in FULL sync-mode");
+    }
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
@@ -2056,16 +2055,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "--security-module=" + DEFAULT_SECURITY_MODULE);
     }
 
-    if (Boolean.TRUE.equals(privacyOptionGroup.isOnchainPrivacyGroupsEnabled)) {
-      logger.warn(
-          DEPRECATION_WARNING_MSG,
-          "--privacy-onchain-groups-enabled",
-          "--privacy-flexible-groups-enabled");
-    }
-
     if (isPruningEnabled()) {
-      logger.warn(
-          "Forest pruning is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format.");
+      if (dataStorageOptions
+          .toDomainObject()
+          .getDataStorageFormat()
+          .equals(DataStorageFormat.BONSAI)) {
+        logger.warn("Forest pruning is ignored with Bonsai data storage format.");
+      } else {
+        logger.warn(
+            "Forest pruning is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format.");
+      }
     }
   }
 
@@ -2743,8 +2742,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setMultiTenancyEnabled(
           privacyOptionGroup.isPrivacyMultiTenancyEnabled);
       privacyParametersBuilder.setFlexiblePrivacyGroupsEnabled(
-          privacyOptionGroup.isFlexiblePrivacyGroupsEnabled
-              || privacyOptionGroup.isOnchainPrivacyGroupsEnabled);
+          privacyOptionGroup.isFlexiblePrivacyGroupsEnabled);
       privacyParametersBuilder.setPrivacyPluginEnabled(
           unstablePrivacyPluginOptions.isPrivacyPluginEnabled());
 
@@ -2867,7 +2865,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return unstableSynchronizerOptions
         .toDomainObject()
         .syncMode(syncMode)
-        .fastSyncMinimumPeerCount(fastSyncMinPeerCount)
+        .fastSyncMinimumPeerCount(syncMinPeerCount)
         .build();
   }
 
@@ -2917,17 +2915,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           ImmutableMiningParameters.builder().from(miningOptions.toDomainObject());
       final var actualGenesisOptions = getActualGenesisConfigOptions();
       if (actualGenesisOptions.isPoa()) {
-        miningParametersBuilder.unstable(
-            ImmutableMiningParameters.Unstable.builder()
-                .minBlockTime(getMinBlockTime(actualGenesisOptions))
-                .build());
+        miningParametersBuilder.genesisBlockPeriodSeconds(
+            getGenesisBlockPeriodSeconds(actualGenesisOptions));
       }
       miningParameters = miningParametersBuilder.build();
     }
     return miningParameters;
   }
 
-  private int getMinBlockTime(final GenesisConfigOptions genesisConfigOptions) {
+  private int getGenesisBlockPeriodSeconds(final GenesisConfigOptions genesisConfigOptions) {
     if (genesisConfigOptions.isClique()) {
       return genesisConfigOptions.getCliqueConfigOptions().getBlockPeriodSeconds();
     }
@@ -3120,14 +3116,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (listBootNodes != null) {
       if (!p2PDiscoveryOptionGroup.peerDiscoveryEnabled) {
         logger.warn("Discovery disabled: bootnodes will be ignored.");
-      } else {
-        logger.info("Configured {} bootnodes.", listBootNodes.size());
-        logger.debug("Bootnodes = {}", listBootNodes);
       }
       DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
       builder.setBootNodes(listBootNodes);
-    } else {
-      logger.info("0 Bootnodes configured");
     }
     return builder.build();
   }
@@ -3525,6 +3516,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setNetwork(network.normalize());
     }
 
+    if (profile != null) {
+      builder.setProfile(profile.toString());
+    }
+
     builder.setHasCustomGenesis(genesisFile != null);
     if (genesisFile != null) {
       builder.setCustomGenesis(genesisFile.getAbsolutePath());
@@ -3560,12 +3555,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setHighSpecEnabled();
     }
 
-    if (dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningEnabled()) {
-      builder.setTrieLogPruningEnabled();
-      builder.setTrieLogRetentionThreshold(
-          dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogRetentionThreshold());
-      builder.setTrieLogPruningLimit(
-          dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningLimit());
+    if (dataStorageOptions.toDomainObject().getUnstable().getBonsaiLimitTrieLogsEnabled()) {
+      builder.setLimitTrieLogsEnabled();
+      builder.setTrieLogRetentionLimit(
+          dataStorageOptions.toDomainObject().getBonsaiMaxLayersToLoad());
+      builder.setTrieLogsPruningWindowSize(
+          dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningWindowSize());
     }
 
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());

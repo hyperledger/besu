@@ -15,7 +15,6 @@
 package org.hyperledger.besu.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
@@ -29,12 +28,10 @@ import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ENGINE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
@@ -72,8 +69,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -96,6 +91,7 @@ import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFact
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
+import org.hyperledger.besu.util.number.PositiveNumber;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
 import java.io.File;
@@ -123,7 +119,6 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
@@ -306,17 +301,18 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path tempConfigFilePath = createTempFile("an-invalid-file-name-without-extension", "");
     parseCommand("--config-file", tempConfigFilePath.toString());
 
-    final String expectedOutputStart =
-        "Unable to read TOML configuration file " + tempConfigFilePath;
+    final String expectedOutputStart = "Unable to read TOML configuration file";
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void callingWithConfigOptionButTomlFileNotFoundShouldDisplayHelp() {
-    parseCommand("--config-file", "./an-invalid-file-name-sdsd87sjhqoi34io23.toml");
+    String invalidFile = "./an-invalid-file-name-sdsd87sjhqoi34io23.toml";
+    parseCommand("--config-file", invalidFile);
 
-    final String expectedOutputStart = "Unable to read TOML configuration, file not found.";
+    final String expectedOutputStart =
+        String.format("Unable to read TOML configuration, file not found: %s", invalidFile);
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
@@ -362,81 +358,6 @@ public class BesuCommandTest extends CommandTestAbstract {
             + "a boolean, a date/time, an array, or a table (line 1, column 8)";
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void overrideDefaultValuesIfKeyIsPresentInConfigFile(final @TempDir File dataFolder)
-      throws IOException {
-    final URL configFile = this.getClass().getResource("/complete_config.toml");
-    final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
-    final String updatedConfig =
-        Resources.toString(configFile, UTF_8)
-            .replace("/opt/besu/genesis.json", escapeTomlString(genesisFile.toString()))
-            .replace(
-                "data-path=\"/opt/besu\"",
-                "data-path=\"" + escapeTomlString(dataFolder.getPath()) + "\"");
-
-    final Path toml = createTempFile("toml", updatedConfig.getBytes(UTF_8));
-
-    final List<String> expectedApis = asList(ETH.name(), WEB3.name());
-
-    final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
-    jsonRpcConfiguration.setEnabled(false);
-    jsonRpcConfiguration.setHost("5.6.7.8");
-    jsonRpcConfiguration.setPort(5678);
-    jsonRpcConfiguration.setCorsAllowedDomains(Collections.emptyList());
-    jsonRpcConfiguration.setRpcApis(expectedApis);
-    jsonRpcConfiguration.setMaxActiveConnections(1000);
-
-    final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();
-    graphQLConfiguration.setEnabled(false);
-    graphQLConfiguration.setHost("6.7.8.9");
-    graphQLConfiguration.setPort(6789);
-
-    final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
-    webSocketConfiguration.setEnabled(false);
-    webSocketConfiguration.setHost("9.10.11.12");
-    webSocketConfiguration.setPort(9101);
-    webSocketConfiguration.setRpcApis(expectedApis);
-
-    final MetricsConfiguration metricsConfiguration =
-        MetricsConfiguration.builder().enabled(false).host("8.6.7.5").port(309).build();
-
-    parseCommand("--config-file", toml.toString());
-
-    verify(mockRunnerBuilder).discovery(eq(false));
-    verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).p2pAdvertisedHost(eq("1.2.3.4"));
-    verify(mockRunnerBuilder).p2pListenPort(eq(1234));
-    verify(mockRunnerBuilder).jsonRpcConfiguration(eq(jsonRpcConfiguration));
-    verify(mockRunnerBuilder).graphQLConfiguration(eq(graphQLConfiguration));
-    verify(mockRunnerBuilder).webSocketConfiguration(eq(webSocketConfiguration));
-    verify(mockRunnerBuilder).metricsConfiguration(eq(metricsConfiguration));
-    verify(mockRunnerBuilder).build();
-
-    final List<EnodeURL> nodes =
-        asList(
-            EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"),
-            EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"),
-            EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"));
-    assertThat(ethNetworkConfigArgumentCaptor.getValue().getBootNodes()).isEqualTo(nodes);
-
-    final EthNetworkConfig networkConfig =
-        new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(MAINNET))
-            .setNetworkId(BigInteger.valueOf(42))
-            .setGenesisConfig(encodeJsonGenesis(GENESIS_VALID_JSON))
-            .setBootNodes(nodes)
-            .setDnsDiscoveryUrl(null)
-            .build();
-    verify(mockControllerBuilder).dataDirectory(eq(dataFolder.toPath()));
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(eq(networkConfig), any(), any());
-    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
-
-    assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfigurationCaptor.getValue().getFastSyncMinimumPeerCount()).isEqualTo(13);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -847,6 +768,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         tomlResult.getDouble(tomlKey);
       } else if (Percentage.class.isAssignableFrom(optionSpec.type())) {
         tomlResult.getLong(tomlKey);
+      } else if (PositiveNumber.class.isAssignableFrom(optionSpec.type())) {
+        tomlResult.getLong(tomlKey);
       } else {
         tomlResult.getString(tomlKey);
       }
@@ -857,81 +780,6 @@ public class BesuCommandTest extends CommandTestAbstract {
                 .filter(optionSpec -> !optionSpec.hidden())
                 .map(CommandLine.Model.OptionSpec::longestName))
         .isEmpty();
-  }
-
-  @Test
-  public void noOverrideDefaultValuesIfKeyIsNotPresentInConfigFile() {
-    final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
-
-    parseCommand("--config-file", configFile);
-    final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
-
-    final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();
-
-    final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
-
-    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
-
-    verify(mockRunnerBuilder).discovery(eq(true));
-    verify(mockRunnerBuilder)
-        .ethNetworkConfig(
-            new EthNetworkConfig(
-                EthNetworkConfig.jsonConfig(MAINNET),
-                MAINNET.getNetworkId(),
-                MAINNET_BOOTSTRAP_NODES,
-                MAINNET_DISCOVERY_URL));
-    verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));
-    verify(mockRunnerBuilder).p2pListenPort(eq(30303));
-    verify(mockRunnerBuilder).jsonRpcConfiguration(eq(jsonRpcConfiguration));
-    verify(mockRunnerBuilder).graphQLConfiguration(eq(graphQLConfiguration));
-    verify(mockRunnerBuilder).webSocketConfiguration(eq(webSocketConfiguration));
-    verify(mockRunnerBuilder).metricsConfiguration(eq(metricsConfiguration));
-    verify(mockRunnerBuilder).build();
-    verify(mockControllerBuilder).build();
-    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
-
-    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(5);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void envVariableOverridesValueFromConfigFile() {
-    final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
-    final String expectedCoinbase = "0x0000000000000000000000000000000000000004";
-    setEnvironmentVariable("BESU_MINER_COINBASE", expectedCoinbase);
-    parseCommand("--config-file", configFile);
-
-    verify(mockControllerBuilder)
-        .miningParameters(
-            ImmutableMiningParameters.builder()
-                .mutableInitValues(
-                    MutableInitValues.builder()
-                        .coinbase(Address.fromHexString(expectedCoinbase))
-                        .build())
-                .build());
-  }
-
-  @Test
-  public void cliOptionOverridesEnvVariableAndConfig() {
-    final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
-    final String expectedCoinbase = "0x0000000000000000000000000000000000000006";
-    setEnvironmentVariable("BESU_MINER_COINBASE", "0x0000000000000000000000000000000000000004");
-    parseCommand("--config-file", configFile, "--miner-coinbase", expectedCoinbase);
-
-    verify(mockControllerBuilder)
-        .miningParameters(
-            ImmutableMiningParameters.builder()
-                .mutableInitValues(
-                    MutableInitValues.builder()
-                        .coinbase(Address.fromHexString(expectedCoinbase))
-                        .build())
-                .build());
   }
 
   @Test
@@ -1882,6 +1730,30 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void parsesValidSnapSyncMinPeersOption() {
+    parseCommand("--sync-mode", "X_SNAP", "--sync-min-peers", "11");
+    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
+
+    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.X_SNAP);
+    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(11);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void parsesValidSyncMinPeersOption() {
+    parseCommand("--sync-mode", "FAST", "--sync-min-peers", "11");
+    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
+
+    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
+    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(11);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void parsesInvalidFastSyncMinPeersOptionWrongFormatShouldFail() {
 
     parseCommand("--sync-mode", "FAST", "--fast-sync-min-peers", "ten");
@@ -1951,16 +1823,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "The `--ethstats-contact` requires ethstats server URL to be provided. Either remove --ethstats-contact or provide a URL (via --ethstats=nodename:secret@host:port)");
-  }
-
-  @Test
-  public void privacyOnchainGroupsEnabledCannotBeUsedWithPrivacyFlexibleGroupsEnabled() {
-    parseCommand("--privacy-onchain-groups-enabled", "--privacy-flexible-groups-enabled");
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "The `--privacy-onchain-groups-enabled` option is deprecated and you should only use `--privacy-flexible-groups-enabled`");
   }
 
   @Test
@@ -3816,8 +3678,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void pruningLogsDeprecationWarning() {
-    parseCommand("--pruning-enabled");
+  public void pruningLogsDeprecationWarningWithForest() {
+    parseCommand("--pruning-enabled", "--data-storage-format=FOREST");
 
     verify(mockControllerBuilder).isPruningEnabled(true);
 
@@ -3828,6 +3690,17 @@ public class BesuCommandTest extends CommandTestAbstract {
             contains(
                 "Forest pruning is deprecated and will be removed soon."
                     + " To save disk space consider switching to Bonsai data storage format."));
+  }
+
+  @Test
+  public void pruningLogsIgnoredWarningWithBonsai() {
+    parseCommand("--pruning-enabled", "--data-storage-format=BONSAI");
+
+    verify(mockControllerBuilder).isPruningEnabled(true);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    verify(mockLogger).warn(contains("Forest pruning is ignored with Bonsai data storage format."));
   }
 
   @Test
@@ -4169,46 +4042,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void onchainPrivacyGroupEnabledFlagValueIsSet() {
-    parseCommand(
-        "--privacy-enabled",
-        "--privacy-public-key-file",
-        ENCLAVE_PUBLIC_KEY_PATH,
-        "--privacy-onchain-groups-enabled",
-        "--min-gas-price",
-        "0");
-
-    final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
-        ArgumentCaptor.forClass(PrivacyParameters.class);
-
-    verify(mockControllerBuilder).privacyParameters(privacyParametersArgumentCaptor.capture());
-    verify(mockControllerBuilder).build();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
-    final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
-    assertThat(privacyParameters.isFlexiblePrivacyGroupsEnabled()).isEqualTo(true);
-  }
-
-  @Test
-  public void onchainPrivacyGroupEnabledOptionIsDeprecated() {
-    parseCommand(
-        "--privacy-enabled",
-        "--privacy-public-key-file",
-        ENCLAVE_PUBLIC_KEY_PATH,
-        "--privacy-onchain-groups-enabled",
-        "--min-gas-price",
-        "0");
-
-    verify(mockLogger)
-        .warn(
-            DEPRECATION_WARNING_MSG,
-            "--privacy-onchain-groups-enabled",
-            "--privacy-flexible-groups-enabled");
-  }
-
-  @Test
   public void flexiblePrivacyGroupEnabledFlagValueIsSet() {
     parseCommand(
         "--privacy-enabled",
@@ -4311,10 +4144,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith(
             "No Payload Provider has been provided. You must register one when enabling privacy plugin!");
-  }
-
-  private static String escapeTomlString(final String s) {
-    return StringEscapeUtils.escapeJava(s);
   }
 
   /**
@@ -5042,8 +4871,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void logWarnIfFastSyncMinPeersUsedWithFullSync() {
     parseCommand("--sync-mode", "FULL", "--fast-sync-min-peers", "1");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("--fast-sync-min-peers can't be used with FULL sync-mode");
+    verify(mockLogger).warn("--sync-min-peers is ignored in FULL sync-mode");
   }
 
   @Test

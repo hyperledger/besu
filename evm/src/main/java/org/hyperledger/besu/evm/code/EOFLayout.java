@@ -158,7 +158,7 @@ public class EOFLayout {
     if (typeData[codeSectionCount - 1][2] == -1) {
       return invalidLayout(container, version, "Incomplete type section");
     }
-    if (typeData[0][0] != 0 || typeData[0][1] != 0) {
+    if (typeData[0][0] != 0 || (typeData[0][1] & 0x7f) != 0) {
       return invalidLayout(
           container, version, "Code section does not have zero inputs and outputs");
     }
@@ -182,7 +182,7 @@ public class EOFLayout {
             version,
             "Type data input stack too large - 0x" + Integer.toHexString(typeData[i][0]));
       }
-      if (typeData[i][1] > 0x7f) {
+      if (typeData[i][1] > 0x80) {
         return invalidLayout(
             container,
             version,

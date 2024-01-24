@@ -17,8 +17,10 @@ package org.hyperledger.besu.tests.acceptance.dsl.node;
 import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -97,6 +99,15 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     params.add("--p2p-port");
     params.add(node.getP2pPort());
+
+    params.addAll(
+        TransactionPoolOptions.fromConfig(
+                ImmutableTransactionPoolConfiguration.builder()
+                    .from(node.getTransactionPoolConfiguration())
+                    .strictTransactionReplayProtectionEnabled(
+                        node.isStrictTxReplayProtectionEnabled())
+                    .build())
+            .getCLIOptions());
 
     if (node.getMiningParameters().isMiningEnabled()) {
       params.add("--miner-enabled");
@@ -390,9 +401,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     params.add("--auto-log-bloom-caching-enabled");
     params.add("false");
-
-    params.add("--strict-tx-replay-protection-enabled");
-    params.add(Boolean.toString(node.isStrictTxReplayProtectionEnabled()));
 
     final String level = System.getProperty("root.log.level");
     if (level != null) {

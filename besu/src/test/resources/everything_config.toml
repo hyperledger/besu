@@ -16,7 +16,7 @@ node-private-key-file="./path/to/privateKey"
 pid-path="~/.pid"
 reorg-logging-threshold=0
 static-nodes-file="~/besudata/static-nodes.json"
-
+profile="NONE"
 # Security Module plugin to use
 security-module="localfile"
 
@@ -142,6 +142,8 @@ min-priority-fee=0
 min-block-occupancy-ratio=0.7
 miner-stratum-host="0.0.0.0"
 miner-stratum-port=8008
+block-txs-selection-max-time=5000
+poa-block-txs-selection-max-time=75
 Xminer-remote-sealers-limit=1000
 Xminer-remote-sealers-hashrate-ttl=10
 Xpos-block-creation-max-time=5
@@ -169,7 +171,6 @@ privacy-enabled=false
 privacy-multi-tenancy-enabled=true
 privacy-marker-transaction-signing-key-file="./signerKey"
 privacy-enable-database-migration=false
-privacy-onchain-groups-enabled=false
 privacy-flexible-groups-enabled=false
 
 # Transaction Pool

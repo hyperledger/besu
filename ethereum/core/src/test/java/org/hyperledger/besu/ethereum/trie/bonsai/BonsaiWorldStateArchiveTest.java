@@ -42,8 +42,8 @@ import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValu
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogManager;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -106,7 +106,8 @@ class BonsaiWorldStateArchiveTest {
         new BonsaiWorldStateProvider(
             cachedWorldStorageManager,
             trieLogManager,
-            new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()),
+            new BonsaiWorldStateKeyValueStorage(
+                storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG),
             blockchain,
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT);
@@ -119,14 +120,13 @@ class BonsaiWorldStateArchiveTest {
   void testGetMutableReturnEmptyWhenLoadMoreThanLimitLayersBack() {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateProvider(
-            new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()),
+            new BonsaiWorldStateKeyValueStorage(
+                storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG),
             blockchain,
             Optional.of(512L),
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
-            new NoOpMetricsSystem(),
             null,
-            EvmConfiguration.DEFAULT,
-            TrieLogPruner.noOpTrieLogPruner());
+            EvmConfiguration.DEFAULT);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(512).buildHeader();
     when(blockchain.getChainHeadHeader()).thenReturn(chainHead);
@@ -141,7 +141,8 @@ class BonsaiWorldStateArchiveTest {
         new BonsaiWorldStateProvider(
             cachedWorldStorageManager,
             trieLogManager,
-            new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()),
+            new BonsaiWorldStateKeyValueStorage(
+                storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG),
             blockchain,
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT);
@@ -167,7 +168,8 @@ class BonsaiWorldStateArchiveTest {
         .getTrieLogLayer(any(Hash.class));
 
     var worldStateStorage =
-        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
+        new BonsaiWorldStateKeyValueStorage(
+            storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateProvider(
@@ -193,7 +195,8 @@ class BonsaiWorldStateArchiveTest {
   void testGetMutableWithStorageConsistencyNotRollbackTheState() {
 
     var worldStateStorage =
-        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
+        new BonsaiWorldStateKeyValueStorage(
+            storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateProvider(
@@ -229,7 +232,8 @@ class BonsaiWorldStateArchiveTest {
         .getTrieLogLayer(any(Hash.class));
 
     var worldStateStorage =
-        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
+        new BonsaiWorldStateKeyValueStorage(
+            storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
 
     bonsaiWorldStateArchive =
         spy(
@@ -276,7 +280,10 @@ class BonsaiWorldStateArchiveTest {
             new BonsaiWorldStateProvider(
                 cachedWorldStorageManager,
                 trieLogManager,
-                new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()),
+                new BonsaiWorldStateKeyValueStorage(
+                    storageProvider,
+                    new NoOpMetricsSystem(),
+                    DataStorageConfiguration.DEFAULT_CONFIG),
                 blockchain,
                 new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
                 EvmConfiguration.DEFAULT));
