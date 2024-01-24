@@ -561,10 +561,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Path kzgTrustedSetupFile = null;
 
   @Option(
-      names = {"--allow-downgrade"},
+      names = {"--version-compatibility-protection"},
       description =
-          "Allow an older version of Besu to start if it detects that a more recent version has started with this data directory. Warning - this could result in unrecoverable changes to the database so should only be used if a backup of the data has been taken before the downgrade. (default: ${DEFAULT-VALUE})")
-  private Boolean allowDowngrade = false;
+          "Perform compatibility checks between the version of Besu being started and the version of Besu that last started with this data directory. (default: ${DEFAULT-VALUE})")
+  private Boolean versionCompatibilityProtection = false;
 
   @CommandLine.ArgGroup(validate = false, heading = "@|bold GraphQL Options|@%n")
   GraphQlOptionGroup graphQlOptionGroup = new GraphQlOptionGroup();
@@ -1466,7 +1466,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       validateOptions();
 
-      VersionMetadata.performDowngradeCheck(allowDowngrade, dataDir());
+      VersionMetadata.performVersionCompatibilityChecks(versionCompatibilityProtection, dataDir());
 
       configure();
       configureNativeLibs();
@@ -3387,8 +3387,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @return true if downgrades are allowed, otherwise false
    */
   @VisibleForTesting
-  public Boolean getAllowDowngrade() {
-    return allowDowngrade;
+  public Boolean getVersionCompatibilityProtection() {
+    return versionCompatibilityProtection;
   }
 
   private class BesuCommandConfigurationService implements BesuConfiguration {

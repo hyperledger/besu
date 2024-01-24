@@ -16,7 +16,7 @@ node-private-key-file="./path/to/privateKey"
 pid-path="~/.pid"
 reorg-logging-threshold=0
 static-nodes-file="~/besudata/static-nodes.json"
-allow-downgrade=true
+version-compatibility-protection=true
 
 # Security Module plugin to use
 security-module="localfile"

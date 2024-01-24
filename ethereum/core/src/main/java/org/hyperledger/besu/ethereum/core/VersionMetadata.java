@@ -87,14 +87,14 @@ public class VersionMetadata {
 
   /**
    * This function is designed to protect a Besu instance from being unintentionally started at a
-   * lower version than the previous instance. Doing so could cause unexpected data corruption
-   * (depending on the storage provider that is in use), so this check prompts the user if a
-   * downgrade is detected and requires them to opt-in by setting --allow-downgrade. The
-   * --allow-downgrade flag only needs to be passed in once, and then the version information is
-   * updated to the lower version number, meaning future restarts will pass the check.
+   * version of Besu that might be incompatible with the version that last modified the specified
+   * data directory. Currently this check is limited to checking that the version is >= the previous
+   * version, to avoid accidentally running a lower version of Besu and potentially corrupting data.
+   * If the --version-compatibility-protection flag is set to true and the compatibilty checks pass,
+   * the version metadata is updated to the current version of Besu.
    */
-  public static void performDowngradeCheck(final boolean allowDowngrade, final Path dataDir)
-      throws IOException {
+  public static void performVersionCompatibilityChecks(
+      final boolean versionCompatibilityProtection, final Path dataDir) throws IOException {
     final VersionMetadata versionMetaData = VersionMetadata.lookUpFrom(dataDir);
     if (versionMetaData.getBesuVersion().equals(VersionMetadata.BESU_VERSION_UNKNOWN)) {
       // The version isn't known, potentially because the file doesn't exist. Write the latest
@@ -113,9 +113,9 @@ public class VersionMetadata {
       if (versionComparison == 0) {
         // Versions match - no-op
       } else if (versionComparison < 0) {
-        if (allowDowngrade) {
+        if (!versionCompatibilityProtection) {
           LOG.warn(
-              "Besu version {} is lower than version {} that last started. Allowing startup because --allow-downgrade has been enabled.",
+              "Besu version {} is lower than version {} that last started. Allowing startup because --version-compatibility-protection has been disabled.",
               installedVersion,
               metadataVersion);
           // We've allowed startup at an older version of Besu. Since the version in the metadata

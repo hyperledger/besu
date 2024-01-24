@@ -1998,10 +1998,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void allowDowngradeTrueOptionIsParsedCorrectly() {
-    final TestBesuCommand besuCommand = parseCommand("--allow-downgrade", "true");
+  public void allowVersionCompatibilityProtectionTrueOptionIsParsedCorrectly() {
+    final TestBesuCommand besuCommand = parseCommand("--version-compatibility-protection", "true");
 
-    assertThat(besuCommand.getAllowDowngrade()).isTrue();
+    assertThat(besuCommand.getVersionCompatibilityProtection()).isTrue();
   }
 
   @Test
