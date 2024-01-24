@@ -1998,7 +1998,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void allowVersionCompatibilityProtectionTrueOptionIsParsedCorrectly() {
+  public void versionCompatibilityProtectionTrueOptionIsParsedCorrectly() {
     final TestBesuCommand besuCommand = parseCommand("--version-compatibility-protection", "true");
 
     assertThat(besuCommand.getVersionCompatibilityProtection()).isTrue();
