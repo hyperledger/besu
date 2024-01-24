@@ -1,0 +1,72 @@
+
+name: artifacts
+
+on:
+  release:
+    types:
+      - prereleased
+
+jobs:
+  artifacts:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: setup gradle
+        uses: gradle/gradle-build-action@v2.10.0
+      - name: assemble distributions
+        run:
+          ./gradlew -Prelease.releaseVersion=${{github.ref_name}} assemble -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+      - name: hashes
+        id: hashes
+        run: |
+          cd build/distributions
+          echo "zipSha=$(shasum -a 256 besu*.zip)" >> $GITHUB_OUTPUT
+          echo "tarSha=$(shasum -a 256 besu*.tar.gz)" >> $GITHUB_OUTPUT
+      - name: upload tarball
+        uses: actions/upload-artifact@v3
+        with:
+          path: 'build/distributions/besu*.tar.gz'
+      - name: upload zipfile
+        uses: actions/upload-artifact@v3
+        with:
+          path: 'build/distributions/besu*.zip'
+      - name: Upload Release assets
+        uses: softprops/action-gh-release@v1
+        with:
+          append_body: true
+          files: |
+            build/distributions/besu*.tar.gz
+            build/distributions/besu*.zip
+          body: |
+            ${{steps.hashes.outputs.tarSha}}
+            ${{steps.hashes.outputs.zipSha}}
+  testWindows:
+    runs-on: windows-2022
+    needs: assemble
+    timeout-minutes: 10
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    steps:
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: adopt
+          java-version: 17
+      - name: Download zip
+        uses: actions/download-artifact@v3
+        with:
+          name: besu*.zip
+      - name: test Besu
+        run: |
+          unzip besu-*.zip -d besu-tmp
+          cd besu-tmp
+          mv besu-* ../besu
+          cd ..
+          besu\bin\besu.bat --help
+          besu\bin\besu.bat --version
+

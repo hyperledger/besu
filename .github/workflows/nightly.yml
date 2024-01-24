@@ -1,0 +1,116 @@
+name: nightly
+
+on:
+  workflow_dispatch:
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    # expression evaluates to midnight every night
+    - cron:  '0 0 * * *'
+
+env:
+  nightly-tag: develop
+  registry: ghcr.io
+  image-name: ${{ github.repository }}
+
+jobs:
+  hadolint:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: setup gradle
+        uses: gradle/gradle-build-action@v2.10.0
+      - name: hadoLint_openj9-jdk_17
+        run: docker run --rm -i hadolint/hadolint < docker/openj9-jdk-17/Dockerfile
+      - name: hadoLint_openjdk_17
+        run: docker run --rm -i hadolint/hadolint < docker/openjdk-17/Dockerfile
+      - name: hadoLint_openjdk_17_debug
+        run: docker run --rm -i hadolint/hadolint < docker/openjdk-17-debug/Dockerfile
+      - name: hadoLint_openjdk_latest
+        run: docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
+      - name: hadoLint_graalvm
+        run: docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
+  buildDocker:
+    needs: hadolint
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - ubuntu-22.04
+          - [self-hosted, ARM64, macOS]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Prepare
+        id: prep
+        run: |
+          platform=${{ matrix.platform }}
+          if [ "$platform" = 'ubuntu-22.04' ]; then 
+            echo "PLATFORM_PAIR=linux-amd64" >> $GITHUB_OUTPUT
+            echo "ARCH=amd64" >> $GITHUB_OUTPUT
+          else
+            echo "PLATFORM_PAIR=linux-arm64" >> $GITHUB_OUTPUT
+            echo "ARCH=arm64" >> $GITHUB_OUTPUT
+          fi
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      - name: short sha
+        id: shortSha
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: setup gradle
+        uses: gradle/gradle-build-action@v2.10.0
+      - name: build image
+        uses: gradle/gradle-build-action@v2.10.0
+        with:
+          arguments: distDocker -PdockerOrgName=${{ secrets.DOCKER_ORG }} -Prelease.releaseVersion=${{ env.nightly-tag }}
+      - name: install goss
+        run: |
+          mkdir -p docker/reports
+          curl -L https://github.com/aelsabbahy/goss/releases/download/v0.4.4/goss-${{ steps.prep.outputs.PLATFORM_PAIR }} -o ./docker/tests/goss-${{ steps.prep.outputs.PLATFORM_PAIR }}
+      - name: test docker
+        uses: gradle/gradle-build-action@v2.10.0
+        env:
+          architecture: ${{ steps.prep.outputs.ARCH }}
+        with:
+          arguments: testDocker -PdockerOrgName=${{ secrets.DOCKER_ORG }} -Prelease.releaseVersion=${{ env.nightly-tag }}
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: publish
+        env:
+          architecture: ${{ steps.prep.outputs.ARCH }}
+        run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ github.repository }} -Prelease.releaseVersion=${{ env.nightly-tag }}
+  multiArch:
+    needs: buildDocker
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: setup gradle
+        uses: gradle/gradle-build-action@v2.10.0
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: multi-arch docker
+        run: ./gradlew manifestDocker -PdockerOrgName=${{ github.repository }} -Prelease.releaseVersion=${{ env.nightly-tag }}
+
