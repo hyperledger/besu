@@ -16,8 +16,6 @@ package org.hyperledger.besu.cli.options;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
-import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.cli.CommandTestAbstract;
@@ -124,30 +122,5 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).contains(errorMsg);
-  }
-
-  /**
-   * Check logger calls
-   *
-   * <p>Here we check the calls to logger and not the result of the log line as we don't test the
-   * logger itself but the fact that we call it.
-   *
-   * @param dependentOptions the string representing the list of dependent options names
-   * @param mainOption the main option name
-   */
-  protected void verifyOptionsConstraintLoggerCall(
-      final String mainOption, final String... dependentOptions) {
-    verify(mockLogger, atLeast(1))
-        .warn(
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture());
-    assertThat(stringArgumentCaptor.getAllValues().get(0)).isEqualTo(DEPENDENCY_WARNING_MSG);
-
-    for (final String option : dependentOptions) {
-      assertThat(stringArgumentCaptor.getAllValues().get(1)).contains(option);
-    }
-
-    assertThat(stringArgumentCaptor.getAllValues().get(2)).isEqualTo(mainOption);
   }
 }
