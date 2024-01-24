@@ -74,7 +74,7 @@ jobs:
           path: tmp/junit-xml-reports-downloaded
           if_no_artifact_found: true
       - name: setup gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v2.10.0
       - name: Split tests
         id: split-tests
         uses: r7kamura/split-tests-by-timings@v0

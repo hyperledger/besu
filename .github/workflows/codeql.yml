@@ -48,7 +48,7 @@ jobs:
         queries: security-and-quality,security-extended
 
     - name: setup gradle
-      uses: gradle/gradle-build-action@v2
+      uses: gradle/gradle-build-action@v2.10.0
     - name: compileJava noscan
       run: |
         JAVA_OPTS="-Xmx2048M" ./gradlew --no-scan compileJava

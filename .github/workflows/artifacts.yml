@@ -18,7 +18,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       - name: setup gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v2.10.0
       - name: assemble distributions
         run:
           ./gradlew -Prelease.releaseVersion=${{github.ref_name}} assemble -Dorg.gradle.parallel=true -Dorg.gradle.caching=true

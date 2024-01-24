@@ -61,7 +61,7 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: setup gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v2.10.0
       - name: run integration tests
         run: ./gradlew integrationTest compileJmh -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Publish Test Report
