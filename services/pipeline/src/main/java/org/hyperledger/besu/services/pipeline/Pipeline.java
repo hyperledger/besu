@@ -176,8 +176,7 @@ public class Pipeline<I> {
                 || t instanceof AsyncOperationException) {
               LOG.trace("Unhandled exception in pipeline. Aborting.", t);
             } else {
-              LOG.info("Unexpected exception in pipeline. Aborting.");
-              LOG.debug("Unexpected exception in pipeline. Aborting.", t);
+              LOG.info("Unexpected exception in pipeline. Aborting.", t);
             }
             try {
               abort(t);
