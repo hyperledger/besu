@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.cli.options.stable;
 
-import static java.util.Arrays.asList;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.VALID_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
@@ -120,8 +119,10 @@ public class JsonRpcWebsocketOptions {
       arity = "1")
   private final File rpcWsAuthenticationPublicKeyFile = null;
 
-  public void validateRpcOptionsParams(
+  public void validate(
       final Logger logger, final CommandLine commandLine, final Predicate<String> configuredApis) {
+    checkOptionDependencies(logger, commandLine);
+
     if (!rpcWsApis.stream().allMatch(configuredApis)) {
       final List<String> invalidWsApis = new ArrayList<String>(rpcWsApis);
       invalidWsApis.removeAll(VALID_APIS);
@@ -139,12 +140,22 @@ public class JsonRpcWebsocketOptions {
           "Invalid value for option '--rpc-ws-api-methods-no-auth', options must be valid RPC methods");
     }
 
+    if (isRpcWsAuthenticationEnabled
+        && rpcWsAuthenticationCredentialsFile(commandLine) == null
+        && rpcWsAuthenticationPublicKeyFile == null) {
+      throw new CommandLine.ParameterException(
+          commandLine,
+          "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file or authentication public key file");
+    }
+  }
+
+  private void checkOptionDependencies(final Logger logger, final CommandLine commandLine) {
     CommandLineUtils.checkOptionDependencies(
         logger,
         commandLine,
         "--rpc-ws-enabled",
         !isRpcWsEnabled,
-        asList(
+        List.of(
             "--rpc-ws-api",
             "--rpc-ws-apis",
             "--rpc-ws-api-method-no-auth",
@@ -164,16 +175,29 @@ public class JsonRpcWebsocketOptions {
           commandLine,
           "--rpc-ws-authentication-public-key-file",
           rpcWsAuthenticationPublicKeyFile == null,
-          asList("--rpc-ws-authentication-jwt-algorithm"));
+          List.of("--rpc-ws-authentication-jwt-algorithm"));
     }
+  }
 
-    if (isRpcWsAuthenticationEnabled
-        && rpcWsAuthenticationCredentialsFile(commandLine) == null
-        && rpcWsAuthenticationPublicKeyFile == null) {
-      throw new CommandLine.ParameterException(
-          commandLine,
-          "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file or authentication public key file");
-    }
+  public WebSocketConfiguration webSocketConfiguration(
+      final List<String> hostsAllowlist, final String defaultHostAddress, final Long wsTimoutSec) {
+    final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
+    webSocketConfiguration.setEnabled(isRpcWsEnabled);
+    webSocketConfiguration.setHost(
+        Strings.isNullOrEmpty(rpcWsHost) ? defaultHostAddress : rpcWsHost);
+    webSocketConfiguration.setPort(rpcWsPort);
+    webSocketConfiguration.setMaxFrameSize(rpcWsMaxFrameSize);
+    webSocketConfiguration.setMaxActiveConnections(rpcWsMaxConnections);
+    webSocketConfiguration.setRpcApis(rpcWsApis);
+    webSocketConfiguration.setRpcApisNoAuth(
+        rpcWsApiMethodsNoAuth.stream().distinct().collect(Collectors.toList()));
+    webSocketConfiguration.setAuthenticationEnabled(isRpcWsAuthenticationEnabled);
+    webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile);
+    webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
+    webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile);
+    webSocketConfiguration.setAuthenticationAlgorithm(rpcWebsocketsAuthenticationAlgorithm);
+    webSocketConfiguration.setTimeoutSec(wsTimoutSec);
+    return webSocketConfiguration;
   }
 
   private String rpcWsAuthenticationCredentialsFile(final CommandLine commandLine) {
@@ -183,26 +207,6 @@ public class JsonRpcWebsocketOptions {
       RpcAuthFileValidator.validate(commandLine, filename, "WS");
     }
     return filename;
-  }
-
-  public WebSocketConfiguration webSocketConfiguration(
-      final List<String> allowCallsFrom, final String hostAddress, final Long wsTimoutSec) {
-    final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
-    webSocketConfiguration.setEnabled(isRpcWsEnabled);
-    webSocketConfiguration.setHost(Strings.isNullOrEmpty(rpcWsHost) ? hostAddress : rpcWsHost);
-    webSocketConfiguration.setPort(rpcWsPort);
-    webSocketConfiguration.setMaxFrameSize(rpcWsMaxFrameSize);
-    webSocketConfiguration.setMaxActiveConnections(rpcWsMaxConnections);
-    webSocketConfiguration.setRpcApis(rpcWsApis);
-    webSocketConfiguration.setRpcApisNoAuth(
-        rpcWsApiMethodsNoAuth.stream().distinct().collect(Collectors.toList()));
-    webSocketConfiguration.setAuthenticationEnabled(isRpcWsAuthenticationEnabled);
-    webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile);
-    webSocketConfiguration.setHostsAllowlist(allowCallsFrom);
-    webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile);
-    webSocketConfiguration.setAuthenticationAlgorithm(rpcWebsocketsAuthenticationAlgorithm);
-    webSocketConfiguration.setTimeoutSec(wsTimoutSec);
-    return webSocketConfiguration;
   }
 
   public List<String> getRpcWsApis() {

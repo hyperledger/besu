@@ -1888,7 +1888,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             Arrays.stream(RpcApis.values())
                     .anyMatch(builtInApi -> apiName.equals(builtInApi.name()))
                 || rpcEndpointServiceImpl.hasNamespace(apiName);
-    jsonRpcWebsocketOptions.validateRpcOptionsParams(logger, commandLine, configuredApis);
+    jsonRpcWebsocketOptions.validate(logger, commandLine, configuredApis);
   }
 
   private void validateChainDataPruningParams() {
