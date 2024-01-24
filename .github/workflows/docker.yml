@@ -16,7 +16,7 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: setup gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v2.10.0
       - name: hadoLint_openj9-jdk_17
         run: docker run --rm -i hadolint/hadolint < docker/openj9-jdk-17/Dockerfile
       - name: hadoLint_openjdk_17
@@ -59,9 +59,9 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: setup gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v2.10.0
       - name: build image
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v2.10.0
         with:
           arguments: distDocker -PdockerOrgName=${{ secrets.DOCKER_ORG }} -Prelease.releaseVersion=${{ github.ref_name }}
       - name: install goss
@@ -69,7 +69,7 @@ jobs:
           mkdir -p docker/reports
           curl -L https://github.com/aelsabbahy/goss/releases/download/v0.4.4/goss-${{ steps.prep.outputs.PLATFORM_PAIR }} -o ./docker/tests/goss-${{ steps.prep.outputs.PLATFORM_PAIR }}
       - name: test docker
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v2.10.0
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
         with:
@@ -95,7 +95,7 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: setup gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v2.10.0
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
