@@ -29,13 +29,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Collection;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /** The Message validator factory. */
 public class MessageValidatorFactory {
-
-  private static final Logger LOG = LoggerFactory.getLogger(MessageValidatorFactory.class);
 
   private final ProposerSelector proposerSelector;
   private final BftProtocolSchedule protocolSchedule;
