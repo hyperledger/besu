@@ -37,6 +37,9 @@ jobs:
         run: docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
   buildDocker:
     needs: hadolint
+    permissions:
+      contents: read
+      packages: write
     strategy:
       fail-fast: false
       matrix:
@@ -93,6 +96,9 @@ jobs:
           architecture: ${{ steps.prep.outputs.ARCH }}
         run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ github.repository_owner }} -Pbranch=${{ github.ref_name }}
   multiArch:
+    permissions:
+      contents: read
+      packages: write
     needs: buildDocker
     runs-on: ubuntu-22.04
     steps:
