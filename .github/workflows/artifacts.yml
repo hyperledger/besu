@@ -32,10 +32,12 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           path: 'build/distributions/besu*.tar.gz'
+          name: besu-${{ github.ref_name }}.tar.gz
       - name: upload zipfile
         uses: actions/upload-artifact@v3
         with:
           path: 'build/distributions/besu*.zip'
+          name: besu-${{ github.ref_name }}.zip
       - name: Upload Release assets
         uses: softprops/action-gh-release@v1
         with:
@@ -60,7 +62,7 @@ jobs:
       - name: Download zip
         uses: actions/download-artifact@v3
         with:
-          name: besu*.zip
+          name: besu-${{ github.ref_name }}.zip
       - name: test Besu
         run: |
           unzip besu-*.zip -d besu-tmp
