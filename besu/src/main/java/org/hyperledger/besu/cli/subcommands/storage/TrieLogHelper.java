@@ -304,7 +304,8 @@ public class TrieLogHelper {
   }
 
   private static IdentityHashMap<byte[], byte[]> getTrieLogs(
-      final List<Hash> trieLogKeys, final DiffBasedWorldStateKeyValueStorage rootWorldStateStorage) {
+      final List<Hash> trieLogKeys,
+      final DiffBasedWorldStateKeyValueStorage rootWorldStateStorage) {
     IdentityHashMap<byte[], byte[]> trieLogsToRetain = new IdentityHashMap<>();
 
     LOG.info("Obtaining trielogs from db, this may take a few minutes...");

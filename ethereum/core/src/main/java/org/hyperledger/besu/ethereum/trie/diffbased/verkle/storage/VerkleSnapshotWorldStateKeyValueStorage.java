@@ -195,6 +195,7 @@ public class VerkleSnapshotWorldStateKeyValueStorage extends VerkleWorldStateKey
     }
   }
 
+  @Override
   public VerkleWorldStateKeyValueStorage getParentWorldStateStorage() {
     return parentWorldStateStorage;
   }

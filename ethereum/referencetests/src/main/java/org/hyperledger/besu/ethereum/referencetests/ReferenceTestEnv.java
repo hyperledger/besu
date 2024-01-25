@@ -152,7 +152,7 @@ public class ReferenceTestEnv extends BlockHeader {
             : BlobGas.fromHexString(currentExcessBlobGas),
         beaconRoot == null ? null : Bytes32.fromHexString(beaconRoot),
         null, // depositsRoot
-            null,
+        null,
         new MainnetBlockHeaderFunctions());
     this.parentDifficulty = parentDifficulty;
     this.parentBaseFee = parentBaseFee;

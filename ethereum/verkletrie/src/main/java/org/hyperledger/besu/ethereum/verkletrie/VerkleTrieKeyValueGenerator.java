@@ -30,7 +30,6 @@ import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.identityconnectors.common.logging.Log;
 
 public class VerkleTrieKeyValueGenerator {
 
@@ -55,7 +54,6 @@ public class VerkleTrieKeyValueGenerator {
   }
 
   public Map<Bytes, Bytes> generateKeyValuesForCode(
-
       final Address address, final Bytes32 keccakCodeHash, final Bytes code) {
 
     final Map<Bytes, Bytes> keyValues = new HashMap<>();
@@ -84,7 +82,7 @@ public class VerkleTrieKeyValueGenerator {
   public Pair<Bytes, Bytes> generateKeyValuesForStorage(
       final Address address, final StorageSlotKey storageKey, final Bytes value) {
     return new Pair<>(
-            trieKeyAdapter.storageKey(address, storageKey.getSlotKey().orElseThrow()), value);
+        trieKeyAdapter.storageKey(address, storageKey.getSlotKey().orElseThrow()), value);
   }
 
   public List<Bytes> generateKeysForStorage(

@@ -122,10 +122,7 @@ public class JsonTestParameters<S, T> {
   }
 
   private static final ObjectMapper objectMapper =
-      new ObjectMapper(
-              new JsonFactoryBuilder()
-                  .build())
-          .registerModule(new Jdk8Module());
+      new ObjectMapper(new JsonFactoryBuilder().build()).registerModule(new Jdk8Module());
 
   // The type to which the json file is directly mapped
   private final Class<S> jsonFileMappedType;

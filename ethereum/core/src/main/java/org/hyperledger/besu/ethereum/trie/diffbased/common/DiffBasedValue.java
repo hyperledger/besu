@@ -84,13 +84,13 @@ public class DiffBasedValue<T> implements TrieLog.LogTuple<T> {
   @Override
   public String toString() {
     return "BonsaiValue{"
-            + "prior="
-            + prior
-            + ", updated="
-            + updated
-            + ", cleared="
-            + lastStepCleared
-            + '}';
+        + "prior="
+        + prior
+        + ", updated="
+        + updated
+        + ", cleared="
+        + lastStepCleared
+        + '}';
   }
 
   @Override
@@ -103,18 +103,18 @@ public class DiffBasedValue<T> implements TrieLog.LogTuple<T> {
     }
     DiffBasedValue<?> that = (DiffBasedValue<?>) o;
     return new EqualsBuilder()
-            .append(lastStepCleared, that.lastStepCleared)
-            .append(prior, that.prior)
-            .append(updated, that.updated)
-            .isEquals();
+        .append(lastStepCleared, that.lastStepCleared)
+        .append(prior, that.prior)
+        .append(updated, that.updated)
+        .isEquals();
   }
 
   @Override
   public int hashCode() {
     return new HashCodeBuilder(17, 37)
-            .append(prior)
-            .append(updated)
-            .append(lastStepCleared)
-            .toHashCode();
+        .append(prior)
+        .append(updated)
+        .append(lastStepCleared)
+        .toHashCode();
   }
 }

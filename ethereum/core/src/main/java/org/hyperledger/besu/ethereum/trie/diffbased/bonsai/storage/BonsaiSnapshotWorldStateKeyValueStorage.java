@@ -229,6 +229,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     }
   }
 
+  @Override
   public BonsaiWorldStateKeyValueStorage getParentWorldStateStorage() {
     return parentWorldStateStorage;
   }

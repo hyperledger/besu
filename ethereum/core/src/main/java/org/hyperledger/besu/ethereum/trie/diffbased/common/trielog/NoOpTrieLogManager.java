@@ -31,10 +31,10 @@ public class NoOpTrieLogManager extends TrieLogManager {
   @SuppressWarnings({"UnsynchronizedOverridesSynchronized", "squid:S3551"})
   @Override
   public void saveTrieLog(
-          final DiffBasedWorldStateUpdateAccumulator<?> localUpdater,
-          final Hash forWorldStateRootHash,
-          final BlockHeader forBlockHeader,
-          final DiffBasedWorldState forWorldState) {
+      final DiffBasedWorldStateUpdateAccumulator<?> localUpdater,
+      final Hash forWorldStateRootHash,
+      final BlockHeader forBlockHeader,
+      final DiffBasedWorldState forWorldState) {
     // notify trie log added observers, synchronously
     TrieLog trieLog = trieLogFactory.create(localUpdater, forBlockHeader);
     trieLogObservers.forEach(o -> o.onTrieLogAdded(new TrieLogAddedEvent(trieLog)));
