@@ -24,8 +24,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParam
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.RewardTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -66,12 +68,15 @@ import org.slf4j.LoggerFactory;
 public class TraceFilter extends TraceBlock {
 
   private static final Logger LOG = LoggerFactory.getLogger(TraceFilter.class);
+  private final Long maxRange;
 
   public TraceFilter(
       final Supplier<BlockTracer> blockTracerSupplier,
       final ProtocolSchedule protocolSchedule,
-      final BlockchainQueries blockchainQueries) {
+      final BlockchainQueries blockchainQueries,
+      final Long maxRange) {
     super(protocolSchedule, blockchainQueries);
+    this.maxRange = maxRange;
   }
 
   @Override
@@ -87,6 +92,17 @@ public class TraceFilter extends TraceBlock {
     final long fromBlock = resolveBlockNumber(filterParameter.getFromBlock());
     final long toBlock = resolveBlockNumber(filterParameter.getToBlock());
     LOG.trace("Received RPC rpcName={} fromBlock={} toBlock={}", getName(), fromBlock, toBlock);
+
+    if (maxRange > 0 && toBlock - fromBlock > maxRange) {
+      LOG.atDebug()
+          .setMessage("trace_filter request {} failed:")
+          .addArgument(requestContext.getRequest())
+          .setCause(
+              new IllegalArgumentException(RpcErrorType.EXCEEDS_RPC_MAX_BLOCK_RANGE.getMessage()))
+          .log();
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), RpcErrorType.EXCEEDS_RPC_MAX_BLOCK_RANGE);
+    }
 
     final ObjectMapper mapper = new ObjectMapper();
     final ArrayNodeWrapper resultArrayNode =

@@ -82,7 +82,7 @@ public class SnapWorldDownloadStateTest {
   private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
   private final SnapSyncStatePersistenceManager snapContext =
       mock(SnapSyncStatePersistenceManager.class);
-  private final SnapsyncMetricsManager metricsManager = mock(SnapsyncMetricsManager.class);
+  private final SnapSyncMetricsManager metricsManager = mock(SnapSyncMetricsManager.class);
   private final Blockchain blockchain = mock(Blockchain.class);
   private final DynamicPivotBlockSelector dynamicPivotBlockManager =
       mock(DynamicPivotBlockSelector.class);

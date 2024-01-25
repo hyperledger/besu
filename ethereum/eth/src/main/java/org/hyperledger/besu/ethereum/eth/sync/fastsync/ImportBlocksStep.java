@@ -33,8 +33,8 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
-  private static final Logger LOG = LoggerFactory.getLogger(FastImportBlocksStep.class);
+public class ImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
+  private static final Logger LOG = LoggerFactory.getLogger(ImportBlocksStep.class);
   private static final long PRINT_DELAY = TimeUnit.SECONDS.toMillis(30L);
 
   private final ProtocolSchedule protocolSchedule;
@@ -46,7 +46,7 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
   private OptionalLong logStartBlock = OptionalLong.empty();
   private final BlockHeader pivotHeader;
 
-  public FastImportBlocksStep(
+  public ImportBlocksStep(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final ValidationPolicy headerValidationPolicy,

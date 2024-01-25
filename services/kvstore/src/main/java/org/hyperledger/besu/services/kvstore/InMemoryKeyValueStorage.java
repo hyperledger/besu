@@ -50,6 +50,11 @@ public class InMemoryKeyValueStorage extends SegmentedKeyValueStorageAdapter {
         public boolean containsStaticData() {
           return false;
         }
+
+        @Override
+        public boolean isEligibleToHighSpecFlag() {
+          return false;
+        }
       };
 
   private static ConcurrentMap<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> asSegmentMap(
