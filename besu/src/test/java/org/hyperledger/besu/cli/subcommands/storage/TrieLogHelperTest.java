@@ -283,7 +283,7 @@ class TrieLogHelperTest {
 
     final BonsaiWorldStateKeyValueStorage inMemoryWorldStateSpy = spy(inMemoryWorldState);
     // force a different value the second time the trie log count is called
-    when(inMemoryWorldStateSpy.streamTrieLogKeys(DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE))
+    when(inMemoryWorldStateSpy.streamTrieLogKeys(3L + DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE))
         .thenCallRealMethod()
         .thenReturn(Stream.empty());
     assertThatThrownBy(

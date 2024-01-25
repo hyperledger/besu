@@ -76,15 +76,11 @@ public class TrieLogHelper {
 
     final long lastBlockNumberToRetainTrieLogsFor = chainHeight - layersToRetain + 1;
 
-    final long countBeforePrune =
-        rootWorldStateStorage
-            .streamTrieLogKeys(DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE)
-            .count();
     if (!validatePruneRequirements(
         blockchain,
         chainHeight,
         lastBlockNumberToRetainTrieLogsFor,
-        countBeforePrune,
+        rootWorldStateStorage,
         layersToRetain)) {
       return;
     }
@@ -99,9 +95,10 @@ public class TrieLogHelper {
         numberOfBatches,
         batchFileNameBase);
 
+    // Should only be layersToRetain left but loading extra just in case of an unforeseen bug
     final long countAfterPrune =
         rootWorldStateStorage
-            .streamTrieLogKeys(DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE)
+            .streamTrieLogKeys(layersToRetain + DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE)
             .count();
     if (countAfterPrune == layersToRetain) {
       if (deleteFiles(batchFileNameBase, numberOfBatches)) {
@@ -213,7 +210,7 @@ public class TrieLogHelper {
       final MutableBlockchain blockchain,
       final long chainHeight,
       final long lastBlockNumberToRetainTrieLogsFor,
-      final long trieLogCount,
+      final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
       final long layersToRetain) {
 
     if (lastBlockNumberToRetainTrieLogsFor < 0) {
@@ -223,11 +220,17 @@ public class TrieLogHelper {
               + "), skipping pruning");
     }
 
-    if (trieLogCount < layersToRetain) {
+    // Need to ensure we're loading at least layersToRetain if they exist
+    // plus extra threshold to account forks and orphans
+    final long clampedCountBeforePruning =
+        rootWorldStateStorage
+            .streamTrieLogKeys(layersToRetain + DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE)
+            .count();
+    if (clampedCountBeforePruning < layersToRetain) {
       throw new IllegalArgumentException(
           String.format(
               "Trie log count (%d) is less than retention limit (%d), skipping pruning",
-              trieLogCount, layersToRetain));
+              clampedCountBeforePruning, layersToRetain));
     }
 
     final Optional<Hash> finalizedBlockHash = blockchain.getFinalized();
