@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +58,7 @@ public class StorageSlotKey implements Comparable<StorageSlotKey> {
    * @param slotKey the UInt256 storage slot key.
    */
   public StorageSlotKey(final UInt256 slotKey) {
-    this(Hash.hash(slotKey), Optional.of(slotKey));
+    this(Suppliers.memoize(() -> Hash.hash(slotKey)), Optional.of(slotKey));
   }
 
   /**

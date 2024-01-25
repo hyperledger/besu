@@ -16,6 +16,7 @@
 
 package org.hyperledger.besu.ethereum.trie.bonsai.worldview;
 
+import com.google.common.base.Suppliers;
 import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -46,6 +47,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.google.common.collect.ForwardingMap;
 import org.apache.tuweni.bytes.Bytes;
@@ -366,7 +368,7 @@ public class BonsaiWorldStateUpdateAccumulator
                     final UInt256 keyUInt = storageUpdate.getKey();
                     final StorageSlotKey slotKey =
                         new StorageSlotKey(
-                            () -> hashAndSavePreImage(keyUInt),
+                            Suppliers.memoize(() -> hashAndSavePreImage(keyUInt)),
                             Optional.of(keyUInt)); // no compute Hash in this case
                     final UInt256 value = storageUpdate.getValue();
                     final BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(slotKey);
