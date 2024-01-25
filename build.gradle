@@ -772,6 +772,7 @@ task distDocker {
 }
 
 task testDocker {
+  dependsOn distDocker
   def dockerReportsDir = "docker/reports/"
 
   doFirst {
@@ -791,6 +792,7 @@ task testDocker {
 }
 
 task dockerUpload {
+  dependsOn distDocker
   def architecture = System.getenv('architecture')
   def image = "${dockerImageName}:${dockerBuildVersion}"
   def additionalTags = []
