@@ -27,7 +27,6 @@ import static org.hyperledger.besu.cli.config.NetworkName.HOLESKY;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ENGINE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
@@ -2145,18 +2144,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcWsNoAuthApiMethodsCannotBeInvalid() {
-    parseCommand("--rpc-ws-enabled", "--rpc-ws-api-methods-no-auth", "invalid");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "Invalid value for option '--rpc-ws-api-methods-no-auth', options must be valid RPC methods");
-  }
-
-  @Test
   public void rpcHttpOptionsRequiresServiceToBeEnabled() {
     parseCommand(
         "--rpc-http-api",
@@ -2302,18 +2289,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcWsApisPropertyWithInvalidEntryMustDisplayError() {
-    parseCommand("--rpc-ws-api", "ETH,BOB,TEST");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-
-    assertThat(commandErrorOutput.toString(UTF_8).trim())
-        .contains("Invalid value for option '--rpc-ws-api': invalid entries found [BOB, TEST]");
-  }
-
-  @Test
   public void rpcApisPropertyWithPluginNamespaceAreValid() {
 
     rpcEndpointServiceImpl.registerRPCEndpoint(
@@ -2388,35 +2363,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).build();
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getMaxActiveConnections())
-        .isEqualTo(maxConnections);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcWsMaxFrameSizePropertyMustBeUsed() {
-    final int maxFrameSize = 65535;
-    parseCommand("--rpc-ws-max-frame-size", String.valueOf(maxFrameSize));
-
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().getMaxFrameSize()).isEqualTo(maxFrameSize);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcWsMaxActiveConnectionsPropertyMustBeUsed() {
-    final int maxConnections = 99;
-    parseCommand("--rpc-ws-max-active-connections", String.valueOf(maxConnections));
-
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().getMaxActiveConnections())
         .isEqualTo(maxConnections);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -3235,129 +3181,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcWsRpcEnabledPropertyMustBeUsed() {
-    parseCommand("--rpc-ws-enabled");
-
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().isEnabled()).isTrue();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcWsOptionsRequiresServiceToBeEnabled() {
-    parseCommand(
-        "--rpc-ws-api",
-        "ETH,NET",
-        "--rpc-ws-host",
-        "0.0.0.0",
-        "--rpc-ws-port",
-        "1234",
-        "--rpc-ws-max-active-connections",
-        "77",
-        "--rpc-ws-max-frame-size",
-        "65535");
-
-    verifyOptionsConstraintLoggerCall(
-        "--rpc-ws-enabled",
-        "--rpc-ws-host",
-        "--rpc-ws-port",
-        "--rpc-ws-api",
-        "--rpc-ws-max-active-connections",
-        "--rpc-ws-max-frame-size");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcWsOptionsRequiresServiceToBeEnabledToml() throws IOException {
-    final Path toml =
-        createTempFile(
-            "toml",
-            "rpc-ws-api=[\"ETH\", \"NET\"]\n"
-                + "rpc-ws-host=\"0.0.0.0\"\n"
-                + "rpc-ws-port=1234\n"
-                + "rpc-ws-max-active-connections=77\n"
-                + "rpc-ws-max-frame-size=65535\n");
-
-    parseCommand("--config-file", toml.toString());
-
-    verifyOptionsConstraintLoggerCall(
-        "--rpc-ws-enabled",
-        "--rpc-ws-host",
-        "--rpc-ws-port",
-        "--rpc-ws-api",
-        "--rpc-ws-max-active-connections",
-        "--rpc-ws-max-frame-size");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcWsApiPropertyMustBeUsed() {
-    final TestBesuCommand command = parseCommand("--rpc-ws-enabled", "--rpc-ws-api", "ETH, NET");
-
-    assertThat(command).isNotNull();
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().getRpcApis())
-        .containsExactlyInAnyOrder(ETH.name(), NET.name());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcWsHostAndPortOptionMustBeUsed() {
-    final String host = "1.2.3.4";
-    final int port = 1234;
-    parseCommand("--rpc-ws-enabled", "--rpc-ws-host", host, "--rpc-ws-port", String.valueOf(port));
-
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
-    assertThat(wsRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcWsHostAndMayBeLocalhost() {
-    final String host = "localhost";
-    parseCommand("--rpc-ws-enabled", "--rpc-ws-host", host);
-
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcWsHostAndMayBeIPv6() {
-    final String host = "2600:DB8::8545";
-    parseCommand("--rpc-ws-enabled", "--rpc-ws-host", host);
-
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void metricsEnabledPropertyDefaultIsFalse() {
     parseCommand();
 
@@ -4152,31 +3975,6 @@ public class BesuCommandTest extends CommandTestAbstract {
    * <p>Here we check the calls to logger and not the result of the log line as we don't test the
    * logger itself but the fact that we call it.
    *
-   * @param dependentOptions the string representing the list of dependent options names
-   * @param mainOption the main option name
-   */
-  private void verifyOptionsConstraintLoggerCall(
-      final String mainOption, final String... dependentOptions) {
-    verify(mockLogger, atLeast(1))
-        .warn(
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture());
-    assertThat(stringArgumentCaptor.getAllValues().get(0)).isEqualTo(DEPENDENCY_WARNING_MSG);
-
-    for (final String option : dependentOptions) {
-      assertThat(stringArgumentCaptor.getAllValues().get(1)).contains(option);
-    }
-
-    assertThat(stringArgumentCaptor.getAllValues().get(2)).isEqualTo(mainOption);
-  }
-
-  /**
-   * Check logger calls
-   *
-   * <p>Here we check the calls to logger and not the result of the log line as we don't test the
-   * logger itself but the fact that we call it.
-   *
    * @param stringToLog the string that is logged
    */
   private void verifyMultiOptionsConstraintLoggerCall(final String stringToLog) {
@@ -4361,17 +4159,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void webSocketAuthenticationAlgorithIsConfigured() {
-    parseCommand("--rpc-ws-authentication-jwt-algorithm", "ES256");
-
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().getAuthenticationAlgorithm())
-        .isEqualTo(JwtAlgorithm.ES256);
-  }
-
-  @Test
   public void httpAuthenticationPublicKeyIsConfigured() throws IOException {
     final Path publicKey = Files.createTempFile("public_key", "");
     parseCommand("--rpc-http-authentication-jwt-public-key-file", publicKey.toString());
@@ -4392,29 +4179,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
-  }
-
-  @Test
-  public void wsAuthenticationPublicKeyIsConfigured() throws IOException {
-    final Path publicKey = Files.createTempFile("public_key", "");
-    parseCommand("--rpc-ws-authentication-jwt-public-key-file", publicKey.toString());
-
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().getAuthenticationPublicKeyFile().getPath())
-        .isEqualTo(publicKey.toString());
-  }
-
-  @Test
-  public void wsAuthenticationWithoutRequiredConfiguredOptionsMustFail() {
-    parseCommand("--rpc-ws-enabled", "--rpc-ws-authentication-enabled");
-
-    verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file or authentication public key file");
   }
 
   @Test
