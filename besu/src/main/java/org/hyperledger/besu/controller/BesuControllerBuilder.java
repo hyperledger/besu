@@ -782,7 +782,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final JsonRpcMethods additionalJsonRpcMethodFactory =
         createAdditionalJsonRpcMethodFactory(protocolContext);
 
-    if (dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningEnabled()
+    if (dataStorageConfiguration.getUnstable().getBonsaiLimitTrieLogsEnabled()
         && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
       final TrieLogManager trieLogManager =
           ((BonsaiWorldStateProvider) worldStateArchive).getTrieLogManager();
@@ -831,8 +831,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
             blockchain,
             scheduler::executeServiceTask,
-            dataStorageConfiguration.getUnstable().getBonsaiTrieLogRetentionThreshold(),
-            dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningLimit(),
+            dataStorageConfiguration.getBonsaiMaxLayersToLoad(),
+            dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningWindowSize(),
             isProofOfStake);
     trieLogPruner.initialize();
 

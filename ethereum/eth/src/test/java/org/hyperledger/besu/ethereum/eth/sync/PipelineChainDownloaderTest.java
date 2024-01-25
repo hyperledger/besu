@@ -52,7 +52,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class PipelineChainDownloaderTest {
 
-  @Mock private SyncTargetManager syncTargetManager;
+  @Mock private AbstractSyncTargetManager syncTargetManager;
   @Mock private DownloadPipelineFactory downloadPipelineFactory;
   @Mock private EthScheduler scheduler;
   @Mock private Pipeline<?> downloadPipeline;

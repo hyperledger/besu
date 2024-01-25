@@ -129,12 +129,16 @@ public class BackwardSyncContext {
       backwardChain.addNewHash(newBlockHash);
     }
 
-    final Status status = getOrStartSyncSession();
-    backwardChain
-        .getBlock(newBlockHash)
-        .ifPresent(
-            newTargetBlock -> status.updateTargetHeight(newTargetBlock.getHeader().getNumber()));
-    return status.currentFuture;
+    if (isReady()) {
+      final Status status = getOrStartSyncSession();
+      backwardChain
+          .getBlock(newBlockHash)
+          .ifPresent(
+              newTargetBlock -> status.updateTargetHeight(newTargetBlock.getHeader().getNumber()));
+      return status.currentFuture;
+    } else {
+      return CompletableFuture.failedFuture(new Throwable("Backward sync is not ready"));
+    }
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
@@ -142,9 +146,13 @@ public class BackwardSyncContext {
       backwardChain.appendTrustedBlock(newPivot);
     }
 
-    final Status status = getOrStartSyncSession();
-    status.updateTargetHeight(newPivot.getHeader().getNumber());
-    return status.currentFuture;
+    if (isReady()) {
+      final Status status = getOrStartSyncSession();
+      status.updateTargetHeight(newPivot.getHeader().getNumber());
+      return status.currentFuture;
+    } else {
+      return CompletableFuture.failedFuture(new Throwable("Backward sync is not ready"));
+    }
   }
 
   private Status getOrStartSyncSession() {
