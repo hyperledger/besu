@@ -59,8 +59,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class DetermineCommonAncestorTaskTest {
 
@@ -74,7 +74,7 @@ public class DetermineCommonAncestorTaskTest {
   private EthContext ethContext;
   private ProtocolContext protocolContext;
 
-  @Before
+  @BeforeEach
   public void setup() {
     localGenesisBlock = blockDataGenerator.genesisBlock();
     localBlockchain = createInMemoryBlockchain(localGenesisBlock);

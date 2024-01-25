@@ -31,19 +31,16 @@ dependencies {
   api 'org.slf4j:slf4j-api'
 
   implementation 'com.google.guava:guava'
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.bouncycastle:bcpkix-jdk15on'
+  implementation 'io.tmio:tuweni-bytes'
+  implementation 'org.bouncycastle:bcpkix-jdk18on'
 
-  testImplementation 'junit:junit'
-  testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
 }
 
 configurations { testArtifacts }
-task testJar(type: Jar) {
+tasks.register('testJar', Jar) {
   archiveBaseName = "${project.name}-test"
   from sourceSets.test.output
 }

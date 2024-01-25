@@ -104,6 +104,7 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
                         value ->
                             getRequestsFromTrieNodeValue(
                                 worldStateStorage,
+                                downloadState,
                                 node.getLocation().orElse(Bytes.EMPTY),
                                 node.getPath(),
                                 value))
@@ -120,6 +121,11 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
   @Override
   public boolean isResponseReceived() {
     return !data.isEmpty() && Hash.hash(data).equals(getNodeHash());
+  }
+
+  @Override
+  public void clear() {
+    setData(Bytes.EMPTY);
   }
 
   @Override
@@ -179,6 +185,7 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
 
   protected abstract Stream<SnapDataRequest> getRequestsFromTrieNodeValue(
       final WorldStateStorage worldStateStorage,
+      final SnapWorldDownloadState downloadState,
       final Bytes location,
       final Bytes path,
       final Bytes value);

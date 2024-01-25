@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.query;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -33,6 +34,8 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -180,8 +183,7 @@ public class BlockchainQueries {
    */
   public Optional<UInt256> storageAt(
       final Address address, final UInt256 storageIndex, final long blockNumber) {
-    final Hash blockHash =
-        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
+    final Hash blockHash = getBlockHashByNumber(blockNumber).orElse(Hash.EMPTY);
 
     return storageAt(address, storageIndex, blockHash);
   }
@@ -208,8 +210,7 @@ public class BlockchainQueries {
    * @return The balance of the account in Wei.
    */
   public Optional<Wei> accountBalance(final Address address, final long blockNumber) {
-    final Hash blockHash =
-        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
+    final Hash blockHash = getBlockHashByNumber(blockNumber).orElse(Hash.EMPTY);
 
     return accountBalance(address, blockHash);
   }
@@ -233,8 +234,7 @@ public class BlockchainQueries {
    * @return The code associated with this address.
    */
   public Optional<Bytes> getCode(final Address address, final long blockNumber) {
-    final Hash blockHash =
-        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
+    final Hash blockHash = getBlockHashByNumber(blockNumber).orElse(Hash.EMPTY);
 
     return getCode(address, blockHash);
   }
@@ -260,13 +260,7 @@ public class BlockchainQueries {
     if (outsideBlockchainRange(blockNumber)) {
       return Optional.empty();
     }
-    return Optional.of(
-        blockchain
-            .getBlockHashByNumber(blockNumber)
-            .flatMap(this::blockByHashWithTxHashes)
-            .map(BlockWithMetadata::getTransactions)
-            .map(List::size)
-            .orElse(-1));
+    return blockchain.getBlockHashByNumber(blockNumber).map(this::getTransactionCount);
   }
 
   /**
@@ -612,7 +606,7 @@ public class BlockchainQueries {
    * @return The transaction receipt associated with the referenced transaction.
    */
   public Optional<TransactionReceiptWithMetadata> transactionReceiptByTransactionHash(
-      final Hash transactionHash) {
+      final Hash transactionHash, final ProtocolSchedule protocolSchedule) {
     final Optional<TransactionLocation> maybeLocation =
         blockchain.getTransactionLocation(transactionHash);
     if (maybeLocation.isEmpty()) {
@@ -621,34 +615,85 @@ public class BlockchainQueries {
     // getTransactionLocation should not return if the TX or block doesn't exist, so throwing
     // on a missing optional is appropriate.
     final TransactionLocation location = maybeLocation.get();
-    final Block block = blockchain.getBlockByHash(location.getBlockHash()).orElseThrow();
-    final Transaction transaction =
-        block.getBody().getTransactions().get(location.getTransactionIndex());
-
     final Hash blockhash = location.getBlockHash();
+    final int transactionIndex = location.getTransactionIndex();
+
+    final Block block = blockchain.getBlockByHash(blockhash).orElseThrow();
+    final Transaction transaction = block.getBody().getTransactions().get(transactionIndex);
+
     final BlockHeader header = block.getHeader();
     final List<TransactionReceipt> transactionReceipts =
         blockchain.getTxReceipts(blockhash).orElseThrow();
-    final TransactionReceipt transactionReceipt =
-        transactionReceipts.get(location.getTransactionIndex());
+    final TransactionReceipt transactionReceipt = transactionReceipts.get(transactionIndex);
 
     long gasUsed = transactionReceipt.getCumulativeGasUsed();
-    if (location.getTransactionIndex() > 0) {
-      gasUsed =
-          gasUsed
-              - transactionReceipts.get(location.getTransactionIndex() - 1).getCumulativeGasUsed();
+    int logIndexOffset = 0;
+    if (transactionIndex > 0) {
+      gasUsed -= transactionReceipts.get(transactionIndex - 1).getCumulativeGasUsed();
+      logIndexOffset =
+          IntStream.range(0, transactionIndex)
+              .map(i -> transactionReceipts.get(i).getLogsList().size())
+              .sum();
     }
+
+    Optional<Long> maybeBlobGasUsed =
+        getBlobGasUsed(transaction, protocolSchedule.getByBlockHeader(header));
+
+    Optional<Wei> maybeBlobGasPrice =
+        getBlobGasPrice(transaction, header, protocolSchedule.getByBlockHeader(header));
 
     return Optional.of(
         TransactionReceiptWithMetadata.create(
             transactionReceipt,
             transaction,
             transactionHash,
-            location.getTransactionIndex(),
+            transactionIndex,
             gasUsed,
             header.getBaseFee(),
             blockhash,
-            header.getNumber()));
+            header.getNumber(),
+            maybeBlobGasUsed,
+            maybeBlobGasPrice,
+            logIndexOffset));
+  }
+
+  /**
+   * Calculates the blob gas used for data in a transaction.
+   *
+   * @param transaction the transaction to calculate the gas for
+   * @param protocolSpec the protocol specification to use for gas calculation
+   * @return an Optional containing the blob gas used for data if the transaction type supports
+   *     blobs, otherwise returns an empty Optional
+   */
+  private Optional<Long> getBlobGasUsed(
+      final Transaction transaction, final ProtocolSpec protocolSpec) {
+    return transaction.getType().supportsBlob()
+        ? Optional.of(protocolSpec.getGasCalculator().blobGasCost(transaction.getBlobCount()))
+        : Optional.empty();
+  }
+
+  /**
+   * Calculates the blob gas price for data in a transaction.
+   *
+   * @param transaction the transaction to calculate the gas price for
+   * @param header the block header of the current block
+   * @param protocolSpec the protocol specification to use for gas price calculation
+   * @return an Optional containing the blob gas price for data if the transaction type supports
+   *     blobs, otherwise returns an empty Optional
+   */
+  private Optional<Wei> getBlobGasPrice(
+      final Transaction transaction, final BlockHeader header, final ProtocolSpec protocolSpec) {
+    if (transaction.getType().supportsBlob()) {
+      return blockchain
+          .getBlockHeader(header.getParentHash())
+          .map(
+              parentHeader ->
+                  protocolSpec
+                      .getFeeMarket()
+                      .blobGasPricePerGas(
+                          calculateExcessBlobGasForParent(protocolSpec, parentHeader)));
+    }
+    return Optional.empty();
   }
 
   /**
@@ -919,7 +964,7 @@ public class BlockchainQueries {
         ? Optional.empty()
         : Optional.of(
             Math.max(
-                apiConfig.getGasPriceMin(),
+                apiConfig.getGasPriceMinSupplier().getAsLong(),
                 Math.min(
                     apiConfig.getGasPriceMax(),
                     gasCollection[
@@ -1025,7 +1070,7 @@ public class BlockchainQueries {
         break;
       }
 
-      logIndexOffset += receipts.get(i).getLogs().size();
+      logIndexOffset += receipts.get(i).getLogsList().size();
     }
 
     return logIndexOffset;

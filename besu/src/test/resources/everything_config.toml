@@ -16,7 +16,7 @@ node-private-key-file="./path/to/privateKey"
 pid-path="~/.pid"
 reorg-logging-threshold=0
 static-nodes-file="~/besudata/static-nodes.json"
-
+profile="NONE"
 # Security Module plugin to use
 security-module="localfile"
 
@@ -87,6 +87,10 @@ rpc-http-tls-cipher-suites=["TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384","TLS_ECDHE_R
 rpc-http-max-batch-size=1
 rpc-http-max-request-content-length = 5242880
 rpc-max-logs-range=100
+json-pretty-print-enabled=false
+cache-last-blocks=512
+rpc-gas-cap = 50000000
+rpc-max-trace-filter-range=100
 
 # PRIVACY TLS
 privacy-tls-enabled=false
@@ -135,9 +139,12 @@ miner-stratum-enabled=false
 miner-coinbase="0x0000000000000000000000000000000000000002"
 miner-extra-data="0x444F4E27542050414E4943202120484F444C2C20484F444C2C20484F444C2021"
 min-gas-price=1
+min-priority-fee=0
 min-block-occupancy-ratio=0.7
 miner-stratum-host="0.0.0.0"
 miner-stratum-port=8008
+block-txs-selection-max-time=5000
+poa-block-txs-selection-max-time=75
 Xminer-remote-sealers-limit=1000
 Xminer-remote-sealers-hashrate-ttl=10
 Xpos-block-creation-max-time=5
@@ -165,20 +172,26 @@ privacy-enabled=false
 privacy-multi-tenancy-enabled=true
 privacy-marker-transaction-signing-key-file="./signerKey"
 privacy-enable-database-migration=false
-privacy-onchain-groups-enabled=false
 privacy-flexible-groups-enabled=false
 
 # Transaction Pool
-tx-pool-retention-hours=999
+tx-pool="layered"
 tx-pool-price-bump=13
-tx-pool-max-size=1234
-tx-pool-limit-by-account-percentage=0.017
-Xincoming-tx-messages-keep-alive-seconds=60
 rpc-tx-feecap=2000000000000000000
 strict-tx-replay-protection-enabled=true
-tx-pool-disable-locals=false
+tx-pool-no-local-priority=false
+tx-pool-priority-senders=["0xABC0000000000000000000000000000000001234","0xDEF0000000000000000000000000000000001234"]
 tx-pool-enable-save-restore=true
 tx-pool-save-file="txpool.dump"
+## Layered
+tx-pool-layer-max-capacity=12345678
+tx-pool-max-prioritized=9876
+tx-pool-max-future-by-sender=321
+## Legacy/Sequenced
+tx-pool-retention-hours=999
+tx-pool-max-size=1234
+tx-pool-limit-by-account-percentage=0.017
+tx-pool-min-gas-price=1000
 
 # Revert Reason
 revert-reason-enabled=false

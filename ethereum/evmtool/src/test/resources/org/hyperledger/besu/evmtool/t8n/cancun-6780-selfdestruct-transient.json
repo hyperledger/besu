@@ -1,0 +1,101 @@
+{
+  "cli": [
+    "t8n",
+    "--input.alloc=stdin",
+    "--input.txs=stdin",
+    "--input.env=stdin",
+    "--output.result=stdout",
+    "--output.alloc=stdout",
+    "--output.body=stdout",
+    "--state.fork=Cancun",
+    "--state.chainid=1",
+    "--state.reward=0"
+  ],
+  "stdin": {
+    "alloc": {
+      "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+        "nonce": "0x00",
+        "balance": "0x3635c9adc5dea00000",
+        "code": "0x",
+        "storage": {}
+      }
+    },
+    "txs": [
+      {
+        "type": "0x0",
+        "chainId": "0x0",
+        "nonce": "0x0",
+        "gasPrice": "0xa",
+        "gas": "0x5f5e100",
+        "value": "0x0",
+        "input": "0x600d8060175f39805f80f05f805f805f855af1505ffffe600280600b5f39805ff3fe5fff",
+        "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+        "v": "0x1b",
+        "r": "0xf2bb558b73cfb96466c41785fdd0f1e367b4703d49653e617cffdb7316a01e87",
+        "s": "0x11e0423aeea027a1e48dc3adffe2b27652d8154599f10b6f552d51b1fcb632ae"
+      }
+    ],
+    "env": {
+      "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+      "currentGasLimit": "10000000000",
+      "currentNumber": "1",
+      "currentTimestamp": "1000",
+      "currentRandom": "0",
+      "currentDifficulty": "0",
+      "currentStateRoot": "0xe8a9461dcfdbaa48bbddca4f4baa439e45f1489827e5deeb2797363323e34769",
+      "parentDifficulty": "0",
+      "parentBaseFee": "7",
+      "parentGasUsed": "0",
+      "parentGasLimit": "10000000000",
+      "parentTimestamp": "0",
+      "blockHashes": {
+        "0": "0xc5d4b3d67827b580c95a2a0980670255c15bfb964e8c4183d18971659bd5b6a8"
+      },
+      "ommers": [],
+      "withdrawals": [],
+      "parentUncleHash": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+      "parentBlobGasUsed": "0",
+      "parentExcessBlobGas": "0"
+    }
+  },
+  "stdout": {
+    "alloc": {
+      "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+        "balance": "0x48552"
+      },
+      "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+        "balance": "0x3635c9adc5de90ee44",
+        "nonce": "0x1"
+      }
+    },
+    "body": "0xf873f871800a8405f5e1008080a4600d8060175f39805f80f05f805f805f855af1505ffffe600280600b5f39805ff3fe5fff1ba0f2bb558b73cfb96466c41785fdd0f1e367b4703d49653e617cffdb7316a01e87a011e0423aeea027a1e48dc3adffe2b27652d8154599f10b6f552d51b1fcb632ae",
+    "result": {
+      "stateRoot": "0xe8a9461dcfdbaa48bbddca4f4baa439e45f1489827e5deeb2797363323e34769",
+      "txRoot": "0x35ab0ce85af281d6e600d467fb3ed12063994cc9e105cbdb4eb1ba65ed9edddf",
+      "receiptsRoot": "0xdf87447856d3a36db48c7ec997ff29845eeb513cb49aaa20547290f64f3710d1",
+      "logsHash": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+      "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "receipts": [
+        {
+          "root": "0x",
+          "status": "0x1",
+          "cumulativeGasUsed": "0x181c6",
+          "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "logs": null,
+          "transactionHash": "0xd954e10ebf0b55b71512b53a6ebae09372ccc6b2bf87b199e8aa8a5c4f757430",
+          "contractAddress": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+          "gasUsed": "0x181c6",
+          "blockHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "transactionIndex": "0x0"
+        }
+      ],
+      "currentDifficulty": null,
+      "gasUsed": "0x181c6",
+      "currentBaseFee": "0x7",
+      "withdrawalsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+      "blobGasUsed": "0x0",
+      "currentExcessBlobGas": "0x0"
+    }
+  }
+}

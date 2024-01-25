@@ -17,17 +17,16 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
@@ -38,9 +37,9 @@ public class EthGetLogs implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(EthGetLogs.class);
 
   private final BlockchainQueries blockchain;
-  private final Optional<Long> maxLogRange;
+  private final long maxLogRange;
 
-  public EthGetLogs(final BlockchainQueries blockchain, final Optional<Long> maxLogRange) {
+  public EthGetLogs(final BlockchainQueries blockchain, final long maxLogRange) {
     this.blockchain = blockchain;
     this.maxLogRange = maxLogRange;
   }
@@ -57,7 +56,7 @@ public class EthGetLogs implements JsonRpcMethod {
 
     if (!filter.isValid()) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     }
 
     final AtomicReference<Exception> ex = new AtomicReference<>();
@@ -86,8 +85,7 @@ public class EthGetLogs implements JsonRpcMethod {
                             .getBlockNumber(blockchain)
                             .orElseThrow(
                                 () -> new Exception("toBlock not found: " + filter.getToBlock()));
-                    if (maxLogRange.isPresent()
-                        && (toBlockNumber - fromBlockNumber) > maxLogRange.get()) {
+                    if (maxLogRange > 0 && (toBlockNumber - fromBlockNumber) > maxLogRange) {
                       throw new IllegalArgumentException(
                           "Requested range exceeds maximum range limit");
                     }
@@ -111,10 +109,10 @@ public class EthGetLogs implements JsonRpcMethod {
           .log();
       if (ex.get() instanceof IllegalArgumentException) {
         return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), JsonRpcError.EXCEEDS_RPC_MAX_BLOCK_RANGE);
+            requestContext.getRequest().getId(), RpcErrorType.EXCEEDS_RPC_MAX_BLOCK_RANGE);
       }
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     }
 
     return new JsonRpcSuccessResponse(

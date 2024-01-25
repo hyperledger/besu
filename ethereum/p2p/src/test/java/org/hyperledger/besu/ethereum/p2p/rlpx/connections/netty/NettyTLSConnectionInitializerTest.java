@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
@@ -44,13 +45,17 @@ import io.netty.handler.codec.compression.SnappyFrameDecoder;
 import io.netty.handler.codec.compression.SnappyFrameEncoder;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class NettyTLSConnectionInitializerTest {
 
   private static final String PEER_HOST = "hyperledger.org";
@@ -69,7 +74,7 @@ public class NettyTLSConnectionInitializerTest {
 
   private NettyTLSConnectionInitializer nettyTLSConnectionInitializer;
 
-  @Before
+  @BeforeEach
   public void before() throws Exception {
     nettyTLSConnectionInitializer = createNettyTLSConnectionInitializer(false);
 
@@ -92,7 +97,8 @@ public class NettyTLSConnectionInitializerTest {
         eventDispatcher,
         new NoOpMetricsSystem(),
         () -> tlsContextFactory,
-        clientHelloSniHeaderEnabled);
+        clientHelloSniHeaderEnabled,
+        new PeerTable(Bytes.random(64)));
   }
 
   @Test

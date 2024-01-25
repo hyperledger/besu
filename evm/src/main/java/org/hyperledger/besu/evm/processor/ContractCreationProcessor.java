@@ -108,24 +108,26 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
     }
     try {
 
-      final MutableAccount sender = frame.getWorldUpdater().getSenderAccount(frame).getMutable();
+      final MutableAccount sender = frame.getWorldUpdater().getSenderAccount(frame);
       sender.decrementBalance(frame.getValue());
 
-      final MutableAccount contract =
-          frame.getWorldUpdater().getOrCreate(frame.getContractAddress()).getMutable();
+      Address contractAddress = frame.getContractAddress();
+      final MutableAccount contract = frame.getWorldUpdater().getOrCreate(contractAddress);
       if (accountExists(contract)) {
         LOG.trace(
             "Contract creation error: account has already been created for address {}",
-            frame.getContractAddress());
+            contractAddress);
         frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
         operationTracer.traceAccountCreationResult(
             frame, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       } else {
+        frame.addCreate(contractAddress);
         contract.incrementBalance(frame.getValue());
         contract.setNonce(initialContractNonce);
         contract.clearStorage();
         frame.setState(MessageFrame.State.CODE_EXECUTING);
+        frame.addCreate(contractAddress);
       }
     } catch (final ModificationNotAllowedException ex) {
       LOG.trace("Contract creation error: attempt to mutate an immutable account");
@@ -167,7 +169,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
 
         // Finalize contract creation, setting the contract code.
         final MutableAccount contract =
-            frame.getWorldUpdater().getOrCreate(frame.getContractAddress()).getMutable();
+            frame.getWorldUpdater().getOrCreate(frame.getContractAddress());
         contract.setCode(contractCode);
         LOG.trace(
             "Successful creation of contract {} with code of size {} (Gas remaining: {})",
@@ -175,6 +177,9 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
             contractCode.size(),
             frame.getRemainingGas());
         frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
+        if (operationTracer.isExtendedTracing()) {
+          operationTracer.traceAccountCreationResult(frame, Optional.empty());
+        }
       } else {
         final Optional<ExceptionalHaltReason> exceptionalHaltReason = invalidReason.get();
         frame.setExceptionalHaltReason(exceptionalHaltReason);

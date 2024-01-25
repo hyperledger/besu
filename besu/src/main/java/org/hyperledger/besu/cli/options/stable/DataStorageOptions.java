@@ -17,8 +17,12 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
+import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
@@ -26,6 +30,7 @@ import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguratio
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 /** The Data storage CLI options. */
@@ -33,7 +38,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
 
   private static final String DATA_STORAGE_FORMAT = "--data-storage-format";
 
-  private static final String BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD =
+  /** The maximum number of historical layers to load. */
+  public static final String BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD =
       "--bonsai-historical-block-limit";
 
   // Use Bonsai DB
@@ -42,16 +48,44 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
       description =
           "Format to store trie data in.  Either FOREST or BONSAI (default: ${DEFAULT-VALUE}).",
       arity = "1")
-  private final DataStorageFormat dataStorageFormat = DataStorageFormat.FOREST;
+  private DataStorageFormat dataStorageFormat = DataStorageFormat.FOREST;
 
   @Option(
       names = {BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD, "--bonsai-maximum-back-layers-to-load"},
       paramLabel = "<LONG>",
       description =
-          "Limit of historical layers that can be loaded with BONSAI (default: ${DEFAULT-VALUE}).",
+          "Limit of historical layers that can be loaded with BONSAI (default: ${DEFAULT-VALUE}). When using "
+              + Unstable.BONSAI_LIMIT_TRIE_LOGS_ENABLED
+              + " it will also be used as the number of layers of trie logs to retain.",
       arity = "1")
-  private final Long bonsaiMaxLayersToLoad = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+  private Long bonsaiMaxLayersToLoad = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
 
+  @CommandLine.ArgGroup(validate = false)
+  private final DataStorageOptions.Unstable unstableOptions = new Unstable();
+
+  /** The unstable options for data storage. */
+  public static class Unstable {
+    private static final String BONSAI_LIMIT_TRIE_LOGS_ENABLED =
+        "--Xbonsai-limit-trie-logs-enabled";
+
+    /** The bonsai trie logs pruning window size. */
+    public static final String BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE =
+        "--Xbonsai-trie-logs-pruning-window-size";
+
+    @CommandLine.Option(
+        hidden = true,
+        names = {BONSAI_LIMIT_TRIE_LOGS_ENABLED},
+        description =
+            "Limit the number of trie logs that are retained. (default: ${DEFAULT-VALUE})")
+    private boolean bonsaiLimitTrieLogsEnabled = DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
+
+    @CommandLine.Option(
+        hidden = true,
+        names = {BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE},
+        description =
+            "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
+    private int bonsaiTrieLogPruningWindowSize = DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
+  }
   /**
    * Create data storage options.
    *
@@ -61,21 +95,69 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     return new DataStorageOptions();
   }
 
+  /**
+   * Validates the data storage options
+   *
+   * @param commandLine the full commandLine to check all the options specified by the user
+   */
+  public void validate(final CommandLine commandLine) {
+    if (unstableOptions.bonsaiLimitTrieLogsEnabled) {
+      if (bonsaiMaxLayersToLoad < MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT) {
+        throw new CommandLine.ParameterException(
+            commandLine,
+            String.format(
+                BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD + " minimum value is %d",
+                MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT));
+      }
+      if (unstableOptions.bonsaiTrieLogPruningWindowSize <= 0) {
+        throw new CommandLine.ParameterException(
+            commandLine,
+            String.format(
+                Unstable.BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
+                unstableOptions.bonsaiTrieLogPruningWindowSize));
+      }
+      if (unstableOptions.bonsaiTrieLogPruningWindowSize <= bonsaiMaxLayersToLoad) {
+        throw new CommandLine.ParameterException(
+            commandLine,
+            String.format(
+                Unstable.BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE
+                    + "=%d must be greater than "
+                    + BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
+                    + "=%d",
+                unstableOptions.bonsaiTrieLogPruningWindowSize,
+                bonsaiMaxLayersToLoad));
+      }
+    }
+  }
+
+  static DataStorageOptions fromConfig(final DataStorageConfiguration domainObject) {
+    final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
+    dataStorageOptions.dataStorageFormat = domainObject.getDataStorageFormat();
+    dataStorageOptions.bonsaiMaxLayersToLoad = domainObject.getBonsaiMaxLayersToLoad();
+    dataStorageOptions.unstableOptions.bonsaiLimitTrieLogsEnabled =
+        domainObject.getUnstable().getBonsaiLimitTrieLogsEnabled();
+    dataStorageOptions.unstableOptions.bonsaiTrieLogPruningWindowSize =
+        domainObject.getUnstable().getBonsaiTrieLogPruningWindowSize();
+
+    return dataStorageOptions;
+  }
+
   @Override
   public DataStorageConfiguration toDomainObject() {
     return ImmutableDataStorageConfiguration.builder()
         .dataStorageFormat(dataStorageFormat)
         .bonsaiMaxLayersToLoad(bonsaiMaxLayersToLoad)
+        .unstable(
+            ImmutableDataStorageConfiguration.Unstable.builder()
+                .bonsaiLimitTrieLogsEnabled(unstableOptions.bonsaiLimitTrieLogsEnabled)
+                .bonsaiTrieLogPruningWindowSize(unstableOptions.bonsaiTrieLogPruningWindowSize)
+                .build())
         .build();
   }
 
   @Override
   public List<String> getCLIOptions() {
-    return List.of(
-        DATA_STORAGE_FORMAT,
-        dataStorageFormat.toString(),
-        BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD,
-        bonsaiMaxLayersToLoad.toString());
+    return CommandLineUtils.getCLIOptions(this, new DataStorageOptions());
   }
 
   /**

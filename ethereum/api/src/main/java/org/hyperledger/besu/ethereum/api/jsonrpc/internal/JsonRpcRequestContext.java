@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -66,6 +67,10 @@ public class JsonRpcRequestContext {
 
   public <T> Optional<T> getOptionalParameter(final int index, final Class<T> paramClass) {
     return jsonRpcRequest.getOptionalParameter(index, paramClass);
+  }
+
+  public <T> Optional<List<T>> getOptionalList(final int index, final Class<T> listOf) {
+    return jsonRpcRequest.getOptionalList(index, listOf);
   }
 
   @Override

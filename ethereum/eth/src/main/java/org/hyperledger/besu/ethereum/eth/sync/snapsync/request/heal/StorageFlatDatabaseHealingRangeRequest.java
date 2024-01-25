@@ -18,7 +18,6 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.getRa
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
@@ -28,6 +27,7 @@ import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
@@ -152,7 +152,7 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
               Function.identity(),
               Function.identity());
 
-      Map<Bytes32, Bytes> remainingKeys = new TreeMap<>(slots);
+      Map<Bytes32, Bytes> flatDbSlots = new TreeMap<>(slots);
 
       // Retrieve the data from the trie in order to know what needs to be fixed in the flat
       // database
@@ -172,18 +172,23 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
                       RangeStorageEntriesCollector.collectEntries(
                           collector, visitor, root, startKeyHash));
 
-      // Perform the fix by updating the flat database
+      // Process each slot
       slots.forEach(
           (key, value) -> {
-            if (remainingKeys.containsKey(key)) {
-              remainingKeys.remove(key);
-            } else {
+            // Remove the key from the flat db and get its associated value
+            final Bytes flatDbEntry = flatDbSlots.remove(key);
+            // If the key was not in flat db and its associated value is different from the
+            // current value
+            if (!value.equals(flatDbEntry)) {
+              // Update the storage value
               bonsaiUpdater.putStorageValueBySlotHash(
                   accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
             }
           });
-      remainingKeys.forEach(
-          (key, value) -> bonsaiUpdater.removeStorageValueBySlotHash(accountHash, Hash.wrap(key)));
+      // For each remaining key, remove the storage value
+      flatDbSlots
+          .keySet()
+          .forEach(key -> bonsaiUpdater.removeStorageValueBySlotHash(accountHash, Hash.wrap(key)));
     }
     return slots.size();
   }

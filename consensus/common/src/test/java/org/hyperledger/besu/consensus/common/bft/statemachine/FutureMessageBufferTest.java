@@ -30,15 +30,15 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class FutureMessageBufferTest {
   private Message message;
   private FutureMessageBuffer futureMsgBuffer;
   private final PeerConnection peerConnection = MockPeerFactory.create(AddressHelpers.ofValue(9));
 
-  @Before
+  @BeforeEach
   public void setup() {
     message = createMessage(10);
     futureMsgBuffer = new FutureMessageBuffer(5, 5, 0);

@@ -19,28 +19,22 @@ package org.hyperledger.besu.evmtool;
 import static org.hyperledger.besu.evmtool.T8nSubCommand.COMMAND_ALIAS;
 import static org.hyperledger.besu.evmtool.T8nSubCommand.COMMAND_NAME;
 
-import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.evm.AccessListEntry;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
-import org.hyperledger.besu.plugin.data.TransactionType;
+import org.hyperledger.besu.evmtool.T8nExecutor.RejectedTransaction;
+import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -49,19 +43,15 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.Stack;
-import java.util.stream.StreamSupport;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.IParameterConsumer;
 import picocli.CommandLine.Model.ArgSpec;
@@ -78,8 +68,6 @@ import picocli.CommandLine.ParentCommand;
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class T8nSubCommand implements Runnable {
-
-  record RejectedTransaction(int index, String error) {}
 
   static final String COMMAND_NAME = "transition";
   static final String COMMAND_ALIAS = "t8n";
@@ -182,12 +170,16 @@ public class T8nSubCommand implements Runnable {
 
   @Override
   public void run() {
+    LogConfigurator.setLevel("", "OFF");
+    // presume ethereum mainnet for reference and state tests
+    SignatureAlgorithmFactory.setDefaultInstance();
     final ObjectMapper objectMapper = JsonUtils.createObjectMapper();
     final ObjectReader t8nReader = objectMapper.reader();
 
-    MutableWorldState initialWorldState;
+    ReferenceTestWorldState initialWorldState;
     ReferenceTestEnv referenceTestEnv;
-    List<Transaction> transactions;
+    List<Transaction> transactions = new ArrayList<>();
+    List<RejectedTransaction> rejections = new ArrayList<>();
     try {
       ObjectNode config;
       if (env.equals(stdinPath) || alloc.equals(stdinPath) || txs.equals(stdinPath)) {
@@ -216,8 +208,9 @@ public class T8nSubCommand implements Runnable {
       }
 
       referenceTestEnv = objectMapper.convertValue(config.get("env"), ReferenceTestEnv.class);
-      initialWorldState =
-          objectMapper.convertValue(config.get("alloc"), ReferenceTestWorldState.class);
+      Map<String, ReferenceTestWorldState.AccountMock> accounts =
+          objectMapper.convertValue(config.get("alloc"), new TypeReference<>() {});
+      initialWorldState = ReferenceTestWorldState.create(accounts, EvmConfiguration.DEFAULT);
       initialWorldState.persist(null);
       var node = config.get("txs");
       Iterator<JsonNode> it;
@@ -229,7 +222,7 @@ public class T8nSubCommand implements Runnable {
         it = List.of(node).iterator();
       }
 
-      transactions = extractTransactions(it);
+      T8nExecutor.extractTransactions(parentCommand.out, it, transactions, rejections);
       if (!outDir.toString().isBlank()) {
         outDir.toFile().mkdirs();
       }
@@ -264,7 +257,8 @@ public class T8nSubCommand implements Runnable {
                       new PrintStream(traceDest),
                       parentCommand.showMemory,
                       !parentCommand.hideStack,
-                      parentCommand.showReturnData);
+                      parentCommand.showReturnData,
+                      parentCommand.showStorage);
               outputStreams.put(jsonTracer, traceDest);
               return jsonTracer;
             }
@@ -299,6 +293,7 @@ public class T8nSubCommand implements Runnable {
             referenceTestEnv,
             initialWorldState,
             transactions,
+            rejections,
             tracerManager);
 
     try {
@@ -332,104 +327,12 @@ public class T8nSubCommand implements Runnable {
         }
       }
 
-      if (outputObject.size() > 0) {
+      if (!outputObject.isEmpty()) {
         parentCommand.out.println(writer.writeValueAsString(outputObject));
       }
     } catch (IOException ioe) {
       System.err.println("Could not write results");
       ioe.printStackTrace(System.err);
     }
-  }
-
-  private List<Transaction> extractTransactions(final Iterator<JsonNode> it) {
-    List<Transaction> transactions = new ArrayList<>();
-    while (it.hasNext()) {
-      JsonNode txNode = it.next();
-      if (txNode.isTextual()) {
-        BytesValueRLPInput rlpInput =
-            new BytesValueRLPInput(Bytes.fromHexString(txNode.asText()), false);
-        rlpInput.enterList();
-        while (!rlpInput.isEndOfCurrentList()) {
-          Transaction tx = Transaction.readFrom(rlpInput);
-          transactions.add(tx);
-        }
-      } else if (txNode.isObject()) {
-        if (txNode.has("txBytes")) {
-          Transaction tx =
-              Transaction.readFrom(Bytes.fromHexString(txNode.get("txbytes").asText()));
-          transactions.add(tx);
-        } else {
-          Transaction.Builder builder = Transaction.builder();
-          int type = Bytes.fromHexStringLenient(txNode.get("type").textValue()).toInt();
-          TransactionType transactionType = TransactionType.of(type == 0 ? 0xf8 : type);
-          builder.type(transactionType);
-          builder.nonce(Bytes.fromHexStringLenient(txNode.get("nonce").textValue()).toLong());
-          builder.gasPrice(Wei.fromHexString(txNode.get("gasPrice").textValue()));
-          builder.gasLimit(Bytes.fromHexStringLenient(txNode.get("gas").textValue()).toLong());
-          builder.value(Wei.fromHexString(txNode.get("value").textValue()));
-          builder.payload(Bytes.fromHexString(txNode.get("input").textValue()));
-          if (txNode.has("to")) {
-            builder.to(Address.fromHexString(txNode.get("to").textValue()));
-          }
-
-          if (transactionType.requiresChainId()
-              || !txNode.has("protected")
-              || txNode.get("protected").booleanValue()) {
-            // chainid if protected
-            builder.chainId(
-                new BigInteger(
-                    1,
-                    Bytes.fromHexStringLenient(txNode.get("chainId").textValue()).toArrayUnsafe()));
-          }
-
-          if (txNode.has("accessList")) {
-            JsonNode accessList = txNode.get("accessList");
-            if (!accessList.isArray()) {
-              parentCommand.out.printf(
-                  "TX json node unparseable: expected accessList to be an array - %s%n", txNode);
-              continue;
-            }
-            List<AccessListEntry> entries = new ArrayList<>(accessList.size());
-            for (JsonNode entryAsJson : accessList) {
-              Address address = Address.fromHexString(entryAsJson.get("address").textValue());
-              List<String> storageKeys =
-                  StreamSupport.stream(
-                          Spliterators.spliteratorUnknownSize(
-                              entryAsJson.get("storageKeys").elements(), Spliterator.ORDERED),
-                          false)
-                      .map(JsonNode::textValue)
-                      .toList();
-              var accessListEntry = AccessListEntry.createAccessListEntry(address, storageKeys);
-              entries.add(accessListEntry);
-            }
-            builder.accessList(entries);
-          }
-
-          if (txNode.has("secretKey")) {
-            SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
-            KeyPair keys =
-                signatureAlgorithm.createKeyPair(
-                    signatureAlgorithm.createPrivateKey(
-                        Bytes32.fromHexString(txNode.get("secretKey").textValue())));
-
-            transactions.add(builder.signAndBuild(keys));
-          } else {
-            builder.signature(
-                SignatureAlgorithmFactory.getInstance()
-                    .createSignature(
-                        Bytes.fromHexString(txNode.get("r").textValue()).toUnsignedBigInteger(),
-                        Bytes.fromHexString(txNode.get("s").textValue()).toUnsignedBigInteger(),
-                        Bytes.fromHexString(txNode.get("v").textValue())
-                            .toUnsignedBigInteger()
-                            .subtract(Transaction.REPLAY_UNPROTECTED_V_BASE)
-                            .byteValueExact()));
-            transactions.add(builder.build());
-          }
-        }
-      } else {
-        parentCommand.out.printf("TX json node unparseable: %s%n", txNode);
-      }
-    }
-    return transactions;
   }
 }

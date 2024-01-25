@@ -31,7 +31,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class EthJsonRpcHttpServiceTest extends AbstractJsonRpcHttpServiceTest {
 
@@ -45,8 +45,7 @@ public class EthJsonRpcHttpServiceTest extends AbstractJsonRpcHttpServiceTest {
   @Test
   public void getFilterChanges_noBlocks() throws Exception {
     startService();
-    final String expectedRespBody =
-        String.format("{%n  \"jsonrpc\" : \"2.0\",%n  \"id\" : 2,%n  \"result\" : [ ]%n}");
+    final String expectedRespBody = String.format("{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":[]}");
     final ResponseBody body = ethNewBlockFilter(1).body();
     final String result = getResult(body);
     body.close();
@@ -60,7 +59,7 @@ public class EthJsonRpcHttpServiceTest extends AbstractJsonRpcHttpServiceTest {
     BlockchainSetupUtil blockchainSetupUtil = startServiceWithEmptyChain(DataStorageFormat.FOREST);
     final String expectedRespBody =
         String.format(
-            "{%n  \"jsonrpc\" : \"2.0\",%n  \"id\" : 2,%n  \"result\" : [ \"0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9\" ]%n}");
+            "{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":[\"0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9\"]}");
     final ResponseBody body = ethNewBlockFilter(1).body();
     final String result = getResult(body);
     body.close();
@@ -75,8 +74,7 @@ public class EthJsonRpcHttpServiceTest extends AbstractJsonRpcHttpServiceTest {
   @Test
   public void getFilterChanges_noTransactions() throws Exception {
     startService();
-    final String expectedRespBody =
-        String.format("{%n  \"jsonrpc\" : \"2.0\",%n  \"id\" : 2,%n  \"result\" : [ ]%n}");
+    final String expectedRespBody = String.format("{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":[]}");
     final ResponseBody body = ethNewPendingTransactionFilter(1).body();
     final String result = getResult(body);
     body.close();
@@ -96,18 +94,14 @@ public class EthJsonRpcHttpServiceTest extends AbstractJsonRpcHttpServiceTest {
     final Response resp = ethGetFilterChanges(2, result);
     assertThat(resp.code()).isEqualTo(200);
     final String expectedRespBody =
-        String.format(
-            "{%n  \"jsonrpc\" : \"2.0\",%n  \"id\" : 2,%n  \"result\" : [ \""
-                + transactionHash
-                + "\" ]%n}");
+        String.format("{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":[\"" + transactionHash + "\"]}");
     assertThat(resp.body().string()).isEqualTo(expectedRespBody);
   }
 
   @Test
   public void uninstallFilter() throws Exception {
     startService();
-    final String expectedRespBody =
-        String.format("{%n  \"jsonrpc\" : \"2.0\",%n  \"id\" : 2,%n  \"result\" : true%n}");
+    final String expectedRespBody = String.format("{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":true}");
     final ResponseBody body = ethNewBlockFilter(1).body();
     final String result = getResult(body);
     body.close();

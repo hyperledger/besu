@@ -7,29 +7,29 @@ on:
 
 jobs:
   spotless:
-    runs-on: [besu,Linux,self-hosted,X64,nodocker]
+    runs-on: [besu-research-ubuntu-16]
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
-          distribution: adopt
+          distribution: 'temurin'
           java-version: 17
           cache: gradle
       - name: spotless
         run: ./gradlew --no-daemon --parallel clean spotlessCheck
   javadoc_17:
-    runs-on: [besu,Linux,self-hosted,X64,nodocker]
+    runs-on: [besu-research-ubuntu-8]
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Java 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
-          distribution: adopt
+          distribution: 'temurin'
           java-version: 17
           cache: gradle
       - name: javadoc (JDK 17)

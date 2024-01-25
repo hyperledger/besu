@@ -18,21 +18,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 import org.hyperledger.besu.cli.converter.exception.FractionConversionException;
+import org.hyperledger.besu.util.number.Fraction;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class FractionConverterTest {
 
   private final FractionConverter fractionConverter = new FractionConverter();
 
   @Test
   public void assertThatConvertHandlesProperlyAValidString() throws FractionConversionException {
-    final float fraction = fractionConverter.convert("0.58");
+    final Fraction fraction = fractionConverter.convert("0.58");
     assertThat(fraction).isNotNull();
-    assertThat(fraction).isEqualTo(0.58f);
+    assertThat(fraction.getValue()).isEqualTo(0.58f);
   }
 
   @Test

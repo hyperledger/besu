@@ -20,7 +20,6 @@ import static com.google.common.base.Strings.padStart;
 
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.Operation;
 
 import java.io.PrintStream;
@@ -42,12 +41,15 @@ public class StandardJsonTracer implements OperationTracer {
   private final boolean showMemory;
   private final boolean showStack;
   private final boolean showReturnData;
+  private final boolean showStorage;
   private int pc;
   private int section;
   private List<String> stack;
   private String gas;
   private Bytes memory;
   private int memorySize;
+  private int depth;
+  private String storageString;
 
   /**
    * Instantiates a new Standard json tracer.
@@ -56,16 +58,19 @@ public class StandardJsonTracer implements OperationTracer {
    * @param showMemory show memory in trace lines
    * @param showStack show the stack in trace lines
    * @param showReturnData show return data in trace lines
+   * @param showStorage show the updated storage
    */
   public StandardJsonTracer(
       final PrintWriter out,
       final boolean showMemory,
       final boolean showStack,
-      final boolean showReturnData) {
+      final boolean showReturnData,
+      final boolean showStorage) {
     this.out = out;
     this.showMemory = showMemory;
     this.showStack = showStack;
     this.showReturnData = showReturnData;
+    this.showStorage = showStorage;
   }
 
   /**
@@ -75,13 +80,20 @@ public class StandardJsonTracer implements OperationTracer {
    * @param showMemory show memory in trace lines
    * @param showStack show the stack in trace lines
    * @param showReturnData show return data in trace lines
+   * @param showStorage show updated storage
    */
   public StandardJsonTracer(
       final PrintStream out,
       final boolean showMemory,
       final boolean showStack,
-      final boolean showReturnData) {
-    this(new PrintWriter(out, true, StandardCharsets.UTF_8), showMemory, showStack, showReturnData);
+      final boolean showReturnData,
+      final boolean showStorage) {
+    this(
+        new PrintWriter(out, true, StandardCharsets.UTF_8),
+        showMemory,
+        showStack,
+        showReturnData,
+        showStorage);
   }
 
   /**
@@ -114,9 +126,7 @@ public class StandardJsonTracer implements OperationTracer {
     for (int i = messageFrame.stackSize() - 1; i >= 0; i--) {
       stack.add("\"" + shortBytes(messageFrame.getStackItem(i)) + "\"");
     }
-    pc =
-        messageFrame.getPC()
-            - messageFrame.getCode().getCodeSection(messageFrame.getSection()).getEntryPoint();
+    pc = messageFrame.getPC() - messageFrame.getCode().getCodeSection(0).getEntryPoint();
     section = messageFrame.getSection();
     gas = shortNumber(messageFrame.getRemainingGas());
     memorySize = messageFrame.memoryWordSize() * 32;
@@ -125,15 +135,45 @@ public class StandardJsonTracer implements OperationTracer {
     } else {
       memory = null;
     }
+    depth = messageFrame.getMessageStackSize();
+
+    StringBuilder sb = new StringBuilder();
+    if (showStorage) {
+      var updater = messageFrame.getWorldUpdater();
+      var account = updater.getAccount(messageFrame.getRecipientAddress());
+      if (account != null && !account.getUpdatedStorage().isEmpty()) {
+        boolean[] shownEntry = {false};
+        sb.append(",\"storage\":{");
+        account
+            .getUpdatedStorage()
+            .forEach(
+                (k, v) -> {
+                  if (shownEntry[0]) {
+                    sb.append(",");
+                  } else {
+                    shownEntry[0] = true;
+                  }
+                  sb.append("\"")
+                      .append(k.toQuantityHexString())
+                      .append("\":\"")
+                      .append(v.toQuantityHexString())
+                      .append("\"");
+                });
+        sb.append("}");
+      }
+    }
+    storageString = sb.toString();
   }
 
   @Override
   public void tracePostExecution(
       final MessageFrame messageFrame, final Operation.OperationResult executeResult) {
     final Operation currentOp = messageFrame.getCurrentOperation();
+    if (currentOp.isVirtualOperation()) {
+      return;
+    }
     final int opcode = currentOp.getOpcode();
     final Bytes returnData = messageFrame.getReturnData();
-    final int depth = messageFrame.getMessageStackDepth() + 1;
 
     final StringBuilder sb = new StringBuilder(1024);
     sb.append("{");
@@ -151,7 +191,7 @@ public class StandardJsonTracer implements OperationTracer {
     if (showStack) {
       sb.append("\"stack\":[").append(commaJoiner.join(stack)).append("],");
     }
-    if (showReturnData && returnData.size() > 0) {
+    if (showReturnData && !returnData.isEmpty()) {
       sb.append("\"returnData\":\"").append(returnData.toHexString()).append("\",");
     }
     sb.append("\"depth\":").append(depth).append(",");
@@ -160,14 +200,14 @@ public class StandardJsonTracer implements OperationTracer {
     if (executeResult.getHaltReason() != null) {
       sb.append(",\"error\":\"")
           .append(executeResult.getHaltReason().getDescription())
-          .append("\"}");
+          .append("\"");
     } else if (messageFrame.getRevertReason().isPresent()) {
       sb.append(",\"error\":\"")
           .append(quoteEscape(messageFrame.getRevertReason().orElse(Bytes.EMPTY)))
-          .append("\"}");
-    } else {
-      sb.append("}");
+          .append("\"");
     }
+
+    sb.append(storageString).append("}");
     out.println(sb);
   }
 
@@ -212,19 +252,5 @@ public class StandardJsonTracer implements OperationTracer {
   public void traceAccountCreationResult(
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {
     // precompile calls are not part of the standard trace
-  }
-
-  @Override
-  public void traceEndTransaction(final Bytes output, final long gasUsed, final long timeNs) {
-    final StringBuilder sb = new StringBuilder(1024);
-    sb.append("{");
-    if (output.size() > 0) {
-      sb.append("\"output\":\"").append(output.toShortHexString()).append("\",");
-    } else {
-      sb.append("\"output\":\"\",");
-    }
-    sb.append("\"gasUsed\":\"").append(Words.longBytes(gasUsed).toShortHexString()).append("\",");
-    sb.append("\"time\":").append(timeNs).append("}");
-    out.println(sb);
   }
 }

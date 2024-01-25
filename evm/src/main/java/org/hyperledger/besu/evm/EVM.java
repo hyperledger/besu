@@ -25,12 +25,13 @@ import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.CodeCache;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
-import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
+import org.hyperledger.besu.evm.internal.OverflowException;
+import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.operation.AddModOperation;
 import org.hyperledger.besu.evm.operation.AddOperation;
 import org.hyperledger.besu.evm.operation.AndOperation;
 import org.hyperledger.besu.evm.operation.ByteOperation;
+import org.hyperledger.besu.evm.operation.ChainIdOperation;
 import org.hyperledger.besu.evm.operation.DivOperation;
 import org.hyperledger.besu.evm.operation.DupOperation;
 import org.hyperledger.besu.evm.operation.ExpOperation;
@@ -77,6 +78,7 @@ public class EVM {
   /** The constant OVERFLOW_RESPONSE. */
   protected static final OperationResult OVERFLOW_RESPONSE =
       new OperationResult(0L, ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
+
   /** The constant UNDERFLOW_RESPONSE. */
   protected static final OperationResult UNDERFLOW_RESPONSE =
       new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
@@ -85,6 +87,7 @@ public class EVM {
   private final GasCalculator gasCalculator;
   private final Operation endOfScriptStop;
   private final CodeCache codeCache;
+  private final EvmConfiguration evmConfiguration;
   private final EvmSpecVersion evmSpecVersion;
 
   // Optimized operation flags
@@ -106,6 +109,7 @@ public class EVM {
     this.operations = operations;
     this.gasCalculator = gasCalculator;
     this.endOfScriptStop = new VirtualOperation(new StopOperation(gasCalculator));
+    this.evmConfiguration = evmConfiguration;
     this.codeCache = new CodeCache(evmConfiguration);
     this.evmSpecVersion = evmSpecVersion;
 
@@ -128,6 +132,39 @@ public class EVM {
    */
   public int getMaxEOFVersion() {
     return evmSpecVersion.maxEofVersion;
+  }
+
+  /**
+   * Returns the non-fork related configuration parameters of the EVM.
+   *
+   * @return the EVM coniguration.
+   */
+  public EvmConfiguration getEvmConfiguration() {
+    return evmConfiguration;
+  }
+
+  /**
+   * Returns the configured EVM spec version for this EVM
+   *
+   * @return the evm spec version
+   */
+  public EvmSpecVersion getEvmVersion() {
+    return evmSpecVersion;
+  }
+
+  /**
+   * Return the ChainId this Executor is using, or empty if the EVM version does not expose chain
+   * ID.
+   *
+   * @return the ChainId, or empty if not exposed.
+   */
+  public Optional<Bytes> getChainId() {
+    Operation op = operations.get(ChainIdOperation.OPCODE);
+    if (op instanceof ChainIdOperation chainIdOperation) {
+      return Optional.of(chainIdOperation.getChainId());
+    } else {
+      return Optional.empty();
+    }
   }
 
   /**

@@ -191,7 +191,6 @@ public class RunnerBuilder {
   private RpcEndpointServiceImpl rpcEndpointServiceImpl;
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private boolean legacyForkIdEnabled;
-  private Optional<Long> rpcMaxLogsRange;
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
 
   /**
@@ -576,17 +575,6 @@ public class RunnerBuilder {
   }
 
   /**
-   * Add Rpc max logs range.
-   *
-   * @param rpcMaxLogsRange the rpc max logs range
-   * @return the runner builder
-   */
-  public RunnerBuilder rpcMaxLogsRange(final Long rpcMaxLogsRange) {
-    this.rpcMaxLogsRange = rpcMaxLogsRange > 0 ? Optional.of(rpcMaxLogsRange) : Optional.empty();
-    return this;
-  }
-
-  /**
    * Add enode DNS configuration
    *
    * @param enodeDnsConfiguration the DNS configuration for enodes
@@ -620,6 +608,8 @@ public class RunnerBuilder {
         bootstrap = ethNetworkConfig.getBootNodes();
       }
       discoveryConfiguration.setBootnodes(bootstrap);
+      LOG.info("Resolved {} bootnodes.", bootstrap.size());
+      LOG.debug("Bootnodes = {}", bootstrap);
       discoveryConfiguration.setDnsDiscoveryURL(ethNetworkConfig.getDnsDiscoveryUrl());
       discoveryConfiguration.setDiscoveryV5Enabled(
           networkingConfiguration.getDiscovery().isDiscoveryV5Enabled());
@@ -661,7 +651,10 @@ public class RunnerBuilder {
 
     final TransactionSimulator transactionSimulator =
         new TransactionSimulator(
-            context.getBlockchain(), context.getWorldStateArchive(), protocolSchedule);
+            context.getBlockchain(),
+            context.getWorldStateArchive(),
+            protocolSchedule,
+            apiConfiguration.getGasCap());
 
     final Bytes localNodeId = nodeKey.getPublicKey().getEncodedBytes();
     final Optional<NodePermissioningController> nodePermissioningController =
@@ -768,7 +761,7 @@ public class RunnerBuilder {
                   powMiningCoordinator,
                   miningParameters.getStratumPort(),
                   miningParameters.getStratumNetworkInterface(),
-                  miningParameters.getStratumExtranonce(),
+                  miningParameters.getUnstable().getStratumExtranonce(),
                   metricsSystem));
       miningCoordinator.addEthHashObserver(stratumServer.get());
       LOG.debug("added ethash observer: {}", stratumServer.get());
@@ -783,10 +776,7 @@ public class RunnerBuilder {
 
     final Optional<AccountPermissioningController> accountPermissioningController =
         buildAccountPermissioningController(
-            permissioningConfiguration,
-            besuController,
-            transactionSimulator,
-            context.getBlockchain());
+            permissioningConfiguration, besuController, transactionSimulator);
 
     final Optional<AccountLocalConfigPermissioningController>
         accountLocalConfigPermissioningController =
@@ -805,6 +795,7 @@ public class RunnerBuilder {
               blockchainQueries,
               synchronizer,
               transactionPool,
+              miningParameters,
               miningCoordinator,
               metricsSystem,
               supportedCapabilities,
@@ -850,6 +841,7 @@ public class RunnerBuilder {
               blockchainQueries,
               synchronizer,
               transactionPool,
+              miningParameters,
               miningCoordinator,
               metricsSystem,
               supportedCapabilities,
@@ -911,6 +903,7 @@ public class RunnerBuilder {
       graphQlContextMap.putIfAbsent(GraphQLContextType.SYNCHRONIZER, synchronizer);
       graphQlContextMap.putIfAbsent(
           GraphQLContextType.CHAIN_ID, protocolSchedule.getChainId().map(UInt256::valueOf));
+      graphQlContextMap.putIfAbsent(GraphQLContextType.GAS_CAP, apiConfiguration.getGasCap());
       final GraphQL graphQL;
       try {
         graphQL = GraphQLProvider.buildGraphQL(fetchers);
@@ -940,6 +933,7 @@ public class RunnerBuilder {
               blockchainQueries,
               synchronizer,
               transactionPool,
+              miningParameters,
               miningCoordinator,
               metricsSystem,
               supportedCapabilities,
@@ -1022,6 +1016,7 @@ public class RunnerBuilder {
               blockchainQueries,
               synchronizer,
               transactionPool,
+              miningParameters,
               miningCoordinator,
               metricsSystem,
               supportedCapabilities,
@@ -1110,8 +1105,7 @@ public class RunnerBuilder {
       final NodePermissioningController nodePermissioningController =
           new NodePermissioningControllerFactory()
               .create(
-                  new PermissioningConfiguration(
-                      Optional.empty(), Optional.empty(), Optional.empty()),
+                  new PermissioningConfiguration(Optional.empty(), Optional.empty()),
                   synchronizer,
                   fixedNodes,
                   localNodeId,
@@ -1129,19 +1123,18 @@ public class RunnerBuilder {
   private Optional<AccountPermissioningController> buildAccountPermissioningController(
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final BesuController besuController,
-      final TransactionSimulator transactionSimulator,
-      final Blockchain blockchain) {
+      final TransactionSimulator transactionSimulator) {
 
     if (permissioningConfiguration.isPresent()) {
       final Optional<AccountPermissioningController> accountPermissioningController =
           AccountPermissioningControllerFactory.create(
-              permissioningConfiguration.get(), transactionSimulator, metricsSystem, blockchain);
+              permissioningConfiguration.get(), transactionSimulator, metricsSystem);
 
       accountPermissioningController.ifPresent(
           permissioningController ->
               besuController
                   .getProtocolSchedule()
-                  .setTransactionFilter(permissioningController::isPermitted));
+                  .setPermissionTransactionFilter(permissioningController::isPermitted));
 
       return accountPermissioningController;
     } else {
@@ -1192,6 +1185,7 @@ public class RunnerBuilder {
       final BlockchainQueries blockchainQueries,
       final Synchronizer synchronizer,
       final TransactionPool transactionPool,
+      final MiningParameters miningParameters,
       final MiningCoordinator miningCoordinator,
       final ObservableMetricsSystem metricsSystem,
       final Set<Capability> supportedCapabilities,
@@ -1223,6 +1217,7 @@ public class RunnerBuilder {
                 protocolContext,
                 filterManager,
                 transactionPool,
+                miningParameters,
                 miningCoordinator,
                 metricsSystem,
                 supportedCapabilities,
@@ -1238,7 +1233,7 @@ public class RunnerBuilder {
                 dataDir,
                 besuController.getProtocolManager().ethContext().getEthPeers(),
                 consensusEngineServer,
-                rpcMaxLogsRange,
+                apiConfiguration,
                 enodeDnsConfiguration);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
 

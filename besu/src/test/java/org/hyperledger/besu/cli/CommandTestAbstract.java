@@ -15,14 +15,18 @@
 package org.hyperledger.besu.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.Runner;
@@ -31,12 +35,14 @@ import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.options.MiningOptions;
+import org.hyperledger.besu.cli.options.TransactionPoolOptions;
+import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
-import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
@@ -49,6 +55,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
@@ -73,8 +80,10 @@ import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
+import org.hyperledger.besu.services.PluginTransactionValidatorServiceImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
@@ -103,27 +112,41 @@ import java.util.function.Supplier;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import io.vertx.core.json.JsonObject;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.awaitility.Awaitility;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.RunLast;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public abstract class CommandTestAbstract {
   private static final Logger TEST_LOGGER = LoggerFactory.getLogger(CommandTestAbstract.class);
+  protected static final JsonObject VALID_GENESIS_QBFT_POST_LONDON =
+      (new JsonObject())
+          .put(
+              "config",
+              new JsonObject()
+                  .put("londonBlock", 0)
+                  .put("qbft", new JsonObject().put("blockperiodseconds", 5)));
+  protected static final JsonObject VALID_GENESIS_IBFT2_POST_LONDON =
+      (new JsonObject())
+          .put(
+              "config",
+              new JsonObject()
+                  .put("londonBlock", 0)
+                  .put("ibft2", new JsonObject().put("blockperiodseconds", 5)));
   protected final PrintStream originalOut = System.out;
   protected final PrintStream originalErr = System.err;
   protected final ByteArrayOutputStream commandOutput = new ByteArrayOutputStream();
@@ -136,17 +159,30 @@ public abstract class CommandTestAbstract {
   protected static final RpcEndpointServiceImpl rpcEndpointServiceImpl =
       new RpcEndpointServiceImpl();
 
-  @Mock protected RunnerBuilder mockRunnerBuilder;
+  @Mock(lenient = true)
+  protected RunnerBuilder mockRunnerBuilder;
+
   @Mock protected Runner mockRunner;
 
-  @Mock protected BesuController.Builder mockControllerBuilderFactory;
+  @Mock(lenient = true)
+  protected BesuController.Builder mockControllerBuilderFactory;
 
-  @Mock protected BesuControllerBuilder mockControllerBuilder;
-  @Mock protected EthProtocolManager mockEthProtocolManager;
+  @Mock(lenient = true)
+  protected BesuControllerBuilder mockControllerBuilder;
+
+  @Mock(lenient = true)
+  protected EthProtocolManager mockEthProtocolManager;
+
   @Mock protected ProtocolSchedule mockProtocolSchedule;
-  @Mock protected ProtocolContext mockProtocolContext;
+
+  @Mock(lenient = true)
+  protected ProtocolContext mockProtocolContext;
+
   @Mock protected BlockBroadcaster mockBlockBroadcaster;
-  @Mock protected BesuController mockController;
+
+  @Mock(lenient = true)
+  protected BesuController mockController;
+
   @Mock protected RlpBlockExporter rlpBlockExporter;
   @Mock protected JsonBlockImporter jsonBlockImporter;
   @Mock protected RlpBlockImporter rlpBlockImporter;
@@ -168,7 +204,8 @@ public abstract class CommandTestAbstract {
   @Mock
   protected Logger mockLogger;
 
-  @Mock protected BesuComponent mockBesuComponent;
+  @Mock(lenient = true)
+  protected BesuComponent mockBesuComponent;
 
   @Mock protected PkiBlockCreationConfigurationProvider mockPkiBlockCreationConfigProvider;
   @Mock protected PkiBlockCreationConfiguration mockPkiBlockCreationConfiguration;
@@ -178,7 +215,6 @@ public abstract class CommandTestAbstract {
   @Captor protected ArgumentCaptor<String> stringArgumentCaptor;
   @Captor protected ArgumentCaptor<Integer> intArgumentCaptor;
   @Captor protected ArgumentCaptor<Long> longArgumentCaptor;
-  @Captor protected ArgumentCaptor<Float> floatCaptor;
   @Captor protected ArgumentCaptor<EthNetworkConfig> ethNetworkConfigArgumentCaptor;
   @Captor protected ArgumentCaptor<SynchronizerConfiguration> syncConfigurationCaptor;
   @Captor protected ArgumentCaptor<JsonRpcConfiguration> jsonRpcConfigArgumentCaptor;
@@ -195,12 +231,11 @@ public abstract class CommandTestAbstract {
       permissioningConfigurationArgumentCaptor;
 
   @Captor protected ArgumentCaptor<TransactionPoolConfiguration> transactionPoolConfigCaptor;
+  @Captor protected ArgumentCaptor<ApiConfiguration> apiConfigurationCaptor;
 
   @Captor protected ArgumentCaptor<EthstatsOptions> ethstatsOptionsArgumentCaptor;
 
-  @Rule public final TemporaryFolder temp = new TemporaryFolder();
-
-  @Before
+  @BeforeEach
   public void initMocks() throws Exception {
     // doReturn used because of generic BesuController
     doReturn(mockControllerBuilder)
@@ -239,8 +274,12 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.maxRemotelyInitiatedPeers(anyInt()))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.transactionSelectorFactory(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.pluginTransactionValidatorFactory(any()))
+        .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.besuComponent(any(BesuComponent.class)))
         .thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.cacheLastBlocks(any())).thenReturn(mockControllerBuilder);
+
     // doReturn used because of generic BesuController
     doReturn(mockController).when(mockControllerBuilder).build();
     lenient().when(mockController.getProtocolManager()).thenReturn(mockEthProtocolManager);
@@ -290,7 +329,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.storageProvider(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.rpcEndpointService(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.legacyForkId(anyBoolean())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.rpcMaxLogsRange(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.apiConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.enodeDnsConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
 
@@ -312,7 +351,7 @@ public abstract class CommandTestAbstract {
         .when(securityModuleService.getByName(eq("localfile")))
         .thenReturn(Optional.of(() -> securityModule));
     lenient()
-        .when(rocksDBSPrivacyStorageFactory.create(any(), any(), any()))
+        .when(rocksDBSPrivacyStorageFactory.create(any(SegmentIdentifier.class), any(), any()))
         .thenReturn(new InMemoryKeyValueStorage());
 
     lenient()
@@ -329,7 +368,7 @@ public abstract class CommandTestAbstract {
     when(mockBesuComponent.getBesuCommandLogger()).thenReturn(mockLogger);
   }
 
-  @Before
+  @BeforeEach
   public void setUpStreams() {
     // reset the global opentelemetry singleton
     GlobalOpenTelemetry.resetForTest();
@@ -340,7 +379,7 @@ public abstract class CommandTestAbstract {
   }
 
   // Display outputs for debug purpose
-  @After
+  @AfterEach
   public void displayOutput() throws IOException {
     TEST_LOGGER.info("Standard output {}", commandOutput.toString(UTF_8));
     TEST_LOGGER.info("Standard error {}", commandErrorOutput.toString(UTF_8));
@@ -454,6 +493,25 @@ public abstract class CommandTestAbstract {
     }
   }
 
+  protected Path createTempFile(final String filename, final byte[] contents) throws IOException {
+    final Path file = Files.createTempFile(filename, "");
+    Files.write(file, contents);
+    file.toFile().deleteOnExit();
+    return file;
+  }
+
+  protected Path createFakeGenesisFile(final JsonObject jsonGenesis) throws IOException {
+    return createTempFile("genesisFile", encodeJsonGenesis(jsonGenesis).getBytes(UTF_8));
+  }
+
+  protected String encodeJsonGenesis(final JsonObject jsonGenesis) {
+    return jsonGenesis.encodePrettily();
+  }
+
+  protected Path createTempFile(final String filename, final String contents) throws IOException {
+    return createTempFile(filename, contents.getBytes(UTF_8));
+  }
+
   @CommandLine.Command
   public static class TestBesuCommand extends BesuCommand {
 
@@ -488,7 +546,8 @@ public abstract class CommandTestAbstract {
           privacyPluginService,
           pkiBlockCreationConfigProvider,
           rpcEndpointServiceImpl,
-          new TransactionSelectionServiceImpl());
+          new TransactionSelectionServiceImpl(),
+          new PluginTransactionValidatorServiceImpl());
     }
 
     @Override
@@ -518,8 +577,16 @@ public abstract class CommandTestAbstract {
       return unstableEthProtocolOptions;
     }
 
+    public MiningOptions getMiningOptions() {
+      return miningOptions;
+    }
+
     public TransactionPoolOptions getTransactionPoolOptions() {
-      return unstableTransactionPoolOptions;
+      return transactionPoolOptions;
+    }
+
+    public DataStorageOptions getDataStorageOptions() {
+      return dataStorageOptions;
     }
 
     public MetricsCLIOptions getMetricsCLIOptions() {
@@ -619,5 +686,34 @@ public abstract class CommandTestAbstract {
     REQUIRED_OPTION,
     PORT_CHECK,
     NO_PORT_CHECK
+  }
+
+  protected static String escapeTomlString(final String s) {
+    return StringEscapeUtils.escapeJava(s);
+  }
+
+  /**
+   * Check logger calls
+   *
+   * <p>Here we check the calls to logger and not the result of the log line as we don't test the
+   * logger itself but the fact that we call it.
+   *
+   * @param dependentOptions the string representing the list of dependent options names
+   * @param mainOption the main option name
+   */
+  protected void verifyOptionsConstraintLoggerCall(
+      final String mainOption, final String... dependentOptions) {
+    verify(mockLogger, atLeast(1))
+        .warn(
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture());
+    assertThat(stringArgumentCaptor.getAllValues().get(0)).isEqualTo(DEPENDENCY_WARNING_MSG);
+
+    for (final String option : dependentOptions) {
+      assertThat(stringArgumentCaptor.getAllValues().get(1)).contains(option);
+    }
+
+    assertThat(stringArgumentCaptor.getAllValues().get(2)).isEqualTo(mainOption);
   }
 }

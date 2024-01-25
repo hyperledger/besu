@@ -35,11 +35,10 @@ public interface PendingTransactions {
 
   List<Transaction> getLocalTransactions();
 
-  TransactionAddedResult addRemoteTransaction(
-      Transaction transaction, Optional<Account> maybeSenderAccount);
+  List<Transaction> getPriorityTransactions();
 
-  TransactionAddedResult addLocalTransaction(
-      Transaction transaction, Optional<Account> maybeSenderAccount);
+  TransactionAddedResult addTransaction(
+      PendingTransaction transaction, Optional<Account> maybeSenderAccount);
 
   void selectTransactions(TransactionSelector selector);
 
@@ -73,21 +72,10 @@ public interface PendingTransactions {
 
   String logStats();
 
-  default List<Transaction> signalInvalidAndGetDependentTransactions(
-      final Transaction transaction) {
-    // ToDo: remove when the legacy tx pool is removed
-    return List.of();
-  }
-
-  default void signalInvalidAndRemoveDependentTransactions(final Transaction transaction) {
-    // ToDo: remove when the legacy tx pool is removed
-    // no-op
-  }
-
-  boolean isLocalSender(Address sender);
+  Optional<Transaction> restoreBlob(Transaction transaction);
 
   @FunctionalInterface
   interface TransactionSelector {
-    TransactionSelectionResult evaluateTransaction(Transaction transaction);
+    TransactionSelectionResult evaluateTransaction(PendingTransaction pendingTransaction);
   }
 }

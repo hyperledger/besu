@@ -14,14 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_REQUEST;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_REQUEST;
 
 import org.hyperledger.besu.ethereum.api.handlers.IsAliveHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonGenerator.Feature;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -45,6 +46,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class WebSocketMessageHandler {
+
+  private static final ObjectMapper jsonObjectMapper =
+      new ObjectMapper()
+          .registerModule(new Jdk8Module()); // Handle JDK8 Optionals (de)serialization
 
   private static final Logger LOG = LoggerFactory.getLogger(WebSocketMessageHandler.class);
   private static final ObjectWriter JSON_OBJECT_WRITER =
@@ -73,7 +78,7 @@ public class WebSocketMessageHandler {
   public void handle(
       final ServerWebSocket websocket, final Buffer buffer, final Optional<User> user) {
     if (buffer.length() == 0) {
-      replyToClient(websocket, errorResponse(null, JsonRpcError.INVALID_REQUEST));
+      replyToClient(websocket, errorResponse(null, RpcErrorType.INVALID_REQUEST));
     } else {
       try {
         final JsonObject jsonRpcRequest = buffer.toJsonObject();
@@ -104,9 +109,9 @@ public class WebSocketMessageHandler {
                 throwable -> {
                   try {
                     final Integer id = jsonRpcRequest.getInteger("id", null);
-                    replyToClient(websocket, errorResponse(id, JsonRpcError.INTERNAL_ERROR));
+                    replyToClient(websocket, errorResponse(id, RpcErrorType.INTERNAL_ERROR));
                   } catch (ClassCastException idNotIntegerException) {
-                    replyToClient(websocket, errorResponse(null, JsonRpcError.INTERNAL_ERROR));
+                    replyToClient(websocket, errorResponse(null, RpcErrorType.INTERNAL_ERROR));
                   }
                 });
       } catch (DecodeException jsonObjectDecodeException) {
@@ -152,15 +157,16 @@ public class WebSocketMessageHandler {
                   })
               .onFailure(
                   throwable ->
-                      replyToClient(websocket, errorResponse(null, JsonRpcError.INTERNAL_ERROR)));
+                      replyToClient(websocket, errorResponse(null, RpcErrorType.INTERNAL_ERROR)));
         } catch (RuntimeException jsonArrayDecodeException) {
-          replyToClient(websocket, errorResponse(null, JsonRpcError.INTERNAL_ERROR));
+          replyToClient(websocket, errorResponse(null, RpcErrorType.INTERNAL_ERROR));
         }
       }
     }
   }
 
   private void replyToClient(final ServerWebSocket websocket, final Object result) {
+    traceResponse(result);
     try {
       // underlying output stream lifecycle is managed by the json object writer
       JSON_OBJECT_WRITER.writeValue(new JsonResponseStreamer(websocket), result);
@@ -169,7 +175,15 @@ public class WebSocketMessageHandler {
     }
   }
 
-  private JsonRpcResponse errorResponse(final Object id, final JsonRpcError error) {
+  private JsonRpcResponse errorResponse(final Object id, final RpcErrorType error) {
     return new JsonRpcErrorResponse(id, error);
+  }
+
+  private void traceResponse(final Object response) {
+    try {
+      LOG.trace(jsonObjectMapper.writeValueAsString(response));
+    } catch (JsonProcessingException e) {
+      LOG.error("Error tracing JSON-RPC response", e);
+    }
   }
 }

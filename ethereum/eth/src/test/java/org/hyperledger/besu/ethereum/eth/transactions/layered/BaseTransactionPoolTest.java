@@ -20,6 +20,13 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Blob;
+import org.hyperledger.besu.datatypes.BlobsWithCommitments;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.KZGCommitment;
+import org.hyperledger.besu.datatypes.KZGProof;
+import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
@@ -29,14 +36,15 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Optional;
 import java.util.Random;
+import java.util.stream.IntStream;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes48;
 
 public class BaseTransactionPoolTest {
 
@@ -82,6 +90,12 @@ public class BaseTransactionPoolTest {
         TransactionType.EIP1559, nonce, Wei.of(5000L).multiply(gasFeeMultiplier), 0, keys);
   }
 
+  protected Transaction createEIP4844Transaction(
+      final long nonce, final KeyPair keys, final int gasFeeMultiplier, final int blobCount) {
+    return createTransaction(
+        TransactionType.BLOB, nonce, Wei.of(5000L).multiply(gasFeeMultiplier), 0, blobCount, keys);
+  }
+
   protected Transaction createTransaction(
       final long nonce, final Wei maxGasPrice, final int payloadSize, final KeyPair keys) {
 
@@ -97,11 +111,26 @@ public class BaseTransactionPoolTest {
       final Wei maxGasPrice,
       final int payloadSize,
       final KeyPair keys) {
-    return prepareTransaction(type, nonce, maxGasPrice, payloadSize).createTransaction(keys);
+    return createTransaction(type, nonce, maxGasPrice, payloadSize, 0, keys);
+  }
+
+  protected Transaction createTransaction(
+      final TransactionType type,
+      final long nonce,
+      final Wei maxGasPrice,
+      final int payloadSize,
+      final int blobCount,
+      final KeyPair keys) {
+    return prepareTransaction(type, nonce, maxGasPrice, payloadSize, blobCount)
+        .createTransaction(keys);
   }
 
   protected TransactionTestFixture prepareTransaction(
-      final TransactionType type, final long nonce, final Wei maxGasPrice, final int payloadSize) {
+      final TransactionType type,
+      final long nonce,
+      final Wei maxGasPrice,
+      final int payloadSize,
+      final int blobCount) {
 
     var tx =
         new TransactionTestFixture()
@@ -110,12 +139,30 @@ public class BaseTransactionPoolTest {
             .nonce(nonce)
             .type(type);
     if (payloadSize > 0) {
-      var payloadBytes = Bytes.repeat((byte) 1, payloadSize);
+      var payloadBytes = Bytes.fromHexString("01".repeat(payloadSize));
       tx.payload(payloadBytes);
     }
     if (type.supports1559FeeMarket()) {
       tx.maxFeePerGas(Optional.of(maxGasPrice))
           .maxPriorityFeePerGas(Optional.of(maxGasPrice.divide(10)));
+      if (type.supportsBlob() && blobCount > 0) {
+        final var versionHashes =
+            IntStream.range(0, blobCount)
+                .mapToObj(i -> new VersionedHash((byte) 1, Hash.ZERO))
+                .toList();
+        final var kgzCommitments =
+            IntStream.range(0, blobCount)
+                .mapToObj(i -> new KZGCommitment(Bytes48.random()))
+                .toList();
+        final var kzgProofs =
+            IntStream.range(0, blobCount).mapToObj(i -> new KZGProof(Bytes48.random())).toList();
+        final var blobs =
+            IntStream.range(0, blobCount).mapToObj(i -> new Blob(Bytes.random(32 * 4096))).toList();
+        tx.versionedHashes(Optional.of(versionHashes));
+        final var blobsWithCommitments =
+            new BlobsWithCommitments(kgzCommitments, blobs, kzgProofs, versionHashes);
+        tx.blobsWithCommitments(Optional.of(blobsWithCommitments));
+      }
     } else {
       tx.gasPrice(maxGasPrice);
     }
@@ -134,6 +181,11 @@ public class BaseTransactionPoolTest {
 
   protected PendingTransaction createRemotePendingTransaction(final Transaction transaction) {
     return new PendingTransaction.Remote(transaction);
+  }
+
+  protected PendingTransaction createRemotePendingTransaction(
+      final Transaction transaction, final boolean hasPriority) {
+    return PendingTransaction.newPendingTransaction(transaction, false, hasPriority);
   }
 
   protected PendingTransaction createLocalPendingTransaction(final Transaction transaction) {
@@ -163,16 +215,19 @@ public class BaseTransactionPoolTest {
   protected void addLocalTransactions(
       final PendingTransactions sorter, final Account sender, final long... nonces) {
     for (final long nonce : nonces) {
-      sorter.addLocalTransaction(createTransaction(nonce), Optional.of(sender));
+      sorter.addTransaction(
+          createLocalPendingTransaction(createTransaction(nonce)), Optional.of(sender));
     }
   }
 
-  protected long getAddedCount(final String source, final String layer) {
-    return metricsSystem.getCounterValue(TransactionPoolMetrics.ADDED_COUNTER_NAME, source, layer);
+  protected long getAddedCount(final String source, final String priority, final String layer) {
+    return metricsSystem.getCounterValue(
+        TransactionPoolMetrics.ADDED_COUNTER_NAME, source, priority, layer);
   }
 
-  protected long getRemovedCount(final String source, final String operation, final String layer) {
+  protected long getRemovedCount(
+      final String source, final String priority, final String operation, final String layer) {
     return metricsSystem.getCounterValue(
-        TransactionPoolMetrics.REMOVED_COUNTER_NAME, source, operation, layer);
+        TransactionPoolMetrics.REMOVED_COUNTER_NAME, source, priority, operation, layer);
   }
 }

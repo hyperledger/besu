@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.VertxPeerDiscoveryAgent;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeerPrivileges;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
@@ -145,6 +146,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   private final CountDownLatch shutdownLatch = new CountDownLatch(2);
   private final Duration shutdownTimeout = Duration.ofSeconds(15);
+  private final Vertx vertx;
   private DNSDaemon dnsDaemon;
 
   /**
@@ -163,6 +165,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
    * @param maintainedPeers A collection of peers for which we are expected to maintain connections
    * @param reputationManager An object that inspect disconnections for misbehaving peers that can
    *     then be blacklisted.
+   * @param vertx the Vert.x instance managing network resources
    */
   DefaultP2PNetwork(
       final MutableLocalNode localNode,
@@ -173,7 +176,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final PeerPermissions peerPermissions,
       final NatService natService,
       final MaintainedPeers maintainedPeers,
-      final PeerDenylistManager reputationManager) {
+      final PeerDenylistManager reputationManager,
+      final Vertx vertx) {
     this.localNode = localNode;
     this.peerDiscoveryAgent = peerDiscoveryAgent;
     this.rlpxAgent = rlpxAgent;
@@ -183,6 +187,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     this.nodeId = nodeKey.getPublicKey().getEncodedBytes();
     this.peerPermissions = peerPermissions;
+    this.vertx = vertx;
 
     // set the requirement here that the number of peers be greater than the lower bound
     final int peerLowerBound = rlpxAgent.getPeerLowerBound();
@@ -229,7 +234,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
                       createDaemonListener(),
                       0L,
                       600000L,
-                      config.getDnsDiscoveryServerOverride().orElse(null));
+                      config.getDnsDiscoveryServerOverride().orElse(null),
+                      vertx);
               dnsDaemon.start();
             });
 
@@ -378,11 +384,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
   @VisibleForTesting
   void attemptPeerConnections() {
     LOG.trace("Initiating connections to discovered peers.");
-    rlpxAgent.connect(
+    final Stream<DiscoveryPeer> toTry =
         streamDiscoveredPeers()
             .filter(peer -> peer.getStatus() == PeerDiscoveryStatus.BONDED)
             .filter(peerDiscoveryAgent::checkForkId)
-            .sorted(Comparator.comparing(DiscoveryPeer::getLastAttemptedConnection)));
+            .sorted(Comparator.comparing(DiscoveryPeer::getLastAttemptedConnection));
+    toTry.forEach(rlpxAgent::connect);
   }
 
   @Override
@@ -506,6 +513,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private Supplier<Stream<PeerConnection>> allConnectionsSupplier;
     private Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
     private int peersLowerBound;
+    private PeerTable peerTable;
 
     public P2PNetwork build() {
       validate();
@@ -523,6 +531,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final MutableLocalNode localNode =
           MutableLocalNode.create(config.getRlpx().getClientId(), 5, supportedCapabilities);
       final PeerPrivileges peerPrivileges = new DefaultPeerPrivileges(maintainedPeers);
+      peerTable = new PeerTable(nodeKey.getPublicKey().getEncodedBytes());
       rlpxAgent = rlpxAgent == null ? createRlpxAgent(localNode, peerPrivileges) : rlpxAgent;
       peerDiscoveryAgent = peerDiscoveryAgent == null ? createDiscoveryAgent() : peerDiscoveryAgent;
 
@@ -535,7 +544,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
           peerPermissions,
           natService,
           maintainedPeers,
-          reputationManager);
+          reputationManager,
+          vertx);
     }
 
     private void validate() {
@@ -566,7 +576,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
           metricsSystem,
           storageProvider,
           forkIdManager,
-          rlpxAgent);
+          rlpxAgent,
+          peerTable);
     }
 
     private RlpxAgent createRlpxAgent(
@@ -583,6 +594,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
           .allConnectionsSupplier(allConnectionsSupplier)
           .allActiveConnectionsSupplier(allActiveConnectionsSupplier)
           .peersLowerBound(peersLowerBound)
+          .peerTable(peerTable)
           .build();
     }
 

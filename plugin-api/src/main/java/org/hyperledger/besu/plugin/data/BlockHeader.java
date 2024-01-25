@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Quantity;
 import org.hyperledger.besu.plugin.Unstable;
@@ -22,20 +21,12 @@ import org.hyperledger.besu.plugin.Unstable;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * The minimum set of data for a BlockHeader, as defined in the <a href=
  * "https://ethereum.github.io/yellowpaper/paper.pdf">Ethereum Yellow Paper</a>.
  */
-public interface BlockHeader {
-
-  /**
-   * The Keccak 256-bit hash of the parent block’s header, in its entirety.
-   *
-   * @return The Keccak 256-bit hash of the parent block’s header, in its entirety.
-   */
-  Hash getParentHash();
+public interface BlockHeader extends ProcessableBlockHeader {
 
   /**
    * The Keccak 256-bit hash of the ommers list portion of this block.
@@ -43,17 +34,6 @@ public interface BlockHeader {
    * @return The Keccak 256-bit hash of the ommers list portion of this block.
    */
   Hash getOmmersHash();
-
-  /**
-   * The 160-bit address to which all fees collected from the successful mining of this block be
-   * transferred.
-   *
-   * <p>The name in the yellow paper is beneficiary.
-   *
-   * @return The 160-bit address to which all fees collected from the successful mining of this
-   *     block be transferred.
-   */
-  Address getCoinbase();
 
   /**
    * The Keccak 256-bit hash of the root node of the state trie, after all transactions are executed
@@ -92,43 +72,11 @@ public interface BlockHeader {
   Bytes getLogsBloom();
 
   /**
-   * A scalar value corresponding to the difficulty level of this block. This can be calculated from
-   * the previous block’s difficulty level and the timestamp.
-   *
-   * @return A UInt256 value corresponding to the difficulty level of this block. This can be
-   *     calculated from the previous block’s difficulty level and the timestamp.
-   */
-  Quantity getDifficulty();
-
-  /**
-   * A scalar value equal to the number of ancestor blocks. The genesis block has a number of zero.
-   *
-   * @return A scalar value equal to the number of ancestor blocks. The genesis block has a number
-   *     of zero.
-   */
-  long getNumber();
-
-  /**
-   * A scalar value equal to the current limit of gas expenditure per block.
-   *
-   * @return A scalar value equal to the current limit of gas expenditure per block.
-   */
-  long getGasLimit();
-
-  /**
    * A scalar value equal to the total gas used in transactions in this block.
    *
    * @return A scalar value equal to the total gas used in transactions in this block.
    */
   long getGasUsed();
-
-  /**
-   * A scalar value equal to the reasonable output of Unix’s time() at this block’s inception.
-   *
-   * @return A scalar value equal to the reasonable output of Unix’s time() at this block’s
-   *     inception.
-   */
-  long getTimestamp();
 
   /**
    * An arbitrary byte array containing data relevant to this block. This must be 32 bytes or fewer.
@@ -164,25 +112,6 @@ public interface BlockHeader {
   Hash getBlockHash();
 
   /**
-   * The BASEFEE of this header.
-   *
-   * @return The BASEFEE of this header.
-   */
-  @Unstable
-  default Optional<? extends Quantity> getBaseFee() {
-    return Optional.empty();
-  }
-
-  /**
-   * Optional 32 bytes of prevRandao data.
-   *
-   * @return Optional prevRandao bytes from this header.
-   */
-  default Optional<Bytes32> getPrevRandao() {
-    return Optional.empty();
-  }
-
-  /**
    * The Keccak 256-bit hash of the root node of the trie structure populated with each withdrawal
    * in the withdrawals list portion of the block.
    *
@@ -202,10 +131,18 @@ public interface BlockHeader {
   Optional<? extends Hash> getDepositsRoot();
 
   /**
-   * The excess_data_gas of this header.
+   * The excess_blob_gas of this header.
    *
-   * @return The excess_data_gas of this header.
+   * @return The excess_blob_gas of this header.
    */
   @Unstable
-  Optional<? extends Quantity> getExcessDataGas();
+  Optional<? extends Quantity> getExcessBlobGas();
+
+  /**
+   * The blob_gas_used of this header.
+   *
+   * @return The blob_gas_used of this header.
+   */
+  @Unstable
+  Optional<? extends Long> getBlobGasUsed();
 }

@@ -18,18 +18,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EthSendTransactionTest {
 
   private JsonRpcMethod method;
 
-  @Before
+  @BeforeEach
   public void before() {
     method = new EthSendTransaction();
   }
@@ -47,7 +47,7 @@ public class EthSendTransactionTest {
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.ETH_SEND_TX_NOT_AVAILABLE);
+            request.getRequest().getId(), RpcErrorType.ETH_SEND_TX_NOT_AVAILABLE);
 
     final JsonRpcResponse actualResponse = method.response(request);
 

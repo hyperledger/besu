@@ -43,7 +43,9 @@ public class TestGetLogHash implements JsonRpcMethod {
     final Hash txHash = requestContext.getRequiredParameter(0, Hash.class);
 
     final Optional<TransactionReceiptWithMetadata> receipt =
-        context.getBlockchainQueries().transactionReceiptByTransactionHash(txHash);
+        context
+            .getBlockchainQueries()
+            .transactionReceiptByTransactionHash(txHash, context.getProtocolSchedule());
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(),
         receipt.map(this::calculateLogHash).orElse(Hash.EMPTY_LIST_HASH).toString());

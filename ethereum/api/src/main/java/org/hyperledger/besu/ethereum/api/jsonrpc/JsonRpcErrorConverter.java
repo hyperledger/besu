@@ -14,71 +14,75 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 public class JsonRpcErrorConverter {
 
-  public static JsonRpcError convertTransactionInvalidReason(
+  public static RpcErrorType convertTransactionInvalidReason(
       final TransactionInvalidReason reason) {
     switch (reason) {
       case NONCE_TOO_LOW:
       case PRIVATE_NONCE_TOO_LOW:
-        return JsonRpcError.NONCE_TOO_LOW;
+        return RpcErrorType.NONCE_TOO_LOW;
       case NONCE_TOO_HIGH:
       case PRIVATE_NONCE_TOO_HIGH:
-        return JsonRpcError.NONCE_TOO_HIGH;
+        return RpcErrorType.NONCE_TOO_HIGH;
       case INVALID_SIGNATURE:
-        return JsonRpcError.INVALID_TRANSACTION_SIGNATURE;
+        return RpcErrorType.INVALID_TRANSACTION_SIGNATURE;
       case INTRINSIC_GAS_EXCEEDS_GAS_LIMIT:
-        return JsonRpcError.INTRINSIC_GAS_EXCEEDS_LIMIT;
+        return RpcErrorType.INTRINSIC_GAS_EXCEEDS_LIMIT;
       case UPFRONT_COST_EXCEEDS_BALANCE:
-        return JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
+        return RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
       case EXCEEDS_BLOCK_GAS_LIMIT:
-        return JsonRpcError.EXCEEDS_BLOCK_GAS_LIMIT;
+        return RpcErrorType.EXCEEDS_BLOCK_GAS_LIMIT;
       case WRONG_CHAIN_ID:
-        return JsonRpcError.WRONG_CHAIN_ID;
+        return RpcErrorType.WRONG_CHAIN_ID;
       case REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED:
-        return JsonRpcError.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED;
+        return RpcErrorType.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED;
       case REPLAY_PROTECTED_SIGNATURE_REQUIRED:
-        return JsonRpcError.REPLAY_PROTECTED_SIGNATURE_REQUIRED;
+        return RpcErrorType.REPLAY_PROTECTED_SIGNATURE_REQUIRED;
       case TX_SENDER_NOT_AUTHORIZED:
-        return JsonRpcError.TX_SENDER_NOT_AUTHORIZED;
+        return RpcErrorType.TX_SENDER_NOT_AUTHORIZED;
         // Private Transaction Invalid Reasons
       case PRIVATE_TRANSACTION_INVALID:
-        return JsonRpcError.PRIVATE_TRANSACTION_INVALID;
+        return RpcErrorType.PRIVATE_TRANSACTION_INVALID;
       case PRIVATE_TRANSACTION_FAILED:
-        return JsonRpcError.PRIVATE_TRANSACTION_FAILED;
+        return RpcErrorType.PRIVATE_TRANSACTION_FAILED;
       case PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE:
-        return JsonRpcError.UNSUPPORTED_PRIVATE_TRANSACTION_TYPE;
+        return RpcErrorType.UNSUPPORTED_PRIVATE_TRANSACTION_TYPE;
       case CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE:
-        return JsonRpcError.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
+        return RpcErrorType.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
       case GAS_PRICE_TOO_LOW:
-        return JsonRpcError.GAS_PRICE_TOO_LOW;
+        return RpcErrorType.GAS_PRICE_TOO_LOW;
       case GAS_PRICE_BELOW_CURRENT_BASE_FEE:
-        return JsonRpcError.GAS_PRICE_BELOW_CURRENT_BASE_FEE;
+        return RpcErrorType.GAS_PRICE_BELOW_CURRENT_BASE_FEE;
       case TX_FEECAP_EXCEEDED:
-        return JsonRpcError.TX_FEECAP_EXCEEDED;
+        return RpcErrorType.TX_FEECAP_EXCEEDED;
       case MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS:
-        return JsonRpcError.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS;
+        return RpcErrorType.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS;
       case OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST:
-        return JsonRpcError.OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST;
+        return RpcErrorType.OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST;
       case INVALID_TRANSACTION_FORMAT:
-        return JsonRpcError.INVALID_TRANSACTION_TYPE;
+        return RpcErrorType.INVALID_TRANSACTION_TYPE;
       case TRANSACTION_ALREADY_KNOWN:
-        return JsonRpcError.ETH_SEND_TX_ALREADY_KNOWN;
+        return RpcErrorType.ETH_SEND_TX_ALREADY_KNOWN;
       case TRANSACTION_REPLACEMENT_UNDERPRICED:
-        return JsonRpcError.ETH_SEND_TX_REPLACEMENT_UNDERPRICED;
+        return RpcErrorType.ETH_SEND_TX_REPLACEMENT_UNDERPRICED;
       case NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER:
-        return JsonRpcError.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
-      case LOWER_NONCE_INVALID_TRANSACTION_EXISTS:
-        return JsonRpcError.LOWER_NONCE_INVALID_TRANSACTION_EXISTS;
-      case TOTAL_DATA_GAS_TOO_HIGH:
-        return JsonRpcError.TOTAL_DATA_GAS_TOO_HIGH;
+        return RpcErrorType.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
+      case TOTAL_BLOB_GAS_TOO_HIGH:
+        return RpcErrorType.TOTAL_BLOB_GAS_TOO_HIGH;
       case TX_POOL_DISABLED:
-        return JsonRpcError.TX_POOL_DISABLED;
+        return RpcErrorType.TX_POOL_DISABLED;
+      case PLUGIN_TX_VALIDATOR:
+        return RpcErrorType.PLUGIN_TX_VALIDATOR;
+      case INVALID_BLOBS:
+        return RpcErrorType.INVALID_BLOBS;
+      case EXECUTION_HALTED:
+        return RpcErrorType.EXECUTION_HALTED;
       default:
-        return JsonRpcError.INTERNAL_ERROR;
+        return RpcErrorType.INTERNAL_ERROR;
     }
   }
 }

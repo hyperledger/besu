@@ -24,7 +24,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
-import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
@@ -41,7 +40,7 @@ import java.util.stream.Collectors;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 public class PeerDiscoveryTableRefreshTest {
@@ -72,7 +71,6 @@ public class PeerDiscoveryTableRefreshTest {
                 .tableRefreshIntervalMs(0)
                 .metricsSystem(new NoOpMetricsSystem())
                 .rlpxAgent(mock(RlpxAgent.class))
-                .forkIdManager(mock(ForkIdManager.class))
                 .build());
     controller.start();
 

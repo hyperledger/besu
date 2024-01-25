@@ -16,13 +16,15 @@ package org.hyperledger.besu.cli.options;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.cli.CommandTestAbstract;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
     extends CommandTestAbstract {
@@ -87,9 +89,9 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
         .isEqualTo(defaultOptions);
   }
 
-  abstract D createDefaultDomainObject();
+  protected abstract D createDefaultDomainObject();
 
-  abstract D createCustomizedDomainObject();
+  protected abstract D createCustomizedDomainObject();
 
   protected List<String> getFieldsWithComputedDefaults() {
     return Collections.emptyList();
@@ -99,7 +101,26 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
     return Collections.emptyList();
   }
 
-  abstract T optionsFromDomainObject(D domainObject);
+  protected abstract T optionsFromDomainObject(D domainObject);
 
-  abstract T getOptionsFromBesuCommand(final TestBesuCommand besuCommand);
+  protected abstract T getOptionsFromBesuCommand(final TestBesuCommand besuCommand);
+
+  protected void internalTestSuccess(final Consumer<D> assertion, final String... args) {
+    final TestBesuCommand cmd = parseCommand(args);
+
+    final T options = getOptionsFromBesuCommand(cmd);
+    final D config = options.toDomainObject();
+    assertion.accept(config);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    verify(mockControllerBuilder).build();
+  }
+
+  protected void internalTestFailure(final String errorMsg, final String... args) {
+    parseCommand(args);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).contains(errorMsg);
+  }
 }

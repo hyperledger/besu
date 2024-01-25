@@ -25,30 +25,30 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PendingTransactionResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PendingTransactionsResult;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.time.Instant;
 
 import com.google.common.collect.Sets;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class TxPoolBesuTransactionsTest {
 
-  @Mock private PendingTransactions pendingTransactions;
+  @Mock private TransactionPool transactionPool;
   private TxPoolBesuTransactions method;
   private final String JSON_RPC_VERSION = "2.0";
   private final String TXPOOL_PENDING_TRANSACTIONS_METHOD = "txpool_besuTransactions";
   private static final String TRANSACTION_HASH =
       "0xbac263fb39f2a51053fb5e1e52aeb4e980fba9e151aa7e4f12eca95a697aeac9";
 
-  @Before
+  @BeforeEach
   public void setUp() {
-    method = new TxPoolBesuTransactions(pendingTransactions);
+    method = new TxPoolBesuTransactions(transactionPool);
   }
 
   @Test
@@ -68,8 +68,7 @@ public class TxPoolBesuTransactionsTest {
     when(pendingTransaction.getHash()).thenReturn(Hash.fromHexString(TRANSACTION_HASH));
     when(pendingTransaction.isReceivedFromLocalSource()).thenReturn(true);
     when(pendingTransaction.getAddedAt()).thenReturn(addedAt);
-    when(pendingTransactions.getPendingTransactions())
-        .thenReturn(Sets.newHashSet(pendingTransaction));
+    when(transactionPool.getPendingTransactions()).thenReturn(Sets.newHashSet(pendingTransaction));
 
     final JsonRpcSuccessResponse actualResponse = (JsonRpcSuccessResponse) method.response(request);
     final PendingTransactionsResult result = (PendingTransactionsResult) actualResponse.getResult();

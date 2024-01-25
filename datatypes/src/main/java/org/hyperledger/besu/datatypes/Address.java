@@ -22,7 +22,12 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+import java.util.concurrent.ExecutionException;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.DelegatingBytes;
@@ -52,28 +57,40 @@ public class Address extends DelegatingBytes {
   public static final Address ALTBN128_PAIRING = Address.precompiled(0x08);
   /** The constant BLAKE2B_F_COMPRESSION. */
   public static final Address BLAKE2B_F_COMPRESSION = Address.precompiled(0x09);
+  /** The constant KZG_POINT_EVAL aka POINT_EVALUATION_PRECOMPILE_ADDRESS. */
+  public static final Address KZG_POINT_EVAL = Address.precompiled(0xA);
   /** The constant BLS12_G1ADD. */
-  public static final Address BLS12_G1ADD = Address.precompiled(0xA);
+  public static final Address BLS12_G1ADD = Address.precompiled(0xB);
   /** The constant BLS12_G1MUL. */
-  public static final Address BLS12_G1MUL = Address.precompiled(0xB);
+  public static final Address BLS12_G1MUL = Address.precompiled(0xC);
   /** The constant BLS12_G1MULTIEXP. */
-  public static final Address BLS12_G1MULTIEXP = Address.precompiled(0xC);
+  public static final Address BLS12_G1MULTIEXP = Address.precompiled(0xD);
   /** The constant BLS12_G2ADD. */
-  public static final Address BLS12_G2ADD = Address.precompiled(0xD);
+  public static final Address BLS12_G2ADD = Address.precompiled(0xE);
   /** The constant BLS12_G2MUL. */
-  public static final Address BLS12_G2MUL = Address.precompiled(0xE);
+  public static final Address BLS12_G2MUL = Address.precompiled(0xF);
   /** The constant BLS12_G2MULTIEXP. */
-  public static final Address BLS12_G2MULTIEXP = Address.precompiled(0xF);
+  public static final Address BLS12_G2MULTIEXP = Address.precompiled(0x10);
   /** The constant BLS12_PAIRING. */
-  public static final Address BLS12_PAIRING = Address.precompiled(0x10);
+  public static final Address BLS12_PAIRING = Address.precompiled(0x11);
   /** The constant BLS12_MAP_FP_TO_G1. */
-  public static final Address BLS12_MAP_FP_TO_G1 = Address.precompiled(0x11);
+  public static final Address BLS12_MAP_FP_TO_G1 = Address.precompiled(0x12);
   /** The constant BLS12_MAP_FP2_TO_G2. */
-  public static final Address BLS12_MAP_FP2_TO_G2 = Address.precompiled(0x12);
-  /** The constant KZG_POINT_EVAL. */
-  public static final Address KZG_POINT_EVAL = Address.precompiled(0x14);
+  public static final Address BLS12_MAP_FP2_TO_G2 = Address.precompiled(0x13);
   /** The constant ZERO. */
   public static final Address ZERO = Address.fromHexString("0x0");
+
+  static LoadingCache<Address, Hash> hashCache =
+      CacheBuilder.newBuilder()
+          .maximumSize(4000)
+          // .weakKeys() // unless we "intern" all addresses we cannot use weak or soft keys.
+          .build(
+              new CacheLoader<>() {
+                @Override
+                public Hash load(final Address key) {
+                  return Hash.hash(key);
+                }
+              });
 
   /**
    * Instantiates a new Address.
@@ -96,7 +113,13 @@ public class Address extends DelegatingBytes {
         "An account address must be %s bytes long, got %s",
         SIZE,
         value.size());
-    return new Address(value);
+    if (value instanceof Address address) {
+      return address;
+    } else if (value instanceof DelegatingBytes delegatingBytes) {
+      return new Address(delegatingBytes.copy());
+    } else {
+      return new Address(value);
+    }
   }
 
   /**
@@ -236,5 +259,18 @@ public class Address extends DelegatingBytes {
                   out.writeBytes(privacyGroupId);
                   out.endList();
                 })));
+  }
+
+  /**
+   * Returns the hash of the address. Backed by a cache for performance reasons.
+   *
+   * @return the hash of the address.
+   */
+  public Hash addressHash() {
+    try {
+      return hashCache.get(this);
+    } catch (ExecutionException e) {
+      return Hash.hash(this);
+    }
   }
 }

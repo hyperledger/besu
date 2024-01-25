@@ -58,6 +58,8 @@ public interface MiningCoordinator {
 
   Wei getMinTransactionGasPrice();
 
+  Wei getMinPriorityFeePerGas();
+
   void setExtraData(Bytes extraData);
 
   default void setCoinbase(final Address coinbase) {

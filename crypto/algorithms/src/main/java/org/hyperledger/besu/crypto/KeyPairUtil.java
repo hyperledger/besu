@@ -84,6 +84,7 @@ public class KeyPairUtil {
     final KeyPair key;
     if (keyFile.exists()) {
 
+      LOG.info("Attempting to load public key from {}", keyFile.getAbsolutePath());
       key = load(keyFile);
       LOG.info(
           "Loaded public key {} from {}", key.getPublicKey().toString(), keyFile.getAbsolutePath());

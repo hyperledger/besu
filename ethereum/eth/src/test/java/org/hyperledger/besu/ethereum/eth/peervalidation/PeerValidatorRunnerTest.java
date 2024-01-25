@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PeerValidatorRunnerTest {
 

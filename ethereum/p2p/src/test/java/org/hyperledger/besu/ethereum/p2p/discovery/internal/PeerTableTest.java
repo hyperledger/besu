@@ -33,7 +33,7 @@ import java.util.Optional;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PeerTableTest {
 
@@ -43,7 +43,7 @@ public class PeerTableTest {
 
   @Test
   public void addPeer() {
-    final PeerTable table = new PeerTable(Peer.randomId(), 16);
+    final PeerTable table = new PeerTable(Peer.randomId());
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(5);
 
     for (final DiscoveryPeer peer : peers) {
@@ -63,7 +63,7 @@ public class PeerTableTest {
                 .ipAddress("127.0.0.1")
                 .discoveryAndListeningPorts(12345)
                 .build());
-    final PeerTable table = new PeerTable(localPeer.getId(), 16);
+    final PeerTable table = new PeerTable(localPeer.getId());
     final PeerTable.AddResult result = table.tryAdd(localPeer);
 
     assertThat(result.getOutcome()).isEqualTo(AddOutcome.SELF);
@@ -72,7 +72,7 @@ public class PeerTableTest {
 
   @Test
   public void peerExists() {
-    final PeerTable table = new PeerTable(Peer.randomId(), 16);
+    final PeerTable table = new PeerTable(Peer.randomId());
     final DiscoveryPeer peer = helper.createDiscoveryPeer();
 
     assertThat(table.tryAdd(peer).getOutcome()).isEqualTo(AddOutcome.ADDED);
@@ -87,7 +87,7 @@ public class PeerTableTest {
 
   @Test
   public void peerExists_withDifferentIp() {
-    final PeerTable table = new PeerTable(Peer.randomId(), 16);
+    final PeerTable table = new PeerTable(Peer.randomId());
     final Bytes peerId =
         SIGNATURE_ALGORITHM.get().generateKeyPair().getPublicKey().getEncodedBytes();
     final DiscoveryPeer peer =
@@ -107,7 +107,7 @@ public class PeerTableTest {
 
   @Test
   public void peerExists_withDifferentUdpPort() {
-    final PeerTable table = new PeerTable(Peer.randomId(), 16);
+    final PeerTable table = new PeerTable(Peer.randomId());
     final Bytes peerId =
         SIGNATURE_ALGORITHM.get().generateKeyPair().getPublicKey().getEncodedBytes();
     final DiscoveryPeer peer =
@@ -127,7 +127,7 @@ public class PeerTableTest {
 
   @Test
   public void peerExists_withDifferentIdAndUdpPort() {
-    final PeerTable table = new PeerTable(Peer.randomId(), 16);
+    final PeerTable table = new PeerTable(Peer.randomId());
     final Bytes peerId =
         SIGNATURE_ALGORITHM.get().generateKeyPair().getPublicKey().getEncodedBytes();
     final DiscoveryPeer peer =
@@ -147,7 +147,7 @@ public class PeerTableTest {
 
   @Test
   public void evictExistingPeerShouldEvict() {
-    final PeerTable table = new PeerTable(Peer.randomId(), 16);
+    final PeerTable table = new PeerTable(Peer.randomId());
     final DiscoveryPeer peer = helper.createDiscoveryPeer();
 
     table.tryAdd(peer);
@@ -158,7 +158,7 @@ public class PeerTableTest {
 
   @Test
   public void evictPeerFromEmptyTableShouldNotEvict() {
-    final PeerTable table = new PeerTable(Peer.randomId(), 16);
+    final PeerTable table = new PeerTable(Peer.randomId());
     final DiscoveryPeer peer = helper.createDiscoveryPeer();
 
     final EvictResult evictResult = table.tryEvict(peer);
@@ -167,7 +167,7 @@ public class PeerTableTest {
 
   @Test
   public void evictAbsentPeerShouldNotEvict() {
-    final PeerTable table = new PeerTable(Peer.randomId(), 16);
+    final PeerTable table = new PeerTable(Peer.randomId());
     final DiscoveryPeer peer = helper.createDiscoveryPeer();
     final List<DiscoveryPeer> otherPeers = helper.createDiscoveryPeers(5);
     otherPeers.forEach(table::tryAdd);
@@ -179,7 +179,7 @@ public class PeerTableTest {
   @Test
   public void evictSelfPeerShouldReturnSelfOutcome() {
     final DiscoveryPeer peer = helper.createDiscoveryPeer();
-    final PeerTable table = new PeerTable(peer.getId(), 16);
+    final PeerTable table = new PeerTable(peer.getId());
 
     final EvictResult evictResult = table.tryEvict(peer);
     assertThat(evictResult.getOutcome()).isEqualTo(EvictOutcome.SELF);

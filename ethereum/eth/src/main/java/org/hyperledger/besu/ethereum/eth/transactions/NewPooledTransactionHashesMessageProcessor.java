@@ -86,8 +86,8 @@ public class NewPooledTransactionHashesMessageProcessor {
 
       LOG.atTrace()
           .setMessage(
-              "Received pooled transaction hashes message from {}, incoming hashes {}, incoming list {}")
-          .addArgument(peer)
+              "Received pooled transaction hashes message from {}... incoming hashes {}, incoming list {}")
+          .addArgument(() -> peer == null ? null : peer.getShortNodeId())
           .addArgument(incomingTransactionHashes::size)
           .addArgument(incomingTransactionHashes)
           .log();
@@ -101,8 +101,12 @@ public class NewPooledTransactionHashesMessageProcessor {
                         .getScheduler()
                         .scheduleFutureTaskWithFixedDelay(
                             new FetcherCreatorTask(peer),
-                            transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod(),
-                            transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod());
+                            transactionPoolConfiguration
+                                .getUnstable()
+                                .getEth65TrxAnnouncedBufferingPeriod(),
+                            transactionPoolConfiguration
+                                .getUnstable()
+                                .getEth65TrxAnnouncedBufferingPeriod());
 
                 return new BufferedGetPooledTransactionsFromPeerFetcher(
                     ethContext,

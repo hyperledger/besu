@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class GetReceiptsForHeadersTaskTest
     extends RetryingMessageTaskTest<Map<BlockHeader, BlockReceipts>> {

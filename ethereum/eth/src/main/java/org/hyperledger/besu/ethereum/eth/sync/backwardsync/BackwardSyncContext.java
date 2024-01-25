@@ -19,6 +19,7 @@ import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -46,6 +47,7 @@ public class BackwardSyncContext {
   private static final int DEFAULT_MAX_RETRIES = 20;
   private static final long MILLIS_DELAY_BETWEEN_PROGRESS_LOG = 10_000L;
   private static final long DEFAULT_MILLIS_BETWEEN_RETRIES = 5000;
+  private static final int DEFAULT_MAX_CHAIN_EVENT_ENTRIES = BadBlockManager.MAX_BAD_BLOCKS_SIZE;
 
   protected final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
@@ -56,6 +58,7 @@ public class BackwardSyncContext {
   private final BackwardChain backwardChain;
   private int batchSize = BATCH_SIZE;
   private final int maxRetries;
+  private final int maxBadChainEventEntries;
   private final long millisBetweenRetries = DEFAULT_MILLIS_BETWEEN_RETRIES;
   private final Subscribers<BadChainListener> badChainListeners = Subscribers.create();
 
@@ -73,7 +76,8 @@ public class BackwardSyncContext {
         ethContext,
         syncState,
         backwardChain,
-        DEFAULT_MAX_RETRIES);
+        DEFAULT_MAX_RETRIES,
+        DEFAULT_MAX_CHAIN_EVENT_ENTRIES);
   }
 
   public BackwardSyncContext(
@@ -83,7 +87,8 @@ public class BackwardSyncContext {
       final EthContext ethContext,
       final SyncState syncState,
       final BackwardChain backwardChain,
-      final int maxRetries) {
+      final int maxRetries,
+      final int maxBadChainEventEntries) {
 
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
@@ -92,6 +97,7 @@ public class BackwardSyncContext {
     this.syncState = syncState;
     this.backwardChain = backwardChain;
     this.maxRetries = maxRetries;
+    this.maxBadChainEventEntries = maxBadChainEventEntries;
   }
 
   public synchronized boolean isSyncing() {
@@ -123,12 +129,16 @@ public class BackwardSyncContext {
       backwardChain.addNewHash(newBlockHash);
     }
 
-    final Status status = getOrStartSyncSession();
-    backwardChain
-        .getBlock(newBlockHash)
-        .ifPresent(
-            newTargetBlock -> status.updateTargetHeight(newTargetBlock.getHeader().getNumber()));
-    return status.currentFuture;
+    if (isReady()) {
+      final Status status = getOrStartSyncSession();
+      backwardChain
+          .getBlock(newBlockHash)
+          .ifPresent(
+              newTargetBlock -> status.updateTargetHeight(newTargetBlock.getHeader().getNumber()));
+      return status.currentFuture;
+    } else {
+      return CompletableFuture.failedFuture(new Throwable("Backward sync is not ready"));
+    }
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
@@ -136,9 +146,13 @@ public class BackwardSyncContext {
       backwardChain.appendTrustedBlock(newPivot);
     }
 
-    final Status status = getOrStartSyncSession();
-    status.updateTargetHeight(newPivot.getHeader().getNumber());
-    return status.currentFuture;
+    if (isReady()) {
+      final Status status = getOrStartSyncSession();
+      status.updateTargetHeight(newPivot.getHeader().getNumber());
+      return status.currentFuture;
+    } else {
+      return CompletableFuture.failedFuture(new Throwable("Backward sync is not ready"));
+    }
   }
 
   private Status getOrStartSyncSession() {
@@ -368,7 +382,9 @@ public class BackwardSyncContext {
 
     Optional<Hash> descendant = backwardChain.getDescendant(badBlock.getHash());
 
-    while (descendant.isPresent()) {
+    while (descendant.isPresent()
+        && badBlockDescendants.size() < maxBadChainEventEntries
+        && badBlockHeaderDescendants.size() < maxBadChainEventEntries) {
       final Optional<Block> block = backwardChain.getBlock(descendant.get());
       if (block.isPresent()) {
         badBlockDescendants.add(block.get());

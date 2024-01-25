@@ -16,11 +16,13 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
@@ -38,12 +40,14 @@ public class BesuNodeConfiguration {
   private final String name;
   private final Optional<Path> dataPath;
   private final MiningParameters miningParameters;
+  private final TransactionPoolConfiguration transactionPoolConfiguration;
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final Optional<JsonRpcConfiguration> engineRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
   private final JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private final MetricsConfiguration metricsConfiguration;
   private final Optional<PermissioningConfiguration> permissioningConfiguration;
+  private final ApiConfiguration apiConfiguration;
   private final Optional<String> keyFilePath;
   private final boolean devMode;
   private final GenesisConfigurationProvider genesisConfigProvider;
@@ -72,12 +76,14 @@ public class BesuNodeConfiguration {
       final String name,
       final Optional<Path> dataPath,
       final MiningParameters miningParameters,
+      final TransactionPoolConfiguration transactionPoolConfiguration,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final Optional<JsonRpcConfiguration> engineRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final JsonRpcIpcConfiguration jsonRpcIpcConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
+      final ApiConfiguration apiConfiguration,
       final Optional<String> keyFilePath,
       final boolean devMode,
       final NetworkName network,
@@ -103,12 +109,14 @@ public class BesuNodeConfiguration {
       final Map<String, String> environment) {
     this.name = name;
     this.miningParameters = miningParameters;
+    this.transactionPoolConfiguration = transactionPoolConfiguration;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
     this.engineRpcConfiguration = engineRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
     this.jsonRpcIpcConfiguration = jsonRpcIpcConfiguration;
     this.metricsConfiguration = metricsConfiguration;
     this.permissioningConfiguration = permissioningConfiguration;
+    this.apiConfiguration = apiConfiguration;
     this.keyFilePath = keyFilePath;
     this.dataPath = dataPath;
     this.devMode = devMode;
@@ -143,6 +151,10 @@ public class BesuNodeConfiguration {
     return miningParameters;
   }
 
+  public TransactionPoolConfiguration getTransactionPoolConfiguration() {
+    return transactionPoolConfiguration;
+  }
+
   public JsonRpcConfiguration getJsonRpcConfiguration() {
     return jsonRpcConfiguration;
   }
@@ -165,6 +177,10 @@ public class BesuNodeConfiguration {
 
   public Optional<PermissioningConfiguration> getPermissioningConfiguration() {
     return permissioningConfiguration;
+  }
+
+  public ApiConfiguration getApiConfiguration() {
+    return apiConfiguration;
   }
 
   public Optional<String> getKeyFilePath() {

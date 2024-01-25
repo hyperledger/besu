@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -60,6 +61,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
 
   private final FramerProvider framerProvider;
   private final boolean inboundInitiated;
+  private final PeerTable peerTable;
 
   AbstractHandshakeHandler(
       final List<SubProtocol> subProtocols,
@@ -70,7 +72,8 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
       final MetricsSystem metricsSystem,
       final HandshakerProvider handshakerProvider,
       final FramerProvider framerProvider,
-      final boolean inboundInitiated) {
+      final boolean inboundInitiated,
+      final PeerTable peerTable) {
     this.subProtocols = subProtocols;
     this.localNode = localNode;
     this.expectedPeer = expectedPeer;
@@ -80,6 +83,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
     this.handshaker = handshakerProvider.buildInstance();
     this.framerProvider = framerProvider;
     this.inboundInitiated = inboundInitiated;
+    this.peerTable = peerTable;
   }
 
   /**
@@ -121,7 +125,8 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
               connectionEventDispatcher,
               connectionFuture,
               metricsSystem,
-              inboundInitiated);
+              inboundInitiated,
+              peerTable);
 
       ctx.channel()
           .pipeline()
@@ -153,7 +158,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
 
   @Override
   public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable throwable) {
-    LOG.debug("Handshake error:", throwable);
+    LOG.trace("Handshake error:", throwable);
     connectionFuture.completeExceptionally(throwable);
     ctx.close();
   }

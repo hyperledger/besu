@@ -23,11 +23,9 @@
         "value": "0x0",
         "input": "0x",
         "to": "0x0000000000000000000000000000000000000100",
-        "protected": true,
-        "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
-        "v": "0x0",
-        "r": "0x0",
-        "s": "0x0"
+        "v": "0x26",
+        "r": "0xe319535da2cae2d72ddb352054535d000c23acdc7cad9d828891253f3850d0d2",
+        "s": "0x32fe4444149b609e2ffa621e23e179b12028309fdb8cb0a5c1bbc58135299af1"
       }
     ],
     "env": {
@@ -37,11 +35,12 @@
       "currentTimestamp": "12",
       "currentRandom": "0",
       "currentDifficulty": "0",
+      "currentStateRoot": "0x7075d070d6ec70a91216fc2dba6ceae6b8d30815166f6b7b7249776767fb9855",
       "parentDifficulty": "0",
       "parentBaseFee": "7",
       "parentGasUsed": "0",
       "parentGasLimit": "100000000000000000",
-      "parentTimstamp": "0",
+      "parentTimestamp": "0",
       "blockHashes": {
         "0": "0x651666d6d8727a6478a750dc8406c1bda0be85abc99094dca694807fa772f83c"
       },

@@ -22,7 +22,6 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAG
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie.FlatDatabaseUpdater.noop;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
@@ -31,6 +30,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
@@ -124,6 +124,11 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     if (!slots.isEmpty() || !proofs.isEmpty()) {
       if (!worldStateProofProvider.isValidRangeProof(
           startKeyHash, endKeyHash, storageRoot, proofs, slots)) {
+        // If the proof is invalid, it means that the storage will be a mix of several blocks.
+        // Therefore, it will be necessary to heal the account's storage subsequently
+        downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
+        // We will request the new storage root of the account because it is apparently no longer
+        // valid with the new pivot block.
         downloadState.enqueueRequest(
             createAccountDataRequest(
                 getRootHash(), Hash.wrap(accountHash), startKeyHash, endKeyHash));
@@ -173,7 +178,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
                       });
               if (startKeyHash.equals(MIN_RANGE) && endKeyHash.equals(MAX_RANGE)) {
                 // need to heal this account storage
-                downloadState.addAccountsToBeRepaired(CompactEncoding.bytesToPath(accountHash));
+                downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
               }
             });
 
@@ -198,6 +203,12 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
   public Bytes32 getEndKeyHash() {
     return endKeyHash;
+  }
+
+  @Override
+  public void clear() {
+    this.isProofValid = Optional.of(false);
+    this.stackTrie.removeElement(startKeyHash);
   }
 
   @VisibleForTesting

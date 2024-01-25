@@ -15,22 +15,23 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncMetricsManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapsyncMetricsManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -47,30 +48,33 @@ import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class AccountFlatDatabaseHealingRangeRequestTest {
 
   @Mock private SnapWorldDownloadState downloadState;
   @Mock private SnapSyncProcessState snapSyncState;
 
-  @Before
+  @BeforeEach
   public void setup() {
     Mockito.when(downloadState.getMetricsManager())
-        .thenReturn(Mockito.mock(SnapsyncMetricsManager.class));
-    Mockito.when(downloadState.getAccountsToBeRepaired()).thenReturn(new HashSet<>());
+        .thenReturn(Mockito.mock(SnapSyncMetricsManager.class));
+    Mockito.when(downloadState.getAccountsHealingList()).thenReturn(new HashSet<>());
   }
 
   @Test
   public void shouldReturnChildRequests() {
     final WorldStateStorage worldStateStorage =
-        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStateProofProvider proofProvider = new WorldStateProofProvider(worldStateStorage);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);
@@ -117,7 +121,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
     Assertions.assertThat(snapDataRequest.getStartKeyHash()).isGreaterThan(accounts.lastKey());
 
     // Verify that we have storage healing request when the account need to be repaired
-    Mockito.when(downloadState.getAccountsToBeRepaired())
+    Mockito.when(downloadState.getAccountsHealingList())
         .thenReturn(
             new HashSet<>(
                 accounts.keySet().stream()
@@ -135,7 +139,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
   @Test
   public void shouldNotReturnChildRequestsWhenNoMoreAccounts() {
     final WorldStateStorage worldStateStorage =
-        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStateProofProvider proofProvider = new WorldStateProofProvider(worldStateStorage);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);
@@ -176,7 +180,8 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
     final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
     final WorldStateStorage worldStateStorage =
-        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
+        new BonsaiWorldStateKeyValueStorage(
+            storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
     final WorldStateProofProvider proofProvider = new WorldStateProofProvider(worldStateStorage);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);
@@ -230,7 +235,8 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
     final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
     final WorldStateStorage worldStateStorage =
-        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
+        new BonsaiWorldStateKeyValueStorage(
+            storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
     final WorldStateProofProvider proofProvider = new WorldStateProofProvider(worldStateStorage);
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);

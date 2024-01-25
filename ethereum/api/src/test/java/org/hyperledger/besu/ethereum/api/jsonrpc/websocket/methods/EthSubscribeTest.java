@@ -21,9 +21,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.InvalidSubscriptionRequestException;
@@ -32,8 +32,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
 
 import io.vertx.core.json.Json;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EthSubscribeTest {
 
@@ -41,7 +41,7 @@ public class EthSubscribeTest {
   private SubscriptionManager subscriptionManagerMock;
   private SubscriptionRequestMapper mapperMock;
 
-  @Before
+  @BeforeEach
   public void before() {
     subscriptionManagerMock = mock(SubscriptionManager.class);
     mapperMock = mock(SubscriptionRequestMapper.class);
@@ -82,7 +82,7 @@ public class EthSubscribeTest {
 
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(
-            jsonRpcrequestContext.getRequest().getId(), JsonRpcError.INVALID_REQUEST);
+            jsonRpcrequestContext.getRequest().getId(), RpcErrorType.INVALID_REQUEST);
 
     assertThat(ethSubscribe.response(jsonRpcrequestContext)).isEqualTo(expectedResponse);
   }
@@ -97,7 +97,7 @@ public class EthSubscribeTest {
 
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(
-            jsonRpcrequestContext.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
+            jsonRpcrequestContext.getRequest().getId(), RpcErrorType.INTERNAL_ERROR);
 
     assertThat(ethSubscribe.response(jsonRpcrequestContext)).isEqualTo(expectedResponse);
   }

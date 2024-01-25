@@ -17,32 +17,33 @@ package org.hyperledger.besu.cli.options;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class MetricsCLIOptionsTest
     extends AbstractCLIOptionsTest<MetricsConfiguration.Builder, MetricsCLIOptions> {
 
   @Override
-  MetricsConfiguration.Builder createDefaultDomainObject() {
+  protected MetricsConfiguration.Builder createDefaultDomainObject() {
     return MetricsConfiguration.builder();
   }
 
   @Override
-  MetricsConfiguration.Builder createCustomizedDomainObject() {
+  protected MetricsConfiguration.Builder createCustomizedDomainObject() {
     return MetricsConfiguration.builder()
         .timersEnabled(!MetricsConfiguration.DEFAULT_METRICS_TIMERS_ENABLED)
         .idleTimeout(MetricsConfiguration.DEFAULT_METRICS_IDLE_TIMEOUT_SECONDS);
   }
 
   @Override
-  MetricsCLIOptions optionsFromDomainObject(final MetricsConfiguration.Builder domainObject) {
+  protected MetricsCLIOptions optionsFromDomainObject(
+      final MetricsConfiguration.Builder domainObject) {
     return MetricsCLIOptions.fromConfiguration(domainObject.build());
   }
 
   @Override
-  MetricsCLIOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
+  protected MetricsCLIOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
     return besuCommand.getMetricsCLIOptions();
   }
 }

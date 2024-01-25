@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.ReplaceableDoubleSupplier;
 import org.hyperledger.besu.metrics.RunnableCounter;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -46,6 +47,9 @@ public class TransactionPoolMetrics {
   private final LabelledMetric<Counter> expiredMessagesCounter;
   private final Map<String, RunnableCounter> expiredMessagesRunnableCounters = new HashMap<>();
   private final LabelledMetric<Counter> alreadySeenTransactionsCounter;
+  private final Map<String, ReplaceableDoubleSupplier> spaceUsedSuppliers = new HashMap<>();
+  private final Map<String, ReplaceableDoubleSupplier> transactionCountSuppliers = new HashMap<>();
+  private final Map<String, ReplaceableDoubleSupplier> uniqueSendersSuppliers = new HashMap<>();
 
   public TransactionPoolMetrics(final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
@@ -56,6 +60,7 @@ public class TransactionPoolMetrics {
             ADDED_COUNTER_NAME,
             "Count of transactions added to the transaction pool",
             "source",
+            "priority",
             "layer");
 
     removedCounter =
@@ -64,6 +69,7 @@ public class TransactionPoolMetrics {
             REMOVED_COUNTER_NAME,
             "Count of transactions removed from the transaction pool",
             "source",
+            "priority",
             "operation",
             "layer");
 
@@ -73,6 +79,7 @@ public class TransactionPoolMetrics {
             REJECTED_COUNTER_NAME,
             "Count of transactions not accepted to the transaction pool",
             "source",
+            "priority",
             "reason",
             "layer");
 
@@ -117,17 +124,44 @@ public class TransactionPoolMetrics {
   }
 
   public void initSpaceUsed(final DoubleSupplier spaceUsedSupplier, final String layer) {
-    spaceUsed.labels(spaceUsedSupplier, layer);
+    spaceUsedSuppliers.compute(
+        layer,
+        (unused, existingSupplier) -> {
+          if (existingSupplier == null) {
+            final var newSupplier = new ReplaceableDoubleSupplier(spaceUsedSupplier);
+            spaceUsed.labels(newSupplier, layer);
+            return newSupplier;
+          }
+          return existingSupplier.replaceDoubleSupplier(spaceUsedSupplier);
+        });
   }
 
   public void initTransactionCount(
       final DoubleSupplier transactionCountSupplier, final String layer) {
-    transactionCount.labels(transactionCountSupplier, layer);
+    transactionCountSuppliers.compute(
+        layer,
+        (unused, existingSupplier) -> {
+          if (existingSupplier == null) {
+            final var newSupplier = new ReplaceableDoubleSupplier(transactionCountSupplier);
+            transactionCount.labels(newSupplier, layer);
+            return newSupplier;
+          }
+          return existingSupplier.replaceDoubleSupplier(transactionCountSupplier);
+        });
   }
 
   public void initUniqueSenderCount(
       final DoubleSupplier uniqueSenderCountSupplier, final String layer) {
-    uniqueSenderCount.labels(uniqueSenderCountSupplier, layer);
+    uniqueSendersSuppliers.compute(
+        layer,
+        (unused, existingSupplier) -> {
+          if (existingSupplier == null) {
+            final var newSupplier = new ReplaceableDoubleSupplier(uniqueSenderCountSupplier);
+            uniqueSenderCount.labels(newSupplier, layer);
+            return newSupplier;
+          }
+          return existingSupplier.replaceDoubleSupplier(uniqueSenderCountSupplier);
+        });
   }
 
   public void initExpiredMessagesCounter(final String message) {
@@ -143,20 +177,46 @@ public class TransactionPoolMetrics {
             SKIPPED_MESSAGES_LOGGING_THRESHOLD));
   }
 
-  public void incrementAdded(final boolean receivedFromLocalSource, final String layer) {
-    addedCounter.labels(location(receivedFromLocalSource), layer).inc();
+  public void incrementAdded(final PendingTransaction pendingTransaction, final String layer) {
+    addedCounter
+        .labels(
+            location(pendingTransaction.isReceivedFromLocalSource()),
+            priority(pendingTransaction.hasPriority()),
+            layer)
+        .inc();
   }
 
   public void incrementRemoved(
-      final boolean receivedFromLocalSource, final String operation, final String layer) {
-    removedCounter.labels(location(receivedFromLocalSource), operation, layer).inc();
+      final PendingTransaction pendingTransaction, final String operation, final String layer) {
+    removedCounter
+        .labels(
+            location(pendingTransaction.isReceivedFromLocalSource()),
+            priority(pendingTransaction.hasPriority()),
+            operation,
+            layer)
+        .inc();
+  }
+
+  public void incrementRejected(
+      final PendingTransaction pendingTransaction,
+      final TransactionInvalidReason rejectReason,
+      final String layer) {
+    incrementRejected(
+        pendingTransaction.isReceivedFromLocalSource(),
+        pendingTransaction.hasPriority(),
+        rejectReason,
+        layer);
   }
 
   public void incrementRejected(
       final boolean receivedFromLocalSource,
+      final boolean hasPriority,
       final TransactionInvalidReason rejectReason,
       final String layer) {
-    rejectedCounter.labels(location(receivedFromLocalSource), rejectReason.name(), layer).inc();
+    rejectedCounter
+        .labels(
+            location(receivedFromLocalSource), priority(hasPriority), rejectReason.name(), layer)
+        .inc();
   }
 
   public void incrementExpiredMessages(final String message) {
@@ -169,5 +229,9 @@ public class TransactionPoolMetrics {
 
   private String location(final boolean receivedFromLocalSource) {
     return receivedFromLocalSource ? "local" : "remote";
+  }
+
+  private String priority(final boolean hasPriority) {
+    return hasPriority ? "yes" : "no";
   }
 }

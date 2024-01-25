@@ -14,11 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
+
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -26,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -45,6 +48,8 @@ import javax.annotation.Nonnull;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*
  * Used to process transactions for eth_call and eth_estimateGas.
@@ -53,6 +58,7 @@ import org.apache.tuweni.bytes.Bytes;
  * blockchain or to estimate the transaction gas cost.
  */
 public class TransactionSimulator {
+  private static final Logger LOG = LoggerFactory.getLogger(TransactionSimulator.class);
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
@@ -73,14 +79,17 @@ public class TransactionSimulator {
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
   private final ProtocolSchedule protocolSchedule;
+  private final long rpcGasCap;
 
   public TransactionSimulator(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule protocolSchedule) {
+      final ProtocolSchedule protocolSchedule,
+      final long rpcGasCap) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
+    this.rpcGasCap = rpcGasCap;
   }
 
   public Optional<TransactionSimulatorResult> process(
@@ -100,7 +109,10 @@ public class TransactionSimulator {
   public Optional<TransactionSimulatorResult> processAtHead(final CallParameter callParams) {
     return process(
         callParams,
-        TransactionValidationParams.transactionSimulator(),
+        ImmutableTransactionValidationParams.builder()
+            .from(TransactionValidationParams.transactionSimulator())
+            .isAllowExceedingBalance(true)
+            .build(),
         OperationTracer.NO_TRACING,
         (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
         blockchain.getChainHeadHeader());
@@ -201,10 +213,17 @@ public class TransactionSimulator {
     final Account sender = updater.get(senderAddress);
     final long nonce = sender != null ? sender.getNonce() : 0L;
 
-    final long gasLimit =
+    long gasLimit =
         callParams.getGasLimit() >= 0
             ? callParams.getGasLimit()
             : blockHeaderToProcess.getGasLimit();
+    if (rpcGasCap > 0) {
+      final long gasCap = rpcGasCap;
+      if (gasCap < gasLimit) {
+        gasLimit = gasCap;
+        LOG.info("Capping gasLimit to " + gasCap);
+      }
+    }
     final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
     final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
 
@@ -227,11 +246,13 @@ public class TransactionSimulator {
 
     final Optional<BlockHeader> maybeParentHeader =
         blockchain.getBlockHeader(blockHeaderToProcess.getParentHash());
-    final Wei dataGasPrice =
+    final Wei blobGasPrice =
         protocolSpec
             .getFeeMarket()
-            .dataPrice(
-                maybeParentHeader.flatMap(BlockHeader::getExcessDataGas).orElse(DataGas.ZERO));
+            .blobGasPricePerGas(
+                maybeParentHeader
+                    .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
+                    .orElse(BlobGas.ZERO));
 
     final Transaction transaction = maybeTransaction.get();
     final TransactionProcessingResult result =
@@ -247,7 +268,7 @@ public class TransactionSimulator {
             false,
             transactionValidationParams,
             operationTracer,
-            dataGasPrice);
+            blobGasPrice);
 
     return Optional.of(new TransactionSimulatorResult(transaction, result));
   }

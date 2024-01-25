@@ -1,9 +1,10 @@
 {
   "config": {
     "chainId": 999,
-    "petersburgBlock": 0,
+    "londonBlock": 0,
+    "zeroBaseFee": true,
     "ethash": {
-      "fixeddifficulty": 100
+      "fixeddifficulty": 500
     }
   },
   "nonce": "0x42",

@@ -39,9 +39,8 @@ import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
-import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,10 +51,8 @@ import org.junit.jupiter.api.Test;
 class AbstractCreateOperationTest {
 
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
-  private final WrappedEvmAccount account = mock(WrappedEvmAccount.class);
-  private final WrappedEvmAccount newAccount = mock(WrappedEvmAccount.class);
-  private final MutableAccount mutableAccount = mock(MutableAccount.class);
-  private final MutableAccount newMutableAccount = mock(MutableAccount.class);
+  private final MutableAccount account = mock(MutableAccount.class);
+  private final MutableAccount newAccount = mock(MutableAccount.class);
   private final FakeCreateOperation operation =
       new FakeCreateOperation(new ConstantinopleGasCalculator(), Integer.MAX_VALUE);
 
@@ -143,7 +140,6 @@ class AbstractCreateOperationTest {
 
   private void executeOperation(final Bytes contract, final EVM evm) {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
     final MessageFrame messageFrame =
         MessageFrame.builder()
             .type(MessageFrame.Type.CONTRACT_CREATION)
@@ -153,33 +149,30 @@ class AbstractCreateOperationTest {
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
             .code(CodeFactory.createCode(SIMPLE_CREATE, 0, true))
-            .depth(1)
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
             .blockValues(mock(BlockValues.class))
             .gasPrice(Wei.ZERO)
-            .messageFrameStack(messageFrameStack)
             .miningBeneficiary(Address.ZERO)
             .originator(Address.ZERO)
             .initialGas(100000L)
             .worldUpdater(worldUpdater)
             .build();
+    final Deque<MessageFrame> messageFrameStack = messageFrame.getMessageFrameStack();
     messageFrame.pushStackItem(Bytes.ofUnsignedLong(contract.size()));
     messageFrame.pushStackItem(memoryOffset);
     messageFrame.pushStackItem(Bytes.EMPTY);
     messageFrame.expandMemory(0, 500);
     messageFrame.writeMemory(memoryOffset.trimLeadingZeros().toInt(), contract.size(), contract);
 
-    when(account.getMutable()).thenReturn(mutableAccount);
     when(account.getNonce()).thenReturn(55L);
-    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
+    when(account.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
     when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
-    when(newAccount.getMutable()).thenReturn(newMutableAccount);
-    when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     operation.execute(messageFrame, evm);

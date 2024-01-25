@@ -22,7 +22,7 @@ import static picocli.CommandLine.defaultExceptionHandler;
 
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.EnvironmentVariableDefaultProvider;
-import org.hyperledger.besu.cli.util.TomlConfigFileDefaultProvider;
+import org.hyperledger.besu.cli.util.TomlConfigurationDefaultProvider;
 import org.hyperledger.besu.util.StringUtils;
 
 import java.io.IOException;
@@ -35,18 +35,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.RunLast;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class CommandLineUtilsTest {
   @SuppressWarnings("PrivateStaticFinalLoggers") // @Mocks are inited by JUnit
   @Mock
@@ -252,7 +252,7 @@ public class CommandLineUtilsTest {
 
     final AbstractTestCommand testCommand = new TestMultiCommandWithDeps(mockLogger);
     testCommand.commandLine.setDefaultValueProvider(
-        new TomlConfigFileDefaultProvider(testCommand.commandLine, toml.toFile()));
+        TomlConfigurationDefaultProvider.fromFile(testCommand.commandLine, toml.toFile()));
     testCommand.commandLine.parseWithHandlers(new RunLast(), defaultExceptionHandler());
 
     verifyMultiOptionsConstraintLoggerCall(

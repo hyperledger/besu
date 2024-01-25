@@ -26,7 +26,6 @@ dependencies {
   implementation project(':testutil')
   implementation project(':util')
 
-  implementation 'com.github.tomakehurst:wiremock-jre8'
   implementation 'com.google.guava:guava'
   implementation 'com.google.dagger:dagger'
   annotationProcessor 'com.google.dagger:dagger-compiler'
@@ -36,15 +35,17 @@ dependencies {
   implementation 'io.vertx:vertx-core'
   implementation 'junit:junit'
   implementation 'io.opentelemetry:opentelemetry-api'
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-io'
-  implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.tmio:tuweni-io'
+  implementation 'io.tmio:tuweni-units'
   implementation 'org.assertj:assertj-core'
   implementation 'org.awaitility:awaitility'
   implementation 'org.java-websocket:Java-WebSocket'
   implementation 'org.web3j:abi'
   implementation 'org.web3j:besu'
   implementation 'org.web3j:crypto'
+  implementation 'org.wiremock:wiremock'
 
   implementation 'org.testcontainers:testcontainers'
+  implementation 'org.junit.jupiter:junit-jupiter'
 }

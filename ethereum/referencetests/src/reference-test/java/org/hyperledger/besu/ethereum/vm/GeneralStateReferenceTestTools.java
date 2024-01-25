@@ -15,13 +15,19 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
-import org.hyperledger.besu.datatypes.DataGas;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -31,19 +37,16 @@ import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseEipSpec;
 import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
+import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
+import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.AccountState;
+import org.hyperledger.besu.evm.internal.EvmConfiguration.WorldUpdaterMode;
 import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.testutil.JsonTestParameters;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 public class GeneralStateReferenceTestTools {
   private static final ReferenceTestProtocolSchedules REFERENCE_TEST_PROTOCOL_SCHEDULES =
@@ -52,14 +55,13 @@ public class GeneralStateReferenceTestTools {
       Arrays.asList("Frontier", "Homestead", "EIP150");
 
   private static MainnetTransactionProcessor transactionProcessor(final String name) {
-    return protocolSpec(name)
-        .getTransactionProcessor();
+    return protocolSpec(name).getTransactionProcessor();
   }
 
   private static ProtocolSpec protocolSpec(final String name) {
     return REFERENCE_TEST_PROTOCOL_SCHEDULES
-            .getByName(name)
-            .getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader());
+        .getByName(name)
+        .getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader());
   }
 
   private static final List<String> EIPS_TO_RUN;
@@ -103,12 +105,12 @@ public class GeneralStateReferenceTestTools {
     params.ignore("static_Call1MB1024Calldepth-\\w");
     params.ignore("ShanghaiLove_.*");
 
-    // Don't do time consuming tests
+    // Don't do time-consuming tests
     params.ignore("CALLBlake2f_MaxRounds.*");
     params.ignore("loopMul-.*");
 
-    // EIP tests are explicitly meant to be works-in-progress with known failing tests
-    params.ignore("/EIPTests/");
+    // EOF tests are written against an older version of the spec
+    params.ignore("/stEOF/");
   }
 
   private GeneralStateReferenceTestTools() {
@@ -121,8 +123,22 @@ public class GeneralStateReferenceTestTools {
 
   public static void executeTest(final GeneralStateTestCaseEipSpec spec) {
     final BlockHeader blockHeader = spec.getBlockHeader();
-    final WorldState initialWorldState = spec.getInitialWorldState();
+    final ReferenceTestWorldState initialWorldState = spec.getInitialWorldState();
     final Transaction transaction = spec.getTransaction();
+    ProtocolSpec protocolSpec = protocolSpec(spec.getFork());
+
+    EVM evm = protocolSpec.getEvm();
+    if (evm.getEvmConfiguration().worldUpdaterMode() == WorldUpdaterMode.JOURNALED) {
+      assumeThat(
+              initialWorldState
+                  .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
+                  .anyMatch(AccountState::isEmpty))
+          .withFailMessage("Journaled account configured and empty account detected")
+          .isFalse();
+      assumeThat(EvmSpecVersion.SPURIOUS_DRAGON.compareTo(evm.getEvmVersion()) > 0)
+          .withFailMessage("Journaled account configured and fork prior to the merge specified")
+          .isFalse();
+    }
 
     // Sometimes the tests ask us assemble an invalid transaction.  If we have
     // no valid transaction then there is no test.  GeneralBlockChain tests
@@ -134,7 +150,7 @@ public class GeneralStateReferenceTestTools {
       return;
     }
 
-    final MutableWorldState worldState = new DefaultMutableWorldState(initialWorldState);
+    final ReferenceTestWorldState worldState = initialWorldState.copy();
     // Several of the GeneralStateTests check if the transaction could potentially
     // consume more gas than is left for the block it's attempted to be included in.
     // This check is performed within the `BlockImporter` rather than inside the
@@ -146,8 +162,10 @@ public class GeneralStateReferenceTestTools {
     final MainnetTransactionProcessor processor = transactionProcessor(spec.getFork());
     final WorldUpdater worldStateUpdater = worldState.updater();
     final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
-    // Todo: EIP-4844 use the excessDataGas of the parent instead of DataGas.ZERO
-    final Wei dataGasPrice = protocolSpec(spec.getFork()).getFeeMarket().dataPrice(DataGas.ZERO);
+    final Wei blobGasPrice =
+        protocolSpec
+            .getFeeMarket()
+            .blobGasPricePerGas(blockHeader.getExcessBlobGas().orElse(BlobGas.ZERO));
     final TransactionProcessingResult result =
         processor.processTransaction(
             blockchain,
@@ -158,9 +176,11 @@ public class GeneralStateReferenceTestTools {
             new CachingBlockHashLookup(blockHeader, blockchain),
             false,
             TransactionValidationParams.processingBlock(),
-            dataGasPrice);
+            blobGasPrice);
     if (result.isInvalid()) {
-      assertThat(spec.getExpectException()).isNotNull();
+      assertThat(spec.getExpectException())
+          .withFailMessage(() -> result.getValidationResult().getErrorMessage())
+          .isNotNull();
       return;
     }
     assertThat(spec.getExpectException())
@@ -172,6 +192,8 @@ public class GeneralStateReferenceTestTools {
       worldStateUpdater.deleteAccount(coinbase.getAddress());
     }
     worldStateUpdater.commit();
+    worldState.processExtraStateStorageFormatValidation(blockHeader);
+    worldState.persist(blockHeader);
 
     // Check the world state root hash.
     final Hash expectedRootHash = spec.getExpectedRootHash();

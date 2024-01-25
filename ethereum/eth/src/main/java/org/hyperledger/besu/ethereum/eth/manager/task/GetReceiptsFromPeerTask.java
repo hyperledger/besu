@@ -84,7 +84,11 @@ public class GetReceiptsFromPeerTask
             .collect(toList());
     return sendRequestToPeer(
         peer -> {
-          LOG.debug("Requesting {} receipts from peer {}.", blockHeaders.size(), peer);
+          LOG.atTrace()
+              .setMessage("Requesting {} receipts from peer {}...")
+              .addArgument(blockHeaders::size)
+              .addArgument(peer::getShortNodeId)
+              .log();
           return peer.getReceipts(blockHashes);
         },
         maximumRequiredBlockNumber);
@@ -94,7 +98,7 @@ public class GetReceiptsFromPeerTask
   protected Optional<Map<BlockHeader, BlockReceipts>> processResponse(
       final boolean streamClosed, final MessageData message, final EthPeer peer) {
     if (streamClosed) {
-      // All outstanding requests have been responded to and we still haven't found the response
+      // All outstanding requests have been responded to, and we still haven't found the response
       // we wanted. It must have been empty or contain data that didn't match.
       peer.recordUselessResponse("receipts");
       return Optional.of(emptyMap());

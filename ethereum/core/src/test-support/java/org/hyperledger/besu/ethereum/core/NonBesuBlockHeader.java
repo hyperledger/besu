@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.data.BlockHeader;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class NonBesuBlockHeader implements BlockHeader {
 
@@ -124,7 +125,17 @@ public class NonBesuBlockHeader implements BlockHeader {
   }
 
   @Override
-  public Optional<? extends Quantity> getExcessDataGas() {
+  public Optional<? extends Quantity> getExcessBlobGas() {
+    return Optional.empty();
+  }
+
+  @Override
+  public Optional<? extends Long> getBlobGasUsed() {
+    return Optional.empty();
+  }
+
+  @Override
+  public Optional<? extends Bytes32> getParentBeaconBlockRoot() {
     return Optional.empty();
   }
 }

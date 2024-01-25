@@ -231,7 +231,7 @@ public class PrivateGroupRehydrationBlockProcessor {
 
     final Wei coinbaseReward = blockReward.add(blockReward.multiply(ommers.size()).divide(32));
     final WorldUpdater updater = worldState.updater();
-    final MutableAccount coinbase = updater.getOrCreate(header.getCoinbase()).getMutable();
+    final MutableAccount coinbase = updater.getOrCreate(header.getCoinbase());
 
     coinbase.incrementBalance(coinbaseReward);
     for (final BlockHeader ommerHeader : ommers) {
@@ -245,8 +245,7 @@ public class PrivateGroupRehydrationBlockProcessor {
         return false;
       }
 
-      final MutableAccount ommerCoinbase =
-          updater.getOrCreate(ommerHeader.getCoinbase()).getMutable();
+      final MutableAccount ommerCoinbase = updater.getOrCreate(ommerHeader.getCoinbase());
       final long distance = header.getNumber() - ommerHeader.getNumber();
       final Wei ommerReward = blockReward.subtract(blockReward.multiply(distance).divide(8));
       ommerCoinbase.incrementBalance(ommerReward);

@@ -19,13 +19,16 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
@@ -41,7 +44,8 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
 
   private final NavigableSet<PendingTransaction> orderByMaxFee =
       new TreeSet<>(
-          Comparator.comparing((PendingTransaction pt) -> pt.getTransaction().getMaxGasPrice())
+          Comparator.comparing(PendingTransaction::hasPriority)
+              .thenComparing((PendingTransaction pt) -> pt.getTransaction().getMaxGasPrice())
               .thenComparing(PendingTransaction::getSequence));
 
   public ReadyTransactions(
@@ -49,8 +53,9 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
       final TransactionsLayer nextLayer,
       final TransactionPoolMetrics metrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
-          transactionReplacementTester) {
-    super(poolConfig, nextLayer, transactionReplacementTester, metrics);
+          transactionReplacementTester,
+      final BlobCache blobCache) {
+    super(poolConfig, nextLayer, transactionReplacementTester, metrics, blobCache);
   }
 
   @Override
@@ -139,30 +144,51 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
   }
 
   @Override
-  public PendingTransaction promote(final Predicate<PendingTransaction> promotionFilter) {
+  public List<PendingTransaction> promote(
+      final Predicate<PendingTransaction> promotionFilter,
+      final long freeSpace,
+      final int freeSlots) {
+    long accumulatedSpace = 0;
+    final List<PendingTransaction> promotedTxs = new ArrayList<>();
 
-    final var maybePromotedTx =
-        orderByMaxFee.descendingSet().stream()
-            .filter(candidateTx -> promotionFilter.test(candidateTx))
-            .findFirst();
+    // first find all txs that can be promoted
+    search:
+    for (final var senderFirstTx : orderByMaxFee.descendingSet()) {
+      final var senderTxs = txsBySender.get(senderFirstTx.getSender());
+      for (final var candidateTx : senderTxs.values()) {
+        if (promotionFilter.test(candidateTx)) {
+          accumulatedSpace += candidateTx.memorySize();
+          if (promotedTxs.size() < freeSlots && accumulatedSpace <= freeSpace) {
+            promotedTxs.add(candidateTx);
+          } else {
+            // no room for more txs the search is over exit the loops
+            break search;
+          }
+        } else {
+          // skip remaining txs for this sender to avoid gaps
+          break;
+        }
+      }
+    }
 
-    return maybePromotedTx
-        .map(
-            promotedTx -> {
-              final var senderTxs = txsBySender.get(promotedTx.getSender());
-              // we always promote the first tx of a sender, so remove the first entry
-              senderTxs.pollFirstEntry();
-              processRemove(senderTxs, promotedTx.getTransaction(), PROMOTED);
+    // then remove promoted txs from this layer
+    promotedTxs.forEach(
+        promotedTx -> {
+          final var sender = promotedTx.getSender();
+          final var senderTxs = txsBySender.get(sender);
+          senderTxs.remove(promotedTx.getNonce());
+          processRemove(senderTxs, promotedTx.getTransaction(), PROMOTED);
+          if (senderTxs.isEmpty()) {
+            txsBySender.remove(sender);
+          }
+        });
 
-              // now that we have space, promote from the next layer
-              promoteTransactions();
+    if (!promotedTxs.isEmpty()) {
+      // since we removed some txs we can try to promote from next layer
+      promoteTransactions();
+    }
 
-              if (senderTxs.isEmpty()) {
-                txsBySender.remove(promotedTx.getSender());
-              }
-              return promotedTx;
-            })
-        .orElse(null);
+    return promotedTxs;
   }
 
   @Override

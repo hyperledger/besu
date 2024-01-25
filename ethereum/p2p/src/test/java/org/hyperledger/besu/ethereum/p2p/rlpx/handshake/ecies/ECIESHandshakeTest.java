@@ -28,10 +28,9 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import junit.framework.AssertionFailedError;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test vectors taken from https://gist.github.com/fjl/3a78780d17c755d22df2 */
 public class ECIESHandshakeTest {
@@ -147,7 +146,7 @@ public class ECIESHandshakeTest {
     final ByteBuf responderRp =
         responder
             .handleMessage(initiatorRq)
-            .orElseThrow(() -> new AssertionFailedError("Expected responder message"));
+            .orElseThrow(() -> new AssertionError("Expected responder message"));
     assertThat(responder.getPartyEphPubKey()).isEqualTo(initiator.getEphKeyPair().getPublicKey());
     assertThat(responder.getInitiatorNonce()).isEqualTo(initiator.getInitiatorNonce());
     assertThat(responder.partyPubKey()).isEqualTo(initiator.getNodeKey().getPublicKey());

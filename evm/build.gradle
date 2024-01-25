@@ -40,8 +40,8 @@ dependencies {
   implementation 'com.github.ben-manes.caffeine:caffeine'
   implementation 'com.google.guava:guava'
   implementation 'net.java.dev.jna:jna'
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.tmio:tuweni-units'
   implementation 'org.hyperledger.besu:arithmetic'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'tech.pegasys:jc-kzg-4844'
@@ -54,8 +54,6 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
 
 publishing {

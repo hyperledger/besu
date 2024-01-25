@@ -65,6 +65,7 @@ public class MigratingMiningCoordinator implements MiningCoordinator, BlockAdded
   }
 
   private void startActiveMiningCoordinator() {
+    activeMiningCoordinator.enable();
     activeMiningCoordinator.start();
     if (activeMiningCoordinator instanceof BlockAddedObserver) {
       ((BlockAddedObserver) activeMiningCoordinator).removeObserver();
@@ -100,6 +101,11 @@ public class MigratingMiningCoordinator implements MiningCoordinator, BlockAdded
   @Override
   public Wei getMinTransactionGasPrice() {
     return activeMiningCoordinator.getMinTransactionGasPrice();
+  }
+
+  @Override
+  public Wei getMinPriorityFeePerGas() {
+    return activeMiningCoordinator.getMinPriorityFeePerGas();
   }
 
   @Override

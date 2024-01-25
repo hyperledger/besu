@@ -19,10 +19,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -34,14 +34,14 @@ import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public final class RangeManagerTest {
 
   @Test
   public void testRemainingRangesEqualToOneWhenFirstRangeContainsMoreThanHalf() {
     TreeMap<Bytes32, Bytes> items = new TreeMap<>();
-    items.put(Bytes32.repeat((byte) 0xbb), Bytes.wrap(new byte[] {0x03}));
+    items.put(Bytes32.fromHexString("bb".repeat(32)), Bytes.wrap(new byte[] {0x03}));
     int nbRanges =
         RangeManager.getRangeCount(RangeManager.MIN_RANGE, RangeManager.MAX_RANGE, items);
     assertThat(nbRanges).isEqualTo(1);
@@ -50,7 +50,7 @@ public final class RangeManagerTest {
   @Test
   public void testRemainingRangesEqualToOneWhenFirstRangeContainsLessThanHalf() {
     TreeMap<Bytes32, Bytes> items = new TreeMap<>();
-    items.put(Bytes32.repeat((byte) 0x77), Bytes.wrap(new byte[] {0x03}));
+    items.put(Bytes32.fromHexString("77".repeat(32)), Bytes.wrap(new byte[] {0x03}));
     int nbRanges =
         RangeManager.getRangeCount(RangeManager.MIN_RANGE, RangeManager.MAX_RANGE, items);
     assertThat(nbRanges).isEqualTo(2);
@@ -118,7 +118,7 @@ public final class RangeManagerTest {
   public void testFindNewBeginElement() {
 
     final WorldStateStorage worldStateStorage =
-        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);
@@ -157,7 +157,7 @@ public final class RangeManagerTest {
   public void testFindNewBeginElementWhenNothingIsMissing() {
 
     final WorldStateStorage worldStateStorage =
-        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         TrieGenerator.generateTrie(worldStateStorage, 15);

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.common.bft;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BftHelpersTest {
 

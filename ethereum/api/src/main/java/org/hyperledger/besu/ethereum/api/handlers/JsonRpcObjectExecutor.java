@@ -20,10 +20,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonResponseStreamer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import java.io.IOException;
 
@@ -36,7 +36,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
 public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
-  private static final ObjectWriter jsonObjectWriter = createObjectWriter();
+  private final ObjectWriter jsonObjectWriter = createObjectWriter();
 
   public JsonRpcObjectExecutor(
       final JsonRpcExecutor jsonRpcExecutor,
@@ -64,7 +64,7 @@ public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
     return jsonObject.getString("method");
   }
 
-  private static void handleJsonObjectResponse(
+  private void handleJsonObjectResponse(
       final HttpServerResponse response,
       final JsonRpcResponse jsonRpcResponse,
       final RoutingContext ctx)
@@ -85,19 +85,22 @@ public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
   private static HttpResponseStatus status(final JsonRpcResponse response) {
     return switch (response.getType()) {
       case UNAUTHORIZED -> HttpResponseStatus.UNAUTHORIZED;
-      case ERROR -> statusCodeFromError(((JsonRpcErrorResponse) response).getError());
+      case ERROR -> statusCodeFromError(((JsonRpcErrorResponse) response).getErrorType());
       default -> HttpResponseStatus.OK;
     };
   }
 
-  private static ObjectWriter createObjectWriter() {
-    return getJsonObjectMapper()
-        .writerWithDefaultPrettyPrinter()
+  private ObjectWriter createObjectWriter() {
+    ObjectWriter writer =
+        jsonRpcConfiguration.isPrettyJsonEnabled()
+            ? getJsonObjectMapper().writerWithDefaultPrettyPrinter()
+            : getJsonObjectMapper().writer();
+    return writer
         .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
         .with(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
   }
 
-  private static HttpResponseStatus statusCodeFromError(final JsonRpcError error) {
+  private static HttpResponseStatus statusCodeFromError(final RpcErrorType error) {
     return switch (error) {
       case INVALID_REQUEST, PARSE_ERROR -> HttpResponseStatus.BAD_REQUEST;
       default -> HttpResponseStatus.OK;

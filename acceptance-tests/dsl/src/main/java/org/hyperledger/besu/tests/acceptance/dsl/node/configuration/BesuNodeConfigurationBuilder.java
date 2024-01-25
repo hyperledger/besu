@@ -22,7 +22,8 @@ import static org.hyperledger.besu.pki.keystore.KeyStoreWrapper.KEYSTORE_TYPE_PK
 
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
@@ -30,8 +31,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
@@ -56,17 +60,19 @@ public class BesuNodeConfigurationBuilder {
   private String name;
   private Optional<Path> dataPath = Optional.empty();
   private MiningParameters miningParameters =
-      new MiningParameters.Builder()
-          .miningEnabled(false)
-          .coinbase(AddressHelpers.ofValue(1))
-          .minTransactionGasPrice(Wei.of(1000))
+      ImmutableMiningParameters.builder()
+          .mutableInitValues(
+              MutableInitValues.builder().coinbase(AddressHelpers.ofValue(1)).build())
           .build();
+  private TransactionPoolConfiguration transactionPoolConfiguration =
+      TransactionPoolConfiguration.DEFAULT;
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
   private JsonRpcConfiguration engineRpcConfiguration = JsonRpcConfiguration.createEngineDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration = new JsonRpcIpcConfiguration();
   private MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
+  private ApiConfiguration apiConfiguration = ImmutableApiConfiguration.builder().build();
   private String keyFilePath = null;
   private boolean devMode = true;
   private GenesisConfigurationProvider genesisConfigProvider = ignore -> Optional.empty();
@@ -113,12 +119,7 @@ public class BesuNodeConfigurationBuilder {
   }
 
   public BesuNodeConfigurationBuilder miningEnabled(final boolean enabled) {
-    this.miningParameters =
-        new MiningParameters.Builder()
-            .miningEnabled(enabled)
-            .minTransactionGasPrice(Wei.of(1000))
-            .coinbase(AddressHelpers.ofValue(1))
-            .build();
+    this.miningParameters = miningParameters.setMiningEnabled(enabled);
     this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER.name());
     return this;
   }
@@ -126,6 +127,12 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfigurationBuilder miningConfiguration(final MiningParameters miningParameters) {
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER.name());
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder transactionPoolConfiguration(
+      final TransactionPoolConfiguration transactionPoolConfiguration) {
+    this.transactionPoolConfiguration = transactionPoolConfiguration;
     return this;
   }
 
@@ -494,17 +501,24 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder apiConfiguration(final ApiConfiguration apiConfiguration) {
+    this.apiConfiguration = apiConfiguration;
+    return this;
+  }
+
   public BesuNodeConfiguration build() {
     return new BesuNodeConfiguration(
         name,
         dataPath,
         miningParameters,
+        transactionPoolConfiguration,
         jsonRpcConfiguration,
         Optional.of(engineRpcConfiguration),
         webSocketConfiguration,
         jsonRpcIpcConfiguration,
         metricsConfiguration,
         permissioningConfiguration,
+        apiConfiguration,
         Optional.ofNullable(keyFilePath),
         devMode,
         network,

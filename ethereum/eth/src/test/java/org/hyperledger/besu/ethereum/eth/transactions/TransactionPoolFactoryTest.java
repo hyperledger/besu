@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
 import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule.DEFAULT_CHAIN_ID;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -26,12 +27,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -41,6 +40,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredPendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
@@ -51,7 +51,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -62,14 +61,17 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Condition;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class TransactionPoolFactoryTest {
   @Mock ProtocolSchedule schedule;
   @Mock ProtocolContext context;
@@ -78,11 +80,8 @@ public class TransactionPoolFactoryTest {
   @Mock EthContext ethContext;
   @Mock EthMessages ethMessages;
   @Mock EthScheduler ethScheduler;
-
-  @Mock PendingTransactions pendingTransactions;
   @Mock PeerTransactionTracker peerTransactionTracker;
   @Mock TransactionsMessageSender transactionsMessageSender;
-
   @Mock NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
 
   TransactionPool pool;
@@ -94,18 +93,12 @@ public class TransactionPoolFactoryTest {
 
   ProtocolContext protocolContext;
 
-  @Before
+  @BeforeEach
   public void setup() {
     when(blockchain.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(mock(Hash.class)));
     when(context.getBlockchain()).thenReturn(blockchain);
 
-    final NodeMessagePermissioningProvider nmpp =
-        new NodeMessagePermissioningProvider() {
-          @Override
-          public boolean isMessagePermitted(final EnodeURL destinationEnode, final int code) {
-            return true;
-          }
-        };
+    final NodeMessagePermissioningProvider nmpp = (destinationEnode, code) -> true;
     ethPeers =
         new EthPeers(
             "ETH",
@@ -246,15 +239,19 @@ public class TransactionPoolFactoryTest {
             TestClock.fixed(),
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
             syncState,
-            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             ImmutableTransactionPoolConfiguration.builder()
                 .txPoolMaxSize(1)
-                .txMessageKeepAliveSeconds(1)
                 .pendingTxRetentionPeriod(1)
+                .unstable(
+                    ImmutableTransactionPoolConfiguration.Unstable.builder()
+                        .txMessageKeepAliveSeconds(1)
+                        .build())
                 .build(),
             peerTransactionTracker,
             transactionsMessageSender,
-            newPooledTransactionHashesMessageSender);
+            newPooledTransactionHashesMessageSender,
+            null,
+            new BlobCache());
 
     ethProtocolManager =
         new EthProtocolManager(
@@ -274,22 +271,53 @@ public class TransactionPoolFactoryTest {
   }
 
   @Test
-  public void createTransactionPool_shouldUseBaseFeePendingTransactionsSorter_whenLondonEnabled() {
+  public void
+      createLegacyTransactionPool_shouldUseBaseFeePendingTransactionsSorter_whenLondonEnabled() {
     setupScheduleWith(new StubGenesisConfigOptions().londonBlock(0));
 
-    final TransactionPool pool = createTransactionPool();
+    final TransactionPool pool =
+        createTransactionPool(TransactionPoolConfiguration.Implementation.LEGACY);
 
-    assertThat(pool.getPendingTransactions()).isInstanceOf(BaseFeePendingTransactionsSorter.class);
+    assertThat(pool.pendingTransactionsImplementation())
+        .isEqualTo(BaseFeePendingTransactionsSorter.class);
   }
 
   @Test
   public void
-      createTransactionPool_shouldUseGasPricePendingTransactionsSorter_whenLondonNotEnabled() {
+      createLegacyTransactionPool_shouldUseGasPricePendingTransactionsSorter_whenLondonNotEnabled() {
     setupScheduleWith(new StubGenesisConfigOptions().berlinBlock(0));
 
-    final TransactionPool pool = createTransactionPool();
+    final TransactionPool pool =
+        createTransactionPool(TransactionPoolConfiguration.Implementation.LEGACY);
 
-    assertThat(pool.getPendingTransactions()).isInstanceOf(GasPricePendingTransactionsSorter.class);
+    assertThat(pool.pendingTransactionsImplementation())
+        .isEqualTo(GasPricePendingTransactionsSorter.class);
+  }
+
+  @Test
+  public void
+      createLayeredTransactionPool_shouldUseBaseFeePendingTransactionsSorter_whenLondonEnabled() {
+    setupScheduleWith(new StubGenesisConfigOptions().londonBlock(0));
+
+    final TransactionPool pool = createTransactionPool(LAYERED);
+
+    assertThat(pool.pendingTransactionsImplementation())
+        .isEqualTo(LayeredPendingTransactions.class);
+
+    assertThat(pool.logStats()).startsWith("Basefee Prioritized");
+  }
+
+  @Test
+  public void
+      createLayeredTransactionPool_shouldUseGasPricePendingTransactionsSorter_whenLondonNotEnabled() {
+    setupScheduleWith(new StubGenesisConfigOptions().berlinBlock(0));
+
+    final TransactionPool pool = createTransactionPool(LAYERED);
+
+    assertThat(pool.pendingTransactionsImplementation())
+        .isEqualTo(LayeredPendingTransactions.class);
+
+    assertThat(pool.logStats()).startsWith("GasPrice Prioritized");
   }
 
   private void setupScheduleWith(final StubGenesisConfigOptions config) {
@@ -310,7 +338,8 @@ public class TransactionPoolFactoryTest {
     syncState = new SyncState(blockchain, ethPeers, true, Optional.empty());
   }
 
-  private TransactionPool createTransactionPool() {
+  private TransactionPool createTransactionPool(
+      final TransactionPoolConfiguration.Implementation implementation) {
     final TransactionPool txPool =
         TransactionPoolFactory.createTransactionPool(
             schedule,
@@ -319,12 +348,17 @@ public class TransactionPoolFactoryTest {
             TestClock.fixed(),
             new NoOpMetricsSystem(),
             syncState,
-            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             ImmutableTransactionPoolConfiguration.builder()
+                .txPoolImplementation(implementation)
                 .txPoolMaxSize(1)
-                .txMessageKeepAliveSeconds(1)
                 .pendingTxRetentionPeriod(1)
-                .build());
+                .unstable(
+                    ImmutableTransactionPoolConfiguration.Unstable.builder()
+                        .txMessageKeepAliveSeconds(1)
+                        .build())
+                .build(),
+            null,
+            new BlobCache());
 
     txPool.setEnabled();
     return txPool;

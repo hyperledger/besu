@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -44,6 +45,8 @@ import org.hyperledger.besu.nat.NatService;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -59,15 +62,14 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class JsonRpcHttpServiceHostAllowlistTest {
 
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir private Path folder;
 
   protected static final Vertx vertx = Vertx.vertx();
 
@@ -84,7 +86,7 @@ public class JsonRpcHttpServiceHostAllowlistTest {
 
   private final List<String> hostsAllowlist = Arrays.asList("ally", "friend");
 
-  @Before
+  @BeforeEach
   public void initServerAndClient() throws Exception {
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
@@ -95,37 +97,37 @@ public class JsonRpcHttpServiceHostAllowlistTest {
     supportedCapabilities.add(EthProtocol.ETH63);
 
     rpcMethods =
-        spy(
-            new JsonRpcMethodsFactory()
-                .methods(
-                    CLIENT_VERSION,
-                    CHAIN_ID,
-                    new StubGenesisConfigOptions(),
-                    peerDiscoveryMock,
-                    blockchainQueries,
-                    synchronizer,
-                    MainnetProtocolSchedule.fromConfig(
-                        new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID)),
-                    mock(ProtocolContext.class),
-                    mock(FilterManager.class),
-                    mock(TransactionPool.class),
-                    mock(PoWMiningCoordinator.class),
-                    new NoOpMetricsSystem(),
-                    supportedCapabilities,
-                    Optional.of(mock(AccountLocalConfigPermissioningController.class)),
-                    Optional.of(mock(NodeLocalConfigPermissioningController.class)),
-                    DEFAULT_RPC_APIS,
-                    mock(PrivacyParameters.class),
-                    mock(JsonRpcConfiguration.class),
-                    mock(WebSocketConfiguration.class),
-                    mock(MetricsConfiguration.class),
-                    natService,
-                    new HashMap<>(),
-                    folder.getRoot().toPath(),
-                    mock(EthPeers.class),
-                    vertx,
-                    Optional.empty(),
-                    Optional.empty()));
+        new JsonRpcMethodsFactory()
+            .methods(
+                CLIENT_VERSION,
+                CHAIN_ID,
+                new StubGenesisConfigOptions(),
+                peerDiscoveryMock,
+                blockchainQueries,
+                synchronizer,
+                MainnetProtocolSchedule.fromConfig(
+                    new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID)),
+                mock(ProtocolContext.class),
+                mock(FilterManager.class),
+                mock(TransactionPool.class),
+                mock(MiningParameters.class),
+                mock(PoWMiningCoordinator.class),
+                new NoOpMetricsSystem(),
+                supportedCapabilities,
+                Optional.of(mock(AccountLocalConfigPermissioningController.class)),
+                Optional.of(mock(NodeLocalConfigPermissioningController.class)),
+                DEFAULT_RPC_APIS,
+                mock(PrivacyParameters.class),
+                mock(JsonRpcConfiguration.class),
+                mock(WebSocketConfiguration.class),
+                mock(MetricsConfiguration.class),
+                natService,
+                new HashMap<>(),
+                folder,
+                mock(EthPeers.class),
+                vertx,
+                mock(ApiConfiguration.class),
+                Optional.empty());
     service = createJsonRpcHttpService();
     service.start().join();
 
@@ -136,7 +138,7 @@ public class JsonRpcHttpServiceHostAllowlistTest {
   private JsonRpcHttpService createJsonRpcHttpService() throws Exception {
     return new JsonRpcHttpService(
         vertx,
-        folder.newFolder().toPath(),
+        Files.createTempDirectory(folder, "tempDir"),
         jsonRpcConfig,
         new NoOpMetricsSystem(),
         natService,
@@ -151,7 +153,7 @@ public class JsonRpcHttpServiceHostAllowlistTest {
     return config;
   }
 
-  @After
+  @AfterEach
   public void shutdownServer() {
     service.stop().join();
   }

@@ -18,12 +18,14 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.util.Lists.list;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
@@ -40,6 +42,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketMeth
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -55,6 +58,7 @@ import org.hyperledger.besu.nat.NatService;
 
 import java.math.BigInteger;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,6 +71,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
@@ -85,26 +90,25 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class WebSocketServiceLoginTest {
   private static final int VERTX_AWAIT_TIMEOUT_MILLIS = 10000;
 
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir private Path folder;
 
   private Vertx vertx;
+  private VertxTestContext testContext;
   protected static Map<String, JsonRpcMethod> rpcMethods;
   protected static JsonRpcHttpService service;
   protected static OkHttpClient client;
@@ -127,9 +131,10 @@ public class WebSocketServiceLoginTest {
   private WebSocketService websocketService;
   private HttpClient httpClient;
 
-  @Before
+  @BeforeEach
   public void before() throws URISyntaxException {
     vertx = Vertx.vertx();
+    testContext = new VertxTestContext();
 
     final String authTomlPath =
         Paths.get(ClassLoader.getSystemResource("JsonRpcHttpService/auth.toml").toURI())
@@ -171,6 +176,7 @@ public class WebSocketServiceLoginTest {
                     mock(ProtocolContext.class),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
+                    mock(MiningParameters.class),
                     mock(PoWMiningCoordinator.class),
                     new NoOpMetricsSystem(),
                     supportedCapabilities,
@@ -183,10 +189,10 @@ public class WebSocketServiceLoginTest {
                     mock(MetricsConfiguration.class),
                     natService,
                     new HashMap<>(),
-                    folder.getRoot().toPath(),
+                    folder,
                     mock(EthPeers.class),
                     vertx,
-                    Optional.empty(),
+                    mock(ApiConfiguration.class),
                     Optional.empty()));
 
     websocketMethods.putAll(rpcMethods);
@@ -219,15 +225,14 @@ public class WebSocketServiceLoginTest {
     httpClient = vertx.createHttpClient(httpClientOptions);
   }
 
-  @After
+  @AfterEach
   public void after() {
     reset(webSocketMessageHandlerSpy);
     websocketService.stop();
   }
 
   @Test
-  public void loginWithBadCredentials(final TestContext context) {
-    final Async async = context.async();
+  public void loginWithBadCredentials() throws InterruptedException {
     httpClient.request(
         HttpMethod.POST,
         websocketConfiguration.getPort(),
@@ -242,16 +247,15 @@ public class WebSocketServiceLoginTest {
                   response -> {
                     assertThat(response.result().statusCode()).isEqualTo(401);
                     assertThat(response.result().statusMessage()).isEqualTo("Unauthorized");
-                    async.complete();
+                    testContext.completeNow();
                   });
         });
 
-    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+    testContext.awaitCompletion(VERTX_AWAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
   }
 
   @Test
-  public void loginWithGoodCredentials(final TestContext context) {
-    final Async async = context.async();
+  public void loginWithGoodCredentials() throws InterruptedException {
     Handler<AsyncResult<HttpClientResponse>> responseHandler =
         response -> {
           assertThat(response.result().statusCode()).isEqualTo(200);
@@ -296,7 +300,7 @@ public class WebSocketServiceLoginTest {
                                   (authed) -> {
                                     assertThat(authed.succeeded()).isTrue();
                                     assertThat(authed.result()).isTrue();
-                                    async.complete();
+                                    testContext.completeNow();
                                   });
                             });
                   });
@@ -314,12 +318,11 @@ public class WebSocketServiceLoginTest {
         "/login",
         requestHandler);
 
-    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+    testContext.awaitCompletion(VERTX_AWAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
   }
 
   @Test
-  public void websocketServiceWithBadHeaderAuthenticationToken(final TestContext context) {
-    final Async async = context.async();
+  public void websocketServiceWithBadHeaderAuthenticationToken() throws InterruptedException {
 
     final String request = "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\"]}";
     final String expectedResponse =
@@ -339,18 +342,19 @@ public class WebSocketServiceLoginTest {
           webSocket
               .result()
               .handler(
-                  buffer -> {
-                    context.assertEquals(expectedResponse, buffer.toString());
-                    async.complete();
-                  });
+                  buffer ->
+                      testContext.verify(
+                          () -> {
+                            assertEquals(expectedResponse, buffer.toString());
+                            testContext.completeNow();
+                          }));
         });
 
-    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+    testContext.awaitCompletion(VERTX_AWAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
   }
 
   @Test
-  public void netServicesSucceedWithNoAuth(final TestContext context) {
-    final Async async = context.async();
+  public void netServicesSucceedWithNoAuth() throws InterruptedException {
 
     final String id = "123";
     final String request =
@@ -370,18 +374,19 @@ public class WebSocketServiceLoginTest {
           webSocket
               .result()
               .handler(
-                  buffer -> {
-                    context.assertEquals(expectedResponse, buffer.toString());
-                    async.complete();
-                  });
+                  buffer ->
+                      testContext.verify(
+                          () -> {
+                            assertEquals(expectedResponse, buffer.toString());
+                            testContext.completeNow();
+                          }));
         });
 
-    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+    testContext.awaitCompletion(VERTX_AWAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
   }
 
   @Test
-  public void websocketServiceWithGoodHeaderAuthenticationToken(final TestContext context) {
-    final Async async = context.async();
+  public void websocketServiceWithGoodHeaderAuthenticationToken() throws InterruptedException {
 
     final JWTOptions jwtOptions = new JWTOptions().setExpiresInMinutes(5).setAlgorithm("RS256");
 
@@ -408,18 +413,19 @@ public class WebSocketServiceLoginTest {
           webSocket
               .result()
               .handler(
-                  buffer -> {
-                    context.assertEquals(expectedResponse, buffer.toString());
-                    async.complete();
-                  });
+                  buffer ->
+                      testContext.verify(
+                          () -> {
+                            assertEquals(expectedResponse, buffer.toString());
+                            testContext.completeNow();
+                          }));
         });
 
-    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+    testContext.awaitCompletion(VERTX_AWAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
   }
 
   @Test
-  public void loginPopulatesJWTPayloadWithRequiredValues(final TestContext context) {
-    final Async async = context.async();
+  public void loginPopulatesJWTPayloadWithRequiredValues() throws InterruptedException {
     httpClient.request(
         HttpMethod.POST,
         websocketConfiguration.getPort(),
@@ -462,12 +468,12 @@ public class WebSocketServiceLoginTest {
                                   jwtPayload.getLong("exp") - jwtPayload.getLong("iat");
                               assertThat(tokenExpiry).isEqualTo(MINUTES.toSeconds(5));
 
-                              async.complete();
+                              testContext.completeNow();
                             });
                   });
         });
 
-    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+    testContext.awaitCompletion(VERTX_AWAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
   }
 
   private JsonObject decodeJwtPayload(final String token) {

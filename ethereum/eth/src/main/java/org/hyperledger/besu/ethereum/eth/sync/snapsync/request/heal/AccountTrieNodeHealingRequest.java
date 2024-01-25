@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
@@ -25,6 +24,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
@@ -112,6 +112,15 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
                   account.size() - getLocation().size()))
           .map(RLP::input)
           .map(StateTrieAccountValue::readFrom)
+          .filter(
+              stateTrieAccountValue ->
+                  // We need to ensure that the accounts to be healed do not have empty storage.
+                  // Therefore, it is unnecessary to create trie heal requests for storage in this
+                  // case.
+                  // If we were to do so, we would be attempting to request storage that does not
+                  // exist from our peers,
+                  // which would cause sync issues.
+                  !stateTrieAccountValue.getStorageRoot().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH))
           .ifPresent(
               stateTrieAccountValue -> {
                 // an account need a heal step
@@ -129,6 +138,7 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
   @Override
   protected Stream<SnapDataRequest> getRequestsFromTrieNodeValue(
       final WorldStateStorage worldStateStorage,
+      final SnapWorldDownloadState downloadState,
       final Bytes location,
       final Bytes path,
       final Bytes value) {
@@ -151,13 +161,25 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
     if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
       builder.add(createBytecodeRequest(accountHash, getRootHash(), accountValue.getCodeHash()));
     }
-    // Add storage, if appropriate
-    if (!accountValue.getStorageRoot().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
-      // If we detect an account storage we fill it with snapsync before completing with a heal
-      final SnapDataRequest storageTrieRequest =
-          createStorageTrieNodeDataRequest(
-              accountValue.getStorageRoot(), accountHash, getRootHash(), Bytes.EMPTY);
-      builder.add(storageTrieRequest);
+
+    // Retrieve the storage root from the database, if available
+    final Hash storageRootFoundInDb =
+        worldStateStorage
+            .getTrieNodeUnsafe(Bytes.concatenate(accountHash, Bytes.EMPTY))
+            .map(Hash::hash)
+            .orElse(Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH));
+    if (!storageRootFoundInDb.equals(accountValue.getStorageRoot())) {
+      // If the storage root is not found in the database, add the account to the list of accounts
+      // to be repaired
+      downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
+      // If the account's storage root is not empty,
+      // fill it with trie heal before completing with a flat heal
+      if (!accountValue.getStorageRoot().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
+        SnapDataRequest storageTrieRequest =
+            createStorageTrieNodeDataRequest(
+                accountValue.getStorageRoot(), accountHash, getRootHash(), Bytes.EMPTY);
+        builder.add(storageTrieRequest);
+      }
     }
     return builder.build();
   }

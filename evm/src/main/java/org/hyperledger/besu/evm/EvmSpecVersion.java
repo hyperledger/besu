@@ -15,6 +15,9 @@
  */
 package org.hyperledger.besu.evm;
 
+import java.util.Comparator;
+import java.util.stream.Stream;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +27,10 @@ public enum EvmSpecVersion {
   FRONTIER(0, true, "Frontier", "Finalized"),
   /** Homestead evm spec version. */
   HOMESTEAD(0, true, "Homestead", "Finalized"),
+  /** Tangerine Whistle evm spec version. */
+  TANGERINE_WHISTLE(0, true, "Tangerine Whistle", "Finalized"),
+  /** Spurious Dragon evm spec version. */
+  SPURIOUS_DRAGON(0, true, "Spuruous Dragon", "Finalized"),
   /** Byzantium evm spec version. */
   BYZANTIUM(0, true, "Byzantium", "Finalized"),
   /** Constantinople evm spec version. */
@@ -41,13 +48,13 @@ public enum EvmSpecVersion {
   /** Shanghai evm spec version. */
   SHANGHAI(0, true, "Shanghai", "Finalized"),
   /** Cancun evm spec version. */
-  CANCUN(0, false, "Cancun", "In Development"),
+  CANCUN(0, true, "Cancun", "Finalized"),
   /** Prague evm spec version. */
   PRAGUE(0, false, "Prague", "Placeholder"),
   /** Osaka evm spec version. */
   OSAKA(0, false, "Osaka", "Placeholder"),
   /** Bogota evm spec version. */
-  BOGOTA(0, false, "Bogata", "Placeholder"),
+  BOGOTA(0, false, "Bogota", "Placeholder"),
   /** Development fork for unscheduled EIPs */
   FUTURE_EIPS(1, false, "Future_EIPs", "Development, for accepted and unscheduled EIPs"),
   /** Development fork for EIPs not accepted to Mainnet */
@@ -77,6 +84,16 @@ public enum EvmSpecVersion {
     this.specFinalized = specFinalized;
     this.name = name;
     this.description = description;
+  }
+
+  /**
+   * What is the "default" version of EVM that should be made. Newer versions of Besu will adjust
+   * this to reflect mainnet fork development.
+   *
+   * @return the current mainnet for as of the release of this version of Besu
+   */
+  public static EvmSpecVersion defaultVersion() {
+    return SHANGHAI;
   }
 
   /**
@@ -119,5 +136,33 @@ public enum EvmSpecVersion {
           this.name());
     }
     versionWarned = true;
+  }
+
+  /**
+   * Calculate a spec version from a text fork name.
+   *
+   * @param name The name of the fork, such as "shanghai" or "berlin"
+   * @return the EVM spec version for that fork, or null if no fork matched.
+   */
+  public static EvmSpecVersion fromName(final String name) {
+    for (var version : EvmSpecVersion.values()) {
+      if (version.name().equalsIgnoreCase(name)) {
+        return version;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * The most recent deployed evm supported by the library. This will change across versions and
+   * will be updated after mainnet activations.
+   *
+   * @return the most recently activated mainnet spec.
+   */
+  public static EvmSpecVersion mostRecent() {
+    return Stream.of(EvmSpecVersion.values())
+        .filter(v -> v.specFinalized)
+        .max(Comparator.naturalOrder())
+        .orElseThrow();
   }
 }

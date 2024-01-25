@@ -34,19 +34,19 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.mockito.Mockito;
 
-@RunWith(Parameterized.class)
 public class PersistBlockTaskTest {
 
   private BlockchainSetupUtil blockchainUtil;
@@ -56,19 +56,15 @@ public class PersistBlockTaskTest {
   private MutableBlockchain blockchain;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
-  @Parameterized.Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][] {{DataStorageFormat.BONSAI}, {DataStorageFormat.FOREST}});
+  static class PersistBlockTaskTestArguments implements ArgumentsProvider {
+    @Override
+    public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
+      return Stream.of(
+          Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
+    }
   }
 
-  private final DataStorageFormat storageFormat;
-
-  public PersistBlockTaskTest(final DataStorageFormat storageFormat) {
-    this.storageFormat = storageFormat;
-  }
-
-  @Before
-  public void setup() {
+  public void setup(final DataStorageFormat storageFormat) {
     blockchainUtil = BlockchainSetupUtil.forTesting(storageFormat);
     protocolSchedule = blockchainUtil.getProtocolSchedule();
     protocolContext = blockchainUtil.getProtocolContext();
@@ -77,8 +73,10 @@ public class PersistBlockTaskTest {
     ethContext = ethProtocolManager.ethContext();
   }
 
-  @Test
-  public void importsValidBlock() throws Exception {
+  @ParameterizedTest
+  @ArgumentsSource(PersistBlockTaskTest.PersistBlockTaskTestArguments.class)
+  public void importsValidBlock(final DataStorageFormat storageFormat) throws Exception {
+    setup(storageFormat);
     blockchainUtil.importFirstBlocks(3);
     final Block nextBlock = blockchainUtil.getBlock(3);
 
@@ -103,8 +101,10 @@ public class PersistBlockTaskTest {
     assertThat(blockchain.contains(nextBlock.getHash())).isTrue();
   }
 
-  @Test
-  public void failsToImportInvalidBlock() {
+  @ParameterizedTest
+  @ArgumentsSource(PersistBlockTaskTest.PersistBlockTaskTestArguments.class)
+  public void failsToImportInvalidBlock(final DataStorageFormat storageFormat) {
+    setup(storageFormat);
     final BlockDataGenerator gen = new BlockDataGenerator();
     blockchainUtil.importFirstBlocks(3);
     final Block nextBlock = gen.block();
@@ -130,8 +130,11 @@ public class PersistBlockTaskTest {
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
   }
 
-  @Test
-  public void importsValidBlockSequence() throws Exception {
+  @ParameterizedTest
+  @ArgumentsSource(PersistBlockTaskTest.PersistBlockTaskTestArguments.class)
+  public void importsValidBlockSequence(final DataStorageFormat storageFormat) throws Exception {
+
+    setup(storageFormat);
     blockchainUtil.importFirstBlocks(3);
     final List<Block> nextBlocks =
         Arrays.asList(blockchainUtil.getBlock(3), blockchainUtil.getBlock(4));
@@ -161,8 +164,11 @@ public class PersistBlockTaskTest {
     }
   }
 
-  @Test
-  public void failsToImportInvalidBlockSequenceWhereSecondBlockFails() {
+  @ParameterizedTest
+  @ArgumentsSource(PersistBlockTaskTest.PersistBlockTaskTestArguments.class)
+  public void failsToImportInvalidBlockSequenceWhereSecondBlockFails(
+      final DataStorageFormat storageFormat) {
+    setup(storageFormat);
     final BlockDataGenerator gen = new BlockDataGenerator();
     blockchainUtil.importFirstBlocks(3);
     final List<Block> nextBlocks = Arrays.asList(blockchainUtil.getBlock(3), gen.block());
@@ -191,8 +197,11 @@ public class PersistBlockTaskTest {
     assertThat(blockchain.contains(nextBlocks.get(1).getHash())).isFalse();
   }
 
-  @Test
-  public void failsToImportInvalidBlockSequenceWhereFirstBlockFails() {
+  @ParameterizedTest
+  @ArgumentsSource(PersistBlockTaskTest.PersistBlockTaskTestArguments.class)
+  public void failsToImportInvalidBlockSequenceWhereFirstBlockFails(
+      final DataStorageFormat storageFormat) {
+    setup(storageFormat);
     final BlockDataGenerator gen = new BlockDataGenerator();
     blockchainUtil.importFirstBlocks(3);
     final List<Block> nextBlocks = Arrays.asList(gen.block(), blockchainUtil.getBlock(3));
@@ -221,8 +230,10 @@ public class PersistBlockTaskTest {
     assertThat(blockchain.contains(nextBlocks.get(1).getHash())).isFalse();
   }
 
-  @Test
-  public void importsValidUnorderedBlocks() throws Exception {
+  @ParameterizedTest
+  @ArgumentsSource(PersistBlockTaskTest.PersistBlockTaskTestArguments.class)
+  public void importsValidUnorderedBlocks(final DataStorageFormat storageFormat) throws Exception {
+    setup(storageFormat);
     blockchainUtil.importFirstBlocks(3);
     final Block valid = blockchainUtil.getBlock(3);
     final List<Block> nextBlocks = Collections.singletonList(valid);
@@ -253,8 +264,10 @@ public class PersistBlockTaskTest {
     }
   }
 
-  @Test
-  public void importsInvalidUnorderedBlock() {
+  @ParameterizedTest
+  @ArgumentsSource(PersistBlockTaskTest.PersistBlockTaskTestArguments.class)
+  public void importsInvalidUnorderedBlock(final DataStorageFormat storageFormat) {
+    setup(storageFormat);
     final BlockDataGenerator gen = new BlockDataGenerator();
     blockchainUtil.importFirstBlocks(3);
     final Block invalid = gen.block();
@@ -284,8 +297,10 @@ public class PersistBlockTaskTest {
     }
   }
 
-  @Test
-  public void importsInvalidUnorderedBlocks() {
+  @ParameterizedTest
+  @ArgumentsSource(PersistBlockTaskTest.PersistBlockTaskTestArguments.class)
+  public void importsInvalidUnorderedBlocks(final DataStorageFormat storageFormat) {
+    setup(storageFormat);
     final BlockDataGenerator gen = new BlockDataGenerator();
     blockchainUtil.importFirstBlocks(3);
     final List<Block> nextBlocks = Arrays.asList(gen.block(), gen.block());
@@ -314,8 +329,11 @@ public class PersistBlockTaskTest {
     }
   }
 
-  @Test
-  public void importsUnorderedBlocksWithMixOfValidAndInvalidBlocks() throws Exception {
+  @ParameterizedTest
+  @ArgumentsSource(PersistBlockTaskTest.PersistBlockTaskTestArguments.class)
+  public void importsUnorderedBlocksWithMixOfValidAndInvalidBlocks(
+      final DataStorageFormat storageFormat) throws Exception {
+    setup(storageFormat);
     final BlockDataGenerator gen = new BlockDataGenerator();
     blockchainUtil.importFirstBlocks(3);
     final Block valid = blockchainUtil.getBlock(3);
@@ -347,8 +365,10 @@ public class PersistBlockTaskTest {
     assertThat(blockchain.contains(invalid.getHash())).isFalse();
   }
 
-  @Test
-  public void cancelBeforeRunning() {
+  @ParameterizedTest
+  @ArgumentsSource(PersistBlockTaskTest.PersistBlockTaskTestArguments.class)
+  public void cancelBeforeRunning(final DataStorageFormat storageFormat) {
+    setup(storageFormat);
     blockchainUtil.importFirstBlocks(3);
     final Block nextBlock = blockchainUtil.getBlock(3);
 
@@ -372,8 +392,10 @@ public class PersistBlockTaskTest {
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
   }
 
-  @Test
-  public void cancelAfterRunning() {
+  @ParameterizedTest
+  @ArgumentsSource(PersistBlockTaskTest.PersistBlockTaskTestArguments.class)
+  public void cancelAfterRunning(final DataStorageFormat storageFormat) {
+    setup(storageFormat);
     blockchainUtil.importFirstBlocks(3);
     final Block nextBlock = blockchainUtil.getBlock(3);
 

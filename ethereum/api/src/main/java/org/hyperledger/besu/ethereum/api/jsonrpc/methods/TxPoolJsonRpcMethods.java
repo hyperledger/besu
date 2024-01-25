@@ -39,8 +39,8 @@ public class TxPoolJsonRpcMethods extends ApiGroupJsonRpcMethods {
   @Override
   protected Map<String, JsonRpcMethod> create() {
     return mapOf(
-        new TxPoolBesuTransactions(transactionPool.getPendingTransactions()),
-        new TxPoolBesuPendingTransactions(transactionPool.getPendingTransactions()),
-        new TxPoolBesuStatistics(transactionPool.getPendingTransactions()));
+        new TxPoolBesuTransactions(transactionPool),
+        new TxPoolBesuPendingTransactions(transactionPool),
+        new TxPoolBesuStatistics(transactionPool));
   }
 }

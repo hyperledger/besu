@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterIdGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -33,12 +34,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
@@ -52,6 +53,7 @@ import org.hyperledger.besu.testutil.BlockTestUtil.ChainResources;
 
 import java.math.BigInteger;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -64,13 +66,12 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.io.TempDir;
 
 public abstract class AbstractJsonRpcHttpServiceTest {
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir private Path folder;
 
   protected BlockchainSetupUtil blockchainSetupUtil;
 
@@ -103,7 +104,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
   }
 
   protected BlockchainSetupUtil getBlockchainSetupUtil(final DataStorageFormat storageFormat) {
-    return BlockchainSetupUtil.forTesting(storageFormat);
+    return BlockchainSetupUtil.forHiveTesting(storageFormat);
   }
 
   protected BlockchainSetupUtil createBlockchainSetupUtil(
@@ -116,13 +117,12 @@ public abstract class AbstractJsonRpcHttpServiceTest {
         new ChainResources(genesisURL, blocksURL), storageFormat);
   }
 
-  @Before
+  @BeforeEach
   public void setup() throws Exception {
     setupBlockchain();
   }
 
-  protected BlockchainSetupUtil startServiceWithEmptyChain(final DataStorageFormat storageFormat)
-      throws Exception {
+  protected BlockchainSetupUtil startServiceWithEmptyChain(final DataStorageFormat storageFormat) {
     final BlockchainSetupUtil emptySetupUtil = getBlockchainSetupUtil(storageFormat);
     startService(emptySetupUtil);
     return emptySetupUtil;
@@ -134,14 +134,13 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     final Synchronizer synchronizerMock = mock(Synchronizer.class);
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final TransactionPool transactionPoolMock = mock(TransactionPool.class);
+    final MiningParameters miningParameters = mock(MiningParameters.class);
     final PoWMiningCoordinator miningCoordinatorMock = mock(PoWMiningCoordinator.class);
     when(transactionPoolMock.addTransactionViaApi(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
     // nonce too low tests uses a tx with nonce=16
     when(transactionPoolMock.addTransactionViaApi(argThat(tx -> tx.getNonce() == 16)))
         .thenReturn(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW));
-    final PendingTransactions pendingTransactionsMock = mock(PendingTransactions.class);
-    when(transactionPoolMock.getPendingTransactions()).thenReturn(pendingTransactionsMock);
     final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
 
     final BlockchainQueries blockchainQueries =
@@ -176,6 +175,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             protocolContext,
             filterManager,
             transactionPoolMock,
+            miningParameters,
             miningCoordinatorMock,
             new NoOpMetricsSystem(),
             supportedCapabilities,
@@ -188,10 +188,10 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             mock(MetricsConfiguration.class),
             natService,
             new HashMap<>(),
-            folder.getRoot().toPath(),
+            folder,
             mock(EthPeers.class),
             syncVertx,
-            Optional.empty(),
+            mock(ApiConfiguration.class),
             Optional.empty());
   }
 
@@ -199,7 +199,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     startService(blockchainSetupUtil);
   }
 
-  private void startService(final BlockchainSetupUtil blockchainSetupUtil) throws Exception {
+  private void startService(final BlockchainSetupUtil blockchainSetupUtil) {
 
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     final Map<String, JsonRpcMethod> methods = getRpcMethods(config, blockchainSetupUtil);
@@ -210,7 +210,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     service =
         new JsonRpcHttpService(
             vertx,
-            folder.newFolder().toPath(),
+            folder,
             config,
             new NoOpMetricsSystem(),
             natService,
@@ -223,7 +223,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     baseUrl = service.url();
   }
 
-  @After
+  @AfterEach
   public void shutdownServer() {
     client.dispatcher().executorService().shutdown();
     client.connectionPool().evictAll();

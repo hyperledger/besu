@@ -189,7 +189,7 @@ type Block {
   raw: Bytes!
 
   """
-  WithdrawalsRoot is the keccak256 hash of the root of the trie of withdrawals in this block.
+  WithdrawalsRoot is the withdrawals trie root in this block.
   If withdrawals are unavailable for this block, this field will be null.
   """
   withdrawalsRoot: Bytes32
@@ -199,6 +199,14 @@ type Block {
   withdrawals are unavailable for this block, this field will be null.
   """
   withdrawals: [Withdrawal!]
+
+  """BlobGasUsed is the total amount of gas used by the transactions."""
+  blobGasUsed: Long
+
+  """
+  ExcessBlobGas is a running total of blob gas consumed in excess of the target, prior to the block.
+  """
+  excessBlobGas: Long
 }
 
 """
@@ -219,11 +227,11 @@ input BlockFilterCriteria {
   contained topics.
 
   Examples:
-   - [] or nil          matches any topic list
-   - [[A]]              matches topic A in first position
-   - [[], [B]]          matches any topic in first position, B in second position
-   - [[A], [B]]         matches topic A in first position, B in second position
-   - [[A, B]], [C, D]]  matches topic (A OR B) in first position, (C OR D) in second position
+  - [] or nil          matches any topic list
+  - [[A]]              matches topic A in first position
+  - [[], [B]]          matches any topic in first position, B in second position
+  - [[A], [B]]         matches topic A in first position, B in second position
+  - [[A, B]], [C, D]]  matches topic (A OR B) in first position, (C OR D) in second position
   """
   topics: [[Bytes32!]!]
 }
@@ -310,11 +318,11 @@ input FilterCriteria {
   contained topics.
 
   Examples:
-   - [] or nil          matches any topic list
-   - [[A]]              matches topic A in first position
-   - [[], [B]]          matches any topic in first position, B in second position
-   - [[A], [B]]         matches topic A in first position, B in second position
-   - [[A, B]], [C, D]]  matches topic (A OR B) in first position, (C OR D) in second position
+  - [] or nil          matches any topic list
+  - [[A]]              matches topic A in first position
+  - [[], [B]]          matches any topic in first position, B in second position
+  - [[A], [B]]         matches topic A in first position, B in second position
+  - [[A, B]], [C, D]]  matches topic (A OR B) in first position, (C OR D) in second position
   """
   topics: [[Bytes32!]!]
 }
@@ -473,6 +481,11 @@ type Transaction {
   maxPriorityFeePerGas: BigInt
 
   """
+  MaxFeePerBlobGas is the maximum blob gas fee cap per blob the sender is willing to pay for blob transaction, in wei.
+  """
+  maxFeePerBlobGas: BigInt
+
+  """
   EffectiveTip is the actual amount of reward going to miner after considering the max fee cap.
   """
   effectiveTip: BigInt
@@ -520,6 +533,14 @@ type Transaction {
   """
   effectiveGasPrice: BigInt
 
+  """BlobGasUsed is the amount of blob gas used by this transaction."""
+  blobGasUsed: Long
+
+  """
+  blobGasPrice is the actual value per blob gas deducted from the senders account.
+  """
+  blobGasPrice: BigInt
+
   """
   CreatedContract is the account that was created by a contract creation
   transaction. If the transaction was not a contract creation transaction,
@@ -534,7 +555,8 @@ type Transaction {
   logs: [Log!]
   r: BigInt!
   s: BigInt!
-  v: BigInt!
+  v: BigInt
+  yParity: BigInt
 
   """Envelope transaction support"""
   type: Long
@@ -552,6 +574,11 @@ type Transaction {
   this is equivalent to TxType || ReceiptEncoding.
   """
   rawReceipt: Bytes!
+
+  """
+  BlobVersionedHashes is a set of hash outputs from the blobs in the transaction.
+  """
+  blobVersionedHashes: [Bytes32!]
 }
 
 """EIP-4895"""
@@ -564,7 +591,7 @@ type Withdrawal {
   """Validator is index of the validator associated with withdrawal."""
   validator: Long!
 
-  """Address recipient of the withdrawn amount."""
+  """Recipient address of the withdrawn amount."""
   address: Address!
 
   """Amount is the withdrawal value in Gwei."""

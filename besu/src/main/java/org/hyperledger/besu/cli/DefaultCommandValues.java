@@ -14,9 +14,7 @@
  */
 package org.hyperledger.besu.cli;
 
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
 
@@ -29,7 +27,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
 
 /** The interface Default command values. */
@@ -57,17 +54,12 @@ public interface DefaultCommandValues {
   String MANDATORY_MODE_FORMAT_HELP = "<MODE>";
   /** The constant MANDATORY_NETWORK_FORMAT_HELP. */
   String MANDATORY_NETWORK_FORMAT_HELP = "<NETWORK>";
+  /** The constant PROFILE_OPTION_NAME. */
+  String PROFILE_OPTION_NAME = "--profile";
+  /** The constant PROFILE_FORMAT_HELP. */
+  String PROFILE_FORMAT_HELP = "<PROFILE>";
   /** The constant MANDATORY_NODE_ID_FORMAT_HELP. */
   String MANDATORY_NODE_ID_FORMAT_HELP = "<NODEID>";
-  /** The constant DEFAULT_MIN_TRANSACTION_GAS_PRICE. */
-  Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
-  /** The constant DEFAULT_RPC_TX_FEE_CAP. */
-  Wei DEFAULT_RPC_TX_FEE_CAP = TransactionPoolConfiguration.DEFAULT_RPC_TX_FEE_CAP;
-
-  /** The constant DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO. */
-  Double DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
-  /** The constant DEFAULT_EXTRA_DATA. */
-  Bytes DEFAULT_EXTRA_DATA = Bytes.EMPTY;
   /** The constant PERMISSIONING_CONFIG_LOCATION. */
   String PERMISSIONING_CONFIG_LOCATION = "permissions_config.toml";
   /** The constant MANDATORY_HOST_FORMAT_HELP. */
@@ -78,8 +70,8 @@ public interface DefaultCommandValues {
   NatMethod DEFAULT_NAT_METHOD = NatMethod.AUTO;
   /** The constant DEFAULT_JWT_ALGORITHM. */
   JwtAlgorithm DEFAULT_JWT_ALGORITHM = JwtAlgorithm.RS256;
-  /** The constant FAST_SYNC_MIN_PEER_COUNT. */
-  int FAST_SYNC_MIN_PEER_COUNT = 5;
+  /** The constant SYNC_MIN_PEER_COUNT. */
+  int SYNC_MIN_PEER_COUNT = 5;
   /** The constant DEFAULT_MAX_PEERS. */
   int DEFAULT_MAX_PEERS = 25;
   /** The constant DEFAULT_P2P_PEER_LOWER_BOUND. */

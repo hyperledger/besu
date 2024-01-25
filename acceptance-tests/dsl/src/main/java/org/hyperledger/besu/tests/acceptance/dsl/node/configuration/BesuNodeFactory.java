@@ -26,6 +26,8 @@ import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.InMemoryPrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -36,6 +38,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory.CliqueOptions;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.pki.PkiKeystoreConfigurationFactory;
 
 import java.io.File;
@@ -61,12 +64,14 @@ public class BesuNodeFactory {
         config.getName(),
         config.getDataPath(),
         config.getMiningParameters(),
+        config.getTransactionPoolConfiguration(),
         config.getJsonRpcConfiguration(),
         config.getEngineRpcConfiguration(),
         config.getWebSocketConfiguration(),
         config.getJsonRpcIpcConfiguration(),
         config.getMetricsConfiguration(),
         config.getPermissioningConfiguration(),
+        config.getApiConfiguration(),
         config.getKeyFilePath(),
         config.isDevMode(),
         config.getNetwork(),
@@ -117,6 +122,7 @@ public class BesuNodeFactory {
             .name(name)
             .miningEnabled()
             .jsonRpcEnabled()
+            .jsonRpcTxPool()
             .webSocketEnabled()
             .extraCLIOptions(extraCliOptions);
     builder = configModifier.apply(builder);
@@ -302,10 +308,13 @@ public class BesuNodeFactory {
             .build();
 
     final MiningParameters miningParameters =
-        new MiningParameters.Builder()
-            .minTransactionGasPrice(Wei.ZERO)
-            .coinbase(AddressHelpers.ofValue(1))
-            .miningEnabled(true)
+        ImmutableMiningParameters.builder()
+            .mutableInitValues(
+                MutableInitValues.builder()
+                    .isMiningEnabled(true)
+                    .minTransactionGasPrice(Wei.ZERO)
+                    .coinbase(AddressHelpers.ofValue(1))
+                    .build())
             .build();
 
     return create(
@@ -361,6 +370,17 @@ public class BesuNodeFactory {
   }
 
   public BesuNode createCliqueNode(final String name) throws IOException {
+    return createCliqueNode(name, CliqueOptions.DEFAULT);
+  }
+
+  public BesuNode createCliqueNode(final String name, final CliqueOptions cliqueOptions)
+      throws IOException {
+    return createCliqueNodeWithExtraCliOptions(name, cliqueOptions, List.of());
+  }
+
+  public BesuNode createCliqueNodeWithExtraCliOptions(
+      final String name, final CliqueOptions cliqueOptions, final List<String> extraCliOptions)
+      throws IOException {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
@@ -368,7 +388,12 @@ public class BesuNodeFactory {
             .jsonRpcConfiguration(node.createJsonRpcWithCliqueEnabledConfig())
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
-            .genesisConfigProvider(GenesisConfigurationFactory::createCliqueGenesisConfig)
+            .jsonRpcTxPool()
+            .genesisConfigProvider(
+                validators ->
+                    GenesisConfigurationFactory.createCliqueGenesisConfig(
+                        validators, cliqueOptions))
+            .extraCLIOptions(extraCliOptions)
             .build());
   }
 
@@ -398,7 +423,7 @@ public class BesuNodeFactory {
     config.setAccountAllowlist(accountAllowList);
     config.setAccountPermissioningConfigFilePath(configFile.getAbsolutePath());
     final PermissioningConfiguration permissioningConfiguration =
-        new PermissioningConfiguration(Optional.of(config), Optional.empty(), Optional.empty());
+        new PermissioningConfiguration(Optional.of(config), Optional.empty());
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
@@ -545,6 +570,7 @@ public class BesuNodeFactory {
             .bootnodeEligible(false)
             .miningEnabled()
             .jsonRpcEnabled()
+            .jsonRpcTxPool()
             .engineRpcEnabled(true)
             .jsonRpcDebug()
             .build());
@@ -559,6 +585,7 @@ public class BesuNodeFactory {
             .miningEnabled()
             .jsonRpcConfiguration(node.createJsonRpcWithCliqueEnabledConfig())
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .jsonRpcTxPool()
             .devMode(false)
             .genesisConfigProvider(
                 nodes ->

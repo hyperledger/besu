@@ -779,6 +779,11 @@ public final class CodeV1Validation {
           }
 
           currentPC += pcAdvance;
+          if (currentPC >= stackHeights.length) {
+            return String.format(
+                "Dangling immediate argument for opcode 0x%x at PC %d in code section %d.",
+                currentStackHeight, codeLength - pcAdvance, codeSectionToValidate);
+          }
           stackHeights[currentPC] = currentStackHeight;
           unusedBytes -= pcAdvance;
         }
