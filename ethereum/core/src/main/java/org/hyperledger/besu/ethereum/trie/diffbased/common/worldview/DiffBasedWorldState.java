@@ -23,11 +23,9 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
@@ -113,7 +111,7 @@ public abstract class DiffBasedWorldState
   }
 
   private boolean isPersisted(final WorldStateKeyValueStorage worldStateKeyValueStorage) {
-    return !(worldStateKeyValueStorage instanceof BonsaiSnapshotWorldStateKeyValueStorage);
+    return !(worldStateKeyValueStorage instanceof DiffBasedSnapshotWorldStateKeyValueStorage);
   }
 
   /**
@@ -172,13 +170,13 @@ public abstract class DiffBasedWorldState
             .getWorldStateTransaction()
             .put(
                 TRIE_BRANCH_STORAGE,
-                BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY,
+                DiffBasedWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY,
                 blockHeader.getHash().toArrayUnsafe());
         worldStateBlockHash = blockHeader.getHash();
       } else {
         stateUpdater
             .getWorldStateTransaction()
-            .remove(TRIE_BRANCH_STORAGE, BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY);
+            .remove(TRIE_BRANCH_STORAGE, DiffBasedWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY);
         worldStateBlockHash = null;
       }
 
@@ -186,7 +184,7 @@ public abstract class DiffBasedWorldState
           .getWorldStateTransaction()
           .put(
               TRIE_BRANCH_STORAGE,
-              BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY,
+              DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY,
               newWorldStateRootHash.toArrayUnsafe());
       worldStateRootHash = newWorldStateRootHash;
       success = true;
@@ -226,7 +224,7 @@ public abstract class DiffBasedWorldState
     return Hash.wrap(worldStateRootHash);
   }
 
-  static final KeyValueStorageTransaction noOpTx =
+  protected static final KeyValueStorageTransaction noOpTx =
       new KeyValueStorageTransaction() {
 
         @Override
@@ -250,7 +248,7 @@ public abstract class DiffBasedWorldState
         }
       };
 
-  static final SegmentedKeyValueStorageTransaction noOpSegmentedTx =
+  protected static final SegmentedKeyValueStorageTransaction noOpSegmentedTx =
       new SegmentedKeyValueStorageTransaction() {
 
         @Override
@@ -274,15 +272,6 @@ public abstract class DiffBasedWorldState
           // no-op
         }
       };
-
-  @Override
-  public Hash frontierRootHash() {
-    return calculateRootHash(
-        Optional.of(
-            new BonsaiWorldStateKeyValueStorage.Updater(
-                noOpSegmentedTx, noOpTx, worldStateKeyValueStorage.getFlatDbStrategy())),
-        accumulator.copy());
-  }
 
   public Hash blockHash() {
     return worldStateBlockHash;
@@ -314,8 +303,8 @@ public abstract class DiffBasedWorldState
 
   private void closeFrozenStorage() {
     try {
-      final BonsaiWorldStateLayerStorage worldStateLayerStorage =
-          (BonsaiWorldStateLayerStorage) worldStateKeyValueStorage;
+      final DiffBasedSnapshotWorldStateKeyValueStorage worldStateLayerStorage =
+          (DiffBasedSnapshotWorldStateKeyValueStorage) worldStateKeyValueStorage;
       if (!isPersisted(worldStateLayerStorage.getParentWorldStateStorage())) {
         worldStateLayerStorage.getParentWorldStateStorage().close();
       }
@@ -323,6 +312,9 @@ public abstract class DiffBasedWorldState
       // no op
     }
   }
+
+  @Override
+  public abstract Hash frontierRootHash();
 
   @Override
   public abstract MutableWorldState freeze();

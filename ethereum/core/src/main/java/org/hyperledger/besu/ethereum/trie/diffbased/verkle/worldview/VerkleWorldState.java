@@ -137,7 +137,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
                 }));
 
     LOG.info("end commit ");
-    //LOG.info(stateTrie.toDotTree());
+    // LOG.info(stateTrie.toDotTree());
     final Bytes32 rootHash = stateTrie.getRootHash();
 
     LOG.info("end commit ");
@@ -352,6 +352,15 @@ public class VerkleWorldState extends DiffBasedWorldState {
   protected Hash hashAndSavePreImage(final Bytes value) {
     // by default do not save has preImages
     return Hash.hash(value);
+  }
+
+  @Override
+  public Hash frontierRootHash() {
+    return calculateRootHash(
+        Optional.of(
+            new VerkleWorldStateKeyValueStorage.Updater(
+                noOpSegmentedTx, noOpTx, worldStateKeyValueStorage.getFlatDbStrategy())),
+        accumulator.copy());
   }
 
   @Override

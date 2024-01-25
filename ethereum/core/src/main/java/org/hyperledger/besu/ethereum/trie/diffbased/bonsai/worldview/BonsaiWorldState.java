@@ -410,6 +410,15 @@ public class BonsaiWorldState extends DiffBasedWorldState {
   }
 
   @Override
+  public Hash frontierRootHash() {
+    return calculateRootHash(
+        Optional.of(
+            new BonsaiWorldStateKeyValueStorage.Updater(
+                noOpSegmentedTx, noOpTx, worldStateKeyValueStorage.getFlatDbStrategy())),
+        accumulator.copy());
+  }
+
+  @Override
   protected Hash getEmptyTrieHash() {
     return Hash.EMPTY_TRIE_HASH;
   }
