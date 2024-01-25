@@ -48,7 +48,7 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash codeHash) {
-    // TODO JF Part of #5388 add reference counting so that code can be removed when there are no more usages
+    // TODO JF Part of #5388 add reference counting so that code can be removed
   }
 
   private byte[] prefixKey(final Bytes prefix, final Bytes key) {
