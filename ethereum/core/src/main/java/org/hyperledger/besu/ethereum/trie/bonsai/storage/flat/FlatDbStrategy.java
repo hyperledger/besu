@@ -53,14 +53,12 @@ public abstract class FlatDbStrategy {
 
   protected final Counter getStorageValueCounter;
   protected final Counter getStorageValueFlatDatabaseCounter;
-  private final CodeStorageStrategy codeStorageStrategy;
+  protected final CodeStorageStrategy codeStorageStrategy;
 
-  public FlatDbStrategy(final MetricsSystem metricsSystem, final boolean useCodeStoredByHash) {
+  public FlatDbStrategy(
+      final MetricsSystem metricsSystem, final CodeStorageStrategy codeStorageStrategy) {
     this.metricsSystem = metricsSystem;
-    this.codeStorageStrategy =
-        useCodeStoredByHash
-            ? new CodeHashCodeStorageStrategy()
-            : new AccountHashCodeStorageStrategy();
+    this.codeStorageStrategy = codeStorageStrategy;
 
     getAccountCounter =
         metricsSystem.createCounter(
