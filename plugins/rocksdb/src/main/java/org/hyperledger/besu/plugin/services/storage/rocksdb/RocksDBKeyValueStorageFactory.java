@@ -14,10 +14,13 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.VersionedStorageFormat.BONSAI_WITH_VARIABLES;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.VersionedStorageFormat.FOREST_WITH_VARIABLES;
+
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -43,10 +46,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.VersionedStorageFormat.BONSAI_ORIGINAL;
-import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.VersionedStorageFormat.BONSAI_WITH_VARIABLES;
-import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.VersionedStorageFormat.FOREST_WITH_VARIABLES;
-
 /**
  * The Rocks db key value storage factory creates segmented storage and uses a adapter to support
  * unsegmented keyvalue storage.
@@ -54,8 +53,10 @@ import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration
 public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBKeyValueStorageFactory.class);
-  private static final VersionedStorageFormat DEFAULT_VERSIONED_FORMAT = VersionedStorageFormat.FOREST_WITH_VARIABLES;
-  private static final EnumSet<VersionedStorageFormat> SUPPORTED_VERSIONED_FORMATS = EnumSet.of(FOREST_WITH_VARIABLES, BONSAI_WITH_VARIABLES);
+  private static final VersionedStorageFormat DEFAULT_VERSIONED_FORMAT =
+      VersionedStorageFormat.FOREST_WITH_VARIABLES;
+  private static final EnumSet<VersionedStorageFormat> SUPPORTED_VERSIONED_FORMATS =
+      EnumSet.of(FOREST_WITH_VARIABLES, BONSAI_WITH_VARIABLES);
   private static final String NAME = "rocksdb";
   private final RocksDBMetricsFactory rocksDBMetricsFactory;
   private VersionedStorageFormat versionedStorageFormat;
@@ -136,7 +137,12 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       final Supplier<RocksDBFactoryConfiguration> configuration,
       final List<SegmentIdentifier> configuredSegments,
       final RocksDBMetricsFactory rocksDBMetricsFactory) {
-    this(configuration, configuredSegments, List.of(), DEFAULT_VERSIONED_FORMAT.getFormat(), rocksDBMetricsFactory);
+    this(
+        configuration,
+        configuredSegments,
+        List.of(),
+        DEFAULT_VERSIONED_FORMAT.getFormat(),
+        rocksDBMetricsFactory);
   }
 
   @Override
@@ -176,38 +182,41 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
     if (segmentedStorage == null) {
       final List<SegmentIdentifier> segmentsForFormat =
-              configuredSegments.stream()
-                      .filter(segmentId -> segmentId.includeInDatabaseFormat(versionedStorageFormat.getFormat()))
-                      .toList();
+          configuredSegments.stream()
+              .filter(
+                  segmentId ->
+                      segmentId.includeInDatabaseFormat(versionedStorageFormat.getFormat()))
+              .toList();
 
       // It's probably a good idea for the creation logic to be entirely dependent on the database
-      // version. Introducing intermediate booleans that represent database properties and dispatching
+      // version. Introducing intermediate booleans that represent database properties and
+      // dispatching
       // creation logic based on them is error-prone.
       switch (versionedStorageFormat.getFormat()) {
         case FOREST -> {
           LOG.debug("FOREST mode detected, using TransactionDB.");
           segmentedStorage =
-                  new TransactionDBRocksDBColumnarKeyValueStorage(
-                          rocksDBConfiguration,
-                          segmentsForFormat,
-                          ignorableSegments,
-                          metricsSystem,
-                          rocksDBMetricsFactory);
+              new TransactionDBRocksDBColumnarKeyValueStorage(
+                  rocksDBConfiguration,
+                  segmentsForFormat,
+                  ignorableSegments,
+                  metricsSystem,
+                  rocksDBMetricsFactory);
         }
         case BONSAI -> {
           LOG.debug("BONSAI mode detected, Using OptimisticTransactionDB.");
           segmentedStorage =
-                  new OptimisticRocksDBColumnarKeyValueStorage(
-                          rocksDBConfiguration,
-                          segmentsForFormat,
-                          ignorableSegments,
-                          metricsSystem,
-                          rocksDBMetricsFactory);
+              new OptimisticRocksDBColumnarKeyValueStorage(
+                  rocksDBConfiguration,
+                  segmentsForFormat,
+                  ignorableSegments,
+                  metricsSystem,
+                  rocksDBMetricsFactory);
         }
       }
     }
     return segmentedStorage;
-}
+  }
 
   /**
    * Storage path.
@@ -239,7 +248,8 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     return segmentedStorage == null;
   }
 
-  private VersionedStorageFormat readDatabaseMetadata(final BesuConfiguration commonConfiguration) throws IOException {
+  private VersionedStorageFormat readDatabaseMetadata(final BesuConfiguration commonConfiguration)
+      throws IOException {
     final Path dataDir = commonConfiguration.getDataPath();
     final boolean databaseExists = commonConfiguration.getStoragePath().toFile().exists();
     final boolean dataDirExists = dataDir.toFile().exists();
@@ -251,7 +261,8 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
           dataDir,
           databaseMetadata);
     } else {
-      final VersionedStorageFormat format = VersionedStorageFormat.fromFormat(commonConfiguration.getDatabaseFormat());
+      final VersionedStorageFormat format =
+          VersionedStorageFormat.fromFormat(commonConfiguration.getDatabaseFormat());
       databaseMetadata = new DatabaseMetadata(format.getFormat(), format.getVersion());
       LOG.info("No existing database detected at {}. Using metadata {}", dataDir, databaseMetadata);
       if (!dataDirExists) {
@@ -260,9 +271,10 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       databaseMetadata.writeToDirectory(dataDir);
     }
 
-    final VersionedStorageFormat versionedFormat = VersionedStorageFormat.fromMetadata(databaseMetadata);
+    final VersionedStorageFormat versionedFormat =
+        VersionedStorageFormat.fromMetadata(databaseMetadata);
 
-    if(!SUPPORTED_VERSIONED_FORMATS.contains(versionedFormat)) {
+    if (!SUPPORTED_VERSIONED_FORMATS.contains(versionedFormat)) {
       final String message = "Unsupported RocksDB metadata: " + databaseMetadata;
       LOG.error(message);
       throw new StorageException(message);

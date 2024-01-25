@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.storage;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -34,7 +34,7 @@ public interface StorageProvider extends Closeable {
   BlockchainStorage createBlockchainStorage(
       ProtocolSchedule protocolSchedule, VariablesStorage variablesStorage);
 
-  WorldStateStorage createWorldStateStorage(DataStorageFormat dataStorageFormat);
+  WorldStateStorage createWorldStateStorage(DataStorageConfiguration dataStorageFormat);
 
   WorldStatePreimageStorage createWorldStatePreimageStorage();
 

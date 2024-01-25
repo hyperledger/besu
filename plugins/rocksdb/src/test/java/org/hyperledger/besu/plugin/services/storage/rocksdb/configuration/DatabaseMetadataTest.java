@@ -17,11 +17,12 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -31,8 +32,7 @@ class DatabaseMetadataTest {
   @Test
   void readingMetadataV1() throws Exception {
     final Path tempDataDir =
-        createAndWrite(
-            "data", "DATABASE_METADATA.json", "{\"version\":2 , \"privacyVersion\":1}");
+        createAndWrite("data", "DATABASE_METADATA.json", "{\"version\":2 , \"privacyVersion\":1}");
 
     final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
     assertThat(databaseMetadata.getFormat()).isEqualTo(DataStorageFormat.BONSAI);

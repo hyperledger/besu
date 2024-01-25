@@ -22,8 +22,7 @@ public enum DataStorageFormat {
   FOREST(1), // Original format.  Store all tries
   BONSAI(2); // New format.  Store one trie, and trie logs to roll forward and backward.
 
-  @Deprecated
-  private final int legacyVersion;
+  @Deprecated private final int legacyVersion;
 
   DataStorageFormat(final int legacyVersion) {
     this.legacyVersion = legacyVersion;

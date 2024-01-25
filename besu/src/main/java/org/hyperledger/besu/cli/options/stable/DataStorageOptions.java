@@ -17,16 +17,15 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_ENABLED;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_LIMIT;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.List;
 
@@ -39,7 +38,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
 
   private static final String DATA_STORAGE_FORMAT = "--data-storage-format";
 
-  private static final String BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD =
+  /** The maximum number of historical layers to load. */
+  public static final String BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD =
       "--bonsai-historical-block-limit";
 
   // Use Bonsai DB
@@ -54,34 +54,37 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
       names = {BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD, "--bonsai-maximum-back-layers-to-load"},
       paramLabel = "<LONG>",
       description =
-          "Limit of historical layers that can be loaded with BONSAI (default: ${DEFAULT-VALUE}).",
+          "Limit of historical layers that can be loaded with BONSAI (default: ${DEFAULT-VALUE}). When using "
+              + Unstable.BONSAI_LIMIT_TRIE_LOGS_ENABLED
+              + " it will also be used as the number of layers of trie logs to retain.",
       arity = "1")
   private Long bonsaiMaxLayersToLoad = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
 
   @CommandLine.ArgGroup(validate = false)
   private final DataStorageOptions.Unstable unstableOptions = new Unstable();
 
-  static class Unstable {
+  /** The unstable options for data storage. */
+  public static class Unstable {
+    private static final String BONSAI_LIMIT_TRIE_LOGS_ENABLED =
+        "--Xbonsai-limit-trie-logs-enabled";
+
+    /** The bonsai trie logs pruning window size. */
+    public static final String BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE =
+        "--Xbonsai-trie-logs-pruning-window-size";
 
     @CommandLine.Option(
         hidden = true,
-        names = {"--Xbonsai-trie-log-pruning-enabled"},
-        description = "Enable trie log pruning. (default: ${DEFAULT-VALUE})")
-    private boolean bonsaiTrieLogPruningEnabled = DEFAULT_BONSAI_TRIE_LOG_PRUNING_ENABLED;
-
-    @CommandLine.Option(
-        hidden = true,
-        names = {"--Xbonsai-trie-log-retention-threshold"},
+        names = {BONSAI_LIMIT_TRIE_LOGS_ENABLED},
         description =
-            "The number of blocks for which to retain trie logs. (default: ${DEFAULT-VALUE})")
-    private long bonsaiTrieLogRetentionThreshold = DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
+            "Limit the number of trie logs that are retained. (default: ${DEFAULT-VALUE})")
+    private boolean bonsaiLimitTrieLogsEnabled = DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
 
     @CommandLine.Option(
         hidden = true,
-        names = {"--Xbonsai-trie-log-pruning-limit"},
+        names = {BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE},
         description =
             "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
-    private int bonsaiTrieLogPruningLimit = DEFAULT_BONSAI_TRIE_LOG_PRUNING_LIMIT;
+    private int bonsaiTrieLogPruningWindowSize = DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
   }
   /**
    * Create data storage options.
@@ -98,21 +101,31 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
    * @param commandLine the full commandLine to check all the options specified by the user
    */
   public void validate(final CommandLine commandLine) {
-    if (unstableOptions.bonsaiTrieLogPruningEnabled) {
-      if (unstableOptions.bonsaiTrieLogRetentionThreshold
-          < MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD) {
+    if (unstableOptions.bonsaiLimitTrieLogsEnabled) {
+      if (bonsaiMaxLayersToLoad < MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT) {
         throw new CommandLine.ParameterException(
             commandLine,
             String.format(
-                "--Xbonsai-trie-log-retention-threshold minimum value is %d",
-                MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD));
+                BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD + " minimum value is %d",
+                MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT));
       }
-      if (unstableOptions.bonsaiTrieLogPruningLimit <= 0) {
+      if (unstableOptions.bonsaiTrieLogPruningWindowSize <= 0) {
         throw new CommandLine.ParameterException(
             commandLine,
             String.format(
-                "--Xbonsai-trie-log-pruning-limit=%d must be greater than 0",
-                unstableOptions.bonsaiTrieLogPruningLimit));
+                Unstable.BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
+                unstableOptions.bonsaiTrieLogPruningWindowSize));
+      }
+      if (unstableOptions.bonsaiTrieLogPruningWindowSize <= bonsaiMaxLayersToLoad) {
+        throw new CommandLine.ParameterException(
+            commandLine,
+            String.format(
+                Unstable.BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE
+                    + "=%d must be greater than "
+                    + BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
+                    + "=%d",
+                unstableOptions.bonsaiTrieLogPruningWindowSize,
+                bonsaiMaxLayersToLoad));
       }
     }
   }
@@ -121,12 +134,10 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
     dataStorageOptions.dataStorageFormat = domainObject.getDataStorageFormat();
     dataStorageOptions.bonsaiMaxLayersToLoad = domainObject.getBonsaiMaxLayersToLoad();
-    dataStorageOptions.unstableOptions.bonsaiTrieLogPruningEnabled =
-        domainObject.getUnstable().getBonsaiTrieLogPruningEnabled();
-    dataStorageOptions.unstableOptions.bonsaiTrieLogRetentionThreshold =
-        domainObject.getUnstable().getBonsaiTrieLogRetentionThreshold();
-    dataStorageOptions.unstableOptions.bonsaiTrieLogPruningLimit =
-        domainObject.getUnstable().getBonsaiTrieLogPruningLimit();
+    dataStorageOptions.unstableOptions.bonsaiLimitTrieLogsEnabled =
+        domainObject.getUnstable().getBonsaiLimitTrieLogsEnabled();
+    dataStorageOptions.unstableOptions.bonsaiTrieLogPruningWindowSize =
+        domainObject.getUnstable().getBonsaiTrieLogPruningWindowSize();
 
     return dataStorageOptions;
   }
@@ -138,9 +149,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         .bonsaiMaxLayersToLoad(bonsaiMaxLayersToLoad)
         .unstable(
             ImmutableDataStorageConfiguration.Unstable.builder()
-                .bonsaiTrieLogPruningEnabled(unstableOptions.bonsaiTrieLogPruningEnabled)
-                .bonsaiTrieLogRetentionThreshold(unstableOptions.bonsaiTrieLogRetentionThreshold)
-                .bonsaiTrieLogPruningLimit(unstableOptions.bonsaiTrieLogPruningLimit)
+                .bonsaiLimitTrieLogsEnabled(unstableOptions.bonsaiLimitTrieLogsEnabled)
+                .bonsaiTrieLogPruningWindowSize(unstableOptions.bonsaiTrieLogPruningWindowSize)
                 .build())
         .build();
   }

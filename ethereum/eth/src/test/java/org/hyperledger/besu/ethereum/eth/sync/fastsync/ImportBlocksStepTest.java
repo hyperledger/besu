@@ -45,7 +45,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class FastImportBlocksStepTest {
+public class ImportBlocksStepTest {
 
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
@@ -56,7 +56,7 @@ public class FastImportBlocksStepTest {
   @Mock private BlockHeader pivotHeader;
   private final BlockDataGenerator gen = new BlockDataGenerator();
 
-  private FastImportBlocksStep importBlocksStep;
+  private ImportBlocksStep importBlocksStep;
 
   @BeforeEach
   public void setUp() {
@@ -66,7 +66,7 @@ public class FastImportBlocksStepTest {
     when(ommerValidationPolicy.getValidationModeForNextBlock()).thenReturn(LIGHT);
 
     importBlocksStep =
-        new FastImportBlocksStep(
+        new ImportBlocksStep(
             protocolSchedule,
             protocolContext,
             validationPolicy,

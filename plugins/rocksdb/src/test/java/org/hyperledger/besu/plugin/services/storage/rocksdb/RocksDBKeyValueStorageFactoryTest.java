@@ -51,7 +51,7 @@ public class RocksDBKeyValueStorageFactoryTest {
   @TempDir public Path temporaryFolder;
   private final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final SegmentIdentifier segment = TestSegment.FOO;
-  private final List<SegmentIdentifier> segments = List.of(segment);
+  private final List<SegmentIdentifier> segments = List.of(TestSegment.DEFAULT, segment);
 
   @Test
   public void shouldCreateCorrectMetadataFileForLatestVersion() throws Exception {
@@ -119,14 +119,20 @@ public class RocksDBKeyValueStorageFactoryTest {
 
     final RocksDBKeyValueStorageFactory storageFactory =
         new RocksDBKeyValueStorageFactory(
-            () -> rocksDbConfiguration, segments, DataStorageFormat.BONSAI, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
+            () -> rocksDbConfiguration,
+            segments,
+            DataStorageFormat.BONSAI,
+            RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
 
     storageFactory.create(segment, commonConfiguration, metricsSystem);
     storageFactory.close();
 
     final RocksDBKeyValueStorageFactory rolledbackStorageFactory =
         new RocksDBKeyValueStorageFactory(
-            () -> rocksDbConfiguration, segments, DataStorageFormat.FOREST, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
+            () -> rocksDbConfiguration,
+            segments,
+            DataStorageFormat.FOREST,
+            RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
     rolledbackStorageFactory.create(segment, commonConfiguration, metricsSystem);
   }
 

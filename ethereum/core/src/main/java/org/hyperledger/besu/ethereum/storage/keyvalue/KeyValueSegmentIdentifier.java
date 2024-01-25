@@ -14,26 +14,26 @@
  */
 package org.hyperledger.besu.ethereum.storage.keyvalue;
 
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
-import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
-
-import org.bouncycastle.util.Arrays;
-
-import java.util.EnumSet;
-
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.FOREST;
 
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+
+import java.nio.charset.StandardCharsets;
+import java.util.EnumSet;
+
 public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
-  BLOCKCHAIN(new byte[] {1}, true),
-  WORLD_STATE(new byte[] {2}, EnumSet.of(FOREST)),
+  DEFAULT("default".getBytes(StandardCharsets.UTF_8)),
+  BLOCKCHAIN(new byte[] {1}, true, true),
+  WORLD_STATE(new byte[] {2}, EnumSet.of(FOREST), false, true),
   PRIVATE_TRANSACTIONS(new byte[] {3}),
   PRIVATE_STATE(new byte[] {4}),
   PRUNING_STATE(new byte[] {5}, EnumSet.of(FOREST)),
-  ACCOUNT_INFO_STATE(new byte[] {6}, EnumSet.of(BONSAI)),
+  ACCOUNT_INFO_STATE(new byte[] {6}, EnumSet.of(BONSAI), false, true),
   CODE_STORAGE(new byte[] {7}, EnumSet.of(BONSAI)),
-  ACCOUNT_STORAGE_STORAGE(new byte[] {8}, EnumSet.of(BONSAI)),
-  TRIE_BRANCH_STORAGE(new byte[] {9}, EnumSet.of(BONSAI)),
+  ACCOUNT_STORAGE_STORAGE(new byte[] {8}, EnumSet.of(BONSAI), false, true),
+  TRIE_BRANCH_STORAGE(new byte[] {9}, EnumSet.of(BONSAI), false, true),
   TRIE_LOG_STORAGE(new byte[] {10}, EnumSet.of(BONSAI)),
   VARIABLES(new byte[] {11}), // formerly GOQUORUM_PRIVATE_WORLD_STATE
 
@@ -51,24 +51,30 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   private final byte[] id;
   private final EnumSet<DataStorageFormat> formats;
   private final boolean containsStaticData;
+  private final boolean eligibleToHighSpecFlag;
 
   KeyValueSegmentIdentifier(final byte[] id) {
     this(id, EnumSet.allOf(DataStorageFormat.class));
   }
 
-  KeyValueSegmentIdentifier(final byte[] id, final boolean containsStaticData) {
-    this(id, EnumSet.allOf(DataStorageFormat.class), containsStaticData);
+  KeyValueSegmentIdentifier(
+      final byte[] id, final boolean containsStaticData, final boolean eligibleToHighSpecFlag) {
+    this(id, EnumSet.allOf(DataStorageFormat.class), containsStaticData, eligibleToHighSpecFlag);
   }
 
   KeyValueSegmentIdentifier(final byte[] id, final EnumSet<DataStorageFormat> formats) {
-    this(id, formats, false);
+    this(id, formats, false, false);
   }
 
   KeyValueSegmentIdentifier(
-      final byte[] id, final EnumSet<DataStorageFormat> formats, final boolean containsStaticData) {
+      final byte[] id,
+      final EnumSet<DataStorageFormat> formats,
+      final boolean containsStaticData,
+      final boolean eligibleToHighSpecFlag) {
     this.id = id;
     this.formats = formats;
     this.containsStaticData = containsStaticData;
+    this.eligibleToHighSpecFlag = eligibleToHighSpecFlag;
   }
 
   @Override
@@ -84,6 +90,11 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   @Override
   public boolean containsStaticData() {
     return containsStaticData;
+  }
+
+  @Override
+  public boolean isEligibleToHighSpecFlag() {
+    return eligibleToHighSpecFlag;
   }
 
   @Override

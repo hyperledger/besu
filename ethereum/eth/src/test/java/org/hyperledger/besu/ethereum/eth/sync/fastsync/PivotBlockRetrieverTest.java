@@ -34,9 +34,9 @@ import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.util.Optional;
@@ -376,9 +376,9 @@ public class PivotBlockRetrieverTest {
 
     assertThat(future).isCompletedExceptionally();
     assertThatThrownBy(future::get)
-        .hasRootCauseInstanceOf(FastSyncException.class)
-        .extracting(e -> ((FastSyncException) ExceptionUtils.rootCause(e)).getError())
-        .isEqualTo(FastSyncError.PIVOT_BLOCK_HEADER_MISMATCH);
+        .hasRootCauseInstanceOf(SyncException.class)
+        .extracting(e -> ((SyncException) ExceptionUtils.rootCause(e)).getError())
+        .isEqualTo(SyncError.PIVOT_BLOCK_HEADER_MISMATCH);
   }
 
   @ParameterizedTest
@@ -406,9 +406,9 @@ public class PivotBlockRetrieverTest {
 
     assertThat(future).isCompletedExceptionally();
     assertThatThrownBy(future::get)
-        .hasRootCauseInstanceOf(FastSyncException.class)
-        .extracting(e -> ((FastSyncException) ExceptionUtils.rootCause(e)).getError())
-        .isEqualTo(FastSyncError.PIVOT_BLOCK_HEADER_MISMATCH);
+        .hasRootCauseInstanceOf(SyncException.class)
+        .extracting(e -> ((SyncException) ExceptionUtils.rootCause(e)).getError())
+        .isEqualTo(SyncError.PIVOT_BLOCK_HEADER_MISMATCH);
   }
 
   private Responder responderForFakeBlocks(final long... blockNumbers) {

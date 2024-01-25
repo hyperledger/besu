@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -24,7 +25,6 @@ import java.util.function.Predicate;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 public interface WorldStateStorage {
 

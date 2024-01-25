@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.eth.sync.PipelineChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncTargetManager;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.SyncTargetManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -38,8 +38,8 @@ public class CheckpointSyncChainDownloader extends FastSyncChainDownloader {
       final MetricsSystem metricsSystem,
       final FastSyncState fastSyncState) {
 
-    final FastSyncTargetManager syncTargetManager =
-        new FastSyncTargetManager(
+    final SyncTargetManager syncTargetManager =
+        new SyncTargetManager(
             config,
             worldStateStorage,
             protocolSchedule,

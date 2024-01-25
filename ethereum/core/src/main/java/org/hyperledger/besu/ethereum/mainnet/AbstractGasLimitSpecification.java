@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 /** Specification for the block gasLimit. */
 public abstract class AbstractGasLimitSpecification {
 
-  public static final long DEFAULT_MAX_CONSTANT_ADMUSTMENT_INCREMENT = 1024L;
   public static final long DEFAULT_MIN_GAS_LIMIT = 5000L;
   public static final long DEFAULT_MAX_GAS_LIMIT = Long.MAX_VALUE;
 

@@ -22,15 +22,14 @@ import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactor
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.DatabaseMetadata;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.VersionedStorageFormat;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.OptionalInt;
 import java.util.Set;
 
-import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.VersionedStorageFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -132,7 +131,8 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
           dataDir,
           privacyDatabaseVersion);
       Files.createDirectories(dataDir);
-      final VersionedStorageFormat format = VersionedStorageFormat.fromFormat(commonConfiguration.getDatabaseFormat());
+      final VersionedStorageFormat format =
+          VersionedStorageFormat.fromFormat(commonConfiguration.getDatabaseFormat());
       new DatabaseMetadata(format.getFormat(), format.getVersion(), privacyDatabaseVersion)
           .writeToDirectory(dataDir);
     }
