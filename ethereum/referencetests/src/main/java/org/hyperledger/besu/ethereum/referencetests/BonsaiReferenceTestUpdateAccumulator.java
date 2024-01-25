@@ -23,7 +23,10 @@ import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldStateUpdat
 import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldView;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiReferenceTestUpdateAccumulator extends BonsaiWorldStateUpdateAccumulator {
   private final BonsaiPreImageProxy preImageProxy;
@@ -42,5 +45,30 @@ public class BonsaiReferenceTestUpdateAccumulator extends BonsaiWorldStateUpdate
   protected Hash hashAndSavePreImage(final Bytes bytes) {
     // by default do not save hash preImages
     return preImageProxy.hashAndSavePreImage(bytes);
+  }
+
+  public BonsaiReferenceTestUpdateAccumulator createDetachedAccumulator() {
+    final BonsaiReferenceTestUpdateAccumulator copy =
+        new BonsaiReferenceTestUpdateAccumulator(
+            wrappedWorldView(),
+            accountPreloader,
+            storagePreloader,
+            preImageProxy,
+            evmConfiguration);
+    getAccountsToUpdate().forEach((k, v) -> copy.getAccountsToUpdate().put(k, v.copy()));
+    getCodeToUpdate().forEach((k, v) -> copy.getCodeToUpdate().put(k, v.copy()));
+    copy.getStorageToClear().addAll(getStorageToClear());
+    getStorageToUpdate()
+        .forEach(
+            (k, v) -> {
+              StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>> newMap =
+                  new StorageConsumingMap<>(k, new ConcurrentHashMap<>(), v.getConsumer());
+              v.forEach((key, value) -> newMap.put(key, value.copy()));
+              copy.getStorageToUpdate().put(k, newMap);
+            });
+    copy.updatedAccounts.putAll(updatedAccounts);
+    copy.deletedAccounts.addAll(deletedAccounts);
+    copy.isAccumulatorStateChanged = true;
+    return copy;
   }
 }

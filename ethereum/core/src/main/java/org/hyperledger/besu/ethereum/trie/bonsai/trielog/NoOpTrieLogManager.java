@@ -25,7 +25,7 @@ import java.util.Optional;
 public class NoOpTrieLogManager extends TrieLogManager {
 
   public NoOpTrieLogManager() {
-    super(null, null, 0, null, TrieLogPruner.noOpTrieLogPruner());
+    super(null, null, 0, null);
   }
 
   @Override

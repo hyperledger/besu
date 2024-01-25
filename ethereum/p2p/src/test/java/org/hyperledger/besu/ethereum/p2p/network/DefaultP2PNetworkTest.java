@@ -55,7 +55,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.vertx.core.Context;
@@ -82,7 +81,7 @@ public final class DefaultP2PNetworkTest {
   @Mock PeerDiscoveryAgent discoveryAgent;
   @Mock RlpxAgent rlpxAgent;
 
-  @Captor private ArgumentCaptor<Stream<? extends Peer>> peerStreamCaptor;
+  @Captor private ArgumentCaptor<DiscoveryPeer> peerCaptor;
 
   private final NetworkingConfiguration config =
       NetworkingConfiguration.create()
@@ -276,12 +275,9 @@ public final class DefaultP2PNetworkTest {
 
     final DefaultP2PNetwork network = network();
     network.attemptPeerConnections();
-    verify(rlpxAgent, times(1)).connect(peerStreamCaptor.capture());
+    verify(rlpxAgent, times(1)).connect(peerCaptor.capture());
 
-    final List<? extends Peer> capturedPeers =
-        peerStreamCaptor.getValue().collect(Collectors.toList());
-    assertThat(capturedPeers.contains(discoPeer)).isTrue();
-    assertThat(capturedPeers.size()).isEqualTo(1);
+    assertThat(peerCaptor.getValue()).isEqualTo(discoPeer);
   }
 
   @Test
@@ -293,12 +289,7 @@ public final class DefaultP2PNetworkTest {
 
     final DefaultP2PNetwork network = network();
     network.attemptPeerConnections();
-    verify(rlpxAgent, times(1)).connect(peerStreamCaptor.capture());
-
-    final List<? extends Peer> capturedPeers =
-        peerStreamCaptor.getValue().collect(Collectors.toList());
-    assertThat(capturedPeers.contains(discoPeer)).isFalse();
-    assertThat(capturedPeers.size()).isEqualTo(0);
+    verify(rlpxAgent, times(0)).connect(any());
   }
 
   @Test
@@ -314,14 +305,7 @@ public final class DefaultP2PNetworkTest {
 
     final DefaultP2PNetwork network = network();
     network.attemptPeerConnections();
-    verify(rlpxAgent, times(1)).connect(peerStreamCaptor.capture());
-
-    final List<? extends Peer> capturedPeers =
-        peerStreamCaptor.getValue().collect(Collectors.toList());
-    assertThat(capturedPeers.size()).isEqualTo(3);
-    assertThat(capturedPeers.get(0)).isEqualTo(discoPeers.get(1));
-    assertThat(capturedPeers.get(1)).isEqualTo(discoPeers.get(0));
-    assertThat(capturedPeers.get(2)).isEqualTo(discoPeers.get(2));
+    verify(rlpxAgent, times(3)).connect(any());
   }
 
   @Test
