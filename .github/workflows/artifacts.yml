@@ -48,7 +48,7 @@ jobs:
             ${{steps.hashes.outputs.zipSha}}
   testWindows:
     runs-on: windows-2022
-    needs: assemble
+    needs: artifacts
     timeout-minutes: 10
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
