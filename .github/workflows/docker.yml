@@ -3,6 +3,8 @@ on:
   release:
     types:
       - prereleased
+env:
+  registry: ghcr.io
 
 jobs:
   hadolint:
@@ -29,6 +31,9 @@ jobs:
         run: docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
   buildDocker:
     needs: hadolint
+    permissions:
+      contents: read
+      packages: write
     strategy:
       fail-fast: false
       matrix:
@@ -60,29 +65,26 @@ jobs:
           java-version: 17
       - name: setup gradle
         uses: gradle/gradle-build-action@v2.10.0
-      - name: build image
-        uses: gradle/gradle-build-action@v2.10.0
-        with:
-          arguments: distDocker -PdockerOrgName=${{ secrets.DOCKER_ORG }} -Prelease.releaseVersion=${{ github.ref_name }}
       - name: install goss
         run: |
           mkdir -p docker/reports
           curl -L https://github.com/aelsabbahy/goss/releases/download/v0.4.4/goss-${{ steps.prep.outputs.PLATFORM_PAIR }} -o ./docker/tests/goss-${{ steps.prep.outputs.PLATFORM_PAIR }}
-      - name: test docker
+      - name: build and test docker
         uses: gradle/gradle-build-action@v2.10.0
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
         with:
-          arguments: testDocker -PdockerOrgName=${{ secrets.DOCKER_ORG }} -Prelease.releaseVersion=${{ github.ref_name }}
-      - name: Login to DockerHub
+          arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Prelease.releaseVersion=${{ github.ref_name }}
+      - name: login to ghcr
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_USER_RW }}
-          password: ${{ secrets.DOCKER_PASSWORD_RW }}
+          registry: ${{ env.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: publish
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
-        run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ secrets.DOCKER_ORG }} -Prelease.releaseVersion=${{ github.ref_name }}
+        run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Prelease.releaseVersion=${{ github.ref_name }}
   multiArch:
     needs: buildDocker
     runs-on: ubuntu-22.04
@@ -96,10 +98,11 @@ jobs:
           java-version: 17
       - name: setup gradle
         uses: gradle/gradle-build-action@v2.10.0
-      - name: Login to DockerHub
+      - name: login to ghcr
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_USER_RW }}
-          password: ${{ secrets.DOCKER_PASSWORD_RW }}
+          registry: ${{ env.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: multi-arch docker
-        run: ./gradlew manifestDocker -PdockerOrgName=${{secrets.DOCKER_ORG }} -Prelease.releaseVersion=${{ github.ref_name }}
+        run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Prelease.releaseVersion=${{ github.ref_name }}

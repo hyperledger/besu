@@ -772,6 +772,7 @@ task distDocker {
 }
 
 task testDocker {
+  dependsOn distDocker
   def dockerReportsDir = "docker/reports/"
 
   doFirst {
