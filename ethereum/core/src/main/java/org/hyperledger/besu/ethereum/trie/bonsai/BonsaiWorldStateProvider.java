@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.flat.FullFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
@@ -347,6 +348,11 @@ public class BonsaiWorldStateProvider implements FlatWorldStateArchive {
     this.cachedWorldStorageManager.reset();
     this.cachedWorldStorageManager.addCachedLayer(
         blockHeader, persistedState.getWorldStateRootHash(), persistedState);
+  }
+
+  @Override
+  public boolean isFullFlat() {
+    return worldStateStorage.getFlatDbStrategy() instanceof FullFlatDbStrategy;
   }
 
   @Override

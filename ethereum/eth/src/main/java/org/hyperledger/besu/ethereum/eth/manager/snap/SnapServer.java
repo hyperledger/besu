@@ -31,11 +31,12 @@ import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.worldstate.FlatWorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 
@@ -84,36 +85,34 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
   private final EthMessages snapMessages;
   private final Function<Optional<Hash>, Optional<BonsaiWorldStateKeyValueStorage>>
       worldStateStorageProvider;
-  private boolean isEnabled = true;
 
-  SnapServer(
-      final EthMessages snapMessages,
-      final ProtocolContext protocolContext,
-      final boolean isEnabled) {
+  SnapServer(final EthMessages snapMessages, final ProtocolContext protocolContext) {
     this(
         snapMessages,
         rootHash ->
             ((BonsaiWorldStateProvider) protocolContext.getWorldStateArchive())
                 .getCachedWorldStorageManager()
                 .flatMap(storageManager -> storageManager.getStorageByRootHash(rootHash)));
-    this.isEnabled = isEnabled;
-    var archive = protocolContext.getWorldStateArchive();
-    if (isEnabled && archive.isFlatArchive()) {
-      var cachedStorageManager = ((FlatWorldStateArchive) archive).getCachedWorldStorageManager();
-      var blockchain = protocolContext.getBlockchain();
+    Optional.of(protocolContext.getWorldStateArchive())
+        .flatMap(WorldStateArchive::isFlatArchive)
+        .filter(FlatWorldStateArchive::isFullFlat)
+        .ifPresent(
+            flatArchive -> {
+              var cachedStorageManager = flatArchive.getCachedWorldStorageManager();
+              var blockchain = protocolContext.getBlockchain();
 
-      // prime state-root-to-blockhash cache
-      primeWorldStateArchive(cachedStorageManager, blockchain);
+              // prime state-root-to-blockhash cache
+              primeWorldStateArchive(cachedStorageManager, blockchain);
 
-      // subscribe to initial sync completed events to start/stop snap server:
-      protocolContext
-          .getSynchronizer()
-          .filter(z -> z instanceof DefaultSynchronizer)
-          .map(DefaultSynchronizer.class::cast)
-          .ifPresentOrElse(
-              z -> this.listenerId.set(z.subscribeInitialSync(this)),
-              () -> LOGGER.warn("SnapServer created without reference to sync status"));
-    }
+              // subscribe to initial sync completed events to start/stop snap server:
+              protocolContext
+                  .getSynchronizer()
+                  .filter(z -> z instanceof DefaultSynchronizer)
+                  .map(DefaultSynchronizer.class::cast)
+                  .ifPresentOrElse(
+                      z -> this.listenerId.set(z.subscribeInitialSync(this)),
+                      () -> LOGGER.warn("SnapServer created without reference to sync status"));
+            });
   }
 
   /**

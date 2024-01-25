@@ -36,7 +36,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
@@ -53,12 +52,11 @@ public class SnapProtocolManager implements ProtocolManager {
       final List<PeerValidator> peerValidators,
       final EthPeers ethPeers,
       final EthMessages snapMessages,
-      final ProtocolContext protocolContext,
-      final Supplier<Boolean> isEnabled) {
+      final ProtocolContext protocolContext) {
     this.ethPeers = ethPeers;
     this.snapMessages = snapMessages;
     this.supportedCapabilities = calculateCapabilities();
-    new SnapServer(snapMessages, protocolContext, isEnabled.get());
+    new SnapServer(snapMessages, protocolContext);
   }
 
   private List<Capability> calculateCapabilities() {

@@ -28,13 +28,14 @@ import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogProvider;
 import org.hyperledger.besu.util.Subscribers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TrieLogManager {
   private static final Logger LOG = LoggerFactory.getLogger(TrieLogManager.class);
