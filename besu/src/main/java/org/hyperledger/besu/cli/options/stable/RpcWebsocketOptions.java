@@ -35,6 +35,7 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import picocli.CommandLine;
 
+/** This class represents the WebSocket options for the RPC. */
 public class RpcWebsocketOptions {
   @CommandLine.Option(
       names = {"--rpc-ws-authentication-jwt-algorithm"},
@@ -119,6 +120,13 @@ public class RpcWebsocketOptions {
       arity = "1")
   private final File rpcWsAuthenticationPublicKeyFile = null;
 
+  /**
+   * Validates the WebSocket options.
+   *
+   * @param logger Logger instance
+   * @param commandLine CommandLine instance
+   * @param configuredApis Predicate for configured APIs
+   */
   public void validate(
       final Logger logger, final CommandLine commandLine, final Predicate<String> configuredApis) {
     checkOptionDependencies(logger, commandLine);
@@ -149,6 +157,12 @@ public class RpcWebsocketOptions {
     }
   }
 
+  /**
+   * Checks the dependencies of the WebSocket options.
+   *
+   * @param logger Logger instance
+   * @param commandLine CommandLine instance
+   */
   private void checkOptionDependencies(final Logger logger, final CommandLine commandLine) {
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -179,6 +193,14 @@ public class RpcWebsocketOptions {
     }
   }
 
+  /**
+   * Creates a WebSocket configuration based on the WebSocket options.
+   *
+   * @param hostsAllowlist List of allowed hosts
+   * @param defaultHostAddress Default host address
+   * @param wsTimoutSec WebSocket timeout in seconds
+   * @return WebSocketConfiguration instance
+   */
   public WebSocketConfiguration webSocketConfiguration(
       final List<String> hostsAllowlist, final String defaultHostAddress, final Long wsTimoutSec) {
     final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
@@ -200,6 +222,12 @@ public class RpcWebsocketOptions {
     return webSocketConfiguration;
   }
 
+  /**
+   * Validates the authentication credentials file for the WebSocket.
+   *
+   * @param commandLine CommandLine instance
+   * @return Filename of the authentication credentials file
+   */
   private String rpcWsAuthenticationCredentialsFile(final CommandLine commandLine) {
     final String filename = rpcWsAuthenticationCredentialsFile;
 
@@ -209,14 +237,29 @@ public class RpcWebsocketOptions {
     return filename;
   }
 
+  /**
+   * Returns the list of APIs for the WebSocket.
+   *
+   * @return List of APIs
+   */
   public List<String> getRpcWsApis() {
     return rpcWsApis;
   }
 
+  /**
+   * Checks if the WebSocket service is enabled.
+   *
+   * @return Boolean indicating if the WebSocket service is enabled
+   */
   public Boolean isRpcWsEnabled() {
     return isRpcWsEnabled;
   }
 
+  /**
+   * Returns the port for the WebSocket service.
+   *
+   * @return Port number
+   */
   public Integer getRpcWsPort() {
     return rpcWsPort;
   }
