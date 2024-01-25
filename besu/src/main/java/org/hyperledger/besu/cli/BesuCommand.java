@@ -1181,6 +1181,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
   private final Integer numberOfblocksToCache = 0;
 
+  @Option(
+      names = {"--rpc-max-trace-filter-range"},
+      description =
+          "Specifies the maximum number of blocks for the trace_filter method. Must be >=0. 0 specifies no limit  (default: $DEFAULT-VALUE)")
+  private final Long maxTraceFilterRange = 1000L;
+
   @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
 
   @Mixin private PkiBlockCreationOptions pkiBlockCreationOptions;
@@ -2374,7 +2380,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .gasPriceMax(apiGasPriceMax)
             .maxLogsRange(rpcMaxLogsRange)
             .gasCap(rpcGasCap)
-            .isGasAndPriorityFeeLimitingEnabled(apiGasAndPriorityFeeLimitingEnabled);
+            .isGasAndPriorityFeeLimitingEnabled(apiGasAndPriorityFeeLimitingEnabled)
+            .maxTraceFilterRange(maxTraceFilterRange);
     if (apiGasAndPriorityFeeLimitingEnabled) {
       if (apiGasAndPriorityFeeLowerBoundCoefficient > apiGasAndPriorityFeeUpperBoundCoefficient) {
         throw new ParameterException(
@@ -3384,12 +3391,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setHighSpecEnabled();
     }
 
-    if (dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningEnabled()) {
-      builder.setTrieLogPruningEnabled();
-      builder.setTrieLogRetentionThreshold(
-          dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogRetentionThreshold());
-      builder.setTrieLogPruningLimit(
-          dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningLimit());
+    if (dataStorageOptions.toDomainObject().getUnstable().getBonsaiLimitTrieLogsEnabled()) {
+      builder.setLimitTrieLogsEnabled();
+      builder.setTrieLogRetentionLimit(
+          dataStorageOptions.toDomainObject().getBonsaiMaxLayersToLoad());
+      builder.setTrieLogsPruningWindowSize(
+          dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningWindowSize());
     }
 
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());

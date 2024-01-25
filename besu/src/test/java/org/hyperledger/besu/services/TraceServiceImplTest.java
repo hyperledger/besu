@@ -115,6 +115,7 @@ class TraceServiceImplTest {
         .getTransactions()
         .forEach(
             tx -> {
+              verify(opTracer).tracePrepareTransaction(any(), eq(tx));
               verify(opTracer).traceStartTransaction(any(), eq(tx));
               verify(opTracer)
                   .traceEndTransaction(
@@ -162,6 +163,7 @@ class TraceServiceImplTest {
                   .getTransactions()
                   .forEach(
                       tx -> {
+                        verify(opTracer).tracePrepareTransaction(any(), eq(tx));
                         verify(opTracer).traceStartTransaction(any(), eq(tx));
                         verify(opTracer)
                             .traceEndTransaction(
