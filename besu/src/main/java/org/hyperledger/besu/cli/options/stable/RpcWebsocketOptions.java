@@ -35,7 +35,7 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import picocli.CommandLine;
 
-public class JsonRpcWebsocketOptions {
+public class RpcWebsocketOptions {
   @CommandLine.Option(
       names = {"--rpc-ws-authentication-jwt-algorithm"},
       description =
@@ -124,7 +124,7 @@ public class JsonRpcWebsocketOptions {
     checkOptionDependencies(logger, commandLine);
 
     if (!rpcWsApis.stream().allMatch(configuredApis)) {
-      final List<String> invalidWsApis = new ArrayList<String>(rpcWsApis);
+      final List<String> invalidWsApis = new ArrayList<>(rpcWsApis);
       invalidWsApis.removeAll(VALID_APIS);
       throw new CommandLine.ParameterException(
           commandLine,

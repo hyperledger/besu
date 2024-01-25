@@ -34,7 +34,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class JsonRpcWebsocketOptionsTest extends CommandTestAbstract {
+public class RpcWebsocketOptionsTest extends CommandTestAbstract {
 
   @Test
   public void rpcWsApiPropertyMustBeUsed() {

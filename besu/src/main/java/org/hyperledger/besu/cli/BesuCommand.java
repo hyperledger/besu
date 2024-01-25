@@ -57,10 +57,10 @@ import org.hyperledger.besu.cli.options.MiningOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
-import org.hyperledger.besu.cli.options.stable.JsonRpcWebsocketOptions;
 import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
 import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.stable.P2PTLSConfigOptions;
+import org.hyperledger.besu.cli.options.stable.RpcWebsocketOptions;
 import org.hyperledger.besu.cli.options.unstable.ChainPruningOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
@@ -806,7 +806,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   // JSON-RPC Websocket Options
   @CommandLine.ArgGroup(validate = false, heading = "@|bold JSON-RPC Websocket Options|@%n")
-  JsonRpcWebsocketOptions jsonRpcWebsocketOptions = new JsonRpcWebsocketOptions();
+  RpcWebsocketOptions rpcWebsocketOptions = new RpcWebsocketOptions();
 
   // Privacy Options Group
   @CommandLine.ArgGroup(validate = false, heading = "@|bold Privacy Options|@%n")
@@ -1888,7 +1888,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             Arrays.stream(RpcApis.values())
                     .anyMatch(builtInApi -> apiName.equals(builtInApi.name()))
                 || rpcEndpointServiceImpl.hasNamespace(apiName);
-    jsonRpcWebsocketOptions.validate(logger, commandLine, configuredApis);
+    rpcWebsocketOptions.validate(logger, commandLine, configuredApis);
   }
 
   private void validateChainDataPruningParams() {
@@ -1991,7 +1991,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     p2pTLSConfiguration = p2pTLSConfigOptions.p2pTLSConfiguration(commandLine);
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration =
-        jsonRpcWebsocketOptions.webSocketConfiguration(
+        rpcWebsocketOptions.webSocketConfiguration(
             hostsAllowlist,
             p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress(),
             unstableRPCOptions.getWsTimeoutSec());
@@ -2444,7 +2444,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Optional<PermissioningConfiguration> permissioningConfiguration() throws Exception {
     if (!(localPermissionsEnabled() || contractPermissionsEnabled())) {
       if (jsonRPCHttpOptionGroup.rpcHttpApis.contains(RpcApis.PERM.name())
-          || jsonRpcWebsocketOptions.getRpcWsApis().contains(RpcApis.PERM.name())) {
+          || rpcWebsocketOptions.getRpcWsApis().contains(RpcApis.PERM.name())) {
         logger.warn(
             "Permissions are disabled. Cannot enable PERM APIs when not using Permissions.");
       }
@@ -2647,9 +2647,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private boolean anyPrivacyApiEnabled() {
     return jsonRPCHttpOptionGroup.rpcHttpApis.contains(RpcApis.EEA.name())
-        || jsonRpcWebsocketOptions.getRpcWsApis().contains(RpcApis.EEA.name())
+        || rpcWebsocketOptions.getRpcWsApis().contains(RpcApis.EEA.name())
         || jsonRPCHttpOptionGroup.rpcHttpApis.contains(RpcApis.PRIV.name())
-        || jsonRpcWebsocketOptions.getRpcWsApis().contains(RpcApis.PRIV.name());
+        || rpcWebsocketOptions.getRpcWsApis().contains(RpcApis.PRIV.name());
   }
 
   private PrivacyKeyValueStorageProvider privacyKeyStorageProvider(final String name) {
@@ -3161,9 +3161,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         jsonRPCHttpOptionGroup.rpcHttpPort,
         jsonRPCHttpOptionGroup.isRpcHttpEnabled);
     addPortIfEnabled(
-        effectivePorts,
-        jsonRpcWebsocketOptions.getRpcWsPort(),
-        jsonRpcWebsocketOptions.isRpcWsEnabled());
+        effectivePorts, rpcWebsocketOptions.getRpcWsPort(), rpcWebsocketOptions.isRpcWsEnabled());
     addPortIfEnabled(effectivePorts, engineRPCOptionGroup.engineRpcPort, isEngineApiEnabled());
     addPortIfEnabled(
         effectivePorts, metricsOptionGroup.metricsPort, metricsOptionGroup.isMetricsEnabled);
