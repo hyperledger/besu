@@ -15,7 +15,6 @@
 package org.hyperledger.besu.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
@@ -28,12 +27,10 @@ import static org.hyperledger.besu.cli.config.NetworkName.HOLESKY;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ENGINE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
@@ -71,8 +68,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -123,7 +118,6 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
@@ -306,17 +300,18 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path tempConfigFilePath = createTempFile("an-invalid-file-name-without-extension", "");
     parseCommand("--config-file", tempConfigFilePath.toString());
 
-    final String expectedOutputStart =
-        "Unable to read TOML configuration file " + tempConfigFilePath;
+    final String expectedOutputStart = "Unable to read TOML configuration file";
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void callingWithConfigOptionButTomlFileNotFoundShouldDisplayHelp() {
-    parseCommand("--config-file", "./an-invalid-file-name-sdsd87sjhqoi34io23.toml");
+    String invalidFile = "./an-invalid-file-name-sdsd87sjhqoi34io23.toml";
+    parseCommand("--config-file", invalidFile);
 
-    final String expectedOutputStart = "Unable to read TOML configuration, file not found.";
+    final String expectedOutputStart =
+        String.format("Unable to read TOML configuration, file not found: %s", invalidFile);
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
@@ -362,81 +357,6 @@ public class BesuCommandTest extends CommandTestAbstract {
             + "a boolean, a date/time, an array, or a table (line 1, column 8)";
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void overrideDefaultValuesIfKeyIsPresentInConfigFile(final @TempDir File dataFolder)
-      throws IOException {
-    final URL configFile = this.getClass().getResource("/complete_config.toml");
-    final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
-    final String updatedConfig =
-        Resources.toString(configFile, UTF_8)
-            .replace("/opt/besu/genesis.json", escapeTomlString(genesisFile.toString()))
-            .replace(
-                "data-path=\"/opt/besu\"",
-                "data-path=\"" + escapeTomlString(dataFolder.getPath()) + "\"");
-
-    final Path toml = createTempFile("toml", updatedConfig.getBytes(UTF_8));
-
-    final List<String> expectedApis = asList(ETH.name(), WEB3.name());
-
-    final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
-    jsonRpcConfiguration.setEnabled(false);
-    jsonRpcConfiguration.setHost("5.6.7.8");
-    jsonRpcConfiguration.setPort(5678);
-    jsonRpcConfiguration.setCorsAllowedDomains(Collections.emptyList());
-    jsonRpcConfiguration.setRpcApis(expectedApis);
-    jsonRpcConfiguration.setMaxActiveConnections(1000);
-
-    final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();
-    graphQLConfiguration.setEnabled(false);
-    graphQLConfiguration.setHost("6.7.8.9");
-    graphQLConfiguration.setPort(6789);
-
-    final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
-    webSocketConfiguration.setEnabled(false);
-    webSocketConfiguration.setHost("9.10.11.12");
-    webSocketConfiguration.setPort(9101);
-    webSocketConfiguration.setRpcApis(expectedApis);
-
-    final MetricsConfiguration metricsConfiguration =
-        MetricsConfiguration.builder().enabled(false).host("8.6.7.5").port(309).build();
-
-    parseCommand("--config-file", toml.toString());
-
-    verify(mockRunnerBuilder).discovery(eq(false));
-    verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).p2pAdvertisedHost(eq("1.2.3.4"));
-    verify(mockRunnerBuilder).p2pListenPort(eq(1234));
-    verify(mockRunnerBuilder).jsonRpcConfiguration(eq(jsonRpcConfiguration));
-    verify(mockRunnerBuilder).graphQLConfiguration(eq(graphQLConfiguration));
-    verify(mockRunnerBuilder).webSocketConfiguration(eq(webSocketConfiguration));
-    verify(mockRunnerBuilder).metricsConfiguration(eq(metricsConfiguration));
-    verify(mockRunnerBuilder).build();
-
-    final List<EnodeURL> nodes =
-        asList(
-            EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"),
-            EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"),
-            EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"));
-    assertThat(ethNetworkConfigArgumentCaptor.getValue().getBootNodes()).isEqualTo(nodes);
-
-    final EthNetworkConfig networkConfig =
-        new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(MAINNET))
-            .setNetworkId(BigInteger.valueOf(42))
-            .setGenesisConfig(encodeJsonGenesis(GENESIS_VALID_JSON))
-            .setBootNodes(nodes)
-            .setDnsDiscoveryUrl(null)
-            .build();
-    verify(mockControllerBuilder).dataDirectory(eq(dataFolder.toPath()));
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(eq(networkConfig), any(), any());
-    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
-
-    assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfigurationCaptor.getValue().getFastSyncMinimumPeerCount()).isEqualTo(13);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -859,81 +779,6 @@ public class BesuCommandTest extends CommandTestAbstract {
                 .filter(optionSpec -> !optionSpec.hidden())
                 .map(CommandLine.Model.OptionSpec::longestName))
         .isEmpty();
-  }
-
-  @Test
-  public void noOverrideDefaultValuesIfKeyIsNotPresentInConfigFile() {
-    final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
-
-    parseCommand("--config-file", configFile);
-    final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
-
-    final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();
-
-    final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
-
-    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
-
-    verify(mockRunnerBuilder).discovery(eq(true));
-    verify(mockRunnerBuilder)
-        .ethNetworkConfig(
-            new EthNetworkConfig(
-                EthNetworkConfig.jsonConfig(MAINNET),
-                MAINNET.getNetworkId(),
-                MAINNET_BOOTSTRAP_NODES,
-                MAINNET_DISCOVERY_URL));
-    verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));
-    verify(mockRunnerBuilder).p2pListenPort(eq(30303));
-    verify(mockRunnerBuilder).jsonRpcConfiguration(eq(jsonRpcConfiguration));
-    verify(mockRunnerBuilder).graphQLConfiguration(eq(graphQLConfiguration));
-    verify(mockRunnerBuilder).webSocketConfiguration(eq(webSocketConfiguration));
-    verify(mockRunnerBuilder).metricsConfiguration(eq(metricsConfiguration));
-    verify(mockRunnerBuilder).build();
-    verify(mockControllerBuilder).build();
-    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
-
-    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(5);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void envVariableOverridesValueFromConfigFile() {
-    final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
-    final String expectedCoinbase = "0x0000000000000000000000000000000000000004";
-    setEnvironmentVariable("BESU_MINER_COINBASE", expectedCoinbase);
-    parseCommand("--config-file", configFile);
-
-    verify(mockControllerBuilder)
-        .miningParameters(
-            ImmutableMiningParameters.builder()
-                .mutableInitValues(
-                    MutableInitValues.builder()
-                        .coinbase(Address.fromHexString(expectedCoinbase))
-                        .build())
-                .build());
-  }
-
-  @Test
-  public void cliOptionOverridesEnvVariableAndConfig() {
-    final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
-    final String expectedCoinbase = "0x0000000000000000000000000000000000000006";
-    setEnvironmentVariable("BESU_MINER_COINBASE", "0x0000000000000000000000000000000000000004");
-    parseCommand("--config-file", configFile, "--miner-coinbase", expectedCoinbase);
-
-    verify(mockControllerBuilder)
-        .miningParameters(
-            ImmutableMiningParameters.builder()
-                .mutableInitValues(
-                    MutableInitValues.builder()
-                        .coinbase(Address.fromHexString(expectedCoinbase))
-                        .build())
-                .build());
   }
 
   @Test
@@ -2299,18 +2144,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcWsNoAuthApiMethodsCannotBeInvalid() {
-    parseCommand("--rpc-ws-enabled", "--rpc-ws-api-methods-no-auth", "invalid");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "Invalid value for option '--rpc-ws-api-methods-no-auth', options must be valid RPC methods");
-  }
-
-  @Test
   public void rpcHttpOptionsRequiresServiceToBeEnabled() {
     parseCommand(
         "--rpc-http-api",
@@ -2456,18 +2289,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcWsApisPropertyWithInvalidEntryMustDisplayError() {
-    parseCommand("--rpc-ws-api", "ETH,BOB,TEST");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-
-    assertThat(commandErrorOutput.toString(UTF_8).trim())
-        .contains("Invalid value for option '--rpc-ws-api': invalid entries found [BOB, TEST]");
-  }
-
-  @Test
   public void rpcApisPropertyWithPluginNamespaceAreValid() {
 
     rpcEndpointServiceImpl.registerRPCEndpoint(
@@ -2542,35 +2363,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).build();
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getMaxActiveConnections())
-        .isEqualTo(maxConnections);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcWsMaxFrameSizePropertyMustBeUsed() {
-    final int maxFrameSize = 65535;
-    parseCommand("--rpc-ws-max-frame-size", String.valueOf(maxFrameSize));
-
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().getMaxFrameSize()).isEqualTo(maxFrameSize);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcWsMaxActiveConnectionsPropertyMustBeUsed() {
-    final int maxConnections = 99;
-    parseCommand("--rpc-ws-max-active-connections", String.valueOf(maxConnections));
-
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().getMaxActiveConnections())
         .isEqualTo(maxConnections);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -3389,129 +3181,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcWsRpcEnabledPropertyMustBeUsed() {
-    parseCommand("--rpc-ws-enabled");
-
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().isEnabled()).isTrue();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcWsOptionsRequiresServiceToBeEnabled() {
-    parseCommand(
-        "--rpc-ws-api",
-        "ETH,NET",
-        "--rpc-ws-host",
-        "0.0.0.0",
-        "--rpc-ws-port",
-        "1234",
-        "--rpc-ws-max-active-connections",
-        "77",
-        "--rpc-ws-max-frame-size",
-        "65535");
-
-    verifyOptionsConstraintLoggerCall(
-        "--rpc-ws-enabled",
-        "--rpc-ws-host",
-        "--rpc-ws-port",
-        "--rpc-ws-api",
-        "--rpc-ws-max-active-connections",
-        "--rpc-ws-max-frame-size");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcWsOptionsRequiresServiceToBeEnabledToml() throws IOException {
-    final Path toml =
-        createTempFile(
-            "toml",
-            "rpc-ws-api=[\"ETH\", \"NET\"]\n"
-                + "rpc-ws-host=\"0.0.0.0\"\n"
-                + "rpc-ws-port=1234\n"
-                + "rpc-ws-max-active-connections=77\n"
-                + "rpc-ws-max-frame-size=65535\n");
-
-    parseCommand("--config-file", toml.toString());
-
-    verifyOptionsConstraintLoggerCall(
-        "--rpc-ws-enabled",
-        "--rpc-ws-host",
-        "--rpc-ws-port",
-        "--rpc-ws-api",
-        "--rpc-ws-max-active-connections",
-        "--rpc-ws-max-frame-size");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcWsApiPropertyMustBeUsed() {
-    final TestBesuCommand command = parseCommand("--rpc-ws-enabled", "--rpc-ws-api", "ETH, NET");
-
-    assertThat(command).isNotNull();
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().getRpcApis())
-        .containsExactlyInAnyOrder(ETH.name(), NET.name());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcWsHostAndPortOptionMustBeUsed() {
-    final String host = "1.2.3.4";
-    final int port = 1234;
-    parseCommand("--rpc-ws-enabled", "--rpc-ws-host", host, "--rpc-ws-port", String.valueOf(port));
-
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
-    assertThat(wsRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcWsHostAndMayBeLocalhost() {
-    final String host = "localhost";
-    parseCommand("--rpc-ws-enabled", "--rpc-ws-host", host);
-
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcWsHostAndMayBeIPv6() {
-    final String host = "2600:DB8::8545";
-    parseCommand("--rpc-ws-enabled", "--rpc-ws-host", host);
-
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void metricsEnabledPropertyDefaultIsFalse() {
     parseCommand();
 
@@ -4300,35 +3969,6 @@ public class BesuCommandTest extends CommandTestAbstract {
             "No Payload Provider has been provided. You must register one when enabling privacy plugin!");
   }
 
-  private static String escapeTomlString(final String s) {
-    return StringEscapeUtils.escapeJava(s);
-  }
-
-  /**
-   * Check logger calls
-   *
-   * <p>Here we check the calls to logger and not the result of the log line as we don't test the
-   * logger itself but the fact that we call it.
-   *
-   * @param dependentOptions the string representing the list of dependent options names
-   * @param mainOption the main option name
-   */
-  private void verifyOptionsConstraintLoggerCall(
-      final String mainOption, final String... dependentOptions) {
-    verify(mockLogger, atLeast(1))
-        .warn(
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture());
-    assertThat(stringArgumentCaptor.getAllValues().get(0)).isEqualTo(DEPENDENCY_WARNING_MSG);
-
-    for (final String option : dependentOptions) {
-      assertThat(stringArgumentCaptor.getAllValues().get(1)).contains(option);
-    }
-
-    assertThat(stringArgumentCaptor.getAllValues().get(2)).isEqualTo(mainOption);
-  }
-
   /**
    * Check logger calls
    *
@@ -4519,17 +4159,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void webSocketAuthenticationAlgorithIsConfigured() {
-    parseCommand("--rpc-ws-authentication-jwt-algorithm", "ES256");
-
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().getAuthenticationAlgorithm())
-        .isEqualTo(JwtAlgorithm.ES256);
-  }
-
-  @Test
   public void httpAuthenticationPublicKeyIsConfigured() throws IOException {
     final Path publicKey = Files.createTempFile("public_key", "");
     parseCommand("--rpc-http-authentication-jwt-public-key-file", publicKey.toString());
@@ -4550,29 +4179,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
-  }
-
-  @Test
-  public void wsAuthenticationPublicKeyIsConfigured() throws IOException {
-    final Path publicKey = Files.createTempFile("public_key", "");
-    parseCommand("--rpc-ws-authentication-jwt-public-key-file", publicKey.toString());
-
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().getAuthenticationPublicKeyFile().getPath())
-        .isEqualTo(publicKey.toString());
-  }
-
-  @Test
-  public void wsAuthenticationWithoutRequiredConfiguredOptionsMustFail() {
-    parseCommand("--rpc-ws-enabled", "--rpc-ws-authentication-enabled");
-
-    verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file or authentication public key file");
   }
 
   @Test

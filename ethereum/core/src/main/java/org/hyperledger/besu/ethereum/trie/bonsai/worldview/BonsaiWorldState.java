@@ -121,12 +121,12 @@ public class BonsaiWorldState
   }
 
   /**
-   * Having a protected method to override the accumulator solves the chicken-egg problem of needing
-   * a worldstate reference (this) when construction the Accumulator.
+   * Override the accumulator solves the chicken-egg problem of needing a worldstate reference
+   * (this) when construction the Accumulator.
    *
    * @param accumulator accumulator to use.
    */
-  protected void setAccumulator(final BonsaiWorldStateUpdateAccumulator accumulator) {
+  public void setAccumulator(final BonsaiWorldStateUpdateAccumulator accumulator) {
     this.accumulator = accumulator;
   }
 

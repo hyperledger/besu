@@ -181,11 +181,11 @@ public class FastSyncDownloaderTest {
   public void shouldAbortIfSelectPivotBlockFails(final DataStorageFormat dataStorageFormat) {
     setup(dataStorageFormat);
     when(fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE))
-        .thenThrow(new FastSyncException(FastSyncError.UNEXPECTED_ERROR));
+        .thenThrow(new SyncException(SyncError.UNEXPECTED_ERROR));
 
     final CompletableFuture<FastSyncState> result = downloader.start();
 
-    assertCompletedExceptionally(result, FastSyncError.UNEXPECTED_ERROR);
+    assertCompletedExceptionally(result, SyncError.UNEXPECTED_ERROR);
 
     verify(fastSyncActions).selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE);
     verifyNoMoreInteractions(fastSyncActions);
@@ -224,10 +224,10 @@ public class FastSyncDownloaderTest {
 
     assertThat(result).isNotDone();
 
-    worldStateFuture.completeExceptionally(new FastSyncException(FastSyncError.NO_PEERS_AVAILABLE));
+    worldStateFuture.completeExceptionally(new SyncException(SyncError.NO_PEERS_AVAILABLE));
     verify(chainDownloader).cancel();
     chainFuture.completeExceptionally(new CancellationException());
-    assertCompletedExceptionally(result, FastSyncError.NO_PEERS_AVAILABLE);
+    assertCompletedExceptionally(result, SyncError.NO_PEERS_AVAILABLE);
     assertThat(chainFuture).isCancelled();
   }
 
@@ -264,8 +264,8 @@ public class FastSyncDownloaderTest {
 
     assertThat(result).isNotDone();
 
-    chainFuture.completeExceptionally(new FastSyncException(FastSyncError.NO_PEERS_AVAILABLE));
-    assertCompletedExceptionally(result, FastSyncError.NO_PEERS_AVAILABLE);
+    chainFuture.completeExceptionally(new SyncException(SyncError.NO_PEERS_AVAILABLE));
+    assertCompletedExceptionally(result, SyncError.NO_PEERS_AVAILABLE);
     assertThat(worldStateFuture).isCancelled();
   }
 
@@ -594,13 +594,13 @@ public class FastSyncDownloaderTest {
   }
 
   private <T> void assertCompletedExceptionally(
-      final CompletableFuture<T> future, final FastSyncError expectedError) {
+      final CompletableFuture<T> future, final SyncError expectedError) {
     assertThat(future).isCompletedExceptionally();
     future.exceptionally(
         actualError -> {
           assertThat(actualError)
-              .isInstanceOf(FastSyncException.class)
-              .extracting(ex -> ((FastSyncException) ex).getError())
+              .isInstanceOf(SyncException.class)
+              .extracting(ex -> ((SyncException) ex).getError())
               .isEqualTo(expectedError);
           return null;
         });

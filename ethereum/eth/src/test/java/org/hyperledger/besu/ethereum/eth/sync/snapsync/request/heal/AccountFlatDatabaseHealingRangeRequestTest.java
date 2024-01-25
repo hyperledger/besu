@@ -19,9 +19,9 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncMetricsManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapsyncMetricsManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -68,7 +68,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
   @BeforeEach
   public void setup() {
     Mockito.when(downloadState.getMetricsManager())
-        .thenReturn(Mockito.mock(SnapsyncMetricsManager.class));
+        .thenReturn(Mockito.mock(SnapSyncMetricsManager.class));
     Mockito.when(downloadState.getAccountsHealingList()).thenReturn(new HashSet<>());
   }
 

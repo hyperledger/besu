@@ -54,7 +54,7 @@ public class PersistDataStepTest {
 
   @BeforeEach
   public void setUp() {
-    when(downloadState.getMetricsManager()).thenReturn(mock(SnapsyncMetricsManager.class));
+    when(downloadState.getMetricsManager()).thenReturn(mock(SnapSyncMetricsManager.class));
   }
 
   @Test
