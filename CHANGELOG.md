@@ -55,8 +55,6 @@
 
 ## 24.1.0
 
-- Github Actions based build.
-
 ### Breaking Changes
 
 ### Deprecations
