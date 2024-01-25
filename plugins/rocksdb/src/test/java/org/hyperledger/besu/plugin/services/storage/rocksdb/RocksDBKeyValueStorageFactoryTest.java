@@ -50,7 +50,7 @@ public class RocksDBKeyValueStorageFactoryTest {
   @TempDir public Path temporaryFolder;
   private final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final SegmentIdentifier segment = TestSegment.FOO;
-  private final List<SegmentIdentifier> segments = List.of(segment);
+  private final List<SegmentIdentifier> segments = List.of(TestSegment.DEFAULT, segment);
 
   @Test
   public void shouldCreateCorrectMetadataFileForLatestVersion() throws Exception {
