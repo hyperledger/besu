@@ -152,7 +152,8 @@ public class MainnetBlockValidator implements BlockValidator {
       context
           .getSynchronizer()
           .ifPresentOrElse(
-              synchronizer -> synchronizer.healWorldState(ex.getMaybeAddress(), ex.getLocation()),
+              synchronizer ->
+                  synchronizer.healWorldState(ex.getMaybeAddress(), ex.getLocation(), true),
               () ->
                   handleAndLogImportFailure(
                       block,

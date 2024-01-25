@@ -54,7 +54,9 @@ public class DummySynchronizer implements Synchronizer {
 
   @Override
   public boolean healWorldState(
-      final Optional<Address> maybeAccountToRepair, final Bytes location) {
+      final Optional<Address> maybeAccountToRepair,
+      final Bytes location,
+      final boolean shouldResetFlatDb) {
     return false;
   }
 

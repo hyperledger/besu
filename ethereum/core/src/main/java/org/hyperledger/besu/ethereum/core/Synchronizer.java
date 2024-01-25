@@ -45,7 +45,10 @@ public interface Synchronizer {
 
   boolean resyncWorldState();
 
-  boolean healWorldState(final Optional<Address> maybeAccountToRepair, final Bytes location);
+  boolean healWorldState(
+      final Optional<Address> maybeAccountToRepair,
+      final Bytes location,
+      final boolean shouldResetFlatDb);
 
   long subscribeSyncStatus(final BesuEvents.SyncStatusListener listener);
 

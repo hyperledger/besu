@@ -307,11 +307,15 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
 
   @Override
   public boolean healWorldState(
-      final Optional<Address> maybeAccountToRepair, final Bytes location) {
+      final Optional<Address> maybeAccountToRepair,
+      final Bytes location,
+      final boolean shouldResetFlatDb) {
     // recreate fast sync with resync and start
     if (fastSyncDownloader.isPresent() && running.get()) {
       stop();
-      fastSyncDownloader.get().deleteFastSyncState();
+      if (shouldResetFlatDb) {
+        fastSyncDownloader.get().deleteFastSyncState();
+      }
     }
 
     LOG.atDebug()

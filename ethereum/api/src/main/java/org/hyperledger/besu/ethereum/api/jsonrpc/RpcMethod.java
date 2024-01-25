@@ -35,6 +35,7 @@ public enum RpcMethod {
   DEBUG_ACCOUNT_AT("debug_accountAt"),
   DEBUG_METRICS("debug_metrics"),
   DEBUG_RESYNC_WORLDSTATE("debug_resyncWorldState"),
+  DEBUG_HEAL_WORLDSTATE("debug_healWorldState"),
   DEBUG_SET_HEAD("debug_setHead"),
   DEBUG_REPLAY_BLOCK("debug_replayBlock"),
   DEBUG_STORAGE_RANGE_AT("debug_storageRangeAt"),
