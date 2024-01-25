@@ -59,7 +59,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       EnumSet.of(FOREST_WITH_VARIABLES, BONSAI_WITH_VARIABLES);
   private static final String NAME = "rocksdb";
   private final RocksDBMetricsFactory rocksDBMetricsFactory;
-  private VersionedStorageFormat versionedStorageFormat;
+  private DatabaseMetadata databaseMetadata;
   private RocksDBColumnarKeyValueStorage segmentedStorage;
   private RocksDBConfiguration rocksDBConfiguration;
 
@@ -86,7 +86,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     this.configuredSegments = configuredSegments;
     this.ignorableSegments = ignorableSegments;
     this.rocksDBMetricsFactory = rocksDBMetricsFactory;
-    this.versionedStorageFormat = VersionedStorageFormat.fromFormat(format);
+    this.databaseMetadata = DatabaseMetadata.defaultForNewDb(format);
   }
 
   /**
@@ -185,14 +185,14 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
           configuredSegments.stream()
               .filter(
                   segmentId ->
-                      segmentId.includeInDatabaseFormat(versionedStorageFormat.getFormat()))
+                      segmentId.includeInDatabaseFormat(databaseMetadata.getVersionedStorageFormat().getFormat()))
               .toList();
 
       // It's probably a good idea for the creation logic to be entirely dependent on the database
       // version. Introducing intermediate booleans that represent database properties and
       // dispatching
       // creation logic based on them is error-prone.
-      switch (versionedStorageFormat.getFormat()) {
+      switch (databaseMetadata.getVersionedStorageFormat().getFormat()) {
         case FOREST -> {
           LOG.debug("FOREST mode detected, using TransactionDB.");
           segmentedStorage =
@@ -230,7 +230,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
   private void init(final BesuConfiguration commonConfiguration) {
     try {
-      versionedStorageFormat = readDatabaseMetadata(commonConfiguration);
+      databaseMetadata = readDatabaseMetadata(commonConfiguration);
     } catch (final IOException e) {
       final String message =
           "Failed to retrieve the RocksDB database meta version: "
@@ -248,7 +248,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     return segmentedStorage == null;
   }
 
-  private VersionedStorageFormat readDatabaseMetadata(final BesuConfiguration commonConfiguration)
+  private DatabaseMetadata readDatabaseMetadata(final BesuConfiguration commonConfiguration)
       throws IOException {
     final Path dataDir = commonConfiguration.getDataPath();
     final boolean databaseExists = commonConfiguration.getStoragePath().toFile().exists();
@@ -257,30 +257,25 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     if (databaseExists) {
       databaseMetadata = DatabaseMetadata.lookUpFrom(dataDir);
       LOG.info(
-          "Existing database detected at {}. Metadata {}. Compacting database...",
+          "Existing database detected at {}. Metadata {}. Processing WAL...",
           dataDir,
           databaseMetadata);
     } else {
-      final VersionedStorageFormat format =
-          VersionedStorageFormat.fromFormat(commonConfiguration.getDatabaseFormat());
-      databaseMetadata = new DatabaseMetadata(format.getFormat(), format.getVersion());
-      LOG.info("No existing database detected at {}. Using metadata {}", dataDir, databaseMetadata);
+      databaseMetadata = DatabaseMetadata.defaultForNewDb(commonConfiguration.getDatabaseFormat());
+      LOG.info("No existing database detected at {}. Using default metadata for new db {}", dataDir, databaseMetadata);
       if (!dataDirExists) {
         Files.createDirectories(dataDir);
       }
       databaseMetadata.writeToDirectory(dataDir);
     }
 
-    final VersionedStorageFormat versionedFormat =
-        VersionedStorageFormat.fromMetadata(databaseMetadata);
-
-    if (!SUPPORTED_VERSIONED_FORMATS.contains(versionedFormat)) {
+    if (!SUPPORTED_VERSIONED_FORMATS.contains(databaseMetadata.getVersionedStorageFormat())) {
       final String message = "Unsupported RocksDB metadata: " + databaseMetadata;
       LOG.error(message);
       throw new StorageException(message);
     }
 
-    return versionedFormat;
+    return databaseMetadata;
   }
 
   @Override

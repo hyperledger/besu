@@ -14,15 +14,17 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.OptionalInt;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,95 +38,25 @@ public class DatabaseMetadata {
 
   private static final String METADATA_FILENAME = "DATABASE_METADATA.json";
   private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
-  private final DataStorageFormat format;
-  private final int version;
+  private final VersionedStorageFormat versionedStorageFormat;
 
-  private final OptionalInt maybePrivacyVersion;
-  //
-  //  /**
-  //   * Instantiates a new Database metadata.
-  //   *
-  //   * @param version the version
-  //   */
-  //  @JsonCreator
-  //  public DatabaseMetadata(final DataStorageFormat format, @JsonProperty("version") final int
-  // version) {
-  //    this(format, version, Optional.empty());
-  //  }
-
-  /**
-   * Instantiates a new Database metadata.
-   *
-   * @param format the format
-   * @param version the version
-   */
-  public DatabaseMetadata(final DataStorageFormat format, final int version) {
-    this(format, version, OptionalInt.empty());
-  }
-
-  /**
-   * Instantiates a new Database metadata.
-   *
-   * @param format the format
-   * @param version the version
-   * @param privacyVersion the privacy version
-   */
-  public DatabaseMetadata(
-      final DataStorageFormat format, final int version, final int privacyVersion) {
-    this(format, version, OptionalInt.of(privacyVersion));
-  }
-
-  /**
-   * Instantiates a new Database metadata.
-   *
-   * @param format the format
-   * @param version the version
-   * @param maybePrivacyVersion the optional privacy version
-   */
   private DatabaseMetadata(
-      final DataStorageFormat format, final int version, final OptionalInt maybePrivacyVersion) {
-    this.format = format;
-    this.version = version;
-    this.maybePrivacyVersion = maybePrivacyVersion;
-  }
-  //
-  //  /**
-  //   * Instantiates a new Database metadata.
-  //   *
-  //   * @param version the version
-  //   * @param privacyVersion the privacy version
-  //   */
-  //  public DatabaseMetadata(final DataStorageFormat format, final int version, final int
-  // privacyVersion) {
-  //    this(format, version, Optional.of(privacyVersion));
-  //  }
-
-  public DataStorageFormat getFormat() {
-    return format;
+   final VersionedStorageFormat versionedStorageFormat) {
+  this.versionedStorageFormat = versionedStorageFormat;
   }
 
-  /**
-   * Gets version.
-   *
-   * @return the version
-   */
-  public int getVersion() {
-    return version;
+  public static DatabaseMetadata defaultForNewDb(final DataStorageFormat dataStorageFormat) {
+    return new DatabaseMetadata(VersionedStorageFormat.defaultForNewDB(dataStorageFormat));
   }
 
-  /**
-   * Maybe privacy version.
-   *
-   * @return the optional
-   */
-  public OptionalInt maybePrivacyVersion() {
-    return maybePrivacyVersion;
+  public VersionedStorageFormat getVersionedStorageFormat() {
+    return versionedStorageFormat;
   }
 
   /**
    * Look up database metadata.
    *
-   * @param dataDir the data dir
+   * @param dataDir        the data dir
    * @return the database metadata
    * @throws IOException the io exception
    */
@@ -144,7 +76,7 @@ public class DatabaseMetadata {
   }
 
   private void writeToFile(final File file) throws IOException {
-    MAPPER.writeValue(file, new V2(new MetadataV2(format, version, maybePrivacyVersion)));
+    MAPPER.writeValue(file, new V2(new MetadataV2(versionedStorageFormat.getFormat(), versionedStorageFormat.getVersion())));
   }
 
   private static File getDefaultMetadataFile(final Path dataDir) {
@@ -153,7 +85,6 @@ public class DatabaseMetadata {
 
   private static DatabaseMetadata resolveDatabaseMetadata(final File metadataFile)
       throws IOException {
-    DatabaseMetadata databaseMetadata;
     try {
       try {
         return tryReadAndMigrateV1(metadataFile);
@@ -161,60 +92,68 @@ public class DatabaseMetadata {
         return tryReadV2(metadataFile);
       }
     } catch (FileNotFoundException fnfe) {
-      databaseMetadata = new DatabaseMetadata(DataStorageFormat.FOREST, 2);
+      throw new IllegalStateException("Database exists but metadata file " + metadataFile.toString() + " not found, without it there is no safe way to open the database");
     } catch (JsonProcessingException jpe) {
       throw new IllegalStateException(
           String.format("Invalid metadata file %s", metadataFile.getAbsolutePath()), jpe);
     }
-    return databaseMetadata;
   }
 
   private static DatabaseMetadata tryReadAndMigrateV1(final File metadataFile) throws IOException {
     final V1 v1 = MAPPER.readValue(metadataFile, V1.class);
-    final DatabaseMetadata metadataV1 =
-        new DatabaseMetadata(DataStorageFormat.fromLegacyVersion(v1.version), 2, v1.privacyVersion);
+    // when migrating from v1, this version will automatically migrate the db to the variables storage, so we use the `_WITH_VARIABLES` variants
+    final var versionedStorageFormat = switch (v1.version()) {
+      case 1 -> VersionedStorageFormat.FOREST_WITH_VARIABLES;
+      case 2 -> VersionedStorageFormat.BONSAI_WITH_VARIABLES;
+      default -> throw new IllegalStateException("Unsupported db version: " + v1.version());
+    };
+
+    final DatabaseMetadata metadataV2 =
+        new DatabaseMetadata(versionedStorageFormat);
     // writing the metadata will migrate to v2
-    metadataV1.writeToFile(metadataFile);
-    return metadataV1;
+    metadataV2.writeToFile(metadataFile);
+    return metadataV2;
   }
 
   private static DatabaseMetadata tryReadV2(final File metadataFile) throws IOException {
     final V2 v2 = MAPPER.readValue(metadataFile, V2.class);
-    return new DatabaseMetadata(v2.v2.format, v2.v2.version, v2.v2.privacyVersion);
+    return new DatabaseMetadata(fromV2(v2.v2));
+  }
+
+  private static VersionedStorageFormat fromV2(final MetadataV2 metadataV2) {
+    return Arrays.stream(VersionedStorageFormat.values())
+            .filter(
+                    vsf ->
+                            vsf.getFormat().equals(metadataV2.format())
+                                    && vsf.getVersion() == metadataV2.version())
+            .findFirst()
+            .orElseThrow(
+                    () -> {
+                      final String message = "Unsupported RocksDB metadata: " + metadataV2;
+                      LOG.error(message);
+                      throw new StorageException(message);
+                    });
   }
 
   @Override
   public String toString() {
-    return "format="
-        + format
-        + ", version="
-        + version
-        + ((maybePrivacyVersion.isPresent()) ? ", privacyVersion=" + maybePrivacyVersion : "");
+    return "versionedStorageFormat="
+        + versionedStorageFormat;
   }
 
-  private static class V1 {
-    @JsonProperty int version;
-    @JsonProperty OptionalInt privacyVersion;
+  @JsonSerialize
+  @SuppressWarnings("unused")
+  private record V1(
+    int version)
+  {};
+
+  @JsonSerialize
+  @SuppressWarnings("unused")
+  private record V2(MetadataV2 v2) {
   }
 
-  private static class V2 {
-    private final MetadataV2 v2;
-
-    public V2(final MetadataV2 v2) {
-      this.v2 = v2;
-    }
-  }
-
-  private static class MetadataV2 {
-    private final DataStorageFormat format;
-    private final int version;
-    private final OptionalInt privacyVersion;
-
-    public MetadataV2(
-        final DataStorageFormat format, final int version, final OptionalInt privacyVersion) {
-      this.format = format;
-      this.version = version;
-      this.privacyVersion = privacyVersion;
-    }
+  @JsonSerialize
+  @SuppressWarnings("unused")
+  private record MetadataV2(DataStorageFormat format, int version) {
   }
 }

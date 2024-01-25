@@ -24,6 +24,7 @@ import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.DatabaseMetadata;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PrivateVersionedStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 
 import java.nio.file.Files;
@@ -94,12 +95,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
     // Side effect is creation of the Metadata version file
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion()).isNotEmpty();
-
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isEqualTo(DEFAULT_VERSION);
-
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion().getAsInt())
-        .isEqualTo(DEFAULT_PRIVACY_VERSION);
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat()).isEqualTo(PrivateVersionedStorageFormat.ORIGINAL);
   }
 
   @Test
@@ -116,18 +112,16 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
 
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion()).isEmpty();
-
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isEqualTo(DEFAULT_VERSION);
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat()).isEqualTo(PrivateVersionedStorageFormat.ORIGINAL);
 
     final RocksDBKeyValuePrivacyStorageFactory privacyStorageFactory =
         new RocksDBKeyValuePrivacyStorageFactory(storageFactory);
 
     privacyStorageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion()).isNotEmpty();
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir, commonConfiguration.getDatabaseFormat()).maybePrivacyVersion()).isNotEmpty();
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion().getAsInt())
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir, commonConfiguration.getDatabaseFormat()).maybePrivacyVersion().getAsInt())
         .isEqualTo(DEFAULT_PRIVACY_VERSION);
   }
 }

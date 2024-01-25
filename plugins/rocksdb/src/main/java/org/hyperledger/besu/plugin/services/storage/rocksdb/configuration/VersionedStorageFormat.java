@@ -1,12 +1,6 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
-import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
-
-import java.util.Arrays;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public enum VersionedStorageFormat {
   FOREST_ORIGINAL(DataStorageFormat.FOREST, 1, 1),
@@ -14,7 +8,7 @@ public enum VersionedStorageFormat {
   BONSAI_ORIGINAL(DataStorageFormat.BONSAI, 1, 1),
   BONSAI_WITH_VARIABLES(DataStorageFormat.BONSAI, 2, 1);
 
-  private static final Logger LOG = LoggerFactory.getLogger(VersionedStorageFormat.class);
+//  private static final Logger LOG = LoggerFactory.getLogger(VersionedStorageFormat.class);
   private final DataStorageFormat format;
   private final int version;
   private final int privacyVersion;
@@ -26,7 +20,7 @@ public enum VersionedStorageFormat {
     this.privacyVersion = privacyVersion;
   }
 
-  public static VersionedStorageFormat fromFormat(final DataStorageFormat format) {
+  public static VersionedStorageFormat defaultForNewDB(final DataStorageFormat format) {
     return switch (format) {
       case FOREST -> FOREST_WITH_VARIABLES;
       case BONSAI -> BONSAI_WITH_VARIABLES;
@@ -45,21 +39,31 @@ public enum VersionedStorageFormat {
     return privacyVersion;
   }
 
-  public static VersionedStorageFormat fromMetadata(final DatabaseMetadata metadata) {
-    return Arrays.stream(values())
-        .filter(
-            vsf ->
-                vsf.format.equals(metadata.getFormat())
-                    && vsf.version == metadata.getVersion()
-                    && (metadata.maybePrivacyVersion().isPresent()
-                        ? metadata.maybePrivacyVersion().getAsInt() == vsf.privacyVersion
-                        : true))
-        .findFirst()
-        .orElseThrow(
-            () -> {
-              final String message = "Unsupported RocksDB metadata: " + metadata;
-              LOG.error(message);
-              throw new StorageException(message);
-            });
+//  static VersionedStorageFormat fromMetadata(final DatabaseMetadata metadata) {
+//    return Arrays.stream(values())
+//        .filter(
+//            vsf ->
+//                vsf.format.equals(metadata.getFormat())
+//                    && vsf.version == metadata.getVersion()
+//                    && (metadata.maybePrivacyVersion().isPresent()
+//                        ? metadata.maybePrivacyVersion().getAsInt() == vsf.privacyVersion
+//                        : true))
+//        .findFirst()
+//        .orElseThrow(
+//            () -> {
+//              final String message = "Unsupported RocksDB metadata: " + metadata;
+//              LOG.error(message);
+//              throw new StorageException(message);
+//            });
+//  }
+
+
+  @Override
+  public String toString() {
+    return
+            "format=" + format +
+            ", version=" + version +
+            ", privacyVersion=" + privacyVersion
+           ;
   }
 }

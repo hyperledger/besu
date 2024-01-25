@@ -32,20 +32,25 @@ class DatabaseMetadataTest {
   @Test
   void readingMetadataV1() throws Exception {
     final Path tempDataDir =
-        createAndWrite("data", "DATABASE_METADATA.json", "{\"version\":2 , \"privacyVersion\":1}");
+        createAndWrite("data", "DATABASE_METADATA.json", "{\"version\":2}");
 
     final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
-    assertThat(databaseMetadata.getFormat()).isEqualTo(DataStorageFormat.BONSAI);
-    assertThat(databaseMetadata.maybePrivacyVersion()).isNotEmpty();
-    assertThat(databaseMetadata.maybePrivacyVersion().getAsInt()).isEqualTo(1);
+    assertThat(databaseMetadata.getVersionedStorageFormat()).isEqualTo(VersionedStorageFormat.BONSAI_WITH_VARIABLES);
   }
 
   @Test
-  void metaFileShouldBeSoughtIntoDataDirFirst() throws Exception {
+  void readingMetadataV2() throws Exception {
+    final Path tempDataDir =
+            createAndWrite("data", "DATABASE_METADATA.json", "{\"v2\":{\"format\":\"FOREST\",\"version\":2}}");
+
+    final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
+    assertThat(databaseMetadata.getVersionedStorageFormat()).isEqualTo(VersionedStorageFormat.FOREST_WITH_VARIABLES);
+  }
+
+  @Test
+  void unsupportedMetadata() throws Exception {
     final Path tempDataDir = createAndWrite("data", "DATABASE_METADATA.json", "{\"version\":42}");
     final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
-    assertThat(databaseMetadata).isNotNull();
-    assertThat(databaseMetadata.getVersion()).isEqualTo(42);
   }
 
   private Path createAndWrite(final String dir, final String file, final String content)

@@ -19,20 +19,20 @@ package org.hyperledger.besu.plugin.services.storage;
 import java.util.Arrays;
 
 public enum DataStorageFormat {
-  FOREST(1), // Original format.  Store all tries
-  BONSAI(2); // New format.  Store one trie, and trie logs to roll forward and backward.
+  FOREST, // Original format.  Store all tries
+  BONSAI; // New format.  Store one trie, and trie logs to roll forward and backward.
 
-  @Deprecated private final int legacyVersion;
+//  @Deprecated private final int legacyVersion;
 
-  DataStorageFormat(final int legacyVersion) {
-    this.legacyVersion = legacyVersion;
-  }
+//  DataStorageFormat(final int legacyVersion) {
+//    this.legacyVersion = legacyVersion;
+//  }
 
-  public int getLegacyVersion() {
-    return legacyVersion;
-  }
-
-  public static DataStorageFormat fromLegacyVersion(final int i) {
-    return Arrays.stream(values()).filter(v -> v.legacyVersion == i).findFirst().orElseThrow();
-  }
+//  public int getLegacyVersion() {
+//    return legacyVersion;
+//  }
+//
+//  public static DataStorageFormat fromLegacyVersion(final int i) {
+//    return Arrays.stream(values()).filter(v -> v.legacyVersion == i).findFirst().orElseThrow();
+//  }
 }
