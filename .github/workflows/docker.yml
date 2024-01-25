@@ -34,6 +34,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+
     strategy:
       fail-fast: false
       matrix:
@@ -106,3 +107,4 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: multi-arch docker
         run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Prelease.releaseVersion=${{ github.ref_name }}
+
