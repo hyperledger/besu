@@ -3,6 +3,7 @@
 ## 24.1.2-SNAPSHOT
 
 ### Breaking Changes
+- The `trace-filter` method in JSON-RPC API now has a default block range limit of 1000, adjustable with `--rpc-max-trace-filter-range` [#6446](https://github.com/hyperledger/besu/pull/6446)
 
 ### Deprecations
 
