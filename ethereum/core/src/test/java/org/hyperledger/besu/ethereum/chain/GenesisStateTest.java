@@ -24,7 +24,9 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.evm.account.Account;
 
 import java.util.stream.Stream;
@@ -56,17 +58,24 @@ public final class GenesisStateTest {
   static class GenesisStateTestArguments implements ArgumentsProvider {
     @Override
     public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
+      final DataStorageConfiguration bonsaiDataConfiguration =
+          ImmutableDataStorageConfiguration.builder()
+              .dataStorageFormat(DataStorageFormat.BONSAI)
+              .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+              .build();
       return Stream.of(
-          Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
+          Arguments.of(DataStorageConfiguration.DEFAULT_CONFIG),
+          Arguments.of(bonsaiDataConfiguration));
     }
   }
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  public void createFromJsonWithAllocs(final DataStorageFormat dataStorageFormat) throws Exception {
+  public void createFromJsonWithAllocs(final DataStorageConfiguration dataStorageConfiguration)
+      throws Exception {
     final GenesisState genesisState =
         GenesisState.fromJson(
-            dataStorageFormat,
+            dataStorageConfiguration,
             Resources.toString(GenesisStateTest.class.getResource("genesis1.json"), Charsets.UTF_8),
             ProtocolScheduleFixture.MAINNET);
     final BlockHeader header = genesisState.getBlock().getHeader();
@@ -93,10 +102,11 @@ public final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  public void createFromJsonNoAllocs(final DataStorageFormat dataStorageFormat) throws Exception {
+  public void createFromJsonNoAllocs(final DataStorageConfiguration dataStorageConfiguration)
+      throws Exception {
     final GenesisState genesisState =
         GenesisState.fromJson(
-            dataStorageFormat,
+            dataStorageConfiguration,
             Resources.toString(GenesisStateTest.class.getResource("genesis2.json"), Charsets.UTF_8),
             ProtocolScheduleFixture.MAINNET);
     final BlockHeader header = genesisState.getBlock().getHeader();
@@ -109,11 +119,13 @@ public final class GenesisStateTest {
   }
 
   private void assertContractInvariants(
-      final DataStorageFormat dataStorageFormat, final String sourceFile, final String blockHash)
+      final DataStorageConfiguration dataStorageConfiguration,
+      final String sourceFile,
+      final String blockHash)
       throws Exception {
     final GenesisState genesisState =
         GenesisState.fromJson(
-            dataStorageFormat,
+            dataStorageConfiguration,
             Resources.toString(GenesisStateTest.class.getResource(sourceFile), Charsets.UTF_8),
             ProtocolScheduleFixture.MAINNET);
     final BlockHeader header = genesisState.getBlock().getHeader();
@@ -136,20 +148,21 @@ public final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  public void createFromJsonWithContract(final DataStorageFormat dataStorageFormat)
+  public void createFromJsonWithContract(final DataStorageConfiguration dataStorageConfiguration)
       throws Exception {
     assertContractInvariants(
-        dataStorageFormat,
+        dataStorageConfiguration,
         "genesis3.json",
         "0xe7fd8db206dcaf066b7c97b8a42a0abc18653613560748557ab44868652a78b6");
   }
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  public void createFromJsonWithNonce(final DataStorageFormat dataStorageFormat) throws Exception {
+  public void createFromJsonWithNonce(final DataStorageConfiguration dataStorageConfiguration)
+      throws Exception {
     final GenesisState genesisState =
         GenesisState.fromJson(
-            dataStorageFormat,
+            dataStorageConfiguration,
             Resources.toString(
                 GenesisStateTest.class.getResource("genesisNonce.json"), Charsets.UTF_8),
             ProtocolScheduleFixture.MAINNET);
@@ -162,10 +175,11 @@ public final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  public void encodeOlympicBlock(final DataStorageFormat dataStorageFormat) throws Exception {
+  public void encodeOlympicBlock(final DataStorageConfiguration dataStorageConfiguration)
+      throws Exception {
     final GenesisState genesisState =
         GenesisState.fromJson(
-            dataStorageFormat,
+            dataStorageConfiguration,
             Resources.toString(
                 GenesisStateTest.class.getResource("genesis-olympic.json"), Charsets.UTF_8),
             ProtocolScheduleFixture.MAINNET);
@@ -183,10 +197,11 @@ public final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  public void genesisFromShanghai(final DataStorageFormat dataStorageFormat) throws Exception {
+  public void genesisFromShanghai(final DataStorageConfiguration dataStorageConfiguration)
+      throws Exception {
     final GenesisState genesisState =
         GenesisState.fromJson(
-            dataStorageFormat,
+            dataStorageConfiguration,
             Resources.toString(
                 GenesisStateTest.class.getResource("genesis_shanghai.json"), Charsets.UTF_8),
             ProtocolScheduleFixture.MAINNET);
@@ -233,10 +248,11 @@ public final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  public void genesisFromCancun(final DataStorageFormat dataStorageFormat) throws Exception {
+  public void genesisFromCancun(final DataStorageConfiguration dataStorageConfiguration)
+      throws Exception {
     final GenesisState genesisState =
         GenesisState.fromJson(
-            dataStorageFormat,
+            dataStorageConfiguration,
             Resources.toString(
                 GenesisStateTest.class.getResource("genesis_cancun.json"), Charsets.UTF_8),
             ProtocolScheduleFixture.MAINNET);

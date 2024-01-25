@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -77,16 +78,18 @@ public final class GenesisState {
   /**
    * Construct a {@link GenesisState} from a JSON string.
    *
-   * @param dataStorageFormat A {@link DataStorageFormat} describing the storage format to use
+   * @param dataStorageConfiguration A {@link DataStorageConfiguration} describing the storage
+   *     format to use
    * @param json A JSON string describing the genesis block
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
    */
   public static GenesisState fromJson(
-      final DataStorageFormat dataStorageFormat,
+      final DataStorageConfiguration dataStorageConfiguration,
       final String json,
       final ProtocolSchedule protocolSchedule) {
-    return fromConfig(dataStorageFormat, GenesisConfigFile.fromConfig(json), protocolSchedule);
+    return fromConfig(
+        dataStorageConfiguration, GenesisConfigFile.fromConfig(json), protocolSchedule);
   }
 
   /**
@@ -98,19 +101,20 @@ public final class GenesisState {
    */
   public static GenesisState fromConfig(
       final GenesisConfigFile config, final ProtocolSchedule protocolSchedule) {
-    return fromConfig(DataStorageFormat.FOREST, config, protocolSchedule);
+    return fromConfig(DataStorageConfiguration.DEFAULT_CONFIG, config, protocolSchedule);
   }
 
   /**
    * Construct a {@link GenesisState} from a JSON object.
    *
-   * @param dataStorageFormat A {@link DataStorageFormat} describing the storage format to use
+   * @param dataStorageConfiguration A {@link DataStorageFormat} describing the storage format to
+   *     use
    * @param config A {@link GenesisConfigFile} describing the genesis block.
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
    */
   public static GenesisState fromConfig(
-      final DataStorageFormat dataStorageFormat,
+      final DataStorageConfiguration dataStorageConfiguration,
       final GenesisConfigFile config,
       final ProtocolSchedule protocolSchedule) {
     final List<GenesisAccount> genesisAccounts = parseAllocations(config).toList();
@@ -118,7 +122,7 @@ public final class GenesisState {
         new Block(
             buildHeader(
                 config,
-                calculateGenesisStateHash(dataStorageFormat, genesisAccounts),
+                calculateGenesisStateHash(dataStorageConfiguration, genesisAccounts),
                 protocolSchedule),
             buildBody(config));
     return new GenesisState(block, genesisAccounts);
@@ -164,8 +168,9 @@ public final class GenesisState {
   }
 
   private static Hash calculateGenesisStateHash(
-      final DataStorageFormat dataStorageFormat, final List<GenesisAccount> genesisAccounts) {
-    try (var worldState = createGenesisWorldState(dataStorageFormat)) {
+      final DataStorageConfiguration dataStorageConfiguration,
+      final List<GenesisAccount> genesisAccounts) {
+    try (var worldState = createGenesisWorldState(dataStorageConfiguration)) {
       writeAccountsTo(worldState, genesisAccounts, null);
       return worldState.rootHash();
     } catch (Exception e) {
