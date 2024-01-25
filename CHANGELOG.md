@@ -10,7 +10,8 @@
 ### Additions and Improvements
 - Add `OperationTracer.tracePrepareTransaction`, where the sender account has not yet been altered[#6453](https://github.com/hyperledger/besu/pull/6453)
 - Improve the high spec flag by limiting it to a few column families [#6354](https://github.com/hyperledger/besu/pull/6354)
-
+- SNAP and CHECKPOINT sync - early access flag removed so now simply SNAP and CHECKPOINT [#6405](https://github.com/hyperledger/besu/pull/6405)
+  - X_SNAP and X_CHECKPOINT are marked for deprecation and will be removed in 24.4.0
 
 ### Bug fixes
 - Fix the way an advertised host configured with `--p2p-host` is treated when communicating with the originator of a PING packet [#6225](https://github.com/hyperledger/besu/pull/6225)
@@ -24,7 +25,7 @@
 - The Besu Docker images with `openjdk-latest` tags since 23.10.3 were incorrectly using UID 1001 instead of 1000 for the container's `besu` user. The user now uses 1000 again. Containers created from or migrated to images using UID 1001 will need to chown their persistent database files to UID 1000 [#6360](https://github.com/hyperledger/besu/pull/6360)
 - The deprecated `--privacy-onchain-groups-enabled` option has now been removed. Use the `--privacy-flexible-groups-enabled` option instead. [#6411](https://github.com/hyperledger/besu/pull/6411)
 - Requesting the Ethereum Node Record (ENR) to acquire the fork id from bonded peers is now enabled by default, so the following change has been made [#5628](https://github.com/hyperledger/besu/pull/5628):
-  - `--Xfilter-on-enr-fork-id` has been removed. To disable the feature use `--filter-on-enr-fork-id=false`. 
+  - `--Xfilter-on-enr-fork-id` has been removed. To disable the feature use `--filter-on-enr-fork-id=false`.
 - The time that can be spent selecting transactions during block creation is not capped at 5 seconds for PoS and PoW networks, and for PoA networks, at 75% of the block period specified in the genesis, this to prevent possible DoS in case a single transaction is taking too long to execute, and to have a stable block production rate, but it could be a breaking change if an existing network used to have transactions that takes more time to executed that the newly introduced limit, if it is mandatory for these network to keep processing these long processing transaction, then the default value of `block-txs-selection-max-time` or `poa-block-txs-selection-max-time` needs to be tuned accordingly.
 
 ### Deprecations
@@ -33,14 +34,11 @@
 - Optimize RocksDB WAL files, allows for faster restart and a more linear disk space utilization [#6328](https://github.com/hyperledger/besu/pull/6328)
 - Disable transaction handling when the node is not in sync, to avoid unnecessary transaction validation work [#6302](https://github.com/hyperledger/besu/pull/6302)
 - Introduce TransactionEvaluationContext to pass data between transaction selectors and plugin, during block creation [#6381](https://github.com/hyperledger/besu/pull/6381)
-- SNAP and CHECKPOINT sync - early access flag removed so X_SNAP is now simply SNAP and X_CHECKPOINT is now simply CHECKPOINT [#6405](https://github.com/hyperledger/besu/pull/6405)
-  - X_SNAP and X_CHECKPOINT are marked for deprecation and will be removed in 24.4.0
-- Dependency updates
-  - Upgrade several dependencies [#6377](https://github.com/hyperledger/besu/pull/6377)
-  - Upgrade `com.fasterxml.jackson` dependencies [#6378](https://github.com/hyperledger/besu/pull/6378)
-  - Upgrade Guava dependency [#6396](https://github.com/hyperledger/besu/pull/6396)
-  - Upgrade Mockito [#6397](https://github.com/hyperledger/besu/pull/6397)
-  - Upgrade `tech.pegasys.discovery:discovery` [#6414](https://github.com/hyperledger/besu/pull/6414)
+- Upgrade dependencies [#6377](https://github.com/hyperledger/besu/pull/6377)
+- Upgrade `com.fasterxml.jackson` dependencies [#6378](https://github.com/hyperledger/besu/pull/6378)
+- Upgrade Guava dependency [#6396](https://github.com/hyperledger/besu/pull/6396)
+- Upgrade Mockito [#6397](https://github.com/hyperledger/besu/pull/6397)
+- Upgrade `tech.pegasys.discovery:discovery` [#6414](https://github.com/hyperledger/besu/pull/6414)
 - Options to tune the max allowed time that can be spent selecting transactions during block creation are now stable [#6423](https://github.com/hyperledger/besu/pull/6423)
 - Introduce `--Xbonsai-limit-trie-logs-enabled` experimental feature which by default will only retain the latest 512 trie logs, saving about 3GB per week in database growth [#5390](https://github.com/hyperledger/besu/issues/5390)
 - Introduce `besu storage x-trie-log prune` experimental offline subcommand which will prune all redundant trie logs except the latest 512 [#6303](https://github.com/hyperledger/besu/pull/6303)
@@ -203,18 +201,18 @@ By default, the txpool is tuned for mainnet usage, but if you are using private 
 ### Breaking Changes
 - Removed support for Kotti network (ETC) [#5816](https://github.com/hyperledger/besu/pull/5816)
 - Layered transaction pool implementation is now stable and enabled by default, so the following changes to experimental options have been done [#5772](https://github.com/hyperledger/besu/pull/5772):
-    - `--Xlayered-tx-pool` is gone, to select the implementation use the new `--tx-pool` option with values `layered` (default) or `legacy`
-    - `--Xlayered-tx-pool-layer-max-capacity`, `--Xlayered-tx-pool-max-prioritized` and `--Xlayered-tx-pool-max-future-by-sender` just drop the `Xlayered-` and keep the same behavior
+  - `--Xlayered-tx-pool` is gone, to select the implementation use the new `--tx-pool` option with values `layered` (default) or `legacy`
+  - `--Xlayered-tx-pool-layer-max-capacity`, `--Xlayered-tx-pool-max-prioritized` and `--Xlayered-tx-pool-max-future-by-sender` just drop the `Xlayered-` and keep the same behavior
 
 ### Additions and Improvements
 - Add access to an immutable world view to start/end transaction hooks in the tracing API[#5836](https://github.com/hyperledger/besu/pull/5836)
-- Layered transaction pool implementation is now stable and enabled by default. If you want still to use the legacy implementation, use `--tx-pool=legacy`. 
+- Layered transaction pool implementation is now stable and enabled by default. If you want still to use the legacy implementation, use `--tx-pool=legacy`.
   By default, the new transaction pool is capped at using 25MB of memory, this limit can be raised using `--layered-tx-pool-layer-max-capacity` options  [#5772](https://github.com/hyperledger/besu/pull/5772)
 - Tune G1GC to reduce Besu memory footprint, and new `besu-untuned` start scripts to run without any specific G1GC flags [#5879](https://github.com/hyperledger/besu/pull/5879)
 - Reduce `engine_forkchoiceUpdatedV?` response time by asynchronously process block added events in the transaction pool [#5909](https://github.com/hyperledger/besu/pull/5909)
 
 ### Bug Fixes
-- do not create ignorable storage on revert storage-variables subcommand [#5830](https://github.com/hyperledger/besu/pull/5830) 
+- do not create ignorable storage on revert storage-variables subcommand [#5830](https://github.com/hyperledger/besu/pull/5830)
 - fix duplicate key errors in EthScheduler-Transactions [#5857](https://github.com/hyperledger/besu/pull/5857)
 - Don't put control characters, escaped or otherwise, in t8n stacktraces [#5910](https://github.com/hyperledger/besu/pull/5910)
 
@@ -245,7 +243,7 @@ https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.3/besu-23.7.3.z
 - Add missing methods to the `Transaction` interface [#5732](https://github.com/hyperledger/besu/pull/5732)
 - Add `benchmark` subcommand to `evmtool` [#5754](https://github.com/hyperledger/besu/issues/5754)
 - JSON output is now compact by default. This can be overridden by the new `--json-pretty-print-enabled` CLI option. [#5766](https://github.com/hyperledger/besu/pull/5766)
-- New `eth_getBlockReceipts` JSON-RPC method to retrieve all transaction receipts for a block in a single call [#5771](https://github.com/hyperledger/besu/pull/5771) 
+- New `eth_getBlockReceipts` JSON-RPC method to retrieve all transaction receipts for a block in a single call [#5771](https://github.com/hyperledger/besu/pull/5771)
 - Add new methods to `OperationTracer` to capture contexts enter/exit [#5756](https://github.com/hyperledger/besu/pull/5756)
 
 ### Bug Fixes
@@ -299,7 +297,7 @@ https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.1/besu-23.7.1.z
 
 ### Breaking Changes
 - Move blockchain related variables in a dedicated storage, to pave the way to future optimizations [#5471](https://github.com/hyperledger/besu/pull/5471). The migration is performed automatically at startup,
-and in case a rollback is needed, before installing a previous version, the migration can be reverted, using the subcommand `storage revert-variables` with the same configuration use to run Besu.
+  and in case a rollback is needed, before installing a previous version, the migration can be reverted, using the subcommand `storage revert-variables` with the same configuration use to run Besu.
 - Remove deprecated Rinkeby named network. [#5540](https://github.com/hyperledger/besu/pull/5540)
 - Use BlobDB for blockchain storage to reduce initial sync time and write amplification (PR #5475). This PR reduces sync time by 14 hours on m6a.xlarge VM (1 day 8 hours 27 minutes instead of 1 day 22 hours 4 minutes).
 ### Additions and Improvements
@@ -314,7 +312,7 @@ and in case a rollback is needed, before installing a previous version, the migr
 
 ### Bug Fixes
 - Fix backwards sync bug where chain is rolled back too far, especially when restarting Nimbus [#5497](https://github.com/hyperledger/besu/pull/5497)
-- Check to ensure storage and transactions are not closed prior to reading/writing [#5527](https://github.com/hyperledger/besu/pull/5527) 
+- Check to ensure storage and transactions are not closed prior to reading/writing [#5527](https://github.com/hyperledger/besu/pull/5527)
 - Fix the unavailability of account code and storage on GraphQL/Bonsai [#5548](https://github.com/hyperledger/besu/pull/5548)
 
 ### Download Links
@@ -346,7 +344,7 @@ https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.4.4/besu-23.4.4.z
 - Early access - layered transaction pool implementation [#5290](https://github.com/hyperledger/besu/pull/5290)
 - New RPC method `debug_getRawReceipts` [#5476](https://github.com/hyperledger/besu/pull/5476)
 - Add TrieLogFactory plugin support [#5440](https://github.com/hyperledger/besu/pull/5440)
-- Ignore `min-block-occupancy-ratio` option when on PoS networks, since in some cases, it prevents to have full blocks even if enough transactions are present [#5491](https://github.com/hyperledger/besu/pull/5491) 
+- Ignore `min-block-occupancy-ratio` option when on PoS networks, since in some cases, it prevents to have full blocks even if enough transactions are present [#5491](https://github.com/hyperledger/besu/pull/5491)
 
 ### Bug Fixes
 - Fix eth_feeHistory response for the case in which blockCount is higher than highestBlock requested. [#5397](https://github.com/hyperledger/besu/pull/5397)
@@ -372,7 +370,7 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.1/besu-23.4.1.z
 ### Additions and Improvements
 - An alternate build target for the EVM using GraalVM AOT compilation was added.  [#5192](https://github.com/hyperledger/besu/pull/5192)
 - To generate the binary install and use GraalVM 23.3.r17 or higher and run `./gradlew nativeCompile`.  The binary will be located in `ethereum/evmtool/build/native/nativeCompile`
-- Upgrade RocksDB version from 7.7.3 to 8.0.0. Besu Team [contributed](https://github.com/facebook/rocksdb/pull/11099) to this release to make disabling checksum verification work. 
+- Upgrade RocksDB version from 7.7.3 to 8.0.0. Besu Team [contributed](https://github.com/facebook/rocksdb/pull/11099) to this release to make disabling checksum verification work.
 - Log an error with stacktrace when RPC responds with internal error [#5288](https://github.com/hyperledger/besu/pull/5288)
 - `--ethstats-cacert` to specify root CA of ethstats server (useful for non-production environments). [#5301](https://github.com/hyperledger/besu/pull/5301)
 - Update most dependencies to latest version [#5269](https://github.com/hyperledger/besu/pull/5269)
@@ -386,16 +384,16 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.1/besu-23.4.1.z
 - Performance: Reduced usage of UInt256 in EVM operations [#5331](https://github.com/hyperledger/besu/pull/5331)
 - Changed wrong error message "Invalid params" when private tx is reverted to "Execution reverted" with correct revert reason in data. [#5369](https://github.com/hyperledger/besu/pull/5369)
 - Changes to the way gas is estimated to provide an exact gas estimate [#5142](https://github.com/hyperledger/besu/pull/5142)
-- Add zero reads to Bonsai TrieLogs [#5317](https://github.com/hyperledger/besu/pull/5317) 
-- Bonsai TrieLog serialization interface and default implementation [#5372](https://github.com/hyperledger/besu/pull/5372) 
+- Add zero reads to Bonsai TrieLogs [#5317](https://github.com/hyperledger/besu/pull/5317)
+- Bonsai TrieLog serialization interface and default implementation [#5372](https://github.com/hyperledger/besu/pull/5372)
 
 ### Bug Fixes
 - Fix eth_getBlockByNumber cache error for latest block when called during syncing [#5292](https://github.com/hyperledger/besu/pull/5292)
-- Fix QBFT and IBFT unable to propose blocks on London when zeroBaseFee is used [#5276](https://github.com/hyperledger/besu/pull/5276) 
+- Fix QBFT and IBFT unable to propose blocks on London when zeroBaseFee is used [#5276](https://github.com/hyperledger/besu/pull/5276)
 - Make QBFT validator smart contract mode work with london fork [#5249](https://github.com/hyperledger/besu/issues/5249)
 - Try to connect to EthStats server by default with ssl followed by non-ssl. [#5301](https://github.com/hyperledger/besu/pull/5301)
 - Allow --miner-extra-data to be used in Proof-of-Stake block production [#5291](https://github.com/hyperledger/besu/pull/5291)
-- Add withdrawals to payloadId calculation to avoid collisions [#5321](https://github.com/hyperledger/besu/pull/5321) 
+- Add withdrawals to payloadId calculation to avoid collisions [#5321](https://github.com/hyperledger/besu/pull/5321)
 - Re-implement trace_block, trace_filter and trace_replayBlockTransactions RPC endpoints to fix memory issues and improve performance [#5131](https://github.com/hyperledger/besu/pull/5131)
 
 ### Download Links
@@ -430,7 +428,7 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.2/besu-23.1.2.t
 https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.2/besu-23.1.2.zip / sha256: 2a9ff091cb4349fc23625a52089400bb6529a831eb22d15d0221cb27039ab203
 
 ## 23.1.1
-This update is required for the Goerli Shanghai/Capella upgrade and recommended for all Mainnet users. If you use Besu on Goerli, update to 23.1.1. If you previously used 23.1.1-RC1, update to test 23.1.1 on Goerli. 
+This update is required for the Goerli Shanghai/Capella upgrade and recommended for all Mainnet users. If you use Besu on Goerli, update to 23.1.1. If you previously used 23.1.1-RC1, update to test 23.1.1 on Goerli.
 
 ### Breaking Changes
 
@@ -623,14 +621,14 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.2/besu-22.10.2
 - Backward sync log UX improvements [#4655](https://github.com/hyperledger/besu/pull/4655)
 - Enable RocksDB Bloom filters to improve read performance [#4682](https://github.com/hyperledger/besu/pull/4682)
 - Backward sync: use retry switching peer when fetching data from peers [#4656](https://github.com/hyperledger/besu/pull/4656)
-- Shanghai implementation of EIP-3651 Warm coinbase [#4620](https://github.com/hyperledger/besu/pull/4620) 
+- Shanghai implementation of EIP-3651 Warm coinbase [#4620](https://github.com/hyperledger/besu/pull/4620)
 - Shanghai implementation of EIP-3855 Push0 [#4660](https://github.com/hyperledger/besu/pull/4660)
 - Shanghai implementation of EIP-3540 and EIP-3670 Ethereum Object Format and Code Validation [#4644](https://github.com/hyperledger/besu/pull/4644)
 - Remove some log statements that are keeping some objects live in heap for a long time, to reduce the amount of memory required during initial sync [#4705](https://github.com/hyperledger/besu/pull/4705)
 - Add field `type` to Transaction receipt object (eth_getTransactionReceipt) [#4505](https://github.com/hyperledger/besu/issues/4505)
 - Print an overview of configuration and system information at startup [#4451](https://github.com/hyperledger/besu/pull/4451)
 - Do not send new payloads to backward sync if initial sync is in progress [#4720](https://github.com/hyperledger/besu/issues/4720)
-- Improve the way transaction fee cap validation is done on London fee market to not depend on transient network conditions [#4598](https://github.com/hyperledger/besu/pull/4598) 
+- Improve the way transaction fee cap validation is done on London fee market to not depend on transient network conditions [#4598](https://github.com/hyperledger/besu/pull/4598)
 - Preload and cache account and storage data from RocksDB to improve performance  [#4737](https://github.com/hyperledger/besu/issues/4737)
 
 ### Bug Fixes
@@ -700,7 +698,7 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.0/besu-22.10.0
 - `--tx-pool-hashes-max-size` option removed (deprecated in 22.1.3)
 - `--Xmerge-support` option remove (deprecated in 22.4.2) [#4518](https://github.com/hyperledger/besu/pull/4518)
 - Breaking API changes in the `OperationTracer` interface to enable performance work.
-  * The `traceExecution` method has been replaced with `tracePreExecution` and `tracePostExecution` methods, called just before and just after operation execution. 
+  * The `traceExecution` method has been replaced with `tracePreExecution` and `tracePostExecution` methods, called just before and just after operation execution.
   * See `DebugOperationTracer` and `StandardJsonTracer` for migration examples.
 
 ### Additions and Improvements
@@ -830,8 +828,8 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.5/besu-22.7.5.t
 - Transaction pool eviction by sender from tail of transaction list [#4327](https://github.com/hyperledger/besu/pull/4327)
 - Transaction pool sender future nonce limits [#4336](https://github.com/hyperledger/besu/pull/4336)
 - Pandas! Pandas now appear in 3 phases: The black bear and polar bear that are preparing? Those will appear when
-your client has TTD configured (which is setup by default for mainnet), is in sync, and processing Proof of Work blocks. In the second phase you will see them powering up when the Terminal Total Difficulty block is added to the blockchain.
-The final form of the Ethereum Panda will appear when the first finalized block is received from the Consensus Layer.
+  your client has TTD configured (which is setup by default for mainnet), is in sync, and processing Proof of Work blocks. In the second phase you will see them powering up when the Terminal Total Difficulty block is added to the blockchain.
+  The final form of the Ethereum Panda will appear when the first finalized block is received from the Consensus Layer.
 
 ### Bug Fixes
 - Accept wit/80 from Nethermind [#4279](https://github.com/hyperledger/besu/pull/4279)
@@ -1145,7 +1143,7 @@ The final form of the Ethereum Panda will appear when the first finalized block 
 - Fix regression on cors-origin star value
 - Fix for ethFeeHistory accepting hex values for blockCount
 
- **Full Changelog**: https://github.com/hyperledger/besu/compare/21.10.8...21.10.9
+**Full Changelog**: https://github.com/hyperledger/besu/compare/21.10.8...21.10.9
 
 [besu-21.10.9.tar.gz](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.9/besu-21.10.9.tar.gz) a4b85ba72ee73017303e4b2f0fdde84a87d376c2c17fdcebfa4e34680f52fc71
 [besu-21.10.9.zip](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.9/besu-21.10.9.zip) c3ba3f07340fa80064ba7c06f2c0ec081184e000f9a925d132084352d0665ef9
@@ -1392,10 +1390,10 @@ sha256sum 83fc44e39a710a95d8b6cbbbf04010dea76122bafcc633a993cd15304905a402
 
 ### Additions and Improvements
 This release contains the activation blocks for London across all supported testnets. They are:
-  * Ropsten 10_499_401 (24 Jun 2021)
-  * Goerli 5_062_605 (30 Jun 2021)
-  * Rinkeby 8_897_988 (7 Jul 2021)
-  * Mainnet 12_965_000 (4 Aug 2021)
+* Ropsten 10_499_401 (24 Jun 2021)
+* Goerli 5_062_605 (30 Jun 2021)
+* Rinkeby 8_897_988 (7 Jul 2021)
+* Mainnet 12_965_000 (4 Aug 2021)
 - eip-1559 changes: accept transactions which have maxFeePerGas below current baseFee [\#2374](https://github.com/hyperledger/besu/pull/2374)
 - Introduced transitions for IBFT2 block rewards [\#1977](https://github.com/hyperledger/besu/pull/1977)
 - Change Ethstats's status from experimental feature to stable. [\#2405](https://github.com/hyperledger/besu/pull/2405)
@@ -1445,9 +1443,9 @@ sha256sum 7bc97c359386cad84d449f786dc0a8ed8728616b6704ce473c63f1d94af3a9ef
 
 ### Early Access Features
 This release contains the activation blocks for London across all supported testnets. They are:
-  * Ropsten 10_499_401 (24 Jun 2021)
-  * Goerli 5_062_605 (30 Jun 2021)
-  * Rinkeby 8_897_988 (7 Jul 2021)
+* Ropsten 10_499_401 (24 Jun 2021)
+* Goerli 5_062_605 (30 Jun 2021)
+* Rinkeby 8_897_988 (7 Jul 2021)
 
 ## Download Link
 https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.7.0-RC1/besu-21.7.0-RC1.zip
@@ -1592,10 +1590,10 @@ https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.1.3/besu-21.1.3.z
 ### Important note: the 21.1.1 release contains an outdated version of the Berlin network upgrade. If you are using Besu on public Ethereum networks, you must upgrade to 21.1.2.
 
 This release contains the activation blocks for Berlin across all supported testnets and the Ethereum mainnet. They are:
-  * Ropsten 9_812_189 (10 Mar 2021)
-  * Goerli 4_460_644 (17 Mar 2021)
-  * Rinkeby 8_290_928 (24 Mar 2021)
-  * Ethereum 12_244_000 (14 Apr 2021)
+* Ropsten 9_812_189 (10 Mar 2021)
+* Goerli 4_460_644 (17 Mar 2021)
+* Rinkeby 8_290_928 (24 Mar 2021)
+* Ethereum 12_244_000 (14 Apr 2021)
 
 
 ### Additions and Improvements
@@ -1622,10 +1620,10 @@ https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.1.2/besu-21.1.2.z
 ### Important note: this release contains an outdated version of the Berlin network upgrade. If you are using Besu on public Ethereum networks, you must upgrade to 21.1.2.
 
 This release contains the activation blocks for Berlin across all supported testnets and the Ethereum mainnet. They are:
-  * Ropsten 9_812_189 (10 Mar 2021)
-  * Goerli 4_460_644 (17 Mar 2021)
-  * Rinkeby 8_290_928 (24 Mar 2021)
-  * Ethereum 12_244_000 (14 Apr 2021)
+* Ropsten 9_812_189 (10 Mar 2021)
+* Goerli 4_460_644 (17 Mar 2021)
+* Rinkeby 8_290_928 (24 Mar 2021)
+* Ethereum 12_244_000 (14 Apr 2021)
 
 ### Additions and Improvements
 * Removed EIP-2315 from the Berlin network upgrade [\#1983](https://github.com/hyperledger/besu/pull/1983)
@@ -1884,7 +1882,7 @@ Users of Web3J should note that many calls will now return a result with the err
 ### --privacy-precompiled-address
 Deprecated in 1.5.1
 - CLI option `--privacy-precompiled-address` option removed. This address is now derived, based
-on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)
+  on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)
 
 ### Download link
 https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/20.10.0/besu-20.10.0.zip
@@ -2024,7 +2022,7 @@ sha256sum: `629f44e230a635b09f8d82f2196d70d31193233718118a46412f11c50772dc85`
 
 ### Deprecated
 - CLI option `--privacy-precompiled-address` option is deprecated. This address is now derived, based
-on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)
+  on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)
 
 ### Additions and Improvements
 
@@ -2073,8 +2071,8 @@ What this means for you:
 
 * If you are running Besu as a binary, there is no impact.
 * If you are running Besu as a Docker container *and* have a volume mount for data,  ensure that the
-permissions on the directory allow other users and groups to r/w. Ideally this should be set to
-`besu:besu` as the owner.
+  permissions on the directory allow other users and groups to r/w. Ideally this should be set to
+  `besu:besu` as the owner.
 
 Note that the `besu` user only exists within the container not outside it. The same user ID may match
 a different user outside the image.
@@ -2124,11 +2122,11 @@ Features added between from 1.4 to 1.5 include:
 * New Plugin API Block Events: `BlockAdded` and `BlockReorg` are now exposed via the Plugin API [\#637](https://github.com/hyperledger/besu/pull/637).
 * Added experimental CLI option `--Xnat-kube-pod-name` to specify the name of the loadbalancer used by the Kubernetes nat manager [\#1078](https://github.com/hyperledger/besu/pull/1078)
 - Local permissioning TOML config now supports additional keys (`nodes-allowlist` and `accounts-allowlist`).
-Support for `nodes-whitelist` and `accounts-whitelist` will be removed in a future release.
+  Support for `nodes-whitelist` and `accounts-whitelist` will be removed in a future release.
 - Add missing `mixHash` field for `eth_getBlockBy*` JSON RPC endpoints. [\#1098](https://github.com/hyperledger/besu/pull/1098)
 * Besu now has a strict check on private transactions to ensure the privateFrom in the transaction
-matches the sender Orion key that has distributed the payload. Besu 1.5+ requires Orion 1.6+ to work.
-[#357](https://github.com/PegaSysEng/orion/issues/357)
+  matches the sender Orion key that has distributed the payload. Besu 1.5+ requires Orion 1.6+ to work.
+  [#357](https://github.com/PegaSysEng/orion/issues/357)
 
 ### Bug fixes
 
@@ -2141,10 +2139,10 @@ Known issues are open issues categorized as [Very High or High impact](https://w
 #### New known issues
 
 - K8S permissioning uses of Service IPs rather than pod IPs which can fail. [\#1190](https://github.com/hyperledger/besu/pull/1190)
-Workaround - Do not use permissioning on K8S.
+  Workaround - Do not use permissioning on K8S.
 
 - Restart caused by insufficient memory can cause inconsistent private state. [\#1110](https://github.com/hyperledger/besu/pull/1110)
-Workaround - Ensure you allocate enough memory for the Java Runtime Environment that the node does not run out of memory.
+  Workaround - Ensure you allocate enough memory for the Java Runtime Environment that the node does not run out of memory.
 
 #### Previously identified known issues
 
@@ -2237,10 +2235,10 @@ Workaround - Limit the number of blocks queried by each `eth_getLogs` call.
 ### Bug Fixes
 
 - Flag added to toggle `eth/65` off by default. `eth/65` will remain toggled off by default until
-a fix is completed for the [eth/65 known issue](KNOWN_ISSUES.md). [\#741](https://github.com/hyperledger/besu/pull/741)
+  a fix is completed for the [eth/65 known issue](KNOWN_ISSUES.md). [\#741](https://github.com/hyperledger/besu/pull/741)
 - Resolve crashing NAT detectors on GKE. [\#731](https://github.com/hyperledger/besu/pull/731) fixes [\#507](https://github.com/hyperledger/besu/issues/507).
-[Besu-Kubernetes Readme](https://github.com/PegaSysEng/besu-kubernetes/blob/master/README.md#network-topology-and-high-availability-requirements)
-updated to reflect changes.
+  [Besu-Kubernetes Readme](https://github.com/PegaSysEng/besu-kubernetes/blob/master/README.md#network-topology-and-high-availability-requirements)
+  updated to reflect changes.
 - Deal with quick service start failures [\#714](https://github.com/hyperledger/besu/pull/714) fixes [\#662](https://github.com/hyperledger/besu/issues/662)
 
 ### Known Issues
@@ -2268,7 +2266,7 @@ Calling delete and set to 0 Solidity mapping in Solidity fail.
 The `eth/65` change is not [backwards compatible](https://github.com/hyperledger/besu/issues/723).
 This has the following impact:
 * In a private network, nodes using the 1.4.3 client cannot interact with nodes using 1.4.2 or earlier
-clients.
+  clients.
 * On mainnet, synchronizing eventually stalls.
 
 Workaround -> revert to v1.4.2.
@@ -2290,7 +2288,7 @@ https://wiki.hyperledger.org/display/BESU/Critical+Issue+for+Privacy+Users
 ### Deprecated
 
 - Private Transaction `hash` field and `getHash()` method have been deprecated. They will be removed
-in 1.5.0 release. [\#639](https://github.com/hyperledger/besu/pull/639)
+  in 1.5.0 release. [\#639](https://github.com/hyperledger/besu/pull/639)
 
 ### Known Issues
 
@@ -2316,8 +2314,8 @@ Fast sync is not currently supported on Digital Ocean. We are investigating opti
 #### Error full syncing with pruning
 
 - Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#580](https://github.com/hyperledger/besu/issues/580)
-The associated error is `Unable to load trie node value for hash` and is caused by the combination of
-full sync and pruning.
+  The associated error is `Unable to load trie node value for hash` and is caused by the combination of
+  full sync and pruning.
 
 Workarounds:
 1. Explicitly disable pruning using `--pruning-enabled=false` when using fast sync.
@@ -2356,7 +2354,7 @@ Workaround -> When using onchain permissioning, ensure bootnodes are also valida
 
 * [Onchain privacy groups](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Onchain-PrivacyGroups/) with add and remove members. Known issue resolved (see above).
 * [TRACE API](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#trace-methods) now includes `trace_block`, `trace_replayBlockTransactions`, and `trace_transaction`.
-Fixed some issues on the trace replay block transactions API [\#522](https://github.com/hyperledger/besu/pull/522).
+  Fixed some issues on the trace replay block transactions API [\#522](https://github.com/hyperledger/besu/pull/522).
 
 ### Known Issues
 
@@ -2366,9 +2364,9 @@ Fixed some issues on the trace replay block transactions API [\#522](https://git
 
 Workarounds:
 1. To re-attempt fast syncing rather than continue full syncing, stop Besu, delete your database,
-and start again.
+   and start again.
 2. When fast syncing, explicitly disable pruning using `--pruning-enabled=false` to reduce the likelihood
-of encountering the pruning bug.
+   of encountering the pruning bug.
 
 A fix to remove the default to full sync is [in progress](https://github.com/hyperledger/besu/pull/427)
 is being actively worked on.
@@ -2376,8 +2374,8 @@ is being actively worked on.
 #### Error full syncing with pruning
 
 - Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#BESU-160](https://jira.hyperledger.org/browse/BESU-160)
-The associated error is `Unable to load trie node value for hash` and is caused by the combination of
-full sync and pruning.
+  The associated error is `Unable to load trie node value for hash` and is caused by the combination of
+  full sync and pruning.
 
 Workarounds:
 1. Explicitly disable pruning using `--pruning-enabled=false` when using fast sync.
@@ -2425,9 +2423,9 @@ have unstable interfaces.
 
 Workarounds:
 1. To re-attempt fast syncing rather than continue full syncing, stop Besu, delete your database,
-and start again.
+   and start again.
 2. When fast syncing, explicitly disable pruning using `--pruning-enabled=false` to reduce the likelihood
-of encountering the pruning bug.
+   of encountering the pruning bug.
 
 A fix to remove the default to full sync is [in progress](https://github.com/hyperledger/besu/pull/427)
 and is planned for inclusion in v1.4.1.
@@ -2435,8 +2433,8 @@ and is planned for inclusion in v1.4.1.
 #### Error full syncing with pruning
 
 - Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#BESU-160](https://jira.hyperledger.org/browse/BESU-160)
-The associated error is `Unable to load trie node value for hash` and is caused by the combination of
-full sync and pruning.
+  The associated error is `Unable to load trie node value for hash` and is caused by the combination of
+  full sync and pruning.
 
 Workarounds:
 1. Explicitly disable pruning using `--pruning-enabled=false` when using fast sync.
@@ -2471,10 +2469,10 @@ If you have existing private transactions, see [migration details](docs/Private-
 * Support for additional [NAT methods](https://besu.hyperledger.org/en/latest/HowTo/Find-and-Connect/Specifying-NAT/).
 
 * Added [`priv_call`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#priv_call) which invokes
-a private contract function locally and does not change the private state.
+  a private contract function locally and does not change the private state.
 
 * Besu has moved from an internal Bytes library to the [Apache Tuweni](https://tuweni.apache.org/) Bytes library.
-This includes using the library in the Plugins API interfaces. [#295](https://github.com/hyperledger/besu/pull/295) and [#215](https://github.com/hyperledger/besu/pull/215)
+  This includes using the library in the Plugins API interfaces. [#295](https://github.com/hyperledger/besu/pull/295) and [#215](https://github.com/hyperledger/besu/pull/215)
 
 ### Early Access Features
 
@@ -2482,7 +2480,7 @@ Early access features are available features that are not recommended for produc
 have unstable interfaces.
 
 * [Reorg compatible privacy](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Privacy-Overview/#reorg-compatible-privacy)
-to enable private transactions on networks using consensus mechanisms that fork.
+  to enable private transactions on networks using consensus mechanisms that fork.
 
 * [Tracing API](https://besu.hyperledger.org/en/latest/Concepts/Transactions/Trace-Types) to obtain detailed information about transaction processing.
 
@@ -2498,9 +2496,9 @@ See RC and Beta sections below.
 
 Workarounds:
 1. To re-attempt fast syncing rather than continue full syncing, stop Besu, delete your database,
-and start again.
+   and start again.
 2. When fast syncing, explicitly disable pruning using `--pruning-enabled=false` to reduce the likelihood
-of encountering the pruning bug.
+   of encountering the pruning bug.
 
 A fix to remove the default to full sync is [in progress](https://github.com/hyperledger/besu/pull/427)
 and is planned for inclusion in v1.4.1.
@@ -2508,8 +2506,8 @@ and is planned for inclusion in v1.4.1.
 #### Error full syncing with pruning
 
 - Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#BESU-160](https://jira.hyperledger.org/browse/BESU-160)
-The associated error is `Unable to load trie node value for hash` and is caused by the combination of
-full sync and pruning.
+  The associated error is `Unable to load trie node value for hash` and is caused by the combination of
+  full sync and pruning.
 
 Workarounds:
 1. Explicitly disable pruning using `--pruning-enabled=false` when using fast sync.
@@ -2680,8 +2678,8 @@ For compatibility with ETC Agharta upgrade, use 1.3.7 or later.
   * [Configuring mining using the Stratum protocol](https://besu.hyperledger.org/en/latest/HowTo/Configure/Configure-Mining/)
   * [ETC network command line options](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#network)
 - Hard Fork Support:
-   * MuirGlacier for Ethereum Mainnet and Ropsten Testnet
-   * Agharta for Kotti and Mordor Testnets
+  * MuirGlacier for Ethereum Mainnet and Ropsten Testnet
+  * Agharta for Kotti and Mordor Testnets
 
 ### Bug Fixes
 
@@ -2924,10 +2922,10 @@ For compatibility with ETC Agharta upgrade, use 1.3.7 or later.
 ### Additions and Improvements
 
 - Removed the release plugin in favour of the new process with branches
-[#1841](https://github.com/PegaSysEng/pantheon/pull/1841)
-[#1843](https://github.com/PegaSysEng/pantheon/pull/1843)
-[#1848](https://github.com/PegaSysEng/pantheon/pull/1848)
-[#1855](https://github.com/PegaSysEng/pantheon/pull/1855)
+  [#1841](https://github.com/PegaSysEng/pantheon/pull/1841)
+  [#1843](https://github.com/PegaSysEng/pantheon/pull/1843)
+  [#1848](https://github.com/PegaSysEng/pantheon/pull/1848)
+  [#1855](https://github.com/PegaSysEng/pantheon/pull/1855)
 - Updated Görli bootnodes [#1842](https://github.com/PegaSysEng/pantheon/pull/1842)
 - Removed unnecessary test dependency [#1839](https://github.com/PegaSysEng/pantheon/pull/1839)
 - Added warning when comments are used in genesis file [#1838](https://github.com/PegaSysEng/pantheon/pull/1838)
@@ -2941,8 +2939,8 @@ For compatibility with ETC Agharta upgrade, use 1.3.7 or later.
 - Removed dead parameters [#1825](https://github.com/PegaSysEng/pantheon/pull/1825)
 - Added a nicer name for Corretto [#1819](https://github.com/PegaSysEng/pantheon/pull/1819)
 - Changed core JSON-RPC method to support ReTestEth
-[#1815](https://github.com/PegaSysEng/pantheon/pull/1815)
-[#1818](https://github.com/PegaSysEng/pantheon/pull/1818)
+  [#1815](https://github.com/PegaSysEng/pantheon/pull/1815)
+  [#1818](https://github.com/PegaSysEng/pantheon/pull/1818)
 - Added rewind to block functionality [#1814](https://github.com/PegaSysEng/pantheon/pull/1814)
 - Added support for NoReward and NoProof seal engines [#1813](https://github.com/PegaSysEng/pantheon/pull/1813)
 - Added strict short hex strings for retesteth [#1812](https://github.com/PegaSysEng/pantheon/pull/1812)
@@ -2959,33 +2957,33 @@ For compatibility with ETC Agharta upgrade, use 1.3.7 or later.
 - Added tracking of world state account key preimages [#1780](https://github.com/PegaSysEng/pantheon/pull/1780)
 - Modified PrivGetPrivateTransaction to take public tx hash [#1778](https://github.com/PegaSysEng/pantheon/pull/1778) (thanks to [josh-richardson](https://github.com/josh-richardson))
 - Removed enclave public key from parameter
-[#1789](https://github.com/PegaSysEng/pantheon/pull/1789)
-[#1777](https://github.com/PegaSysEng/pantheon/pull/1777) (thanks to [iikirilov](https://github.com/iikirilov))
+  [#1789](https://github.com/PegaSysEng/pantheon/pull/1789)
+  [#1777](https://github.com/PegaSysEng/pantheon/pull/1777) (thanks to [iikirilov](https://github.com/iikirilov))
 - Added storage key preimage tracking [#1772](https://github.com/PegaSysEng/pantheon/pull/1772)
 - Updated priv_getPrivacyPrecompileAddress method return [#1766](https://github.com/PegaSysEng/pantheon/pull/1766) (thanks to [iikirilov](https://github.com/iikirilov))
 - Added tests for permissioning with static nodes behaviour [#1764](https://github.com/PegaSysEng/pantheon/pull/1764)
 - Added integration test for contract creation with privacyGroupId [#1762](https://github.com/PegaSysEng/pantheon/pull/1762) (thanks to [josh-richardson](https://github.com/josh-richardson))
 - Added report node local address as the coinbase in Clique and IBFT
-[#1758](https://github.com/PegaSysEng/pantheon/pull/1758)
-[#1760](https://github.com/PegaSysEng/pantheon/pull/1760)
+  [#1758](https://github.com/PegaSysEng/pantheon/pull/1758)
+  [#1760](https://github.com/PegaSysEng/pantheon/pull/1760)
 - Fixed private tx signature validation [#1753](https://github.com/PegaSysEng/pantheon/pull/1753)
 - Updated CI configuration
-[#1751](https://github.com/PegaSysEng/pantheon/pull/1751)
-[#1835](https://github.com/PegaSysEng/pantheon/pull/1835)
+  [#1751](https://github.com/PegaSysEng/pantheon/pull/1751)
+  [#1835](https://github.com/PegaSysEng/pantheon/pull/1835)
 - Added CLI flag for setting WorldStateDownloader task cache size [#1749](https://github.com/PegaSysEng/pantheon/pull/1749) (thanks to [matkt](https://github.com/matkt))
 - Updated vertx to 2.8.0 [#1748](https://github.com/PegaSysEng/pantheon/pull/1748)
 - changed RevertReason to BytesValue [#1746](https://github.com/PegaSysEng/pantheon/pull/1746)
 - Added static nodes acceptance test [#1745](https://github.com/PegaSysEng/pantheon/pull/1745)
 - Added report 0 hashrate when the mining coordinator doesn't support mining
-[#1744](https://github.com/PegaSysEng/pantheon/pull/1744)
-[#1757](https://github.com/PegaSysEng/pantheon/pull/1757)
+  [#1744](https://github.com/PegaSysEng/pantheon/pull/1744)
+  [#1757](https://github.com/PegaSysEng/pantheon/pull/1757)
 - Implemented EIP-2200 - Net Gas Metering Revised [#1743](https://github.com/PegaSysEng/pantheon/pull/1743)
 - Added chainId validation to PrivateTransactionValidator [#1741](https://github.com/PegaSysEng/pantheon/pull/1741)
 - Reduced intrinsic gas cost [#1739](https://github.com/PegaSysEng/pantheon/pull/1739)
 - De-duplicated test blocks data files [#1737](https://github.com/PegaSysEng/pantheon/pull/1737)
 - Renamed various EEA methods to priv methods [#1736](https://github.com/PegaSysEng/pantheon/pull/1736) (thanks to [josh-richardson](https://github.com/josh-richardson))
 - Permissioning Acceptance Test [#1735](https://github.com/PegaSysEng/pantheon/pull/1735)
- [#1759](https://github.com/PegaSysEng/pantheon/pull/1759)
+  [#1759](https://github.com/PegaSysEng/pantheon/pull/1759)
 - Add nonce handling to GenesisState [#1728](https://github.com/PegaSysEng/pantheon/pull/1728)
 - Added 100-continue to HTTP [#1727](https://github.com/PegaSysEng/pantheon/pull/1727)
 - Fixed get_signerMetrics [#1725](https://github.com/PegaSysEng/pantheon/pull/1725) (thanks to [matkt](https://github.com/matkt))
@@ -3002,42 +3000,42 @@ For compatibility with ETC Agharta upgrade, use 1.3.7 or later.
   - Added content on deploying for production [#1774](https://github.com/PegaSysEng/pantheon/pull/1774)
   - Updated docker docs for location of data path [#1790](https://github.com/PegaSysEng/pantheon/pull/1790)
   - Updated permissiong documentation
-  [#1792](https://github.com/PegaSysEng/pantheon/pull/1792)
-  [#1652](https://github.com/PegaSysEng/pantheon/pull/1652)
+    [#1792](https://github.com/PegaSysEng/pantheon/pull/1792)
+    [#1652](https://github.com/PegaSysEng/pantheon/pull/1652)
   - Added permissioning webinar in the resources [#1717](https://github.com/PegaSysEng/pantheon/pull/1717)
   - Add web3.js-eea reference doc [#1617](https://github.com/PegaSysEng/pantheon/pull/1617)
   - Updated privacy documentation
-  [#1650](https://github.com/PegaSysEng/pantheon/pull/1650)
-  [#1721](https://github.com/PegaSysEng/pantheon/pull/1721)
-  [#1722](https://github.com/PegaSysEng/pantheon/pull/1722)
-  [#1724](https://github.com/PegaSysEng/pantheon/pull/1724)
-  [#1729](https://github.com/PegaSysEng/pantheon/pull/1729)
-  [#1730](https://github.com/PegaSysEng/pantheon/pull/1730)
-  [#1731](https://github.com/PegaSysEng/pantheon/pull/1731)
-  [#1732](https://github.com/PegaSysEng/pantheon/pull/1732)
-  [#1740](https://github.com/PegaSysEng/pantheon/pull/1740)
-  [#1750](https://github.com/PegaSysEng/pantheon/pull/1750)
-  [#1761](https://github.com/PegaSysEng/pantheon/pull/1761)
-  [#1765](https://github.com/PegaSysEng/pantheon/pull/1765)
-  [#1769](https://github.com/PegaSysEng/pantheon/pull/1769)
-  [#1770](https://github.com/PegaSysEng/pantheon/pull/1770)
-  [#1771](https://github.com/PegaSysEng/pantheon/pull/1771)
-  [#1773](https://github.com/PegaSysEng/pantheon/pull/1773)
-  [#1787](https://github.com/PegaSysEng/pantheon/pull/1787)
-  [#1788](https://github.com/PegaSysEng/pantheon/pull/1788)
-  [#1796](https://github.com/PegaSysEng/pantheon/pull/1796)
-  [#1803](https://github.com/PegaSysEng/pantheon/pull/1803)
-  [#1810](https://github.com/PegaSysEng/pantheon/pull/1810)
-  [#1817](https://github.com/PegaSysEng/pantheon/pull/1817)
+    [#1650](https://github.com/PegaSysEng/pantheon/pull/1650)
+    [#1721](https://github.com/PegaSysEng/pantheon/pull/1721)
+    [#1722](https://github.com/PegaSysEng/pantheon/pull/1722)
+    [#1724](https://github.com/PegaSysEng/pantheon/pull/1724)
+    [#1729](https://github.com/PegaSysEng/pantheon/pull/1729)
+    [#1730](https://github.com/PegaSysEng/pantheon/pull/1730)
+    [#1731](https://github.com/PegaSysEng/pantheon/pull/1731)
+    [#1732](https://github.com/PegaSysEng/pantheon/pull/1732)
+    [#1740](https://github.com/PegaSysEng/pantheon/pull/1740)
+    [#1750](https://github.com/PegaSysEng/pantheon/pull/1750)
+    [#1761](https://github.com/PegaSysEng/pantheon/pull/1761)
+    [#1765](https://github.com/PegaSysEng/pantheon/pull/1765)
+    [#1769](https://github.com/PegaSysEng/pantheon/pull/1769)
+    [#1770](https://github.com/PegaSysEng/pantheon/pull/1770)
+    [#1771](https://github.com/PegaSysEng/pantheon/pull/1771)
+    [#1773](https://github.com/PegaSysEng/pantheon/pull/1773)
+    [#1787](https://github.com/PegaSysEng/pantheon/pull/1787)
+    [#1788](https://github.com/PegaSysEng/pantheon/pull/1788)
+    [#1796](https://github.com/PegaSysEng/pantheon/pull/1796)
+    [#1803](https://github.com/PegaSysEng/pantheon/pull/1803)
+    [#1810](https://github.com/PegaSysEng/pantheon/pull/1810)
+    [#1817](https://github.com/PegaSysEng/pantheon/pull/1817)
   - Added documentation for getSignerMetrics [#1723](https://github.com/PegaSysEng/pantheon/pull/1723) (thanks to [matkt](https://github.com/matkt))
   - Added Java 11+ as a prerequisite for installing Besu using Homebrew. [#1755](https://github.com/PegaSysEng/pantheon/pull/1755)
   - Fixed documentation formatting and typos [#1718](https://github.com/PegaSysEng/pantheon/pull/1718)
-  [#1742](https://github.com/PegaSysEng/pantheon/pull/1742)
-  [#1763](https://github.com/PegaSysEng/pantheon/pull/1763)
-  [#1779](https://github.com/PegaSysEng/pantheon/pull/1779)
-  [#1781](https://github.com/PegaSysEng/pantheon/pull/1781)
-  [#1827](https://github.com/PegaSysEng/pantheon/pull/1827)
-  [#1767](https://github.com/PegaSysEng/pantheon/pull/1767) (thanks to [helderjnpinto](https://github.com/helderjnpinto))
+    [#1742](https://github.com/PegaSysEng/pantheon/pull/1742)
+    [#1763](https://github.com/PegaSysEng/pantheon/pull/1763)
+    [#1779](https://github.com/PegaSysEng/pantheon/pull/1779)
+    [#1781](https://github.com/PegaSysEng/pantheon/pull/1781)
+    [#1827](https://github.com/PegaSysEng/pantheon/pull/1827)
+    [#1767](https://github.com/PegaSysEng/pantheon/pull/1767) (thanks to [helderjnpinto](https://github.com/helderjnpinto))
   - Moved the docs to a [new doc repos](https://github.com/PegaSysEng/doc.pantheon) [#1822](https://github.com/PegaSysEng/pantheon/pull/1822)
 - Explicitly configure some maven artifactIds [#1853](https://github.com/PegaSysEng/pantheon/pull/1853)
 - Update export subcommand to export blocks in rlp format [#1852](https://github.com/PegaSysEng/pantheon/pull/1852)
@@ -3417,11 +3415,11 @@ Documentation updates include:
 - [Onchain Permissioning](https://besu.hyperledger.org/en/latest/Concepts/Permissioning/Permissioning-Overview/#onchain)
 - [Fastsync](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#fast-sync-min-peers)
 - Documentation updates include:
-    - Added JSON-RPC methods:
-      - [`txpool_pantheonStatistics`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#txpool_besustatistics)
-      - [`net_services`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#net_services)
-    - [Updated to indicate Docker image doesn't run on Windows](https://besu.hyperledger.org/en/latest/HowTo/Get-Started/Run-Docker-Image/)
-    - [Added how to configure a free gas network](https://besu.hyperledger.org/en/latest/HowTo/Configure/FreeGas/)
+  - Added JSON-RPC methods:
+    - [`txpool_pantheonStatistics`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#txpool_besustatistics)
+    - [`net_services`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#net_services)
+  - [Updated to indicate Docker image doesn't run on Windows](https://besu.hyperledger.org/en/latest/HowTo/Get-Started/Run-Docker-Image/)
+  - [Added how to configure a free gas network](https://besu.hyperledger.org/en/latest/HowTo/Configure/FreeGas/)
 
 ### Technical Improvements
 
@@ -3476,16 +3474,16 @@ Documentation updates include:
 
 - Notify of dropped messages [\#1156](https://github.com/PegaSysEng/pantheon/pull/1156)
 - Documentation updates include:
-    - Added [Permissioning Overview](https://besu.hyperledger.org/en/latest/Concepts/Permissioning/Permissioning-Overview/)
-    - Added content on [Network vs Node Configuration](https://besu.hyperledger.org/en/latest/HowTo/Configure/Using-Configuration-File/)
-    - Updated [RAM requirements](https://besu.hyperledger.org/en/latest/HowTo/Get-Started/System-Requirements/#ram)
-    - Added [Privacy Overview](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Privacy-Overview/) and [Processing Private Transactions](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Private-Transaction-Processing/)
-    - Renaming of Ethstats Lite Explorer to [Ethereum Lite Explorer](https://besu.hyperledger.org/en/latest/HowTo/Deploy/Lite-Block-Explorer/#lite-block-explorer-documentation) (thanks to [tzapu](https://github.com/tzapu))
-    - Added content on using [Truffle with Besu](https://besu.hyperledger.org/en/latest/HowTo/Develop-Dapps/Truffle/)
-    - Added [`droppedPendingTransactions` RPC Pub/Sub subscription](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/RPC-PubSub/#dropped-transactions)
-    - Added [`eea_*` JSON-RPC API methods](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#eea-methods)
-    - Added [architecture diagram](https://besu.hyperledger.org/en/latest/Concepts/ArchitectureOverview/)
-    - Updated [permissioning CLI options](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#permissions-accounts-config-file-enabled) and [permissioned network tutorial](https://besu.hyperledger.org/en/stable/)
+  - Added [Permissioning Overview](https://besu.hyperledger.org/en/latest/Concepts/Permissioning/Permissioning-Overview/)
+  - Added content on [Network vs Node Configuration](https://besu.hyperledger.org/en/latest/HowTo/Configure/Using-Configuration-File/)
+  - Updated [RAM requirements](https://besu.hyperledger.org/en/latest/HowTo/Get-Started/System-Requirements/#ram)
+  - Added [Privacy Overview](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Privacy-Overview/) and [Processing Private Transactions](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Private-Transaction-Processing/)
+  - Renaming of Ethstats Lite Explorer to [Ethereum Lite Explorer](https://besu.hyperledger.org/en/latest/HowTo/Deploy/Lite-Block-Explorer/#lite-block-explorer-documentation) (thanks to [tzapu](https://github.com/tzapu))
+  - Added content on using [Truffle with Besu](https://besu.hyperledger.org/en/latest/HowTo/Develop-Dapps/Truffle/)
+  - Added [`droppedPendingTransactions` RPC Pub/Sub subscription](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/RPC-PubSub/#dropped-transactions)
+  - Added [`eea_*` JSON-RPC API methods](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#eea-methods)
+  - Added [architecture diagram](https://besu.hyperledger.org/en/latest/Concepts/ArchitectureOverview/)
+  - Updated [permissioning CLI options](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#permissions-accounts-config-file-enabled) and [permissioned network tutorial](https://besu.hyperledger.org/en/stable/)
 
 ### Technical Improvements
 
@@ -3541,30 +3539,30 @@ Documentation updates include:
 - Added `admin_nodeInfo` JSON-RPC [\#1012](https://github.com/PegaSysEng/pantheon/pull/1012)
 - Added `--metrics-category` CLI to only enable select metrics [\#969](https://github.com/PegaSysEng/pantheon/pull/969)
 - Documentation updates include:
-   - Updated endpoints in [Private Network Quickstart](https://besu.hyperledger.org/en/latest/Tutorials/Quickstarts/Private-Network-Quickstart/) (thanks to [laubai](https://github.com/laubai))
-   - Updated [documentation contribution guidelines](https://besu.hyperledger.org/en/stable/)
-   - Added [`admin_removePeer`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#admin_removepeer)
-   - Updated [tutorials](https://besu.hyperledger.org/en/latest/Tutorials/Private-Network/Create-Private-Clique-Network/) for printing of enode on startup
-   - Added [`txpool_pantheonTransactions`](https://besu.hyperledger.org/en/stable/Reference/API-Methods/#txpool_besutransactions)
-   - Added [Transaction Pool content](https://besu.hyperledger.org/en/latest/Concepts/Transactions/Transaction-Pool/)
-   - Added [`tx-pool-max-size` CLI option](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#tx-pool-max-size)
-   - Updated [developer build instructions to use installDist](https://besu.hyperledger.org/en/stable/)
-   - Added [Azure quickstart tutorial](https://besu.hyperledger.org/en/latest/Tutorials/Quickstarts/Azure-Private-Network-Quickstart/)
-   - Enabled copy button in code blocks
-   - Added [IBFT 1.0](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/QuorumIBFT/)
-   - Added section on using [Geth attach with Besu](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/Using-JSON-RPC-API/#geth-console)
-   - Enabled the edit link doc site to ease external doc contributions
-   - Added [EthStats docs](https://besu.hyperledger.org/HowTo/Deploy/Lite-Network-Monitor/) (thanks to [baxy](https://github.com/baxy))
-   - Updated [Postman collection](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/Authentication/#postman)
-   - Added [`metrics-category` CLI option](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#metrics-category)
-   - Added information on [block time and timeout settings](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/IBFT/#block-time) for IBFT 2.0
-   - Added [`admin_nodeInfo`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#admin_nodeinfo)
-   - Added [permissions images](https://besu.hyperledger.org/en/latest/Concepts/Permissioning/Permissioning-Overview/)
-   - Added permissioning blog to [Resources](https://besu.hyperledger.org/en/latest/Reference/Resources/)
-   - Updated [Create Permissioned Network](https://besu.hyperledger.org/en/latest/Tutorials/Permissioning/Create-Permissioned-Network/) tutorial to use `export-address`
-   - Updated [Clique](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/Clique/) and [IBFT 2.0](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/IBFT/) docs to include complete genesis file
-   - Updated [Clique tutorial](https://besu.hyperledger.org/en/latest/Tutorials/Private-Network/Create-Private-Clique-Network/) to use `export-address` subcommand
-   - Added IBFT 2.0 [future message configuration options](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/IBFT/#optional-configuration-options)
+  - Updated endpoints in [Private Network Quickstart](https://besu.hyperledger.org/en/latest/Tutorials/Quickstarts/Private-Network-Quickstart/) (thanks to [laubai](https://github.com/laubai))
+  - Updated [documentation contribution guidelines](https://besu.hyperledger.org/en/stable/)
+  - Added [`admin_removePeer`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#admin_removepeer)
+  - Updated [tutorials](https://besu.hyperledger.org/en/latest/Tutorials/Private-Network/Create-Private-Clique-Network/) for printing of enode on startup
+  - Added [`txpool_pantheonTransactions`](https://besu.hyperledger.org/en/stable/Reference/API-Methods/#txpool_besutransactions)
+  - Added [Transaction Pool content](https://besu.hyperledger.org/en/latest/Concepts/Transactions/Transaction-Pool/)
+  - Added [`tx-pool-max-size` CLI option](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#tx-pool-max-size)
+  - Updated [developer build instructions to use installDist](https://besu.hyperledger.org/en/stable/)
+  - Added [Azure quickstart tutorial](https://besu.hyperledger.org/en/latest/Tutorials/Quickstarts/Azure-Private-Network-Quickstart/)
+  - Enabled copy button in code blocks
+  - Added [IBFT 1.0](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/QuorumIBFT/)
+  - Added section on using [Geth attach with Besu](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/Using-JSON-RPC-API/#geth-console)
+  - Enabled the edit link doc site to ease external doc contributions
+  - Added [EthStats docs](https://besu.hyperledger.org/HowTo/Deploy/Lite-Network-Monitor/) (thanks to [baxy](https://github.com/baxy))
+  - Updated [Postman collection](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/Authentication/#postman)
+  - Added [`metrics-category` CLI option](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#metrics-category)
+  - Added information on [block time and timeout settings](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/IBFT/#block-time) for IBFT 2.0
+  - Added [`admin_nodeInfo`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#admin_nodeinfo)
+  - Added [permissions images](https://besu.hyperledger.org/en/latest/Concepts/Permissioning/Permissioning-Overview/)
+  - Added permissioning blog to [Resources](https://besu.hyperledger.org/en/latest/Reference/Resources/)
+  - Updated [Create Permissioned Network](https://besu.hyperledger.org/en/latest/Tutorials/Permissioning/Create-Permissioned-Network/) tutorial to use `export-address`
+  - Updated [Clique](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/Clique/) and [IBFT 2.0](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/IBFT/) docs to include complete genesis file
+  - Updated [Clique tutorial](https://besu.hyperledger.org/en/latest/Tutorials/Private-Network/Create-Private-Clique-Network/) to use `export-address` subcommand
+  - Added IBFT 2.0 [future message configuration options](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/IBFT/#optional-configuration-options)
 
 ### Technical Improvements
 - Fixed so self persists to the whitelist [\#1176](https://github.com/PegaSysEng/pantheon/pull/1176)
@@ -4059,7 +4057,7 @@ fully synchronized to MainNet, the data directory will be ~2TB.
 When restarting your node with the v0.8.4 Docker image:
 
 * Save the node key in the [`key` file](https://besu.hyperledger.org/en/latest/Concepts/Node-Keys/#node-private-key) in the data
-    directory or specify the location using the [`--node-private-key` option](https://besu.hyperledger.org/en/stable/).
+  directory or specify the location using the [`--node-private-key` option](https://besu.hyperledger.org/en/stable/).
 * Specify the `<destination_directory` as a [volume for the data directory](https://besu.hyperledger.org/en/stable/).
 
 ### Bug Fixes
@@ -4168,10 +4166,10 @@ Specify `*` or `all` for `--host-whitelist` to effectively disable host protecti
 - Added `--goerli` CLI option [\#370](https://github.com/PegaSysEng/pantheon/pull/370) (Thanks to [@Nashatyrev](https://github.com/Nashatyrev))
 - Begin capturing metrics to better understand Besu's behaviour [\#326](https://github.com/PegaSysEng/pantheon/pull/326)
 - Documentation updates include:
-   * Added Coding Conventions [\#342](https://github.com/PegaSysEng/pantheon/pull/342)
-   * Reorganised [Installation documentation](https://github.com/PegaSysEng/pantheon/wiki/Installation) and added [Chocolatey installation](https://github.com/PegaSysEng/pantheon/wiki/Install-Binaries#windows-with-chocolatey) for Windows
-   * Reorganised [JSON-RPC API documentation](https://github.com/PegaSysEng/pantheon/wiki/JSON-RPC-API)
-   * Updated [RPC Pub/Sub API documentation](https://github.com/PegaSysEng/pantheon/wiki/RPC-PubSub)
+  * Added Coding Conventions [\#342](https://github.com/PegaSysEng/pantheon/pull/342)
+  * Reorganised [Installation documentation](https://github.com/PegaSysEng/pantheon/wiki/Installation) and added [Chocolatey installation](https://github.com/PegaSysEng/pantheon/wiki/Install-Binaries#windows-with-chocolatey) for Windows
+  * Reorganised [JSON-RPC API documentation](https://github.com/PegaSysEng/pantheon/wiki/JSON-RPC-API)
+  * Updated [RPC Pub/Sub API documentation](https://github.com/PegaSysEng/pantheon/wiki/RPC-PubSub)
 
 ### Technical Improvements
 
@@ -4223,53 +4221,53 @@ Specify `*` or `all` for `--host-whitelist` to effectively disable host protecti
 ## 0.8.2
 
 ### Removed
- - Removed `import-blockchain` command because nothing exports to the required format yet (PR [\#223](https://github.com/PegaSysEng/pantheon/pull/223))
+- Removed `import-blockchain` command because nothing exports to the required format yet (PR [\#223](https://github.com/PegaSysEng/pantheon/pull/223))
 
 ### Bug Fixes
- - `io.netty.util.internal.OutOfDirectMemoryError` errors by removing reference counting from network messages.
- - Log spam: endless loop in `nioEventLoopGroup` thanks to [@5chdn](https://github.com/5chdn) for reporting) (PR [#261](https://github.com/PegaSysEng/pantheon/pull/261))
- - Rinkeby import can stall with too many fragments thanks to [@steffenkux](https://github.com/steffenkux) and [@5chdn](https://github.com/5chdn) for reporting) (PR [#255](https://github.com/PegaSysEng/pantheon/pull/255))
- - Clique incorrectly used the chain ID instead of the network ID in ETH status messages (PR [#209](https://github.com/PegaSysEng/pantheon/pull/209))
- - Gradle deprecation warnings (PR [#246](https://github.com/PegaSysEng/pantheon/pull/246) with thanks to [@jvirtanen](https://github.com/jvirtanen))
- - Consensus issue on Ropsten:
-    - Treat output length as a maximum length for CALL operations (PR [#236](https://github.com/PegaSysEng/pantheon/pull/236))
-    - ECRec precompile should return empty instead of 32 zero bytes when the input is invalid (PR [#227](https://github.com/PegaSysEng/pantheon/pull/227))
- - File name too long error while building from source thanks to [@5chdn](https://github.com/5chdn) for reporting) (PR [#221](https://github.com/PegaSysEng/pantheon/pull/221))
- - Loop syntax in `runBesuPrivateNetwork.sh` (PR [#237](https://github.com/PegaSysEng/pantheon/pull/237) thanks to [@matt9ucci](https://github.com/matt9ucci))
- - Fix `CompressionException: Snappy decompression failed` errors thanks to [@5chdn](https://github.com/5chdn) for reporting) (PR [#274](https://github.com/PegaSysEng/pantheon/pull/274))
+- `io.netty.util.internal.OutOfDirectMemoryError` errors by removing reference counting from network messages.
+- Log spam: endless loop in `nioEventLoopGroup` thanks to [@5chdn](https://github.com/5chdn) for reporting) (PR [#261](https://github.com/PegaSysEng/pantheon/pull/261))
+- Rinkeby import can stall with too many fragments thanks to [@steffenkux](https://github.com/steffenkux) and [@5chdn](https://github.com/5chdn) for reporting) (PR [#255](https://github.com/PegaSysEng/pantheon/pull/255))
+- Clique incorrectly used the chain ID instead of the network ID in ETH status messages (PR [#209](https://github.com/PegaSysEng/pantheon/pull/209))
+- Gradle deprecation warnings (PR [#246](https://github.com/PegaSysEng/pantheon/pull/246) with thanks to [@jvirtanen](https://github.com/jvirtanen))
+- Consensus issue on Ropsten:
+  - Treat output length as a maximum length for CALL operations (PR [#236](https://github.com/PegaSysEng/pantheon/pull/236))
+  - ECRec precompile should return empty instead of 32 zero bytes when the input is invalid (PR [#227](https://github.com/PegaSysEng/pantheon/pull/227))
+- File name too long error while building from source thanks to [@5chdn](https://github.com/5chdn) for reporting) (PR [#221](https://github.com/PegaSysEng/pantheon/pull/221))
+- Loop syntax in `runBesuPrivateNetwork.sh` (PR [#237](https://github.com/PegaSysEng/pantheon/pull/237) thanks to [@matt9ucci](https://github.com/matt9ucci))
+- Fix `CompressionException: Snappy decompression failed` errors thanks to [@5chdn](https://github.com/5chdn) for reporting) (PR [#274](https://github.com/PegaSysEng/pantheon/pull/274))
 
 ### Additions and Improvements
- - Added `--ropsten` command line argument to make syncing to Ropsten easier (PR [#197](https://github.com/PegaSysEng/pantheon/pull/197) with thanks to [@jvirtanen](https://github.com/jvirtanen))
- - Enabled constantinople in `--dev-mode` (PR [#256](https://github.com/PegaSysEng/pantheon/pull/256))
- - Supported Constantinople with Clique thanks to [@5chdn](https://github.com/5chdn) for reporting) (PR [#250](https://github.com/PegaSysEng/pantheon/pull/250), PR [#247](https://github.com/PegaSysEng/pantheon/pull/247))
- - Implemented `eth_chainId` JSON-RPC method (PR [#219](https://github.com/PegaSysEng/pantheon/pull/219))
- - Updated client version to be ethstats friendly (PR [#258](https://github.com/PegaSysEng/pantheon/pull/258))
- - Added `--node-private-key` option to allow nodekey file to be specified separately to data directory thanks to [@peterbroadhurst](https://github.com/peterbroadhurst) for requesting)  (PR [#234](https://github.com/PegaSysEng/pantheon/pull/234))
- - Added `--banned-nodeids` option to prevent connection to specific nodes (PR [#254](https://github.com/PegaSysEng/pantheon/pull/254))
- - Send client quitting disconnect message to peers on shutdown (PR [#253](https://github.com/PegaSysEng/pantheon/pull/253))
- - Improved error message for port conflict error (PR [#232](https://github.com/PegaSysEng/pantheon/pull/232))
- - Improved documentation by adding the following pages:
-    * [Getting Started](https://github.com/PegaSysEng/pantheon/wiki/Getting-Started)
-    * [Network ID and Chain ID](https://github.com/PegaSysEng/pantheon/wiki/NetworkID-And-ChainID)
-    * [Node Keys](https://github.com/PegaSysEng/pantheon/wiki/Node-Keys)
-    * [Networking](https://github.com/PegaSysEng/pantheon/wiki/Networking)
-    * [Accounts for Testing](https://github.com/PegaSysEng/pantheon/wiki/Accounts-for-Testing)
-    * [Logging](https://github.com/PegaSysEng/pantheon/wiki/Logging)
-    * [Proof of Authority](https://github.com/PegaSysEng/pantheon/wiki/Proof-of-Authority)
-    * [Passing JVM Options](https://github.com/PegaSysEng/pantheon/wiki/Passing-JVM-Options)
+- Added `--ropsten` command line argument to make syncing to Ropsten easier (PR [#197](https://github.com/PegaSysEng/pantheon/pull/197) with thanks to [@jvirtanen](https://github.com/jvirtanen))
+- Enabled constantinople in `--dev-mode` (PR [#256](https://github.com/PegaSysEng/pantheon/pull/256))
+- Supported Constantinople with Clique thanks to [@5chdn](https://github.com/5chdn) for reporting) (PR [#250](https://github.com/PegaSysEng/pantheon/pull/250), PR [#247](https://github.com/PegaSysEng/pantheon/pull/247))
+- Implemented `eth_chainId` JSON-RPC method (PR [#219](https://github.com/PegaSysEng/pantheon/pull/219))
+- Updated client version to be ethstats friendly (PR [#258](https://github.com/PegaSysEng/pantheon/pull/258))
+- Added `--node-private-key` option to allow nodekey file to be specified separately to data directory thanks to [@peterbroadhurst](https://github.com/peterbroadhurst) for requesting)  (PR [#234](https://github.com/PegaSysEng/pantheon/pull/234))
+- Added `--banned-nodeids` option to prevent connection to specific nodes (PR [#254](https://github.com/PegaSysEng/pantheon/pull/254))
+- Send client quitting disconnect message to peers on shutdown (PR [#253](https://github.com/PegaSysEng/pantheon/pull/253))
+- Improved error message for port conflict error (PR [#232](https://github.com/PegaSysEng/pantheon/pull/232))
+- Improved documentation by adding the following pages:
+  * [Getting Started](https://github.com/PegaSysEng/pantheon/wiki/Getting-Started)
+  * [Network ID and Chain ID](https://github.com/PegaSysEng/pantheon/wiki/NetworkID-And-ChainID)
+  * [Node Keys](https://github.com/PegaSysEng/pantheon/wiki/Node-Keys)
+  * [Networking](https://github.com/PegaSysEng/pantheon/wiki/Networking)
+  * [Accounts for Testing](https://github.com/PegaSysEng/pantheon/wiki/Accounts-for-Testing)
+  * [Logging](https://github.com/PegaSysEng/pantheon/wiki/Logging)
+  * [Proof of Authority](https://github.com/PegaSysEng/pantheon/wiki/Proof-of-Authority)
+  * [Passing JVM Options](https://github.com/PegaSysEng/pantheon/wiki/Passing-JVM-Options)
 
 
- ### Technical Improvements
- - Upgraded Ethereum reference tests to 6.0 beta 2. (thanks to [@jvirtanen](https://github.com/jvirtanen) for the initial upgrade to beta 1)
- - Set Java compiler default encoding to UTF-8 (PR [#238](https://github.com/PegaSysEng/pantheon/pull/238) thanks to [@matt9ucci](https://github.com/matt9ucci))
- - Removed duplicate code defining default JSON-RPC APIs (PR [#218](https://github.com/PegaSysEng/pantheon/pull/218) thanks to [@matt9ucci](https://github.com/matt9ucci))
- - Improved code for parsing config (PRs [#208](https://github.com/PegaSysEng/pantheon/pull/208), [#209](https://github.com/PegaSysEng/pantheon/pull/209))
- - Use `java.time.Clock` in favour of a custom Clock interface (PR [#220](https://github.com/PegaSysEng/pantheon/pull/220))
- - Improve modularity of storage systems (PR [#211](https://github.com/PegaSysEng/pantheon/pull/211), [#207](https://github.com/PegaSysEng/pantheon/pull/207))
- - Treat JavaDoc warnings as errors (PR [#171](https://github.com/PegaSysEng/pantheon/pull/171))
- - Add benchmark for `BlockHashOperation `as a template for benchmarking other EVM operations (PR [#203](https://github.com/PegaSysEng/pantheon/pull/203))
- - Added unit tests for `EthBlockNumber` (PR [#195](https://github.com/PegaSysEng/pantheon/pull/195) thanks to [@jvirtanen](https://github.com/jvirtanen))
- - Code style improvements (PR [#196](https://github.com/PegaSysEng/pantheon/pull/196) thanks to [@jvirtanen](https://github.com/jvirtanen))
- - Added unit tests for `Web3ClientVersion` (PR [#194](https://github.com/PegaSysEng/pantheon/pull/194) with thanks to [@jvirtanen](https://github.com/jvirtanen))
- - Removed RLPUtils from `RawBlockIterator` (PR [#179](https://github.com/PegaSysEng/pantheon/pull/179))
- - Replace the JNI based snappy library with a pure-Java version (PR [#257](https://github.com/PegaSysEng/pantheon/pull/257))
+### Technical Improvements
+- Upgraded Ethereum reference tests to 6.0 beta 2. (thanks to [@jvirtanen](https://github.com/jvirtanen) for the initial upgrade to beta 1)
+- Set Java compiler default encoding to UTF-8 (PR [#238](https://github.com/PegaSysEng/pantheon/pull/238) thanks to [@matt9ucci](https://github.com/matt9ucci))
+- Removed duplicate code defining default JSON-RPC APIs (PR [#218](https://github.com/PegaSysEng/pantheon/pull/218) thanks to [@matt9ucci](https://github.com/matt9ucci))
+- Improved code for parsing config (PRs [#208](https://github.com/PegaSysEng/pantheon/pull/208), [#209](https://github.com/PegaSysEng/pantheon/pull/209))
+- Use `java.time.Clock` in favour of a custom Clock interface (PR [#220](https://github.com/PegaSysEng/pantheon/pull/220))
+- Improve modularity of storage systems (PR [#211](https://github.com/PegaSysEng/pantheon/pull/211), [#207](https://github.com/PegaSysEng/pantheon/pull/207))
+- Treat JavaDoc warnings as errors (PR [#171](https://github.com/PegaSysEng/pantheon/pull/171))
+- Add benchmark for `BlockHashOperation `as a template for benchmarking other EVM operations (PR [#203](https://github.com/PegaSysEng/pantheon/pull/203))
+- Added unit tests for `EthBlockNumber` (PR [#195](https://github.com/PegaSysEng/pantheon/pull/195) thanks to [@jvirtanen](https://github.com/jvirtanen))
+- Code style improvements (PR [#196](https://github.com/PegaSysEng/pantheon/pull/196) thanks to [@jvirtanen](https://github.com/jvirtanen))
+- Added unit tests for `Web3ClientVersion` (PR [#194](https://github.com/PegaSysEng/pantheon/pull/194) with thanks to [@jvirtanen](https://github.com/jvirtanen))
+- Removed RLPUtils from `RawBlockIterator` (PR [#179](https://github.com/PegaSysEng/pantheon/pull/179))
+- Replace the JNI based snappy library with a pure-Java version (PR [#257](https://github.com/PegaSysEng/pantheon/pull/257))
