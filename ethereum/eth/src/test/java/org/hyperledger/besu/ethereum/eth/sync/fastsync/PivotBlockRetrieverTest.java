@@ -376,9 +376,9 @@ public class PivotBlockRetrieverTest {
 
     assertThat(future).isCompletedExceptionally();
     assertThatThrownBy(future::get)
-        .hasRootCauseInstanceOf(FastSyncException.class)
-        .extracting(e -> ((FastSyncException) ExceptionUtils.rootCause(e)).getError())
-        .isEqualTo(FastSyncError.PIVOT_BLOCK_HEADER_MISMATCH);
+        .hasRootCauseInstanceOf(SyncException.class)
+        .extracting(e -> ((SyncException) ExceptionUtils.rootCause(e)).getError())
+        .isEqualTo(SyncError.PIVOT_BLOCK_HEADER_MISMATCH);
   }
 
   @ParameterizedTest
@@ -406,9 +406,9 @@ public class PivotBlockRetrieverTest {
 
     assertThat(future).isCompletedExceptionally();
     assertThatThrownBy(future::get)
-        .hasRootCauseInstanceOf(FastSyncException.class)
-        .extracting(e -> ((FastSyncException) ExceptionUtils.rootCause(e)).getError())
-        .isEqualTo(FastSyncError.PIVOT_BLOCK_HEADER_MISMATCH);
+        .hasRootCauseInstanceOf(SyncException.class)
+        .extracting(e -> ((SyncException) ExceptionUtils.rootCause(e)).getError())
+        .isEqualTo(SyncError.PIVOT_BLOCK_HEADER_MISMATCH);
   }
 
   private Responder responderForFakeBlocks(final long... blockNumbers) {

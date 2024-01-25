@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static io.netty.util.internal.ObjectUtil.checkNonEmpty;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapsyncMetricsManager.Step.HEAL_TRIE;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncMetricsManager.Step.HEAL_TRIE;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -37,9 +37,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Manages the metrics related to the SnapSync process. */
-public class SnapsyncMetricsManager {
+public class SnapSyncMetricsManager {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SnapsyncMetricsManager.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SnapSyncMetricsManager.class);
   private static final long PRINT_DELAY = TimeUnit.MINUTES.toMillis(1);
 
   private final MetricsSystem metricsSystem;
@@ -79,7 +79,7 @@ public class SnapsyncMetricsManager {
 
   private long lastNotifyTimestamp;
 
-  public SnapsyncMetricsManager(final MetricsSystem metricsSystem, final EthContext ethContext) {
+  public SnapSyncMetricsManager(final MetricsSystem metricsSystem, final EthContext ethContext) {
     this.metricsSystem = metricsSystem;
     this.ethContext = ethContext;
     percentageProgress = new AtomicReference<>(new BigDecimal(0));

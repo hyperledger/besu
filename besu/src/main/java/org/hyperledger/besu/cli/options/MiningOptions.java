@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.util.List;
+import java.util.OptionalInt;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -188,6 +189,8 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
         DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
   }
 
+  private OptionalInt maybeGenesisBlockPeriodSeconds;
+
   private MiningOptions() {}
 
   /**
@@ -197,6 +200,16 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
    */
   public static MiningOptions create() {
     return new MiningOptions();
+  }
+
+  /**
+   * Set the optional genesis block period per seconds
+   *
+   * @param genesisBlockPeriodSeconds if the network is PoA then the block period in seconds
+   *     specified in the genesis file, otherwise empty.
+   */
+  public void setGenesisBlockPeriodSeconds(final OptionalInt genesisBlockPeriodSeconds) {
+    maybeGenesisBlockPeriodSeconds = genesisBlockPeriodSeconds;
   }
 
   /**
@@ -285,6 +298,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
 
   static MiningOptions fromConfig(final MiningParameters miningParameters) {
     final MiningOptions miningOptions = MiningOptions.create();
+    miningOptions.setGenesisBlockPeriodSeconds(miningParameters.getGenesisBlockPeriodSeconds());
     miningOptions.isMiningEnabled = miningParameters.isMiningEnabled();
     miningOptions.iStratumMiningEnabled = miningParameters.isStratumMiningEnabled();
     miningOptions.stratumNetworkInterface = miningParameters.getStratumNetworkInterface();
@@ -319,6 +333,11 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
 
   @Override
   public MiningParameters toDomainObject() {
+    if (maybeGenesisBlockPeriodSeconds == null) {
+      throw new IllegalStateException(
+          "genesisBlockPeriodSeconds must be set before using this object");
+    }
+
     final var updatableInitValuesBuilder =
         MutableInitValues.builder()
             .isMiningEnabled(isMiningEnabled)
@@ -334,27 +353,26 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
       updatableInitValuesBuilder.coinbase(coinbase);
     }
 
-    final var miningParametersBuilder =
-        ImmutableMiningParameters.builder()
-            .mutableInitValues(updatableInitValuesBuilder.build())
-            .isStratumMiningEnabled(iStratumMiningEnabled)
-            .stratumNetworkInterface(stratumNetworkInterface)
-            .stratumPort(stratumPort)
-            .nonPoaBlockTxsSelectionMaxTime(nonPoaBlockTxsSelectionMaxTime)
-            .poaBlockTxsSelectionMaxTime(poaBlockTxsSelectionMaxTime)
-            .unstable(
-                ImmutableMiningParameters.Unstable.builder()
-                    .remoteSealersLimit(unstableOptions.remoteSealersLimit)
-                    .remoteSealersTimeToLive(unstableOptions.remoteSealersTimeToLive)
-                    .powJobTimeToLive(unstableOptions.powJobTimeToLive)
-                    .maxOmmerDepth(unstableOptions.maxOmmersDepth)
-                    .stratumExtranonce(unstableOptions.stratumExtranonce)
-                    .posBlockCreationMaxTime(unstableOptions.posBlockCreationMaxTime)
-                    .posBlockCreationRepetitionMinDuration(
-                        unstableOptions.posBlockCreationRepetitionMinDuration)
-                    .build());
-
-    return miningParametersBuilder.build();
+    return ImmutableMiningParameters.builder()
+        .genesisBlockPeriodSeconds(maybeGenesisBlockPeriodSeconds)
+        .mutableInitValues(updatableInitValuesBuilder.build())
+        .isStratumMiningEnabled(iStratumMiningEnabled)
+        .stratumNetworkInterface(stratumNetworkInterface)
+        .stratumPort(stratumPort)
+        .nonPoaBlockTxsSelectionMaxTime(nonPoaBlockTxsSelectionMaxTime)
+        .poaBlockTxsSelectionMaxTime(poaBlockTxsSelectionMaxTime)
+        .unstable(
+            ImmutableMiningParameters.Unstable.builder()
+                .remoteSealersLimit(unstableOptions.remoteSealersLimit)
+                .remoteSealersTimeToLive(unstableOptions.remoteSealersTimeToLive)
+                .powJobTimeToLive(unstableOptions.powJobTimeToLive)
+                .maxOmmerDepth(unstableOptions.maxOmmersDepth)
+                .stratumExtranonce(unstableOptions.stratumExtranonce)
+                .posBlockCreationMaxTime(unstableOptions.posBlockCreationMaxTime)
+                .posBlockCreationRepetitionMinDuration(
+                    unstableOptions.posBlockCreationRepetitionMinDuration)
+                .build())
+        .build();
   }
 
   @Override
