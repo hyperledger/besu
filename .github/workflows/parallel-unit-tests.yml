@@ -19,7 +19,7 @@ jobs:
           - 3
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.1.1
       - name: Split tests
         id: split-tests
         uses: chaosaffe/split-tests@v1-alpha.1
@@ -29,7 +29,7 @@ jobs:
           split-index: ${{ matrix.runner_index }}
           line-count: true
       - name: Set up Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4.0.0
         with:
           distribution: adopt
           java-version: 17
