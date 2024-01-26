@@ -30,7 +30,7 @@ public class DataSizeOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public DataSizeOperation(final GasCalculator gasCalculator) {
-    super(0xB7, "DATASIZE", 0, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0xd2, "DATASIZE", 0, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

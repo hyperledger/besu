@@ -32,7 +32,7 @@ public class DataCopyOperation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public DataCopyOperation(final GasCalculator gasCalculator) {
-    super(0xB7, "DATALOAD", 3, 1, gasCalculator);
+    super(0xd3, "DATALOAD", 3, 1, gasCalculator);
   }
 
   /**

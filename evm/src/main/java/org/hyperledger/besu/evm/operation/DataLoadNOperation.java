@@ -30,7 +30,7 @@ public class DataLoadNOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public DataLoadNOperation(final GasCalculator gasCalculator) {
-    super(0xBA, "DATALOADN", 0, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0xd1, "DATALOADN", 0, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

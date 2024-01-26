@@ -34,7 +34,7 @@ public class Call2Operation extends AbstractCallOperation {
    * @param gasCalculator the gas calculator
    */
   public Call2Operation(final GasCalculator gasCalculator) {
-    super(0xF9, "LCALL", 4, 1, gasCalculator);
+    super(0xF8, "CALL2", 4, 1, gasCalculator);
   }
 
   @Override
