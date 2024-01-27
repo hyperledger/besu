@@ -281,7 +281,7 @@ public final class GenesisState {
     if (shanghaiTimestamp.isPresent()) {
       return genesis.getTimestamp() >= shanghaiTimestamp.getAsLong();
     }
-    return isCancunAtGenesis(genesis);
+    return false;
   }
 
   private static boolean isCancunAtGenesis(final GenesisConfigFile genesis) {
@@ -289,23 +289,7 @@ public final class GenesisState {
     if (cancunTimestamp.isPresent()) {
       return genesis.getTimestamp() >= cancunTimestamp.getAsLong();
     }
-    return isPragueAtGenesis(genesis);
-  }
-
-  private static boolean isPragueAtGenesis(final GenesisConfigFile genesis) {
-    final OptionalLong pragueTimestamp = genesis.getConfigOptions().getPragueTime();
-    if (pragueTimestamp.isPresent()) {
-      return genesis.getTimestamp() >= pragueTimestamp.getAsLong();
-    }
-    return isFutureEipsTimeAtGenesis(genesis);
-  }
-
-  private static boolean isFutureEipsTimeAtGenesis(final GenesisConfigFile genesis) {
-    final OptionalLong futureEipsTime = genesis.getConfigOptions().getFutureEipsTime();
-    if (futureEipsTime.isPresent()) {
-      return genesis.getTimestamp() >= futureEipsTime.getAsLong();
-    }
-    return isExperimentalEipsTimeAtGenesis(genesis);
+    return false;
   }
 
   private static boolean isExperimentalEipsTimeAtGenesis(final GenesisConfigFile genesis) {
