@@ -75,7 +75,7 @@ public abstract class PeerDiscoveryAgent {
   // clients ignore that, so we add in a little extra padding.
   private static final int MAX_PACKET_SIZE_BYTES = 1600;
   private static final List<String> PING_PACKET_SOURCE_IGNORED =
-      List.of("127.0.0.1", "255.255.255.255", "0.0.0.0", "[::]");
+      List.of("127.0.0.1", "255.255.255.255", "0.0.0.0", "::", "0:0:0:0:0:0:0:0");
 
   protected final List<DiscoveryPeer> bootstrapPeers;
   private final List<PeerRequirement> peerRequirements = new CopyOnWriteArrayList<>();

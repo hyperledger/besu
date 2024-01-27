@@ -840,7 +840,7 @@ public class PeerDiscoveryAgentTest {
   public void assertHostCorrectlyRevertsOnIgnoredPacketFrom() {
     final String sourceHost = "UDP_SOURCE_ORIGIN_HOST";
     final String emptyIPv4Host = "0.0.0.0";
-    final String emptyIPv6Host = "[::]";
+    final String emptyIPv6Host = "::";
     final String localHost = "127.0.0.1";
     final String broadcastDefaultHost = "255.255.255.255";
     final String routableHost = "50.50.50.50";
