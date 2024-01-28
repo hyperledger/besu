@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +65,7 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
       final List<BlockHeader> headers,
       final int maxRetries,
       final MetricsSystem metricsSystem) {
-    super(ethContext, maxRetries, Collection::isEmpty, metricsSystem);
+    super(ethContext, maxRetries, metricsSystem);
     checkArgument(headers.size() > 0, "Must supply a non-empty headers list");
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
@@ -134,6 +133,16 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
     return requestBodies(assignedPeer).thenCompose(this::processBodiesResult);
   }
 
+  @Override
+  protected boolean emptyResult(final List<Block> peerResult) {
+    return peerResult.isEmpty();
+  }
+
+  @Override
+  protected boolean successfulResult(final List<Block> peerResult) {
+    return incompleteHeaders().isEmpty();
+  }
+
   private CompletableFuture<List<Block>> requestBodies(final Optional<EthPeer> assignedPeer) {
     final List<BlockHeader> incompleteHeaders = incompleteHeaders();
     if (incompleteHeaders.isEmpty()) {
@@ -157,7 +166,7 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
     blocksResult.forEach((block) -> blocks.put(block.getHeader().getNumber(), block));
 
     if (incompleteHeaders().isEmpty()) {
-      result.complete(
+      return completedFuture(
           headers.stream().map(h -> blocks.get(h.getNumber())).collect(Collectors.toList()));
     }
 

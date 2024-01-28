@@ -227,6 +227,10 @@ public class EthPeers {
     return ethPeer != null ? ethPeer : completeConnections.get(connection.getPeer().getId());
   }
 
+  public EthPeer peer(final Bytes peerId) {
+    return completeConnections.get(peerId);
+  }
+
   public PendingPeerRequest executePeerRequest(
       final PeerRequest request, final long minimumBlockNumber, final Optional<EthPeer> peer) {
     final long actualMinBlockNumber;

@@ -18,12 +18,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractGetHeadersFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByNumberTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -41,7 +41,7 @@ public class RetryingGetHeaderFromPeerByNumberTask
       final MetricsSystem metricsSystem,
       final long pivotBlockNumber,
       final int maxRetries) {
-    super(ethContext, maxRetries, Collection::isEmpty, metricsSystem);
+    super(ethContext, maxRetries, metricsSystem);
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.pivotBlockNumber = pivotBlockNumber;
@@ -65,14 +65,17 @@ public class RetryingGetHeaderFromPeerByNumberTask
         GetHeadersFromPeerByNumberTask.forSingleNumber(
             protocolSchedule, ethContext, pivotBlockNumber, metricsSystem);
     assignedPeer.ifPresent(getHeadersTask::assignPeer);
-    return executeSubTask(getHeadersTask::run)
-        .thenApply(
-            peerResult -> {
-              if (!peerResult.getResult().isEmpty()) {
-                result.complete(peerResult.getResult());
-              }
-              return peerResult.getResult();
-            });
+    return executeSubTask(getHeadersTask::run).thenApply(PeerTaskResult::getResult);
+  }
+
+  @Override
+  protected boolean emptyResult(final List<BlockHeader> peerResult) {
+    return peerResult.isEmpty();
+  }
+
+  @Override
+  protected boolean successfulResult(final List<BlockHeader> peerResult) {
+    return !emptyResult(peerResult);
   }
 
   public CompletableFuture<BlockHeader> getHeader() {

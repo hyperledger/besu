@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlocksFromPeersTask;
 
 import java.util.Comparator;
@@ -84,15 +83,13 @@ public class ForwardSyncStep {
             context.getEthContext().getEthPeers().peerCount(),
             blockHeaders);
 
-    final CompletableFuture<AbstractPeerTask.PeerTaskResult<List<Block>>> run =
-        getBodiesFromPeerTask.run();
-    return run.thenApply(AbstractPeerTask.PeerTaskResult::getResult)
-        .thenApply(
-            blocks -> {
-              LOG.debug("Got {} blocks from peers", blocks.size());
-              blocks.sort(Comparator.comparing(block -> block.getHeader().getNumber()));
-              return blocks;
-            });
+    final CompletableFuture<List<Block>> run = getBodiesFromPeerTask.run();
+    return run.thenApply(
+        blocks -> {
+          LOG.debug("Got {} blocks from peers", blocks.size());
+          blocks.sort(Comparator.comparing(block -> block.getHeader().getNumber()));
+          return blocks;
+        });
   }
 
   @VisibleForTesting

@@ -15,20 +15,22 @@
 package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingSwitchingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 import org.apache.tuweni.bytes.Bytes32;
 
 public class RetryingGetAccountRangeFromPeerTask
-    extends AbstractRetryingPeerTask<AccountRangeMessage.AccountRangeData> {
+    extends AbstractRetryingSwitchingPeerTask<AccountRangeMessage.AccountRangeData> {
 
   private final EthContext ethContext;
   private final Bytes32 startKeyHash;
@@ -41,9 +43,9 @@ public class RetryingGetAccountRangeFromPeerTask
       final Bytes32 startKeyHash,
       final Bytes32 endKeyHash,
       final BlockHeader blockHeader,
-      final MetricsSystem metricsSystem) {
-    super(
-        ethContext, 4, data -> data.accounts().isEmpty() && data.proofs().isEmpty(), metricsSystem);
+      final MetricsSystem metricsSystem,
+      final int maxRetries) {
+    super(ethContext, metricsSystem, maxRetries);
     this.ethContext = ethContext;
     this.startKeyHash = startKeyHash;
     this.endKeyHash = endKeyHash;
@@ -56,23 +58,41 @@ public class RetryingGetAccountRangeFromPeerTask
       final Bytes32 startKeyHash,
       final Bytes32 endKeyHash,
       final BlockHeader blockHeader,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final int maxRetries) {
     return new RetryingGetAccountRangeFromPeerTask(
-        ethContext, startKeyHash, endKeyHash, blockHeader, metricsSystem);
+        ethContext, startKeyHash, endKeyHash, blockHeader, metricsSystem, maxRetries);
   }
 
   @Override
-  protected CompletableFuture<AccountRangeMessage.AccountRangeData> executePeerTask(
-      final Optional<EthPeer> assignedPeer) {
+  protected CompletableFuture<AccountRangeMessage.AccountRangeData> executeTaskOnCurrentPeer(
+      final EthPeer assignedPeer) {
     final GetAccountRangeFromPeerTask task =
         GetAccountRangeFromPeerTask.forAccountRange(
             ethContext, startKeyHash, endKeyHash, blockHeader, metricsSystem);
-    assignedPeer.ifPresent(task::assignPeer);
-    return executeSubTask(task::run)
-        .thenApply(
-            peerResult -> {
-              result.complete(peerResult.getResult());
-              return peerResult.getResult();
-            });
+    task.assignPeer(assignedPeer);
+    return executeSubTask(task::run).thenApply(PeerTaskResult::getResult);
+  }
+
+  @Override
+  protected boolean emptyResult(final AccountRangeMessage.AccountRangeData data) {
+    return data.accounts().isEmpty() && data.proofs().isEmpty();
+  }
+
+  @Override
+  protected boolean reportUselessIfEmptyResponse() {
+    return false;
+  }
+
+  @Override
+  protected boolean successfulResult(final AccountRangeMessage.AccountRangeData peerResult) {
+    return !emptyResult(peerResult);
+  }
+
+  @Override
+  protected Predicate<EthPeer> getPeerFilter() {
+    return (peer) ->
+        peer.getConnection().getAgreedCapabilities().stream()
+            .anyMatch((c) -> c.getName().equals(SnapProtocol.NAME));
   }
 }

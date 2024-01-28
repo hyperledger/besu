@@ -47,7 +47,8 @@ public class RetryingGetBlockFromPeersTaskTest
   }
 
   @Override
-  protected RetryingGetBlockFromPeersTask createTask(final PeerTaskResult<Block> requestedData) {
+  protected RetryingGetBlockFromPeersTask createTask(
+      final PeerTaskResult<Block> requestedData, final int maxRetries) {
     return RetryingGetBlockFromPeersTask.create(
         protocolSchedule,
         ethContext,

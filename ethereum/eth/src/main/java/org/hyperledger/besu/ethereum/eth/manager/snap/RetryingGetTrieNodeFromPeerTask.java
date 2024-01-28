@@ -15,20 +15,23 @@
 package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingSwitchingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class RetryingGetTrieNodeFromPeerTask extends AbstractRetryingPeerTask<Map<Bytes, Bytes>> {
+public class RetryingGetTrieNodeFromPeerTask
+    extends AbstractRetryingSwitchingPeerTask<Map<Bytes, Bytes>> {
 
   private final EthContext ethContext;
   private final Map<Bytes, List<Bytes>> paths;
@@ -39,8 +42,9 @@ public class RetryingGetTrieNodeFromPeerTask extends AbstractRetryingPeerTask<Ma
       final EthContext ethContext,
       final Map<Bytes, List<Bytes>> paths,
       final BlockHeader blockHeader,
-      final MetricsSystem metricsSystem) {
-    super(ethContext, 4, Map::isEmpty, metricsSystem);
+      final MetricsSystem metricsSystem,
+      final int maxRetries) {
+    super(ethContext, metricsSystem, maxRetries);
     this.ethContext = ethContext;
     this.paths = paths;
     this.blockHeader = blockHeader;
@@ -51,21 +55,39 @@ public class RetryingGetTrieNodeFromPeerTask extends AbstractRetryingPeerTask<Ma
       final EthContext ethContext,
       final Map<Bytes, List<Bytes>> paths,
       final BlockHeader blockHeader,
-      final MetricsSystem metricsSystem) {
-    return new RetryingGetTrieNodeFromPeerTask(ethContext, paths, blockHeader, metricsSystem);
+      final MetricsSystem metricsSystem,
+      final int maxRetries) {
+    return new RetryingGetTrieNodeFromPeerTask(
+        ethContext, paths, blockHeader, metricsSystem, maxRetries);
   }
 
   @Override
-  protected CompletableFuture<Map<Bytes, Bytes>> executePeerTask(
-      final Optional<EthPeer> assignedPeer) {
+  protected CompletableFuture<Map<Bytes, Bytes>> executeTaskOnCurrentPeer(final EthPeer peer) {
     final GetTrieNodeFromPeerTask task =
         GetTrieNodeFromPeerTask.forTrieNodes(ethContext, paths, blockHeader, metricsSystem);
-    assignedPeer.ifPresent(task::assignPeer);
-    return executeSubTask(task::run)
-        .thenApply(
-            peerResult -> {
-              result.complete(peerResult.getResult());
-              return peerResult.getResult();
-            });
+    task.assignPeer(peer);
+    return executeSubTask(task::run).thenApply(PeerTaskResult::getResult);
+  }
+
+  @Override
+  protected boolean emptyResult(final Map<Bytes, Bytes> peerResult) {
+    return peerResult.isEmpty();
+  }
+
+  @Override
+  protected boolean reportUselessIfEmptyResponse() {
+    return false;
+  }
+
+  @Override
+  protected boolean successfulResult(final Map<Bytes, Bytes> peerResult) {
+    return !emptyResult(peerResult);
+  }
+
+  @Override
+  protected Predicate<EthPeer> getPeerFilter() {
+    return (peer) ->
+        peer.getConnection().getAgreedCapabilities().stream()
+            .anyMatch((c) -> c.getName().equals(SnapProtocol.NAME));
   }
 }
