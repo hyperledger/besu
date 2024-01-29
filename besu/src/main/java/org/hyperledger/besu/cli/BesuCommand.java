@@ -116,7 +116,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -215,6 +214,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -2401,32 +2401,28 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private MiningParameters getMiningParameters() {
     if (miningParameters == null) {
-      final var miningParametersBuilder =
-          ImmutableMiningParameters.builder().from(miningOptions.toDomainObject());
-      final var actualGenesisOptions = getActualGenesisConfigOptions();
-      if (actualGenesisOptions.isPoa()) {
-        miningParametersBuilder.genesisBlockPeriodSeconds(
-            getGenesisBlockPeriodSeconds(actualGenesisOptions));
-      }
-      miningParameters = miningParametersBuilder.build();
+      miningOptions.setGenesisBlockPeriodSeconds(
+          getGenesisBlockPeriodSeconds(getActualGenesisConfigOptions()));
+      miningParameters = miningOptions.toDomainObject();
     }
     return miningParameters;
   }
 
-  private int getGenesisBlockPeriodSeconds(final GenesisConfigOptions genesisConfigOptions) {
+  private OptionalInt getGenesisBlockPeriodSeconds(
+      final GenesisConfigOptions genesisConfigOptions) {
     if (genesisConfigOptions.isClique()) {
-      return genesisConfigOptions.getCliqueConfigOptions().getBlockPeriodSeconds();
+      return OptionalInt.of(genesisConfigOptions.getCliqueConfigOptions().getBlockPeriodSeconds());
     }
 
     if (genesisConfigOptions.isIbft2()) {
-      return genesisConfigOptions.getBftConfigOptions().getBlockPeriodSeconds();
+      return OptionalInt.of(genesisConfigOptions.getBftConfigOptions().getBlockPeriodSeconds());
     }
 
     if (genesisConfigOptions.isQbft()) {
-      return genesisConfigOptions.getQbftConfigOptions().getBlockPeriodSeconds();
+      return OptionalInt.of(genesisConfigOptions.getQbftConfigOptions().getBlockPeriodSeconds());
     }
 
-    throw new IllegalArgumentException("Should only be called for a PoA network");
+    return OptionalInt.empty();
   }
 
   private boolean isPruningEnabled() {
@@ -2878,7 +2874,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return genesisConfigOptions.getEcCurve();
   }
 
-  private GenesisConfigOptions getActualGenesisConfigOptions() {
+  /**
+   * Return the genesis config options after applying any specified config overrides
+   *
+   * @return the genesis config options after applying any specified config overrides
+   */
+  protected GenesisConfigOptions getActualGenesisConfigOptions() {
     return Optional.ofNullable(genesisConfigOptions)
         .orElseGet(
             () ->
