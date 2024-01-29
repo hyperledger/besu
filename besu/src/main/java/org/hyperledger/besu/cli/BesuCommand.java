@@ -635,7 +635,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   // JSON-RPC HTTP Options
   @CommandLine.ArgGroup(validate = false, heading = "@|bold JSON-RPC HTTP Options|@%n")
-  JsonRpcHttpOptions jsonRPCHttpOptionGroup = new JsonRpcHttpOptions();
+  JsonRpcHttpOptions jsonRpcHttpOptions = new JsonRpcHttpOptions();
 
   // JSON-RPC Websocket Options
   @CommandLine.ArgGroup(validate = false, heading = "@|bold JSON-RPC Websocket Options|@%n")
@@ -1699,7 +1699,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             Arrays.stream(RpcApis.values())
                     .anyMatch(builtInApi -> apiName.equals(builtInApi.name()))
                 || rpcEndpointServiceImpl.hasNamespace(apiName);
-    jsonRPCHttpOptionGroup.validate(logger, commandLine, configuredApis);
+    jsonRpcHttpOptions.validate(logger, commandLine, configuredApis);
   }
 
   private void validateRpcWsOptions() {
@@ -1801,7 +1801,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     ethNetworkConfig = updateNetworkConfig(network);
 
     jsonRpcConfiguration =
-        jsonRPCHttpOptionGroup.jsonRpcConfiguration(
+        jsonRpcHttpOptions.jsonRpcConfiguration(
             hostsAllowlist,
             p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress(),
             unstableRPCOptions.getHttpTimeoutSec());
@@ -1977,8 +1977,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private JsonRpcConfiguration createEngineJsonRpcConfiguration(
       final Integer engineListenPort, final List<String> allowCallsFrom) {
+    jsonRpcHttpOptions.checkDependencies(logger, commandLine);
     final JsonRpcConfiguration engineConfig =
-        jsonRPCHttpOptionGroup.jsonRpcConfiguration(
+        jsonRpcHttpOptions.jsonRpcConfiguration(
             allowCallsFrom,
             p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress(),
             unstableRPCOptions.getWsTimeoutSec());
@@ -2092,7 +2093,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private Optional<PermissioningConfiguration> permissioningConfiguration() throws Exception {
     if (!(localPermissionsEnabled() || contractPermissionsEnabled())) {
-      if (jsonRPCHttpOptionGroup.getRpcHttpApis().contains(RpcApis.PERM.name())
+      if (jsonRpcHttpOptions.getRpcHttpApis().contains(RpcApis.PERM.name())
           || rpcWebsocketOptions.getRpcWsApis().contains(RpcApis.PERM.name())) {
         logger.warn(
             "Permissions are disabled. Cannot enable PERM APIs when not using Permissions.");
@@ -2295,9 +2296,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private boolean anyPrivacyApiEnabled() {
-    return jsonRPCHttpOptionGroup.getRpcHttpApis().contains(RpcApis.EEA.name())
+    return jsonRpcHttpOptions.getRpcHttpApis().contains(RpcApis.EEA.name())
         || rpcWebsocketOptions.getRpcWsApis().contains(RpcApis.EEA.name())
-        || jsonRPCHttpOptionGroup.getRpcHttpApis().contains(RpcApis.PRIV.name())
+        || jsonRpcHttpOptions.getRpcHttpApis().contains(RpcApis.PRIV.name())
         || rpcWebsocketOptions.getRpcWsApis().contains(RpcApis.PRIV.name());
   }
 
@@ -2797,9 +2798,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         graphQlOptionGroup.graphQLHttpPort,
         graphQlOptionGroup.isGraphQLHttpEnabled);
     addPortIfEnabled(
-        effectivePorts,
-        jsonRPCHttpOptionGroup.getRpcHttpPort(),
-        jsonRPCHttpOptionGroup.isRpcHttpEnabled());
+        effectivePorts, jsonRpcHttpOptions.getRpcHttpPort(), jsonRpcHttpOptions.isRpcHttpEnabled());
     addPortIfEnabled(
         effectivePorts, rpcWebsocketOptions.getRpcWsPort(), rpcWebsocketOptions.isRpcWsEnabled());
     addPortIfEnabled(effectivePorts, engineRPCOptionGroup.engineRpcPort, isEngineApiEnabled());

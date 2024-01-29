@@ -227,9 +227,7 @@ public class JsonRpcHttpOptions {
           "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
     }
 
-    checkRpcTlsClientAuthOptionsDependencies(logger, commandLine);
-    checkRpcTlsOptionsDependencies(logger, commandLine);
-    checkRpcHttpOptionsDependencies(logger, commandLine);
+    checkDependencies(logger, commandLine);
 
     if (isRpcTlsConfigurationRequired()) {
       validateTls(commandLine);
@@ -260,6 +258,12 @@ public class JsonRpcHttpOptions {
     jsonRpcConfiguration.setMaxRequestContentLength(rpcHttpMaxRequestContentLength);
     jsonRpcConfiguration.setPrettyJsonEnabled(prettyJsonEnabled);
     return jsonRpcConfiguration;
+  }
+
+  public void checkDependencies(final Logger logger, final CommandLine commandLine) {
+    checkRpcTlsClientAuthOptionsDependencies(logger, commandLine);
+    checkRpcTlsOptionsDependencies(logger, commandLine);
+    checkRpcHttpOptionsDependencies(logger, commandLine);
   }
 
   private void checkRpcTlsClientAuthOptionsDependencies(
