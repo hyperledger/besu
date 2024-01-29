@@ -49,7 +49,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolTransa
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.web3.Web3Transactions;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.ProcessBuilder.Redirect;
@@ -58,14 +57,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.junit.After;
-import org.junit.Rule;
-import org.junit.rules.TestName;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
+/**
+ * Superclass for acceptance tests. For now (transition to junit5 is ongoing) this class supports
+ * junit4 format.
+ */
+@ExtendWith(AcceptanceTestBaseTestWatcher.class)
 public class AcceptanceTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(AcceptanceTestBase.class);
@@ -131,8 +131,6 @@ public class AcceptanceTestBase {
     exitedSuccessfully = new ExitedWithCode(0);
   }
 
-  @Rule public final TestName name = new TestName();
-
   @After
   public void tearDownAcceptanceTestBase() {
     reportMemory();
@@ -177,49 +175,6 @@ public class AcceptanceTestBase {
       LOG.warn("Failed to read output from memory information process: ", e);
     }
   }
-
-  @Rule
-  public TestWatcher logEraser =
-      new TestWatcher() {
-
-        @Override
-        protected void starting(final Description description) {
-          MDC.put("test", description.getMethodName());
-          MDC.put("class", description.getClassName());
-
-          final String errorMessage = "Uncaught exception in thread \"{}\"";
-          Thread.currentThread()
-              .setUncaughtExceptionHandler(
-                  (thread, error) -> LOG.error(errorMessage, thread.getName(), error));
-          Thread.setDefaultUncaughtExceptionHandler(
-              (thread, error) -> LOG.error(errorMessage, thread.getName(), error));
-        }
-
-        @Override
-        protected void failed(final Throwable e, final Description description) {
-          // add the result at the end of the log so it is self-sufficient
-          LOG.error(
-              "==========================================================================================");
-          LOG.error("Test failed. Reported Throwable at the point of failure:", e);
-          LOG.error(e.getMessage());
-        }
-
-        @Override
-        protected void succeeded(final Description description) {
-          // if so configured, delete logs of successful tests
-          if (!Boolean.getBoolean("acctests.keepLogsOfPassingTests")) {
-            String pathname =
-                "build/acceptanceTestLogs/"
-                    + description.getClassName()
-                    + "."
-                    + description.getMethodName()
-                    + ".log";
-            LOG.info("Test successful, deleting log at {}", pathname);
-            File file = new File(pathname);
-            file.delete();
-          }
-        }
-      };
 
   protected void waitForBlockHeight(final Node node, final long blockchainHeight) {
     WaitUtils.waitFor(

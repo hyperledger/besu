@@ -60,13 +60,13 @@ public class BonsaiWorldStateUpdateAccumulator
     implements BonsaiWorldView, TrieLogAccumulator {
   private static final Logger LOG =
       LoggerFactory.getLogger(BonsaiWorldStateUpdateAccumulator.class);
-  private final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader;
-  private final Consumer<StorageSlotKey> storagePreloader;
+  protected final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader;
+  protected final Consumer<StorageSlotKey> storagePreloader;
 
   private final AccountConsumingMap<BonsaiValue<BonsaiAccount>> accountsToUpdate;
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
-  private final EvmConfiguration evmConfiguration;
+  protected final EvmConfiguration evmConfiguration;
 
   // storage sub mapped by _hashed_ key.  This is because in self_destruct calls we need to
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the
@@ -74,7 +74,7 @@ public class BonsaiWorldStateUpdateAccumulator
   private final Map<Address, StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>>
       storageToUpdate = new ConcurrentHashMap<>();
 
-  private boolean isAccumulatorStateChanged;
+  protected boolean isAccumulatorStateChanged;
 
   public BonsaiWorldStateUpdateAccumulator(
       final BonsaiWorldView world,
@@ -459,7 +459,7 @@ public class BonsaiWorldStateUpdateAccumulator
     if (localAccountStorage != null) {
       final BonsaiValue<UInt256> value = localAccountStorage.get(storageSlotKey);
       if (value != null) {
-        if (value.isCleared()) {
+        if (value.isLastStepCleared()) {
           return UInt256.ZERO;
         }
         final UInt256 updated = value.getUpdated();

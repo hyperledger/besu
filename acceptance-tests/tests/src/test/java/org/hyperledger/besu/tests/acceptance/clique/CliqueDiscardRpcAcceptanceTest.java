@@ -14,14 +14,14 @@
  */
 package org.hyperledger.besu.tests.acceptance.clique;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import java.io.IOException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class CliqueDiscardRpcAcceptanceTest extends AcceptanceTestBase {
+public class CliqueDiscardRpcAcceptanceTest extends AcceptanceTestBaseJunit5 {
 
   @Test
   public void shouldDiscardVotes() throws IOException {

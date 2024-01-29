@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
-import org.hyperledger.besu.ethereum.eth.sync.SyncTargetManager;
+import org.hyperledger.besu.ethereum.eth.sync.AbstractSyncTargetManager;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByNumberTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -39,8 +39,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FastSyncTargetManager extends SyncTargetManager {
-  private static final Logger LOG = LoggerFactory.getLogger(FastSyncTargetManager.class);
+public class SyncTargetManager extends AbstractSyncTargetManager {
+  private static final Logger LOG = LoggerFactory.getLogger(SyncTargetManager.class);
 
   private final WorldStateStorage worldStateStorage;
   private final ProtocolSchedule protocolSchedule;
@@ -53,7 +53,7 @@ public class FastSyncTargetManager extends SyncTargetManager {
   private final int logDebugRepeatDelay = 15;
   private final int logInfoRepeatDelay = 120;
 
-  public FastSyncTargetManager(
+  public SyncTargetManager(
       final SynchronizerConfiguration config,
       final WorldStateStorage worldStateStorage,
       final ProtocolSchedule protocolSchedule,

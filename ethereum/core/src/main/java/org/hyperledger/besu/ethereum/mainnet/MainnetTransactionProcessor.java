@@ -293,6 +293,8 @@ public class MainnetTransactionProcessor {
         return TransactionProcessingResult.invalid(validationResult);
       }
 
+      operationTracer.tracePrepareTransaction(worldState, transaction);
+
       final long previousNonce = sender.incrementNonce();
       LOG.trace(
           "Incremented sender {} nonce ({} -> {})",
@@ -426,6 +428,13 @@ public class MainnetTransactionProcessor {
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         worldUpdater.commit();
+      } else {
+        if (initialFrame.getExceptionalHaltReason().isPresent()) {
+          validationResult =
+              ValidationResult.invalid(
+                  TransactionInvalidReason.EXECUTION_HALTED,
+                  initialFrame.getExceptionalHaltReason().get().toString());
+        }
       }
 
       if (LOG.isTraceEnabled()) {

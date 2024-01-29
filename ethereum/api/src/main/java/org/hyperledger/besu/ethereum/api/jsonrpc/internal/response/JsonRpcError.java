@@ -73,6 +73,10 @@ public class JsonRpcError {
     return data;
   }
 
+  public void setReason(final String reason) {
+    this.reason = reason;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {

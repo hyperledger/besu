@@ -84,7 +84,10 @@ public class BlockHeaderValidator {
             rule -> {
               boolean worked = rule.validate(header, parent, protocolContext);
               if (!worked) {
-                LOG.debug("{} rule failed", rule.innerRuleClass().getCanonicalName());
+                String canonicalName = rule.innerRuleClass().getCanonicalName();
+                LOG.debug(
+                    "{} rule failed",
+                    canonicalName == null ? rule.innerRuleClass().getName() : canonicalName);
               }
               return worked;
             });

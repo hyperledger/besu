@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.util.number.Percentage;
+import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.time.Duration;
 import java.util.Objects;
@@ -32,6 +32,10 @@ import org.immutables.value.Value;
 @Value.Immutable
 @Value.Enclosing
 public abstract class MiningParameters {
+  public static final PositiveNumber DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME =
+      PositiveNumber.fromInt((int) Duration.ofSeconds(5).toMillis());
+  public static final PositiveNumber DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME =
+      PositiveNumber.fromInt(75);
   public static final MiningParameters MINING_DISABLED =
       ImmutableMiningParameters.builder()
           .mutableInitValues(
@@ -128,6 +132,28 @@ public abstract class MiningParameters {
   @Value.Default
   public int getStratumPort() {
     return 8008;
+  }
+
+  @Value.Default
+  public PositiveNumber getNonPoaBlockTxsSelectionMaxTime() {
+    return DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+  }
+
+  @Value.Default
+  public PositiveNumber getPoaBlockTxsSelectionMaxTime() {
+    return DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+  }
+
+  public abstract OptionalInt getGenesisBlockPeriodSeconds();
+
+  @Value.Derived
+  public long getBlockTxsSelectionMaxTime() {
+    if (getGenesisBlockPeriodSeconds().isPresent()) {
+      return (TimeUnit.SECONDS.toMillis(getGenesisBlockPeriodSeconds().getAsInt())
+              * getPoaBlockTxsSelectionMaxTime().getValue())
+          / 100;
+    }
+    return getNonPoaBlockTxsSelectionMaxTime().getValue();
   }
 
   @Value.Default
@@ -266,8 +292,6 @@ public abstract class MiningParameters {
     int DEFAULT_MAX_OMMERS_DEPTH = 8;
     long DEFAULT_POS_BLOCK_CREATION_MAX_TIME = Duration.ofSeconds(12).toMillis();
     long DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION = Duration.ofMillis(500).toMillis();
-    long DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME = Duration.ofSeconds(5).toMillis();
-    Percentage DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME = Percentage.fromInt(75);
 
     MiningParameters.Unstable DEFAULT = ImmutableMiningParameters.Unstable.builder().build();
 
@@ -304,28 +328,6 @@ public abstract class MiningParameters {
     @Value.Default
     default String getStratumExtranonce() {
       return "080c";
-    }
-
-    @Value.Default
-    default long getNonPoaBlockTxsSelectionMaxTime() {
-      return DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
-    }
-
-    @Value.Default
-    default Percentage getPoaBlockTxsSelectionMaxTime() {
-      return DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
-    }
-
-    OptionalInt getMinBlockTime();
-
-    @Value.Derived
-    default long getBlockTxsSelectionMaxTime() {
-      if (getMinBlockTime().isPresent()) {
-        return (TimeUnit.SECONDS.toMillis(getMinBlockTime().getAsInt())
-                * getPoaBlockTxsSelectionMaxTime().getValue())
-            / 100;
-      }
-      return getNonPoaBlockTxsSelectionMaxTime();
     }
   }
 }

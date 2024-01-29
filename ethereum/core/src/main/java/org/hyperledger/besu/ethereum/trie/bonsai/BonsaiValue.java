@@ -24,18 +24,33 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 public class BonsaiValue<T> implements TrieLog.LogTuple<T> {
   private T prior;
   private T updated;
-  private boolean cleared;
+  private boolean lastStepCleared;
+
+  private boolean clearedAtLeastOnce;
 
   public BonsaiValue(final T prior, final T updated) {
     this.prior = prior;
     this.updated = updated;
-    this.cleared = false;
+    this.lastStepCleared = false;
+    this.clearedAtLeastOnce = false;
   }
 
-  public BonsaiValue(final T prior, final T updated, final boolean cleared) {
+  public BonsaiValue(final T prior, final T updated, final boolean lastStepCleared) {
     this.prior = prior;
     this.updated = updated;
-    this.cleared = cleared;
+    this.lastStepCleared = lastStepCleared;
+    this.clearedAtLeastOnce = lastStepCleared;
+  }
+
+  public BonsaiValue(
+      final T prior,
+      final T updated,
+      final boolean lastStepCleared,
+      final boolean clearedAtLeastOnce) {
+    this.prior = prior;
+    this.updated = updated;
+    this.lastStepCleared = lastStepCleared;
+    this.clearedAtLeastOnce = clearedAtLeastOnce;
   }
 
   @Override
@@ -54,18 +69,27 @@ public class BonsaiValue<T> implements TrieLog.LogTuple<T> {
   }
 
   public BonsaiValue<T> setUpdated(final T updated) {
-    this.cleared = updated == null;
+    this.lastStepCleared = updated == null;
+    if (lastStepCleared) {
+      this.clearedAtLeastOnce = true;
+    }
     this.updated = updated;
     return this;
   }
 
   public void setCleared() {
-    this.cleared = true;
+    this.lastStepCleared = true;
+    this.clearedAtLeastOnce = true;
   }
 
   @Override
-  public boolean isCleared() {
-    return cleared;
+  public boolean isLastStepCleared() {
+    return lastStepCleared;
+  }
+
+  @Override
+  public boolean isClearedAtLeastOnce() {
+    return clearedAtLeastOnce;
   }
 
   @Override
@@ -76,7 +100,7 @@ public class BonsaiValue<T> implements TrieLog.LogTuple<T> {
         + ", updated="
         + updated
         + ", cleared="
-        + cleared
+        + lastStepCleared
         + '}';
   }
 
@@ -90,7 +114,7 @@ public class BonsaiValue<T> implements TrieLog.LogTuple<T> {
     }
     BonsaiValue<?> that = (BonsaiValue<?>) o;
     return new EqualsBuilder()
-        .append(cleared, that.cleared)
+        .append(lastStepCleared, that.lastStepCleared)
         .append(prior, that.prior)
         .append(updated, that.updated)
         .isEquals();
@@ -98,6 +122,14 @@ public class BonsaiValue<T> implements TrieLog.LogTuple<T> {
 
   @Override
   public int hashCode() {
-    return new HashCodeBuilder(17, 37).append(prior).append(updated).append(cleared).toHashCode();
+    return new HashCodeBuilder(17, 37)
+        .append(prior)
+        .append(updated)
+        .append(lastStepCleared)
+        .toHashCode();
+  }
+
+  public BonsaiValue<T> copy() {
+    return new BonsaiValue<T>(prior, updated, lastStepCleared, clearedAtLeastOnce);
   }
 }

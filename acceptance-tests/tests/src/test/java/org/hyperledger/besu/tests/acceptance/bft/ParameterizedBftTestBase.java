@@ -14,29 +14,23 @@
  */
 package org.hyperledger.besu.tests.acceptance.bft;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
 
-import java.util.Collection;
+import java.util.stream.Stream;
 
-import org.junit.Ignore;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.params.provider.Arguments;
 
-@RunWith(Parameterized.class)
-@Ignore("This is not a test class, it offers BFT parameterization only.")
-public abstract class ParameterizedBftTestBase extends AcceptanceTestBase {
+@Disabled("This is not a test class, it offers BFT parameterization only.")
+public abstract class ParameterizedBftTestBase extends AcceptanceTestBaseJunit5 {
+  protected String bftType;
+  protected BftAcceptanceTestParameterization nodeFactory;
 
-  protected final String bftType;
-  protected final BftAcceptanceTestParameterization nodeFactory;
-
-  @Parameters(name = "{0}")
-  public static Collection<Object[]> factoryFunctions() {
+  public static Stream<Arguments> factoryFunctions() {
     return BftAcceptanceTestParameterization.getFactories();
   }
 
-  protected ParameterizedBftTestBase(
-      final String bftType, final BftAcceptanceTestParameterization input) {
+  protected void setUp(final String bftType, final BftAcceptanceTestParameterization input) {
     this.bftType = bftType;
     this.nodeFactory = input;
   }

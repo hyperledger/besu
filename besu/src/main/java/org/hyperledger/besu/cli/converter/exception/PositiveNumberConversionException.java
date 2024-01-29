@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,10 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.cli.converter.exception;
 
-public enum FastSyncError {
-  NO_PEERS_AVAILABLE,
-  PIVOT_BLOCK_HEADER_MISMATCH,
-  UNEXPECTED_ERROR
+import static java.lang.String.format;
+
+/** The custom PositiveNumber conversion exception. */
+public final class PositiveNumberConversionException extends Exception {
+
+  /**
+   * Instantiates a new PositiveNumber conversion exception.
+   *
+   * @param value the invalid value to add in exception message
+   */
+  public PositiveNumberConversionException(final String value) {
+    super(format("Invalid value: %s, should be a positive number >0.", value));
+  }
 }
