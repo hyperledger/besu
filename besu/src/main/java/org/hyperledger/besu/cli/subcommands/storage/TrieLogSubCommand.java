@@ -34,6 +34,7 @@ import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.logging.log4j.Level;
@@ -133,6 +134,26 @@ public class TrieLogSubCommand implements Runnable {
           Paths.get(
               TrieLogSubCommand.parentCommand.parentCommand.dataDir().toAbsolutePath().toString());
 
+      long estimatedSaving = getEstimatedSaving();
+
+      final TrieLogHelper trieLogHelper = new TrieLogHelper();
+      boolean success =
+          trieLogHelper.prune(
+              context.config(),
+              context.rootWorldStateStorage(),
+              context.blockchain(),
+              dataDirectoryPath);
+
+      if (success) {
+        spec.commandLine()
+            .getOut()
+            .printf(
+                "Prune ran successfully. We estimate you freed up %s! \uD83D\uDE80\n",
+                RocksDbUsageHelper.formatOutputSize(estimatedSaving));
+      }
+    }
+
+    private long getEstimatedSaving() {
       final String dbPath =
           TrieLogSubCommand.parentCommand
               .parentCommand
@@ -140,7 +161,6 @@ public class TrieLogSubCommand implements Runnable {
               .toString()
               .concat("/")
               .concat(DATABASE_PATH);
-      // estimate trie log size
       RocksDB.loadLibrary();
       Options options = new Options();
       options.setCreateIfMissing(true);
@@ -157,10 +177,10 @@ public class TrieLogSubCommand implements Runnable {
       long estimatedSaving = 0L;
       try (final RocksDB rocksdb = RocksDB.openReadOnly(dbPath, cfDescriptors, cfHandles)) {
         for (ColumnFamilyHandle cfHandle : cfHandles) {
-          //          if (Arrays.equals(cfHandle.getName(), TRIE_LOG_STORAGE.getId())) {
-          estimatedSaving =
-              Long.parseLong(rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size"));
-          //          }
+          if (Arrays.equals(cfHandle.getName(), TRIE_LOG_STORAGE.getId())) {
+            estimatedSaving =
+                Long.parseLong(rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size"));
+          }
         }
       } catch (RocksDBException e) {
         throw new RuntimeException(e);
@@ -169,14 +189,7 @@ public class TrieLogSubCommand implements Runnable {
           cfHandle.close();
         }
       }
-
-      final TrieLogHelper trieLogHelper = new TrieLogHelper();
-      trieLogHelper.prune(
-          context.config(),
-          context.rootWorldStateStorage(),
-          context.blockchain(),
-          dataDirectoryPath,
-          estimatedSaving);
+      return estimatedSaving;
     }
   }
 

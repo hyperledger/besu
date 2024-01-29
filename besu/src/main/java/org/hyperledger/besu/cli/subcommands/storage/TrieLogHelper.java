@@ -60,12 +60,11 @@ public class TrieLogHelper {
   private static final int ROCKSDB_MAX_INSERTS_PER_TRANSACTION = 1000;
   private static final Logger LOG = LoggerFactory.getLogger(TrieLogHelper.class);
 
-  void prune(
+  boolean prune(
       final DataStorageConfiguration config,
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
       final MutableBlockchain blockchain,
-      final Path dataDirectoryPath,
-      final long estimatedSaving) {
+      final Path dataDirectoryPath) {
 
     final String batchFileNameBase =
         dataDirectoryPath.resolve(DATABASE_PATH).resolve(TRIE_LOG_FILE).toString();
@@ -84,7 +83,7 @@ public class TrieLogHelper {
         lastBlockNumberToRetainTrieLogsFor,
         rootWorldStateStorage,
         layersToRetain)) {
-      return;
+      return false;
     }
 
     final long numberOfBatches = calculateNumberOfBatches(layersToRetain);
@@ -104,9 +103,7 @@ public class TrieLogHelper {
             .count();
     if (countAfterPrune == layersToRetain) {
       if (deleteFiles(batchFileNameBase, numberOfBatches)) {
-        LOG.info(
-            "Prune ran successfully. We estimate you freed up {}! \uD83D\uDE80",
-            RocksDbUsageHelper.formatOutputSize(estimatedSaving));
+        return true;
       } else {
         throw new IllegalStateException(
             "There was an error deleting the trie log backup files. Please ensure besu is working before deleting them manually.");
