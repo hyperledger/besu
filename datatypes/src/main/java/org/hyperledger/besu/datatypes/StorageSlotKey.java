@@ -94,11 +94,7 @@ public class StorageSlotKey implements Comparable<StorageSlotKey> {
 
   @Override
   public int hashCode() {
-    if (slotKey.isPresent()) {
-      return Objects.hash(getSlotKey());
-    } else {
-      return Objects.hash(getSlotHash().hashCode());
-    }
+    return Objects.hash(getSlotHash().hashCode());
   }
 
   @Override
