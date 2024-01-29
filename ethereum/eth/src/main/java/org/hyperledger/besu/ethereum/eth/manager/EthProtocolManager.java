@@ -420,7 +420,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           .setMessage("Disconnect - {} - {} - {}... - {} peers left")
           .addArgument(initiatedByPeer ? "Inbound" : "Outbound")
           .addArgument(reason::toString)
-          .addArgument(() -> connection.getPeer().getId().slice(0, 8))
+          .addArgument(() -> connection.getPeer().getLoggableId())
           .addArgument(ethPeers::peerCount)
           .log();
       LOG.atTrace().setMessage("{}").addArgument(ethPeers::toString).log();

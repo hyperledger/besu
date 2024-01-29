@@ -33,4 +33,6 @@ public interface PeerId {
    * @return The Keccak-256 hash of the peer's ID.
    */
   Bytes32 keccak256();
+
+  Bytes getLoggableId();
 }

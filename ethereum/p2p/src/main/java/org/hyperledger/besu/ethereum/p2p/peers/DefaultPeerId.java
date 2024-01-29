@@ -35,6 +35,11 @@ public class DefaultPeerId implements PeerId {
   }
 
   @Override
+  public Bytes getLoggableId() {
+    return getId().slice(0, 16);
+  }
+
+  @Override
   public Bytes32 keccak256() {
     if (keccak256 == null) {
       keccak256 = Hash.keccak256(getId());
