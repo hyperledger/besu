@@ -34,5 +34,5 @@ public interface PeerId {
    */
   Bytes32 keccak256();
 
-  Bytes getLoggableId();
+  String getLoggableId();
 }
