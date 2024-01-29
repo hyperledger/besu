@@ -97,14 +97,18 @@ public class StorageSlotKey implements Comparable<StorageSlotKey> {
     }
     StorageSlotKey that = (StorageSlotKey) o;
     if (slotKey.isPresent() && that.slotKey.isPresent()) {
-      return slotKey.map(key -> key.equals(that.slotKey.get())).get();
+      return slotKey.get().equals(that.slotKey.get());
     }
     return Objects.equals(getSlotHash(), that.getSlotHash());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getSlotHash().hashCode());
+    if (slotKey.isPresent()) {
+      return Objects.hash(getSlotKey());
+    } else {
+      return Objects.hash(getSlotHash().hashCode());
+    }
   }
 
   @Override
