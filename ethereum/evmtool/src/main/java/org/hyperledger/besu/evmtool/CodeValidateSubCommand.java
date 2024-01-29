@@ -39,7 +39,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
     name = COMMAND_NAME,
-    description = "Execute an Ethereum State Test.",
+    description = "Validates EVM code for fuzzing",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class CodeValidateSubCommand implements Runnable {
