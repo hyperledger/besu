@@ -16,7 +16,6 @@
 
 package org.hyperledger.besu.ethereum.trie.bonsai.worldview;
 
-import com.google.common.base.Suppliers;
 import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -37,6 +36,7 @@ import org.hyperledger.besu.plugin.services.trielogs.TrieLogAccumulator;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -47,7 +47,6 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import com.google.common.collect.ForwardingMap;
 import org.apache.tuweni.bytes.Bytes;
@@ -362,16 +361,25 @@ public class BonsaiWorldStateUpdateAccumulator
                   new TreeSet<>(Map.Entry.comparingByKey());
               entries.addAll(updatedAccount.getUpdatedStorage().entrySet());
 
+              final Map<UInt256, Hash> slotKeyByHash = new HashMap<>();
+              pendingStorageUpdates.keySet().stream()
+                  .filter(storageSlotKey -> storageSlotKey.getSlotKey().isPresent())
+                  .forEach(
+                      (storageSlotKey) ->
+                          slotKeyByHash.put(
+                              storageSlotKey.getSlotKey().get(), storageSlotKey.getSlotHash()));
+
               // parallel stream here may cause database corruption
               entries.forEach(
                   storageUpdate -> {
                     final UInt256 keyUInt = storageUpdate.getKey();
                     final StorageSlotKey slotKey =
                         new StorageSlotKey(
-                            Suppliers.memoize(() -> hashAndSavePreImage(keyUInt)),
+                            slotKeyByHash.getOrDefault(keyUInt, hashAndSavePreImage(keyUInt)),
                             Optional.of(keyUInt)); // no compute Hash in this case
                     final UInt256 value = storageUpdate.getValue();
                     final BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(slotKey);
+
                     if (pendingValue == null) {
                       pendingStorageUpdates.put(
                           slotKey,

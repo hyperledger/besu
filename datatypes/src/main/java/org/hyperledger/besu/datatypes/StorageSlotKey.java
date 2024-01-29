@@ -16,9 +16,7 @@ package org.hyperledger.besu.datatypes;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Supplier;
 
-import com.google.common.base.Suppliers;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class StorageSlotKey implements Comparable<StorageSlotKey> {
 
-  private final Supplier<Hash> slotHash;
+  private final Hash slotHash;
   private final Optional<UInt256> slotKey;
 
   /**
@@ -43,11 +41,6 @@ public class StorageSlotKey implements Comparable<StorageSlotKey> {
    * @param slotKey Optional UInt256 storage slot key.
    */
   public StorageSlotKey(final Hash slotHash, final Optional<UInt256> slotKey) {
-    this.slotHash = () -> slotHash;
-    this.slotKey = slotKey;
-  }
-
-  public StorageSlotKey(final Supplier<Hash> slotHash, final Optional<UInt256> slotKey) {
     this.slotHash = slotHash;
     this.slotKey = slotKey;
   }
@@ -58,7 +51,7 @@ public class StorageSlotKey implements Comparable<StorageSlotKey> {
    * @param slotKey the UInt256 storage slot key.
    */
   public StorageSlotKey(final UInt256 slotKey) {
-    this(Suppliers.memoize(() -> Hash.hash(slotKey)), Optional.of(slotKey));
+    this(Hash.hash(slotKey), Optional.of(slotKey));
   }
 
   /**
@@ -67,7 +60,7 @@ public class StorageSlotKey implements Comparable<StorageSlotKey> {
    * @return the hash of the storage slot key.
    */
   public Hash getSlotHash() {
-    return slotHash.get();
+    return slotHash;
   }
 
   /**
@@ -96,9 +89,6 @@ public class StorageSlotKey implements Comparable<StorageSlotKey> {
       return false;
     }
     StorageSlotKey that = (StorageSlotKey) o;
-    if (slotKey.isPresent() && that.slotKey.isPresent()) {
-      return slotKey.get().equals(that.slotKey.get());
-    }
     return Objects.equals(getSlotHash(), that.getSlotHash());
   }
 
