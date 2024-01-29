@@ -36,7 +36,6 @@ import org.hyperledger.besu.plugin.services.trielogs.TrieLogAccumulator;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -75,6 +74,8 @@ public class BonsaiWorldStateUpdateAccumulator
   private final Map<Address, StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>>
       storageToUpdate = new ConcurrentHashMap<>();
 
+  private final Map<Address, ConcurrentMap<UInt256, Hash>> slotKeyToHashCache =
+      new ConcurrentHashMap<>();
   private boolean isAccumulatorStateChanged;
 
   public BonsaiWorldStateUpdateAccumulator(
@@ -143,7 +144,7 @@ public class BonsaiWorldStateUpdateAccumulator
         new BonsaiAccount(
             this,
             address,
-            hashAndSavePreImage(address),
+            hashAndSaveAccountPreImage(address),
             nonce,
             balance,
             Hash.EMPTY_TRIE_HASH,
@@ -361,21 +362,13 @@ public class BonsaiWorldStateUpdateAccumulator
                   new TreeSet<>(Map.Entry.comparingByKey());
               entries.addAll(updatedAccount.getUpdatedStorage().entrySet());
 
-              final Map<UInt256, Hash> slotKeyByHash = new HashMap<>();
-              pendingStorageUpdates.keySet().stream()
-                  .filter(storageSlotKey -> storageSlotKey.getSlotKey().isPresent())
-                  .forEach(
-                      (storageSlotKey) ->
-                          slotKeyByHash.put(
-                              storageSlotKey.getSlotKey().get(), storageSlotKey.getSlotHash()));
-
               // parallel stream here may cause database corruption
               entries.forEach(
                   storageUpdate -> {
                     final UInt256 keyUInt = storageUpdate.getKey();
                     final StorageSlotKey slotKey =
                         new StorageSlotKey(
-                            slotKeyByHash.getOrDefault(keyUInt, hashAndSavePreImage(keyUInt)),
+                            hashAndSaveSlotPreImage(updatedAddress, keyUInt),
                             Optional.of(keyUInt)); // no compute Hash in this case
                     final UInt256 value = storageUpdate.getValue();
                     final BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(slotKey);
@@ -420,7 +413,7 @@ public class BonsaiWorldStateUpdateAccumulator
   @Override
   public UInt256 getStorageValue(final Address address, final UInt256 slotKey) {
     StorageSlotKey storageSlotKey =
-        new StorageSlotKey(hashAndSavePreImage(slotKey), Optional.of(slotKey));
+        new StorageSlotKey(hashAndSaveSlotPreImage(address, slotKey), Optional.of(slotKey));
     return getStorageValueByStorageSlotKey(address, storageSlotKey).orElse(UInt256.ZERO);
   }
 
@@ -464,7 +457,7 @@ public class BonsaiWorldStateUpdateAccumulator
   public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
     StorageSlotKey storageSlotKey =
-        new StorageSlotKey(hashAndSavePreImage(storageKey), Optional.of(storageKey));
+        new StorageSlotKey(hashAndSaveSlotPreImage(address, storageKey), Optional.of(storageKey));
     final Map<StorageSlotKey, BonsaiValue<UInt256>> localAccountStorage =
         storageToUpdate.get(address);
     if (localAccountStorage != null) {
@@ -839,8 +832,18 @@ public class BonsaiWorldStateUpdateAccumulator
     void process(final Address address, T value);
   }
 
-  protected Hash hashAndSavePreImage(final Bytes bytes) {
-    // by default do not save hash preImages
-    return Hash.hash(bytes);
+  protected Hash hashAndSaveAccountPreImage(final Address address) {
+    return Hash.hash(address);
+  }
+
+  protected Hash hashAndSaveSlotPreImage(final Address address, final UInt256 slotKey) {
+    final ConcurrentMap<UInt256, Hash> slotKeyHash =
+        slotKeyToHashCache.getOrDefault(address, new ConcurrentHashMap<>());
+    Hash hash = slotKeyHash.get(slotKey);
+    if (hash == null) {
+      hash = Hash.hash(slotKey);
+      slotKeyHash.put(slotKey, hash);
+    }
+    return hash;
   }
 }
