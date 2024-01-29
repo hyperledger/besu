@@ -154,7 +154,7 @@ class TrieLogHelperTest {
         .isEqualTo(createTrieLog(blockHeader3));
 
     nonValidatingTrieLogHelper.prune(
-        dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir);
+        dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir, estimatedSaving);
 
     // assert pruned trie logs are not in the DB
     assertThat(inMemoryWorldState.getTrieLog(blockHeader1.getHash())).isEqualTo(Optional.empty());
@@ -187,7 +187,11 @@ class TrieLogHelperTest {
     assertThatThrownBy(
             () ->
                 nonValidatingTrieLogHelper.prune(
-                    dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
+                    dataStorageConfiguration,
+                    inMemoryWorldState,
+                    blockchain,
+                    Path.of(""),
+                    estimatedSaving))
         .isInstanceOf(RuntimeException.class)
         .hasMessage("No finalized block present, can't safely run trie log prune");
   }
@@ -209,7 +213,11 @@ class TrieLogHelperTest {
     assertThatThrownBy(
             () ->
                 nonValidatingTrieLogHelper.prune(
-                    dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
+                    dataStorageConfiguration,
+                    inMemoryWorldState,
+                    blockchain,
+                    Path.of(""),
+                    estimatedSaving))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Trying to retain more trie logs than chain length (5), skipping pruning");
   }
@@ -232,7 +240,11 @@ class TrieLogHelperTest {
     assertThatThrownBy(
             () ->
                 nonValidatingTrieLogHelper.prune(
-                    dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir))
+                    dataStorageConfiguration,
+                    inMemoryWorldState,
+                    blockchain,
+                    dataDir,
+                    estimatedSaving))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage(
             "Trying to prune more layers than the finalized block height, skipping pruning");
@@ -256,7 +268,11 @@ class TrieLogHelperTest {
     assertThatThrownBy(
             () ->
                 nonValidatingTrieLogHelper.prune(
-                    dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
+                    dataStorageConfiguration,
+                    inMemoryWorldState,
+                    blockchain,
+                    Path.of(""),
+                    estimatedSaving))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Trie log count (5) is less than retention limit (6), skipping pruning");
   }
@@ -289,7 +305,11 @@ class TrieLogHelperTest {
     assertThatThrownBy(
             () ->
                 nonValidatingTrieLogHelper.prune(
-                    dataStorageConfiguration, inMemoryWorldStateSpy, blockchain, dataDir))
+                    dataStorageConfiguration,
+                    inMemoryWorldStateSpy,
+                    blockchain,
+                    dataDir,
+                    estimatedSaving))
         .isInstanceOf(RuntimeException.class)
         .hasMessage(
             "Remaining trie logs (0) did not match --bonsai-historical-block-limit (3). Trie logs backup files have not been deleted, it is safe to rerun the subcommand.");
@@ -311,7 +331,12 @@ class TrieLogHelperTest {
     TrieLogHelper helper = new TrieLogHelper();
     assertThatThrownBy(
             () ->
-                helper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
+                helper.prune(
+                    dataStorageConfiguration,
+                    inMemoryWorldState,
+                    blockchain,
+                    Path.of(""),
+                    estimatedSaving))
         .isInstanceOf(RuntimeException.class)
         .hasMessage("--bonsai-historical-block-limit minimum value is 512");
   }
@@ -333,7 +358,12 @@ class TrieLogHelperTest {
     TrieLogHelper helper = new TrieLogHelper();
     assertThatThrownBy(
             () ->
-                helper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
+                helper.prune(
+                    dataStorageConfiguration,
+                    inMemoryWorldState,
+                    blockchain,
+                    Path.of(""),
+                    estimatedSaving))
         .isInstanceOf(RuntimeException.class)
         .hasMessage("--Xbonsai-trie-logs-pruning-window-size=0 must be greater than 0");
   }
@@ -354,7 +384,12 @@ class TrieLogHelperTest {
     TrieLogHelper helper = new TrieLogHelper();
     assertThatThrownBy(
             () ->
-                helper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
+                helper.prune(
+                    dataStorageConfiguration,
+                    inMemoryWorldState,
+                    blockchain,
+                    Path.of(""),
+                    estimatedSaving))
         .isInstanceOf(RuntimeException.class)
         .hasMessage(
             "--Xbonsai-trie-logs-pruning-window-size=512 must be greater than --bonsai-historical-block-limit=512");
@@ -384,7 +419,8 @@ class TrieLogHelperTest {
                     dataStorageConfiguration,
                     inMemoryWorldState,
                     blockchain,
-                    dataDir.resolve("unknownPath")))
+                    dataDir.resolve("unknownPath"),
+                    estimatedSaving))
         .isInstanceOf(RuntimeException.class)
         .hasCauseExactlyInstanceOf(FileNotFoundException.class);
 

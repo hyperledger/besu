@@ -16,6 +16,8 @@ package org.hyperledger.besu.cli.subcommands.storage;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_LOG_STORAGE;
 
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
@@ -31,10 +33,16 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.rocksdb.ColumnFamilyDescriptor;
+import org.rocksdb.ColumnFamilyHandle;
+import org.rocksdb.Options;
+import org.rocksdb.RocksDB;
+import org.rocksdb.RocksDBException;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -124,12 +132,51 @@ public class TrieLogSubCommand implements Runnable {
       final Path dataDirectoryPath =
           Paths.get(
               TrieLogSubCommand.parentCommand.parentCommand.dataDir().toAbsolutePath().toString());
+
+      final String dbPath =
+          TrieLogSubCommand.parentCommand
+              .parentCommand
+              .dataDir()
+              .toString()
+              .concat("/")
+              .concat(DATABASE_PATH);
+      // estimate trie log size
+      RocksDB.loadLibrary();
+      Options options = new Options();
+      options.setCreateIfMissing(true);
+      final List<ColumnFamilyDescriptor> cfDescriptors = new ArrayList<>();
+      List<byte[]> cfNames;
+      try {
+        cfNames = RocksDB.listColumnFamilies(options, dbPath);
+      } catch (RocksDBException e) {
+        throw new RuntimeException(e);
+      }
+      cfDescriptors.add(new ColumnFamilyDescriptor(cfNames.get(0)));
+      cfDescriptors.add(new ColumnFamilyDescriptor(TRIE_LOG_STORAGE.getId()));
+      final List<ColumnFamilyHandle> cfHandles = new ArrayList<>();
+      long estimatedSaving = 0L;
+      try (final RocksDB rocksdb = RocksDB.openReadOnly(dbPath, cfDescriptors, cfHandles)) {
+        for (ColumnFamilyHandle cfHandle : cfHandles) {
+          //          if (Arrays.equals(cfHandle.getName(), TRIE_LOG_STORAGE.getId())) {
+          estimatedSaving =
+              Long.parseLong(rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size"));
+          //          }
+        }
+      } catch (RocksDBException e) {
+        throw new RuntimeException(e);
+      } finally {
+        for (ColumnFamilyHandle cfHandle : cfHandles) {
+          cfHandle.close();
+        }
+      }
+
       final TrieLogHelper trieLogHelper = new TrieLogHelper();
       trieLogHelper.prune(
           context.config(),
           context.rootWorldStateStorage(),
           context.blockchain(),
-          dataDirectoryPath);
+          dataDirectoryPath,
+          estimatedSaving);
     }
   }
 

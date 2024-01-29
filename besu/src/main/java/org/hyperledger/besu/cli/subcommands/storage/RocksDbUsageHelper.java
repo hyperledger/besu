@@ -62,7 +62,7 @@ public class RocksDbUsageHelper {
     }
   }
 
-  private static String formatOutputSize(final long size) {
+  static String formatOutputSize(final long size) {
     if (size > (1024 * 1024 * 1024)) {
       long sizeInGiB = size / (1024 * 1024 * 1024);
       return sizeInGiB + " GiB";
