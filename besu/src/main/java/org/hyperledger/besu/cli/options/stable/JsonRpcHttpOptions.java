@@ -48,6 +48,10 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import picocli.CommandLine;
 
+/**
+ * Handles configuration options for the JSON-RPC HTTP service, including validation and creation of
+ * a JSON-RPC configuration.
+ */
 public class JsonRpcHttpOptions {
   @CommandLine.Option(
       names = {"--rpc-http-enabled"},
@@ -204,6 +208,13 @@ public class JsonRpcHttpOptions {
       description = "Enable JSON pretty print format (default: ${DEFAULT-VALUE})")
   private final Boolean prettyJsonEnabled = DEFAULT_PRETTY_JSON_ENABLED;
 
+  /**
+   * Validates the Rpc Http options.
+   *
+   * @param logger Logger instance
+   * @param commandLine CommandLine instance
+   * @param configuredApis Predicate for configured APIs
+   */
   public void validate(
       final Logger logger, final CommandLine commandLine, final Predicate<String> configuredApis) {
 
@@ -248,8 +259,16 @@ public class JsonRpcHttpOptions {
     }
   }
 
+  /**
+   * Creates a JsonRpcConfiguration based on the provided options.
+   *
+   * @param hostsAllowlist List of hosts allowed
+   * @param defaultHostAddress Default host address
+   * @param timoutSec timeout in seconds
+   * @return A JsonRpcConfiguration instance
+   */
   public JsonRpcConfiguration jsonRpcConfiguration(
-      final List<String> hostsAllowlist, final String defaultHostAddress, final Long wsTimoutSec) {
+      final List<String> hostsAllowlist, final String defaultHostAddress, final Long timoutSec) {
 
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
     jsonRpcConfiguration.setEnabled(isRpcHttpEnabled);
@@ -267,13 +286,19 @@ public class JsonRpcHttpOptions {
     jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
     jsonRpcConfiguration.setAuthenticationAlgorithm(rpcHttpAuthenticationAlgorithm);
     jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
-    jsonRpcConfiguration.setHttpTimeoutSec(wsTimoutSec);
+    jsonRpcConfiguration.setHttpTimeoutSec(timoutSec);
     jsonRpcConfiguration.setMaxBatchSize(rpcHttpMaxBatchSize);
     jsonRpcConfiguration.setMaxRequestContentLength(rpcHttpMaxRequestContentLength);
     jsonRpcConfiguration.setPrettyJsonEnabled(prettyJsonEnabled);
     return jsonRpcConfiguration;
   }
 
+  /**
+   * Checks dependencies between options.
+   *
+   * @param logger Logger instance
+   * @param commandLine CommandLine instance
+   */
   public void checkDependencies(final Logger logger, final CommandLine commandLine) {
     checkRpcTlsClientAuthOptionsDependencies(logger, commandLine);
     checkRpcTlsOptionsDependencies(logger, commandLine);
@@ -438,14 +463,29 @@ public class JsonRpcHttpOptions {
     return filename;
   }
 
+  /**
+   * Returns the list of APIs enabled for RPC over HTTP.
+   *
+   * @return A list of APIs
+   */
   public List<String> getRpcHttpApis() {
     return rpcHttpApis;
   }
 
+  /**
+   * Returns the port for RPC over HTTP.
+   *
+   * @return The port number
+   */
   public Integer getRpcHttpPort() {
     return rpcHttpPort;
   }
 
+  /**
+   * Checks if RPC over HTTP is enabled.
+   *
+   * @return true if enabled, false otherwise
+   */
   public Boolean isRpcHttpEnabled() {
     return isRpcHttpEnabled;
   }
