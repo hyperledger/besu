@@ -212,7 +212,7 @@ public class EthPeer implements Comparable<EthPeer> {
   public void recordRequestTimeout(final int requestCode) {
     LOG.atDebug()
         .setMessage("Timed out while waiting for response from peer {}...")
-        .addArgument(this::getShortNodeId)
+        .addArgument(this::getLoggableId)
         .log();
     LOG.trace("Timed out while waiting for response from peer {}", this);
     reputation.recordRequestTimeout(requestCode).ifPresent(this::disconnect);
@@ -222,7 +222,7 @@ public class EthPeer implements Comparable<EthPeer> {
     LOG.atTrace()
         .setMessage("Received useless response for request type {} from peer {}...")
         .addArgument(requestType)
-        .addArgument(this::getShortNodeId)
+        .addArgument(this::getLoggableId)
         .log();
     reputation.recordUselessResponse(System.currentTimeMillis()).ifPresent(this::disconnect);
   }
@@ -264,7 +264,7 @@ public class EthPeer implements Comparable<EthPeer> {
       LOG.atDebug()
           .setMessage("Protocol {} unavailable for this peer {}...")
           .addArgument(protocolName)
-          .addArgument(this.getShortNodeId())
+          .addArgument(this.getLoggableId())
           .log();
       return null;
     }
@@ -274,7 +274,7 @@ public class EthPeer implements Comparable<EthPeer> {
       LOG.info(
           "Permissioning blocked sending of message code {} to {}...",
           messageData.getCode(),
-          this.getShortNodeId());
+          this.getLoggableId());
       if (LOG.isDebugEnabled()) {
         LOG.debug(
             "Permissioning blocked by providers {}",
@@ -608,7 +608,7 @@ public class EthPeer implements Comparable<EthPeer> {
   public String toString() {
     return String.format(
         "PeerId: %s... %s, validated? %s, disconnected? %s, client: %s, %s, %s",
-        getShortNodeId(),
+        getLoggableId(),
         reputation,
         isFullyValidated(),
         isDisconnected(),
@@ -618,8 +618,9 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   @Nonnull
-  public String getShortNodeId() {
-    return nodeId().toString().substring(0, 16);
+  public String getLoggableId() {
+    // 8 bytes plus the 0x prefix is 18 characters
+    return nodeId().toString().substring(0, 18) + "...";
   }
 
   @Override

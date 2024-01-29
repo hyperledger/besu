@@ -200,7 +200,7 @@ public class EthPeers {
         if (peer.getReputation().getScore() > USEFULL_PEER_SCORE_THRESHOLD) {
           LOG.debug("Disconnected USEFULL peer {}", peer);
         } else {
-          LOG.debug("Disconnected EthPeer {}", peer.getShortNodeId());
+          LOG.debug("Disconnected EthPeer {}", peer.getLoggableId());
         }
       }
     }
@@ -389,7 +389,7 @@ public class EthPeers {
               LOG.atDebug()
                   .setMessage(
                       "disconnecting peer {}. Waiting for better peers. Current {} of max {}")
-                  .addArgument(peer::getShortNodeId)
+                  .addArgument(peer::getLoggableId)
                   .addArgument(this::peerCount)
                   .addArgument(this::getMaxPeers)
                   .log();

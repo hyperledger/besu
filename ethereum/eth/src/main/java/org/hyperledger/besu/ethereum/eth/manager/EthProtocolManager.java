@@ -400,13 +400,16 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     if (peer.getForkId().map(forkIdManager::peerCheck).orElse(true)) {
       LOG.atDebug()
           .setMessage("ForkId OK or not available for peer {}")
-          .addArgument(peer::getId)
+          .addArgument(peer::getLoggableId)
           .log();
       if (ethPeers.shouldConnect(peer, incoming)) {
         return true;
       }
     }
-    LOG.atDebug().setMessage("ForkId check failed for peer {}").addArgument(peer::getId).log();
+    LOG.atDebug()
+        .setMessage("ForkId check failed for peer {}")
+        .addArgument(peer::getLoggableId)
+        .log();
     return false;
   }
 
@@ -478,7 +481,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     } catch (final RLPException e) {
       LOG.atDebug()
           .setMessage("Unable to parse status message from peer {}... {}")
-          .addArgument(peer::getShortNodeId)
+          .addArgument(peer::getLoggableId)
           .addArgument(e)
           .log();
       // Parsing errors can happen when clients broadcast network ids outside the int range,
@@ -488,7 +491,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   }
 
   private Object getPeerOrPeerId(final EthPeer peer) {
-    return LOG.isTraceEnabled() ? peer : peer.getShortNodeId();
+    return LOG.isTraceEnabled() ? peer : peer.getLoggableId();
   }
 
   @Override

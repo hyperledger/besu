@@ -36,7 +36,7 @@ public class DefaultPeerId implements PeerId {
 
   @Override
   public String getLoggableId() {
-    return getId().slice(0, 16) + "...";
+    return getId().slice(0, 8) + "...";
   }
 
   @Override

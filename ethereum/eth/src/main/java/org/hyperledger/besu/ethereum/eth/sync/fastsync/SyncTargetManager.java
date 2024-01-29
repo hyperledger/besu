@@ -96,7 +96,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
       if (bestPeer.chainState().getEstimatedHeight() < pivotBlockHeader.getNumber()) {
         LOG.info(
             "Best peer {} has chain height {} below pivotBlock height {}. Waiting for better peers. Current {} of max {}",
-            maybeBestPeer.map(EthPeer::getShortNodeId).orElse("none"),
+            maybeBestPeer.map(EthPeer::getLoggableId).orElse("none"),
             maybeBestPeer.map(p -> p.chainState().getEstimatedHeight()).orElse(-1L),
             pivotBlockHeader.getNumber(),
             ethPeers.peerCount(),
@@ -138,7 +138,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
                 }
                 LOG.debug(
                     "Retrying best peer {} with new pivot block {}",
-                    bestPeer.getShortNodeId(),
+                    bestPeer.getLoggableId(),
                     pivotBlockHeader.toLogString());
                 return confirmPivotBlockHeader(bestPeer);
               } else {
