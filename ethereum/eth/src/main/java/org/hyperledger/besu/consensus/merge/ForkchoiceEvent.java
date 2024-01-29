@@ -91,8 +91,6 @@ public class ForkchoiceEvent {
         + safeBlockHash
         + ", finalizedBlockHash="
         + finalizedBlockHash
-        + ", safeBlockHash="
-        + safeBlockHash
         + '}';
   }
 }
