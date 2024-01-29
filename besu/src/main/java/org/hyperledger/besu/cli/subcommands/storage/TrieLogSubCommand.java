@@ -33,16 +33,12 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.rocksdb.ColumnFamilyDescriptor;
-import org.rocksdb.ColumnFamilyHandle;
-import org.rocksdb.Options;
-import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -161,35 +157,24 @@ public class TrieLogSubCommand implements Runnable {
               .toString()
               .concat("/")
               .concat(DATABASE_PATH);
-      RocksDB.loadLibrary();
-      Options options = new Options();
-      options.setCreateIfMissing(true);
-      final List<ColumnFamilyDescriptor> cfDescriptors = new ArrayList<>();
-      List<byte[]> cfNames;
-      try {
-        cfNames = RocksDB.listColumnFamilies(options, dbPath);
-      } catch (RocksDBException e) {
-        throw new RuntimeException(e);
-      }
-      cfDescriptors.add(new ColumnFamilyDescriptor(cfNames.get(0)));
-      cfDescriptors.add(new ColumnFamilyDescriptor(TRIE_LOG_STORAGE.getId()));
-      final List<ColumnFamilyHandle> cfHandles = new ArrayList<>();
-      long estimatedSaving = 0L;
-      try (final RocksDB rocksdb = RocksDB.openReadOnly(dbPath, cfDescriptors, cfHandles)) {
-        for (ColumnFamilyHandle cfHandle : cfHandles) {
-          if (Arrays.equals(cfHandle.getName(), TRIE_LOG_STORAGE.getId())) {
-            estimatedSaving =
-                Long.parseLong(rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size"));
-          }
-        }
-      } catch (RocksDBException e) {
-        throw new RuntimeException(e);
-      } finally {
-        for (ColumnFamilyHandle cfHandle : cfHandles) {
-          cfHandle.close();
-        }
-      }
-      return estimatedSaving;
+
+      AtomicLong estimatedSaving = new AtomicLong(0L);
+      RocksDbUsageHelper.forEachColumnFamily(
+          dbPath,
+          (rocksdb, cfHandle) -> {
+            try {
+              if (Arrays.equals(cfHandle.getName(), TRIE_LOG_STORAGE.getId())) {
+                estimatedSaving.set(
+                    Long.parseLong(
+                        rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size")));
+              }
+            } catch (RocksDBException e) {
+              throw new RuntimeException(e);
+            }
+            return null;
+          });
+
+      return estimatedSaving.get();
     }
   }
 
