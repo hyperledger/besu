@@ -83,6 +83,7 @@ public class DebugTraceBlockTest {
         new TraceFrame(
             12,
             Optional.of("NONE"),
+            Optional.empty(),
             45L,
             OptionalLong.of(56L),
             0L,

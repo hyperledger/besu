@@ -534,9 +534,9 @@ public class FlatTraceGenerator {
       if (i + 1 < transactionTrace.getTraceFrames().size()) {
         final TraceFrame next = transactionTrace.getTraceFrames().get(i + 1);
         if (next.getDepth() == callFrame.getDepth()) {
-          if (next.getOpcode().equals("REVERT")) {
+          if (next.getOpcodeNumber() == 0xFD) { // REVERT opCode
             return true;
-          } else if (next.getOpcode().equals("RETURN")) {
+          } else if (next.getOpcodeNumber() == 0xF3) { // RETURN opCode
             return false;
           }
         }

@@ -116,6 +116,7 @@ public class DebugTraceTransactionTest {
         new TraceFrame(
             12,
             Optional.of("NONE"),
+            Optional.empty(),
             45L,
             OptionalLong.of(56L),
             0L,
@@ -183,6 +184,7 @@ public class DebugTraceTransactionTest {
         new TraceFrame(
             12,
             Optional.of("NONE"),
+            Optional.empty(),
             45L,
             OptionalLong.of(56L),
             0L,

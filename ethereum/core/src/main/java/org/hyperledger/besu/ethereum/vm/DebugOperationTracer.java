@@ -67,6 +67,7 @@ public class DebugOperationTracer implements OperationTracer {
   public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
     final Operation currentOperation = frame.getCurrentOperation();
     final String opcode = currentOperation.getName();
+    final int opcodeNumber = currentOperation.getOpcode();
     final WorldUpdater worldUpdater = frame.getWorldUpdater();
     final Bytes outputData = frame.getOutputData();
     final Optional<Bytes[]> memory = captureMemory(frame);
@@ -82,6 +83,7 @@ public class DebugOperationTracer implements OperationTracer {
         new TraceFrame(
             pc,
             Optional.of(opcode),
+            Optional.of(opcodeNumber),
             gasRemaining,
             operationResult.getGasCost() == 0
                 ? OptionalLong.empty()
@@ -116,6 +118,7 @@ public class DebugOperationTracer implements OperationTracer {
       final TraceFrame traceFrame =
           new TraceFrame(
               frame.getPC(),
+              Optional.empty(),
               Optional.empty(),
               frame.getRemainingGas(),
               OptionalLong.empty(),
@@ -162,6 +165,7 @@ public class DebugOperationTracer implements OperationTracer {
             final TraceFrame traceFrame =
                 new TraceFrame(
                     frame.getPC(),
+                    Optional.empty(),
                     Optional.empty(),
                     frame.getRemainingGas(),
                     OptionalLong.empty(),
