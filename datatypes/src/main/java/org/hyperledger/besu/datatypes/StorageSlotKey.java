@@ -106,6 +106,6 @@ public class StorageSlotKey implements Comparable<StorageSlotKey> {
 
   @Override
   public int compareTo(@NotNull final StorageSlotKey other) {
-    return this.slotHash.compareTo(other.getSlotHash());
+    return this.slotHash.compareTo(other.slotHash);
   }
 }
