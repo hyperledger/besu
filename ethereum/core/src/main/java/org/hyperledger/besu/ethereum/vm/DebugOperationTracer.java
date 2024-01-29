@@ -83,7 +83,7 @@ public class DebugOperationTracer implements OperationTracer {
         new TraceFrame(
             pc,
             Optional.of(opcode),
-            Optional.of(opcodeNumber),
+            opcodeNumber,
             gasRemaining,
             operationResult.getGasCost() == 0
                 ? OptionalLong.empty()
@@ -119,7 +119,7 @@ public class DebugOperationTracer implements OperationTracer {
           new TraceFrame(
               frame.getPC(),
               Optional.empty(),
-              Optional.empty(),
+              Integer.MAX_VALUE,
               frame.getRemainingGas(),
               OptionalLong.empty(),
               frame.getGasRefund(),
@@ -166,7 +166,7 @@ public class DebugOperationTracer implements OperationTracer {
                 new TraceFrame(
                     frame.getPC(),
                     Optional.empty(),
-                    Optional.empty(),
+                    Integer.MAX_VALUE,
                     frame.getRemainingGas(),
                     OptionalLong.empty(),
                     frame.getGasRefund(),

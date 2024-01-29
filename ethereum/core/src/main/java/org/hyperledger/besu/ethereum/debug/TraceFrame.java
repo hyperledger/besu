@@ -34,7 +34,7 @@ public class TraceFrame {
 
   private final int pc;
   private final Optional<String> opcode;
-  private final Optional<Integer> opcodeNumber;
+  private final int opcodeNumber;
   private final long gasRemaining;
   private final OptionalLong gasCost;
   private final long gasRefund;
@@ -64,7 +64,7 @@ public class TraceFrame {
   public TraceFrame(
       final int pc,
       final Optional<String> opcode,
-      final Optional<Integer> opcodeNumber,
+      final int opcodeNumber,
       final long gasRemaining,
       final OptionalLong gasCost,
       final long gasRefund,
@@ -122,7 +122,7 @@ public class TraceFrame {
   }
 
   public int getOpcodeNumber() {
-    return opcodeNumber.orElse(Integer.MAX_VALUE);
+    return opcodeNumber;
   }
 
   public long getGasRemaining() {
