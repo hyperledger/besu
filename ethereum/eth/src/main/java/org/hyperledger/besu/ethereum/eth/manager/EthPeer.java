@@ -619,7 +619,7 @@ public class EthPeer implements Comparable<EthPeer> {
 
   @Nonnull
   public String getShortNodeId() {
-    return nodeId().toString().substring(0, 20);
+    return nodeId().toString().substring(0, 16);
   }
 
   @Override
