@@ -89,26 +89,23 @@ public class StorageSlotKey implements Comparable<StorageSlotKey> {
       return false;
     }
     StorageSlotKey that = (StorageSlotKey) o;
-    return Objects.equals(getSlotHash(), that.getSlotHash());
+    return Objects.equals(slotHash, that.slotHash);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getSlotHash().hashCode());
+    return Objects.hash(slotHash.hashCode());
   }
 
   @Override
   public String toString() {
     return String.format(
         "StorageSlotKey{slotHash=%s, slotKey=%s}",
-        getSlotHash(), slotKey.map(UInt256::toString).orElse("null"));
+        slotHash, slotKey.map(UInt256::toString).orElse("null"));
   }
 
   @Override
   public int compareTo(@NotNull final StorageSlotKey other) {
-    if (getSlotKey().isPresent() && other.getSlotKey().isPresent()) {
-      return getSlotKey().map(key -> key.compareTo(other.slotKey.get())).get();
-    }
-    return this.getSlotHash().compareTo(other.getSlotHash());
+    return this.slotHash.compareTo(other.getSlotHash());
   }
 }
