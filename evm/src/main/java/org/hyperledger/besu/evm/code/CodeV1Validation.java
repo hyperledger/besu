@@ -410,7 +410,7 @@ public final class CodeV1Validation {
         }
         for (int offsetPos = jumpBasis; offsetPos < pcPostInstruction; offsetPos += 2) {
           final int offset = readBigEndianI16(offsetPos, rawCode);
-          final int rjumpdest = jumpBasis + offset;
+          final int rjumpdest = pcPostInstruction + offset;
           if (rjumpdest < 0 || rjumpdest >= size) {
             return "Relative jump destination out of bounds";
           }

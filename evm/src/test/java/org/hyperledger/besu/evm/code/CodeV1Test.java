@@ -54,7 +54,7 @@ class CodeV1Test {
 
   @ParameterizedTest
   @ValueSource(
-      strings = {"3000", "5000", "e0000000", "6000e1000000", "6000e200000200", "fe00", "0000"})
+      strings = {"3000", "5000", "e0000000", "6000e1000000", "6000e200000000", "fe00", "0000"})
   void testValidOpcodes(final String code) {
     final String validationError = validateCode(Bytes.fromHexString(code), 1);
     assertThat(validationError).isNull();
@@ -133,14 +133,14 @@ class CodeV1Test {
 
   private static Stream<Arguments> rjumptableValidImmediateArguments() {
     return Stream.of(
-            "6001e200000200",
-            "6001e201000400040000",
+            "6001e200000000",
+            "6001e201000000010000",
             "6001e202000600080100" + "5b".repeat(256) + ZERO_HEX,
             "6001e2030008000801007ffe" + "5b".repeat(32767) + ZERO_HEX,
             "6001e200fffc0000",
             "5b".repeat(252) + "6001e201fffaff0000",
             "5b".repeat(32764) + "6001e201fffa800000",
-            "e200000200")
+            "e200000000")
         .map(Arguments::arguments);
   }
 
@@ -242,8 +242,8 @@ class CodeV1Test {
         "6001e10001e0000000",
         "6001e10002e0000000",
         // RJUMPV into RJUMP immediate
-        "6001e2000003e0000000",
-        "6001e2000004e0000000",
+        "6001e2000001e0000000",
+        "6001e2000002e0000000",
         // RJUMP into RJUMPI immediate
         "e000036001e1000000",
         "e000046001e1000000",
@@ -255,8 +255,8 @@ class CodeV1Test {
         "6001e100036001e1000000",
         "6001e100046001e1000000",
         // RJUMPV into RJUMPI immediate
-        "6001e20000056001e1000000",
-        "6001e20000066001e1000000",
+        "6001e20000036001e1000000",
+        "6001e20000046001e1000000",
         // RJUMP into RJUMPV immediate
         "e00001e200000000",
         "e00002e200000000",
@@ -266,17 +266,17 @@ class CodeV1Test {
         "6001e10002e200000000",
         "6001e10003e200000000",
         // RJUMPV into RJUMPV immediate
-        "6001e200000000",
         "6001e200ffff00",
+        "6001e200fffe00",
         "6001e200fffd00",
+        "6001e2000001e200000000",
+        "6001e2000002e200000000",
         "6001e2000003e200000000",
-        "6001e2000004e200000000",
-        "6001e2000005e200000000",
-        "6001e2000003e2010000000300",
-        "6001e2000004e2010000000300",
-        "6001e2000005e2010000000300",
-        "6001e2000006e2010000000300",
-        "6001e2000007e2010000000300"
+        "6001e2000001e2010000000000",
+        "6001e2000002e2010000000000",
+        "6001e2000003e2010000000000",
+        "6001e2000004e2010000000000",
+        "6001e2000005e2010000000000"
       })
   void testRjumpsIntoImmediate(final String code) {
     final String validationError = validateCode(Bytes.fromHexString(code), 1);
@@ -306,7 +306,7 @@ class CodeV1Test {
                                     ZERO_HEX.repeat(n)
                                     + // push data
                                     ZERO_HEX, // STOP
-                                String.format("6001e20000%02x", offset + 2)
+                                String.format("6001e20000%02x", offset)
                                     + String.format("%02x", 0x60 + n - 1)
                                     + // PUSHn
                                     ZERO_HEX.repeat(n)

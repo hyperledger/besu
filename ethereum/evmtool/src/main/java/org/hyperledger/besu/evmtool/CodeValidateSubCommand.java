@@ -109,7 +109,7 @@ public class CodeValidateSubCommand implements Runnable {
     } catch (RuntimeException re) {
       return "err: hex string -" + re + "\n";
     }
-    if (codeBytes.size() == 0) {
+    if (codeBytes.isEmpty()) {
       return "";
     }
 
