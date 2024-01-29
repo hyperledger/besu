@@ -61,7 +61,7 @@ public class UndoScalar<T> implements Undoable {
   }
 
   /**
-   * Has this scalar had any change since the inital value
+   * Has this scalar had any change since the initial value
    *
    * @return true if there are any changes to undo
    */
