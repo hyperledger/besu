@@ -26,19 +26,19 @@ import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
  *   <LI>TBD
  * </UL>
  */
-public class PragueGasCalculator extends ShanghaiGasCalculator {
+public class PragueGasCalculator extends CancunGasCalculator {
 
-  /** Instantiates a new Cancun Gas Calculator. */
+  /** Instantiates a new Prague Gas Calculator. */
   public PragueGasCalculator() {
     this(KZG_POINT_EVAL.toArrayUnsafe()[19]);
   }
 
   /**
-   * Instantiates a new Cancun Gas Calculator
+   * Instantiates a new Prague Gas Calculator
    *
    * @param maxPrecompile the max precompile
    */
-  private PragueGasCalculator(final int maxPrecompile) {
+  protected PragueGasCalculator(final int maxPrecompile) {
     super(maxPrecompile);
   }
 }
