@@ -79,4 +79,61 @@ public abstract class AbstractSegmentedKeyValueStorageTest extends AbstractKeyVa
       assertThat(val6).isNotPresent();
     }
   }
+
+  @Test
+  void txGet_returnsEmptyWhenNoValue() {
+    final SegmentedKeyValueStorage store = createSegmentedStore();
+    final SegmentedKeyValueStorageTransaction tx = store.startTransaction();
+    assertThat(tx.get(SEGMENT_IDENTIFIER, Bytes.fromHexString("0001").toArrayUnsafe())).isEmpty();
+  }
+
+  @Test
+  void txGet_returnsUpdatedValueAfterPut() {
+    final SegmentedKeyValueStorage store = createSegmentedStore();
+    final SegmentedKeyValueStorageTransaction tx = store.startTransaction();
+    final byte[] key = Bytes.fromHexString("0001").toArrayUnsafe();
+    final byte[] value = Bytes.fromHexString("0002").toArrayUnsafe();
+
+    tx.put(SEGMENT_IDENTIFIER, key, value);
+    assertThat(tx.get(SEGMENT_IDENTIFIER, key).map(Bytes::wrap)).contains(Bytes.wrap(value));
+  }
+
+  @Test
+  void txGet_returnsEmptyAfterPutAndRemove() {
+    final SegmentedKeyValueStorage store = createSegmentedStore();
+    final SegmentedKeyValueStorageTransaction tx = store.startTransaction();
+    final byte[] key = Bytes.fromHexString("0001").toArrayUnsafe();
+    final byte[] value = Bytes.fromHexString("0002").toArrayUnsafe();
+
+    tx.put(SEGMENT_IDENTIFIER, key, value);
+    tx.remove(SEGMENT_IDENTIFIER, key);
+    assertThat(tx.get(SEGMENT_IDENTIFIER, key).map(Bytes::wrap)).isEmpty();
+  }
+
+  @Test
+  void txGet_returnsUpdatedValueAfterPutRemovePut() {
+    final SegmentedKeyValueStorage store = createSegmentedStore();
+    final SegmentedKeyValueStorageTransaction tx = store.startTransaction();
+    final byte[] key = Bytes.fromHexString("0001").toArrayUnsafe();
+    final byte[] value1 = Bytes.fromHexString("0002").toArrayUnsafe();
+    final byte[] value2 = Bytes.fromHexString("0003").toArrayUnsafe();
+
+    tx.put(SEGMENT_IDENTIFIER, key, value1);
+    tx.remove(SEGMENT_IDENTIFIER, key);
+    tx.put(SEGMENT_IDENTIFIER, key, value2);
+    assertThat(tx.get(SEGMENT_IDENTIFIER, key).map(Bytes::wrap)).contains(Bytes.wrap(value2));
+  }
+
+  @Test
+  void txGet_returnsUpdatedValueAfterPutPut() {
+    final SegmentedKeyValueStorage store = createSegmentedStore();
+    final SegmentedKeyValueStorageTransaction tx = store.startTransaction();
+    final byte[] key = Bytes.fromHexString("0001").toArrayUnsafe();
+    final byte[] value1 = Bytes.fromHexString("0002").toArrayUnsafe();
+    final byte[] value2 = Bytes.fromHexString("0003").toArrayUnsafe();
+
+    tx.put(SEGMENT_IDENTIFIER, key, value1);
+    tx.put(SEGMENT_IDENTIFIER, key, value2);
+    assertThat(tx.get(SEGMENT_IDENTIFIER, key).map(Bytes::wrap)).contains(Bytes.wrap(value2));
+  }
 }
