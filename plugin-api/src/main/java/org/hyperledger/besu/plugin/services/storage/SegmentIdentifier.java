@@ -66,7 +66,7 @@ public interface SegmentIdentifier {
   boolean isEligibleToHighSpecFlag();
 
   /**
-   * Define is garbage collection is enabled for static data. This should be enabled for static data
+   * Enable garbage collection for static data. This should be enabled for static data
    * which can be deleted or pruned.
    *
    * @return true if enabled, false otherwise.
