@@ -22,15 +22,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-/**
- * Utility class for logging.
- */
+/** Utility class for logging. */
 public class LogUtil {
   static ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
   static final String BESU_NAMESPACE = "org.hyperledger.besu";
+  static final int MAX_SUMMARY_DEPTH = 20;
 
   /**
    * Throttles logging to a given logger.
+   *
    * @param logger logger as a String consumer
    * @param logMessage message to log
    * @param shouldLog AtomicBoolean to track whether the message should be logged
@@ -64,9 +64,10 @@ public class LogUtil {
     StackTraceElement[] stackTraceElements = throwable.getStackTrace();
 
     List<String> stackTraceSummary = new ArrayList<>();
+    int depth = 0;
     for (StackTraceElement element : stackTraceElements) {
       stackTraceSummary.add(String.format("\tat: %s", element));
-      if (element.getClassName().startsWith(namespace)) {
+      if (element.getClassName().startsWith(namespace) || ++depth >= MAX_SUMMARY_DEPTH) {
         break;
       }
     }

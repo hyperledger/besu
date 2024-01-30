@@ -80,6 +80,20 @@ public class LogUtilTest {
     assertThat(lines.get(0)).contains("besuSummary");
   }
 
+  @Test
+  public void assertMaxDepth() {
+    String result = "";
+    try {
+      recurseTimesAndThrow(30);
+    } catch (Exception ex) {
+      result = LogUtil.summarizeStackTrace("besuSummary", ex, "java.lang");
+    }
+    System.out.println(result);
+    List<String> lines = Arrays.asList(result.split("\n"));
+    assertThat(lines).hasSize(22);
+    assertThat(lines.get(0)).contains("besuSummary");
+  }
+
   private List<String> assertFoundInTrace(
       final String result,
       final String namespace,
@@ -98,6 +112,13 @@ public class LogUtilTest {
                 .count())
         .isEqualTo(times);
     return lines;
+  }
+
+  private void recurseTimesAndThrow(final int times) {
+    if (times < 1) {
+      throw new RuntimeException("FakeStackOverflowError");
+    }
+    recurseTimesAndThrow(times - 1);
   }
 
   private Optional<Object> besuStackHelper(final Object o) {
