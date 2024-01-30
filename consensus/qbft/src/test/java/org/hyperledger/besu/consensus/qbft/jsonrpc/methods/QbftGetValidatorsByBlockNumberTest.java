@@ -95,8 +95,7 @@ public class QbftGetValidatorsByBlockNumberTest {
     request =
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "qbft_getValidatorsByBlockNumber", new String[] {"pending"}));
-    when(blockchainQueries.headBlockNumber()).thenReturn(12L);
-    when(blockchainQueries.getBlockHeaderByNumber(12)).thenReturn(Optional.of(blockHeader));
+    when(blockchainQueries.headBlockHeader()).thenReturn(blockHeader);
     final List<Address> addresses = Collections.singletonList(Address.ID);
     final List<String> expectedOutput = Collections.singletonList(Address.ID.toString());
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(addresses);
