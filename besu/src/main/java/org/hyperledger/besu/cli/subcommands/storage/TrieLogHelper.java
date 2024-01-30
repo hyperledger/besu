@@ -111,8 +111,11 @@ public class TrieLogHelper {
     } else {
       throw new IllegalStateException(
           String.format(
-              "Remaining trie logs (%d) did not match %s (%d). Trie logs backup files have not been deleted, it is safe to rerun the subcommand.",
-              countAfterPrune, BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD, layersToRetain));
+              "Remaining trie logs (%d) did not match %s (%d). Trie logs backup files (in %s) have not been deleted, it is safe to rerun the subcommand.",
+              countAfterPrune,
+              BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD,
+              layersToRetain,
+              batchFileNameBase));
     }
   }
 
@@ -132,7 +135,7 @@ public class TrieLogHelper {
       final List<Hash> trieLogKeys =
           getTrieLogKeysForBlocks(blockchain, firstBlockOfBatch, lastBlockOfBatch);
 
-      LOG.info("Saving trie logs to retain in file (batch {})...", batchNumber);
+      LOG.info("Saving trie logs to retain in file {} (batch {})...", batchFileName, batchNumber);
       saveTrieLogBatches(batchFileName, rootWorldStateStorage, trieLogKeys);
     }
 
@@ -320,7 +323,7 @@ public class TrieLogHelper {
 
     File file = new File(batchFileName);
     if (file.exists()) {
-      LOG.error("File already exists, skipping file creation");
+      LOG.warn("File already exists {}, skipping file creation", batchFileName);
       return;
     }
 
@@ -355,7 +358,7 @@ public class TrieLogHelper {
       final String batchFileName) {
     File file = new File(batchFileName);
     if (file.exists()) {
-      LOG.error("File already exists, skipping file creation");
+      LOG.warn("File already exists {}, skipping file creation", batchFileName);
       return;
     }
 
