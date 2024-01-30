@@ -1,6 +1,8 @@
-sync-mode="X_SNAP"
+sync-mode="FAST"
 sync-min-peers=1
 remote-connections-limit-enabled=false
 tx-pool="SEQUENCED"
 tx-pool-no-local-priority=true
-tx-pool-limit-by-account-percentage=0.1220703125
+tx-pool-limit-by-account-percentage=0.15
+rpc-http-max-active-connections=300
+min-gas-price=0
