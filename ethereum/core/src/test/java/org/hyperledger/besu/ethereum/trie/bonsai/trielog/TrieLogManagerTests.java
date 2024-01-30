@@ -16,7 +16,6 @@
 package org.hyperledger.besu.ethereum.trie.bonsai.trielog;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogPruner.noOpTrieLogPruner;
 import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -57,9 +56,7 @@ class TrieLogManagerTests {
 
   @BeforeEach
   public void setup() {
-    trieLogManager =
-        new TrieLogManager(
-            blockchain, bonsaiWorldStateKeyValueStorage, 512, null, noOpTrieLogPruner());
+    trieLogManager = new TrieLogManager(blockchain, bonsaiWorldStateKeyValueStorage, 512, null);
   }
 
   @Test

@@ -22,7 +22,6 @@ import io.opentelemetry.sdk.metrics.data.AggregationTemporality;
 import io.opentelemetry.sdk.metrics.data.MetricData;
 import io.opentelemetry.sdk.metrics.export.CollectionRegistration;
 import io.opentelemetry.sdk.metrics.export.MetricReader;
-import io.opentelemetry.sdk.metrics.internal.export.MetricProducer;
 import org.jetbrains.annotations.NotNull;
 
 class DebugMetricReader implements MetricReader {
@@ -31,7 +30,7 @@ class DebugMetricReader implements MetricReader {
   public DebugMetricReader() {}
 
   public Collection<MetricData> getAllMetrics() {
-    return MetricProducer.asMetricProducer(this.registration).collectAllMetrics();
+    return registration.collectAllMetrics();
   }
 
   @Override

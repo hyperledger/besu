@@ -16,7 +16,7 @@ node-private-key-file="./path/to/privateKey"
 pid-path="~/.pid"
 reorg-logging-threshold=0
 static-nodes-file="~/besudata/static-nodes.json"
-
+profile="NONE"
 # Security Module plugin to use
 security-module="localfile"
 
@@ -90,6 +90,7 @@ rpc-max-logs-range=100
 json-pretty-print-enabled=false
 cache-last-blocks=512
 rpc-gas-cap = 50000000
+rpc-max-trace-filter-range=100
 
 # PRIVACY TLS
 privacy-tls-enabled=false

@@ -47,19 +47,16 @@ public class TrieLogManager {
   protected final Subscribers<TrieLogEvent.TrieLogObserver> trieLogObservers = Subscribers.create();
 
   protected final TrieLogFactory trieLogFactory;
-  private final TrieLogPruner trieLogPruner;
 
   public TrieLogManager(
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad,
-      final BesuContext pluginContext,
-      final TrieLogPruner trieLogPruner) {
+      final BesuContext pluginContext) {
     this.blockchain = blockchain;
     this.rootWorldStateStorage = worldStateStorage;
     this.maxLayersToLoad = maxLayersToLoad;
     this.trieLogFactory = setupTrieLogFactory(pluginContext);
-    this.trieLogPruner = trieLogPruner;
   }
 
   public synchronized void saveTrieLog(
@@ -85,8 +82,6 @@ public class TrieLogManager {
       } finally {
         if (success) {
           stateUpdater.commit();
-          trieLogPruner.addToPruneQueue(forBlockHeader.getNumber(), forBlockHeader.getBlockHash());
-          trieLogPruner.pruneFromQueue();
         } else {
           stateUpdater.rollback();
         }
