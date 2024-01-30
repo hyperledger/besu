@@ -189,7 +189,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     this.peerPermissions = peerPermissions;
     this.vertx = vertx;
 
-    // set the requirement here that the number of peers be greater than the lower bound
     final int maxPeers = rlpxAgent.getMaxPeers();
     LOG.debug("setting maxPeers {}", maxPeers);
     peerDiscoveryAgent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= maxPeers);
