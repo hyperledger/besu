@@ -28,7 +28,6 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -293,6 +292,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getPragueTime() {
+    return getOptionalLong("praguetime");
+  }
+
+  @Override
   public OptionalLong getFutureEipsTime() {
     return getOptionalLong("futureeipstime");
   }
@@ -304,10 +308,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public Optional<Wei> getBaseFeePerGas() {
-    return Optional.ofNullable(configOverrides.get("baseFeePerGas"))
-        .map(Wei::fromHexString)
-        .map(Optional::of)
-        .orElse(Optional.empty());
+    return Optional.ofNullable(configOverrides.get("baseFeePerGas")).map(Wei::fromHexString);
   }
 
   @Override
@@ -448,6 +449,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getMergeNetSplitBlockNumber().ifPresent(l -> builder.put("mergeNetSplitBlock", l));
     getShanghaiTime().ifPresent(l -> builder.put("shanghaiTime", l));
     getCancunTime().ifPresent(l -> builder.put("cancunTime", l));
+    getPragueTime().ifPresent(l -> builder.put("pragueTime", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
     getFutureEipsTime().ifPresent(l -> builder.put("futureEipsTime", l));
@@ -582,14 +584,18 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
         .map(OptionalLong::getAsLong)
         .distinct()
         .sorted()
-        .collect(Collectors.toList());
+        .toList();
   }
 
   @Override
   public List<Long> getForkBlockTimestamps() {
     Stream<OptionalLong> forkBlockTimestamps =
         Stream.of(
-            getShanghaiTime(), getCancunTime(), getFutureEipsTime(), getExperimentalEipsTime());
+            getShanghaiTime(),
+            getCancunTime(),
+            getPragueTime(),
+            getFutureEipsTime(),
+            getExperimentalEipsTime());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
 
     return forkBlockTimestamps
@@ -597,6 +603,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
         .map(OptionalLong::getAsLong)
         .distinct()
         .sorted()
-        .collect(Collectors.toList());
+        .toList();
   }
 }

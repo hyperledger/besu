@@ -16,7 +16,9 @@
 package org.hyperledger.besu.cli.subcommands.storage;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.cli.options.stable.DataStorageOptions.BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
 
 import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.datatypes.Hash;
@@ -74,11 +76,16 @@ public class TrieLogHelper {
 
     final long lastBlockNumberToRetainTrieLogsFor = chainHeight - layersToRetain + 1;
 
-    if (!validPruneRequirements(blockchain, chainHeight, lastBlockNumberToRetainTrieLogsFor)) {
+    if (!validatePruneRequirements(
+        blockchain,
+        chainHeight,
+        lastBlockNumberToRetainTrieLogsFor,
+        rootWorldStateStorage,
+        layersToRetain)) {
       return;
     }
 
-    final long numberOfBatches = calculateNumberofBatches(layersToRetain);
+    final long numberOfBatches = calculateNumberOfBatches(layersToRetain);
 
     processTrieLogBatches(
         rootWorldStateStorage,
@@ -88,11 +95,23 @@ public class TrieLogHelper {
         numberOfBatches,
         batchFileNameBase);
 
-    if (rootWorldStateStorage.streamTrieLogKeys(layersToRetain).count() == layersToRetain) {
-      deleteFiles(batchFileNameBase, numberOfBatches);
-      LOG.info("Prune ran successfully. Enjoy some disk space back! \uD83D\uDE80");
+    // Should only be layersToRetain left but loading extra just in case of an unforeseen bug
+    final long countAfterPrune =
+        rootWorldStateStorage
+            .streamTrieLogKeys(layersToRetain + DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE)
+            .count();
+    if (countAfterPrune == layersToRetain) {
+      if (deleteFiles(batchFileNameBase, numberOfBatches)) {
+        LOG.info("Prune ran successfully. Enjoy some disk space back! \uD83D\uDE80");
+      } else {
+        throw new IllegalStateException(
+            "There was an error deleting the trie log backup files. Please ensure besu is working before deleting them manually.");
+      }
     } else {
-      LOG.error("Prune failed. Re-run the subcommand to load the trie logs from file.");
+      throw new IllegalStateException(
+          String.format(
+              "Remaining trie logs (%d) did not match %s (%d). Trie logs backup files have not been deleted, it is safe to rerun the subcommand.",
+              countAfterPrune, BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD, layersToRetain));
     }
   }
 
@@ -151,15 +170,21 @@ public class TrieLogHelper {
     }
   }
 
-  private void deleteFiles(final String batchFileNameBase, final long numberOfBatches) {
+  private boolean deleteFiles(final String batchFileNameBase, final long numberOfBatches) {
 
     LOG.info("Deleting files...");
 
-    for (long batchNumber = 1; batchNumber <= numberOfBatches; batchNumber++) {
-      File file = new File(batchFileNameBase + "-" + batchNumber);
-      if (file.exists()) {
-        file.delete();
+    try {
+      for (long batchNumber = 1; batchNumber <= numberOfBatches; batchNumber++) {
+        File file = new File(batchFileNameBase + "-" + batchNumber);
+        if (file.exists()) {
+          file.delete();
+        }
       }
+      return true;
+    } catch (Exception e) {
+      LOG.error("Error deleting files", e);
+      return false;
     }
   }
 
@@ -177,19 +202,35 @@ public class TrieLogHelper {
     return trieLogKeys;
   }
 
-  private long calculateNumberofBatches(final long layersToRetain) {
+  private long calculateNumberOfBatches(final long layersToRetain) {
     return layersToRetain / BATCH_SIZE + ((layersToRetain % BATCH_SIZE == 0) ? 0 : 1);
   }
 
-  private boolean validPruneRequirements(
+  private boolean validatePruneRequirements(
       final MutableBlockchain blockchain,
       final long chainHeight,
-      final long lastBlockNumberToRetainTrieLogsFor) {
+      final long lastBlockNumberToRetainTrieLogsFor,
+      final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
+      final long layersToRetain) {
+
     if (lastBlockNumberToRetainTrieLogsFor < 0) {
       throw new IllegalArgumentException(
           "Trying to retain more trie logs than chain length ("
               + chainHeight
               + "), skipping pruning");
+    }
+
+    // Need to ensure we're loading at least layersToRetain if they exist
+    // plus extra threshold to account forks and orphans
+    final long clampedCountBeforePruning =
+        rootWorldStateStorage
+            .streamTrieLogKeys(layersToRetain + DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE)
+            .count();
+    if (clampedCountBeforePruning < layersToRetain) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Trie log count (%d) is less than retention limit (%d), skipping pruning",
+              clampedCountBeforePruning, layersToRetain));
     }
 
     final Optional<Hash> finalizedBlockHash = blockchain.getFinalized();
@@ -250,7 +291,7 @@ public class TrieLogHelper {
         config.getBonsaiMaxLayersToLoad()
             >= DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT,
         String.format(
-            DataStorageOptions.BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD + " minimum value is %d",
+            BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD + " minimum value is %d",
             DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT));
     checkArgument(
         config.getUnstable().getBonsaiTrieLogPruningWindowSize() > 0,
@@ -264,7 +305,7 @@ public class TrieLogHelper {
         String.format(
             DataStorageOptions.Unstable.BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE
                 + "=%d must be greater than "
-                + DataStorageOptions.BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
+                + BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
                 + "=%d",
             config.getUnstable().getBonsaiTrieLogPruningWindowSize(),
             config.getBonsaiMaxLayersToLoad()));
