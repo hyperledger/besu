@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -79,7 +78,7 @@ public final class GenesisState {
    * Construct a {@link GenesisState} from a JSON string.
    *
    * @param dataStorageConfiguration A {@link DataStorageConfiguration} describing the storage
-   *     format to use
+   *     configuration
    * @param json A JSON string describing the genesis block
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
@@ -107,8 +106,8 @@ public final class GenesisState {
   /**
    * Construct a {@link GenesisState} from a JSON object.
    *
-   * @param dataStorageConfiguration A {@link DataStorageFormat} describing the storage format to
-   *     use
+   * @param dataStorageConfiguration A {@link DataStorageConfiguration} describing the storage
+   *     configuration
    * @param config A {@link GenesisConfigFile} describing the genesis block.
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
