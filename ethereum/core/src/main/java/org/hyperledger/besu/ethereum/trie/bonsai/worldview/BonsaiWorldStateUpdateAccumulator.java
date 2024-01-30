@@ -839,7 +839,7 @@ public class BonsaiWorldStateUpdateAccumulator
 
   protected Hash hashAndSaveSlotPreImage(final Address address, final UInt256 slotKey) {
     final ConcurrentMap<UInt256, Hash> slotKeyHash =
-        slotKeyToHashCache.getOrDefault(address, new ConcurrentHashMap<>());
+        slotKeyToHashCache.computeIfAbsent(address, address1 -> new ConcurrentHashMap<>());
     Hash hash = slotKeyHash.get(slotKey);
     if (hash == null) {
       hash = Hash.hash(slotKey);
