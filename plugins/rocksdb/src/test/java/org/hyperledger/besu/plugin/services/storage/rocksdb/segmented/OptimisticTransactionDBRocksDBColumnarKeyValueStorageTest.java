@@ -39,7 +39,7 @@ public class OptimisticTransactionDBRocksDBColumnarKeyValueStorageTest
         new RocksDBConfigurationBuilder()
             .databaseDir(Files.createTempDirectory("segmentedStore"))
             .build(),
-        Arrays.asList(TestSegment.FOO, TestSegment.BAR),
+        Arrays.asList(TestSegment.DEFAULT, TestSegment.FOO, TestSegment.BAR),
         List.of(),
         new NoOpMetricsSystem(),
         RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);

@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAge
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.NeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketType;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
@@ -53,6 +54,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.junit.jupiter.api.Test;
 
@@ -832,6 +834,67 @@ public class PeerDiscoveryAgentTest {
     final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(agentBuilder);
 
     assertThat(agent.isActive()).isFalse();
+  }
+
+  @Test
+  public void assertHostCorrectlyRevertsOnIgnoredPacketFrom() {
+    final String sourceHost = "UDP_SOURCE_ORIGIN_HOST";
+    final String emptyIPv4Host = "0.0.0.0";
+    final String emptyIPv6Host = "::";
+    final String localHost = "127.0.0.1";
+    final String broadcastDefaultHost = "255.255.255.255";
+    final String routableHost = "50.50.50.50";
+
+    Endpoint source = new Endpoint(sourceHost, 30303, Optional.empty());
+    Endpoint emptyIPv4 = new Endpoint(emptyIPv4Host, 30303, Optional.empty());
+    Endpoint emptyIPv6 = new Endpoint(emptyIPv6Host, 30303, Optional.empty());
+    Endpoint endpointLocal = new Endpoint(localHost, 30303, Optional.empty());
+    Endpoint endpointBroadcast = new Endpoint(broadcastDefaultHost, 30303, Optional.empty());
+    Endpoint endpointRoutable = new Endpoint(routableHost, 30303, Optional.empty());
+
+    Packet mockEmptyIPv4 =
+        when(mock(Packet.class).getPacketData(any()))
+            .thenReturn(
+                Optional.of(
+                    PingPacketData.create(Optional.of(emptyIPv4), endpointLocal, UInt64.ONE)))
+            .getMock();
+    Packet mockEmptyIPv6 =
+        when(mock(Packet.class).getPacketData(any()))
+            .thenReturn(
+                Optional.of(
+                    PingPacketData.create(Optional.of(emptyIPv6), endpointLocal, UInt64.ONE)))
+            .getMock();
+    Packet mockLocal =
+        when(mock(Packet.class).getPacketData(any()))
+            .thenReturn(
+                Optional.of(
+                    PingPacketData.create(Optional.of(endpointLocal), endpointLocal, UInt64.ONE)))
+            .getMock();
+    Packet mockBroadcast =
+        when(mock(Packet.class).getPacketData(any()))
+            .thenReturn(
+                Optional.of(
+                    PingPacketData.create(
+                        Optional.of(endpointBroadcast), endpointLocal, UInt64.ONE)))
+            .getMock();
+    Packet mockWellFormed =
+        when(mock(Packet.class).getPacketData(any()))
+            .thenReturn(
+                Optional.of(
+                    PingPacketData.create(
+                        Optional.of(endpointRoutable), endpointLocal, UInt64.ONE)))
+            .getMock();
+
+    // assert a pingpacketdata with empty ipv4 address reverts to the udp source host
+    assertThat(PeerDiscoveryAgent.deriveHost(source, mockEmptyIPv4)).isEqualTo(sourceHost);
+    // assert a pingpacketdata with empty ipv6 address reverts to the udp source host
+    assertThat(PeerDiscoveryAgent.deriveHost(source, mockEmptyIPv6)).isEqualTo(sourceHost);
+    // assert a pingpacketdata from address of 127.0.0.1 reverts to the udp source host
+    assertThat(PeerDiscoveryAgent.deriveHost(source, mockLocal)).isEqualTo(sourceHost);
+    // assert that 255.255.255.255 reverts to the udp source host
+    assertThat(PeerDiscoveryAgent.deriveHost(source, mockBroadcast)).isEqualTo(sourceHost);
+    // assert that a well-formed routable address in the ping packet data is used
+    assertThat(PeerDiscoveryAgent.deriveHost(source, mockWellFormed)).isEqualTo(routableHost);
   }
 
   protected void bondViaIncomingPing(

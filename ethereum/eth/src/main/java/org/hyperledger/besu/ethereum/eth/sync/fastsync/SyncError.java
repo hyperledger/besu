@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
-public enum FastSyncError {
+public enum SyncError {
   NO_PEERS_AVAILABLE,
   PIVOT_BLOCK_HEADER_MISMATCH,
   UNEXPECTED_ERROR
