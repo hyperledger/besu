@@ -53,7 +53,7 @@ public class GraphQlOptions {
   @CommandLine.Option(
       names = {"--graphql-http-cors-origins"},
       description = "Comma separated origin domain URLs for CORS validation (default: none)")
-  protected final CorsAllowedOriginsProperty graphQLHttpCorsAllowedOrigins =
+  private final CorsAllowedOriginsProperty graphQLHttpCorsAllowedOrigins =
       new CorsAllowedOriginsProperty();
 
   /**
