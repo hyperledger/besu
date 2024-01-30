@@ -839,15 +839,31 @@ public class PeerDiscoveryAgentTest {
   @Test
   public void assertHostCorrectlyRevertsOnIgnoredPacketFrom() {
     final String sourceHost = "UDP_SOURCE_ORIGIN_HOST";
+    final String emptyIPv4Host = "0.0.0.0";
+    final String emptyIPv6Host = "::";
     final String localHost = "127.0.0.1";
     final String broadcastDefaultHost = "255.255.255.255";
     final String routableHost = "50.50.50.50";
 
     Endpoint source = new Endpoint(sourceHost, 30303, Optional.empty());
+    Endpoint emptyIPv4 = new Endpoint(emptyIPv4Host, 30303, Optional.empty());
+    Endpoint emptyIPv6 = new Endpoint(emptyIPv6Host, 30303, Optional.empty());
     Endpoint endpointLocal = new Endpoint(localHost, 30303, Optional.empty());
     Endpoint endpointBroadcast = new Endpoint(broadcastDefaultHost, 30303, Optional.empty());
     Endpoint endpointRoutable = new Endpoint(routableHost, 30303, Optional.empty());
 
+    Packet mockEmptyIPv4 =
+        when(mock(Packet.class).getPacketData(any()))
+            .thenReturn(
+                Optional.of(
+                    PingPacketData.create(Optional.of(emptyIPv4), endpointLocal, UInt64.ONE)))
+            .getMock();
+    Packet mockEmptyIPv6 =
+        when(mock(Packet.class).getPacketData(any()))
+            .thenReturn(
+                Optional.of(
+                    PingPacketData.create(Optional.of(emptyIPv6), endpointLocal, UInt64.ONE)))
+            .getMock();
     Packet mockLocal =
         when(mock(Packet.class).getPacketData(any()))
             .thenReturn(
@@ -869,6 +885,10 @@ public class PeerDiscoveryAgentTest {
                         Optional.of(endpointRoutable), endpointLocal, UInt64.ONE)))
             .getMock();
 
+    // assert a pingpacketdata with empty ipv4 address reverts to the udp source host
+    assertThat(PeerDiscoveryAgent.deriveHost(source, mockEmptyIPv4)).isEqualTo(sourceHost);
+    // assert a pingpacketdata with empty ipv6 address reverts to the udp source host
+    assertThat(PeerDiscoveryAgent.deriveHost(source, mockEmptyIPv6)).isEqualTo(sourceHost);
     // assert a pingpacketdata from address of 127.0.0.1 reverts to the udp source host
     assertThat(PeerDiscoveryAgent.deriveHost(source, mockLocal)).isEqualTo(sourceHost);
     // assert that 255.255.255.255 reverts to the udp source host
