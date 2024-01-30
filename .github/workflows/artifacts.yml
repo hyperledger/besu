@@ -9,6 +9,8 @@ on:
 jobs:
   artifacts:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
     steps:
       - name: checkout
         uses: actions/checkout@v4.1.1
