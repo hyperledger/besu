@@ -42,7 +42,7 @@ public class LogUtil {
 
   /**
    * Summarizes the stack trace of a throwable to the first class in the namespace. Useful for
-   * limiting exceptionally deep stack traces to the last releavant point in besu code.
+   * limiting exceptionally deep stack traces to the last relevant point in besu code.
    *
    * @param throwable exception to summarize
    * @param namespace namespace to summarize to
