@@ -56,17 +56,17 @@ jobs:
     if: ${{ needs.shouldRun.outputs.shouldRun == 'true' }}
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
           set-safe-directory: true
       - name: Set up Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4.0.0
         with:
           distribution: temurin
           java-version: 17
       - name: setup gradle
-        uses: gradle/gradle-build-action@v2.10.0
+        uses: gradle/gradle-build-action@v2.12.0
       - name: execute generate reference tests
         run: ./gradlew ethereum:referencetests:blockchainReferenceTests ethereum:referencetests:generalstateReferenceTests ethereum:referencetests:generalstateRegressionReferenceTests -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: store generated tests
@@ -89,11 +89,11 @@ jobs:
         runner_index: [0,1,2,3,4,5]
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
       - name: Set up Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4.0.0
         with:
           distribution: adopt-openj9
           java-version: 17
@@ -111,7 +111,7 @@ jobs:
           path: tmp/ref-xml-reports-downloaded
           if_no_artifact_found: true
       - name: setup gradle
-        uses: gradle/gradle-build-action@v2.10.0
+        uses: gradle/gradle-build-action@v2.12.0
       - name: Split tests
         id: split-tests
         uses: r7kamura/split-tests-by-timings@v0

@@ -28,8 +28,14 @@ import org.hyperledger.besu.datatypes.Address;
 import java.time.Clock;
 import java.util.Collection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** This is the full data set, or context, required for many of the aspects of BFT workflows. */
 public class BftFinalState {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BftFinalState.class);
+
   private final ValidatorProvider validatorProvider;
   private final NodeKey nodeKey;
   private final Address localAddress;
@@ -126,7 +132,9 @@ public class BftFinalState {
    * @return the boolean
    */
   public boolean isLocalNodeValidator() {
-    return getValidators().contains(localAddress);
+    final boolean isValidator = getValidators().contains(localAddress);
+    LOG.debug(isValidator ? "Local node is a validator" : "Local node is a non-validator");
+    return isValidator;
   }
 
   /**
