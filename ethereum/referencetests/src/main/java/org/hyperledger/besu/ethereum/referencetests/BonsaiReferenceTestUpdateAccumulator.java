@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiValue;
@@ -25,49 +23,41 @@ import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldView;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.concurrent.ConcurrentHashMap;
+
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiReferenceTestUpdateAccumulator extends BonsaiWorldStateUpdateAccumulator {
   private final BonsaiPreImageProxy preImageProxy;
 
   public BonsaiReferenceTestUpdateAccumulator(
-      final BonsaiWorldView world,
-      final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader,
-      final Consumer<StorageSlotKey> storagePreloader,
-      final BonsaiPreImageProxy preImageProxy,
-      final EvmConfiguration evmConfiguration) {
+          final BonsaiWorldView world,
+          final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader,
+          final Consumer<StorageSlotKey> storagePreloader,
+          final BonsaiPreImageProxy preImageProxy,
+          final EvmConfiguration evmConfiguration) {
     super(world, accountPreloader, storagePreloader, evmConfiguration);
     this.preImageProxy = preImageProxy;
   }
 
-  @Override
-  protected Hash hashAndSaveAccountPreImage(final Address address) {
-    return preImageProxy.hashAndSavePreImage(address);
-  }
-
-  @Override
-  protected Hash hashAndSaveSlotPreImage(final Address address, final UInt256 slotKey) {
-    return preImageProxy.hashAndSavePreImage(slotKey);
-  }
-
   public BonsaiReferenceTestUpdateAccumulator createDetachedAccumulator() {
     final BonsaiReferenceTestUpdateAccumulator copy =
-        new BonsaiReferenceTestUpdateAccumulator(
-            wrappedWorldView(),
-            accountPreloader,
-            storagePreloader,
-            preImageProxy,
+            new BonsaiReferenceTestUpdateAccumulator(
+                    wrappedWorldView(),
+                    accountPreloader,
+                    storagePreloader,
+                    preImageProxy,
+                    evmConfiguration);
     getAccountsToUpdate().forEach((k, v) -> copy.getAccountsToUpdate().put(k, v.copy()));
     getCodeToUpdate().forEach((k, v) -> copy.getCodeToUpdate().put(k, v.copy()));
     copy.getStorageToClear().addAll(getStorageToClear());
     getStorageToUpdate()
-        .forEach(
-            (k, v) -> {
-              StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>> newMap =
-                  new StorageConsumingMap<>(k, new ConcurrentHashMap<>(), v.getConsumer());
-              v.forEach((key, value) -> newMap.put(key, value.copy()));
-              copy.getStorageToUpdate().put(k, newMap);
-            });
+            .forEach(
+                    (k, v) -> {
+                      StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>> newMap =
+                              new StorageConsumingMap<>(k, new ConcurrentHashMap<>(), v.getConsumer());
+                      v.forEach((key, value) -> newMap.put(key, value.copy()));
+                      copy.getStorageToUpdate().put(k, newMap);
+                    });
     copy.updatedAccounts.putAll(updatedAccounts);
     copy.deletedAccounts.addAll(deletedAccounts);
     copy.isAccumulatorStateChanged = true;
