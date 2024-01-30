@@ -610,14 +610,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         paramLabel = MANDATORY_FILE_FORMAT_HELP,
         description = "Path to file containing shared secret key for JWT signature verification")
     private final Path engineJwtKeyFile = null;
-
-    @Option(
-        names = {"--engine-jwt-enabled"},
-        description = "deprecated option, engine jwt auth is enabled by default",
-        hidden = true)
-    @SuppressWarnings({"FieldCanBeFinal", "UnusedVariable"})
-    private final Boolean deprecatedIsEngineAuthEnabled = true;
-
     @Option(
         names = {"--engine-jwt-disabled"},
         description = "Disable authentication for Engine APIs (default: ${DEFAULT-VALUE})")
