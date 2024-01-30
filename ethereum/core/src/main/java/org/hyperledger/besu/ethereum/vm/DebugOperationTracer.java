@@ -67,7 +67,7 @@ public class DebugOperationTracer implements OperationTracer {
   public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
     final Operation currentOperation = frame.getCurrentOperation();
     final String opcode = currentOperation.getName();
-    final int opcodeNumber = (currentOperation.getName() != null) ? currentOperation.getOpcode() : Integer.MAX_VALUE;
+    final int opcodeNumber = (opcode != null) ? currentOperation.getOpcode() : Integer.MAX_VALUE;
     final WorldUpdater worldUpdater = frame.getWorldUpdater();
     final Bytes outputData = frame.getOutputData();
     final Optional<Bytes[]> memory = captureMemory(frame);
