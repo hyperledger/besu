@@ -56,6 +56,7 @@ import org.hyperledger.besu.cli.options.stable.JsonRpcHttpOptions;
 import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
 import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.stable.P2PTLSConfigOptions;
+import org.hyperledger.besu.cli.options.stable.PermissionsOptions;
 import org.hyperledger.besu.cli.options.stable.RpcWebsocketOptions;
 import org.hyperledger.besu.cli.options.unstable.ChainPruningOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
@@ -130,8 +131,6 @@ import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
-import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBuilder;
-import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -818,62 +817,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   // Permission Option Group
   @CommandLine.ArgGroup(validate = false, heading = "@|bold Permissions Options|@%n")
-  PermissionsOptionGroup permissionsOptionGroup = new PermissionsOptionGroup();
-
-  static class PermissionsOptionGroup {
-    @Option(
-        names = {"--permissions-nodes-config-file-enabled"},
-        description = "Enable node level permissions (default: ${DEFAULT-VALUE})")
-    private final Boolean permissionsNodesEnabled = false;
-
-    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-    @CommandLine.Option(
-        names = {"--permissions-nodes-config-file"},
-        description =
-            "Node permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
-    private String nodePermissionsConfigFile = null;
-
-    @Option(
-        names = {"--permissions-accounts-config-file-enabled"},
-        description = "Enable account level permissions (default: ${DEFAULT-VALUE})")
-    private final Boolean permissionsAccountsEnabled = false;
-
-    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-    @CommandLine.Option(
-        names = {"--permissions-accounts-config-file"},
-        description =
-            "Account permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
-    private String accountPermissionsConfigFile = null;
-
-    @Option(
-        names = {"--permissions-nodes-contract-address"},
-        description = "Address of the node permissioning smart contract",
-        arity = "1")
-    private final Address permissionsNodesContractAddress = null;
-
-    @Option(
-        names = {"--permissions-nodes-contract-version"},
-        description = "Version of the EEA Node Permissioning interface (default: ${DEFAULT-VALUE})")
-    private final Integer permissionsNodesContractVersion = 1;
-
-    @Option(
-        names = {"--permissions-nodes-contract-enabled"},
-        description =
-            "Enable node level permissions via smart contract (default: ${DEFAULT-VALUE})")
-    private final Boolean permissionsNodesContractEnabled = false;
-
-    @Option(
-        names = {"--permissions-accounts-contract-address"},
-        description = "Address of the account permissioning smart contract",
-        arity = "1")
-    private final Address permissionsAccountsContractAddress = null;
-
-    @Option(
-        names = {"--permissions-accounts-contract-enabled"},
-        description =
-            "Enable account level permissions via smart contract (default: ${DEFAULT-VALUE})")
-    private final Boolean permissionsAccountsContractEnabled = false;
-  }
+  PermissionsOptions permissionsOptions = new PermissionsOptions();
 
   @Option(
       names = {"--revert-reason-enabled"},
@@ -1845,6 +1789,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     logger.info("Security Module: {}", securityModuleName);
   }
 
+  private Optional<PermissioningConfiguration> permissioningConfiguration() throws Exception {
+    return permissionsOptions.permissioningConfiguration(
+        jsonRpcHttpOptions,
+        rpcWebsocketOptions,
+        getEnodeDnsConfiguration(),
+        dataDir(),
+        logger,
+        commandLine);
+  }
+
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration(
       final Boolean enabled, final Path ipcPath, final List<String> rpcIpcApis) {
     final Path actualPath;
@@ -2082,106 +2036,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .hostsAllowlist(hostsAllowlist)
         .prometheusJob(metricsOptionGroup.metricsPrometheusJob)
         .build();
-  }
-
-  private Optional<PermissioningConfiguration> permissioningConfiguration() throws Exception {
-    if (!(localPermissionsEnabled() || contractPermissionsEnabled())) {
-      if (jsonRpcHttpOptions.getRpcHttpApis().contains(RpcApis.PERM.name())
-          || rpcWebsocketOptions.getRpcWsApis().contains(RpcApis.PERM.name())) {
-        logger.warn(
-            "Permissions are disabled. Cannot enable PERM APIs when not using Permissions.");
-      }
-      return Optional.empty();
-    }
-
-    final Optional<LocalPermissioningConfiguration> localPermissioningConfigurationOptional;
-    if (localPermissionsEnabled()) {
-      final Optional<String> nodePermissioningConfigFile =
-          Optional.ofNullable(permissionsOptionGroup.nodePermissionsConfigFile);
-      final Optional<String> accountPermissioningConfigFile =
-          Optional.ofNullable(permissionsOptionGroup.accountPermissionsConfigFile);
-
-      final LocalPermissioningConfiguration localPermissioningConfiguration =
-          PermissioningConfigurationBuilder.permissioningConfiguration(
-              permissionsOptionGroup.permissionsNodesEnabled,
-              getEnodeDnsConfiguration(),
-              nodePermissioningConfigFile.orElse(getDefaultPermissioningFilePath()),
-              permissionsOptionGroup.permissionsAccountsEnabled,
-              accountPermissioningConfigFile.orElse(getDefaultPermissioningFilePath()));
-
-      localPermissioningConfigurationOptional = Optional.of(localPermissioningConfiguration);
-    } else {
-      if (permissionsOptionGroup.nodePermissionsConfigFile != null
-          && !permissionsOptionGroup.permissionsNodesEnabled) {
-        logger.warn(
-            "Node permissioning config file set {} but no permissions enabled",
-            permissionsOptionGroup.nodePermissionsConfigFile);
-      }
-
-      if (permissionsOptionGroup.accountPermissionsConfigFile != null
-          && !permissionsOptionGroup.permissionsAccountsEnabled) {
-        logger.warn(
-            "Account permissioning config file set {} but no permissions enabled",
-            permissionsOptionGroup.accountPermissionsConfigFile);
-      }
-      localPermissioningConfigurationOptional = Optional.empty();
-    }
-
-    final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
-        SmartContractPermissioningConfiguration.createDefault();
-
-    if (Boolean.TRUE.equals(permissionsOptionGroup.permissionsNodesContractEnabled)) {
-      if (permissionsOptionGroup.permissionsNodesContractAddress == null) {
-        throw new ParameterException(
-            this.commandLine,
-            "No node permissioning contract address specified. Cannot enable smart contract based node permissioning.");
-      } else {
-        smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(
-            permissionsOptionGroup.permissionsNodesContractEnabled);
-        smartContractPermissioningConfiguration.setNodeSmartContractAddress(
-            permissionsOptionGroup.permissionsNodesContractAddress);
-        smartContractPermissioningConfiguration.setNodeSmartContractInterfaceVersion(
-            permissionsOptionGroup.permissionsNodesContractVersion);
-      }
-    } else if (permissionsOptionGroup.permissionsNodesContractAddress != null) {
-      logger.warn(
-          "Node permissioning smart contract address set {} but smart contract node permissioning is disabled.",
-          permissionsOptionGroup.permissionsNodesContractAddress);
-    }
-
-    if (Boolean.TRUE.equals(permissionsOptionGroup.permissionsAccountsContractEnabled)) {
-      if (permissionsOptionGroup.permissionsAccountsContractAddress == null) {
-        throw new ParameterException(
-            this.commandLine,
-            "No account permissioning contract address specified. Cannot enable smart contract based account permissioning.");
-      } else {
-        smartContractPermissioningConfiguration.setSmartContractAccountAllowlistEnabled(
-            permissionsOptionGroup.permissionsAccountsContractEnabled);
-        smartContractPermissioningConfiguration.setAccountSmartContractAddress(
-            permissionsOptionGroup.permissionsAccountsContractAddress);
-      }
-    } else if (permissionsOptionGroup.permissionsAccountsContractAddress != null) {
-      logger.warn(
-          "Account permissioning smart contract address set {} but smart contract account permissioning is disabled.",
-          permissionsOptionGroup.permissionsAccountsContractAddress);
-    }
-
-    final PermissioningConfiguration permissioningConfiguration =
-        new PermissioningConfiguration(
-            localPermissioningConfigurationOptional,
-            Optional.of(smartContractPermissioningConfiguration));
-
-    return Optional.of(permissioningConfiguration);
-  }
-
-  private boolean localPermissionsEnabled() {
-    return permissionsOptionGroup.permissionsAccountsEnabled
-        || permissionsOptionGroup.permissionsNodesEnabled;
-  }
-
-  private boolean contractPermissionsEnabled() {
-    return permissionsOptionGroup.permissionsNodesContractEnabled
-        || permissionsOptionGroup.permissionsAccountsContractEnabled;
   }
 
   private PrivacyParameters privacyParameters() {
@@ -2652,12 +2506,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private File resolveNodePrivateKeyFile(final File nodePrivateKeyFile) {
     return Optional.ofNullable(nodePrivateKeyFile)
         .orElseGet(() -> KeyPairUtil.getDefaultKeyFile(dataDir()));
-  }
-
-  private String getDefaultPermissioningFilePath() {
-    return dataDir()
-        + System.getProperty("file.separator")
-        + DefaultCommandValues.PERMISSIONING_CONFIG_LOCATION;
   }
 
   /**
