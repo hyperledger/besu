@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.rocksdb.RocksDBException;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -58,6 +59,8 @@ import picocli.CommandLine.ParentCommand;
       TrieLogSubCommand.ImportTrieLog.class
     })
 public class TrieLogSubCommand implements Runnable {
+
+  private static final Logger LOG = LoggerFactory.getLogger(TrieLogSubCommand.class);
 
   @SuppressWarnings("UnusedVariable")
   @ParentCommand
@@ -130,7 +133,9 @@ public class TrieLogSubCommand implements Runnable {
           Paths.get(
               TrieLogSubCommand.parentCommand.parentCommand.dataDir().toAbsolutePath().toString());
 
+      LOG.info("Calculating trie logs size before...");
       long sizeBefore = estimatedSizeOfTrieLogs();
+      LOG.info("Trie logs size before: {}", RocksDbHelper.formatOutputSize(sizeBefore));
 
       final TrieLogHelper trieLogHelper = new TrieLogHelper();
       boolean success =
@@ -141,14 +146,10 @@ public class TrieLogSubCommand implements Runnable {
               dataDirectoryPath);
 
       if (success) {
+        LOG.info("Finished pruning - recalculating size...");
         final long sizeAfter = estimatedSizeOfTrieLogs();
+        LOG.info("Trie logs size after: {}", RocksDbHelper.formatOutputSize(sizeAfter));
         long estimatedSaving = sizeBefore - sizeAfter;
-        spec.commandLine()
-            .getOut()
-            .printf("Trie logs size before: %s\n", RocksDbHelper.formatOutputSize(sizeBefore));
-        spec.commandLine()
-            .getOut()
-            .printf("Trie logs size after: %s\n", RocksDbHelper.formatOutputSize(sizeAfter));
         spec.commandLine()
             .getOut()
             .printf(
