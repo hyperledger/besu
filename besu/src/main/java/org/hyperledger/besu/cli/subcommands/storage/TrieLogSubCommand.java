@@ -130,7 +130,7 @@ public class TrieLogSubCommand implements Runnable {
           Paths.get(
               TrieLogSubCommand.parentCommand.parentCommand.dataDir().toAbsolutePath().toString());
 
-      long estimatedSaving = getEstimatedSaving();
+      long sizeBefore = estimatedSizeOfTrieLogs();
 
       final TrieLogHelper trieLogHelper = new TrieLogHelper();
       boolean success =
@@ -141,6 +141,14 @@ public class TrieLogSubCommand implements Runnable {
               dataDirectoryPath);
 
       if (success) {
+        final long sizeAfter = estimatedSizeOfTrieLogs();
+        long estimatedSaving = sizeBefore - sizeAfter;
+        spec.commandLine()
+            .getOut()
+            .printf("Trie logs size before: %s\n", RocksDbHelper.formatOutputSize(sizeBefore));
+        spec.commandLine()
+            .getOut()
+            .printf("Trie logs size after: %s\n", RocksDbHelper.formatOutputSize(sizeAfter));
         spec.commandLine()
             .getOut()
             .printf(
@@ -149,7 +157,7 @@ public class TrieLogSubCommand implements Runnable {
       }
     }
 
-    private long getEstimatedSaving() {
+    private long estimatedSizeOfTrieLogs() {
       final String dbPath =
           TrieLogSubCommand.parentCommand
               .parentCommand
