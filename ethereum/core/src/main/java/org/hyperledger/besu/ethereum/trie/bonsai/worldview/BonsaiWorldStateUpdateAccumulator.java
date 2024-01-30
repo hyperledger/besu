@@ -769,6 +769,7 @@ public class BonsaiWorldStateUpdateAccumulator
     resetAccumulatorStateChanged();
     updatedAccounts.clear();
     deletedAccounts.clear();
+    slotKeyToHashCache.clear();
   }
 
   public static class AccountConsumingMap<T> extends ForwardingMap<Address, T> {
