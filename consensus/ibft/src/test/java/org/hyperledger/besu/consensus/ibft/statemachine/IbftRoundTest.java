@@ -131,10 +131,8 @@ public class IbftRoundTest {
         .when(blockCreator.createBlock(anyLong()))
         .thenReturn(new BlockCreationResult(proposedBlock, new TransactionSelectionResults()));
 
-    lenient()
-        .when(protocolSchedule.getByBlockNumberOrTimestamp(anyLong(), anyLong()))
-        .thenReturn(protocolSpec);
     lenient().when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
+    lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
 
     lenient()
         .when(blockImporter.importBlock(any(), any(), any()))
