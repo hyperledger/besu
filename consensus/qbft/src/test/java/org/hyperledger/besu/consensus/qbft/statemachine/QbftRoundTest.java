@@ -140,8 +140,7 @@ public class QbftRoundTest {
     when(blockCreator.createBlock(anyLong()))
         .thenReturn(new BlockCreationResult(proposedBlock, new TransactionSelectionResults()));
 
-    when(protocolSchedule.getByBlockNumberOrTimestamp(anyLong(), anyLong()))
-        .thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
 
     when(blockImporter.importBlock(any(), any(), any()))

@@ -110,7 +110,8 @@ public class MessageValidatorTest {
         .when(protocolSchedule.getByBlockNumberOrTimestamp(anyLong(), anyLong()))
         .thenReturn(protocolSpec);
 
-    lenient().when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);
+    when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
 
