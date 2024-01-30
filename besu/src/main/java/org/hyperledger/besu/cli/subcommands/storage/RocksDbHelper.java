@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiFunction;
+import java.util.function.BiConsumer;
 
 import org.bouncycastle.util.Arrays;
 import org.rocksdb.ColumnFamilyDescriptor;
@@ -31,12 +31,12 @@ import org.rocksdb.RocksDBException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** RocksDB Usage subcommand helper methods for formatting and printing. */
-public class RocksDbUsageHelper {
-  private static final Logger LOG = LoggerFactory.getLogger(RocksDbUsageHelper.class);
+/** RocksDB subcommand helper methods. */
+public class RocksDbHelper {
+  private static final Logger LOG = LoggerFactory.getLogger(RocksDbHelper.class);
 
   static void forEachColumnFamily(
-      final String dbPath, final BiFunction<RocksDB, ColumnFamilyHandle, Void> task) {
+      final String dbPath, final BiConsumer<RocksDB, ColumnFamilyHandle> task) {
     RocksDB.loadLibrary();
     Options options = new Options();
     options.setCreateIfMissing(true);
@@ -55,7 +55,7 @@ public class RocksDbUsageHelper {
     }
     try (final RocksDB rocksdb = RocksDB.openReadOnly(dbPath, cfDescriptors, cfHandles)) {
       for (ColumnFamilyHandle cfHandle : cfHandles) {
-        task.apply(rocksdb, cfHandle);
+        task.accept(rocksdb, cfHandle);
       }
     } catch (RocksDBException e) {
       throw new RuntimeException(e);

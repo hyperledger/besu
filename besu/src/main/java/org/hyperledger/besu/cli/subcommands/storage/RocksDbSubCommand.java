@@ -76,17 +76,16 @@ public class RocksDbSubCommand implements Runnable {
               .concat("/")
               .concat(DATABASE_PATH);
 
-      RocksDbUsageHelper.printTableHeader(out);
+      RocksDbHelper.printTableHeader(out);
 
-      RocksDbUsageHelper.forEachColumnFamily(
+      RocksDbHelper.forEachColumnFamily(
           dbPath,
           (rocksdb, cfHandle) -> {
             try {
-              RocksDbUsageHelper.printUsageForColumnFamily(rocksdb, cfHandle, out);
+              RocksDbHelper.printUsageForColumnFamily(rocksdb, cfHandle, out);
             } catch (RocksDBException e) {
               throw new RuntimeException(e);
             }
-            return null;
           });
     }
   }

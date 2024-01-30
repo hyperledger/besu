@@ -145,7 +145,7 @@ public class TrieLogSubCommand implements Runnable {
             .getOut()
             .printf(
                 "Prune ran successfully. We estimate you freed up %s! \uD83D\uDE80\n",
-                RocksDbUsageHelper.formatOutputSize(estimatedSaving));
+                RocksDbHelper.formatOutputSize(estimatedSaving));
       }
     }
 
@@ -159,7 +159,7 @@ public class TrieLogSubCommand implements Runnable {
               .concat(DATABASE_PATH);
 
       AtomicLong estimatedSaving = new AtomicLong(0L);
-      RocksDbUsageHelper.forEachColumnFamily(
+      RocksDbHelper.forEachColumnFamily(
           dbPath,
           (rocksdb, cfHandle) -> {
             try {
@@ -171,7 +171,6 @@ public class TrieLogSubCommand implements Runnable {
             } catch (RocksDBException e) {
               throw new RuntimeException(e);
             }
-            return null;
           });
 
       return estimatedSaving.get();
