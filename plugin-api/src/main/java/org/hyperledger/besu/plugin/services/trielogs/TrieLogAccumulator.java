@@ -23,7 +23,7 @@ import java.util.Map;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/** Accumulator interface tor provding trie updates for creating TrieLogs. */
+/** Accumulator interface for providing trie updates for creating TrieLogs. */
 public interface TrieLogAccumulator {
 
   /**
