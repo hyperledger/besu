@@ -74,8 +74,7 @@ public class BonsaiWorldStateUpdateAccumulator
   private final Map<Address, StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>>
       storageToUpdate = new ConcurrentHashMap<>();
 
-  private final Map<Address, ConcurrentMap<UInt256, Hash>> slotKeyToHashCache =
-      new ConcurrentHashMap<>();
+  private final Map<UInt256, Hash> slotKeyToHashCache = new ConcurrentHashMap<>();
   private boolean isAccumulatorStateChanged;
 
   public BonsaiWorldStateUpdateAccumulator(
@@ -838,12 +837,10 @@ public class BonsaiWorldStateUpdateAccumulator
   }
 
   protected Hash hashAndSaveSlotPreImage(final Address address, final UInt256 slotKey) {
-    final ConcurrentMap<UInt256, Hash> slotKeyHash =
-        slotKeyToHashCache.computeIfAbsent(address, address1 -> new ConcurrentHashMap<>());
-    Hash hash = slotKeyHash.get(slotKey);
+    Hash hash = slotKeyToHashCache.get(slotKey);
     if (hash == null) {
       hash = Hash.hash(slotKey);
-      slotKeyHash.put(slotKey, hash);
+      slotKeyToHashCache.put(slotKey, hash);
     }
     return hash;
   }
