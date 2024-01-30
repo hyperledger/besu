@@ -26,9 +26,16 @@ import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public abstract class AbstractSegmentedKeyValueStorageTest extends AbstractKeyValueStorageTest {
   public abstract SegmentedKeyValueStorage createSegmentedStore();
+
+  private static final byte[] KEY = Bytes.fromHexString("0001").toArrayUnsafe();
+  private static final byte[] INITIAL_VALUE = Bytes.fromHexString("0000").toArrayUnsafe();
+  private static final byte[] VALUE1 = Bytes.fromHexString("0002").toArrayUnsafe();
+  private static final byte[] VALUE2 = Bytes.fromHexString("0003").toArrayUnsafe();
 
   @Test
   public void assertSegmentedIsNearestTo() throws Exception {
@@ -88,52 +95,80 @@ public abstract class AbstractSegmentedKeyValueStorageTest extends AbstractKeyVa
   }
 
   @Test
-  void txGet_returnsUpdatedValueAfterPut() {
-    final SegmentedKeyValueStorage store = createSegmentedStore();
-    final SegmentedKeyValueStorageTransaction tx = store.startTransaction();
-    final byte[] key = Bytes.fromHexString("0001").toArrayUnsafe();
-    final byte[] value = Bytes.fromHexString("0002").toArrayUnsafe();
-
-    tx.put(SEGMENT_IDENTIFIER, key, value);
-    assertThat(tx.get(SEGMENT_IDENTIFIER, key).map(Bytes::wrap)).contains(Bytes.wrap(value));
+  void txGet_returnsValueForExistingValue() {
+    final SegmentedKeyValueStorage store = createPopulatedSegmentedStore();
+    final var tx = store.startTransaction();
+    assertThat(tx.get(SEGMENT_IDENTIFIER, KEY).map(Bytes::wrap))
+        .contains(Bytes.wrap(INITIAL_VALUE));
   }
 
-  @Test
-  void txGet_returnsEmptyAfterPutAndRemove() {
-    final SegmentedKeyValueStorage store = createSegmentedStore();
-    final SegmentedKeyValueStorageTransaction tx = store.startTransaction();
-    final byte[] key = Bytes.fromHexString("0001").toArrayUnsafe();
-    final byte[] value = Bytes.fromHexString("0002").toArrayUnsafe();
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void txGet_returnsEmptyAfterRemove(final boolean populatedDb) {
+    final SegmentedKeyValueStorage store =
+        populatedDb ? createPopulatedSegmentedStore() : createSegmentedStore();
 
-    tx.put(SEGMENT_IDENTIFIER, key, value);
-    tx.remove(SEGMENT_IDENTIFIER, key);
-    assertThat(tx.get(SEGMENT_IDENTIFIER, key).map(Bytes::wrap)).isEmpty();
+    final var tx = store.startTransaction();
+    tx.remove(SEGMENT_IDENTIFIER, KEY);
+
+    assertThat(tx.get(SEGMENT_IDENTIFIER, KEY)).isEmpty();
   }
 
-  @Test
-  void txGet_returnsUpdatedValueAfterPutRemovePut() {
-    final SegmentedKeyValueStorage store = createSegmentedStore();
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void txGet_returnsUpdatedValueAfterPut(final boolean populatedDb) {
+    final SegmentedKeyValueStorage store =
+        populatedDb ? createPopulatedSegmentedStore() : createSegmentedStore();
     final SegmentedKeyValueStorageTransaction tx = store.startTransaction();
-    final byte[] key = Bytes.fromHexString("0001").toArrayUnsafe();
-    final byte[] value1 = Bytes.fromHexString("0002").toArrayUnsafe();
-    final byte[] value2 = Bytes.fromHexString("0003").toArrayUnsafe();
-
-    tx.put(SEGMENT_IDENTIFIER, key, value1);
-    tx.remove(SEGMENT_IDENTIFIER, key);
-    tx.put(SEGMENT_IDENTIFIER, key, value2);
-    assertThat(tx.get(SEGMENT_IDENTIFIER, key).map(Bytes::wrap)).contains(Bytes.wrap(value2));
+    tx.put(SEGMENT_IDENTIFIER, KEY, VALUE1);
+    assertThat(tx.get(SEGMENT_IDENTIFIER, KEY).map(Bytes::wrap)).contains(Bytes.wrap(VALUE1));
   }
 
-  @Test
-  void txGet_returnsUpdatedValueAfterPutPut() {
-    final SegmentedKeyValueStorage store = createSegmentedStore();
-    final SegmentedKeyValueStorageTransaction tx = store.startTransaction();
-    final byte[] key = Bytes.fromHexString("0001").toArrayUnsafe();
-    final byte[] value1 = Bytes.fromHexString("0002").toArrayUnsafe();
-    final byte[] value2 = Bytes.fromHexString("0003").toArrayUnsafe();
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void txGet_returnsEmptyAfterPutAndRemove(final boolean populatedDb) {
+    final SegmentedKeyValueStorage store =
+        populatedDb ? createPopulatedSegmentedStore() : createSegmentedStore();
 
-    tx.put(SEGMENT_IDENTIFIER, key, value1);
-    tx.put(SEGMENT_IDENTIFIER, key, value2);
-    assertThat(tx.get(SEGMENT_IDENTIFIER, key).map(Bytes::wrap)).contains(Bytes.wrap(value2));
+    final SegmentedKeyValueStorageTransaction tx = store.startTransaction();
+    tx.put(SEGMENT_IDENTIFIER, KEY, VALUE1);
+    tx.remove(SEGMENT_IDENTIFIER, KEY);
+
+    assertThat(tx.get(SEGMENT_IDENTIFIER, KEY).map(Bytes::wrap)).isEmpty();
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void txGet_returnsUpdatedValueAfterPutRemovePut(final boolean populatedDb) {
+    final SegmentedKeyValueStorage store =
+        populatedDb ? createPopulatedSegmentedStore() : createSegmentedStore();
+
+    final SegmentedKeyValueStorageTransaction tx = store.startTransaction();
+    tx.put(SEGMENT_IDENTIFIER, KEY, VALUE1);
+    tx.remove(SEGMENT_IDENTIFIER, KEY);
+    tx.put(SEGMENT_IDENTIFIER, KEY, VALUE2);
+
+    assertThat(tx.get(SEGMENT_IDENTIFIER, KEY).map(Bytes::wrap)).contains(Bytes.wrap(VALUE2));
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void txGet_returnsUpdatedValueAfterPutPut(final boolean populatedDb) {
+    final SegmentedKeyValueStorage store =
+        populatedDb ? createPopulatedSegmentedStore() : createSegmentedStore();
+
+    final SegmentedKeyValueStorageTransaction tx = store.startTransaction();
+    tx.put(SEGMENT_IDENTIFIER, KEY, VALUE1);
+    tx.put(SEGMENT_IDENTIFIER, KEY, VALUE2);
+
+    assertThat(tx.get(SEGMENT_IDENTIFIER, KEY).map(Bytes::wrap)).contains(Bytes.wrap(VALUE2));
+  }
+
+  private SegmentedKeyValueStorage createPopulatedSegmentedStore() {
+    final SegmentedKeyValueStorage segmentedStore = createSegmentedStore();
+    SegmentedKeyValueStorageTransaction tx = segmentedStore.startTransaction();
+    tx.put(SEGMENT_IDENTIFIER, KEY, Bytes.fromHexString("0000").toArrayUnsafe());
+    tx.commit();
+    return segmentedStore;
   }
 }

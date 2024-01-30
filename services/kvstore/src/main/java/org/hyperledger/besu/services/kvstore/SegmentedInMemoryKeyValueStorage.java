@@ -272,9 +272,17 @@ public class SegmentedInMemoryKeyValueStorage
 
     @Override
     public Optional<byte[]> get(final SegmentIdentifier segmentIdentifier, final byte[] key) {
-      return updatedValues
-          .computeIfAbsent(segmentIdentifier, __ -> new HashMap<>())
-          .getOrDefault(Bytes.wrap(key), Optional.empty());
+      final Optional<byte[]> updatedValue =
+          updatedValues
+              .computeIfAbsent(segmentIdentifier, __ -> new HashMap<>())
+              .getOrDefault(Bytes.wrap(key), Optional.empty());
+      final Set<Bytes> removedKeys =
+          this.removedKeys.computeIfAbsent(segmentIdentifier, __ -> new HashSet<>());
+      return removedKeys.contains(Bytes.wrap(key))
+          ? Optional.empty()
+          : updatedValue.isPresent()
+              ? updatedValue
+              : SegmentedInMemoryKeyValueStorage.this.get(segmentIdentifier, key);
     }
 
     @Override
