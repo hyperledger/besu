@@ -36,7 +36,7 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
    *
    * @param maxPrecompile the max precompile
    */
-  private CancunGasCalculator(final int maxPrecompile) {
+  protected CancunGasCalculator(final int maxPrecompile) {
     super(maxPrecompile);
   }
 
