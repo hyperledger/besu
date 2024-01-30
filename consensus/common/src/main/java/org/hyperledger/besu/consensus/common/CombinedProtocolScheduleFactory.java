@@ -68,7 +68,7 @@ public class CombinedProtocolScheduleFactory {
       // our consensus mechanism's BesuControllerBuilder so any additional rules are applied
       if (spec.getBlock() > 0) {
         combinedProtocolSchedule.putBlockNumberMilestone(
-            spec.getBlock(), protocolSchedule.getByBlockNumberAndTimestamp(spec.getBlock(), 0L));
+            spec.getBlock(), protocolSchedule.getByBlockNumberOrTimestamp(spec.getBlock(), 0L));
       }
     }
     return combinedProtocolSchedule;

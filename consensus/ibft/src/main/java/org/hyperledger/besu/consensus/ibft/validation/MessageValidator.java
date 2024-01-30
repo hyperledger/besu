@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.ibft.validation;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
-import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
@@ -97,10 +96,7 @@ public class MessageValidator {
   private boolean validateBlock(final Block block) {
 
     final BlockValidator blockValidator =
-        ((BftProtocolSchedule) protocolSchedule)
-            .getByBlockNumberAndTimestamp(
-                block.getHeader().getNumber(), block.getHeader().getTimestamp())
-            .getBlockValidator();
+        protocolSchedule.getByBlockHeader(block.getHeader()).getBlockValidator();
 
     final var validationResult =
         blockValidator.validateAndProcessBlock(

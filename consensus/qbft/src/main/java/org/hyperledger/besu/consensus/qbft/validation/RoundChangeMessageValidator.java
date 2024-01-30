@@ -99,7 +99,7 @@ public class RoundChangeMessageValidator {
 
     final BlockValidator blockValidator =
         ((BftProtocolSchedule) protocolSchedule)
-            .getByBlockNumberAndTimestamp(
+            .getByBlockNumberOrTimestamp(
                 block.getHeader().getNumber(), block.getHeader().getTimestamp())
             .getBlockValidator();
 

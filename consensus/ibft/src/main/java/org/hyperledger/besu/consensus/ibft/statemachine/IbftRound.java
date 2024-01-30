@@ -21,7 +21,6 @@ import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
-import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
@@ -301,7 +300,6 @@ public class IbftRound {
             roundState.getCommitSeals());
 
     final long blockNumber = blockToImport.getHeader().getNumber();
-    final long blockTimestamp = blockToImport.getHeader().getTimestamp();
     final BftExtraData extraData = bftExtraDataCodec.decode(blockToImport.getHeader());
     if (getRoundIdentifier().getRoundNumber() > 0) {
       LOG.info(
@@ -316,10 +314,7 @@ public class IbftRound {
     }
     LOG.trace("Importing block with extraData={}", extraData);
     final BlockImporter blockImporter =
-        ((BftProtocolSchedule) protocolSchedule)
-            .getByBlockNumberAndTimestamp(
-                roundState.getRoundIdentifier().getSequenceNumber(), blockTimestamp)
-            .getBlockImporter();
+        protocolSchedule.getByBlockHeader(blockToImport.getHeader()).getBlockImporter();
     final BlockImportResult result =
         blockImporter.importBlock(protocolContext, blockToImport, HeaderValidationMode.FULL);
     if (!result.isImported()) {

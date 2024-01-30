@@ -89,7 +89,7 @@ public class RoundChangeMessageValidatorTest {
             Optional.empty());
 
     lenient()
-        .when(protocolSchedule.getByBlockNumberAndTimestamp(anyLong(), anyLong()))
+        .when(protocolSchedule.getByBlockNumberOrTimestamp(anyLong(), anyLong()))
         .thenReturn(protocolSpec);
 
     lenient().when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);

@@ -117,7 +117,7 @@ public class IbftRoundIntegrationTest {
     final BlockHeader header = headerTestFixture.buildHeader();
     proposedBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
 
-    when(protocolSchedule.getByBlockNumberAndTimestamp(anyLong(), anyLong()))
+    when(protocolSchedule.getByBlockNumberOrTimestamp(anyLong(), anyLong()))
         .thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
 

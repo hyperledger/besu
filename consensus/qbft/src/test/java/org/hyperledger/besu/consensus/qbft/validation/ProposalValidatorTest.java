@@ -114,7 +114,7 @@ public class ProposalValidatorTest {
             eq(HeaderValidationMode.FULL)))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
 
-    when(protocolSchedule.getByBlockNumberAndTimestamp(anyLong(), anyLong()))
+    when(protocolSchedule.getByBlockNumberOrTimestamp(anyLong(), anyLong()))
         .thenReturn(protocolSpec);
 
     when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);

@@ -102,7 +102,7 @@ public class ProposalValidator {
 
     final BlockValidator blockValidator =
         ((BftProtocolSchedule) protocolSchedule)
-            .getByBlockNumberAndTimestamp(
+            .getByBlockNumberOrTimestamp(
                 roundIdentifier.getSequenceNumber(), msg.getBlock().getHeader().getTimestamp())
             .getBlockValidator();
 

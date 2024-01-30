@@ -39,13 +39,13 @@ public class BftProtocolSchedule extends DefaultProtocolSchedule {
   }
 
   /**
-   * Look up ProtocolSpec by block number and timestamp
+   * Look up ProtocolSpec by block number or timestamp
    *
    * @param number block number
    * @param timestamp block timestamp
-   * @return the protocol spec for that block number and timestamp
+   * @return the protocol spec for that block number or timestamp
    */
-  public ProtocolSpec getByBlockNumberAndTimestamp(final long number, final long timestamp) {
+  public ProtocolSpec getByBlockNumberOrTimestamp(final long number, final long timestamp) {
     checkArgument(number >= 0, "number must be non-negative");
     checkArgument(
         !protocolSpecs.isEmpty(), "At least 1 milestone must be provided to the protocol schedule");
