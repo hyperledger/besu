@@ -366,9 +366,7 @@ public class BonsaiWorldStateUpdateAccumulator
                   storageUpdate -> {
                     final UInt256 keyUInt = storageUpdate.getKey();
                     final StorageSlotKey slotKey =
-                        new StorageSlotKey(
-                            hashAndSaveSlotPreImage(keyUInt),
-                            Optional.of(keyUInt)); // no compute Hash in this case
+                        new StorageSlotKey(hashAndSaveSlotPreImage(keyUInt), Optional.of(keyUInt));
                     final UInt256 value = storageUpdate.getValue();
                     final BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(slotKey);
 
