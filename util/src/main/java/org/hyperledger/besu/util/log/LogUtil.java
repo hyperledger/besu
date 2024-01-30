@@ -22,10 +22,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+/**
+ * Utility class for logging.
+ */
 public class LogUtil {
   static ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-  public static final String BESU_NAMESPACE = "org.hyperledger.besu";
+  static final String BESU_NAMESPACE = "org.hyperledger.besu";
 
+  /**
+   * Throttles logging to a given logger.
+   * @param logger logger as a String consumer
+   * @param logMessage message to log
+   * @param shouldLog AtomicBoolean to track whether the message should be logged
+   * @param logRepeatDelay delay in seconds between repeated logs
+   */
   public static void throttledLog(
       final Consumer<String> logger,
       final String logMessage,
@@ -44,6 +54,7 @@ public class LogUtil {
    * Summarizes the stack trace of a throwable to the first class in the namespace. Useful for
    * limiting exceptionally deep stack traces to the last relevant point in besu code.
    *
+   * @param contextMessage message to prepend to the summary
    * @param throwable exception to summarize
    * @param namespace namespace to summarize to
    * @return summary of the StackTrace
@@ -65,6 +76,14 @@ public class LogUtil {
         contextMessage, throwable, String.join("\n", stackTraceSummary));
   }
 
+  /**
+   * Summarizes the stack trace of a throwable to the first besu class in the namespace. Useful for
+   * limiting exceptionally deep stack traces to the last relevant point in besu code.
+   *
+   * @param contextMessage message to prepend to the summary
+   * @param throwable exception to summarize
+   * @return summary of the StackTrace
+   */
   public static String summarizeBesuStackTrace(
       final String contextMessage, final Throwable throwable) {
     return summarizeStackTrace(contextMessage, throwable, BESU_NAMESPACE);
