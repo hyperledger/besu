@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerPrivileges;
@@ -162,13 +163,6 @@ public class RlpxAgent {
     }
   }
 
-  public void connect(final Stream<? extends Peer> peerStream) {
-    if (!localNode.isReady()) {
-      return;
-    }
-    peerStream.forEach(this::connect);
-  }
-
   public void disconnect(final Bytes peerId, final DisconnectReason reason) {
     try {
       allActiveConnectionsSupplier
@@ -206,6 +200,7 @@ public class RlpxAgent {
                   + this.getClass().getSimpleName()
                   + " has finished starting"));
     }
+
     // Check peer is valid
     final EnodeURL enode = peer.getEnodeURL();
     if (!enode.isListening()) {
@@ -380,6 +375,7 @@ public class RlpxAgent {
     private Supplier<Stream<PeerConnection>> allConnectionsSupplier;
     private Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
     private int peersLowerBound;
+    private PeerTable peerTable;
 
     private Builder() {}
 
@@ -399,12 +395,13 @@ public class RlpxAgent {
                   localNode,
                   connectionEvents,
                   metricsSystem,
-                  p2pTLSConfiguration.get());
+                  p2pTLSConfiguration.get(),
+                  peerTable);
         } else {
           LOG.debug("Using default NettyConnectionInitializer");
           connectionInitializer =
               new NettyConnectionInitializer(
-                  nodeKey, config, localNode, connectionEvents, metricsSystem);
+                  nodeKey, config, localNode, connectionEvents, metricsSystem, peerTable);
         }
       }
 
@@ -497,6 +494,11 @@ public class RlpxAgent {
 
     public Builder peersLowerBound(final int peersLowerBound) {
       this.peersLowerBound = peersLowerBound;
+      return this;
+    }
+
+    public Builder peerTable(final PeerTable peerTable) {
+      this.peerTable = peerTable;
       return this;
     }
   }

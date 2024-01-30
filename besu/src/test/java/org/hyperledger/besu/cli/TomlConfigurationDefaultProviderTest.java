@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.cli.util.TomlConfigFileDefaultProvider;
+import org.hyperledger.besu.cli.util.TomlConfigurationDefaultProvider;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.io.BufferedWriter;
@@ -42,7 +42,7 @@ import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.ParameterException;
 
 @ExtendWith(MockitoExtension.class)
-public class TomlConfigFileDefaultProviderTest {
+public class TomlConfigurationDefaultProviderTest {
   @Mock CommandLine mockCommandLine;
 
   @Mock CommandSpec mockCommandSpec;
@@ -67,8 +67,8 @@ public class TomlConfigFileDefaultProviderTest {
       fileWriter.write("a-longer-option='1234'");
       fileWriter.flush();
 
-      final TomlConfigFileDefaultProvider providerUnderTest =
-          new TomlConfigFileDefaultProvider(mockCommandLine, tempConfigFile);
+      final TomlConfigurationDefaultProvider providerUnderTest =
+          TomlConfigurationDefaultProvider.fromFile(mockCommandLine, tempConfigFile);
 
       // this option must be found in config
       assertThat(
@@ -152,8 +152,8 @@ public class TomlConfigFileDefaultProviderTest {
       fileWriter.write("a-double-value-option-int=1"); // should be able to parse int as double
       fileWriter.flush();
 
-      final TomlConfigFileDefaultProvider providerUnderTest =
-          new TomlConfigFileDefaultProvider(mockCommandLine, tempConfigFile);
+      final TomlConfigurationDefaultProvider providerUnderTest =
+          TomlConfigurationDefaultProvider.fromFile(mockCommandLine, tempConfigFile);
 
       assertThat(
               providerUnderTest.defaultValue(
@@ -221,16 +221,9 @@ public class TomlConfigFileDefaultProviderTest {
 
   @Test
   public void configFileNotFoundMustThrow() {
-
     final File nonExistingFile = new File("doesnt.exit");
-
-    final TomlConfigFileDefaultProvider providerUnderTest =
-        new TomlConfigFileDefaultProvider(mockCommandLine, nonExistingFile);
-
     assertThatThrownBy(
-            () ->
-                providerUnderTest.defaultValue(
-                    OptionSpec.builder("an-option").type(String.class).build()))
+            () -> TomlConfigurationDefaultProvider.fromFile(mockCommandLine, nonExistingFile))
         .isInstanceOf(ParameterException.class)
         .hasMessage("Unable to read TOML configuration, file not found.");
   }
@@ -240,8 +233,8 @@ public class TomlConfigFileDefaultProviderTest {
 
     final File tempConfigFile = Files.createTempFile("invalid", "toml").toFile();
 
-    final TomlConfigFileDefaultProvider providerUnderTest =
-        new TomlConfigFileDefaultProvider(mockCommandLine, tempConfigFile);
+    final TomlConfigurationDefaultProvider providerUnderTest =
+        TomlConfigurationDefaultProvider.fromFile(mockCommandLine, tempConfigFile);
 
     assertThatThrownBy(
             () ->
@@ -260,8 +253,8 @@ public class TomlConfigFileDefaultProviderTest {
     fileWriter.write("an-invalid-syntax=======....");
     fileWriter.flush();
 
-    final TomlConfigFileDefaultProvider providerUnderTest =
-        new TomlConfigFileDefaultProvider(mockCommandLine, tempConfigFile);
+    final TomlConfigurationDefaultProvider providerUnderTest =
+        TomlConfigurationDefaultProvider.fromFile(mockCommandLine, tempConfigFile);
 
     assertThatThrownBy(
             () ->
@@ -286,8 +279,8 @@ public class TomlConfigFileDefaultProviderTest {
     fileWriter.write("invalid_option=true");
     fileWriter.flush();
 
-    final TomlConfigFileDefaultProvider providerUnderTest =
-        new TomlConfigFileDefaultProvider(mockCommandLine, tempConfigFile);
+    final TomlConfigurationDefaultProvider providerUnderTest =
+        TomlConfigurationDefaultProvider.fromFile(mockCommandLine, tempConfigFile);
 
     assertThatThrownBy(
             () ->
@@ -321,8 +314,8 @@ public class TomlConfigFileDefaultProviderTest {
     fileWriter.newLine();
     fileWriter.flush();
 
-    final TomlConfigFileDefaultProvider providerUnderTest =
-        new TomlConfigFileDefaultProvider(mockCommandLine, tempConfigFile);
+    final TomlConfigurationDefaultProvider providerUnderTest =
+        TomlConfigurationDefaultProvider.fromFile(mockCommandLine, tempConfigFile);
 
     assertThat(
             providerUnderTest.defaultValue(
@@ -361,8 +354,8 @@ public class TomlConfigFileDefaultProviderTest {
     fileWriter.newLine();
     fileWriter.flush();
 
-    final TomlConfigFileDefaultProvider providerUnderTest =
-        new TomlConfigFileDefaultProvider(mockCommandLine, tempConfigFile);
+    final TomlConfigurationDefaultProvider providerUnderTest =
+        TomlConfigurationDefaultProvider.fromFile(mockCommandLine, tempConfigFile);
 
     assertThatThrownBy(
             () ->

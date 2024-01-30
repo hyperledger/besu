@@ -33,9 +33,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class SyncTargetManager {
+public abstract class AbstractSyncTargetManager {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SyncTargetManager.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractSyncTargetManager.class);
 
   private final AtomicBoolean cancelled = new AtomicBoolean(false);
 
@@ -45,7 +45,7 @@ public abstract class SyncTargetManager {
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
 
-  protected SyncTargetManager(
+  protected AbstractSyncTargetManager(
       final SynchronizerConfiguration config,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,

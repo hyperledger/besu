@@ -22,7 +22,7 @@ import static picocli.CommandLine.defaultExceptionHandler;
 
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.EnvironmentVariableDefaultProvider;
-import org.hyperledger.besu.cli.util.TomlConfigFileDefaultProvider;
+import org.hyperledger.besu.cli.util.TomlConfigurationDefaultProvider;
 import org.hyperledger.besu.util.StringUtils;
 
 import java.io.IOException;
@@ -252,7 +252,7 @@ public class CommandLineUtilsTest {
 
     final AbstractTestCommand testCommand = new TestMultiCommandWithDeps(mockLogger);
     testCommand.commandLine.setDefaultValueProvider(
-        new TomlConfigFileDefaultProvider(testCommand.commandLine, toml.toFile()));
+        TomlConfigurationDefaultProvider.fromFile(testCommand.commandLine, toml.toFile()));
     testCommand.commandLine.parseWithHandlers(new RunLast(), defaultExceptionHandler());
 
     verifyMultiOptionsConstraintLoggerCall(

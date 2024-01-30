@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.blockcreation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.awaitility.Awaitility.await;
-import static org.hyperledger.besu.ethereum.core.MiningParameters.Unstable.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
@@ -54,7 +54,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.Unstable;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -83,8 +82,9 @@ import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
+import org.hyperledger.besu.plugin.services.txselection.TransactionEvaluationContext;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
-import org.hyperledger.besu.util.number.Percentage;
+import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.math.BigInteger;
 import java.time.Instant;
@@ -581,17 +581,25 @@ public abstract class AbstractBlockTransactionSelectorTest {
             new PluginTransactionSelector() {
               @Override
               public TransactionSelectionResult evaluateTransactionPreProcessing(
-                  final PendingTransaction pendingTransaction) {
-                if (pendingTransaction.getTransaction().equals(notSelectedTransient))
+                  final TransactionEvaluationContext<? extends PendingTransaction>
+                      evaluationContext) {
+                if (evaluationContext
+                    .getPendingTransaction()
+                    .getTransaction()
+                    .equals(notSelectedTransient))
                   return PluginTransactionSelectionResult.GENERIC_PLUGIN_INVALID_TRANSIENT;
-                if (pendingTransaction.getTransaction().equals(notSelectedInvalid))
+                if (evaluationContext
+                    .getPendingTransaction()
+                    .getTransaction()
+                    .equals(notSelectedInvalid))
                   return PluginTransactionSelectionResult.GENERIC_PLUGIN_INVALID;
                 return SELECTED;
               }
 
               @Override
               public TransactionSelectionResult evaluateTransactionPostProcessing(
-                  final PendingTransaction pendingTransaction,
+                  final TransactionEvaluationContext<? extends PendingTransaction>
+                      evaluationContext,
                   final org.hyperledger.besu.plugin.data.TransactionProcessingResult
                       processingResult) {
                 return SELECTED;
@@ -645,13 +653,15 @@ public abstract class AbstractBlockTransactionSelectorTest {
             new PluginTransactionSelector() {
               @Override
               public TransactionSelectionResult evaluateTransactionPreProcessing(
-                  final PendingTransaction pendingTransaction) {
+                  final TransactionEvaluationContext<? extends PendingTransaction>
+                      evaluationContext) {
                 return SELECTED;
               }
 
               @Override
               public TransactionSelectionResult evaluateTransactionPostProcessing(
-                  final PendingTransaction pendingTransaction,
+                  final TransactionEvaluationContext<? extends PendingTransaction>
+                      evaluationContext,
                   final org.hyperledger.besu.plugin.data.TransactionProcessingResult
                       processingResult) {
                 // the transaction with max gas +1 should fail
@@ -711,13 +721,14 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     selector.buildTransactionListForBlock();
 
-    ArgumentCaptor<PendingTransaction> argumentCaptor =
-        ArgumentCaptor.forClass(PendingTransaction.class);
+    @SuppressWarnings("unchecked")
+    ArgumentCaptor<TransactionEvaluationContext<PendingTransaction>> argumentCaptor =
+        ArgumentCaptor.forClass(TransactionEvaluationContext.class);
 
     // selected transaction must be notified to the selector
     verify(transactionSelector)
         .onTransactionSelected(argumentCaptor.capture(), any(TransactionProcessingResult.class));
-    PendingTransaction selected = argumentCaptor.getValue();
+    PendingTransaction selected = argumentCaptor.getValue().getPendingTransaction();
     assertThat(selected.getTransaction()).isEqualTo(transaction);
 
     // unselected transaction must be notified to the selector with correct reason
@@ -725,7 +736,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .onTransactionNotSelected(
             argumentCaptor.capture(),
             eq(TransactionSelectionResult.invalid(invalidReason.toString())));
-    PendingTransaction rejectedTransaction = argumentCaptor.getValue();
+    PendingTransaction rejectedTransaction = argumentCaptor.getValue().getPendingTransaction();
     assertThat(rejectedTransaction.getTransaction()).isEqualTo(invalidTransaction);
   }
 
@@ -931,9 +942,10 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final BiFunction<Transaction, Long, Answer<TransactionSelectionResult>> tooLate =
         (p, t) ->
             invocation -> {
-              final org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction ptx =
-                  invocation.getArgument(0);
-              if (ptx.getTransaction().equals(p)) {
+              final org.hyperledger.besu.ethereum.blockcreation.txselection
+                      .TransactionEvaluationContext
+                  ctx = invocation.getArgument(0);
+              if (ctx.getTransaction().equals(p)) {
                 Thread.sleep(t);
               } else {
                 Thread.sleep(fastProcessingTxTime);
@@ -943,8 +955,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final ProcessableBlockHeader blockHeader = createBlock(301_000);
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
-    final int poaMinBlockTime = 1;
-    final long blockTxsSelectionMaxTime = 750;
+    final int poaGenesisBlockPeriod = 1;
+    final int blockTxsSelectionMaxTime = 750;
 
     final List<Transaction> transactionsToInject = new ArrayList<>(3);
     for (int i = 0; i < 2; i++) {
@@ -974,9 +986,14 @@ public abstract class AbstractBlockTransactionSelectorTest {
         createBlockSelectorAndSetupTxPool(
             isPoa
                 ? createMiningParameters(
-                    Wei.ZERO, MIN_OCCUPANCY_100_PERCENT, poaMinBlockTime, Percentage.fromInt(75))
+                    Wei.ZERO,
+                    MIN_OCCUPANCY_100_PERCENT,
+                    poaGenesisBlockPeriod,
+                    PositiveNumber.fromInt(75))
                 : createMiningParameters(
-                    Wei.ZERO, MIN_OCCUPANCY_100_PERCENT, blockTxsSelectionMaxTime),
+                    Wei.ZERO,
+                    MIN_OCCUPANCY_100_PERCENT,
+                    PositiveNumber.fromInt(blockTxsSelectionMaxTime)),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -1163,33 +1180,32 @@ public abstract class AbstractBlockTransactionSelectorTest {
   }
 
   protected MiningParameters createMiningParameters(
-      final Wei minGasPrice, final double minBlockOccupancyRatio, final long txsSelectionMaxTime) {
+      final Wei minGasPrice,
+      final double minBlockOccupancyRatio,
+      final PositiveNumber txsSelectionMaxTime) {
     return ImmutableMiningParameters.builder()
         .mutableInitValues(
             MutableInitValues.builder()
                 .minTransactionGasPrice(minGasPrice)
                 .minBlockOccupancyRatio(minBlockOccupancyRatio)
                 .build())
-        .unstable(Unstable.builder().nonPoaBlockTxsSelectionMaxTime(txsSelectionMaxTime).build())
+        .nonPoaBlockTxsSelectionMaxTime(txsSelectionMaxTime)
         .build();
   }
 
   protected MiningParameters createMiningParameters(
       final Wei minGasPrice,
       final double minBlockOccupancyRatio,
-      final int minBlockTime,
-      final Percentage minBlockTimePercentage) {
+      final int genesisBlockPeriodSeconds,
+      final PositiveNumber minBlockTimePercentage) {
     return ImmutableMiningParameters.builder()
         .mutableInitValues(
             MutableInitValues.builder()
                 .minTransactionGasPrice(minGasPrice)
                 .minBlockOccupancyRatio(minBlockOccupancyRatio)
                 .build())
-        .unstable(
-            Unstable.builder()
-                .minBlockTime(minBlockTime)
-                .poaBlockTxsSelectionMaxTime(minBlockTimePercentage)
-                .build())
+        .genesisBlockPeriodSeconds(genesisBlockPeriodSeconds)
+        .poaBlockTxsSelectionMaxTime(minBlockTimePercentage)
         .build();
   }
 

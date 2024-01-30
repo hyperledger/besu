@@ -23,7 +23,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** Trielog provider interface for a given block hash. */
 public interface TrieLogProvider {
-  void saveRawTrieLogLayer(Hash blockHash, Bytes trieLog);
+  void saveRawTrieLogLayer(Hash blockHash, long blockNumber, Bytes trieLog);
 
   /**
    * Returns the TrieLog layer for the given block hash.

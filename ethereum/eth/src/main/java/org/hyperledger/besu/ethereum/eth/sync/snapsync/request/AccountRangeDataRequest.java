@@ -18,7 +18,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MAX_R
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MIN_RANGE;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNewBeginElementInRange;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.ACCOUNT_RANGE;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapsyncMetricsManager.Step.DOWNLOAD;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncMetricsManager.Step.DOWNLOAD;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie.FlatDatabaseUpdater.noop;
 
 import org.hyperledger.besu.datatypes.Hash;

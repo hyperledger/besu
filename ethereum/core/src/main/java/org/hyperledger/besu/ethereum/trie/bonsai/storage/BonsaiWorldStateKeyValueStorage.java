@@ -25,14 +25,14 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.flat.FlatDbStrategy;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.flat.FullFlatDbStrategy;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.flat.PartialFlatDbStrategy;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.flat.FlatDbStrategyProvider;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -64,16 +64,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   public static final byte[] WORLD_BLOCK_HASH_KEY =
       "worldBlockHash".getBytes(StandardCharsets.UTF_8);
 
-  // 0x666C61744462537461747573
-  public static final byte[] FLAT_DB_MODE = "flatDbStatus".getBytes(StandardCharsets.UTF_8);
-
-  protected FlatDbMode flatDbMode;
-  protected FlatDbStrategy flatDbStrategy;
+  protected final FlatDbStrategyProvider flatDbStrategyProvider;
 
   protected final SegmentedKeyValueStorage composedWorldStateStorage;
   protected final KeyValueStorage trieLogStorage;
-
-  protected final ObservableMetricsSystem metricsSystem;
 
   private final AtomicBoolean shouldClose = new AtomicBoolean(false);
 
@@ -82,62 +76,27 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   protected final Subscribers<BonsaiStorageSubscriber> subscribers = Subscribers.create();
 
   public BonsaiWorldStateKeyValueStorage(
-      final StorageProvider provider, final ObservableMetricsSystem metricsSystem) {
+      final StorageProvider provider,
+      final MetricsSystem metricsSystem,
+      final DataStorageConfiguration dataStorageConfiguration) {
     this.composedWorldStateStorage =
         provider.getStorageBySegmentIdentifiers(
             List.of(
                 ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE));
     this.trieLogStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
-    this.metricsSystem = metricsSystem;
-    loadFlatDbStrategy();
+    this.flatDbStrategyProvider =
+        new FlatDbStrategyProvider(metricsSystem, dataStorageConfiguration);
+    flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
   }
 
   public BonsaiWorldStateKeyValueStorage(
-      final FlatDbMode flatDbMode,
-      final FlatDbStrategy flatDbStrategy,
+      final FlatDbStrategyProvider flatDbStrategyProvider,
       final SegmentedKeyValueStorage composedWorldStateStorage,
-      final KeyValueStorage trieLogStorage,
-      final ObservableMetricsSystem metricsSystem) {
-    this.flatDbMode = flatDbMode;
-    this.flatDbStrategy = flatDbStrategy;
+      final KeyValueStorage trieLogStorage) {
+    this.flatDbStrategyProvider = flatDbStrategyProvider;
     this.composedWorldStateStorage = composedWorldStateStorage;
     this.trieLogStorage = trieLogStorage;
-    this.metricsSystem = metricsSystem;
-  }
-
-  private void loadFlatDbStrategy() {
-    // derive our flatdb strategy from db or default:
-    var newFlatDbMode = deriveFlatDbStrategy();
-
-    // if  flatDbMode is not loaded or has changed, reload flatDbStrategy
-    if (this.flatDbMode == null || !this.flatDbMode.equals(newFlatDbMode)) {
-      this.flatDbMode = newFlatDbMode;
-      if (flatDbMode == FlatDbMode.FULL) {
-        this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem);
-      } else {
-        this.flatDbStrategy = new PartialFlatDbStrategy(metricsSystem);
-      }
-    }
-  }
-
-  public FlatDbMode deriveFlatDbStrategy() {
-    var flatDbMode =
-        FlatDbMode.fromVersion(
-            composedWorldStateStorage
-                .get(TRIE_BRANCH_STORAGE, FLAT_DB_MODE)
-                .map(Bytes::wrap)
-                .orElse(FlatDbMode.PARTIAL.getVersion()));
-    LOG.info("Bonsai flat db mode found {}", flatDbMode);
-
-    return flatDbMode;
-  }
-
-  public FlatDbStrategy getFlatDbStrategy() {
-    if (flatDbStrategy == null) {
-      loadFlatDbStrategy();
-    }
-    return flatDbStrategy;
   }
 
   @Override
@@ -147,7 +106,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   @Override
   public FlatDbMode getFlatDbMode() {
-    return flatDbMode;
+    return flatDbStrategyProvider.getFlatDbMode();
   }
 
   @Override
@@ -155,12 +114,15 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
-      return getFlatDbStrategy().getFlatCode(codeHash, accountHash, composedWorldStateStorage);
+      return flatDbStrategyProvider
+          .getFlatDbStrategy(composedWorldStateStorage)
+          .getFlatCode(codeHash, accountHash, composedWorldStateStorage);
     }
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    return getFlatDbStrategy()
+    return flatDbStrategyProvider
+        .getFlatDbStrategy(composedWorldStateStorage)
         .getFlatAccount(
             this::getWorldStateRootHash,
             this::getAccountStateTrieNode,
@@ -243,7 +205,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Hash accountHash,
       final StorageSlotKey storageSlotKey) {
-    return getFlatDbStrategy()
+    return flatDbStrategyProvider
+        .getFlatDbStrategy(composedWorldStateStorage)
         .getFlatStorageValueByStorageSlotKey(
             this::getWorldStateRootHash,
             storageRootSupplier,
@@ -256,14 +219,16 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   @Override
   public Map<Bytes32, Bytes> streamFlatAccounts(
       final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
-    return getFlatDbStrategy()
+    return flatDbStrategyProvider
+        .getFlatDbStrategy(composedWorldStateStorage)
         .streamAccountFlatDatabase(composedWorldStateStorage, startKeyHash, endKeyHash, max);
   }
 
   @Override
   public Map<Bytes32, Bytes> streamFlatStorages(
       final Hash accountHash, final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
-    return getFlatDbStrategy()
+    return flatDbStrategyProvider
+        .getFlatDbStrategy(composedWorldStateStorage)
         .streamStorageFlatDatabase(
             composedWorldStateStorage, accountHash, startKeyHash, endKeyHash, max);
   }
@@ -292,31 +257,23 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public void upgradeToFullFlatDbMode() {
-    final SegmentedKeyValueStorageTransaction transaction =
-        composedWorldStateStorage.startTransaction();
-    // TODO: consider ARCHIVE mode
-    transaction.put(
-        TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.FULL.getVersion().toArrayUnsafe());
-    transaction.commit();
-    loadFlatDbStrategy(); // force reload of flat db reader strategy
+    flatDbStrategyProvider.upgradeToFullFlatDbMode(composedWorldStateStorage);
   }
 
   public void downgradeToPartialFlatDbMode() {
-    final SegmentedKeyValueStorageTransaction transaction =
-        composedWorldStateStorage.startTransaction();
-    transaction.put(
-        TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.PARTIAL.getVersion().toArrayUnsafe());
-    transaction.commit();
-    loadFlatDbStrategy(); // force reload of flat db reader strategy
+    flatDbStrategyProvider.downgradeToPartialFlatDbMode(composedWorldStateStorage);
   }
 
   @Override
   public void clear() {
     subscribers.forEach(BonsaiStorageSubscriber::onClearStorage);
-    getFlatDbStrategy().clearAll(composedWorldStateStorage);
+    flatDbStrategyProvider
+        .getFlatDbStrategy(composedWorldStateStorage)
+        .clearAll(composedWorldStateStorage);
     composedWorldStateStorage.clear(TRIE_BRANCH_STORAGE);
     trieLogStorage.clear();
-    loadFlatDbStrategy(); // force reload of flat db reader strategy
+    flatDbStrategyProvider.loadFlatDbStrategy(
+        composedWorldStateStorage); // force reload of flat db reader strategy
   }
 
   @Override
@@ -334,7 +291,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   @Override
   public void clearFlatDatabase() {
     subscribers.forEach(BonsaiStorageSubscriber::onClearFlatDatabaseStorage);
-    getFlatDbStrategy().resetOnResync(composedWorldStateStorage);
+    flatDbStrategyProvider
+        .getFlatDbStrategy(composedWorldStateStorage)
+        .resetOnResync(composedWorldStateStorage);
   }
 
   @Override
@@ -342,7 +301,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return new Updater(
         composedWorldStateStorage.startTransaction(),
         trieLogStorage.startTransaction(),
-        flatDbStrategy);
+        flatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage));
   }
 
   @Override
@@ -367,6 +326,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   @Override
   public void removeNodeAddedListener(final long id) {
     throw new RuntimeException("removeNodeAddedListener not available");
+  }
+
+  public FlatDbStrategy getFlatDbStrategy() {
+    return flatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage);
   }
 
   public interface BonsaiUpdater extends WorldStateStorage.Updater {

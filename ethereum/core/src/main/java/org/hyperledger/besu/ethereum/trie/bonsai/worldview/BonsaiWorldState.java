@@ -91,17 +91,17 @@ public class BonsaiWorldState
     this(
         worldStateStorage,
         archive.getCachedMerkleTrieLoader(),
-        archive.getTrieLogManager(),
         archive.getCachedWorldStorageManager(),
+        archive.getTrieLogManager(),
         bonsaiWorldStateConfig,
         evmConfiguration);
   }
 
-  protected BonsaiWorldState(
+  public BonsaiWorldState(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
-      final TrieLogManager trieLogManager,
       final CachedWorldStorageManager cachedWorldStorageManager,
+      final TrieLogManager trieLogManager,
       final BonsaiWorldStateConfig bonsaiWorldStateConfig,
       final EvmConfiguration evmConfiguration) {
     this.worldStateStorage = worldStateStorage;
@@ -126,12 +126,12 @@ public class BonsaiWorldState
   }
 
   /**
-   * Having a protected method to override the accumulator solves the chicken-egg problem of needing
-   * a worldstate reference (this) when construction the Accumulator.
+   * Override the accumulator solves the chicken-egg problem of needing a worldstate reference
+   * (this) when construction the Accumulator.
    *
    * @param accumulator accumulator to use.
    */
-  protected void setAccumulator(final BonsaiWorldStateUpdateAccumulator accumulator) {
+  public void setAccumulator(final BonsaiWorldStateUpdateAccumulator accumulator) {
     this.accumulator = accumulator;
   }
 

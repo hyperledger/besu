@@ -83,7 +83,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   private OptionalLong blockObserverId;
 
   // metrics around the snapsync
-  private final SnapsyncMetricsManager metricsManager;
+  private final SnapSyncMetricsManager metricsManager;
 
   public SnapWorldDownloadState(
       final WorldStateStorage worldStateStorage,
@@ -93,7 +93,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       final InMemoryTasksPriorityQueues<SnapDataRequest> pendingRequests,
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,
-      final SnapsyncMetricsManager metricsManager,
+      final SnapSyncMetricsManager metricsManager,
       final Clock clock) {
     super(
         worldStateStorage,
@@ -400,7 +400,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         __ -> {});
   }
 
-  public SnapsyncMetricsManager getMetricsManager() {
+  public SnapSyncMetricsManager getMetricsManager() {
     return metricsManager;
   }
 

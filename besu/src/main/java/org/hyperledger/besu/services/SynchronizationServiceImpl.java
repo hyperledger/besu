@@ -67,6 +67,8 @@ public class SynchronizationServiceImpl implements SynchronizationService {
     final MergeContext mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     if (mergeContext != null) {
       mergeContext.fireNewUnverifiedForkchoiceEvent(head, safeBlock, finalizedBlock);
+      protocolContext.getBlockchain().setFinalized(finalizedBlock);
+      protocolContext.getBlockchain().setSafeBlock(safeBlock);
     } else {
       LOG.atWarn()
           .setMessage(
