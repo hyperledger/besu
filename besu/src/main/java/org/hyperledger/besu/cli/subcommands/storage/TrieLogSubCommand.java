@@ -89,14 +89,15 @@ public class TrieLogSubCommand implements Runnable {
 
     @Override
     public void run() {
-      TrieLogContext context = getTrieLogContext();
+      final TrieLogContext context = getTrieLogContext();
 
       final PrintWriter out = spec.commandLine().getOut();
 
       out.println("Counting trie logs...");
-      TrieLogHelper.printCount(
+      final TrieLogHelper trieLogHelper = new TrieLogHelper();
+      trieLogHelper.printCount(
           out,
-          TrieLogHelper.getCount(
+          trieLogHelper.getCount(
               context.rootWorldStateStorage, Integer.MAX_VALUE, context.blockchain));
     }
   }
@@ -104,7 +105,7 @@ public class TrieLogSubCommand implements Runnable {
   @Command(
       name = "prune",
       description =
-          "This command prunes all trie log layers below the retention threshold, including orphaned trie logs.",
+          "This command prunes all trie log layers below the retention limit, including orphaned trie logs.",
       mixinStandardHelpOptions = true,
       versionProvider = VersionProvider.class)
   static class PruneTrieLog implements Runnable {
@@ -119,11 +120,12 @@ public class TrieLogSubCommand implements Runnable {
 
     @Override
     public void run() {
-      TrieLogContext context = getTrieLogContext();
+      final TrieLogContext context = getTrieLogContext();
       final Path dataDirectoryPath =
           Paths.get(
               TrieLogSubCommand.parentCommand.parentCommand.dataDir().toAbsolutePath().toString());
-      TrieLogHelper.prune(
+      final TrieLogHelper trieLogHelper = new TrieLogHelper();
+      trieLogHelper.prune(
           context.config(),
           context.rootWorldStateStorage(),
           context.blockchain(),
@@ -146,6 +148,7 @@ public class TrieLogSubCommand implements Runnable {
     @CommandLine.Spec
     private CommandLine.Model.CommandSpec spec; // Picocli injects reference to command spec
 
+    @SuppressWarnings("unused")
     @CommandLine.Option(
         names = "--trie-log-block-hash",
         description =
@@ -173,13 +176,15 @@ public class TrieLogSubCommand implements Runnable {
                     .toString());
       }
 
-      TrieLogContext context = getTrieLogContext();
+      final TrieLogContext context = getTrieLogContext();
 
       final List<Hash> listOfBlockHashes =
           trieLogBlockHashList.stream().map(Hash::fromHexString).toList();
 
+      final TrieLogHelper trieLogHelper = new TrieLogHelper();
+
       try {
-        TrieLogHelper.exportTrieLog(
+        trieLogHelper.exportTrieLog(
             context.rootWorldStateStorage(), listOfBlockHashes, trieLogFilePath);
       } catch (IOException e) {
         throw new RuntimeException(e);
@@ -222,8 +227,8 @@ public class TrieLogSubCommand implements Runnable {
       }
 
       TrieLogContext context = getTrieLogContext();
-
-      TrieLogHelper.importTrieLog(context.rootWorldStateStorage(), trieLogFilePath);
+      final TrieLogHelper trieLogHelper = new TrieLogHelper();
+      trieLogHelper.importTrieLog(context.rootWorldStateStorage(), trieLogFilePath);
     }
   }
 

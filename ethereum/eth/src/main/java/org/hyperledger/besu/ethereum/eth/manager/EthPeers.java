@@ -143,6 +143,7 @@ public class EthPeers {
         "peer_limit",
         "The maximum number of peers this node allows to connect",
         () -> peerUpperBound);
+
     connectedPeersCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.PEERS, "connected_total", "Total number of peers connected");

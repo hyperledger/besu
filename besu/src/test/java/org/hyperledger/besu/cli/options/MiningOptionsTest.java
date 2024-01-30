@@ -32,7 +32,9 @@ import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -361,13 +363,16 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
 
   @Test
   public void poaBlockTxsSelectionMaxTimeOptionOver100Percent() throws IOException {
-    final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
+    final Path genesisFileClique = createFakeGenesisFile(VALID_GENESIS_CLIQUE_POST_LONDON);
     internalTestSuccess(
-        miningParams ->
-            assertThat(miningParams.getPoaBlockTxsSelectionMaxTime())
-                .isEqualTo(PositiveNumber.fromInt(200)),
+        miningParams -> {
+          assertThat(miningParams.getPoaBlockTxsSelectionMaxTime())
+              .isEqualTo(PositiveNumber.fromInt(200));
+          assertThat(miningParams.getBlockTxsSelectionMaxTime())
+              .isEqualTo(Duration.ofSeconds(POA_BLOCK_PERIOD_SECONDS * 2).toMillis());
+        },
         "--genesis-file",
-        genesisFileIBFT2.toString(),
+        genesisFileClique.toString(),
         "--poa-block-txs-selection-max-time",
         "200");
   }
@@ -407,6 +412,16 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
 
   @Override
   protected MiningOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
-    return besuCommand.getMiningOptions();
+    final var miningOptions = besuCommand.getMiningOptions();
+    miningOptions.setGenesisBlockPeriodSeconds(
+        besuCommand.getActualGenesisConfigOptions().isPoa()
+            ? OptionalInt.of(POA_BLOCK_PERIOD_SECONDS)
+            : OptionalInt.empty());
+    return miningOptions;
+  }
+
+  @Override
+  protected String[] getNonOptionFields() {
+    return new String[] {"maybeGenesisBlockPeriodSeconds"};
   }
 }
