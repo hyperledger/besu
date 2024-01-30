@@ -28,9 +28,6 @@ import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ENGINE;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
@@ -45,7 +42,6 @@ import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -55,7 +51,6 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -64,19 +59,13 @@ import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
-import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
-import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
-import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
-import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
@@ -87,7 +76,6 @@ import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
-import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 import org.hyperledger.besu.util.number.PositiveNumber;
@@ -96,7 +84,6 @@ import org.hyperledger.besu.util.platform.PlatformDetector;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -105,16 +92,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.io.FileUtils;
@@ -139,7 +123,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private static final String VALID_NODE_ID =
       "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0";
-  private static final String PERMISSIONING_CONFIG_TOML = "/permissioning_config.toml";
   private static final JsonRpcConfiguration DEFAULT_JSON_RPC_CONFIGURATION;
   private static final GraphQLConfiguration DEFAULT_GRAPH_QL_CONFIGURATION;
   private static final WebSocketConfiguration DEFAULT_WEB_SOCKET_CONFIGURATION;
@@ -356,374 +339,6 @@ public class BesuCommandTest extends CommandTestAbstract {
         "Invalid TOML configuration: org.apache.tuweni.toml.TomlParseError: Unexpected '=', expected ', \", ''', \"\"\", a number, "
             + "a boolean, a date/time, an array, or a table (line 1, column 8)";
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedOutputStart);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissionsSmartContractWithoutOptionMustError() {
-    parseCommand("--permissions-nodes-contract-address");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith("Missing required parameter for option '--permissions-nodes-contract-address'");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissionsEnabledWithoutContractAddressMustError() {
-    parseCommand("--permissions-nodes-contract-enabled");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("No node permissioning contract address specified");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissionsEnabledWithInvalidContractAddressMustError() {
-    parseCommand(
-        "--permissions-nodes-contract-enabled",
-        "--permissions-nodes-contract-address",
-        "invalid-smart-contract-address");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).contains("Invalid value");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissionsEnabledWithTooShortContractAddressMustError() {
-    parseCommand(
-        "--permissions-nodes-contract-enabled", "--permissions-nodes-contract-address", "0x1234");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).contains("Invalid value");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissionsSmartContractMustUseOption() {
-
-    final String smartContractAddress = "0x0000000000000000000000000000000000001234";
-
-    parseCommand(
-        "--permissions-nodes-contract-enabled",
-        "--permissions-nodes-contract-address",
-        smartContractAddress);
-    final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
-        new SmartContractPermissioningConfiguration();
-    smartContractPermissioningConfiguration.setNodeSmartContractAddress(
-        Address.fromHexString(smartContractAddress));
-    smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(true);
-
-    verify(mockRunnerBuilder)
-        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    final PermissioningConfiguration config =
-        permissioningConfigurationArgumentCaptor.getValue().get();
-    assertThat(config.getSmartContractConfig().get())
-        .usingRecursiveComparison()
-        .isEqualTo(smartContractPermissioningConfiguration);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissionsContractVersionDefaultValue() {
-    final SmartContractPermissioningConfiguration expectedConfig =
-        new SmartContractPermissioningConfiguration();
-    expectedConfig.setNodeSmartContractAddress(
-        Address.fromHexString("0x0000000000000000000000000000000000001234"));
-    expectedConfig.setSmartContractNodeAllowlistEnabled(true);
-    expectedConfig.setNodeSmartContractInterfaceVersion(1);
-
-    parseCommand(
-        "--permissions-nodes-contract-enabled",
-        "--permissions-nodes-contract-address",
-        "0x0000000000000000000000000000000000001234");
-
-    verify(mockRunnerBuilder)
-        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    final PermissioningConfiguration config =
-        permissioningConfigurationArgumentCaptor.getValue().get();
-    assertThat(config.getSmartContractConfig().get())
-        .usingRecursiveComparison()
-        .isEqualTo(expectedConfig);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissionsContractVersionSetsValue() {
-    final SmartContractPermissioningConfiguration expectedConfig =
-        new SmartContractPermissioningConfiguration();
-    expectedConfig.setNodeSmartContractAddress(
-        Address.fromHexString("0x0000000000000000000000000000000000001234"));
-    expectedConfig.setSmartContractNodeAllowlistEnabled(true);
-    expectedConfig.setNodeSmartContractInterfaceVersion(2);
-
-    parseCommand(
-        "--permissions-nodes-contract-enabled",
-        "--permissions-nodes-contract-address",
-        "0x0000000000000000000000000000000000001234",
-        "--permissions-nodes-contract-version",
-        "2");
-
-    verify(mockRunnerBuilder)
-        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    final PermissioningConfiguration config =
-        permissioningConfigurationArgumentCaptor.getValue().get();
-    assertThat(config.getSmartContractConfig().get())
-        .usingRecursiveComparison()
-        .isEqualTo(expectedConfig);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void accountPermissionsSmartContractWithoutOptionMustError() {
-    parseCommand("--permissions-accounts-contract-address");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith(
-            "Missing required parameter for option '--permissions-accounts-contract-address'");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void accountPermissionsEnabledWithoutContractAddressMustError() {
-    parseCommand("--permissions-accounts-contract-enabled");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("No account permissioning contract address specified");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void accountPermissionsEnabledWithInvalidContractAddressMustError() {
-    parseCommand(
-        "--permissions-accounts-contract-enabled",
-        "--permissions-accounts-contract-address",
-        "invalid-smart-contract-address");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).contains("Invalid value");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void accountPermissionsEnabledWithTooShortContractAddressMustError() {
-    parseCommand(
-        "--permissions-accounts-contract-enabled",
-        "--permissions-accounts-contract-address",
-        "0x1234");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).contains("Invalid value");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void accountPermissionsSmartContractMustUseOption() {
-    final String smartContractAddress = "0x0000000000000000000000000000000000001234";
-
-    parseCommand(
-        "--permissions-accounts-contract-enabled",
-        "--permissions-accounts-contract-address",
-        smartContractAddress);
-    final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
-        new SmartContractPermissioningConfiguration();
-    smartContractPermissioningConfiguration.setAccountSmartContractAddress(
-        Address.fromHexString(smartContractAddress));
-    smartContractPermissioningConfiguration.setSmartContractAccountAllowlistEnabled(true);
-
-    verify(mockRunnerBuilder)
-        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
-    final PermissioningConfiguration permissioningConfiguration =
-        permissioningConfigurationArgumentCaptor.getValue().get();
-    assertThat(permissioningConfiguration.getSmartContractConfig()).isPresent();
-
-    final SmartContractPermissioningConfiguration effectiveSmartContractConfig =
-        permissioningConfiguration.getSmartContractConfig().get();
-    assertThat(effectiveSmartContractConfig.isSmartContractAccountAllowlistEnabled()).isTrue();
-    assertThat(effectiveSmartContractConfig.getAccountSmartContractAddress())
-        .isEqualTo(Address.fromHexString(smartContractAddress));
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissioningTomlPathWithoutOptionMustDisplayUsage() {
-    parseCommand("--permissions-nodes-config-file");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith("Missing required parameter for option '--permissions-nodes-config-file'");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void accountPermissioningTomlPathWithoutOptionMustDisplayUsage() {
-    parseCommand("--permissions-accounts-config-file");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith("Missing required parameter for option '--permissions-accounts-config-file'");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissioningEnabledWithNonexistentConfigFileMustError() {
-    parseCommand(
-        "--permissions-nodes-config-file-enabled",
-        "--permissions-nodes-config-file",
-        "file-does-not-exist");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).contains("Configuration file does not exist");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void accountPermissioningEnabledWithNonexistentConfigFileMustError() {
-    parseCommand(
-        "--permissions-accounts-config-file-enabled",
-        "--permissions-accounts-config-file",
-        "file-does-not-exist");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).contains("Configuration file does not exist");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissioningTomlFileWithNoPermissionsEnabledMustNotError() throws IOException {
-
-    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_TOML);
-    final Path permToml = createTempFile("toml", Resources.toByteArray(configFile));
-    parseCommand("--permissions-nodes-config-file", permToml.toString());
-
-    verify(mockRunnerBuilder).build();
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void accountPermissioningTomlFileWithNoPermissionsEnabledMustNotError()
-      throws IOException {
-
-    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_TOML);
-    final Path permToml = createTempFile("toml", Resources.toByteArray(configFile));
-    parseCommand("--permissions-accounts-config-file", permToml.toString());
-
-    verify(mockRunnerBuilder).build();
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void defaultPermissionsTomlFileWithNoPermissionsEnabledMustNotError() {
-    parseCommand("--p2p-enabled", "false");
-
-    verify(mockRunnerBuilder).build();
-
-    assertThat(commandErrorOutput.toString(UTF_8)).doesNotContain("no permissions enabled");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissioningTomlPathMustUseOption() throws IOException {
-    final List<EnodeURL> allowedNodes =
-        Lists.newArrayList(
-            EnodeURLImpl.fromString(
-                "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.9:4567"),
-            EnodeURLImpl.fromString(
-                "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.169.0.9:4568"));
-
-    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_TOML);
-    final Path permToml = createTempFile("toml", Resources.toByteArray(configFile));
-
-    final String allowedNodesString =
-        allowedNodes.stream().map(Object::toString).collect(Collectors.joining(","));
-    parseCommand(
-        "--permissions-nodes-config-file-enabled",
-        "--permissions-nodes-config-file",
-        permToml.toString(),
-        "--bootnodes",
-        allowedNodesString);
-    final LocalPermissioningConfiguration localPermissioningConfiguration =
-        LocalPermissioningConfiguration.createDefault();
-    localPermissioningConfiguration.setNodePermissioningConfigFilePath(permToml.toString());
-    localPermissioningConfiguration.setNodeAllowlist(allowedNodes);
-
-    verify(mockRunnerBuilder)
-        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    final PermissioningConfiguration config =
-        permissioningConfigurationArgumentCaptor.getValue().get();
-    assertThat(config.getLocalConfig().get())
-        .usingRecursiveComparison()
-        .isEqualTo(localPermissioningConfiguration);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void accountPermissioningTomlPathMustUseOption() throws IOException {
-
-    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_TOML);
-    final Path permToml = createTempFile("toml", Resources.toByteArray(configFile));
-
-    parseCommand(
-        "--permissions-accounts-config-file-enabled",
-        "--permissions-accounts-config-file",
-        permToml.toString());
-    final LocalPermissioningConfiguration localPermissioningConfiguration =
-        LocalPermissioningConfiguration.createDefault();
-    localPermissioningConfiguration.setAccountPermissioningConfigFilePath(permToml.toString());
-    localPermissioningConfiguration.setAccountAllowlist(
-        Collections.singletonList("0x0000000000000000000000000000000000000009"));
-
-    verify(mockRunnerBuilder)
-        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
-    final PermissioningConfiguration permissioningConfiguration =
-        permissioningConfigurationArgumentCaptor.getValue().get();
-    assertThat(permissioningConfiguration.getLocalConfig()).isPresent();
-
-    final LocalPermissioningConfiguration effectiveLocalPermissioningConfig =
-        permissioningConfiguration.getLocalConfig().get();
-    assertThat(effectiveLocalPermissioningConfig.isAccountAllowlistEnabled()).isTrue();
-    assertThat(effectiveLocalPermissioningConfig.getAccountPermissioningConfigFilePath())
-        .isEqualTo(permToml.toString());
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
@@ -1546,37 +1161,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcHttpMaxBatchSizeOptionMustBeUsed() {
-    final int rpcHttpMaxBatchSize = 1;
-    parseCommand("--rpc-http-max-batch-size", Integer.toString(rpcHttpMaxBatchSize));
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getMaxBatchSize())
-        .isEqualTo(rpcHttpMaxBatchSize);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpMaxRequestContentLengthOptionMustBeUsed() {
-    final int rpcHttpMaxRequestContentLength = 1;
-    parseCommand(
-        "--rpc-http-max-request-content-length", Long.toString(rpcHttpMaxRequestContentLength));
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getMaxRequestContentLength())
-        .isEqualTo(rpcHttpMaxRequestContentLength);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void maxpeersSet_p2pPeerLowerBoundSet() {
 
     final int maxPeers = 123;
@@ -1998,19 +1582,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcHttpEnabledPropertyMustBeUsed() {
-    parseCommand("--rpc-http-enabled");
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().isEnabled()).isTrue();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void graphQLHttpEnabledPropertyDefaultIsFalse() {
     parseCommand();
 
@@ -2037,22 +1608,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcApisPropertyMustBeUsed() {
-    parseCommand("--rpc-http-api", "ETH,NET,PERM", "--rpc-http-enabled");
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-    verify(mockLogger)
-        .warn("Permissions are disabled. Cannot enable PERM APIs when not using Permissions.");
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
-        .containsExactlyInAnyOrder(ETH.name(), NET.name(), PERM.name());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void rpcApisSupportsEngine() {
     parseCommand("--rpc-http-api", "ENGINE", "--rpc-http-enabled");
 
@@ -2061,38 +1616,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
         .containsExactlyInAnyOrder(ENGINE.name());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcApisPropertyIgnoresDuplicatesAndMustBeUsed() {
-    parseCommand("--rpc-http-api", "ETH,NET,NET", "--rpc-http-enabled");
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
-        .containsExactlyInAnyOrder(ETH.name(), NET.name());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcApiNoAuthMethodsIgnoresDuplicatesAndMustBeUsed() {
-    parseCommand(
-        "--rpc-http-api-methods-no-auth",
-        "admin_peers, admin_peers, eth_getWork",
-        "--rpc-http-enabled");
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getNoAuthRpcApis())
-        .containsExactlyInAnyOrder(
-            RpcMethod.ADMIN_PEERS.getMethodName(), RpcMethod.ETH_GET_WORK.getMethodName());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -2127,69 +1650,6 @@ public class BesuCommandTest extends CommandTestAbstract {
         "/tmp/fakeKey.hex");
     verify(mockRunnerBuilder).engineJsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     assertThat(jsonRpcConfigArgumentCaptor.getValue().isAuthenticationEnabled()).isFalse();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpNoAuthApiMethodsCannotBeInvalid() {
-    parseCommand("--rpc-http-enabled", "--rpc-http-api-method-no-auth", "invalid");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "Invalid value for option '--rpc-http-api-methods-no-auth', options must be valid RPC methods");
-  }
-
-  @Test
-  public void rpcHttpOptionsRequiresServiceToBeEnabled() {
-    parseCommand(
-        "--rpc-http-api",
-        "ETH,NET",
-        "--rpc-http-host",
-        "0.0.0.0",
-        "--rpc-http-port",
-        "1234",
-        "--rpc-http-cors-origins",
-        "all",
-        "--rpc-http-max-active-connections",
-        "88");
-
-    verifyOptionsConstraintLoggerCall(
-        "--rpc-http-enabled",
-        "--rpc-http-host",
-        "--rpc-http-port",
-        "--rpc-http-cors-origins",
-        "--rpc-http-api",
-        "--rpc-http-max-active-connections");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpOptionsRequiresServiceToBeEnabledToml() throws IOException {
-    final Path toml =
-        createTempFile(
-            "toml",
-            "rpc-http-api=[\"ETH\",\"NET\"]\n"
-                + "rpc-http-host=\"0.0.0.0\"\n"
-                + "rpc-http-port=1234\n"
-                + "rpc-http-cors-origins=[\"all\"]\n"
-                + "rpc-http-max-active-connections=88");
-
-    parseCommand("--config-file", toml.toString());
-
-    verifyOptionsConstraintLoggerCall(
-        "--rpc-http-enabled",
-        "--rpc-http-host",
-        "--rpc-http-port",
-        "--rpc-http-cors-origins",
-        "--rpc-http-api",
-        "--rpc-http-max-active-connections");
-
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -2277,498 +1737,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcApisPropertyWithInvalidEntryMustDisplayError() {
-    parseCommand("--rpc-http-api", "BOB");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    // PicoCLI uses longest option name for message when option has multiple names, so here plural.
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Invalid value for option '--rpc-http-api': invalid entries found [BOB]");
-  }
-
-  @Test
-  public void rpcApisPropertyWithPluginNamespaceAreValid() {
-
-    rpcEndpointServiceImpl.registerRPCEndpoint(
-        "bob", "method", (Function<PluginRpcRequest, Object>) request -> "nothing");
-
-    parseCommand("--rpc-http-api", "BOB");
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
-        .containsExactlyInAnyOrder("BOB");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpHostAndPortOptionsMustBeUsed() {
-
-    final String host = "1.2.3.4";
-    final int port = 1234;
-    parseCommand(
-        "--rpc-http-enabled", "--rpc-http-host", host, "--rpc-http-port", String.valueOf(port));
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpHostMayBeLocalhost() {
-
-    final String host = "localhost";
-    parseCommand("--rpc-http-enabled", "--rpc-http-host", host);
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpHostMayBeIPv6() {
-
-    final String host = "2600:DB8::8545";
-    parseCommand("--rpc-http-enabled", "--rpc-http-host", host);
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpMaxActiveConnectionsPropertyMustBeUsed() {
-    final int maxConnections = 99;
-    parseCommand("--rpc-http-max-active-connections", String.valueOf(maxConnections));
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getMaxActiveConnections())
-        .isEqualTo(maxConnections);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpTlsRequiresRpcHttpEnabled() {
-    parseCommand("--rpc-http-tls-enabled");
-
-    verifyOptionsConstraintLoggerCall("--rpc-http-enabled", "--rpc-http-tls-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpTlsRequiresRpcHttpEnabledToml() throws IOException {
-    final Path toml = createTempFile("toml", "rpc-http-tls-enabled=true\n");
-
-    parseCommand("--config-file", toml.toString());
-
-    verifyOptionsConstraintLoggerCall("--rpc-http-enabled", "--rpc-http-tls-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpTlsWithoutKeystoreReportsError() {
-    parseCommand("--rpc-http-enabled", "--rpc-http-tls-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Keystore file is required when TLS is enabled for JSON-RPC HTTP endpoint");
-  }
-
-  @Test
-  public void rpcHttpTlsWithoutPasswordfileReportsError() {
-    parseCommand(
-        "--rpc-http-enabled",
-        "--rpc-http-tls-enabled",
-        "--rpc-http-tls-keystore-file",
-        "/tmp/test.p12");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "File containing password to unlock keystore is required when TLS is enabled for JSON-RPC HTTP endpoint");
-  }
-
-  @Test
-  public void rpcHttpTlsKeystoreAndPasswordMustBeUsed() {
-    final String host = "1.2.3.4";
-    final int port = 1234;
-    final String keystoreFile = "/tmp/test.p12";
-    final String keystorePasswordFile = "/tmp/test.txt";
-
-    parseCommand(
-        "--rpc-http-enabled",
-        "--rpc-http-host",
-        host,
-        "--rpc-http-port",
-        String.valueOf(port),
-        "--rpc-http-tls-enabled",
-        "--rpc-http-tls-keystore-file",
-        keystoreFile,
-        "--rpc-http-tls-keystore-password-file",
-        keystorePasswordFile);
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
-    final Optional<TlsConfiguration> tlsConfiguration =
-        jsonRpcConfigArgumentCaptor.getValue().getTlsConfiguration();
-    assertThat(tlsConfiguration.isPresent()).isTrue();
-    assertThat(tlsConfiguration.get().getKeyStorePath()).isEqualTo(Path.of(keystoreFile));
-    assertThat(tlsConfiguration.get().getClientAuthConfiguration().isEmpty()).isTrue();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpTlsClientAuthWithoutKnownFileReportsError() {
-    final String host = "1.2.3.4";
-    final int port = 1234;
-    final String keystoreFile = "/tmp/test.p12";
-    final String keystorePasswordFile = "/tmp/test.txt";
-    parseCommand(
-        "--rpc-http-enabled",
-        "--rpc-http-host",
-        host,
-        "--rpc-http-port",
-        String.valueOf(port),
-        "--rpc-http-tls-enabled",
-        "--rpc-http-tls-keystore-file",
-        keystoreFile,
-        "--rpc-http-tls-keystore-password-file",
-        keystorePasswordFile,
-        "--rpc-http-tls-client-auth-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "Known-clients file must be specified or CA clients must be enabled when TLS client authentication is enabled for JSON-RPC HTTP endpoint");
-  }
-
-  @Test
-  public void rpcHttpTlsClientAuthWithKnownClientFile() {
-    final String host = "1.2.3.4";
-    final int port = 1234;
-    final String keystoreFile = "/tmp/test.p12";
-    final String keystorePasswordFile = "/tmp/test.txt";
-    final String knownClientFile = "/tmp/knownClientFile";
-    parseCommand(
-        "--rpc-http-enabled",
-        "--rpc-http-host",
-        host,
-        "--rpc-http-port",
-        String.valueOf(port),
-        "--rpc-http-tls-enabled",
-        "--rpc-http-tls-keystore-file",
-        keystoreFile,
-        "--rpc-http-tls-keystore-password-file",
-        keystorePasswordFile,
-        "--rpc-http-tls-client-auth-enabled",
-        "--rpc-http-tls-known-clients-file",
-        knownClientFile);
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
-    final Optional<TlsConfiguration> tlsConfiguration =
-        jsonRpcConfigArgumentCaptor.getValue().getTlsConfiguration();
-    assertThat(tlsConfiguration.isPresent()).isTrue();
-    assertThat(tlsConfiguration.get().getKeyStorePath()).isEqualTo(Path.of(keystoreFile));
-    assertThat(tlsConfiguration.get().getClientAuthConfiguration().isPresent()).isTrue();
-    assertThat(
-            tlsConfiguration.get().getClientAuthConfiguration().get().getKnownClientsFile().get())
-        .isEqualTo(Path.of(knownClientFile));
-    assertThat(tlsConfiguration.get().getClientAuthConfiguration().get().isCaClientsEnabled())
-        .isFalse();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpTlsClientAuthWithCAClient() {
-    final String host = "1.2.3.4";
-    final int port = 1234;
-    final String keystoreFile = "/tmp/test.p12";
-    final String keystorePasswordFile = "/tmp/test.txt";
-    parseCommand(
-        "--rpc-http-enabled",
-        "--rpc-http-host",
-        host,
-        "--rpc-http-port",
-        String.valueOf(port),
-        "--rpc-http-tls-enabled",
-        "--rpc-http-tls-keystore-file",
-        keystoreFile,
-        "--rpc-http-tls-keystore-password-file",
-        keystorePasswordFile,
-        "--rpc-http-tls-client-auth-enabled",
-        "--rpc-http-tls-ca-clients-enabled");
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
-    final Optional<TlsConfiguration> tlsConfiguration =
-        jsonRpcConfigArgumentCaptor.getValue().getTlsConfiguration();
-    assertThat(tlsConfiguration.isPresent()).isTrue();
-    assertThat(tlsConfiguration.get().getKeyStorePath()).isEqualTo(Path.of(keystoreFile));
-    assertThat(tlsConfiguration.get().getClientAuthConfiguration().isPresent()).isTrue();
-    assertThat(
-            tlsConfiguration
-                .get()
-                .getClientAuthConfiguration()
-                .get()
-                .getKnownClientsFile()
-                .isEmpty())
-        .isTrue();
-    assertThat(tlsConfiguration.get().getClientAuthConfiguration().get().isCaClientsEnabled())
-        .isTrue();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpTlsClientAuthWithCAClientAndKnownClientFile() {
-    final String host = "1.2.3.4";
-    final int port = 1234;
-    final String keystoreFile = "/tmp/test.p12";
-    final String keystorePasswordFile = "/tmp/test.txt";
-    final String knownClientFile = "/tmp/knownClientFile";
-    parseCommand(
-        "--rpc-http-enabled",
-        "--rpc-http-host",
-        host,
-        "--rpc-http-port",
-        String.valueOf(port),
-        "--rpc-http-tls-enabled",
-        "--rpc-http-tls-keystore-file",
-        keystoreFile,
-        "--rpc-http-tls-keystore-password-file",
-        keystorePasswordFile,
-        "--rpc-http-tls-client-auth-enabled",
-        "--rpc-http-tls-ca-clients-enabled",
-        "--rpc-http-tls-known-clients-file",
-        knownClientFile);
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
-    final Optional<TlsConfiguration> tlsConfiguration =
-        jsonRpcConfigArgumentCaptor.getValue().getTlsConfiguration();
-    assertThat(tlsConfiguration.isPresent()).isTrue();
-    assertThat(tlsConfiguration.get().getKeyStorePath()).isEqualTo(Path.of(keystoreFile));
-    assertThat(tlsConfiguration.get().getClientAuthConfiguration().isPresent()).isTrue();
-    assertThat(
-            tlsConfiguration.get().getClientAuthConfiguration().get().getKnownClientsFile().get())
-        .isEqualTo(Path.of(knownClientFile));
-    assertThat(tlsConfiguration.get().getClientAuthConfiguration().get().isCaClientsEnabled())
-        .isTrue();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpTlsCheckDefaultProtocolsAndCipherSuites() {
-    final String host = "1.2.3.4";
-    final int port = 1234;
-    final String keystoreFile = "/tmp/test.p12";
-    final String keystorePasswordFile = "/tmp/test.txt";
-
-    parseCommand(
-        "--rpc-http-enabled",
-        "--rpc-http-host",
-        host,
-        "--rpc-http-port",
-        String.valueOf(port),
-        "--rpc-http-tls-enabled",
-        "--rpc-http-tls-keystore-file",
-        keystoreFile,
-        "--rpc-http-tls-keystore-password-file",
-        keystorePasswordFile);
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
-    final Optional<TlsConfiguration> tlsConfiguration =
-        jsonRpcConfigArgumentCaptor.getValue().getTlsConfiguration();
-    assertThat(tlsConfiguration).isPresent();
-    assertThat(tlsConfiguration.get().getKeyStorePath()).isEqualTo(Path.of(keystoreFile));
-    assertThat(tlsConfiguration.get().getClientAuthConfiguration()).isEmpty();
-    assertThat(tlsConfiguration.get().getCipherSuites().get()).isEmpty();
-    assertThat(tlsConfiguration.get().getSecureTransportProtocols().get())
-        .containsExactly("TLSv1.3", "TLSv1.2");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpTlsCheckInvalidProtocols() {
-    final String host = "1.2.3.4";
-    final int port = 1234;
-    final String keystoreFile = "/tmp/test.p12";
-    final String keystorePasswordFile = "/tmp/test.txt";
-    final String protocol = "TLsv1.4";
-
-    parseCommand(
-        "--rpc-http-enabled",
-        "--rpc-http-host",
-        host,
-        "--rpc-http-port",
-        String.valueOf(port),
-        "--rpc-http-tls-enabled",
-        "--rpc-http-tls-keystore-file",
-        keystoreFile,
-        "--rpc-http-tls-keystore-password-file",
-        keystorePasswordFile,
-        "--rpc-http-tls-protocols",
-        protocol);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).contains("No valid TLS protocols specified");
-  }
-
-  @Test
-  public void rpcHttpTlsCheckInvalidCipherSuites() {
-    final String host = "1.2.3.4";
-    final int port = 1234;
-    final String keystoreFile = "/tmp/test.p12";
-    final String keystorePasswordFile = "/tmp/test.txt";
-    final String cipherSuites = "Invalid";
-
-    parseCommand(
-        "--rpc-http-enabled",
-        "--rpc-http-host",
-        host,
-        "--rpc-http-port",
-        String.valueOf(port),
-        "--rpc-http-tls-enabled",
-        "--rpc-http-tls-keystore-file",
-        keystoreFile,
-        "--rpc-http-tls-keystore-password-file",
-        keystorePasswordFile,
-        "--rpc-http-tls-cipher-suites",
-        cipherSuites);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Invalid TLS cipher suite specified " + cipherSuites);
-  }
-
-  @Test
-  public void rpcHttpTlsCheckValidProtocolsAndCipherSuites() {
-    final String host = "1.2.3.4";
-    final int port = 1234;
-    final String keystoreFile = "/tmp/test.p12";
-    final String keystorePasswordFile = "/tmp/test.txt";
-    final String protocols = "TLSv1.3,TLSv1.2";
-    final String cipherSuites =
-        "TLS_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256";
-
-    parseCommand(
-        "--rpc-http-enabled",
-        "--rpc-http-host",
-        host,
-        "--rpc-http-port",
-        String.valueOf(port),
-        "--rpc-http-tls-enabled",
-        "--rpc-http-tls-keystore-file",
-        keystoreFile,
-        "--rpc-http-tls-keystore-password-file",
-        keystorePasswordFile,
-        "--rpc-http-tls-protocols",
-        protocols,
-        "--rpc-http-tls-cipher-suites",
-        cipherSuites);
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
-    final Optional<TlsConfiguration> tlsConfiguration =
-        jsonRpcConfigArgumentCaptor.getValue().getTlsConfiguration();
-    assertThat(tlsConfiguration).isPresent();
-    assertThat(tlsConfiguration.get().getKeyStorePath()).isEqualTo(Path.of(keystoreFile));
-    assertThat(tlsConfiguration.get().getClientAuthConfiguration()).isEmpty();
-    assertThat(tlsConfiguration.get().getCipherSuites().get())
-        .containsExactlyInAnyOrder(
-            "TLS_AES_256_GCM_SHA384",
-            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256");
-    assertThat(tlsConfiguration.get().getSecureTransportProtocols().get())
-        .containsExactlyInAnyOrder("TLSv1.2", "TLSv1.3");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpTlsWarnIfCipherSuitesSpecifiedWithoutTls() {
-    final String host = "1.2.3.4";
-    final int port = 1234;
-    final String cipherSuites = "Invalid";
-
-    parseCommand(
-        "--rpc-http-enabled",
-        "--engine-rpc-enabled",
-        "--rpc-http-host",
-        host,
-        "--rpc-http-port",
-        String.valueOf(port),
-        "--rpc-http-tls-cipher-suite",
-        cipherSuites);
-    verify(
-            mockLogger,
-            times(2)) // this is verified for both the full suite of apis, and the engine group.
-        .warn(
-            "{} has been ignored because {} was not defined on the command line.",
-            "--rpc-http-tls-cipher-suite",
-            "--rpc-http-tls-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void graphQLHttpHostAndPortOptionsMustBeUsed() {
 
     final String host = "1.2.3.4";
@@ -2818,169 +1786,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpCorsOriginsTwoDomainsMustBuildListWithBothDomains() {
-    final String[] origins = {"http://domain1.com", "https://domain2.com"};
-    parseCommand("--rpc-http-enabled", "--rpc-http-cors-origins", String.join(",", origins));
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getCorsAllowedDomains().toArray())
-        .isEqualTo(origins);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpCorsOriginsDoubleCommaFilteredOut() {
-    final String[] origins = {"http://domain1.com", "https://domain2.com"};
-    parseCommand("--rpc-http-enabled", "--rpc-http-cors-origins", String.join(",,", origins));
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getCorsAllowedDomains().toArray())
-        .isEqualTo(origins);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpCorsOriginsWithWildcardMustBuildListWithWildcard() {
-    final String[] origins = {"*"};
-    parseCommand("--rpc-http-enabled", "--rpc-http-cors-origins", String.join(",", origins));
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getCorsAllowedDomains().toArray())
-        .isEqualTo(origins);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpCorsOriginsWithAllMustBuildListWithWildcard() {
-    parseCommand("--rpc-http-enabled", "--rpc-http-cors-origins", "all");
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getCorsAllowedDomains()).containsExactly("*");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpCorsOriginsWithNoneMustBuildEmptyList() {
-    final String[] origins = {"none"};
-    parseCommand("--rpc-http-enabled", "--rpc-http-cors-origins", String.join(",", origins));
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getCorsAllowedDomains()).isEmpty();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpCorsOriginsNoneWithAnotherDomainMustFail() {
-    final String[] origins = {"http://domain1.com", "none"};
-    parseCommand("--rpc-http-cors-origins", String.join(",", origins));
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Value 'none' can't be used with other domains");
-  }
-
-  @Test
-  public void rpcHttpCorsOriginsNoneWithAnotherDomainMustFailNoneFirst() {
-    final String[] origins = {"none", "http://domain1.com"};
-    parseCommand("--rpc-http-cors-origins", String.join(",", origins));
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Value 'none' can't be used with other domains");
-  }
-
-  @Test
-  public void rpcHttpCorsOriginsAllWithAnotherDomainMustFail() {
-    parseCommand("--rpc-http-cors-origins=http://domain1.com,all");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Values '*' or 'all' can't be used with other domains");
-  }
-
-  @Test
-  public void rpcHttpCorsOriginsAllWithAnotherDomainMustFailAsFlags() {
-    parseCommand("--rpc-http-cors-origins=http://domain1.com", "--rpc-http-cors-origins=all");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Values '*' or 'all' can't be used with other domains");
-  }
-
-  @Test
-  public void rpcHttpCorsOriginsWildcardWithAnotherDomainMustFail() {
-    parseCommand("--rpc-http-cors-origins=http://domain1.com,*");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Values '*' or 'all' can't be used with other domains");
-  }
-
-  @Test
-  public void rpcHttpCorsOriginsWildcardWithAnotherDomainMustFailAsFlags() {
-    parseCommand("--rpc-http-cors-origins=http://domain1.com", "--rpc-http-cors-origins=*");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Values '*' or 'all' can't be used with other domains");
-  }
-
-  @Test
-  public void rpcHttpCorsOriginsInvalidRegexShouldFail() {
-    final String[] origins = {"**"};
-    parseCommand("--rpc-http-cors-origins", String.join(",", origins));
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Domain values result in invalid regex pattern");
-  }
-
-  @Test
-  public void rpcHttpCorsOriginsEmptyValueFails() {
-    parseCommand("--rpc-http-cors-origins=");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Domain cannot be empty string or null string.");
   }
 
   /** test deprecated CLI option * */
@@ -3165,19 +1970,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Hostname cannot be empty string or null string.");
-  }
-
-  @Test
-  public void rpcWsRpcEnabledPropertyDefaultIsFalse() {
-    parseCommand();
-
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().isEnabled()).isFalse();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -4000,43 +2792,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void errorIsRaisedIfStaticNodesAreNotAllowed(final @TempDir Path testFolder)
-      throws IOException {
-    final Path staticNodesFile = testFolder.resolve("static-nodes.json");
-    final Path permissioningConfig = testFolder.resolve("permissioning.json");
-
-    final EnodeURL staticNodeURI =
-        EnodeURLImpl.builder()
-            .nodeId(
-                "50203c6bfca6874370e71aecc8958529fd723feb05013dc1abca8fc1fff845c5259faba05852e9dfe5ce172a7d6e7c2a3a5eaa8b541c8af15ea5518bbff5f2fa")
-            .ipAddress("127.0.0.1")
-            .useDefaultPorts()
-            .build();
-
-    final EnodeURL allowedNode =
-        EnodeURLImpl.builder()
-            .nodeId(
-                "50203c6bfca6874370e71aecc8958529fd723feb05013dc1abca8fc1fff845c5259faba05852e9dfe5ce172a7d6e7c2a3a5eaa8b541c8af15ea5518bbff5f2fa")
-            .useDefaultPorts()
-            .ipAddress("127.0.0.1")
-            .listeningPort(30304)
-            .build();
-
-    Files.write(staticNodesFile, ("[\"" + staticNodeURI.toString() + "\"]").getBytes(UTF_8));
-    Files.write(
-        permissioningConfig,
-        ("nodes-allowlist=[\"" + allowedNode.toString() + "\"]").getBytes(UTF_8));
-
-    parseCommand(
-        "--data-path=" + testFolder,
-        "--bootnodes",
-        "--permissions-nodes-config-file-enabled=true",
-        "--permissions-nodes-config-file=" + permissioningConfig);
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(staticNodeURI.toString(), "not in nodes-allowlist");
-  }
-
-  @Test
   public void tomlThatHasInvalidOptions() throws IOException {
     final URL configFile = this.getClass().getResource("/complete_config.toml");
     // update genesis file path, "similar" valid option and add invalid options
@@ -4145,40 +2900,6 @@ public class BesuCommandTest extends CommandTestAbstract {
         .containsEntry(block1, Hash.fromHexStringLenient(hash1));
     assertThat(requiredBlocksArg.getValue())
         .containsEntry(block2, Hash.fromHexStringLenient(hash2));
-  }
-
-  @Test
-  public void httpAuthenticationAlgorithIsConfigured() {
-    parseCommand("--rpc-http-authentication-jwt-algorithm", "ES256");
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getAuthenticationAlgorithm())
-        .isEqualTo(JwtAlgorithm.ES256);
-  }
-
-  @Test
-  public void httpAuthenticationPublicKeyIsConfigured() throws IOException {
-    final Path publicKey = Files.createTempFile("public_key", "");
-    parseCommand("--rpc-http-authentication-jwt-public-key-file", publicKey.toString());
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getAuthenticationPublicKeyFile().getPath())
-        .isEqualTo(publicKey.toString());
-  }
-
-  @Test
-  public void httpAuthenticationWithoutRequiredConfiguredOptionsMustFail() {
-    parseCommand("--rpc-http-enabled", "--rpc-http-authentication-enabled");
-
-    verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
   }
 
   @Test
@@ -4413,29 +3134,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void assertThatCheckPortClashAcceptsAsExpected() throws Exception {
-    // use WS port for HTTP
-    final int port = 8546;
-    parseCommand("--rpc-http-enabled", "--rpc-http-port", String.valueOf(port));
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void assertThatCheckPortClashRejectsAsExpected() throws Exception {
-    // use WS port for HTTP
-    final int port = 8546;
-    parseCommand("--rpc-http-enabled", "--rpc-http-port", String.valueOf(port), "--rpc-ws-enabled");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "Port number '8546' has been specified multiple times. Please review the supplied configuration.");
-  }
-
-  @Test
   public void assertThatCheckPortClashRejectsAsExpectedForEngineApi() throws Exception {
     // use WS port for HTTP
     final int port = 8545;
@@ -4636,19 +3334,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void logWarnIfFastSyncMinPeersUsedWithFullSync() {
     parseCommand("--sync-mode", "FULL", "--fast-sync-min-peers", "1");
     verify(mockLogger).warn("--sync-min-peers is ignored in FULL sync-mode");
-  }
-
-  @Test
-  public void portInUseReportsError() throws IOException {
-    final ServerSocket serverSocket = new ServerSocket(8545);
-
-    parseCommandWithPortCheck("--rpc-http-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Port(s) '[8545]' already in use. Check for other processes using the port(s).");
-
-    serverSocket.close();
   }
 
   @Test
