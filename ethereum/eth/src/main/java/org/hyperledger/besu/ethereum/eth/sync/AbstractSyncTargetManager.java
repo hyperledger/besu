@@ -32,9 +32,9 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class SyncTargetManager {
+public abstract class AbstractSyncTargetManager {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SyncTargetManager.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractSyncTargetManager.class);
 
   private final SynchronizerConfiguration config;
   private final ProtocolSchedule protocolSchedule;
@@ -42,7 +42,7 @@ public abstract class SyncTargetManager {
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
 
-  protected SyncTargetManager(
+  protected AbstractSyncTargetManager(
       final SynchronizerConfiguration config,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,

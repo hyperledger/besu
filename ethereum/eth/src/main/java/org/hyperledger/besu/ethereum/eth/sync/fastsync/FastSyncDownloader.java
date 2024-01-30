@@ -44,7 +44,9 @@ public class FastSyncDownloader<REQUEST> {
 
   private static final Duration FAST_SYNC_RETRY_DELAY = Duration.ofSeconds(5);
 
-  private static final Logger LOG = LoggerFactory.getLogger(FastSyncDownloader.class);
+  @SuppressWarnings("PrivateStaticFinalLoggers")
+  protected final Logger LOG = LoggerFactory.getLogger(getClass());
+
   private final WorldStateStorage worldStateStorage;
   private final WorldStateDownloader worldStateDownloader;
   private final TaskCollection<REQUEST> taskCollection;
@@ -75,7 +77,7 @@ public class FastSyncDownloader<REQUEST> {
 
   public CompletableFuture<FastSyncState> start() {
     if (!running.compareAndSet(false, true)) {
-      throw new IllegalStateException("FastSyncDownloader already running");
+      throw new IllegalStateException("SyncDownloader already running");
     }
     LOG.info("Starting sync");
     return start(initialFastSyncState);
@@ -107,7 +109,7 @@ public class FastSyncDownloader<REQUEST> {
   protected CompletableFuture<FastSyncState> handleFailure(final Throwable error) {
     trailingPeerRequirements = Optional.empty();
     Throwable rootCause = ExceptionUtils.rootCause(error);
-    if (rootCause instanceof FastSyncException) {
+    if (rootCause instanceof SyncException) {
       return CompletableFuture.failedFuture(error);
     } else if (rootCause instanceof StalledDownloadException) {
       LOG.debug("Stalled sync re-pivoting to newer block.");
@@ -120,7 +122,7 @@ public class FastSyncDownloader<REQUEST> {
       return start(FastSyncState.EMPTY_SYNC_STATE);
     } else {
       LOG.error(
-          "Encountered an unexpected error during fast sync. Restarting sync in "
+          "Encountered an unexpected error during sync. Restarting sync in "
               + FAST_SYNC_RETRY_DELAY.getSeconds()
               + " seconds.",
           error);
@@ -132,7 +134,7 @@ public class FastSyncDownloader<REQUEST> {
   public void stop() {
     synchronized (this) {
       if (running.compareAndSet(true, false)) {
-        LOG.info("Stopping fast sync");
+        LOG.info("Stopping sync");
         // Cancelling the world state download will also cause the chain download to be cancelled.
         worldStateDownloader.cancel();
       }
@@ -149,7 +151,7 @@ public class FastSyncDownloader<REQUEST> {
         MoreFiles.deleteRecursively(fastSyncDataDirectory, RecursiveDeleteOption.ALLOW_INSECURE);
       }
     } catch (final IOException e) {
-      LOG.error("Unable to clean up fast sync state", e);
+      LOG.error("Unable to clean up sync state", e);
     }
   }
 
