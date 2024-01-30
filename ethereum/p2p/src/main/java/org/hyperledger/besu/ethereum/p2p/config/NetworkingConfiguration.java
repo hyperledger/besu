@@ -23,6 +23,7 @@ public class NetworkingConfiguration {
   public static final int DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC = 30;
   public static final int DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_SEC = 60;
   public static final int DEFAULT_PEER_LOWER_BOUND = 25;
+  public static final boolean DEFAULT_FILTER_ON_ENR_FORK_ID = true;
 
   private DiscoveryConfiguration discovery = new DiscoveryConfiguration();
   private RlpxConfiguration rlpx = new RlpxConfiguration();

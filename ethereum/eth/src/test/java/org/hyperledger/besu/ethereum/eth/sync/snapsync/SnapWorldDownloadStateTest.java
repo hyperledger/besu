@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProcess;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -81,7 +82,7 @@ public class SnapWorldDownloadStateTest {
   private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
   private final SnapSyncStatePersistenceManager snapContext =
       mock(SnapSyncStatePersistenceManager.class);
-  private final SnapsyncMetricsManager metricsManager = mock(SnapsyncMetricsManager.class);
+  private final SnapSyncMetricsManager metricsManager = mock(SnapSyncMetricsManager.class);
   private final Blockchain blockchain = mock(Blockchain.class);
   private final DynamicPivotBlockSelector dynamicPivotBlockManager =
       mock(DynamicPivotBlockSelector.class);
@@ -108,7 +109,9 @@ public class SnapWorldDownloadStateTest {
     if (storageFormat == DataStorageFormat.BONSAI) {
       worldStateStorage =
           new BonsaiWorldStateKeyValueStorage(
-              new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
+              new InMemoryKeyValueStorageProvider(),
+              new NoOpMetricsSystem(),
+              DataStorageConfiguration.DEFAULT_CONFIG);
     } else {
       worldStateStorage = new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     }

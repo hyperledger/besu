@@ -165,6 +165,14 @@ public class PeerDiscoveryTestHelper {
     return startDiscoveryAgent(agentBuilder);
   }
 
+  public MockPeerDiscoveryAgent startDiscoveryAgent(
+      final String advertisedHost, final DiscoveryPeer... bootstrapPeers) {
+    final AgentBuilder agentBuilder =
+        agentBuilder().bootstrapPeers(bootstrapPeers).advertisedHost(advertisedHost);
+
+    return startDiscoveryAgent(agentBuilder);
+  }
+
   /**
    * Start a single discovery agent with the provided bootstrap peers.
    *
@@ -287,6 +295,7 @@ public class PeerDiscoveryTestHelper {
       config.setAdvertisedHost(advertisedHost);
       config.setBindPort(port);
       config.setActive(active);
+      config.setFilterOnEnrForkId(false);
 
       final ForkIdManager mockForkIdManager = mock(ForkIdManager.class);
       final ForkId forkId = new ForkId(Bytes.EMPTY, Bytes.EMPTY);

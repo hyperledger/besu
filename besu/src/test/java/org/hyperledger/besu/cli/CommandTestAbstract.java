@@ -15,14 +15,18 @@
 package org.hyperledger.besu.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.Runner;
@@ -40,6 +44,7 @@ import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
 import org.hyperledger.besu.components.BesuComponent;
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
@@ -109,6 +114,7 @@ import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.awaitility.Awaitility;
@@ -128,20 +134,37 @@ import picocli.CommandLine.RunLast;
 @ExtendWith(MockitoExtension.class)
 public abstract class CommandTestAbstract {
   private static final Logger TEST_LOGGER = LoggerFactory.getLogger(CommandTestAbstract.class);
+
+  protected static final int POA_BLOCK_PERIOD_SECONDS = 5;
   protected static final JsonObject VALID_GENESIS_QBFT_POST_LONDON =
       (new JsonObject())
           .put(
               "config",
               new JsonObject()
                   .put("londonBlock", 0)
-                  .put("qbft", new JsonObject().put("blockperiodseconds", 5)));
+                  .put(
+                      "qbft",
+                      new JsonObject().put("blockperiodseconds", POA_BLOCK_PERIOD_SECONDS)));
   protected static final JsonObject VALID_GENESIS_IBFT2_POST_LONDON =
       (new JsonObject())
           .put(
               "config",
               new JsonObject()
                   .put("londonBlock", 0)
-                  .put("ibft2", new JsonObject().put("blockperiodseconds", 5)));
+                  .put(
+                      "ibft2",
+                      new JsonObject().put("blockperiodseconds", POA_BLOCK_PERIOD_SECONDS)));
+
+  protected static final JsonObject VALID_GENESIS_CLIQUE_POST_LONDON =
+      (new JsonObject())
+          .put(
+              "config",
+              new JsonObject()
+                  .put("londonBlock", 0)
+                  .put(
+                      "clique",
+                      new JsonObject().put("blockperiodseconds", POA_BLOCK_PERIOD_SECONDS)));
+
   protected final PrintStream originalOut = System.out;
   protected final PrintStream originalErr = System.err;
   protected final ByteArrayOutputStream commandOutput = new ByteArrayOutputStream();
@@ -556,6 +579,11 @@ public abstract class CommandTestAbstract {
       return vertx;
     }
 
+    @Override
+    public GenesisConfigOptions getActualGenesisConfigOptions() {
+      return super.getActualGenesisConfigOptions();
+    }
+
     public CommandSpec getSpec() {
       return spec;
     }
@@ -681,5 +709,34 @@ public abstract class CommandTestAbstract {
     REQUIRED_OPTION,
     PORT_CHECK,
     NO_PORT_CHECK
+  }
+
+  protected static String escapeTomlString(final String s) {
+    return StringEscapeUtils.escapeJava(s);
+  }
+
+  /**
+   * Check logger calls
+   *
+   * <p>Here we check the calls to logger and not the result of the log line as we don't test the
+   * logger itself but the fact that we call it.
+   *
+   * @param dependentOptions the string representing the list of dependent options names
+   * @param mainOption the main option name
+   */
+  protected void verifyOptionsConstraintLoggerCall(
+      final String mainOption, final String... dependentOptions) {
+    verify(mockLogger, atLeast(1))
+        .warn(
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture());
+    assertThat(stringArgumentCaptor.getAllValues().get(0)).isEqualTo(DEPENDENCY_WARNING_MSG);
+
+    for (final String option : dependentOptions) {
+      assertThat(stringArgumentCaptor.getAllValues().get(1)).contains(option);
+    }
+
+    assertThat(stringArgumentCaptor.getAllValues().get(2)).isEqualTo(mainOption);
   }
 }

@@ -234,9 +234,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return respondWithInvalid(reqId, blockParam, null, getInvalidBlockHashStatus(), errorMessage);
     }
 
+    final var blobTransactions =
+        transactions.stream().filter(transaction -> transaction.getType().supportsBlob()).toList();
+
     ValidationResult<RpcErrorType> blobValidationResult =
         validateBlobs(
-            transactions,
+            blobTransactions,
             newBlockHeader,
             maybeParentHeader,
             maybeVersionedHashes,
@@ -302,7 +305,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final BlockProcessingResult executionResult = mergeCoordinator.rememberBlock(block);
 
     if (executionResult.isSuccessful()) {
-      logImportedBlockInfo(block, (System.currentTimeMillis() - startTimeMs) / 1000.0);
+      logImportedBlockInfo(
+          block, blobTransactions.size(), (System.currentTimeMillis() - startTimeMs) / 1000.0);
       return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
     } else {
       if (executionResult.causedBy().isPresent()) {
@@ -380,10 +384,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             invalidStatus, latestValidHash, Optional.of(validationError)));
   }
 
-  protected boolean requireTerminalPoWBlockValidation() {
-    return false;
-  }
-
   protected EngineStatus getInvalidBlockHashStatus() {
     return INVALID;
   }
@@ -396,14 +396,11 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   }
 
   protected ValidationResult<RpcErrorType> validateBlobs(
-      final List<Transaction> transactions,
+      final List<Transaction> blobTransactions,
       final BlockHeader header,
       final Optional<BlockHeader> maybeParentHeader,
       final Optional<List<VersionedHash>> maybeVersionedHashes,
       final ProtocolSpec protocolSpec) {
-
-    var blobTransactions =
-        transactions.stream().filter(transaction -> transaction.getType().supportsBlob()).toList();
 
     final List<VersionedHash> transactionVersionedHashes = new ArrayList<>();
     for (Transaction transaction : blobTransactions) {
@@ -489,7 +486,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 .collect(Collectors.toList()));
   }
 
-  private void logImportedBlockInfo(final Block block, final double timeInS) {
+  private void logImportedBlockInfo(final Block block, final int blobCount, final double timeInS) {
     final StringBuilder message = new StringBuilder();
     message.append("Imported #%,d / %d tx");
     final List<Object> messageArgs =
@@ -503,9 +500,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       message.append(" / %d ds");
       messageArgs.add(block.getBody().getDeposits().get().size());
     }
-    message.append(" / base fee %s / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d");
+    message.append(" / %d blobs / base fee %s / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d");
     messageArgs.addAll(
         List.of(
+            blobCount,
             block.getHeader().getBaseFee().map(Wei::toHumanReadableString).orElse("N/A"),
             block.getHeader().getGasUsed(),
             (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),

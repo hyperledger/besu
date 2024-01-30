@@ -56,4 +56,12 @@ public interface SegmentIdentifier {
    * @return true if the segment contains only static data
    */
   boolean containsStaticData();
+
+  /**
+   * This flag defines which segment is eligible for the high spec flag, so basically what column
+   * family is involved with high spec flag
+   *
+   * @return true if the segment is involved with the high spec flag
+   */
+  boolean isEligibleToHighSpecFlag();
 }

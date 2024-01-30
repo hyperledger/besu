@@ -35,8 +35,6 @@ import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
-import org.hyperledger.besu.ethereum.forkid.ForkId;
-import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
@@ -1480,14 +1478,12 @@ public class PeerDiscoveryControllerTest {
   }
 
   @Test
-  public void shouldFiltersOnForkIdSuccess() {
+  public void forkIdShouldBeAvailableIfEnrPacketContainsForkId() {
     final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
-    final ForkIdManager forkIdManager = mock(ForkIdManager.class);
     final DiscoveryPeer sender = peers.get(0);
-    final Packet enrPacket = prepareForForkIdCheck(forkIdManager, nodeKeys, sender, true);
+    final Packet enrPacket = prepareForForkIdCheck(nodeKeys, sender, true);
 
-    when(forkIdManager.peerCheck(any(ForkId.class))).thenReturn(true);
     controller.onMessage(enrPacket, sender);
 
     final Optional<DiscoveryPeer> maybePeer =
@@ -1502,34 +1498,11 @@ public class PeerDiscoveryControllerTest {
   }
 
   @Test
-  public void shouldFiltersOnForkIdFailure() {
-    final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
-    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
-    final ForkIdManager forkIdManager = mock(ForkIdManager.class);
-    final DiscoveryPeer sender = peers.get(0);
-    final Packet enrPacket = prepareForForkIdCheck(forkIdManager, nodeKeys, sender, true);
-
-    when(forkIdManager.peerCheck(any(ForkId.class))).thenReturn(false);
-    controller.onMessage(enrPacket, sender);
-
-    final Optional<DiscoveryPeer> maybePeer =
-        controller
-            .streamDiscoveredPeers()
-            .filter(p -> p.getId().equals(sender.getId()))
-            .findFirst();
-
-    assertThat(maybePeer.isPresent()).isTrue();
-    assertThat(maybePeer.get().getForkId().isPresent()).isTrue();
-    verify(controller, never()).connectOnRlpxLayer(eq(maybePeer.get()));
-  }
-
-  @Test
   public void shouldStillCallConnectIfNoForkIdSent() {
     final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
     final DiscoveryPeer sender = peers.get(0);
-    final Packet enrPacket =
-        prepareForForkIdCheck(mock(ForkIdManager.class), nodeKeys, sender, false);
+    final Packet enrPacket = prepareForForkIdCheck(nodeKeys, sender, false);
 
     controller.onMessage(enrPacket, sender);
 
@@ -1546,10 +1519,7 @@ public class PeerDiscoveryControllerTest {
 
   @NotNull
   private Packet prepareForForkIdCheck(
-      final ForkIdManager forkIdManager,
-      final List<NodeKey> nodeKeys,
-      final DiscoveryPeer sender,
-      final boolean sendForkId) {
+      final List<NodeKey> nodeKeys, final DiscoveryPeer sender, final boolean sendForkId) {
     final HashMap<PacketType, Bytes> packetTypeBytesHashMap = new HashMap<>();
     final OutboundMessageHandler outboundMessageHandler =
         (dp, pa) -> packetTypeBytesHashMap.put(pa.getType(), pa.getHash());
@@ -1573,7 +1543,6 @@ public class PeerDiscoveryControllerTest {
             .outboundMessageHandler(outboundMessageHandler)
             .enrCache(enrs)
             .filterOnForkId(true)
-            .forkIdManager(forkIdManager)
             .build();
 
     // Mock the creation of the PING packet, so that we can control the hash, which gets validated
@@ -1720,7 +1689,6 @@ public class PeerDiscoveryControllerTest {
     private Cache<Bytes, Packet> enrs =
         CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, TimeUnit.SECONDS).build();
     private boolean filterOnForkId = false;
-    private ForkIdManager forkIdManager;
 
     public static ControllerBuilder create() {
       return new ControllerBuilder();
@@ -1776,11 +1744,6 @@ public class PeerDiscoveryControllerTest {
       return this;
     }
 
-    public ControllerBuilder forkIdManager(final ForkIdManager forkIdManager) {
-      this.forkIdManager = forkIdManager;
-      return this;
-    }
-
     PeerDiscoveryController build() {
       checkNotNull(nodeKey);
       if (localPeer == null) {
@@ -1803,7 +1766,6 @@ public class PeerDiscoveryControllerTest {
               .peerPermissions(peerPermissions)
               .metricsSystem(new NoOpMetricsSystem())
               .cacheForEnrRequests(enrs)
-              .forkIdManager(forkIdManager == null ? mock(ForkIdManager.class) : forkIdManager)
               .filterOnEnrForkId(filterOnForkId)
               .rlpxAgent(mock(RlpxAgent.class))
               .build());
