@@ -77,4 +77,9 @@ public abstract class ApiConfiguration {
   public Long getUpperBoundGasAndPriorityFeeCoefficient() {
     return DEFAULT_UPPER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT;
   }
+
+  @Value.Default
+  public Long getMaxTraceFilterRange() {
+    return 1000L;
+  }
 }

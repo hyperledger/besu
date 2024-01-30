@@ -51,11 +51,6 @@ public class EngineNewPayloadV1 extends AbstractEngineNewPayload {
   }
 
   @Override
-  protected boolean requireTerminalPoWBlockValidation() {
-    return true;
-  }
-
-  @Override
   protected EngineStatus getInvalidBlockHashStatus() {
     return INVALID_BLOCK_HASH;
   }

@@ -194,13 +194,17 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     SegmentedKeyValueStorage store =
         createSegmentedStore(
             testPath,
-            Arrays.asList(TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
+            Arrays.asList(
+                TestSegment.DEFAULT, TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
             List.of(TestSegment.EXPERIMENTAL));
     store.close();
 
     // new db will be backward compatible with db without knowledge of experimental column family
     store =
-        createSegmentedStore(testPath, Arrays.asList(TestSegment.FOO, TestSegment.BAR), List.of());
+        createSegmentedStore(
+            testPath,
+            Arrays.asList(TestSegment.DEFAULT, TestSegment.FOO, TestSegment.BAR),
+            List.of());
     store.close();
   }
 
@@ -212,14 +216,18 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     SegmentedKeyValueStorage store =
         createSegmentedStore(
             testPath,
-            Arrays.asList(TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
+            Arrays.asList(
+                TestSegment.DEFAULT, TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
             List.of());
     store.close();
 
     // new db will not be backward compatible with db without knowledge of experimental column
     // family
     try {
-      createSegmentedStore(testPath, Arrays.asList(TestSegment.FOO, TestSegment.BAR), List.of());
+      createSegmentedStore(
+          testPath,
+          Arrays.asList(TestSegment.DEFAULT, TestSegment.FOO, TestSegment.BAR),
+          List.of());
       fail("DB without knowledge of experimental column family should fail");
     } catch (StorageException e) {
       assertThat(e.getMessage()).contains("Unhandled column families");
@@ -230,7 +238,8 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     store =
         createSegmentedStore(
             testPath,
-            Arrays.asList(TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
+            Arrays.asList(
+                TestSegment.DEFAULT, TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
             List.of(TestSegment.EXPERIMENTAL));
     store.close();
   }
@@ -242,27 +251,35 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     SegmentedKeyValueStorage store =
         createSegmentedStore(
             testPath,
-            Arrays.asList(TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
+            Arrays.asList(
+                TestSegment.DEFAULT, TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
             List.of(TestSegment.EXPERIMENTAL));
     store.close();
 
     // new db will be backward compatible with db without knowledge of experimental column family
     store =
-        createSegmentedStore(testPath, Arrays.asList(TestSegment.FOO, TestSegment.BAR), List.of());
+        createSegmentedStore(
+            testPath,
+            Arrays.asList(TestSegment.DEFAULT, TestSegment.FOO, TestSegment.BAR),
+            List.of());
     store.close();
 
     // Create new db without ignoring experimental colum family will add column to db
     store =
         createSegmentedStore(
             testPath,
-            Arrays.asList(TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
+            Arrays.asList(
+                TestSegment.DEFAULT, TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
             List.of());
     store.close();
 
     // Now, the db will be backward incompatible with db without knowledge of experimental column
     // family
     try {
-      createSegmentedStore(testPath, Arrays.asList(TestSegment.FOO, TestSegment.BAR), List.of());
+      createSegmentedStore(
+          testPath,
+          Arrays.asList(TestSegment.DEFAULT, TestSegment.FOO, TestSegment.BAR),
+          List.of());
       fail("DB without knowledge of experimental column family should fail");
     } catch (StorageException e) {
       assertThat(e.getMessage()).contains("Unhandled column families");
@@ -293,7 +310,10 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
 
     final SegmentedKeyValueStorage store =
         createSegmentedStore(
-            folder, metricsSystemMock, List.of(TestSegment.FOO), List.of(TestSegment.EXPERIMENTAL));
+            folder,
+            metricsSystemMock,
+            List.of(TestSegment.DEFAULT, TestSegment.FOO),
+            List.of(TestSegment.EXPERIMENTAL));
 
     KeyValueStorage keyValueStorage = new SegmentedKeyValueStorageAdapter(TestSegment.FOO, store);
 
@@ -343,24 +363,28 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
   }
 
   public enum TestSegment implements SegmentIdentifier {
+    DEFAULT("default".getBytes(StandardCharsets.UTF_8)),
     FOO(new byte[] {1}),
     BAR(new byte[] {2}),
     EXPERIMENTAL(new byte[] {3}),
 
-    STATIC_DATA(new byte[] {4}, true);
+    STATIC_DATA(new byte[] {4}, true, false);
 
     private final byte[] id;
     private final String nameAsUtf8;
     private final boolean containsStaticData;
+    private final boolean eligibleToHighSpecFlag;
 
     TestSegment(final byte[] id) {
-      this(id, false);
+      this(id, false, false);
     }
 
-    TestSegment(final byte[] id, final boolean containsStaticData) {
+    TestSegment(
+        final byte[] id, final boolean containsStaticData, final boolean eligibleToHighSpecFlag) {
       this.id = id;
       this.nameAsUtf8 = new String(id, StandardCharsets.UTF_8);
       this.containsStaticData = containsStaticData;
+      this.eligibleToHighSpecFlag = eligibleToHighSpecFlag;
     }
 
     @Override
@@ -376,6 +400,11 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     @Override
     public boolean containsStaticData() {
       return containsStaticData;
+    }
+
+    @Override
+    public boolean isEligibleToHighSpecFlag() {
+      return eligibleToHighSpecFlag;
     }
   }
 
