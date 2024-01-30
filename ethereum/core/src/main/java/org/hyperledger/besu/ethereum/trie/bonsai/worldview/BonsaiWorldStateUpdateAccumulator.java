@@ -367,7 +367,7 @@ public class BonsaiWorldStateUpdateAccumulator
                     final UInt256 keyUInt = storageUpdate.getKey();
                     final StorageSlotKey slotKey =
                         new StorageSlotKey(
-                            hashAndSaveSlotPreImage(updatedAddress, keyUInt),
+                            hashAndSaveSlotPreImage(keyUInt),
                             Optional.of(keyUInt)); // no compute Hash in this case
                     final UInt256 value = storageUpdate.getValue();
                     final BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(slotKey);
@@ -412,7 +412,7 @@ public class BonsaiWorldStateUpdateAccumulator
   @Override
   public UInt256 getStorageValue(final Address address, final UInt256 slotKey) {
     StorageSlotKey storageSlotKey =
-        new StorageSlotKey(hashAndSaveSlotPreImage(address, slotKey), Optional.of(slotKey));
+        new StorageSlotKey(hashAndSaveSlotPreImage(slotKey), Optional.of(slotKey));
     return getStorageValueByStorageSlotKey(address, storageSlotKey).orElse(UInt256.ZERO);
   }
 
@@ -456,7 +456,7 @@ public class BonsaiWorldStateUpdateAccumulator
   public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
     StorageSlotKey storageSlotKey =
-        new StorageSlotKey(hashAndSaveSlotPreImage(address, storageKey), Optional.of(storageKey));
+        new StorageSlotKey(hashAndSaveSlotPreImage(storageKey), Optional.of(storageKey));
     final Map<StorageSlotKey, BonsaiValue<UInt256>> localAccountStorage =
         storageToUpdate.get(address);
     if (localAccountStorage != null) {
@@ -833,10 +833,11 @@ public class BonsaiWorldStateUpdateAccumulator
   }
 
   protected Hash hashAndSaveAccountPreImage(final Address address) {
+    // no need to save account preimage by default
     return Hash.hash(address);
   }
 
-  protected Hash hashAndSaveSlotPreImage(final Address address, final UInt256 slotKey) {
+  protected Hash hashAndSaveSlotPreImage(final UInt256 slotKey) {
     Hash hash = slotKeyToHashCache.get(slotKey);
     if (hash == null) {
       hash = Hash.hash(slotKey);
