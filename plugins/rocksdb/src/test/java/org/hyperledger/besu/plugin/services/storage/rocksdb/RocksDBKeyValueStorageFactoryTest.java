@@ -27,6 +27,7 @@ import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.DatabaseMetadata;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.VersionedStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorageTest.TestSegment;
 
 import java.nio.charset.Charset;
@@ -44,7 +45,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class RocksDBKeyValueStorageFactoryTest {
 
   private static final String METADATA_FILENAME = "DATABASE_METADATA.json";
-  private static final int DEFAULT_VERSION = 1;
 
   @Mock private RocksDBFactoryConfiguration rocksDbConfiguration;
   @Mock private BesuConfiguration commonConfiguration;
@@ -68,7 +68,8 @@ public class RocksDBKeyValueStorageFactoryTest {
     // Side effect is creation of the Metadata version file
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir, commonConfiguration.getDatabaseFormat()).getVersion()).isEqualTo(DEFAULT_VERSION);
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
+        .isEqualTo(VersionedStorageFormat.FOREST_WITH_VARIABLES);
   }
 
   @Test
@@ -86,7 +87,8 @@ public class RocksDBKeyValueStorageFactoryTest {
 
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir, commonConfiguration.getDatabaseFormat()).getVersion()).isEqualTo(DEFAULT_VERSION);
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
+        .isEqualTo(VersionedStorageFormat.FOREST_WITH_VARIABLES);
   }
 
   @Test
@@ -104,7 +106,8 @@ public class RocksDBKeyValueStorageFactoryTest {
 
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir, commonConfiguration.getDatabaseFormat()).getVersion()).isEqualTo(DEFAULT_VERSION);
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
+        .isEqualTo(VersionedStorageFormat.FOREST_WITH_VARIABLES);
     assertThat(storageFactory.isSegmentIsolationSupported()).isTrue();
   }
 
@@ -144,7 +147,9 @@ public class RocksDBKeyValueStorageFactoryTest {
     Files.createDirectories(tempDataDir);
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
-    new DatabaseMetadata(DataStorageFormat.FOREST, 99).writeToDirectory(tempDataDir);
+    final String badVersion = "{\"version\":99}";
+    Files.write(
+        tempDataDir.resolve(METADATA_FILENAME), badVersion.getBytes(Charset.defaultCharset()));
     assertThatThrownBy(
             () ->
                 new RocksDBKeyValueStorageFactory(
@@ -224,7 +229,7 @@ public class RocksDBKeyValueStorageFactoryTest {
     // Ensure that having created everything via a symlink data dir the DB meta-data has been
     // created correctly
     storageFactory.create(segment, commonConfiguration, metricsSystem);
-    assertThat(DatabaseMetadata.lookUpFrom(tempRealDataDir, commonConfiguration.getDatabaseFormat()).getVersion())
-        .isEqualTo(DEFAULT_VERSION);
+    assertThat(DatabaseMetadata.lookUpFrom(tempRealDataDir).getVersionedStorageFormat())
+        .isEqualTo(VersionedStorageFormat.FOREST_WITH_VARIABLES);
   }
 }

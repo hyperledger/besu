@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -51,7 +52,6 @@ import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 public final class GenesisState {
 

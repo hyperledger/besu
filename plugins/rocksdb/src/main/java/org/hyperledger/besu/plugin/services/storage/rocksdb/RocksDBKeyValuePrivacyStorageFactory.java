@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactor
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PrivateDatabaseMetadata;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PrivateVersionedStorageFormat;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,7 +31,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PrivateVersionedStorageFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +41,8 @@ import org.slf4j.LoggerFactory;
 public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStorageFactory {
   private static final Logger LOG =
       LoggerFactory.getLogger(RocksDBKeyValuePrivacyStorageFactory.class);
-  private static final Set<PrivateVersionedStorageFormat> SUPPORTED_VERSIONS = EnumSet.of(PrivateVersionedStorageFormat.ORIGINAL);
+  private static final Set<PrivateVersionedStorageFormat> SUPPORTED_VERSIONS =
+      EnumSet.of(PrivateVersionedStorageFormat.ORIGINAL);
   private static final String PRIVATE_DATABASE_PATH = "private";
   private final RocksDBKeyValueStorageFactory publicFactory;
   private PrivateDatabaseMetadata databaseMetadata;
@@ -114,7 +115,8 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
    * private database exists there may be a "privacyVersion" field in the metadata file otherwise
    * use the default version
    */
-  private PrivateDatabaseMetadata readDatabaseMetadata(final BesuConfiguration commonConfiguration) throws IOException {
+  private PrivateDatabaseMetadata readDatabaseMetadata(final BesuConfiguration commonConfiguration)
+      throws IOException {
     final Path dataDir = commonConfiguration.getDataPath();
     final boolean privacyDatabaseExists =
         commonConfiguration.getStoragePath().resolve(PRIVATE_DATABASE_PATH).toFile().exists();
@@ -122,7 +124,9 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
     if (privacyDatabaseExists) {
       privateDatabaseMetadata = PrivateDatabaseMetadata.lookUpFrom(dataDir);
       LOG.info(
-          "Existing private database detected at {}. Metadata {}", dataDir, privateDatabaseMetadata);
+          "Existing private database detected at {}. Metadata {}",
+          dataDir,
+          privateDatabaseMetadata);
     } else {
       privateDatabaseMetadata = PrivateDatabaseMetadata.defaultForNewDb();
       LOG.info(
@@ -130,8 +134,7 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
           dataDir,
           privateDatabaseMetadata);
       Files.createDirectories(dataDir);
-          privateDatabaseMetadata
-                  .writeToDirectory(dataDir);
+      privateDatabaseMetadata.writeToDirectory(dataDir);
     }
 
     if (!SUPPORTED_VERSIONS.contains(privateDatabaseMetadata.getPrivateVersionedStorageFormat())) {

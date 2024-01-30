@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,28 +11,10 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.plugin.services.storage;
-
-import java.util.Arrays;
 
 public enum DataStorageFormat {
   FOREST, // Original format.  Store all tries
   BONSAI; // New format.  Store one trie, and trie logs to roll forward and backward.
-
-//  @Deprecated private final int legacyVersion;
-
-//  DataStorageFormat(final int legacyVersion) {
-//    this.legacyVersion = legacyVersion;
-//  }
-
-//  public int getLegacyVersion() {
-//    return legacyVersion;
-//  }
-//
-//  public static DataStorageFormat fromLegacyVersion(final int i) {
-//    return Arrays.stream(values()).filter(v -> v.legacyVersion == i).findFirst().orElseThrow();
-//  }
 }

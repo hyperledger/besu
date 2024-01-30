@@ -24,6 +24,7 @@ import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.DatabaseMetadata;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PrivateDatabaseMetadata;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PrivateVersionedStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 
@@ -39,9 +40,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class RocksDBKeyValuePrivacyStorageFactoryTest {
-  private static final int DEFAULT_VERSION = 1;
-  private static final int DEFAULT_PRIVACY_VERSION = 1;
-
   @Mock private RocksDBFactoryConfiguration rocksDbConfiguration;
   @Mock private BesuConfiguration commonConfiguration;
   @TempDir private Path temporaryFolder;
@@ -69,12 +67,8 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
     // Side effect is creation of the Metadata version file
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion()).isNotEmpty();
-
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isEqualTo(DEFAULT_VERSION);
-
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion().getAsInt())
-        .isEqualTo(DEFAULT_VERSION);
+    assertThat(PrivateDatabaseMetadata.lookUpFrom(tempDataDir).getPrivateVersionedStorageFormat())
+        .isEqualTo(PrivateVersionedStorageFormat.ORIGINAL);
   }
 
   @Test
@@ -95,7 +89,8 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
     // Side effect is creation of the Metadata version file
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat()).isEqualTo(PrivateVersionedStorageFormat.ORIGINAL);
+    assertThat(PrivateDatabaseMetadata.lookUpFrom(tempDataDir).getPrivateVersionedStorageFormat())
+        .isEqualTo(PrivateVersionedStorageFormat.ORIGINAL);
   }
 
   @Test
@@ -112,16 +107,15 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
 
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat()).isEqualTo(PrivateVersionedStorageFormat.ORIGINAL);
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
+        .isEqualTo(PrivateVersionedStorageFormat.ORIGINAL);
 
     final RocksDBKeyValuePrivacyStorageFactory privacyStorageFactory =
         new RocksDBKeyValuePrivacyStorageFactory(storageFactory);
 
     privacyStorageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir, commonConfiguration.getDatabaseFormat()).maybePrivacyVersion()).isNotEmpty();
-
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir, commonConfiguration.getDatabaseFormat()).maybePrivacyVersion().getAsInt())
-        .isEqualTo(DEFAULT_PRIVACY_VERSION);
+    assertThat(PrivateDatabaseMetadata.lookUpFrom(tempDataDir).getPrivateVersionedStorageFormat())
+        .isEqualTo(PrivateVersionedStorageFormat.ORIGINAL);
   }
 }

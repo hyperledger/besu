@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.stream.Stream;
 
@@ -33,7 +34,6 @@ import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.bouncycastle.util.encoders.Hex;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;

@@ -185,7 +185,8 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
           configuredSegments.stream()
               .filter(
                   segmentId ->
-                      segmentId.includeInDatabaseFormat(databaseMetadata.getVersionedStorageFormat().getFormat()))
+                      segmentId.includeInDatabaseFormat(
+                          databaseMetadata.getVersionedStorageFormat().getFormat()))
               .toList();
 
       // It's probably a good idea for the creation logic to be entirely dependent on the database
@@ -262,7 +263,10 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
           databaseMetadata);
     } else {
       databaseMetadata = DatabaseMetadata.defaultForNewDb(commonConfiguration.getDatabaseFormat());
-      LOG.info("No existing database detected at {}. Using default metadata for new db {}", dataDir, databaseMetadata);
+      LOG.info(
+          "No existing database detected at {}. Using default metadata for new db {}",
+          dataDir,
+          databaseMetadata);
       if (!dataDirExists) {
         Files.createDirectories(dataDir);
       }

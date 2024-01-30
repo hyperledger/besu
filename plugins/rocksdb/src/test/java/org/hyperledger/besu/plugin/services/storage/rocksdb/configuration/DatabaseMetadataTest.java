@@ -17,8 +17,6 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,26 +29,28 @@ class DatabaseMetadataTest {
 
   @Test
   void readingMetadataV1() throws Exception {
-    final Path tempDataDir =
-        createAndWrite("data", "DATABASE_METADATA.json", "{\"version\":2}");
+    final Path tempDataDir = createAndWrite("data", "DATABASE_METADATA.json", "{\"version\":2}");
 
     final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
-    assertThat(databaseMetadata.getVersionedStorageFormat()).isEqualTo(VersionedStorageFormat.BONSAI_WITH_VARIABLES);
+    assertThat(databaseMetadata.getVersionedStorageFormat())
+        .isEqualTo(VersionedStorageFormat.BONSAI_WITH_VARIABLES);
   }
 
   @Test
   void readingMetadataV2() throws Exception {
     final Path tempDataDir =
-            createAndWrite("data", "DATABASE_METADATA.json", "{\"v2\":{\"format\":\"FOREST\",\"version\":2}}");
+        createAndWrite(
+            "data", "DATABASE_METADATA.json", "{\"v2\":{\"format\":\"FOREST\",\"version\":2}}");
 
     final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
-    assertThat(databaseMetadata.getVersionedStorageFormat()).isEqualTo(VersionedStorageFormat.FOREST_WITH_VARIABLES);
+    assertThat(databaseMetadata.getVersionedStorageFormat())
+        .isEqualTo(VersionedStorageFormat.FOREST_WITH_VARIABLES);
   }
 
   @Test
   void unsupportedMetadata() throws Exception {
     final Path tempDataDir = createAndWrite("data", "DATABASE_METADATA.json", "{\"version\":42}");
-    final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
+    DatabaseMetadata.lookUpFrom(tempDataDir);
   }
 
   private Path createAndWrite(final String dir, final String file, final String content)

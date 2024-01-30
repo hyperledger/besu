@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
@@ -23,11 +22,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.OptionalInt;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,9 +39,8 @@ public class DatabaseMetadata {
   private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
   private final VersionedStorageFormat versionedStorageFormat;
 
-  private DatabaseMetadata(
-   final VersionedStorageFormat versionedStorageFormat) {
-  this.versionedStorageFormat = versionedStorageFormat;
+  private DatabaseMetadata(final VersionedStorageFormat versionedStorageFormat) {
+    this.versionedStorageFormat = versionedStorageFormat;
   }
 
   public static DatabaseMetadata defaultForNewDb(final DataStorageFormat dataStorageFormat) {
@@ -56,7 +54,7 @@ public class DatabaseMetadata {
   /**
    * Look up database metadata.
    *
-   * @param dataDir        the data dir
+   * @param dataDir the data dir
    * @return the database metadata
    * @throws IOException the io exception
    */
@@ -76,7 +74,11 @@ public class DatabaseMetadata {
   }
 
   private void writeToFile(final File file) throws IOException {
-    MAPPER.writeValue(file, new V2(new MetadataV2(versionedStorageFormat.getFormat(), versionedStorageFormat.getVersion())));
+    MAPPER.writeValue(
+        file,
+        new V2(
+            new MetadataV2(
+                versionedStorageFormat.getFormat(), versionedStorageFormat.getVersion())));
   }
 
   private static File getDefaultMetadataFile(final Path dataDir) {
@@ -92,7 +94,10 @@ public class DatabaseMetadata {
         return tryReadV2(metadataFile);
       }
     } catch (FileNotFoundException fnfe) {
-      throw new IllegalStateException("Database exists but metadata file " + metadataFile.toString() + " not found, without it there is no safe way to open the database");
+      throw new IllegalStateException(
+          "Database exists but metadata file "
+              + metadataFile.toString()
+              + " not found, without it there is no safe way to open the database");
     } catch (JsonProcessingException jpe) {
       throw new IllegalStateException(
           String.format("Invalid metadata file %s", metadataFile.getAbsolutePath()), jpe);
@@ -101,15 +106,16 @@ public class DatabaseMetadata {
 
   private static DatabaseMetadata tryReadAndMigrateV1(final File metadataFile) throws IOException {
     final V1 v1 = MAPPER.readValue(metadataFile, V1.class);
-    // when migrating from v1, this version will automatically migrate the db to the variables storage, so we use the `_WITH_VARIABLES` variants
-    final var versionedStorageFormat = switch (v1.version()) {
-      case 1 -> VersionedStorageFormat.FOREST_WITH_VARIABLES;
-      case 2 -> VersionedStorageFormat.BONSAI_WITH_VARIABLES;
-      default -> throw new IllegalStateException("Unsupported db version: " + v1.version());
-    };
+    // when migrating from v1, this version will automatically migrate the db to the variables
+    // storage, so we use the `_WITH_VARIABLES` variants
+    final var versionedStorageFormat =
+        switch (v1.version()) {
+          case 1 -> VersionedStorageFormat.FOREST_WITH_VARIABLES;
+          case 2 -> VersionedStorageFormat.BONSAI_WITH_VARIABLES;
+          default -> throw new IllegalStateException("Unsupported db version: " + v1.version());
+        };
 
-    final DatabaseMetadata metadataV2 =
-        new DatabaseMetadata(versionedStorageFormat);
+    final DatabaseMetadata metadataV2 = new DatabaseMetadata(versionedStorageFormat);
     // writing the metadata will migrate to v2
     metadataV2.writeToFile(metadataFile);
     return metadataV2;
@@ -122,38 +128,34 @@ public class DatabaseMetadata {
 
   private static VersionedStorageFormat fromV2(final MetadataV2 metadataV2) {
     return Arrays.stream(VersionedStorageFormat.values())
-            .filter(
-                    vsf ->
-                            vsf.getFormat().equals(metadataV2.format())
-                                    && vsf.getVersion() == metadataV2.version())
-            .findFirst()
-            .orElseThrow(
-                    () -> {
-                      final String message = "Unsupported RocksDB metadata: " + metadataV2;
-                      LOG.error(message);
-                      throw new StorageException(message);
-                    });
+        .filter(
+            vsf ->
+                vsf.getFormat().equals(metadataV2.format())
+                    && vsf.getVersion() == metadataV2.version())
+        .findFirst()
+        .orElseThrow(
+            () -> {
+              final String message = "Unsupported RocksDB metadata: " + metadataV2;
+              LOG.error(message);
+              throw new StorageException(message);
+            });
   }
 
   @Override
   public String toString() {
-    return "versionedStorageFormat="
-        + versionedStorageFormat;
+    return "versionedStorageFormat=" + versionedStorageFormat;
   }
 
   @JsonSerialize
   @SuppressWarnings("unused")
-  private record V1(
-    int version)
-  {};
+  private record V1(int version) {}
+  ;
 
   @JsonSerialize
   @SuppressWarnings("unused")
-  private record V2(MetadataV2 v2) {
-  }
+  private record V2(MetadataV2 v2) {}
 
   @JsonSerialize
   @SuppressWarnings("unused")
-  private record MetadataV2(DataStorageFormat format, int version) {
-  }
+  private record MetadataV2(DataStorageFormat format, int version) {}
 }
