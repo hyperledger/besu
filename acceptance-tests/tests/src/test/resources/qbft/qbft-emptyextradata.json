@@ -3,7 +3,7 @@
     "chainid": 2017,
     "byzantiumBlock": 0,
     "qbft": {
-      "blockperiodseconds": 3,
+      "blockperiodseconds": 1,
       "epochlength": 30000,
       "requesttimeoutseconds": 5,
       "blockreward": "5000000000000000000"
