@@ -12,8 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.util;
+package org.hyperledger.besu.util.log;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +24,7 @@ import java.util.function.Consumer;
 
 public class LogUtil {
   static ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+  public static final String BESU_NAMESPACE = "org.hyperledger.besu";
 
   public static void throttledLog(
       final Consumer<String> logger,
@@ -35,5 +38,35 @@ public class LogUtil {
       final Runnable runnable = () -> shouldLog.set(true);
       executor.schedule(runnable, logRepeatDelay, TimeUnit.SECONDS);
     }
+  }
+
+  /**
+   * Summarizes the stack trace of a throwable to the first class in the namespace. Useful for
+   * limiting exceptionally deep stack traces to the last releavant point in besu code.
+   *
+   * @param throwable exception to summarize
+   * @param namespace namespace to summarize to
+   * @return summary of the StackTrace
+   */
+  public static String summarizeStackTrace(
+      final String contextMessage, final Throwable throwable, final String namespace) {
+    StackTraceElement[] stackTraceElements = throwable.getStackTrace();
+
+    List<String> stackTraceSummary = new ArrayList<>();
+    for (StackTraceElement element : stackTraceElements) {
+      stackTraceSummary.add(String.format("\tat: %s", element));
+      if (element.getClassName().startsWith(namespace)) {
+        break;
+      }
+    }
+
+    return String.format(
+        "%s\nThrowable summary: %s\n%s",
+        contextMessage, throwable, String.join("\n", stackTraceSummary));
+  }
+
+  public static String summarizeBesuStackTrace(
+      final String contextMessage, final Throwable throwable) {
+    return summarizeStackTrace(contextMessage, throwable, BESU_NAMESPACE);
   }
 }
