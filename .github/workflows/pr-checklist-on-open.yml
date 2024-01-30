@@ -7,6 +7,8 @@ jobs:
   checklist:
     name: "add checklist as a comment on newly opened PRs"
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
     steps:
       - uses: actions/github-script@v7.0.1
         with:
