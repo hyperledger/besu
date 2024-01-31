@@ -75,6 +75,9 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             restriction == UNRESTRICTED);
 
     privacyCluster.start(minerNode, transactionNode);
+
+    minerNode.verify(priv.syncingStatus(false));
+    transactionNode.verify(priv.syncingStatus(false));
   }
 
   @Test
