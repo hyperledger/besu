@@ -20,6 +20,7 @@ import static org.hyperledger.besu.evm.internal.Words.readBigEndianI16;
 import static org.hyperledger.besu.evm.internal.Words.readBigEndianU16;
 
 import org.hyperledger.besu.evm.operation.CallFOperation;
+import org.hyperledger.besu.evm.operation.JumpFOperation;
 import org.hyperledger.besu.evm.operation.PushOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
@@ -290,10 +291,10 @@ public final class CodeV1Validation {
     OpcodeInfo.unallocatedOpcode(0xcd),
     OpcodeInfo.unallocatedOpcode(0xce),
     OpcodeInfo.unallocatedOpcode(0xcf),
-    OpcodeInfo.unallocatedOpcode(0xd0),
-    OpcodeInfo.unallocatedOpcode(0xd1),
-    OpcodeInfo.unallocatedOpcode(0xd2),
-    OpcodeInfo.unallocatedOpcode(0xd3),
+    OpcodeInfo.validOpcode("DATALOAD", 0xd0, 1, 1, 1),
+    OpcodeInfo.validOpcode("DATALOADN", 0xd1, 0, 1, 3),
+    OpcodeInfo.validOpcode("DATASIZE", 0xd2, 0, 1, 1),
+    OpcodeInfo.validOpcode("DATACOPY", 0xd3, 3, 0, 1),
     OpcodeInfo.unallocatedOpcode(0xd4),
     OpcodeInfo.unallocatedOpcode(0xd5),
     OpcodeInfo.unallocatedOpcode(0xd6),
@@ -311,13 +312,13 @@ public final class CodeV1Validation {
     OpcodeInfo.validOpcode("RJUMPV", 0xe2, 1, 0, 2),
     OpcodeInfo.validOpcode("CALLF", 0xe3, 0, 0, 3),
     OpcodeInfo.terminalOpcode("RETF", 0xe4, 0, 0, -1),
-    OpcodeInfo.terminalOpcode("JUMPF", 0xe5, 1, 0, -1),
-    OpcodeInfo.validOpcode("DUPN", 0xe6, 1, 1, 1),
-    OpcodeInfo.validOpcode("SWAPN", 0xe7, 1, 0, 1),
-    OpcodeInfo.validOpcode("DATALOAD", 0xe8, 1, 1, 1),
-    OpcodeInfo.validOpcode("DATALOADN", 0xe9, 0, 1, 1),
-    OpcodeInfo.validOpcode("DATACOPY", 0xea, 3, 0, 1),
-    OpcodeInfo.validOpcode("DATALOADN", 0xeb, 0, 1, 3),
+    OpcodeInfo.terminalOpcode("JUMPF", 0xe5, 0, 0, -3),
+    OpcodeInfo.validOpcode("DUPN", 0xe6, 0, 1, 2),
+    OpcodeInfo.validOpcode("SWAPN", 0xe7, 0, 0, 2),
+    OpcodeInfo.validOpcode("EXCHANGE", 0xe8, 0, 0, 2),
+    OpcodeInfo.unallocatedOpcode(0xe9),
+    OpcodeInfo.unallocatedOpcode(0xea),
+    OpcodeInfo.unallocatedOpcode(0xeb),
     OpcodeInfo.unallocatedOpcode(0xec),
     OpcodeInfo.unallocatedOpcode(0xed),
     OpcodeInfo.unallocatedOpcode(0xee),
@@ -347,12 +348,15 @@ public final class CodeV1Validation {
    * @return validation code, null otherwise.
    */
   public static String validateCode(final EOFLayout eofLayout) {
-    int sectionCount = eofLayout.getCodeSectionCount();
-    for (int i = 0; i < sectionCount; i++) {
-      CodeSection cs = eofLayout.getCodeSection(i);
+    if (!eofLayout.isValid()) {
+      return "Invalid EOF container - " + eofLayout.invalidReason();
+    }
+    for (CodeSection cs : eofLayout.codeSections()) {
       var validation =
           CodeV1Validation.validateCode(
-              eofLayout.container().slice(cs.getEntryPoint(), cs.getLength()), sectionCount);
+              eofLayout.container().slice(cs.getEntryPoint(), cs.getLength()),
+              cs.isReturning(),
+              eofLayout.codeSections());
       if (validation != null) {
         return validation;
       }
@@ -366,13 +370,15 @@ public final class CodeV1Validation {
    * @param code the code section code
    * @return null if valid, otherwise a string containing an error reason.
    */
-  static String validateCode(final Bytes code, final int sectionCount) {
+  static String validateCode(
+      final Bytes code, final boolean returning, final CodeSection... codeSections) {
     final int size = code.size();
     final BitSet rjumpdests = new BitSet(size);
     final BitSet immediates = new BitSet(size);
     final byte[] rawCode = code.toArrayUnsafe();
     OpcodeInfo opcodeInfo = OPCODE_INFO[0xfe];
     int pos = 0;
+    boolean hasReturningOpcode = false;
     while (pos < size) {
       final int operationNum = rawCode[pos] & 0xff;
       opcodeInfo = OPCODE_INFO[operationNum];
@@ -421,13 +427,30 @@ public final class CodeV1Validation {
           return "Truncated CALLF";
         }
         int section = readBigEndianU16(pos, rawCode);
-        if (section >= sectionCount) {
+        if (section >= codeSections.length) {
           return "CALLF to non-existent section - " + Integer.toHexString(section);
         }
         pcPostInstruction += 2;
+      } else if (operationNum == JumpFOperation.OPCODE) {
+        if (pos + 2 > size) {
+          return "Truncated JUMPF";
+        }
+        int section = readBigEndianU16(pos, rawCode);
+        if (section >= codeSections.length) {
+          return "JUMPF to non-existent section - " + Integer.toHexString(section);
+        }
+        hasReturningOpcode |= codeSections[section].isReturning();
+        pcPostInstruction += 2;
+      } else if (operationNum == RetFOperation.OPCODE) {
+        hasReturningOpcode = true;
       }
       immediates.set(pos, pcPostInstruction);
       pos = pcPostInstruction;
+    }
+    if (returning != hasReturningOpcode) {
+      return returning
+          ? "No RETF or qualifying JUMPF"
+          : "Non-returing section has RETF or JUMPF into returning section";
     }
     if (!opcodeInfo.terminal) {
       return "No terminating instruction";
@@ -459,6 +482,9 @@ public final class CodeV1Validation {
    * @return null if valid, otherwise an error string providing the validation error.
    */
   public static String validateStack(final int codeSectionToValidate, final EOFLayout eofLayout) {
+    if (!eofLayout.isValid()) {
+      return "EOF Layout invalid - " + eofLayout.invalidReason();
+    }
     try {
       CodeSection toValidate = eofLayout.getCodeSection(codeSectionToValidate);
       byte[] code =
@@ -500,14 +526,18 @@ public final class CodeV1Validation {
           OpcodeInfo opcodeInfo = OPCODE_INFO[thisOp];
           int stackInputs;
           int stackOutputs;
+          int sectionStackUsed;
           int pcAdvance = opcodeInfo.pcAdvance();
           if (thisOp == CallFOperation.OPCODE) {
             int section = readBigEndianU16(currentPC + 1, code);
-            stackInputs = eofLayout.getCodeSection(section).getInputs();
-            stackOutputs = eofLayout.getCodeSection(section).getOutputs();
+            CodeSection codeSection = eofLayout.getCodeSection(section);
+            stackInputs = codeSection.getInputs();
+            stackOutputs = codeSection.getOutputs();
+            sectionStackUsed = codeSection.getMaxStackHeight();
           } else {
             stackInputs = opcodeInfo.inputs();
             stackOutputs = opcodeInfo.outputs();
+            sectionStackUsed = 0;
           }
 
           if (stackInputs > currentStackHeight) {
@@ -517,7 +547,7 @@ public final class CodeV1Validation {
           }
 
           currentStackHeight = currentStackHeight - stackInputs + stackOutputs;
-          if (currentStackHeight > MAX_STACK_HEIGHT) {
+          if (currentStackHeight + sectionStackUsed - stackOutputs > MAX_STACK_HEIGHT) {
             return "Stack height exceeds 1024";
           }
 

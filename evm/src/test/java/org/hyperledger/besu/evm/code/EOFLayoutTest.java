@@ -132,25 +132,25 @@ public class EOFLayoutTest {
             1
           },
           {
-            "EF0001 010008 02000200020002 040000 00 00000000 00000000 FEFE ",
+            "EF0001 010008 02000200020002 040000 00 00800000 00000000 FEFE ",
             "No code section multiple",
             "Incomplete code section 1",
             1
           },
           {
-            "EF0001 010008 02000200020002 040000 00 00000000 00000000 FEFE FE",
+            "EF0001 010008 02000200020002 040000 00 00800000 00000000 FEFE FE",
             "Incomplete code section multiple",
             "Incomplete code section 1",
             1
           },
           {
-            "EF0001 010004 0200010001 040003 00 00000000 FE DEADBEEF",
+            "EF0001 010004 0200010001 040003 00 00800000 FE DEADBEEF",
             "Incomplete data section",
             "Dangling data after end of all sections",
             1
           },
           {
-            "EF0001 010004 0200010001 040003 00 00000000 FE BEEF",
+            "EF0001 010004 0200010001 040003 00 00800000 FE BEEF",
             "Incomplete data section",
             "Incomplete data section",
             1
@@ -224,7 +224,7 @@ public class EOFLayoutTest {
             1
           },
           {
-            "EF0001 010010 0200040001000200020002 040000 00 00000000 01000001 00010001 02030003 FE 5000 3000 8000",
+            "EF0001 010010 0200040001000200020002 040000 00 00800000 01000001 00010001 02030003 FE 5000 3000 8000",
             "non-void input and output types",
             null,
             1
@@ -233,7 +233,7 @@ public class EOFLayoutTest {
             "EF0001 011000 020400"
                 + " 0001".repeat(1024)
                 + " 040000 00"
-                + " 00000000".repeat(1024)
+                + " 00800000".repeat(1024)
                 + " FE".repeat(1024),
             "no data section, 1024 code sections",
             null,
@@ -258,13 +258,13 @@ public class EOFLayoutTest {
             1
           },
           {
-            "EF0001 010010 0200040001000200020002 040000 00 00000000 F0000000 00010000 02030000 FE 5000 3000 8000",
+            "EF0001 010010 0200040001000200020002 040000 00 00800000 F0000000 00010000 02030000 FE 5000 3000 8000",
             "inputs too large",
             "Type data input stack too large - 0xf0",
             1
           },
           {
-            "EF0001 010010 0200040001000200020002 040000 00 00000000 01000000 00F00000 02030000 FE 5000 3000 8000",
+            "EF0001 010010 0200040001000200020002 040000 00 00800000 01000000 00F00000 02030000 FE 5000 3000 8000",
             "outputs too large",
             "Type data output stack too large - 0xf0",
             1
@@ -276,7 +276,7 @@ public class EOFLayoutTest {
             1
           },
           {
-            "EF0001 010010 0200040001000200020002 040000 00 00000000 01000001 00010001 02030003 FE 5000 3000 8000",
+            "EF0001 010010 0200040001000200020002 040000 00 00800000 01000001 00010001 02030003 FE 5000 3000 8000",
             "non-void input and output types",
             null,
             1
@@ -288,7 +288,7 @@ public class EOFLayoutTest {
     return Arrays.asList(
         new Object[][] {
           {
-            "EF0001 010004 0200010001 0300010014 040000 00 00000000 FE EF000101000402000100010400000000000000FE",
+            "EF0001 010004 0200010001 0300010014 040000 00 00800000 FE EF000101000402000100010400000000800000FE",
             "no data section, one code section, one subcontainer",
             null,
             1

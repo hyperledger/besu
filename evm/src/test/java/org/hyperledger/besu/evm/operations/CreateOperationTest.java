@@ -75,7 +75,7 @@ class CreateOperationTest {
               + "F3" // RETURN
           );
   public static final Bytes SIMPLE_EOF =
-      Bytes.fromHexString("0xEF00010100040200010001040000000000000000");
+      Bytes.fromHexString("0xEF00010100040200010001040000000080000000");
   public static final String SENDER = "0xdeadc0de00000000000000000000000000000000";
 
   private static final int SHANGHAI_CREATE_GAS = 41240;

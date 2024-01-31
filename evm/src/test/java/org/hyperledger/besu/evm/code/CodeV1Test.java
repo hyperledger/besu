@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.evm.code.CodeV1Validation.validateCode;
 import static org.hyperledger.besu.evm.code.CodeV1Validation.validateStack;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -41,10 +42,40 @@ class CodeV1Test {
   public static final String ZERO_HEX = "00";
   public static final String NOOP_HEX = "5b";
 
+  private static void assertValidation(final String error, final String code) {
+    assertValidation(error, code, false, 1, 5);
+  }
+
+  private static void assertValidation(
+      final String error,
+      final String code,
+      final boolean returning,
+      final int... codeSectionSizes) {
+    Bytes codeBytes = Bytes.fromHexString(code);
+    for (int i : codeSectionSizes) {
+      CodeSection[] codeSections = new CodeSection[i];
+      Arrays.fill(codeSections, new CodeSection(1, 0, returning ? 0 : 0x80, 1, 1));
+      assertValidation(error, codeBytes, returning, codeSections);
+    }
+  }
+
+  private static void assertValidation(
+      final String error,
+      final Bytes codeBytes,
+      final boolean returning,
+      final CodeSection... codeSections) {
+    final String validationError = validateCode(codeBytes, returning, codeSections);
+    if (error == null) {
+      assertThat(validationError).isNull();
+    } else {
+      assertThat(validationError).startsWith(error);
+    }
+  }
+
   @Test
   void validCode() {
     String codeHex =
-        "0xEF0001 01000C 020003 000b 0002 0008 040000 00 00000000 02010001 01000002 60016002e30001e30002e4 01e4 60005360106000f3";
+        "0xEF0001 01000C 020003 000b 0002 0008 040000 00 00800000 02010001 01000002 60016002e30001e30002f3 01e4 60005360106000e4";
     final EOFLayout layout = EOFLayout.parseEOF(Bytes.fromHexString(codeHex.replace(" ", "")));
 
     String validationError = validateCode(layout);
@@ -52,26 +83,36 @@ class CodeV1Test {
     assertThat(validationError).isNull();
   }
 
+  @Test
+  void invalidCode() {
+    String codeHex =
+        "0xEF0001 01000C 020003 000b 0002 0008 040000 00 00000000 02010001 01000002 60016002e30001e30002f3 01e4 60005360106000e4";
+    final EOFLayout layout = EOFLayout.parseEOF(Bytes.fromHexString(codeHex.replace(" ", "")));
+
+    String validationError = validateCode(layout);
+
+    assertThat(validationError)
+        .isEqualTo(
+            "Invalid EOF container - Code section at zero expected non-returning flag, but had return stack of 0");
+  }
+
   @ParameterizedTest
   @ValueSource(
       strings = {"3000", "5000", "e0000000", "6000e1000000", "6000e200000000", "fe00", "0000"})
   void testValidOpcodes(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 1);
-    assertThat(validationError).isNull();
+    assertValidation(null, code);
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"00", "3030f3", "3030fd", "fe"})
   void testValidCodeTerminator(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 1);
-    assertThat(validationError).isNull();
+    assertValidation(null, code);
   }
 
   @ParameterizedTest
   @MethodSource("testPushValidImmediateArguments")
   void testPushValidImmediate(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 1);
-    assertThat(validationError).isNull();
+    assertValidation(null, code);
   }
 
   private static Stream<Arguments> testPushValidImmediateArguments() {
@@ -84,8 +125,7 @@ class CodeV1Test {
   @ParameterizedTest
   @MethodSource("testRjumpValidImmediateArguments")
   void testRjumpValidImmediate(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 1);
-    assertThat(validationError).isNull();
+    assertValidation(null, code);
   }
 
   private static Stream<Arguments> testRjumpValidImmediateArguments() {
@@ -105,8 +145,7 @@ class CodeV1Test {
   @ParameterizedTest
   @MethodSource("testRjumpiValidImmediateArguments")
   void testRjumpiValidImmediate(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 1);
-    assertThat(validationError).isNull();
+    assertValidation(null, code);
   }
 
   private static Stream<Arguments> testRjumpiValidImmediateArguments() {
@@ -127,8 +166,7 @@ class CodeV1Test {
   @ParameterizedTest
   @MethodSource("rjumptableValidImmediateArguments")
   void testRjumptableValidImmediate(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 1);
-    assertThat(validationError).isNull();
+    assertValidation(null, code);
   }
 
   private static Stream<Arguments> rjumptableValidImmediateArguments() {
@@ -147,8 +185,7 @@ class CodeV1Test {
   @ParameterizedTest
   @MethodSource("invalidCodeArguments")
   void testInvalidCode(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 1);
-    assertThat(validationError).startsWith("Invalid Instruction 0x");
+    assertValidation("Invalid Instruction 0x", code);
   }
 
   private static Stream<Arguments> invalidCodeArguments() {
@@ -160,8 +197,9 @@ class CodeV1Test {
             IntStream.rangeClosed(0xa5, 0xaf),
             IntStream.rangeClosed(0xb0, 0xbf),
             IntStream.rangeClosed(0xc0, 0xcf),
-            IntStream.rangeClosed(0xd0, 0xdf),
-            IntStream.rangeClosed(0xec, 0xef),
+            IntStream.rangeClosed(0xd4, 0xdf),
+            IntStream.rangeClosed(0xd4, 0xdf),
+            IntStream.rangeClosed(0xe9, 0xef),
             IntStream.of(0xf6, 0xf7, 0xfc))
         .flatMapToInt(i -> i)
         .mapToObj(i -> String.format("%02x", i) + ZERO_HEX)
@@ -171,8 +209,7 @@ class CodeV1Test {
   @ParameterizedTest
   @MethodSource("pushTruncatedImmediateArguments")
   void testPushTruncatedImmediate(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 1);
-    assertThat(validationError).isEqualTo("No terminating instruction");
+    assertValidation("No terminating instruction", code);
   }
 
   private static Stream<Arguments> pushTruncatedImmediateArguments() {
@@ -186,15 +223,13 @@ class CodeV1Test {
   @ParameterizedTest
   @ValueSource(strings = {"e0", "e000"})
   void testRjumpTruncatedImmediate(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 1);
-    assertThat(validationError).isEqualTo("Truncated relative jump offset");
+    assertValidation("Truncated relative jump offset", code);
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"6001e1", "6001e100"})
   void testRjumpiTruncatedImmediate(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 1);
-    assertThat(validationError).isEqualTo("Truncated relative jump offset");
+    assertValidation("Truncated relative jump offset", code);
   }
 
   @ParameterizedTest
@@ -208,8 +243,7 @@ class CodeV1Test {
         "6001e2030000000100"
       })
   void testRjumpvTruncatedImmediate(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 1);
-    assertThat(validationError).isEqualTo("Truncated jump table");
+    assertValidation("Truncated jump table", code);
   }
 
   @ParameterizedTest
@@ -225,8 +259,7 @@ class CodeV1Test {
         "6001e200fff900"
       })
   void testRjumpsOutOfBounds(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 1);
-    assertThat(validationError).isEqualTo("Relative jump destination out of bounds");
+    assertValidation("Relative jump destination out of bounds", code);
   }
 
   @ParameterizedTest
@@ -279,9 +312,7 @@ class CodeV1Test {
         "6001e2000005e2010000000000"
       })
   void testRjumpsIntoImmediate(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 1);
-    assertThat(validationError)
-        .isEqualTo("Relative jump destinations targets invalid immediate data");
+    assertValidation("Relative jump destinations targets invalid immediate data", code);
   }
 
   private static Stream<Arguments> rjumpsIntoImmediateExtraArguments() {
@@ -321,53 +352,46 @@ class CodeV1Test {
   @ParameterizedTest
   @ValueSource(strings = {"e3", "e300"})
   void testCallFTruncated(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 1);
-    assertThat(validationError).isEqualTo("Truncated CALLF");
+    assertValidation("Truncated CALLF", code);
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"e5", "e500"})
   @Disabled("Out of Shahghai, will likely return in Cancun or Prague")
   void testJumpCallFTruncated(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 1);
-    assertThat(validationError).isEqualTo("Truncated CALLF");
+    assertValidation("Truncated CALLF", code);
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"e30004", "e303ff", "e3ffff"})
   void testCallFWrongSection(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 3);
-    assertThat(validationError).startsWith("CALLF to non-existent section -");
+    assertValidation("CALLF to non-existent section -", code, false, 3);
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"e50004", "e503ff", "e5ffff"})
   @Disabled("Out of Shahghai, will likely return in Cancun or Prague")
   void testJumpFWrongSection(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 3);
-    assertThat(validationError).startsWith("CALLF to non-existent section -");
+    assertValidation("CALLF to non-existent section -", code, false, 3);
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"e3000100", "e3000200", "e3000000"})
   void testCallFValid(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 3);
-    assertThat(validationError).isNull();
+    assertValidation(null, code, false, 3);
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"e50001", "e50002", "e50000"})
   @Disabled("Out of Shahghai, will likely return in Cancun or Prague")
   void testJumpFValid(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 3);
-    assertThat(validationError).isNull();
+    assertValidation(null, code, false, 3);
   }
 
   @ParameterizedTest
   @MethodSource("immediateContainsOpcodeArguments")
   void testImmediateContainsOpcode(final String code) {
-    final String validationError = validateCode(Bytes.fromHexString(code), 1);
-    assertThat(validationError).isNull();
+    assertValidation(null, code);
   }
 
   private static Stream<Arguments> immediateContainsOpcodeArguments() {
@@ -454,30 +478,30 @@ class CodeV1Test {
    * @return parameterized test vectors
    */
   static Stream<Arguments> stackEmpty() {
-    return Stream.of(Arguments.of("Empty", null, 0, List.of(List.of("00", 0, 0, 0))));
+    return Stream.of(Arguments.of("Empty", null, 0, List.of(List.of("00", 0, 0x80, 0))));
   }
 
   static Stream<Arguments> stackEmptyAtExit() {
     return Stream.of(
         // this depends on requiring stacks to be "clean" returns
-        Arguments.of("Stack Empty at Exit", null, 0, List.of(List.of("43 50 00", 0, 0, 1))),
+        Arguments.of("Stack Empty at Exit", null, 0, List.of(List.of("43 50 00", 0, 0x80, 1))),
         Arguments.of(
             "Stack empty with input",
             null,
             1,
-            List.of(List.of("00", 0, 0, 0), List.of("50 00", 1, 0, 1))),
+            List.of(List.of("00", 0, 0x80, 0), List.of("50 00", 1, 0x80, 1))),
         // this depends on requiring stacks to be "clean" returns
         Arguments.of(
             "Stack not empty at output",
             null,
             1,
-            List.of(List.of("00", 0, 0, 0), List.of("00", 1, 0, 1))));
+            List.of(List.of("00", 0, 0x80, 0), List.of("00", 1, 0x80, 1))));
   }
 
   static Stream<Arguments> stackImmediateBytes() {
     return Stream.of(
         Arguments.of(
-            "Immediate Bytes - simple push", null, 0, List.of(List.of("6001 50 00", 0, 0, 1))));
+            "Immediate Bytes - simple push", null, 0, List.of(List.of("6001 50 00", 0, 0x80, 1))));
   }
 
   static Stream<Arguments> stackUnderflow() {
@@ -486,53 +510,54 @@ class CodeV1Test {
             "Stack underflow",
             "Operation 0x50 requires stack of 1 but only has 0 items",
             0,
-            List.of(List.of("50 00", 0, 0, 1))));
+            List.of(List.of("50 00", 0, 0x80, 1))));
   }
 
   static Stream<Arguments> stackRJumpForward() {
     return Stream.of(
-        Arguments.of("RJUMP 0", null, 0, List.of(List.of("e00000 00", 0, 0, 0))),
+        Arguments.of("RJUMP 0", null, 0, List.of(List.of("e00000 00", 0, 0x80, 0))),
         Arguments.of(
             "RJUMP 1 w/ dead code",
             "Dead code detected in section 0",
             0,
-            List.of(List.of("e00001 43 00", 0, 0, 0))),
+            List.of(List.of("e00001 43 00", 0, 0x80, 0))),
         Arguments.of(
             "RJUMP 2 w/ dead code",
             "Dead code detected in section 0",
             0,
-            List.of(List.of("e00002 43 50 00", 0, 0, 0))),
+            List.of(List.of("e00002 43 50 00", 0, 0x80, 0))),
         Arguments.of(
             "RJUMP 3 and -10",
             null,
             0,
-            List.of(List.of("e00003 01 50 00 6001 6001 e0fff6", 0, 0, 2))));
+            List.of(List.of("e00003 01 50 00 6001 6001 e0fff6", 0, 0x80, 2))));
   }
 
   static Stream<Arguments> stackRJumpBackward() {
     return Stream.of(
-        Arguments.of("RJUMP -3", null, 0, List.of(List.of("e0fffd", 0, 0, 0))),
-        Arguments.of("RJUMP -4", null, 0, List.of(List.of("5B e0fffc", 0, 0, 0))),
+        Arguments.of("RJUMP -3", null, 0, List.of(List.of("e0fffd", 0, 0x80, 0))),
+        Arguments.of("RJUMP -4", null, 0, List.of(List.of("5B e0fffc", 0, 0x80, 0))),
         Arguments.of(
             "RJUMP -4 unmatched stack",
             "Jump into code stack height (0) does not match previous value (1)",
             0,
-            List.of(List.of("43 e0fffc", 0, 0, 0))),
+            List.of(List.of("43 e0fffc", 0, 0x80, 0))),
         Arguments.of(
             "RJUMP -4 unmatched stack",
             "Jump into code stack height (1) does not match previous value (0)",
             0,
-            List.of(List.of("43 50 e0fffc 00", 0, 0, 0))),
-        Arguments.of("RJUMP -3 matched stack", null, 0, List.of(List.of("43 50 e0fffd", 0, 0, 1))),
+            List.of(List.of("43 50 e0fffc 00", 0, 0x80, 0))),
         Arguments.of(
-            "RJUMP -4 matched stack", null, 0, List.of(List.of("43 50 5B e0fffc", 0, 0, 1))),
+            "RJUMP -3 matched stack", null, 0, List.of(List.of("43 50 e0fffd", 0, 0x80, 1))),
         Arguments.of(
-            "RJUMP -5 matched stack", null, 0, List.of(List.of("43 50 43 e0fffb", 0, 0, 1))),
+            "RJUMP -4 matched stack", null, 0, List.of(List.of("43 50 5B e0fffc", 0, 0x80, 1))),
+        Arguments.of(
+            "RJUMP -5 matched stack", null, 0, List.of(List.of("43 50 43 e0fffb", 0, 0x80, 1))),
         Arguments.of(
             "RJUMP -4 unmatched stack",
             "Jump into code stack height (0) does not match previous value (1)",
             0,
-            List.of(List.of("43 50 43 e0fffc 50 00", 0, 0, 0))));
+            List.of(List.of("43 50 43 e0fffc 50 00", 0, 0x80, 0))));
   }
 
   static Stream<Arguments> stackRJumpI() {
@@ -541,61 +566,61 @@ class CodeV1Test {
             "RJUMPI Each branch ending with STOP",
             null,
             0,
-            List.of(List.of("60ff 6001 e10002 50 00 50 00", 0, 0, 2))),
+            List.of(List.of("60ff 6001 e10002 50 00 50 00", 0, 0x80, 2))),
         Arguments.of(
             "RJUMPI One branch ending with RJUMP",
             null,
             0,
-            List.of(List.of("60ff 6001 e10004 50 e00001 50 00", 0, 0, 2))),
+            List.of(List.of("60ff 6001 e10004 50 e00001 50 00", 0, 0x80, 2))),
         Arguments.of(
             "RJUMPI Fallthrough",
             null,
             0,
-            List.of(List.of("60ff 6001 e10004 80 80 50 50 50 00", 0, 0, 3))),
+            List.of(List.of("60ff 6001 e10004 80 80 50 50 50 00", 0, 0x80, 3))),
         Arguments.of(
-            "RJUMPI Offset 0", null, 0, List.of(List.of("60ff 6001 e10000 50 00", 0, 0, 2))),
+            "RJUMPI Offset 0", null, 0, List.of(List.of("60ff 6001 e10000 50 00", 0, 0x80, 2))),
         Arguments.of(
             "Simple loop (RJUMPI offset = -5)",
             null,
             0,
-            List.of(List.of("6001 60ff 81 02 80 e1fffa 50 50 00", 0, 0, 3))),
+            List.of(List.of("6001 60ff 81 02 80 e1fffa 50 50 00", 0, 0x80, 3))),
         Arguments.of(
             "RJUMPI One branch increasing max stack more stack than another",
             null,
             0,
-            List.of(List.of("6001 e10007 30 30 30 50 50 50 00 30 50 00", 0, 0, 3))),
+            List.of(List.of("6001 e10007 30 30 30 50 50 50 00 30 50 00", 0, 0x80, 3))),
         Arguments.of(
             "RJUMPI One branch increasing max stack more stack than another II",
             null,
             0,
-            List.of(List.of("6001 e10003 30 50 00 30 30 30 50 50 50 00", 0, 0, 3))),
+            List.of(List.of("6001 e10003 30 50 00 30 30 30 50 50 50 00", 0, 0x80, 3))),
         Arguments.of(
             "RJUMPI Missing stack argument",
             "Operation 0xE1 requires stack of 1 but only has 0 items",
             0,
-            List.of(List.of("e10000 00", 0, 0, 0))),
+            List.of(List.of("e10000 00", 0, 0x80, 0))),
         Arguments.of(
             "Stack underflow one branch",
             "Operation 0x02 requires stack of 2 but only has 1 items",
             0,
-            List.of(List.of("60ff 6001 e10002 50 00 02 50 00", 0, 0, 0))),
+            List.of(List.of("60ff 6001 e10002 50 00 02 50 00", 0, 0x80, 0))),
         Arguments.of(
             "Stack underflow another branch",
             "Operation 0x02 requires stack of 2 but only has 1 items",
             0,
-            List.of(List.of("60ff 6001 e10002 02 00 19 50 00", 0, 0, 0))),
+            List.of(List.of("60ff 6001 e10002 02 00 19 50 00", 0, 0x80, 0))),
         // this depends on requiring stacks to be "clean" returns
         Arguments.of(
             "RJUMPI Stack not empty in the end of one branch",
             null,
             0,
-            List.of(List.of("60ff 6001 e10002 50 00 19 00", 0, 0, 2))),
+            List.of(List.of("60ff 6001 e10002 50 00 19 00", 0, 0x80, 2))),
         // this depends on requiring stacks to be "clean" returns
         Arguments.of(
             "RJUMPI Stack not empty in the end of one branch II",
             null,
             0,
-            List.of(List.of("60ff 6001 e10002 19 00 50 00", 0, 0, 2))));
+            List.of(List.of("60ff 6001 e10002 19 00 50 00", 0, 0x80, 2))));
   }
 
   static Stream<Arguments> stackCallF() {
@@ -604,166 +629,172 @@ class CodeV1Test {
             "0 input 0 output",
             null,
             0,
-            List.of(List.of("e30001 00", 0, 0, 0), List.of("e4", 0, 0, 0))),
+            List.of(List.of("e30001 00", 0, 0x80, 0), List.of("e4", 0, 0, 0))),
         Arguments.of(
             "0 inputs, 0 output 3 sections",
             null,
             0,
-            List.of(List.of("e30002 00", 0, 0, 0), List.of("e4", 1, 1, 1), List.of("e4", 0, 0, 0))),
+            List.of(
+                List.of("e30002 00", 0, 0x80, 0), List.of("e4", 1, 1, 1), List.of("e4", 0, 0, 0))),
         Arguments.of(
             "more than 0 inputs",
             null,
             0,
-            List.of(List.of("30 e30001 00", 0, 0, 1), List.of("00", 1, 0, 1))),
+            List.of(List.of("30 e30001 00", 0, 0x80, 1), List.of("00", 1, 0x80, 1))),
         Arguments.of(
             "forwarding an argument",
             null,
             1,
-            List.of(List.of("00", 0, 0, 0), List.of("e30002 00", 1, 0, 1), List.of("00", 1, 0, 1))),
+            List.of(
+                List.of("00", 0, 0x80, 0),
+                List.of("e30002 00", 1, 0x80, 1),
+                List.of("00", 1, 0x80, 1))),
         Arguments.of(
             "more than 1 inputs",
             null,
             0,
-            List.of(List.of("30 80 e30001 00", 0, 0, 2), List.of("00", 2, 0, 2))),
+            List.of(List.of("30 80 e30001 00", 0, 0x80, 2), List.of("00", 2, 0x80, 2))),
         Arguments.of(
             "more than 0 outputs",
             null,
             0,
-            List.of(List.of("e30001 50 00", 0, 0, 1), List.of("3000", 0, 1, 1))),
+            List.of(List.of("e30001 50 00", 0, 0x80, 1), List.of("30e4", 0, 1, 1))),
         Arguments.of(
             "more than 0 outputs 3 sections",
             null,
             0,
             List.of(
-                List.of("e30002 50 00", 0, 0, 1),
-                List.of("00", 0, 0, 0),
+                List.of("e30002 50 00", 0, 0x80, 1),
+                List.of("00", 0, 0x80, 0),
                 List.of("30305000", 0, 1, 2))),
         Arguments.of(
             "more than 1 outputs",
             null,
             0,
-            List.of(List.of("e30001 50 50 00", 0, 0, 2), List.of("303000", 0, 2, 2))),
+            List.of(List.of("e30001 50 50 00", 0, 0x80, 2), List.of("3030e4", 0, 2, 2))),
         Arguments.of(
             "more than 0 inputs, more than 0 outputs",
             null,
             0,
             List.of(
-                List.of("30 30 e30001 50 50 50 00", 0, 0, 3),
-                List.of("30 30 e30001 50 50 00", 2, 3, 5))),
-        Arguments.of("recursion", null, 0, List.of(List.of("e30000 00", 0, 0, 0))),
+                List.of("30 30 e30001 50 50 50 00", 0, 0x80, 3),
+                List.of("30 30 e30001 50 50 e4", 2, 3, 5))),
+        Arguments.of("recursion", null, 0, List.of(List.of("e30000 00", 0, 0x80, 0))),
         Arguments.of(
             "recursion 2 inputs",
             null,
             1,
-            List.of(List.of("00", 0, 0, 0), List.of("e30000 00", 2, 0, 2))),
+            List.of(List.of("00", 0, 0x80, 0), List.of("e30000 00", 2, 0x80, 2))),
         Arguments.of(
             "recursion 2 inputs 2 outputs",
             null,
             1,
-            List.of(List.of("00", 0, 0, 0), List.of("e30000 50 50 00", 2, 2, 2))),
+            List.of(List.of("00", 0, 0x80, 0), List.of("e30000 50 50 00", 2, 2, 2))),
         Arguments.of(
             "recursion 2 inputs 1 output",
             null,
             1,
-            List.of(List.of("00", 0, 0, 0), List.of("30 30 e30001 50 50 50 00", 2, 1, 4))),
+            List.of(List.of("00", 0, 0x80, 0), List.of("30 30 e30001 50 50 50 00", 2, 1, 4))),
         Arguments.of(
             "multiple CALLFs with different types",
             null,
             1,
             List.of(
-                List.of("00", 0, 0, 0),
-                List.of("44 e30002 80 80 e30003 44 80 e30004 50 50 00", 0, 0, 3),
-                List.of("3030505000", 1, 1, 3),
-                List.of("50505000", 3, 0, 3),
-                List.of("00", 2, 2, 2))),
+                List.of("00", 0, 0x80, 0),
+                List.of("44 e30002 80 80 e30003 44 80 e30004 50 50 e4", 0, 0, 3),
+                List.of("30305050e4", 1, 1, 3),
+                List.of("505050e4", 3, 0, 3),
+                List.of("e4", 2, 2, 2))),
         Arguments.of(
             "underflow",
             "Operation 0xE3 requires stack of 1 but only has 0 items",
             0,
-            List.of(List.of("e30001 00", 0, 0, 0), List.of("00", 1, 0, 0))),
+            List.of(List.of("e30001 00", 0, 0x80, 0), List.of("e4", 1, 0, 0))),
         Arguments.of(
             "underflow 2",
             "Operation 0xE3 requires stack of 2 but only has 1 items",
             0,
-            List.of(List.of("30 e30001 00", 0, 0, 0), List.of("00", 2, 0, 2))),
+            List.of(List.of("30 e30001 00", 0, 0x80, 0), List.of("e4", 2, 0, 2))),
         Arguments.of(
             "underflow 3",
             "Operation 0xE3 requires stack of 1 but only has 0 items",
             1,
-            List.of(List.of("00", 0, 0, 0), List.of("50 e30001 00", 1, 0, 1))),
+            List.of(List.of("00", 0, 0x80, 0), List.of("50 e30001 e4", 1, 0, 1))),
         Arguments.of(
             "underflow 4",
             "Operation 0xE3 requires stack of 3 but only has 2 items",
             0,
             List.of(
-                List.of("44 e30001 80 e30002 00", 0, 0, 0),
-                List.of("00", 1, 1, 1),
-                List.of("00", 3, 0, 3))));
+                List.of("44 e30001 80 e30002 00", 0, 0x80, 0),
+                List.of("e4", 1, 1, 1),
+                List.of("e4", 3, 0, 3))));
   }
 
   static Stream<Arguments> stackRetF() {
     return Stream.of(
         Arguments.of(
             "0 outputs at section 0",
-            null,
+            "EOF Layout invalid - Code section at zero expected non-returning flag, but had return stack of 0",
             0,
-            List.of(List.of("e4", 0, 0, 0), List.of("00", 0, 0, 0))),
+            List.of(List.of("e4", 0, 0, 0), List.of("e4", 0, 0, 0))),
         Arguments.of(
             "0 outputs at section 1",
             null,
             1,
-            List.of(List.of("00", 0, 0, 0), List.of("e4", 0, 0, 0))),
+            List.of(List.of("00", 0, 0x80, 0), List.of("e4", 0, 0, 0))),
         Arguments.of(
             "0 outputs at section 2",
             null,
             2,
-            List.of(List.of("00", 0, 0, 0), List.of("00", 1, 1, 1), List.of("e4", 0, 0, 0))),
+            List.of(List.of("00", 0, 0x80, 0), List.of("e4", 1, 1, 1), List.of("e4", 0, 0, 0))),
         Arguments.of(
             "more than 0 outputs section 0",
-            null,
+            "EOF Layout invalid - Code section at zero expected non-returning flag, but had return stack of 0",
             0,
             List.of(List.of("44 50 e4", 0, 0, 1), List.of("4400", 0, 1, 1))),
         Arguments.of(
             "more than 0 outputs section 0",
-            null,
+            "EOF Layout invalid - Code section at zero expected non-returning flag, but had return stack of 0",
             1,
             List.of(List.of("00", 0, 0, 0), List.of("44 e4", 0, 1, 1))),
         Arguments.of(
             "more than 1 outputs section 1",
             null,
             1,
-            List.of(List.of("00", 0, 0, 0), List.of("44 80 e4", 0, 2, 2))),
+            List.of(List.of("00", 0, 0x80, 0), List.of("44 80 e4", 0, 2, 2))),
         Arguments.of(
             "Forwarding return values",
             null,
             1,
-            List.of(List.of("00", 0, 0, 0), List.of("e4", 1, 1, 1))),
+            List.of(List.of("00", 0, 0x80, 0), List.of("e4", 1, 1, 1))),
         Arguments.of(
             "Forwarding of return values 2",
             null,
             1,
             List.of(
-                List.of("00", 0, 0, 0), List.of("e30002 e4", 0, 1, 1), List.of("3000", 0, 1, 1))),
+                List.of("00", 0, 0x80, 0),
+                List.of("e30002 e4", 0, 1, 1),
+                List.of("30e4", 0, 1, 1))),
         Arguments.of(
             "Multiple RETFs",
             null,
             1,
-            List.of(List.of("00", 0, 0, 0), List.of("e10003 44 80 e4 30 80 e4", 1, 2, 2))),
+            List.of(List.of("00", 0, 0x80, 0), List.of("e10003 44 80 e4 30 80 e4", 1, 2, 2))),
         Arguments.of(
             "underflow 1",
             "Section return (RETF) calculated height 0x0 does not match configured height 0x1",
             1,
-            List.of(List.of("00", 0, 0, 0), List.of("e4", 0, 1, 0))),
+            List.of(List.of("00", 0, 0x80, 0), List.of("e4", 0, 1, 0))),
         Arguments.of(
             "underflow 2",
             "Section return (RETF) calculated height 0x1 does not match configured height 0x2",
             1,
-            List.of(List.of("00", 0, 0, 0), List.of("44 e4", 0, 2, 1))),
+            List.of(List.of("00", 0, 0x80, 0), List.of("44 e4", 0, 2, 1))),
         Arguments.of(
             "underflow 3",
             "Section return (RETF) calculated height 0x1 does not match configured height 0x2",
             1,
-            List.of(List.of("00", 0, 0, 0), List.of("e10003 44 80 e4 30 e4", 1, 2, 2))));
+            List.of(List.of("00", 0, 0x80, 0), List.of("e10003 44 80 e4 30 e4", 1, 2, 2))));
   }
 
   static Stream<Arguments> stackUnreachable() {
@@ -772,32 +803,32 @@ class CodeV1Test {
             "Max stack not changed by unreachable code",
             "Dead code detected in section 0",
             0,
-            List.of(List.of("30 50 00 30 30 30 50 50 50 00", 0, 0, 1))),
+            List.of(List.of("30 50 00 30 30 30 50 50 50 00", 0, 0x80, 1))),
         Arguments.of(
             "Max stack not changed by unreachable code RETf",
             "Dead code detected in section 0",
             0,
-            List.of(List.of("30 50 e4 30 30 30 50 50 50 00", 0, 0, 1))),
+            List.of(List.of("30 50 e4 30 30 30 50 50 50 00", 0, 0x80, 1))),
         Arguments.of(
             "Max stack not changed by unreachable code RJUMP",
             "Dead code detected in section 0",
             0,
-            List.of(List.of("30 50 e00006 30 30 30 50 50 50 00", 0, 0, 1))),
+            List.of(List.of("30 50 e00006 30 30 30 50 50 50 00", 0, 0x80, 1))),
         Arguments.of(
             "Stack underflow in unreachable code",
             "Dead code detected in section 0",
             0,
-            List.of(List.of("30 50 00 50 00", 0, 0, 1))),
+            List.of(List.of("30 50 00 50 00", 0, 0x80, 1))),
         Arguments.of(
             "Stack underflow in unreachable code RETF",
             "Dead code detected in section 0",
             0,
-            List.of(List.of("30 50 e4 50 00", 0, 0, 1))),
+            List.of(List.of("30 50 e4 50 00", 0, 0x80, 1))),
         Arguments.of(
             "Stack underflow in unreachable code RJUMP",
             "Dead code detected in section 0",
             0,
-            List.of(List.of("30 50 e00001 50 00", 0, 0, 1))));
+            List.of(List.of("30 50 e00001 50 00", 0, 0x80, 1))));
   }
 
   static Stream<Arguments> stackHeight() {
@@ -806,12 +837,12 @@ class CodeV1Test {
             "Stack height mismatch backwards",
             "Jump into code stack height (0) does not match previous value (1)",
             0,
-            List.of(List.of("30 e0fffc00", 0, 0, 1))),
+            List.of(List.of("30 e0fffc00", 0, 0x80, 1))),
         Arguments.of(
             "Stack height mismatch forwards",
             "Jump into code stack height (3) does not match previous value (0)",
             0,
-            List.of(List.of("30e10003303030303000", 0, 0, 2))));
+            List.of(List.of("30e10003303030303000", 0, 0x80, 2))));
   }
 
   static Stream<Arguments> invalidInstructions() {
@@ -823,6 +854,6 @@ class CodeV1Test {
                     String.format("Invalid opcode %02x", opcode),
                     String.format("Invalid Instruction 0x%02x", opcode),
                     0,
-                    List.of(List.of(String.format("0x%02x", opcode), 0, 0, 0))));
+                    List.of(List.of(String.format("0x%02x", opcode), 0, 0x80, 0))));
   }
 }

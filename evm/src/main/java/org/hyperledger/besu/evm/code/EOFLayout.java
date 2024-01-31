@@ -304,6 +304,13 @@ public record EOFLayout(
       }
       codeSections[i] =
           new CodeSection(codeSectionSize, typeData[i][0], typeData[i][1], typeData[i][2], pos);
+      if (i == 0 && typeData[0][1] != 0x80) {
+        return invalidLayout(
+            container,
+            version,
+            "Code section at zero expected non-returning flag, but had return stack of "
+                + typeData[0][1]);
+      }
       pos += codeSectionSize;
     }
 

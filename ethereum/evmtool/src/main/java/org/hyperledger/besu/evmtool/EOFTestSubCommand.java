@@ -99,7 +99,7 @@ public class EOFTestSubCommand implements Runnable {
           final File file = new File(fileName);
           if (file.isFile()) {
             final Map<String, EOFTestCaseSpec> eofTests = eofTestMapper.readValue(file, javaType);
-            executeEOFTest(eofTests);
+            executeEOFTest(file.toString(), eofTests);
           } else {
             parentCommand.out.println("File not found: " + fileName);
           }
@@ -112,7 +112,7 @@ public class EOFTestSubCommand implements Runnable {
           } else {
             eofTests = eofTestMapper.readValue(eofTestFile.toFile(), javaType);
           }
-          executeEOFTest(eofTests);
+          executeEOFTest(eofTestFile.toString(), eofTests);
         }
       }
     } catch (final JsonProcessingException jpe) {
@@ -124,14 +124,15 @@ public class EOFTestSubCommand implements Runnable {
   }
 
   record TestExecutionResult(
+      String fileName,
       String group,
       String name,
       String fork,
-      boolean passed,
+      boolean pass,
       String expectedError,
       String actualError) {}
 
-  private void executeEOFTest(final Map<String, EOFTestCaseSpec> eofTests) {
+  private void executeEOFTest(final String fileName, final Map<String, EOFTestCaseSpec> eofTests) {
     List<TestExecutionResult> results = new ArrayList<>();
 
     for (var testGroup : eofTests.entrySet()) {
@@ -152,6 +153,7 @@ public class EOFTestSubCommand implements Runnable {
           if (evmVersion == null) {
             results.add(
                 new TestExecutionResult(
+                        fileName,
                     groupName,
                     testName,
                     expectedForkName,
@@ -169,6 +171,7 @@ public class EOFTestSubCommand implements Runnable {
           }
           results.add(
               new TestExecutionResult(
+                      fileName,
                   groupName,
                   testName,
                   expectedForkName,

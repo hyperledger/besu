@@ -33,6 +33,8 @@ public final class CodeSection {
   final int maxStackHeight;
   /** The byte offset from the beginning of the container that the section starts at */
   final int entryPoint;
+  /** Is this a returing code section (i.e. contains RETF or JUMPF into a returning section)? */
+  final boolean returning;
 
   /**
    * Instantiates a new Code section.
@@ -51,7 +53,13 @@ public final class CodeSection {
       final int entryPoint) {
     this.length = length;
     this.inputs = inputs;
-    this.outputs = outputs;
+    if (outputs == 0x80) {
+      this.outputs = 0;
+      returning = false;
+    } else {
+      this.outputs = outputs;
+      returning = true;
+    }
     this.maxStackHeight = maxStackHeight;
     this.entryPoint = entryPoint;
   }
@@ -81,6 +89,15 @@ public final class CodeSection {
    */
   public int getOutputs() {
     return outputs;
+  }
+
+  /**
+   * Does this code seciton have a RETF return anywhere?
+   *
+   * @return returning
+   */
+  public boolean isReturning() {
+    return returning;
   }
 
   /**

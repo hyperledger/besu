@@ -93,6 +93,6 @@ public class CodeInvalid implements Code {
 
   @Override
   public int getEofVersion() {
-    return -1;
+    return Integer.MAX_VALUE;
   }
 }
