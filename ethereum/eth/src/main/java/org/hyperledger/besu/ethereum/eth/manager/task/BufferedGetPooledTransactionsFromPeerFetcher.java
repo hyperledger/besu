@@ -92,7 +92,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
                     .setMessage("Got {} transactions of {} hashes requested from peer {}...")
                     .addArgument(retrievedTransactions::size)
                     .addArgument(task.getTransactionHashes()::size)
-                    .addArgument(peer::getShortNodeId)
+                    .addArgument(peer::getLoggableId)
                     .log();
 
                 transactionPool.addRemoteTransactions(retrievedTransactions);
@@ -121,7 +121,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
     LOG.atTrace()
         .setMessage(
             "Transaction hashes to request from peer {}... fresh count {}, already seen count {}")
-        .addArgument(peer::getShortNodeId)
+        .addArgument(peer::getLoggableId)
         .addArgument(toRetrieve::size)
         .addArgument(alreadySeenCount)
         .log();
