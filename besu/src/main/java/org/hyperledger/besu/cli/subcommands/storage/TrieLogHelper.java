@@ -87,6 +87,10 @@ public class TrieLogHelper {
     }
 
     final long numberOfBatches = calculateNumberOfBatches(layersToRetain);
+    LOG.info(
+        "Starting pruning: retain {} trie logs, processing in {} batches...",
+        layersToRetain,
+        numberOfBatches);
 
     processTrieLogBatches(
         rootWorldStateStorage,

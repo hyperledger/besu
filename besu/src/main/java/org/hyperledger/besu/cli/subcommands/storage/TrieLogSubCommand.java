@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.subcommands.storage;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.cli.subcommands.storage.RocksDbHelper.formatOutputSize;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_LOG_STORAGE;
 
@@ -133,9 +134,9 @@ public class TrieLogSubCommand implements Runnable {
           Paths.get(
               TrieLogSubCommand.parentCommand.parentCommand.dataDir().toAbsolutePath().toString());
 
-      LOG.info("Calculating trie logs size before...");
+      LOG.info("Estimating trie logs size before pruning...");
       long sizeBefore = estimatedSizeOfTrieLogs();
-      LOG.info("Trie logs size before: {}", RocksDbHelper.formatOutputSize(sizeBefore));
+      LOG.info("Estimated trie logs size before pruning: {}", formatOutputSize(sizeBefore));
 
       final TrieLogHelper trieLogHelper = new TrieLogHelper();
       boolean success =
@@ -146,15 +147,20 @@ public class TrieLogSubCommand implements Runnable {
               dataDirectoryPath);
 
       if (success) {
-        LOG.info("Finished pruning - recalculating size...");
+        LOG.info("Finished pruning. Re-estimating trie logs size...");
         final long sizeAfter = estimatedSizeOfTrieLogs();
-        LOG.info("Trie logs size after: {}", RocksDbHelper.formatOutputSize(sizeAfter));
+        LOG.info(
+            "Estimated trie logs size after pruning: {} (0 B estimate is normal when using default settings)",
+            formatOutputSize(sizeAfter));
         long estimatedSaving = sizeBefore - sizeAfter;
+        LOG.info(
+            "Prune ran successfully. We estimate you freed up {}! \uD83D\uDE80",
+            formatOutputSize(estimatedSaving));
         spec.commandLine()
             .getOut()
             .printf(
                 "Prune ran successfully. We estimate you freed up %s! \uD83D\uDE80\n",
-                RocksDbHelper.formatOutputSize(estimatedSaving));
+                formatOutputSize(estimatedSaving));
       }
     }
 
