@@ -184,7 +184,7 @@ public class TrieLogSubCommand implements Runnable {
                       Long.parseLong(
                           rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size")));
                 }
-              } catch (RocksDBException e) {
+              } catch (RocksDBException | NumberFormatException e) {
                 throw new RuntimeException(e);
               }
             });
