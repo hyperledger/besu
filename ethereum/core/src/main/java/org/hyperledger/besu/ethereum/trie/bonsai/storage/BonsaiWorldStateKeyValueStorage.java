@@ -110,7 +110,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   @Override
-  public Optional<Bytes> getCode(final Hash codeHash, final Hash accountHash) {
+  public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
@@ -323,7 +323,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public interface BonsaiUpdater extends WorldStateStorage.Updater {
-    BonsaiUpdater removeCode(final Hash accountHash, final Hash codeHash);
+    BonsaiUpdater removeCode(final Hash accountHash);
 
     BonsaiUpdater removeAccountInfoState(final Hash accountHash);
 
@@ -356,14 +356,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     }
 
     @Override
-    public BonsaiUpdater removeCode(final Hash accountHash, final Hash codeHash) {
-      flatDbStrategy.removeFlatCode(composedWorldStateTransaction, accountHash, codeHash);
+    public BonsaiUpdater removeCode(final Hash accountHash) {
+      flatDbStrategy.removeFlatCode(composedWorldStateTransaction, accountHash);
       return this;
     }
 
     @Override
-    public BonsaiUpdater putCode(final Hash accountHash, final Hash codeHash, final Bytes code) {
-      if (code.isEmpty()) {
+    public BonsaiUpdater putCode(final Hash accountHash, final Bytes32 codeHash, final Bytes code) {
+      if (code.size() == 0) {
         // Don't save empty values
         return this;
       }
@@ -379,7 +379,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
     @Override
     public BonsaiUpdater putAccountInfoState(final Hash accountHash, final Bytes accountValue) {
-      if (accountValue.isEmpty()) {
+      if (accountValue.size() == 0) {
         // Don't save empty values
         return this;
       }

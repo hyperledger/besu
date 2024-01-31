@@ -53,12 +53,9 @@ public abstract class FlatDbStrategy {
 
   protected final Counter getStorageValueCounter;
   protected final Counter getStorageValueFlatDatabaseCounter;
-  protected final CodeStorageStrategy codeStorageStrategy;
 
-  public FlatDbStrategy(
-      final MetricsSystem metricsSystem, final CodeStorageStrategy codeStorageStrategy) {
+  public FlatDbStrategy(final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
-    this.codeStorageStrategy = codeStorageStrategy;
 
     getAccountCounter =
         metricsSystem.createCounter(
@@ -110,11 +107,14 @@ public abstract class FlatDbStrategy {
    * Retrieves the code data for the given code hash and account hash.
    */
   public Optional<Bytes> getFlatCode(
-      final Hash codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
+      final Bytes32 codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
-      return codeStorageStrategy.getFlatCode(codeHash, accountHash, storage);
+      return storage
+          .get(CODE_STORAGE, accountHash.toArrayUnsafe())
+          .map(Bytes::wrap)
+          .filter(b -> Hash.hash(b).equals(codeHash));
     }
   }
 
@@ -162,10 +162,8 @@ public abstract class FlatDbStrategy {
    * Removes code for the given account hash.
    */
   public void removeFlatCode(
-      final SegmentedKeyValueStorageTransaction transaction,
-      final Hash accountHash,
-      final Hash codeHash) {
-    codeStorageStrategy.removeFlatCode(transaction, accountHash, codeHash);
+      final SegmentedKeyValueStorageTransaction transaction, final Hash accountHash) {
+    transaction.remove(CODE_STORAGE, accountHash.toArrayUnsafe());
   }
 
   /*
@@ -174,9 +172,9 @@ public abstract class FlatDbStrategy {
   public void putFlatCode(
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
-      final Hash codeHash,
+      final Bytes32 codeHash,
       final Bytes code) {
-    codeStorageStrategy.putFlatCode(transaction, accountHash, codeHash, code);
+    transaction.put(CODE_STORAGE, accountHash.toArrayUnsafe(), code.toArrayUnsafe());
   }
 
   public void clearAll(final SegmentedKeyValueStorage storage) {

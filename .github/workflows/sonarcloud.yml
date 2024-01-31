@@ -14,24 +14,26 @@ permissions:
 jobs:
   Analysis:
     runs-on: ubuntu-latest
-    if: github.repository == 'hyperledger/besu'
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v4.0.0
         with:
           distribution: 'temurin'
           java-version: '17'
-          cache: gradle
       - name: Cache SonarCloud packages
         uses: actions/cache@v3
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
+      - name: setup gradle
+        uses: gradle/gradle-build-action@v2.12.0
       - name: Build and analyze
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./gradlew build sonarqube --continue --info
+          SONAR_ORGANIZATION: ${{ env.SONAR_ORGANIZATION }}
+          SONAR_PROJECT_KEY: $ {{ env.SONAR_PROJECT_KEY }}
+        run: ./gradlew build sonarqube --continue --info -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
