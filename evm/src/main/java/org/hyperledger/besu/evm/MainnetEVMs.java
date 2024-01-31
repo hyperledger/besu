@@ -24,6 +24,7 @@ import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
@@ -896,7 +897,7 @@ public class MainnetEVMs {
    * @return the evm
    */
   public static EVM prague(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return prague(new CancunGasCalculator(), chainId, evmConfiguration);
+    return prague(new PragueGasCalculator(), chainId, evmConfiguration);
   }
 
   /**
@@ -963,7 +964,7 @@ public class MainnetEVMs {
    * @return the evm
    */
   public static EVM osaka(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return osaka(new CancunGasCalculator(), chainId, evmConfiguration);
+    return osaka(new PragueGasCalculator(), chainId, evmConfiguration);
   }
 
   /**
@@ -1030,7 +1031,7 @@ public class MainnetEVMs {
    * @return the evm
    */
   public static EVM bogota(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return bogota(new CancunGasCalculator(), chainId, evmConfiguration);
+    return bogota(new PragueGasCalculator(), chainId, evmConfiguration);
   }
 
   /**
@@ -1098,7 +1099,7 @@ public class MainnetEVMs {
    * @return the evm
    */
   public static EVM futureEips(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return futureEips(new CancunGasCalculator(), chainId, evmConfiguration);
+    return futureEips(new PragueGasCalculator(), chainId, evmConfiguration);
   }
 
   /**
@@ -1174,7 +1175,7 @@ public class MainnetEVMs {
    */
   public static EVM experimentalEips(
       final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return experimentalEips(new CancunGasCalculator(), chainId, evmConfiguration);
+    return experimentalEips(new PragueGasCalculator(), chainId, evmConfiguration);
   }
 
   /**

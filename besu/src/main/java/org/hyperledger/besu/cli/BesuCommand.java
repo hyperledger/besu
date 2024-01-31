@@ -24,7 +24,6 @@ import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
-import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService.EPHEMERAL_JWT_FILE;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
@@ -44,7 +43,6 @@ import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.config.ProfileName;
 import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
-import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
@@ -52,10 +50,12 @@ import org.hyperledger.besu.cli.options.MiningOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
+import org.hyperledger.besu.cli.options.stable.GraphQlOptions;
 import org.hyperledger.besu.cli.options.stable.JsonRpcHttpOptions;
 import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
 import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.stable.P2PTLSConfigOptions;
+import org.hyperledger.besu.cli.options.stable.PermissionsOptions;
 import org.hyperledger.besu.cli.options.stable.RpcWebsocketOptions;
 import org.hyperledger.besu.cli.options.unstable.ChainPruningOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
@@ -130,8 +130,6 @@ import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
-import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBuilder;
-import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -360,6 +358,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Identification for this node in the Client ID",
       arity = "1")
   private final Optional<String> identityString = Optional.empty();
+
   // P2P Discovery Option Group
   @CommandLine.ArgGroup(validate = false, heading = "@|bold P2P Discovery Options|@%n")
   P2PDiscoveryOptionGroup p2PDiscoveryOptionGroup = new P2PDiscoveryOptionGroup();
@@ -557,35 +556,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Path kzgTrustedSetupFile = null;
 
   @CommandLine.ArgGroup(validate = false, heading = "@|bold GraphQL Options|@%n")
-  GraphQlOptionGroup graphQlOptionGroup = new GraphQlOptionGroup();
-
-  static class GraphQlOptionGroup {
-    @Option(
-        names = {"--graphql-http-enabled"},
-        description = "Set to start the GraphQL HTTP service (default: ${DEFAULT-VALUE})")
-    private final Boolean isGraphQLHttpEnabled = false;
-
-    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-    @Option(
-        names = {"--graphql-http-host"},
-        paramLabel = MANDATORY_HOST_FORMAT_HELP,
-        description = "Host for GraphQL HTTP to listen on (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private String graphQLHttpHost;
-
-    @Option(
-        names = {"--graphql-http-port"},
-        paramLabel = MANDATORY_PORT_FORMAT_HELP,
-        description = "Port for GraphQL HTTP to listen on (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private final Integer graphQLHttpPort = DEFAULT_GRAPHQL_HTTP_PORT;
-
-    @Option(
-        names = {"--graphql-http-cors-origins"},
-        description = "Comma separated origin domain URLs for CORS validation (default: none)")
-    protected final CorsAllowedOriginsProperty graphQLHttpCorsAllowedOrigins =
-        new CorsAllowedOriginsProperty();
-  }
+  GraphQlOptions graphQlOptions = new GraphQlOptions();
 
   // Engine JSON-PRC Options
   @CommandLine.ArgGroup(validate = false, heading = "@|bold Engine JSON-RPC Options|@%n")
@@ -610,13 +581,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         paramLabel = MANDATORY_FILE_FORMAT_HELP,
         description = "Path to file containing shared secret key for JWT signature verification")
     private final Path engineJwtKeyFile = null;
-
-    @Option(
-        names = {"--engine-jwt-enabled"},
-        description = "deprecated option, engine jwt auth is enabled by default",
-        hidden = true)
-    @SuppressWarnings({"FieldCanBeFinal", "UnusedVariable"})
-    private final Boolean deprecatedIsEngineAuthEnabled = true;
 
     @Option(
         names = {"--engine-jwt-disabled"},
@@ -825,62 +789,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   // Permission Option Group
   @CommandLine.ArgGroup(validate = false, heading = "@|bold Permissions Options|@%n")
-  PermissionsOptionGroup permissionsOptionGroup = new PermissionsOptionGroup();
-
-  static class PermissionsOptionGroup {
-    @Option(
-        names = {"--permissions-nodes-config-file-enabled"},
-        description = "Enable node level permissions (default: ${DEFAULT-VALUE})")
-    private final Boolean permissionsNodesEnabled = false;
-
-    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-    @CommandLine.Option(
-        names = {"--permissions-nodes-config-file"},
-        description =
-            "Node permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
-    private String nodePermissionsConfigFile = null;
-
-    @Option(
-        names = {"--permissions-accounts-config-file-enabled"},
-        description = "Enable account level permissions (default: ${DEFAULT-VALUE})")
-    private final Boolean permissionsAccountsEnabled = false;
-
-    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-    @CommandLine.Option(
-        names = {"--permissions-accounts-config-file"},
-        description =
-            "Account permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
-    private String accountPermissionsConfigFile = null;
-
-    @Option(
-        names = {"--permissions-nodes-contract-address"},
-        description = "Address of the node permissioning smart contract",
-        arity = "1")
-    private final Address permissionsNodesContractAddress = null;
-
-    @Option(
-        names = {"--permissions-nodes-contract-version"},
-        description = "Version of the EEA Node Permissioning interface (default: ${DEFAULT-VALUE})")
-    private final Integer permissionsNodesContractVersion = 1;
-
-    @Option(
-        names = {"--permissions-nodes-contract-enabled"},
-        description =
-            "Enable node level permissions via smart contract (default: ${DEFAULT-VALUE})")
-    private final Boolean permissionsNodesContractEnabled = false;
-
-    @Option(
-        names = {"--permissions-accounts-contract-address"},
-        description = "Address of the account permissioning smart contract",
-        arity = "1")
-    private final Address permissionsAccountsContractAddress = null;
-
-    @Option(
-        names = {"--permissions-accounts-contract-enabled"},
-        description =
-            "Enable account level permissions via smart contract (default: ${DEFAULT-VALUE})")
-    private final Boolean permissionsAccountsContractEnabled = false;
-  }
+  PermissionsOptions permissionsOptions = new PermissionsOptions();
 
   @Option(
       names = {"--revert-reason-enabled"},
@@ -929,7 +838,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Option(
       names = {"--pruning-blocks-retained"},
-      defaultValue = "1024",
       paramLabel = "<INTEGER>",
       description =
           "Minimum number of recent blocks for which to keep entire world state (default: ${DEFAULT-VALUE})",
@@ -938,7 +846,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Option(
       names = {"--pruning-block-confirmations"},
-      defaultValue = "10",
       paramLabel = "<INTEGER>",
       description =
           "Minimum number of confirmations on a block before marking begins (default: ${DEFAULT-VALUE})",
@@ -1544,7 +1451,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.info("Using the Java implementation of the blake2bf algorithm");
     }
 
-    if (getActualGenesisConfigOptions().getCancunTime().isPresent()) {
+    if (getActualGenesisConfigOptions().getCancunTime().isPresent()
+        || getActualGenesisConfigOptions().getPragueTime().isPresent()) {
       if (kzgTrustedSetupFile != null) {
         KZGPointEvalPrecompiledContract.init(kzgTrustedSetupFile);
       } else {
@@ -1572,6 +1480,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validatePostMergeCheckpointBlockRequirements();
     validateTransactionPoolOptions();
     validateDataStorageOptions();
+    validateGraphQlOptions();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
     pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
   }
@@ -1615,6 +1524,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } catch (final UnknownHostException | SocketException e) {
       throw new ParameterException(commandLine, failMessage, e);
     }
+  }
+
+  private void validateGraphQlOptions() {
+    graphQlOptions.validate(logger, commandLine);
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -1811,7 +1724,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               engineRPCOptionGroup.engineRpcPort, engineRPCOptionGroup.engineHostsAllowlist);
     }
     p2pTLSConfiguration = p2pTLSConfigOptions.p2pTLSConfiguration(commandLine);
-    graphQLConfiguration = graphQLConfiguration();
+    graphQLConfiguration =
+        graphQlOptions.graphQLConfiguration(
+            hostsAllowlist,
+            p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress(),
+            unstableRPCOptions.getHttpTimeoutSec());
     webSocketConfiguration =
         rpcWebsocketOptions.webSocketConfiguration(
             hostsAllowlist,
@@ -1850,6 +1767,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     logger.info(generateConfigurationOverview());
     logger.info("Security Module: {}", securityModuleName);
+  }
+
+  private Optional<PermissioningConfiguration> permissioningConfiguration() throws Exception {
+    return permissionsOptions.permissioningConfiguration(
+        jsonRpcHttpOptions,
+        rpcWebsocketOptions,
+        getEnodeDnsConfiguration(),
+        dataDir(),
+        logger,
+        commandLine);
   }
 
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration(
@@ -1951,28 +1878,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final Optional<PluginTransactionValidatorService> txSValidatorService =
         besuPluginContext.getService(PluginTransactionValidatorService.class);
     return txSValidatorService.map(PluginTransactionValidatorService::get).orElse(null);
-  }
-
-  private GraphQLConfiguration graphQLConfiguration() {
-
-    CommandLineUtils.checkOptionDependencies(
-        logger,
-        commandLine,
-        "--graphql-http-enabled",
-        !graphQlOptionGroup.isGraphQLHttpEnabled,
-        asList("--graphql-http-cors-origins", "--graphql-http-host", "--graphql-http-port"));
-    final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();
-    graphQLConfiguration.setEnabled(graphQlOptionGroup.isGraphQLHttpEnabled);
-    graphQLConfiguration.setHost(
-        Strings.isNullOrEmpty(graphQlOptionGroup.graphQLHttpHost)
-            ? p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress()
-            : graphQlOptionGroup.graphQLHttpHost);
-    graphQLConfiguration.setPort(graphQlOptionGroup.graphQLHttpPort);
-    graphQLConfiguration.setHostsAllowlist(hostsAllowlist);
-    graphQLConfiguration.setCorsAllowedDomains(graphQlOptionGroup.graphQLHttpCorsAllowedOrigins);
-    graphQLConfiguration.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
-
-    return graphQLConfiguration;
   }
 
   private JsonRpcConfiguration createEngineJsonRpcConfiguration(
@@ -2089,106 +1994,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .hostsAllowlist(hostsAllowlist)
         .prometheusJob(metricsOptionGroup.metricsPrometheusJob)
         .build();
-  }
-
-  private Optional<PermissioningConfiguration> permissioningConfiguration() throws Exception {
-    if (!(localPermissionsEnabled() || contractPermissionsEnabled())) {
-      if (jsonRpcHttpOptions.getRpcHttpApis().contains(RpcApis.PERM.name())
-          || rpcWebsocketOptions.getRpcWsApis().contains(RpcApis.PERM.name())) {
-        logger.warn(
-            "Permissions are disabled. Cannot enable PERM APIs when not using Permissions.");
-      }
-      return Optional.empty();
-    }
-
-    final Optional<LocalPermissioningConfiguration> localPermissioningConfigurationOptional;
-    if (localPermissionsEnabled()) {
-      final Optional<String> nodePermissioningConfigFile =
-          Optional.ofNullable(permissionsOptionGroup.nodePermissionsConfigFile);
-      final Optional<String> accountPermissioningConfigFile =
-          Optional.ofNullable(permissionsOptionGroup.accountPermissionsConfigFile);
-
-      final LocalPermissioningConfiguration localPermissioningConfiguration =
-          PermissioningConfigurationBuilder.permissioningConfiguration(
-              permissionsOptionGroup.permissionsNodesEnabled,
-              getEnodeDnsConfiguration(),
-              nodePermissioningConfigFile.orElse(getDefaultPermissioningFilePath()),
-              permissionsOptionGroup.permissionsAccountsEnabled,
-              accountPermissioningConfigFile.orElse(getDefaultPermissioningFilePath()));
-
-      localPermissioningConfigurationOptional = Optional.of(localPermissioningConfiguration);
-    } else {
-      if (permissionsOptionGroup.nodePermissionsConfigFile != null
-          && !permissionsOptionGroup.permissionsNodesEnabled) {
-        logger.warn(
-            "Node permissioning config file set {} but no permissions enabled",
-            permissionsOptionGroup.nodePermissionsConfigFile);
-      }
-
-      if (permissionsOptionGroup.accountPermissionsConfigFile != null
-          && !permissionsOptionGroup.permissionsAccountsEnabled) {
-        logger.warn(
-            "Account permissioning config file set {} but no permissions enabled",
-            permissionsOptionGroup.accountPermissionsConfigFile);
-      }
-      localPermissioningConfigurationOptional = Optional.empty();
-    }
-
-    final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
-        SmartContractPermissioningConfiguration.createDefault();
-
-    if (Boolean.TRUE.equals(permissionsOptionGroup.permissionsNodesContractEnabled)) {
-      if (permissionsOptionGroup.permissionsNodesContractAddress == null) {
-        throw new ParameterException(
-            this.commandLine,
-            "No node permissioning contract address specified. Cannot enable smart contract based node permissioning.");
-      } else {
-        smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(
-            permissionsOptionGroup.permissionsNodesContractEnabled);
-        smartContractPermissioningConfiguration.setNodeSmartContractAddress(
-            permissionsOptionGroup.permissionsNodesContractAddress);
-        smartContractPermissioningConfiguration.setNodeSmartContractInterfaceVersion(
-            permissionsOptionGroup.permissionsNodesContractVersion);
-      }
-    } else if (permissionsOptionGroup.permissionsNodesContractAddress != null) {
-      logger.warn(
-          "Node permissioning smart contract address set {} but smart contract node permissioning is disabled.",
-          permissionsOptionGroup.permissionsNodesContractAddress);
-    }
-
-    if (Boolean.TRUE.equals(permissionsOptionGroup.permissionsAccountsContractEnabled)) {
-      if (permissionsOptionGroup.permissionsAccountsContractAddress == null) {
-        throw new ParameterException(
-            this.commandLine,
-            "No account permissioning contract address specified. Cannot enable smart contract based account permissioning.");
-      } else {
-        smartContractPermissioningConfiguration.setSmartContractAccountAllowlistEnabled(
-            permissionsOptionGroup.permissionsAccountsContractEnabled);
-        smartContractPermissioningConfiguration.setAccountSmartContractAddress(
-            permissionsOptionGroup.permissionsAccountsContractAddress);
-      }
-    } else if (permissionsOptionGroup.permissionsAccountsContractAddress != null) {
-      logger.warn(
-          "Account permissioning smart contract address set {} but smart contract account permissioning is disabled.",
-          permissionsOptionGroup.permissionsAccountsContractAddress);
-    }
-
-    final PermissioningConfiguration permissioningConfiguration =
-        new PermissioningConfiguration(
-            localPermissioningConfigurationOptional,
-            Optional.of(smartContractPermissioningConfiguration));
-
-    return Optional.of(permissioningConfiguration);
-  }
-
-  private boolean localPermissionsEnabled() {
-    return permissionsOptionGroup.permissionsAccountsEnabled
-        || permissionsOptionGroup.permissionsNodesEnabled;
-  }
-
-  private boolean contractPermissionsEnabled() {
-    return permissionsOptionGroup.permissionsNodesContractEnabled
-        || permissionsOptionGroup.permissionsAccountsContractEnabled;
   }
 
   private PrivacyParameters privacyParameters() {
@@ -2661,12 +2466,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .orElseGet(() -> KeyPairUtil.getDefaultKeyFile(dataDir()));
   }
 
-  private String getDefaultPermissioningFilePath() {
-    return dataDir()
-        + System.getProperty("file.separator")
-        + DefaultCommandValues.PERMISSIONING_CONFIG_LOCATION;
-  }
-
   /**
    * Metrics System used by Besu
    *
@@ -2790,9 +2589,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     addPortIfEnabled(
         effectivePorts, p2PDiscoveryOptionGroup.p2pPort, p2PDiscoveryOptionGroup.p2pEnabled);
     addPortIfEnabled(
-        effectivePorts,
-        graphQlOptionGroup.graphQLHttpPort,
-        graphQlOptionGroup.isGraphQLHttpEnabled);
+        effectivePorts, graphQlOptions.getGraphQLHttpPort(), graphQlOptions.isGraphQLHttpEnabled());
     addPortIfEnabled(
         effectivePorts, jsonRpcHttpOptions.getRpcHttpPort(), jsonRpcHttpOptions.isRpcHttpEnabled());
     addPortIfEnabled(
