@@ -239,7 +239,6 @@ public class EthProtocolManagerTestUtil {
             Bytes.random(64),
             25,
             25,
-            25,
             false);
     final EthMessages messages = new EthMessages();
 
