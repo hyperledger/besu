@@ -65,6 +65,7 @@ public class PrivGetLogsAcceptanceTest extends ParameterizedEnclaveTestBase {
             restriction == UNRESTRICTED);
 
     privacyCluster.start(node);
+    node.verify(priv.syncingStatus(false));
   }
 
   @Test

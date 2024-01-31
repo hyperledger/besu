@@ -62,4 +62,8 @@ public class PrivacyTransactions {
   public PrivGetTransactionReceiptTransaction getTransactionReceipt(final Hash transactionHash) {
     return new PrivGetTransactionReceiptTransaction(transactionHash);
   }
+
+  public PrivSyncingTransactions syncing() {
+    return new PrivSyncingTransactions();
+  }
 }

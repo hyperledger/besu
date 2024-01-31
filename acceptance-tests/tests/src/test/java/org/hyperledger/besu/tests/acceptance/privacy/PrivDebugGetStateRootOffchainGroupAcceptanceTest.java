@@ -72,6 +72,9 @@ public class PrivDebugGetStateRootOffchainGroupAcceptanceTest extends Parameteri
             "0xBB");
 
     privacyCluster.start(aliceNode, bobNode);
+
+    aliceNode.verify(priv.syncingStatus(false));
+    bobNode.verify(priv.syncingStatus(false));
   }
 
   @Test

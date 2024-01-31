@@ -55,6 +55,7 @@ public class PrivGetCodeAcceptanceTest extends ParameterizedEnclaveTestBase {
             restriction == UNRESTRICTED);
 
     privacyCluster.start(alice);
+    alice.verify(priv.syncingStatus(false));
   }
 
   @Test
