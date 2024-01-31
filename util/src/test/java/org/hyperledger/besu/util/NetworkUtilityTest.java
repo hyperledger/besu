@@ -48,4 +48,27 @@ public class NetworkUtilityTest {
     assertThat(NetworkUtility.isLocalhostAddress("192.168.1.1")).isFalse();
     assertThat(NetworkUtility.isLocalhostAddress("::ffff:c0a8:101")).isFalse();
   }
+
+  @Test
+  public void assertIpV4Address() {
+    assertThat(NetworkUtility.isIpV4Address("127.0.0.1")).isTrue();
+    assertThat(NetworkUtility.isIpV4Address("10.0.0.0")).isTrue();
+    assertThat(NetworkUtility.isIpV4Address("172.16.1.1")).isTrue();
+    assertThat(NetworkUtility.isIpV4Address("127.0.0.")).isFalse();
+    assertThat(NetworkUtility.isIpV4Address("256.256.256.256")).isFalse();
+    // ipv6 compatible ipv4 address
+    assertThat(NetworkUtility.isIpV4Address("0000:0000:0000:0000:0000:ffff:c0a8:5801")).isTrue();
+    assertThat(NetworkUtility.isIpV4Address("::ffff:c0a8:5801")).isTrue();
+    assertThat(NetworkUtility.isIpV4Address("0:0:0:0:0:ffff:c0a8:5801")).isTrue();
+    assertThat(NetworkUtility.isIpV4Address("0000:0000:0000:0000:0000:ffff:c0a8:5801")).isTrue();
+  }
+
+  @Test
+  public void assertIpV6Address() {
+    assertThat(NetworkUtility.isIpV6Address("::1")).isTrue();
+    assertThat(NetworkUtility.isIpV6Address("::")).isTrue();
+    assertThat(NetworkUtility.isIpV6Address("2001:db8:3333:4444:5555:6666:7777:8888")).isTrue();
+    assertThat(NetworkUtility.isIpV6Address("00:00::00:00::00:00")).isFalse();
+    assertThat(NetworkUtility.isIpV6Address("00:00::00:00::00:00")).isFalse();
+  }
 }

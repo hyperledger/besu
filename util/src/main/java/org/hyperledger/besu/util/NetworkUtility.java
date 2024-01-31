@@ -16,6 +16,7 @@ package org.hyperledger.besu.util;
 
 import java.io.IOException;
 import java.net.DatagramSocket;
+import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -26,6 +27,7 @@ import java.net.UnknownHostException;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
+import com.google.common.net.InetAddresses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -193,5 +195,21 @@ public class NetworkUtility {
    */
   public static boolean isPortAvailable(final int port) {
     return isPortAvailableForTcp(port) && isPortAvailableForUdp(port);
+  }
+
+  public static boolean isIpV4Address(final String hostAddress) {
+    try {
+      return InetAddresses.forString(hostAddress) instanceof Inet4Address;
+    } catch (final IllegalArgumentException e) {
+      return false;
+    }
+  }
+
+  public static boolean isIpV6Address(final String hostAddress) {
+    try {
+      return InetAddresses.forString(hostAddress) instanceof Inet6Address;
+    } catch (final IllegalArgumentException e) {
+      return false;
+    }
   }
 }

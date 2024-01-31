@@ -40,10 +40,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.NetworkUtility;
 
-import java.net.Inet6Address;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -328,19 +325,7 @@ public abstract class PeerDiscoveryAgent {
         .filter(InetAddresses::isInetAddress)
         .filter(h -> !NetworkUtility.isUnspecifiedAddress(h))
         .filter(h -> !NetworkUtility.isLocalhostAddress(h))
-        .filter(
-            h -> {
-              // filter ipv6 addresses if ipv6 is not available
-              if (isIpv6Available) {
-                return true;
-              } else {
-                try {
-                  return !(InetAddress.getByName(h) instanceof Inet6Address);
-                } catch (UnknownHostException e) {
-                  return false;
-                }
-              }
-            })
+        .filter(h -> isIpv6Available || !NetworkUtility.isIpV6Address(h))
         .stream()
         .peek(
             h ->
