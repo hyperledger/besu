@@ -51,6 +51,12 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
     // TODO JF Part of #5388 add reference counting so that code can be removed
   }
 
+  public static boolean isCodeHashValue(final byte[] key, final byte[] value) {
+    final Bytes keyWithoutPrefix = Bytes.wrap(key).slice(1);
+    final Hash valueHash = Hash.hash(Bytes.wrap(value));
+    return keyWithoutPrefix.equals(valueHash);
+  }
+
   private byte[] prefixKey(final Bytes prefix, final Bytes key) {
     return Bytes.concatenate(prefix, key).toArrayUnsafe();
   }
