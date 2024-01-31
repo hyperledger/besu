@@ -83,7 +83,6 @@ public class EthPeers {
   private final Subscribers<ConnectCallback> connectCallbacks = Subscribers.create();
   private final Subscribers<DisconnectCallback> disconnectCallbacks = Subscribers.create();
   private final Collection<PendingPeerRequest> pendingRequests = new CopyOnWriteArrayList<>();
-  private final int peerLowerBound;
   private final int peerUpperBound;
   private final int maxRemotelyInitiatedConnections;
   private final Boolean randomPeerPriority;
@@ -104,7 +103,6 @@ public class EthPeers {
       final int maxMessageSize,
       final List<NodeMessagePermissioningProvider> permissioningProviders,
       final Bytes localNodeId,
-      final int peerLowerBound,
       final int peerUpperBound,
       final int maxRemotelyInitiatedConnections,
       final Boolean randomPeerPriority) {
@@ -115,15 +113,10 @@ public class EthPeers {
     this.maxMessageSize = maxMessageSize;
     this.bestPeerComparator = HEAVIEST_CHAIN;
     this.localNodeId = localNodeId;
-    this.peerLowerBound = peerLowerBound;
     this.peerUpperBound = peerUpperBound;
     this.maxRemotelyInitiatedConnections = maxRemotelyInitiatedConnections;
     this.randomPeerPriority = randomPeerPriority;
-    LOG.trace(
-        "MaxPeers: {}, Lower Bound: {}, Max Remote: {}",
-        peerUpperBound,
-        peerLowerBound,
-        maxRemotelyInitiatedConnections);
+    LOG.trace("MaxPeers: {}, Max Remote: {}", peerUpperBound, maxRemotelyInitiatedConnections);
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.ETHEREUM,
         "peer_count",
@@ -169,10 +162,6 @@ public class EthPeers {
       }
       incompleteConnections.put(newConnection, ethPeer);
     }
-  }
-
-  public int getPeerLowerBound() {
-    return peerLowerBound;
   }
 
   @NotNull

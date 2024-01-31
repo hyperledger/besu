@@ -253,7 +253,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).storageProvider(storageProviderArgumentCaptor.capture());
     verify(mockControllerBuilder).gasLimitCalculator(eq(GasLimitCalculator.constant()));
     verify(mockControllerBuilder).maxPeers(eq(maxPeers));
-    verify(mockControllerBuilder).lowerBoundPeers(eq(maxPeers));
     verify(mockControllerBuilder).maxRemotelyInitiatedPeers(eq((int) Math.floor(0.6 * maxPeers)));
     verify(mockControllerBuilder).build();
 
@@ -1143,7 +1142,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void p2pPeerUpperBound_without_p2pPeerLowerBound_shouldSetLowerBoundEqualToUpperBound() {
+  public void p2pPeerUpperBound_without_p2pPeerLowerBound_shouldSetMaxPeers() {
 
     final int maxPeers = 23;
     parseCommand("--p2p-peer-upper-bound", String.valueOf(maxPeers));
@@ -1154,33 +1153,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).maxPeers(intArgumentCaptor.capture());
     assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
 
-    verify(mockControllerBuilder).lowerBoundPeers(intArgumentCaptor.capture());
-    assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
-
     verify(mockRunnerBuilder).build();
-  }
-
-  @Test
-  public void maxpeersSet_p2pPeerLowerBoundSet() {
-
-    final int maxPeers = 123;
-    final int minPeers = 66;
-    parseCommand(
-        "--max-peers",
-        String.valueOf(maxPeers),
-        "--Xp2p-peer-lower-bound",
-        String.valueOf(minPeers));
-
-    verify(mockControllerBuilder).maxPeers(intArgumentCaptor.capture());
-    assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
-
-    verify(mockControllerBuilder).lowerBoundPeers(intArgumentCaptor.capture());
-    assertThat(intArgumentCaptor.getValue()).isEqualTo(minPeers);
-
-    verify(mockRunnerBuilder).build();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3403,20 +3376,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "PoS checkpoint sync can't be used with TTD = 0 and checkpoint totalDifficulty = 0");
-  }
-
-  @Test
-  public void checkP2pPeerLowerBound_isSet() {
-    final int lowerBound = 13;
-    parseCommand("--Xp2p-peer-lower-bound", String.valueOf(lowerBound));
-
-    verify(mockControllerBuilder).lowerBoundPeers(intArgumentCaptor.capture());
-    verify(mockControllerBuilder).build();
-
-    assertThat(intArgumentCaptor.getValue()).isEqualTo(lowerBound);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
