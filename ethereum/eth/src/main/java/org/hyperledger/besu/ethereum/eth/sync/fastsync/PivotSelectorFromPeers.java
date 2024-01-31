@@ -118,7 +118,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
   private boolean canPeerDeterminePivotBlock(final EthPeer peer) {
     LOG.debug(
         "peer {} hasEstimatedHeight {} isFullyValidated? {}",
-        peer.getShortNodeId(),
+        peer.getLoggableId(),
         peer.chainState().hasEstimatedHeight(),
         peer.isFullyValidated());
     return peer.chainState().hasEstimatedHeight() && peer.isFullyValidated();
