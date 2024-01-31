@@ -197,6 +197,12 @@ public class NetworkUtility {
     return isPortAvailableForTcp(port) && isPortAvailableForUdp(port);
   }
 
+
+  /**
+   * Is hostAddress string an ip v4 address
+   * @param hostAddress the host address as a string
+   * @return true if the host address is an ip v4 address
+   */
   public static boolean isIpV4Address(final String hostAddress) {
     try {
       return InetAddresses.forString(hostAddress) instanceof Inet4Address;
@@ -205,6 +211,11 @@ public class NetworkUtility {
     }
   }
 
+  /**
+   * Is hostAddress string an ip v6 address
+   * @param hostAddress the host address as a string
+   * @return true if the host address is an ip v6 address
+   */
   public static boolean isIpV6Address(final String hostAddress) {
     try {
       return InetAddresses.forString(hostAddress) instanceof Inet6Address;
