@@ -690,6 +690,7 @@ public class RunnerBuilder {
               .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
               .allConnectionsSupplier(ethPeers::getAllConnections)
               .allActiveConnectionsSupplier(ethPeers::getAllActiveConnections)
+              .maxPeers(ethPeers.getMaxPeers())
               .build();
         };
 
