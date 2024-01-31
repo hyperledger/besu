@@ -26,15 +26,15 @@ import java.util.EnumSet;
 public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   DEFAULT("default".getBytes(StandardCharsets.UTF_8)),
   BLOCKCHAIN(new byte[] {1}, true, true),
-  WORLD_STATE(new byte[] {2}, EnumSet.of(FOREST), false, true),
+  WORLD_STATE(new byte[] {2}, EnumSet.of(FOREST), false, true, false),
   PRIVATE_TRANSACTIONS(new byte[] {3}),
   PRIVATE_STATE(new byte[] {4}),
   PRUNING_STATE(new byte[] {5}, EnumSet.of(FOREST)),
-  ACCOUNT_INFO_STATE(new byte[] {6}, EnumSet.of(BONSAI), false, true),
+  ACCOUNT_INFO_STATE(new byte[] {6}, EnumSet.of(BONSAI), false, true, false),
   CODE_STORAGE(new byte[] {7}, EnumSet.of(BONSAI)),
-  ACCOUNT_STORAGE_STORAGE(new byte[] {8}, EnumSet.of(BONSAI), false, true),
-  TRIE_BRANCH_STORAGE(new byte[] {9}, EnumSet.of(BONSAI), false, true),
-  TRIE_LOG_STORAGE(new byte[] {10}, EnumSet.of(BONSAI)),
+  ACCOUNT_STORAGE_STORAGE(new byte[] {8}, EnumSet.of(BONSAI), false, true, false),
+  TRIE_BRANCH_STORAGE(new byte[] {9}, EnumSet.of(BONSAI), false, true, false),
+  TRIE_LOG_STORAGE(new byte[] {10}, EnumSet.of(BONSAI), true, false, true),
   VARIABLES(new byte[] {11}), // formerly GOQUORUM_PRIVATE_WORLD_STATE
 
   // previously supported GoQuorum private states
@@ -52,6 +52,7 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   private final EnumSet<DataStorageFormat> formats;
   private final boolean containsStaticData;
   private final boolean eligibleToHighSpecFlag;
+  private final boolean staticDataGarbageCollectionEnabled;
 
   KeyValueSegmentIdentifier(final byte[] id) {
     this(id, EnumSet.allOf(DataStorageFormat.class));
@@ -59,22 +60,29 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
 
   KeyValueSegmentIdentifier(
       final byte[] id, final boolean containsStaticData, final boolean eligibleToHighSpecFlag) {
-    this(id, EnumSet.allOf(DataStorageFormat.class), containsStaticData, eligibleToHighSpecFlag);
+    this(
+        id,
+        EnumSet.allOf(DataStorageFormat.class),
+        containsStaticData,
+        eligibleToHighSpecFlag,
+        false);
   }
 
   KeyValueSegmentIdentifier(final byte[] id, final EnumSet<DataStorageFormat> formats) {
-    this(id, formats, false, false);
+    this(id, formats, false, false, false);
   }
 
   KeyValueSegmentIdentifier(
       final byte[] id,
       final EnumSet<DataStorageFormat> formats,
       final boolean containsStaticData,
-      final boolean eligibleToHighSpecFlag) {
+      final boolean eligibleToHighSpecFlag,
+      final boolean staticDataGarbageCollectionEnabled) {
     this.id = id;
     this.formats = formats;
     this.containsStaticData = containsStaticData;
     this.eligibleToHighSpecFlag = eligibleToHighSpecFlag;
+    this.staticDataGarbageCollectionEnabled = staticDataGarbageCollectionEnabled;
   }
 
   @Override
@@ -95,6 +103,11 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   @Override
   public boolean isEligibleToHighSpecFlag() {
     return eligibleToHighSpecFlag;
+  }
+
+  @Override
+  public boolean isStaticDataGarbageCollectionEnabled() {
+    return staticDataGarbageCollectionEnabled;
   }
 
   @Override

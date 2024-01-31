@@ -86,9 +86,9 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     this.initiatedAt = System.currentTimeMillis();
 
     LOG.atDebug()
-        .setMessage("New PeerConnection ({}) established with peer {}...")
+        .setMessage("New PeerConnection ({}) established with peer {}")
         .addArgument(this)
-        .addArgument(peer.getId().slice(0, 16))
+        .addArgument(peer.getLoggableId())
         .log();
   }
 
@@ -188,9 +188,9 @@ public abstract class AbstractPeerConnection implements PeerConnection {
       connectionEventDispatcher.dispatchDisconnect(this, reason, false);
       doSend(null, DisconnectMessage.create(reason));
       LOG.atDebug()
-          .setMessage("Disconnecting connection {}, peer {}... reason {}")
+          .setMessage("Disconnecting connection {}, peer {} reason {}")
           .addArgument(this.hashCode())
-          .addArgument(peer.getId().slice(0, 16))
+          .addArgument(peer.getLoggableId())
           .addArgument(reason)
           .log();
       closeConnection();

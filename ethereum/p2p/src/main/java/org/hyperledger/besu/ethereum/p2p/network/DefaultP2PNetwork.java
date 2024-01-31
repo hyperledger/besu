@@ -189,10 +189,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
     this.peerPermissions = peerPermissions;
     this.vertx = vertx;
 
-    // set the requirement here that the number of peers be greater than the lower bound
-    final int peerLowerBound = rlpxAgent.getPeerLowerBound();
-    LOG.debug("setting peerLowerBound {}", peerLowerBound);
-    peerDiscoveryAgent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= peerLowerBound);
+    final int maxPeers = rlpxAgent.getMaxPeers();
+    LOG.debug("setting maxPeers {}", maxPeers);
+    peerDiscoveryAgent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= maxPeers);
     subscribeDisconnect(reputationManager);
   }
 
@@ -512,7 +511,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private boolean legacyForkIdEnabled = false;
     private Supplier<Stream<PeerConnection>> allConnectionsSupplier;
     private Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
-    private int peersLowerBound;
+    private int maxPeers;
     private PeerTable peerTable;
 
     public P2PNetwork build() {
@@ -593,7 +592,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
           .p2pTLSConfiguration(p2pTLSConfiguration)
           .allConnectionsSupplier(allConnectionsSupplier)
           .allActiveConnectionsSupplier(allActiveConnectionsSupplier)
-          .peersLowerBound(peersLowerBound)
+          .maxPeers(maxPeers)
           .peerTable(peerTable)
           .build();
     }
@@ -710,8 +709,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return this;
     }
 
-    public Builder peersLowerBound(final int peersLowerBound) {
-      this.peersLowerBound = peersLowerBound;
+    public Builder maxPeers(final int maxPeers) {
+      this.maxPeers = maxPeers;
       return this;
     }
   }

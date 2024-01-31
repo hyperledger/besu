@@ -1595,19 +1595,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void graphQLHttpEnabledPropertyMustBeUsed() {
-    parseCommand("--graphql-http-enabled");
-
-    verify(mockRunnerBuilder).graphQLConfiguration(graphQLConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(graphQLConfigArgumentCaptor.getValue().isEnabled()).isTrue();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void rpcApisSupportsEngine() {
     parseCommand("--rpc-http-api", "ENGINE", "--rpc-http-enabled");
 
@@ -1731,58 +1718,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--config-file", toml.toString());
 
     verifyOptionsConstraintLoggerCall("--privacy-enabled", "--privacy-tls-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void graphQLHttpHostAndPortOptionsMustBeUsed() {
-
-    final String host = "1.2.3.4";
-    final int port = 1234;
-    parseCommand(
-        "--graphql-http-enabled",
-        "--graphql-http-host",
-        host,
-        "--graphql-http-port",
-        String.valueOf(port));
-
-    verify(mockRunnerBuilder).graphQLConfiguration(graphQLConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(graphQLConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
-    assertThat(graphQLConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void graphQLHttpHostMayBeLocalhost() {
-
-    final String host = "localhost";
-    parseCommand("--graphql-http-enabled", "--graphql-http-host", host);
-
-    verify(mockRunnerBuilder).graphQLConfiguration(graphQLConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(graphQLConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void graphQLHttpHostMayBeIPv6() {
-
-    final String host = "2600:DB8::8545";
-    parseCommand("--graphql-http-enabled", "--graphql-http-host", host);
-
-    verify(mockRunnerBuilder).graphQLConfiguration(graphQLConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(graphQLConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
