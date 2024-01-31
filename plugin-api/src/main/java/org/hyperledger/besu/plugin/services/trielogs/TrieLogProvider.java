@@ -19,8 +19,12 @@ import org.hyperledger.besu.datatypes.Hash;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+
 /** Trielog provider interface for a given block hash. */
 public interface TrieLogProvider {
+  void saveRawTrieLogLayer(Hash blockHash, long blockNumber, Bytes trieLog);
+
   /**
    * Returns the TrieLog layer for the given block hash.
    *
@@ -30,6 +34,8 @@ public interface TrieLogProvider {
    */
   <T extends TrieLog.LogTuple<?>> Optional<TrieLog> getTrieLogLayer(final Hash blockHash);
 
+  Optional<Bytes> getRawTrieLogLayer(final Hash blockHash);
+
   /**
    * Returns the TrieLog layer for the given block number.
    *
@@ -38,6 +44,8 @@ public interface TrieLogProvider {
    * @param <T> the type of the TrieLog
    */
   <T extends TrieLog.LogTuple<?>> Optional<TrieLog> getTrieLogLayer(final long blockNumber);
+
+  Optional<Bytes> getRawTrieLogLayer(final long blockNumber);
 
   /**
    * Returns the TrieLog layers for the given block number range.

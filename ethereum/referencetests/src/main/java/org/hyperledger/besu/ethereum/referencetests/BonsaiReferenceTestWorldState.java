@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateConfig;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
@@ -64,6 +65,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
         cachedMerkleTrieLoader,
         cachedWorldStorageManager,
         trieLogManager,
+        new BonsaiWorldStateConfig(),
         evmConfiguration);
     this.refTestStorage = worldStateStorage;
     this.preImageProxy = preImageProxy;
@@ -190,6 +192,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
             cachedMerkleTrieLoader,
             cachedWorldStorageManager,
             trieLogManager,
+            new BonsaiWorldStateConfig(),
             evmConfiguration);
     if (isFrozen) {
       bonsaiWorldState.freeze(); // freeze state

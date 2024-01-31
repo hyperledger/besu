@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateConfig;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -59,7 +60,8 @@ public class RollingImport {
             archive,
             new BonsaiWorldStateKeyValueStorage(
                 provider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG),
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            new BonsaiWorldStateConfig());
     final SegmentedInMemoryKeyValueStorage worldStateStorage =
         (SegmentedInMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifiers(

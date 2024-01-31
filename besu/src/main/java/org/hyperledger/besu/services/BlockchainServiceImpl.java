@@ -15,28 +15,33 @@
 
 package org.hyperledger.besu.services;
 
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockContext;
 import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.data.TransactionReceipt;
 import org.hyperledger.besu.plugin.services.BlockchainService;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /** The Blockchain service implementation. */
 @Unstable
 public class BlockchainServiceImpl implements BlockchainService {
 
-  private final Blockchain blockchain;
+  private final MutableBlockchain blockchain;
 
   /**
    * Instantiates a new Blockchain service.
    *
    * @param blockchain the blockchain
    */
-  public BlockchainServiceImpl(final Blockchain blockchain) {
+  public BlockchainServiceImpl(final MutableBlockchain blockchain) {
     this.blockchain = blockchain;
   }
 
@@ -51,6 +56,48 @@ public class BlockchainServiceImpl implements BlockchainService {
     return blockchain
         .getBlockByNumber(number)
         .map(block -> blockContext(block::getHeader, block::getBody));
+  }
+
+  @Override
+  public Optional<List<TransactionReceipt>> getReceiptsByBlockHash(final Hash blockHash) {
+    return blockchain
+        .getTxReceipts(blockHash)
+        .map(
+            list -> list.stream().map(TransactionReceipt.class::cast).collect(Collectors.toList()));
+  }
+
+  @Override
+  public void storeBlock(
+      final BlockHeader blockHeader,
+      final BlockBody blockBody,
+      final List<TransactionReceipt> receipts) {
+    final org.hyperledger.besu.ethereum.core.BlockHeader coreHeader =
+        (org.hyperledger.besu.ethereum.core.BlockHeader) blockHeader;
+    final org.hyperledger.besu.ethereum.core.BlockBody coreBody =
+        (org.hyperledger.besu.ethereum.core.BlockBody) blockBody;
+    final List<org.hyperledger.besu.ethereum.core.TransactionReceipt> coreReceipts =
+        receipts.stream()
+            .map(org.hyperledger.besu.ethereum.core.TransactionReceipt.class::cast)
+            .toList();
+    blockchain.unsafeImportBlock(
+        new Block(coreHeader, coreBody),
+        coreReceipts,
+        Optional.ofNullable(blockchain.calculateTotalDifficulty(coreHeader)));
+  }
+
+  @Override
+  public BlockHeader getChainHead() {
+    return blockchain.getChainHead().getBlockHeader();
+  }
+
+  @Override
+  public Optional<Hash> getSafeBlock() {
+    return blockchain.getSafeBlock();
+  }
+
+  @Override
+  public Optional<Hash> getFinalizedBlock() {
+    return blockchain.getFinalized();
   }
 
   private static BlockContext blockContext(

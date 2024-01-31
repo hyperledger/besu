@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,28 +14,24 @@
  */
 package org.hyperledger.besu.services;
 
-import org.hyperledger.besu.plugin.services.BesuConfiguration;
+import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
+import org.hyperledger.besu.plugin.services.p2p.P2PService;
 
-import java.nio.file.Path;
+public class P2PServiceImpl implements P2PService {
 
-/** A concrete implementation of BesuConfiguration which is used in Besu plugin framework. */
-public class BesuConfigurationImpl implements BesuConfiguration {
+  private final P2PNetwork p2PNetwork;
 
-  private final Path storagePath;
-  private final Path dataPath;
-
-  public BesuConfigurationImpl(final Path dataPath, final Path storagePath) {
-    this.dataPath = dataPath;
-    this.storagePath = storagePath;
+  public P2PServiceImpl(final P2PNetwork p2PNetwork) {
+    this.p2PNetwork = p2PNetwork;
   }
 
   @Override
-  public Path getStoragePath() {
-    return storagePath;
+  public void enableDiscovery() {
+    p2PNetwork.start();
   }
 
   @Override
-  public Path getDataPath() {
-    return dataPath;
+  public void disableDiscovery() {
+    p2PNetwork.stop();
   }
 }

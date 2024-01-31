@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.bonsai.cache;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateConfig;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
@@ -30,6 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -40,6 +42,8 @@ public class CachedWorldStorageManager
   public static final long RETAINED_LAYERS = 512; // at least 256 + typical rollbacks
   private static final Logger LOG = LoggerFactory.getLogger(CachedWorldStorageManager.class);
   private final BonsaiWorldStateProvider archive;
+  private final Supplier<BonsaiWorldStateConfig> defaultBonsaiWorldStateConfigSupplier;
+
   private final EvmConfiguration evmConfiguration;
 
   private final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
@@ -49,7 +53,9 @@ public class CachedWorldStorageManager
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash,
+      final Supplier<BonsaiWorldStateConfig> defaultBonsaiWorldStateConfigSupplier,
       final EvmConfiguration evmConfiguration) {
+    this.defaultBonsaiWorldStateConfigSupplier = defaultBonsaiWorldStateConfigSupplier;
     worldStateStorage.subscribe(this);
     this.rootWorldStateStorage = worldStateStorage;
     this.cachedWorldStatesByHash = cachedWorldStatesByHash;
@@ -59,8 +65,14 @@ public class CachedWorldStorageManager
 
   public CachedWorldStorageManager(
       final BonsaiWorldStateProvider archive,
-      final BonsaiWorldStateKeyValueStorage worldStateStorage) {
-    this(archive, worldStateStorage, new ConcurrentHashMap<>(), EvmConfiguration.DEFAULT);
+      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final Supplier<BonsaiWorldStateConfig> defaultBonsaiWorldStateConfigSupplier) {
+    this(
+        archive,
+        worldStateStorage,
+        new ConcurrentHashMap<>(),
+        defaultBonsaiWorldStateConfigSupplier,
+        EvmConfiguration.DEFAULT);
   }
 
   public synchronized void addCachedLayer(
@@ -131,7 +143,8 @@ public class CachedWorldStorageManager
                   new BonsaiWorldState(
                       archive,
                       new BonsaiWorldStateLayerStorage(cached.getWorldStateStorage()),
-                      evmConfiguration));
+                      evmConfiguration,
+                      defaultBonsaiWorldStateConfigSupplier.get()));
     }
     LOG.atDebug()
         .setMessage("did not find worldstate in cache for {}")
@@ -170,7 +183,10 @@ public class CachedWorldStorageManager
         .map(
             storage ->
                 new BonsaiWorldState( // wrap the state in a layered worldstate
-                    archive, new BonsaiWorldStateLayerStorage(storage), evmConfiguration));
+                    archive,
+                    new BonsaiWorldStateLayerStorage(storage),
+                    evmConfiguration,
+                    defaultBonsaiWorldStateConfigSupplier.get()));
   }
 
   public Optional<BonsaiWorldState> getHeadWorldState(
@@ -187,7 +203,11 @@ public class CachedWorldStorageManager
               addCachedLayer(
                   blockHeader,
                   blockHeader.getStateRoot(),
-                  new BonsaiWorldState(archive, rootWorldStateStorage, evmConfiguration));
+                  new BonsaiWorldState(
+                      archive,
+                      rootWorldStateStorage,
+                      evmConfiguration,
+                      defaultBonsaiWorldStateConfigSupplier.get()));
               return getWorldState(blockHeader.getHash());
             });
   }
@@ -212,6 +232,11 @@ public class CachedWorldStorageManager
 
   @Override
   public void onClearTrieLog() {
+    this.cachedWorldStatesByHash.clear();
+  }
+
+  @Override
+  public void onClearTrie() {
     this.cachedWorldStatesByHash.clear();
   }
 

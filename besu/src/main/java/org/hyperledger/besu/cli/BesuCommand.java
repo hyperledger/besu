@@ -167,22 +167,30 @@ import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.p2p.P2PService;
+import org.hyperledger.besu.plugin.services.rlp.RlpConverterService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
+import org.hyperledger.besu.plugin.services.sync.SynchronizationService;
+import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolService;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
+import org.hyperledger.besu.services.P2PServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.PluginTransactionValidatorServiceImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
+import org.hyperledger.besu.services.RlpConverterServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
+import org.hyperledger.besu.services.SynchronizationServiceImpl;
 import org.hyperledger.besu.services.TraceServiceImpl;
+import org.hyperledger.besu.services.TransactionPoolServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
 import org.hyperledger.besu.util.InvalidConfigurationException;
@@ -1128,12 +1136,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final var runner = buildRunner();
       runner.startExternalServices();
 
-      startPlugins();
+      startPlugins(runner);
       validatePluginOptions();
       setReleaseMetrics();
       preSynchronization();
 
       runner.startEthereumMainLoop();
+
+      besuPluginContext.afterExternalServicesMainLoop();
+
       runner.awaitStop();
 
     } catch (final Exception e) {
@@ -1315,7 +1326,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         pidPath);
   }
 
-  private void startPlugins() {
+  private void startPlugins(final Runner runner) {
     besuPluginContext.addService(
         BesuEvents.class,
         new BesuEventsImpl(
@@ -1328,6 +1339,24 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(
         BlockchainService.class,
         new BlockchainServiceImpl(besuController.getProtocolContext().getBlockchain()));
+
+    besuPluginContext.addService(
+        SynchronizationService.class,
+        new SynchronizationServiceImpl(
+            besuController.getProtocolContext(),
+            besuController.getProtocolSchedule(),
+            besuController.getSyncState(),
+            besuController.getProtocolContext().getWorldStateArchive()));
+
+    besuPluginContext.addService(P2PService.class, new P2PServiceImpl(runner.getP2PNetwork()));
+
+    besuPluginContext.addService(
+        TransactionPoolService.class,
+        new TransactionPoolServiceImpl(besuController.getTransactionPool()));
+
+    besuPluginContext.addService(
+        RlpConverterService.class,
+        new RlpConverterServiceImpl(besuController.getProtocolSchedule()));
 
     besuPluginContext.addService(
         TraceService.class,
@@ -1627,11 +1656,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void validateChainDataPruningParams() {
     if (unstableChainPruningOptions.getChainDataPruningEnabled()
         && unstableChainPruningOptions.getChainDataPruningBlocksRetained()
-            < ChainPruningOptions.DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED) {
+            < unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit()) {
       throw new ParameterException(
           this.commandLine,
           "--Xchain-pruning-blocks-retained must be >= "
-              + ChainPruningOptions.DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED);
+              + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
     }
   }
 

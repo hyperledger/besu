@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,28 +14,24 @@
  */
 package org.hyperledger.besu.services;
 
-import org.hyperledger.besu.plugin.services.BesuConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolService;
 
-import java.nio.file.Path;
+public class TransactionPoolServiceImpl implements TransactionPoolService {
 
-/** A concrete implementation of BesuConfiguration which is used in Besu plugin framework. */
-public class BesuConfigurationImpl implements BesuConfiguration {
+  private final TransactionPool transactionPool;
 
-  private final Path storagePath;
-  private final Path dataPath;
-
-  public BesuConfigurationImpl(final Path dataPath, final Path storagePath) {
-    this.dataPath = dataPath;
-    this.storagePath = storagePath;
+  public TransactionPoolServiceImpl(final TransactionPool transactionPool) {
+    this.transactionPool = transactionPool;
   }
 
   @Override
-  public Path getStoragePath() {
-    return storagePath;
+  public void disableTransactionPool() {
+    transactionPool.setDisabled();
   }
 
   @Override
-  public Path getDataPath() {
-    return dataPath;
+  public void enableTransactionPool() {
+    transactionPool.setEnabled();
   }
 }

@@ -20,6 +20,7 @@ import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogProvider;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A service interface for registering observers for trie log events.
@@ -40,7 +41,7 @@ public interface TrieLogService extends BesuService {
    *
    * @return the TrieLogFactory implementation
    */
-  TrieLogFactory getTrieLogFactory();
+  Optional<TrieLogFactory> getTrieLogFactory();
 
   /**
    * Configure a TrieLogProvider implementation to use for retrieving stored TrieLogs.

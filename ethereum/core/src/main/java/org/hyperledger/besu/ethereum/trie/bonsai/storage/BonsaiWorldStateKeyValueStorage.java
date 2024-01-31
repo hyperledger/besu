@@ -252,6 +252,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         .orElse(false);
   }
 
+  public KeyValueStorage getTrieLogStorage() {
+    return trieLogStorage;
+  }
+
   public void upgradeToFullFlatDbMode() {
     flatDbStrategyProvider.upgradeToFullFlatDbMode(composedWorldStateStorage);
   }
@@ -276,6 +280,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   public void clearTrieLog() {
     subscribers.forEach(BonsaiStorageSubscriber::onClearTrieLog);
     trieLogStorage.clear();
+  }
+
+  @Override
+  public void clearTrie() {
+    subscribers.forEach(BonsaiStorageSubscriber::onClearTrie);
+    composedWorldStateStorage.clear(TRIE_BRANCH_STORAGE);
   }
 
   @Override
@@ -522,6 +532,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     default void onClearFlatDatabaseStorage() {}
 
     default void onClearTrieLog() {}
+
+    default void onClearTrie() {}
 
     default void onCloseStorage() {}
   }

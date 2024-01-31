@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateConfig;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -94,7 +95,8 @@ class BlockImportExceptionHandlingTest {
           new BonsaiWorldState(
               (BonsaiWorldStateProvider) worldStateArchive,
               (BonsaiWorldStateKeyValueStorage) worldStateStorage,
-              EvmConfiguration.DEFAULT));
+              EvmConfiguration.DEFAULT,
+              new BonsaiWorldStateConfig()));
 
   private final BadBlockManager badBlockManager = new BadBlockManager();
 

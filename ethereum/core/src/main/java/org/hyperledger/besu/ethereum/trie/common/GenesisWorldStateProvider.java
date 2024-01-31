@@ -16,6 +16,7 @@
 
 package org.hyperledger.besu.ethereum.trie.common;
 
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateConfig;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
@@ -73,6 +74,7 @@ public class GenesisWorldStateProvider {
         cachedMerkleTrieLoader,
         new NoOpCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
         new NoOpTrieLogManager(),
+        new BonsaiWorldStateConfig(),
         EvmConfiguration.DEFAULT);
   }
 

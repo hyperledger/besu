@@ -14,9 +14,14 @@
  */
 package org.hyperledger.besu.plugin.services;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockContext;
+import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.data.TransactionReceipt;
 
+import java.util.List;
 import java.util.Optional;
 
 /** A service that plugins can use to query blocks by number */
@@ -29,4 +34,14 @@ public interface BlockchainService extends BesuService {
    * @return the BlockContext
    */
   Optional<BlockContext> getBlockByNumber(final long number);
+
+  Optional<List<TransactionReceipt>> getReceiptsByBlockHash(Hash blockHash);
+
+  void storeBlock(BlockHeader blockHeader, BlockBody blockBody, List<TransactionReceipt> receipts);
+
+  BlockHeader getChainHead();
+
+  Optional<Hash> getSafeBlock();
+
+  Optional<Hash> getFinalizedBlock();
 }
