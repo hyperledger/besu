@@ -141,6 +141,31 @@ public interface MainnetPrecompiledContracts {
   }
 
   /**
+   * Prague precompile contract registry.
+   *
+   * @param gasCalculator the gas calculator
+   * @return the precompile contract registry
+   */
+  static PrecompileContractRegistry prague(final GasCalculator gasCalculator) {
+    PrecompileContractRegistry precompileContractRegistry = new PrecompileContractRegistry();
+    populateForPrague(precompileContractRegistry, gasCalculator);
+    return precompileContractRegistry;
+  }
+
+  /**
+   * Populate registry for Prague.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   */
+  static void populateForPrague(
+      final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
+    populateForCancun(registry, gasCalculator);
+
+    // TODO: add Prague precompiles here
+  }
+
+  /**
    * FutureEIPs precompile contract registry.
    *
    * @param gasCalculator the gas calculator

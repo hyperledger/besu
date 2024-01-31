@@ -24,7 +24,6 @@ import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
-import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService.EPHEMERAL_JWT_FILE;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
@@ -44,7 +43,6 @@ import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.config.ProfileName;
 import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
-import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
@@ -52,6 +50,7 @@ import org.hyperledger.besu.cli.options.MiningOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
+import org.hyperledger.besu.cli.options.stable.GraphQlOptions;
 import org.hyperledger.besu.cli.options.stable.JsonRpcHttpOptions;
 import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
 import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
@@ -359,6 +358,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Identification for this node in the Client ID",
       arity = "1")
   private final Optional<String> identityString = Optional.empty();
+
   // P2P Discovery Option Group
   @CommandLine.ArgGroup(validate = false, heading = "@|bold P2P Discovery Options|@%n")
   P2PDiscoveryOptionGroup p2PDiscoveryOptionGroup = new P2PDiscoveryOptionGroup();
@@ -556,35 +556,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Path kzgTrustedSetupFile = null;
 
   @CommandLine.ArgGroup(validate = false, heading = "@|bold GraphQL Options|@%n")
-  GraphQlOptionGroup graphQlOptionGroup = new GraphQlOptionGroup();
-
-  static class GraphQlOptionGroup {
-    @Option(
-        names = {"--graphql-http-enabled"},
-        description = "Set to start the GraphQL HTTP service (default: ${DEFAULT-VALUE})")
-    private final Boolean isGraphQLHttpEnabled = false;
-
-    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-    @Option(
-        names = {"--graphql-http-host"},
-        paramLabel = MANDATORY_HOST_FORMAT_HELP,
-        description = "Host for GraphQL HTTP to listen on (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private String graphQLHttpHost;
-
-    @Option(
-        names = {"--graphql-http-port"},
-        paramLabel = MANDATORY_PORT_FORMAT_HELP,
-        description = "Port for GraphQL HTTP to listen on (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private final Integer graphQLHttpPort = DEFAULT_GRAPHQL_HTTP_PORT;
-
-    @Option(
-        names = {"--graphql-http-cors-origins"},
-        description = "Comma separated origin domain URLs for CORS validation (default: none)")
-    protected final CorsAllowedOriginsProperty graphQLHttpCorsAllowedOrigins =
-        new CorsAllowedOriginsProperty();
-  }
+  GraphQlOptions graphQlOptions = new GraphQlOptions();
 
   // Engine JSON-PRC Options
   @CommandLine.ArgGroup(validate = false, heading = "@|bold Engine JSON-RPC Options|@%n")
@@ -1481,7 +1453,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.info("Using the Java implementation of the blake2bf algorithm");
     }
 
-    if (getActualGenesisConfigOptions().getCancunTime().isPresent()) {
+    if (getActualGenesisConfigOptions().getCancunTime().isPresent()
+        || getActualGenesisConfigOptions().getPragueTime().isPresent()) {
       if (kzgTrustedSetupFile != null) {
         KZGPointEvalPrecompiledContract.init(kzgTrustedSetupFile);
       } else {
@@ -1509,6 +1482,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validatePostMergeCheckpointBlockRequirements();
     validateTransactionPoolOptions();
     validateDataStorageOptions();
+    validateGraphQlOptions();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
     pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
   }
@@ -1552,6 +1526,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } catch (final UnknownHostException | SocketException e) {
       throw new ParameterException(commandLine, failMessage, e);
     }
+  }
+
+  private void validateGraphQlOptions() {
+    graphQlOptions.validate(logger, commandLine);
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -1748,7 +1726,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               engineRPCOptionGroup.engineRpcPort, engineRPCOptionGroup.engineHostsAllowlist);
     }
     p2pTLSConfiguration = p2pTLSConfigOptions.p2pTLSConfiguration(commandLine);
-    graphQLConfiguration = graphQLConfiguration();
+    graphQLConfiguration =
+        graphQlOptions.graphQLConfiguration(
+            hostsAllowlist,
+            p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress(),
+            unstableRPCOptions.getHttpTimeoutSec());
     webSocketConfiguration =
         rpcWebsocketOptions.webSocketConfiguration(
             hostsAllowlist,
@@ -1898,28 +1880,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final Optional<PluginTransactionValidatorService> txSValidatorService =
         besuPluginContext.getService(PluginTransactionValidatorService.class);
     return txSValidatorService.map(PluginTransactionValidatorService::get).orElse(null);
-  }
-
-  private GraphQLConfiguration graphQLConfiguration() {
-
-    CommandLineUtils.checkOptionDependencies(
-        logger,
-        commandLine,
-        "--graphql-http-enabled",
-        !graphQlOptionGroup.isGraphQLHttpEnabled,
-        asList("--graphql-http-cors-origins", "--graphql-http-host", "--graphql-http-port"));
-    final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();
-    graphQLConfiguration.setEnabled(graphQlOptionGroup.isGraphQLHttpEnabled);
-    graphQLConfiguration.setHost(
-        Strings.isNullOrEmpty(graphQlOptionGroup.graphQLHttpHost)
-            ? p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress()
-            : graphQlOptionGroup.graphQLHttpHost);
-    graphQLConfiguration.setPort(graphQlOptionGroup.graphQLHttpPort);
-    graphQLConfiguration.setHostsAllowlist(hostsAllowlist);
-    graphQLConfiguration.setCorsAllowedDomains(graphQlOptionGroup.graphQLHttpCorsAllowedOrigins);
-    graphQLConfiguration.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
-
-    return graphQLConfiguration;
   }
 
   private JsonRpcConfiguration createEngineJsonRpcConfiguration(
@@ -2631,9 +2591,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     addPortIfEnabled(
         effectivePorts, p2PDiscoveryOptionGroup.p2pPort, p2PDiscoveryOptionGroup.p2pEnabled);
     addPortIfEnabled(
-        effectivePorts,
-        graphQlOptionGroup.graphQLHttpPort,
-        graphQlOptionGroup.isGraphQLHttpEnabled);
+        effectivePorts, graphQlOptions.getGraphQLHttpPort(), graphQlOptions.isGraphQLHttpEnabled());
     addPortIfEnabled(
         effectivePorts, jsonRpcHttpOptions.getRpcHttpPort(), jsonRpcHttpOptions.isRpcHttpEnabled());
     addPortIfEnabled(
