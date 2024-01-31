@@ -647,6 +647,8 @@ task autocomplete(type: JavaExec) {
   }
 }
 
+def archiveBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
+
 installDist { dependsOn checkLicense, untunedStartScripts, evmToolStartScripts }
 
 distTar {
@@ -655,6 +657,7 @@ distTar {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
   compression = Compression.GZIP
+  setVersion(archiveBuildVersion)
   archiveExtension = 'tar.gz'
 }
 
@@ -663,6 +666,7 @@ distZip {
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
+  setVersion(archiveBuildVersion)
 }
 
 publishing {
