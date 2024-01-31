@@ -33,7 +33,7 @@ public class NoOpBonsaiCachedWorldStorageManager extends BonsaiCachedWorldStorag
   public synchronized void addCachedLayer(
       final BlockHeader blockHeader,
       final Hash worldStateRootHash,
-      final DiffBasedWorldState<?> forWorldState) {
+      final DiffBasedWorldState forWorldState) {
     // no cache
   }
 
@@ -43,17 +43,17 @@ public class NoOpBonsaiCachedWorldStorageManager extends BonsaiCachedWorldStorag
   }
 
   @Override
-  public Optional<DiffBasedWorldState<?>> getWorldState(final Hash blockHash) {
+  public Optional<DiffBasedWorldState> getWorldState(final Hash blockHash) {
     return Optional.empty();
   }
 
   @Override
-  public Optional<DiffBasedWorldState<?>> getNearestWorldState(final BlockHeader blockHeader) {
+  public Optional<DiffBasedWorldState> getNearestWorldState(final BlockHeader blockHeader) {
     return Optional.empty();
   }
 
   @Override
-  public Optional<DiffBasedWorldState<?>> getHeadWorldState(
+  public Optional<DiffBasedWorldState> getHeadWorldState(
       final Function<Hash, Optional<BlockHeader>> hashBlockHeaderFunction) {
     return Optional.empty();
   }

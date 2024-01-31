@@ -64,7 +64,7 @@ public class TrieLogManager {
       final DiffBasedWorldStateUpdateAccumulator<?> localUpdater,
       final Hash forWorldStateRootHash,
       final BlockHeader forBlockHeader,
-      final DiffBasedWorldState<?> forWorldState) {
+      final DiffBasedWorldState forWorldState) {
     // do not overwrite a trielog layer that already exists in the database.
     // if it's only in memory we need to save it
     // for example, in case of reorg we don't replace a trielog layer

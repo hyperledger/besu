@@ -67,7 +67,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
   public synchronized void addCachedLayer(
       final BlockHeader blockHeader,
       final Hash worldStateRootHash,
-      final DiffBasedWorldState<?> forWorldState) {
+      final DiffBasedWorldState forWorldState) {
     final Optional<DiffBasedCachedWorldView> cachedDiffBasedWorldView =
         Optional.ofNullable(this.cachedWorldStatesByHash.get(blockHeader.getBlockHash()));
     if (cachedDiffBasedWorldView.isPresent()) {
@@ -123,7 +123,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
     }
   }
 
-  public Optional<DiffBasedWorldState<?>> getWorldState(final Hash blockHash) {
+  public Optional<DiffBasedWorldState> getWorldState(final Hash blockHash) {
     if (cachedWorldStatesByHash.containsKey(blockHash)) {
       // return a new worldstate using worldstate storage and an isolated copy of the updater
       return Optional.ofNullable(cachedWorldStatesByHash.get(blockHash))
@@ -142,7 +142,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
     return Optional.empty();
   }
 
-  public Optional<DiffBasedWorldState<?>> getNearestWorldState(final BlockHeader blockHeader) {
+  public Optional<DiffBasedWorldState> getNearestWorldState(final BlockHeader blockHeader) {
     LOG.atDebug()
         .setMessage("getting nearest worldstate for {}")
         .addArgument(blockHeader.toLogString())
@@ -174,7 +174,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
                     archive, createLayeredKeyValueStorage(storage), evmConfiguration));
   }
 
-  public Optional<DiffBasedWorldState<?>> getHeadWorldState(
+  public Optional<DiffBasedWorldState> getHeadWorldState(
       final Function<Hash, Optional<BlockHeader>> hashBlockHeaderFunction) {
 
     LOG.atDebug().setMessage("getting head worldstate").log();
@@ -221,7 +221,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
     this.cachedWorldStatesByHash.clear();
   }
 
-  public abstract DiffBasedWorldState<?> createWorldState(
+  public abstract DiffBasedWorldState createWorldState(
       final BonsaiWorldStateProvider archive,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final EvmConfiguration evmConfiguration);

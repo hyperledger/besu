@@ -45,7 +45,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-class CachedMerkleTrieLoaderTest {
+class BonsaiCachedMerkleTrieLoaderTest {
 
   private BonsaiCachedMerkleTrieLoader merkleTrieLoader;
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();

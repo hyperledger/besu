@@ -23,12 +23,12 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
@@ -50,14 +50,13 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class DiffBasedWorldState<
-        WORLDSTATE_STORAGE extends DiffBasedWorldStateKeyValueStorage>
+public abstract class DiffBasedWorldState
     implements MutableWorldState, DiffBasedWorldView, StorageSubscriber {
 
   private static final Logger LOG = LoggerFactory.getLogger(DiffBasedWorldState.class);
 
-  protected WORLDSTATE_STORAGE worldStateKeyValueStorage;
-  protected final BonsaiCachedWorldStorageManager cachedWorldStorageManager;
+  protected DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
+  protected final DiffBasedCachedWorldStorageManager cachedWorldStorageManager;
   protected final TrieLogManager trieLogManager;
   protected DiffBasedWorldStateUpdateAccumulator<?> accumulator;
 
@@ -66,8 +65,8 @@ public abstract class DiffBasedWorldState<
   protected boolean isFrozen;
 
   protected DiffBasedWorldState(
-      final WORLDSTATE_STORAGE worldStateKeyValueStorage,
-      final BonsaiCachedWorldStorageManager cachedWorldStorageManager,
+      final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
+      final DiffBasedCachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager) {
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.worldStateRootHash =
@@ -129,7 +128,7 @@ public abstract class DiffBasedWorldState<
   }
 
   @Override
-  public WORLDSTATE_STORAGE getWorldStateStorage() {
+  public DiffBasedWorldStateKeyValueStorage getWorldStateStorage() {
     return worldStateKeyValueStorage;
   }
 

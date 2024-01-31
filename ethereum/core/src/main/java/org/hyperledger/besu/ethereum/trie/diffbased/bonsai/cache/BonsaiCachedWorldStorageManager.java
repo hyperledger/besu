@@ -33,7 +33,7 @@ public class BonsaiCachedWorldStorageManager extends DiffBasedCachedWorldStorage
   }
 
   @Override
-  public DiffBasedWorldState<?> createWorldState(
+  public DiffBasedWorldState createWorldState(
       final BonsaiWorldStateProvider archive,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final EvmConfiguration evmConfiguration) {
