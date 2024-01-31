@@ -8,10 +8,6 @@ on:
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
 
-permissions:
-  statuses: write
-  checks: write
-
 jobs:
   authorize:
     environment:
