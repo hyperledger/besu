@@ -11,6 +11,7 @@
 
 
 ### Deprecations
+- `--Xp2p-peer-lower-bound` [#6501](https://github.com/hyperledger/besu/pull/6501)
 
 ### Additions and Improvements
 - Upgrade Prometheus and Opentelemetry dependencies [#6422](https://github.com/hyperledger/besu/pull/6422)
