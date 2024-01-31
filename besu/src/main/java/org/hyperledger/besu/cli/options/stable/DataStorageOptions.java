@@ -17,7 +17,6 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT;
@@ -86,14 +85,6 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         description =
             "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
     private int bonsaiTrieLogPruningWindowSize = DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
-
-    @CommandLine.Option(
-        hidden = true,
-        names = {"--Xbonsai-code-using-code-hash-enabled"},
-        arity = "1",
-        description =
-            "Enables code storage using code hash instead of by account hash. (default: ${DEFAULT-VALUE})")
-    private boolean bonsaiCodeUsingCodeHashEnabled = DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
   }
   /**
    * Create data storage options.
@@ -147,8 +138,6 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         domainObject.getUnstable().getBonsaiLimitTrieLogsEnabled();
     dataStorageOptions.unstableOptions.bonsaiTrieLogPruningWindowSize =
         domainObject.getUnstable().getBonsaiTrieLogPruningWindowSize();
-    dataStorageOptions.unstableOptions.bonsaiCodeUsingCodeHashEnabled =
-        domainObject.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
 
     return dataStorageOptions;
   }
@@ -162,7 +151,6 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
             ImmutableDataStorageConfiguration.Unstable.builder()
                 .bonsaiLimitTrieLogsEnabled(unstableOptions.bonsaiLimitTrieLogsEnabled)
                 .bonsaiTrieLogPruningWindowSize(unstableOptions.bonsaiTrieLogPruningWindowSize)
-                .bonsaiCodeStoredByCodeHashEnabled(unstableOptions.bonsaiCodeUsingCodeHashEnabled)
                 .build())
         .build();
   }

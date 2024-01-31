@@ -88,28 +88,6 @@ public class DataStorageOptionsTest
         "511");
   }
 
-  @Test
-  public void bonsaiCodeUsingCodeHashEnabledCanBeEnabled() {
-    internalTestSuccess(
-        dataStorageConfiguration ->
-            assertThat(
-                    dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled())
-                .isEqualTo(true),
-        "--Xbonsai-code-using-code-hash-enabled",
-        "true");
-  }
-
-  @Test
-  public void bonsaiCodeUsingCodeHashEnabledCanBeDisabled() {
-    internalTestSuccess(
-        dataStorageConfiguration ->
-            assertThat(
-                    dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled())
-                .isEqualTo(false),
-        "--Xbonsai-code-using-code-hash-enabled",
-        "false");
-  }
-
   @Override
   protected DataStorageConfiguration createDefaultDomainObject() {
     return DataStorageConfiguration.DEFAULT_CONFIG;
