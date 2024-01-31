@@ -39,7 +39,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
 
   private static Bytes successResult;
 
-  private static void init() {
+  private static void loadLib() {
     CKZG4844JNI.loadNativeLibrary();
     Bytes fieldElementsPerBlob =
         Bytes32.wrap(Words.intBytes(CKZG4844JNI.FIELD_ELEMENTS_PER_BLOB).xor(Bytes32.ZERO));
@@ -57,7 +57,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
    */
   public static void init(final Path trustedSetupFile) {
     if (loaded.compareAndSet(false, true)) {
-      init();
+      loadLib();
       final String trustedSetupResourceName = trustedSetupFile.toAbsolutePath().toString();
       LOG.info("Loading trusted setup from user-specified resource {}", trustedSetupResourceName);
       CKZG4844JNI.loadTrustedSetup(trustedSetupResourceName);
@@ -67,17 +67,14 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
   }
 
   /**
-   * Init the C-KZG native lib using a resource identified by the passed network name as trusted
-   * setup
+   * Init the C-KZG native lib using mainnet trusted setup
    *
-   * @param networkName used to select the resource in /kzg-trusted-setups/ to use.
    * @throws IllegalStateException is the trusted setup was already loaded
    */
-  public static void init(final String networkName) {
+  public static void init() {
     if (loaded.compareAndSet(false, true)) {
-      init();
-      final String trustedSetupResourceName =
-          "/kzg-trusted-setups/" + networkName.toLowerCase() + ".txt";
+      loadLib();
+      final String trustedSetupResourceName = "/kzg-trusted-setups/mainnet.txt";
       LOG.info(
           "Loading network trusted setup from classpath resource {}", trustedSetupResourceName);
       CKZG4844JNI.loadTrustedSetupFromResource(

@@ -18,6 +18,7 @@ import static java.util.stream.Collectors.toList;
 
 import org.hyperledger.besu.services.pipeline.exception.AsyncOperationException;
 import org.hyperledger.besu.util.ExceptionUtils;
+import org.hyperledger.besu.util.log.LogUtil;
 
 import java.util.Collection;
 import java.util.List;
@@ -176,7 +177,9 @@ public class Pipeline<I> {
                 || t instanceof AsyncOperationException) {
               LOG.trace("Unhandled exception in pipeline. Aborting.", t);
             } else {
-              LOG.info("Unexpected exception in pipeline. Aborting.");
+              LOG.info(
+                  LogUtil.summarizeBesuStackTrace(
+                      "Unexpected exception in pipeline. Aborting.", t));
               LOG.debug("Unexpected exception in pipeline. Aborting.", t);
             }
             try {

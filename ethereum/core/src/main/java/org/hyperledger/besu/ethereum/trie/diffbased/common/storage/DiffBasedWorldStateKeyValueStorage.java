@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -62,30 +61,23 @@ public abstract class DiffBasedWorldStateKeyValueStorage
   protected final AtomicBoolean isClosed = new AtomicBoolean(false);
 
   protected final Subscribers<StorageSubscriber> subscribers = Subscribers.create();
-
-  protected final ObservableMetricsSystem metricsSystem;
-
   protected final SegmentedKeyValueStorage composedWorldStateStorage;
   protected final KeyValueStorage trieLogStorage;
 
-  public DiffBasedWorldStateKeyValueStorage(
-      final StorageProvider provider, final ObservableMetricsSystem metricsSystem) {
+  public DiffBasedWorldStateKeyValueStorage(final StorageProvider provider) {
     this.composedWorldStateStorage =
         provider.getStorageBySegmentIdentifiers(
             List.of(
                 ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE));
     this.trieLogStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
-    this.metricsSystem = metricsSystem;
   }
 
   public DiffBasedWorldStateKeyValueStorage(
       final SegmentedKeyValueStorage composedWorldStateStorage,
-      final KeyValueStorage trieLogStorage,
-      final ObservableMetricsSystem metricsSystem) {
+      final KeyValueStorage trieLogStorage) {
     this.composedWorldStateStorage = composedWorldStateStorage;
     this.trieLogStorage = trieLogStorage;
-    this.metricsSystem = metricsSystem;
   }
 
   public abstract FlatDbMode getFlatDbMode();
@@ -107,7 +99,7 @@ public abstract class DiffBasedWorldStateKeyValueStorage
     return trieLogStorage.get(blockHash.toArrayUnsafe());
   }
 
-  public Stream<byte[]> streamTrieLogKeys(final int limit) {
+  public Stream<byte[]> streamTrieLogKeys(final long limit) {
     return trieLogStorage.streamKeys().limit(limit);
   }
 
@@ -209,10 +201,6 @@ public abstract class DiffBasedWorldStateKeyValueStorage
     if (shouldClose.get() && subscribers.getSubscriberCount() < 1) {
       doClose();
     }
-  }
-
-  public ObservableMetricsSystem getMetricsSystem() {
-    return metricsSystem;
   }
 
   protected synchronized void doClose() throws Exception {

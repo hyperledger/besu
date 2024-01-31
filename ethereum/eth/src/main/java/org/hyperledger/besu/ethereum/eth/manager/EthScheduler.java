@@ -23,9 +23,11 @@ import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.Queue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -34,6 +36,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -138,8 +142,8 @@ public class EthScheduler {
     txWorkerExecutor.execute(command);
   }
 
-  public <T> CompletableFuture<T> scheduleServiceTask(final Supplier<T> task) {
-    return CompletableFuture.supplyAsync(task, servicesExecutor);
+  public void executeServiceTask(final Runnable command) {
+    servicesExecutor.execute(command);
   }
 
   public <T> CompletableFuture<T> scheduleServiceTask(final EthTask<T> task) {
@@ -294,5 +298,50 @@ public class EthScheduler {
         },
         delay,
         unit);
+  }
+
+  public <ITEM> OrderedProcessor<ITEM> createOrderedProcessor(final Consumer<ITEM> processor) {
+    return new OrderedProcessor<>(processor);
+  }
+
+  /**
+   * This class is a way to execute a set of tasks, one by one, in a strict order, without blocking
+   * the caller in case there are still previous tasks queued
+   *
+   * @param <ITEM> the class of item to be processed
+   */
+  public class OrderedProcessor<ITEM> {
+    private final Queue<ITEM> blockAddedQueue = new ConcurrentLinkedQueue<>();
+    private final ReentrantLock blockAddedLock = new ReentrantLock();
+    private final Consumer<ITEM> processor;
+
+    private OrderedProcessor(final Consumer<ITEM> processor) {
+      this.processor = processor;
+    }
+
+    public void submit(final ITEM item) {
+      // add the item to the processing queue
+      blockAddedQueue.add(item);
+
+      if (blockAddedLock.hasQueuedThreads()) {
+        // another thread is already waiting to process the queue with our item, there is no need to
+        // schedule another thread
+        LOG.trace(
+            "Block added event queue is already being processed and an already queued thread is present, nothing to do");
+      } else {
+        servicesExecutor.submit(
+            () -> {
+              blockAddedLock.lock();
+              try {
+                // now that we have the lock, process as many items as possible
+                for (ITEM i = blockAddedQueue.poll(); i != null; i = blockAddedQueue.poll()) {
+                  processor.accept(i);
+                }
+              } finally {
+                blockAddedLock.unlock();
+              }
+            });
+      }
+    }
   }
 }

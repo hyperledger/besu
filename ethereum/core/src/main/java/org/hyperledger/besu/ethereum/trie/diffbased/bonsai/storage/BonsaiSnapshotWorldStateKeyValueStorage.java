@@ -19,7 +19,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedSnapshotWorldStateKeyValueStorage;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
@@ -44,27 +43,20 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   public BonsaiSnapshotWorldStateKeyValueStorage(
       final BonsaiWorldStateKeyValueStorage parentWorldStateStorage,
       final SnappedKeyValueStorage segmentedWorldStateStorage,
-      final KeyValueStorage trieLogStorage,
-      final ObservableMetricsSystem metricsSystem) {
+      final KeyValueStorage trieLogStorage) {
     super(
-        parentWorldStateStorage.flatDbMode,
-        parentWorldStateStorage.flatDbStrategy,
-        segmentedWorldStateStorage,
-        trieLogStorage,
-        metricsSystem);
+        parentWorldStateStorage.flatDbStrategyProvider, segmentedWorldStateStorage, trieLogStorage);
     this.parentWorldStateStorage = parentWorldStateStorage;
     this.subscribeParentId = parentWorldStateStorage.subscribe(this);
   }
 
   public BonsaiSnapshotWorldStateKeyValueStorage(
-      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final ObservableMetricsSystem metricsSystem) {
+      final BonsaiWorldStateKeyValueStorage worldStateStorageKeyValueStorage) {
     this(
-        worldStateKeyValueStorage,
-        ((SnappableKeyValueStorage) worldStateKeyValueStorage.getComposedWorldStateStorage())
+        worldStateStorageKeyValueStorage,
+        ((SnappableKeyValueStorage) worldStateStorageKeyValueStorage.getComposedWorldStateStorage())
             .takeSnapshot(),
-        worldStateKeyValueStorage.getTrieLogStorage(),
-        metricsSystem);
+        worldStateStorageKeyValueStorage.getTrieLogStorage());
   }
 
   private boolean isClosedGet() {
@@ -80,7 +72,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     return new Updater(
         ((SnappedKeyValueStorage) composedWorldStateStorage).getSnapshotTransaction(),
         trieLogStorage.startTransaction(),
-        flatDbStrategy);
+        getFlatDbStrategy());
   }
 
   @Override

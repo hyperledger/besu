@@ -37,12 +37,11 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
   private final String DNS_DISCOVERY_SERVER_OVERRIDE_FLAG = "--Xp2p-dns-discovery-server";
   private final String DISCOVERY_PROTOCOL_V5_ENABLED = "--Xv5-discovery-enabled";
   /** The constant FILTER_ON_ENR_FORK_ID. */
-  public static final String FILTER_ON_ENR_FORK_ID = "--Xfilter-on-enr-fork-id";
+  public static final String FILTER_ON_ENR_FORK_ID = "--filter-on-enr-fork-id";
 
   @CommandLine.Option(
       names = INITIATE_CONNECTIONS_FREQUENCY_FLAG,
       hidden = true,
-      defaultValue = "30",
       paramLabel = "<INTEGER>",
       description =
           "The frequency (in seconds) at which to initiate new outgoing connections (default: ${DEFAULT-VALUE})")
@@ -52,7 +51,6 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
   @CommandLine.Option(
       names = CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG,
       hidden = true,
-      defaultValue = "60",
       paramLabel = "<INTEGER>",
       description =
           "The frequency (in seconds) at which to check maintained connections (default: ${DEFAULT-VALUE})")
@@ -69,16 +67,14 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
   @CommandLine.Option(
       names = DISCOVERY_PROTOCOL_V5_ENABLED,
       hidden = true,
-      defaultValue = "false",
       description = "Whether to enable P2P Discovery Protocol v5 (default: ${DEFAULT-VALUE})")
   private final Boolean isPeerDiscoveryV5Enabled = false;
 
   @CommandLine.Option(
       names = FILTER_ON_ENR_FORK_ID,
       hidden = true,
-      defaultValue = "false",
       description = "Whether to enable filtering of peers based on the ENR field ForkId)")
-  private final Boolean filterOnEnrForkId = false;
+  private final Boolean filterOnEnrForkId = NetworkingConfiguration.DEFAULT_FILTER_ON_ENR_FORK_ID;
 
   @CommandLine.Option(
       hidden = true,

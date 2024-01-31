@@ -27,11 +27,10 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedWor
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateLayerStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.account.Account;
@@ -60,7 +59,7 @@ public abstract class DiffBasedWorldState<
   protected WORLDSTATE_STORAGE worldStateKeyValueStorage;
   protected final BonsaiCachedWorldStorageManager cachedWorldStorageManager;
   protected final TrieLogManager trieLogManager;
-  protected BonsaiWorldStateUpdateAccumulator accumulator;
+  protected DiffBasedWorldStateUpdateAccumulator<?> accumulator;
 
   protected Hash worldStateRootHash;
   protected Hash worldStateBlockHash;
@@ -88,7 +87,7 @@ public abstract class DiffBasedWorldState<
    *
    * @param accumulator accumulator to use.
    */
-  protected void setAccumulator(final BonsaiWorldStateUpdateAccumulator accumulator) {
+  public void setAccumulator(final DiffBasedWorldStateUpdateAccumulator<?> accumulator) {
     this.accumulator = accumulator;
   }
 
@@ -134,7 +133,7 @@ public abstract class DiffBasedWorldState<
     return worldStateKeyValueStorage;
   }
 
-  public BonsaiWorldStateUpdateAccumulator getAccumulator() {
+  public DiffBasedWorldStateUpdateAccumulator<?> getAccumulator() {
     return accumulator;
   }
 

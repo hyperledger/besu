@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -58,7 +59,9 @@ public class AccountHealingTrackingTest {
   private final List<Address> accounts = List.of(Address.fromHexString("0xdeadbeef"));
   private final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
       new BonsaiWorldStateKeyValueStorage(
-          new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
+          new InMemoryKeyValueStorageProvider(),
+          new NoOpMetricsSystem(),
+          DataStorageConfiguration.DEFAULT_CONFIG);
 
   private WorldStateStorageCoordinator worldStateStorageCoordinator;
 
@@ -219,8 +222,7 @@ public class AccountHealingTrackingTest {
             accountHash,
             Hash.wrap(accountStateTrie.getRootHash()),
             Bytes.EMPTY);
-    storageTrieNodeHealingRequest.getExistingData(
-        snapWorldDownloadState, worldStateStorageCoordinator);
+    storageTrieNodeHealingRequest.getExistingData(worldStateStorageCoordinator);
     verify(snapWorldDownloadState, never()).addAccountToHealingList(any(Bytes.class));
   }
 }

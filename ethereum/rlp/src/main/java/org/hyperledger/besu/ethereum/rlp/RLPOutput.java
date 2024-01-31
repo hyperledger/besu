@@ -92,7 +92,7 @@ public interface RLPOutput {
   /**
    * Writes a RLP "null", that is an empty value.
    *
-   * <p>This is a shortcut for writeUInt256Scalar{@code writeBytes(Bytes.EMPTY)}.
+   * <p>This is a shortcut for {@code writeBytes(Bytes.EMPTY)}.
    */
   default void writeNull() {
     writeBytes(Bytes.EMPTY);

@@ -38,8 +38,8 @@ public class FastSyncChainDownloader {
       final MetricsSystem metricsSystem,
       final FastSyncState fastSyncState) {
 
-    final FastSyncTargetManager syncTargetManager =
-        new FastSyncTargetManager(
+    final SyncTargetManager syncTargetManager =
+        new SyncTargetManager(
             config,
             worldStateStorageCoordinator,
             protocolSchedule,

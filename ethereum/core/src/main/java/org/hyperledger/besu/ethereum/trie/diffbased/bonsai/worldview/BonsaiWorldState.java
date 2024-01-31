@@ -32,9 +32,9 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMer
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateLayerStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.StorageConsumingMap;
@@ -53,6 +53,7 @@ import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.rlp.RLP;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiWorldState extends DiffBasedWorldState<BonsaiWorldStateKeyValueStorage> {
@@ -71,7 +72,7 @@ public class BonsaiWorldState extends DiffBasedWorldState<BonsaiWorldStateKeyVal
         evmConfiguration);
   }
 
-  protected BonsaiWorldState(
+  public BonsaiWorldState(
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final BonsaiCachedMerkleTrieLoader cachedMerkleTrieLoader,
       final BonsaiCachedWorldStorageManager cachedWorldStorageManager,
@@ -86,7 +87,7 @@ public class BonsaiWorldState extends DiffBasedWorldState<BonsaiWorldStateKeyVal
                 cachedMerkleTrieLoader.preLoadAccount(
                     worldStateKeyValueStorage, worldStateRootHash, addr),
             (addr, value) ->
-                cachedMerkleTrieLoader.preLoadStorageSlot(worldStateKeyValueStorage, addr, value),
+                cachedMerkleTrieLoader.preLoadStorageSlot(getWorldStateStorage(), addr, value),
             evmConfiguration));
   }
 
@@ -265,50 +266,55 @@ public class BonsaiWorldState extends DiffBasedWorldState<BonsaiWorldStateKeyVal
   private void clearStorage(
       final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
-
-    maybeStateUpdater.ifPresent(
-        bonsaiUpdater -> {
-          for (final Address address : worldStateUpdater.getStorageToClear()) {
-            // because we are clearing persisted values we need the account root as persisted
-            final BonsaiAccount oldAccount =
-                getWorldStateStorage()
-                    .getAccount(address.addressHash())
-                    .map(
-                        bytes -> BonsaiAccount.fromRLP(BonsaiWorldState.this, address, bytes, true))
-                    .orElse(null);
-            if (oldAccount == null) {
-              // This is when an account is both created and deleted within the scope of the same
-              // block.  A not-uncommon DeFi bot pattern.
-              continue;
-            }
-            final Hash addressHash = address.addressHash();
-            final MerkleTrie<Bytes, Bytes> storageTrie =
-                createTrie(
-                    (location, key) -> getStorageTrieNode(addressHash, location, key),
-                    oldAccount.getStorageRoot());
-            try {
-              Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
-              while (!entriesToDelete.isEmpty()) {
-                entriesToDelete
-                    .keySet()
-                    .forEach(
-                        k ->
-                            bonsaiUpdater.removeStorageValueBySlotHash(
-                                address.addressHash(), Hash.wrap(k)));
-                entriesToDelete.keySet().forEach(storageTrie::remove);
-                if (entriesToDelete.size() == 256) {
-                  entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
-                } else {
-                  break;
-                }
-              }
-            } catch (MerkleTrieException e) {
-              // need to throw to trigger the heal
-              throw new MerkleTrieException(
-                  e.getMessage(), Optional.of(Address.wrap(address)), e.getHash(), e.getLocation());
-            }
+    for (final Address address : worldStateUpdater.getStorageToClear()) {
+      // because we are clearing persisted values we need the account root as persisted
+      final BonsaiAccount oldAccount =
+          worldStateKeyValueStorage
+              .getAccount(address.addressHash())
+              .map(bytes -> BonsaiAccount.fromRLP(BonsaiWorldState.this, address, bytes, true))
+              .orElse(null);
+      if (oldAccount == null) {
+        // This is when an account is both created and deleted within the scope of the same
+        // block.  A not-uncommon DeFi bot pattern.
+        continue;
+      }
+      final Hash addressHash = address.addressHash();
+      final MerkleTrie<Bytes, Bytes> storageTrie =
+          createTrie(
+              (location, key) -> getStorageTrieNode(addressHash, location, key),
+              oldAccount.getStorageRoot());
+      try {
+        final StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> storageToDelete =
+            worldStateUpdater.getStorageToUpdate().get(address);
+        Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
+        while (!entriesToDelete.isEmpty()) {
+          entriesToDelete.forEach(
+              (k, v) -> {
+                final StorageSlotKey storageSlotKey =
+                    new StorageSlotKey(Hash.wrap(k), Optional.empty());
+                final UInt256 slotValue = UInt256.fromBytes(Bytes32.leftPad(RLP.decodeValue(v)));
+                maybeStateUpdater.ifPresent(
+                    bonsaiUpdater ->
+                        bonsaiUpdater.removeStorageValueBySlotHash(
+                            address.addressHash(), storageSlotKey.getSlotHash()));
+                storageToDelete
+                    .computeIfAbsent(
+                        storageSlotKey, key -> new DiffBasedValue<>(slotValue, null, true))
+                    .setPrior(slotValue);
+              });
+          entriesToDelete.keySet().forEach(storageTrie::remove);
+          if (entriesToDelete.size() == 256) {
+            entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
+          } else {
+            break;
           }
-        });
+        }
+      } catch (MerkleTrieException e) {
+        // need to throw to trigger the heal
+        throw new MerkleTrieException(
+            e.getMessage(), Optional.of(Address.wrap(address)), e.getHash(), e.getLocation());
+      }
+    }
   }
 
   @Override
@@ -335,7 +341,7 @@ public class BonsaiWorldState extends DiffBasedWorldState<BonsaiWorldStateKeyVal
     return getWorldStateStorage().getAccountStateTrieNode(location, nodeHash);
   }
 
-  protected void writeTrieNode(
+  private void writeTrieNode(
       final SegmentIdentifier segmentId,
       final SegmentedKeyValueStorageTransaction tx,
       final Bytes location,

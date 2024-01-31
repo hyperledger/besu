@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerPrivileges;
@@ -70,7 +71,7 @@ public class RlpxAgent {
   private final PeerPrivileges peerPrivileges;
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
-  private final int lowerBound;
+  private final int maxPeers;
   private final Supplier<Stream<PeerConnection>> allConnectionsSupplier;
   private final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
   private final Cache<Bytes, CompletableFuture<PeerConnection>> peersConnectingCache =
@@ -86,7 +87,7 @@ public class RlpxAgent {
       final ConnectionInitializer connectionInitializer,
       final PeerRlpxPermissions peerPermissions,
       final PeerPrivileges peerPrivileges,
-      final int peersLowerBound,
+      final int maxPeers,
       final Supplier<Stream<PeerConnection>> allConnectionsSupplier,
       final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier) {
     this.localNode = localNode;
@@ -94,7 +95,7 @@ public class RlpxAgent {
     this.connectionInitializer = connectionInitializer;
     this.peerPermissions = peerPermissions;
     this.peerPrivileges = peerPrivileges;
-    this.lowerBound = peersLowerBound;
+    this.maxPeers = maxPeers;
     this.allConnectionsSupplier = allConnectionsSupplier;
     this.allActiveConnectionsSupplier = allActiveConnectionsSupplier;
   }
@@ -162,13 +163,6 @@ public class RlpxAgent {
     }
   }
 
-  public void connect(final Stream<? extends Peer> peerStream) {
-    if (!localNode.isReady()) {
-      return;
-    }
-    peerStream.forEach(this::connect);
-  }
-
   public void disconnect(final Bytes peerId, final DisconnectReason reason) {
     try {
       allActiveConnectionsSupplier
@@ -206,6 +200,7 @@ public class RlpxAgent {
                   + this.getClass().getSimpleName()
                   + " has finished starting"));
     }
+
     // Check peer is valid
     final EnodeURL enode = peer.getEnodeURL();
     if (!enode.isListening()) {
@@ -310,8 +305,8 @@ public class RlpxAgent {
             });
   }
 
-  public boolean canExceedConnectionLimits(final Peer peer) {
-    return peerPrivileges.canExceedConnectionLimits(peer);
+  public boolean canExceedConnectionLimits(final Bytes peerId) {
+    return peerPrivileges.canExceedConnectionLimits(peerId);
   }
 
   private void handleIncomingConnection(final PeerConnection peerConnection) {
@@ -363,8 +358,8 @@ public class RlpxAgent {
     return peersConnectingCache.asMap();
   }
 
-  public int getPeerLowerBound() {
-    return lowerBound;
+  public int getMaxPeers() {
+    return maxPeers;
   }
 
   public static class Builder {
@@ -379,7 +374,8 @@ public class RlpxAgent {
     private Optional<TLSConfiguration> p2pTLSConfiguration;
     private Supplier<Stream<PeerConnection>> allConnectionsSupplier;
     private Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
-    private int peersLowerBound;
+    private int maxPeers;
+    private PeerTable peerTable;
 
     private Builder() {}
 
@@ -399,12 +395,13 @@ public class RlpxAgent {
                   localNode,
                   connectionEvents,
                   metricsSystem,
-                  p2pTLSConfiguration.get());
+                  p2pTLSConfiguration.get(),
+                  peerTable);
         } else {
           LOG.debug("Using default NettyConnectionInitializer");
           connectionInitializer =
               new NettyConnectionInitializer(
-                  nodeKey, config, localNode, connectionEvents, metricsSystem);
+                  nodeKey, config, localNode, connectionEvents, metricsSystem, peerTable);
         }
       }
 
@@ -416,7 +413,7 @@ public class RlpxAgent {
           connectionInitializer,
           rlpxPermissions,
           peerPrivileges,
-          peersLowerBound,
+          maxPeers,
           allConnectionsSupplier,
           allActiveConnectionsSupplier);
     }
@@ -495,8 +492,13 @@ public class RlpxAgent {
       return this;
     }
 
-    public Builder peersLowerBound(final int peersLowerBound) {
-      this.peersLowerBound = peersLowerBound;
+    public Builder maxPeers(final int maxPeers) {
+      this.maxPeers = maxPeers;
+      return this;
+    }
+
+    public Builder peerTable(final PeerTable peerTable) {
+      this.peerTable = peerTable;
       return this;
     }
   }

@@ -32,7 +32,7 @@ public class DiscoveryConfiguration {
   private List<EnodeURL> bootnodes = new ArrayList<>();
   private String dnsDiscoveryURL;
   private boolean discoveryV5Enabled = false;
-  private boolean filterOnEnrForkId = false;
+  private boolean filterOnEnrForkId = NetworkingConfiguration.DEFAULT_FILTER_ON_ENR_FORK_ID;
 
   public static DiscoveryConfiguration create() {
     return new DiscoveryConfiguration();

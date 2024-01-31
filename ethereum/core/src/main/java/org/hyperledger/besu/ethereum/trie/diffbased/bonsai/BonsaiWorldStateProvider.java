@@ -28,17 +28,15 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
@@ -72,22 +70,21 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
       final BonsaiCachedMerkleTrieLoader cachedMerkleTrieLoader,
-      final ObservableMetricsSystem metricsSystem,
       final BesuContext pluginContext,
-      final EvmConfiguration evmConfiguration,
-      final TrieLogPruner trieLogPruner) {
+      final EvmConfiguration evmConfiguration) {
 
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
+
     this.cachedWorldStorageManager =
-        new BonsaiCachedWorldStorageManager(this, worldStateKeyValueStorage, metricsSystem);
+        new BonsaiCachedWorldStorageManager(this, worldStateKeyValueStorage);
+
     // TODO: de-dup constructors
     this.trieLogManager =
         new TrieLogManager(
             blockchain,
             worldStateKeyValueStorage,
             maxLayersToLoad.orElse(BonsaiCachedWorldStorageManager.RETAINED_LAYERS),
-            pluginContext,
-            trieLogPruner);
+            pluginContext);
     this.blockchain = blockchain;
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
     this.persistedState = new BonsaiWorldState(this, worldStateKeyValueStorage, evmConfiguration);

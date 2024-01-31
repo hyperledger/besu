@@ -293,6 +293,8 @@ public class MainnetTransactionProcessor {
         return TransactionProcessingResult.invalid(validationResult);
       }
 
+      operationTracer.tracePrepareTransaction(worldState, transaction);
+
       final long previousNonce = sender.incrementNonce();
       LOG.trace(
           "Incremented sender {} nonce ({} -> {})",
@@ -426,6 +428,13 @@ public class MainnetTransactionProcessor {
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         worldUpdater.commit();
+      } else {
+        if (initialFrame.getExceptionalHaltReason().isPresent()) {
+          validationResult =
+              ValidationResult.invalid(
+                  TransactionInvalidReason.EXECUTION_HALTED,
+                  initialFrame.getExceptionalHaltReason().get().toString());
+        }
       }
 
       if (LOG.isTraceEnabled()) {
@@ -505,9 +514,15 @@ public class MainnetTransactionProcessor {
             gasUsedByTransaction, refundedGas, validationResult, initialFrame.getRevertReason());
       }
     } catch (final MerkleTrieException re) {
+      operationTracer.traceEndTransaction(
+          worldState.updater(), transaction, false, Bytes.EMPTY, List.of(), 0, 0L);
+
       // need to throw to trigger the heal
       throw re;
     } catch (final RuntimeException re) {
+      operationTracer.traceEndTransaction(
+          worldState.updater(), transaction, false, Bytes.EMPTY, List.of(), 0, 0L);
+
       LOG.error("Critical Exception Processing Transaction", re);
       return TransactionProcessingResult.invalid(
           ValidationResult.invalid(

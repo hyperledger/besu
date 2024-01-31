@@ -165,7 +165,9 @@ public class TrieLogFactoryImpl implements TrieLogFactory {
         final StateTrieAccountValue newValue = nullOrValue(input, StateTrieAccountValue::readFrom);
         final boolean isCleared = getOptionalIsCleared(input);
         input.leaveList();
-        newLayer.getAccountChanges().put(address, new DiffBasedValue<>(oldValue, newValue, isCleared));
+        newLayer
+            .getAccountChanges()
+            .put(address, new DiffBasedValue<>(oldValue, newValue, isCleared));
       }
 
       if (input.nextIsNull()) {
@@ -249,7 +251,7 @@ public class TrieLogFactoryImpl implements TrieLogFactory {
     } else {
       writer.accept(output, value.getUpdated());
     }
-    if (!value.isCleared()) {
+    if (!value.isLastStepCleared()) {
       output.writeNull();
     } else {
       output.writeInt(1);

@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadExceptio
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProcess;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -83,7 +84,9 @@ public class FastWorldDownloadStateTest {
     if (storageFormat == DataStorageFormat.BONSAI) {
       worldStateKeyValueStorage =
           new BonsaiWorldStateKeyValueStorage(
-              new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
+              new InMemoryKeyValueStorageProvider(),
+              new NoOpMetricsSystem(),
+              DataStorageConfiguration.DEFAULT_CONFIG);
     } else {
       worldStateKeyValueStorage =
           new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());

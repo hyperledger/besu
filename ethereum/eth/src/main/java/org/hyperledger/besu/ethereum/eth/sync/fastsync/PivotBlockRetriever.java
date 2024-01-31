@@ -156,8 +156,7 @@ public class PivotBlockRetriever {
           || pivotBlockNumber.get() <= BlockHeader.GENESIS_BLOCK_NUMBER) {
         LOG.info("Max retries reached, cancel pivot block download.");
         // Pivot block selection has failed
-        result.completeExceptionally(
-            new FastSyncException(FastSyncError.PIVOT_BLOCK_HEADER_MISMATCH));
+        result.completeExceptionally(new SyncException(SyncError.PIVOT_BLOCK_HEADER_MISMATCH));
         return;
       } else {
         LOG.info("Move pivot block back to {} and retry.", pivotBlockNumber);

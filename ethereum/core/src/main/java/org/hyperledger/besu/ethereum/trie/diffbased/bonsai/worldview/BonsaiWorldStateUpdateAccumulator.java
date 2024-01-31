@@ -92,7 +92,8 @@ public class BonsaiWorldStateUpdateAccumulator
   }
 
   @Override
-  protected void assertCloseEnoughForDiffing(final BonsaiAccount source, final AccountValue account, final String context) {
-    BonsaiAccount.assertCloseEnoughForDiffing(source,account,context);
+  protected void assertCloseEnoughForDiffing(
+      final BonsaiAccount source, final AccountValue account, final String context) {
+    BonsaiAccount.assertCloseEnoughForDiffing(source, account, context);
   }
 }

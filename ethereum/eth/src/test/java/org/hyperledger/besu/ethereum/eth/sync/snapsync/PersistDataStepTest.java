@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.services.tasks.Task;
 
@@ -41,7 +41,8 @@ public class PersistDataStepTest {
 
   private final WorldStateStorageCoordinator worldStateStorageCoordinator =
       new InMemoryKeyValueStorageProvider()
-          .createWorldStateStorageCoordinator(DataStorageFormat.FOREST);
+          .createWorldStateStorageCoordinator(DataStorageConfiguration.DEFAULT_CONFIG);
+
   private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
   private final SnapWorldDownloadState downloadState = mock(SnapWorldDownloadState.class);
 
@@ -53,7 +54,7 @@ public class PersistDataStepTest {
 
   @BeforeEach
   public void setUp() {
-    when(downloadState.getMetricsManager()).thenReturn(mock(SnapsyncMetricsManager.class));
+    when(downloadState.getMetricsManager()).thenReturn(mock(SnapSyncMetricsManager.class));
   }
 
   @Test
