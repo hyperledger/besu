@@ -317,10 +317,13 @@ public abstract class PeerDiscoveryAgent {
    * @return host address as string
    */
   static String deriveHost(final Endpoint sourceEndpoint, final Packet packet) {
-    return packet
-        .getPacketData(PingPacketData.class)
-        .flatMap(PingPacketData::getFrom)
-        .map(Endpoint::getHost)
+    final Optional<String> pingPacketHost =
+        packet
+            .getPacketData(PingPacketData.class)
+            .flatMap(PingPacketData::getFrom)
+            .map(Endpoint::getHost);
+
+    return pingPacketHost
         // fall back to source endpoint "from" if ping packet from address does not satisfy filters
         .filter(InetAddresses::isInetAddress)
         .filter(h -> !NetworkUtility.isUnspecifiedAddress(h))
@@ -341,12 +344,21 @@ public abstract class PeerDiscoveryAgent {
         .stream()
         .peek(
             h ->
-                LOG.trace(
-                    "Using \"From\" endpoint {} specified in ping packet. Ignoring UDP source host {}",
-                    h,
-                    sourceEndpoint.getHost()))
+                LOG.atTrace()
+                    .setMessage(
+                        "Using \"From\" endpoint {} specified in ping packet. Ignoring UDP source host {}")
+                    .addArgument(h)
+                    .addArgument(sourceEndpoint::getHost)
+                    .log())
         .findFirst()
-        .orElseGet(sourceEndpoint::getHost);
+        .orElseGet(
+            () -> {
+              LOG.debug(
+                  "Ignoring \"From\" endpoint {} specified in ping packet. Using UDP source host {}",
+                  pingPacketHost.orElse("not specified"),
+                  sourceEndpoint.getHost());
+              return sourceEndpoint.getHost();
+            });
   }
 
   /**
