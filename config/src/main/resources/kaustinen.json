@@ -12,10 +12,11 @@
     "berlinBlock": 0,
     "londonBlock": 0,
     "preMergeForkBlock": 0,
+    "mergeNetsplitBlock": 0,
     "terminalTotalDifficulty": 0,
     "shanghaiTime": 0,
-    "pragueTime": 1697197884,
-    "ethash":{}
+    "ethash": {},
+    "pragueTime": 1700826600
   },
   "alloc": {
     "0x0000000000000000000000000000000000000000": {
@@ -851,5 +852,5 @@
   "nonce": "0x1234",
   "mixhash": "0x0000000000000000000000000000000000000000000000000000000000000000",
   "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-  "timestamp": "1697196984"
+  "timestamp": "1700825700"
 }

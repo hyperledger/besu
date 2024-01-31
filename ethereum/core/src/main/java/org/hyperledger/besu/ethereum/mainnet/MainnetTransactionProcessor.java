@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.AccessWitness;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
@@ -331,13 +332,16 @@ public class MainnetTransactionProcessor {
       if (warmCoinbase) {
         addressList.add(miningBeneficiary);
       }
-
+      final AccessWitness accessWitness = new AccessWitness();
       final long intrinsicGas =
           gasCalculator.transactionIntrinsicGasCost(
               transaction.getPayload(), transaction.isContractCreation());
       final long accessListGas =
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
-      final long gasAvailable = transaction.getGasLimit() - intrinsicGas - accessListGas;
+      final long accessEventCost =
+          gasCalculator.computeAccessEventsCost(accessWitness, transaction, sender);
+      final long gasAvailable =
+          transaction.getGasLimit() - intrinsicGas - accessListGas - accessEventCost;
       LOG.trace(
           "Gas available for execution {} = {} - {} - {} (limit - intrinsic - accessList)",
           gasAvailable,

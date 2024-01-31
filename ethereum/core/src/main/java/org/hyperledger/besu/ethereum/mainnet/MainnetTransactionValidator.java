@@ -169,11 +169,13 @@ public class MainnetTransactionValidator implements TransactionValidator {
                 txTotalBlobGas, gasLimitCalculator.currentBlobGasLimit()));
       }
     }
-
+    // final AccessWitness accessWitness = new AccessWitness();
     final long intrinsicGasCost =
         gasCalculator.transactionIntrinsicGasCost(
                 transaction.getPayload(), transaction.isContractCreation())
             + (transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L));
+    // TODO VERKLE FIX CALCULATION ON VALIDATION+
+    // gasCalculator.computeAccessEventsCost(accessWitness, transaction);
     if (Long.compareUnsigned(intrinsicGasCost, transaction.getGasLimit()) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,

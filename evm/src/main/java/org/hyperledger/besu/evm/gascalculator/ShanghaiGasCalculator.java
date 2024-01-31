@@ -16,6 +16,11 @@ package org.hyperledger.besu.evm.gascalculator;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
+import org.hyperledger.besu.datatypes.AccessWitness;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Transaction;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -50,12 +55,34 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
   }
 
   @Override
+  public long computeAccessEventsCost(
+      final AccessWitness accessWitness,
+      final Transaction transaction,
+      final MutableAccount sender) {
+    final boolean sendsValue = !transaction.getValue().equals(Wei.ZERO);
+    long cost = 0;
+    cost += accessWitness.touchTxOriginAndComputeGas(transaction.getSender());
+
+    if (transaction.getTo().isPresent()) {
+      final Address to = transaction.getTo().get();
+      cost += accessWitness.touchTxExistingAndComputeGas(to, sendsValue);
+    } else {
+      cost +=
+          accessWitness.touchAndChargeContractCreateInit(
+              Address.contractAddress(transaction.getSender(), sender.getNonce() - 1L), sendsValue);
+    }
+
+    return cost;
+  }
+
+  @Override
   public long createOperationGasCost(final MessageFrame frame) {
     final long initCodeLength = clampedToLong(frame.getStackItem(2));
     return clampedAdd(super.createOperationGasCost(frame), calculateInitGasCost(initCodeLength));
   }
 
   private static long calculateInitGasCost(final long initCodeLength) {
+
     final int dataLength = (int) Math.ceil(initCodeLength / 32.0);
     return dataLength * INIT_CODE_COST;
   }
