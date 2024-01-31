@@ -57,7 +57,6 @@ public class NetworkUtilityTest {
     assertThat(NetworkUtility.isIpV4Address("127.0.0.")).isFalse();
     assertThat(NetworkUtility.isIpV4Address("256.256.256.256")).isFalse();
     // ipv6 compatible ipv4 address
-    assertThat(NetworkUtility.isIpV4Address("0000:0000:0000:0000:0000:ffff:c0a8:5801")).isTrue();
     assertThat(NetworkUtility.isIpV4Address("::ffff:c0a8:5801")).isTrue();
     assertThat(NetworkUtility.isIpV4Address("0:0:0:0:0:ffff:c0a8:5801")).isTrue();
     assertThat(NetworkUtility.isIpV4Address("0000:0000:0000:0000:0000:ffff:c0a8:5801")).isTrue();
@@ -68,7 +67,6 @@ public class NetworkUtilityTest {
     assertThat(NetworkUtility.isIpV6Address("::1")).isTrue();
     assertThat(NetworkUtility.isIpV6Address("::")).isTrue();
     assertThat(NetworkUtility.isIpV6Address("2001:db8:3333:4444:5555:6666:7777:8888")).isTrue();
-    assertThat(NetworkUtility.isIpV6Address("00:00::00:00::00:00")).isFalse();
     assertThat(NetworkUtility.isIpV6Address("00:00::00:00::00:00")).isFalse();
   }
 }
