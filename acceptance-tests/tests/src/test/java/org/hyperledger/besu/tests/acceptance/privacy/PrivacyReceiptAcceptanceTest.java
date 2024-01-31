@@ -61,6 +61,8 @@ public class PrivacyReceiptAcceptanceTest extends ParameterizedEnclaveTestBase {
             restriction == UNRESTRICTED,
             "0xAA");
     privacyCluster.start(alice);
+
+    alice.verify(priv.syncingStatus(false));
   }
 
   @Test

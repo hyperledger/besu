@@ -94,6 +94,10 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
             false,
             false);
     privacyCluster.start(alice, bob, charlie);
+
+    alice.verify(priv.syncingStatus(false));
+    bob.verify(priv.syncingStatus(false));
+    charlie.verify(priv.syncingStatus(false));
   }
 
   @Test
