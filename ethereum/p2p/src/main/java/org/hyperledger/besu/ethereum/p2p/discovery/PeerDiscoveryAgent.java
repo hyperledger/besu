@@ -338,10 +338,12 @@ public abstract class PeerDiscoveryAgent {
         .findFirst()
         .orElseGet(
             () -> {
-              LOG.trace(
-                  "Ignoring \"From\" endpoint {} in ping packet. Using UDP source host {}",
-                  pingPacketHost.orElse("not specified"),
-                  sourceEndpoint.getHost());
+              LOG.atTrace()
+                  .setMessage(
+                      "Ignoring \"From\" endpoint {} in ping packet. Using UDP source host {}")
+                  .addArgument(pingPacketHost.orElse("not specified"))
+                  .addArgument(sourceEndpoint.getHost())
+                  .log();
               return sourceEndpoint.getHost();
             });
   }
