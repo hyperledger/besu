@@ -32,6 +32,7 @@ import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -119,11 +120,11 @@ class FlatDbStrategyProviderTest {
 
     final SegmentedKeyValueStorageTransaction transaction =
         composedWorldStateStorage.startTransaction();
+    final AccountHashCodeStorageStrategy accountHashCodeStorageStrategy =
+        new AccountHashCodeStorageStrategy();
     // key representing account hash just needs to not be the code hash
-    transaction.put(
-        KeyValueSegmentIdentifier.CODE_STORAGE,
-        Bytes.of(2).toArrayUnsafe(),
-        Bytes.of(1).toArrayUnsafe());
+    final Hash accountHash = Hash.wrap(Bytes32.fromHexString("0001"));
+    accountHashCodeStorageStrategy.putFlatCode(transaction, accountHash, null, Bytes.of(2));
     transaction.commit();
 
     flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
@@ -149,10 +150,10 @@ class FlatDbStrategyProviderTest {
 
     final SegmentedKeyValueStorageTransaction transaction =
         composedWorldStateStorage.startTransaction();
-    transaction.put(
-        KeyValueSegmentIdentifier.CODE_STORAGE,
-        Hash.hash(Bytes.of(1)).toArrayUnsafe(),
-        Bytes.of(1).toArrayUnsafe());
+
+    final CodeHashCodeStorageStrategy codeHashCodeStorageStrategy =
+        new CodeHashCodeStorageStrategy();
+    codeHashCodeStorageStrategy.putFlatCode(transaction, null, Hash.hash(Bytes.of(1)), Bytes.of(1));
     transaction.commit();
 
     flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);

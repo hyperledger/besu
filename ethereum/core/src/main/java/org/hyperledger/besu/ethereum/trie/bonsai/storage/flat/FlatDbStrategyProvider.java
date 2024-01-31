@@ -18,7 +18,6 @@ package org.hyperledger.besu.ethereum.trie.bonsai.storage.flat;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -108,11 +107,8 @@ public class FlatDbStrategyProvider {
         .limit(1)
         .findFirst()
         .map(
-            keypair -> {
-              final Bytes key = Bytes.wrap(keypair.getKey());
-              final Hash valueHash = Hash.hash(Bytes.wrap(keypair.getValue()));
-              return key.equals(valueHash);
-            });
+            keypair ->
+                CodeHashCodeStorageStrategy.isCodeHashValue(keypair.getKey(), keypair.getValue()));
   }
 
   public FlatDbStrategy getFlatDbStrategy(
