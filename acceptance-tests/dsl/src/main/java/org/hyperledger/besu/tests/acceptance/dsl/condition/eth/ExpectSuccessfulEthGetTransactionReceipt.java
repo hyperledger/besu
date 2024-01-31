@@ -32,6 +32,7 @@ public class ExpectSuccessfulEthGetTransactionReceipt implements Condition {
 
   @Override
   public void verify(final Node node) {
+    //TODO: TEST INVERTED FOR INTENTIONAL BREAK PLS UNDO!!!
     WaitUtils.waitFor(60, () -> assertThat(node.execute(transaction)).isNotPresent());
   }
 }
