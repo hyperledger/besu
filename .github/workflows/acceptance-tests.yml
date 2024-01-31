@@ -40,7 +40,7 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: get acceptance test report
-        uses: docker/login-action@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d@v3
+        uses: dawidd6/action-download-artifact@v2
         with:
           branch: main
           name_is_regexp: true
