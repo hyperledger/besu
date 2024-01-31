@@ -21,8 +21,8 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PrivateDatabaseMetadata;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PrivateVersionedStorageFormat;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.DatabaseMetadata;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PrivacyVersionedStorageFormat;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -41,11 +41,13 @@ import org.slf4j.LoggerFactory;
 public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStorageFactory {
   private static final Logger LOG =
       LoggerFactory.getLogger(RocksDBKeyValuePrivacyStorageFactory.class);
-  private static final Set<PrivateVersionedStorageFormat> SUPPORTED_VERSIONS =
-      EnumSet.of(PrivateVersionedStorageFormat.ORIGINAL);
+  private static final Set<PrivacyVersionedStorageFormat> SUPPORTED_VERSIONS =
+      EnumSet.of(
+          PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES,
+          PrivacyVersionedStorageFormat.BONSAI_WITH_VARIABLES);
   private static final String PRIVATE_DATABASE_PATH = "private";
   private final RocksDBKeyValueStorageFactory publicFactory;
-  private PrivateDatabaseMetadata databaseMetadata;
+  private DatabaseMetadata databaseMetadata;
 
   /**
    * Instantiates a new RocksDb key value privacy storage factory.
@@ -115,39 +117,54 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
    * private database exists there may be a "privacyVersion" field in the metadata file otherwise
    * use the default version
    */
-  private PrivateDatabaseMetadata readDatabaseMetadata(final BesuConfiguration commonConfiguration)
+  private DatabaseMetadata readDatabaseMetadata(final BesuConfiguration commonConfiguration)
       throws IOException {
     final Path dataDir = commonConfiguration.getDataPath();
     final boolean privacyDatabaseExists =
         commonConfiguration.getStoragePath().resolve(PRIVATE_DATABASE_PATH).toFile().exists();
-    final PrivateDatabaseMetadata privateDatabaseMetadata;
-    if (privacyDatabaseExists) {
-      privateDatabaseMetadata = PrivateDatabaseMetadata.lookUpFrom(dataDir);
-      LOG.info(
-          "Existing private database detected at {}. Metadata {}",
-          dataDir,
-          privateDatabaseMetadata);
+    final boolean privacyDatabaseMetadataExists = DatabaseMetadata.isPresent(dataDir);
+    final DatabaseMetadata privacyDatabaseMetadata;
+    if (privacyDatabaseExists && !privacyDatabaseMetadataExists) {
+      throw new StorageException(
+          "Privacy database exists but metadata file not found, without it there is no safe way to open the database");
+    }
+    if (privacyDatabaseMetadataExists) {
+      final var existingDatabaseMetadata = DatabaseMetadata.lookUpFrom(dataDir);
+      if (existingDatabaseMetadata.getVersionedStorageFormat().getPrivacyVersion().isEmpty()) {
+        privacyDatabaseMetadata = existingDatabaseMetadata.upgradeToPrivacy();
+        privacyDatabaseMetadata.writeToDirectory(dataDir);
+        LOG.info(
+            "Upgraded existing database detected at {} to privacy database. Metadata {}",
+            dataDir,
+            existingDatabaseMetadata);
+      } else {
+        privacyDatabaseMetadata = existingDatabaseMetadata;
+        LOG.info(
+            "Existing privacy database detected at {}. Metadata {}",
+            dataDir,
+            privacyDatabaseMetadata);
+      }
     } else {
-      privateDatabaseMetadata = PrivateDatabaseMetadata.defaultForNewDb();
+      privacyDatabaseMetadata = DatabaseMetadata.defaultForNewPrivateDb();
       LOG.info(
           "No existing private database detected at {}. Using default metadata for new db {}",
           dataDir,
-          privateDatabaseMetadata);
+          privacyDatabaseMetadata);
       Files.createDirectories(dataDir);
-      privateDatabaseMetadata.writeToDirectory(dataDir);
+      privacyDatabaseMetadata.writeToDirectory(dataDir);
     }
 
-    if (!SUPPORTED_VERSIONS.contains(privateDatabaseMetadata.getPrivateVersionedStorageFormat())) {
-      final String message = "Unsupported RocksDB Metadata version of: " + privateDatabaseMetadata;
+    if (!SUPPORTED_VERSIONS.contains(privacyDatabaseMetadata.getVersionedStorageFormat())) {
+      final String message = "Unsupported RocksDB Metadata version of: " + privacyDatabaseMetadata;
       LOG.error(message);
       throw new StorageException(message);
     }
 
-    return privateDatabaseMetadata;
+    return privacyDatabaseMetadata;
   }
 
   @Override
   public int getVersion() {
-    return databaseMetadata.getPrivateVersionedStorageFormat().getPrivacyVersion();
+    return databaseMetadata.getVersionedStorageFormat().getPrivacyVersion().getAsInt();
   }
 }

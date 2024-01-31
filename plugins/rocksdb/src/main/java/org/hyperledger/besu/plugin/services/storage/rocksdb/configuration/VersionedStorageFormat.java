@@ -16,37 +16,13 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
-public enum VersionedStorageFormat {
-  FOREST_ORIGINAL(DataStorageFormat.FOREST, 1),
-  FOREST_WITH_VARIABLES(DataStorageFormat.FOREST, 2),
-  BONSAI_ORIGINAL(DataStorageFormat.BONSAI, 1),
-  BONSAI_WITH_VARIABLES(DataStorageFormat.BONSAI, 2);
+import java.util.OptionalInt;
 
-  private final DataStorageFormat format;
-  private final int version;
+public interface VersionedStorageFormat {
 
-  VersionedStorageFormat(final DataStorageFormat format, final int version) {
-    this.format = format;
-    this.version = version;
-  }
+  DataStorageFormat getFormat();
 
-  public static VersionedStorageFormat defaultForNewDB(final DataStorageFormat format) {
-    return switch (format) {
-      case FOREST -> FOREST_WITH_VARIABLES;
-      case BONSAI -> BONSAI_WITH_VARIABLES;
-    };
-  }
+  int getVersion();
 
-  public DataStorageFormat getFormat() {
-    return format;
-  }
-
-  public int getVersion() {
-    return version;
-  }
-
-  @Override
-  public String toString() {
-    return "format=" + format + ", version=" + version;
-  }
+  OptionalInt getPrivacyVersion();
 }

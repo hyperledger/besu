@@ -17,6 +17,8 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.plugin.services.exception.StorageException;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,7 +35,17 @@ class DatabaseMetadataTest {
 
     final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
     assertThat(databaseMetadata.getVersionedStorageFormat())
-        .isEqualTo(VersionedStorageFormat.BONSAI_WITH_VARIABLES);
+        .isEqualTo(BaseVersionedStorageFormat.BONSAI_WITH_VARIABLES);
+  }
+
+  @Test
+  void readingMetadataV1Privacy() throws Exception {
+    final Path tempDataDir =
+        createAndWrite("data", "DATABASE_METADATA.json", "{\"version\":1,\"privacyVersion\":1}");
+
+    final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
+    assertThat(databaseMetadata.getVersionedStorageFormat())
+        .isEqualTo(PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES);
   }
 
   @Test
@@ -44,13 +56,30 @@ class DatabaseMetadataTest {
 
     final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
     assertThat(databaseMetadata.getVersionedStorageFormat())
-        .isEqualTo(VersionedStorageFormat.FOREST_WITH_VARIABLES);
+        .isEqualTo(BaseVersionedStorageFormat.FOREST_WITH_VARIABLES);
+  }
+
+  @Test
+  void readingMetadataV2Privacy() throws Exception {
+    final Path tempDataDir =
+        createAndWrite(
+            "data",
+            "DATABASE_METADATA.json",
+            "{\"v2\":{\"format\":\"FOREST\",\"version\":2,\"privacyVersion\":1}}");
+
+    final DatabaseMetadata databaseMetadata = DatabaseMetadata.lookUpFrom(tempDataDir);
+    assertThat(databaseMetadata.getVersionedStorageFormat())
+        .isEqualTo(PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES);
   }
 
   @Test
   void unsupportedMetadata() throws Exception {
     final Path tempDataDir = createAndWrite("data", "DATABASE_METADATA.json", "{\"version\":42}");
-    DatabaseMetadata.lookUpFrom(tempDataDir);
+    try {
+      DatabaseMetadata.lookUpFrom(tempDataDir);
+    } catch (final StorageException se) {
+      assertThat(se).hasMessage("Unsupported db version: 42");
+    }
   }
 
   private Path createAndWrite(final String dir, final String file, final String content)

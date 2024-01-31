@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
-import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.VersionedStorageFormat.BONSAI_WITH_VARIABLES;
-import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.VersionedStorageFormat.FOREST_WITH_VARIABLES;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.BONSAI_WITH_VARIABLES;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.FOREST_WITH_VARIABLES;
 
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -25,6 +25,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.DatabaseMetadata;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
@@ -53,9 +54,8 @@ import org.slf4j.LoggerFactory;
 public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBKeyValueStorageFactory.class);
-  private static final VersionedStorageFormat DEFAULT_VERSIONED_FORMAT =
-      VersionedStorageFormat.FOREST_WITH_VARIABLES;
-  private static final EnumSet<VersionedStorageFormat> SUPPORTED_VERSIONED_FORMATS =
+  private static final VersionedStorageFormat DEFAULT_VERSIONED_FORMAT = FOREST_WITH_VARIABLES;
+  private static final EnumSet<BaseVersionedStorageFormat> SUPPORTED_VERSIONED_FORMATS =
       EnumSet.of(FOREST_WITH_VARIABLES, BONSAI_WITH_VARIABLES);
   private static final String NAME = "rocksdb";
   private final RocksDBMetricsFactory rocksDBMetricsFactory;
@@ -252,10 +252,15 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
   private DatabaseMetadata readDatabaseMetadata(final BesuConfiguration commonConfiguration)
       throws IOException {
     final Path dataDir = commonConfiguration.getDataPath();
-    final boolean databaseExists = commonConfiguration.getStoragePath().toFile().exists();
     final boolean dataDirExists = dataDir.toFile().exists();
+    final boolean databaseExists = commonConfiguration.getStoragePath().toFile().exists();
+    final boolean databaseMetadataExists = DatabaseMetadata.isPresent(dataDir);
     final DatabaseMetadata databaseMetadata;
-    if (databaseExists) {
+    if (databaseExists && !databaseMetadataExists) {
+      throw new StorageException(
+          "Database exists but metadata file not found, without it there is no safe way to open the database");
+    }
+    if (databaseMetadataExists) {
       databaseMetadata = DatabaseMetadata.lookUpFrom(dataDir);
       LOG.info(
           "Existing database detected at {}. Metadata {}. Processing WAL...",
@@ -273,13 +278,21 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       databaseMetadata.writeToDirectory(dataDir);
     }
 
-    if (!SUPPORTED_VERSIONED_FORMATS.contains(databaseMetadata.getVersionedStorageFormat())) {
+    if (!isSupportedVersionedFormat(databaseMetadata.getVersionedStorageFormat())) {
       final String message = "Unsupported RocksDB metadata: " + databaseMetadata;
       LOG.error(message);
       throw new StorageException(message);
     }
 
     return databaseMetadata;
+  }
+
+  private boolean isSupportedVersionedFormat(final VersionedStorageFormat versionedStorageFormat) {
+    return SUPPORTED_VERSIONED_FORMATS.stream()
+        .anyMatch(
+            vsf ->
+                vsf.getFormat().equals(versionedStorageFormat.getFormat())
+                    && vsf.getVersion() == versionedStorageFormat.getVersion());
   }
 
   @Override

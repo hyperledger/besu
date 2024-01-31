@@ -17,6 +17,7 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -25,17 +26,18 @@ import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.DatabaseMetadata;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.VersionedStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorageTest.TestSegment;
 
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
@@ -43,8 +45,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class RocksDBKeyValueStorageFactoryTest {
-
-  private static final String METADATA_FILENAME = "DATABASE_METADATA.json";
 
   @Mock private RocksDBFactoryConfiguration rocksDbConfiguration;
   @Mock private BesuConfiguration commonConfiguration;
@@ -54,7 +54,7 @@ public class RocksDBKeyValueStorageFactoryTest {
   private final List<SegmentIdentifier> segments = List.of(TestSegment.DEFAULT, segment);
 
   @Test
-  public void shouldCreateCorrectMetadataFileForLatestVersion() throws Exception {
+  public void shouldCreateCorrectMetadataFileForLatestVersionForNewDb() throws Exception {
     final Path tempDataDir = temporaryFolder.resolve("data");
     final Path tempDatabaseDir = temporaryFolder.resolve("db");
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
@@ -65,15 +65,15 @@ public class RocksDBKeyValueStorageFactoryTest {
         new RocksDBKeyValueStorageFactory(
             () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
 
-    // Side effect is creation of the Metadata version file
-    storageFactory.create(segment, commonConfiguration, metricsSystem);
-
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
-        .isEqualTo(VersionedStorageFormat.FOREST_WITH_VARIABLES);
+    try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
+      // Side effect is creation of the Metadata version file
+      assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
+          .isEqualTo(BaseVersionedStorageFormat.FOREST_WITH_VARIABLES);
+    }
   }
 
   @Test
-  public void shouldDetectVersion1DatabaseIfNoMetadataFileFound() throws Exception {
+  public void shouldFailIfDbExistsAndNoMetadataFileFound() throws Exception {
     final Path tempDataDir = temporaryFolder.resolve("data");
     final Path tempDatabaseDir = temporaryFolder.resolve("db");
     Files.createDirectories(tempDatabaseDir);
@@ -85,30 +85,35 @@ public class RocksDBKeyValueStorageFactoryTest {
         new RocksDBKeyValueStorageFactory(
             () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
 
-    storageFactory.create(segment, commonConfiguration, metricsSystem);
-
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
-        .isEqualTo(VersionedStorageFormat.FOREST_WITH_VARIABLES);
+    try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
+      fail("Must fail if db is present but metadata is not");
+    } catch (StorageException se) {
+      assertThat(se)
+          .hasMessage(
+              "Database exists but metadata file not found, without it there is no safe way to open the database");
+    }
   }
 
   @Test
-  public void shouldDetectCorrectVersionIfMetadataFileExists() throws Exception {
+  public void shouldDetectCorrectMetadataV1() throws Exception {
     final Path tempDataDir = temporaryFolder.resolve("data");
     final Path tempDatabaseDir = temporaryFolder.resolve("db");
     Files.createDirectories(tempDataDir);
+    Files.createDirectories(tempDatabaseDir);
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
-    when(commonConfiguration.getDatabaseFormat()).thenReturn(DataStorageFormat.FOREST);
+
+    Utils.createDatabaseMetadataV1(tempDataDir, 2);
 
     final RocksDBKeyValueStorageFactory storageFactory =
         new RocksDBKeyValueStorageFactory(
             () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
 
-    storageFactory.create(segment, commonConfiguration, metricsSystem);
-
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
-        .isEqualTo(VersionedStorageFormat.FOREST_WITH_VARIABLES);
-    assertThat(storageFactory.isSegmentIsolationSupported()).isTrue();
+    try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
+      assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
+          .isEqualTo(BaseVersionedStorageFormat.BONSAI_WITH_VARIABLES);
+      assertThat(storageFactory.isSegmentIsolationSupported()).isTrue();
+    }
   }
 
   @Test
@@ -119,6 +124,8 @@ public class RocksDBKeyValueStorageFactoryTest {
     Files.createDirectories(tempDataDir);
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
+
+    Utils.createDatabaseMetadataV1(tempDataDir, 2);
 
     final RocksDBKeyValueStorageFactory storageFactory =
         new RocksDBKeyValueStorageFactory(
@@ -137,6 +144,7 @@ public class RocksDBKeyValueStorageFactoryTest {
             DataStorageFormat.FOREST,
             RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
     rolledbackStorageFactory.create(segment, commonConfiguration, metricsSystem);
+    rolledbackStorageFactory.close();
   }
 
   @Test
@@ -147,9 +155,8 @@ public class RocksDBKeyValueStorageFactoryTest {
     Files.createDirectories(tempDataDir);
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
-    final String badVersion = "{\"version\":99}";
-    Files.write(
-        tempDataDir.resolve(METADATA_FILENAME), badVersion.getBytes(Charset.defaultCharset()));
+
+    Utils.createDatabaseMetadataV1(tempDataDir, 99);
     assertThatThrownBy(
             () ->
                 new RocksDBKeyValueStorageFactory(
@@ -161,7 +168,8 @@ public class RocksDBKeyValueStorageFactoryTest {
   }
 
   @Test
-  public void shouldSetSegmentationFieldDuringCreation() throws Exception {
+  public void shouldDetectCorrectMetadataV2AndSetSegmentationFieldDuringCreation()
+      throws Exception {
     final Path tempDataDir = temporaryFolder.resolve("data");
     final Path tempDatabaseDir = temporaryFolder.resolve("db");
     Files.createDirectories(tempDatabaseDir);
@@ -169,11 +177,16 @@ public class RocksDBKeyValueStorageFactoryTest {
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
 
+    Utils.createDatabaseMetadataV2(tempDataDir, DataStorageFormat.FOREST, 2);
+
     final RocksDBKeyValueStorageFactory storageFactory =
         new RocksDBKeyValueStorageFactory(
             () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
-    storageFactory.create(segment, commonConfiguration, metricsSystem);
-    assertThatCode(storageFactory::isSegmentIsolationSupported).doesNotThrowAnyException();
+    try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
+      assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
+          .isEqualTo(BaseVersionedStorageFormat.FOREST_WITH_VARIABLES);
+      assertThatCode(storageFactory::isSegmentIsolationSupported).doesNotThrowAnyException();
+    }
   }
 
   @Test
@@ -185,9 +198,7 @@ public class RocksDBKeyValueStorageFactoryTest {
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
 
-    final String badVersion = "{\"🦄\":1}";
-    Files.write(
-        tempDataDir.resolve(METADATA_FILENAME), badVersion.getBytes(Charset.defaultCharset()));
+    Utils.createDatabaseMetadataRaw(tempDataDir, "{\"🦄\":1}");
 
     assertThatThrownBy(
             () ->
@@ -198,9 +209,7 @@ public class RocksDBKeyValueStorageFactoryTest {
                     .create(segment, commonConfiguration, metricsSystem))
         .isInstanceOf(IllegalStateException.class);
 
-    final String badValue = "{\"version\":\"iomedae\"}";
-    Files.write(
-        tempDatabaseDir.resolve(METADATA_FILENAME), badValue.getBytes(Charset.defaultCharset()));
+    Utils.createDatabaseMetadataRaw(tempDataDir, "{\"version\":\"iomedae\"}");
 
     assertThatThrownBy(
             () ->
@@ -213,6 +222,7 @@ public class RocksDBKeyValueStorageFactoryTest {
   }
 
   @Test
+  @DisabledOnOs(OS.WINDOWS)
   public void shouldCreateDBCorrectlyIfSymlink() throws Exception {
     final Path tempRealDataDir = Files.createDirectories(temporaryFolder.resolve("real-data-dir"));
     final Path tempSymLinkDataDir =
@@ -222,14 +232,39 @@ public class RocksDBKeyValueStorageFactoryTest {
     when(commonConfiguration.getDataPath()).thenReturn(tempSymLinkDataDir);
     when(commonConfiguration.getDatabaseFormat()).thenReturn(DataStorageFormat.FOREST);
 
+    Utils.createDatabaseMetadataV2(tempSymLinkDataDir, DataStorageFormat.FOREST, 2);
+
     final RocksDBKeyValueStorageFactory storageFactory =
         new RocksDBKeyValueStorageFactory(
             () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
 
     // Ensure that having created everything via a symlink data dir the DB meta-data has been
     // created correctly
-    storageFactory.create(segment, commonConfiguration, metricsSystem);
-    assertThat(DatabaseMetadata.lookUpFrom(tempRealDataDir).getVersionedStorageFormat())
-        .isEqualTo(VersionedStorageFormat.FOREST_WITH_VARIABLES);
+    try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
+      assertThat(DatabaseMetadata.lookUpFrom(tempRealDataDir).getVersionedStorageFormat())
+          .isEqualTo(BaseVersionedStorageFormat.FOREST_WITH_VARIABLES);
+    }
   }
+
+  //  private void createDatabaseMetadataV1(final Path tempDataDir, final int version)
+  //      throws IOException {
+  //    final String content = "{\"version\":" + version + "}";
+  //    Files.write(tempDataDir.resolve(METADATA_FILENAME),
+  // content.getBytes(Charset.defaultCharset()));
+  //  }
+  //
+  //  private void createDatabaseMetadataV2(
+  //      final Path tempDataDir, final DataStorageFormat dataStorageFormat, final int version)
+  //      throws IOException {
+  //    final String content =
+  //        "{\"v2\":{\"format\":\"" + dataStorageFormat + "\",\"version\":" + version + "}}";
+  //    Files.write(tempDataDir.resolve(METADATA_FILENAME),
+  // content.getBytes(Charset.defaultCharset()));
+  //  }
+  //
+  //  private void createDatabaseMetadataRaw(final Path tempDataDir, final String content)
+  //      throws IOException {
+  //    Files.write(tempDataDir.resolve(METADATA_FILENAME),
+  // content.getBytes(Charset.defaultCharset()));
+  //  }
 }
