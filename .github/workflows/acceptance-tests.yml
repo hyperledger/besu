@@ -9,6 +9,10 @@ env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
   total-runners: 16
 
+permissions:
+  statuses: write
+  checks: write
+
 jobs:
   authorize:
     environment:
