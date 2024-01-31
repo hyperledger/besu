@@ -197,9 +197,9 @@ public class NetworkUtility {
     return isPortAvailableForTcp(port) && isPortAvailableForUdp(port);
   }
 
-
   /**
    * Is hostAddress string an ip v4 address
+   *
    * @param hostAddress the host address as a string
    * @return true if the host address is an ip v4 address
    */
@@ -213,6 +213,7 @@ public class NetworkUtility {
 
   /**
    * Is hostAddress string an ip v6 address
+   *
    * @param hostAddress the host address as a string
    * @return true if the host address is an ip v6 address
    */
