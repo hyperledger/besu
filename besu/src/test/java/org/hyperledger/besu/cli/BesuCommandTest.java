@@ -51,7 +51,6 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -67,9 +66,6 @@ import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
-import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
-import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
-import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
@@ -96,7 +92,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -104,7 +99,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.io.FileUtils;
@@ -129,7 +123,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private static final String VALID_NODE_ID =
       "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0";
-  private static final String PERMISSIONING_CONFIG_TOML = "/permissioning_config.toml";
   private static final JsonRpcConfiguration DEFAULT_JSON_RPC_CONFIGURATION;
   private static final GraphQLConfiguration DEFAULT_GRAPH_QL_CONFIGURATION;
   private static final WebSocketConfiguration DEFAULT_WEB_SOCKET_CONFIGURATION;
@@ -346,374 +339,6 @@ public class BesuCommandTest extends CommandTestAbstract {
         "Invalid TOML configuration: org.apache.tuweni.toml.TomlParseError: Unexpected '=', expected ', \", ''', \"\"\", a number, "
             + "a boolean, a date/time, an array, or a table (line 1, column 8)";
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedOutputStart);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissionsSmartContractWithoutOptionMustError() {
-    parseCommand("--permissions-nodes-contract-address");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith("Missing required parameter for option '--permissions-nodes-contract-address'");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissionsEnabledWithoutContractAddressMustError() {
-    parseCommand("--permissions-nodes-contract-enabled");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("No node permissioning contract address specified");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissionsEnabledWithInvalidContractAddressMustError() {
-    parseCommand(
-        "--permissions-nodes-contract-enabled",
-        "--permissions-nodes-contract-address",
-        "invalid-smart-contract-address");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).contains("Invalid value");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissionsEnabledWithTooShortContractAddressMustError() {
-    parseCommand(
-        "--permissions-nodes-contract-enabled", "--permissions-nodes-contract-address", "0x1234");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).contains("Invalid value");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissionsSmartContractMustUseOption() {
-
-    final String smartContractAddress = "0x0000000000000000000000000000000000001234";
-
-    parseCommand(
-        "--permissions-nodes-contract-enabled",
-        "--permissions-nodes-contract-address",
-        smartContractAddress);
-    final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
-        new SmartContractPermissioningConfiguration();
-    smartContractPermissioningConfiguration.setNodeSmartContractAddress(
-        Address.fromHexString(smartContractAddress));
-    smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(true);
-
-    verify(mockRunnerBuilder)
-        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    final PermissioningConfiguration config =
-        permissioningConfigurationArgumentCaptor.getValue().get();
-    assertThat(config.getSmartContractConfig().get())
-        .usingRecursiveComparison()
-        .isEqualTo(smartContractPermissioningConfiguration);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissionsContractVersionDefaultValue() {
-    final SmartContractPermissioningConfiguration expectedConfig =
-        new SmartContractPermissioningConfiguration();
-    expectedConfig.setNodeSmartContractAddress(
-        Address.fromHexString("0x0000000000000000000000000000000000001234"));
-    expectedConfig.setSmartContractNodeAllowlistEnabled(true);
-    expectedConfig.setNodeSmartContractInterfaceVersion(1);
-
-    parseCommand(
-        "--permissions-nodes-contract-enabled",
-        "--permissions-nodes-contract-address",
-        "0x0000000000000000000000000000000000001234");
-
-    verify(mockRunnerBuilder)
-        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    final PermissioningConfiguration config =
-        permissioningConfigurationArgumentCaptor.getValue().get();
-    assertThat(config.getSmartContractConfig().get())
-        .usingRecursiveComparison()
-        .isEqualTo(expectedConfig);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissionsContractVersionSetsValue() {
-    final SmartContractPermissioningConfiguration expectedConfig =
-        new SmartContractPermissioningConfiguration();
-    expectedConfig.setNodeSmartContractAddress(
-        Address.fromHexString("0x0000000000000000000000000000000000001234"));
-    expectedConfig.setSmartContractNodeAllowlistEnabled(true);
-    expectedConfig.setNodeSmartContractInterfaceVersion(2);
-
-    parseCommand(
-        "--permissions-nodes-contract-enabled",
-        "--permissions-nodes-contract-address",
-        "0x0000000000000000000000000000000000001234",
-        "--permissions-nodes-contract-version",
-        "2");
-
-    verify(mockRunnerBuilder)
-        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    final PermissioningConfiguration config =
-        permissioningConfigurationArgumentCaptor.getValue().get();
-    assertThat(config.getSmartContractConfig().get())
-        .usingRecursiveComparison()
-        .isEqualTo(expectedConfig);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void accountPermissionsSmartContractWithoutOptionMustError() {
-    parseCommand("--permissions-accounts-contract-address");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith(
-            "Missing required parameter for option '--permissions-accounts-contract-address'");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void accountPermissionsEnabledWithoutContractAddressMustError() {
-    parseCommand("--permissions-accounts-contract-enabled");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("No account permissioning contract address specified");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void accountPermissionsEnabledWithInvalidContractAddressMustError() {
-    parseCommand(
-        "--permissions-accounts-contract-enabled",
-        "--permissions-accounts-contract-address",
-        "invalid-smart-contract-address");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).contains("Invalid value");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void accountPermissionsEnabledWithTooShortContractAddressMustError() {
-    parseCommand(
-        "--permissions-accounts-contract-enabled",
-        "--permissions-accounts-contract-address",
-        "0x1234");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).contains("Invalid value");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void accountPermissionsSmartContractMustUseOption() {
-    final String smartContractAddress = "0x0000000000000000000000000000000000001234";
-
-    parseCommand(
-        "--permissions-accounts-contract-enabled",
-        "--permissions-accounts-contract-address",
-        smartContractAddress);
-    final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
-        new SmartContractPermissioningConfiguration();
-    smartContractPermissioningConfiguration.setAccountSmartContractAddress(
-        Address.fromHexString(smartContractAddress));
-    smartContractPermissioningConfiguration.setSmartContractAccountAllowlistEnabled(true);
-
-    verify(mockRunnerBuilder)
-        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
-    final PermissioningConfiguration permissioningConfiguration =
-        permissioningConfigurationArgumentCaptor.getValue().get();
-    assertThat(permissioningConfiguration.getSmartContractConfig()).isPresent();
-
-    final SmartContractPermissioningConfiguration effectiveSmartContractConfig =
-        permissioningConfiguration.getSmartContractConfig().get();
-    assertThat(effectiveSmartContractConfig.isSmartContractAccountAllowlistEnabled()).isTrue();
-    assertThat(effectiveSmartContractConfig.getAccountSmartContractAddress())
-        .isEqualTo(Address.fromHexString(smartContractAddress));
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissioningTomlPathWithoutOptionMustDisplayUsage() {
-    parseCommand("--permissions-nodes-config-file");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith("Missing required parameter for option '--permissions-nodes-config-file'");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void accountPermissioningTomlPathWithoutOptionMustDisplayUsage() {
-    parseCommand("--permissions-accounts-config-file");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith("Missing required parameter for option '--permissions-accounts-config-file'");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissioningEnabledWithNonexistentConfigFileMustError() {
-    parseCommand(
-        "--permissions-nodes-config-file-enabled",
-        "--permissions-nodes-config-file",
-        "file-does-not-exist");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).contains("Configuration file does not exist");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void accountPermissioningEnabledWithNonexistentConfigFileMustError() {
-    parseCommand(
-        "--permissions-accounts-config-file-enabled",
-        "--permissions-accounts-config-file",
-        "file-does-not-exist");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).contains("Configuration file does not exist");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissioningTomlFileWithNoPermissionsEnabledMustNotError() throws IOException {
-
-    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_TOML);
-    final Path permToml = createTempFile("toml", Resources.toByteArray(configFile));
-    parseCommand("--permissions-nodes-config-file", permToml.toString());
-
-    verify(mockRunnerBuilder).build();
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void accountPermissioningTomlFileWithNoPermissionsEnabledMustNotError()
-      throws IOException {
-
-    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_TOML);
-    final Path permToml = createTempFile("toml", Resources.toByteArray(configFile));
-    parseCommand("--permissions-accounts-config-file", permToml.toString());
-
-    verify(mockRunnerBuilder).build();
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void defaultPermissionsTomlFileWithNoPermissionsEnabledMustNotError() {
-    parseCommand("--p2p-enabled", "false");
-
-    verify(mockRunnerBuilder).build();
-
-    assertThat(commandErrorOutput.toString(UTF_8)).doesNotContain("no permissions enabled");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void nodePermissioningTomlPathMustUseOption() throws IOException {
-    final List<EnodeURL> allowedNodes =
-        Lists.newArrayList(
-            EnodeURLImpl.fromString(
-                "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.9:4567"),
-            EnodeURLImpl.fromString(
-                "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.169.0.9:4568"));
-
-    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_TOML);
-    final Path permToml = createTempFile("toml", Resources.toByteArray(configFile));
-
-    final String allowedNodesString =
-        allowedNodes.stream().map(Object::toString).collect(Collectors.joining(","));
-    parseCommand(
-        "--permissions-nodes-config-file-enabled",
-        "--permissions-nodes-config-file",
-        permToml.toString(),
-        "--bootnodes",
-        allowedNodesString);
-    final LocalPermissioningConfiguration localPermissioningConfiguration =
-        LocalPermissioningConfiguration.createDefault();
-    localPermissioningConfiguration.setNodePermissioningConfigFilePath(permToml.toString());
-    localPermissioningConfiguration.setNodeAllowlist(allowedNodes);
-
-    verify(mockRunnerBuilder)
-        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    final PermissioningConfiguration config =
-        permissioningConfigurationArgumentCaptor.getValue().get();
-    assertThat(config.getLocalConfig().get())
-        .usingRecursiveComparison()
-        .isEqualTo(localPermissioningConfiguration);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void accountPermissioningTomlPathMustUseOption() throws IOException {
-
-    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_TOML);
-    final Path permToml = createTempFile("toml", Resources.toByteArray(configFile));
-
-    parseCommand(
-        "--permissions-accounts-config-file-enabled",
-        "--permissions-accounts-config-file",
-        permToml.toString());
-    final LocalPermissioningConfiguration localPermissioningConfiguration =
-        LocalPermissioningConfiguration.createDefault();
-    localPermissioningConfiguration.setAccountPermissioningConfigFilePath(permToml.toString());
-    localPermissioningConfiguration.setAccountAllowlist(
-        Collections.singletonList("0x0000000000000000000000000000000000000009"));
-
-    verify(mockRunnerBuilder)
-        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
-    final PermissioningConfiguration permissioningConfiguration =
-        permissioningConfigurationArgumentCaptor.getValue().get();
-    assertThat(permissioningConfiguration.getLocalConfig()).isPresent();
-
-    final LocalPermissioningConfiguration effectiveLocalPermissioningConfig =
-        permissioningConfiguration.getLocalConfig().get();
-    assertThat(effectiveLocalPermissioningConfig.isAccountAllowlistEnabled()).isTrue();
-    assertThat(effectiveLocalPermissioningConfig.getAccountPermissioningConfigFilePath())
-        .isEqualTo(permToml.toString());
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
@@ -1970,19 +1595,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void graphQLHttpEnabledPropertyMustBeUsed() {
-    parseCommand("--graphql-http-enabled");
-
-    verify(mockRunnerBuilder).graphQLConfiguration(graphQLConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(graphQLConfigArgumentCaptor.getValue().isEnabled()).isTrue();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void rpcApisSupportsEngine() {
     parseCommand("--rpc-http-api", "ENGINE", "--rpc-http-enabled");
 
@@ -2106,58 +1718,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--config-file", toml.toString());
 
     verifyOptionsConstraintLoggerCall("--privacy-enabled", "--privacy-tls-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void graphQLHttpHostAndPortOptionsMustBeUsed() {
-
-    final String host = "1.2.3.4";
-    final int port = 1234;
-    parseCommand(
-        "--graphql-http-enabled",
-        "--graphql-http-host",
-        host,
-        "--graphql-http-port",
-        String.valueOf(port));
-
-    verify(mockRunnerBuilder).graphQLConfiguration(graphQLConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(graphQLConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
-    assertThat(graphQLConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void graphQLHttpHostMayBeLocalhost() {
-
-    final String host = "localhost";
-    parseCommand("--graphql-http-enabled", "--graphql-http-host", host);
-
-    verify(mockRunnerBuilder).graphQLConfiguration(graphQLConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(graphQLConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void graphQLHttpHostMayBeIPv6() {
-
-    final String host = "2600:DB8::8545";
-    parseCommand("--graphql-http-enabled", "--graphql-http-host", host);
-
-    verify(mockRunnerBuilder).graphQLConfiguration(graphQLConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(graphQLConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -3164,43 +2724,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Pruning cannot be enabled with privacy.");
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void errorIsRaisedIfStaticNodesAreNotAllowed(final @TempDir Path testFolder)
-      throws IOException {
-    final Path staticNodesFile = testFolder.resolve("static-nodes.json");
-    final Path permissioningConfig = testFolder.resolve("permissioning.json");
-
-    final EnodeURL staticNodeURI =
-        EnodeURLImpl.builder()
-            .nodeId(
-                "50203c6bfca6874370e71aecc8958529fd723feb05013dc1abca8fc1fff845c5259faba05852e9dfe5ce172a7d6e7c2a3a5eaa8b541c8af15ea5518bbff5f2fa")
-            .ipAddress("127.0.0.1")
-            .useDefaultPorts()
-            .build();
-
-    final EnodeURL allowedNode =
-        EnodeURLImpl.builder()
-            .nodeId(
-                "50203c6bfca6874370e71aecc8958529fd723feb05013dc1abca8fc1fff845c5259faba05852e9dfe5ce172a7d6e7c2a3a5eaa8b541c8af15ea5518bbff5f2fa")
-            .useDefaultPorts()
-            .ipAddress("127.0.0.1")
-            .listeningPort(30304)
-            .build();
-
-    Files.write(staticNodesFile, ("[\"" + staticNodeURI.toString() + "\"]").getBytes(UTF_8));
-    Files.write(
-        permissioningConfig,
-        ("nodes-allowlist=[\"" + allowedNode.toString() + "\"]").getBytes(UTF_8));
-
-    parseCommand(
-        "--data-path=" + testFolder,
-        "--bootnodes",
-        "--permissions-nodes-config-file-enabled=true",
-        "--permissions-nodes-config-file=" + permissioningConfig);
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(staticNodeURI.toString(), "not in nodes-allowlist");
   }
 
   @Test
