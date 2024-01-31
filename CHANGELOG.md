@@ -11,6 +11,7 @@
 
 
 ### Deprecations
+- `--Xsnapsync-synchronizer-flat-db-healing-enabled` is deprecated (always enabled). [#6499](https://github.com/hyperledger/besu/pull/6499)
 - `--Xp2p-peer-lower-bound` [#6501](https://github.com/hyperledger/besu/pull/6501)
 
 ### Additions and Improvements
