@@ -174,19 +174,24 @@ public class TrieLogSubCommand implements Runnable {
               .concat(DATABASE_PATH);
 
       AtomicLong estimatedSaving = new AtomicLong(0L);
-      RocksDbHelper.forEachColumnFamily(
-          dbPath,
-          (rocksdb, cfHandle) -> {
-            try {
-              if (Arrays.equals(cfHandle.getName(), TRIE_LOG_STORAGE.getId())) {
-                estimatedSaving.set(
-                    Long.parseLong(
-                        rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size")));
+      try {
+        RocksDbHelper.forEachColumnFamily(
+            dbPath,
+            (rocksdb, cfHandle) -> {
+              try {
+                if (Arrays.equals(cfHandle.getName(), TRIE_LOG_STORAGE.getId())) {
+                  estimatedSaving.set(
+                      Long.parseLong(
+                          rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size")));
+                }
+              } catch (RocksDBException e) {
+                throw new RuntimeException(e);
               }
-            } catch (RocksDBException e) {
-              throw new RuntimeException(e);
-            }
-          });
+            });
+      } catch (Exception e) {
+        LOG.warn("Error while estimating trie log size, returning 0 for estimate", e);
+        return 0L;
+      }
 
       return estimatedSaving.get();
     }
