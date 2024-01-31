@@ -353,8 +353,8 @@ public abstract class PeerDiscoveryAgent {
         .findFirst()
         .orElseGet(
             () -> {
-              LOG.debug(
-                  "Ignoring \"From\" endpoint {} specified in ping packet. Using UDP source host {}",
+              LOG.trace(
+                  "Ignoring \"From\" endpoint {} in ping packet. Using UDP source host {}",
                   pingPacketHost.orElse("not specified"),
                   sourceEndpoint.getHost());
               return sourceEndpoint.getHost();
