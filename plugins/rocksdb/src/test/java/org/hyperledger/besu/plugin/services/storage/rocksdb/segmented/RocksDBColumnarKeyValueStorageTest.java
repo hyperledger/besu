@@ -308,58 +308,59 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
 
     // Actual call
 
-    final SegmentedKeyValueStorage store =
+    try (final SegmentedKeyValueStorage store =
         createSegmentedStore(
             folder,
             metricsSystemMock,
             List.of(TestSegment.DEFAULT, TestSegment.FOO),
-            List.of(TestSegment.EXPERIMENTAL));
+            List.of(TestSegment.EXPERIMENTAL))) {
 
-    KeyValueStorage keyValueStorage = new SegmentedKeyValueStorageAdapter(TestSegment.FOO, store);
+      KeyValueStorage keyValueStorage = new SegmentedKeyValueStorageAdapter(TestSegment.FOO, store);
 
-    // Assertions
-    assertThat(keyValueStorage).isNotNull();
-    verify(metricsSystemMock, times(4))
-        .createLabelledTimer(
-            eq(BesuMetricCategory.KVSTORE_ROCKSDB),
-            labelledTimersMetricsNameArgs.capture(),
-            labelledTimersHelpArgs.capture(),
-            any());
-    assertThat(labelledTimersMetricsNameArgs.getAllValues())
-        .containsExactly(
-            "read_latency_seconds",
-            "remove_latency_seconds",
-            "write_latency_seconds",
-            "commit_latency_seconds");
-    assertThat(labelledTimersHelpArgs.getAllValues())
-        .containsExactly(
-            "Latency for read from RocksDB.",
-            "Latency of remove requests from RocksDB.",
-            "Latency for write to RocksDB.",
-            "Latency for commits to RocksDB.");
+      // Assertions
+      assertThat(keyValueStorage).isNotNull();
+      verify(metricsSystemMock, times(4))
+          .createLabelledTimer(
+              eq(BesuMetricCategory.KVSTORE_ROCKSDB),
+              labelledTimersMetricsNameArgs.capture(),
+              labelledTimersHelpArgs.capture(),
+              any());
+      assertThat(labelledTimersMetricsNameArgs.getAllValues())
+          .containsExactly(
+              "read_latency_seconds",
+              "remove_latency_seconds",
+              "write_latency_seconds",
+              "commit_latency_seconds");
+      assertThat(labelledTimersHelpArgs.getAllValues())
+          .containsExactly(
+              "Latency for read from RocksDB.",
+              "Latency of remove requests from RocksDB.",
+              "Latency for write to RocksDB.",
+              "Latency for commits to RocksDB.");
 
-    verify(metricsSystemMock, times(2))
-        .createLongGauge(
-            eq(BesuMetricCategory.KVSTORE_ROCKSDB),
-            longGaugesMetricsNameArgs.capture(),
-            longGaugesHelpArgs.capture(),
-            any(LongSupplier.class));
-    assertThat(longGaugesMetricsNameArgs.getAllValues())
-        .containsExactly("rocks_db_table_readers_memory_bytes", "rocks_db_files_size_bytes");
-    assertThat(longGaugesHelpArgs.getAllValues())
-        .containsExactly(
-            "Estimated memory used for RocksDB index and filter blocks in bytes",
-            "Estimated database size in bytes");
+      verify(metricsSystemMock, times(2))
+          .createLongGauge(
+              eq(BesuMetricCategory.KVSTORE_ROCKSDB),
+              longGaugesMetricsNameArgs.capture(),
+              longGaugesHelpArgs.capture(),
+              any(LongSupplier.class));
+      assertThat(longGaugesMetricsNameArgs.getAllValues())
+          .containsExactly("rocks_db_table_readers_memory_bytes", "rocks_db_files_size_bytes");
+      assertThat(longGaugesHelpArgs.getAllValues())
+          .containsExactly(
+              "Estimated memory used for RocksDB index and filter blocks in bytes",
+              "Estimated database size in bytes");
 
-    verify(metricsSystemMock)
-        .createLabelledCounter(
-            eq(BesuMetricCategory.KVSTORE_ROCKSDB),
-            labelledCountersMetricsNameArgs.capture(),
-            labelledCountersHelpArgs.capture(),
-            any());
-    assertThat(labelledCountersMetricsNameArgs.getValue()).isEqualTo("rollback_count");
-    assertThat(labelledCountersHelpArgs.getValue())
-        .isEqualTo("Number of RocksDB transactions rolled back.");
+      verify(metricsSystemMock)
+          .createLabelledCounter(
+              eq(BesuMetricCategory.KVSTORE_ROCKSDB),
+              labelledCountersMetricsNameArgs.capture(),
+              labelledCountersHelpArgs.capture(),
+              any());
+      assertThat(labelledCountersMetricsNameArgs.getValue()).isEqualTo("rollback_count");
+      assertThat(labelledCountersHelpArgs.getValue())
+          .isEqualTo("Number of RocksDB transactions rolled back.");
+    }
   }
 
   public enum TestSegment implements SegmentIdentifier {
