@@ -321,7 +321,7 @@ public abstract class PeerDiscoveryAgent {
         .getPacketData(PingPacketData.class)
         .flatMap(PingPacketData::getFrom)
         .map(Endpoint::getHost)
-        // fall back to from endpoint if address does not meet these filters
+        // fall back to source endpoint "from" if ping packet from address does not satisfy filters
         .filter(InetAddresses::isInetAddress)
         .filter(h -> !NetworkUtility.isUnspecifiedAddress(h))
         .filter(h -> !NetworkUtility.isLocalhostAddress(h))
