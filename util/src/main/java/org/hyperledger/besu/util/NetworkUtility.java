@@ -33,8 +33,16 @@ import org.slf4j.LoggerFactory;
 public class NetworkUtility {
   /** The constant INADDR_ANY. */
   public static final String INADDR_ANY = "0.0.0.0";
+  /** The constant INADDR_NONE. */
+  public static final String INADDR_NONE = "255.255.255.255";
   /** The constant INADDR6_ANY. */
   public static final String INADDR6_ANY = "0:0:0:0:0:0:0:0";
+  /** The constant INADDR6_NONE. */
+  public static final String INADDR6_NONE = "::";
+  /** The constant INADDR_LOCALHOST. */
+  public static final String INADDR_LOCALHOST = "127.0.0.1";
+  /** The constant INADDR6_LOCALHOST. */
+  public static final String INADDR6_LOCALHOST = "::1";
 
   private static final Logger LOG = LoggerFactory.getLogger(NetworkUtility.class);
 
@@ -119,7 +127,15 @@ public class NetworkUtility {
    * @return the boolean
    */
   public static boolean isUnspecifiedAddress(final String ipAddress) {
-    return INADDR_ANY.equals(ipAddress) || INADDR6_ANY.equals(ipAddress);
+    return INADDR_ANY.equals(ipAddress)
+        || INADDR6_ANY.equals(ipAddress)
+        || INADDR_NONE.equals(ipAddress)
+        || INADDR6_NONE.equals(ipAddress);
+  }
+
+  /** Is local host address. */
+  public static boolean isLocalhostAddress(final String ipAddress) {
+    return INADDR_LOCALHOST.equals(ipAddress) || INADDR6_LOCALHOST.equals(ipAddress);
   }
 
   /**

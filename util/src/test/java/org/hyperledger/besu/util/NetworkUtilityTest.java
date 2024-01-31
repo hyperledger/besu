@@ -40,4 +40,12 @@ public class NetworkUtilityTest {
     assertThat(!NetworkUtility.isPortAvailable(8541)).isEqualTo(true);
     serverSocket.close();
   }
+
+  @Test
+  public void assertLocalhostIdentification() {
+    assertThat(NetworkUtility.isLocalhostAddress("127.0.0.1")).isTrue();
+    assertThat(NetworkUtility.isLocalhostAddress("::1")).isTrue();
+    assertThat(NetworkUtility.isLocalhostAddress("192.168.1.1")).isFalse();
+    assertThat(NetworkUtility.isLocalhostAddress("::ffff:c0a8:101")).isFalse();
+  }
 }

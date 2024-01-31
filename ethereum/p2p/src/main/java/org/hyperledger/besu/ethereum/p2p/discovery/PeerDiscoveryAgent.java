@@ -40,7 +40,10 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.NetworkUtility;
 
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -74,9 +77,6 @@ public abstract class PeerDiscoveryAgent {
   // The devp2p specification says only accept packets up to 1280, but some
   // clients ignore that, so we add in a little extra padding.
   private static final int MAX_PACKET_SIZE_BYTES = 1600;
-  private static final List<String> PING_PACKET_SOURCE_IGNORED =
-      List.of("127.0.0.1", "255.255.255.255", "0.0.0.0", "::", "0:0:0:0:0:0:0:0");
-
   protected final List<DiscoveryPeer> bootstrapPeers;
   private final List<PeerRequirement> peerRequirements = new CopyOnWriteArrayList<>();
   private final PeerPermissions peerPermissions;
@@ -85,6 +85,7 @@ public abstract class PeerDiscoveryAgent {
   private final RlpxAgent rlpxAgent;
   private final ForkIdManager forkIdManager;
   private final PeerTable peerTable;
+  private static final boolean isIpv6Available = NetworkUtility.isIPv6Available();
 
   /* The peer controller, which takes care of the state machine of peers. */
   protected Optional<PeerDiscoveryController> controller = Optional.empty();
@@ -320,10 +321,23 @@ public abstract class PeerDiscoveryAgent {
         .getPacketData(PingPacketData.class)
         .flatMap(PingPacketData::getFrom)
         .map(Endpoint::getHost)
+        // fall back to from endpoint if address does not meet these filters
+        .filter(InetAddresses::isInetAddress)
+        .filter(h -> !NetworkUtility.isUnspecifiedAddress(h))
+        .filter(h -> !NetworkUtility.isLocalhostAddress(h))
         .filter(
-            fromAddr ->
-                (!PING_PACKET_SOURCE_IGNORED.contains(fromAddr)
-                    && InetAddresses.isInetAddress(fromAddr)))
+            h -> {
+              // filter ipv6 addresses if ipv6 is not available
+              if (isIpv6Available) {
+                return true;
+              } else {
+                try {
+                  return !(InetAddress.getByName(h) instanceof Inet6Address);
+                } catch (UnknownHostException e) {
+                  return false;
+                }
+              }
+            })
         .stream()
         .peek(
             h ->
