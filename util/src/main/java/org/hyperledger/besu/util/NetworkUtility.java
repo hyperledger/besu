@@ -133,7 +133,12 @@ public class NetworkUtility {
         || INADDR6_NONE.equals(ipAddress);
   }
 
-  /** Is local host address. */
+  /**
+   * Returns whether host address string is local host address.
+   *
+   * @param ipAddress the host address as a string
+   * @return true if the host address is a local host address
+   */
   public static boolean isLocalhostAddress(final String ipAddress) {
     return INADDR_LOCALHOST.equals(ipAddress) || INADDR6_LOCALHOST.equals(ipAddress);
   }
