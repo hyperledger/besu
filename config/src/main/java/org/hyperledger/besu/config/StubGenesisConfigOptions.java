@@ -48,6 +48,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private OptionalLong mergeNetSplitBlockNumber = OptionalLong.empty();
   private OptionalLong shanghaiTime = OptionalLong.empty();
   private OptionalLong cancunTime = OptionalLong.empty();
+  private OptionalLong pragueTime = OptionalLong.empty();
   private OptionalLong futureEipsTime = OptionalLong.empty();
   private OptionalLong experimentalEipsTime = OptionalLong.empty();
   private OptionalLong terminalBlockNumber = OptionalLong.empty();
@@ -233,6 +234,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
+  public OptionalLong getPragueTime() {
+    return pragueTime;
+  }
+
+  @Override
   public OptionalLong getFutureEipsTime() {
     return futureEipsTime;
   }
@@ -364,6 +370,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
     getMergeNetSplitBlockNumber().ifPresent(l -> builder.put("mergeNetSplitBlock", l));
     getShanghaiTime().ifPresent(l -> builder.put("shanghaiTime", l));
     getCancunTime().ifPresent(l -> builder.put("cancunTime", l));
+    getPragueTime().ifPresent(l -> builder.put("pragueTime", l));
     getFutureEipsTime().ifPresent(l -> builder.put("futureEipsTime", l));
     getExperimentalEipsTime().ifPresent(l -> builder.put("experimentalEipsTime", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
@@ -605,6 +612,17 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    */
   public StubGenesisConfigOptions cancunTime(final long timestamp) {
     cancunTime = OptionalLong.of(timestamp);
+    return this;
+  }
+
+  /**
+   * Prague time.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions pragueTime(final long timestamp) {
+    pragueTime = OptionalLong.of(timestamp);
     return this;
   }
 

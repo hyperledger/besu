@@ -50,6 +50,7 @@ import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.trace.TracerProvider;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk;
+import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdkBuilder;
 import io.opentelemetry.sdk.common.CompletableResultCode;
 import io.opentelemetry.sdk.metrics.SdkMeterProvider;
 import io.opentelemetry.sdk.metrics.data.DoublePointData;
@@ -61,7 +62,7 @@ import io.opentelemetry.sdk.metrics.data.PointData;
 import io.opentelemetry.sdk.metrics.data.SummaryPointData;
 import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
-import io.opentelemetry.semconv.resource.attributes.ResourceAttributes;
+import io.opentelemetry.semconv.ResourceAttributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,15 +111,18 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
             .merge(
                 Resource.create(
                     Attributes.builder().put(ResourceAttributes.SERVICE_NAME, jobName).build()));
-    AutoConfiguredOpenTelemetrySdk autoSdk =
+    AutoConfiguredOpenTelemetrySdkBuilder autoSdkBuilder =
         AutoConfiguredOpenTelemetrySdk.builder()
             .addMeterProviderCustomizer(
                 (provider, config) ->
                     provider.setResource(resource).registerMetricReader(debugMetricReader))
-            .addTracerProviderCustomizer((provider, config) -> provider.setResource(resource))
-            .setResultAsGlobal(setAsGlobal)
-            .build();
-    OpenTelemetrySdk sdk = autoSdk.getOpenTelemetrySdk();
+            .addTracerProviderCustomizer((provider, config) -> provider.setResource(resource));
+
+    if (setAsGlobal) {
+      autoSdkBuilder.setResultAsGlobal();
+    }
+
+    OpenTelemetrySdk sdk = autoSdkBuilder.build().getOpenTelemetrySdk();
     this.sdkMeterProvider = sdk.getSdkMeterProvider();
     this.sdkTracerProvider = sdk.getSdkTracerProvider();
   }
