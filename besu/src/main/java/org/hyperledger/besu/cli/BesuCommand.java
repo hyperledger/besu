@@ -838,7 +838,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Option(
       names = {"--pruning-blocks-retained"},
-      defaultValue = "1024",
       paramLabel = "<INTEGER>",
       description =
           "Minimum number of recent blocks for which to keep entire world state (default: ${DEFAULT-VALUE})",
@@ -847,7 +846,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Option(
       names = {"--pruning-block-confirmations"},
-      defaultValue = "10",
       paramLabel = "<INTEGER>",
       description =
           "Minimum number of confirmations on a block before marking begins (default: ${DEFAULT-VALUE})",
