@@ -20,10 +20,12 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
 
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -33,7 +35,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TrieLogPruner {
+public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
 
   private static final Logger LOG = LoggerFactory.getLogger(TrieLogPruner.class);
 
@@ -41,6 +43,7 @@ public class TrieLogPruner {
   private final int loadingLimit;
   private final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
   private final Blockchain blockchain;
+  private final Consumer<Runnable> executeAsync;
   private final long numBlocksToRetain;
   private final boolean requireFinalizedBlock;
 
@@ -50,11 +53,13 @@ public class TrieLogPruner {
   public TrieLogPruner(
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
       final Blockchain blockchain,
+      final Consumer<Runnable> executeAsync,
       final long numBlocksToRetain,
       final int pruningLimit,
       final boolean requireFinalizedBlock) {
     this.rootWorldStateStorage = rootWorldStateStorage;
     this.blockchain = blockchain;
+    this.executeAsync = executeAsync;
     this.numBlocksToRetain = numBlocksToRetain;
     this.pruningLimit = pruningLimit;
     this.loadingLimit = pruningLimit; // same as pruningLimit for now
@@ -166,34 +171,18 @@ public class TrieLogPruner {
     return wasPruned.size();
   }
 
-  public static TrieLogPruner noOpTrieLogPruner() {
-    return new NoOpTrieLogPruner(null, null, 0, 0);
-  }
-
-  public static class NoOpTrieLogPruner extends TrieLogPruner {
-    private NoOpTrieLogPruner(
-        final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,
-        final Blockchain blockchain,
-        final long numBlocksToRetain,
-        final int pruningLimit) {
-      super(rootWorldStateStorage, blockchain, numBlocksToRetain, pruningLimit, true);
-    }
-
-    @Override
-    public int initialize() {
-      // no-op
-      return -1;
-    }
-
-    @Override
-    void addToPruneQueue(final long blockNumber, final Hash blockHash) {
-      // no-op
-    }
-
-    @Override
-    int pruneFromQueue() {
-      // no-op
-      return -1;
+  @Override
+  public void onTrieLogAdded(final TrieLogEvent event) {
+    if (TrieLogEvent.Type.ADDED.equals(event.getType())) {
+      final Hash blockHash = event.layer().getBlockHash();
+      final Optional<Long> blockNumber = event.layer().getBlockNumber();
+      blockNumber.ifPresent(
+          blockNum ->
+              executeAsync.accept(
+                  () -> {
+                    addToPruneQueue(blockNum, blockHash);
+                    pruneFromQueue();
+                  }));
     }
   }
 }

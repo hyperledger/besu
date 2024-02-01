@@ -2,3 +2,6 @@
 
 #mining
 miner-coinbase="0x0000000000000000000000000000000000000002"
+
+#network
+network="mainnet"

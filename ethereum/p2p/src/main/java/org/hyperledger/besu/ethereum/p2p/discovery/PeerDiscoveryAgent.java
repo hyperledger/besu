@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerRequirement;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.TimerUtil;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
@@ -73,7 +74,6 @@ public abstract class PeerDiscoveryAgent {
   // The devp2p specification says only accept packets up to 1280, but some
   // clients ignore that, so we add in a little extra padding.
   private static final int MAX_PACKET_SIZE_BYTES = 1600;
-
   protected final List<DiscoveryPeer> bootstrapPeers;
   private final List<PeerRequirement> peerRequirements = new CopyOnWriteArrayList<>();
   private final PeerPermissions peerPermissions;
@@ -81,6 +81,8 @@ public abstract class PeerDiscoveryAgent {
   private final MetricsSystem metricsSystem;
   private final RlpxAgent rlpxAgent;
   private final ForkIdManager forkIdManager;
+  private final PeerTable peerTable;
+  private static final boolean isIpv6Available = NetworkUtility.isIPv6Available();
 
   /* The peer controller, which takes care of the state machine of peers. */
   protected Optional<PeerDiscoveryController> controller = Optional.empty();
@@ -109,7 +111,8 @@ public abstract class PeerDiscoveryAgent {
       final MetricsSystem metricsSystem,
       final StorageProvider storageProvider,
       final ForkIdManager forkIdManager,
-      final RlpxAgent rlpxAgent) {
+      final RlpxAgent rlpxAgent,
+      final PeerTable peerTable) {
     this.metricsSystem = metricsSystem;
     checkArgument(nodeKey != null, "nodeKey cannot be null");
     checkArgument(config != null, "provided configuration cannot be null");
@@ -130,6 +133,7 @@ public abstract class PeerDiscoveryAgent {
     this.forkIdManager = forkIdManager;
     this.forkIdSupplier = () -> forkIdManager.getForkIdForChainHead().getForkIdAsBytesList();
     this.rlpxAgent = rlpxAgent;
+    this.peerTable = peerTable;
   }
 
   protected abstract TimerUtil createTimer();
@@ -263,9 +267,9 @@ public abstract class PeerDiscoveryAgent {
         .peerRequirement(PeerRequirement.combine(peerRequirements))
         .peerPermissions(peerPermissions)
         .metricsSystem(metricsSystem)
-        .forkIdManager(forkIdManager)
         .filterOnEnrForkId((config.isFilterOnEnrForkIdEnabled()))
         .rlpxAgent(rlpxAgent)
+        .peerTable(peerTable)
         .build();
   }
 
@@ -282,8 +286,9 @@ public abstract class PeerDiscoveryAgent {
             .flatMap(Endpoint::getTcpPort)
             .orElse(udpPort);
 
+    final String host = deriveHost(sourceEndpoint, packet);
+
     // Notify the peer controller.
-    final String host = sourceEndpoint.getHost();
     final DiscoveryPeer peer =
         DiscoveryPeer.fromEnode(
             EnodeURLImpl.builder()
@@ -294,6 +299,53 @@ public abstract class PeerDiscoveryAgent {
                 .build());
 
     controller.ifPresent(c -> c.onMessage(packet, peer));
+  }
+
+  /**
+   * method to derive the host from the source endpoint and the P2P PING packet. If the host is
+   * present in the P2P PING packet itself, use that as the endpoint. If the P2P PING packet
+   * specifies 127.0.0.1 (the default if a custom value is not specified with --p2p-host or via a
+   * suitable --nat-method) we ignore it in favour of the UDP source address. Some implementations
+   * send 127.0.0.1 or 255.255.255.255 anyway, but this reduces the chance of an unexpected change
+   * in behaviour as a result of https://github.com/hyperledger/besu/issues/6224 being fixed.
+   *
+   * @param sourceEndpoint source endpoint of the packet
+   * @param packet P2P PING packet
+   * @return host address as string
+   */
+  static String deriveHost(final Endpoint sourceEndpoint, final Packet packet) {
+    final Optional<String> pingPacketHost =
+        packet
+            .getPacketData(PingPacketData.class)
+            .flatMap(PingPacketData::getFrom)
+            .map(Endpoint::getHost);
+
+    return pingPacketHost
+        // fall back to source endpoint "from" if ping packet from address does not satisfy filters
+        .filter(InetAddresses::isInetAddress)
+        .filter(h -> !NetworkUtility.isUnspecifiedAddress(h))
+        .filter(h -> !NetworkUtility.isLocalhostAddress(h))
+        .filter(h -> isIpv6Available || !NetworkUtility.isIpV6Address(h))
+        .stream()
+        .peek(
+            h ->
+                LOG.atTrace()
+                    .setMessage(
+                        "Using \"From\" endpoint {} specified in ping packet. Ignoring UDP source host {}")
+                    .addArgument(h)
+                    .addArgument(sourceEndpoint::getHost)
+                    .log())
+        .findFirst()
+        .orElseGet(
+            () -> {
+              LOG.atTrace()
+                  .setMessage(
+                      "Ignoring \"From\" endpoint {} in ping packet. Using UDP source host {}")
+                  .addArgument(pingPacketHost.orElse("not specified"))
+                  .addArgument(sourceEndpoint.getHost())
+                  .log();
+              return sourceEndpoint.getHost();
+            });
   }
 
   /**

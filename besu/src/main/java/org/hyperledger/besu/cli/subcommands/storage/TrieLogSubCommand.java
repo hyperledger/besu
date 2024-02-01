@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -26,9 +27,11 @@ import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
@@ -43,7 +46,12 @@ import picocli.CommandLine.ParentCommand;
     description = "Manipulate trie logs",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class,
-    subcommands = {TrieLogSubCommand.CountTrieLog.class, TrieLogSubCommand.PruneTrieLog.class})
+    subcommands = {
+      TrieLogSubCommand.CountTrieLog.class,
+      TrieLogSubCommand.PruneTrieLog.class,
+      TrieLogSubCommand.ExportTrieLog.class,
+      TrieLogSubCommand.ImportTrieLog.class
+    })
 public class TrieLogSubCommand implements Runnable {
 
   @SuppressWarnings("UnusedVariable")
@@ -81,14 +89,15 @@ public class TrieLogSubCommand implements Runnable {
 
     @Override
     public void run() {
-      TrieLogContext context = getTrieLogContext();
+      final TrieLogContext context = getTrieLogContext();
 
       final PrintWriter out = spec.commandLine().getOut();
 
       out.println("Counting trie logs...");
-      TrieLogHelper.printCount(
+      final TrieLogHelper trieLogHelper = new TrieLogHelper();
+      trieLogHelper.printCount(
           out,
-          TrieLogHelper.getCount(
+          trieLogHelper.getCount(
               context.rootWorldStateStorage, Integer.MAX_VALUE, context.blockchain));
     }
   }
@@ -96,7 +105,7 @@ public class TrieLogSubCommand implements Runnable {
   @Command(
       name = "prune",
       description =
-          "This command prunes all trie log layers below the retention threshold, including orphaned trie logs.",
+          "This command prunes all trie log layers below the retention limit, including orphaned trie logs.",
       mixinStandardHelpOptions = true,
       versionProvider = VersionProvider.class)
   static class PruneTrieLog implements Runnable {
@@ -111,15 +120,115 @@ public class TrieLogSubCommand implements Runnable {
 
     @Override
     public void run() {
-      TrieLogContext context = getTrieLogContext();
+      final TrieLogContext context = getTrieLogContext();
       final Path dataDirectoryPath =
           Paths.get(
               TrieLogSubCommand.parentCommand.parentCommand.dataDir().toAbsolutePath().toString());
-      TrieLogHelper.prune(
+      final TrieLogHelper trieLogHelper = new TrieLogHelper();
+      trieLogHelper.prune(
           context.config(),
           context.rootWorldStateStorage(),
           context.blockchain(),
           dataDirectoryPath);
+    }
+  }
+
+  @Command(
+      name = "export",
+      description = "This command exports the trie log of a determined block to a binary file",
+      mixinStandardHelpOptions = true,
+      versionProvider = VersionProvider.class)
+  static class ExportTrieLog implements Runnable {
+
+    @SuppressWarnings("unused")
+    @ParentCommand
+    private TrieLogSubCommand parentCommand;
+
+    @SuppressWarnings("unused")
+    @CommandLine.Spec
+    private CommandLine.Model.CommandSpec spec; // Picocli injects reference to command spec
+
+    @SuppressWarnings("unused")
+    @CommandLine.Option(
+        names = "--trie-log-block-hash",
+        description =
+            "Comma separated list of hashes from the blocks you want to export the trie logs of",
+        split = " {0,1}, {0,1}",
+        arity = "1..*")
+    private List<String> trieLogBlockHashList;
+
+    @CommandLine.Option(
+        names = "--trie-log-file-path",
+        description = "The file you want to export the trie logs to",
+        arity = "1..1")
+    private Path trieLogFilePath = null;
+
+    @Override
+    public void run() {
+      if (trieLogFilePath == null) {
+        trieLogFilePath =
+            Paths.get(
+                TrieLogSubCommand.parentCommand
+                    .parentCommand
+                    .dataDir()
+                    .resolve("trie-logs.bin")
+                    .toAbsolutePath()
+                    .toString());
+      }
+
+      final TrieLogContext context = getTrieLogContext();
+
+      final List<Hash> listOfBlockHashes =
+          trieLogBlockHashList.stream().map(Hash::fromHexString).toList();
+
+      final TrieLogHelper trieLogHelper = new TrieLogHelper();
+
+      try {
+        trieLogHelper.exportTrieLog(
+            context.rootWorldStateStorage(), listOfBlockHashes, trieLogFilePath);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
+  @Command(
+      name = "import",
+      description = "This command imports a trie log exported by another besu node",
+      mixinStandardHelpOptions = true,
+      versionProvider = VersionProvider.class)
+  static class ImportTrieLog implements Runnable {
+
+    @SuppressWarnings("unused")
+    @ParentCommand
+    private TrieLogSubCommand parentCommand;
+
+    @SuppressWarnings("unused")
+    @CommandLine.Spec
+    private CommandLine.Model.CommandSpec spec; // Picocli injects reference to command spec
+
+    @CommandLine.Option(
+        names = "--trie-log-file-path",
+        description = "The file you want to import the trie logs from",
+        arity = "1..1")
+    private Path trieLogFilePath = null;
+
+    @Override
+    public void run() {
+      if (trieLogFilePath == null) {
+        trieLogFilePath =
+            Paths.get(
+                TrieLogSubCommand.parentCommand
+                    .parentCommand
+                    .dataDir()
+                    .resolve("trie-logs.bin")
+                    .toAbsolutePath()
+                    .toString());
+      }
+
+      TrieLogContext context = getTrieLogContext();
+      final TrieLogHelper trieLogHelper = new TrieLogHelper();
+      trieLogHelper.importTrieLog(context.rootWorldStateStorage(), trieLogFilePath);
     }
   }
 
@@ -139,8 +248,7 @@ public class TrieLogSubCommand implements Runnable {
 
     final StorageProvider storageProvider = besuController.getStorageProvider();
     final BonsaiWorldStateKeyValueStorage rootWorldStateStorage =
-        (BonsaiWorldStateKeyValueStorage)
-            storageProvider.createWorldStateStorage(DataStorageFormat.BONSAI);
+        (BonsaiWorldStateKeyValueStorage) storageProvider.createWorldStateStorage(config);
     final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
     return new TrieLogContext(config, rootWorldStateStorage, blockchain);
   }

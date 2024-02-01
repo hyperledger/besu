@@ -30,7 +30,6 @@ public class MetricsCLIOptions implements CLIOptions<MetricsConfiguration.Builde
   @CommandLine.Option(
       names = TIMERS_ENABLED_FLAG,
       hidden = true,
-      defaultValue = "true",
       description = "Whether to enable timer metrics (default: ${DEFAULT-VALUE}).")
   private Boolean timersEnabled = MetricsConfiguration.DEFAULT_METRICS_TIMERS_ENABLED;
 

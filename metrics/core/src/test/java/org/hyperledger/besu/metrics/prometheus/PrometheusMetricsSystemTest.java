@@ -17,6 +17,7 @@ package org.hyperledger.besu.metrics.prometheus;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.function.Predicate.not;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
@@ -51,6 +52,11 @@ public class PrometheusMetricsSystemTest {
       Comparator.<Observation, String>comparing(observation -> observation.getCategory().getName())
           .thenComparing(Observation::getMetricName)
           .thenComparing((o1, o2) -> o1.getLabels().equals(o2.getLabels()) ? 0 : 1);
+  private static final Comparator<Observation> WITH_VALUES =
+      Comparator.<Observation, String>comparing(observation -> observation.getCategory().getName())
+          .thenComparing(Observation::getMetricName)
+          .thenComparing((o1, o2) -> o1.getLabels().equals(o2.getLabels()) ? 0 : 1)
+          .thenComparing((o1, o2) -> o1.getValue().equals(o2.getValue()) ? 0 : 1);
 
   @BeforeEach
   public void resetGlobalOpenTelemetry() {
@@ -66,11 +72,17 @@ public class PrometheusMetricsSystemTest {
 
     counter.inc();
     assertThat(metricsSystem.streamObservations())
-        .containsExactly(new Observation(PEERS, "connected", 1.0, emptyList()));
+        .usingElementComparator(this::compareCounters)
+        .containsExactlyInAnyOrder(
+            new Observation(PEERS, "connected", 1.0, emptyList()),
+            new Observation(PEERS, "connected", null, List.of("created")));
 
     counter.inc();
     assertThat(metricsSystem.streamObservations())
-        .containsExactly(new Observation(PEERS, "connected", 2.0, emptyList()));
+        .usingElementComparator(this::compareCounters)
+        .containsExactly(
+            new Observation(PEERS, "connected", 2.0, emptyList()),
+            new Observation(PEERS, "connected", null, List.of("created")));
   }
 
   @Test
@@ -83,26 +95,36 @@ public class PrometheusMetricsSystemTest {
 
     counter1.labels().inc();
     assertThat(metricsSystem.streamObservations())
-        .containsExactly(new Observation(PEERS, "connected", 1.0, emptyList()));
+        .usingElementComparator(this::compareCounters)
+        .containsExactly(
+            new Observation(PEERS, "connected", 1.0, emptyList()),
+            new Observation(PEERS, "connected", null, List.of("created")));
 
     counter2.labels().inc();
     assertThat(metricsSystem.streamObservations())
-        .containsExactly(new Observation(PEERS, "connected", 2.0, emptyList()));
+        .usingElementComparator(this::compareCounters)
+        .containsExactly(
+            new Observation(PEERS, "connected", 2.0, emptyList()),
+            new Observation(PEERS, "connected", null, List.of("created")));
   }
 
   @Test
   public void shouldCreateSeparateObservationsForEachCounterLabelValue() {
     final LabelledMetric<Counter> counter =
-        metricsSystem.createLabelledCounter(PEERS, "connected", "Some help string", "labelName");
+        metricsSystem.createLabelledCounter(
+            PEERS, "connected_total", "Some help string", "labelName");
 
     counter.labels("value1").inc();
     counter.labels("value2").inc();
     counter.labels("value1").inc();
 
     assertThat(metricsSystem.streamObservations())
+        .usingElementComparator(this::compareCounters)
         .containsExactlyInAnyOrder(
-            new Observation(PEERS, "connected", 2.0, singletonList("value1")),
-            new Observation(PEERS, "connected", 1.0, singletonList("value2")));
+            new Observation(PEERS, "connected_total", 2.0, singletonList("value1")),
+            new Observation(PEERS, "connected_total", 1.0, singletonList("value2")),
+            new Observation(PEERS, "connected_total", null, List.of("value1", "created")),
+            new Observation(PEERS, "connected_total", null, List.of("value2", "created")));
   }
 
   @Test
@@ -138,11 +160,18 @@ public class PrometheusMetricsSystemTest {
 
     counter.inc(5);
     assertThat(metricsSystem.streamObservations())
-        .containsExactly(new Observation(PEERS, "connected", 5.0, emptyList()));
+        .usingElementComparator(this::compareCounters)
+        .containsExactly(
+            new Observation(PEERS, "connected", 5.0, emptyList()),
+            new Observation(PEERS, "connected", null, List.of("created")));
 
     counter.inc(6);
     assertThat(metricsSystem.streamObservations())
-        .containsExactly(new Observation(PEERS, "connected", 11.0, emptyList()));
+        .usingDefaultElementComparator()
+        .usingElementComparator(this::compareCounters)
+        .containsExactly(
+            new Observation(PEERS, "connected", 11.0, emptyList()),
+            new Observation(PEERS, "connected", null, List.of("created")));
   }
 
   @Test
@@ -162,7 +191,8 @@ public class PrometheusMetricsSystemTest {
             new Observation(RPC, "request", null, asList("quantile", "0.99")),
             new Observation(RPC, "request", null, asList("quantile", "1.0")),
             new Observation(RPC, "request", null, singletonList("sum")),
-            new Observation(RPC, "request", null, singletonList("count")));
+            new Observation(RPC, "request", null, singletonList("count")),
+            new Observation(RPC, "request", null, singletonList("created")));
   }
 
   @Test
@@ -192,7 +222,8 @@ public class PrometheusMetricsSystemTest {
             new Observation(RPC, "request", null, asList("method", "quantile", "0.99")),
             new Observation(RPC, "request", null, asList("method", "quantile", "1.0")),
             new Observation(RPC, "request", null, asList("method", "sum")),
-            new Observation(RPC, "request", null, asList("method", "count")));
+            new Observation(RPC, "request", null, asList("method", "count")),
+            new Observation(RPC, "request", null, asList("method", "created")));
   }
 
   @Test
@@ -251,6 +282,8 @@ public class PrometheusMetricsSystemTest {
 
     counterR.labels("op").inc();
     assertThat(localMetricSystem.streamObservations())
+        .usingRecursiveFieldByFieldElementComparator()
+        .filteredOn(not(this::isCreatedSample))
         .containsExactly(new Observation(RPC, "name", 1.0, singletonList("op")));
   }
 
@@ -279,5 +312,19 @@ public class PrometheusMetricsSystemTest {
     final MetricsSystem localMetricSystem = MetricsSystemFactory.create(metricsConfiguration);
 
     assertThat(localMetricSystem).isInstanceOf(PrometheusMetricsSystem.class);
+  }
+
+  private boolean isCreatedSample(final Observation obs) {
+    // Simple client 0.10.0 add a _created sample to every counter, histogram and summary, that we
+    // may want to ignore
+    return obs.getLabels().contains("created");
+  }
+
+  private int compareCounters(final Observation obs1, final Observation obs2) {
+    // for created samples ignore values
+    if (obs1.getLabels().contains("created") && obs2.getLabels().contains("created")) {
+      return IGNORE_VALUES.compare(obs1, obs2);
+    }
+    return WITH_VALUES.compare(obs1, obs2);
   }
 }

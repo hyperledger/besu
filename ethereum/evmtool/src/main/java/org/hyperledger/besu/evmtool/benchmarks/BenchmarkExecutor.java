@@ -31,6 +31,7 @@ import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
@@ -136,7 +137,8 @@ public abstract class BenchmarkExecutor {
       case BERLIN -> new BerlinGasCalculator();
       case LONDON, PARIS -> new LondonGasCalculator();
       case SHANGHAI -> new ShanghaiGasCalculator();
-      default -> new CancunGasCalculator();
+      case CANCUN -> new CancunGasCalculator();
+      default -> new PragueGasCalculator();
     };
   }
 

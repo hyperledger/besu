@@ -54,10 +54,14 @@ import org.slf4j.LoggerFactory;
 public class EthPeers {
   private static final Logger LOG = LoggerFactory.getLogger(EthPeers.class);
   public static final Comparator<EthPeer> TOTAL_DIFFICULTY =
-      Comparator.comparing(((final EthPeer p) -> p.chainState().getEstimatedTotalDifficulty()));
+      Comparator.comparing((final EthPeer p) -> p.chainState().getEstimatedTotalDifficulty());
 
   public static final Comparator<EthPeer> CHAIN_HEIGHT =
-      Comparator.comparing(((final EthPeer p) -> p.chainState().getEstimatedHeight()));
+      Comparator.comparing((final EthPeer p) -> p.chainState().getEstimatedHeight());
+
+  public static final Comparator<EthPeer> MOST_USEFUL_PEER =
+      Comparator.comparing((final EthPeer p) -> p.getReputation().getScore())
+          .thenComparing(CHAIN_HEIGHT);
 
   public static final Comparator<EthPeer> HEAVIEST_CHAIN =
       TOTAL_DIFFICULTY.thenComparing(CHAIN_HEIGHT);
@@ -139,6 +143,7 @@ public class EthPeers {
         "peer_limit",
         "The maximum number of peers this node allows to connect",
         () -> peerUpperBound);
+
     connectedPeersCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.PEERS, "connected_total", "Total number of peers connected");
@@ -199,7 +204,7 @@ public class EthPeers {
         if (peer.getReputation().getScore() > USEFULL_PEER_SCORE_THRESHOLD) {
           LOG.debug("Disconnected USEFULL peer {}", peer);
         } else {
-          LOG.debug("Disconnected EthPeer {}", peer.getShortNodeId());
+          LOG.debug("Disconnected EthPeer {}", peer.getLoggableId());
         }
       }
     }
@@ -388,7 +393,7 @@ public class EthPeers {
               LOG.atDebug()
                   .setMessage(
                       "disconnecting peer {}. Waiting for better peers. Current {} of max {}")
-                  .addArgument(peer::getShortNodeId)
+                  .addArgument(peer::getLoggableId)
                   .addArgument(this::peerCount)
                   .addArgument(this::getMaxPeers)
                   .log();

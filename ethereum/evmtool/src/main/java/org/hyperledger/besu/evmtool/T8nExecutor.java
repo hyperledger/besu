@@ -271,6 +271,7 @@ public class T8nExecutor {
       final TransactionProcessingResult result;
       try {
         tracer = tracerManager.getManagedTracer(i, transaction.getHash());
+        tracer.tracePrepareTransaction(worldStateUpdater, transaction);
         tracer.traceStartTransaction(worldStateUpdater, transaction);
         result =
             processor.processTransaction(
