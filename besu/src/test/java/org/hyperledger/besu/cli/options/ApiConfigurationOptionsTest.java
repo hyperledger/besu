@@ -1,0 +1,138 @@
+package org.hyperledger.besu.cli.options;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+
+import org.hyperledger.besu.cli.CommandTestAbstract;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+public class ApiConfigurationOptionsTest extends CommandTestAbstract {
+
+  @Test
+  public void apiPriorityFeeLimitingEnabledOptionMustBeUsed() {
+    parseCommand("--api-gas-and-priority-fee-limiting-enabled");
+    verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
+    verify(mockRunnerBuilder).build();
+    assertThat(apiConfigurationCaptor.getValue())
+        .isEqualTo(
+            ImmutableApiConfiguration.builder().isGasAndPriorityFeeLimitingEnabled(true).build());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void apiPriorityFeeLowerBoundCoefficientOptionMustBeUsed() {
+    final long lowerBound = 150L;
+    parseCommand(
+        "--api-gas-and-priority-fee-lower-bound-coefficient",
+        Long.toString(lowerBound),
+        "--api-gas-and-priority-fee-limiting-enabled");
+    verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
+    verify(mockRunnerBuilder).build();
+    assertThat(apiConfigurationCaptor.getValue())
+        .isEqualTo(
+            ImmutableApiConfiguration.builder()
+                .lowerBoundGasAndPriorityFeeCoefficient(lowerBound)
+                .isGasAndPriorityFeeLimitingEnabled(true)
+                .build());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void
+      apiPriorityFeeLowerBoundCoefficients_MustNotBeGreaterThan_apiPriorityFeeUpperBoundCoefficient() {
+    final long lowerBound = 200L;
+    final long upperBound = 100L;
+
+    parseCommand(
+        "--api-gas-and-priority-fee-limiting-enabled",
+        "--api-gas-and-priority-fee-lower-bound-coefficient",
+        Long.toString(lowerBound),
+        "--api-gas-and-priority-fee-upper-bound-coefficient",
+        Long.toString(upperBound));
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "--api-gas-and-priority-fee-lower-bound-coefficient cannot be greater than the value of --api-gas-and-priority-fee-upper-bound-coefficient");
+  }
+
+  @Test
+  public void apiPriorityFeeUpperBoundCoefficientsOptionMustBeUsed() {
+    final long upperBound = 200L;
+    parseCommand(
+        "--api-gas-and-priority-fee-upper-bound-coefficient",
+        Long.toString(upperBound),
+        "--api-gas-and-priority-fee-limiting-enabled");
+    verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
+    verify(mockRunnerBuilder).build();
+    assertThat(apiConfigurationCaptor.getValue())
+        .isEqualTo(
+            ImmutableApiConfiguration.builder()
+                .upperBoundGasAndPriorityFeeCoefficient(upperBound)
+                .isGasAndPriorityFeeLimitingEnabled(true)
+                .build());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcMaxLogsRangeOptionMustBeUsed() {
+
+    final long rpcMaxLogsRange = 150L;
+    parseCommand("--rpc-max-logs-range", Long.toString(rpcMaxLogsRange));
+
+    verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(apiConfigurationCaptor.getValue())
+        .isEqualTo(ImmutableApiConfiguration.builder().maxLogsRange((rpcMaxLogsRange)).build());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcGasCapOptionMustBeUsed() {
+    final long rpcGasCap = 150L;
+    parseCommand("--rpc-gas-cap", Long.toString(rpcGasCap));
+
+    verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(apiConfigurationCaptor.getValue())
+        .isEqualTo(ImmutableApiConfiguration.builder().gasCap((rpcGasCap)).build());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcMaxTraceFilterOptionMustBeUsed() {
+    final long rpcMaxTraceFilterOption = 150L;
+    parseCommand("--rpc-max-trace-filter-range", Long.toString(rpcMaxTraceFilterOption));
+
+    verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(apiConfigurationCaptor.getValue())
+        .isEqualTo(
+            ImmutableApiConfiguration.builder()
+                .maxTraceFilterRange((rpcMaxTraceFilterOption))
+                .build());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+}

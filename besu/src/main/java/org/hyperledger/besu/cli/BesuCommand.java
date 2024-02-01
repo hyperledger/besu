@@ -48,6 +48,7 @@ import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
 import org.hyperledger.besu.cli.options.MiningOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
+import org.hyperledger.besu.cli.options.stable.ApiConfigurationOptions;
 import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.stable.GraphQlOptions;
@@ -107,7 +108,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
-import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
@@ -861,43 +861,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Path to PID file (optional)")
   private final Path pidPath = null;
 
-  @CommandLine.Option(
-      names = {"--api-gas-price-blocks"},
-      description = "Number of blocks to consider for eth_gasPrice (default: ${DEFAULT-VALUE})")
-  private final Long apiGasPriceBlocks = 100L;
-
-  @CommandLine.Option(
-      names = {"--api-gas-price-percentile"},
-      description = "Percentile value to measure for eth_gasPrice (default: ${DEFAULT-VALUE})")
-  private final Double apiGasPricePercentile = 50.0;
-
-  @CommandLine.Option(
-      names = {"--api-gas-price-max"},
-      description = "Maximum gas price for eth_gasPrice (default: ${DEFAULT-VALUE})")
-  private final Long apiGasPriceMax = 500_000_000_000L;
-
-  @CommandLine.Option(
-      names = {"--api-gas-and-priority-fee-limiting-enabled"},
-      hidden = true,
-      description =
-          "Set to enable gas price and minimum priority fee limit in eth_getGasPrice and eth_feeHistory (default: ${DEFAULT-VALUE})")
-  private final Boolean apiGasAndPriorityFeeLimitingEnabled = false;
-
-  @CommandLine.Option(
-      names = {"--api-gas-and-priority-fee-lower-bound-coefficient"},
-      hidden = true,
-      description =
-          "Coefficient for setting the lower limit of gas price and minimum priority fee in eth_getGasPrice and eth_feeHistory (default: ${DEFAULT-VALUE})")
-  private final Long apiGasAndPriorityFeeLowerBoundCoefficient =
-      ApiConfiguration.DEFAULT_LOWER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT;
-
-  @CommandLine.Option(
-      names = {"--api-gas-and-priority-fee-upper-bound-coefficient"},
-      hidden = true,
-      description =
-          "Coefficient for setting the upper limit of gas price and minimum priority fee in eth_getGasPrice and eth_feeHistory (default: ${DEFAULT-VALUE})")
-  private final Long apiGasAndPriorityFeeUpperBoundCoefficient =
-      ApiConfiguration.DEFAULT_UPPER_BOUND_GAS_AND_PRIORITY_FEE_COEFFICIENT;
+  // Permission Option Group
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold API Configuration Options|@%n")
+  ApiConfigurationOptions apiConfigurationOptions = new ApiConfigurationOptions();
 
   @CommandLine.Option(
       names = {"--static-nodes-file"},
@@ -907,27 +873,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Path staticNodesFile = null;
 
   @CommandLine.Option(
-      names = {"--rpc-max-logs-range"},
-      description =
-          "Specifies the maximum number of blocks to retrieve logs from via RPC. Must be >=0. 0 specifies no limit  (default: ${DEFAULT-VALUE})")
-  private final Long rpcMaxLogsRange = 5000L;
-
-  @CommandLine.Option(
-      names = {"--rpc-gas-cap"},
-      description =
-          "Specifies the gasLimit cap for transaction simulation RPC methods. Must be >=0. 0 specifies no limit  (default: ${DEFAULT-VALUE})")
-  private final Long rpcGasCap = 0L;
-
-  @CommandLine.Option(
       names = {"--cache-last-blocks"},
       description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
   private final Integer numberOfblocksToCache = 0;
-
-  @Option(
-      names = {"--rpc-max-trace-filter-range"},
-      description =
-          "Specifies the maximum number of blocks for the trace_filter method. Must be >=0. 0 specifies no limit  (default: $DEFAULT-VALUE)")
-  private final Long maxTraceFilterRange = 1000L;
 
   @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
 
@@ -1483,8 +1431,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateTransactionPoolOptions();
     validateDataStorageOptions();
     validateGraphQlOptions();
+    validateApiOptions();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
     pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
+  }
+
+  private void validateApiOptions() {
+    apiConfigurationOptions.validate(commandLine, logger);
   }
 
   private void validateTransactionPoolOptions() {
@@ -1568,17 +1521,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "The `--Xdns-update-enabled` requires dns to be enabled. Either remove --Xdns-update-enabled"
               + " or specify dns is enabled (--Xdns-enabled)");
     }
-  }
-
-  private void checkApiOptionsDependencies() {
-    CommandLineUtils.checkOptionDependencies(
-        logger,
-        commandLine,
-        "--api-gas-and-priority-fee-limiting-enabled",
-        !apiGasAndPriorityFeeLimitingEnabled,
-        asList(
-            "--api-gas-and-priority-fee-upper-bound-coefficient",
-            "--api-gas-and-priority-fee-lower-bound-coefficient"));
   }
 
   private void ensureValidPeerBoundParams() {
@@ -1741,7 +1683,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             unstableIpcOptions.isEnabled(),
             unstableIpcOptions.getIpcPath(),
             unstableIpcOptions.getRpcIpcApis());
-    apiConfiguration = apiConfiguration();
+    apiConfiguration = apiConfigurationOptions.apiConfiguration(getMiningParameters());
     // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
     if (!hostsWhitelist.isEmpty()) {
       // if allowlist == default values, remove the default values
@@ -1917,32 +1859,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--privacy-tls-keystore-file",
             "--privacy-tls-keystore-password-file",
             "--privacy-tls-known-enclave-file"));
-  }
-
-  private ApiConfiguration apiConfiguration() {
-    checkApiOptionsDependencies();
-    var builder =
-        ImmutableApiConfiguration.builder()
-            .gasPriceBlocks(apiGasPriceBlocks)
-            .gasPricePercentile(apiGasPricePercentile)
-            .gasPriceMinSupplier(
-                getMiningParameters().getMinTransactionGasPrice().getAsBigInteger()::longValueExact)
-            .gasPriceMax(apiGasPriceMax)
-            .maxLogsRange(rpcMaxLogsRange)
-            .gasCap(rpcGasCap)
-            .isGasAndPriorityFeeLimitingEnabled(apiGasAndPriorityFeeLimitingEnabled)
-            .maxTraceFilterRange(maxTraceFilterRange);
-    if (apiGasAndPriorityFeeLimitingEnabled) {
-      if (apiGasAndPriorityFeeLowerBoundCoefficient > apiGasAndPriorityFeeUpperBoundCoefficient) {
-        throw new ParameterException(
-            this.commandLine,
-            "--api-gas-and-priority-fee-lower-bound-coefficient cannot be greater than the value of --api-gas-and-priority-fee-upper-bound-coefficient");
-      }
-      builder
-          .lowerBoundGasAndPriorityFeeCoefficient(apiGasAndPriorityFeeLowerBoundCoefficient)
-          .upperBoundGasAndPriorityFeeCoefficient(apiGasAndPriorityFeeUpperBoundCoefficient);
-    }
-    return builder.build();
   }
 
   /**
