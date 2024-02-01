@@ -168,10 +168,10 @@ public final class RunnerTest {
   @Test
   public void shouldThrowExceptionWhenDatabaseVersionMismatches() throws IOException {
 
+    var expectedDatabaseVersion = DataStorageFormat.BONSAI;
     var actualDatabaseVersion = DataStorageFormat.FOREST;
     new DatabaseMetadata(actualDatabaseVersion.getDatabaseVersion()).writeToDirectory(temp);
 
-    var expectedDatabaseVersion = DataStorageFormat.BONSAI;
     BesuConfigurationImpl configuration = setupConfiguration(expectedDatabaseVersion);
 
     // Attempt to get a controller with the mismatched configuration
