@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: true
-        
+
   acceptanceTestEthereum:
     runs-on: ubuntu-22.04
     name: "Acceptance Runner"
@@ -25,7 +25,6 @@ jobs:
     permissions:
       statuses: write
       checks: write
-    if: ${{ needs.shouldRun.outputs.shouldRun == 'true'}}
     strategy:
       fail-fast: true
       matrix:
