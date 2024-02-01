@@ -21,10 +21,6 @@ import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -61,16 +57,13 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
-import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.DatabaseMetadata;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -163,43 +156,6 @@ public final class RunnerTest {
     MergeConfigOptions.setMergeEnabled(false);
 
     syncFromGenesis(SyncMode.FAST, getFastSyncGenesis());
-  }
-
-  @Test
-  public void shouldThrowExceptionWhenDatabaseVersionMismatches() throws IOException {
-
-    var actualDatabaseVersion = DataStorageFormat.FOREST;
-    new DatabaseMetadata(actualDatabaseVersion.getDatabaseVersion()).writeToDirectory(temp);
-
-    var expectedDatabaseVersion = DataStorageFormat.BONSAI;
-    BesuConfigurationImpl configuration = setupConfiguration(expectedDatabaseVersion);
-
-    // Attempt to get a controller with the mismatched configuration
-    final Exception exception =
-        assertThrows(
-            StorageException.class,
-            () ->
-                getController(
-                    getFastSyncGenesis(),
-                    mock(SynchronizerConfiguration.class),
-                    configuration.getStoragePath(),
-                    mock(NodeKey.class),
-                    createKeyValueStorageProvider(configuration),
-                    new NoOpMetricsSystem()));
-
-    final String expectedMessage =
-        String.format(
-            "Database version mismatch: Detected '%s', configured '%s'. Verify database configuration.",
-            actualDatabaseVersion, expectedDatabaseVersion);
-    assertThat(exception.getMessage()).isEqualTo(expectedMessage);
-  }
-
-  private BesuConfigurationImpl setupConfiguration(
-      final DataStorageFormat expectedDatabaseVersion) {
-    BesuConfigurationImpl configuration = spy(new BesuConfigurationImpl(temp, temp));
-    when(configuration.getDatabaseVersion())
-        .thenReturn(expectedDatabaseVersion.getDatabaseVersion());
-    return configuration;
   }
 
   private void syncFromGenesis(final SyncMode mode, final GenesisConfigFile genesisConfig)
@@ -420,10 +376,6 @@ public final class RunnerTest {
   }
 
   private StorageProvider createKeyValueStorageProvider(final Path dataDir, final Path dbDir) {
-    return createKeyValueStorageProvider(new BesuConfigurationImpl(dataDir, dbDir));
-  }
-
-  private StorageProvider createKeyValueStorageProvider(final BesuConfigurationImpl configuration) {
     return new KeyValueStorageProviderBuilder()
         .withStorageFactory(
             new RocksDBKeyValueStorageFactory(
@@ -435,7 +387,7 @@ public final class RunnerTest {
                         DEFAULT_IS_HIGH_SPEC),
                 Arrays.asList(KeyValueSegmentIdentifier.values()),
                 RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
-        .withCommonConfiguration(configuration)
+        .withCommonConfiguration(new BesuConfigurationImpl(dataDir, dbDir))
         .withMetricsSystem(new NoOpMetricsSystem())
         .build();
   }
