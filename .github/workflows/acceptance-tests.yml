@@ -3,8 +3,6 @@ on:
   pull_request_target:
     branches:
       - main
-  pull_request_review:
-    types: [submitted]
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
@@ -19,47 +17,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: true
-  shouldRun:
-    name: checks to ensure we should run
-    needs: authorize
-    # necessary because there is no single PR approved event, need to check all comments/approvals/denials
-    runs-on: ubuntu-22.04
-    outputs:
-      shouldRun: ${{steps.shouldRun.outputs.result}}
-    steps:
-      - name: required check
-        id: shouldRun
-        uses: actions/github-script@v7.0.1
-        env:
-          # fun fact, this changes based on incoming event, it will be different when we run this on pushes to main
-          RELEVANT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        with:
-          script: |
-            const { RELEVANT_SHA } = process.env;
-            const { data: { statuses } } = await github.rest.repos.getCombinedStatusForRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: RELEVANT_SHA,
-            });
-            const acceptanceTested = statuses && statuses.filter(({ context }) => context === 'acceptance-tests');
-            const alreadyRun = acceptanceTested && acceptanceTested.find(({ state }) => state === 'success') > 0;
-            const { data: reviews } = await github.rest.pulls.listReviews({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-            });
-            const approvingReviews = reviews && reviews.filter(review => review.state === 'APPROVED');
-            const shouldRun = !alreadyRun && github.actor != 'dependabot[bot]' &&  (approvingReviews.length > 0);
-            
-              console.log("tests should be run = %j", shouldRun);
-              console.log("alreadyRun = %j", alreadyRun);
-              console.log("approvingReviews = %j", approvingReviews.length);
-            
-            return shouldRun;
+        
   acceptanceTestEthereum:
     runs-on: ubuntu-22.04
     name: "Acceptance Runner"
-    needs: shouldRun
+    needs: authorize
     permissions:
       statuses: write
       checks: write
