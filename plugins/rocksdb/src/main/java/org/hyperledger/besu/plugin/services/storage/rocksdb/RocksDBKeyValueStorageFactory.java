@@ -261,7 +261,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       if (databaseVersion != commonConfiguration.getDatabaseVersion()) {
         String error =
             String.format(
-                "Mismatch detected: Database at %s is version '%s', but configuration expects version '%s'. Please verify your database configuration.",
+                "Mismatch detected: Database at %s is version '%s', but configuration expects version '%s'.",
                 dataDir, databaseVersion, commonConfiguration.getDatabaseVersion());
         throw new StorageException(error);
       }
