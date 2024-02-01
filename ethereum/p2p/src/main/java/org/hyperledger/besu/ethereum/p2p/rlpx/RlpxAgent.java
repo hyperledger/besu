@@ -71,7 +71,7 @@ public class RlpxAgent {
   private final PeerPrivileges peerPrivileges;
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
-  private final int lowerBound;
+  private final int maxPeers;
   private final Supplier<Stream<PeerConnection>> allConnectionsSupplier;
   private final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
   private final Cache<Bytes, CompletableFuture<PeerConnection>> peersConnectingCache =
@@ -87,7 +87,7 @@ public class RlpxAgent {
       final ConnectionInitializer connectionInitializer,
       final PeerRlpxPermissions peerPermissions,
       final PeerPrivileges peerPrivileges,
-      final int peersLowerBound,
+      final int maxPeers,
       final Supplier<Stream<PeerConnection>> allConnectionsSupplier,
       final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier) {
     this.localNode = localNode;
@@ -95,7 +95,7 @@ public class RlpxAgent {
     this.connectionInitializer = connectionInitializer;
     this.peerPermissions = peerPermissions;
     this.peerPrivileges = peerPrivileges;
-    this.lowerBound = peersLowerBound;
+    this.maxPeers = maxPeers;
     this.allConnectionsSupplier = allConnectionsSupplier;
     this.allActiveConnectionsSupplier = allActiveConnectionsSupplier;
   }
@@ -358,8 +358,8 @@ public class RlpxAgent {
     return peersConnectingCache.asMap();
   }
 
-  public int getPeerLowerBound() {
-    return lowerBound;
+  public int getMaxPeers() {
+    return maxPeers;
   }
 
   public static class Builder {
@@ -374,7 +374,7 @@ public class RlpxAgent {
     private Optional<TLSConfiguration> p2pTLSConfiguration;
     private Supplier<Stream<PeerConnection>> allConnectionsSupplier;
     private Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
-    private int peersLowerBound;
+    private int maxPeers;
     private PeerTable peerTable;
 
     private Builder() {}
@@ -413,7 +413,7 @@ public class RlpxAgent {
           connectionInitializer,
           rlpxPermissions,
           peerPrivileges,
-          peersLowerBound,
+          maxPeers,
           allConnectionsSupplier,
           allActiveConnectionsSupplier);
     }
@@ -492,8 +492,8 @@ public class RlpxAgent {
       return this;
     }
 
-    public Builder peersLowerBound(final int peersLowerBound) {
-      this.peersLowerBound = peersLowerBound;
+    public Builder maxPeers(final int maxPeers) {
+      this.maxPeers = maxPeers;
       return this;
     }
 

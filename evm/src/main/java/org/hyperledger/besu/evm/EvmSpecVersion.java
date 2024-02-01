@@ -50,7 +50,7 @@ public enum EvmSpecVersion {
   /** Cancun evm spec version. */
   CANCUN(0, true, "Cancun", "Finalized"),
   /** Prague evm spec version. */
-  PRAGUE(0, false, "Prague", "Placeholder"),
+  PRAGUE(0, false, "Prague", "In Development"),
   /** Osaka evm spec version. */
   OSAKA(0, false, "Osaka", "Placeholder"),
   /** Bogota evm spec version. */

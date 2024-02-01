@@ -500,7 +500,7 @@ public class EVMExecutor {
       final BigInteger chainId, final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.prague(chainId, evmConfiguration));
     executor.precompileContractRegistry =
-        MainnetPrecompiledContracts.cancun(executor.evm.getGasCalculator());
+        MainnetPrecompiledContracts.prague(executor.evm.getGasCalculator());
     return executor;
   }
 
@@ -515,7 +515,7 @@ public class EVMExecutor {
       final BigInteger chainId, final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.osaka(chainId, evmConfiguration));
     executor.precompileContractRegistry =
-        MainnetPrecompiledContracts.cancun(executor.evm.getGasCalculator());
+        MainnetPrecompiledContracts.prague(executor.evm.getGasCalculator());
     return executor;
   }
 
@@ -530,7 +530,7 @@ public class EVMExecutor {
       final BigInteger chainId, final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.bogota(chainId, evmConfiguration));
     executor.precompileContractRegistry =
-        MainnetPrecompiledContracts.cancun(executor.evm.getGasCalculator());
+        MainnetPrecompiledContracts.prague(executor.evm.getGasCalculator());
     return executor;
   }
 

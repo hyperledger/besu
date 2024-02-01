@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.PrivateCondition;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyTransactions;
 
@@ -111,5 +112,9 @@ public class PrivConditions {
   public Condition multiTenancyValidationFail(
       final Transaction<?> transaction, final RpcErrorType error) {
     return new ExpectJsonRpcError(transaction, error);
+  }
+
+  public PrivateCondition syncingStatus(final boolean isSyncing) {
+    return new PrivateSyncingStatusCondition(transactions.syncing(), isSyncing);
   }
 }

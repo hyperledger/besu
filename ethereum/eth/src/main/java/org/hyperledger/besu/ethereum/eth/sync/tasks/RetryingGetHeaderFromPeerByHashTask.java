@@ -95,7 +95,7 @@ public class RetryingGetHeaderFromPeerByHashTask
                     "No block header for hash "
                         + referenceHash
                         + " returned by peer "
-                        + peer.getShortNodeId());
+                        + peer.getLoggableId());
               }
               result.complete(peerResult.getResult());
               return peerResult.getResult();
