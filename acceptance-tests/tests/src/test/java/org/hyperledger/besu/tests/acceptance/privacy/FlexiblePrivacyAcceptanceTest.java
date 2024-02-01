@@ -111,6 +111,10 @@ public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTest
             enclaveType,
             Optional.of(containerNetwork));
     privacyCluster.start(alice, bob, charlie);
+
+    alice.verify(priv.syncingStatus(false));
+    bob.verify(priv.syncingStatus(false));
+    charlie.verify(priv.syncingStatus(false));
   }
 
   @Test

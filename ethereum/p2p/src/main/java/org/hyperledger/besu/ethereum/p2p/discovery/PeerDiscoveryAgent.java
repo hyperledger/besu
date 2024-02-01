@@ -74,7 +74,6 @@ public abstract class PeerDiscoveryAgent {
   // The devp2p specification says only accept packets up to 1280, but some
   // clients ignore that, so we add in a little extra padding.
   private static final int MAX_PACKET_SIZE_BYTES = 1600;
-
   protected final List<DiscoveryPeer> bootstrapPeers;
   private final List<PeerRequirement> peerRequirements = new CopyOnWriteArrayList<>();
   private final PeerPermissions peerPermissions;
@@ -83,6 +82,7 @@ public abstract class PeerDiscoveryAgent {
   private final RlpxAgent rlpxAgent;
   private final ForkIdManager forkIdManager;
   private final PeerTable peerTable;
+  private static final boolean isIpv6Available = NetworkUtility.isIPv6Available();
 
   /* The peer controller, which takes care of the state machine of peers. */
   protected Optional<PeerDiscoveryController> controller = Optional.empty();
@@ -286,29 +286,7 @@ public abstract class PeerDiscoveryAgent {
             .flatMap(Endpoint::getTcpPort)
             .orElse(udpPort);
 
-    // If the host is present in the P2P PING packet itself, use that as the endpoint. If the P2P
-    // PING packet specifies 127.0.0.1 (the default if a custom value is not specified with
-    // --p2p-host or via a suitable --nat-method) we ignore it in favour of the UDP source address.
-    // The likelihood is that the UDP source will be 127.0.0.1 anyway, but this reduces the chance
-    // of an unexpected change in behaviour as a result of
-    // https://github.com/hyperledger/besu/issues/6224 being fixed.
-    final String host =
-        packet
-            .getPacketData(PingPacketData.class)
-            .flatMap(PingPacketData::getFrom)
-            .map(Endpoint::getHost)
-            .filter(
-                fromAddr ->
-                    (!fromAddr.equals("127.0.0.1") && InetAddresses.isInetAddress(fromAddr)))
-            .stream()
-            .peek(
-                h ->
-                    LOG.trace(
-                        "Using \"From\" endpoint {} specified in ping packet. Ignoring UDP source host {}",
-                        h,
-                        sourceEndpoint.getHost()))
-            .findFirst()
-            .orElseGet(sourceEndpoint::getHost);
+    final String host = deriveHost(sourceEndpoint, packet);
 
     // Notify the peer controller.
     final DiscoveryPeer peer =
@@ -321,6 +299,53 @@ public abstract class PeerDiscoveryAgent {
                 .build());
 
     controller.ifPresent(c -> c.onMessage(packet, peer));
+  }
+
+  /**
+   * method to derive the host from the source endpoint and the P2P PING packet. If the host is
+   * present in the P2P PING packet itself, use that as the endpoint. If the P2P PING packet
+   * specifies 127.0.0.1 (the default if a custom value is not specified with --p2p-host or via a
+   * suitable --nat-method) we ignore it in favour of the UDP source address. Some implementations
+   * send 127.0.0.1 or 255.255.255.255 anyway, but this reduces the chance of an unexpected change
+   * in behaviour as a result of https://github.com/hyperledger/besu/issues/6224 being fixed.
+   *
+   * @param sourceEndpoint source endpoint of the packet
+   * @param packet P2P PING packet
+   * @return host address as string
+   */
+  static String deriveHost(final Endpoint sourceEndpoint, final Packet packet) {
+    final Optional<String> pingPacketHost =
+        packet
+            .getPacketData(PingPacketData.class)
+            .flatMap(PingPacketData::getFrom)
+            .map(Endpoint::getHost);
+
+    return pingPacketHost
+        // fall back to source endpoint "from" if ping packet from address does not satisfy filters
+        .filter(InetAddresses::isInetAddress)
+        .filter(h -> !NetworkUtility.isUnspecifiedAddress(h))
+        .filter(h -> !NetworkUtility.isLocalhostAddress(h))
+        .filter(h -> isIpv6Available || !NetworkUtility.isIpV6Address(h))
+        .stream()
+        .peek(
+            h ->
+                LOG.atTrace()
+                    .setMessage(
+                        "Using \"From\" endpoint {} specified in ping packet. Ignoring UDP source host {}")
+                    .addArgument(h)
+                    .addArgument(sourceEndpoint::getHost)
+                    .log())
+        .findFirst()
+        .orElseGet(
+            () -> {
+              LOG.atTrace()
+                  .setMessage(
+                      "Ignoring \"From\" endpoint {} in ping packet. Using UDP source host {}")
+                  .addArgument(pingPacketHost.orElse("not specified"))
+                  .addArgument(sourceEndpoint.getHost())
+                  .log();
+              return sourceEndpoint.getHost();
+            });
   }
 
   /**
