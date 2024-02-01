@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedLaye
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -42,7 +41,6 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
   private static final Logger LOG =
       LoggerFactory.getLogger(DiffBasedCachedWorldStorageManager.class);
   private final DiffBasedWorldStateProvider archive;
-  private final ObservableMetricsSystem metricsSystem;
   private final EvmConfiguration evmConfiguration;
 
   private final DiffBasedWorldStateKeyValueStorage rootWorldStateStorage;
@@ -52,25 +50,21 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
       final DiffBasedWorldStateProvider archive,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Map<Bytes32, DiffBasedCachedWorldView> cachedWorldStatesByHash,
-      final ObservableMetricsSystem metricsSystem,
       final EvmConfiguration evmConfiguration) {
     worldStateKeyValueStorage.subscribe(this);
     this.rootWorldStateStorage = worldStateKeyValueStorage;
     this.cachedWorldStatesByHash = cachedWorldStatesByHash;
     this.archive = archive;
-    this.metricsSystem = metricsSystem;
     this.evmConfiguration = evmConfiguration;
   }
 
   public DiffBasedCachedWorldStorageManager(
       final DiffBasedWorldStateProvider archive,
-      final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final ObservableMetricsSystem metricsSystem) {
+      final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage) {
     this(
         archive,
         worldStateKeyValueStorage,
         new ConcurrentHashMap<>(),
-        metricsSystem,
         EvmConfiguration.DEFAULT);
   }
 
@@ -93,7 +87,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
         cachedDiffBasedWorldView
             .get()
             .updateWorldStateStorage(
-                createSnapshotKeyValueStorage(forWorldState.getWorldStateStorage(), metricsSystem));
+                createSnapshotKeyValueStorage(forWorldState.getWorldStateStorage()));
       }
     } else {
       LOG.atDebug()
@@ -105,9 +99,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
         cachedWorldStatesByHash.put(
             blockHeader.getHash(),
             new DiffBasedCachedWorldView(
-                blockHeader,
-                createSnapshotKeyValueStorage(
-                    forWorldState.getWorldStateStorage(), metricsSystem)));
+                blockHeader, createSnapshotKeyValueStorage(forWorldState.getWorldStateStorage())));
       } else {
         // otherwise, add the layer to the cache
         cachedWorldStatesByHash.put(
@@ -242,6 +234,5 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage);
 
   public abstract DiffBasedWorldStateKeyValueStorage createSnapshotKeyValueStorage(
-      final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final ObservableMetricsSystem metricsSystem);
+      final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage);
 }

@@ -71,7 +71,7 @@ public abstract class AbstractPeerBlockValidatorTest {
 
     final PeerValidator validator = createValidator(blockNumber, 0);
 
-    final int peerCount = 1000;
+    final int peerCount = 24;
     final List<RespondingEthPeer> otherPeers =
         Stream.generate(
                 () -> EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber))

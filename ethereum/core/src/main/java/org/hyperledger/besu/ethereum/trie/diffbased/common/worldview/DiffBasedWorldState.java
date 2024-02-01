@@ -83,7 +83,7 @@ public abstract class DiffBasedWorldState
    *
    * @param accumulator accumulator to use.
    */
-  protected void setAccumulator(final DiffBasedWorldStateUpdateAccumulator<?> accumulator) {
+  public void setAccumulator(final DiffBasedWorldStateUpdateAccumulator<?> accumulator) {
     this.accumulator = accumulator;
   }
 

@@ -27,7 +27,7 @@ public class VerkleNoOpCachedWorldStorageManager extends VerkleCachedWorldStorag
 
   public VerkleNoOpCachedWorldStorageManager(
       final VerkleWorldStateKeyValueStorage verkleWorldStateKeyValueStorage) {
-    super(null, verkleWorldStateKeyValueStorage, new NoOpMetricsSystem());
+    super(null, verkleWorldStateKeyValueStorage);
   }
 
   @Override

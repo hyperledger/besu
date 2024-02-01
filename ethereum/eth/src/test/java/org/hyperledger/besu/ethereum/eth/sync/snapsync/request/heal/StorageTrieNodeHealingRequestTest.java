@@ -18,12 +18,12 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -42,13 +42,11 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class StorageTrieNodeHealingRequestTest {
 
-  @Mock private SnapWorldDownloadState downloadState;
   final List<Address> accounts =
       List.of(
           Address.fromHexString("0xdeadbeef"),
@@ -75,9 +73,13 @@ class StorageTrieNodeHealingRequestTest {
               new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage()));
     } else {
       final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
+
       worldStateStorageCoordinator =
           new WorldStateStorageCoordinator(
-              new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()));
+              new BonsaiWorldStateKeyValueStorage(
+                  storageProvider,
+                  new NoOpMetricsSystem(),
+                  DataStorageConfiguration.DEFAULT_CONFIG));
     }
     final MerkleTrie<Bytes, Bytes> trie =
         TrieGenerator.generateTrie(
@@ -102,8 +104,7 @@ class StorageTrieNodeHealingRequestTest {
         new StorageTrieNodeHealingRequest(
             account0StorageRoot, account0Hash, Hash.EMPTY, Bytes.EMPTY);
 
-    Assertions.assertThat(request.getExistingData(downloadState, worldStateStorageCoordinator))
-        .isPresent();
+    Assertions.assertThat(request.getExistingData(worldStateStorageCoordinator)).isPresent();
   }
 
   @ParameterizedTest
@@ -113,7 +114,6 @@ class StorageTrieNodeHealingRequestTest {
     final StorageTrieNodeHealingRequest request =
         new StorageTrieNodeHealingRequest(Hash.EMPTY, account0Hash, Hash.EMPTY, Bytes.EMPTY);
 
-    Assertions.assertThat(request.getExistingData(downloadState, worldStateStorageCoordinator))
-        .isEmpty();
+    Assertions.assertThat(request.getExistingData(worldStateStorageCoordinator)).isEmpty();
   }
 }

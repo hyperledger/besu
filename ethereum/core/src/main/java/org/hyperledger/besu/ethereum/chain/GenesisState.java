@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.chain;
 
 import static java.util.Collections.emptyList;
+import static org.hyperledger.besu.ethereum.trie.common.GenesisWorldStateProvider.createGenesisWorldState;
 
 import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -32,26 +33,13 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiNoOpCachedWorldStorageManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.NoOpTrieLogManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.VerkleNoOpCachedWorldStorageManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldState;
-import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
+
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
-import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
+
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -81,21 +69,6 @@ public final class GenesisState {
   /**
    * Construct a {@link GenesisState} from a JSON string.
    *
-   * @param dataStorageFormat A {@link DataStorageFormat} describing the storage format to use
-   * @param json A JSON string describing the genesis block
-   * @param protocolSchedule A protocol Schedule associated with
-   * @return A new {@link GenesisState}.
-   */
-  public static GenesisState fromJson(
-      final DataStorageFormat dataStorageFormat,
-      final String json,
-      final ProtocolSchedule protocolSchedule) {
-    return fromConfig(dataStorageFormat, GenesisConfigFile.fromConfig(json), protocolSchedule);
-  }
-
-  /**
-   * Construct a {@link GenesisState} from a JSON string.
-   *
    * @param json A JSON string describing the genesis block
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
@@ -105,16 +78,32 @@ public final class GenesisState {
   }
 
   /**
-   * Construct a {@link GenesisState} from a JSON object with FOREST as a default data storage
-   * format.
+   * Construct a {@link GenesisState} from a JSON string.
+   *
+   * @param dataStorageFormat A {@link DataStorageFormat} describing the storage format to use
+   * @param json A JSON string describing the genesis block
+   * @param protocolSchedule A protocol Schedule associated with
+   * @return A new {@link GenesisState}.
+   */
+  public static GenesisState fromJson(
+          final DataStorageFormat dataStorageFormat,
+          final String json,
+          final ProtocolSchedule protocolSchedule) {
+    return fromConfig(dataStorageFormat, GenesisConfigFile.fromConfig(json), protocolSchedule);
+  }
+
+  /**
+   * Construct a {@link GenesisState} from a JSON object.
    *
    * @param config A {@link GenesisConfigFile} describing the genesis block.
    * @param protocolSchedule A protocol Schedule associated with
+   * @return A new {@link GenesisState}.
    */
   public static GenesisState fromConfig(
       final GenesisConfigFile config, final ProtocolSchedule protocolSchedule) {
     return fromConfig(DataStorageFormat.FOREST, config, protocolSchedule);
   }
+
   /**
    * Construct a {@link GenesisState} from a JSON object.
    *
@@ -179,51 +168,11 @@ public final class GenesisState {
 
   private static Hash calculateGenesisStateHash(
       final DataStorageFormat dataStorageFormat, final List<GenesisAccount> genesisAccounts) {
-    final MutableWorldState worldState = loadWorldState(dataStorageFormat);
-    writeAccountsTo(worldState, genesisAccounts, null);
-    return worldState.rootHash();
-  }
-
-  private static MutableWorldState loadWorldState(final DataStorageFormat dataStorageFormat) {
-    switch (dataStorageFormat) {
-      case BONSAI -> {
-        final BonsaiCachedMerkleTrieLoader cachedMerkleTrieLoader =
-            new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem());
-        final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
-            new BonsaiWorldStateKeyValueStorage(
-                new KeyValueStorageProvider(
-                    segmentIdentifiers -> new SegmentedInMemoryKeyValueStorage(),
-                    new InMemoryKeyValueStorage(),
-                    new NoOpMetricsSystem()),
-                new NoOpMetricsSystem());
-        return new BonsaiWorldState(
-            bonsaiWorldStateKeyValueStorage,
-            cachedMerkleTrieLoader,
-            new BonsaiNoOpCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
-            new NoOpTrieLogManager(),
-            EvmConfiguration.DEFAULT);
-      }
-      case VERKLE -> {
-        final VerkleWorldStateKeyValueStorage verkleWorldStateKeyValueStorage =
-            new VerkleWorldStateKeyValueStorage(
-                new KeyValueStorageProvider(
-                    segmentIdentifiers -> new SegmentedInMemoryKeyValueStorage(),
-                    new InMemoryKeyValueStorage(),
-                    new NoOpMetricsSystem()),
-                new NoOpMetricsSystem());
-        return new VerkleWorldState(
-            verkleWorldStateKeyValueStorage,
-            new VerkleNoOpCachedWorldStorageManager(verkleWorldStateKeyValueStorage),
-            new NoOpTrieLogManager(),
-            EvmConfiguration.DEFAULT);
-      }
-      default -> {
-        final ForestWorldStateKeyValueStorage stateStorage =
-            new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-        final WorldStatePreimageKeyValueStorage preimageStorage =
-            new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
-        return new ForestMutableWorldState(stateStorage, preimageStorage, EvmConfiguration.DEFAULT);
-      }
+    try (var worldState = createGenesisWorldState(dataStorageFormat)) {
+      writeAccountsTo(worldState, genesisAccounts, null);
+      return worldState.rootHash();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -335,7 +284,7 @@ public final class GenesisState {
     if (shanghaiTimestamp.isPresent()) {
       return genesis.getTimestamp() >= shanghaiTimestamp.getAsLong();
     }
-    return false;
+    return isCancunAtGenesis(genesis);
   }
 
   private static boolean isCancunAtGenesis(final GenesisConfigFile genesis) {
@@ -343,7 +292,23 @@ public final class GenesisState {
     if (cancunTimestamp.isPresent()) {
       return genesis.getTimestamp() >= cancunTimestamp.getAsLong();
     }
-    return false;
+    return isPragueAtGenesis(genesis);
+  }
+
+  private static boolean isPragueAtGenesis(final GenesisConfigFile genesis) {
+    final OptionalLong pragueTimestamp = genesis.getConfigOptions().getPragueTime();
+    if (pragueTimestamp.isPresent()) {
+      return genesis.getTimestamp() >= pragueTimestamp.getAsLong();
+    }
+    return isFutureEipsTimeAtGenesis(genesis);
+  }
+
+  private static boolean isFutureEipsTimeAtGenesis(final GenesisConfigFile genesis) {
+    final OptionalLong futureEipsTime = genesis.getConfigOptions().getFutureEipsTime();
+    if (futureEipsTime.isPresent()) {
+      return genesis.getTimestamp() >= futureEipsTime.getAsLong();
+    }
+    return isExperimentalEipsTimeAtGenesis(genesis);
   }
 
   private static boolean isExperimentalEipsTimeAtGenesis(final GenesisConfigFile genesis) {

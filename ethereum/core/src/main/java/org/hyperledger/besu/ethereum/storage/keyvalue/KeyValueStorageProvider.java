@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
@@ -78,12 +79,13 @@ public class KeyValueStorageProvider implements StorageProvider {
 
   @Override
   public WorldStateKeyValueStorage createWorldStateStorage(
-      final DataStorageFormat dataStorageFormat) {
-    if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
-      return new BonsaiWorldStateKeyValueStorage(this, metricsSystem);
-    } else if (dataStorageFormat.equals(DataStorageFormat.VERKLE)) {
+      final DataStorageConfiguration dataStorageConfiguration) {
+    if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
+      return new BonsaiWorldStateKeyValueStorage(this, metricsSystem, dataStorageConfiguration);
+    }  else if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.VERKLE)) {
       return new VerkleWorldStateKeyValueStorage(this, metricsSystem);
-    } else {
+    }
+    else {
       return new ForestWorldStateKeyValueStorage(
           getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.WORLD_STATE));
     }
@@ -91,8 +93,9 @@ public class KeyValueStorageProvider implements StorageProvider {
 
   @Override
   public WorldStateStorageCoordinator createWorldStateStorageCoordinator(
-      final DataStorageFormat dataStorageFormat) {
-    return new WorldStateStorageCoordinator(createWorldStateStorage(dataStorageFormat));
+      final DataStorageConfiguration dataStorageFormatConfiguration) {
+    return new WorldStateStorageCoordinator(
+        createWorldStateStorage(dataStorageFormatConfiguration));
   }
 
   @Override

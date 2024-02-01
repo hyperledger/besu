@@ -77,7 +77,6 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
   @Override
   public Optional<Bytes> getExistingData(
-      final SnapWorldDownloadState downloadState,
       final WorldStateStorageCoordinator worldStateStorageCoordinator) {
     return worldStateStorageCoordinator
         .getAccountStateTrieNode(getLocation(), getNodeHash())

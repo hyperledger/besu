@@ -37,13 +37,11 @@ public class VerkleWorldStateProvider extends DiffBasedWorldStateProvider {
       final VerkleWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
-      final ObservableMetricsSystem metricsSystem,
       final BesuContext pluginContext,
-      final EvmConfiguration evmConfiguration,
-      final TrieLogPruner trieLogPruner) {
-    super(worldStateKeyValueStorage, blockchain, maxLayersToLoad, pluginContext, trieLogPruner);
+      final EvmConfiguration evmConfiguration) {
+    super(worldStateKeyValueStorage, blockchain, maxLayersToLoad, pluginContext);
     provideCachedWorldStorageManager(
-        new VerkleCachedWorldStorageManager(this, worldStateKeyValueStorage, metricsSystem));
+        new VerkleCachedWorldStorageManager(this, worldStateKeyValueStorage));
     loadPersistedState(new VerkleWorldState(this, worldStateKeyValueStorage, evmConfiguration));
   }
 

@@ -24,15 +24,13 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCached
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
 public class BonsaiCachedWorldStorageManager extends DiffBasedCachedWorldStorageManager {
 
   public BonsaiCachedWorldStorageManager(
       final DiffBasedWorldStateProvider archive,
-      final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final ObservableMetricsSystem metricsSystem) {
-    super(archive, worldStateKeyValueStorage, metricsSystem);
+      final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage) {
+    super(archive, worldStateKeyValueStorage);
   }
 
   @Override
@@ -55,9 +53,8 @@ public class BonsaiCachedWorldStorageManager extends DiffBasedCachedWorldStorage
 
   @Override
   public DiffBasedWorldStateKeyValueStorage createSnapshotKeyValueStorage(
-      final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final ObservableMetricsSystem metricsSystem) {
+      final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage) {
     return new BonsaiSnapshotWorldStateKeyValueStorage(
-        (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage, metricsSystem);
+        (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage);
   }
 }

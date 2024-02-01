@@ -29,16 +29,14 @@ public class VerkleLayeredWorldStateKeyValueStorage extends VerkleSnapshotWorldS
     this(
         new LayeredKeyValueStorage(parent.getComposedWorldStateStorage()),
         parent.getTrieLogStorage(),
-        parent,
-        parent.getMetricsSystem());
+        parent);
   }
 
   public VerkleLayeredWorldStateKeyValueStorage(
       final SnappedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage,
-      final VerkleWorldStateKeyValueStorage parent,
-      final ObservableMetricsSystem metricsSystem) {
-    super(parent, composedWorldStateStorage, trieLogStorage, metricsSystem);
+      final VerkleWorldStateKeyValueStorage parent) {
+    super(parent, composedWorldStateStorage, trieLogStorage);
   }
 
   @Override
@@ -46,7 +44,6 @@ public class VerkleLayeredWorldStateKeyValueStorage extends VerkleSnapshotWorldS
     return new VerkleLayeredWorldStateKeyValueStorage(
         ((LayeredKeyValueStorage) composedWorldStateStorage).clone(),
         trieLogStorage,
-        parentWorldStateStorage,
-        metricsSystem);
+        parentWorldStateStorage);
   }
 }

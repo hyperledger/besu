@@ -30,9 +30,8 @@ public class VerkleCachedWorldStorageManager extends DiffBasedCachedWorldStorage
 
   public VerkleCachedWorldStorageManager(
       final DiffBasedWorldStateProvider archive,
-      final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final ObservableMetricsSystem metricsSystem) {
-    super(archive, worldStateKeyValueStorage, metricsSystem);
+      final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage) {
+    super(archive, worldStateKeyValueStorage);
   }
 
   @Override
@@ -55,9 +54,8 @@ public class VerkleCachedWorldStorageManager extends DiffBasedCachedWorldStorage
 
   @Override
   public DiffBasedWorldStateKeyValueStorage createSnapshotKeyValueStorage(
-      final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final ObservableMetricsSystem metricsSystem) {
+      final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage) {
     return new VerkleSnapshotWorldStateKeyValueStorage(
-        (VerkleWorldStateKeyValueStorage) worldStateKeyValueStorage, metricsSystem);
+        (VerkleWorldStateKeyValueStorage) worldStateKeyValueStorage);
   }
 }

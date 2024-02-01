@@ -43,22 +43,19 @@ public class VerkleSnapshotWorldStateKeyValueStorage extends VerkleWorldStateKey
   public VerkleSnapshotWorldStateKeyValueStorage(
       final VerkleWorldStateKeyValueStorage parentWorldStateStorage,
       final SnappedKeyValueStorage segmentedWorldStateStorage,
-      final KeyValueStorage trieLogStorage,
-      final ObservableMetricsSystem metricsSystem) {
-    super(segmentedWorldStateStorage, trieLogStorage, metricsSystem);
+      final KeyValueStorage trieLogStorage) {
+    super(parentWorldStateStorage.flatDbStrategy, segmentedWorldStateStorage, trieLogStorage);
     this.parentWorldStateStorage = parentWorldStateStorage;
     this.subscribeParentId = parentWorldStateStorage.subscribe(this);
   }
 
   public VerkleSnapshotWorldStateKeyValueStorage(
-      final VerkleWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final ObservableMetricsSystem metricsSystem) {
+      final VerkleWorldStateKeyValueStorage worldStateKeyValueStorage) {
     this(
         worldStateKeyValueStorage,
         ((SnappableKeyValueStorage) worldStateKeyValueStorage.getComposedWorldStateStorage())
             .takeSnapshot(),
-        worldStateKeyValueStorage.getTrieLogStorage(),
-        metricsSystem);
+        worldStateKeyValueStorage.getTrieLogStorage());
   }
 
   private boolean isClosedGet() {

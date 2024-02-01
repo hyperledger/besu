@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -47,22 +48,21 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
   protected FullFlatDbStrategy flatDbStrategy;
 
   public VerkleWorldStateKeyValueStorage(
-      final StorageProvider provider, final ObservableMetricsSystem metricsSystem) {
+          final StorageProvider provider,
+          final MetricsSystem metricsSystem) {
     super(
         provider.getStorageBySegmentIdentifiers(
             List.of(
                 ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE)),
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
-        metricsSystem);
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
     this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem);
   }
 
   public VerkleWorldStateKeyValueStorage(
+          final FlatDbStrategy flatDbStrategy,
       final SegmentedKeyValueStorage composedWorldStateStorage,
-      final KeyValueStorage trieLogStorage,
-      final ObservableMetricsSystem metricsSystem) {
-    super(composedWorldStateStorage, trieLogStorage, metricsSystem);
-    this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem);
+      final KeyValueStorage trieLogStorage) {
+    super(composedWorldStateStorage, trieLogStorage);
   }
 
   @Override

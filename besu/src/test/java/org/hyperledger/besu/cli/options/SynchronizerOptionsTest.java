@@ -82,8 +82,8 @@ public class SynchronizerOptionsTest
   }
 
   @Override
-  protected List<String> getFieldsWithComputedDefaults() {
-    return Arrays.asList("maxTrailingPeers", "computationParallelism");
+  protected String[] getFieldsWithComputedDefaults() {
+    return new String[] {"maxTrailingPeers", "computationParallelism"};
   }
 
   @Override

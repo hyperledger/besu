@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapsyncMetricsManager.Step.DOWNLOAD;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncMetricsManager.Step.DOWNLOAD;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountRangeDataRequest;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -133,8 +133,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
           stateRoot,
           snapTaskCollection.size());
 
-      final SnapsyncMetricsManager snapsyncMetricsManager =
-          new SnapsyncMetricsManager(metricsSystem, ethContext);
+      final SnapSyncMetricsManager snapsyncMetricsManager =
+          new SnapSyncMetricsManager(metricsSystem, ethContext);
 
       final SnapWorldDownloadState newDownloadState =
           new SnapWorldDownloadState(

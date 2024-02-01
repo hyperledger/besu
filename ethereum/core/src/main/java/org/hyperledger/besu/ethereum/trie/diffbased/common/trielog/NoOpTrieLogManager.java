@@ -25,12 +25,11 @@ import java.util.Optional;
 public class NoOpTrieLogManager extends TrieLogManager {
 
   public NoOpTrieLogManager() {
-    super(null, null, 0, null, TrieLogPruner.noOpTrieLogPruner());
+    super(null, null, 0, null);
   }
 
-  @SuppressWarnings({"UnsynchronizedOverridesSynchronized", "squid:S3551"})
   @Override
-  public void saveTrieLog(
+  public synchronized void saveTrieLog(
       final DiffBasedWorldStateUpdateAccumulator<?> localUpdater,
       final Hash forWorldStateRootHash,
       final BlockHeader forBlockHeader,

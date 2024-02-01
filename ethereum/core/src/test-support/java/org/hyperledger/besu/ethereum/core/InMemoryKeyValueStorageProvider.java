@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -28,13 +30,14 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValue
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -100,16 +103,20 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         new InMemoryKeyValueStorageProvider();
     final BonsaiCachedMerkleTrieLoader cachedMerkleTrieLoader =
         new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem());
+    final DataStorageConfiguration bonsaiDataStorageConfig =
+        ImmutableDataStorageConfiguration.builder()
+            .dataStorageFormat(DataStorageFormat.BONSAI)
+            .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+            .unstable(DataStorageConfiguration.Unstable.DEFAULT)
+            .build();
     return new BonsaiWorldStateProvider(
         (BonsaiWorldStateKeyValueStorage)
-            inMemoryKeyValueStorageProvider.createWorldStateStorage(DataStorageFormat.BONSAI),
+            inMemoryKeyValueStorageProvider.createWorldStateStorage(bonsaiDataStorageConfig),
         blockchain,
         Optional.empty(),
         cachedMerkleTrieLoader,
-        new NoOpMetricsSystem(),
         null,
-        evmConfiguration,
-        TrieLogPruner.noOpTrieLogPruner());
+        evmConfiguration);
   }
 
   public static VerkleWorldStateProvider createVerkleInMemoryWorldStateArchive(
@@ -121,21 +128,24 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
       final Blockchain blockchain, final EvmConfiguration evmConfiguration) {
     final InMemoryKeyValueStorageProvider inMemoryKeyValueStorageProvider =
         new InMemoryKeyValueStorageProvider();
+    final DataStorageConfiguration verkleDataStorageConfig =
+            ImmutableDataStorageConfiguration.builder()
+                    .dataStorageFormat(DataStorageFormat.VERKLE)
+                    .unstable(DataStorageConfiguration.Unstable.DEFAULT)
+                    .build();
     return new VerkleWorldStateProvider(
         (VerkleWorldStateKeyValueStorage)
-            inMemoryKeyValueStorageProvider.createWorldStateStorage(DataStorageFormat.VERKLE),
+            inMemoryKeyValueStorageProvider.createWorldStateStorage(verkleDataStorageConfig),
         blockchain,
         Optional.empty(),
-        new NoOpMetricsSystem(),
         null,
-        evmConfiguration,
-        TrieLogPruner.noOpTrieLogPruner());
+        evmConfiguration);
   }
 
   public static MutableWorldState createInMemoryWorldState() {
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
     return new ForestMutableWorldState(
-        provider.createWorldStateStorage(DataStorageFormat.FOREST),
+        provider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG),
         provider.createWorldStatePreimageStorage(),
         EvmConfiguration.DEFAULT);
   }

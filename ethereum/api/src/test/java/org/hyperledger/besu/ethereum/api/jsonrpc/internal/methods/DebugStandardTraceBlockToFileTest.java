@@ -18,11 +18,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -30,28 +31,23 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.Answers;
 
 public class DebugStandardTraceBlockToFileTest {
 
   // this tempDir is deliberately static
   @TempDir private static Path folder;
 
-  private final WorldStateArchive archive =
-      mock(WorldStateArchive.class, Answers.RETURNS_DEEP_STUBS);
   private final Blockchain blockchain = mock(Blockchain.class);
-  private final BlockchainQueries blockchainQueries =
-      spy(new BlockchainQueries(blockchain, archive));
+  private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final TransactionTracer transactionTracer = mock(TransactionTracer.class);
   private final DebugStandardTraceBlockToFile debugStandardTraceBlockToFile =
       new DebugStandardTraceBlockToFile(() -> transactionTracer, blockchainQueries, folder);
@@ -76,20 +72,26 @@ public class DebugStandardTraceBlockToFileTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "debug_standardTraceBlockToFile", params));
 
-    final List<String> paths = new ArrayList<>();
-    paths.add("path-1");
-
-    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    final List<String> paths = List.of("path-1");
 
     when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
     when(blockchain.getBlockHeader(genesis.getHash())).thenReturn(Optional.of(genesis.getHeader()));
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+
+    when(blockchainQueries.getAndMapWorldState(any(), any()))
+        .thenAnswer(
+            invocationOnMock -> {
+              Function<Tracer.TraceableState, ? extends Optional<BlockTracer>> mapper =
+                  invocationOnMock.getArgument(1);
+              return mapper.apply(mock(Tracer.TraceableState.class));
+            });
 
     when(transactionTracer.traceTransactionToFile(
             any(MutableWorldState.class), eq(block.getHash()), any(), any()))
         .thenReturn(paths);
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugStandardTraceBlockToFile.response(request);
-    final List result = (ArrayList) response.getResult();
+    final List result = (List) response.getResult();
 
     assertThat(result.size()).isEqualTo(1);
   }

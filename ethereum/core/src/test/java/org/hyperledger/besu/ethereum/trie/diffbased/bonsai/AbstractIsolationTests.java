@@ -67,8 +67,9 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogPruner;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -147,17 +148,21 @@ public abstract class AbstractIsolationTests {
   @BeforeEach
   public void createStorage() {
     worldStateKeyValueStorage =
-        createKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.BONSAI);
+        createKeyValueStorageProvider()
+            .createWorldStateStorage(
+                ImmutableDataStorageConfiguration.builder()
+                    .dataStorageFormat(DataStorageFormat.BONSAI)
+                    .bonsaiMaxLayersToLoad(
+                        DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+                    .build());
     archive =
         new BonsaiWorldStateProvider(
             (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage,
             blockchain,
             Optional.of(16L),
             new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
-            new NoOpMetricsSystem(),
             null,
-            EvmConfiguration.DEFAULT,
-            TrieLogPruner.noOpTrieLogPruner());
+            EvmConfiguration.DEFAULT);
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
     protocolContext = new ProtocolContext(blockchain, archive, null, Optional.empty());

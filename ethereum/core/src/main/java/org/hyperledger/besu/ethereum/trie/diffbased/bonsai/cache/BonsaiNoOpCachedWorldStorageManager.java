@@ -27,7 +27,7 @@ public class BonsaiNoOpCachedWorldStorageManager extends BonsaiCachedWorldStorag
 
   public BonsaiNoOpCachedWorldStorageManager(
       final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage) {
-    super(null, bonsaiWorldStateKeyValueStorage, new NoOpMetricsSystem());
+    super(null, bonsaiWorldStateKeyValueStorage);
   }
 
   @Override

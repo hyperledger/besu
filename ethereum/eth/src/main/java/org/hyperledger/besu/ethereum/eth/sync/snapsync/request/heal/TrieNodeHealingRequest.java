@@ -181,7 +181,6 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
   }
 
   public abstract Optional<Bytes> getExistingData(
-      final SnapWorldDownloadState downloadState,
       final WorldStateStorageCoordinator worldStateStorageCoordinator);
 
   public abstract List<Bytes> getTrieNodePath();

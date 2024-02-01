@@ -25,21 +25,20 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.FlatDbStrategy;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.FullFlatDbStrategy;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.PartialFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategyProvider;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
@@ -47,72 +46,31 @@ import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValueStorage
     implements WorldStateKeyValueStorage {
-  private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateKeyValueStorage.class);
-  public static final byte[] FLAT_DB_MODE = "flatDbStatus".getBytes(StandardCharsets.UTF_8);
-
-  protected FlatDbMode flatDbMode;
-  protected FlatDbStrategy flatDbStrategy;
+  protected final FlatDbStrategyProvider flatDbStrategyProvider;
 
   public BonsaiWorldStateKeyValueStorage(
-      final StorageProvider provider, final ObservableMetricsSystem metricsSystem) {
+      final StorageProvider provider,
+      final MetricsSystem metricsSystem,
+      final DataStorageConfiguration dataStorageConfiguration) {
     super(
         provider.getStorageBySegmentIdentifiers(
             List.of(
                 ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE)),
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
-        metricsSystem);
-    loadFlatDbStrategy();
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
+    this.flatDbStrategyProvider =
+        new FlatDbStrategyProvider(metricsSystem, dataStorageConfiguration);
+    flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
   }
 
   public BonsaiWorldStateKeyValueStorage(
-      final FlatDbMode flatDbMode,
-      final FlatDbStrategy flatDbStrategy,
+      final FlatDbStrategyProvider flatDbStrategyProvider,
       final SegmentedKeyValueStorage composedWorldStateStorage,
-      final KeyValueStorage trieLogStorage,
-      final ObservableMetricsSystem metricsSystem) {
-    super(composedWorldStateStorage, trieLogStorage, metricsSystem);
-    this.flatDbMode = flatDbMode;
-    this.flatDbStrategy = flatDbStrategy;
-  }
-
-  private void loadFlatDbStrategy() {
-    // derive our flatdb strategy from db or default:
-    var newFlatDbMode = deriveFlatDbStrategy();
-
-    // if  flatDbMode is not loaded or has changed, reload flatDbStrategy
-    if (this.flatDbMode == null || !this.flatDbMode.equals(newFlatDbMode)) {
-      this.flatDbMode = newFlatDbMode;
-      if (flatDbMode == FlatDbMode.FULL) {
-        this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem);
-      } else {
-        this.flatDbStrategy = new PartialFlatDbStrategy(metricsSystem);
-      }
-    }
-  }
-
-  public FlatDbMode deriveFlatDbStrategy() {
-    var flatDbMode =
-        FlatDbMode.fromVersion(
-            composedWorldStateStorage
-                .get(TRIE_BRANCH_STORAGE, FLAT_DB_MODE)
-                .map(Bytes::wrap)
-                .orElse(FlatDbMode.PARTIAL.getVersion()));
-    LOG.info("Bonsai flat db mode found {}", flatDbMode);
-
-    return flatDbMode;
-  }
-
-  @Override
-  public FlatDbStrategy getFlatDbStrategy() {
-    if (flatDbStrategy == null) {
-      loadFlatDbStrategy();
-    }
-    return flatDbStrategy;
+      final KeyValueStorage trieLogStorage) {
+    super(composedWorldStateStorage, trieLogStorage);
+    this.flatDbStrategyProvider = flatDbStrategyProvider;
   }
 
   @Override
@@ -122,19 +80,22 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
 
   @Override
   public FlatDbMode getFlatDbMode() {
-    return flatDbMode;
+    return flatDbStrategyProvider.getFlatDbMode();
   }
 
   public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
-      return getFlatDbStrategy().getFlatCode(codeHash, accountHash, composedWorldStateStorage);
+      return flatDbStrategyProvider
+          .getFlatDbStrategy(composedWorldStateStorage)
+          .getFlatCode(codeHash, accountHash, composedWorldStateStorage);
     }
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    return getFlatDbStrategy()
+    return flatDbStrategyProvider
+        .getFlatDbStrategy(composedWorldStateStorage)
         .getFlatAccount(
             this::getWorldStateRootHash,
             this::getAccountStateTrieNode,
@@ -189,7 +150,8 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Hash accountHash,
       final StorageSlotKey storageSlotKey) {
-    return getFlatDbStrategy()
+    return flatDbStrategyProvider
+        .getFlatDbStrategy(composedWorldStateStorage)
         .getFlatStorageValueByStorageSlotKey(
             this::getWorldStateRootHash,
             storageRootSupplier,
@@ -205,28 +167,23 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
   }
 
   public void upgradeToFullFlatDbMode() {
-    final SegmentedKeyValueStorageTransaction transaction =
-        composedWorldStateStorage.startTransaction();
-    // TODO: consider ARCHIVE mode
-    transaction.put(
-        TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.FULL.getVersion().toArrayUnsafe());
-    transaction.commit();
-    loadFlatDbStrategy(); // force reload of flat db reader strategy
+    flatDbStrategyProvider.upgradeToFullFlatDbMode(composedWorldStateStorage);
   }
 
   public void downgradeToPartialFlatDbMode() {
-    final SegmentedKeyValueStorageTransaction transaction =
-        composedWorldStateStorage.startTransaction();
-    transaction.put(
-        TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.PARTIAL.getVersion().toArrayUnsafe());
-    transaction.commit();
-    loadFlatDbStrategy(); // force reload of flat db reader strategy
+    flatDbStrategyProvider.downgradeToPartialFlatDbMode(composedWorldStateStorage);
   }
 
   @Override
   public void clear() {
     super.clear();
-    loadFlatDbStrategy(); // force reload of flat db reader strategy
+    flatDbStrategyProvider.loadFlatDbStrategy(
+        composedWorldStateStorage); // force reload of flat db reader strategy
+  }
+
+  @Override
+  public FlatDbStrategy getFlatDbStrategy() {
+    return flatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage);
   }
 
   @Override
@@ -234,7 +191,7 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     return new Updater(
         composedWorldStateStorage.startTransaction(),
         trieLogStorage.startTransaction(),
-        flatDbStrategy);
+        flatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage));
   }
 
   public static class Updater implements DiffBasedWorldStateKeyValueStorage.Updater {

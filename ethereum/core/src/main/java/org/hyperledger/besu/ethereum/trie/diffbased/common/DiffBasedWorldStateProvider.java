@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -61,8 +60,7 @@ public class DiffBasedWorldStateProvider implements WorldStateArchive {
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
-      final BesuContext pluginContext,
-      final TrieLogPruner trieLogPruner) {
+      final BesuContext pluginContext) {
 
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     // TODO: de-dup constructors
@@ -71,8 +69,7 @@ public class DiffBasedWorldStateProvider implements WorldStateArchive {
             blockchain,
             worldStateKeyValueStorage,
             maxLayersToLoad.orElse(DiffBasedCachedWorldStorageManager.RETAINED_LAYERS),
-            pluginContext,
-            trieLogPruner);
+            pluginContext);
     this.blockchain = blockchain;
   }
 
