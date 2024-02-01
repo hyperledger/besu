@@ -33,13 +33,10 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -86,9 +83,9 @@ public final class GenesisState {
    * @return A new {@link GenesisState}.
    */
   public static GenesisState fromJson(
-          final DataStorageFormat dataStorageFormat,
-          final String json,
-          final ProtocolSchedule protocolSchedule) {
+      final DataStorageFormat dataStorageFormat,
+      final String json,
+      final ProtocolSchedule protocolSchedule) {
     return fromConfig(dataStorageFormat, GenesisConfigFile.fromConfig(json), protocolSchedule);
   }
 

@@ -68,8 +68,6 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBui
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -147,16 +145,13 @@ public abstract class AbstractIsolationTests {
 
   @BeforeEach
   public void createStorage() {
+    final DataStorageConfiguration dataStorageConfiguration =
+        DataStorageConfiguration.DEFAULT_BONSAI_CONFIG;
     worldStateKeyValueStorage =
-        createKeyValueStorageProvider()
-            .createWorldStateStorage(
-                ImmutableDataStorageConfiguration.builder()
-                    .dataStorageFormat(DataStorageFormat.BONSAI)
-                    .bonsaiMaxLayersToLoad(
-                        DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
-                    .build());
+        createKeyValueStorageProvider().createWorldStateStorage(dataStorageConfiguration);
     archive =
         new BonsaiWorldStateProvider(
+            dataStorageConfiguration,
             (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage,
             blockchain,
             Optional.of(16L),

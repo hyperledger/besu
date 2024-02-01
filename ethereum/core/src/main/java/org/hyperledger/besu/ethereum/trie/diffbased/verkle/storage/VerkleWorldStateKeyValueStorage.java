@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorl
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -48,8 +47,7 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
   protected FullFlatDbStrategy flatDbStrategy;
 
   public VerkleWorldStateKeyValueStorage(
-          final StorageProvider provider,
-          final MetricsSystem metricsSystem) {
+      final StorageProvider provider, final MetricsSystem metricsSystem) {
     super(
         provider.getStorageBySegmentIdentifiers(
             List.of(
@@ -59,7 +57,7 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
   }
 
   public VerkleWorldStateKeyValueStorage(
-          final FlatDbStrategy flatDbStrategy,
+      final FlatDbStrategy flatDbStrategy,
       final SegmentedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage) {
     super(composedWorldStateStorage, trieLogStorage);

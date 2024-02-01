@@ -118,10 +118,13 @@ class BonsaiWorldStateProviderTest {
 
   @Test
   void testGetMutableReturnEmptyWhenLoadMoreThanLimitLayersBack() {
+    final DataStorageConfiguration dataStorageConfiguration =
+        DataStorageConfiguration.DEFAULT_BONSAI_CONFIG;
     bonsaiWorldStateArchive =
         new BonsaiWorldStateProvider(
+            dataStorageConfiguration,
             new BonsaiWorldStateKeyValueStorage(
-                storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG),
+                storageProvider, new NoOpMetricsSystem(), dataStorageConfiguration),
             blockchain,
             Optional.of(512L),
             new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),

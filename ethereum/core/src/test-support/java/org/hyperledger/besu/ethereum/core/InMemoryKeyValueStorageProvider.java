@@ -110,6 +110,7 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
             .unstable(DataStorageConfiguration.Unstable.DEFAULT)
             .build();
     return new BonsaiWorldStateProvider(
+        bonsaiDataStorageConfig,
         (BonsaiWorldStateKeyValueStorage)
             inMemoryKeyValueStorageProvider.createWorldStateStorage(bonsaiDataStorageConfig),
         blockchain,
@@ -129,11 +130,13 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
     final InMemoryKeyValueStorageProvider inMemoryKeyValueStorageProvider =
         new InMemoryKeyValueStorageProvider();
     final DataStorageConfiguration verkleDataStorageConfig =
-            ImmutableDataStorageConfiguration.builder()
-                    .dataStorageFormat(DataStorageFormat.VERKLE)
-                    .unstable(DataStorageConfiguration.Unstable.DEFAULT)
-                    .build();
+        ImmutableDataStorageConfiguration.builder()
+            .dataStorageFormat(DataStorageFormat.VERKLE)
+            .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+            .unstable(DataStorageConfiguration.Unstable.DEFAULT)
+            .build();
     return new VerkleWorldStateProvider(
+        verkleDataStorageConfig,
         (VerkleWorldStateKeyValueStorage)
             inMemoryKeyValueStorageProvider.createWorldStateStorage(verkleDataStorageConfig),
         blockchain,

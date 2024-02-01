@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.Optional;
@@ -25,7 +26,7 @@ import java.util.Optional;
 public class NoOpTrieLogManager extends TrieLogManager {
 
   public NoOpTrieLogManager() {
-    super(null, null, 0, null);
+    super(null, DataStorageConfiguration.DEFAULT_BONSAI_CONFIG, null, 0, null);
   }
 
   @Override

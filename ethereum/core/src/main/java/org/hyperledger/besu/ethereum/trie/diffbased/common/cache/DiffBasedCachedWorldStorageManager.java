@@ -61,11 +61,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
   public DiffBasedCachedWorldStorageManager(
       final DiffBasedWorldStateProvider archive,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage) {
-    this(
-        archive,
-        worldStateKeyValueStorage,
-        new ConcurrentHashMap<>(),
-        EvmConfiguration.DEFAULT);
+    this(archive, worldStateKeyValueStorage, new ConcurrentHashMap<>(), EvmConfiguration.DEFAULT);
   }
 
   public synchronized void addCachedLayer(

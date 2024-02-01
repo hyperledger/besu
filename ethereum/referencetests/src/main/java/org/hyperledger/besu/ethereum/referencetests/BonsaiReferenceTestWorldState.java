@@ -260,7 +260,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
         CacheBuilder.newBuilder().maximumSize(5).build();
 
     public ReferenceTestsInMemoryTrieLogManager() {
-      super(null, null, 0, null);
+      super(null, DataStorageConfiguration.DEFAULT_BONSAI_CONFIG, null, 0, null);
     }
 
     @Override

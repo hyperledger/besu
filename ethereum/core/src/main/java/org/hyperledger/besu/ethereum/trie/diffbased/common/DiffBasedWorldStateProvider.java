@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorl
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -57,6 +58,7 @@ public class DiffBasedWorldStateProvider implements WorldStateArchive {
   protected final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
 
   public DiffBasedWorldStateProvider(
+      final DataStorageConfiguration dataStorageConfiguration,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
@@ -67,6 +69,7 @@ public class DiffBasedWorldStateProvider implements WorldStateArchive {
     this.trieLogManager =
         new TrieLogManager(
             blockchain,
+            dataStorageConfiguration,
             worldStateKeyValueStorage,
             maxLayersToLoad.orElse(DiffBasedCachedWorldStorageManager.RETAINED_LAYERS),
             pluginContext);

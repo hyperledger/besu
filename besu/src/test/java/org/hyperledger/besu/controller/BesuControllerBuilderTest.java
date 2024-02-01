@@ -179,10 +179,7 @@ public class BesuControllerBuilderTest {
   @Test
   public void shouldDisablePruningIfBonsaiIsEnabled() {
     DataStorageConfiguration dataStorageConfiguration =
-        ImmutableDataStorageConfiguration.builder()
-            .dataStorageFormat(DataStorageFormat.BONSAI)
-            .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
-            .build();
+        DataStorageConfiguration.DEFAULT_BONSAI_CONFIG;
     BonsaiWorldState mockWorldState = mock(BonsaiWorldState.class, Answers.RETURNS_DEEP_STUBS);
     doReturn(worldStateArchive)
         .when(besuControllerBuilder)

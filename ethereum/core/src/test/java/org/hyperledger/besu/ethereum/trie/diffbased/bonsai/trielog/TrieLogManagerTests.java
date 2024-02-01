@@ -26,6 +26,9 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -57,7 +60,14 @@ class TrieLogManagerTests {
 
   @BeforeEach
   public void setup() {
-    trieLogManager = new TrieLogManager(blockchain, bonsaiWorldStateKeyValueStorage, 512, null);
+    final DataStorageConfiguration DEFAULT_CONFIG =
+        ImmutableDataStorageConfiguration.builder()
+            .dataStorageFormat(DataStorageFormat.FOREST)
+            .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+            .unstable(DataStorageConfiguration.Unstable.DEFAULT)
+            .build();
+    trieLogManager =
+        new TrieLogManager(blockchain, DEFAULT_CONFIG, bonsaiWorldStateKeyValueStorage, 512, null);
   }
 
   @Test

@@ -81,20 +81,19 @@ public class GenesisWorldStateProvider {
         EvmConfiguration.DEFAULT);
   }
 
-
-  private static MutableWorldState createGenesisVerkleWorldState(){
+  private static MutableWorldState createGenesisVerkleWorldState() {
     final VerkleWorldStateKeyValueStorage verkleWorldStateKeyValueStorage =
-            new VerkleWorldStateKeyValueStorage(
-                    new KeyValueStorageProvider(
-                            segmentIdentifiers -> new SegmentedInMemoryKeyValueStorage(),
-                            new InMemoryKeyValueStorage(),
-                            new NoOpMetricsSystem()),
-                    new NoOpMetricsSystem());
+        new VerkleWorldStateKeyValueStorage(
+            new KeyValueStorageProvider(
+                segmentIdentifiers -> new SegmentedInMemoryKeyValueStorage(),
+                new InMemoryKeyValueStorage(),
+                new NoOpMetricsSystem()),
+            new NoOpMetricsSystem());
     return new VerkleWorldState(
-            verkleWorldStateKeyValueStorage,
-            new VerkleNoOpCachedWorldStorageManager(verkleWorldStateKeyValueStorage),
-            new NoOpTrieLogManager(),
-            EvmConfiguration.DEFAULT);
+        verkleWorldStateKeyValueStorage,
+        new VerkleNoOpCachedWorldStorageManager(verkleWorldStateKeyValueStorage),
+        new NoOpTrieLogManager(),
+        EvmConfiguration.DEFAULT);
   }
 
   /**

@@ -1108,6 +1108,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
             worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
         yield new BonsaiWorldStateProvider(
+            dataStorageConfiguration,
             worldStateKeyValueStorage,
             blockchain,
             Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
@@ -1119,6 +1120,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         final VerkleWorldStateKeyValueStorage worldStateKeyValueStorage =
             worldStateStorageCoordinator.getStrategy(VerkleWorldStateKeyValueStorage.class);
         yield new VerkleWorldStateProvider(
+            dataStorageConfiguration,
             worldStateKeyValueStorage,
             blockchain,
             Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),

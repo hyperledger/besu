@@ -22,6 +22,8 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorl
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.trielog.TrieLogFactoryImpl;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.services.TrieLogService;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
@@ -51,13 +53,14 @@ public class TrieLogManager {
 
   public TrieLogManager(
       final Blockchain blockchain,
+      final DataStorageConfiguration dataStorageConfiguration,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final long maxLayersToLoad,
       final BesuContext pluginContext) {
     this.blockchain = blockchain;
     this.rootWorldStateStorage = worldStateKeyValueStorage;
     this.maxLayersToLoad = maxLayersToLoad;
-    this.trieLogFactory = setupTrieLogFactory(pluginContext);
+    this.trieLogFactory = setupTrieLogFactory(dataStorageConfiguration, pluginContext);
   }
 
   public synchronized void saveTrieLog(
@@ -133,7 +136,8 @@ public class TrieLogManager {
     trieLogObservers.unsubscribe(id);
   }
 
-  private TrieLogFactory setupTrieLogFactory(final BesuContext pluginContext) {
+  private TrieLogFactory setupTrieLogFactory(
+      final DataStorageConfiguration dataStorageConfiguration, final BesuContext pluginContext) {
     // if we have a TrieLogService from pluginContext, use it.
     var trieLogServicez =
         Optional.ofNullable(pluginContext)
@@ -151,7 +155,11 @@ public class TrieLogManager {
       return trieLogService.getTrieLogFactory();
     } else {
       // Otherwise default to TrieLogFactoryImpl
-      return new TrieLogFactoryImpl();
+      if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
+        return new org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog.TrieLogFactoryImpl();
+      } else {
+        return new TrieLogFactoryImpl();
+      }
     }
   }
 
