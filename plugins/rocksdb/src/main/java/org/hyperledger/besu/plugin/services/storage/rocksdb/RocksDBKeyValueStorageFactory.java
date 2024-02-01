@@ -258,18 +258,17 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     final int databaseVersion;
     if (databaseExists) {
       databaseVersion = DatabaseMetadata.lookUpFrom(dataDir).getVersion();
+      if (databaseVersion != commonConfiguration.getDatabaseVersion()) {
+        String error =
+            String.format(
+                "Mismatch detected: Database at %s is version '%s', but configuration expects version '%s'. Please verify your database configuration.",
+                dataDir, databaseVersion, commonConfiguration.getDatabaseVersion());
+        throw new StorageException(error);
+      }
       LOG.info(
           "Existing database detected at {}. Version {}. Compacting database...",
           dataDir,
           databaseVersion);
-      if (databaseVersion != commonConfiguration.getDatabaseVersion()) {
-        String error =
-            String.format(
-                "Database version mismatch: Detected '%s', configured '%s'. Verify database configuration.",
-                DataStorageFormat.getValue(databaseVersion),
-                DataStorageFormat.getValue(commonConfiguration.getDatabaseVersion()));
-        throw new StorageException(error);
-      }
     } else {
       databaseVersion = commonConfiguration.getDatabaseVersion();
       LOG.info("No existing database detected at {}. Using version {}", dataDir, databaseVersion);

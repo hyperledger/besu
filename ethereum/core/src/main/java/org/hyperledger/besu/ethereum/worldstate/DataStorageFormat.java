@@ -29,13 +29,4 @@ public enum DataStorageFormat {
   public int getDatabaseVersion() {
     return databaseVersion;
   }
-
-  public static DataStorageFormat getValue(final int version) {
-    for (DataStorageFormat format : DataStorageFormat.values()) {
-      if (format.getDatabaseVersion() == version) {
-        return format;
-      }
-    }
-    throw new IllegalArgumentException("Unexpected version: " + version);
-  }
 }
