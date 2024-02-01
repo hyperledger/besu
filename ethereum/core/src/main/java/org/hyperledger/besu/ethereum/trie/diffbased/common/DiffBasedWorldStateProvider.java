@@ -150,7 +150,28 @@ public class DiffBasedWorldStateProvider implements WorldStateArchive {
   @Override
   public synchronized Optional<MutableWorldState> getMutable(
       final Hash rootHash, final Hash blockHash) {
-    return rollMutableStateToBlockHash(persistedState, blockHash);
+    rollMutableStateToBlockHash(persistedState, blockHash);
+
+    // TODO remove after testing
+    blockchain
+        .getBlockHeader(blockHash)
+        .ifPresent(
+            blockHeader -> {
+              Optional<MutableWorldState> worldState =
+                  rollMutableStateToBlockHash(persistedState, blockHeader.getParentHash());
+              if (worldState.isEmpty()) {
+                throw new RuntimeException(
+                    "unable to rollback block " + blockHeader.getParentHash());
+              }
+            });
+
+    // TODO remove after testing
+    Optional<MutableWorldState> worldState = rollMutableStateToBlockHash(persistedState, blockHash);
+    if (worldState.isEmpty()) {
+      throw new RuntimeException("unable to rollforward block " + blockHash);
+    }
+
+    return worldState;
   }
 
   Optional<MutableWorldState> rollMutableStateToBlockHash(

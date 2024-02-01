@@ -85,7 +85,7 @@ class LogRollingTests {
           Hash.ZERO,
           Hash.EMPTY_LIST_HASH,
           Address.ZERO,
-          Hash.fromHexString("0x3869378cd87434ffd04c4e187312d69d1430dc62e575c4b4b061ac625b88ec08"),
+          Hash.fromHexString("0x5838fdaa799cc6702310a507f8841ac60d6dc70634650f5f31fba8ab10c38bae"),
           Hash.EMPTY_TRIE_HASH,
           Hash.EMPTY_LIST_HASH,
           LogsBloomFilter.builder().build(),
@@ -103,13 +103,14 @@ class LogRollingTests {
           null,
           null,
           null,
+          null,
           new MainnetBlockHeaderFunctions());
   private static final BlockHeader headerTwo =
       new BlockHeader(
           headerOne.getHash(),
           Hash.EMPTY_LIST_HASH,
           Address.ZERO,
-          Hash.fromHexString("0x3e7c057b149069fadbb2bd2c752184cb5c7a9c736d27682c9e557ceda8ede10e"),
+          Hash.fromHexString("0x121b55c8ed6858d1f9531c73c8a5b75c5738bcffafff152baff10821ecbbf217"),
           Hash.EMPTY_TRIE_HASH,
           Hash.EMPTY_LIST_HASH,
           LogsBloomFilter.builder().build(),
@@ -127,13 +128,14 @@ class LogRollingTests {
           null,
           null,
           null,
+          null,
           new MainnetBlockHeaderFunctions());
   private static final BlockHeader headerThree =
       new BlockHeader(
           headerOne.getHash(),
           Hash.EMPTY_LIST_HASH,
           Address.ZERO,
-          Hash.fromHexString("0xec5d7bd6bd7ce01e58bb389475767350852e2ce2bb72b8cd9c9b55d118c14e07"),
+          Hash.fromHexString("0x35ed5a945a3ee9207c6201997e38db37e90230d531fd18f8ac1d107287465cc2"),
           Hash.EMPTY_TRIE_HASH,
           Hash.EMPTY_LIST_HASH,
           LogsBloomFilter.builder().build(),
@@ -148,6 +150,7 @@ class LogRollingTests {
           0,
           null,
           null, // blobGasUsed
+          null,
           null,
           null,
           null,
@@ -158,7 +161,7 @@ class LogRollingTests {
           headerOne.getHash(),
           Hash.EMPTY_LIST_HASH,
           Address.ZERO,
-          Hash.fromHexString("0x3869378cd87434ffd04c4e187312d69d1430dc62e575c4b4b061ac625b88ec08"),
+          Hash.fromHexString("0x5838fdaa799cc6702310a507f8841ac60d6dc70634650f5f31fba8ab10c38bae"),
           Hash.EMPTY_TRIE_HASH,
           Hash.EMPTY_LIST_HASH,
           LogsBloomFilter.builder().build(),
@@ -173,6 +176,7 @@ class LogRollingTests {
           0,
           null,
           null, // blobGasUsed
+          null,
           null,
           null,
           null,
@@ -462,6 +466,7 @@ class LogRollingTests {
     worldState.persist(headerThree);
     final TrieLogLayer layerThree = getTrieLogLayer(trieLogStorage, headerThree.getHash());
 
+    System.out.println(layerThree.dump());
     final WorldUpdater updater4 = worldState.updater();
     final MutableAccount mutableAccount4 = updater4.getAccount(addressOne);
     mutableAccount4.setStorageValue(UInt256.ONE, UInt256.valueOf(1));
@@ -475,7 +480,6 @@ class LogRollingTests {
 
     firstRollbackUpdater.rollBack(layerFour);
 
-    System.out.println(layerFour.dump());
     worldState.persist(headerThree);
 
     final VerkleWorldStateUpdateAccumulator secondRollbackUpdater =

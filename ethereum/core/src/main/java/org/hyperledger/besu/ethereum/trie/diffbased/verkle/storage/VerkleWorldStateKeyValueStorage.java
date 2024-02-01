@@ -57,10 +57,11 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
   }
 
   public VerkleWorldStateKeyValueStorage(
-      final FlatDbStrategy flatDbStrategy,
+      final FullFlatDbStrategy flatDbStrategy,
       final SegmentedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage) {
     super(composedWorldStateStorage, trieLogStorage);
+    this.flatDbStrategy = flatDbStrategy;
   }
 
   @Override
