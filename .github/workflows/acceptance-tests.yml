@@ -4,6 +4,8 @@ on:
     branches:
       - main
       - release-*
+  pull_request_review:
+    types: [submitted]
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
@@ -49,7 +51,7 @@ jobs:
   acceptanceTestEthereum:
     runs-on: ubuntu-22.04
     name: "Acceptance Runner"
-    needs: authorize
+    needs: shouldRun
     permissions:
       statuses: write
       checks: write
