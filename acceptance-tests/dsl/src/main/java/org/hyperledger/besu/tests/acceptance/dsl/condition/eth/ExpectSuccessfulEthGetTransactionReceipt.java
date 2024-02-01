@@ -32,6 +32,6 @@ public class ExpectSuccessfulEthGetTransactionReceipt implements Condition {
 
   @Override
   public void verify(final Node node) {
-    WaitUtils.waitFor(60, () -> assertThat(node.execute(transaction)).isNotPresent());
+    WaitUtils.waitFor(60, () -> assertThat(node.execute(transaction)).isPresent());
   }
 }
