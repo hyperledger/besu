@@ -149,7 +149,8 @@ public class RocksDBKeyValueStorageFactoryTest {
   }
 
   @Test
-  public void shouldThrowExceptionWhenVersionNumbserIsInvalid() throws Exception {
+  public void shouldThrowExceptionWhenExistingDatabaseVersionDifferentFromConfig()
+      throws Exception {
 
     final int actualDatabaseVersion = 1;
     final int expectedDatabaseVersion = 2;
