@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createPreparePayloads;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createPreparedCertificate;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
@@ -88,9 +87,7 @@ public class RoundChangeMessageValidatorTest {
                 QbftContext.class, emptyList(), bftExtraDataEncoder),
             Optional.empty());
 
-    lenient()
-        .when(protocolSchedule.getByBlockNumberOrTimestamp(anyLong(), anyLong()))
-        .thenReturn(protocolSpec);
+    lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
 
     lenient().when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);
   }

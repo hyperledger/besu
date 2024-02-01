@@ -20,7 +20,6 @@ import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupC
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createEmptyRoundChangePayloads;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createPreparePayloads;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
@@ -114,8 +113,7 @@ public class ProposalValidatorTest {
             eq(HeaderValidationMode.FULL)))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
 
-    when(protocolSchedule.getByBlockNumberOrTimestamp(anyLong(), anyLong()))
-        .thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
 
     when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);
 

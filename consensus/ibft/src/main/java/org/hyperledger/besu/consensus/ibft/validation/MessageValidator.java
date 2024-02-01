@@ -48,7 +48,7 @@ public class MessageValidator {
    *
    * @param signedDataValidator the signed data validator
    * @param proposalConsistencyValidator the proposal consistency validator
-   * @param protocolSchedule the proposal schedule
+   * @param protocolSchedule the protocol schedule
    * @param protocolContext the protocol context
    * @param roundChangeCertificateValidator the round change certificate validator
    */

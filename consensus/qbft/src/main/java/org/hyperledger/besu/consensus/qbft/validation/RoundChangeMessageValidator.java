@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.qbft.validation;
 import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHelpers.hasDuplicateAuthors;
 import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHelpers.hasSufficientEntries;
 
-import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
@@ -98,10 +97,7 @@ public class RoundChangeMessageValidator {
   private boolean validateBlock(final Block block) {
 
     final BlockValidator blockValidator =
-        ((BftProtocolSchedule) protocolSchedule)
-            .getByBlockNumberOrTimestamp(
-                block.getHeader().getNumber(), block.getHeader().getTimestamp())
-            .getBlockValidator();
+        protocolSchedule.getByBlockHeader(block.getHeader()).getBlockValidator();
 
     final var validationResult =
         blockValidator.validateAndProcessBlock(

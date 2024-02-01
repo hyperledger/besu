@@ -101,10 +101,7 @@ public class ProposalValidator {
         "Wrong class type for protocol schedule, requires BftProtocolSchedule");
 
     final BlockValidator blockValidator =
-        ((BftProtocolSchedule) protocolSchedule)
-            .getByBlockNumberOrTimestamp(
-                roundIdentifier.getSequenceNumber(), msg.getBlock().getHeader().getTimestamp())
-            .getBlockValidator();
+        protocolSchedule.getByBlockHeader(msg.getBlock().getHeader()).getBlockValidator();
 
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
