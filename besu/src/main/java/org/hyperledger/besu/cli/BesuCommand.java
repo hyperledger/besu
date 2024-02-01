@@ -838,7 +838,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Option(
       names = {"--pruning-blocks-retained"},
-      defaultValue = "1024",
       paramLabel = "<INTEGER>",
       description =
           "Minimum number of recent blocks for which to keep entire world state (default: ${DEFAULT-VALUE})",
@@ -847,7 +846,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Option(
       names = {"--pruning-block-confirmations"},
-      defaultValue = "10",
       paramLabel = "<INTEGER>",
       description =
           "Minimum number of confirmations on a block before marking begins (default: ${DEFAULT-VALUE})",
@@ -1620,14 +1618,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         "--Xcheckpoint-post-merge-enabled can only be used with X_CHECKPOINT sync-mode",
         SyncMode.X_CHECKPOINT.equals(getDefaultSyncModeIfNotSet()),
         singletonList("--Xcheckpoint-post-merge-enabled"));
-
-    CommandLineUtils.failIfOptionDoesntMeetRequirement(
-        commandLine,
-        "--Xsnapsync-synchronizer-flat option can only be used when -Xsnapsync-synchronizer-flat-db-healing-enabled is true",
-        unstableSynchronizerOptions.isSnapsyncFlatDbHealingEnabled(),
-        asList(
-            "--Xsnapsync-synchronizer-flat-account-healed-count-per-request",
-            "--Xsnapsync-synchronizer-flat-slot-healed-count-per-request"));
 
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
         && nodePrivateKeyFileOption.getNodePrivateKeyFile() != null) {
