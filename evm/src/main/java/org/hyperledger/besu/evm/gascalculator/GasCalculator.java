@@ -15,9 +15,12 @@
 package org.hyperledger.besu.evm.gascalculator;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
+import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.BalanceOperation;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
@@ -543,6 +546,18 @@ public interface GasCalculator {
    * @return the new excess blob gas value
    */
   default long computeExcessBlobGas(final long parentExcessBlobGas, final long blobGasUsed) {
+    return 0L;
+  }
+  /**
+   * Compute access events cost of a transaction
+   *
+   * @param transaction transaction
+   * @return gas cost after computing all access events
+   */
+  default long computeAccessEventsCost(
+      final AccessWitness accessWitness,
+      final Transaction transaction,
+      final MutableAccount sender) {
     return 0L;
   }
 }

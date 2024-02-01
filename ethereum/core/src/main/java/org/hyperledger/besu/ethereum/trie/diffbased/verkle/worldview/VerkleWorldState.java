@@ -140,7 +140,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
     // LOG.info(stateTrie.toDotTree());
     final Bytes32 rootHash = stateTrie.getRootHash();
 
-    LOG.info("end commit ");
+    LOG.info("end commit " + rootHash);
     return Hash.wrap(rootHash);
   }
 
@@ -177,7 +177,15 @@ public class VerkleWorldState extends DiffBasedWorldState {
                   updatedAccount.getCodeHash())
               .forEach(
                   (bytes, bytes2) -> {
-                    System.out.println("add " + bytes + " " + bytes2);
+                    System.out.println(
+                        "add "
+                            + accountKey
+                            + " "
+                            + bytes
+                            + " "
+                            + bytes2
+                            + " "
+                            + updatedAccount.getBalance());
                     stateTrie.put(bytes, bytes2);
                   });
           maybeStateUpdater.ifPresent(

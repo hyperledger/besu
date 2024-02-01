@@ -135,6 +135,11 @@ public class NonBesuBlockHeader implements BlockHeader {
   }
 
   @Override
+  public Optional<? extends Object> getExecutionWitness() {
+    return Optional.empty();
+  }
+
+  @Override
   public Optional<? extends Bytes32> getParentBeaconBlockRoot() {
     return Optional.empty();
   }

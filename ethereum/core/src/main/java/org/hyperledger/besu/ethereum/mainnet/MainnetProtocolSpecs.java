@@ -629,6 +629,7 @@ public abstract class MainnetProtocolSpecs {
                     SHANGHAI_INIT_CODE_SIZE_LIMIT))
         .withdrawalsProcessor(new WithdrawalsProcessor())
         .withdrawalsValidator(new WithdrawalsValidator.AllowedWithdrawals())
+        .executionWitnessValidator(new ExecutionWitnessValidator.AllowedExecutionWitness())
         .name("Shanghai");
   }
 

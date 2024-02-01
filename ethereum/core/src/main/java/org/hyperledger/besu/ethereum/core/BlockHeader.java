@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.ethereum.trie.verkle.ExecutionWitness;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.Objects;
@@ -65,6 +66,7 @@ public class BlockHeader extends SealableBlockHeader
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
       final Hash depositsRoot,
+      final ExecutionWitness executionWitness,
       final BlockHeaderFunctions blockHeaderFunctions) {
     super(
         parentHash,
@@ -86,7 +88,8 @@ public class BlockHeader extends SealableBlockHeader
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        depositsRoot);
+        depositsRoot,
+        executionWitness);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -211,6 +214,8 @@ public class BlockHeader extends SealableBlockHeader
     final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
     final Hash depositHashRoot =
         !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
+    final ExecutionWitness executionWitness =
+        !input.isEndOfCurrentList() ? ExecutionWitness.readFrom(input) : null;
     input.leaveList();
     return new BlockHeader(
         parentHash,
@@ -234,6 +239,7 @@ public class BlockHeader extends SealableBlockHeader
         excessBlobGas,
         parentBeaconBlockRoot,
         depositHashRoot,
+        executionWitness,
         blockHeaderFunctions);
   }
 
@@ -322,6 +328,7 @@ public class BlockHeader extends SealableBlockHeader
             .getDepositsRoot()
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
+        (ExecutionWitness) pluginBlockHeader.getExecutionWitness().orElse(null),
         blockHeaderFunctions);
   }
 

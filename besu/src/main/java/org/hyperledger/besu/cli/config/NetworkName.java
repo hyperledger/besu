@@ -29,6 +29,7 @@ public enum NetworkName {
   GOERLI("/goerli.json", BigInteger.valueOf(5)),
   /** Holešky network name. */
   HOLESKY("/holesky.json", BigInteger.valueOf(17000)),
+  KAUSTINEN("/kaustinen.json", BigInteger.valueOf(69420)),
 
   /** Dev network name. */
   DEV("/dev.json", BigInteger.valueOf(2018), false),

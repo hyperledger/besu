@@ -145,4 +145,10 @@ public interface BlockHeader extends ProcessableBlockHeader {
    */
   @Unstable
   Optional<? extends Long> getBlobGasUsed();
+  /**
+   * The executionWitness of the block
+   *
+   * @return The executionWitness of the block
+   */
+  Optional<? extends Object> getExecutionWitness();
 }
