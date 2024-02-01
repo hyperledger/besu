@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -204,7 +203,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     // invalid code results in a quick exit
     if (!code.isValid()) {
-      System.out.println(((CodeInvalid) code).getInvalidReason());
       return new OperationResult(cost, ExceptionalHaltReason.INVALID_CODE, 0);
     }
 
