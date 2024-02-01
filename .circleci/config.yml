@@ -254,7 +254,7 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-          name: AcceptanceTests (Non-Mainnet)
+          name: AcceptanceTests (Privacy)
           no_output_timeout: 20m
           command: |
             CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
@@ -407,7 +407,7 @@ workflows:
     jobs:
       - assemble
       - unitTests:
-           requires:
+          requires:
             - assemble
       - testWindows:
           requires:
@@ -426,6 +426,10 @@ workflows:
             - assemble
             - acceptanceTests
       - acceptanceTestsPermissioning:
+          requires:
+            - assemble
+            - acceptanceTestsCliqueBft
+      - acceptanceTestsPrivacy:
           requires:
             - assemble
       - buildDocker:

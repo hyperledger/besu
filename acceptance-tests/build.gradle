@@ -13,4 +13,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+dependencies {
+  tessera 'net.consensys.quorum.tessera:tessera-dist:23.4.0@tar'
+}
+
 jar { enabled = false }

@@ -55,7 +55,6 @@ public class PrivacyReceiptAcceptanceTest extends ParameterizedEnclaveTestBase {
             PrivacyAccountResolver.ALICE.resolve(enclaveEncryptorType),
             false,
             enclaveType,
-            Optional.empty(),
             false,
             false,
             restriction == UNRESTRICTED,

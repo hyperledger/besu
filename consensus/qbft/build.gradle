@@ -84,4 +84,6 @@ dependencies {
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 
   testSupportImplementation 'org.mockito:mockito-core'
+
+  tessera 'net.consensys.quorum.tessera:tessera-dist:23.4.0@tar'
 }

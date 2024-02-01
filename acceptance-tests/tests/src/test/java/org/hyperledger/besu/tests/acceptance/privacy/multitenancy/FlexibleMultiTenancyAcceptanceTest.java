@@ -39,7 +39,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.junit.After;
@@ -88,8 +87,7 @@ public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanc
             "node1",
             PrivacyAccountResolver.MULTI_TENANCY.resolve(enclaveEncryptorType),
             true,
-            enclaveType,
-            Optional.empty());
+            enclaveType);
     final BesuNode aliceBesu = alice.getBesu();
     privacyCluster.startNodes(alice);
     final String alice1Token =

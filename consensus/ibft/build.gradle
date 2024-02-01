@@ -75,4 +75,6 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
+
+  tessera 'net.consensys.quorum.tessera:tessera-dist:23.4.0@tar'
 }
