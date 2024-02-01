@@ -31,11 +31,11 @@ jobs:
         runner_index: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
       - name: Set up Java
-        uses: actions/setup-java@v4.0.0
+        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
           distribution: temurin
           java-version: 17
@@ -48,7 +48,7 @@ jobs:
           path: tmp/junit-xml-reports-downloaded
           if_no_artifact_found: true
       - name: setup gradle
-        uses: gradle/gradle-build-action@v2.12.0
+        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
       - name: Split tests
         id: split-tests
         uses: r7kamura/split-tests-by-timings@9322bd292d9423e2bc5a65bec548901801341e3f
@@ -68,7 +68,7 @@ jobs:
       - name: cleanup tempfiles
         run: rm testList.txt gradleArgs.txt
       - name: Upload Acceptance Test Results
-        uses: actions/upload-artifact@v3.1.0
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32
         with:
           name: acceptance-node-${{matrix.runner_index}}-test-results
           path: 'acceptance-tests/tests/build/test-results/acceptanceTest/TEST-*.xml'
