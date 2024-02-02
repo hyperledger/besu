@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
@@ -29,7 +30,6 @@ import org.apache.tuweni.bytes.Bytes;
 public class ShanghaiGasCalculator extends LondonGasCalculator {
 
   private static final long INIT_CODE_COST = 2L;
-
   /**
    * Instantiates a new ShanghaiGasCalculator
    *
@@ -44,6 +44,8 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
     super();
   }
 
+
+
   @Override
   public long transactionIntrinsicGasCost(final Bytes payload, final boolean isContractCreation) {
     long intrinsicGasCost = super.transactionIntrinsicGasCost(payload, isContractCreation);
@@ -55,8 +57,8 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
   }
 
   @Override
-  public long computeAccessEventsCost(
-      final AccessWitness accessWitness,
+  public long computeBaseAccessEventsCost(
+          final AccessWitness accessWitness,
       final Transaction transaction,
       final MutableAccount sender) {
     final boolean sendsValue = !transaction.getValue().equals(Wei.ZERO);
@@ -85,4 +87,38 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
     final int dataLength = (int) Math.ceil(initCodeLength / 32.0);
     return dataLength * INIT_CODE_COST;
   }
+
+  @Override
+  public long callOperationGasCost(
+          final MessageFrame frame,
+          final long stipend,
+          final long inputDataOffset,
+          final long inputDataLength,
+          final long outputDataOffset,
+          final long outputDataLength,
+          final Wei transferValue,
+          final Account recipient,
+          final Address to) {
+
+    final long baseCost =
+            super.callOperationGasCost(
+                    frame,
+                    stipend,
+                    inputDataOffset,
+                    inputDataLength,
+                    outputDataOffset,
+                    outputDataLength,
+                    transferValue,
+                    recipient,
+                    to);
+    long cost = baseCost;
+    if(!super.isPrecompile(to)){
+      cost = clampedAdd(baseCost,frame.getAccessWitness().touchAndChargeMessageCall(to));
+    }
+    if(!transferValue.isZero()){
+      cost = clampedAdd(baseCost,frame.getAccessWitness().touchAndChargeValueTransfer(recipient.getAddress(),to));
+    }
+    return cost;
+  }
+
 }

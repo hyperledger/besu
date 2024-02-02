@@ -341,7 +341,7 @@ public class MainnetTransactionProcessor {
       final long accessListGas =
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
       final long accessEventCost =
-          gasCalculator.computeAccessEventsCost(accessWitness, transaction, sender);
+          gasCalculator.computeBaseAccessEventsCost(accessWitness, transaction, sender);
       final long gasAvailable =
           transaction.getGasLimit() - intrinsicGas - accessListGas - accessEventCost;
       LOG.trace(
@@ -380,7 +380,8 @@ public class MainnetTransactionProcessor {
               .blockHashLookup(blockHashLookup)
               .contextVariables(contextVariablesBuilder.build())
               .accessListWarmAddresses(addressList)
-              .accessListWarmStorage(storageList);
+              .accessListWarmStorage(storageList)
+              .accessWitness(accessWitness);
 
       if (transaction.getVersionedHashes().isPresent()) {
         commonMessageFrameBuilder.versionedHashes(

@@ -554,7 +554,7 @@ public interface GasCalculator {
    * @param transaction transaction
    * @return gas cost after computing all access events
    */
-  default long computeAccessEventsCost(
+  default long computeBaseAccessEventsCost(
       final AccessWitness accessWitness,
       final Transaction transaction,
       final MutableAccount sender) {
