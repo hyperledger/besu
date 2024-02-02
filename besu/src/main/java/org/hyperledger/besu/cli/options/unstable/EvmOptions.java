@@ -47,7 +47,6 @@ public class EvmOptions implements CLIOptions<EvmConfiguration> {
           "size in kilobytes to allow the cache "
               + "of valid jump destinations to grow to before evicting the least recently used entry",
       fallbackValue = "32000",
-      defaultValue = "32000",
       hidden = true,
       arity = "1")
   private Long jumpDestCacheWeightKilobytes =
@@ -57,7 +56,6 @@ public class EvmOptions implements CLIOptions<EvmConfiguration> {
       names = {WORLDSTATE_UPDATE_MODE},
       description = "How to handle worldstate updates within a transaction",
       fallbackValue = "STACKED",
-      defaultValue = "STACKED",
       hidden = true,
       arity = "1")
   private EvmConfiguration.WorldUpdaterMode worldstateUpdateMode =

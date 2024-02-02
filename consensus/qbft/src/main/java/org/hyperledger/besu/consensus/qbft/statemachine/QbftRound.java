@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -65,8 +66,9 @@ public class QbftRound {
   protected final BlockCreator blockCreator;
   /** The Protocol context. */
   protected final ProtocolContext protocolContext;
+  /** The Protocol schedule. */
+  protected final ProtocolSchedule protocolSchedule;
 
-  private final BlockImporter blockImporter;
   private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final QbftMessageTransmitter transmitter;
@@ -79,7 +81,7 @@ public class QbftRound {
    * @param roundState the round state
    * @param blockCreator the block creator
    * @param protocolContext the protocol context
-   * @param blockImporter the block importer
+   * @param protocolSchedule the protocol schedule
    * @param observers the observers
    * @param nodeKey the node key
    * @param messageFactory the message factory
@@ -91,7 +93,7 @@ public class QbftRound {
       final RoundState roundState,
       final BlockCreator blockCreator,
       final ProtocolContext protocolContext,
-      final BlockImporter blockImporter,
+      final ProtocolSchedule protocolSchedule,
       final Subscribers<MinedBlockObserver> observers,
       final NodeKey nodeKey,
       final MessageFactory messageFactory,
@@ -101,7 +103,7 @@ public class QbftRound {
     this.roundState = roundState;
     this.blockCreator = blockCreator;
     this.protocolContext = protocolContext;
-    this.blockImporter = blockImporter;
+    this.protocolSchedule = protocolSchedule;
     this.observers = observers;
     this.nodeKey = nodeKey;
     this.messageFactory = messageFactory;
@@ -341,7 +343,10 @@ public class QbftRound {
           getRoundIdentifier(),
           blockToImport.getHash());
     }
+
     LOG.trace("Importing proposed block with extraData={}", extraData);
+    final BlockImporter blockImporter =
+        protocolSchedule.getByBlockHeader(blockToImport.getHeader()).getBlockImporter();
     final BlockImportResult result =
         blockImporter.importBlock(protocolContext, blockToImport, HeaderValidationMode.FULL);
     if (!result.isImported()) {
