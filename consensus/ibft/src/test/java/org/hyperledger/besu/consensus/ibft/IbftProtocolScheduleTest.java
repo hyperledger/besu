@@ -110,7 +110,7 @@ public class IbftProtocolScheduleTest {
       final BlockHeader blockHeader,
       final int block) {
     return schedule
-        .getByBlockNumber(block)
+        .getByBlockNumberOrTimestamp(block, blockHeader.getTimestamp())
         .getBlockHeaderValidator()
         .validateHeader(
             blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.LIGHT);

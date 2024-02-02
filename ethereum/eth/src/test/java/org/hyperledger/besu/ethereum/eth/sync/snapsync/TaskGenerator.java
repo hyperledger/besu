@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.Task;
@@ -44,7 +44,8 @@ public class TaskGenerator {
   public static List<Task<SnapDataRequest>> createAccountRequest(final boolean withData) {
 
     final WorldStateStorage worldStateStorage =
-        new InMemoryKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.FOREST);
+        new InMemoryKeyValueStorageProvider()
+            .createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG);
 
     final WorldStateProofProvider worldStateProofProvider =
         new WorldStateProofProvider(worldStateStorage);

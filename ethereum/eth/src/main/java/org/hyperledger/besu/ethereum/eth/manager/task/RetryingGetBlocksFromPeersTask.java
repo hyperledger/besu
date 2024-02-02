@@ -80,7 +80,7 @@ public class RetryingGetBlocksFromPeersTask
               if (peerResult.getResult().isEmpty()) {
                 currentPeer.recordUselessResponse("GetBodiesFromPeerTask");
                 throw new IncompleteResultsException(
-                    "No blocks returned by peer " + currentPeer.getShortNodeId());
+                    "No blocks returned by peer " + currentPeer.getLoggableId());
               }
 
               result.complete(peerResult);

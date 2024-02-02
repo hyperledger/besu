@@ -296,7 +296,7 @@ public class RlpxAgentTest {
         Stream.generate(PeerTestHelper::createPeer).limit(peerNo);
 
     agent = spy(agent);
-    agent.connect(peerStream);
+    peerStream.forEach(agent::connect);
 
     assertThat(agent.getMapOfCompletableFutures().size()).isEqualTo(peerNo);
     verify(agent, times(peerNo)).connect(any(Peer.class));

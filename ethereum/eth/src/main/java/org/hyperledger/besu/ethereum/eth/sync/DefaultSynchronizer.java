@@ -142,7 +142,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   worldStateStorage,
                   syncState,
                   clock);
-    } else if (SyncMode.X_CHECKPOINT.equals(syncConfig.getSyncMode())) {
+    } else if (SyncMode.isCheckpointSync(syncConfig.getSyncMode())) {
       this.fastSyncFactory =
           () ->
               CheckpointDownloaderFactory.createCheckpointDownloader(

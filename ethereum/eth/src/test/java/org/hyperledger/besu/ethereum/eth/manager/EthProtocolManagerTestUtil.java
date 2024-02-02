@@ -86,7 +86,6 @@ public class EthProtocolManagerTestUtil {
             Bytes.random(64),
             25,
             25,
-            25,
             false);
     final EthMessages messages = new EthMessages();
     final EthScheduler ethScheduler = new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT);
@@ -206,7 +205,6 @@ public class EthProtocolManagerTestUtil {
             Bytes.random(64),
             25,
             25,
-            25,
             false);
     final EthMessages messages = new EthMessages();
 
@@ -241,7 +239,6 @@ public class EthProtocolManagerTestUtil {
             Bytes.random(64),
             25,
             25,
-            25,
             false);
     final EthMessages messages = new EthMessages();
 
@@ -270,7 +267,6 @@ public class EthProtocolManagerTestUtil {
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
             Collections.emptyList(),
             Bytes.random(64),
-            25,
             25,
             25,
             false);

@@ -1019,24 +1019,33 @@ public class Transaction
             withCommitments ->
                 blobsWithCommitmentsDetachedCopy(withCommitments, detachedVersionedHashes.get()));
 
-    return new Transaction(
-        true,
-        transactionType,
-        nonce,
-        gasPrice,
-        maxPriorityFeePerGas,
-        maxFeePerGas,
-        maxFeePerBlobGas,
-        gasLimit,
-        detachedTo,
-        value,
-        signature,
-        payload.copy(),
-        detachedAccessList,
-        sender,
-        chainId,
-        detachedVersionedHashes,
-        detachedBlobsWithCommitments);
+    final var copiedTx =
+        new Transaction(
+            true,
+            transactionType,
+            nonce,
+            gasPrice,
+            maxPriorityFeePerGas,
+            maxFeePerGas,
+            maxFeePerBlobGas,
+            gasLimit,
+            detachedTo,
+            value,
+            signature,
+            payload.copy(),
+            detachedAccessList,
+            sender,
+            chainId,
+            detachedVersionedHashes,
+            detachedBlobsWithCommitments);
+
+    // copy also the computed fields, to avoid to recompute them
+    copiedTx.sender = this.sender;
+    copiedTx.hash = this.hash;
+    copiedTx.hashNoSignature = this.hashNoSignature;
+    copiedTx.size = this.size;
+
+    return copiedTx;
   }
 
   private AccessListEntry accessListDetachedCopy(final AccessListEntry accessListEntry) {

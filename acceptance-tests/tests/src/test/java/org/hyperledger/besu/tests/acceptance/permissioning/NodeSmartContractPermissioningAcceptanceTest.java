@@ -49,6 +49,11 @@ public class NodeSmartContractPermissioningAcceptanceTest
 
     permissionedNode.verify(admin.addPeer(bootnode));
     permissionedNode.verify(admin.addPeer(allowedNode));
+
+    allowedNode.verify(eth.syncingStatus(false));
+    bootnode.verify(eth.syncingStatus(false));
+    permissionedNode.verify(eth.syncingStatus(false));
+    forbiddenNode.verify(eth.syncingStatus(false));
   }
 
   @Test
