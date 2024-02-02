@@ -160,41 +160,39 @@ public class NetworkUtility {
   }
 
   /**
-   * Is port available for tcp.
+   * Is this port unavailable for tcp.
    *
    * @param port the port
-   * @return the boolean
+   * @return true if the port is unavailable for tcp
    */
-  public static boolean isPortAvailableForTcp(final int port) {
+  public static boolean isPortUnavailableForTcp(final int port) {
     try (final ServerSocket serverSocket = new ServerSocket()) {
       serverSocket.setReuseAddress(true);
       serverSocket.bind(new InetSocketAddress(port));
-      return true;
+      serverSocket.close();
+      return false;
     } catch (IOException ex) {
       LOG.trace(String.format("Failed to open port %d for TCP", port), ex);
     }
-    return false;
-  }
-
-  private static boolean isPortAvailableForUdp(final int port) {
-    try (final DatagramSocket datagramSocket = new DatagramSocket(null)) {
-      datagramSocket.setReuseAddress(true);
-      datagramSocket.bind(new InetSocketAddress(port));
-      return true;
-    } catch (IOException ex) {
-      LOG.trace(String.format("failed to open port %d for UDP", port), ex);
-    }
-    return false;
+    return true;
   }
 
   /**
-   * Is port available.
+   * Is this port unavailable for udp.
    *
    * @param port the port
-   * @return the boolean
+   * @return true if the port is unavailable for udp
    */
-  public static boolean isPortAvailable(final int port) {
-    return isPortAvailableForTcp(port) && isPortAvailableForUdp(port);
+  public static boolean isPortUnavailableForUdp(final int port) {
+    try (final DatagramSocket datagramSocket = new DatagramSocket(null)) {
+      datagramSocket.setReuseAddress(true);
+      datagramSocket.bind(new InetSocketAddress(port));
+      datagramSocket.close();
+      return false;
+    } catch (IOException ex) {
+      LOG.trace(String.format("failed to open port %d for UDP", port), ex);
+    }
+    return true;
   }
 
   /**

@@ -2555,11 +2555,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .forEach(
             port -> {
               if (port.equals(p2PDiscoveryOptionGroup.p2pPort)
-                  && !NetworkUtility.isPortAvailable(port)) {
+                  && (NetworkUtility.isPortUnavailableForTcp(port)
+                      || NetworkUtility.isPortUnavailableForUdp(port))) {
                 unavailablePorts.add(port);
               }
               if (!port.equals(p2PDiscoveryOptionGroup.p2pPort)
-                  && !NetworkUtility.isPortAvailableForTcp(port)) {
+                  && NetworkUtility.isPortUnavailableForTcp(port)) {
                 unavailablePorts.add(port);
               }
             });
