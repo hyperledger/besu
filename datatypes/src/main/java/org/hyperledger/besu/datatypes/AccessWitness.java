@@ -10,6 +10,7 @@ public interface AccessWitness {
 
   AccessWitness copy();
 
+  long touchAndChargeProofOfAbsence(Address address);
   long touchAndChargeValueTransfer(Address caller, Address target);
 
   long touchAndChargeMessageCall(Address address);

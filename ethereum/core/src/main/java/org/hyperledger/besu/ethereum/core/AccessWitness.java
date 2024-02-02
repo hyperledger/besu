@@ -58,6 +58,17 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
   }
 
   @Override
+  public long touchAndChargeProofOfAbsence(final Address address){
+    long gas = 0;
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, 0);
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, 1);
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, 2);
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, 3);
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, 4);
+    return gas;
+  }
+
+  @Override
   public long touchAndChargeMessageCall(final Address address) {
 
     long gas = 0;

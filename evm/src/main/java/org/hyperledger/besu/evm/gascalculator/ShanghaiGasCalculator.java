@@ -112,9 +112,15 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
                     recipient,
                     to);
     long cost = baseCost;
-    if(!super.isPrecompile(to)){
-      cost = clampedAdd(baseCost,frame.getAccessWitness().touchAndChargeMessageCall(to));
+    if(frame.getWorldUpdater().get(to) == null){
+      cost = clampedAdd(baseCost,frame.getAccessWitness().touchAndChargeProofOfAbsence(to));
     }
+    else{
+      if(!super.isPrecompile(to)){
+        cost = clampedAdd(baseCost,frame.getAccessWitness().touchAndChargeMessageCall(to));
+      }
+    }
+
     if(!transferValue.isZero()){
       cost = clampedAdd(baseCost,frame.getAccessWitness().touchAndChargeValueTransfer(recipient.getAddress(),to));
     }
