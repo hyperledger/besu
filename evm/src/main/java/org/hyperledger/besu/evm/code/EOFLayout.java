@@ -121,7 +121,7 @@ public record EOFLayout(
       return invalidLayout(container, version, error);
     }
     int typesLength = readUnsignedShort(inputStream);
-    if (typesLength <= 0) {
+    if (typesLength <= 0 || typesLength % 4 != 0) {
       return invalidLayout(container, version, "Invalid Types section size");
     }
 

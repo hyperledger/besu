@@ -153,7 +153,7 @@ public class EOFTestSubCommand implements Runnable {
           if (evmVersion == null) {
             results.add(
                 new TestExecutionResult(
-                        fileName,
+                    fileName,
                     groupName,
                     testName,
                     expectedForkName,
@@ -171,7 +171,7 @@ public class EOFTestSubCommand implements Runnable {
           }
           results.add(
               new TestExecutionResult(
-                      fileName,
+                  fileName,
                   groupName,
                   testName,
                   expectedForkName,

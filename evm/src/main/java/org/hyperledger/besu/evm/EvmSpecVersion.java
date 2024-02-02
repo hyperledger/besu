@@ -50,11 +50,11 @@ public enum EvmSpecVersion {
   /** Cancun evm spec version. */
   CANCUN(0, true, "Cancun", "Finalized"),
   /** Prague evm spec version. */
-  PRAGUE(0, false, "Prague", "In Development"),
+  PRAGUE(1, false, "Prague", "In Development"),
   /** Osaka evm spec version. */
-  OSAKA(0, false, "Osaka", "Placeholder"),
+  OSAKA(1, false, "Osaka", "Placeholder"),
   /** Bogota evm spec version. */
-  BOGOTA(0, false, "Bogota", "Placeholder"),
+  BOGOTA(1, false, "Bogota", "Placeholder"),
   /** Development fork for unscheduled EIPs */
   FUTURE_EIPS(1, false, "Future_EIPs", "Development, for accepted and unscheduled EIPs"),
   /** Development fork for EIPs not accepted to Mainnet */
