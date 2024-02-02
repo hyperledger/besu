@@ -18,7 +18,8 @@ import org.apache.commons.lang3.StringUtils;
 
 /** Enum for profile names. Each profile corresponds to a configuration file. */
 public enum ProfileName {
-
+  /** The 'STAKER' profile */
+  STAKER("profiles/staker.toml"),
   /** The 'MINIMALIST_STAKER' profile */
   MINIMALIST_STAKER("profiles/minimalist-staker.toml"),
   /** The 'DEV' profile. Corresponds to the 'profiles/dev.toml' configuration file. */
