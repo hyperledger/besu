@@ -1147,8 +1147,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final CheckpointConfigOptions checkpointConfigOptions =
         genesisConfig.getConfigOptions(genesisConfigOverrides).getCheckpointOptions();
-    if (SyncMode.X_CHECKPOINT.equals(syncConfig.getSyncMode())
-        && checkpointConfigOptions.isValid()) {
+    if (SyncMode.isCheckpointSync(syncConfig.getSyncMode()) && checkpointConfigOptions.isValid()) {
       validators.add(
           new CheckpointBlocksPeerValidator(
               protocolSchedule,

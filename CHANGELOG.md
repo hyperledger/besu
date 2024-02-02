@@ -11,6 +11,7 @@
 
 
 ### Deprecations
+- X_SNAP and X_CHECKPOINT are marked for deprecation and will be removed in 24.4.0 in favor of SNAP and CHECKPOINT [#6405](https://github.com/hyperledger/besu/pull/6405)
 - `--Xsnapsync-synchronizer-flat-db-healing-enabled` is deprecated (always enabled). [#6499](https://github.com/hyperledger/besu/pull/6499)
 - `--Xp2p-peer-lower-bound` [#6501](https://github.com/hyperledger/besu/pull/6501)
 
@@ -21,6 +22,8 @@
 - Log blob count when importing a block via Engine API [#6466](https://github.com/hyperledger/besu/pull/6466)
 - Introduce `--Xbonsai-limit-trie-logs-enabled` experimental feature which by default will only retain the latest 512 trie logs, saving about 3GB per week in database growth [#5390](https://github.com/hyperledger/besu/issues/5390)
 - Introduce `besu storage x-trie-log prune` experimental offline subcommand which will prune all redundant trie logs except the latest 512 [#6303](https://github.com/hyperledger/besu/pull/6303)
+- SNAP and CHECKPOINT sync - early access flag removed so now simply SNAP and CHECKPOINT [#6405](https://github.com/hyperledger/besu/pull/6405)
+  - X_SNAP and X_CHECKPOINT are marked for deprecation and will be removed in 24.4.0
 - Github Actions based build.
 - Introduce caching mechanism to optimize Keccak hash calculations for account storage slots during block processing [#6452](https://github.com/hyperledger/besu/pull/6452)
 - Added configuration options for `pragueTime` to genesis file for Prague fork development [#6473](https://github.com/hyperledger/besu/pull/6473)
