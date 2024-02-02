@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - id: get-members
-      uses: GuillaumeFalourd/github-team-members@v1
+      uses: GuillaumeFalourd/github-team-members@2c201b9c885619191c705b947322e1c37cb53b00
       with:
         org_slug: org-slug
         team_slug: team-slug
