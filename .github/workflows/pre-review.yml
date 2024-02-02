@@ -18,20 +18,8 @@ jobs:
       'external' || 'internal' }}
     runs-on: ubuntu-22.04
     steps:
-    - id: get-members
-      uses: GuillaumeFalourd/github-team-members@2c201b9c885619191c705b947322e1c37cb53b00
-      with:
-        org_slug: org-slug
-        team_slug: team-slug
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - run: true
 
-    - if: steps.get-members.outputs.actor-belongs-team == 'true'
-      run: echo "${{ github.actor }} belongs to Team"
-      shell: bash
-
-    - if: steps.get-members.outputs.actor-belongs-team == 'false'
-      run: echo "${{ github.actor }} doesn't belong to Team"
-      shell: bash
   repolint:
     name: "Repository Linting"
     runs-on: ubuntu-22.04
