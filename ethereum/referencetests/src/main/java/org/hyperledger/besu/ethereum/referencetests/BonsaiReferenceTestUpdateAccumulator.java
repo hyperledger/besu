@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiAccount;
@@ -25,7 +26,6 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiReferenceTestUpdateAccumulator extends BonsaiWorldStateUpdateAccumulator {
@@ -42,9 +42,13 @@ public class BonsaiReferenceTestUpdateAccumulator extends BonsaiWorldStateUpdate
   }
 
   @Override
-  protected Hash hashAndSavePreImage(final Bytes bytes) {
-    // by default do not save hash preImages
-    return preImageProxy.hashAndSavePreImage(bytes);
+  protected Hash hashAndSaveAccountPreImage(final Address address) {
+    return preImageProxy.hashAndSavePreImage(address);
+  }
+
+  @Override
+  protected Hash hashAndSaveSlotPreImage(final UInt256 slotKey) {
+    return preImageProxy.hashAndSavePreImage(slotKey);
   }
 
   public BonsaiReferenceTestUpdateAccumulator createDetachedAccumulator() {

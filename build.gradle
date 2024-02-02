@@ -36,8 +36,9 @@ plugins {
 
 sonarqube {
   properties {
-    property "sonar.projectKey", "hyperledger_besu"
-    property "sonar.organization", "hyperledger"
+    property "sonar.projectKey", "$System.env.SONAR_PROJECT_KEY"
+    property "sonar.organization", "$System.env.SONAR_ORGANIZATION"
+    property "sonar.gradle.skipCompile", "true"
     property "sonar.host.url", "https://sonarcloud.io"
     property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
     property "sonar.coverage.exclusions", "acceptance-tests/**/*"
@@ -646,6 +647,8 @@ task autocomplete(type: JavaExec) {
   }
 }
 
+def archiveBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
+
 installDist { dependsOn checkLicense, untunedStartScripts, evmToolStartScripts }
 
 distTar {
@@ -654,6 +657,7 @@ distTar {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
   compression = Compression.GZIP
+  setVersion(archiveBuildVersion)
   archiveExtension = 'tar.gz'
 }
 
@@ -662,6 +666,7 @@ distZip {
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
+  setVersion(archiveBuildVersion)
 }
 
 publishing {
@@ -981,6 +986,12 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
     "(.*${sep}build${sep}.*)",
     "(.*${sep}src${sep}[^${sep}]+${sep}generated${sep}.*)"
   ].join("|")
+}
+
+jacocoTestReport {
+  reports {
+    xml.enabled true
+  }
 }
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {

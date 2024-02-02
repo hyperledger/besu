@@ -246,4 +246,17 @@ public class RpcWebsocketOptionsTest extends CommandTestAbstract {
         .contains(
             "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file or authentication public key file");
   }
+
+  @Test
+  public void rpcWsRpcEnabledPropertyDefaultIsFalse() {
+    parseCommand();
+
+    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(wsRpcConfigArgumentCaptor.getValue().isEnabled()).isFalse();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
 }

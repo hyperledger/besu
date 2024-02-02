@@ -104,7 +104,7 @@ public class RetryingGetHeadersEndingAtFromPeerByHashTask
                     "No block headers for hash "
                         + referenceHash
                         + " returned by peer "
-                        + currentPeer.getShortNodeId());
+                        + currentPeer.getLoggableId());
               }
               result.complete(peerResult.getResult());
               return peerResult.getResult();

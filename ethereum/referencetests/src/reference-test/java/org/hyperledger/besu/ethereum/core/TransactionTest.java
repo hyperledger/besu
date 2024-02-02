@@ -34,6 +34,7 @@ import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
@@ -146,6 +147,12 @@ public class TransactionTest {
   @MethodSource("getTestParametersForConfig")
   public void cancun(final String name, final TransactionTestCaseSpec spec) {
     milestone(spec, name, "Cancun", new CancunGasCalculator(), Optional.of(Wei.of(0)));
+  }
+
+  @ParameterizedTest(name = "Name: {0}")
+  @MethodSource("getTestParametersForConfig")
+  public void prague(final String name, final TransactionTestCaseSpec spec) {
+    milestone(spec, name, "Prague", new PragueGasCalculator(), Optional.of(Wei.of(0)));
   }
 
   public void milestone(

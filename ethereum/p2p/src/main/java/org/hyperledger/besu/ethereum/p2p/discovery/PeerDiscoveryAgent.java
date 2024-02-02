@@ -74,9 +74,6 @@ public abstract class PeerDiscoveryAgent {
   // The devp2p specification says only accept packets up to 1280, but some
   // clients ignore that, so we add in a little extra padding.
   private static final int MAX_PACKET_SIZE_BYTES = 1600;
-  private static final List<String> PING_PACKET_SOURCE_IGNORED =
-      List.of("127.0.0.1", "255.255.255.255");
-
   protected final List<DiscoveryPeer> bootstrapPeers;
   private final List<PeerRequirement> peerRequirements = new CopyOnWriteArrayList<>();
   private final PeerPermissions peerPermissions;
@@ -85,6 +82,7 @@ public abstract class PeerDiscoveryAgent {
   private final RlpxAgent rlpxAgent;
   private final ForkIdManager forkIdManager;
   private final PeerTable peerTable;
+  private static final boolean isIpv6Available = NetworkUtility.isIPv6Available();
 
   /* The peer controller, which takes care of the state machine of peers. */
   protected Optional<PeerDiscoveryController> controller = Optional.empty();
@@ -316,23 +314,38 @@ public abstract class PeerDiscoveryAgent {
    * @return host address as string
    */
   static String deriveHost(final Endpoint sourceEndpoint, final Packet packet) {
-    return packet
-        .getPacketData(PingPacketData.class)
-        .flatMap(PingPacketData::getFrom)
-        .map(Endpoint::getHost)
-        .filter(
-            fromAddr ->
-                (!PING_PACKET_SOURCE_IGNORED.contains(fromAddr)
-                    && InetAddresses.isInetAddress(fromAddr)))
+    final Optional<String> pingPacketHost =
+        packet
+            .getPacketData(PingPacketData.class)
+            .flatMap(PingPacketData::getFrom)
+            .map(Endpoint::getHost);
+
+    return pingPacketHost
+        // fall back to source endpoint "from" if ping packet from address does not satisfy filters
+        .filter(InetAddresses::isInetAddress)
+        .filter(h -> !NetworkUtility.isUnspecifiedAddress(h))
+        .filter(h -> !NetworkUtility.isLocalhostAddress(h))
+        .filter(h -> isIpv6Available || !NetworkUtility.isIpV6Address(h))
         .stream()
         .peek(
             h ->
-                LOG.trace(
-                    "Using \"From\" endpoint {} specified in ping packet. Ignoring UDP source host {}",
-                    h,
-                    sourceEndpoint.getHost()))
+                LOG.atTrace()
+                    .setMessage(
+                        "Using \"From\" endpoint {} specified in ping packet. Ignoring UDP source host {}")
+                    .addArgument(h)
+                    .addArgument(sourceEndpoint::getHost)
+                    .log())
         .findFirst()
-        .orElseGet(sourceEndpoint::getHost);
+        .orElseGet(
+            () -> {
+              LOG.atTrace()
+                  .setMessage(
+                      "Ignoring \"From\" endpoint {} in ping packet. Using UDP source host {}")
+                  .addArgument(pingPacketHost.orElse("not specified"))
+                  .addArgument(sourceEndpoint.getHost())
+                  .log();
+              return sourceEndpoint.getHost();
+            });
   }
 
   /**
