@@ -1,6 +1,9 @@
 name: integration-tests
 on:
   pull_request_target:
+    branches:
+      - main
+      - release-*
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"

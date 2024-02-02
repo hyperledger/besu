@@ -3,15 +3,24 @@ on:
   pull_request_target:
     branches:
       - main
+      - release-*
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
   total-runners: 6
 
 jobs:
+  authorize:
+    environment:
+      ${{ github.event_name == 'pull_request_target' &&
+      github.event.pull_request.head.repo.full_name != github.repository &&
+      'external' || 'internal' }}
+    runs-on: ubuntu-22.04
+    steps:
+      - run: true
   prepareReferenceTestEthereum:
     runs-on: ubuntu-22.04
-    needs: shouldRun
+    needs: authorize
     steps:
       - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
