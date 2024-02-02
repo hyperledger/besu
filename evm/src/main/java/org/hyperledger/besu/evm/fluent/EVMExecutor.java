@@ -162,7 +162,10 @@ public class EVMExecutor {
       case CANCUN -> cancun(chainId, evmConfiguration);
       case PRAGUE -> prague(chainId, evmConfiguration);
       case OSAKA -> osaka(chainId, evmConfiguration);
+      case AMSTERDAM -> amsterdam(chainId, evmConfiguration);
       case BOGOTA -> bogota(chainId, evmConfiguration);
+      case POLIS -> polis(chainId, evmConfiguration);
+      case BANGKOK -> bangkok(chainId, evmConfiguration);
       case FUTURE_EIPS -> futureEips(chainId, evmConfiguration);
       case EXPERIMENTAL_EIPS -> experimentalEips(chainId, evmConfiguration);
     };
@@ -519,6 +522,21 @@ public class EVMExecutor {
   }
 
   /**
+   * Instantiate Amsterdam evm executor.
+   *
+   * @param chainId the chain ID
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor amsterdam(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.amsterdam(chainId, evmConfiguration));
+    executor.precompileContractRegistry =
+        MainnetPrecompiledContracts.prague(executor.evm.getGasCalculator());
+    return executor;
+  }
+
+  /**
    * Instantiate Bogota evm executor.
    *
    * @param chainId the chain ID
@@ -534,12 +552,43 @@ public class EVMExecutor {
   }
 
   /**
+   * Instantiate Polis evm executor.
+   *
+   * @param chainId the chain ID
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor polis(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.polis(chainId, evmConfiguration));
+    executor.precompileContractRegistry =
+        MainnetPrecompiledContracts.prague(executor.evm.getGasCalculator());
+    return executor;
+  }
+
+  /**
+   * Instantiate Bangkok evm executor.
+   *
+   * @param chainId the chain ID
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor bangkok(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.bangkok(chainId, evmConfiguration));
+    executor.precompileContractRegistry =
+        MainnetPrecompiledContracts.prague(executor.evm.getGasCalculator());
+    return executor;
+  }
+
+  /**
    * Instantiate Future EIPs evm executor.
    *
    * @param evmConfiguration the evm configuration
    * @return the evm executor
    * @deprecated Migrate to use {@link EVMExecutor#evm(EvmSpecVersion)}.
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @InlineMe(
       replacement = "EVMExecutor.evm(EvmSpecVersion.FUTURE_EIPS, BigInteger.ONE, evmConfiguration)",
       imports = {

@@ -71,7 +71,7 @@ public class GeneralStateReferenceTestTools {
         System.getProperty(
             "test.ethereum.state.eips",
             "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul,Berlin,"
-                + "London,Merge,Shanghai,Cancun,Prague,Osaka,Bogota");
+                + "London,Merge,Shanghai,Cancun,Prague,Osaka,Amsterdam,Bogota,Polis,Bangkok");
     EIPS_TO_RUN = Arrays.asList(eips.split(","));
   }
 

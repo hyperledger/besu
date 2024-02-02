@@ -55,7 +55,7 @@ public class BlockchainReferenceTestTools {
             "test.ethereum.blockchain.eips",
             "FrontierToHomesteadAt5,HomesteadToEIP150At5,HomesteadToDaoAt5,EIP158ToByzantiumAt5,"
                 + "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul,Berlin,"
-                + "London,Merge,Shanghai,Cancun,Prague,Osaka,Bogota");
+                + "London,Merge,Shanghai,Cancun,Prague,Osaka,Amsterdam,Bogota,Polis,Bangkok");
     NETWORKS_TO_RUN = Arrays.asList(networks.split(","));
   }
 
@@ -87,7 +87,7 @@ public class BlockchainReferenceTestTools {
     // Inconclusive fork choice rule, since in merge CL should be choosing forks and setting the
     // chain head.
     // Perfectly valid test pre-merge.
-    params.ignore("UncleFromSideChain_(Merge|Shanghai|Cancun|Prague|Osaka|Bogota)");
+    params.ignore("UncleFromSideChain_(Merge|Shanghai|Cancun|Prague|Osaka|Amsterdam|Bogota|Polis|Bangkok)");
 
     // EOF tests are written against an older version of the spec
     params.ignore("/stEOF/");
