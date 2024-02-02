@@ -137,7 +137,7 @@ public class TrieLogSubCommand implements Runnable {
       LOG.info("Estimating trie logs size before pruning...");
       long sizeBefore = estimatedSizeOfTrieLogs();
       LOG.info("Estimated trie logs size before pruning: {}", formatOutputSize(sizeBefore));
-
+      LOG.info("Starting pruning...");
       final TrieLogHelper trieLogHelper = new TrieLogHelper();
       boolean success =
           trieLogHelper.prune(
