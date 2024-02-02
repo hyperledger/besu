@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.qbft.validation;
 
-import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHelpers.hasDuplicateAuthors;
 import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHelpers.hasSufficientEntries;
 
@@ -22,7 +21,6 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
-import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -95,11 +93,6 @@ public class ProposalValidator {
    * @return the boolean
    */
   public boolean validate(final Proposal msg) {
-
-    checkState(
-        protocolSchedule instanceof BftProtocolSchedule,
-        "Wrong class type for protocol schedule, requires BftProtocolSchedule");
-
     final BlockValidator blockValidator =
         protocolSchedule.getByBlockHeader(msg.getBlock().getHeader()).getBlockValidator();
 
