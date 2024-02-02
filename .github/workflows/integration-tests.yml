@@ -1,9 +1,6 @@
 name: integration-tests
 on:
-  pull_request:
-  pull_request_review:
-    types:
-      - submitted
+  pull_request_target:
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
