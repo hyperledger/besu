@@ -71,7 +71,7 @@ jobs:
           name: 'reference-tests'
           path: 'ethereum/referencetests/build/generated/sources/reference-test/'
       - name: get reference test report
-        uses: dawidd6/action-download-artifact@v3
+        uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
         with:
           branch: main
           name_is_regexp: true
