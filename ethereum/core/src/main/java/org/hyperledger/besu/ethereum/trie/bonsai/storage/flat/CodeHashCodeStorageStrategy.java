@@ -26,12 +26,11 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 
 public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
-  static final Bytes CODE_PREFIX = Bytes.of(1);
 
   @Override
   public Optional<Bytes> getFlatCode(
       final Hash codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
-    return storage.get(CODE_STORAGE, prefixKey(CODE_PREFIX, codeHash)).map(Bytes::wrap);
+    return storage.get(CODE_STORAGE, codeHash.toArrayUnsafe()).map(Bytes::wrap);
   }
 
   @Override
@@ -40,24 +39,17 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
       final Hash accountHash,
       final Hash codeHash,
       final Bytes code) {
-    transaction.put(CODE_STORAGE, prefixKey(CODE_PREFIX, codeHash), code.toArrayUnsafe());
+    transaction.put(CODE_STORAGE, codeHash.toArrayUnsafe(), code.toArrayUnsafe());
   }
 
   @Override
   public void removeFlatCode(
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
-      final Hash codeHash) {
-    // TODO JF Part of #5388 add reference counting so that code can be removed
-  }
+      final Hash codeHash) {}
 
   public static boolean isCodeHashValue(final byte[] key, final byte[] value) {
-    final Bytes keyWithoutPrefix = Bytes.wrap(key).slice(1);
     final Hash valueHash = Hash.hash(Bytes.wrap(value));
-    return keyWithoutPrefix.equals(valueHash);
-  }
-
-  private byte[] prefixKey(final Bytes prefix, final Bytes key) {
-    return Bytes.concatenate(prefix, key).toArrayUnsafe();
+    return Bytes.wrap(key).equals(valueHash);
   }
 }
