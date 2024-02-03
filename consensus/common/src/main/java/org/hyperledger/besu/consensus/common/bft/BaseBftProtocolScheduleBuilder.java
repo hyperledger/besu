@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -116,6 +117,9 @@ public abstract class BaseBftProtocolScheduleBuilder {
         .skipZeroBlockRewards(true)
         .blockHeaderFunctions(BftBlockHeaderFunctions.forOnchainBlock(bftExtraDataCodec))
         .blockReward(Wei.of(configOptions.getBlockRewardWei()))
+        .withdrawalsValidator(
+            new WithdrawalsValidator
+                .ProhibitedWithdrawals()) // QBFT/IBFT doesn't support withdrawals
         .miningBeneficiaryCalculator(
             header -> configOptions.getMiningBeneficiary().orElseGet(header::getCoinbase));
   }
