@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -234,6 +235,19 @@ public class TransactionPool implements BlockAddedObserver {
       return ValidationResult.invalid(TRANSACTION_ALREADY_KNOWN);
     }
 
+    // before validating the transaction further, validate if from an allowed sender
+    // allowed sender is either in allow list or not in reject list
+    if (!isSenderAllowed(transaction.getSender())) {
+      LOG.atTrace()
+          .setMessage("Discarded transaction from unauthorized sender {}")
+          .addArgument(transaction.getSender())
+          .log();
+      // We already have this transaction, don't even validate it.
+      metrics.incrementRejected(isLocal, hasPriority, TX_SENDER_NOT_AUTHORIZED, "txpool");
+      return ValidationResult.invalid(TX_SENDER_NOT_AUTHORIZED);
+    };
+
+    // validation step
     final ValidationResultAndAccount validationResult =
         validateTransaction(transaction, isLocal, hasPriority);
 
@@ -292,6 +306,20 @@ public class TransactionPool implements BlockAddedObserver {
   private Stream<Transaction> sortedBySenderAndNonce(final Collection<Transaction> transactions) {
     return transactions.stream()
         .sorted(Comparator.comparing(Transaction::getSender).thenComparing(Transaction::getNonce));
+  }
+
+  private boolean isSenderAllowed(final Address sender){
+    // If the sender is in the reject list, reject transaction
+    if (configuration.getSendersRejectList().contains(sender)){
+      return false;
+    }
+
+    // If there is a non-empty allow list and the sender is not in it, reject transaction
+    if (!configuration.getSendersAllowList().isEmpty() && !configuration.getSendersAllowList().contains(sender)) {
+      return false;
+    }
+
+    return true;
   }
 
   private boolean isPriorityTransaction(final Transaction transaction, final boolean isLocal) {

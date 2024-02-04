@@ -56,6 +56,8 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
       "--strict-tx-replay-protection-enabled";
   private static final String TX_POOL_PRIORITY_SENDERS = "--tx-pool-priority-senders";
   private static final String TX_POOL_MIN_GAS_PRICE = "--tx-pool-min-gas-price";
+  private static final String TX_POOL_ALLOW_LIST = "--tx-pool-allow-list";
+  private static final String TX_POOL_REJECT_LIST = "--tx-pool-reject-list";
 
   @CommandLine.Option(
       names = {TX_POOL_IMPLEMENTATION},
@@ -114,6 +116,24 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
       fallbackValue = "true",
       arity = "0..1")
   private Boolean strictTxReplayProtectionEnabled = false;
+
+  @CommandLine.Option(
+      names = {TX_POOL_ALLOW_LIST},
+      split = ",",
+      paramLabel = "Comma separated list of addresses to allow transactions",
+      description =
+          "List of sender addresses to accept transactions. If not specified, transactions from all sender addresses are allowed (default: ${DEFAULT-VALUE})",
+      arity = "1..*")
+  private Set<Address> sendersAllowList = TransactionPoolConfiguration.DEFAULT_SENDER_ALLOW_LIST;
+
+  @CommandLine.Option(
+      names = {TX_POOL_REJECT_LIST},
+      split = ",",
+      paramLabel = "Comma separated list of addresses to reject transactions",
+      description =
+          "List of sender addresses to reject transactions. If not specified, transactions from no sender addresses are is rejected (default: ${DEFAULT-VALUE})",
+      arity = "1..*")
+  private Set<Address> senderRejectList = TransactionPoolConfiguration.DEFAULT_SENDER_REJECT_LIST;
 
   @CommandLine.Option(
       names = {TX_POOL_PRIORITY_SENDERS},
@@ -268,6 +288,8 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     options.saveFile = config.getSaveFile();
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
     options.prioritySenders = config.getPrioritySenders();
+    options.sendersAllowList = config.getSendersAllowList();
+    options.senderRejectList = config.getSendersRejectList();
     options.minGasPrice = config.getMinGasPrice();
     options.layeredOptions.txPoolLayerMaxCapacity =
         config.getPendingTransactionsLayerMaxCapacityBytes();
@@ -311,6 +333,12 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         "Price bump option is not compatible with zero base fee market",
         !genesisConfigOptions.isZeroBaseFee(),
         List.of(TX_POOL_PRICE_BUMP));
+
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
+        commandLine, 
+        "Can only set either Reject list or allow list of senders",
+        !CommandLineUtils.isOptionSet(commandLine, TX_POOL_ALLOW_LIST),
+        List.of(TX_POOL_REJECT_LIST));
   }
 
   @Override
@@ -324,6 +352,8 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         .saveFile(saveFile)
         .strictTransactionReplayProtectionEnabled(strictTxReplayProtectionEnabled)
         .prioritySenders(prioritySenders)
+        .sendersAllowList(sendersAllowList)
+        .sendersRejectList(senderRejectList)
         .minGasPrice(minGasPrice)
         .pendingTransactionsLayerMaxCapacityBytes(layeredOptions.txPoolLayerMaxCapacity)
         .maxPrioritizedTransactions(layeredOptions.txPoolMaxPrioritized)

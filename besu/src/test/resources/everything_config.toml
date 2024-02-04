@@ -192,6 +192,8 @@ tx-pool-retention-hours=999
 tx-pool-max-size=1234
 tx-pool-limit-by-account-percentage=0.017
 tx-pool-min-gas-price=1000
+tx-pool-allow-list=["0xABC0000000000000000000000000000000001234"]
+tx-pool-reject-list=["0xDEF0000000000000000000000000000000001234"]
 
 # Revert Reason
 revert-reason-enabled=false

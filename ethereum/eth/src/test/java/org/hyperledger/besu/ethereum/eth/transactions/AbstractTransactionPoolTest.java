@@ -28,6 +28,7 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURE_REQUIRED;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TRANSACTION_REPLACEMENT_UNDERPRICED;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TX_FEECAP_EXCEEDED;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -524,6 +525,34 @@ public abstract class AbstractTransactionPoolTest {
 
     assertTransactionNotPending(transaction);
     verifyNoMoreInteractions(transactionValidatorFactory);
+  }
+
+  @Test
+  public void shouldAddTransactionFromSenderInAllowList() {
+    final Transaction transactionFromSenderInAllowList = createTransaction(1, KEY_PAIR1);
+    final Transaction transactionFromSenderNotInAllowList = createTransaction(1, KEY_PAIR2);
+    transactionPool =
+        createTransactionPool(b -> b.sendersAllowList(Set.of(transactionFromSenderInAllowList.getSender())));
+
+    givenTransactionIsValid(transactionFromSenderInAllowList);
+
+    addAndAssertRemoteTransactionsValid(transactionFromSenderInAllowList);
+    addAndAssertTransactionViaApiValid(transactionFromSenderInAllowList, false);
+    addAndAssertRemoteTransactionInvalid(transactionFromSenderNotInAllowList);
+    addAndAssertTransactionViaApiInvalid(transactionFromSenderNotInAllowList, TX_SENDER_NOT_AUTHORIZED);
+  }
+
+  @Test
+  public void shouldNotAddTransactionFromSenderInRejectList() {
+    final Transaction transactionFromSenderInRejectList = createTransaction(1, KEY_PAIR1);
+    final Transaction transactionFromSenderNotInRejectList = createTransaction(1, KEY_PAIR2);
+    transactionPool =
+        createTransactionPool(b -> b.sendersRejectList(Set.of(transactionFromSenderInRejectList.getSender())));
+
+    addAndAssertRemoteTransactionsValid(transactionFromSenderNotInRejectList);
+    addAndAssertTransactionViaApiValid(transactionFromSenderNotInRejectList, false);
+    addAndAssertRemoteTransactionInvalid(transactionFromSenderInRejectList);
+    addAndAssertTransactionViaApiInvalid(transactionFromSenderInRejectList, TX_SENDER_NOT_AUTHORIZED);
   }
 
   @Test

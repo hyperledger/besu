@@ -298,6 +298,49 @@ public class TransactionPoolOptionsTest
             + prioritySender3.toHexString());
   }
 
+  // Tests here
+  @Test
+  public void emptyAllowListByDefault(){
+    internalTestSuccess(config -> assertThat(config.getSendersAllowList()).isEmpty());
+  }
+
+  @Test
+  public void nonEmptyAllowList(){
+    final Address address1 = Address.fromHexString("0xABC123");
+    final Address address2 = Address.fromHexString("0xDEF456");
+    final Address address3 = Address.fromHexString("0xCBA789");
+    internalTestSuccess(config -> assertThat(config.getSendersAllowList())
+      .containsExactly(address1, address2, address3),
+      "--tx-pool-allow-list", address1.toHexString(), address2.toHexString(), address3.toHexString()
+      );
+  }
+
+  @Test
+  public void emptyRejectListByDefault(){
+    internalTestSuccess(config -> assertThat(config.getSendersRejectList()).isEmpty());
+  }
+
+  @Test
+  public void nonEmptyRejectList(){
+    final Address address1 = Address.fromHexString("0xABC123");
+    final Address address2 = Address.fromHexString("0xDEF456");
+    final Address address3 = Address.fromHexString("0xCBA789");
+    internalTestSuccess(config -> assertThat(config.getSendersRejectList())
+      .containsExactly(address1, address2, address3),
+      "--tx-pool-reject-list", address1.toHexString(), address2.toHexString(), address3.toHexString()
+      );
+  }
+  
+  @Test
+  public void cannotPassBothOptions(){
+    final Address allowedAddress = Address.fromHexString("0xABC123");
+    final Address rejectAddress = Address.fromHexString("0xDEF456");
+    internalTestFailure(
+      "Can only set either Reject list or allow list of senders",
+      "--tx-pool-allow-list", allowedAddress.toHexString(),  
+      "--tx-pool-reject-list", rejectAddress.toHexString());
+  }
+
   @Test
   public void txMessageKeepAliveSeconds() {
     final int txMessageKeepAliveSeconds = 999;
