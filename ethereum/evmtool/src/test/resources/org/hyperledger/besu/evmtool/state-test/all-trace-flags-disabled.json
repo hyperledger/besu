@@ -84,7 +84,7 @@
     {"pc":8,"op":96,"gas":"0x9ffffadec","gasCost":"0x3","memSize":0,"depth":1,"refund":0,"opName":"PUSH1"},
     {"pc":10,"op":115,"gas":"0x9ffffade9","gasCost":"0x3","memSize":0,"depth":1,"refund":0,"opName":"PUSH20"},
     {"pc":31,"op":100,"gas":"0x9ffffade6","gasCost":"0x3","memSize":0,"depth":1,"refund":0,"opName":"PUSH5"},
-    {"pc":37,"op":241,"gas":"0x9ffffade3","gasCost":"0xa28","memSize":0,"depth":1,"refund":0,"opName":"CALL"},
+    {"pc":37,"op":241,"gas":"0x9ffffade3","gasCost":"0x900000a28","memSize":0,"depth":1,"refund":0,"opName":"CALL"},
     {"pc":0,"op":125,"gas":"0x900000000","gasCost":"0x3","memSize":0,"depth":2,"refund":0,"opName":"PUSH30"},
     {"pc":31,"op":96,"gas":"0x8fffffffd","gasCost":"0x3","memSize":0,"depth":2,"refund":0,"opName":"PUSH1"},
     {"pc":33,"op":82,"gas":"0x8fffffffa","gasCost":"0x6","memSize":0,"depth":2,"refund":0,"opName":"MSTORE"},

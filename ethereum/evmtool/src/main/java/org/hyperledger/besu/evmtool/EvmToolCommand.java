@@ -19,6 +19,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -109,6 +110,13 @@ public class EvmToolCommand implements Runnable {
       description = "Amount of gas for this invocation.",
       paramLabel = "<int>")
   private final Long gas = 10_000_000_000L;
+
+  @Option(
+      names = {"--intrinsic-gas"},
+      description = "Calculate and charge intrinsic and tx content gas. Default is not to charge.",
+      scope = INHERIT,
+      negatable = true)
+  final Boolean chargeIntrinsicGas = false;
 
   @Option(
       names = {"--price"},
@@ -360,15 +368,19 @@ public class EvmToolCommand implements Runnable {
               .sender(sender)
               .build();
 
-      final long intrinsicGasCost =
-          protocolSpec
-              .getGasCalculator()
-              .transactionIntrinsicGasCost(tx.getPayload(), tx.isContractCreation());
-      final long accessListCost =
-          tx.getAccessList()
-              .map(list -> protocolSpec.getGasCalculator().accessListGasCost(list))
-              .orElse(0L);
-      long txGas = gas - intrinsicGasCost - accessListCost;
+      long txGas = gas;
+      if (chargeIntrinsicGas) {
+        final long intrinsicGasCost =
+            protocolSpec
+                .getGasCalculator()
+                .transactionIntrinsicGasCost(tx.getPayload(), tx.isContractCreation());
+        txGas -= intrinsicGasCost;
+        final long accessListCost =
+            tx.getAccessList()
+                .map(list -> protocolSpec.getGasCalculator().accessListGasCost(list))
+                .orElse(0L);
+        txGas -= accessListCost;
+      }
 
       final EVM evm = protocolSpec.getEvm();
       if (codeBytes.isEmpty()) {
@@ -395,6 +407,13 @@ public class EvmToolCommand implements Runnable {
         var contractAccount = updater.getOrCreate(contract);
         contractAccount.setCode(codeBytes);
 
+        final Set<Address> addressList = new BytesTrieSet<>(Address.SIZE);
+        addressList.add(sender);
+        addressList.add(contract);
+        if (EvmSpecVersion.SHANGHAI.compareTo(evm.getEvmVersion()) <= 0) {
+          addressList.add(coinbase);
+        }
+
         MessageFrame initialMessageFrame =
             MessageFrame.builder()
                 .type(MessageFrame.Type.MESSAGE_CALL)
@@ -414,10 +433,7 @@ public class EvmToolCommand implements Runnable {
                 .completer(c -> {})
                 .miningBeneficiary(blockHeader.getCoinbase())
                 .blockHashLookup(new CachingBlockHashLookup(blockHeader, component.getBlockchain()))
-                .accessListWarmAddresses(
-                    EvmSpecVersion.SHANGHAI.compareTo(evm.getEvmVersion()) <= 0
-                        ? Set.of(coinbase)
-                        : Set.of())
+                .accessListWarmAddresses(addressList)
                 .build();
         Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
 
