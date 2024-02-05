@@ -18,17 +18,53 @@ package org.hyperledger.besu.cli.subcommands.storage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BiConsumer;
 
 import org.bouncycastle.util.Arrays;
+import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
+import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** RocksDB Usage subcommand helper methods for formatting and printing. */
-public class RocksDbUsageHelper {
-  private static final Logger LOG = LoggerFactory.getLogger(RocksDbUsageHelper.class);
+/** RocksDB subcommand helper methods. */
+public class RocksDbHelper {
+  private static final Logger LOG = LoggerFactory.getLogger(RocksDbHelper.class);
+
+  static void forEachColumnFamily(
+      final String dbPath, final BiConsumer<RocksDB, ColumnFamilyHandle> task) {
+    RocksDB.loadLibrary();
+    Options options = new Options();
+    options.setCreateIfMissing(true);
+
+    // Open the RocksDB database with multiple column families
+    List<byte[]> cfNames;
+    try {
+      cfNames = RocksDB.listColumnFamilies(options, dbPath);
+    } catch (RocksDBException e) {
+      throw new RuntimeException(e);
+    }
+    final List<ColumnFamilyHandle> cfHandles = new ArrayList<>();
+    final List<ColumnFamilyDescriptor> cfDescriptors = new ArrayList<>();
+    for (byte[] cfName : cfNames) {
+      cfDescriptors.add(new ColumnFamilyDescriptor(cfName));
+    }
+    try (final RocksDB rocksdb = RocksDB.openReadOnly(dbPath, cfDescriptors, cfHandles)) {
+      for (ColumnFamilyHandle cfHandle : cfHandles) {
+        task.accept(rocksdb, cfHandle);
+      }
+    } catch (RocksDBException e) {
+      throw new RuntimeException(e);
+    } finally {
+      for (ColumnFamilyHandle cfHandle : cfHandles) {
+        cfHandle.close();
+      }
+    }
+  }
 
   static void printUsageForColumnFamily(
       final RocksDB rocksdb, final ColumnFamilyHandle cfHandle, final PrintWriter out)
@@ -62,7 +98,7 @@ public class RocksDbUsageHelper {
     }
   }
 
-  private static String formatOutputSize(final long size) {
+  static String formatOutputSize(final long size) {
     if (size > (1024 * 1024 * 1024)) {
       long sizeInGiB = size / (1024 * 1024 * 1024);
       return sizeInGiB + " GiB";

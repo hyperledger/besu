@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.qbft.validation;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
@@ -144,6 +146,8 @@ public class ProposalPayloadValidator {
   }
 
   private boolean validateBlock(final Block block) {
+    checkState(blockValidator != null, "block validation not possible, no block validator.");
+
     final var validationResult =
         blockValidator.validateAndProcessBlock(
             protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL);

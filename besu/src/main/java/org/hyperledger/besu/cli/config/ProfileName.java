@@ -14,8 +14,14 @@
  */
 package org.hyperledger.besu.cli.config;
 
+import org.apache.commons.lang3.StringUtils;
+
 /** Enum for profile names. Each profile corresponds to a configuration file. */
 public enum ProfileName {
+  /** The 'STAKER' profile */
+  STAKER("profiles/staker.toml"),
+  /** The 'MINIMALIST_STAKER' profile */
+  MINIMALIST_STAKER("profiles/minimalist-staker.toml"),
   /** The 'DEV' profile. Corresponds to the 'profiles/dev.toml' configuration file. */
   DEV("profiles/dev.toml");
 
@@ -37,5 +43,10 @@ public enum ProfileName {
    */
   public String getConfigFile() {
     return configFile;
+  }
+
+  @Override
+  public String toString() {
+    return StringUtils.capitalize(name().replaceAll("_", " ").toLowerCase());
   }
 }

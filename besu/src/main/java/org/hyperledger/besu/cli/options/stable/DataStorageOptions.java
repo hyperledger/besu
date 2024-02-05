@@ -75,7 +75,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
 
     @CommandLine.Option(
         hidden = true,
-        names = {BONSAI_LIMIT_TRIE_LOGS_ENABLED},
+        names = {BONSAI_LIMIT_TRIE_LOGS_ENABLED, "--Xbonsai-trie-log-pruning-enabled"},
         description =
             "Limit the number of trie logs that are retained. (default: ${DEFAULT-VALUE})")
     private boolean bonsaiLimitTrieLogsEnabled = DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
