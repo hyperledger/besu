@@ -197,7 +197,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--help");
     final String expectedOutputStart = String.format("Usage:%n%nbesu [OPTIONS] [COMMAND]");
     assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
-    assertThat(commandErrorOutput.toString(UTF_8)).isNotEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
