@@ -4,7 +4,7 @@ on:
   pull_request_target:
     branches:
       - main
-  workflow_dispatch:
+      - release-*
 
 permissions:
   statuses: write
@@ -77,7 +77,7 @@ jobs:
     env:
         GRADLEW_UNIT_TEST_ARGS: ${{matrix.gradle_args}}
     runs-on: ubuntu-22.04
-    needs: [ compile, authorize ]
+    needs: [ compile ]
     permissions:
       checks: write
       statuses: write
