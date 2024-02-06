@@ -505,7 +505,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--sync-mode"},
       paramLabel = MANDATORY_MODE_FORMAT_HELP,
       description =
-          "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} (default: FAST if a --network is supplied and privacy isn't enabled. FULL otherwise.)")
+          "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} (default: SNAP if a --network is supplied and privacy isn't enabled. FULL otherwise.)")
   private SyncMode syncMode = null;
 
   @Option(
@@ -2652,8 +2652,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .orElse(
             genesisFile == null
                     && !privacyOptionGroup.isPrivacyEnabled
-                    && Optional.ofNullable(network).map(NetworkName::canFastSync).orElse(false)
-                ? SyncMode.FAST
+                    && Optional.ofNullable(network).map(NetworkName::canSnapSync).orElse(false)
+                ? SyncMode.SNAP
                 : SyncMode.FULL);
   }
 

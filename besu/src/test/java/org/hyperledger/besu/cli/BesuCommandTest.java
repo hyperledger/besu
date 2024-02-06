@@ -1176,6 +1176,18 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void syncMode_snap_by_default() {
+    parseCommand();
+    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
+
+    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.SNAP);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void helpShouldDisplayFastSyncOptions() {
     parseCommand("--help");
 
