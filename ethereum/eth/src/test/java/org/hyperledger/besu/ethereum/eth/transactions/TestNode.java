@@ -147,7 +147,6 @@ public class TestNode implements Closeable {
             Bytes.random(64),
             25,
             25,
-            25,
             false);
 
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, metricsSystem);

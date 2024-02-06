@@ -107,7 +107,8 @@ public class VmTraceGenerator {
     } else if (frame.getExceptionalHaltReason().isPresent()) {
       final Optional<ExceptionalHaltReason> haltReason = frame.getExceptionalHaltReason();
       return haltReason.get() != ExceptionalHaltReason.INVALID_JUMP_DESTINATION
-          && haltReason.get() != ExceptionalHaltReason.INSUFFICIENT_GAS;
+          && haltReason.get() != ExceptionalHaltReason.INSUFFICIENT_GAS
+          && haltReason.get() != ExceptionalHaltReason.ILLEGAL_STATE_CHANGE;
     } else {
       return frame.isVirtualOperation();
     }

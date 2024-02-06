@@ -42,7 +42,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-public final class GenesisStateTest {
+final class GenesisStateTest {
 
   /** Known RLP encoded bytes of the Olympic Genesis Block. */
   private static final String OLYMPIC_RLP =
@@ -58,14 +58,9 @@ public final class GenesisStateTest {
   static class GenesisStateTestArguments implements ArgumentsProvider {
     @Override
     public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
-      final DataStorageConfiguration bonsaiDataConfiguration =
-          ImmutableDataStorageConfiguration.builder()
-              .dataStorageFormat(DataStorageFormat.BONSAI)
-              .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
-              .build();
       return Stream.of(
           Arguments.of(DataStorageConfiguration.DEFAULT_CONFIG),
-          Arguments.of(bonsaiDataConfiguration));
+          Arguments.of(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG));
     }
   }
 
@@ -102,8 +97,7 @@ public final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  public void createFromJsonNoAllocs(final DataStorageConfiguration dataStorageConfiguration)
-      throws Exception {
+  void createFromJsonNoAllocs(final DataStorageConfiguration dataStorageConfiguration) throws Exception {
     final GenesisState genesisState =
         GenesisState.fromJson(
             dataStorageConfiguration,
@@ -148,8 +142,7 @@ public final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  public void createFromJsonWithContract(final DataStorageConfiguration dataStorageConfiguration)
-      throws Exception {
+  void createFromJsonWithContract(final DataStorageConfiguration dataStorageConfiguration) throws Exception {
     assertContractInvariants(
         dataStorageConfiguration,
         "genesis3.json",
@@ -158,8 +151,7 @@ public final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  public void createFromJsonWithNonce(final DataStorageConfiguration dataStorageConfiguration)
-      throws Exception {
+  void createFromJsonWithNonce(final DataStorageConfiguration dataStorageConfiguration) throws Exception {
     final GenesisState genesisState =
         GenesisState.fromJson(
             dataStorageConfiguration,
@@ -175,8 +167,7 @@ public final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  public void encodeOlympicBlock(final DataStorageConfiguration dataStorageConfiguration)
-      throws Exception {
+  void encodeOlympicBlock(final DataStorageConfiguration dataStorageConfiguration) throws Exception {
     final GenesisState genesisState =
         GenesisState.fromJson(
             dataStorageConfiguration,
@@ -197,8 +188,7 @@ public final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  public void genesisFromShanghai(final DataStorageConfiguration dataStorageConfiguration)
-      throws Exception {
+  void genesisFromShanghai(final DataStorageConfiguration dataStorageConfiguration) throws Exception {
     final GenesisState genesisState =
         GenesisState.fromJson(
             dataStorageConfiguration,
@@ -211,8 +201,8 @@ public final class GenesisStateTest {
             Hash.fromHexString(
                 "0xfdc41f92053811b877be43e61cab6b0d9ee55501ae2443df0970c753747f12d8"));
     assertThat(header.getGasLimit()).isEqualTo(0x2fefd8);
-    assertThat(header.getGasUsed()).isEqualTo(0);
-    assertThat(header.getNumber()).isEqualTo(0);
+    assertThat(header.getGasUsed()).isZero();
+    assertThat(header.getNumber()).isZero();
     assertThat(header.getReceiptsRoot())
         .isEqualTo(
             Hash.fromHexString(
@@ -238,7 +228,7 @@ public final class GenesisStateTest {
     final Account last =
         worldState.get(Address.fromHexString("fb289e2b2b65fb63299a682d000744671c50417b"));
     assertThat(first).isNotNull();
-    assertThat(first.getBalance().toLong()).isEqualTo(0);
+    assertThat(first.getBalance().toLong()).isZero();
     assertThat(first.getCode())
         .isEqualTo(Bytes.fromHexString("0x5f804955600180495560028049556003804955"));
     assertThat(last).isNotNull();
@@ -248,8 +238,7 @@ public final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  public void genesisFromCancun(final DataStorageConfiguration dataStorageConfiguration)
-      throws Exception {
+  void genesisFromCancun(final DataStorageConfiguration dataStorageConfiguration) throws Exception {
     final GenesisState genesisState =
         GenesisState.fromJson(
             dataStorageConfiguration,
@@ -262,8 +251,8 @@ public final class GenesisStateTest {
             Hash.fromHexString(
                 "0x87846b86c1026fa7d7be2da045716274231de1871065a320659c9b111287c688"));
     assertThat(header.getGasLimit()).isEqualTo(0x2fefd8);
-    assertThat(header.getGasUsed()).isEqualTo(0);
-    assertThat(header.getNumber()).isEqualTo(0);
+    assertThat(header.getGasUsed()).isZero();
+    assertThat(header.getNumber()).isZero();
     assertThat(header.getReceiptsRoot())
         .isEqualTo(
             Hash.fromHexString(
@@ -289,7 +278,57 @@ public final class GenesisStateTest {
     final Account last =
         worldState.get(Address.fromHexString("fb289e2b2b65fb63299a682d000744671c50417b"));
     assertThat(first).isNotNull();
-    assertThat(first.getBalance().toLong()).isEqualTo(0);
+    assertThat(first.getBalance().toLong()).isZero();
+    assertThat(first.getCode())
+        .isEqualTo(Bytes.fromHexString("0x5f804955600180495560028049556003804955"));
+    assertThat(last).isNotNull();
+    Wei lastBalance = last.getBalance();
+    assertThat(lastBalance).isEqualTo(Wei.fromHexString("0x123450000000000000000"));
+  }
+
+  @ParameterizedTest
+  @ArgumentsSource(GenesisStateTestArguments.class)
+  void genesisFromPrague(final DataStorageFormat dataStorageFormat) throws Exception {
+    final GenesisState genesisState =
+        GenesisState.fromJson(
+            dataStorageFormat,
+            Resources.toString(
+                GenesisStateTest.class.getResource("genesis_prague.json"), Charsets.UTF_8),
+            ProtocolScheduleFixture.MAINNET);
+    final BlockHeader header = genesisState.getBlock().getHeader();
+    assertThat(header.getHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x87846b86c1026fa7d7be2da045716274231de1871065a320659c9b111287c688"));
+    assertThat(header.getGasLimit()).isEqualTo(0x2fefd8);
+    assertThat(header.getGasUsed()).isZero();
+    assertThat(header.getNumber()).isZero();
+    assertThat(header.getReceiptsRoot())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"));
+    assertThat(header.getTransactionsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
+    assertThat(header.getOmmersHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"));
+    assertThat(header.getExtraData()).isEqualTo(Bytes.EMPTY);
+    assertThat(header.getParentHash()).isEqualTo(Hash.ZERO);
+
+    final MutableWorldState worldState = InMemoryKeyValueStorageProvider.createInMemoryWorldState();
+    genesisState.writeStateTo(worldState);
+    Hash computedStateRoot = worldState.rootHash();
+    assertThat(computedStateRoot).isEqualTo(header.getStateRoot());
+    assertThat(header.getStateRoot())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x7f5cfe1375a61009a22d24512d18035bc8f855129452fa9c6a6be2ef4e9da7db"));
+    final Account first =
+        worldState.get(Address.fromHexString("0000000000000000000000000000000000000100"));
+    final Account last =
+        worldState.get(Address.fromHexString("fb289e2b2b65fb63299a682d000744671c50417b"));
+    assertThat(first).isNotNull();
+    assertThat(first.getBalance().toLong()).isZero();
     assertThat(first.getCode())
         .isEqualTo(Bytes.fromHexString("0x5f804955600180495560028049556003804955"));
     assertThat(last).isNotNull();

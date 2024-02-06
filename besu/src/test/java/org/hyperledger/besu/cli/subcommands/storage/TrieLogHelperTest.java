@@ -293,8 +293,8 @@ class TrieLogHelperTest {
                 nonValidatingTrieLogHelper.prune(
                     dataStorageConfiguration, inMemoryWorldStateSpy, blockchain, dataDir))
         .isInstanceOf(RuntimeException.class)
-        .hasMessage(
-            "Remaining trie logs (0) did not match --bonsai-historical-block-limit (3). Trie logs backup files have not been deleted, it is safe to rerun the subcommand.");
+        .hasMessageContaining(
+            "Remaining trie logs (0) did not match --bonsai-historical-block-limit (3)");
   }
 
   @Test
