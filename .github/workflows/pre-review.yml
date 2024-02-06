@@ -6,19 +6,7 @@ on:
       - main
       - release-*
 
-permissions:
-  statuses: write
-  checks: write
-
 jobs:
-  authorize:
-    environment:
-      ${{ steps.get-members.outputs.actor-belongs-team == 'true' &&
-      'internal' || 'external' }}
-    runs-on: ubuntu-22.04
-    steps:
-      - run: true
-
   repolint:
     name: "Repository Linting"
     runs-on: ubuntu-22.04
