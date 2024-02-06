@@ -26,7 +26,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class HistoricalBlockHashProcessor {
 
   private static final long HISTORY_SERVE_WINDOW = 256;
-  private static final Address HISTORY_STORAGE_ADDRESS =
+  public static final Address HISTORY_STORAGE_ADDRESS =
       Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
 
   public HistoricalBlockHashProcessor() {}

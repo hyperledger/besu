@@ -704,14 +704,14 @@ public abstract class MainnetProtocolSpecs {
         .name("Cancun");
   }
 
+  //TODO FIX THAT TO HAVE CORRECT CONFIGURATION
   static ProtocolSpecBuilder pragueDefinition(
-      final Optional<BigInteger> chainId,
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
-      final EvmConfiguration evmConfiguration) {
-
+          final Optional<BigInteger> chainId,
+          final OptionalInt configContractSizeLimit,
+          final OptionalInt configStackSizeLimit,
+          final boolean enableRevertReason,
+          final GenesisConfigOptions genesisConfigOptions,
+          final EvmConfiguration evmConfiguration) {
     return shanghaiDefinition(
             chainId,
             configContractSizeLimit,
@@ -719,9 +719,10 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             genesisConfigOptions,
             evmConfiguration)
-        .historicalBlockHashProcessor(new HistoricalBlockHashProcessor())
-        .name("Prague");
+            .historicalBlockHashProcessor(new HistoricalBlockHashProcessor())
+            .name("Prague");
   }
+  /*
   /*static ProtocolSpecBuilder pragueDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,

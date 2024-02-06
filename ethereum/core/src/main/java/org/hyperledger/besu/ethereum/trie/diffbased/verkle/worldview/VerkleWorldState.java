@@ -217,7 +217,8 @@ public class VerkleWorldState extends DiffBasedWorldState {
               worldStateUpdater.getCodeToUpdate().entrySet()) {
             final Bytes previousCode = codeUpdate.getValue().getPrior();
             final Bytes updatedCode = codeUpdate.getValue().getUpdated();
-            if (!codeUpdate.getValue().isUnchanged()) {
+            System.out.println(previousCode+" "+codeUpdate);
+            if (!codeUpdate.getValue().isUnchanged() || (codeIsEmpty(previousCode) && codeIsEmpty(updatedCode))) {
               final Address address = codeUpdate.getKey();
               final Hash accountHash = address.addressHash();
               if (updatedCode == null) {
@@ -259,6 +260,10 @@ public class VerkleWorldState extends DiffBasedWorldState {
         });
   }
 
+  private boolean codeIsEmpty(final Bytes value) {
+    return value == null || value.isEmpty();
+  }
+
   private void updateAccountStorageState(
       final VerkleTrie stateTrie,
       final Optional<VerkleWorldStateKeyValueStorage.Updater> maybeStateUpdater,
@@ -296,7 +301,6 @@ public class VerkleWorldState extends DiffBasedWorldState {
                 .put(storage.getFirst(), storage.getSecond())
                 .ifPresentOrElse(
                     bytes -> {
-                      System.out.println("found old key " + bytes);
                       storageUpdate.getValue().setPrior(UInt256.fromBytes(bytes));
                     },
                     () -> {

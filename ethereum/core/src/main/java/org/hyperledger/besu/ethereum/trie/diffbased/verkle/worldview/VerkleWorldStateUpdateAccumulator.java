@@ -21,16 +21,23 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.mainnet.HistoricalBlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.Consumer;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
+import java.util.ArrayList;
+
 public class VerkleWorldStateUpdateAccumulator
     extends DiffBasedWorldStateUpdateAccumulator<VerkleAccount> {
+
+
   public VerkleWorldStateUpdateAccumulator(
       final DiffBasedWorldView world,
       final Consumer<DiffBasedValue<VerkleAccount>> accountPreloader,
@@ -95,6 +102,13 @@ public class VerkleWorldStateUpdateAccumulator
   protected void assertCloseEnoughForDiffing(
       final VerkleAccount source, final AccountValue account, final String context) {
     VerkleAccount.assertCloseEnoughForDiffing(source, account, context);
+  }
+
+  @Override
+  public void clearAccountsThatAreEmpty() {
+    //TODO manage that more cleanly EIP2925 ignore historical data addres
+    new ArrayList<>(getTouchedAccounts())
+            .stream().filter(account -> !account.getAddress().equals(HistoricalBlockHashProcessor.HISTORY_STORAGE_ADDRESS)).filter(Account::isEmpty).forEach(a -> deleteAccount(a.getAddress()));
   }
 
   @Override

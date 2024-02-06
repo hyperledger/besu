@@ -150,26 +150,32 @@ public class DiffBasedWorldStateProvider implements WorldStateArchive {
   @Override
   public synchronized Optional<MutableWorldState> getMutable(
       final Hash rootHash, final Hash blockHash) {
-    rollMutableStateToBlockHash(persistedState, blockHash);
-
-    // TODO remove after testing
-    blockchain
-        .getBlockHeader(blockHash)
-        .ifPresent(
-            blockHeader -> {
-              Optional<MutableWorldState> worldState =
-                  rollMutableStateToBlockHash(persistedState, blockHeader.getParentHash());
-              if (worldState.isEmpty()) {
-                throw new RuntimeException(
-                    "unable to rollback block " + blockHeader.getParentHash());
-              }
-            });
-
-    // TODO remove after testing
     Optional<MutableWorldState> worldState = rollMutableStateToBlockHash(persistedState, blockHash);
-    if (worldState.isEmpty()) {
-      throw new RuntimeException("unable to rollforward block " + blockHash);
+
+    Optional<BlockHeader> block = blockchain
+            .getBlockHeader(blockHash);
+    if(block.isPresent() && block.get().getNumber()>0){
+      // TODO remove after testing
+      blockchain
+              .getBlockHeader(blockHash)
+              .ifPresent(
+                      blockHeader -> {
+                        Optional<MutableWorldState> ws =
+                                rollMutableStateToBlockHash(persistedState, blockHeader.getParentHash());
+                        if (ws.isEmpty()) {
+                          throw new RuntimeException(
+                                  "unable to rollback block " + blockHeader.getParentHash());
+                        }
+                        // TODO remove after testing
+                        ws = rollMutableStateToBlockHash(persistedState, blockHash);
+                        if (ws.isEmpty()) {
+                          throw new RuntimeException("unable to rollforward block " + blockHash);
+                        }
+                      });
+
+
     }
+
 
     return worldState;
   }
@@ -261,7 +267,7 @@ public class DiffBasedWorldStateProvider implements WorldStateArchive {
           return Optional.empty();
         }
       } catch (final RuntimeException re) {
-        LOG.info("Archive rolling failed for block hash " + blockHash, re);
+        LOG.error("Archive rolling failed for block hash " + blockHash, re);
         if (re instanceof MerkleTrieException) {
           // need to throw to trigger the heal
           throw re;

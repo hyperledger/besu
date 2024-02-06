@@ -172,7 +172,7 @@ public class BlockHeader extends SealableBlockHeader
     if (withdrawalsRoot != null) {
       out.writeBytes(withdrawalsRoot);
     }
-    if (excessBlobGas != null && blobGasUsed != null) {
+    /*if (excessBlobGas != null && blobGasUsed != null) {
       out.writeLongScalar(blobGasUsed);
       out.writeUInt64Scalar(excessBlobGas);
     }
@@ -181,7 +181,7 @@ public class BlockHeader extends SealableBlockHeader
     }
     if (depositsRoot != null) {
       out.writeBytes(depositsRoot);
-    }
+    }*/
     out.endList();
   }
 
@@ -208,12 +208,12 @@ public class BlockHeader extends SealableBlockHeader
         !(input.isEndOfCurrentList() || input.isZeroLengthString())
             ? Hash.wrap(input.readBytes32())
             : null;
-    final Long blobGasUsed = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
+    /*final Long blobGasUsed = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
     final BlobGas excessBlobGas =
         !input.isEndOfCurrentList() ? BlobGas.of(input.readLongScalar()) : null;
     final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
     final Hash depositHashRoot =
-        !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
+        !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;*/
     final ExecutionWitness executionWitness =
         !input.isEndOfCurrentList() ? ExecutionWitness.readFrom(input) : null;
     input.leaveList();
@@ -235,10 +235,10 @@ public class BlockHeader extends SealableBlockHeader
         mixHashOrPrevRandao,
         nonce,
         withdrawalHashRoot,
-        blobGasUsed,
-        excessBlobGas,
-        parentBeaconBlockRoot,
-        depositHashRoot,
+        null,
+            null,
+            null,
+            null,
         executionWitness,
         blockHeaderFunctions);
   }
@@ -334,6 +334,6 @@ public class BlockHeader extends SealableBlockHeader
 
   @Override
   public String toLogString() {
-    return getNumber() + " (" + getHash() + ")";
+    return getNumber() + " (" + getHash() + " "+getParentHash()+")";
   }
 }
