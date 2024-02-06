@@ -179,7 +179,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.SNAP);
     assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(5);
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
