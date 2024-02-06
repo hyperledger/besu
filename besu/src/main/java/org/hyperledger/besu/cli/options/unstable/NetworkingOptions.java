@@ -42,7 +42,6 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
   @CommandLine.Option(
       names = INITIATE_CONNECTIONS_FREQUENCY_FLAG,
       hidden = true,
-      defaultValue = "30",
       paramLabel = "<INTEGER>",
       description =
           "The frequency (in seconds) at which to initiate new outgoing connections (default: ${DEFAULT-VALUE})")
@@ -52,7 +51,6 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
   @CommandLine.Option(
       names = CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG,
       hidden = true,
-      defaultValue = "60",
       paramLabel = "<INTEGER>",
       description =
           "The frequency (in seconds) at which to check maintained connections (default: ${DEFAULT-VALUE})")
@@ -69,14 +67,12 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
   @CommandLine.Option(
       names = DISCOVERY_PROTOCOL_V5_ENABLED,
       hidden = true,
-      defaultValue = "false",
       description = "Whether to enable P2P Discovery Protocol v5 (default: ${DEFAULT-VALUE})")
   private final Boolean isPeerDiscoveryV5Enabled = false;
 
   @CommandLine.Option(
       names = FILTER_ON_ENR_FORK_ID,
       hidden = true,
-      defaultValue = "true",
       description = "Whether to enable filtering of peers based on the ENR field ForkId)")
   private final Boolean filterOnEnrForkId = NetworkingConfiguration.DEFAULT_FILTER_ON_ENR_FORK_ID;
 
@@ -84,8 +80,8 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
       hidden = true,
       names = PEER_LOWER_BOUND_FLAG,
       description =
-          "Lower bound on the target number of P2P connections (default: ${DEFAULT-VALUE})")
-  private Integer peerLowerBoundConfig = DefaultCommandValues.DEFAULT_P2P_PEER_LOWER_BOUND;
+          "(Deprecated) Lower bound on the target number of P2P connections (default: ${DEFAULT-VALUE})")
+  private final Integer peerLowerBoundConfig = DefaultCommandValues.DEFAULT_MAX_PEERS;
 
   private NetworkingOptions() {}
 
@@ -111,7 +107,6 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
     cliOptions.initiateConnectionsFrequencySec =
         networkingConfig.getInitiateConnectionsFrequencySec();
     cliOptions.dnsDiscoveryServerOverride = networkingConfig.getDnsDiscoveryServerOverride();
-    cliOptions.peerLowerBoundConfig = networkingConfig.getPeerLowerBound();
 
     return cliOptions;
   }
@@ -124,7 +119,6 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
     config.setDnsDiscoveryServerOverride(dnsDiscoveryServerOverride);
     config.getDiscovery().setDiscoveryV5Enabled(isPeerDiscoveryV5Enabled);
     config.getDiscovery().setFilterOnEnrForkId(filterOnEnrForkId);
-    config.setPeerLowerBound(peerLowerBoundConfig);
     return config;
   }
 

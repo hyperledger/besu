@@ -110,7 +110,6 @@ public class TransactionPoolFactoryTest {
             Bytes.random(64),
             25,
             25,
-            25,
             false);
     when(ethContext.getEthMessages()).thenReturn(ethMessages);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
