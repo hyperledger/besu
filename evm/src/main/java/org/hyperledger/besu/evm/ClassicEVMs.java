@@ -26,6 +26,7 @@ import org.hyperledger.besu.evm.operation.Push0Operation;
 
 import java.math.BigInteger;
 
+/** Classic EMVs */
 public class ClassicEVMs {
 
   /**
