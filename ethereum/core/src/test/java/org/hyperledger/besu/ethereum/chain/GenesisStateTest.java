@@ -25,8 +25,6 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.evm.account.Account;
 
 import java.util.stream.Stream;
@@ -97,7 +95,8 @@ final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  void createFromJsonNoAllocs(final DataStorageConfiguration dataStorageConfiguration) throws Exception {
+  void createFromJsonNoAllocs(final DataStorageConfiguration dataStorageConfiguration)
+      throws Exception {
     final GenesisState genesisState =
         GenesisState.fromJson(
             dataStorageConfiguration,
@@ -142,7 +141,8 @@ final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  void createFromJsonWithContract(final DataStorageConfiguration dataStorageConfiguration) throws Exception {
+  void createFromJsonWithContract(final DataStorageConfiguration dataStorageConfiguration)
+      throws Exception {
     assertContractInvariants(
         dataStorageConfiguration,
         "genesis3.json",
@@ -151,7 +151,8 @@ final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  void createFromJsonWithNonce(final DataStorageConfiguration dataStorageConfiguration) throws Exception {
+  void createFromJsonWithNonce(final DataStorageConfiguration dataStorageConfiguration)
+      throws Exception {
     final GenesisState genesisState =
         GenesisState.fromJson(
             dataStorageConfiguration,
@@ -167,7 +168,8 @@ final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  void encodeOlympicBlock(final DataStorageConfiguration dataStorageConfiguration) throws Exception {
+  void encodeOlympicBlock(final DataStorageConfiguration dataStorageConfiguration)
+      throws Exception {
     final GenesisState genesisState =
         GenesisState.fromJson(
             dataStorageConfiguration,
@@ -188,7 +190,8 @@ final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  void genesisFromShanghai(final DataStorageConfiguration dataStorageConfiguration) throws Exception {
+  void genesisFromShanghai(final DataStorageConfiguration dataStorageConfiguration)
+      throws Exception {
     final GenesisState genesisState =
         GenesisState.fromJson(
             dataStorageConfiguration,
@@ -288,10 +291,10 @@ final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  void genesisFromPrague(final DataStorageFormat dataStorageFormat) throws Exception {
+  void genesisFromPrague(final DataStorageConfiguration dataStorageConfiguration) throws Exception {
     final GenesisState genesisState =
         GenesisState.fromJson(
-            dataStorageFormat,
+            dataStorageConfiguration,
             Resources.toString(
                 GenesisStateTest.class.getResource("genesis_prague.json"), Charsets.UTF_8),
             ProtocolScheduleFixture.MAINNET);
