@@ -51,7 +51,6 @@ import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
@@ -712,6 +711,24 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration) {
+
+    return shanghaiDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration)
+        .historicalBlockHashProcessor(new HistoricalBlockHashProcessor())
+        .name("Prague");
+  }
+  /*static ProtocolSpecBuilder pragueDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
 
@@ -742,7 +759,7 @@ public abstract class MainnetProtocolSpecs {
         // use prague precompiled contracts
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
         .name("Prague");
-  }
+  }*/
 
   static ProtocolSpecBuilder futureEipsDefinition(
       final Optional<BigInteger> chainId,

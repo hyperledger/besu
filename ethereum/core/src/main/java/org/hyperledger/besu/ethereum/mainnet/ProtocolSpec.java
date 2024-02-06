@@ -81,6 +81,7 @@ public class ProtocolSpec {
   private final DepositsValidator depositsValidator;
   private final ExecutionWitnessValidator executionWitnessValidator;
 
+  private final Optional<HistoricalBlockHashProcessor> historicalBlockHashProcessor;
   private final boolean isPoS;
   private final boolean isReplayProtectionSupported;
   /**
@@ -145,6 +146,7 @@ public class ProtocolSpec {
       final Optional<WithdrawalsProcessor> withdrawalsProcessor,
       final DepositsValidator depositsValidator,
       final ExecutionWitnessValidator executionWitnessValidator,
+      final Optional<HistoricalBlockHashProcessor> historicalBlockHashProcessor,
       final boolean isPoS,
       final boolean isReplayProtectionSupported) {
     this.name = name;
@@ -174,6 +176,7 @@ public class ProtocolSpec {
     this.withdrawalsProcessor = withdrawalsProcessor;
     this.depositsValidator = depositsValidator;
     this.executionWitnessValidator = executionWitnessValidator;
+    this.historicalBlockHashProcessor = historicalBlockHashProcessor;
     this.isPoS = isPoS;
     this.isReplayProtectionSupported = isReplayProtectionSupported;
   }
@@ -390,6 +393,10 @@ public class ProtocolSpec {
 
   public ExecutionWitnessValidator getExecutionWitnessValidator() {
     return executionWitnessValidator;
+  }
+
+  public Optional<HistoricalBlockHashProcessor> getHistoricalBlockHashProcessor() {
+    return historicalBlockHashProcessor;
   }
 
   /**
