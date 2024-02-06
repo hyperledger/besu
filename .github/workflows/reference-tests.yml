@@ -4,23 +4,58 @@ on:
     branches:
       - main
       - release-*
+  pull_request_review:
+    types: [ submitted ]
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
   total-runners: 6
 
 jobs:
-  authorize:
-    environment:
-      ${{ github.event_name == 'pull_request_target' &&
-      github.event.pull_request.head.repo.full_name != github.repository &&
-      'external' || 'internal' }}
+  shouldRun:
+    name: checks to ensure we should run
+    # necessary because there is no single PR approved event, need to check all comments/approvals/denials
+    # might also be a job running, and additional approvals
     runs-on: ubuntu-22.04
+    outputs:
+      shouldRun: ${{steps.shouldRun.outputs.result}}
     steps:
-      - run: true
+      - name: required check
+        id: shouldRun
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        env:
+          # fun fact, this changes based on incoming event, it will be different when we run this on pushes to main
+          RELEVANT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        with:
+          script: |
+            const { RELEVANT_SHA } = process.env;
+            const { data: { statuses } } = await github.rest.repos.getCombinedStatusForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: RELEVANT_SHA,
+            });
+            
+            
+            const refTested = statuses && statuses.filter(({ context }) => context === 'reference-tests');
+            const alreadyRun = refTested && refTested.find(({ state }) => state === 'success') > 0;
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            const approvingReviews = reviews && reviews.filter(review => review.state === 'APPROVED');
+            const shouldRun = !alreadyRun && github.actor != 'dependabot[bot]' &&  (approvingReviews.length > 0);
+
+              console.log("tests should be run = %j", shouldRun);
+              console.log("alreadyRun = %j", alreadyRun);
+              console.log("approvingReviews = %j", approvingReviews.length);
+
+            return shouldRun;
+
   prepareReferenceTestEthereum:
     runs-on: ubuntu-22.04
-    needs: authorize
+    needs: shouldRun
+    if: ${{ needs.shouldRun.outputs.shouldRun == 'true' }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -50,6 +85,7 @@ jobs:
       checks: write
     needs:
       - prepareReferenceTestEthereum
+    if: ${{ needs.shouldRun.outputs.shouldRun == 'true' }}
     strategy:
       fail-fast: true
       matrix:
