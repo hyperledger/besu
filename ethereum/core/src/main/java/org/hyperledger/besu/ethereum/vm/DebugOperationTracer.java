@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.operation.AbstractCallOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -39,6 +40,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class DebugOperationTracer implements OperationTracer {
 
   private final TraceOptions options;
+
+  private final boolean additionalCallGas;
   private List<TraceFrame> traceFrames = new ArrayList<>();
   private TraceFrame lastFrame;
 
@@ -48,8 +51,9 @@ public class DebugOperationTracer implements OperationTracer {
   private int pc;
   private int depth;
 
-  public DebugOperationTracer(final TraceOptions options) {
+  public DebugOperationTracer(final TraceOptions options, final boolean additionalCallGas) {
     this.options = options;
+    this.additionalCallGas = additionalCallGas;
   }
 
   @Override
@@ -78,14 +82,16 @@ public class DebugOperationTracer implements OperationTracer {
     final Optional<Map<UInt256, UInt256>> storage = captureStorage(frame);
     final Optional<Map<Address, Wei>> maybeRefunds =
         frame.getRefunds().isEmpty() ? Optional.empty() : Optional.of(frame.getRefunds());
+    long thisGasCost = operationResult.getGasCost();
+    if (additionalCallGas && currentOperation instanceof AbstractCallOperation) {
+      thisGasCost += frame.getMessageFrameStack().getFirst().getRemainingGas();
+    }
     lastFrame =
         new TraceFrame(
             pc,
             Optional.of(opcode),
             gasRemaining,
-            operationResult.getGasCost() == 0
-                ? OptionalLong.empty()
-                : OptionalLong.of(operationResult.getGasCost()),
+            thisGasCost == 0 ? OptionalLong.empty() : OptionalLong.of(thisGasCost),
             frame.getGasRefund(),
             depth,
             Optional.ofNullable(operationResult.getHaltReason()),

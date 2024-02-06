@@ -66,11 +66,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     final Optional<BlockParameter> maybeBlockParameter =
         request.getOptionalParameter(1, BlockParameter.class);
 
-    if (maybeBlockParameter.isPresent()) {
-      return maybeBlockParameter.get();
-    }
-
-    return BlockParameter.LATEST;
+      return maybeBlockParameter.orElse(BlockParameter.LATEST);
   }
 
   @Override
@@ -153,7 +149,8 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
       final BlockHeader header,
       final WorldUpdater worldUpdater) {
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
-    final DebugOperationTracer tracer = new DebugOperationTracer(buildTraceOptions(traceTypes));
+    final DebugOperationTracer tracer =
+        new DebugOperationTracer(buildTraceOptions(traceTypes), false);
     final Optional<TransactionSimulatorResult> maybeSimulatorResult =
         transactionSimulator.processWithWorldUpdater(
             callParameter, buildTransactionValidationParams(), tracer, header, worldUpdater);
