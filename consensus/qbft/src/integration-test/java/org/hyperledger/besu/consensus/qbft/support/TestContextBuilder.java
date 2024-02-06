@@ -147,6 +147,7 @@ public class TestContextBuilder {
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private boolean useValidatorContract;
   private boolean useLondonMilestone = false;
+  private boolean useShanghaiMilestone = false;
   private boolean useZeroBaseFee = false;
   public static final int EPOCH_LENGTH = 10_000;
   public static final int BLOCK_TIMER_SEC = 3;
@@ -212,6 +213,11 @@ public class TestContextBuilder {
 
   public TestContextBuilder useLondonMilestone(final boolean useLondonMilestone) {
     this.useLondonMilestone = useLondonMilestone;
+    return this;
+  }
+
+  public TestContextBuilder useShanghaiMilestone(final boolean useShanghaiMilestone) {
+    this.useShanghaiMilestone = useShanghaiMilestone;
     return this;
   }
 
@@ -285,6 +291,7 @@ public class TestContextBuilder {
             synchronizerUpdater,
             useValidatorContract,
             useLondonMilestone,
+            useShanghaiMilestone,
             useZeroBaseFee,
             qbftForks);
 
@@ -365,6 +372,7 @@ public class TestContextBuilder {
       final SynchronizerUpdater synchronizerUpdater,
       final boolean useValidatorContract,
       final boolean useLondonMilestone,
+      final boolean useShanghaiMilestone,
       final boolean useZeroBaseFee,
       final List<QbftFork> qbftForks) {
 
@@ -390,6 +398,8 @@ public class TestContextBuilder {
 
     if (useLondonMilestone) {
       genesisConfigOptions.londonBlock(0);
+    } else if (useShanghaiMilestone) {
+      genesisConfigOptions.shanghaiTime(10);
     } else {
       genesisConfigOptions.berlinBlock(0);
     }

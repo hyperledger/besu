@@ -74,8 +74,6 @@ public interface DefaultCommandValues {
   int SYNC_MIN_PEER_COUNT = 5;
   /** The constant DEFAULT_MAX_PEERS. */
   int DEFAULT_MAX_PEERS = 25;
-  /** The constant DEFAULT_P2P_PEER_LOWER_BOUND. */
-  int DEFAULT_P2P_PEER_LOWER_BOUND = 25;
   /** The constant DEFAULT_HTTP_MAX_CONNECTIONS. */
   int DEFAULT_HTTP_MAX_CONNECTIONS = 80;
   /** The constant DEFAULT_HTTP_MAX_BATCH_SIZE. */

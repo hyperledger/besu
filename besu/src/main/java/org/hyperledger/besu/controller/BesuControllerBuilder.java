@@ -178,7 +178,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** The Max peers. */
   protected int maxPeers;
 
-  private int peerLowerBound;
   private int maxRemotelyInitiatedPeers;
   /** The Chain pruner configuration. */
   protected ChainPrunerConfiguration chainPrunerConfiguration = ChainPrunerConfiguration.DEFAULT;
@@ -476,21 +475,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
-   * Lower bound of peers where we stop actively trying to initiate new outgoing connections
-   *
-   * @param peerLowerBound lower bound of peers where we stop actively trying to initiate new
-   *     outgoing connections
-   * @return the besu controller builder
-   */
-  public BesuControllerBuilder lowerBoundPeers(final int peerLowerBound) {
-    this.peerLowerBound = peerLowerBound;
-    return this;
-  }
-
-  /**
    * Maximum number of remotely initiated peer connections
    *
-   * @param maxRemotelyInitiatedPeers aximum number of remotely initiated peer connections
+   * @param maxRemotelyInitiatedPeers maximum number of remotely initiated peer connections
    * @return the besu controller builder
    */
   public BesuControllerBuilder maxRemotelyInitiatedPeers(final int maxRemotelyInitiatedPeers) {
@@ -511,7 +498,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
-   * Chain pruning configuration besu controller builder.
+   * Sets the number of blocks to cache.
    *
    * @param numberOfBlocksToCache the number of blocks to cache
    * @return the besu controller builder
@@ -681,7 +668,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             maxMessageSize,
             messagePermissioningProviders,
             nodeKey.getPublicKey().getEncodedBytes(),
-            peerLowerBound,
             maxPeers,
             maxRemotelyInitiatedPeers,
             randomPeerPriority);
@@ -1161,8 +1147,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final CheckpointConfigOptions checkpointConfigOptions =
         genesisConfig.getConfigOptions(genesisConfigOverrides).getCheckpointOptions();
-    if (SyncMode.X_CHECKPOINT.equals(syncConfig.getSyncMode())
-        && checkpointConfigOptions.isValid()) {
+    if (SyncMode.isCheckpointSync(syncConfig.getSyncMode()) && checkpointConfigOptions.isValid()) {
       validators.add(
           new CheckpointBlocksPeerValidator(
               protocolSchedule,

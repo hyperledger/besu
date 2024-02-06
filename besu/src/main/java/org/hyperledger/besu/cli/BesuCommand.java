@@ -21,6 +21,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
+import static org.hyperledger.besu.cli.options.unstable.NetworkingOptions.PEER_LOWER_BOUND_FLAG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
@@ -320,7 +321,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private int maxPeers;
   private int maxRemoteInitiatedPeers;
-  private int peersLowerBound;
 
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
@@ -1523,18 +1523,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void ensureValidPeerBoundParams() {
     maxPeers = p2PDiscoveryOptionGroup.maxPeers;
-    peersLowerBound = unstableNetworkingOptions.toDomainObject().getPeerLowerBound();
-    if (peersLowerBound > maxPeers) {
-      logger.warn(
-          "`--Xp2p-peer-lower-bound` "
-              + peersLowerBound
-              + " must not exceed --max-peers "
-              + maxPeers);
-      logger.warn("setting --Xp2p-peer-lower-bound=" + maxPeers);
-      peersLowerBound = maxPeers;
-    }
     final Boolean isLimitRemoteWireConnectionsEnabled =
         p2PDiscoveryOptionGroup.isLimitRemoteWireConnectionsEnabled;
+    if (isOptionSet(commandLine, PEER_LOWER_BOUND_FLAG)) {
+      logger.warn(PEER_LOWER_BOUND_FLAG + " is deprecated and will be removed soon.");
+    }
     if (isLimitRemoteWireConnectionsEnabled) {
       final float fraction =
           Fraction.fromPercentage(p2PDiscoveryOptionGroup.maxRemoteConnectionsPercentage)
@@ -1615,8 +1608,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
-        "--Xcheckpoint-post-merge-enabled can only be used with X_CHECKPOINT sync-mode",
-        SyncMode.X_CHECKPOINT.equals(getDefaultSyncModeIfNotSet()),
+        "--Xcheckpoint-post-merge-enabled can only be used with CHECKPOINT sync-mode",
+        SyncMode.isCheckpointSync(getDefaultSyncModeIfNotSet()),
         singletonList("--Xcheckpoint-post-merge-enabled"));
 
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
@@ -1794,7 +1787,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .evmConfiguration(unstableEvmOptions.toDomainObject())
         .dataStorageConfiguration(dataStorageOptions.toDomainObject())
         .maxPeers(p2PDiscoveryOptionGroup.maxPeers)
-        .lowerBoundPeers(peersLowerBound)
         .maxRemotelyInitiatedPeers(maxRemoteInitiatedPeers)
         .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
         .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
@@ -1927,6 +1919,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final String errorSuffix = "cannot be enabled with privacy.";
       if (syncMode == SyncMode.FAST) {
         throw new ParameterException(commandLine, String.format("%s %s", "Fast sync", errorSuffix));
+      }
+      if (syncMode == SyncMode.SNAP) {
+        throw new ParameterException(commandLine, String.format("%s %s", "Snap sync", errorSuffix));
+      }
+      if (syncMode == SyncMode.CHECKPOINT) {
+        throw new ParameterException(
+            commandLine, String.format("%s %s", "Checkpoint sync", errorSuffix));
       }
       if (isPruningEnabled()) {
         throw new ParameterException(commandLine, String.format("%s %s", "Pruning", errorSuffix));
@@ -2471,11 +2470,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .forEach(
             port -> {
               if (port.equals(p2PDiscoveryOptionGroup.p2pPort)
-                  && !NetworkUtility.isPortAvailable(port)) {
+                  && (NetworkUtility.isPortUnavailableForTcp(port)
+                      || NetworkUtility.isPortUnavailableForUdp(port))) {
                 unavailablePorts.add(port);
               }
               if (!port.equals(p2PDiscoveryOptionGroup.p2pPort)
-                  && !NetworkUtility.isPortAvailableForTcp(port)) {
+                  && NetworkUtility.isPortUnavailableForTcp(port)) {
                 unavailablePorts.add(port);
               }
             });
