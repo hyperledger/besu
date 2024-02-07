@@ -112,6 +112,7 @@ jobs:
         if: success() || failure() # always run even if the build step fails
         with:
           report_paths: '**/build/test-results/referenceTest/TEST-*.xml'
+          annotate_only: true
   reference-tests:
     runs-on: ubuntu-22.04
     needs: [ referenceTestEthereum ]

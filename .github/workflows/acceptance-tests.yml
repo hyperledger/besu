@@ -108,6 +108,7 @@ jobs:
         if: (success() || failure()) # always run even if the build step fails
         with:
           report_paths: 'acceptance-tests/tests/build/test-results/acceptanceTest/TEST-*.xml'
+          annotate_only: true
   acceptance-tests:
     runs-on: ubuntu-22.04
     needs: [ acceptanceTestEthereum ]

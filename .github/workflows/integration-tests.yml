@@ -74,5 +74,6 @@ jobs:
         if: (success() || failure())
         with:
           report_paths: '**/build/test-results/integrationTest/TEST-*.xml'
+          annotate_only: true
 
 
