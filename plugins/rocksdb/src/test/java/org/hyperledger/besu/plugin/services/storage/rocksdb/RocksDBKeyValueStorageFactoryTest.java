@@ -167,7 +167,7 @@ public class RocksDBKeyValueStorageFactoryTest {
 
     String exceptionMessage =
         String.format(
-            "Mismatch: DB at %s is %s (Version %s) but config expects %s (Version %s). Verify config.",
+            "Mismatch: DB at %s is %s (Version %s) but config expects %s (Version %s). Please check your config.",
             tempDataDir.toAbsolutePath(),
             DataStorageFormat.getName(actualDatabaseVersion),
             actualDatabaseVersion,
