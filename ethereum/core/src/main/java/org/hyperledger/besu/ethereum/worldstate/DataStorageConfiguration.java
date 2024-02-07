@@ -37,6 +37,13 @@ public interface DataStorageConfiguration {
           .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
           .build();
 
+  DataStorageConfiguration DEFAULT_FOREST_CONFIG =
+      ImmutableDataStorageConfiguration.builder()
+          .dataStorageFormat(DataStorageFormat.FOREST)
+          .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+          .unstable(Unstable.DEFAULT)
+          .build();
+
   DataStorageFormat getDataStorageFormat();
 
   Long getBonsaiMaxLayersToLoad();
