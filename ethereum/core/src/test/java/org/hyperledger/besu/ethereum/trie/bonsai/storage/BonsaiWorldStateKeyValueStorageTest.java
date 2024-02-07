@@ -455,7 +455,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     return new BonsaiWorldStateKeyValueStorage(
         new InMemoryKeyValueStorageProvider(),
         new NoOpMetricsSystem(),
-        DataStorageConfiguration.DEFAULT_CONFIG);
+        DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
   }
 
   @Test
@@ -491,6 +491,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
     when(mockStorageProvider.getStorageBySegmentIdentifiers(any()))
         .thenReturn(mock(SegmentedKeyValueStorage.class));
     return new BonsaiWorldStateKeyValueStorage(
-        mockStorageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
+        mockStorageProvider,
+        new NoOpMetricsSystem(),
+        DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
   }
 }
