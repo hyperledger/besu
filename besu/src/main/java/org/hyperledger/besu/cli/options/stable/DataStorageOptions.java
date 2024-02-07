@@ -139,7 +139,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     }
   }
 
-  static DataStorageOptions fromConfig(final DataStorageConfiguration domainObject) {
+  public static DataStorageOptions fromConfig(final DataStorageConfiguration domainObject) {
     final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
     dataStorageOptions.dataStorageFormat = domainObject.getDataStorageFormat();
     dataStorageOptions.bonsaiMaxLayersToLoad = domainObject.getBonsaiMaxLayersToLoad();
