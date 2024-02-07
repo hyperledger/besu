@@ -2591,6 +2591,24 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void privacyWithSnapSyncMustError() {
+    parseCommand("--sync-mode=SNAP", "--privacy-enabled");
+
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Snap sync cannot be enabled with privacy.");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void privacyWithCheckpointSyncMustError() {
+    parseCommand("--sync-mode=CHECKPOINT", "--privacy-enabled");
+
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Checkpoint sync cannot be enabled with privacy.");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void privacyWithPruningMustError() {
     parseCommand("--pruning-enabled", "--privacy-enabled");
 
