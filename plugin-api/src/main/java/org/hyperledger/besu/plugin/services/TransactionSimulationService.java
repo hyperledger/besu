@@ -31,8 +31,12 @@ public interface TransactionSimulationService extends BesuService {
    * @param transaction tx
    * @param blockHash the hash of the block
    * @param operationTracer the tracer
+   * @param isAllowExceedingBalance should ignore the sender balance during the simulation?
    * @return the result of the simulation
    */
   Optional<TransactionSimulationResult> simulate(
-      Transaction transaction, Hash blockHash, OperationTracer operationTracer);
+      Transaction transaction,
+      Hash blockHash,
+      OperationTracer operationTracer,
+      boolean isAllowExceedingBalance);
 }

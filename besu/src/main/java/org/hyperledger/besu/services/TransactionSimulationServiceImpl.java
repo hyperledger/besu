@@ -17,6 +17,7 @@ package org.hyperledger.besu.services;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -30,6 +31,11 @@ import java.util.Optional;
 /** TransactionSimulationServiceImpl */
 @Unstable
 public class TransactionSimulationServiceImpl implements TransactionSimulationService {
+  private static final TransactionValidationParams SIMULATOR_ALLOWING_EXCEEDING_BALANCE =
+      ImmutableTransactionValidationParams.builder()
+          .from(TransactionValidationParams.transactionSimulator())
+          .isAllowExceedingBalance(true)
+          .build();
   private Blockchain blockchain;
   private TransactionSimulator transactionSimulator;
 
@@ -49,7 +55,10 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
 
   @Override
   public Optional<TransactionSimulationResult> simulate(
-      final Transaction transaction, final Hash blockHash, final OperationTracer operationTracer) {
+      final Transaction transaction,
+      final Hash blockHash,
+      final OperationTracer operationTracer,
+      final boolean isAllowExceedingBalance) {
 
     final CallParameter callParameter = CallParameter.fromTransaction(transaction);
 
@@ -65,7 +74,9 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
     return transactionSimulator
         .process(
             callParameter,
-            TransactionValidationParams.transactionSimulator(),
+            isAllowExceedingBalance
+                ? SIMULATOR_ALLOWING_EXCEEDING_BALANCE
+                : TransactionValidationParams.transactionSimulator(),
             operationTracer,
             blockHeader)
         .map(res -> new TransactionSimulationResult(transaction, res.result()));
