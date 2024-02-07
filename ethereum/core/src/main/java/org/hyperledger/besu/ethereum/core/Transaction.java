@@ -417,22 +417,22 @@ public class Transaction
   public Address getSender() {
     if (sender == null) {
       Optional<Address> cachedSender = Optional.ofNullable(senderCache.getIfPresent(getHash()));
-      sender =
-          cachedSender.orElseGet(
-              () -> {
-                final SECPPublicKey publicKey =
-                    signatureAlgorithm
-                        .recoverPublicKeyFromSignature(getOrComputeSenderRecoveryHash(), signature)
-                        .orElseThrow(
-                            () ->
-                                new IllegalStateException(
-                                    "Cannot recover public key from signature for " + this));
-                Address calculatedSender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
-                senderCache.put(this.hash, calculatedSender);
-                return calculatedSender;
-              });
+      sender = cachedSender.orElseGet(this::computeSender);
     }
     return sender;
+  }
+
+  private Address computeSender() {
+    final SECPPublicKey publicKey =
+        signatureAlgorithm
+            .recoverPublicKeyFromSignature(getOrComputeSenderRecoveryHash(), signature)
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Cannot recover public key from signature for " + this));
+    Address calculatedSender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
+    senderCache.put(this.hash, calculatedSender);
+    return calculatedSender;
   }
 
   /**
