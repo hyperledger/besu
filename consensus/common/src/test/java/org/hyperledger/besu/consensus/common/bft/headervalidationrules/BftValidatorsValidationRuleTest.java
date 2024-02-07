@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.junit.jupiter.api.Test;
@@ -46,7 +45,7 @@ public class BftValidatorsValidationRuleTest {
 
     final ProtocolContext context =
         new ProtocolContext(
-            null, null, setupContextWithBftExtraData(validators, bftExtraData), Optional.empty());
+            null, null, setupContextWithBftExtraData(validators, bftExtraData), null);
     when(bftExtraData.getValidators()).thenReturn(validators);
 
     assertThat(validatorsValidationRule.validate(blockHeader, null, context)).isTrue();
@@ -61,7 +60,7 @@ public class BftValidatorsValidationRuleTest {
 
     final ProtocolContext context =
         new ProtocolContext(
-            null, null, setupContextWithBftExtraData(validators, bftExtraData), Optional.empty());
+            null, null, setupContextWithBftExtraData(validators, bftExtraData), null);
     when(bftExtraData.getValidators()).thenReturn(Lists.reverse(validators));
 
     assertThat(validatorsValidationRule.validate(blockHeader, null, context)).isFalse();
@@ -79,10 +78,7 @@ public class BftValidatorsValidationRuleTest {
 
     final ProtocolContext context =
         new ProtocolContext(
-            null,
-            null,
-            setupContextWithBftExtraData(storedValidators, bftExtraData),
-            Optional.empty());
+            null, null, setupContextWithBftExtraData(storedValidators, bftExtraData), null);
     when(bftExtraData.getValidators()).thenReturn(Lists.reverse(reportedValidators));
 
     assertThat(validatorsValidationRule.validate(blockHeader, null, context)).isFalse();

@@ -112,7 +112,7 @@ public class IbftRoundTest {
             blockChain,
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(emptyList(), new IbftExtraDataCodec()),
-            Optional.empty());
+            null);
 
     lenient().when(messageValidator.validateProposal(any())).thenReturn(true);
     lenient().when(messageValidator.validatePrepare(any())).thenReturn(true);

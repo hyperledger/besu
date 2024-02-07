@@ -169,7 +169,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
 
     final TransactionTrace transactionTrace =
         new TransactionTrace(
-            simulatorResult.getTransaction(), simulatorResult.getResult(), tracer.getTraceFrames());
+            simulatorResult.transaction(), simulatorResult.result(), tracer.getTraceFrames());
 
     final Block block = blockchainQueriesSupplier.get().getBlockchain().getChainHeadBlock();
 

@@ -27,10 +27,11 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolReques
 import java.util.Optional;
 
 import org.web3j.protocol.Web3j;
+import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.websocket.WebSocketService;
 
 public class NodeRequests {
-
+  private final Web3jService web3jService;
   private final Web3j netEth;
   private final CliqueRequestFactory clique;
   private final BftRequestFactory bft;
@@ -44,6 +45,7 @@ public class NodeRequests {
   private final TxPoolRequestFactory txPool;
 
   public NodeRequests(
+      final Web3jService web3jService,
       final Web3j netEth,
       final CliqueRequestFactory clique,
       final BftRequestFactory bft,
@@ -55,6 +57,7 @@ public class NodeRequests {
       final TxPoolRequestFactory txPool,
       final Optional<WebSocketService> websocketService,
       final LoginRequestFactory login) {
+    this.web3jService = web3jService;
     this.netEth = netEth;
     this.clique = clique;
     this.bft = bft;
@@ -115,5 +118,9 @@ public class NodeRequests {
   public void shutdown() {
     netEth.shutdown();
     websocketService.ifPresent(WebSocketService::close);
+  }
+
+  public Web3jService getWeb3jService() {
+    return web3jService;
   }
 }

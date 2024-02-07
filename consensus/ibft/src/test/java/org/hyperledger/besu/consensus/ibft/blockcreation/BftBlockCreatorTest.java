@@ -59,6 +59,8 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.TransactionSelectionService;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -124,7 +126,16 @@ public class BftBlockCreatorTest {
             blockchain,
             createInMemoryWorldStateArchive(),
             setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder),
-            Optional.empty());
+            new TransactionSelectionService() {
+              @Override
+              public Optional<PluginTransactionSelectorFactory> get() {
+                return Optional.empty();
+              }
+
+              @Override
+              public void registerTransactionSelectorFactory(
+                  final PluginTransactionSelectorFactory transactionSelectorFactory) {}
+            });
 
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();

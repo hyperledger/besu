@@ -41,6 +41,8 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.services.PluginTransactionValidatorServiceImpl;
+import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.io.IOException;
@@ -457,6 +459,8 @@ public abstract class JsonBlockImporterTest {
         .gasLimitCalculator(GasLimitCalculator.constant())
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .networkConfiguration(NetworkingConfiguration.create())
+        .pluginTransactionValidatorService(new PluginTransactionValidatorServiceImpl())
+        .transactionSelectorService(new TransactionSelectionServiceImpl())
         .build();
   }
 }

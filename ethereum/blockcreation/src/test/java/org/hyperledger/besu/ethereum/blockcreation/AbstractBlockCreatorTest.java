@@ -78,6 +78,8 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.PluginTransactionValidatorService;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.math.BigInteger;
@@ -385,7 +387,16 @@ abstract class AbstractBlockCreatorTest {
             ethContext,
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
             poolConf,
-            null);
+            new PluginTransactionValidatorService() {
+              @Override
+              public PluginTransactionValidatorFactory get() {
+                return null;
+              }
+
+              @Override
+              public void registerTransactionValidatorFactory(
+                  final PluginTransactionValidatorFactory transactionValidatorFactory) {}
+            });
     transactionPool.setEnabled();
 
     final MiningParameters miningParameters =

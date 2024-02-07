@@ -103,7 +103,7 @@ public class ProposalValidatorTest {
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(
                 QbftContext.class, emptyList(), bftExtraDataEncoder),
-            Optional.empty());
+            null);
 
     // typically tests require the blockValidation to be successful
     when(blockValidator.validateAndProcessBlock(

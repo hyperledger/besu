@@ -64,6 +64,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.TransactionSelectionService;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -117,7 +119,20 @@ public class CliqueBlockCreatorTest {
         GenesisState.fromConfig(GenesisConfigFile.mainnet(), protocolSchedule).getBlock();
     blockchain = createInMemoryBlockchain(genesis);
     protocolContext =
-        new ProtocolContext(blockchain, stateArchive, cliqueContext, Optional.empty());
+        new ProtocolContext(
+            blockchain,
+            stateArchive,
+            cliqueContext,
+            new TransactionSelectionService() {
+              @Override
+              public Optional<PluginTransactionSelectorFactory> get() {
+                return Optional.empty();
+              }
+
+              @Override
+              public void registerTransactionSelectorFactory(
+                  final PluginTransactionSelectorFactory transactionSelectorFactory) {}
+            });
     epochManager = new EpochManager(10);
 
     // Add a block above the genesis

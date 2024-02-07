@@ -75,6 +75,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.PluginTransactionValidatorService;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
@@ -1117,7 +1118,7 @@ public final class EthProtocolManagerTest {
               metricsSystem,
               new SyncState(blockchain, ethManager.ethContext().getEthPeers()),
               TransactionPoolConfiguration.DEFAULT,
-              null,
+              mock(PluginTransactionValidatorService.class),
               new BlobCache())
           .setEnabled();
 

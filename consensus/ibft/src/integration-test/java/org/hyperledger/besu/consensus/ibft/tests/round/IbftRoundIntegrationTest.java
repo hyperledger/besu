@@ -126,7 +126,7 @@ public class IbftRoundIntegrationTest {
             blockChain,
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(emptyList(), bftExtraDataEncoder),
-            Optional.empty());
+            null);
   }
 
   @Test

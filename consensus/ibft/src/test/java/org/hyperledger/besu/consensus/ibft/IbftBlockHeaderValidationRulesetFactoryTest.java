@@ -51,7 +51,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
         null,
         null,
         setupContextWithBftExtraDataEncoder(validators, new IbftExtraDataCodec()),
-        Optional.empty());
+        null);
   }
 
   @Test

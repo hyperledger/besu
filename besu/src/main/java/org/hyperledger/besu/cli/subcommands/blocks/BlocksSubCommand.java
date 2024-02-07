@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.MetricsService;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
@@ -258,6 +259,7 @@ public class BlocksSubCommand implements Runnable {
             // set to mainnet genesis block so validation rules won't reject it.
             .clock(Clock.fixed(Instant.ofEpochSecond(startTime), ZoneOffset.UTC))
             .miningParameters(getMiningParameters())
+            .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_CONFIG)
             .build();
       } catch (final Exception e) {
         throw new ExecutionException(parentCommand.spec.commandLine(), e.getMessage(), e);
@@ -376,6 +378,7 @@ public class BlocksSubCommand implements Runnable {
           .parentCommand
           .getControllerBuilder()
           .miningParameters(MiningParameters.newDefault())
+          .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_CONFIG)
           .build();
     }
 

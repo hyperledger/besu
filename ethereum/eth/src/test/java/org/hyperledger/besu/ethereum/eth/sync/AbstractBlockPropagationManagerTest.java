@@ -65,7 +65,6 @@ import org.hyperledger.besu.testutil.TestClock;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -106,7 +105,7 @@ public abstract class AbstractBlockPropagationManagerTest {
             blockchain,
             tempProtocolContext.getWorldStateArchive(),
             tempProtocolContext.getConsensusContext(ConsensusContext.class),
-            Optional.empty());
+            null);
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             protocolSchedule,

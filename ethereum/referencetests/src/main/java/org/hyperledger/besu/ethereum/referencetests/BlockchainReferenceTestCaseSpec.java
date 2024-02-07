@@ -107,8 +107,7 @@ public class BlockchainReferenceTestCaseSpec {
     this.worldStateArchive = buildWorldStateArchive(accounts);
     this.blockchain = buildBlockchain(genesisBlockHeader);
     this.sealEngine = sealEngine;
-    this.protocolContext =
-        new ProtocolContext(this.blockchain, this.worldStateArchive, null, Optional.empty());
+    this.protocolContext = new ProtocolContext(this.blockchain, this.worldStateArchive, null, null);
   }
 
   public String getNetwork() {

@@ -49,6 +49,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.UnaryOperator;
 
 import io.vertx.core.Vertx;
@@ -72,6 +73,7 @@ public class BesuNodeFactory {
         config.getMetricsConfiguration(),
         config.getPermissioningConfiguration(),
         config.getApiConfiguration(),
+        config.getDataStorageConfiguration(),
         config.getKeyFilePath(),
         config.isDevMode(),
         config.getNetwork(),
@@ -375,17 +377,27 @@ public class BesuNodeFactory {
 
   public BesuNode createCliqueNode(final String name, final CliqueOptions cliqueOptions)
       throws IOException {
-    return createCliqueNodeWithExtraCliOptions(name, cliqueOptions, List.of());
+    return createCliqueNodeWithExtraCliOptionsAndRpcApis(name, cliqueOptions, List.of());
   }
 
-  public BesuNode createCliqueNodeWithExtraCliOptions(
+  public BesuNode createCliqueNodeWithExtraCliOptionsAndRpcApis(
       final String name, final CliqueOptions cliqueOptions, final List<String> extraCliOptions)
+      throws IOException {
+    return createCliqueNodeWithExtraCliOptionsAndRpcApis(
+        name, cliqueOptions, extraCliOptions, Set.of());
+  }
+
+  public BesuNode createCliqueNodeWithExtraCliOptionsAndRpcApis(
+      final String name,
+      final CliqueOptions cliqueOptions,
+      final List<String> extraCliOptions,
+      final Set<String> extraRpcApis)
       throws IOException {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
-            .jsonRpcConfiguration(node.createJsonRpcWithCliqueEnabledConfig())
+            .jsonRpcConfiguration(node.createJsonRpcWithCliqueEnabledConfig(extraRpcApis))
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
             .jsonRpcTxPool()
@@ -583,7 +595,7 @@ public class BesuNodeFactory {
         new BesuNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
-            .jsonRpcConfiguration(node.createJsonRpcWithCliqueEnabledConfig())
+            .jsonRpcConfiguration(node.createJsonRpcWithCliqueEnabledConfig(Set.of()))
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .jsonRpcTxPool()
             .devMode(false)

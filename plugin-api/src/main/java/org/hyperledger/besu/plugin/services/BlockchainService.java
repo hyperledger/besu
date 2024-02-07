@@ -14,8 +14,11 @@
  */
 package org.hyperledger.besu.plugin.services;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.BlockContext;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.Optional;
 
@@ -29,4 +32,25 @@ public interface BlockchainService extends BesuService {
    * @return the BlockContext
    */
   Optional<BlockContext> getBlockByNumber(final long number);
+
+  /**
+   * Get the hash of the chain head
+   *
+   * @return chain head hash
+   */
+  Hash getChainHeadHash();
+
+  /**
+   * Get the block header of the chain head
+   *
+   * @return chain head block header
+   */
+  BlockHeader getChainHeadHeader();
+
+  /**
+   * Return the base fee for the next block
+   *
+   * @return base fee of the next block or empty if the fee market does not support base fee
+   */
+  Optional<Wei> getNextBlockBaseFee();
 }

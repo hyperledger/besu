@@ -107,7 +107,7 @@ public class ValidatorContractController {
     if (result.isSuccessful()) {
       final List<Type> decodedList =
           FunctionReturnDecoder.decode(
-              result.getResult().getOutput().toHexString(), function.getOutputParameters());
+              result.result().getOutput().toHexString(), function.getOutputParameters());
 
       if (decodedList.isEmpty()) {
         throw new IllegalStateException(

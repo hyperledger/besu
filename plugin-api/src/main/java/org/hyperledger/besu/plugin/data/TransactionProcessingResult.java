@@ -88,4 +88,11 @@ public interface TransactionProcessingResult {
    * @return the revert reason.
    */
   Optional<Bytes> getRevertReason();
+
+  /**
+   * Return the reason why the transaction is invalid or empty if the transaction is successful
+   *
+   * @return the optional invalid reason as a string
+   */
+  Optional<String> getInvalidReason();
 }

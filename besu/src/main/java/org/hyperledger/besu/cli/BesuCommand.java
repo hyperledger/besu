@@ -137,7 +137,9 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
@@ -165,14 +167,14 @@ import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.TraceService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
+import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
-import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
-import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
+import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
@@ -185,6 +187,7 @@ import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.TraceServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
+import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.LogConfigurator;
@@ -232,7 +235,6 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.metrics.MetricsOptions;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import picocli.AutoComplete;
 import picocli.CommandLine;
@@ -365,6 +367,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private final TransactionSelectionServiceImpl transactionSelectionServiceImpl;
   private final PluginTransactionValidatorServiceImpl transactionValidatorServiceImpl;
+  private final TransactionSimulationServiceImpl transactionSimulationServiceImpl;
+  private final BlockchainServiceImpl blockchainServiceImpl;
 
   static class P2PDiscoveryOptionGroup {
 
@@ -889,9 +893,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
   private Optional<TLSConfiguration> p2pTLSConfiguration;
+  private DataStorageConfiguration dataStorageConfiguration;
   private Collection<EnodeURL> staticNodes;
   private BesuController besuController;
-  private BesuConfiguration pluginCommonConfiguration;
+  private BesuConfigurationImpl pluginCommonConfiguration;
   private MiningParameters miningParameters;
 
   private BesuComponent besuComponent;
@@ -942,7 +947,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new PkiBlockCreationConfigurationProvider(),
         new RpcEndpointServiceImpl(),
         new TransactionSelectionServiceImpl(),
-        new PluginTransactionValidatorServiceImpl());
+        new PluginTransactionValidatorServiceImpl(),
+        new TransactionSimulationServiceImpl(),
+        new BlockchainServiceImpl());
   }
 
   /**
@@ -964,6 +971,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param rpcEndpointServiceImpl instance of RpcEndpointServiceImpl
    * @param transactionSelectionServiceImpl instance of TransactionSelectionServiceImpl
    * @param transactionValidatorServiceImpl instance of TransactionValidatorServiceImpl
+   * @param transactionSimulationServiceImpl instance of TransactionSimulationServiceImpl
+   * @param blockchainServiceImpl instance of BlockchainServiceImpl
    */
   @VisibleForTesting
   protected BesuCommand(
@@ -982,7 +991,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl,
       final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
-      final PluginTransactionValidatorServiceImpl transactionValidatorServiceImpl) {
+      final PluginTransactionValidatorServiceImpl transactionValidatorServiceImpl,
+      final TransactionSimulationServiceImpl transactionSimulationServiceImpl,
+      final BlockchainServiceImpl blockchainServiceImpl) {
     this.besuComponent = besuComponent;
     this.logger = besuComponent.getBesuCommandLogger();
     this.rlpBlockImporter = rlpBlockImporter;
@@ -996,12 +1007,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.securityModuleService = securityModuleService;
     this.permissioningService = permissioningService;
     this.privacyPluginService = privacyPluginService;
-    pluginCommonConfiguration = new BesuCommandConfigurationService();
+    this.pluginCommonConfiguration = new BesuConfigurationImpl();
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
     this.pkiBlockCreationConfigProvider = pkiBlockCreationConfigProvider;
     this.rpcEndpointServiceImpl = rpcEndpointServiceImpl;
     this.transactionSelectionServiceImpl = transactionSelectionServiceImpl;
     this.transactionValidatorServiceImpl = transactionValidatorServiceImpl;
+    this.transactionSimulationServiceImpl = transactionSimulationServiceImpl;
+    this.blockchainServiceImpl = blockchainServiceImpl;
   }
 
   /**
@@ -1069,7 +1082,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       validateOptions();
       configure();
       configureNativeLibs();
-      besuController = initController();
+      besuController = buildController();
 
       besuPluginContext.beforeExternalServices();
 
@@ -1091,7 +1104,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   @VisibleForTesting
-  void setBesuConfiguration(final BesuConfiguration pluginCommonConfiguration) {
+  void setBesuConfiguration(final BesuConfigurationImpl pluginCommonConfiguration) {
     this.pluginCommonConfiguration = pluginCommonConfiguration;
   }
 
@@ -1184,6 +1197,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         TransactionSelectionService.class, transactionSelectionServiceImpl);
     besuPluginContext.addService(
         PluginTransactionValidatorService.class, transactionValidatorServiceImpl);
+    besuPluginContext.addService(
+        TransactionSimulationService.class, transactionSimulationServiceImpl);
+    besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
 
     // register built-in plugins
     rocksDBPlugin = new RocksDBPlugin();
@@ -1264,6 +1280,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void startPlugins() {
+    blockchainServiceImpl.init(
+        besuController.getProtocolContext(), besuController.getProtocolSchedule());
+    transactionSimulationServiceImpl.init(
+        besuController.getProtocolContext().getBlockchain(),
+        new TransactionSimulator(
+            besuController.getProtocolContext().getBlockchain(),
+            besuController.getProtocolContext().getWorldStateArchive(),
+            besuController.getProtocolSchedule(),
+            apiConfiguration.getGasCap()));
+
     besuPluginContext.addService(
         BesuEvents.class,
         new BesuEventsImpl(
@@ -1272,10 +1298,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getTransactionPool(),
             besuController.getSyncState()));
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
-
-    besuPluginContext.addService(
-        BlockchainService.class,
-        new BlockchainServiceImpl(besuController.getProtocolContext().getBlockchain()));
 
     besuPluginContext.addService(
         TraceService.class,
@@ -1667,6 +1689,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             unstableIpcOptions.getIpcPath(),
             unstableIpcOptions.getRpcIpcApis());
     apiConfiguration = apiConfigurationOptions.apiConfiguration(getMiningParameters());
+    dataStorageConfiguration = getDataStorageConfiguration();
     // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
     if (!hostsWhitelist.isEmpty()) {
       // if allowlist == default values, remove the default values
@@ -1729,10 +1752,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private BesuController initController() {
-    return buildController();
-  }
-
   /**
    * Builds BesuController
    *
@@ -1754,6 +1773,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @return instance of BesuControllerBuilder
    */
   public BesuControllerBuilder getControllerBuilder() {
+    pluginCommonConfiguration.init(
+        dataDir(),
+        dataDir().resolve(DATABASE_PATH),
+        getDataStorageConfiguration(),
+        getMiningParameters());
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
     return controllerBuilderFactory
         .fromEthNetworkConfig(
@@ -1761,9 +1785,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .synchronizerConfiguration(buildSyncConfig())
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .networkConfiguration(unstableNetworkingOptions.toDomainObject())
-        .transactionSelectorFactory(getTransactionSelectorFactory())
-        .pluginTransactionValidatorFactory(getPluginTransactionValidatorFactory())
+        .transactionSelectorService(getTransactionSelectorService())
+        .pluginTransactionValidatorService(getPluginTransactionValidatorService())
         .dataDirectory(dataDir())
+        .dataStorageConfiguration(getDataStorageConfiguration())
         .miningParameters(getMiningParameters())
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(new NodeKey(securityModule()))
@@ -1785,7 +1810,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .requiredBlocks(requiredBlocks)
         .reorgLoggingThreshold(reorgLoggingThreshold)
         .evmConfiguration(unstableEvmOptions.toDomainObject())
-        .dataStorageConfiguration(dataStorageOptions.toDomainObject())
         .maxPeers(p2PDiscoveryOptionGroup.maxPeers)
         .maxRemotelyInitiatedPeers(maxRemoteInitiatedPeers)
         .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
@@ -1793,17 +1817,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .cacheLastBlocks(numberOfblocksToCache);
   }
 
-  @NotNull
-  private Optional<PluginTransactionSelectorFactory> getTransactionSelectorFactory() {
-    final Optional<TransactionSelectionService> txSelectionService =
-        besuPluginContext.getService(TransactionSelectionService.class);
-    return txSelectionService.isPresent() ? txSelectionService.get().get() : Optional.empty();
+  private TransactionSelectionService getTransactionSelectorService() {
+    return besuPluginContext.getService(TransactionSelectionService.class).orElseThrow();
   }
 
-  private PluginTransactionValidatorFactory getPluginTransactionValidatorFactory() {
-    final Optional<PluginTransactionValidatorService> txSValidatorService =
-        besuPluginContext.getService(PluginTransactionValidatorService.class);
-    return txSValidatorService.map(PluginTransactionValidatorService::get).orElse(null);
+  private PluginTransactionValidatorService getPluginTransactionValidatorService() {
+    return besuPluginContext.getService(PluginTransactionValidatorService.class).orElseThrow();
   }
 
   private JsonRpcConfiguration createEngineJsonRpcConfiguration(
@@ -2118,6 +2137,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       miningParameters = miningOptions.toDomainObject();
     }
     return miningParameters;
+  }
+
+  private DataStorageConfiguration getDataStorageConfiguration() {
+    if (dataStorageConfiguration == null) {
+      dataStorageConfiguration = dataStorageOptions.toDomainObject();
+    }
+    return dataStorageConfiguration;
   }
 
   private OptionalInt getGenesisBlockPeriodSeconds(
@@ -2531,24 +2557,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return loggingLevelOption.getLogLevel();
   }
 
-  private class BesuCommandConfigurationService implements BesuConfiguration {
-
-    @Override
-    public Path getStoragePath() {
-      return dataDir().resolve(DATABASE_PATH);
-    }
-
-    @Override
-    public Path getDataPath() {
-      return dataDir();
-    }
-
-    @Override
-    public int getDatabaseVersion() {
-      return dataStorageOptions.toDomainObject().getDataStorageFormat().getDatabaseVersion();
-    }
-  }
-
   private void instantiateSignatureAlgorithmFactory() {
     if (SignatureAlgorithmFactory.isInstanceSet()) {
       return;
@@ -2707,12 +2715,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setHighSpecEnabled();
     }
 
-    if (dataStorageOptions.toDomainObject().getUnstable().getBonsaiLimitTrieLogsEnabled()) {
+    if (getDataStorageConfiguration().getUnstable().getBonsaiLimitTrieLogsEnabled()) {
       builder.setLimitTrieLogsEnabled();
-      builder.setTrieLogRetentionLimit(
-          dataStorageOptions.toDomainObject().getBonsaiMaxLayersToLoad());
+      builder.setTrieLogRetentionLimit(getDataStorageConfiguration().getBonsaiMaxLayersToLoad());
       builder.setTrieLogsPruningWindowSize(
-          dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningWindowSize());
+          getDataStorageConfiguration().getUnstable().getBonsaiTrieLogPruningWindowSize());
     }
 
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());

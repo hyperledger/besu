@@ -71,7 +71,7 @@ public class NodeSmartContractPermissioningController
         transactionSimulator.processAtHead(callParams);
 
     if (result.isPresent()) {
-      switch (result.get().getResult().getStatus()) {
+      switch (result.get().result().getStatus()) {
         case INVALID:
           throw new IllegalStateException("Permissioning transaction found to be Invalid");
         case FAILED:

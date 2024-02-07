@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
+import org.hyperledger.besu.plugin.services.PluginTransactionValidatorService;
 
 import java.time.Clock;
 import java.util.function.BiFunction;
@@ -54,7 +54,7 @@ public class TransactionPoolFactory {
       final MetricsSystem metricsSystem,
       final SyncState syncState,
       final TransactionPoolConfiguration transactionPoolConfiguration,
-      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory,
+      final PluginTransactionValidatorService pluginTransactionValidatorService,
       final BlobCache blobCache) {
 
     final TransactionPoolMetrics metrics = new TransactionPoolMetrics(metricsSystem);
@@ -77,7 +77,7 @@ public class TransactionPoolFactory {
         transactionTracker,
         transactionsMessageSender,
         newPooledTransactionHashesMessageSender,
-        pluginTransactionValidatorFactory,
+        pluginTransactionValidatorService,
         blobCache);
   }
 
@@ -92,7 +92,7 @@ public class TransactionPoolFactory {
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
       final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender,
-      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory,
+      final PluginTransactionValidatorService pluginTransactionValidatorService,
       final BlobCache blobCache) {
 
     final TransactionPool transactionPool =
@@ -115,7 +115,7 @@ public class TransactionPoolFactory {
             ethContext,
             metrics,
             transactionPoolConfiguration,
-            pluginTransactionValidatorFactory);
+            pluginTransactionValidatorService);
 
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(

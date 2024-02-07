@@ -28,10 +28,10 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,7 +58,8 @@ public class CliqueDifficultyCalculatorTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext, Optional.empty());
+    cliqueProtocolContext =
+        new ProtocolContext(null, null, cliqueContext, mock(TransactionSelectionService.class));
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }
 

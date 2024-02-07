@@ -101,7 +101,7 @@ public class TraceRawTransaction extends AbstractTraceByBlock implements JsonRpc
                     result -> {
                       final TransactionTrace transactionTrace =
                           new TransactionTrace(
-                              result.getTransaction(), result.getResult(), tracer.getTraceFrames());
+                              result.transaction(), result.result(), tracer.getTraceFrames());
                       final Optional<Block> maybeBlock =
                           blockchainQueriesSupplier
                               .get()

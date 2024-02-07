@@ -57,6 +57,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -168,7 +169,8 @@ public final class RunnerTest {
     final SynchronizerConfiguration syncConfigAhead =
         SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
     final ObservableMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
-
+    final var miningParameters = MiningParameters.newDefault();
+    final var dataStorageConfiguration = DataStorageConfiguration.DEFAULT_CONFIG;
     // Setup Runner with blocks
     final BesuController controllerAhead =
         getController(
@@ -176,8 +178,10 @@ public final class RunnerTest {
             syncConfigAhead,
             dataDirAhead,
             aheadDbNodeKey,
-            createKeyValueStorageProvider(dataDirAhead, dbAhead),
-            noOpMetricsSystem);
+            createKeyValueStorageProvider(
+                dataDirAhead, dbAhead, dataStorageConfiguration, miningParameters),
+            noOpMetricsSystem,
+            miningParameters);
     setupState(
         blockCount, controllerAhead.getProtocolSchedule(), controllerAhead.getProtocolContext());
 
@@ -232,7 +236,8 @@ public final class RunnerTest {
               dataDirBehind,
               behindDbNodeKey,
               new InMemoryKeyValueStorageProvider(),
-              noOpMetricsSystem);
+              noOpMetricsSystem,
+              miningParameters);
 
       final EnodeURL aheadEnode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
@@ -375,7 +380,13 @@ public final class RunnerTest {
     return GenesisConfigFile.fromConfig(jsonNode);
   }
 
-  private StorageProvider createKeyValueStorageProvider(final Path dataDir, final Path dbDir) {
+  private StorageProvider createKeyValueStorageProvider(
+      final Path dataDir,
+      final Path dbDir,
+      final DataStorageConfiguration dataStorageConfiguration,
+      final MiningParameters miningParameters) {
+    final var besuConfiguration = new BesuConfigurationImpl();
+    besuConfiguration.init(dataDir, dbDir, dataStorageConfiguration, miningParameters);
     return new KeyValueStorageProviderBuilder()
         .withStorageFactory(
             new RocksDBKeyValueStorageFactory(
@@ -387,7 +398,7 @@ public final class RunnerTest {
                         DEFAULT_IS_HIGH_SPEC),
                 Arrays.asList(KeyValueSegmentIdentifier.values()),
                 RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
-        .withCommonConfiguration(new BesuConfigurationImpl(dataDir, dbDir))
+        .withCommonConfiguration(besuConfiguration)
         .withMetricsSystem(new NoOpMetricsSystem())
         .build();
   }
@@ -443,14 +454,15 @@ public final class RunnerTest {
       final Path dataDir,
       final NodeKey nodeKey,
       final StorageProvider storageProvider,
-      final ObservableMetricsSystem metricsSystem) {
+      final ObservableMetricsSystem metricsSystem,
+      final MiningParameters miningParameters) {
     return new MainnetBesuControllerBuilder()
         .genesisConfigFile(genesisConfig)
         .synchronizerConfiguration(syncConfig)
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .dataDirectory(dataDir)
         .networkId(NETWORK_ID)
-        .miningParameters(MiningParameters.newDefault())
+        .miningParameters(miningParameters)
         .nodeKey(nodeKey)
         .storageProvider(storageProvider)
         .metricsSystem(metricsSystem)

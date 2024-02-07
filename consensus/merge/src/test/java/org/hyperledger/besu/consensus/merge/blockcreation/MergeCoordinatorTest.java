@@ -77,6 +77,8 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
+import org.hyperledger.besu.plugin.services.TransactionSelectionService;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.number.Fraction;
 
@@ -201,7 +203,20 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         .getByBlockHeader(any(BlockHeader.class));
 
     protocolContext =
-        new ProtocolContext(blockchain, worldStateArchive, mergeContext, Optional.empty());
+        new ProtocolContext(
+            blockchain,
+            worldStateArchive,
+            mergeContext,
+            new TransactionSelectionService() {
+              @Override
+              public Optional<PluginTransactionSelectorFactory> get() {
+                return Optional.empty();
+              }
+
+              @Override
+              public void registerTransactionSelectorFactory(
+                  final PluginTransactionSelectorFactory transactionSelectorFactory) {}
+            });
     var mutable = worldStateArchive.getMutable();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);

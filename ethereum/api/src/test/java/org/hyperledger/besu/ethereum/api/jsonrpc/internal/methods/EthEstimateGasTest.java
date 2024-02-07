@@ -451,7 +451,7 @@ public class EthEstimateGasTest {
     when(mockResult.getEstimateGasUsedByTransaction()).thenReturn(estimateGas);
     when(mockResult.getRevertReason()).thenReturn(revertReason);
 
-    when(mockTxSimResult.getResult()).thenReturn(mockResult);
+    when(mockTxSimResult.result()).thenReturn(mockResult);
     when(mockTxSimResult.isSuccessful()).thenReturn(isSuccessful);
     return mockTxSimResult;
   }

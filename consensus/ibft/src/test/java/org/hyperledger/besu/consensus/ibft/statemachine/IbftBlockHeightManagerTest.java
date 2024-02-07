@@ -76,6 +76,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.math.BigInteger;
@@ -168,7 +169,10 @@ public class IbftBlockHeightManagerTest {
 
     protocolContext =
         new ProtocolContext(
-            blockchain, null, setupContextWithValidators(validators), Optional.empty());
+            blockchain,
+            null,
+            setupContextWithValidators(validators),
+            mock(TransactionSelectionService.class));
 
     final ProtocolScheduleBuilder protocolScheduleBuilder =
         new ProtocolScheduleBuilder(

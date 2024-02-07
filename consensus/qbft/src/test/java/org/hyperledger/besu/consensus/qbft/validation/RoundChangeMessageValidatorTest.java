@@ -85,7 +85,7 @@ public class RoundChangeMessageValidatorTest {
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(
                 QbftContext.class, emptyList(), bftExtraDataEncoder),
-            Optional.empty());
+            null);
 
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
 

@@ -47,6 +47,8 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.plugin.services.TransactionSelectionService;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 
 import java.math.BigInteger;
 import java.nio.file.Path;
@@ -78,7 +80,21 @@ public class JsonRpcTestMethodsFactory {
     this.blockchain = createInMemoryBlockchain(importer.getGenesisBlock());
     this.stateArchive = createInMemoryWorldStateArchive();
     this.importer.getGenesisState().writeStateTo(stateArchive.getMutable());
-    this.context = new ProtocolContext(blockchain, stateArchive, null, Optional.empty());
+    this.context =
+        new ProtocolContext(
+            blockchain,
+            stateArchive,
+            null,
+            new TransactionSelectionService() {
+              @Override
+              public Optional<PluginTransactionSelectorFactory> get() {
+                return Optional.empty();
+              }
+
+              @Override
+              public void registerTransactionSelectorFactory(
+                  PluginTransactionSelectorFactory transactionSelectorFactory) {}
+            });
 
     final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
     this.synchronizer = mock(Synchronizer.class);

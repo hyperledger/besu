@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.transaction;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.List;
 import java.util.Objects;
@@ -146,14 +146,38 @@ public class CallParameter {
         from, to, gasLimit, gasPrice, maxPriorityFeePerGas, maxFeePerGas, value, payload);
   }
 
+  @Override
+  public String toString() {
+    return "CallParameter{"
+        + "from="
+        + from
+        + ", to="
+        + to
+        + ", gasLimit="
+        + gasLimit
+        + ", maxPriorityFeePerGas="
+        + maxPriorityFeePerGas
+        + ", maxFeePerGas="
+        + maxFeePerGas
+        + ", gasPrice="
+        + gasPrice
+        + ", value="
+        + value
+        + ", payloadSize="
+        + (payload == null ? "null" : payload.size())
+        + ", accessListSize="
+        + accessList.map(List::size)
+        + '}';
+  }
+
   public static CallParameter fromTransaction(final Transaction tx) {
     return new CallParameter(
         tx.getSender(),
-        tx.getTo().orElseGet(() -> null),
+        tx.getTo().orElse(null),
         tx.getGasLimit(),
-        Wei.fromQuantity(tx.getGasPrice().orElseGet(() -> Wei.ZERO)),
-        Optional.of(Wei.fromQuantity(tx.getMaxPriorityFeePerGas().orElseGet(() -> Wei.ZERO))),
-        tx.getMaxFeePerGas(),
+        tx.getGasPrice().map(Wei::fromQuantity).orElse(Wei.ZERO),
+        tx.getMaxPriorityFeePerGas().map(Wei::fromQuantity),
+        tx.getMaxFeePerGas().map(Wei::fromQuantity),
         Wei.fromQuantity(tx.getValue()),
         tx.getPayload(),
         tx.getAccessList());

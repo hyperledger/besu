@@ -20,9 +20,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
-
-import java.util.Optional;
+import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 
 /** The Migrating protocol context. */
 public class MigratingProtocolContext extends ProtocolContext {
@@ -35,14 +33,14 @@ public class MigratingProtocolContext extends ProtocolContext {
    * @param blockchain the blockchain
    * @param worldStateArchive the world state archive
    * @param consensusContextSchedule the consensus context schedule
-   * @param transactionSelectorFactory the optional transaction selector factory
+   * @param transactionSelectorService the optional transaction selector service
    */
   public MigratingProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ForksSchedule<ConsensusContext> consensusContextSchedule,
-      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
-    super(blockchain, worldStateArchive, null, transactionSelectorFactory);
+      final TransactionSelectionService transactionSelectorService) {
+    super(blockchain, worldStateArchive, null, transactionSelectorService);
     this.consensusContextSchedule = consensusContextSchedule;
   }
 
@@ -53,7 +51,7 @@ public class MigratingProtocolContext extends ProtocolContext {
    * @param worldStateArchive the world state archive
    * @param protocolSchedule the protocol schedule
    * @param consensusContextFactory the consensus context factory
-   * @param transactionSelectorFactory the optional transaction selector factory
+   * @param transactionSelectorService the optional transaction selector service
    * @return the protocol context
    */
   public static ProtocolContext init(
@@ -61,7 +59,7 @@ public class MigratingProtocolContext extends ProtocolContext {
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory,
-      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
+      final TransactionSelectionService transactionSelectorService) {
     final ConsensusContext consensusContext =
         consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule);
     final MigratingContext migratingContext = consensusContext.as(MigratingContext.class);
@@ -69,7 +67,7 @@ public class MigratingProtocolContext extends ProtocolContext {
         blockchain,
         worldStateArchive,
         migratingContext.getConsensusContextSchedule(),
-        transactionSelectorFactory);
+        transactionSelectorService);
   }
 
   @Override
