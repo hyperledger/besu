@@ -52,32 +52,6 @@ jobs:
 
             return shouldRun;
 
-  prepareReferenceTestEthereum:
-    runs-on: ubuntu-22.04
-    needs: shouldRun
-    if: ${{ needs.shouldRun.outputs.shouldRun == 'true' }}
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.ref }}
-          submodules: recursive
-          set-safe-directory: true
-      - name: Set up Java
-        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
-        with:
-          distribution: temurin
-          java-version: 17
-      - name: setup gradle
-        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
-      - name: execute generate reference tests
-        run: ./gradlew ethereum:referencetests:blockchainReferenceTests ethereum:referencetests:generalstateReferenceTests ethereum:referencetests:generalstateRegressionReferenceTests -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
-      - name: store generated tests
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
-        with:
-          name: 'reference-tests'
-          path: 'ethereum/referencetests/build/generated/sources/reference-test/**/*.java'
-
   referenceTestEthereum:
     runs-on: ubuntu-22.04
     permissions:
@@ -85,7 +59,7 @@ jobs:
       checks: write
       packages: read
     needs:
-      - prepareReferenceTestEthereum
+      - shouldRun
     if: ${{ needs.shouldRun.outputs.shouldRun == 'true' }}
     strategy:
       fail-fast: true
@@ -102,11 +76,6 @@ jobs:
         with:
           distribution: adopt-openj9
           java-version: 17
-      - name: retrieve generated tests
-        uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe
-        with:
-          name: 'reference-tests'
-          path: 'ethereum/referencetests/build/generated/sources/reference-test/'
       - name: get reference test report
         uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
         with:
@@ -117,6 +86,9 @@ jobs:
           if_no_artifact_found: true
       - name: setup gradle
         uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+        #shame the test generation isn't less redundant, we used to do this in a dependent job, but artifact downloading broke
+      - name: execute generate reference tests
+        run: ./gradlew ethereum:referencetests:blockchainReferenceTests ethereum:referencetests:generalstateReferenceTests ethereum:referencetests:generalstateRegressionReferenceTests -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Split tests
         id: split-tests
         uses: r7kamura/split-tests-by-timings@9322bd292d9423e2bc5a65bec548901801341e3f
