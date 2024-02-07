@@ -59,7 +59,7 @@ public class ForkIdManager {
     checkNotNull(blockNumberForks);
     this.chainHeadSupplier = blockchain::getChainHeadHeader;
     this.genesisHash = blockchain.getGenesisBlock().getHash();
-    System.out.println("genesis hash "+genesisHash);
+    System.out.println("genesis hash " + genesisHash);
     this.blockNumbersForkIds = new ArrayList<>();
     this.timestampsForkIds = new ArrayList<>();
     this.legacyEth64 = legacyEth64;

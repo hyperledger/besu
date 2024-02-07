@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.ClearEmptyAccount;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
@@ -180,7 +181,7 @@ public class ClassicProtocolSpecs {
                     transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
-                    true,
+                    new ClearEmptyAccount(),
                     false,
                     stackSizeLimit,
                     feeMarket,
@@ -369,7 +370,7 @@ public class ClassicProtocolSpecs {
                     transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
-                    true,
+                    new ClearEmptyAccount(),
                     true,
                     stackSizeLimit,
                     feeMarket,

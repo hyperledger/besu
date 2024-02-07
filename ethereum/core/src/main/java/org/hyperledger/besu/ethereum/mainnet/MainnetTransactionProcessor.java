@@ -71,7 +71,7 @@ public class MainnetTransactionProcessor {
 
   private final int maxStackSize;
 
-  private final boolean clearEmptyAccounts;
+  private final ClearEmptyAccountStrategy clearEmptyAccountStrategy;
 
   protected final boolean warmCoinbase;
 
@@ -83,7 +83,7 @@ public class MainnetTransactionProcessor {
       final TransactionValidatorFactory transactionValidatorFactory,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
-      final boolean clearEmptyAccounts,
+      final ClearEmptyAccountStrategy clearEmptyAccountStrategy,
       final boolean warmCoinbase,
       final int maxStackSize,
       final FeeMarket feeMarket,
@@ -92,7 +92,7 @@ public class MainnetTransactionProcessor {
     this.transactionValidatorFactory = transactionValidatorFactory;
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
-    this.clearEmptyAccounts = clearEmptyAccounts;
+    this.clearEmptyAccountStrategy = clearEmptyAccountStrategy;
     this.warmCoinbase = warmCoinbase;
     this.maxStackSize = maxStackSize;
     this.feeMarket = feeMarket;
@@ -502,9 +502,7 @@ public class MainnetTransactionProcessor {
 
       initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
 
-      if (clearEmptyAccounts) {
-        worldState.clearAccountsThatAreEmpty();
-      }
+      clearEmptyAccountStrategy.process(worldUpdater);
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         return TransactionProcessingResult.successful(

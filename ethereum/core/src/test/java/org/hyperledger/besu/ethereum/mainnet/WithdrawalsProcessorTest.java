@@ -23,6 +23,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.ClearEmptyAccount;
+import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.ClearEmptyAccountWithException;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Collections;
@@ -42,7 +44,8 @@ class WithdrawalsProcessorTest {
         createWorldStateWithAccounts(List.of(entry("0x1", 1), entry("0x2", 2), entry("0x3", 3)));
     final WorldUpdater updater = worldState.updater();
 
-    final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
+    final WithdrawalsProcessor withdrawalsProcessor =
+        new WithdrawalsProcessor(new ClearEmptyAccount());
     withdrawalsProcessor.processWithdrawals(Collections.emptyList(), updater);
 
     assertThat(worldState.get(Address.fromHexString("0x1")).getBalance()).isEqualTo(Wei.of(1));
@@ -69,7 +72,8 @@ class WithdrawalsProcessorTest {
                 UInt64.valueOf(2000),
                 Address.fromHexString("0x2"),
                 GWei.of(200)));
-    final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
+    final WithdrawalsProcessor withdrawalsProcessor =
+        new WithdrawalsProcessor(new ClearEmptyAccount());
     withdrawalsProcessor.processWithdrawals(withdrawals, updater);
 
     assertThat(worldState.get(Address.fromHexString("0x1")).getBalance())
@@ -96,7 +100,8 @@ class WithdrawalsProcessorTest {
                 UInt64.valueOf(2000),
                 Address.fromHexString("0x2"),
                 GWei.of(200)));
-    final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
+    final WithdrawalsProcessor withdrawalsProcessor =
+        new WithdrawalsProcessor(new ClearEmptyAccount());
     withdrawalsProcessor.processWithdrawals(withdrawals, updater);
 
     assertThat(worldState.get(Address.fromHexString("0x1")).getBalance())
@@ -119,10 +124,34 @@ class WithdrawalsProcessorTest {
                 UInt64.valueOf(2000),
                 Address.fromHexString("0x2"),
                 GWei.ZERO));
-    final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
+    final WithdrawalsProcessor withdrawalsProcessor =
+        new WithdrawalsProcessor(new ClearEmptyAccount());
     withdrawalsProcessor.processWithdrawals(withdrawals, updater);
 
     assertThat(worldState.get(Address.fromHexString("0x1"))).isNull();
+    assertThat(worldState.get(Address.fromHexString("0x2"))).isNull();
+  }
+
+  @Test
+  void shouldNotDeleteEmptyAccountsInExceptionList() {
+    final MutableWorldState worldState = createWorldStateWithAccounts(List.of(entry("0x1", 0)));
+    final WorldUpdater updater = worldState.updater();
+
+    final List<Withdrawal> withdrawals =
+        List.of(
+            new Withdrawal(
+                UInt64.valueOf(100), UInt64.valueOf(1000), Address.fromHexString("0x1"), GWei.ZERO),
+            new Withdrawal(
+                UInt64.valueOf(200),
+                UInt64.valueOf(2000),
+                Address.fromHexString("0x2"),
+                GWei.ZERO));
+    final WithdrawalsProcessor withdrawalsProcessor =
+        new WithdrawalsProcessor(
+            new ClearEmptyAccountWithException(List.of(Address.fromHexString("0x1"))));
+    withdrawalsProcessor.processWithdrawals(withdrawals, updater);
+
+    assertThat(worldState.get(Address.fromHexString("0x1"))).isNotNull();
     assertThat(worldState.get(Address.fromHexString("0x2"))).isNull();
   }
 

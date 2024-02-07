@@ -50,6 +50,7 @@ public class VerkleTrieKeyValueGenerator {
     keys.add(trieKeyAdapter.versionKey(address));
     keys.add(trieKeyAdapter.balanceKey(address));
     keys.add(trieKeyAdapter.nonceKey(address));
+    keys.add(trieKeyAdapter.codeKeccakKey(address));
     return keys;
   }
 

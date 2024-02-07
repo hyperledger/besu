@@ -217,8 +217,9 @@ public class VerkleWorldState extends DiffBasedWorldState {
               worldStateUpdater.getCodeToUpdate().entrySet()) {
             final Bytes previousCode = codeUpdate.getValue().getPrior();
             final Bytes updatedCode = codeUpdate.getValue().getUpdated();
-            System.out.println(previousCode+" "+codeUpdate);
-            if (!codeUpdate.getValue().isUnchanged() || (codeIsEmpty(previousCode) && codeIsEmpty(updatedCode))) {
+            System.out.println(previousCode + " " + codeUpdate);
+            if (!codeUpdate.getValue().isUnchanged()
+                || (codeIsEmpty(previousCode) && codeIsEmpty(updatedCode))) {
               final Address address = codeUpdate.getKey();
               final Hash accountHash = address.addressHash();
               if (updatedCode == null) {
@@ -306,12 +307,10 @@ public class VerkleWorldState extends DiffBasedWorldState {
                     () -> {
                       storageUpdate.getValue().setPrior(null);
                     });
-            if (updatedStorage.equals(UInt256.ZERO)) {
-              maybeStateUpdater.ifPresent(
-                  bonsaiUpdater ->
-                      bonsaiUpdater.putStorageValueBySlotHash(
-                          updatedAddressHash, slotHash, updatedStorage));
-            }
+            maybeStateUpdater.ifPresent(
+                bonsaiUpdater ->
+                    bonsaiUpdater.putStorageValueBySlotHash(
+                        updatedAddressHash, slotHash, updatedStorage));
           }
         }
       }

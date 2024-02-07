@@ -35,28 +35,44 @@ public class HistoricalBlockHashProcessor {
       final Blockchain blockchain,
       final WorldUpdater worldUpdater,
       final BlockHeader currentBlockHeader) {
-    /*
-     see EIP-2935: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2935.md
-    */
-    final MutableAccount account = worldUpdater.getOrCreate(HISTORY_STORAGE_ADDRESS);
 
-    if (currentBlockHeader.getNumber() > 0) {
-      final long currentBlockNumber = currentBlockHeader.getNumber();
-      final UInt256 storageValue = account.getStorageValue(UInt256.valueOf(currentBlockNumber - 1));
-      if (storageValue.isZero()) { // this is the first block of the fork
-        final long rangeSize = Math.min(HISTORY_SERVE_WINDOW - 1, currentBlockNumber - 1);
-        for (long i = 0; i <= rangeSize; i++) {
-          final BlockHeader blockHeader =
-              blockchain.getBlockHeader(currentBlockNumber - 1 - i).orElseThrow();
-          account.setStorageValue(
-              UInt256.valueOf(blockHeader.getNumber()),
-              UInt256.fromBytes(blockHeader.getBlockHash()));
+    final MutableAccount account = worldUpdater.getOrCreate(HISTORY_STORAGE_ADDRESS);
+    final long currentBlockNumber = currentBlockHeader.getNumber();
+    // If this is not the genesis block
+    if (currentBlockNumber > 0) {
+      // Store the previous block's hash
+      final long parentBlockNumber = currentBlockNumber - 1;
+      storeBlockHash(blockchain, account, parentBlockNumber);
+
+      if (parentBlockNumber > 0) {
+        // If this is the first block of the fork
+        if (isFirstBlockOfFork(account, currentBlockNumber)) {
+          // Store the hashes of the last min(HISTORY_SERVE_WINDOW-1, currentBlockNumber-1) blocks
+          final long rangeSize = Math.min(HISTORY_SERVE_WINDOW - 1, currentBlockNumber - 1);
+          storeBlockHashesInRange(blockchain, account, currentBlockNumber, rangeSize);
         }
-      } else {
-        account.setStorageValue(
-            UInt256.valueOf(currentBlockNumber),
-            UInt256.fromBytes(currentBlockHeader.getBlockHash()));
       }
     }
+  }
+
+  private boolean isFirstBlockOfFork(final MutableAccount account, final long currentBlockNumber) {
+    return account.getStorageValue(UInt256.valueOf(currentBlockNumber - 2)).isZero();
+  }
+
+  private void storeBlockHashesInRange(
+      final Blockchain blockchain,
+      final MutableAccount account,
+      final long currentBlockNumber,
+      final long rangeSize) {
+    for (long i = 0; i <= rangeSize; i++) {
+      storeBlockHash(blockchain, account, currentBlockNumber - 1 - i);
+    }
+  }
+
+  private void storeBlockHash(
+      final Blockchain blockchain, final MutableAccount account, final long blockNumber) {
+    final BlockHeader blockHeader = blockchain.getBlockHeader(blockNumber).orElseThrow();
+    account.setStorageValue(
+        UInt256.valueOf(blockHeader.getNumber()), UInt256.fromBytes(blockHeader.getBlockHash()));
   }
 }

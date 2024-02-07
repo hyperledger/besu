@@ -23,10 +23,10 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.AccountConsumingMap;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.Consumer;
@@ -435,13 +435,8 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     }
     try {
       final Optional<UInt256> valueUInt =
-          (wrappedWorldView() instanceof BonsaiWorldState bonsaiWorldState)
-              ? bonsaiWorldState.getStorageValueByStorageSlotKey(
-                  () ->
-                      Optional.ofNullable(loadAccount(address, DiffBasedValue::getPrior))
-                          .map(DiffBasedAccount::getStorageRoot),
-                  address,
-                  storageSlotKey)
+          (wrappedWorldView() instanceof DiffBasedWorldState worldState)
+              ? worldState.getStorageValueByStorageSlotKey(address, storageSlotKey)
               : wrappedWorldView().getStorageValueByStorageSlotKey(address, storageSlotKey);
       storageToUpdate
           .computeIfAbsent(
@@ -820,6 +815,9 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
 
   protected abstract void assertCloseEnoughForDiffing(
       final ACCOUNT source, final AccountValue account, final String context);
+
+  protected abstract Optional<UInt256> getStorageValueByStorageSlotKey(
+      DiffBasedWorldState worldState, Address address, StorageSlotKey storageSlotKey);
 
   protected abstract boolean shouldIgnoreIdenticalValuesDuringAccountRollingUpdate();
 }

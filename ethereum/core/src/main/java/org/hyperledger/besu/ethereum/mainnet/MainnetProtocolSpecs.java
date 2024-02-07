@@ -29,6 +29,9 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.ClearEmptyAccount;
+import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.ClearEmptyAccountWithException;
+import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.NotClearEmptyAccount;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -136,7 +139,7 @@ public abstract class MainnetProtocolSpecs {
                     transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
-                    false,
+                    new NotClearEmptyAccount(),
                     false,
                     stackSizeLimit,
                     FeeMarket.legacy(),
@@ -289,7 +292,7 @@ public abstract class MainnetProtocolSpecs {
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
-                    true,
+                    new ClearEmptyAccount(),
                     false,
                     stackSizeLimit,
                     feeMarket,
@@ -478,7 +481,7 @@ public abstract class MainnetProtocolSpecs {
                     transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
-                    true,
+                    new ClearEmptyAccount(),
                     false,
                     stackSizeLimit,
                     feeMarket,
@@ -581,6 +584,8 @@ public abstract class MainnetProtocolSpecs {
     // extra variables need to support flipping the warm coinbase flag.
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
 
+    final ClearEmptyAccountStrategy clearEmptyAccountStrategy = new ClearEmptyAccount();
+
     return parisDefinition(
             chainId,
             configContractSizeLimit,
@@ -607,7 +612,7 @@ public abstract class MainnetProtocolSpecs {
                     transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
-                    true,
+                    clearEmptyAccountStrategy,
                     true,
                     stackSizeLimit,
                     feeMarket,
@@ -626,7 +631,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559),
                     SHANGHAI_INIT_CODE_SIZE_LIMIT))
-        .withdrawalsProcessor(new WithdrawalsProcessor())
+        .withdrawalsProcessor(new WithdrawalsProcessor(clearEmptyAccountStrategy))
         .withdrawalsValidator(new WithdrawalsValidator.AllowedWithdrawals())
         .executionWitnessValidator(new ExecutionWitnessValidator.AllowedExecutionWitness())
         .name("Shanghai");
@@ -679,7 +684,7 @@ public abstract class MainnetProtocolSpecs {
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
-                    true,
+                    new ClearEmptyAccount(),
                     true,
                     stackSizeLimit,
                     feeMarket,
@@ -704,14 +709,20 @@ public abstract class MainnetProtocolSpecs {
         .name("Cancun");
   }
 
-  //TODO FIX THAT TO HAVE CORRECT CONFIGURATION
+  // TODO FIX THAT TO HAVE CORRECT CONFIGURATION
   static ProtocolSpecBuilder pragueDefinition(
-          final Optional<BigInteger> chainId,
-          final OptionalInt configContractSizeLimit,
-          final OptionalInt configStackSizeLimit,
-          final boolean enableRevertReason,
-          final GenesisConfigOptions genesisConfigOptions,
-          final EvmConfiguration evmConfiguration) {
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration) {
+
+    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
+
+    final ClearEmptyAccountStrategy clearEmptyAccountStrategy =
+        new ClearEmptyAccountWithException(
+            List.of(HistoricalBlockHashProcessor.HISTORY_STORAGE_ADDRESS));
     return shanghaiDefinition(
             chainId,
             configContractSizeLimit,
@@ -719,8 +730,25 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             genesisConfigOptions,
             evmConfiguration)
-            .historicalBlockHashProcessor(new HistoricalBlockHashProcessor())
-            .name("Prague");
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                feeMarket,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    clearEmptyAccountStrategy,
+                    true,
+                    stackSizeLimit,
+                    feeMarket,
+                    CoinbaseFeePriceCalculator.eip1559()))
+        .withdrawalsProcessor(new WithdrawalsProcessor(clearEmptyAccountStrategy))
+        .historicalBlockHashProcessor(new HistoricalBlockHashProcessor())
+        .name("Prague");
   }
   /*
   /*static ProtocolSpecBuilder pragueDefinition(

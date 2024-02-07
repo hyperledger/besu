@@ -236,9 +236,9 @@ public class BlockHeader extends SealableBlockHeader
         nonce,
         withdrawalHashRoot,
         null,
-            null,
-            null,
-            null,
+        null,
+        null,
+        null,
         executionWitness,
         blockHeaderFunctions);
   }
@@ -334,6 +334,6 @@ public class BlockHeader extends SealableBlockHeader
 
   @Override
   public String toLogString() {
-    return getNumber() + " (" + getHash() + " "+getParentHash()+")";
+    return getNumber() + " (" + getHash() + " " + getParentHash() + ")";
   }
 }

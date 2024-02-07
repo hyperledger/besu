@@ -150,34 +150,22 @@ public class DiffBasedWorldStateProvider implements WorldStateArchive {
   @Override
   public synchronized Optional<MutableWorldState> getMutable(
       final Hash rootHash, final Hash blockHash) {
-    Optional<MutableWorldState> worldState = rollMutableStateToBlockHash(persistedState, blockHash);
-
-    Optional<BlockHeader> block = blockchain
-            .getBlockHeader(blockHash);
-    if(block.isPresent() && block.get().getNumber()>0){
-      // TODO remove after testing
-      blockchain
-              .getBlockHeader(blockHash)
-              .ifPresent(
-                      blockHeader -> {
-                        Optional<MutableWorldState> ws =
-                                rollMutableStateToBlockHash(persistedState, blockHeader.getParentHash());
-                        if (ws.isEmpty()) {
-                          throw new RuntimeException(
-                                  "unable to rollback block " + blockHeader.getParentHash());
-                        }
-                        // TODO remove after testing
-                        ws = rollMutableStateToBlockHash(persistedState, blockHash);
-                        if (ws.isEmpty()) {
-                          throw new RuntimeException("unable to rollforward block " + blockHash);
-                        }
-                      });
 
 
-    }
+    /*Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockHash);
+    if(blockHeader.isPresent()){
+      Optional<BlockHeader> parentHeader = blockchain.getBlockHeader(blockHeader.get().getParentHash());
+      if(parentHeader.isPresent()){
+        Optional<MutableWorldState> worldState = rollMutableStateToBlockHash(persistedState, parentHeader.get().getBlockHash());
+        if(worldState.isEmpty()){
+          System.out.println("failed rollback to "+parentHeader.get().getNumber());
+          throw new RuntimeException("invalid trielog");
+        }
+        System.out.println("rollback to "+parentHeader.get().getNumber());
+      }
+    }*/
+    return rollMutableStateToBlockHash(persistedState, blockHash);
 
-
-    return worldState;
   }
 
   Optional<MutableWorldState> rollMutableStateToBlockHash(
