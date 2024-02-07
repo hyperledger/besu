@@ -15,13 +15,13 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.FOREST;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorageTest.TestSegment;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.DatabaseMetadata;
@@ -54,8 +54,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
     final Path tempPrivateDatabaseDir = tempDatabaseDir.resolve("private");
     Files.createDirectories(tempPrivateDatabaseDir);
     Files.createDirectories(tempDataDir);
-    when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
-    when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
+    mockCommonConfiguration(tempDataDir, tempDatabaseDir);
 
     Utils.createDatabaseMetadataV1Privacy(tempDataDir, 1, 1);
 
@@ -78,8 +77,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
   public void shouldCreateCorrectMetadataFileForLatestVersion() throws Exception {
     final Path tempDataDir = temporaryFolder.resolve("data");
     final Path tempDatabaseDir = temporaryFolder.resolve("db");
-    when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
-    when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
+    mockCommonConfiguration(tempDataDir, tempDatabaseDir);
 
     final RocksDBKeyValuePrivacyStorageFactory storageFactory =
         new RocksDBKeyValuePrivacyStorageFactory(
@@ -99,9 +97,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
   public void shouldUpdateCorrectMetadataFileForLatestVersion() throws Exception {
     final Path tempDataDir = temporaryFolder.resolve("data");
     final Path tempDatabaseDir = temporaryFolder.resolve("db");
-    when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
-    when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
-    when(commonConfiguration.getDatabaseFormat()).thenReturn(DataStorageFormat.FOREST);
+    mockCommonConfiguration(tempDataDir, tempDatabaseDir);
 
     final RocksDBKeyValueStorageFactory storageFactory =
         new RocksDBKeyValueStorageFactory(
@@ -124,5 +120,11 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
           .isEqualTo(PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES);
     }
     privacyStorageFactory.close();
+  }
+
+  private void mockCommonConfiguration(final Path tempDataDir, final Path tempDatabaseDir) {
+    when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
+    when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
+    when(commonConfiguration.getDatabaseFormat()).thenReturn(FOREST);
   }
 }

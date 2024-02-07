@@ -630,7 +630,6 @@ public abstract class AbstractBlockPropagationManagerTest {
                 Bytes.random(64),
                 25,
                 25,
-                25,
                 false),
             new EthMessages(),
             ethScheduler);
@@ -767,7 +766,6 @@ public abstract class AbstractBlockPropagationManagerTest {
                 EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
                 Collections.emptyList(),
                 Bytes.random(64),
-                25,
                 25,
                 25,
                 false),

@@ -30,7 +30,6 @@ public class NetworkingConfiguration {
   private int initiateConnectionsFrequencySec = DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC;
   private int checkMaintainedConnectionsFrequencySec =
       DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_SEC;
-  private Integer peerLowerBound = DEFAULT_PEER_LOWER_BOUND;
   private Optional<String> dnsDiscoveryServerOverride = Optional.empty();
 
   public static NetworkingConfiguration create() {
@@ -84,16 +83,6 @@ public class NetworkingConfiguration {
       final int checkMaintainedConnectionsFrequency) {
     checkArgument(checkMaintainedConnectionsFrequency > 0);
     this.checkMaintainedConnectionsFrequencySec = checkMaintainedConnectionsFrequency;
-    return this;
-  }
-
-  public Integer getPeerLowerBound() {
-    return peerLowerBound;
-  }
-
-  public NetworkingConfiguration setPeerLowerBound(final Integer peerLowerBoundConfig) {
-    checkArgument(peerLowerBoundConfig > 0);
-    this.peerLowerBound = peerLowerBoundConfig;
     return this;
   }
 

@@ -80,8 +80,8 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
       hidden = true,
       names = PEER_LOWER_BOUND_FLAG,
       description =
-          "Lower bound on the target number of P2P connections (default: ${DEFAULT-VALUE})")
-  private Integer peerLowerBoundConfig = DefaultCommandValues.DEFAULT_P2P_PEER_LOWER_BOUND;
+          "(Deprecated) Lower bound on the target number of P2P connections (default: ${DEFAULT-VALUE})")
+  private final Integer peerLowerBoundConfig = DefaultCommandValues.DEFAULT_MAX_PEERS;
 
   private NetworkingOptions() {}
 
@@ -107,7 +107,6 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
     cliOptions.initiateConnectionsFrequencySec =
         networkingConfig.getInitiateConnectionsFrequencySec();
     cliOptions.dnsDiscoveryServerOverride = networkingConfig.getDnsDiscoveryServerOverride();
-    cliOptions.peerLowerBoundConfig = networkingConfig.getPeerLowerBound();
 
     return cliOptions;
   }
@@ -120,7 +119,6 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
     config.setDnsDiscoveryServerOverride(dnsDiscoveryServerOverride);
     config.getDiscovery().setDiscoveryV5Enabled(isPeerDiscoveryV5Enabled);
     config.getDiscovery().setFilterOnEnrForkId(filterOnEnrForkId);
-    config.setPeerLowerBound(peerLowerBoundConfig);
     return config;
   }
 

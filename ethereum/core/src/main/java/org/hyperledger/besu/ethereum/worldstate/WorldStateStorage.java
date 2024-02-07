@@ -28,7 +28,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public interface WorldStateStorage {
 
-  Optional<Bytes> getCode(Bytes32 codeHash, Hash accountHash);
+  Optional<Bytes> getCode(Hash codeHash, Hash accountHash);
 
   Optional<Bytes> getAccountStateTrieNode(Bytes location, Bytes32 nodeHash);
 
@@ -99,7 +99,7 @@ public interface WorldStateStorage {
 
   interface Updater {
 
-    Updater putCode(Hash accountHash, Bytes32 nodeHash, Bytes code);
+    Updater putCode(Hash accountHash, Hash nodeHash, Bytes code);
 
     default Updater putCode(final Hash accountHash, final Bytes code) {
       // Skip the hash calculation for empty code

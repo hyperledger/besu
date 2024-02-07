@@ -262,6 +262,20 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     }
     if (databaseMetadataExists) {
       databaseMetadata = DatabaseMetadata.lookUpFrom(dataDir);
+      if (!databaseMetadata
+          .getVersionedStorageFormat()
+          .getFormat()
+          .equals(commonConfiguration.getDatabaseFormat())) {
+        String error =
+            String.format(
+                "Database format mismatch: DB at %s is %s but config expects %s. "
+                    + "Please check your config.",
+                dataDir,
+                databaseMetadata.getVersionedStorageFormat().getFormat().name(),
+                commonConfiguration.getDatabaseFormat());
+
+        throw new StorageException(error);
+      }
       LOG.info(
           "Existing database detected at {}. Metadata {}. Processing WAL...",
           dataDir,
