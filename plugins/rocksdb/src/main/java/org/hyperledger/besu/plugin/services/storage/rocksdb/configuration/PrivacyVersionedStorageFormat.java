@@ -33,7 +33,7 @@ public enum PrivacyVersionedStorageFormat implements VersionedStorageFormat {
     this.privacyVersion = OptionalInt.of(privacyVersion);
   }
 
-  static VersionedStorageFormat defaultForNewDB(final DataStorageFormat format) {
+  public static VersionedStorageFormat defaultForNewDB(final DataStorageFormat format) {
     return switch (format) {
       case FOREST -> FOREST_WITH_VARIABLES;
       case BONSAI -> BONSAI_WITH_VARIABLES;

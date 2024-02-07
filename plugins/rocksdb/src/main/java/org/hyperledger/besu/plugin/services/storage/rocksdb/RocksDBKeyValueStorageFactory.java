@@ -41,6 +41,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -254,51 +255,121 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     final Path dataDir = commonConfiguration.getDataPath();
     final boolean dataDirExists = dataDir.toFile().exists();
     final boolean databaseExists = commonConfiguration.getStoragePath().toFile().exists();
-    final boolean databaseMetadataExists = DatabaseMetadata.isPresent(dataDir);
-    final DatabaseMetadata databaseMetadata;
-    if (databaseExists && !databaseMetadataExists) {
+    final boolean metadataExists = DatabaseMetadata.isPresent(dataDir);
+    DatabaseMetadata metadata;
+    if (databaseExists && !metadataExists) {
       throw new StorageException(
           "Database exists but metadata file not found, without it there is no safe way to open the database");
     }
-    if (databaseMetadataExists) {
-      databaseMetadata = DatabaseMetadata.lookUpFrom(dataDir);
-      if (!databaseMetadata
+    if (metadataExists) {
+      metadata = DatabaseMetadata.lookUpFrom(dataDir);
+
+      if (!metadata
           .getVersionedStorageFormat()
           .getFormat()
           .equals(commonConfiguration.getDatabaseFormat())) {
-        String error =
-            String.format(
-                "Database format mismatch: DB at %s is %s but config expects %s. "
-                    + "Please check your config.",
-                dataDir,
-                databaseMetadata.getVersionedStorageFormat().getFormat().name(),
-                commonConfiguration.getDatabaseFormat());
-
-        throw new StorageException(error);
+        handleFormatMismatch(commonConfiguration, dataDir, metadata);
       }
-      LOG.info(
-          "Existing database detected at {}. Metadata {}. Processing WAL...",
-          dataDir,
-          databaseMetadata);
+
+      final var runtimeVersion =
+          BaseVersionedStorageFormat.defaultForNewDB(commonConfiguration.getDatabaseFormat());
+
+      if (metadata.getVersionedStorageFormat().getVersion() > runtimeVersion.getVersion()) {
+        final var maybeDowngradedMetadata =
+            handleVersionDowngrade(dataDir, metadata, runtimeVersion);
+        if (maybeDowngradedMetadata.isPresent()) {
+          metadata = maybeDowngradedMetadata.get();
+          metadata.writeToDirectory(dataDir);
+        }
+      }
+
+      if (metadata.getVersionedStorageFormat().getVersion() < runtimeVersion.getVersion()) {
+        final var maybeUpgradedMetadata = handleVersionUpgrade(dataDir, metadata, runtimeVersion);
+        if (maybeUpgradedMetadata.isPresent()) {
+          metadata = maybeUpgradedMetadata.get();
+          metadata.writeToDirectory(dataDir);
+        }
+      }
+
+      LOG.info("Existing database at {}. Metadata {}. Processing WAL...", dataDir, metadata);
     } else {
-      databaseMetadata = DatabaseMetadata.defaultForNewDb(commonConfiguration.getDatabaseFormat());
+
+      metadata = DatabaseMetadata.defaultForNewDb(commonConfiguration.getDatabaseFormat());
       LOG.info(
-          "No existing database detected at {}. Using default metadata for new db {}",
-          dataDir,
-          databaseMetadata);
+          "No existing database at {}. Using default metadata for new db {}", dataDir, metadata);
       if (!dataDirExists) {
         Files.createDirectories(dataDir);
       }
-      databaseMetadata.writeToDirectory(dataDir);
+      metadata.writeToDirectory(dataDir);
     }
 
-    if (!isSupportedVersionedFormat(databaseMetadata.getVersionedStorageFormat())) {
-      final String message = "Unsupported RocksDB metadata: " + databaseMetadata;
+    if (!isSupportedVersionedFormat(metadata.getVersionedStorageFormat())) {
+      final String message = "Unsupported RocksDB metadata: " + metadata;
       LOG.error(message);
       throw new StorageException(message);
     }
 
-    return databaseMetadata;
+    return metadata;
+  }
+
+  private static void handleFormatMismatch(
+      final BesuConfiguration commonConfiguration,
+      final Path dataDir,
+      final DatabaseMetadata existingMetadata) {
+    String error =
+        String.format(
+            "Database format mismatch: DB at %s is %s but config expects %s. "
+                + "Please check your config.",
+            dataDir,
+            existingMetadata.getVersionedStorageFormat().getFormat().name(),
+            commonConfiguration.getDatabaseFormat());
+
+    throw new StorageException(error);
+  }
+
+  private Optional<DatabaseMetadata> handleVersionDowngrade(
+      final Path dataDir,
+      final DatabaseMetadata existingMetadata,
+      final BaseVersionedStorageFormat runtimeVersion) {
+    // here we put the code, or the messages, to perform an automated, or manual, downgrade of the
+    // database, if supported, otherwise we just prevent Besu from starting since it will not
+    // recognize the newer version.
+    // In case we do an automated downgrade, then we also need to update the metadata on disk to
+    // reflect the change to the runtime version, and return it.
+
+    // for the moment there are supported automated downgrades, so we just fail.
+    String error =
+        String.format(
+            "Database unsafe downgrade detect: DB at %s is %s with version %s but version %s is expected. "
+                + "Please check your config and review release notes for supported downgrade procedures.",
+            dataDir,
+            existingMetadata.getVersionedStorageFormat().getFormat().name(),
+            existingMetadata.getVersionedStorageFormat().getVersion(),
+            runtimeVersion.getVersion());
+
+    throw new StorageException(error);
+  }
+
+  private Optional<DatabaseMetadata> handleVersionUpgrade(
+      final Path dataDir,
+      final DatabaseMetadata existingMetadata,
+      final BaseVersionedStorageFormat runtimeVersion) {
+    // here we put the code, or the messages, to perform an automated, or manual, upgrade of the
+    // database.
+    // In case we do an automated upgrade, then we also need to update the metadata on disk to
+    // reflect the change to the runtime version, and return it.
+
+    // for the moment there are no planned automated upgrades, so we just fail.
+    String error =
+        String.format(
+            "Database unsafe downgrade detect: DB at %s is %s with version %s but version %s is expected. "
+                + "Please check your config and review release notes for supported downgrade procedures.",
+            dataDir,
+            existingMetadata.getVersionedStorageFormat().getFormat().name(),
+            existingMetadata.getVersionedStorageFormat().getVersion(),
+            runtimeVersion.getVersion());
+
+    throw new StorageException(error);
   }
 
   private boolean isSupportedVersionedFormat(final VersionedStorageFormat versionedStorageFormat) {

@@ -23,12 +23,14 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.DatabaseMetadata;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PrivacyVersionedStorageFormat;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.VersionedStorageFormat;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -122,45 +124,109 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
     final Path dataDir = commonConfiguration.getDataPath();
     final boolean privacyDatabaseExists =
         commonConfiguration.getStoragePath().resolve(PRIVATE_DATABASE_PATH).toFile().exists();
-    final boolean privacyDatabaseMetadataExists = DatabaseMetadata.isPresent(dataDir);
-    final DatabaseMetadata privacyDatabaseMetadata;
-    if (privacyDatabaseExists && !privacyDatabaseMetadataExists) {
+    final boolean privacyMetadataExists = DatabaseMetadata.isPresent(dataDir);
+    DatabaseMetadata privacyMetadata;
+    if (privacyDatabaseExists && !privacyMetadataExists) {
       throw new StorageException(
           "Privacy database exists but metadata file not found, without it there is no safe way to open the database");
     }
-    if (privacyDatabaseMetadataExists) {
-      final var existingDatabaseMetadata = DatabaseMetadata.lookUpFrom(dataDir);
-      if (existingDatabaseMetadata.getVersionedStorageFormat().getPrivacyVersion().isEmpty()) {
-        privacyDatabaseMetadata = existingDatabaseMetadata.upgradeToPrivacy();
-        privacyDatabaseMetadata.writeToDirectory(dataDir);
+    if (privacyMetadataExists) {
+      final var existingPrivacyMetadata = DatabaseMetadata.lookUpFrom(dataDir);
+      final var maybeExistingPrivacyVersion =
+          existingPrivacyMetadata.getVersionedStorageFormat().getPrivacyVersion();
+      if (maybeExistingPrivacyVersion.isEmpty()) {
+        privacyMetadata = existingPrivacyMetadata.upgradeToPrivacy();
+        privacyMetadata.writeToDirectory(dataDir);
         LOG.info(
-            "Upgraded existing database detected at {} to privacy database. Metadata {}",
+            "Upgraded existing database at {} to privacy database. Metadata {}",
             dataDir,
-            existingDatabaseMetadata);
+            existingPrivacyMetadata);
       } else {
-        privacyDatabaseMetadata = existingDatabaseMetadata;
-        LOG.info(
-            "Existing privacy database detected at {}. Metadata {}",
-            dataDir,
-            privacyDatabaseMetadata);
+        privacyMetadata = existingPrivacyMetadata;
+        final int existingPrivacyVersion = maybeExistingPrivacyVersion.getAsInt();
+        final var runtimeVersion =
+            PrivacyVersionedStorageFormat.defaultForNewDB(commonConfiguration.getDatabaseFormat());
+
+        if (existingPrivacyVersion > runtimeVersion.getPrivacyVersion().getAsInt()) {
+          final var maybeDowngradedMetadata =
+              handleVersionDowngrade(dataDir, privacyMetadata, runtimeVersion);
+          if (maybeDowngradedMetadata.isPresent()) {
+            privacyMetadata = maybeDowngradedMetadata.get();
+            privacyMetadata.writeToDirectory(dataDir);
+          }
+        } else if (existingPrivacyVersion < runtimeVersion.getPrivacyVersion().getAsInt()) {
+          final var maybeUpgradedMetadata =
+              handleVersionUpgrade(dataDir, privacyMetadata, runtimeVersion);
+          if (maybeUpgradedMetadata.isPresent()) {
+            privacyMetadata = maybeUpgradedMetadata.get();
+            privacyMetadata.writeToDirectory(dataDir);
+          }
+        } else {
+          LOG.info("Existing privacy database at {}. Metadata {}", dataDir, privacyMetadata);
+        }
       }
     } else {
-      privacyDatabaseMetadata = DatabaseMetadata.defaultForNewPrivateDb();
+      privacyMetadata = DatabaseMetadata.defaultForNewPrivateDb();
       LOG.info(
-          "No existing private database detected at {}. Using default metadata for new db {}",
+          "No existing private database at {}. Using default metadata for new db {}",
           dataDir,
-          privacyDatabaseMetadata);
+          privacyMetadata);
       Files.createDirectories(dataDir);
-      privacyDatabaseMetadata.writeToDirectory(dataDir);
+      privacyMetadata.writeToDirectory(dataDir);
     }
 
-    if (!SUPPORTED_VERSIONS.contains(privacyDatabaseMetadata.getVersionedStorageFormat())) {
-      final String message = "Unsupported RocksDB Metadata version of: " + privacyDatabaseMetadata;
+    if (!SUPPORTED_VERSIONS.contains(privacyMetadata.getVersionedStorageFormat())) {
+      final String message = "Unsupported RocksDB Metadata version of: " + privacyMetadata;
       LOG.error(message);
       throw new StorageException(message);
     }
 
-    return privacyDatabaseMetadata;
+    return privacyMetadata;
+  }
+
+  private Optional<DatabaseMetadata> handleVersionDowngrade(
+      final Path dataDir,
+      final DatabaseMetadata existingPrivacyMetadata,
+      final VersionedStorageFormat runtimeVersion) {
+    // here we put the code, or the messages, to perform an automated, or manual, downgrade of the
+    // database, if supported, otherwise we just prevent Besu from starting since it will not
+    // recognize the newer version.
+    // In case we do an automated downgrade, then we also need to update the metadata on disk to
+    // reflect the change to the runtime version, and return it.
+
+    // for the moment there are supported automated downgrades, so we just fail.
+    String error =
+        String.format(
+            "Database unsafe downgrade detect: DB at %s is %s with version %s but version %s is expected. "
+                + "Please check your config and review release notes for supported downgrade procedures.",
+            dataDir,
+            existingPrivacyMetadata.getVersionedStorageFormat().getFormat().name(),
+            existingPrivacyMetadata.getVersionedStorageFormat().getVersion(),
+            runtimeVersion.getVersion());
+
+    throw new StorageException(error);
+  }
+
+  private Optional<DatabaseMetadata> handleVersionUpgrade(
+      final Path dataDir,
+      final DatabaseMetadata existingPrivacyMetadata,
+      final VersionedStorageFormat runtimeVersion) {
+    // here we put the code, or the messages, to perform an automated, or manual, upgrade of the
+    // database.
+    // In case we do an automated upgrade, then we also need to update the metadata on disk to
+    // reflect the change to the runtime version, and return it.
+
+    // for the moment there are no planned automated upgrades, so we just fail.
+    String error =
+        String.format(
+            "Database unsafe upgrade detect: DB at %s is %s with version %s but version %s is expected. "
+                + "Please check your config and review release notes for supported upgrade procedures.",
+            dataDir,
+            existingPrivacyMetadata.getVersionedStorageFormat().getFormat().name(),
+            existingPrivacyMetadata.getVersionedStorageFormat().getVersion(),
+            runtimeVersion.getVersion());
+
+    throw new StorageException(error);
   }
 
   @Override

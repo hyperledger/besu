@@ -32,7 +32,7 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
     this.version = version;
   }
 
-  static BaseVersionedStorageFormat defaultForNewDB(final DataStorageFormat format) {
+  public static BaseVersionedStorageFormat defaultForNewDB(final DataStorageFormat format) {
     return switch (format) {
       case FOREST -> FOREST_WITH_VARIABLES;
       case BONSAI -> BONSAI_WITH_VARIABLES;
