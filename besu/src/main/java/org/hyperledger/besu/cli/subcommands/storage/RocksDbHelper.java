@@ -100,8 +100,6 @@ public class RocksDbHelper {
       final String prefix = "rocksdb.";
       final String num_files_at_level_prefix = "num-files-at-level";
       final String compression_ratio_at_level_prefix = "compression-ratio-at-level";
-      final String allstats = "stats";
-      final String sstables = "sstables";
       final String cfstats = "cfstats";
       final String cfstats_no_file_histogram = "cfstats-no-file-histogram";
       final String cf_file_histogram = "cf-file-histogram";
@@ -161,8 +159,6 @@ public class RocksDbHelper {
       Stream.of(
               num_files_at_level_prefix,
               compression_ratio_at_level_prefix,
-              allstats,
-              sstables,
               cfstats,
               cfstats_no_file_histogram,
               cf_file_histogram,
