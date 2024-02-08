@@ -22,11 +22,11 @@ public class FastImportBlocksPercentageCalculationTest {
 
   @Test
   public void blocksPercent_calculations() {
-    assertThat(FastImportBlocksStep.getBlocksPercent(1, 1)).isEqualByComparingTo(100l);
-    assertThat(FastImportBlocksStep.getBlocksPercent(1, 100)).isEqualByComparingTo(1l);
-    assertThat(FastImportBlocksStep.getBlocksPercent(0, 100)).isEqualByComparingTo(0l);
-    assertThat(FastImportBlocksStep.getBlocksPercent(99, 0)).isEqualByComparingTo(0l);
-    assertThat(FastImportBlocksStep.getBlocksPercent(1, 1000)).isEqualByComparingTo(0l);
-    assertThat(FastImportBlocksStep.getBlocksPercent(1, 10000)).isEqualByComparingTo(0l);
+    assertThat(ImportBlocksStep.getBlocksPercent(1, 1)).isEqualByComparingTo(100l);
+    assertThat(ImportBlocksStep.getBlocksPercent(1, 100)).isEqualByComparingTo(1l);
+    assertThat(ImportBlocksStep.getBlocksPercent(0, 100)).isEqualByComparingTo(0l);
+    assertThat(ImportBlocksStep.getBlocksPercent(99, 0)).isEqualByComparingTo(0l);
+    assertThat(ImportBlocksStep.getBlocksPercent(1, 1000)).isEqualByComparingTo(0l);
+    assertThat(ImportBlocksStep.getBlocksPercent(1, 10000)).isEqualByComparingTo(0l);
   }
 }

@@ -51,7 +51,7 @@ public class PersistDataStepTest {
 
   @BeforeEach
   public void setUp() {
-    when(downloadState.getMetricsManager()).thenReturn(mock(SnapsyncMetricsManager.class));
+    when(downloadState.getMetricsManager()).thenReturn(mock(SnapSyncMetricsManager.class));
   }
 
   @Test
@@ -97,7 +97,8 @@ public class PersistDataStepTest {
           } else if (task.getData() instanceof BytecodeRequest) {
             final BytecodeRequest data = (BytecodeRequest) task.getData();
             assertThat(
-                    worldStateStorage.getCode(data.getCodeHash(), Hash.wrap(data.getAccountHash())))
+                    worldStateStorage.getCode(
+                        Hash.wrap(data.getCodeHash()), Hash.wrap(data.getAccountHash())))
                 .isPresent();
           } else {
             fail("not expected message");

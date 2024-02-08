@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collection;
 import java.util.List;
@@ -45,8 +46,8 @@ public class RoundChangeMessageValidator {
   private final long quorumMessageCount;
   private final long chainHeight;
   private final Collection<Address> validators;
-  private final BlockValidator blockValidator;
   private final ProtocolContext protocolContext;
+  private final ProtocolSchedule protocolSchedule;
 
   /**
    * Instantiates a new Round change message validator.
@@ -55,22 +56,22 @@ public class RoundChangeMessageValidator {
    * @param quorumMessageCount the quorum message count
    * @param chainHeight the chain height
    * @param validators the validators
-   * @param blockValidator the block validator
    * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol context
    */
   public RoundChangeMessageValidator(
       final RoundChangePayloadValidator roundChangePayloadValidator,
       final long quorumMessageCount,
       final long chainHeight,
       final Collection<Address> validators,
-      final BlockValidator blockValidator,
-      final ProtocolContext protocolContext) {
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule) {
     this.roundChangePayloadValidator = roundChangePayloadValidator;
     this.quorumMessageCount = quorumMessageCount;
     this.chainHeight = chainHeight;
     this.validators = validators;
-    this.blockValidator = blockValidator;
     this.protocolContext = protocolContext;
+    this.protocolSchedule = protocolSchedule;
   }
 
   /**
@@ -94,6 +95,10 @@ public class RoundChangeMessageValidator {
   }
 
   private boolean validateBlock(final Block block) {
+
+    final BlockValidator blockValidator =
+        protocolSchedule.getByBlockHeader(block.getHeader()).getBlockValidator();
+
     final var validationResult =
         blockValidator.validateAndProcessBlock(
             protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL);

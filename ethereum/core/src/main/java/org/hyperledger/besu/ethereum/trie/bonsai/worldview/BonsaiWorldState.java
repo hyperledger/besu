@@ -51,12 +51,14 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
@@ -119,12 +121,12 @@ public class BonsaiWorldState
   }
 
   /**
-   * Having a protected method to override the accumulator solves the chicken-egg problem of needing
-   * a worldstate reference (this) when construction the Accumulator.
+   * Override the accumulator solves the chicken-egg problem of needing a worldstate reference
+   * (this) when construction the Accumulator.
    *
    * @param accumulator accumulator to use.
    */
-  protected void setAccumulator(final BonsaiWorldStateUpdateAccumulator accumulator) {
+  public void setAccumulator(final BonsaiWorldStateUpdateAccumulator accumulator) {
     this.accumulator = accumulator;
   }
 
@@ -253,7 +255,8 @@ public class BonsaiWorldState
     }
   }
 
-  private void updateCode(
+  @VisibleForTesting
+  protected void updateCode(
       final Optional<BonsaiWorldStateKeyValueStorage.BonsaiUpdater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
     maybeStateUpdater.ifPresent(
@@ -262,13 +265,27 @@ public class BonsaiWorldState
               worldStateUpdater.getCodeToUpdate().entrySet()) {
             final Bytes updatedCode = codeUpdate.getValue().getUpdated();
             final Hash accountHash = codeUpdate.getKey().addressHash();
-            if (updatedCode == null || updatedCode.isEmpty()) {
-              bonsaiUpdater.removeCode(accountHash);
+            final Bytes priorCode = codeUpdate.getValue().getPrior();
+
+            // code hasn't changed then do nothing
+            if (Objects.equals(priorCode, updatedCode)
+                || (codeIsEmpty(priorCode) && codeIsEmpty(updatedCode))) {
+              continue;
+            }
+
+            if (codeIsEmpty(updatedCode)) {
+              final Hash priorCodeHash = Hash.hash(priorCode);
+              bonsaiUpdater.removeCode(accountHash, priorCodeHash);
             } else {
-              bonsaiUpdater.putCode(accountHash, null, updatedCode);
+              final Hash codeHash = Hash.hash(codeUpdate.getValue().getUpdated());
+              bonsaiUpdater.putCode(accountHash, codeHash, updatedCode);
             }
           }
         });
+  }
+
+  private boolean codeIsEmpty(final Bytes value) {
+    return value == null || value.isEmpty();
   }
 
   private void updateAccountStorageState(

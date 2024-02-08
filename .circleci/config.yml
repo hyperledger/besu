@@ -204,7 +204,7 @@ jobs:
           at: ~/project
       - run:
           name: ReferenceTests
-          no_output_timeout: 30m
+          no_output_timeout: 40m
           command: |
             git submodule update --init --recursive
             ./gradlew --no-daemon referenceTest
@@ -500,6 +500,3 @@ workflows:
     jobs:
       - assemble
       - dockerScan
-      - acceptanceTestsPrivacy:
-          requires:
-            - assemble

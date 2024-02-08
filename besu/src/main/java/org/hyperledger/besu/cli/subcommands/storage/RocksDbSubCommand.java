@@ -19,13 +19,7 @@ import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import org.hyperledger.besu.cli.util.VersionProvider;
 
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
 
-import org.rocksdb.ColumnFamilyDescriptor;
-import org.rocksdb.ColumnFamilyHandle;
-import org.rocksdb.Options;
-import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -82,34 +76,17 @@ public class RocksDbSubCommand implements Runnable {
               .concat("/")
               .concat(DATABASE_PATH);
 
-      RocksDB.loadLibrary();
-      Options options = new Options();
-      options.setCreateIfMissing(true);
+      RocksDbHelper.printTableHeader(out);
 
-      // Open the RocksDB database with multiple column families
-      List<byte[]> cfNames;
-      try {
-        cfNames = RocksDB.listColumnFamilies(options, dbPath);
-      } catch (RocksDBException e) {
-        throw new RuntimeException(e);
-      }
-      final List<ColumnFamilyHandle> cfHandles = new ArrayList<>();
-      final List<ColumnFamilyDescriptor> cfDescriptors = new ArrayList<>();
-      for (byte[] cfName : cfNames) {
-        cfDescriptors.add(new ColumnFamilyDescriptor(cfName));
-      }
-      RocksDbUsageHelper.printTableHeader(out);
-      try (final RocksDB rocksdb = RocksDB.openReadOnly(dbPath, cfDescriptors, cfHandles)) {
-        for (ColumnFamilyHandle cfHandle : cfHandles) {
-          RocksDbUsageHelper.printUsageForColumnFamily(rocksdb, cfHandle, out);
-        }
-      } catch (RocksDBException e) {
-        throw new RuntimeException(e);
-      } finally {
-        for (ColumnFamilyHandle cfHandle : cfHandles) {
-          cfHandle.close();
-        }
-      }
+      RocksDbHelper.forEachColumnFamily(
+          dbPath,
+          (rocksdb, cfHandle) -> {
+            try {
+              RocksDbHelper.printUsageForColumnFamily(rocksdb, cfHandle, out);
+            } catch (RocksDBException e) {
+              throw new RuntimeException(e);
+            }
+          });
     }
   }
 }

@@ -16,19 +16,22 @@ package org.hyperledger.besu.ethereum.storage.keyvalue;
 
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
+import java.nio.charset.StandardCharsets;
+
 import org.bouncycastle.util.Arrays;
 
 public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
-  BLOCKCHAIN(new byte[] {1}, true),
-  WORLD_STATE(new byte[] {2}, new int[] {0, 1}),
+  DEFAULT("default".getBytes(StandardCharsets.UTF_8)),
+  BLOCKCHAIN(new byte[] {1}, true, true),
+  WORLD_STATE(new byte[] {2}, new int[] {0, 1}, false, true, false),
   PRIVATE_TRANSACTIONS(new byte[] {3}),
   PRIVATE_STATE(new byte[] {4}),
   PRUNING_STATE(new byte[] {5}, new int[] {0, 1}),
-  ACCOUNT_INFO_STATE(new byte[] {6}, new int[] {2}),
+  ACCOUNT_INFO_STATE(new byte[] {6}, new int[] {2}, false, true, false),
   CODE_STORAGE(new byte[] {7}, new int[] {2}),
-  ACCOUNT_STORAGE_STORAGE(new byte[] {8}, new int[] {2}),
-  TRIE_BRANCH_STORAGE(new byte[] {9}, new int[] {2}),
-  TRIE_LOG_STORAGE(new byte[] {10}, new int[] {2}),
+  ACCOUNT_STORAGE_STORAGE(new byte[] {8}, new int[] {2}, false, true, false),
+  TRIE_BRANCH_STORAGE(new byte[] {9}, new int[] {2}, false, true, false),
+  TRIE_LOG_STORAGE(new byte[] {10}, new int[] {2}, true, false, true),
   VARIABLES(new byte[] {11}), // formerly GOQUORUM_PRIVATE_WORLD_STATE
 
   // previously supported GoQuorum private states
@@ -45,24 +48,33 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   private final byte[] id;
   private final int[] versionList;
   private final boolean containsStaticData;
+  private final boolean eligibleToHighSpecFlag;
+  private final boolean staticDataGarbageCollectionEnabled;
 
   KeyValueSegmentIdentifier(final byte[] id) {
     this(id, new int[] {0, 1, 2});
   }
 
-  KeyValueSegmentIdentifier(final byte[] id, final boolean containsStaticData) {
-    this(id, new int[] {0, 1, 2}, containsStaticData);
+  KeyValueSegmentIdentifier(
+      final byte[] id, final boolean containsStaticData, final boolean eligibleToHighSpecFlag) {
+    this(id, new int[] {0, 1, 2}, containsStaticData, eligibleToHighSpecFlag, false);
   }
 
   KeyValueSegmentIdentifier(final byte[] id, final int[] versionList) {
-    this(id, versionList, false);
+    this(id, versionList, false, false, false);
   }
 
   KeyValueSegmentIdentifier(
-      final byte[] id, final int[] versionList, final boolean containsStaticData) {
+      final byte[] id,
+      final int[] versionList,
+      final boolean containsStaticData,
+      final boolean eligibleToHighSpecFlag,
+      final boolean staticDataGarbageCollectionEnabled) {
     this.id = id;
     this.versionList = versionList;
     this.containsStaticData = containsStaticData;
+    this.eligibleToHighSpecFlag = eligibleToHighSpecFlag;
+    this.staticDataGarbageCollectionEnabled = staticDataGarbageCollectionEnabled;
   }
 
   @Override
@@ -78,6 +90,16 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   @Override
   public boolean containsStaticData() {
     return containsStaticData;
+  }
+
+  @Override
+  public boolean isEligibleToHighSpecFlag() {
+    return eligibleToHighSpecFlag;
+  }
+
+  @Override
+  public boolean isStaticDataGarbageCollectionEnabled() {
+    return staticDataGarbageCollectionEnabled;
   }
 
   @Override

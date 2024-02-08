@@ -16,7 +16,7 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT;
 
 import org.hyperledger.besu.cli.options.AbstractCLIOptionsTest;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -32,51 +32,82 @@ public class DataStorageOptionsTest
   public void bonsaiTrieLogPruningLimitOption() {
     internalTestSuccess(
         dataStorageConfiguration ->
-            assertThat(dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningLimit())
-                .isEqualTo(1),
+            assertThat(dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningWindowSize())
+                .isEqualTo(600),
         "--Xbonsai-limit-trie-logs-enabled",
-        "--Xbonsai-trie-logs-pruning-limit",
-        "1");
+        "--Xbonsai-trie-logs-pruning-window-size",
+        "600");
   }
 
   @Test
-  public void bonsaiTrieLogPruningLimitShouldBePositive() {
+  public void bonsaiTrieLogPruningWindowSizeShouldBePositive() {
     internalTestFailure(
-        "--Xbonsai-trie-log-pruning-limit=0 must be greater than 0",
+        "--Xbonsai-trie-logs-pruning-window-size=0 must be greater than 0",
         "--Xbonsai-limit-trie-logs-enabled",
-        "--Xbonsai-trie-logs-pruning-limit",
+        "--Xbonsai-trie-logs-pruning-window-size",
         "0");
   }
 
   @Test
-  public void bonsaiTrieLogRetentionThresholdOption() {
-    internalTestSuccess(
-        dataStorageConfiguration ->
-            assertThat(dataStorageConfiguration.getUnstable().getBonsaiTrieLogRetentionThreshold())
-                .isEqualTo(MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD + 1),
+  public void bonsaiTrieLogPruningWindowSizeShouldBeAboveRetentionLimit() {
+    internalTestFailure(
+        "--Xbonsai-trie-logs-pruning-window-size=512 must be greater than --bonsai-historical-block-limit=512",
         "--Xbonsai-limit-trie-logs-enabled",
-        "--Xbonsai-trie-logs-retention-threshold",
-        "513");
-  }
-
-  @Test
-  public void bonsaiTrieLogRetentionThresholdOption_boundaryTest() {
-    internalTestSuccess(
-        dataStorageConfiguration ->
-            assertThat(dataStorageConfiguration.getUnstable().getBonsaiTrieLogRetentionThreshold())
-                .isEqualTo(MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD),
-        "--Xbonsai-limit-trie-logs-enabled",
-        "--Xbonsai-trie-logs-retention-threshold",
+        "--Xbonsai-trie-logs-pruning-window-size",
         "512");
   }
 
   @Test
-  public void bonsaiTrieLogRetentionThresholdShouldBeAboveMinimum() {
-    internalTestFailure(
-        "--Xbonsai-trie-log-retention-threshold minimum value is 512",
+  public void bonsaiTrieLogRetentionLimitOption() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(dataStorageConfiguration.getBonsaiMaxLayersToLoad())
+                .isEqualTo(MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT + 1),
         "--Xbonsai-limit-trie-logs-enabled",
-        "--Xbonsai-trie-logs-retention-threshold",
+        "--bonsai-historical-block-limit",
+        "513");
+  }
+
+  @Test
+  public void bonsaiTrieLogRetentionLimitOption_boundaryTest() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(dataStorageConfiguration.getBonsaiMaxLayersToLoad())
+                .isEqualTo(MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT),
+        "--Xbonsai-limit-trie-logs-enabled",
+        "--bonsai-historical-block-limit",
+        "512");
+  }
+
+  @Test
+  public void bonsaiTrieLogRetentionLimitShouldBeAboveMinimum() {
+    internalTestFailure(
+        "--bonsai-historical-block-limit minimum value is 512",
+        "--Xbonsai-limit-trie-logs-enabled",
+        "--bonsai-historical-block-limit",
         "511");
+  }
+
+  @Test
+  public void bonsaiCodeUsingCodeHashEnabledCanBeEnabled() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(
+                    dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled())
+                .isEqualTo(true),
+        "--Xbonsai-code-using-code-hash-enabled",
+        "true");
+  }
+
+  @Test
+  public void bonsaiCodeUsingCodeHashEnabledCanBeDisabled() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(
+                    dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled())
+                .isEqualTo(false),
+        "--Xbonsai-code-using-code-hash-enabled",
+        "false");
   }
 
   @Override
@@ -88,12 +119,11 @@ public class DataStorageOptionsTest
   protected DataStorageConfiguration createCustomizedDomainObject() {
     return ImmutableDataStorageConfiguration.builder()
         .dataStorageFormat(DataStorageFormat.BONSAI)
-        .bonsaiMaxLayersToLoad(100L)
+        .bonsaiMaxLayersToLoad(513L)
         .unstable(
             ImmutableDataStorageConfiguration.Unstable.builder()
-                .bonsaiTrieLogPruningEnabled(true)
-                .bonsaiTrieLogRetentionThreshold(1000L)
-                .bonsaiTrieLogPruningLimit(20)
+                .bonsaiLimitTrieLogsEnabled(true)
+                .bonsaiTrieLogPruningWindowSize(514)
                 .build())
         .build();
   }
