@@ -430,7 +430,7 @@ public class Transaction
                 () ->
                     new IllegalStateException(
                         "Cannot recover public key from signature for " + this));
-    Address calculatedSender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
+    final Address calculatedSender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
     senderCache.put(this.hash, calculatedSender);
     return calculatedSender;
   }
