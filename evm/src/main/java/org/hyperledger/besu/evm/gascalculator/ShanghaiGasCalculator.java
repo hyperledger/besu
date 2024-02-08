@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.gascalculator;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Transaction;
@@ -25,6 +26,8 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import org.apache.tuweni.bytes.Bytes;
+
+import java.util.function.Supplier;
 
 /** The Shanghai gas calculator. */
 public class ShanghaiGasCalculator extends LondonGasCalculator {
@@ -80,7 +83,11 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
   @Override
   public long createOperationGasCost(final MessageFrame frame) {
     final long initCodeLength = clampedToLong(frame.getStackItem(2));
-    return clampedAdd(super.createOperationGasCost(frame), calculateInitGasCost(initCodeLength));
+    long cost = super.createOperationGasCost(frame);
+    cost = clampedAdd(cost, frame.getAccessWitness().touchAndChargeContractCreateInit(frame.getRecipientAddress(),!frame.getStackItem(0).isZero()));
+    //TODO VERKLE maybe we should onlu change this upon the completion of the contract creation, geth does at the end of the execution
+    cost = clampedAdd(cost, frame.getAccessWitness().touchAndChargeContractCreateCompleted(frame.getRecipientAddress()));
+    return clampedAdd(cost, calculateInitGasCost(initCodeLength));
   }
 
   private static long calculateInitGasCost(final long initCodeLength) {
@@ -127,4 +134,17 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
     return cost;
   }
 
+
+  @Override
+  public long calculateStorageCost(
+          final MessageFrame frame, final UInt256 newValue, final Supplier<UInt256> currentValue, final Supplier<UInt256> originalValue){
+
+    long gasCost = super.calculateStorageCost(frame, newValue, currentValue, originalValue);
+    //TODO VEKLE: right now we're not computing what is the tree index and subindex we're just charging the cost of writing to the storage
+    if(!newValue.equals(currentValue.get())){
+      gasCost += frame.getAccessWitness().touchAddressOnWriteAndComputeGas(frame.getRecipientAddress(),0,64);
+    }
+
+    return gasCost;
+  }
 }

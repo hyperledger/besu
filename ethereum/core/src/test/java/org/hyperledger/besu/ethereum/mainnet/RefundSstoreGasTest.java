@@ -19,6 +19,8 @@ import static org.apache.tuweni.units.bigints.UInt256.ZERO;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import io.vertx.core.eventbus.Message;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
@@ -90,6 +92,7 @@ public class RefundSstoreGasTest {
 
   private final Supplier<UInt256> mockSupplierForOriginalValue = mockSupplier();
   private final Supplier<UInt256> mockSupplierCurrentValue = mockSupplier();
+  private final MessageFrame mockMessageFrame = mock(MessageFrame.class);
 
   @SuppressWarnings("unchecked")
   private <T> Supplier<T> mockSupplier() {
@@ -113,8 +116,8 @@ public class RefundSstoreGasTest {
       final long expectedGasRefund) {
     setUp(originalValue, currentValue);
     Assertions.assertThat(
-            gasCalculator.calculateStorageCost(
-                newValue, mockSupplierCurrentValue, mockSupplierForOriginalValue))
+            gasCalculator.calculateStorageCost(mockMessageFrame,
+                    newValue, mockSupplierCurrentValue, mockSupplierForOriginalValue))
         .isEqualTo(expectedGasCost);
   }
 

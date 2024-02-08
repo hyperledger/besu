@@ -424,9 +424,9 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public long calculateStorageCost(
-      final UInt256 newValue,
-      final Supplier<UInt256> currentValue,
-      final Supplier<UInt256> originalValue) {
+          final MessageFrame frame, final UInt256 newValue,
+          final Supplier<UInt256> currentValue,
+          final Supplier<UInt256> originalValue) {
     return !newValue.isZero() && currentValue.get().isZero()
         ? STORAGE_SET_GAS_COST
         : STORAGE_RESET_GAS_COST;

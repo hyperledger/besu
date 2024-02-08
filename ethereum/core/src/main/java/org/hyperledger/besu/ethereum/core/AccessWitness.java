@@ -106,7 +106,7 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
 
     return gas;
   }
-
+  @Override
   public long touchAndChargeContractCreateCompleted(final Address address) {
 
     long gas = 0;
@@ -120,6 +120,7 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
     return gas;
   }
 
+  @SuppressWarnings("unused")
   @Override
   public long touchTxOriginAndComputeGas(final Address origin) {
 
@@ -130,10 +131,12 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
     gas += touchAddressOnWriteAndComputeGas(origin, zeroTreeIndex, 2);
     gas += touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, 3);
     gas += touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, 4);
+    //modifying this after update on EIP-4762 to not charge simple transfers
 
-    return gas;
+    return 0;
   }
 
+  @SuppressWarnings("unused")
   @Override
   public long touchTxExistingAndComputeGas(final Address target, final boolean sendsValue) {
 
@@ -149,10 +152,12 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
     } else {
       gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, 1);
     }
+    //modifying this after update on EIP-4762 to not charge simple transfers
 
-    return gas;
+    return 0;
   }
 
+  @Override
   public long touchAddressOnWriteAndComputeGas(
       final Address address, final int treeIndex, final int subIndex) {
 
