@@ -80,6 +80,12 @@ public class RocksDbHelper {
             rocksdb.getProperty(cfHandle, "rocksdb.total-sst-files-size");
         final long totalSstFilesSizeLong =
             !totalSstFilesSize.isBlank() ? Long.parseLong(totalSstFilesSize) : 0;
+
+        final String totalBlobFilesSize =
+            rocksdb.getProperty(cfHandle, "rocksdb.total-blob-file-size");
+        final long totalBlobFilesSizeLong =
+            !totalBlobFilesSize.isBlank() ? Long.parseLong(totalBlobFilesSize) : 0;
+
         if (sizeLong == 0 && numberOfKeysLong == 0) {
           emptyColumnFamily = true;
         }
@@ -90,7 +96,8 @@ public class RocksDbHelper {
               getNameById(cfHandle.getName()),
               rocksdb.getProperty(cfHandle, "rocksdb.estimate-num-keys"),
               formatOutputSize(sizeLong),
-              formatOutputSize(totalSstFilesSizeLong));
+              formatOutputSize(totalSstFilesSizeLong),
+              formatOutputSize(totalBlobFilesSizeLong));
         }
       } catch (NumberFormatException e) {
         LOG.error("Failed to parse string into long: " + e.getMessage());
@@ -124,9 +131,9 @@ public class RocksDbHelper {
 
   static void printTableHeader(final PrintWriter out) {
     out.format(
-        "| Column Family                  | Keys            | Column Size  | SST Files Size  |\n");
+        "| Column Family                  | Keys            | Column Size  | SST Files Size  | Blob Files Size  | \n");
     out.format(
-        "|--------------------------------|-----------------|--------------|-----------------|\n");
+        "|--------------------------------|-----------------|--------------|-----------------|------------------|\n");
   }
 
   static void printLine(
@@ -134,8 +141,9 @@ public class RocksDbHelper {
       final String cfName,
       final String keys,
       final String columnSize,
-      final String sstFilesSize) {
-    final String format = "| %-30s | %-15s | %-12s | %-15s |\n";
-    out.format(format, cfName, keys, columnSize, sstFilesSize);
+      final String sstFilesSize,
+      final String blobFilesSize) {
+    final String format = "| %-30s | %-15s | %-12s | %-15s | %-16s |\n";
+    out.format(format, cfName, keys, columnSize, sstFilesSize, blobFilesSize);
   }
 }
