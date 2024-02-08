@@ -31,7 +31,7 @@ import picocli.CommandLine.ParentCommand;
     description = "Print RocksDB information",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class,
-    subcommands = {RocksDbSubCommand.RocksDbUsage.class})
+    subcommands = {RocksDbSubCommand.RocksDbUsage.class, RocksDbSubCommand.RocksDbStats.class})
 public class RocksDbSubCommand implements Runnable {
 
   @SuppressWarnings("unused")
@@ -83,6 +83,47 @@ public class RocksDbSubCommand implements Runnable {
           (rocksdb, cfHandle) -> {
             try {
               RocksDbHelper.printUsageForColumnFamily(rocksdb, cfHandle, out);
+            } catch (RocksDBException e) {
+              throw new RuntimeException(e);
+            }
+          });
+    }
+  }
+
+  @Command(
+      name = "stats",
+      description = "Print rocksdb stats",
+      mixinStandardHelpOptions = true,
+      versionProvider = VersionProvider.class)
+  static class RocksDbStats implements Runnable {
+
+    @SuppressWarnings("unused")
+    @CommandLine.Spec
+    private CommandLine.Model.CommandSpec spec;
+
+    @SuppressWarnings("unused")
+    @ParentCommand
+    private RocksDbSubCommand parentCommand;
+
+    @Override
+    public void run() {
+
+      final PrintWriter out = spec.commandLine().getOut();
+
+      final String dbPath =
+          parentCommand
+              .parentCommand
+              .parentCommand
+              .dataDir()
+              .toString()
+              .concat("/")
+              .concat(DATABASE_PATH);
+
+      RocksDbHelper.forEachColumnFamily(
+          dbPath,
+          (rocksdb, cfHandle) -> {
+            try {
+              RocksDbHelper.printStatsForColumnFamily(rocksdb, cfHandle, out);
             } catch (RocksDBException e) {
               throw new RuntimeException(e);
             }

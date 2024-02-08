@@ -66,12 +66,28 @@ public class RocksDbHelper {
     }
   }
 
+  static void printStatsForColumnFamily(
+      final RocksDB rocksdb, final ColumnFamilyHandle cfHandle, final PrintWriter out)
+      throws RocksDBException {
+    final String size = rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size");
+    final String numberOfKeys = rocksdb.getProperty(cfHandle, "rocksdb.estimate-num-keys");
+    final long sizeLong = Long.parseLong(size);
+    final long numberOfKeysLong = Long.parseLong(numberOfKeys);
+    if (!size.isBlank()
+        && !numberOfKeys.isBlank()
+        && !isEmptyColumnFamily(sizeLong, numberOfKeysLong)) {
+      out.println("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
+      out.println("Column Family: " + getNameById(cfHandle.getName()));
+      out.println(rocksdb.getProperty(cfHandle, "rocksdb.stats"));
+      out.println("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
+    }
+  }
+
   static void printUsageForColumnFamily(
       final RocksDB rocksdb, final ColumnFamilyHandle cfHandle, final PrintWriter out)
       throws RocksDBException, NumberFormatException {
     final String size = rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size");
     final String numberOfKeys = rocksdb.getProperty(cfHandle, "rocksdb.estimate-num-keys");
-    boolean emptyColumnFamily = false;
     if (!size.isBlank() && !numberOfKeys.isBlank()) {
       try {
         final long sizeLong = Long.parseLong(size);
@@ -86,11 +102,7 @@ public class RocksDbHelper {
         final long totalBlobFilesSizeLong =
             !totalBlobFilesSize.isBlank() ? Long.parseLong(totalBlobFilesSize) : 0;
 
-        if (sizeLong == 0 && numberOfKeysLong == 0) {
-          emptyColumnFamily = true;
-        }
-
-        if (!emptyColumnFamily) {
+        if (!isEmptyColumnFamily(sizeLong, numberOfKeysLong)) {
           printLine(
               out,
               getNameById(cfHandle.getName()),
@@ -103,6 +115,10 @@ public class RocksDbHelper {
         LOG.error("Failed to parse string into long: " + e.getMessage());
       }
     }
+  }
+
+  private static boolean isEmptyColumnFamily(final long size, final long numberOfKeys) {
+    return size == 0 && numberOfKeys == 0;
   }
 
   static String formatOutputSize(final long size) {
