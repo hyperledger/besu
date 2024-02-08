@@ -334,26 +334,6 @@ public class EvmToolCommand implements Runnable {
               .metricsSystemModule(new MetricsSystemModule())
               .build();
 
-      final BlockHeader blockHeader =
-          BlockHeaderBuilder.create()
-              .parentHash(Hash.EMPTY)
-              .coinbase(coinbase)
-              .difficulty(Difficulty.ONE)
-              .number(1)
-              .gasLimit(5000)
-              .timestamp(Instant.now().toEpochMilli())
-              .ommersHash(Hash.EMPTY_LIST_HASH)
-              .stateRoot(Hash.EMPTY_TRIE_HASH)
-              .transactionsRoot(Hash.EMPTY)
-              .receiptsRoot(Hash.EMPTY)
-              .logsBloom(LogsBloomFilter.empty())
-              .gasUsed(0)
-              .extraData(Bytes.EMPTY)
-              .mixHash(Hash.EMPTY)
-              .nonce(0)
-              .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
-              .buildBlockHeader();
-
       int remainingIters = this.repeat;
       final ProtocolSpec protocolSpec =
           component.getProtocolSpec().apply(BlockHeaderBuilder.createDefault().buildBlockHeader());
@@ -413,6 +393,26 @@ public class EvmToolCommand implements Runnable {
         if (EvmSpecVersion.SHANGHAI.compareTo(evm.getEvmVersion()) <= 0) {
           addressList.add(coinbase);
         }
+        final BlockHeader blockHeader =
+            BlockHeaderBuilder.create()
+                .parentHash(Hash.EMPTY)
+                .coinbase(coinbase)
+                .difficulty(Difficulty.ONE)
+                .number(1)
+                .gasLimit(5000)
+                .timestamp(Instant.now().toEpochMilli())
+                .ommersHash(Hash.EMPTY_LIST_HASH)
+                .stateRoot(Hash.EMPTY_TRIE_HASH)
+                .transactionsRoot(Hash.EMPTY)
+                .receiptsRoot(Hash.EMPTY)
+                .logsBloom(LogsBloomFilter.empty())
+                .gasUsed(0)
+                .extraData(Bytes.EMPTY)
+                .mixHash(Hash.EMPTY)
+                .nonce(0)
+                .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
+                .baseFee(component.getBlockchain().getChainHeadHeader().getBaseFee().orElse(null))
+                .buildBlockHeader();
 
         MessageFrame initialMessageFrame =
             MessageFrame.builder()
