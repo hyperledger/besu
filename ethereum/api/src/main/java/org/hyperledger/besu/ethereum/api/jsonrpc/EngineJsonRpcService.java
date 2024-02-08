@@ -428,6 +428,7 @@ public class EngineJsonRpcService {
         .handler(
             BodyHandler.create()
                 .setUploadsDirectory(dataDir.resolve("uploads").toString())
+                .setBodyLimit(128*1024*1024)
                 .setDeleteUploadedFilesOnEnd(true));
     router.route("/").method(HttpMethod.GET).handler(this::handleEmptyRequest);
     router
