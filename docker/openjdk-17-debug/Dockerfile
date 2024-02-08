@@ -38,7 +38,7 @@ ENV BESU_PID_PATH "/tmp/pid"
 
 #debug options for maximum observability
 ENV BESU_LOGGING "INFO"
-ENV JDWP_OPTS "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
+ENV JDWP_OPTS "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
 ENV JAVA_OPTS "${JDWP_OPTS} "
 
 ENV OTEL_RESOURCE_ATTRIBUTES="service.name=besu,service.version=$VERSION"
