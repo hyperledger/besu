@@ -21,6 +21,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 
 import org.bouncycastle.util.Arrays;
 import org.rocksdb.ColumnFamilyDescriptor;
@@ -66,7 +67,7 @@ public class RocksDbHelper {
     }
   }
 
-  static void printStatsForColumnFamily(
+  static void printAllStatsForColumnFamily(
       final RocksDB rocksdb, final ColumnFamilyHandle cfHandle, final PrintWriter out)
       throws RocksDBException {
     final String size = rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size");
@@ -79,6 +80,156 @@ public class RocksDbHelper {
       out.println("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
       out.println("Column Family: " + getNameById(cfHandle.getName()));
       out.println(rocksdb.getProperty(cfHandle, "rocksdb.stats"));
+      out.println("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
+    }
+  }
+
+  static void printStatsForColumnFamily(
+      final RocksDB rocksdb, final ColumnFamilyHandle cfHandle, final PrintWriter out)
+      throws RocksDBException {
+    final String size = rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size");
+    final String numberOfKeys = rocksdb.getProperty(cfHandle, "rocksdb.estimate-num-keys");
+    final long sizeLong = Long.parseLong(size);
+    final long numberOfKeysLong = Long.parseLong(numberOfKeys);
+    if (!size.isBlank()
+        && !numberOfKeys.isBlank()
+        && !isEmptyColumnFamily(sizeLong, numberOfKeysLong)) {
+      out.println("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
+      out.println("Column Family: " + getNameById(cfHandle.getName()));
+
+      final String prefix = "rocksdb.";
+      final String num_files_at_level_prefix = "num-files-at-level";
+      final String compression_ratio_at_level_prefix = "compression-ratio-at-level";
+      final String allstats = "stats";
+      final String sstables = "sstables";
+      final String cfstats = "cfstats";
+      final String cfstats_no_file_histogram = "cfstats-no-file-histogram";
+      final String cf_file_histogram = "cf-file-histogram";
+      final String cf_write_stall_stats = "cf-write-stall-stats";
+      final String dbstats = "dbstats";
+      final String db_write_stall_stats = "db-write-stall-stats";
+      final String levelstats = "levelstats";
+      final String block_cache_entry_stats = "block-cache-entry-stats";
+      final String fast_block_cache_entry_stats = "fast-block-cache-entry-stats";
+      final String num_immutable_mem_table = "num-immutable-mem-table";
+      final String num_immutable_mem_table_flushed = "num-immutable-mem-table-flushed";
+      final String mem_table_flush_pending = "mem-table-flush-pending";
+      final String compaction_pending = "compaction-pending";
+      final String background_errors = "background-errors";
+      final String cur_size_active_mem_table = "cur-size-active-mem-table";
+      final String cur_size_all_mem_tables = "cur-size-all-mem-tables";
+      final String size_all_mem_tables = "size-all-mem-tables";
+      final String num_entries_active_mem_table = "num-entries-active-mem-table";
+      final String num_entries_imm_mem_tables = "num-entries-imm-mem-tables";
+      final String num_deletes_active_mem_table = "num-deletes-active-mem-table";
+      final String num_deletes_imm_mem_tables = "num-deletes-imm-mem-tables";
+      final String estimate_num_keys = "estimate-num-keys";
+      final String estimate_table_readers_mem = "estimate-table-readers-mem";
+      final String is_file_deletions_enabled = "is-file-deletions-enabled";
+      final String num_snapshots = "num-snapshots";
+      final String oldest_snapshot_time = "oldest-snapshot-time";
+      final String oldest_snapshot_sequence = "oldest-snapshot-sequence";
+      final String num_live_versions = "num-live-versions";
+      final String current_version_number = "current-super-version-number";
+      final String estimate_live_data_size = "estimate-live-data-size";
+      final String min_log_number_to_keep_str = "min-log-number-to-keep";
+      final String min_obsolete_sst_number_to_keep_str = "min-obsolete-sst-number-to-keep";
+      final String base_level_str = "base-level";
+      final String total_sst_files_size = "total-sst-files-size";
+      final String live_sst_files_size = "live-sst-files-size";
+      final String obsolete_sst_files_size = "obsolete-sst-files-size";
+      final String live_sst_files_size_at_temperature = "live-sst-files-size-at-temperature";
+      final String estimate_pending_comp_bytes = "estimate-pending-compaction-bytes";
+      final String aggregated_table_properties = "aggregated-table-properties";
+      final String num_running_compactions = "num-running-compactions";
+      final String num_running_flushes = "num-running-flushes";
+      final String actual_delayed_write_rate = "actual-delayed-write-rate";
+      final String is_write_stopped = "is-write-stopped";
+      final String estimate_oldest_key_time = "estimate-oldest-key-time";
+      final String block_cache_capacity = "block-cache-capacity";
+      final String block_cache_usage = "block-cache-usage";
+      final String block_cache_pinned_usage = "block-cache-pinned-usage";
+      final String options_statistics = "options-statistics";
+      final String num_blob_files = "num-blob-files";
+      final String blob_stats = "blob-stats";
+      final String total_blob_file_size = "total-blob-file-size";
+      final String live_blob_file_size = "live-blob-file-size";
+      final String live_blob_file_garbage_size = "live-blob-file-garbage-size";
+      final String blob_cache_capacity = "blob-cache-capacity";
+      final String blob_cache_usage = "blob-cache-usage";
+      final String blob_cache_pinned_usage = "blob-cache-pinned-usage";
+      Stream.of(
+              num_files_at_level_prefix,
+              compression_ratio_at_level_prefix,
+              allstats,
+              sstables,
+              cfstats,
+              cfstats_no_file_histogram,
+              cf_file_histogram,
+              cf_write_stall_stats,
+              dbstats,
+              db_write_stall_stats,
+              levelstats,
+              block_cache_entry_stats,
+              fast_block_cache_entry_stats,
+              num_immutable_mem_table,
+              num_immutable_mem_table_flushed,
+              mem_table_flush_pending,
+              compaction_pending,
+              background_errors,
+              cur_size_active_mem_table,
+              cur_size_all_mem_tables,
+              size_all_mem_tables,
+              num_entries_active_mem_table,
+              num_entries_imm_mem_tables,
+              num_deletes_active_mem_table,
+              num_deletes_imm_mem_tables,
+              estimate_num_keys,
+              estimate_table_readers_mem,
+              is_file_deletions_enabled,
+              num_snapshots,
+              oldest_snapshot_time,
+              oldest_snapshot_sequence,
+              num_live_versions,
+              current_version_number,
+              estimate_live_data_size,
+              min_log_number_to_keep_str,
+              min_obsolete_sst_number_to_keep_str,
+              base_level_str,
+              total_sst_files_size,
+              live_sst_files_size,
+              obsolete_sst_files_size,
+              live_sst_files_size_at_temperature,
+              estimate_pending_comp_bytes,
+              aggregated_table_properties,
+              num_running_compactions,
+              num_running_flushes,
+              actual_delayed_write_rate,
+              is_write_stopped,
+              estimate_oldest_key_time,
+              block_cache_capacity,
+              block_cache_usage,
+              block_cache_pinned_usage,
+              options_statistics,
+              num_blob_files,
+              blob_stats,
+              total_blob_file_size,
+              live_blob_file_size,
+              live_blob_file_garbage_size,
+              blob_cache_capacity,
+              blob_cache_usage,
+              blob_cache_pinned_usage)
+          .forEach(
+              prop -> {
+                try {
+                  final String value = rocksdb.getProperty(cfHandle, prefix + prop);
+                  if (!value.isBlank()) {
+                    out.println(prop + ": " + value);
+                  }
+                } catch (RocksDBException e) {
+                  LOG.warn("couldn't get property {}", prop);
+                }
+              });
       out.println("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
     }
   }
