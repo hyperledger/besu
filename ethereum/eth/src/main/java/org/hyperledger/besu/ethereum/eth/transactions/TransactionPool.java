@@ -401,9 +401,11 @@ public class TransactionPool implements BlockAddedObserver {
     final FeeMarket feeMarket =
         protocolSchedule.getByBlockHeader(chainHeadBlockHeader).getFeeMarket();
     Wei blobGasPrice = null;
-    if(feeMarket.implementsDataFee()) {
-      blobGasPrice = feeMarket.blobGasPricePerGas(
-                      calculateExcessBlobGasForParent(protocolSchedule.getByBlockHeader(chainHeadBlockHeader), chainHeadBlockHeader));
+    if (feeMarket.implementsDataFee()) {
+      blobGasPrice =
+          feeMarket.blobGasPricePerGas(
+              calculateExcessBlobGasForParent(
+                  protocolSchedule.getByBlockHeader(chainHeadBlockHeader), chainHeadBlockHeader));
     }
 
     final TransactionInvalidReason priceInvalidReason =

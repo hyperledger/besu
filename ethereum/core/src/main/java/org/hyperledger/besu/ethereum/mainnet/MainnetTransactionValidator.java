@@ -170,14 +170,18 @@ public class MainnetTransactionValidator implements TransactionValidator {
                 "total blob gas %d exceeds max blob gas per block %d",
                 txTotalBlobGas, gasLimitCalculator.currentBlobGasLimit()));
       }
-      if(maybeBlobFee.isEmpty()) {
-        throw new IllegalArgumentException("blob fee must be provided from blocks containing blobs");
-      } else if(maybeBlobFee.get().compareTo(transaction.getMaxFeePerBlobGas().get()) > 0){
-        return ValidationResult.invalid(TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE, String.format(
+      if (maybeBlobFee.isEmpty()) {
+        throw new IllegalArgumentException(
+            "blob fee must be provided from blocks containing blobs");
+      } else if (maybeBlobFee.get().compareTo(transaction.getMaxFeePerBlobGas().get()) > 0) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE,
+            String.format(
                 "max fee per blob gas less than block blob gas fee: address %s blobGasFeeCap: %s, blobBaseFee: %s",
-                transaction.getSender().toHexString(), transaction.getMaxFeePerBlobGas().get().toHumanReadableString(), maybeBlobFee.get().toHumanReadableString()));
+                transaction.getSender().toHexString(),
+                transaction.getMaxFeePerBlobGas().get().toHumanReadableString(),
+                maybeBlobFee.get().toHumanReadableString()));
       }
-
     }
 
     final long intrinsicGasCost =
