@@ -188,7 +188,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                         Address sender = transaction.getSender();
                         LOG.atTrace()
                             .setMessage("The sender for transaction {} is calculated : {}")
-                            .addArgument(transaction.getHash())
+                            .addArgument(transaction::getHash)
                             .addArgument(sender)
                             .log();
                       }));
