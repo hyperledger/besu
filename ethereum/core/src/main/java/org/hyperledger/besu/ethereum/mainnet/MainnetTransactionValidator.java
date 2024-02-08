@@ -175,7 +175,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
             "blob fee must be provided from blocks containing blobs");
       } else if (maybeBlobFee.get().compareTo(transaction.getMaxFeePerBlobGas().get()) > 0) {
         return ValidationResult.invalid(
-            TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE,
+            TransactionInvalidReason.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE,
             String.format(
                 "max fee per blob gas less than block blob gas fee: address %s blobGasFeeCap: %s, blobBaseFee: %s",
                 transaction.getSender().toHexString(),
