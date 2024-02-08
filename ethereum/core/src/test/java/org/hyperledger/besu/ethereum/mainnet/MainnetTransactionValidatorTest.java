@@ -315,7 +315,7 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
-  public void shouldRejectTransactionWithMaxBlobPriorityFeeGreaterThanMaxBlobFee() {
+  public void shouldRejectTransactionWithMaxBlobPriorityFeeSmallerThanBlobBaseFee() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator,
