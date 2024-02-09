@@ -816,6 +816,16 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         });
   }
 
+  /**
+   * returns the instance of ethScheduler
+   *
+   * @return get the Eth scheduler
+   */
+  @Override
+  public EthScheduler getEthScheduler() {
+    return ethScheduler;
+  }
+
   /** The interface Merge block creator factory. */
   @FunctionalInterface
   protected interface MergeBlockCreatorFactory {
