@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -424,12 +425,16 @@ public class MainnetTransactionProcessor {
       } else {
         initialFrame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
         initialFrame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INVALID_CODE));
+        validationResult =
+            ValidationResult.invalid(
+                TransactionInvalidReason.EOF_CODE_INVALID,
+                ((CodeInvalid) initialFrame.getCode()).getInvalidReason());
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         worldUpdater.commit();
       } else {
-        if (initialFrame.getExceptionalHaltReason().isPresent()) {
+        if (initialFrame.getExceptionalHaltReason().isPresent() && initialFrame.getCode().isValid()) {
           validationResult =
               ValidationResult.invalid(
                   TransactionInvalidReason.EXECUTION_HALTED,

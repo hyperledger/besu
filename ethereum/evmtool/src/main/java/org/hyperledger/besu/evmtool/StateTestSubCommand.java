@@ -307,7 +307,11 @@ public class StateTestSubCommand implements Runnable {
               "validationError",
               "Exception '" + spec.getExpectException() + "' was expected but did not occur");
         }
-
+        if (!result.getValidationResult().isValid()) {
+          summaryLine.put(
+                  "error",
+                  result.getValidationResult().getErrorMessage());
+        }
         if (parentCommand.showJsonAlloc) {
           EvmToolCommand.dumpWorldState(worldState, parentCommand.out);
         }

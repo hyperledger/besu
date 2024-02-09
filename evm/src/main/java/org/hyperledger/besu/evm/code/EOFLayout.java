@@ -99,6 +99,17 @@ public record EOFLayout(
    * @return the eof layout
    */
   public static EOFLayout parseEOF(final Bytes container) {
+    return parseEOF(container, false);
+  }
+
+  /**
+   * Parse EOF.
+   *
+   * @param container the container
+   * @param inSubcontainer Is this a subcontainer, i.e. not for deployment.
+   * @return the eof layout
+   */
+  static EOFLayout parseEOF(final Bytes container, final boolean inSubcontainer) {
     final ByteArrayInputStream inputStream = new ByteArrayInputStream(container.toArrayUnsafe());
 
     if (inputStream.available() < 3) {
@@ -314,12 +325,6 @@ public record EOFLayout(
       pos += codeSectionSize;
     }
 
-    if (inputStream.skip(dataSize) != dataSize) {
-      return invalidLayout(container, version, "Incomplete data section");
-    }
-    Bytes data = container.slice(pos, dataSize);
-    pos += dataSize;
-
     EOFLayout[] subContainers = new EOFLayout[containerSectionCount];
     for (int i = 0; i < containerSectionCount; i++) {
       int subcontianerSize = containerSectionSizes[i];
@@ -328,13 +333,24 @@ public record EOFLayout(
       if (subcontianerSize != inputStream.skip(subcontianerSize)) {
         return invalidLayout(container, version, "incomplete subcontainer");
       }
-      EOFLayout subLayout = EOFLayout.parseEOF(subcontainer);
+      EOFLayout subLayout = EOFLayout.parseEOF(subcontainer, true);
       if (!subLayout.isValid()) {
-        System.out.println(subLayout.invalidReason());
-        return invalidLayout(container, version, "invalid subcontainer");
+        String invalidSubReason = subLayout.invalidReason;
+        return invalidLayout(
+            container,
+            version,
+            invalidSubReason.contains("invalid subcontainer")
+                ? invalidSubReason
+                : "invalid subcontainer - " + invalidSubReason);
       }
       subContainers[i] = subLayout;
     }
+
+    long loadedDataCount = inputStream.skip(dataSize);
+    if (!inSubcontainer && loadedDataCount != dataSize) {
+      return invalidLayout(container, version, "Incomplete data section");
+    }
+    Bytes data = container.slice(pos, (int) loadedDataCount);
 
     if (inputStream.read() != -1) {
       return invalidLayout(container, version, "Dangling data after end of all sections");
