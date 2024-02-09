@@ -955,6 +955,35 @@ public class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
     registerCancunOperations(registry, gasCalculator, chainID);
+
+    // EIP-4200 relative jump
+    registry.put(new RelativeJumpOperation(gasCalculator));
+    registry.put(new RelativeJumpIfOperation(gasCalculator));
+    registry.put(new RelativeJumpVectorOperation(gasCalculator));
+
+    // EIP-4750 EOF Code Sections
+    registry.put(new CallFOperation(gasCalculator));
+    registry.put(new RetFOperation(gasCalculator));
+
+    // EIP-6209 JUMPF Instruction
+    registry.put(new JumpFOperation(gasCalculator));
+
+    // EIP-663 Unlimited Swap and Dup
+    registry.put(new DupNOperation(gasCalculator));
+    registry.put(new SwapNOperation(gasCalculator));
+
+    // "mega" EOF
+    registry.put(new DataLoadOperation(gasCalculator));
+    registry.put(new DataLoadNOperation(gasCalculator));
+    registry.put(new DataSizeOperation(gasCalculator));
+    registry.put(new DataCopyOperation(gasCalculator));
+
+    // TODO CREATE3, CREATE4, RETURNCONTRACT
+
+    // EIP-7069 Reworked Call Operations
+    registry.put(new Call2Operation(gasCalculator));
+    registry.put(new DelegateCall2Operation(gasCalculator));
+    registry.put(new StaticCall2Operation(gasCalculator));
   }
 
   /**
@@ -1358,35 +1387,6 @@ public class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
     registerBogotaOperations(registry, gasCalculator, chainID);
-
-    // EIP-4200 relative jump
-    registry.put(new RelativeJumpOperation(gasCalculator));
-    registry.put(new RelativeJumpIfOperation(gasCalculator));
-    registry.put(new RelativeJumpVectorOperation(gasCalculator));
-
-    // EIP-4750 EOF Code Sections
-    registry.put(new CallFOperation(gasCalculator));
-    registry.put(new RetFOperation(gasCalculator));
-
-    // EIP-6209 JUMPF Instruction
-    registry.put(new JumpFOperation(gasCalculator));
-
-    // EIP-663 Unlimited Swap and Dup
-    registry.put(new DupNOperation(gasCalculator));
-    registry.put(new SwapNOperation(gasCalculator));
-
-    // "mega" EOF
-    registry.put(new DataLoadOperation(gasCalculator));
-    registry.put(new DataLoadNOperation(gasCalculator));
-    registry.put(new DataSizeOperation(gasCalculator));
-    registry.put(new DataCopyOperation(gasCalculator));
-
-    // TODO CREATE3, CREATE4, RETURNCONTRACT
-
-    // EIP-7069 Reworked Call Operations
-    registry.put(new Call2Operation(gasCalculator));
-    registry.put(new DelegateCall2Operation(gasCalculator));
-    registry.put(new StaticCall2Operation(gasCalculator));
   }
 
   /**
