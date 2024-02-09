@@ -31,6 +31,12 @@ public interface DataStorageConfiguration {
           .unstable(Unstable.DEFAULT)
           .build();
 
+  DataStorageConfiguration DEFAULT_BONSAI_CONFIG =
+      ImmutableDataStorageConfiguration.builder()
+          .dataStorageFormat(DataStorageFormat.BONSAI)
+          .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+          .build();
+
   DataStorageFormat getDataStorageFormat();
 
   Long getBonsaiMaxLayersToLoad();
@@ -43,27 +49,27 @@ public interface DataStorageConfiguration {
   @Value.Immutable
   interface Unstable {
 
-    boolean DEFAULT_BONSAI_TRIE_LOG_PRUNING_ENABLED = false;
-    long DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD = 512L;
-    long MINIMUM_BONSAI_TRIE_LOG_RETENTION_THRESHOLD = DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
-    int DEFAULT_BONSAI_TRIE_LOG_PRUNING_LIMIT = 30_000;
+    boolean DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED = false;
+    long MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+    int DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE = 30_000;
+    boolean DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED = false;
 
     DataStorageConfiguration.Unstable DEFAULT =
         ImmutableDataStorageConfiguration.Unstable.builder().build();
 
     @Value.Default
-    default boolean getBonsaiTrieLogPruningEnabled() {
-      return DEFAULT_BONSAI_TRIE_LOG_PRUNING_ENABLED;
+    default boolean getBonsaiLimitTrieLogsEnabled() {
+      return DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
     }
 
     @Value.Default
-    default long getBonsaiTrieLogRetentionThreshold() {
-      return DEFAULT_BONSAI_TRIE_LOG_RETENTION_THRESHOLD;
+    default int getBonsaiTrieLogPruningWindowSize() {
+      return DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
     }
 
     @Value.Default
-    default int getBonsaiTrieLogPruningLimit() {
-      return DEFAULT_BONSAI_TRIE_LOG_PRUNING_LIMIT;
+    default boolean getBonsaiCodeStoredByCodeHashEnabled() {
+      return DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
     }
   }
 }

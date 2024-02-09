@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -60,6 +61,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
 
   private final FramerProvider framerProvider;
   private final boolean inboundInitiated;
+  private final PeerTable peerTable;
 
   AbstractHandshakeHandler(
       final List<SubProtocol> subProtocols,
@@ -70,7 +72,8 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
       final MetricsSystem metricsSystem,
       final HandshakerProvider handshakerProvider,
       final FramerProvider framerProvider,
-      final boolean inboundInitiated) {
+      final boolean inboundInitiated,
+      final PeerTable peerTable) {
     this.subProtocols = subProtocols;
     this.localNode = localNode;
     this.expectedPeer = expectedPeer;
@@ -80,6 +83,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
     this.handshaker = handshakerProvider.buildInstance();
     this.framerProvider = framerProvider;
     this.inboundInitiated = inboundInitiated;
+    this.peerTable = peerTable;
   }
 
   /**
@@ -97,47 +101,48 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
       ctx.writeAndFlush(nextMsg.get());
     } else if (handshaker.getStatus() != Handshaker.HandshakeStatus.SUCCESS) {
       LOG.debug("waiting for more bytes");
-      return;
+    } else {
+
+      final Bytes nodeId = handshaker.partyPubKey().getEncodedBytes();
+      if (!localNode.isReady()) {
+        // If we're handling a connection before the node is fully up, just disconnect
+        LOG.debug("Rejecting connection because local node is not ready {}", nodeId);
+        disconnect(ctx, DisconnectMessage.DisconnectReason.UNKNOWN);
+        return;
+      }
+
+      LOG.trace("Sending framed hello");
+
+      // Exchange keys done
+      final Framer framer = this.framerProvider.buildFramer(handshaker.secrets());
+
+      final ByteToMessageDecoder deFramer =
+          new DeFramer(
+              framer,
+              subProtocols,
+              localNode,
+              expectedPeer,
+              connectionEventDispatcher,
+              connectionFuture,
+              metricsSystem,
+              inboundInitiated,
+              peerTable);
+
+      ctx.channel()
+          .pipeline()
+          .replace(this, "DeFramer", deFramer)
+          .addBefore("DeFramer", "validate", new ValidateFirstOutboundMessage(framer));
+
+      ctx.writeAndFlush(new OutboundMessage(null, HelloMessage.create(localNode.getPeerInfo())))
+          .addListener(
+              ff -> {
+                if (ff.isSuccess()) {
+                  LOG.trace("Successfully wrote hello message");
+                }
+              });
+      msg.retain();
+      ctx.fireChannelRead(msg);
     }
-
-    final Bytes nodeId = handshaker.partyPubKey().getEncodedBytes();
-    if (!localNode.isReady()) {
-      // If we're handling a connection before the node is fully up, just disconnect
-      LOG.debug("Rejecting connection because local node is not ready {}", nodeId);
-      disconnect(ctx, DisconnectMessage.DisconnectReason.UNKNOWN);
-      return;
-    }
-
-    LOG.trace("Sending framed hello");
-
-    // Exchange keys done
-    final Framer framer = this.framerProvider.buildFramer(handshaker.secrets());
-
-    final ByteToMessageDecoder deFramer =
-        new DeFramer(
-            framer,
-            subProtocols,
-            localNode,
-            expectedPeer,
-            connectionEventDispatcher,
-            connectionFuture,
-            metricsSystem,
-            inboundInitiated);
-
-    ctx.channel()
-        .pipeline()
-        .replace(this, "DeFramer", deFramer)
-        .addBefore("DeFramer", "validate", new ValidateFirstOutboundMessage(framer));
-
-    ctx.writeAndFlush(new OutboundMessage(null, HelloMessage.create(localNode.getPeerInfo())))
-        .addListener(
-            ff -> {
-              if (ff.isSuccess()) {
-                LOG.trace("Successfully wrote hello message");
-              }
-            });
-    msg.retain();
-    ctx.fireChannelRead(msg);
   }
 
   private void disconnect(

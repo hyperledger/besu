@@ -42,7 +42,6 @@ import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValu
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogManager;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -108,7 +107,9 @@ class BonsaiWorldStateArchiveTest {
             cachedWorldStorageManager,
             trieLogManager,
             new BonsaiWorldStateKeyValueStorage(
-                storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG),
+                storageProvider,
+                new NoOpMetricsSystem(),
+                DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             blockchain,
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT);
@@ -122,13 +123,14 @@ class BonsaiWorldStateArchiveTest {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateProvider(
             new BonsaiWorldStateKeyValueStorage(
-                storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG),
+                storageProvider,
+                new NoOpMetricsSystem(),
+                DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             blockchain,
             Optional.of(512L),
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
             null,
-            EvmConfiguration.DEFAULT,
-            TrieLogPruner.noOpTrieLogPruner());
+            EvmConfiguration.DEFAULT);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(512).buildHeader();
     when(blockchain.getChainHeadHeader()).thenReturn(chainHead);
@@ -144,7 +146,9 @@ class BonsaiWorldStateArchiveTest {
             cachedWorldStorageManager,
             trieLogManager,
             new BonsaiWorldStateKeyValueStorage(
-                storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG),
+                storageProvider,
+                new NoOpMetricsSystem(),
+                DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             blockchain,
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT);
@@ -171,7 +175,9 @@ class BonsaiWorldStateArchiveTest {
 
     var worldStateStorage =
         new BonsaiWorldStateKeyValueStorage(
-            storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
+            storageProvider,
+            new NoOpMetricsSystem(),
+            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateProvider(
@@ -198,7 +204,9 @@ class BonsaiWorldStateArchiveTest {
 
     var worldStateStorage =
         new BonsaiWorldStateKeyValueStorage(
-            storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
+            storageProvider,
+            new NoOpMetricsSystem(),
+            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateProvider(
@@ -235,7 +243,9 @@ class BonsaiWorldStateArchiveTest {
 
     var worldStateStorage =
         new BonsaiWorldStateKeyValueStorage(
-            storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
+            storageProvider,
+            new NoOpMetricsSystem(),
+            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
 
     bonsaiWorldStateArchive =
         spy(
@@ -285,7 +295,7 @@ class BonsaiWorldStateArchiveTest {
                 new BonsaiWorldStateKeyValueStorage(
                     storageProvider,
                     new NoOpMetricsSystem(),
-                    DataStorageConfiguration.DEFAULT_CONFIG),
+                    DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
                 blockchain,
                 new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
                 EvmConfiguration.DEFAULT));

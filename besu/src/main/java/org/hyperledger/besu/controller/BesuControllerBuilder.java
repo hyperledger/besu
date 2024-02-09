@@ -83,6 +83,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.MarkSweepPruner;
@@ -177,7 +178,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** The Max peers. */
   protected int maxPeers;
 
-  private int peerLowerBound;
   private int maxRemotelyInitiatedPeers;
   /** The Chain pruner configuration. */
   protected ChainPrunerConfiguration chainPrunerConfiguration = ChainPrunerConfiguration.DEFAULT;
@@ -475,21 +475,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
-   * Lower bound of peers where we stop actively trying to initiate new outgoing connections
-   *
-   * @param peerLowerBound lower bound of peers where we stop actively trying to initiate new
-   *     outgoing connections
-   * @return the besu controller builder
-   */
-  public BesuControllerBuilder lowerBoundPeers(final int peerLowerBound) {
-    this.peerLowerBound = peerLowerBound;
-    return this;
-  }
-
-  /**
    * Maximum number of remotely initiated peer connections
    *
-   * @param maxRemotelyInitiatedPeers aximum number of remotely initiated peer connections
+   * @param maxRemotelyInitiatedPeers maximum number of remotely initiated peer connections
    * @return the besu controller builder
    */
   public BesuControllerBuilder maxRemotelyInitiatedPeers(final int maxRemotelyInitiatedPeers) {
@@ -510,7 +498,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
-   * Chain pruning configuration besu controller builder.
+   * Sets the number of blocks to cache.
    *
    * @param numberOfBlocksToCache the number of blocks to cache
    * @return the besu controller builder
@@ -592,8 +580,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
     final GenesisState genesisState =
-        GenesisState.fromConfig(
-            dataStorageConfiguration.getDataStorageFormat(), genesisConfig, protocolSchedule);
+        GenesisState.fromConfig(dataStorageConfiguration, genesisConfig, protocolSchedule);
 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
 
@@ -680,7 +667,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             maxMessageSize,
             messagePermissioningProviders,
             nodeKey.getPublicKey().getEncodedBytes(),
-            peerLowerBound,
             maxPeers,
             maxRemotelyInitiatedPeers,
             randomPeerPriority);
@@ -781,6 +767,15 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final JsonRpcMethods additionalJsonRpcMethodFactory =
         createAdditionalJsonRpcMethodFactory(protocolContext);
 
+    if (dataStorageConfiguration.getUnstable().getBonsaiLimitTrieLogsEnabled()
+        && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
+      final TrieLogManager trieLogManager =
+          ((BonsaiWorldStateProvider) worldStateArchive).getTrieLogManager();
+      final TrieLogPruner trieLogPruner =
+          createTrieLogPruner(worldStateStorage, blockchain, scheduler);
+      trieLogManager.subscribe(trieLogPruner);
+    }
+
     final List<Closeable> closeables = new ArrayList<>();
     closeables.add(protocolContext.getWorldStateArchive());
     closeables.add(storageProvider);
@@ -807,6 +802,26 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         ethPeers,
         storageProvider,
         dataStorageConfiguration);
+  }
+
+  private TrieLogPruner createTrieLogPruner(
+      final WorldStateStorage worldStateStorage,
+      final Blockchain blockchain,
+      final EthScheduler scheduler) {
+    final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
+    final boolean isProofOfStake = genesisConfigOptions.getTerminalTotalDifficulty().isPresent();
+
+    final TrieLogPruner trieLogPruner =
+        new TrieLogPruner(
+            (BonsaiWorldStateKeyValueStorage) worldStateStorage,
+            blockchain,
+            scheduler::executeServiceTask,
+            dataStorageConfiguration.getBonsaiMaxLayersToLoad(),
+            dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningWindowSize(),
+            isProofOfStake);
+    trieLogPruner.initialize();
+
+    return trieLogPruner;
   }
 
   /**
@@ -1069,29 +1084,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final Blockchain blockchain,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
-      case BONSAI -> {
-        final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
-        final boolean isProofOfStake =
-            genesisConfigOptions.getTerminalTotalDifficulty().isPresent();
-        final TrieLogPruner trieLogPruner =
-            dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningEnabled()
-                ? new TrieLogPruner(
-                    (BonsaiWorldStateKeyValueStorage) worldStateStorage,
-                    blockchain,
-                    dataStorageConfiguration.getUnstable().getBonsaiTrieLogRetentionThreshold(),
-                    dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningLimit(),
-                    isProofOfStake)
-                : TrieLogPruner.noOpTrieLogPruner();
-        trieLogPruner.initialize();
-        yield new BonsaiWorldStateProvider(
-            (BonsaiWorldStateKeyValueStorage) worldStateStorage,
-            blockchain,
-            Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
-            cachedMerkleTrieLoader,
-            besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
-            evmConfiguration,
-            trieLogPruner);
-      }
+      case BONSAI -> new BonsaiWorldStateProvider(
+          (BonsaiWorldStateKeyValueStorage) worldStateStorage,
+          blockchain,
+          Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
+          cachedMerkleTrieLoader,
+          besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
+          evmConfiguration);
       case FOREST -> {
         final WorldStatePreimageStorage preimageStorage =
             storageProvider.createWorldStatePreimageStorage();
@@ -1147,8 +1146,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final CheckpointConfigOptions checkpointConfigOptions =
         genesisConfig.getConfigOptions(genesisConfigOverrides).getCheckpointOptions();
-    if (SyncMode.X_CHECKPOINT.equals(syncConfig.getSyncMode())
-        && checkpointConfigOptions.isValid()) {
+    if (SyncMode.isCheckpointSync(syncConfig.getSyncMode()) && checkpointConfigOptions.isValid()) {
       validators.add(
           new CheckpointBlocksPeerValidator(
               protocolSchedule,

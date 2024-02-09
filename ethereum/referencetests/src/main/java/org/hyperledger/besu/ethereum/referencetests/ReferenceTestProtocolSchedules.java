@@ -78,8 +78,7 @@ public class ReferenceTestProtocolSchedules {
         "ShanghaiToCancunAtTime15k",
         createSchedule(genesisStub.clone().shanghaiTime(0).cancunTime(15000)));
     builder.put("Cancun", createSchedule(genesisStub.clone().cancunTime(0)));
-    // TODO remove this after execution-test-specs finalize
-    builder.put("Prague", createSchedule(genesisStub.clone().futureEipsTime(0)));
+    builder.put("Prague", createSchedule(genesisStub.clone().pragueTime(0)));
     builder.put("Future_EIPs", createSchedule(genesisStub.clone().futureEipsTime(0)));
     builder.put("Experimental_EIPs", createSchedule(genesisStub.clone().experimentalEipsTime(0)));
     return new ReferenceTestProtocolSchedules(builder.build());

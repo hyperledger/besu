@@ -54,6 +54,10 @@ public interface DefaultCommandValues {
   String MANDATORY_MODE_FORMAT_HELP = "<MODE>";
   /** The constant MANDATORY_NETWORK_FORMAT_HELP. */
   String MANDATORY_NETWORK_FORMAT_HELP = "<NETWORK>";
+  /** The constant PROFILE_OPTION_NAME. */
+  String PROFILE_OPTION_NAME = "--profile";
+  /** The constant PROFILE_FORMAT_HELP. */
+  String PROFILE_FORMAT_HELP = "<PROFILE>";
   /** The constant MANDATORY_NODE_ID_FORMAT_HELP. */
   String MANDATORY_NODE_ID_FORMAT_HELP = "<NODEID>";
   /** The constant PERMISSIONING_CONFIG_LOCATION. */
@@ -70,8 +74,6 @@ public interface DefaultCommandValues {
   int SYNC_MIN_PEER_COUNT = 5;
   /** The constant DEFAULT_MAX_PEERS. */
   int DEFAULT_MAX_PEERS = 25;
-  /** The constant DEFAULT_P2P_PEER_LOWER_BOUND. */
-  int DEFAULT_P2P_PEER_LOWER_BOUND = 25;
   /** The constant DEFAULT_HTTP_MAX_CONNECTIONS. */
   int DEFAULT_HTTP_MAX_CONNECTIONS = 80;
   /** The constant DEFAULT_HTTP_MAX_BATCH_SIZE. */
