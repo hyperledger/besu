@@ -79,8 +79,6 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
           "Loading network trusted setup from classpath resource {}", trustedSetupResourceName);
       CKZG4844JNI.loadTrustedSetupFromResource(
           trustedSetupResourceName, KZGPointEvalPrecompiledContract.class);
-    } else {
-      throw new IllegalStateException("KZG trusted setup was already loaded");
     }
   }
 
