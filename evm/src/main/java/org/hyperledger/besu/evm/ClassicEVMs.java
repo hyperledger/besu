@@ -26,6 +26,9 @@ import org.hyperledger.besu.evm.operation.Push0Operation;
 
 import java.math.BigInteger;
 
+/**
+ * Ethereum Classic EVM definitions.
+ */
 public class ClassicEVMs {
 
   /**
