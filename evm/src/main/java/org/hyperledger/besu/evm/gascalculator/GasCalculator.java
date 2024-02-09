@@ -352,19 +352,20 @@ public interface GasCalculator {
    *
    * @return the cost for executing the storage load operation
    */
-  long getSloadOperationGasCost();
+  long getSloadOperationGasCost(MessageFrame frame, UInt256 key);
 
   /**
    * Returns the cost for an SSTORE operation.
    *
    * @param frame         the current frame
+   * @param key           the slot key
    * @param newValue      the new value to be stored
    * @param currentValue  the supplier of the current value
    * @param originalValue the supplier of the original value
    * @return the gas cost for the SSTORE operation
    */
   long calculateStorageCost(
-          MessageFrame frame, UInt256 newValue, Supplier<UInt256> currentValue, Supplier<UInt256> originalValue);
+          MessageFrame frame, UInt256 key, UInt256 newValue, Supplier<UInt256> currentValue, Supplier<UInt256> originalValue);
 
   /**
    * Returns the refund amount for an SSTORE operation.

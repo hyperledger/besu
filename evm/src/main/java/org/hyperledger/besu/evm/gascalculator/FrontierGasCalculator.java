@@ -418,13 +418,13 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long getSloadOperationGasCost() {
+  public long getSloadOperationGasCost(MessageFrame frame, UInt256 key) {
     return SLOAD_OPERATION_GAS_COST;
   }
 
   @Override
   public long calculateStorageCost(
-          final MessageFrame frame, final UInt256 newValue,
+          final MessageFrame frame, UInt256 key, final UInt256 newValue,
           final Supplier<UInt256> currentValue,
           final Supplier<UInt256> originalValue) {
     return !newValue.isZero() && currentValue.get().isZero()

@@ -58,7 +58,7 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-2200
   public long calculateStorageCost(
-          final MessageFrame frame, final UInt256 newValue,
+          final MessageFrame frame, UInt256 key, final UInt256 newValue,
           final Supplier<UInt256> currentValue,
           final Supplier<UInt256> originalValue) {
 
@@ -119,7 +119,7 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
 
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-1884
-  public long getSloadOperationGasCost() {
+  public long getSloadOperationGasCost(MessageFrame frame, UInt256 key) {
     return SLOAD_GAS;
   }
 

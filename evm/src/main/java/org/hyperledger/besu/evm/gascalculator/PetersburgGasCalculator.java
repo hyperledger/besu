@@ -35,11 +35,11 @@ public class PetersburgGasCalculator extends ConstantinopleGasCalculator {
   private static final long STORAGE_RESET_REFUND_AMOUNT = 15_000L;
 
   /**
-   * Same as {#link {@link GasCalculator#calculateStorageCost(MessageFrame, UInt256, Supplier, Supplier)}
+   * Same as {#link {@link GasCalculator#calculateStorageCost(MessageFrame, UInt256, UInt256, Supplier, Supplier)}
    */
   @Override
   public long calculateStorageCost(
-          final MessageFrame frame, final UInt256 newValue,
+          final MessageFrame frame, UInt256 key, final UInt256 newValue,
           final Supplier<UInt256> currentValue,
           final Supplier<UInt256> originalValue) {
     return !newValue.isZero() && currentValue.get().isZero()

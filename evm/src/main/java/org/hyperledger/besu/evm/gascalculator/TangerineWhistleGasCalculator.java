@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.gascalculator;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
@@ -123,7 +124,7 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
   }
 
   @Override
-  public long getSloadOperationGasCost() {
+  public long getSloadOperationGasCost(MessageFrame frame, UInt256 key) {
     return SLOAD_OPERATION_GAS_COST;
   }
 }

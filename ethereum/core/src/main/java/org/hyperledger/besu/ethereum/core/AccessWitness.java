@@ -1,11 +1,20 @@
 package org.hyperledger.besu.ethereum.core;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.Address;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_OFFSET;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.HEADER_STORAGE_OFFSET;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.MAIN_STORAGE_OFFSET;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.VERKLE_NODE_WIDTH;
 
 public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitness {
 
@@ -268,5 +277,16 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
     public ChunkAccessKey(final Address address, final int treeIndex, final int chunkIndex) {
       this(new BranchAccessKey(address, treeIndex), chunkIndex);
     }
+  }
+  @Override
+  public List<Integer> getStorageSlotTreeIndexes(UInt256 storageKey){
+
+    UInt256 pos;
+    if (storageKey.lessThan(CODE_OFFSET.subtract(HEADER_STORAGE_OFFSET))) {
+      pos = HEADER_STORAGE_OFFSET.add(storageKey);
+    } else {
+      pos = MAIN_STORAGE_OFFSET.add(storageKey);
+    }
+    return List.of(pos.divide(VERKLE_NODE_WIDTH).intValue(), pos.mod(VERKLE_NODE_WIDTH).intValue());
   }
 }

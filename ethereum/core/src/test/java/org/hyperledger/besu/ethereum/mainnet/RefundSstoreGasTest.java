@@ -19,7 +19,6 @@ import static org.apache.tuweni.units.bigints.UInt256.ZERO;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import io.vertx.core.eventbus.Message;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -93,6 +92,7 @@ public class RefundSstoreGasTest {
   private final Supplier<UInt256> mockSupplierForOriginalValue = mockSupplier();
   private final Supplier<UInt256> mockSupplierCurrentValue = mockSupplier();
   private final MessageFrame mockMessageFrame = mock(MessageFrame.class);
+  private final UInt256 key = UInt256.ZERO;
 
   @SuppressWarnings("unchecked")
   private <T> Supplier<T> mockSupplier() {
@@ -115,8 +115,9 @@ public class RefundSstoreGasTest {
       final long expectedGasCost,
       final long expectedGasRefund) {
     setUp(originalValue, currentValue);
+    //TODO VERKLE assert new method signature change leaked into this test, REVIEW IT LATER
     Assertions.assertThat(
-            gasCalculator.calculateStorageCost(mockMessageFrame,
+            gasCalculator.calculateStorageCost(mockMessageFrame, key,
                     newValue, mockSupplierCurrentValue, mockSupplierForOriginalValue))
         .isEqualTo(expectedGasCost);
   }

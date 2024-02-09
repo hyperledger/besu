@@ -1,5 +1,8 @@
 package org.hyperledger.besu.datatypes;
 
+import org.apache.tuweni.units.bigints.UInt256;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public interface AccessWitness {
@@ -25,4 +28,6 @@ public interface AccessWitness {
   long touchAddressOnWriteAndComputeGas(Address address,  int treeIndex,  int subIndex);
 
   long touchAddressOnReadAndComputeGas(Address address,  int treeIndex,  int subIndex);
+
+  List<Integer> getStorageSlotTreeIndexes(UInt256 storageKey);
 }

@@ -15,8 +15,6 @@ package org.hyperledger.besu.evm.gascalculator;
  */
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.BALANCE_LEAF_KEY;
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_KECCAK_LEAF_KEY;
-import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_OFFSET;
-import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.HEADER_STORAGE_OFFSET;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
@@ -28,11 +26,11 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.ethereum.trie.verkle.util.Parameters;
 
 
 import org.apache.tuweni.bytes.Bytes;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 /** The Shanghai gas calculator. */
@@ -143,15 +141,24 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
 
   @Override
   public long calculateStorageCost(
-          final MessageFrame frame, final UInt256 newValue, final Supplier<UInt256> currentValue, final Supplier<UInt256> originalValue){
+          final MessageFrame frame, UInt256 key, final UInt256 newValue, final Supplier<UInt256> currentValue, final Supplier<UInt256> originalValue){
 
-    long gasCost = super.calculateStorageCost(frame, newValue, currentValue, originalValue);
+    long gasCost = super.calculateStorageCost(frame, key, newValue, currentValue, originalValue);
     //TODO VEKLE: right now we're not computing what is the tree index and subindex we're just charging the cost of writing to the storage
     if(!newValue.equals(currentValue.get())){
-      gasCost += frame.getAccessWitness().touchAddressOnWriteAndComputeGas(frame.getRecipientAddress(),0,HEADER_STORAGE_OFFSET.intValue());
+      AccessWitness accessWitness = frame.getAccessWitness();
+      List<Integer> treeIndexes = accessWitness.getStorageSlotTreeIndexes(key);
+      gasCost += frame.getAccessWitness().touchAddressOnWriteAndComputeGas(frame.getRecipientAddress(),treeIndexes.get(0),treeIndexes.get(1));
     }
 
     return gasCost;
+  }
+
+  @Override
+  public long getSloadOperationGasCost(MessageFrame frame, UInt256 key){
+    AccessWitness accessWitness = frame.getAccessWitness();
+    List<Integer> treeIndexes = accessWitness.getStorageSlotTreeIndexes(key);
+    return clampedAdd(super.getSloadOperationGasCost(frame, key),frame.getAccessWitness().touchAddressOnReadAndComputeGas(frame.getContractAddress(),treeIndexes.get(0),treeIndexes.get(1)));
   }
 
   @Override
@@ -163,4 +170,6 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
   public long extCodeHashOperationGasCost(MessageFrame frame){
     return clampedAdd(super.extCodeHashOperationGasCost(frame),frame.getAccessWitness().touchAddressOnReadAndComputeGas(frame.getContractAddress(),0,CODE_KECCAK_LEAF_KEY.intValue()));
   }
+
+
 }
