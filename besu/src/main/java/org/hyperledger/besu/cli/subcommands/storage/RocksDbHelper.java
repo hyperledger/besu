@@ -76,7 +76,7 @@ public class RocksDbHelper {
     final long numberOfKeysLong = Long.parseLong(numberOfKeys);
     if (!size.isBlank()
         && !numberOfKeys.isBlank()
-        && !isEmptyColumnFamily(sizeLong, numberOfKeysLong)) {
+        && isPopulatedColumnFamily(sizeLong, numberOfKeysLong)) {
       out.println("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
       out.println("Column Family: " + getNameById(cfHandle.getName()));
       out.println(rocksdb.getProperty(cfHandle, "rocksdb.stats"));
@@ -93,7 +93,7 @@ public class RocksDbHelper {
     final long numberOfKeysLong = Long.parseLong(numberOfKeys);
     if (!size.isBlank()
         && !numberOfKeys.isBlank()
-        && !isEmptyColumnFamily(sizeLong, numberOfKeysLong)) {
+        && isPopulatedColumnFamily(sizeLong, numberOfKeysLong)) {
       out.println("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
       out.println("Column Family: " + getNameById(cfHandle.getName()));
 
@@ -233,11 +233,9 @@ public class RocksDbHelper {
   static void printUsageForColumnFamily(
       final RocksDB rocksdb, final ColumnFamilyHandle cfHandle, final PrintWriter out)
       throws RocksDBException, NumberFormatException {
-    final String sizeEstimate = rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size");
     final String numberOfKeys = rocksdb.getProperty(cfHandle, "rocksdb.estimate-num-keys");
-    if (!sizeEstimate.isBlank() && !numberOfKeys.isBlank()) {
+    if (!numberOfKeys.isBlank()) {
       try {
-        final long sizeLong = Long.parseLong(sizeEstimate);
         final long numberOfKeysLong = Long.parseLong(numberOfKeys);
         final String totalSstFilesSize =
             rocksdb.getProperty(cfHandle, "rocksdb.total-sst-files-size");
@@ -250,12 +248,11 @@ public class RocksDbHelper {
             !totalBlobFilesSize.isBlank() ? Long.parseLong(totalBlobFilesSize) : 0;
 
         final long totalFilesSize = totalSstFilesSizeLong + totalBlobFilesSizeLong;
-        if (!isEmptyColumnFamily(sizeLong, numberOfKeysLong)) {
+        if (isPopulatedColumnFamily(0, numberOfKeysLong)) {
           printLine(
               out,
               getNameById(cfHandle.getName()),
               rocksdb.getProperty(cfHandle, "rocksdb.estimate-num-keys"),
-              formatOutputSize(sizeLong),
               formatOutputSize(totalFilesSize),
               formatOutputSize(totalSstFilesSizeLong),
               formatOutputSize(totalBlobFilesSizeLong));
@@ -266,8 +263,8 @@ public class RocksDbHelper {
     }
   }
 
-  private static boolean isEmptyColumnFamily(final long size, final long numberOfKeys) {
-    return size == 0 && numberOfKeys == 0;
+  private static boolean isPopulatedColumnFamily(final long size, final long numberOfKeys) {
+    return size != 0 || numberOfKeys != 0;
   }
 
   static String formatOutputSize(final long size) {
@@ -296,20 +293,19 @@ public class RocksDbHelper {
 
   static void printTableHeader(final PrintWriter out) {
     out.format(
-        "| Column Family                  | Keys            | Estimated Size  | Total Files Size  | SST Files Size  | Blob Files Size  | \n");
+        "| Column Family                  | Keys            | Total Size  | SST Files Size  | Blob Files Size  | \n");
     out.format(
-        "|--------------------------------|-----------------|-----------------|-------------------|-----------------|------------------|\n");
+        "|--------------------------------|-----------------|-------------|-----------------|------------------|\n");
   }
 
   static void printLine(
       final PrintWriter out,
       final String cfName,
       final String keys,
-      final String columnSize,
       final String totalFilesSize,
       final String sstFilesSize,
       final String blobFilesSize) {
-    final String format = "| %-30s | %-15s | %-15s | %-17s | %-15s | %-16s |\n";
-    out.format(format, cfName, keys, columnSize, totalFilesSize, sstFilesSize, blobFilesSize);
+    final String format = "| %-30s | %-15s | %-11s | %-15s | %-16s |\n";
+    out.format(format, cfName, keys, totalFilesSize, sstFilesSize, blobFilesSize);
   }
 }
