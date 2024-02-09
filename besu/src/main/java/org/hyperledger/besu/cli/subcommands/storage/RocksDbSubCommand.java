@@ -20,8 +20,6 @@ import org.hyperledger.besu.cli.util.VersionProvider;
 
 import java.io.PrintWriter;
 
-import org.rocksdb.Options;
-import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -120,21 +118,6 @@ public class RocksDbSubCommand implements Runnable {
               .toString()
               .concat("/")
               .concat(DATABASE_PATH);
-
-      RocksDB.loadLibrary();
-      Options options = new Options();
-      options.setCreateIfMissing(true);
-
-      out.println("Column Family All Stats...");
-      RocksDbHelper.forEachColumnFamily(
-          dbPath,
-          (rocksdb, cfHandle) -> {
-            try {
-              RocksDbHelper.printAllStatsForColumnFamily(rocksdb, cfHandle, out);
-            } catch (RocksDBException e) {
-              throw new RuntimeException(e);
-            }
-          });
 
       out.println("Column Family Stats...");
       RocksDbHelper.forEachColumnFamily(

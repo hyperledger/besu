@@ -67,23 +67,6 @@ public class RocksDbHelper {
     }
   }
 
-  static void printAllStatsForColumnFamily(
-      final RocksDB rocksdb, final ColumnFamilyHandle cfHandle, final PrintWriter out)
-      throws RocksDBException {
-    final String size = rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size");
-    final String numberOfKeys = rocksdb.getProperty(cfHandle, "rocksdb.estimate-num-keys");
-    final long sizeLong = Long.parseLong(size);
-    final long numberOfKeysLong = Long.parseLong(numberOfKeys);
-    if (!size.isBlank()
-        && !numberOfKeys.isBlank()
-        && isPopulatedColumnFamily(sizeLong, numberOfKeysLong)) {
-      out.println("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
-      out.println("Column Family: " + getNameById(cfHandle.getName()));
-      out.println(rocksdb.getProperty(cfHandle, "rocksdb.stats"));
-      out.println("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
-    }
-  }
-
   static void printStatsForColumnFamily(
       final RocksDB rocksdb, final ColumnFamilyHandle cfHandle, final PrintWriter out)
       throws RocksDBException {
