@@ -115,7 +115,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
 
   // Zeroed out old costs
   @Override
-  public long getBalanceOperationGasCost() {
+  public long getBalanceOperationGasCost(MessageFrame frame) {
     return 0L;
   }
 

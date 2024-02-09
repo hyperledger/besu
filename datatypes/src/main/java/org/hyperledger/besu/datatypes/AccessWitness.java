@@ -23,4 +23,6 @@ public interface AccessWitness {
   long touchAndChargeContractCreateCompleted(final Address address);
 
   long touchAddressOnWriteAndComputeGas(Address address,  int treeIndex,  int subIndex);
+
+  long touchAddressOnReadAndComputeGas(Address address,  int treeIndex,  int subIndex);
 }

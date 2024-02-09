@@ -125,7 +125,7 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
 
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-1884
-  public long getBalanceOperationGasCost() {
+  public long getBalanceOperationGasCost(MessageFrame frame) {
     return BALANCE_OPERATION_GAS_COST;
   }
 

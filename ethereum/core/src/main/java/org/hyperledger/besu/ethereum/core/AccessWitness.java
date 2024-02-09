@@ -164,6 +164,7 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
     return touchAddressAndChargeGas(address, treeIndex, subIndex, true);
   }
 
+  @Override
   public long touchAddressOnReadAndComputeGas(
       final Address address, final int treeIndex, final int subIndex) {
 

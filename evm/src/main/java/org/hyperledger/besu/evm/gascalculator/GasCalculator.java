@@ -242,7 +242,7 @@ public interface GasCalculator {
    *
    * @return the cost for executing the balance operation
    */
-  long getBalanceOperationGasCost();
+  long getBalanceOperationGasCost(MessageFrame frame);
 
   /**
    * Returns the cost for executing a {@link BlockHashOperation}.

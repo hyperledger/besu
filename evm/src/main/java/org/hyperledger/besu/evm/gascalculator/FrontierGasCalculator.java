@@ -313,7 +313,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long getBalanceOperationGasCost() {
+  public long getBalanceOperationGasCost(MessageFrame frame) {
     return BALANCE_OPERATION_GAS_COST;
   }
 

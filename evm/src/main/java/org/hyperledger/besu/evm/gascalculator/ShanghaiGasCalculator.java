@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
+
 import org.apache.tuweni.bytes.Bytes;
 
 import java.util.function.Supplier;
@@ -146,5 +147,10 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
     }
 
     return gasCost;
+  }
+
+  @Override
+  public long getBalanceOperationGasCost(MessageFrame frame){
+    return clampedAdd(super.getBalanceOperationGasCost(frame),frame.getAccessWitness().touchAddressOnWriteAndComputeGas(frame.getContractAddress(),0,1));
   }
 }
