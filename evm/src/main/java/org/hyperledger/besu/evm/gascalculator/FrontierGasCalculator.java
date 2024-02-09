@@ -313,7 +313,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long getBalanceOperationGasCost() {
+  public long getBalanceOperationGasCost(final MessageFrame frame) {
     return BALANCE_OPERATION_GAS_COST;
   }
 
@@ -353,7 +353,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long extCodeHashOperationGasCost() {
+  public long extCodeHashOperationGasCost(final MessageFrame frame) {
     throw new UnsupportedOperationException(
         "EXTCODEHASH not supported by " + getClass().getSimpleName());
   }
@@ -396,7 +396,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long selfDestructOperationGasCost(final Account recipient, final Wei inheritance) {
+  public long selfDestructOperationGasCost(final MessageFrame frame, final Account recipient, final Wei inheritance, final Address originatorAddress) {
     return SELFDESTRUCT_OPERATION_GAS_COST;
   }
 
@@ -418,15 +418,15 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long getSloadOperationGasCost() {
+  public long getSloadOperationGasCost(final MessageFrame frame, final UInt256 key) {
     return SLOAD_OPERATION_GAS_COST;
   }
 
   @Override
   public long calculateStorageCost(
-      final UInt256 newValue,
-      final Supplier<UInt256> currentValue,
-      final Supplier<UInt256> originalValue) {
+          final MessageFrame frame, final UInt256 key, final UInt256 newValue,
+          final Supplier<UInt256> currentValue,
+          final Supplier<UInt256> originalValue) {
     return !newValue.isZero() && currentValue.get().isZero()
         ? STORAGE_SET_GAS_COST
         : STORAGE_RESET_GAS_COST;

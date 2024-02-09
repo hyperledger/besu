@@ -115,7 +115,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
 
   // Zeroed out old costs
   @Override
-  public long getBalanceOperationGasCost() {
+  public long getBalanceOperationGasCost(final MessageFrame frame) {
     return 0L;
   }
 
@@ -125,7 +125,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   }
 
   @Override
-  public long extCodeHashOperationGasCost() {
+  public long extCodeHashOperationGasCost(final MessageFrame frame) {
     return 0L;
   }
 
@@ -135,7 +135,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   }
 
   @Override
-  public long getSloadOperationGasCost() {
+  public long getSloadOperationGasCost(final MessageFrame frame, final UInt256 key) {
     return 0L;
   }
 
@@ -178,9 +178,9 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-2200
   public long calculateStorageCost(
-      final UInt256 newValue,
-      final Supplier<UInt256> currentValue,
-      final Supplier<UInt256> originalValue) {
+          final MessageFrame frame, final UInt256 key, final UInt256 newValue,
+          final Supplier<UInt256> currentValue,
+          final Supplier<UInt256> originalValue) {
 
     final UInt256 localCurrentValue = currentValue.get();
     if (localCurrentValue.equals(newValue)) {

@@ -1,11 +1,20 @@
 package org.hyperledger.besu.ethereum.core;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.Address;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_OFFSET;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.HEADER_STORAGE_OFFSET;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.MAIN_STORAGE_OFFSET;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.VERKLE_NODE_WIDTH;
 
 public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitness {
 
@@ -58,6 +67,17 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
   }
 
   @Override
+  public long touchAndChargeProofOfAbsence(final Address address){
+    long gas = 0;
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, 0);
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, 1);
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, 2);
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, 3);
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, 4);
+    return gas;
+  }
+
+  @Override
   public long touchAndChargeMessageCall(final Address address) {
 
     long gas = 0;
@@ -95,7 +115,7 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
 
     return gas;
   }
-
+  @Override
   public long touchAndChargeContractCreateCompleted(final Address address) {
 
     long gas = 0;
@@ -109,6 +129,7 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
     return gas;
   }
 
+  @SuppressWarnings("unused")
   @Override
   public long touchTxOriginAndComputeGas(final Address origin) {
 
@@ -119,10 +140,12 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
     gas += touchAddressOnWriteAndComputeGas(origin, zeroTreeIndex, 2);
     gas += touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, 3);
     gas += touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, 4);
+    //modifying this after update on EIP-4762 to not charge simple transfers
 
-    return gas;
+    return 0;
   }
 
+  @SuppressWarnings("unused")
   @Override
   public long touchTxExistingAndComputeGas(final Address target, final boolean sendsValue) {
 
@@ -138,19 +161,30 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
     } else {
       gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, 1);
     }
+    //modifying this after update on EIP-4762 to not charge simple transfers
 
+    return 0;
+  }
+
+  @Override
+  public long touchCodeChunksUponContractCreation(final Address address, final long codeLength){
+    long gas = 0;
+    for (long i = 0; i < (codeLength + 30) / 31; i++) {
+      gas += touchAddressOnWriteAndComputeGas(address, CODE_OFFSET.subtract(i).divide(VERKLE_NODE_WIDTH).intValue(), CODE_OFFSET.subtract(i).mod(VERKLE_NODE_WIDTH).intValue());
+    }
     return gas;
   }
 
+  @Override
   public long touchAddressOnWriteAndComputeGas(
       final Address address, final int treeIndex, final int subIndex) {
 
     return touchAddressAndChargeGas(address, treeIndex, subIndex, true);
   }
 
+  @Override
   public long touchAddressOnReadAndComputeGas(
       final Address address, final int treeIndex, final int subIndex) {
-
     return touchAddressAndChargeGas(address, treeIndex, subIndex, false);
   }
 
@@ -251,5 +285,16 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
     public ChunkAccessKey(final Address address, final int treeIndex, final int chunkIndex) {
       this(new BranchAccessKey(address, treeIndex), chunkIndex);
     }
+  }
+  @Override
+  public List<Integer> getStorageSlotTreeIndexes(final UInt256 storageKey){
+
+    UInt256 pos;
+    if (storageKey.lessThan(CODE_OFFSET.subtract(HEADER_STORAGE_OFFSET))) {
+      pos = HEADER_STORAGE_OFFSET.add(storageKey);
+    } else {
+      pos = MAIN_STORAGE_OFFSET.add(storageKey);
+    }
+    return List.of(pos.divide(VERKLE_NODE_WIDTH).intValue(), pos.mod(VERKLE_NODE_WIDTH).intValue());
   }
 }

@@ -41,11 +41,12 @@ public class ExtCodeHashOperation extends AbstractOperation {
   /**
    * Cost of Ext code hash operation.
    *
+   * @param frame the current frame
    * @param accountIsWarm the account is warm
    * @return the long
    */
-  protected long cost(final boolean accountIsWarm) {
-    return gasCalculator().extCodeHashOperationGasCost()
+  protected long cost(final MessageFrame frame, final boolean accountIsWarm) {
+    return gasCalculator().extCodeHashOperationGasCost(frame)
         + (accountIsWarm
             ? gasCalculator().getWarmStorageReadCost()
             : gasCalculator().getColdAccountAccessCost());
@@ -57,7 +58,7 @@ public class ExtCodeHashOperation extends AbstractOperation {
       final Address address = Words.toAddress(frame.popStackItem());
       final boolean accountIsWarm =
           frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
-      final long cost = cost(accountIsWarm);
+      final long cost = cost(frame, accountIsWarm);
       if (frame.getRemainingGas() < cost) {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
@@ -70,9 +71,9 @@ public class ExtCodeHashOperation extends AbstractOperation {
         return new OperationResult(cost, null);
       }
     } catch (final UnderflowException ufe) {
-      return new OperationResult(cost(true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+      return new OperationResult(cost(frame, true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     } catch (final OverflowException ofe) {
-      return new OperationResult(cost(true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
+      return new OperationResult(cost(frame, true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
     }
   }
 }

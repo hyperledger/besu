@@ -60,6 +60,7 @@ dependencies {
   implementation 'io.tmio:tuweni-units'
   implementation 'io.tmio:tuweni-rlp'
   implementation 'org.hyperledger.besu:bls12-381'
+  implementation 'org.hyperledger.besu:besu-verkle-trie'
   implementation 'org.immutables:value-annotations'
   implementation 'tech.pegasys:jc-kzg-4844'
 

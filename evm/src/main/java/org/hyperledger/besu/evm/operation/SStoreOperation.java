@@ -60,6 +60,8 @@ public class SStoreOperation extends AbstractOperation {
     return minimumGasRemaining;
   }
 
+
+
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
 
@@ -79,7 +81,7 @@ public class SStoreOperation extends AbstractOperation {
         Suppliers.memoize(() -> account.getOriginalStorageValue(key));
 
     final long cost =
-        gasCalculator().calculateStorageCost(newValue, currentValueSupplier, originalValueSupplier)
+        gasCalculator().calculateStorageCost(frame, key, newValue, currentValueSupplier, originalValueSupplier)
             + (slotIsWarm ? 0L : gasCalculator().getColdSloadCost());
 
     final long remainingGas = frame.getRemainingGas();
