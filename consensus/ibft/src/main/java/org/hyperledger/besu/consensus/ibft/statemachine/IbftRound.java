@@ -59,6 +59,7 @@ public class IbftRound {
   private final BlockCreator blockCreator;
   /** The protocol context. */
   protected final ProtocolContext protocolContext;
+
   private final ProtocolSchedule protocolSchedule;
   private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
