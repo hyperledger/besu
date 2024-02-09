@@ -353,7 +353,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long extCodeHashOperationGasCost() {
+  public long extCodeHashOperationGasCost(MessageFrame frame) {
     throw new UnsupportedOperationException(
         "EXTCODEHASH not supported by " + getClass().getSimpleName());
   }

@@ -112,7 +112,7 @@ public class ConstantinopleGasCalculator extends ByzantiumGasCalculator {
   }
 
   @Override
-  public long extCodeHashOperationGasCost() {
+  public long extCodeHashOperationGasCost(MessageFrame frame) {
     return EXTCODE_HASH_COST;
   }
 }

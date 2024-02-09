@@ -67,9 +67,9 @@ public class BalanceOperation extends AbstractOperation {
         return new OperationResult(cost, null);
       }
     } catch (final UnderflowException ufe) {
-      return new OperationResult(cost(, true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+      return new OperationResult(cost(frame, true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     } catch (final OverflowException ofe) {
-      return new OperationResult(cost(, true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
+      return new OperationResult(cost(frame, true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
     }
   }
 }

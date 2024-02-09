@@ -131,7 +131,7 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
 
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-1884
-  public long extCodeHashOperationGasCost() {
+  public long extCodeHashOperationGasCost(MessageFrame frame) {
     return EXTCODE_HASH_COST;
   }
 

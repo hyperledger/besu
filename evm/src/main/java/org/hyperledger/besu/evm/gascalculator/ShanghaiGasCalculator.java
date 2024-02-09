@@ -13,6 +13,10 @@ package org.hyperledger.besu.evm.gascalculator;
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.BALANCE_LEAF_KEY;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_KECCAK_LEAF_KEY;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_OFFSET;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.HEADER_STORAGE_OFFSET;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
@@ -24,6 +28,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.ethereum.trie.verkle.util.Parameters;
 
 
 import org.apache.tuweni.bytes.Bytes;
@@ -143,7 +148,7 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
     long gasCost = super.calculateStorageCost(frame, newValue, currentValue, originalValue);
     //TODO VEKLE: right now we're not computing what is the tree index and subindex we're just charging the cost of writing to the storage
     if(!newValue.equals(currentValue.get())){
-      gasCost += frame.getAccessWitness().touchAddressOnWriteAndComputeGas(frame.getRecipientAddress(),0,64);
+      gasCost += frame.getAccessWitness().touchAddressOnWriteAndComputeGas(frame.getRecipientAddress(),0,HEADER_STORAGE_OFFSET.intValue());
     }
 
     return gasCost;
@@ -151,6 +156,11 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
 
   @Override
   public long getBalanceOperationGasCost(MessageFrame frame){
-    return clampedAdd(super.getBalanceOperationGasCost(frame),frame.getAccessWitness().touchAddressOnWriteAndComputeGas(frame.getContractAddress(),0,1));
+    return clampedAdd(super.getBalanceOperationGasCost(frame),frame.getAccessWitness().touchAddressOnWriteAndComputeGas(frame.getContractAddress(),0, BALANCE_LEAF_KEY.intValue()));
+  }
+
+  @Override
+  public long extCodeHashOperationGasCost(MessageFrame frame){
+    return clampedAdd(super.extCodeHashOperationGasCost(frame),frame.getAccessWitness().touchAddressOnReadAndComputeGas(frame.getContractAddress(),0,CODE_KECCAK_LEAF_KEY.intValue()));
   }
 }

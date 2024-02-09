@@ -125,7 +125,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   }
 
   @Override
-  public long extCodeHashOperationGasCost() {
+  public long extCodeHashOperationGasCost(MessageFrame frame) {
     return 0L;
   }
 

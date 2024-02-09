@@ -274,7 +274,7 @@ public interface GasCalculator {
    *
    * @return the cost for executing the external code hash operation
    */
-  long extCodeHashOperationGasCost();
+  long extCodeHashOperationGasCost(MessageFrame frame);
 
   /**
    * Returns the cost for executing a {@link ExtCodeSizeOperation}.
