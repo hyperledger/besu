@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.tracing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.evm.EVM;
@@ -49,7 +50,7 @@ class ExtendedOperationTracerTest {
   @BeforeEach
   void setUp() {
     when(frame.getOutputData()).thenReturn(Bytes.EMPTY);
-    when(gasCalculator.codeDepositGasCost(anyInt())).thenReturn(0L);
+    when(gasCalculator.codeDepositGasCost(eq(frame), anyInt())).thenReturn(0L);
     when(frame.getRemainingGas()).thenReturn(1L);
 
     when(frame.getWorldUpdater()).thenReturn(worldUpdater);

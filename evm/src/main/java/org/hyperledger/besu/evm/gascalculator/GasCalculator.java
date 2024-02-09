@@ -189,6 +189,10 @@ public interface GasCalculator {
    */
   long gasAvailableForChildCall(MessageFrame frame, long stipend, boolean transfersValue);
 
+  long initCreateContractGasCost(MessageFrame frame);
+
+  long completedCreateContractGasCost(final MessageFrame frame);
+
   /**
    * Returns the amount of gas the CREATE operation will consume.
    *
@@ -331,13 +335,14 @@ public interface GasCalculator {
   /**
    * Returns the cost for executing a {@link SelfDestructOperation}.
    *
-   * @param frame             The current frame
-   * @param recipient         The recipient of the self destructed inheritance (may be null)
-   * @param inheritance       The amount the recipient will receive
+   * @param frame The current frame
+   * @param recipient The recipient of the self destructed inheritance (may be null)
+   * @param inheritance The amount the recipient will receive
    * @param originatorAddress The address of the self destructing account
    * @return the cost for executing the self destruct operation
    */
-  long selfDestructOperationGasCost(MessageFrame frame, Account recipient, Wei inheritance, Address originatorAddress);
+  long selfDestructOperationGasCost(
+      MessageFrame frame, Account recipient, Wei inheritance, Address originatorAddress);
 
   /**
    * Returns the cost for executing a {@link Keccak256Operation}.
@@ -359,15 +364,19 @@ public interface GasCalculator {
   /**
    * Returns the cost for an SSTORE operation.
    *
-   * @param frame         the current frame
-   * @param key           the slot key
-   * @param newValue      the new value to be stored
-   * @param currentValue  the supplier of the current value
+   * @param frame the current frame
+   * @param key the slot key
+   * @param newValue the new value to be stored
+   * @param currentValue the supplier of the current value
    * @param originalValue the supplier of the original value
    * @return the gas cost for the SSTORE operation
    */
   long calculateStorageCost(
-          MessageFrame frame, UInt256 key, UInt256 newValue, Supplier<UInt256> currentValue, Supplier<UInt256> originalValue);
+      MessageFrame frame,
+      UInt256 key,
+      UInt256 newValue,
+      Supplier<UInt256> currentValue,
+      Supplier<UInt256> originalValue);
 
   /**
    * Returns the refund amount for an SSTORE operation.
@@ -439,10 +448,11 @@ public interface GasCalculator {
   /**
    * Returns the cost for a {@link AbstractMessageProcessor} to deposit the code in storage
    *
+   * @param frame The current frame
    * @param codeSize The size of the code in bytes
    * @return the code deposit cost
    */
-  long codeDepositGasCost(int codeSize);
+  long codeDepositGasCost(MessageFrame frame, int codeSize);
 
   /**
    * Returns the intrinsic gas cost of a transaction payload, i.e. the cost deriving from its

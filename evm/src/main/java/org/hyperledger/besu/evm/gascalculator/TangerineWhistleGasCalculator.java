@@ -16,12 +16,13 @@ package org.hyperledger.besu.evm.gascalculator;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 
-import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
+
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Tangerine whistle gas calculator. */
 public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
@@ -115,7 +116,11 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
   }
 
   @Override
-  public long selfDestructOperationGasCost(final MessageFrame frame, final Account recipient, final Wei inheritance, final Address originatorAddress) {
+  public long selfDestructOperationGasCost(
+      final MessageFrame frame,
+      final Account recipient,
+      final Wei inheritance,
+      final Address originatorAddress) {
     if (recipient == null) {
       return SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT;
     } else {

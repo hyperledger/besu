@@ -50,9 +50,11 @@ public class ConstantinopleGasCalculator extends ByzantiumGasCalculator {
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-1283
   public long calculateStorageCost(
-          final MessageFrame frame, final UInt256 key, final UInt256 newValue,
-          final Supplier<UInt256> currentValue,
-          final Supplier<UInt256> originalValue) {
+      final MessageFrame frame,
+      final UInt256 key,
+      final UInt256 newValue,
+      final Supplier<UInt256> currentValue,
+      final Supplier<UInt256> originalValue) {
 
     final UInt256 localCurrentValue = currentValue.get();
     if (localCurrentValue.equals(newValue)) {

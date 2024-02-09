@@ -136,10 +136,7 @@ public abstract class DiffBasedWorldState
   @Override
   public void persist(final BlockHeader blockHeader) {
     final Optional<BlockHeader> maybeBlockHeader = Optional.ofNullable(blockHeader);
-    LOG.atInfo()
-        .setMessage("Persist world state for block {}")
-        .addArgument(maybeBlockHeader)
-        .log();
+    LOG.atInfo().setMessage("Persist world state for block {}").addArgument(maybeBlockHeader).log();
 
     final DiffBasedWorldStateUpdateAccumulator<?> localCopy = accumulator.copy();
 

@@ -65,7 +65,9 @@ public class SelfDestructOperation extends AbstractOperation {
     final Wei originatorBalance = originatorAccount.getBalance();
 
     final long cost =
-        gasCalculator().selfDestructOperationGasCost(frame, beneficiaryNullable, originatorBalance, originatorAddress)
+        gasCalculator()
+                .selfDestructOperationGasCost(
+                    frame, beneficiaryNullable, originatorBalance, originatorAddress)
             + (beneficiaryIsWarm ? 0L : gasCalculator().getColdAccountAccessCost());
 
     // With the cost we can test for two early exits: static or not enough gas.

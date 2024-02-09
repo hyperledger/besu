@@ -18,7 +18,6 @@ import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_KEC
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
-import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Transaction;
@@ -27,11 +26,11 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
-
-import org.apache.tuweni.bytes.Bytes;
-
 import java.util.List;
 import java.util.function.Supplier;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Shanghai gas calculator. */
 public class ShanghaiGasCalculator extends LondonGasCalculator {
@@ -51,8 +50,6 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
     super();
   }
 
-
-
   @Override
   public long transactionIntrinsicGasCost(final Bytes payload, final boolean isContractCreation) {
     long intrinsicGasCost = super.transactionIntrinsicGasCost(payload, isContractCreation);
@@ -65,7 +62,7 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
 
   @Override
   public long computeBaseAccessEventsCost(
-          final AccessWitness accessWitness,
+      final AccessWitness accessWitness,
       final Transaction transaction,
       final MutableAccount sender) {
     final boolean sendsValue = !transaction.getValue().equals(Wei.ZERO);
@@ -85,12 +82,33 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
   }
 
   @Override
+  public long initCreateContractGasCost(final MessageFrame frame) {
+    return frame
+        .getAccessWitness()
+        .touchAndChargeContractCreateInit(frame.getContractAddress(), !frame.getValue().isZero());
+  }
+
+  @Override
+  public long completedCreateContractGasCost(final MessageFrame frame) {
+    return frame
+        .getAccessWitness()
+        .touchAndChargeContractCreateCompleted(frame.getContractAddress());
+  }
+
+  @Override
+  public long codeDepositGasCost(final MessageFrame frame, final int codeSize) {
+    long cost = super.codeDepositGasCost(frame, codeSize);
+    return clampedAdd(
+        cost,
+        frame
+            .getAccessWitness()
+            .touchCodeChunksUponContractCreation(frame.getContractAddress(), codeSize));
+  }
+
+  @Override
   public long createOperationGasCost(final MessageFrame frame) {
     final long initCodeLength = clampedToLong(frame.getStackItem(2));
     long cost = super.createOperationGasCost(frame);
-    cost = clampedAdd(cost, frame.getAccessWitness().touchAndChargeContractCreateInit(frame.getRecipientAddress(),!frame.getStackItem(0).isZero()));
-    //TODO VERKLE maybe we should onlu change this upon the completion of the contract creation, geth does at the end of the execution
-    cost = clampedAdd(cost, frame.getAccessWitness().touchAndChargeContractCreateCompleted(frame.getRecipientAddress()));
     return clampedAdd(cost, calculateInitGasCost(initCodeLength));
   }
 
@@ -101,84 +119,128 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
 
   @Override
   public long callOperationGasCost(
-          final MessageFrame frame,
-          final long stipend,
-          final long inputDataOffset,
-          final long inputDataLength,
-          final long outputDataOffset,
-          final long outputDataLength,
-          final Wei transferValue,
-          final Account recipient,
-          final Address to) {
+      final MessageFrame frame,
+      final long stipend,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
+      final Wei transferValue,
+      final Account recipient,
+      final Address to) {
 
     final long baseCost =
-            super.callOperationGasCost(
-                    frame,
-                    stipend,
-                    inputDataOffset,
-                    inputDataLength,
-                    outputDataOffset,
-                    outputDataLength,
-                    transferValue,
-                    recipient,
-                    to);
+        super.callOperationGasCost(
+            frame,
+            stipend,
+            inputDataOffset,
+            inputDataLength,
+            outputDataOffset,
+            outputDataLength,
+            transferValue,
+            recipient,
+            to);
     long cost = baseCost;
-    if(frame.getWorldUpdater().get(to) == null){
-      cost = clampedAdd(baseCost,frame.getAccessWitness().touchAndChargeProofOfAbsence(to));
-    }
-    else{
-      if(!super.isPrecompile(to)){
-        cost = clampedAdd(baseCost,frame.getAccessWitness().touchAndChargeMessageCall(to));
+    if (frame.getWorldUpdater().get(to) == null) {
+      cost = clampedAdd(baseCost, frame.getAccessWitness().touchAndChargeProofOfAbsence(to));
+    } else {
+      if (!super.isPrecompile(to)) {
+        cost = clampedAdd(baseCost, frame.getAccessWitness().touchAndChargeMessageCall(to));
       }
     }
 
-    if(!transferValue.isZero()){
-      cost = clampedAdd(baseCost,frame.getAccessWitness().touchAndChargeValueTransfer(recipient.getAddress(),to));
+    if (!transferValue.isZero()) {
+      cost =
+          clampedAdd(
+              baseCost,
+              frame.getAccessWitness().touchAndChargeValueTransfer(recipient.getAddress(), to));
     }
     return cost;
   }
 
-
   @Override
   public long calculateStorageCost(
-          final MessageFrame frame, final UInt256 key, final UInt256 newValue, final Supplier<UInt256> currentValue, final Supplier<UInt256> originalValue){
+      final MessageFrame frame,
+      final UInt256 key,
+      final UInt256 newValue,
+      final Supplier<UInt256> currentValue,
+      final Supplier<UInt256> originalValue) {
 
     long gasCost = super.calculateStorageCost(frame, key, newValue, currentValue, originalValue);
-    //TODO VEKLE: right now we're not computing what is the tree index and subindex we're just charging the cost of writing to the storage
-    if(!newValue.equals(currentValue.get())){
+    // TODO VEKLE: right now we're not computing what is the tree index and subindex we're just
+    // charging the cost of writing to the storage
+    if (!newValue.equals(currentValue.get())) {
       AccessWitness accessWitness = frame.getAccessWitness();
       List<Integer> treeIndexes = accessWitness.getStorageSlotTreeIndexes(key);
-      gasCost += frame.getAccessWitness().touchAddressOnWriteAndComputeGas(frame.getRecipientAddress(),treeIndexes.get(0),treeIndexes.get(1));
-      gasCost += frame.getAccessWitness().touchAddressOnWriteAndComputeGas(frame.getRecipientAddress(),treeIndexes.get(0),treeIndexes.get(1));
+      gasCost +=
+          frame
+              .getAccessWitness()
+              .touchAddressOnWriteAndComputeGas(
+                  frame.getRecipientAddress(), treeIndexes.get(0), treeIndexes.get(1));
+      gasCost +=
+          frame
+              .getAccessWitness()
+              .touchAddressOnWriteAndComputeGas(
+                  frame.getRecipientAddress(), treeIndexes.get(0), treeIndexes.get(1));
     }
 
     return gasCost;
   }
 
   @Override
-  public long getSloadOperationGasCost(final MessageFrame frame, final UInt256 key){
+  public long getSloadOperationGasCost(final MessageFrame frame, final UInt256 key) {
     AccessWitness accessWitness = frame.getAccessWitness();
     List<Integer> treeIndexes = accessWitness.getStorageSlotTreeIndexes(key);
-    return clampedAdd(super.getSloadOperationGasCost(frame, key),frame.getAccessWitness().touchAddressOnReadAndComputeGas(frame.getContractAddress(),treeIndexes.get(0),treeIndexes.get(1)));
+    return clampedAdd(
+        super.getSloadOperationGasCost(frame, key),
+        frame
+            .getAccessWitness()
+            .touchAddressOnReadAndComputeGas(
+                frame.getContractAddress(), treeIndexes.get(0), treeIndexes.get(1)));
   }
 
   @Override
-  public long getBalanceOperationGasCost(final MessageFrame frame){
-    return clampedAdd(super.getBalanceOperationGasCost(frame),frame.getAccessWitness().touchAddressOnWriteAndComputeGas(frame.getContractAddress(),0, BALANCE_LEAF_KEY.intValue()));
+  public long getBalanceOperationGasCost(final MessageFrame frame) {
+    return clampedAdd(
+        super.getBalanceOperationGasCost(frame),
+        frame
+            .getAccessWitness()
+            .touchAddressOnWriteAndComputeGas(
+                frame.getContractAddress(), 0, BALANCE_LEAF_KEY.intValue()));
   }
 
   @Override
-  public long extCodeHashOperationGasCost(final MessageFrame frame){
-    return clampedAdd(super.extCodeHashOperationGasCost(frame),frame.getAccessWitness().touchAddressOnReadAndComputeGas(frame.getContractAddress(),0,CODE_KECCAK_LEAF_KEY.intValue()));
+  public long extCodeHashOperationGasCost(final MessageFrame frame) {
+    return clampedAdd(
+        super.extCodeHashOperationGasCost(frame),
+        frame
+            .getAccessWitness()
+            .touchAddressOnReadAndComputeGas(
+                frame.getContractAddress(), 0, CODE_KECCAK_LEAF_KEY.intValue()));
   }
 
   @Override
-  public long selfDestructOperationGasCost(final MessageFrame frame, final Account recipient, final Wei inheritance, final Address originatorAddress){
-    long cost = super.selfDestructOperationGasCost(frame, recipient, inheritance, originatorAddress);
-    cost = clampedAdd(cost,frame.getAccessWitness().touchAddressOnReadAndComputeGas(originatorAddress,0,BALANCE_LEAF_KEY.intValue()));
-    cost = clampedAdd(cost,frame.getAccessWitness().touchAddressOnReadAndComputeGas(recipient.getAddress(),0,BALANCE_LEAF_KEY.intValue()));
+  public long selfDestructOperationGasCost(
+      final MessageFrame frame,
+      final Account recipient,
+      final Wei inheritance,
+      final Address originatorAddress) {
+    long cost =
+        super.selfDestructOperationGasCost(frame, recipient, inheritance, originatorAddress);
+    cost =
+        clampedAdd(
+            cost,
+            frame
+                .getAccessWitness()
+                .touchAddressOnReadAndComputeGas(
+                    originatorAddress, 0, BALANCE_LEAF_KEY.intValue()));
+    cost =
+        clampedAdd(
+            cost,
+            frame
+                .getAccessWitness()
+                .touchAddressOnReadAndComputeGas(
+                    recipient.getAddress(), 0, BALANCE_LEAF_KEY.intValue()));
     return cost;
   }
-
-
 }

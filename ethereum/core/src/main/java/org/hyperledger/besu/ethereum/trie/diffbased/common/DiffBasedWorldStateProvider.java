@@ -151,7 +151,6 @@ public class DiffBasedWorldStateProvider implements WorldStateArchive {
   public synchronized Optional<MutableWorldState> getMutable(
       final Hash rootHash, final Hash blockHash) {
 
-
     /*Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockHash);
     if(blockHeader.isPresent()){
       Optional<BlockHeader> parentHeader = blockchain.getBlockHeader(blockHeader.get().getParentHash());
@@ -165,7 +164,6 @@ public class DiffBasedWorldStateProvider implements WorldStateArchive {
       }
     }*/
     return rollMutableStateToBlockHash(persistedState, blockHash);
-
   }
 
   Optional<MutableWorldState> rollMutableStateToBlockHash(

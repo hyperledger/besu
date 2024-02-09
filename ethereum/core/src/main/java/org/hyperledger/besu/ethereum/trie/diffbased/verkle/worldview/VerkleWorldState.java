@@ -217,9 +217,8 @@ public class VerkleWorldState extends DiffBasedWorldState {
               worldStateUpdater.getCodeToUpdate().entrySet()) {
             final Bytes previousCode = codeUpdate.getValue().getPrior();
             final Bytes updatedCode = codeUpdate.getValue().getUpdated();
-            System.out.println(previousCode + " " + codeUpdate);
             if (!codeUpdate.getValue().isUnchanged()
-                || !(codeIsEmpty(previousCode) && codeIsEmpty(updatedCode))) {
+                && !(codeIsEmpty(previousCode) && codeIsEmpty(updatedCode))) {
               final Address address = codeUpdate.getKey();
               final Hash accountHash = address.addressHash();
               if (updatedCode == null) {

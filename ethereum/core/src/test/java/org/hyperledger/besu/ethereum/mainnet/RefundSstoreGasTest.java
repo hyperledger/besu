@@ -115,10 +115,14 @@ public class RefundSstoreGasTest {
       final long expectedGasCost,
       final long expectedGasRefund) {
     setUp(originalValue, currentValue);
-    //TODO VERKLE assert new method signature change leaked into this test, REVIEW IT LATER
+    // TODO VERKLE assert new method signature change leaked into this test, REVIEW IT LATER
     Assertions.assertThat(
-            gasCalculator.calculateStorageCost(mockMessageFrame, key,
-                    newValue, mockSupplierCurrentValue, mockSupplierForOriginalValue))
+            gasCalculator.calculateStorageCost(
+                mockMessageFrame,
+                key,
+                newValue,
+                mockSupplierCurrentValue,
+                mockSupplierForOriginalValue))
         .isEqualTo(expectedGasCost);
   }
 

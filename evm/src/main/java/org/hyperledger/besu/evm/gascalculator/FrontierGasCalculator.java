@@ -144,7 +144,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long codeDepositGasCost(final int codeSize) {
+  public long codeDepositGasCost(final MessageFrame frame, final int codeSize) {
     return CODE_DEPOSIT_BYTE_COST * codeSize;
   }
 
@@ -280,6 +280,16 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
+  public long initCreateContractGasCost(final MessageFrame frame) {
+    return 0;
+  }
+
+  @Override
+  public long completedCreateContractGasCost(final MessageFrame frame) {
+    return 0;
+  }
+
+  @Override
   public long createOperationGasCost(final MessageFrame frame) {
     final long initCodeOffset = clampedToLong(frame.getStackItem(1));
     final long initCodeLength = clampedToLong(frame.getStackItem(2));
@@ -396,7 +406,11 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long selfDestructOperationGasCost(final MessageFrame frame, final Account recipient, final Wei inheritance, final Address originatorAddress) {
+  public long selfDestructOperationGasCost(
+      final MessageFrame frame,
+      final Account recipient,
+      final Wei inheritance,
+      final Address originatorAddress) {
     return SELFDESTRUCT_OPERATION_GAS_COST;
   }
 
@@ -424,9 +438,11 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public long calculateStorageCost(
-          final MessageFrame frame, final UInt256 key, final UInt256 newValue,
-          final Supplier<UInt256> currentValue,
-          final Supplier<UInt256> originalValue) {
+      final MessageFrame frame,
+      final UInt256 key,
+      final UInt256 newValue,
+      final Supplier<UInt256> currentValue,
+      final Supplier<UInt256> originalValue) {
     return !newValue.isZero() && currentValue.get().isZero()
         ? STORAGE_SET_GAS_COST
         : STORAGE_RESET_GAS_COST;

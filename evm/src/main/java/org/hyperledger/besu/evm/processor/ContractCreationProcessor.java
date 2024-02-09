@@ -107,11 +107,13 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
       LOG.trace("Executing contract-creation");
     }
     try {
-
       final MutableAccount sender = frame.getWorldUpdater().getSenderAccount(frame);
       sender.decrementBalance(frame.getValue());
 
       Address contractAddress = frame.getContractAddress();
+
+      frame.decrementRemainingGas(gasCalculator.initCreateContractGasCost(frame));
+
       final MutableAccount contract = frame.getWorldUpdater().getOrCreate(contractAddress);
       if (accountExists(contract)) {
         LOG.trace(
@@ -140,7 +142,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
   public void codeSuccess(final MessageFrame frame, final OperationTracer operationTracer) {
     final Bytes contractCode = frame.getOutputData();
 
-    final long depositFee = gasCalculator.codeDepositGasCost(contractCode.size());
+    final long depositFee = gasCalculator.codeDepositGasCost(frame, contractCode.size());
 
     if (frame.getRemainingGas() < depositFee) {
       LOG.trace(
@@ -171,12 +173,15 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
         final MutableAccount contract =
             frame.getWorldUpdater().getOrCreate(frame.getContractAddress());
         contract.setCode(contractCode);
-        LOG.trace(
+        LOG.info(
             "Successful creation of contract {} with code of size {} (Gas remaining: {})",
             frame.getContractAddress(),
             contractCode.size(),
             frame.getRemainingGas());
         frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
+
+        frame.decrementRemainingGas(gasCalculator.completedCreateContractGasCost(frame));
+
         if (operationTracer.isExtendedTracing()) {
           operationTracer.traceAccountCreationResult(frame, Optional.empty());
         }

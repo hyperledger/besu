@@ -1,20 +1,18 @@
 package org.hyperledger.besu.ethereum.core;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.tuweni.units.bigints.UInt256;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_OFFSET;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.HEADER_STORAGE_OFFSET;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.MAIN_STORAGE_OFFSET;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.VERKLE_NODE_WIDTH;
+
 import org.hyperledger.besu.datatypes.Address;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_OFFSET;
-import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.HEADER_STORAGE_OFFSET;
-import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.MAIN_STORAGE_OFFSET;
-import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.VERKLE_NODE_WIDTH;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitness {
 
@@ -67,7 +65,7 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
   }
 
   @Override
-  public long touchAndChargeProofOfAbsence(final Address address){
+  public long touchAndChargeProofOfAbsence(final Address address) {
     long gas = 0;
     gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, 0);
     gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, 1);
@@ -115,6 +113,7 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
 
     return gas;
   }
+
   @Override
   public long touchAndChargeContractCreateCompleted(final Address address) {
 
@@ -140,7 +139,7 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
     gas += touchAddressOnWriteAndComputeGas(origin, zeroTreeIndex, 2);
     gas += touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, 3);
     gas += touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, 4);
-    //modifying this after update on EIP-4762 to not charge simple transfers
+    // modifying this after update on EIP-4762 to not charge simple transfers
 
     return 0;
   }
@@ -161,16 +160,22 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
     } else {
       gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, 1);
     }
-    //modifying this after update on EIP-4762 to not charge simple transfers
+    // modifying this after update on EIP-4762 to not charge simple transfers
 
     return 0;
   }
 
   @Override
-  public long touchCodeChunksUponContractCreation(final Address address, final long codeLength){
+  public long touchCodeChunksUponContractCreation(final Address address, final long codeLength) {
     long gas = 0;
+    System.out.println("run touchCodeChunksUponContractCreation ? "+codeLength);
     for (long i = 0; i < (codeLength + 30) / 31; i++) {
-      gas += touchAddressOnWriteAndComputeGas(address, CODE_OFFSET.subtract(i).divide(VERKLE_NODE_WIDTH).intValue(), CODE_OFFSET.subtract(i).mod(VERKLE_NODE_WIDTH).intValue());
+      System.out.println("run touchCodeChunksUponContractCreation ? "+i);
+      gas +=
+          touchAddressOnWriteAndComputeGas(
+              address,
+              CODE_OFFSET.subtract(i).divide(VERKLE_NODE_WIDTH).intValue(),
+              CODE_OFFSET.subtract(i).mod(VERKLE_NODE_WIDTH).intValue());
     }
     return gas;
   }
@@ -195,18 +200,73 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
     long gas = 0;
     if (accessEvent.isBranchRead()) {
       gas += WITNESS_BRANCH_READ_COST;
+      System.out.println(
+          "touchAddressAndChargeGas WitnessBranchReadCost "
+              + address
+              + " "
+              + treeIndex
+              + " "
+              + subIndex
+              + " "
+              + isWrite
+              + " "
+              + gas);
     }
     if (accessEvent.isChunkRead()) {
       gas += WITNESS_CHUNK_READ_COST;
+      System.out.println(
+          "touchAddressAndChargeGas WitnessChunkReadCost "
+              + address
+              + " "
+              + treeIndex
+              + " "
+              + subIndex
+              + " "
+              + isWrite
+              + " "
+              + gas);
     }
     if (accessEvent.isBranchWrite()) {
       gas += WITNESS_BRANCH_WRITE_COST;
+      System.out.println(
+          "touchAddressAndChargeGas WitnessBranchWriteCost "
+              + address
+              + " "
+              + treeIndex
+              + " "
+              + subIndex
+              + " "
+              + isWrite
+              + " "
+              + gas);
     }
     if (accessEvent.isChunkWrite()) {
       gas += WITNESS_CHUNK_WRITE_COST;
+      System.out.println(
+          "touchAddressAndChargeGas WitnessChunkWriteCost "
+              + address
+              + " "
+              + treeIndex
+              + " "
+              + subIndex
+              + " "
+              + isWrite
+              + " "
+              + gas);
     }
     if (accessEvent.isChunkFill()) {
       gas += WITNESS_CHUNK_FILL_COST;
+      System.out.println(
+          "touchAddressAndChargeGas WitnessChunkFillCost "
+              + address
+              + " "
+              + treeIndex
+              + " "
+              + subIndex
+              + " "
+              + isWrite
+              + " "
+              + gas);
     }
 
     return gas;
@@ -286,8 +346,9 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
       this(new BranchAccessKey(address, treeIndex), chunkIndex);
     }
   }
+
   @Override
-  public List<Integer> getStorageSlotTreeIndexes(final UInt256 storageKey){
+  public List<Integer> getStorageSlotTreeIndexes(final UInt256 storageKey) {
 
     UInt256 pos;
     if (storageKey.lessThan(CODE_OFFSET.subtract(HEADER_STORAGE_OFFSET))) {

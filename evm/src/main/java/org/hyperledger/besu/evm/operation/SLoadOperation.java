@@ -36,12 +36,11 @@ public class SLoadOperation extends AbstractOperation {
    */
   public SLoadOperation(final GasCalculator gasCalculator) {
     super(0x54, "SLOAD", 1, 1, gasCalculator);
-
   }
 
   protected long cost(final MessageFrame frame, final Bytes32 key, final boolean slotIsWarm) {
     return gasCalculator().getSloadOperationGasCost(frame, UInt256.fromBytes(key))
-            + (slotIsWarm
+        + (slotIsWarm
             ? gasCalculator().getWarmStorageReadCost()
             : gasCalculator().getColdSloadCost());
   }
@@ -63,11 +62,13 @@ public class SLoadOperation extends AbstractOperation {
         return new OperationResult(cost, null);
       }
     } catch (final UnderflowException ufe) {
-      //TODO VERKLE FIX THE SLOTISWARM
-      return new OperationResult(cost(frame, Bytes32.ZERO,true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+      // TODO VERKLE FIX THE SLOTISWARM
+      return new OperationResult(
+          cost(frame, Bytes32.ZERO, true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     } catch (final OverflowException ofe) {
-      //TODO VERKLE FIX THE SLOTISWARM
-      return new OperationResult(cost(frame, Bytes32.ZERO, true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
+      // TODO VERKLE FIX THE SLOTISWARM
+      return new OperationResult(
+          cost(frame, Bytes32.ZERO, true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
     }
   }
 }

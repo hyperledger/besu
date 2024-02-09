@@ -36,7 +36,6 @@ import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.rmi.AccessException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -260,22 +259,22 @@ public class MessageFrame {
   }
 
   private MessageFrame(
-          final Type type,
-          final WorldUpdater worldUpdater,
-          final long initialGas,
-          final Address recipient,
-          final Address contract,
-          final Bytes inputData,
-          final Address sender,
-          final Wei value,
-          final Wei apparentValue,
-          final Code code,
-          final boolean isStatic,
-          final Consumer<MessageFrame> completer,
-          final Map<String, Object> contextVariables,
-          final Optional<Bytes> revertReason,
-          final TxValues txValues,
-          final AccessWitness accessWitness) {
+      final Type type,
+      final WorldUpdater worldUpdater,
+      final long initialGas,
+      final Address recipient,
+      final Address contract,
+      final Bytes inputData,
+      final Address sender,
+      final Wei value,
+      final Wei apparentValue,
+      final Code code,
+      final boolean isStatic,
+      final Consumer<MessageFrame> completer,
+      final Map<String, Object> contextVariables,
+      final Optional<Bytes> revertReason,
+      final TxValues txValues,
+      final AccessWitness accessWitness) {
 
     this.txValues = txValues;
     this.type = type;

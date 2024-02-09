@@ -466,7 +466,10 @@ public class MainnetTransactionProcessor {
           .addArgument(sender.getBalance())
           .log();
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
-      LOG.info("Gas used by transaction({}): {}",transaction.getHash().toShortHexString(), gasUsedByTransaction);
+      LOG.info(
+          "Gas used by transaction({}): {}",
+          transaction.getHash().toShortHexString(),
+          gasUsedByTransaction);
       operationTracer.traceEndTransaction(
           worldUpdater,
           transaction,

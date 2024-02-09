@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
+import org.hyperledger.besu.evm.frame.MessageFrame;
+
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.evm.frame.MessageFrame;
 
 /** The Istanbul gas calculator. */
 public class IstanbulGasCalculator extends PetersburgGasCalculator {
@@ -58,9 +59,11 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-2200
   public long calculateStorageCost(
-          final MessageFrame frame, final UInt256 key, final UInt256 newValue,
-          final Supplier<UInt256> currentValue,
-          final Supplier<UInt256> originalValue) {
+      final MessageFrame frame,
+      final UInt256 key,
+      final UInt256 newValue,
+      final Supplier<UInt256> currentValue,
+      final Supplier<UInt256> originalValue) {
 
     final UInt256 localCurrentValue = currentValue.get();
     if (localCurrentValue.equals(newValue)) {

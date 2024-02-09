@@ -66,7 +66,7 @@ class ContractCreationProcessorTest
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(100L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
+    when(gasCalculator.codeDepositGasCost(messageFrame, contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
     assertThat(messageFrame.getExceptionalHaltReason())
@@ -88,7 +88,7 @@ class ContractCreationProcessorTest
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(100L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
+    when(gasCalculator.codeDepositGasCost(messageFrame, contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
   }
@@ -103,7 +103,7 @@ class ContractCreationProcessorTest
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(100L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
+    when(gasCalculator.codeDepositGasCost(messageFrame, contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
   }
@@ -123,7 +123,7 @@ class ContractCreationProcessorTest
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(100L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
+    when(gasCalculator.codeDepositGasCost(messageFrame, contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
     assertThat(messageFrame.getExceptionalHaltReason())
@@ -145,7 +145,7 @@ class ContractCreationProcessorTest
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(100L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
+    when(gasCalculator.codeDepositGasCost(messageFrame, contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
   }
@@ -167,7 +167,7 @@ class ContractCreationProcessorTest
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(100L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
+    when(gasCalculator.codeDepositGasCost(messageFrame, contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
   }
@@ -191,7 +191,7 @@ class ContractCreationProcessorTest
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(100L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
+    when(gasCalculator.codeDepositGasCost(messageFrame, contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
   }
@@ -213,7 +213,7 @@ class ContractCreationProcessorTest
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(100L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
+    when(gasCalculator.codeDepositGasCost(messageFrame, contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
   }
@@ -233,7 +233,7 @@ class ContractCreationProcessorTest
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(100L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
+    when(gasCalculator.codeDepositGasCost(messageFrame, contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
     assertThat(messageFrame.getExceptionalHaltReason())
@@ -278,7 +278,7 @@ class ContractCreationProcessorTest
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(100L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
+    when(gasCalculator.codeDepositGasCost(messageFrame, contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
   }
@@ -293,7 +293,7 @@ class ContractCreationProcessorTest
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(100L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
+    when(gasCalculator.codeDepositGasCost(messageFrame, contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
   }

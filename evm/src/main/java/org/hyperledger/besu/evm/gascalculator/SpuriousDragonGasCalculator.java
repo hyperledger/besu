@@ -67,7 +67,11 @@ public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
   private static final long SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT = 30_000L;
 
   @Override
-  public long selfDestructOperationGasCost(final MessageFrame frame, final Account recipient, final Wei inheritance, final Address originatorAddress) {
+  public long selfDestructOperationGasCost(
+      final MessageFrame frame,
+      final Account recipient,
+      final Wei inheritance,
+      final Address originatorAddress) {
     if ((recipient == null || recipient.isEmpty()) && !inheritance.isZero()) {
       return SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT;
     } else {
