@@ -219,7 +219,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
             final Bytes updatedCode = codeUpdate.getValue().getUpdated();
             System.out.println(previousCode + " " + codeUpdate);
             if (!codeUpdate.getValue().isUnchanged()
-                || (codeIsEmpty(previousCode) && codeIsEmpty(updatedCode))) {
+                || !(codeIsEmpty(previousCode) && codeIsEmpty(updatedCode))) {
               final Address address = codeUpdate.getKey();
               final Hash accountHash = address.addressHash();
               if (updatedCode == null) {
@@ -233,10 +233,8 @@ public class VerkleWorldState extends DiffBasedWorldState {
                 bonsaiUpdater.removeCode(accountHash);
               } else {
                 if (updatedCode.isEmpty()) {
-                  final Hash codeHash =
-                      updatedCode.size() == 0 ? Hash.EMPTY : Hash.hash(updatedCode);
                   verkleTrieKeyValueGenerator
-                      .generateKeyValuesForCode(address, codeHash, updatedCode)
+                      .generateKeyValuesForCode(address, updatedCode)
                       .forEach(
                           (bytes, bytes2) -> {
                             // System.out.println("add code " + bytes + " " + bytes2);
@@ -244,10 +242,8 @@ public class VerkleWorldState extends DiffBasedWorldState {
                           });
                   bonsaiUpdater.removeCode(accountHash);
                 } else {
-                  final Hash codeHash =
-                      updatedCode.size() == 0 ? Hash.EMPTY : Hash.hash(updatedCode);
                   verkleTrieKeyValueGenerator
-                      .generateKeyValuesForCode(address, codeHash, updatedCode)
+                      .generateKeyValuesForCode(address, updatedCode)
                       .forEach(
                           (bytes, bytes2) -> {
                             System.out.println("add code " + bytes + " " + bytes2);

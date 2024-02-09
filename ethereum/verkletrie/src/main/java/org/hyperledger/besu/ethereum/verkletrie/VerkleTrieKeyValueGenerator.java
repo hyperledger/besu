@@ -54,8 +54,7 @@ public class VerkleTrieKeyValueGenerator {
     return keys;
   }
 
-  public Map<Bytes, Bytes> generateKeyValuesForCode(
-      final Address address, final Bytes32 keccakCodeHash, final Bytes code) {
+  public Map<Bytes, Bytes> generateKeyValuesForCode(final Address address, final Bytes code) {
     final Map<Bytes, Bytes> keyValues = new HashMap<>();
     keyValues.put(
         trieKeyAdapter.codeSizeKey(address), toLittleEndian(UInt256.valueOf(code.size())));
