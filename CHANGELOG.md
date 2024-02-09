@@ -1,6 +1,11 @@
 # Changelog
 
-## 24.1.2-SNAPSHOT
+## 24.2.0 (unreleased)
+
+### Additions and Improvements
+- removed account frame warming from GasCalculator for call costs and moved it into the Call operations [#6557](https://github.com/hyperledger/besu/pull/6557)
+
+## 24.1.2-SNAPSHOT (unreleased)
 
 ### Breaking Changes
 - Following the OpenMetrics convention, the updated Prometheus client adds the `_total` suffix to every metrics of type counter, with the effect that some existing metrics have been renamed to have this suffix. If you are using the official Besu Grafana dashboard [(available here)](https://grafana.com/grafana/dashboards/16455-besu-full/), just update it to the latest revision, that accepts the old and the new name of the affected metrics. If you have a custom dashboard or use the metrics in other ways, then you need to manually update it to support the new naming.
