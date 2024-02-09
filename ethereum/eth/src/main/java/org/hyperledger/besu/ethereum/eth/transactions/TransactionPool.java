@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
@@ -400,14 +399,6 @@ public class TransactionPool implements BlockAddedObserver {
 
     final FeeMarket feeMarket =
         protocolSchedule.getByBlockHeader(chainHeadBlockHeader).getFeeMarket();
-    Wei blobGasPrice = null;
-    if (feeMarket.implementsDataFee()) {
-      blobGasPrice =
-          feeMarket.blobGasPricePerGas(
-              calculateExcessBlobGasForParent(
-                  protocolSchedule.getByBlockHeader(chainHeadBlockHeader), chainHeadBlockHeader));
-    }
-
     final TransactionInvalidReason priceInvalidReason =
         validatePrice(transaction, isLocal, hasPriority, feeMarket);
     if (priceInvalidReason != null) {
@@ -419,7 +410,9 @@ public class TransactionPool implements BlockAddedObserver {
             .validate(
                 transaction,
                 chainHeadBlockHeader.getBaseFee(),
-                Optional.ofNullable(blobGasPrice),
+                Optional.of(
+                    Wei.ZERO), // TransactionValidationParams.transactionPool() allows underpriced
+                // txs
                 TransactionValidationParams.transactionPool());
     if (!basicValidationResult.isValid()) {
       return new ValidationResultAndAccount(basicValidationResult);

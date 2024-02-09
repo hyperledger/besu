@@ -140,7 +140,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
     if (maybeBaseFee.isPresent()) {
       final Wei price = feeMarket.getTransactionPriceCalculator().price(transaction, maybeBaseFee);
-      if (!transactionValidationParams.isAllowMaxFeeGasBelowBaseFee()
+      if (!transactionValidationParams.allowUnderpriced()
           && price.compareTo(maybeBaseFee.orElseThrow()) < 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE,
@@ -173,7 +173,8 @@ public class MainnetTransactionValidator implements TransactionValidator {
       if (maybeBlobFee.isEmpty()) {
         throw new IllegalArgumentException(
             "blob fee must be provided from blocks containing blobs");
-      } else if (maybeBlobFee.get().compareTo(transaction.getMaxFeePerBlobGas().get()) > 0) {
+      } else if (!transactionValidationParams.allowUnderpriced()
+          && maybeBlobFee.get().compareTo(transaction.getMaxFeePerBlobGas().get()) > 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE,
             String.format(
