@@ -249,7 +249,7 @@ public class RocksDbHelper {
         final long totalBlobFilesSizeLong =
             !totalBlobFilesSize.isBlank() ? Long.parseLong(totalBlobFilesSize) : 0;
 
-        final long totalFilesSize = sizeLong + totalSstFilesSizeLong + totalBlobFilesSizeLong;
+        final long totalFilesSize = totalSstFilesSizeLong + totalBlobFilesSizeLong;
         if (!isEmptyColumnFamily(sizeLong, numberOfKeysLong)) {
           printLine(
               out,
