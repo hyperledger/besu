@@ -41,11 +41,11 @@ public class ExtCodeHashOperation extends AbstractOperation {
   /**
    * Cost of Ext code hash operation.
    *
-   * @param frame
+   * @param frame the current frame
    * @param accountIsWarm the account is warm
    * @return the long
    */
-  protected long cost(MessageFrame frame, final boolean accountIsWarm) {
+  protected long cost(final MessageFrame frame, final boolean accountIsWarm) {
     return gasCalculator().extCodeHashOperationGasCost(frame)
         + (accountIsWarm
             ? gasCalculator().getWarmStorageReadCost()

@@ -39,7 +39,7 @@ public class PetersburgGasCalculator extends ConstantinopleGasCalculator {
    */
   @Override
   public long calculateStorageCost(
-          final MessageFrame frame, UInt256 key, final UInt256 newValue,
+          final MessageFrame frame, final UInt256 key, final UInt256 newValue,
           final Supplier<UInt256> currentValue,
           final Supplier<UInt256> originalValue) {
     return !newValue.isZero() && currentValue.get().isZero()

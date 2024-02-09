@@ -30,4 +30,5 @@ public interface AccessWitness {
   long touchAddressOnReadAndComputeGas(Address address,  int treeIndex,  int subIndex);
 
   List<Integer> getStorageSlotTreeIndexes(UInt256 storageKey);
+  long touchCodeChunksUponContractCreation(Address address, long codeLength);
 }

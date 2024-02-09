@@ -167,6 +167,15 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
   }
 
   @Override
+  public long touchCodeChunksUponContractCreation(final Address address, final long codeLength){
+    long gas = 0;
+    for (long i = 0; i < (codeLength + 30) / 31; i++) {
+      gas += touchAddressOnWriteAndComputeGas(address, CODE_OFFSET.subtract(i).divide(VERKLE_NODE_WIDTH).intValue(), CODE_OFFSET.subtract(i).mod(VERKLE_NODE_WIDTH).intValue());
+    }
+    return gas;
+  }
+
+  @Override
   public long touchAddressOnWriteAndComputeGas(
       final Address address, final int treeIndex, final int subIndex) {
 
@@ -176,7 +185,6 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
   @Override
   public long touchAddressOnReadAndComputeGas(
       final Address address, final int treeIndex, final int subIndex) {
-
     return touchAddressAndChargeGas(address, treeIndex, subIndex, false);
   }
 
@@ -279,7 +287,7 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
     }
   }
   @Override
-  public List<Integer> getStorageSlotTreeIndexes(UInt256 storageKey){
+  public List<Integer> getStorageSlotTreeIndexes(final UInt256 storageKey){
 
     UInt256 pos;
     if (storageKey.lessThan(CODE_OFFSET.subtract(HEADER_STORAGE_OFFSET))) {

@@ -39,7 +39,7 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
   private static final long SLOAD_OPERATION_GAS_COST = 200L;
 
   @Override
-  public long getBalanceOperationGasCost(MessageFrame frame) {
+  public long getBalanceOperationGasCost(final MessageFrame frame) {
     return BALANCE_OPERATION_GAS_COST;
   }
 
@@ -115,7 +115,7 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
   }
 
   @Override
-  public long selfDestructOperationGasCost(MessageFrame frame, final Account recipient, final Wei inheritance, Address originatorAddress) {
+  public long selfDestructOperationGasCost(final MessageFrame frame, final Account recipient, final Wei inheritance, final Address originatorAddress) {
     if (recipient == null) {
       return SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT;
     } else {
@@ -124,7 +124,7 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
   }
 
   @Override
-  public long getSloadOperationGasCost(MessageFrame frame, UInt256 key) {
+  public long getSloadOperationGasCost(final MessageFrame frame, final UInt256 key) {
     return SLOAD_OPERATION_GAS_COST;
   }
 }

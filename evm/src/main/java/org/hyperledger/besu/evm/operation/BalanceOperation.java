@@ -45,7 +45,7 @@ public class BalanceOperation extends AbstractOperation {
    * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
    * @return the long
    */
-  protected long cost(MessageFrame frame, final boolean accountIsWarm) {
+  protected long cost(final MessageFrame frame, final boolean accountIsWarm) {
     return gasCalculator().getBalanceOperationGasCost(frame)
         + (accountIsWarm
             ? gasCalculator().getWarmStorageReadCost()
