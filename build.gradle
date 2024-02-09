@@ -54,12 +54,12 @@ if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
 
 group = 'org.hyperledger.besu'
 
-defaultTasks 'build', 'checkLicenses', 'javadoc'
+defaultTasks 'build', 'checkLicense', 'javadoc'
 
 def buildAliases = ['dev': [
     'spotlessApply',
     'build',
-    'checkLicenses',
+    'checkLicense',
     'javadoc'
   ]]
 
