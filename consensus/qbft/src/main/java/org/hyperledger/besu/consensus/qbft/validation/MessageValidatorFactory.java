@@ -119,7 +119,8 @@ public class MessageValidatorFactory {
    */
   public MessageValidator createMessageValidator(
       final ConsensusRoundIdentifier roundIdentifier, final BlockHeader parentHeader) {
-    final Collection<Address> validatorsForHeight = getValidatorsAfterBlock(parentHeader);
+    final Collection<Address> validatorsForHeight =
+        getValidatorsAfterBlock(protocolContext, parentHeader);
 
     final ProposalValidator proposalValidator =
         new ProposalValidator(

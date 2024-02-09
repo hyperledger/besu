@@ -102,7 +102,7 @@ public class MessageValidatorFactory {
    */
   public MessageValidator createMessageValidator(
       final ConsensusRoundIdentifier roundIdentifier, final BlockHeader parentHeader) {
-    final Collection<Address> validators = getValidatorsAfterBlock(parentHeader);
+    final Collection<Address> validators = getValidatorsAfterBlock(protocolContext, parentHeader);
 
     final BftBlockInterface bftBlockInterface =
         protocolContext.getConsensusContext(BftContext.class).getBlockInterface();
