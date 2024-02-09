@@ -31,6 +31,8 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -46,12 +48,15 @@ import org.junit.jupiter.params.provider.MethodSource;
 public class DifficultyCalculatorTests {
 
   public static Stream<Arguments> getTestParametersForConfig() throws IOException {
+    Map<String, String> postMergeOverrides = new HashMap<>();
+    postMergeOverrides.put("shanghaiTime", "999999999999");
+    postMergeOverrides.put("cancunTime","999999999999");
     return Stream.of(
         Arguments.of(
             "/BasicTests/difficultyMainNetwork.json",
             MainnetProtocolSchedule.fromConfig(
                 GenesisConfigFile.mainnet()
-                    .getConfigOptions(Map.of("shanghaiTime", "999999999999")),
+                    .getConfigOptions(postMergeOverrides),
                 EvmConfiguration.DEFAULT)),
         Arguments.of(
           "/DifficultyTests/dfGrayGlacier/difficultyGrayGlacierForkBlock.json",
