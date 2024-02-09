@@ -4,6 +4,8 @@
 
 ### Bug fixes
 - Fix ETC Spiral upgrade breach of consensus [#6524](https://github.com/hyperledger/besu/pull/6524)
+
+### Additions and Improvements
 - Adds timestamp to enable Cancun upgrade on mainnet
 - Github Actions based build.
 
