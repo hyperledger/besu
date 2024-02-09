@@ -171,5 +171,13 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
     return clampedAdd(super.extCodeHashOperationGasCost(frame),frame.getAccessWitness().touchAddressOnReadAndComputeGas(frame.getContractAddress(),0,CODE_KECCAK_LEAF_KEY.intValue()));
   }
 
+  @Override
+  public long selfDestructOperationGasCost(MessageFrame frame, Account recipient, Wei inheritance, Address originatorAddress){
+    long cost = super.selfDestructOperationGasCost(frame, recipient, inheritance, originatorAddress);
+    cost = clampedAdd(cost,frame.getAccessWitness().touchAddressOnReadAndComputeGas(originatorAddress,0,BALANCE_LEAF_KEY.intValue()));
+    cost = clampedAdd(cost,frame.getAccessWitness().touchAddressOnReadAndComputeGas(recipient.getAddress(),0,BALANCE_LEAF_KEY.intValue()));
+    return cost;
+  }
+
 
 }

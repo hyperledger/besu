@@ -396,7 +396,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long selfDestructOperationGasCost(final Account recipient, final Wei inheritance) {
+  public long selfDestructOperationGasCost(MessageFrame frame, final Account recipient, final Wei inheritance, Address originatorAddress) {
     return SELFDESTRUCT_OPERATION_GAS_COST;
   }
 

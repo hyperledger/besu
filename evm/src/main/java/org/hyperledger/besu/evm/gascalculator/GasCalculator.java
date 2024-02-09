@@ -331,11 +331,13 @@ public interface GasCalculator {
   /**
    * Returns the cost for executing a {@link SelfDestructOperation}.
    *
-   * @param recipient The recipient of the self destructed inheritance (may be null)
-   * @param inheritance The amount the recipient will receive
+   * @param frame
+   * @param recipient         The recipient of the self destructed inheritance (may be null)
+   * @param inheritance       The amount the recipient will receive
+   * @param originatorAddress
    * @return the cost for executing the self destruct operation
    */
-  long selfDestructOperationGasCost(Account recipient, Wei inheritance);
+  long selfDestructOperationGasCost(MessageFrame frame, Account recipient, Wei inheritance, Address originatorAddress);
 
   /**
    * Returns the cost for executing a {@link Keccak256Operation}.

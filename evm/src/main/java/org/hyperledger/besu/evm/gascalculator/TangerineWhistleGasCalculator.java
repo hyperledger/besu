@@ -115,7 +115,7 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
   }
 
   @Override
-  public long selfDestructOperationGasCost(final Account recipient, final Wei inheritance) {
+  public long selfDestructOperationGasCost(MessageFrame frame, final Account recipient, final Wei inheritance, Address originatorAddress) {
     if (recipient == null) {
       return SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT;
     } else {
