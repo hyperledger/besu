@@ -187,7 +187,6 @@ public abstract class AbstractIsolationTests {
                         8388608 /*CACHE_CAPACITY*/,
                         false),
                 Arrays.asList(KeyValueSegmentIdentifier.values()),
-                DataStorageFormat.BONSAI,
                 RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
         .withCommonConfiguration(
             new BesuConfiguration() {

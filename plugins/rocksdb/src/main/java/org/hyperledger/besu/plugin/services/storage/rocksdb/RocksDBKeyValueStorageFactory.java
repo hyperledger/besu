@@ -20,7 +20,6 @@ import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -55,7 +54,6 @@ import org.slf4j.LoggerFactory;
 public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBKeyValueStorageFactory.class);
-  private static final VersionedStorageFormat DEFAULT_VERSIONED_FORMAT = FOREST_WITH_VARIABLES;
   private static final EnumSet<BaseVersionedStorageFormat> SUPPORTED_VERSIONED_FORMATS =
       EnumSet.of(FOREST_WITH_VARIABLES, BONSAI_WITH_VARIABLES);
   private static final String NAME = "rocksdb";
@@ -74,20 +72,17 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
    * @param configuration the configuration
    * @param configuredSegments the segments
    * @param ignorableSegments the ignorable segments
-   * @param format the storage format
    * @param rocksDBMetricsFactory the rocks db metrics factory
    */
   public RocksDBKeyValueStorageFactory(
       final Supplier<RocksDBFactoryConfiguration> configuration,
       final List<SegmentIdentifier> configuredSegments,
       final List<SegmentIdentifier> ignorableSegments,
-      final DataStorageFormat format,
       final RocksDBMetricsFactory rocksDBMetricsFactory) {
     this.configuration = configuration;
     this.configuredSegments = configuredSegments;
     this.ignorableSegments = ignorableSegments;
     this.rocksDBMetricsFactory = rocksDBMetricsFactory;
-    this.databaseMetadata = DatabaseMetadata.defaultForNewDb(format);
   }
 
   /**
@@ -95,55 +90,13 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
    *
    * @param configuration the configuration
    * @param configuredSegments the segments
-   * @param format the storage format
-   * @param rocksDBMetricsFactory the rocks db metrics factory
-   */
-  public RocksDBKeyValueStorageFactory(
-      final Supplier<RocksDBFactoryConfiguration> configuration,
-      final List<SegmentIdentifier> configuredSegments,
-      final DataStorageFormat format,
-      final RocksDBMetricsFactory rocksDBMetricsFactory) {
-    this(configuration, configuredSegments, List.of(), format, rocksDBMetricsFactory);
-  }
-
-  /**
-   * Instantiates a new Rocks db key value storage factory.
-   *
-   * @param configuration the configuration
-   * @param configuredSegments the segments
-   * @param ignorableSegments the ignorable segments
-   * @param rocksDBMetricsFactory the rocks db metrics factory
-   */
-  public RocksDBKeyValueStorageFactory(
-      final Supplier<RocksDBFactoryConfiguration> configuration,
-      final List<SegmentIdentifier> configuredSegments,
-      final List<SegmentIdentifier> ignorableSegments,
-      final RocksDBMetricsFactory rocksDBMetricsFactory) {
-    this(
-        configuration,
-        configuredSegments,
-        ignorableSegments,
-        DEFAULT_VERSIONED_FORMAT.getFormat(),
-        rocksDBMetricsFactory);
-  }
-
-  /**
-   * Instantiates a new Rocks db key value storage factory.
-   *
-   * @param configuration the configuration
-   * @param configuredSegments the segments
    * @param rocksDBMetricsFactory the rocks db metrics factory
    */
   public RocksDBKeyValueStorageFactory(
       final Supplier<RocksDBFactoryConfiguration> configuration,
       final List<SegmentIdentifier> configuredSegments,
       final RocksDBMetricsFactory rocksDBMetricsFactory) {
-    this(
-        configuration,
-        configuredSegments,
-        List.of(),
-        DEFAULT_VERSIONED_FORMAT.getFormat(),
-        rocksDBMetricsFactory);
+    this(configuration, configuredSegments, List.of(), rocksDBMetricsFactory);
   }
 
   @Override
