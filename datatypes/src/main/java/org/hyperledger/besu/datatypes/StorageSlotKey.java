@@ -16,9 +16,9 @@ package org.hyperledger.besu.datatypes;
 
 import java.util.Objects;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.units.bigints.UInt256;
-import javax.annotation.Nonnull;
 
 /**
  * StorageSlotKey represents a key used for storage slots in Ethereum. It contains the hash of the

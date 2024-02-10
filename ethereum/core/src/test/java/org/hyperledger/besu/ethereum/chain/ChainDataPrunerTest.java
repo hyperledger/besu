@@ -28,8 +28,8 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import java.util.List;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.TimeUnit;
-
 import javax.annotation.Nonnull;
+
 import org.junit.jupiter.api.Test;
 
 public class ChainDataPrunerTest {

@@ -39,10 +39,10 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 
 import io.vertx.core.Vertx;
 import org.assertj.core.api.Assertions;
-import javax.annotation.Nonnull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
