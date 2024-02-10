@@ -13,6 +13,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 /* Derived from https://github.com/palantir/gradle-baseline/blob/6fe385a80291473e7fc1441f176454bec4184d6b/baseline-error-prone/src/main/java/com/palantir/baseline/errorprone/PreferCommonAnnotations.java */
