@@ -97,7 +97,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -382,7 +382,7 @@ public class EngineJsonRpcService {
     };
   }
 
-  @NotNull
+  @Nonnull
   private Handler<Buffer> handlerForUser(
       final SocketAddress socketAddress,
       final ServerWebSocket websocket,

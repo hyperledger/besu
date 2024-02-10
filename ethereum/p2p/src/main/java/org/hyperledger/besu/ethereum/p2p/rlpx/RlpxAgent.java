@@ -55,7 +55,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -235,7 +235,7 @@ public class RlpxAgent {
     return peerConnectionCompletableFuture;
   }
 
-  @NotNull
+  @Nonnull
   private CompletableFuture<PeerConnection> createPeerConnectionCompletableFuture(final Peer peer) {
     final CompletableFuture<PeerConnection> peerConnectionCompletableFuture =
         initiateOutboundConnection(peer);

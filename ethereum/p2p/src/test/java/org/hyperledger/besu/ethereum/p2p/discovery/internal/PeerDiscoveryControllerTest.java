@@ -75,7 +75,7 @@ import org.ethereum.beacon.discovery.schema.IdentitySchema;
 import org.ethereum.beacon.discovery.schema.IdentitySchemaInterpreter;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -1517,7 +1517,7 @@ public class PeerDiscoveryControllerTest {
     verify(controller, times(1)).connectOnRlpxLayer(eq(maybePeer.get()));
   }
 
-  @NotNull
+  @Nonnull
   private Packet prepareForForkIdCheck(
       final List<NodeKey> nodeKeys, final DiscoveryPeer sender, final boolean sendForkId) {
     final HashMap<PacketType, Bytes> packetTypeBytesHashMap = new HashMap<>();

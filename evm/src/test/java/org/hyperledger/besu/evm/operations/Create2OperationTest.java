@@ -46,7 +46,7 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -252,7 +252,7 @@ public class Create2OperationTest {
     assertThat(result.getHaltReason()).isEqualTo(CODE_TOO_LARGE);
   }
 
-  @NotNull
+  @Nonnull
   private MessageFrame testMemoryFrame(
       final UInt256 memoryOffset,
       final UInt256 memoryLength,

@@ -42,7 +42,7 @@ import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
 import org.assertj.core.api.Assertions;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -74,7 +74,7 @@ public class NetworkingServiceLifecycleTest {
     }
   }
 
-  @NotNull
+  @Nonnull
   private DefaultP2PNetwork.Builder getP2PNetworkBuilder() {
     final DefaultP2PNetwork.Builder builder = builder();
     final MutableBlockchain blockchainMock = mock(MutableBlockchain.class);

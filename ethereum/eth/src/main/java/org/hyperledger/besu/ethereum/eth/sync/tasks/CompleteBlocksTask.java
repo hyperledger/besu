@@ -39,7 +39,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,7 +85,7 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
                             createEmptyBodyBasedOnProtocolSchedule(protocolSchedule, header))));
   }
 
-  @NotNull
+  @Nonnull
   private BlockBody createEmptyBodyBasedOnProtocolSchedule(
       final ProtocolSchedule protocolSchedule, final BlockHeader header) {
     return new BlockBody(

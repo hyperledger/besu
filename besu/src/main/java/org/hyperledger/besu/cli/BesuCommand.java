@@ -232,7 +232,7 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.metrics.MetricsOptions;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import picocli.AutoComplete;
 import picocli.CommandLine;
@@ -1796,7 +1796,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .cacheLastBlocks(numberOfblocksToCache);
   }
 
-  @NotNull
+  @Nonnull
   private Optional<PluginTransactionSelectorFactory> getTransactionSelectorFactory() {
     final Optional<TransactionSelectionService> txSelectionService =
         besuPluginContext.getService(TransactionSelectionService.class);
