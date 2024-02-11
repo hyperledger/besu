@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.AbstractTransactionPoolTest;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -40,9 +41,14 @@ public abstract class AbstractLayeredTransactionPoolTest extends AbstractTransac
     final var txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
     final TransactionsLayer sparseLayer =
         new SparseTransactions(
-            poolConfig, new EndLayer(txPoolMetrics), txPoolMetrics, transactionReplacementTester);
+            poolConfig,
+            new EndLayer(txPoolMetrics),
+            txPoolMetrics,
+            transactionReplacementTester,
+            new BlobCache());
     final TransactionsLayer readyLayer =
-        new ReadyTransactions(poolConfig, sparseLayer, txPoolMetrics, transactionReplacementTester);
+        new ReadyTransactions(
+            poolConfig, sparseLayer, txPoolMetrics, transactionReplacementTester, new BlobCache());
     return new LayeredPendingTransactions(
         poolConfig,
         createPrioritizedTransactions(

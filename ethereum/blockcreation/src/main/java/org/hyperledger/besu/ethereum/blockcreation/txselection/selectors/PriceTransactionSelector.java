@@ -14,10 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionEvaluationContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
@@ -41,14 +40,15 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
    * Evaluates a transaction considering its price. If the transaction's current price is below the
    * minimum, it returns a selection result indicating the reason.
    *
-   * @param pendingTransaction The transaction to be evaluated.
+   * @param evaluationContext The current selection session data.
    * @param ignored The results of other transaction evaluations in the same block.
    * @return The result of the transaction selection.
    */
   @Override
   public TransactionSelectionResult evaluateTransactionPreProcessing(
-      final PendingTransaction pendingTransaction, final TransactionSelectionResults ignored) {
-    if (transactionCurrentPriceBelowMin(pendingTransaction)) {
+      final TransactionEvaluationContext evaluationContext,
+      final TransactionSelectionResults ignored) {
+    if (transactionCurrentPriceBelowMin(evaluationContext)) {
       return TransactionSelectionResult.CURRENT_TX_PRICE_BELOW_MIN;
     }
     return TransactionSelectionResult.SELECTED;
@@ -56,7 +56,7 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
 
   @Override
   public TransactionSelectionResult evaluateTransactionPostProcessing(
-      final PendingTransaction pendingTransaction,
+      final TransactionEvaluationContext evaluationContext,
       final TransactionSelectionResults blockTransactionResults,
       final TransactionProcessingResult processingResult) {
     // All necessary checks were done in the pre-processing method, so nothing to do here.
@@ -66,31 +66,28 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
   /**
    * Checks if the transaction's current price is below the minimum.
    *
-   * @param pendingTransaction The transaction to be checked.
+   * @param evaluationContext The current selection session data.
    * @return True if the transaction's current price is below the minimum, false otherwise.
    */
-  private boolean transactionCurrentPriceBelowMin(final PendingTransaction pendingTransaction) {
-    final Transaction transaction = pendingTransaction.getTransaction();
-    // Here we only care about EIP1159 since for Frontier and local transactions the checks
-    // that we do when accepting them in the pool are enough
-    if (transaction.getType().supports1559FeeMarket() && !pendingTransaction.hasPriority()) {
+  private boolean transactionCurrentPriceBelowMin(
+      final TransactionEvaluationContext evaluationContext) {
+    final PendingTransaction pendingTransaction = evaluationContext.getPendingTransaction();
+    // Priority txs are exempt from this check
+    if (!pendingTransaction.hasPriority()) {
 
-      // For EIP1559 transactions, the price is dynamic and depends on network conditions, so we can
-      // only calculate at this time the current minimum price the transaction is willing to pay
-      // and if it is above the minimum accepted by the node.
-      // If below we do not delete the transaction, since when we added the transaction to the pool,
-      // we assured sure that the maxFeePerGas is >= of the minimum price accepted by the node
-      // and so the price of the transaction could satisfy this rule in the future
-      final Wei currentMinTransactionGasPriceInBlock =
-          context
-              .feeMarket()
-              .getTransactionPriceCalculator()
-              .price(transaction, context.processableBlockHeader().getBaseFee());
-      if (context.minTransactionGasPrice().compareTo(currentMinTransactionGasPriceInBlock) > 0) {
-        LOG.trace(
-            "Current gas fee of {} is lower than configured minimum {}, skipping",
-            pendingTransaction,
-            context.minTransactionGasPrice());
+      if (context
+              .miningParameters()
+              .getMinTransactionGasPrice()
+              .compareTo(evaluationContext.getTransactionGasPrice())
+          > 0) {
+        LOG.atTrace()
+            .setMessage(
+                "Current gas price of {} is {} and lower than the configured minimum {}, skipping")
+            .addArgument(pendingTransaction::toTraceLog)
+            .addArgument(evaluationContext.getTransactionGasPrice()::toHumanReadableString)
+            .addArgument(
+                context.miningParameters().getMinTransactionGasPrice()::toHumanReadableString)
+            .log();
         return true;
       }
     }

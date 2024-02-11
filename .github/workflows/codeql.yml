@@ -14,42 +14,32 @@ name: "CodeQL"
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
-    paths-ignore:
-      - '**/*.json'
-      - '**/*.md'
-      - '**/*.properties'
-      - '**/*.txt'
+    pull_request:
+      branches: [ main ]
+      paths-ignore:
+        - '**/*.json'
+        - '**/*.md'
+        - '**/*.properties'
+        - '**/*.txt'
 jobs:
   analyze:
     name: Analyze
-    runs-on: [besu-research-ubuntu-16]
+    runs-on: ubuntu-22.04
     permissions:
       actions: read
       contents: read
       security-events: write
-
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [ 'java' ]
-        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
-        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
-
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
-
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
     - name: Set up Java
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
       with:
-        distribution: adopt
+        distribution: 'temurin'
         java-version: 17
-
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@2f93e4319b2f04a2efc38fa7f78bd681bc3f7b2f
       with:
         languages: ${{ matrix.language }}
         # If you wish to specify custom queries, you can do so here or in a config file.
@@ -57,10 +47,10 @@ jobs:
         # Prefix the list here with "+" to use these queries and those in the config file.
         queries: security-and-quality,security-extended
 
-    # Autobuild failed (OOM)
-    # Hence, supply memory args for gradle build
-    - run: |
-        JAVA_OPTS="-Xmx1000M" ./gradlew --no-scan compileJava
-
+    - name: setup gradle
+      uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+    - name: compileJava noscan
+      run: |
+        JAVA_OPTS="-Xmx2048M" ./gradlew --no-scan compileJava
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@2f93e4319b2f04a2efc38fa7f78bd681bc3f7b2f

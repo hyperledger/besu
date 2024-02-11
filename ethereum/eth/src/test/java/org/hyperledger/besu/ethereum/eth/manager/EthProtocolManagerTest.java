@@ -27,7 +27,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -37,7 +36,6 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -61,6 +59,7 @@ import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
@@ -1089,8 +1088,9 @@ public final class EthProtocolManagerTest {
     final ExecutorService transactions = mock(ExecutorService.class);
     final ExecutorService services = mock(ExecutorService.class);
     final ExecutorService computations = mock(ExecutorService.class);
+    final ExecutorService blockCreation = mock(ExecutorService.class);
     final EthScheduler ethScheduler =
-        new EthScheduler(worker, scheduled, transactions, services, computations);
+        new EthScheduler(worker, scheduled, transactions, services, computations, blockCreation);
 
     // Create the fake TransactionMessage to feed to the EthManager.
     final BlockDataGenerator gen = new BlockDataGenerator(1);
@@ -1116,9 +1116,9 @@ public final class EthProtocolManagerTest {
               TestClock.system(ZoneId.systemDefault()),
               metricsSystem,
               new SyncState(blockchain, ethManager.ethContext().getEthPeers()),
-              new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
               TransactionPoolConfiguration.DEFAULT,
-              null)
+              null,
+              new BlobCache())
           .setEnabled();
 
       // Send just a transaction message.
@@ -1152,9 +1152,9 @@ public final class EthProtocolManagerTest {
 
   @Test
   public void shouldUseRightCapabilityDependingOnSyncMode() {
-    assertHighestCapability(SyncMode.X_SNAP, EthProtocol.ETH68);
+    assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH68);
     assertHighestCapability(SyncMode.FULL, EthProtocol.ETH68);
-    assertHighestCapability(SyncMode.X_CHECKPOINT, EthProtocol.ETH68);
+    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH68);
     /* Eth67 does not support fast sync, see EIP-4938 */
     assertHighestCapability(SyncMode.FAST, EthProtocol.ETH66);
   }
@@ -1166,9 +1166,9 @@ public final class EthProtocolManagerTest {
     final EthProtocolConfiguration configuration =
         EthProtocolConfiguration.builder().maxEthCapability(EthProtocolVersion.V65).build();
 
-    assertHighestCapability(SyncMode.X_SNAP, EthProtocol.ETH65, configuration);
+    assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH65, configuration);
     assertHighestCapability(SyncMode.FULL, EthProtocol.ETH65, configuration);
-    assertHighestCapability(SyncMode.X_CHECKPOINT, EthProtocol.ETH65, configuration);
+    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH65, configuration);
     /* Eth67 does not support fast sync, see EIP-4938 */
     assertHighestCapability(SyncMode.FAST, EthProtocol.ETH65, configuration);
   }
@@ -1180,7 +1180,7 @@ public final class EthProtocolManagerTest {
     final EthProtocolConfiguration configuration =
         EthProtocolConfiguration.builder().minEthCapability(EthProtocolVersion.V64).build();
 
-    final EthProtocolManager ethManager = createEthManager(SyncMode.X_SNAP, configuration);
+    final EthProtocolManager ethManager = createEthManager(SyncMode.SNAP, configuration);
 
     assertThat(ethManager.getSupportedCapabilities()).contains(EthProtocol.ETH64);
     assertThat(ethManager.getSupportedCapabilities()).doesNotContain(EthProtocol.ETH63);
@@ -1193,9 +1193,9 @@ public final class EthProtocolManagerTest {
     final EthProtocolConfiguration configuration =
         EthProtocolConfiguration.builder().maxEthCapability(EthProtocolVersion.V67).build();
 
-    assertHighestCapability(SyncMode.X_SNAP, EthProtocol.ETH67, configuration);
+    assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH67, configuration);
     assertHighestCapability(SyncMode.FULL, EthProtocol.ETH67, configuration);
-    assertHighestCapability(SyncMode.X_CHECKPOINT, EthProtocol.ETH67, configuration);
+    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH67, configuration);
     /* Eth67 does not support fast sync, see EIP-4938 */
     assertHighestCapability(SyncMode.FAST, EthProtocol.ETH66, configuration);
   }

@@ -18,13 +18,9 @@ package org.hyperledger.besu.evm.tracing;
 
 import static com.google.common.base.Strings.padStart;
 
-import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.internal.Words;
-import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.Operation;
-import org.hyperledger.besu.evm.worldstate.WorldView;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -130,9 +126,7 @@ public class StandardJsonTracer implements OperationTracer {
     for (int i = messageFrame.stackSize() - 1; i >= 0; i--) {
       stack.add("\"" + shortBytes(messageFrame.getStackItem(i)) + "\"");
     }
-    pc =
-        messageFrame.getPC()
-            - messageFrame.getCode().getCodeSection(messageFrame.getSection()).getEntryPoint();
+    pc = messageFrame.getPC() - messageFrame.getCode().getCodeSection(0).getEntryPoint();
     section = messageFrame.getSection();
     gas = shortNumber(messageFrame.getRemainingGas());
     memorySize = messageFrame.memoryWordSize() * 32;
@@ -175,6 +169,9 @@ public class StandardJsonTracer implements OperationTracer {
   public void tracePostExecution(
       final MessageFrame messageFrame, final Operation.OperationResult executeResult) {
     final Operation currentOp = messageFrame.getCurrentOperation();
+    if (currentOp.isVirtualOperation()) {
+      return;
+    }
     final int opcode = currentOp.getOpcode();
     final Bytes returnData = messageFrame.getReturnData();
 
@@ -255,26 +252,5 @@ public class StandardJsonTracer implements OperationTracer {
   public void traceAccountCreationResult(
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {
     // precompile calls are not part of the standard trace
-  }
-
-  @Override
-  public void traceEndTransaction(
-      final WorldView _worldView,
-      final Transaction _tx,
-      final boolean _status,
-      final Bytes output,
-      final List<Log> _logs,
-      final long gasUsed,
-      final long timeNs) {
-    final StringBuilder sb = new StringBuilder(1024);
-    sb.append("{");
-    if (!output.isEmpty()) {
-      sb.append("\"output\":\"").append(output.toShortHexString()).append("\",");
-    } else {
-      sb.append("\"output\":\"\",");
-    }
-    sb.append("\"gasUsed\":\"").append(Words.longBytes(gasUsed).toShortHexString()).append("\",");
-    sb.append("\"time\":").append(timeNs).append("}");
-    out.println(sb);
   }
 }

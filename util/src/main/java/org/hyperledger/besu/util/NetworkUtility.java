@@ -16,6 +16,7 @@ package org.hyperledger.besu.util;
 
 import java.io.IOException;
 import java.net.DatagramSocket;
+import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -26,6 +27,7 @@ import java.net.UnknownHostException;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
+import com.google.common.net.InetAddresses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,8 +35,16 @@ import org.slf4j.LoggerFactory;
 public class NetworkUtility {
   /** The constant INADDR_ANY. */
   public static final String INADDR_ANY = "0.0.0.0";
+  /** The constant INADDR_NONE. */
+  public static final String INADDR_NONE = "255.255.255.255";
   /** The constant INADDR6_ANY. */
   public static final String INADDR6_ANY = "0:0:0:0:0:0:0:0";
+  /** The constant INADDR6_NONE. */
+  public static final String INADDR6_NONE = "::";
+  /** The constant INADDR_LOCALHOST. */
+  public static final String INADDR_LOCALHOST = "127.0.0.1";
+  /** The constant INADDR6_LOCALHOST. */
+  public static final String INADDR6_LOCALHOST = "::1";
 
   private static final Logger LOG = LoggerFactory.getLogger(NetworkUtility.class);
 
@@ -119,7 +129,20 @@ public class NetworkUtility {
    * @return the boolean
    */
   public static boolean isUnspecifiedAddress(final String ipAddress) {
-    return INADDR_ANY.equals(ipAddress) || INADDR6_ANY.equals(ipAddress);
+    return INADDR_ANY.equals(ipAddress)
+        || INADDR6_ANY.equals(ipAddress)
+        || INADDR_NONE.equals(ipAddress)
+        || INADDR6_NONE.equals(ipAddress);
+  }
+
+  /**
+   * Returns whether host address string is local host address.
+   *
+   * @param ipAddress the host address as a string
+   * @return true if the host address is a local host address
+   */
+  public static boolean isLocalhostAddress(final String ipAddress) {
+    return INADDR_LOCALHOST.equals(ipAddress) || INADDR6_LOCALHOST.equals(ipAddress);
   }
 
   /**
@@ -137,40 +160,66 @@ public class NetworkUtility {
   }
 
   /**
-   * Is port available for tcp.
+   * Is port unavailable for tcp.
    *
    * @param port the port
-   * @return the boolean
+   * @return true if the port is unavailable for TCP
    */
-  public static boolean isPortAvailableForTcp(final int port) {
+  public static boolean isPortUnavailableForTcp(final int port) {
     try (final ServerSocket serverSocket = new ServerSocket()) {
       serverSocket.setReuseAddress(true);
       serverSocket.bind(new InetSocketAddress(port));
-      return true;
+      serverSocket.close();
+      return false;
     } catch (IOException ex) {
       LOG.trace(String.format("Failed to open port %d for TCP", port), ex);
     }
-    return false;
-  }
-
-  private static boolean isPortAvailableForUdp(final int port) {
-    try (final DatagramSocket datagramSocket = new DatagramSocket(null)) {
-      datagramSocket.setReuseAddress(true);
-      datagramSocket.bind(new InetSocketAddress(port));
-      return true;
-    } catch (IOException ex) {
-      LOG.trace(String.format("failed to open port %d for UDP", port), ex);
-    }
-    return false;
+    return true;
   }
 
   /**
-   * Is port available.
+   * Is port unavailable for udp.
    *
    * @param port the port
-   * @return the boolean
+   * @return true if the port is unavailable for UDP
    */
-  public static boolean isPortAvailable(final int port) {
-    return isPortAvailableForTcp(port) && isPortAvailableForUdp(port);
+  public static boolean isPortUnavailableForUdp(final int port) {
+    try (final DatagramSocket datagramSocket = new DatagramSocket(null)) {
+      datagramSocket.setReuseAddress(true);
+      datagramSocket.bind(new InetSocketAddress(port));
+      datagramSocket.close();
+      return false;
+    } catch (IOException ex) {
+      LOG.trace(String.format("failed to open port %d for UDP", port), ex);
+    }
+    return true;
+  }
+
+  /**
+   * Is hostAddress string an ip v4 address
+   *
+   * @param hostAddress the host address as a string
+   * @return true if the host address is an ip v4 address
+   */
+  public static boolean isIpV4Address(final String hostAddress) {
+    try {
+      return InetAddresses.forString(hostAddress) instanceof Inet4Address;
+    } catch (final IllegalArgumentException e) {
+      return false;
+    }
+  }
+
+  /**
+   * Is hostAddress string an ip v6 address
+   *
+   * @param hostAddress the host address as a string
+   * @return true if the host address is an ip v6 address
+   */
+  public static boolean isIpV6Address(final String hostAddress) {
+    try {
+      return InetAddresses.forString(hostAddress) instanceof Inet6Address;
+    } catch (final IllegalArgumentException e) {
+      return false;
+    }
   }
 }

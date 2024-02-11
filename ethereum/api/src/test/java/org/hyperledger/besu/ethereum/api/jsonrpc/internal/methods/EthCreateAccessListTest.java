@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -25,6 +24,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -78,10 +78,16 @@ public class EthCreateAccessListTest {
 
   @BeforeEach
   public void setUp() {
-    when(blockchainQueries.headBlockNumber()).thenReturn(1L);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getWorldStateArchive()).thenReturn(worldStateArchive);
-    when(blockchain.getBlockHeader(eq(1L))).thenReturn(Optional.of(blockHeader));
+    when(blockchain.getChainHeadHash())
+        .thenReturn(
+            Hash.fromHexString(
+                "0x3f07a9c83155594c000642e7d60e8a8a00038d03e9849171a05ed0e2d47acbb3"));
+    when(blockchain.getBlockHeader(
+            Hash.fromHexString(
+                "0x3f07a9c83155594c000642e7d60e8a8a00038d03e9849171a05ed0e2d47acbb3")))
+        .thenReturn(Optional.of(blockHeader));
     when(blockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
     when(blockHeader.getNumber()).thenReturn(1L);
     when(worldStateArchive.isWorldStateAvailable(any(), any())).thenReturn(true);
@@ -308,6 +314,7 @@ public class EthCreateAccessListTest {
         null,
         Wei.ZERO,
         Bytes.EMPTY,
+        null,
         false,
         null);
   }
@@ -336,6 +343,7 @@ public class EthCreateAccessListTest {
         Wei.fromHexString("0x10"),
         Wei.ZERO,
         Bytes.EMPTY,
+        null,
         false,
         accessListEntries);
   }

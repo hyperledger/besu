@@ -22,14 +22,11 @@ import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -40,6 +37,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
@@ -47,6 +45,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.ZoneId;
@@ -119,7 +118,6 @@ public abstract class AbstractMessageTaskTest<T, R> {
                 Bytes.random(64),
                 MAX_PEERS,
                 MAX_PEERS,
-                MAX_PEERS,
                 false));
 
     final EthMessages ethMessages = new EthMessages();
@@ -136,9 +134,9 @@ public abstract class AbstractMessageTaskTest<T, R> {
             TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
             syncState,
-            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             TransactionPoolConfiguration.DEFAULT,
-            null);
+            null,
+            new BlobCache());
     transactionPool.setEnabled();
 
     ethProtocolManager =
@@ -167,7 +165,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
         RespondingEthPeer.blockchainResponder(
             blockchain, protocolContext.getWorldStateArchive(), transactionPool);
     final RespondingEthPeer respondingPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 32);
 
     // Setup data to be requested and expected response
     final T requestedData = generateDataToBeRequested();
@@ -191,7 +189,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
   @Test
   public void doesNotCompleteWhenPeersDoNotRespond() {
     // Setup a unresponsive peer
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 32);
 
     // Setup data to be requested
     final T requestedData = generateDataToBeRequested();
@@ -210,7 +208,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
   @Test
   public void cancel() {
     // Setup a unresponsive peer
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 32);
 
     // Setup data to be requested
     final T requestedData = generateDataToBeRequested();

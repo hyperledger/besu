@@ -235,6 +235,7 @@ public class ProtocolScheduleBuilder {
     // Begin timestamp forks
     lastForkBlock = validateForkOrder("Shanghai", config.getShanghaiTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("Cancun", config.getCancunTime(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Prague", config.getPragueTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("FutureEips", config.getFutureEipsTime(), lastForkBlock);
     lastForkBlock =
         validateForkOrder("ExperimentalEips", config.getExperimentalEipsTime(), lastForkBlock);
@@ -258,6 +259,7 @@ public class ProtocolScheduleBuilder {
     lastForkBlock = validateForkOrder("Thanos", config.getThanosBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Magneto", config.getMagnetoBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Mystique", config.getMystiqueBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Spiral", config.getSpiralBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 
@@ -312,6 +314,7 @@ public class ProtocolScheduleBuilder {
         // Timestamp Forks
         timestampMilestone(config.getShanghaiTime(), specFactory.shanghaiDefinition(config)),
         timestampMilestone(config.getCancunTime(), specFactory.cancunDefinition(config)),
+        timestampMilestone(config.getPragueTime(), specFactory.pragueDefinition(config)),
         timestampMilestone(config.getFutureEipsTime(), specFactory.futureEipsDefinition(config)),
         timestampMilestone(
             config.getExperimentalEipsTime(), specFactory.experimentalEipsDefinition(config)),
@@ -329,7 +332,8 @@ public class ProtocolScheduleBuilder {
         blockNumberMilestone(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
         blockNumberMilestone(config.getThanosBlockNumber(), specFactory.thanosDefinition()),
         blockNumberMilestone(config.getMagnetoBlockNumber(), specFactory.magnetoDefinition()),
-        blockNumberMilestone(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()));
+        blockNumberMilestone(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()),
+        blockNumberMilestone(config.getSpiralBlockNumber(), specFactory.spiralDefinition()));
   }
 
   private Optional<BuilderMapEntry> timestampMilestone(

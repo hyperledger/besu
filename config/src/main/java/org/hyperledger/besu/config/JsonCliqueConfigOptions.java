@@ -24,6 +24,7 @@ public class JsonCliqueConfigOptions implements CliqueConfigOptions {
 
   private static final long DEFAULT_EPOCH_LENGTH = 30_000;
   private static final int DEFAULT_BLOCK_PERIOD_SECONDS = 15;
+  private static final boolean DEFAULT_CREATE_EMPTY_BLOCKS = true;
 
   private final ObjectNode cliqueConfigRoot;
 
@@ -62,6 +63,16 @@ public class JsonCliqueConfigOptions implements CliqueConfigOptions {
   }
 
   /**
+   * Whether the creation of empty blocks is allowed.
+   *
+   * @return the create empty block status
+   */
+  @Override
+  public boolean getCreateEmptyBlocks() {
+    return JsonUtil.getBoolean(cliqueConfigRoot, "createemptyblocks", DEFAULT_CREATE_EMPTY_BLOCKS);
+  }
+
+  /**
    * As map.
    *
    * @return the map
@@ -69,6 +80,11 @@ public class JsonCliqueConfigOptions implements CliqueConfigOptions {
   @Override
   public Map<String, Object> asMap() {
     return ImmutableMap.of(
-        "epochLength", getEpochLength(), "blockPeriodSeconds", getBlockPeriodSeconds());
+        "epochLength",
+        getEpochLength(),
+        "blockPeriodSeconds",
+        getBlockPeriodSeconds(),
+        "createemptyblocks",
+        getCreateEmptyBlocks());
   }
 }

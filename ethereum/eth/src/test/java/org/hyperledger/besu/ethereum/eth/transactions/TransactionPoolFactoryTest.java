@@ -27,12 +27,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -110,7 +108,6 @@ public class TransactionPoolFactoryTest {
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
             Collections.singletonList(nmpp),
             Bytes.random(64),
-            25,
             25,
             25,
             false);
@@ -241,7 +238,6 @@ public class TransactionPoolFactoryTest {
             TestClock.fixed(),
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
             syncState,
-            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             ImmutableTransactionPoolConfiguration.builder()
                 .txPoolMaxSize(1)
                 .pendingTxRetentionPeriod(1)
@@ -253,7 +249,8 @@ public class TransactionPoolFactoryTest {
             peerTransactionTracker,
             transactionsMessageSender,
             newPooledTransactionHashesMessageSender,
-            null);
+            null,
+            new BlobCache());
 
     ethProtocolManager =
         new EthProtocolManager(
@@ -350,7 +347,6 @@ public class TransactionPoolFactoryTest {
             TestClock.fixed(),
             new NoOpMetricsSystem(),
             syncState,
-            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             ImmutableTransactionPoolConfiguration.builder()
                 .txPoolImplementation(implementation)
                 .txPoolMaxSize(1)
@@ -360,7 +356,8 @@ public class TransactionPoolFactoryTest {
                         .txMessageKeepAliveSeconds(1)
                         .build())
                 .build(),
-            null);
+            null,
+            new BlobCache());
 
     txPool.setEnabled();
     return txPool;

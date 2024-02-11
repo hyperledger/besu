@@ -31,8 +31,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public abstract class PendingTransaction
     implements org.hyperledger.besu.datatypes.PendingTransaction {
   static final int NOT_INITIALIZED = -1;
-  static final int FRONTIER_AND_ACCESS_LIST_BASE_MEMORY_SIZE = 872;
-  static final int EIP1559_AND_EIP4844_BASE_MEMORY_SIZE = 984;
+  static final int FRONTIER_AND_ACCESS_LIST_SHALLOW_MEMORY_SIZE = 888;
+  static final int EIP1559_AND_EIP4844_SHALLOW_MEMORY_SIZE = 1000;
   static final int OPTIONAL_TO_MEMORY_SIZE = 112;
   static final int OPTIONAL_CHAIN_ID_MEMORY_SIZE = 80;
   static final int PAYLOAD_BASE_MEMORY_SIZE = 32;
@@ -44,7 +44,7 @@ public abstract class PendingTransaction
   static final int BASE_OPTIONAL_SIZE = 16;
   static final int KZG_COMMITMENT_OR_PROOF_SIZE = 112;
   static final int BLOB_SIZE = 131136;
-  static final int BLOBS_WITH_COMMITMENTS_SIZE = 32;
+  static final int BLOBS_WITH_COMMITMENTS_SIZE = 40;
   static final int PENDING_TRANSACTION_MEMORY_SIZE = 40;
   private static final AtomicLong TRANSACTIONS_ADDED = new AtomicLong();
   private final Transaction transaction;
@@ -136,14 +136,14 @@ public abstract class PendingTransaction
   }
 
   private int computeFrontierMemorySize() {
-    return FRONTIER_AND_ACCESS_LIST_BASE_MEMORY_SIZE
+    return FRONTIER_AND_ACCESS_LIST_SHALLOW_MEMORY_SIZE
         + computePayloadMemorySize()
         + computeToMemorySize()
         + computeChainIdMemorySize();
   }
 
   private int computeAccessListMemorySize() {
-    return FRONTIER_AND_ACCESS_LIST_BASE_MEMORY_SIZE
+    return FRONTIER_AND_ACCESS_LIST_SHALLOW_MEMORY_SIZE
         + computePayloadMemorySize()
         + computeToMemorySize()
         + computeChainIdMemorySize()
@@ -151,7 +151,7 @@ public abstract class PendingTransaction
   }
 
   private int computeEIP1559MemorySize() {
-    return EIP1559_AND_EIP4844_BASE_MEMORY_SIZE
+    return EIP1559_AND_EIP4844_SHALLOW_MEMORY_SIZE
         + computePayloadMemorySize()
         + computeToMemorySize()
         + computeChainIdMemorySize()

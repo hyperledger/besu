@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -33,6 +34,8 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.data.BlockTraceResult;
+import org.hyperledger.besu.plugin.data.TransactionTraceResult;
 import org.hyperledger.besu.plugin.services.TraceService;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
@@ -72,10 +75,9 @@ public class TraceServiceImpl implements TraceService {
    * @param tracer an instance of OperationTracer
    */
   @Override
-  public void traceBlock(final long blockNumber, final BlockAwareOperationTracer tracer) {
-    checkArgument(tracer != null);
-    final Optional<Block> block = blockchainQueries.getBlockchain().getBlockByNumber(blockNumber);
-    block.ifPresent(value -> trace(value, tracer));
+  public BlockTraceResult traceBlock(
+      final long blockNumber, final BlockAwareOperationTracer tracer) {
+    return traceBlock(blockchainQueries.getBlockchain().getBlockByNumber(blockNumber), tracer);
   }
 
   /**
@@ -85,10 +87,41 @@ public class TraceServiceImpl implements TraceService {
    * @param tracer an instance of OperationTracer
    */
   @Override
-  public void traceBlock(final Hash hash, final BlockAwareOperationTracer tracer) {
+  public BlockTraceResult traceBlock(final Hash hash, final BlockAwareOperationTracer tracer) {
+    return traceBlock(blockchainQueries.getBlockchain().getBlockByHash(hash), tracer);
+  }
+
+  private BlockTraceResult traceBlock(
+      final Optional<Block> maybeBlock, final BlockAwareOperationTracer tracer) {
     checkArgument(tracer != null);
-    final Optional<Block> block = blockchainQueries.getBlockchain().getBlockByHash(hash);
-    block.ifPresent(value -> trace(value, tracer));
+    if (maybeBlock.isEmpty()) {
+      return BlockTraceResult.empty();
+    }
+
+    final Optional<List<TransactionProcessingResult>> results = trace(maybeBlock.get(), tracer);
+
+    if (results.isEmpty()) {
+      return BlockTraceResult.empty();
+    }
+
+    final BlockTraceResult.Builder builder = BlockTraceResult.builder();
+
+    final List<TransactionProcessingResult> transactionProcessingResults = results.get();
+    final List<Transaction> transactions = maybeBlock.get().getBody().getTransactions();
+    for (int i = 0; i < transactionProcessingResults.size(); i++) {
+      final TransactionProcessingResult transactionProcessingResult =
+          transactionProcessingResults.get(i);
+      final TransactionTraceResult transactionTraceResult =
+          transactionProcessingResult.isInvalid()
+              ? TransactionTraceResult.error(
+                  transactions.get(i).getHash(),
+                  transactionProcessingResult.getValidationResult().getErrorMessage())
+              : TransactionTraceResult.success(transactions.get(i).getHash());
+
+      builder.addTransactionTraceResult(transactionTraceResult);
+    }
+
+    return builder.build();
   }
 
   /**
@@ -129,22 +162,25 @@ public class TraceServiceImpl implements TraceService {
           blocks.forEach(
               block -> {
                 results.addAll(trace(blockchain, block, chainUpdater, tracer));
-                tracer.traceEndBlock(block.getHeader(), block.getBody());
               });
           afterTracing.accept(chainUpdater.getNextUpdater());
           return Optional.of(results);
         });
   }
 
-  private void trace(final Block block, final BlockAwareOperationTracer tracer) {
+  private Optional<List<TransactionProcessingResult>> trace(
+      final Block block, final BlockAwareOperationTracer tracer) {
     LOG.debug("Tracing block {}", block.toLogString());
     final Blockchain blockchain = blockchainQueries.getBlockchain();
-    Tracer.processTracing(
-        blockchainQueries,
-        block.getHash(),
-        traceableState ->
-            Optional.of(trace(blockchain, block, new ChainUpdater(traceableState), tracer)));
-    tracer.traceEndBlock(block.getHeader(), block.getBody());
+
+    final Optional<List<TransactionProcessingResult>> results =
+        Tracer.processTracing(
+            blockchainQueries,
+            block.getHash(),
+            traceableState ->
+                Optional.of(trace(blockchain, block, new ChainUpdater(traceableState), tracer)));
+
+    return results;
   }
 
   private List<TransactionProcessingResult> trace(
@@ -174,28 +210,17 @@ public class TraceServiceImpl implements TraceService {
                               .orElse(BlobGas.ZERO));
 
               final WorldUpdater worldUpdater = chainUpdater.getNextUpdater();
-              tracer.traceStartTransaction(worldUpdater, transaction);
               final TransactionProcessingResult result =
                   transactionProcessor.processTransaction(
                       blockchain,
                       worldUpdater,
                       header,
                       transaction,
-                      header.getCoinbase(),
+                      protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
                       tracer,
                       new CachingBlockHashLookup(header, blockchain),
                       false,
                       blobGasPrice);
-
-              long transactionGasUsed = transaction.getGasLimit() - result.getGasRemaining();
-              tracer.traceEndTransaction(
-                  worldUpdater,
-                  transaction,
-                  result.isSuccessful(),
-                  result.getOutput(),
-                  result.getLogs(),
-                  transactionGasUsed,
-                  0);
 
               results.add(result);
             });

@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evmtool.T8nExecutor.RejectedTransaction;
@@ -45,6 +46,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
@@ -206,8 +208,9 @@ public class T8nSubCommand implements Runnable {
       }
 
       referenceTestEnv = objectMapper.convertValue(config.get("env"), ReferenceTestEnv.class);
-      initialWorldState =
-          objectMapper.convertValue(config.get("alloc"), ReferenceTestWorldState.class);
+      Map<String, ReferenceTestWorldState.AccountMock> accounts =
+          objectMapper.convertValue(config.get("alloc"), new TypeReference<>() {});
+      initialWorldState = ReferenceTestWorldState.create(accounts, EvmConfiguration.DEFAULT);
       initialWorldState.persist(null);
       var node = config.get("txs");
       Iterator<JsonNode> it;

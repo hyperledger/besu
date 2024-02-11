@@ -27,6 +27,7 @@ import java.util.Map;
 public class MutableCliqueConfigOptions implements CliqueConfigOptions {
   private long epochLength;
   private int blockPeriodSeconds;
+  private boolean createEmptyBlocks;
 
   /**
    * Instantiates a new Mutable bft config options.
@@ -36,6 +37,7 @@ public class MutableCliqueConfigOptions implements CliqueConfigOptions {
   public MutableCliqueConfigOptions(final CliqueConfigOptions bftConfigOptions) {
     this.epochLength = bftConfigOptions.getEpochLength();
     this.blockPeriodSeconds = bftConfigOptions.getBlockPeriodSeconds();
+    this.createEmptyBlocks = bftConfigOptions.getCreateEmptyBlocks();
   }
 
   @Override
@@ -46,6 +48,11 @@ public class MutableCliqueConfigOptions implements CliqueConfigOptions {
   @Override
   public int getBlockPeriodSeconds() {
     return blockPeriodSeconds;
+  }
+
+  @Override
+  public boolean getCreateEmptyBlocks() {
+    return createEmptyBlocks;
   }
 
   @Override
@@ -69,5 +76,14 @@ public class MutableCliqueConfigOptions implements CliqueConfigOptions {
    */
   public void setBlockPeriodSeconds(final int blockPeriodSeconds) {
     this.blockPeriodSeconds = blockPeriodSeconds;
+  }
+
+  /**
+   * Sets create empty blocks.
+   *
+   * @param createEmptyBlocks the create empty blocks
+   */
+  public void setCreateEmptyBlocks(final boolean createEmptyBlocks) {
+    this.createEmptyBlocks = createEmptyBlocks;
   }
 }

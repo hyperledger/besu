@@ -30,7 +30,7 @@ import org.hyperledger.besu.consensus.common.ForksScheduleFactory.SpecCreator;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 public class ForksScheduleFactoryTest {

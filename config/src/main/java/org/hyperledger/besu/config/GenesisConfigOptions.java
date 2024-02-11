@@ -243,6 +243,13 @@ public interface GenesisConfigOptions {
   OptionalLong getCancunTime();
 
   /**
+   * Gets prague time.
+   *
+   * @return the prague time
+   */
+  OptionalLong getPragueTime();
+
+  /**
    * Gets future eips time.
    *
    * @return the future eips time
@@ -418,6 +425,15 @@ public interface GenesisConfigOptions {
    *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1104">https://ecips.ethereumclassic.org/ECIPs/ecip-1104</a>
    */
   OptionalLong getMystiqueBlockNumber();
+
+  /**
+   * Block number to activate Spiral on Classic networks.
+   *
+   * @return block number of Spiral fork on Classic networks
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1109">https://ecips.ethereumclassic.org/ECIPs/ecip-1109</a>
+   */
+  OptionalLong getSpiralBlockNumber();
 
   /**
    * Gets chain id.

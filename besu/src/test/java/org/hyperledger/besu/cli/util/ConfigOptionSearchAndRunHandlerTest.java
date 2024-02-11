@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,18 +29,19 @@ import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine;
 import picocli.CommandLine.IDefaultValueProvider;
 import picocli.CommandLine.IExecutionStrategy;
@@ -49,11 +51,11 @@ import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.ParseResult;
 import picocli.CommandLine.RunLast;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ConfigOptionSearchAndRunHandlerTest {
 
   private static final String CONFIG_FILE_OPTION_NAME = "--config-file";
-  @Rule public final TemporaryFolder temp = new TemporaryFolder();
+  @TempDir public Path temp;
 
   private LoggingLevelOption levelOption;
   private final IExecutionStrategy resultHandler = new RunLast();
@@ -68,16 +70,18 @@ public class ConfigOptionSearchAndRunHandlerTest {
   @Mock IGetter mockConfigOptionGetter;
   @Mock BesuParameterExceptionHandler mockParameterExceptionHandler;
 
-  @Before
+  @BeforeEach
   public void initMocks() {
-    when(mockCommandSpec.commandLine()).thenReturn(mockCommandLine);
-    when(mockParseResult.commandSpec()).thenReturn(mockCommandSpec);
+    lenient().when(mockCommandSpec.commandLine()).thenReturn(mockCommandLine);
+    lenient().when(mockParseResult.commandSpec()).thenReturn(mockCommandSpec);
     final List<String> originalArgs = new ArrayList<>();
     originalArgs.add(CONFIG_FILE_OPTION_NAME);
-    when(mockParseResult.originalArgs()).thenReturn(originalArgs);
-    when(mockParseResult.matchedOption(CONFIG_FILE_OPTION_NAME)).thenReturn(mockConfigOptionSpec);
-    when(mockParseResult.hasMatchedOption(CONFIG_FILE_OPTION_NAME)).thenReturn(true);
-    when(mockConfigOptionSpec.getter()).thenReturn(mockConfigOptionGetter);
+    lenient().when(mockParseResult.originalArgs()).thenReturn(originalArgs);
+    lenient()
+        .when(mockParseResult.matchedOption(CONFIG_FILE_OPTION_NAME))
+        .thenReturn(mockConfigOptionSpec);
+    lenient().when(mockParseResult.hasMatchedOption(CONFIG_FILE_OPTION_NAME)).thenReturn(true);
+    lenient().when(mockConfigOptionSpec.getter()).thenReturn(mockConfigOptionGetter);
     levelOption = new LoggingLevelOption();
     levelOption.setLogLevel("INFO");
     configParsingHandler =
@@ -87,7 +91,7 @@ public class ConfigOptionSearchAndRunHandlerTest {
 
   @Test
   public void handleWithCommandLineOption() throws Exception {
-    when(mockConfigOptionGetter.get()).thenReturn(temp.newFile());
+    when(mockConfigOptionGetter.get()).thenReturn(Files.createTempFile("tmp", "txt").toFile());
     final List<Object> result = configParsingHandler.handle(mockParseResult);
     verify(mockCommandLine).setDefaultValueProvider(any(IDefaultValueProvider.class));
     verify(mockCommandLine).setExecutionStrategy(eq(resultHandler));
@@ -105,7 +109,9 @@ public class ConfigOptionSearchAndRunHandlerTest {
         new ConfigOptionSearchAndRunHandler(
             resultHandler,
             mockParameterExceptionHandler,
-            singletonMap("BESU_CONFIG_FILE", temp.newFile().getAbsolutePath()));
+            singletonMap(
+                "BESU_CONFIG_FILE",
+                Files.createFile(temp.resolve("tmp")).toFile().getAbsolutePath()));
 
     when(mockParseResult.hasMatchedOption(CONFIG_FILE_OPTION_NAME)).thenReturn(false);
 
@@ -139,7 +145,7 @@ public class ConfigOptionSearchAndRunHandlerTest {
   public void shouldRetrieveConfigFromEnvironmentWhenConfigFileSpecified() throws Exception {
     final IDefaultValueProvider defaultValueProvider =
         configParsingHandler.createDefaultValueProvider(
-            mockCommandLine, Optional.of(new File("foo")));
+            mockCommandLine, Optional.of(new File("foo")), Optional.empty());
     final String value = defaultValueProvider.defaultValue(OptionSpec.builder("--logging").build());
     assertThat(value).isEqualTo("ERROR");
   }
@@ -147,7 +153,8 @@ public class ConfigOptionSearchAndRunHandlerTest {
   @Test
   public void shouldRetrieveConfigFromEnvironmentWhenConfigFileNotSpecified() throws Exception {
     final IDefaultValueProvider defaultValueProvider =
-        configParsingHandler.createDefaultValueProvider(mockCommandLine, Optional.empty());
+        configParsingHandler.createDefaultValueProvider(
+            mockCommandLine, Optional.empty(), Optional.empty());
     final String value = defaultValueProvider.defaultValue(OptionSpec.builder("--logging").build());
     assertThat(value).isEqualTo("ERROR");
   }
@@ -160,7 +167,7 @@ public class ConfigOptionSearchAndRunHandlerTest {
         new ConfigOptionSearchAndRunHandler(
             resultHandler,
             mockParameterExceptionHandler,
-            singletonMap("BESU_CONFIG_FILE", temp.newFile().getAbsolutePath()));
+            singletonMap("BESU_CONFIG_FILE", temp.resolve("tmp").toFile().getAbsolutePath()));
 
     when(mockParseResult.hasMatchedOption(CONFIG_FILE_OPTION_NAME)).thenReturn(true);
 

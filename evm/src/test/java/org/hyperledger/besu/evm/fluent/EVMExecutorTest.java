@@ -50,7 +50,7 @@ class EVMExecutorTest {
   @Test
   void currentEVM() {
     var subject = EVMExecutor.evm();
-    assertThat(subject.getEVMVersion()).isEqualTo(EvmSpecVersion.SHANGHAI);
+    assertThat(subject.getEVMVersion()).isEqualTo(EvmSpecVersion.CANCUN);
   }
 
   @ParameterizedTest
@@ -126,6 +126,10 @@ class EVMExecutorTest {
 
     EVMExecutor cancunEVM = EVMExecutor.cancun(EvmConfiguration.DEFAULT);
     assertThat(cancunEVM.getChainId()).contains(defaultChainId);
+
+    EVMExecutor pragueEVM =
+        EVMExecutor.prague(defaultChainId.toBigInteger(), EvmConfiguration.DEFAULT);
+    assertThat(pragueEVM.getChainId()).contains(defaultChainId);
 
     EVMExecutor futureEipsVM = EVMExecutor.futureEips(EvmConfiguration.DEFAULT);
     assertThat(futureEipsVM.getChainId()).contains(defaultChainId);

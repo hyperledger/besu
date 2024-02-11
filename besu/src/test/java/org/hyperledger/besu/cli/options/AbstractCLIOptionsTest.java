@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.options;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.cli.CommandTestAbstract;
 
@@ -23,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
     extends CommandTestAbstract {
@@ -66,7 +67,10 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
     final TestBesuCommand cmd = parseCommand(cliOptions);
     final T optionsFromCommand = getOptionsFromBesuCommand(cmd);
 
-    assertThat(optionsFromCommand).usingRecursiveComparison().isEqualTo(options);
+    assertThat(optionsFromCommand)
+        .usingRecursiveComparison()
+        .ignoringFields(getNonOptionFields())
+        .isEqualTo(options);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -81,10 +85,10 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
     final T optionsFromCommand = getOptionsFromBesuCommand(cmd);
 
     // Check default values supplied by CLI match expected default values
-    final String[] fieldsToIgnore = getFieldsWithComputedDefaults().toArray(new String[0]);
     assertThat(optionsFromCommand)
         .usingRecursiveComparison()
-        .ignoringFields(fieldsToIgnore)
+        .ignoringFields(getFieldsWithComputedDefaults())
+        .ignoringFields(getNonOptionFields())
         .isEqualTo(defaultOptions);
   }
 
@@ -92,8 +96,12 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
 
   protected abstract D createCustomizedDomainObject();
 
-  protected List<String> getFieldsWithComputedDefaults() {
-    return Collections.emptyList();
+  protected String[] getFieldsWithComputedDefaults() {
+    return new String[0];
+  }
+
+  protected String[] getNonOptionFields() {
+    return new String[0];
   }
 
   protected List<String> getFieldsToIgnore() {
@@ -113,6 +121,7 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    verify(mockControllerBuilder).build();
   }
 
   protected void internalTestFailure(final String errorMsg, final String... args) {

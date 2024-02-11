@@ -54,6 +54,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
 
   private Address localAddress;
   private EpochManager epochManager;
+  private boolean createEmptyBlocks = true;
   private final BlockInterface blockInterface = new CliqueBlockInterface();
   private ForksSchedule<CliqueConfigOptions> forksSchedule;
 
@@ -62,6 +63,8 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
     localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final CliqueConfigOptions cliqueConfig = configOptionsSupplier.get().getCliqueConfigOptions();
     final long blocksPerEpoch = cliqueConfig.getEpochLength();
+    createEmptyBlocks = cliqueConfig.getCreateEmptyBlocks();
+
     epochManager = new EpochManager(blocksPerEpoch);
     forksSchedule = CliqueForksSchedulesFactory.create(configOptionsSupplier.get());
   }
@@ -92,7 +95,9 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
                 protocolContext.getConsensusContext(CliqueContext.class).getValidatorProvider(),
                 localAddress,
                 forksSchedule),
-            epochManager);
+            epochManager,
+            createEmptyBlocks,
+            ethProtocolManager.ethContext().getScheduler());
     final CliqueMiningCoordinator miningCoordinator =
         new CliqueMiningCoordinator(
             protocolContext.getBlockchain(),
@@ -150,6 +155,6 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   public MiningParameters getMiningParameterOverrides(final MiningParameters fromCli) {
     // Clique mines by default, reflect that with in the mining parameters:
-    return new MiningParameters.Builder(fromCli).miningEnabled(true).build();
+    return fromCli.setMiningEnabled(true);
   }
 }

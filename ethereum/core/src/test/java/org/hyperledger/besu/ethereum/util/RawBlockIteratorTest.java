@@ -38,7 +38,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 public class RawBlockIteratorTest {
 
-  @TempDir private static Path tmp;
+  @TempDir private Path tmp;
   private BlockDataGenerator gen;
 
   @BeforeEach

@@ -66,7 +66,10 @@ public class ChainHeadTracker implements ConnectCallback {
 
   @Override
   public void onPeerConnected(final EthPeer peer) {
-    LOG.debug("Requesting chain head info from {}", peer);
+    LOG.atDebug()
+        .setMessage("Requesting chain head info from {}...")
+        .addArgument(peer::getLoggableId)
+        .log();
     GetHeadersFromPeerByHashTask.forSingleHash(
             protocolSchedule,
             ethContext,
@@ -82,17 +85,21 @@ public class ChainHeadTracker implements ConnectCallback {
                 peer.chainState().update(chainHeadHeader);
                 trailingPeerLimiter.enforceTrailingPeerLimit();
                 LOG.atDebug()
-                    .setMessage("Retrieved chain head info {} from {}")
+                    .setMessage("Retrieved chain head info {} from {}...")
                     .addArgument(
                         () ->
                             chainHeadHeader.getNumber()
                                 + " ("
                                 + chainHeadHeader.getBlockHash()
                                 + ")")
-                    .addArgument(peer)
+                    .addArgument(peer::getLoggableId)
                     .log();
               } else {
-                LOG.debug("Failed to retrieve chain head info. Disconnecting {}", peer, error);
+                LOG.atDebug()
+                    .setMessage("Failed to retrieve chain head info. Disconnecting {}... {}")
+                    .addArgument(peer::getLoggableId)
+                    .addArgument(error)
+                    .log();
                 peer.disconnect(DisconnectReason.USELESS_PEER);
               }
             });

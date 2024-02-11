@@ -21,14 +21,24 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.MockExecutorService;
+import org.hyperledger.besu.testutil.MockScheduledExecutor;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -206,5 +216,44 @@ public class EthSchedulerTest {
     assertThat(task.isDone()).isTrue();
     assertThat(task.isFailed()).isTrue();
     assertThat(task.isCancelled()).isTrue();
+  }
+
+  @Test
+  public void itemsSubmittedToOrderedProcessorAreProcessedInOrder() throws InterruptedException {
+    final int numOfItems = 100;
+    final Random random = new Random();
+    final EthScheduler realEthScheduler = new EthScheduler(1, 1, 1, new NoOpMetricsSystem());
+
+    final List<String> processedStrings = new CopyOnWriteArrayList<>();
+
+    final Consumer<String> stringProcessor =
+        s -> {
+          processedStrings.add(s);
+          try {
+            Thread.sleep(random.nextInt(20));
+          } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+          }
+        };
+
+    final var orderProcessor = realEthScheduler.createOrderedProcessor(stringProcessor);
+    IntStream.range(0, numOfItems)
+        .mapToObj(String::valueOf)
+        .forEach(
+            s -> {
+              orderProcessor.submit(s);
+              try {
+                Thread.sleep(random.nextInt(20));
+              } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+              }
+            });
+
+    final List<String> expectedStrings = new ArrayList<>(numOfItems);
+    IntStream.range(0, numOfItems).mapToObj(String::valueOf).forEach(expectedStrings::add);
+
+    Awaitility.await().until(() -> processedStrings.size() == numOfItems);
+
+    assertThat(processedStrings).containsExactlyElementsOf(expectedStrings);
   }
 }

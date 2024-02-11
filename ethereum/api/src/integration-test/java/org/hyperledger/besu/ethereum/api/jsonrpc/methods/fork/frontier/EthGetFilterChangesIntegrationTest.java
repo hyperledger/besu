@@ -18,6 +18,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -44,7 +45,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -108,7 +108,7 @@ public class EthGetFilterChangesIntegrationTest {
             blockchain::getChainHeadHeader);
     final ProtocolContext protocolContext = executionContext.getProtocolContext();
 
-    EthContext ethContext = mock(EthContext.class);
+    EthContext ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
     EthPeers ethPeers = mock(EthPeers.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
 
@@ -119,7 +119,6 @@ public class EthGetFilterChangesIntegrationTest {
             protocolContext,
             batchAddedListener,
             ethContext,
-            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             new TransactionPoolMetrics(metricsSystem),
             TransactionPoolConfiguration.DEFAULT,
             null);

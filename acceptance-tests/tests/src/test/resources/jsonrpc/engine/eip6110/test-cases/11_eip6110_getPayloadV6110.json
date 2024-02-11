@@ -3,7 +3,7 @@
     "jsonrpc": "2.0",
     "method": "engine_getPayloadV6110",
     "params": [
-      "0x28264382a1f291cf"
+      "0x282643db882670cf"
     ],
     "id": 67
   },
@@ -12,9 +12,9 @@
     "id": 67,
     "result": {
       "executionPayload": {
-        "parentHash": "0xe6763c709abac0b477073c1efd980e12728c1ea22361c03e41db6fbd6a271832",
+        "parentHash": "0xddb65a684b9b8980b6231ee0e388566c10a9c4583bbddf16f8d68bbc0b8ed965",
         "feeRecipient": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
-        "stateRoot": "0x2d60598bb65d4a9451c097884d1fb07e015c242e2a3475f4ef902ed23e319d3b",
+        "stateRoot": "0x14208ac0e218167936e220b72d5d5887a963cb858ea2f2d268518f014a3da3fa",
         "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "gasLimit": "0x1c9c380",
@@ -22,23 +22,23 @@
         "timestamp": "0x30",
         "extraData": "0x",
         "baseFeePerGas": "0x7",
-        "excessBlobGas" : "0x0",
-        "parentBeaconBlockRoot" : "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "excessBlobGas": "0x0",
+        "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "transactions": [],
         "withdrawals": [],
-        "depositReceipts" : [],
+        "depositReceipts": [],
         "blockNumber": "0x3",
-        "blockHash": "0xa489adae4826ac6a342c382243e8841d3e3b33168e7fd6e31b2c36c17a25f702",
+        "blockHash": "0xf1e7093b5d229885caab11a3acb95412af80f9077b742020a8014cf81c8c75f2",
         "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
-        "blobGasUsed" : "0x0"
+        "blobGasUsed": "0x0"
       },
       "blockValue": "0x0",
-      "blobsBundle" : {
-        "commitments" : [],
-        "proofs" : [],
-        "blobs" : []
+      "blobsBundle": {
+        "commitments": [],
+        "proofs": [],
+        "blobs": []
       },
-      "shouldOverrideBuilder" : false
+      "shouldOverrideBuilder": false
     }
   },
   "statusCode": 200

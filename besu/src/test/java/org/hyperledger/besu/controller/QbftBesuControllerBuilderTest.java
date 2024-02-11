@@ -17,6 +17,7 @@ package org.hyperledger.besu.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -47,7 +48,7 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -56,20 +57,20 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.util.List;
 
 import com.google.common.collect.Range;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class QbftBesuControllerBuilderTest {
 
   private BesuControllerBuilder qbftBesuControllerBuilder;
@@ -92,43 +93,54 @@ public class QbftBesuControllerBuilderTest {
       TransactionPoolConfiguration.DEFAULT;
   private final ObservableMetricsSystem observableMetricsSystem = new NoOpMetricsSystem();
 
-  @Rule public final TemporaryFolder tempDirRule = new TemporaryFolder();
+  @TempDir Path tempDir;
 
-  @Before
+  @BeforeEach
   public void setup() {
     // besu controller setup
-    when(genesisConfigFile.getParentHash()).thenReturn(Hash.ZERO.toHexString());
-    when(genesisConfigFile.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
+    lenient().when(genesisConfigFile.getParentHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisConfigFile.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
     when(genesisConfigFile.getExtraData()).thenReturn(Bytes.EMPTY.toHexString());
-    when(genesisConfigFile.getMixHash()).thenReturn(Hash.ZERO.toHexString());
-    when(genesisConfigFile.getNonce()).thenReturn(Long.toHexString(1));
-    when(genesisConfigFile.getConfigOptions(any())).thenReturn(genesisConfigOptions);
-    when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
-    when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
-    when(storageProvider.createBlockchainStorage(any(), any()))
+    lenient().when(genesisConfigFile.getMixHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisConfigFile.getNonce()).thenReturn(Long.toHexString(1));
+    lenient().when(genesisConfigFile.getConfigOptions(any())).thenReturn(genesisConfigOptions);
+    lenient().when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
+    lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
+    lenient()
+        .when(storageProvider.createBlockchainStorage(any(), any()))
         .thenReturn(
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(),
                 new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
                 new MainnetBlockHeaderFunctions()));
-    when(storageProvider.createWorldStateStorage(DataStorageFormat.FOREST))
+    lenient()
+        .when(storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG))
         .thenReturn(worldStateStorage);
-    when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
-    when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));
-    when(worldStatePreimageStorage.updater())
+    lenient().when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
+    lenient().when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));
+    lenient()
+        .when(worldStatePreimageStorage.updater())
         .thenReturn(mock(WorldStatePreimageStorage.Updater.class));
-    when(storageProvider.createWorldStatePreimageStorage()).thenReturn(worldStatePreimageStorage);
-    when(synchronizerConfiguration.getDownloaderParallelism()).thenReturn(1);
-    when(synchronizerConfiguration.getTransactionsParallelism()).thenReturn(1);
-    when(synchronizerConfiguration.getComputationParallelism()).thenReturn(1);
+    lenient()
+        .when(storageProvider.createWorldStatePreimageStorage())
+        .thenReturn(worldStatePreimageStorage);
+    lenient().when(synchronizerConfiguration.getDownloaderParallelism()).thenReturn(1);
+    lenient().when(synchronizerConfiguration.getTransactionsParallelism()).thenReturn(1);
+    lenient().when(synchronizerConfiguration.getComputationParallelism()).thenReturn(1);
 
-    when(synchronizerConfiguration.getBlockPropagationRange()).thenReturn(Range.closed(1L, 2L));
+    lenient()
+        .when(synchronizerConfiguration.getBlockPropagationRange())
+        .thenReturn(Range.closed(1L, 2L));
 
     // qbft prepForBuild setup
-    when(genesisConfigOptions.getQbftConfigOptions())
+    lenient()
+        .when(genesisConfigOptions.getQbftConfigOptions())
         .thenReturn(new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT));
-    when(genesisConfigOptions.getTransitions()).thenReturn(mock(TransitionsConfigOptions.class));
-    when(genesisConfigFile.getExtraData())
+    lenient()
+        .when(genesisConfigOptions.getTransitions())
+        .thenReturn(mock(TransitionsConfigOptions.class));
+    lenient()
+        .when(genesisConfigFile.getExtraData())
         .thenReturn(
             QbftExtraDataCodec.createGenesisExtraDataString(List.of(Address.fromHexString("1"))));
 
@@ -141,7 +153,7 @@ public class QbftBesuControllerBuilderTest {
             .miningParameters(miningParameters)
             .metricsSystem(observableMetricsSystem)
             .privacyParameters(privacyParameters)
-            .dataDirectory(tempDirRule.getRoot().toPath())
+            .dataDirectory(tempDir)
             .clock(clock)
             .transactionPoolConfiguration(poolConfiguration)
             .nodeKey(nodeKey)

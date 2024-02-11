@@ -29,8 +29,9 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -47,29 +48,28 @@ import java.math.BigInteger;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public abstract class JsonBlockImporterTest {
 
-  @Rule public final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir public Path dataDir;
 
-  protected final String consensusEngine;
-  protected final GenesisConfigFile genesisConfigFile;
-  protected final boolean isEthash;
+  protected String consensusEngine;
+  protected GenesisConfigFile genesisConfigFile;
+  protected boolean isEthash;
 
-  protected JsonBlockImporterTest(final String consensusEngine) throws IOException {
+  protected void setup(final String consensusEngine) throws IOException {
     this.consensusEngine = consensusEngine;
     final String genesisData = getFileContents("genesis.json");
     this.genesisConfigFile = GenesisConfigFile.fromConfig(genesisData);
@@ -77,8 +77,10 @@ public abstract class JsonBlockImporterTest {
   }
 
   public static class SingletonTests extends JsonBlockImporterTest {
-    public SingletonTests() throws IOException {
-      super("unsupported");
+
+    @BeforeEach
+    public void setup() throws IOException {
+      super.setup("unsupported");
     }
 
     @Test
@@ -96,21 +98,23 @@ public abstract class JsonBlockImporterTest {
     }
   }
 
-  @RunWith(Parameterized.class)
   public static class ParameterizedTests extends JsonBlockImporterTest {
 
-    public ParameterizedTests(final String consensusEngine) throws IOException {
-      super(consensusEngine);
+    @Override
+    public void setup(final String consensusEngine) throws IOException {
+      super.setup(consensusEngine);
     }
 
-    @Parameters(name = "Name: {0}")
-    public static Collection<Object[]> getParameters() {
-      final Object[][] params = {{"ethash"}, {"clique"}};
-      return Arrays.asList(params);
+    public static Stream<Arguments> getParameters() {
+      return Stream.of(Arguments.of("ethash"), Arguments.of("clique"));
     }
 
-    @Test
-    public void importChain_validJson_withBlockNumbers() throws IOException {
+    @ParameterizedTest(name = "{index}: {0}")
+    @MethodSource("getParameters")
+    public void importChain_validJson_withBlockNumbers(final String consensusEngine)
+        throws IOException {
+      setup(consensusEngine);
+
       final BesuController controller = createController();
       final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
@@ -200,8 +204,12 @@ public abstract class JsonBlockImporterTest {
       assertThat(tx.getNonce()).isEqualTo(1L);
     }
 
-    @Test
-    public void importChain_validJson_noBlockIdentifiers() throws IOException {
+    @ParameterizedTest(name = "{index}: {0}")
+    @MethodSource("getParameters")
+    public void importChain_validJson_noBlockIdentifiers(final String consensusEngine)
+        throws IOException {
+      setup(consensusEngine);
+
       final BesuController controller = createController();
       final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
@@ -291,8 +299,12 @@ public abstract class JsonBlockImporterTest {
       assertThat(tx.getNonce()).isEqualTo(1L);
     }
 
-    @Test
-    public void importChain_validJson_withParentHashes() throws IOException {
+    @ParameterizedTest(name = "{index}: {0}")
+    @MethodSource("getParameters")
+    public void importChain_validJson_withParentHashes(final String consensusEngine)
+        throws IOException {
+      setup(consensusEngine);
+
       final BesuController controller = createController();
       final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
@@ -342,8 +354,11 @@ public abstract class JsonBlockImporterTest {
       assertThat(tx.getNonce()).isEqualTo(2L);
     }
 
-    @Test
-    public void importChain_invalidParent() throws IOException {
+    @ParameterizedTest(name = "{index}: {0}")
+    @MethodSource("getParameters")
+    public void importChain_invalidParent(final String consensusEngine) throws IOException {
+      setup(consensusEngine);
+
       final BesuController controller = createController();
       final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
@@ -354,8 +369,11 @@ public abstract class JsonBlockImporterTest {
           .hasMessageStartingWith("Unable to locate block parent at 2456");
     }
 
-    @Test
-    public void importChain_invalidTransaction() throws IOException {
+    @ParameterizedTest(name = "{index}: {0}")
+    @MethodSource("getParameters")
+    public void importChain_invalidTransaction(final String consensusEngine) throws IOException {
+      setup(consensusEngine);
+
       final BesuController controller = createController();
       final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
@@ -367,8 +385,11 @@ public abstract class JsonBlockImporterTest {
               "Unable to create block.  1 transaction(s) were found to be invalid.");
     }
 
-    @Test
-    public void importChain_specialFields() throws IOException {
+    @ParameterizedTest(name = "{index}: {0}")
+    @MethodSource("getParameters")
+    public void importChain_specialFields(final String consensusEngine) throws IOException {
+      setup(consensusEngine);
+
       final BesuController controller = createController();
       final JsonBlockImporter importer = new JsonBlockImporter(controller);
 
@@ -413,7 +434,6 @@ public abstract class JsonBlockImporterTest {
 
   protected BesuController createController(final GenesisConfigFile genesisConfigFile)
       throws IOException {
-    final Path dataDir = folder.newFolder().toPath();
     return new BesuController.Builder()
         .fromGenesisConfig(genesisConfigFile, SyncMode.FAST)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
@@ -421,9 +441,12 @@ public abstract class JsonBlockImporterTest {
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .networkId(BigInteger.valueOf(10))
         .miningParameters(
-            new MiningParameters.Builder()
-                .minTransactionGasPrice(Wei.ZERO)
-                .miningEnabled(true)
+            ImmutableMiningParameters.builder()
+                .mutableInitValues(
+                    MutableInitValues.builder()
+                        .isMiningEnabled(true)
+                        .minTransactionGasPrice(Wei.ZERO)
+                        .build())
                 .build())
         .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())

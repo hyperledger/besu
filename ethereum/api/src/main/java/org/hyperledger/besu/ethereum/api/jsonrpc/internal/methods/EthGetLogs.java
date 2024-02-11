@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
@@ -38,9 +37,9 @@ public class EthGetLogs implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(EthGetLogs.class);
 
   private final BlockchainQueries blockchain;
-  private final Optional<Long> maxLogRange;
+  private final long maxLogRange;
 
-  public EthGetLogs(final BlockchainQueries blockchain, final Optional<Long> maxLogRange) {
+  public EthGetLogs(final BlockchainQueries blockchain, final long maxLogRange) {
     this.blockchain = blockchain;
     this.maxLogRange = maxLogRange;
   }
@@ -86,8 +85,7 @@ public class EthGetLogs implements JsonRpcMethod {
                             .getBlockNumber(blockchain)
                             .orElseThrow(
                                 () -> new Exception("toBlock not found: " + filter.getToBlock()));
-                    if (maxLogRange.isPresent()
-                        && (toBlockNumber - fromBlockNumber) > maxLogRange.get()) {
+                    if (maxLogRange > 0 && (toBlockNumber - fromBlockNumber) > maxLogRange) {
                       throw new IllegalArgumentException(
                           "Requested range exceeds maximum range limit");
                     }

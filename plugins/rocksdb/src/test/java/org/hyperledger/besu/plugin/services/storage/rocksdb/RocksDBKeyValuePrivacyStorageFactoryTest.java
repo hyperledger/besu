@@ -45,7 +45,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
   @TempDir private Path temporaryFolder;
   private final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final SegmentIdentifier segment = TestSegment.BAR;
-  private final List<SegmentIdentifier> segments = List.of(segment);
+  private final List<SegmentIdentifier> segments = List.of(TestSegment.DEFAULT, segment);
 
   @Test
   public void shouldDetectVersion1DatabaseIfNoMetadataFileFound() throws Exception {
@@ -56,6 +56,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
     Files.createDirectories(tempDataDir);
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
+    when(commonConfiguration.getDatabaseVersion()).thenReturn(DEFAULT_VERSION);
 
     final RocksDBKeyValuePrivacyStorageFactory storageFactory =
         new RocksDBKeyValuePrivacyStorageFactory(

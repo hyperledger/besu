@@ -46,6 +46,11 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
 
     permissionedNode.execute(allowNode(permissionedNode));
     permissionedNode.verify(connectionIsAllowed(permissionedNode));
+
+    allowedNode.verify(eth.syncingStatus(false));
+    bootnode.verify(eth.syncingStatus(false));
+    permissionedNode.verify(eth.syncingStatus(false));
+    forbiddenNode.verify(eth.syncingStatus(false));
   }
 
   @Test

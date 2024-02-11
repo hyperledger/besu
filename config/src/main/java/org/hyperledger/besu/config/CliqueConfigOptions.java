@@ -23,5 +23,7 @@ public interface CliqueConfigOptions {
 
   int getBlockPeriodSeconds();
 
+  boolean getCreateEmptyBlocks();
+
   Map<String, Object> asMap();
 }

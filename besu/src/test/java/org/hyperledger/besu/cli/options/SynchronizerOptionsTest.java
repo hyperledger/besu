@@ -23,10 +23,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.google.common.collect.Range;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class SynchronizerOptionsTest
     extends AbstractCLIOptionsTest<SynchronizerConfiguration.Builder, SynchronizerOptions> {
 
@@ -82,8 +82,8 @@ public class SynchronizerOptionsTest
   }
 
   @Override
-  protected List<String> getFieldsWithComputedDefaults() {
-    return Arrays.asList("maxTrailingPeers", "computationParallelism");
+  protected String[] getFieldsWithComputedDefaults() {
+    return new String[] {"maxTrailingPeers", "computationParallelism"};
   }
 
   @Override

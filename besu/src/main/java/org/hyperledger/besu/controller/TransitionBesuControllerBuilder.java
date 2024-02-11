@@ -52,9 +52,9 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.trie.forest.pruner.Pruner;
+import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.Pruner;
-import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -134,7 +134,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transitionProtocolSchedule.getPreMergeSchedule(),
                 protocolContext,
                 transactionPool,
-                new MiningParameters.Builder(miningParameters).miningEnabled(false).build(),
+                MiningParameters.MINING_DISABLED,
                 syncState,
                 ethProtocolManager),
             mergeBesuControllerBuilder.createTransitionMiningCoordinator(
@@ -144,7 +144,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transitionMiningParameters,
                 syncState,
                 transitionBackwardsSyncContext,
-                metricsSystem));
+                ethProtocolManager.ethContext().getScheduler()));
     initTransitionWatcher(protocolContext, composedCoordinator);
     return composedCoordinator;
   }

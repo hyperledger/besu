@@ -35,11 +35,11 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class CombinedProtocolScheduleFactoryTest {
 
   private final CombinedProtocolScheduleFactory combinedProtocolScheduleFactory =
@@ -60,18 +60,20 @@ public class CombinedProtocolScheduleFactoryTest {
     final BftProtocolSchedule combinedProtocolSchedule =
         combinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN));
 
-    assertThat(combinedProtocolSchedule.getByBlockNumber(0L).getName()).isEqualTo("Frontier");
-    assertThat(combinedProtocolSchedule.getByBlockNumber(0L))
-        .isSameAs(protocolSchedule.getByBlockNumber(0L));
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(0L, 0L).getName())
+        .isEqualTo("Frontier");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(0L, 0L))
+        .isSameAs(protocolSchedule.getByBlockNumberOrTimestamp(0L, 0L));
 
-    assertThat(combinedProtocolSchedule.getByBlockNumber(5L).getName()).isEqualTo("Homestead");
-    assertThat(combinedProtocolSchedule.getByBlockNumber(5L))
-        .isSameAs(protocolSchedule.getByBlockNumber(5L));
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(5L, 0L).getName())
+        .isEqualTo("Homestead");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(5L, 0L))
+        .isSameAs(protocolSchedule.getByBlockNumberOrTimestamp(5L, 0L));
 
-    assertThat(combinedProtocolSchedule.getByBlockNumber(10L).getName())
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(10L, 0L).getName())
         .isEqualTo("Constantinople");
-    assertThat(combinedProtocolSchedule.getByBlockNumber(10L))
-        .isSameAs(protocolSchedule.getByBlockNumber(10L));
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(10L, 0L))
+        .isSameAs(protocolSchedule.getByBlockNumberOrTimestamp(10L, 0L));
 
     assertThat(
             new MilestoneStreamingProtocolSchedule(combinedProtocolSchedule)
@@ -88,63 +90,78 @@ public class CombinedProtocolScheduleFactoryTest {
     genesisConfigOptions.byzantiumBlock(105L);
     genesisConfigOptions.berlinBlock(110L);
     genesisConfigOptions.londonBlock(220L);
+    genesisConfigOptions.shanghaiTime(1000000050L);
     genesisConfigOptions.chainId(BigInteger.TEN);
 
     final BftProtocolSchedule protocolSchedule1 = createProtocolSchedule(genesisConfigOptions);
     final BftProtocolSchedule protocolSchedule2 = createProtocolSchedule(genesisConfigOptions);
     final BftProtocolSchedule protocolSchedule3 = createProtocolSchedule(genesisConfigOptions);
+    final BftProtocolSchedule protocolSchedule4 = createProtocolSchedule(genesisConfigOptions);
 
     final NavigableSet<ForkSpec<ProtocolSchedule>> consensusSchedule =
         new TreeSet<>(ForkSpec.COMPARATOR);
     consensusSchedule.add(new ForkSpec<>(0, protocolSchedule1));
     consensusSchedule.add(new ForkSpec<>(100L, protocolSchedule2));
     consensusSchedule.add(new ForkSpec<>(200L, protocolSchedule3));
+    consensusSchedule.add(new ForkSpec<>(1000000000L, protocolSchedule4));
 
     final BftProtocolSchedule combinedProtocolSchedule =
         combinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN));
 
     // consensus schedule 1
-    assertThat(combinedProtocolSchedule.getByBlockNumber(0L).getName()).isEqualTo("Frontier");
-    assertThat(combinedProtocolSchedule.getByBlockNumber(0L))
-        .isSameAs(protocolSchedule1.getByBlockNumber(0L));
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(0L, 0L).getName())
+        .isEqualTo("Frontier");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(0L, 0L))
+        .isSameAs(protocolSchedule1.getByBlockNumberOrTimestamp(0L, 0L));
 
-    assertThat(combinedProtocolSchedule.getByBlockNumber(5L).getName()).isEqualTo("Homestead");
-    assertThat(combinedProtocolSchedule.getByBlockNumber(5L))
-        .isSameAs(protocolSchedule1.getByBlockNumber(5L));
-    assertThat(combinedProtocolSchedule.getByBlockNumber(10L).getName())
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(5L, 0L).getName())
+        .isEqualTo("Homestead");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(5L, 0L))
+        .isSameAs(protocolSchedule1.getByBlockNumberOrTimestamp(5L, 0L));
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(10L, 0L).getName())
         .isEqualTo("Constantinople");
-    assertThat(combinedProtocolSchedule.getByBlockNumber(10L))
-        .isSameAs(protocolSchedule1.getByBlockNumber(10L));
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(10L, 0L))
+        .isSameAs(protocolSchedule1.getByBlockNumberOrTimestamp(10L, 0L));
 
     // consensus schedule 2 migration block
-    assertThat(combinedProtocolSchedule.getByBlockNumber(100L).getName())
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(100L, 0L).getName())
         .isEqualTo("Constantinople");
-    assertThat(combinedProtocolSchedule.getByBlockNumber(100L))
-        .isSameAs(protocolSchedule2.getByBlockNumber(10L));
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(100L, 0L))
+        .isSameAs(protocolSchedule2.getByBlockNumberOrTimestamp(10L, 0L));
 
     // consensus schedule 2
-    assertThat(combinedProtocolSchedule.getByBlockNumber(105L).getName()).isEqualTo("Byzantium");
-    assertThat(combinedProtocolSchedule.getByBlockNumber(105L))
-        .isSameAs(protocolSchedule2.getByBlockNumber(105L));
-    assertThat(combinedProtocolSchedule.getByBlockNumber(110L).getName()).isEqualTo("Berlin");
-    assertThat(combinedProtocolSchedule.getByBlockNumber(110L))
-        .isSameAs(protocolSchedule2.getByBlockNumber(110L));
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(105L, 0L).getName())
+        .isEqualTo("Byzantium");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(105L, 0L))
+        .isSameAs(protocolSchedule2.getByBlockNumberOrTimestamp(105L, 0L));
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(110L, 0L).getName())
+        .isEqualTo("Berlin");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(110L, 0L))
+        .isSameAs(protocolSchedule2.getByBlockNumberOrTimestamp(110L, 0L));
 
     // consensus schedule 3 migration block
-    assertThat(combinedProtocolSchedule.getByBlockNumber(200L).getName()).isEqualTo("Berlin");
-    assertThat(combinedProtocolSchedule.getByBlockNumber(200L))
-        .isSameAs(protocolSchedule3.getByBlockNumber(110L));
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(200L, 0L).getName())
+        .isEqualTo("Berlin");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(200L, 0L))
+        .isSameAs(protocolSchedule3.getByBlockNumberOrTimestamp(110L, 0L));
 
     // consensus schedule 3
-    assertThat(combinedProtocolSchedule.getByBlockNumber(220L).getName()).isEqualTo("London");
-    assertThat(combinedProtocolSchedule.getByBlockNumber(220L))
-        .isSameAs(protocolSchedule3.getByBlockNumber(220L));
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(220L, 0L).getName())
+        .isEqualTo("London");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(220L, 0L))
+        .isSameAs(protocolSchedule3.getByBlockNumberOrTimestamp(220L, 0L));
+
+    // consensus schedule 4
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(0L, 1000000050L).getName())
+        .isEqualTo("Shanghai");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(220L, 1000000050L))
+        .isSameAs(protocolSchedule4.getByBlockNumberOrTimestamp(220L, 1000000050L));
 
     assertThat(
             new MilestoneStreamingProtocolSchedule(combinedProtocolSchedule)
                 .streamMilestoneBlocks()
                 .collect(Collectors.toList()))
-        .isEqualTo(List.of(0L, 5L, 10L, 100L, 105L, 110L, 200L, 220L));
+        .isEqualTo(List.of(0L, 5L, 10L, 100L, 105L, 110L, 200L, 220L, 1000000000L, 1000000050L));
   }
 
   private BftProtocolSchedule createProtocolSchedule(

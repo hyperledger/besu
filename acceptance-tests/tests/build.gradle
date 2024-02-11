@@ -55,7 +55,6 @@ dependencies {
   testImplementation project(':testutil')
   testImplementation project(':util')
 
-  testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
   testImplementation 'commons-io:commons-io'
   testImplementation 'io.grpc:grpc-all'
   testImplementation 'io.grpc:grpc-core'
@@ -84,6 +83,7 @@ dependencies {
   testImplementation 'org.web3j:abi'
   testImplementation 'org.web3j:besu'
   testImplementation 'org.web3j:core'
+  testImplementation 'org.wiremock:wiremock'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
@@ -98,7 +98,7 @@ sourceSets {
   }
 }
 
-processTestResources.dependsOn(':acceptance-tests:test-plugins:testPluginsJar')
+processTestResources.dependsOn(':acceptance-tests:test-plugins:testPluginsJar',':acceptance-tests:test-plugins:jar')
 
 task acceptanceTest(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
@@ -140,6 +140,33 @@ task acceptanceTestMainnet(type: Test) {
   systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
   mustRunAfter rootProject.subprojects*.test
   description = 'Runs MAINNET Besu acceptance tests (excluding permissioning, privacy and some other stable features).'
+  group = 'verification'
+
+  jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"
+
+  testLogging {
+    exceptionFormat = 'full'
+    showStackTraces = true
+    showStandardStreams = Boolean.getBoolean('acctests.showStandardStreams')
+    showExceptions = true
+    showCauses = true
+  }
+
+  doFirst { mkdir "${buildDir}/jvmErrorLogs" }
+}
+
+task acceptanceTestNotPrivacy(type: Test) {
+  inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
+  exclude '**/privacy/**'
+
+  useJUnitPlatform {}
+
+  dependsOn(rootProject.installDist)
+  setSystemProperties(test.getSystemProperties())
+  systemProperty 'acctests.runBesuAsProcess', 'true'
+  systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
+  mustRunAfter rootProject.subprojects*.test
+  description = 'Runs MAINNET Besu acceptance tests (excluding privacy since they run nightly, and are being refactored).'
   group = 'verification'
 
   jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"

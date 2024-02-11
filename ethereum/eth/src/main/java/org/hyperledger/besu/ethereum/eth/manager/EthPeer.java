@@ -210,12 +210,20 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public void recordRequestTimeout(final int requestCode) {
-    LOG.debug("Timed out while waiting for response from peer {}", this);
+    LOG.atDebug()
+        .setMessage("Timed out while waiting for response from peer {}...")
+        .addArgument(this::getLoggableId)
+        .log();
+    LOG.trace("Timed out while waiting for response from peer {}", this);
     reputation.recordRequestTimeout(requestCode).ifPresent(this::disconnect);
   }
 
   public void recordUselessResponse(final String requestType) {
-    LOG.debug("Received useless response for request type {} from peer {}", requestType, this);
+    LOG.atTrace()
+        .setMessage("Received useless response for request type {} from peer {}...")
+        .addArgument(requestType)
+        .addArgument(this::getLoggableId)
+        .log();
     reputation.recordUselessResponse(System.currentTimeMillis()).ifPresent(this::disconnect);
   }
 
@@ -253,14 +261,20 @@ public class EthPeer implements Comparable<EthPeer> {
       throws PeerNotConnected {
     if (connectionToUse.getAgreedCapabilities().stream()
         .noneMatch(capability -> capability.getName().equalsIgnoreCase(protocolName))) {
-      LOG.debug("Protocol {} unavailable for this peer {}", protocolName, this);
+      LOG.atDebug()
+          .setMessage("Protocol {} unavailable for this peer {}...")
+          .addArgument(protocolName)
+          .addArgument(this.getLoggableId())
+          .log();
       return null;
     }
     if (permissioningProviders.stream()
         .anyMatch(
             p -> !p.isMessagePermitted(connectionToUse.getRemoteEnode(), messageData.getCode()))) {
       LOG.info(
-          "Permissioning blocked sending of message code {} to {}", messageData.getCode(), this);
+          "Permissioning blocked sending of message code {} to {}...",
+          messageData.getCode(),
+          this.getLoggableId());
       if (LOG.isDebugEnabled()) {
         LOG.debug(
             "Permissioning blocked by providers {}",
@@ -448,7 +462,7 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   void handleDisconnect() {
-    LOG.debug("handleDisconnect - EthPeer {}", this);
+    LOG.trace("handleDisconnect - EthPeer {}", this);
 
     requestManagers.forEach(
         (protocolName, map) -> map.forEach((code, requestManager) -> requestManager.close()));
@@ -593,8 +607,8 @@ public class EthPeer implements Comparable<EthPeer> {
   @Override
   public String toString() {
     return String.format(
-        "PeerId %s, reputation %s, validated? %s, disconnected? %s, client: %s, connection %s, enode %s",
-        nodeId(),
+        "PeerId: %s... %s, validated? %s, disconnected? %s, client: %s, %s, %s",
+        getLoggableId(),
         reputation,
         isFullyValidated(),
         isDisconnected(),
@@ -604,8 +618,9 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   @Nonnull
-  public String getShortNodeId() {
-    return nodeId().toString().substring(0, 20);
+  public String getLoggableId() {
+    // 8 bytes plus the 0x prefix is 18 characters
+    return nodeId().toString().substring(0, 18) + "...";
   }
 
   @Override

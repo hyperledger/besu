@@ -66,7 +66,11 @@ public class GetNodeDataFromPeerTask extends AbstractPeerRequestTask<Map<Hash, B
   protected PendingPeerRequest sendRequest() {
     return sendRequestToPeer(
         peer -> {
-          LOG.debug("Requesting {} node data entries from peer {}.", hashes.size(), peer);
+          LOG.atTrace()
+              .setMessage("Requesting {} node data entries from peer {}...")
+              .addArgument(hashes::size)
+              .addArgument(peer::getLoggableId)
+              .log();
           return peer.getNodeData(hashes);
         },
         pivotBlockNumber);

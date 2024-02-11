@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.common.bft.network;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -37,13 +38,13 @@ import java.math.BigInteger;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ValidatorPeersTest {
 
   public static final String PROTOCOL_NAME = "BFT";
@@ -53,7 +54,7 @@ public class ValidatorPeersTest {
   private final List<PeerConnection> peerConnections = newArrayList();
   @Mock ValidatorProvider validatorProvider;
 
-  @Before
+  @BeforeEach
   public void setup() {
     for (int i = 0; i < 4; i++) {
       final SECPPublicKey pubKey =
@@ -71,8 +72,8 @@ public class ValidatorPeersTest {
   private PeerConnection mockPeerConnection(final Address address) {
     final PeerInfo peerInfo = mock(PeerInfo.class);
     final PeerConnection peerConnection = mock(PeerConnection.class);
-    when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
-    when(peerInfo.getAddress()).thenReturn(address);
+    lenient().when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
+    lenient().when(peerInfo.getAddress()).thenReturn(address);
     return peerConnection;
   }
 

@@ -52,7 +52,8 @@ class MainnetGenesisFileModule extends GenesisFileModule {
   ProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
       @Named("Fork") final Optional<String> fork,
-      @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
+      @Named("RevertReasonEnabled") final boolean revertReasonEnabled,
+      final EvmConfiguration evmConfiguration) {
 
     final Optional<String> ecCurve = configOptions.getEcCurve();
     if (ecCurve.isEmpty()) {
@@ -73,7 +74,7 @@ class MainnetGenesisFileModule extends GenesisFileModule {
         return schedule.get();
       }
     }
-    return MainnetProtocolSchedule.fromConfig(configOptions, EvmConfiguration.DEFAULT);
+    return MainnetProtocolSchedule.fromConfig(configOptions, evmConfiguration);
   }
 
   public static Map<String, Supplier<ProtocolSchedule>> createSchedules() {
@@ -110,6 +111,9 @@ class MainnetGenesisFileModule extends GenesisFileModule {
         Map.entry(
             "cancun",
             createSchedule(new StubGenesisConfigOptions().cancunTime(0).baseFeePerGas(0x0a))),
+        Map.entry(
+            "prague",
+            createSchedule(new StubGenesisConfigOptions().pragueTime(0).baseFeePerGas(0x0a))),
         Map.entry(
             "futureeips",
             createSchedule(new StubGenesisConfigOptions().futureEipsTime(0).baseFeePerGas(0x0a))),

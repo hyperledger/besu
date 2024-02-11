@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -26,14 +24,20 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
-import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
+import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
+
+import java.util.Optional;
 
 public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
 
@@ -73,31 +77,41 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         0);
   }
 
-  public static DefaultWorldStateArchive createInMemoryWorldStateArchive() {
-    return new DefaultWorldStateArchive(
-        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
-        new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
+  public static ForestWorldStateArchive createInMemoryWorldStateArchive() {
+    return new ForestWorldStateArchive(
+        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
+        new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
+        EvmConfiguration.DEFAULT);
   }
 
   public static BonsaiWorldStateProvider createBonsaiInMemoryWorldStateArchive(
       final Blockchain blockchain) {
+    return createBonsaiInMemoryWorldStateArchive(blockchain, EvmConfiguration.DEFAULT);
+  }
+
+  public static BonsaiWorldStateProvider createBonsaiInMemoryWorldStateArchive(
+      final Blockchain blockchain, final EvmConfiguration evmConfiguration) {
     final InMemoryKeyValueStorageProvider inMemoryKeyValueStorageProvider =
         new InMemoryKeyValueStorageProvider();
     final CachedMerkleTrieLoader cachedMerkleTrieLoader =
         new CachedMerkleTrieLoader(new NoOpMetricsSystem());
     return new BonsaiWorldStateProvider(
-        inMemoryKeyValueStorageProvider,
+        (BonsaiWorldStateKeyValueStorage)
+            inMemoryKeyValueStorageProvider.createWorldStateStorage(
+                DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
         blockchain,
+        Optional.empty(),
         cachedMerkleTrieLoader,
-        new NoOpMetricsSystem(),
-        null);
+        null,
+        evmConfiguration);
   }
 
   public static MutableWorldState createInMemoryWorldState() {
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
-    return new DefaultMutableWorldState(
-        provider.createWorldStateStorage(DataStorageFormat.FOREST),
-        provider.createWorldStatePreimageStorage());
+    return new ForestMutableWorldState(
+        provider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG),
+        provider.createWorldStatePreimageStorage(),
+        EvmConfiguration.DEFAULT);
   }
 
   public static PrivateStateStorage createInMemoryPrivateStateStorage() {

@@ -37,13 +37,13 @@ import java.util.Map;
 import java.util.OptionalLong;
 
 import com.google.common.io.Resources;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class BesuControllerTest {
 
   @Spy private GenesisConfigFile genesisConfigFile = GenesisConfigFile.mainnet();
@@ -130,7 +130,7 @@ public class BesuControllerTest {
 
     final BesuControllerBuilder besuControllerBuilder =
         new BesuController.Builder()
-            .fromGenesisConfig(postMergeGenesisFile, Collections.emptyMap(), SyncMode.X_CHECKPOINT);
+            .fromGenesisConfig(postMergeGenesisFile, Collections.emptyMap(), SyncMode.CHECKPOINT);
 
     assertThat(besuControllerBuilder).isInstanceOf(MergeBesuControllerBuilder.class);
   }
@@ -147,7 +147,7 @@ public class BesuControllerTest {
 
     final BesuControllerBuilder besuControllerBuilder =
         new BesuController.Builder()
-            .fromGenesisConfig(mergeAtGenesisFile, Collections.emptyMap(), SyncMode.X_CHECKPOINT);
+            .fromGenesisConfig(mergeAtGenesisFile, Collections.emptyMap(), SyncMode.CHECKPOINT);
 
     assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
   }
@@ -156,7 +156,7 @@ public class BesuControllerTest {
   public void preMergeCheckpointSyncUsesTransitionControllerBuilder() {
     final BesuControllerBuilder besuControllerBuilder =
         new BesuController.Builder()
-            .fromGenesisConfig(genesisConfigFile, Collections.emptyMap(), SyncMode.X_CHECKPOINT);
+            .fromGenesisConfig(genesisConfigFile, Collections.emptyMap(), SyncMode.CHECKPOINT);
 
     assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
   }
@@ -165,7 +165,7 @@ public class BesuControllerTest {
   public void nonCheckpointSyncUsesTransitionControllerBuild() {
     final BesuControllerBuilder besuControllerBuilder =
         new BesuController.Builder()
-            .fromGenesisConfig(genesisConfigFile, Collections.emptyMap(), SyncMode.X_SNAP);
+            .fromGenesisConfig(genesisConfigFile, Collections.emptyMap(), SyncMode.SNAP);
 
     assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
   }

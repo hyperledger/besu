@@ -60,6 +60,7 @@ public class PrivateLogFilterAcceptanceTest extends ParameterizedEnclaveTestBase
             restriction == UNRESTRICTED);
 
     privacyCluster.start(node);
+    node.verify(priv.syncingStatus(false));
   }
 
   @Test

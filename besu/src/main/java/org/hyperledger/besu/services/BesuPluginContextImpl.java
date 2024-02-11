@@ -21,7 +21,6 @@ import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.services.BesuService;
 import org.hyperledger.besu.plugin.services.PluginVersionsProvider;
-import org.hyperledger.besu.util.log.FramedLogMessage;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -76,6 +75,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
   private final Map<Class<?>, ? super BesuService> serviceRegistry = new HashMap<>();
   private final List<BesuPlugin> plugins = new ArrayList<>();
   private final List<String> pluginVersions = new ArrayList<>();
+  final List<String> lines = new ArrayList<>();
 
   /**
    * Add service.
@@ -105,9 +105,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
    * @param pluginsDir the plugins dir
    */
   public void registerPlugins(final Path pluginsDir) {
-    final List<String> lines = new ArrayList<>();
-    lines.add("plugins dir " + pluginsDir.toAbsolutePath());
-    lines.add("");
+    lines.add("Plugins:");
     checkState(
         state == Lifecycle.UNINITIALIZED,
         "Besu plugins have already been registered.  Cannot register additional plugins.");
@@ -120,12 +118,15 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     final ServiceLoader<BesuPlugin> serviceLoader =
         ServiceLoader.load(BesuPlugin.class, pluginLoader);
 
+    int pluginsCount = 0;
     for (final BesuPlugin plugin : serviceLoader) {
+      pluginsCount++;
       try {
         plugin.register(this);
         LOG.info("Registered plugin of type {}.", plugin.getClass().getName());
-        lines.add(String.format("SUCCESS %s", plugin.getClass().getSimpleName()));
-        addPluginVersion(plugin);
+        String pluginVersion = getPluginVersion(plugin);
+        pluginVersions.add(pluginVersion);
+        lines.add(String.format("%s (%s)", plugin.getClass().getSimpleName(), pluginVersion));
       } catch (final Exception e) {
         LOG.error(
             "Error registering plugin of type "
@@ -139,14 +140,24 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     }
 
     LOG.debug("Plugin registration complete.");
-    lines.add("");
-    lines.add("TOTAL = " + plugins.size());
-    LOG.debug(FramedLogMessage.generate(lines));
+    lines.add(
+        String.format(
+            "TOTAL = %d of %d plugins successfully loaded", plugins.size(), pluginsCount));
+    lines.add(String.format("from %s", pluginsDir.toAbsolutePath()));
 
     state = Lifecycle.REGISTERED;
   }
 
-  private void addPluginVersion(final BesuPlugin plugin) {
+  /**
+   * get the summary log, as a list of string lines
+   *
+   * @return the summary
+   */
+  public List<String> getPluginsSummaryLog() {
+    return lines;
+  }
+
+  private String getPluginVersion(final BesuPlugin plugin) {
     final Package pluginPackage = plugin.getClass().getPackage();
     final String implTitle =
         Optional.ofNullable(pluginPackage.getImplementationTitle())
@@ -156,8 +167,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
         Optional.ofNullable(pluginPackage.getImplementationVersion())
             .filter(Predicate.not(String::isBlank))
             .orElse("<Unknown Version>");
-    final String pluginVersion = implTitle + "/v" + implVersion;
-    pluginVersions.add(pluginVersion);
+    return implTitle + "/v" + implVersion;
   }
 
   /** Before external services. */

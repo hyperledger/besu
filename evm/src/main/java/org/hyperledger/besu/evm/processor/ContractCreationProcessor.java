@@ -117,11 +117,12 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
         LOG.trace(
             "Contract creation error: account has already been created for address {}",
             contractAddress);
-        frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+        frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
         operationTracer.traceAccountCreationResult(
-            frame, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+            frame, Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
       } else {
+        frame.addCreate(contractAddress);
         contract.incrementBalance(frame.getValue());
         contract.setNonce(initialContractNonce);
         contract.clearStorage();

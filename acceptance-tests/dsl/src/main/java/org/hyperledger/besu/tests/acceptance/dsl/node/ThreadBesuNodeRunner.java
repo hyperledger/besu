@@ -44,6 +44,7 @@ import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.PluginTransactionValidatorService;
+import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
@@ -98,6 +99,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
     besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
+    besuPluginContext.addService(RpcEndpointService.class, new RpcEndpointServiceImpl());
     besuPluginContext.addService(
         TransactionSelectionService.class, new TransactionSelectionServiceImpl());
     besuPluginContext.addService(
@@ -180,6 +182,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final TransactionPoolConfiguration txPoolConfig =
         ImmutableTransactionPoolConfiguration.builder()
+            .from(node.getTransactionPoolConfiguration())
             .strictTransactionReplayProtectionEnabled(node.isStrictTxReplayProtectionEnabled())
             .build();
 
@@ -208,7 +211,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                 .map(pkiConfig -> new PkiBlockCreationConfigurationProvider().load(pkiConfig)))
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .maxPeers(maxPeers)
-        .lowerBoundPeers(maxPeers)
         .maxRemotelyInitiatedPeers(15)
         .networkConfiguration(node.getNetworkingConfiguration())
         .randomPeerPriority(false)
@@ -223,6 +225,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
     runnerBuilder.permissioningConfiguration(node.getPermissioningConfiguration());
+    runnerBuilder.apiConfiguration(node.getApiConfiguration());
 
     runnerBuilder
         .vertx(Vertx.vertx())

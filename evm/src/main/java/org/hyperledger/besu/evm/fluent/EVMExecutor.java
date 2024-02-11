@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.fluent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -41,7 +42,6 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -80,7 +80,7 @@ public class EVMExecutor {
       List.of(MaxCodeSizeRule.of(0x6000), PrefixCodeRule.of());
   private long initialNonce = 1;
   private Collection<Address> forceCommitAddresses = List.of(Address.fromHexString("0x03"));
-  private Set<Address> accessListWarmAddresses = new HashSet<>();
+  private Set<Address> accessListWarmAddresses = new BytesTrieSet<>(Address.SIZE);
   private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
   private MessageCallProcessor messageCallProcessor = null;
   private ContractCreationProcessor contractCreationProcessor = null;
@@ -221,7 +221,7 @@ public class EVMExecutor {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.tangerineWhistle(evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.frontier(executor.evm.getGasCalculator());
-    executor.contractValidationRules = List.of(MaxCodeSizeRule.of(0x6000));
+    executor.contractValidationRules = List.of();
     executor.initialNonce = 0;
     return executor;
   }
@@ -499,7 +499,7 @@ public class EVMExecutor {
       final BigInteger chainId, final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.prague(chainId, evmConfiguration));
     executor.precompileContractRegistry =
-        MainnetPrecompiledContracts.cancun(executor.evm.getGasCalculator());
+        MainnetPrecompiledContracts.prague(executor.evm.getGasCalculator());
     return executor;
   }
 
@@ -514,7 +514,7 @@ public class EVMExecutor {
       final BigInteger chainId, final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.osaka(chainId, evmConfiguration));
     executor.precompileContractRegistry =
-        MainnetPrecompiledContracts.cancun(executor.evm.getGasCalculator());
+        MainnetPrecompiledContracts.prague(executor.evm.getGasCalculator());
     return executor;
   }
 
@@ -529,7 +529,7 @@ public class EVMExecutor {
       final BigInteger chainId, final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.bogota(chainId, evmConfiguration));
     executor.precompileContractRegistry =
-        MainnetPrecompiledContracts.cancun(executor.evm.getGasCalculator());
+        MainnetPrecompiledContracts.prague(executor.evm.getGasCalculator());
     return executor;
   }
 

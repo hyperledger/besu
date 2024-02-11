@@ -240,7 +240,6 @@ public class T8nExecutor {
 
     final BonsaiReferenceTestWorldState worldState =
         (BonsaiReferenceTestWorldState) initialWorldState.copy();
-    worldState.disableRootHashVerification();
 
     final ProtocolSchedule protocolSchedule = referenceTestProtocolSchedules.getByName(fork);
     if (protocolSchedule == null) {
@@ -272,6 +271,7 @@ public class T8nExecutor {
       final TransactionProcessingResult result;
       try {
         tracer = tracerManager.getManagedTracer(i, transaction.getHash());
+        tracer.tracePrepareTransaction(worldStateUpdater, transaction);
         tracer.traceStartTransaction(worldStateUpdater, transaction);
         result =
             processor.processTransaction(

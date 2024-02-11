@@ -27,8 +27,10 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,12 +40,12 @@ public class GetPooledTransactionsFromPeerTask extends AbstractPeerRequestTask<L
   private static final Logger LOG =
       LoggerFactory.getLogger(GetPooledTransactionsFromPeerTask.class);
 
-  private final List<Hash> hashes;
+  private final Set<Hash> hashes;
 
   private GetPooledTransactionsFromPeerTask(
       final EthContext ethContext, final List<Hash> hashes, final MetricsSystem metricsSystem) {
     super(ethContext, EthPV65.GET_POOLED_TRANSACTIONS, metricsSystem);
-    this.hashes = List.copyOf(hashes);
+    this.hashes = new HashSet<>(hashes);
   }
 
   public static GetPooledTransactionsFromPeerTask forHashes(
@@ -51,7 +53,7 @@ public class GetPooledTransactionsFromPeerTask extends AbstractPeerRequestTask<L
     return new GetPooledTransactionsFromPeerTask(ethContext, hashes, metricsSystem);
   }
 
-  public List<Hash> getTransactionHashes() {
+  public Set<Hash> getTransactionHashes() {
     return hashes;
   }
 
@@ -59,8 +61,12 @@ public class GetPooledTransactionsFromPeerTask extends AbstractPeerRequestTask<L
   protected PendingPeerRequest sendRequest() {
     return sendRequestToPeer(
         peer -> {
-          LOG.debug("Requesting {} transaction pool entries from peer {}.", hashes.size(), peer);
-          return peer.getPooledTransactions(hashes);
+          LOG.atTrace()
+              .setMessage("Requesting {} transaction pool entries from peer {}...")
+              .addArgument(hashes::size)
+              .addArgument(peer::getLoggableId)
+              .log();
+          return peer.getPooledTransactions(new ArrayList<>(hashes));
         },
         0);
   }

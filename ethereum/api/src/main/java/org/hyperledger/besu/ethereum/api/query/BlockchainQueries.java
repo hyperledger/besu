@@ -183,8 +183,7 @@ public class BlockchainQueries {
    */
   public Optional<UInt256> storageAt(
       final Address address, final UInt256 storageIndex, final long blockNumber) {
-    final Hash blockHash =
-        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
+    final Hash blockHash = getBlockHashByNumber(blockNumber).orElse(Hash.EMPTY);
 
     return storageAt(address, storageIndex, blockHash);
   }
@@ -211,8 +210,7 @@ public class BlockchainQueries {
    * @return The balance of the account in Wei.
    */
   public Optional<Wei> accountBalance(final Address address, final long blockNumber) {
-    final Hash blockHash =
-        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
+    final Hash blockHash = getBlockHashByNumber(blockNumber).orElse(Hash.EMPTY);
 
     return accountBalance(address, blockHash);
   }
@@ -236,8 +234,7 @@ public class BlockchainQueries {
    * @return The code associated with this address.
    */
   public Optional<Bytes> getCode(final Address address, final long blockNumber) {
-    final Hash blockHash =
-        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
+    final Hash blockHash = getBlockHashByNumber(blockNumber).orElse(Hash.EMPTY);
 
     return getCode(address, blockHash);
   }
@@ -263,13 +260,7 @@ public class BlockchainQueries {
     if (outsideBlockchainRange(blockNumber)) {
       return Optional.empty();
     }
-    return Optional.of(
-        blockchain
-            .getBlockHashByNumber(blockNumber)
-            .flatMap(this::blockByHashWithTxHashes)
-            .map(BlockWithMetadata::getTransactions)
-            .map(List::size)
-            .orElse(-1));
+    return blockchain.getBlockHashByNumber(blockNumber).map(this::getTransactionCount);
   }
 
   /**
@@ -624,22 +615,25 @@ public class BlockchainQueries {
     // getTransactionLocation should not return if the TX or block doesn't exist, so throwing
     // on a missing optional is appropriate.
     final TransactionLocation location = maybeLocation.get();
-    final Block block = blockchain.getBlockByHash(location.getBlockHash()).orElseThrow();
-    final Transaction transaction =
-        block.getBody().getTransactions().get(location.getTransactionIndex());
-
     final Hash blockhash = location.getBlockHash();
+    final int transactionIndex = location.getTransactionIndex();
+
+    final Block block = blockchain.getBlockByHash(blockhash).orElseThrow();
+    final Transaction transaction = block.getBody().getTransactions().get(transactionIndex);
+
     final BlockHeader header = block.getHeader();
     final List<TransactionReceipt> transactionReceipts =
         blockchain.getTxReceipts(blockhash).orElseThrow();
-    final TransactionReceipt transactionReceipt =
-        transactionReceipts.get(location.getTransactionIndex());
+    final TransactionReceipt transactionReceipt = transactionReceipts.get(transactionIndex);
 
     long gasUsed = transactionReceipt.getCumulativeGasUsed();
-    if (location.getTransactionIndex() > 0) {
-      gasUsed =
-          gasUsed
-              - transactionReceipts.get(location.getTransactionIndex() - 1).getCumulativeGasUsed();
+    int logIndexOffset = 0;
+    if (transactionIndex > 0) {
+      gasUsed -= transactionReceipts.get(transactionIndex - 1).getCumulativeGasUsed();
+      logIndexOffset =
+          IntStream.range(0, transactionIndex)
+              .map(i -> transactionReceipts.get(i).getLogsList().size())
+              .sum();
     }
 
     Optional<Long> maybeBlobGasUsed =
@@ -653,13 +647,14 @@ public class BlockchainQueries {
             transactionReceipt,
             transaction,
             transactionHash,
-            location.getTransactionIndex(),
+            transactionIndex,
             gasUsed,
             header.getBaseFee(),
             blockhash,
             header.getNumber(),
             maybeBlobGasUsed,
-            maybeBlobGasPrice));
+            maybeBlobGasPrice,
+            logIndexOffset));
   }
 
   /**
@@ -969,7 +964,7 @@ public class BlockchainQueries {
         ? Optional.empty()
         : Optional.of(
             Math.max(
-                apiConfig.getGasPriceMin(),
+                apiConfig.getGasPriceMinSupplier().getAsLong(),
                 Math.min(
                     apiConfig.getGasPriceMax(),
                     gasCollection[
@@ -1075,7 +1070,7 @@ public class BlockchainQueries {
         break;
       }
 
-      logIndexOffset += receipts.get(i).getLogs().size();
+      logIndexOffset += receipts.get(i).getLogsList().size();
     }
 
     return logIndexOffset;

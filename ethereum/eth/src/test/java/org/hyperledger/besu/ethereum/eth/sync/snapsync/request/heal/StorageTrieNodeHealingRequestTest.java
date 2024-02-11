@@ -16,14 +16,15 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -70,11 +71,14 @@ class StorageTrieNodeHealingRequestTest {
 
   public void setup(final DataStorageFormat storageFormat) {
     if (storageFormat.equals(DataStorageFormat.FOREST)) {
-      worldStateStorage = new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+      worldStateStorage = new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     } else {
       final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
       worldStateStorage =
-          new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
+          new BonsaiWorldStateKeyValueStorage(
+              storageProvider,
+              new NoOpMetricsSystem(),
+              DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
     }
     final MerkleTrie<Bytes, Bytes> trie =
         TrieGenerator.generateTrie(

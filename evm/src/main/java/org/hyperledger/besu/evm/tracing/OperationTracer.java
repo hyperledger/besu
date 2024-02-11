@@ -68,7 +68,15 @@ public interface OperationTracer {
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {}
 
   /**
-   * Trace the start of a transaction.
+   * Trace the start of a transaction, before sender account alteration but after validation.
+   *
+   * @param worldView an immutable view of the execution context
+   * @param transaction the transaction which will be processed
+   */
+  default void tracePrepareTransaction(final WorldView worldView, final Transaction transaction) {}
+
+  /**
+   * Trace the start of a transaction, before execution but after sender account alteration.
    *
    * @param worldView an immutable view of the execution context
    * @param transaction the transaction which will be processed
@@ -101,6 +109,13 @@ public interface OperationTracer {
    * @param frame the frame
    */
   default void traceContextEnter(final MessageFrame frame) {}
+
+  /**
+   * Trace the re-entry in a context from a child context
+   *
+   * @param frame the frame
+   */
+  default void traceContextReEnter(final MessageFrame frame) {}
 
   /**
    * Trace the exiting of a context

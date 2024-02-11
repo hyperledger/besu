@@ -20,10 +20,10 @@ import static org.hyperledger.besu.ethereum.api.tls.KnownClientFileUtil.writeToK
 import static org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration.Builder.aTlsClientAuthConfiguration;
 import static org.hyperledger.besu.ethereum.api.tls.TlsConfiguration.Builder.aTlsConfiguration;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.SelfSignedP12Certificate;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -98,37 +99,37 @@ class JsonRpcHttpServiceTlsMisconfigurationTest {
     supportedCapabilities.add(EthProtocol.ETH63);
 
     rpcMethods =
-        spy(
-            new JsonRpcMethodsFactory()
-                .methods(
-                    CLIENT_VERSION,
-                    CHAIN_ID,
-                    new StubGenesisConfigOptions(),
-                    peerDiscoveryMock,
-                    blockchainQueries,
-                    synchronizer,
-                    MainnetProtocolSchedule.fromConfig(
-                        new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID)),
-                    mock(ProtocolContext.class),
-                    mock(FilterManager.class),
-                    mock(TransactionPool.class),
-                    mock(PoWMiningCoordinator.class),
-                    new NoOpMetricsSystem(),
-                    supportedCapabilities,
-                    Optional.of(mock(AccountLocalConfigPermissioningController.class)),
-                    Optional.of(mock(NodeLocalConfigPermissioningController.class)),
-                    DEFAULT_RPC_APIS,
-                    mock(PrivacyParameters.class),
-                    mock(JsonRpcConfiguration.class),
-                    mock(WebSocketConfiguration.class),
-                    mock(MetricsConfiguration.class),
-                    natService,
-                    Collections.emptyMap(),
-                    tempDir.getRoot(),
-                    mock(EthPeers.class),
-                    vertx,
-                    Optional.empty(),
-                    Optional.empty()));
+        new JsonRpcMethodsFactory()
+            .methods(
+                CLIENT_VERSION,
+                CHAIN_ID,
+                new StubGenesisConfigOptions(),
+                peerDiscoveryMock,
+                blockchainQueries,
+                synchronizer,
+                MainnetProtocolSchedule.fromConfig(
+                    new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID)),
+                mock(ProtocolContext.class),
+                mock(FilterManager.class),
+                mock(TransactionPool.class),
+                mock(MiningParameters.class),
+                mock(PoWMiningCoordinator.class),
+                new NoOpMetricsSystem(),
+                supportedCapabilities,
+                Optional.of(mock(AccountLocalConfigPermissioningController.class)),
+                Optional.of(mock(NodeLocalConfigPermissioningController.class)),
+                DEFAULT_RPC_APIS,
+                mock(PrivacyParameters.class),
+                mock(JsonRpcConfiguration.class),
+                mock(WebSocketConfiguration.class),
+                mock(MetricsConfiguration.class),
+                natService,
+                Collections.emptyMap(),
+                tempDir.getRoot(),
+                mock(EthPeers.class),
+                vertx,
+                mock(ApiConfiguration.class),
+                Optional.empty());
   }
 
   @AfterEach

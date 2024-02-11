@@ -23,11 +23,11 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class NetworkingOptionsTest
     extends AbstractCLIOptionsTest<NetworkingConfiguration, NetworkingOptions> {
 
@@ -134,7 +134,7 @@ public class NetworkingOptionsTest
 
     final NetworkingOptions options = cmd.getNetworkingOptions();
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
-    assertThat(networkingConfig.getDiscovery().isFilterOnEnrForkIdEnabled()).isEqualTo(false);
+    assertThat(networkingConfig.getDiscovery().isFilterOnEnrForkIdEnabled()).isEqualTo(true);
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -176,7 +176,6 @@ public class NetworkingOptionsTest
         NetworkingConfiguration.DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC + 10);
     config.setCheckMaintainedConnectionsFrequency(
         NetworkingConfiguration.DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_SEC + 10);
-    config.setPeerLowerBound(NetworkingConfiguration.DEFAULT_PEER_LOWER_BOUND - 10);
     return config;
   }
 

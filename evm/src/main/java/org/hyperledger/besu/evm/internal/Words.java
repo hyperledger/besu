@@ -147,25 +147,6 @@ public interface Words {
   }
 
   /**
-   * Multiplies a and b, but if an underflow/overflow occurs return the Integer max/min value
-   *
-   * @param a first value
-   * @param b second value
-   * @return value of a times b if no over/underflows or Integer.MAX_VALUE/Integer.MIN_VALUE
-   *     otherwise
-   */
-  static int clampedMultiply(final int a, final int b) {
-    long r = (long) a * (long) b;
-    int ri = (int) r;
-    if (ri == r) {
-      return ri;
-    } else {
-      // out of bounds, clamp it!
-      return ((a ^ b) < 0) ? Integer.MIN_VALUE : Integer.MAX_VALUE;
-    }
-  }
-
-  /**
    * Returns the lesser of the two values, when compared as an unsigned value
    *
    * @param a first value

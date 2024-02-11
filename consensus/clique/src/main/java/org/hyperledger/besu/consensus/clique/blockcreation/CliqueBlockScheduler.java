@@ -52,10 +52,7 @@ public class CliqueBlockScheduler extends DefaultBlockScheduler {
     super(
         parentHeader ->
             (long)
-                forkSchedule
-                    .getFork(parentHeader.getNumber())
-                    .getValue()
-                    .getBlockPeriodSeconds(),
+                forkSchedule.getFork(parentHeader.getNumber()).getValue().getBlockPeriodSeconds(),
         0L,
         clock);
     this.validatorProvider = validatorProvider;

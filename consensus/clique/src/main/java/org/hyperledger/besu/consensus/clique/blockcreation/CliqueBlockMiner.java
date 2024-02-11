@@ -20,16 +20,23 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.BlockMiner;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** The Clique block miner. */
 public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
+  private static final Logger LOG = LoggerFactory.getLogger(CliqueBlockMiner.class);
+  private static final int WAIT_IN_MS_BETWEEN_EMPTY_BUILD_ATTEMPTS = 1_000;
 
   private final Address localAddress;
+  private final boolean createEmptyBlocks;
 
   /**
    * Instantiates a new Clique block miner.
@@ -41,6 +48,7 @@ public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
    * @param scheduler the scheduler
    * @param parentHeader the parent header
    * @param localAddress the local address
+   * @param createEmptyBlocks whether clique should allow the creation of empty blocks.
    */
   public CliqueBlockMiner(
       final Function<BlockHeader, CliqueBlockCreator> blockCreator,
@@ -49,9 +57,11 @@ public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
       final Subscribers<MinedBlockObserver> observers,
       final AbstractBlockScheduler scheduler,
       final BlockHeader parentHeader,
-      final Address localAddress) {
+      final Address localAddress,
+      final boolean createEmptyBlocks) {
     super(blockCreator, protocolSchedule, protocolContext, observers, scheduler, parentHeader);
     this.localAddress = localAddress;
+    this.createEmptyBlocks = createEmptyBlocks;
   }
 
   @Override
@@ -62,5 +72,19 @@ public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
     }
 
     return true; // terminate mining.
+  }
+
+  @Override
+  protected boolean shouldImportBlock(final Block block) throws InterruptedException {
+    if (createEmptyBlocks) {
+      return true;
+    }
+
+    final boolean isEmpty = block.getBody().getTransactions().isEmpty();
+    if (isEmpty) {
+      LOG.debug("Skipping creating empty block {}", block.toLogString());
+      Thread.sleep(WAIT_IN_MS_BETWEEN_EMPTY_BUILD_ATTEMPTS);
+    }
+    return !isEmpty;
   }
 }

@@ -16,10 +16,10 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -65,12 +66,14 @@ import org.junit.jupiter.api.io.TempDir;
 
 public class JsonRpcHttpServiceTestBase {
 
+  // this tempDir is deliberately static
   @TempDir private static Path folder;
   protected final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
 
   private static final Vertx vertx = Vertx.vertx();
-
   protected static Map<String, JsonRpcMethod> rpcMethods;
+  private static Map<String, JsonRpcMethod> disabledRpcMethods;
+  private static Set<String> addedRpcMethods;
   protected static JsonRpcHttpService service;
   protected static OkHttpClient client;
   protected static String baseUrl;
@@ -103,38 +106,41 @@ public class JsonRpcHttpServiceTestBase {
     supportedCapabilities.add(EthProtocol.ETH63);
 
     rpcMethods =
-        spy(
-            new JsonRpcMethodsFactory()
-                .methods(
-                    CLIENT_VERSION,
-                    CHAIN_ID,
-                    new StubGenesisConfigOptions(),
-                    peerDiscoveryMock,
-                    blockchainQueries,
-                    synchronizer,
-                    MainnetProtocolSchedule.fromConfig(
-                        new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID),
-                        EvmConfiguration.DEFAULT),
-                    mock(ProtocolContext.class),
-                    mock(FilterManager.class),
-                    mock(TransactionPool.class),
-                    mock(PoWMiningCoordinator.class),
-                    new NoOpMetricsSystem(),
-                    supportedCapabilities,
-                    Optional.of(mock(AccountLocalConfigPermissioningController.class)),
-                    Optional.of(mock(NodeLocalConfigPermissioningController.class)),
-                    JSON_RPC_APIS,
-                    mock(PrivacyParameters.class),
-                    mock(JsonRpcConfiguration.class),
-                    mock(WebSocketConfiguration.class),
-                    mock(MetricsConfiguration.class),
-                    natService,
-                    new HashMap<>(),
-                    folder,
-                    ethPeersMock,
-                    vertx,
-                    Optional.empty(),
-                    Optional.empty()));
+        new JsonRpcMethodsFactory()
+            .methods(
+                CLIENT_VERSION,
+                CHAIN_ID,
+                new StubGenesisConfigOptions(),
+                peerDiscoveryMock,
+                blockchainQueries,
+                synchronizer,
+                MainnetProtocolSchedule.fromConfig(
+                    new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID),
+                    EvmConfiguration.DEFAULT),
+                mock(ProtocolContext.class),
+                mock(FilterManager.class),
+                mock(TransactionPool.class),
+                mock(MiningParameters.class),
+                mock(PoWMiningCoordinator.class),
+                new NoOpMetricsSystem(),
+                supportedCapabilities,
+                Optional.of(mock(AccountLocalConfigPermissioningController.class)),
+                Optional.of(mock(NodeLocalConfigPermissioningController.class)),
+                JSON_RPC_APIS,
+                mock(PrivacyParameters.class),
+                mock(JsonRpcConfiguration.class),
+                mock(WebSocketConfiguration.class),
+                mock(MetricsConfiguration.class),
+                natService,
+                new HashMap<>(),
+                folder,
+                ethPeersMock,
+                vertx,
+                mock(ApiConfiguration.class),
+                Optional.empty());
+    disabledRpcMethods = new HashMap<>();
+    addedRpcMethods = new HashSet<>();
+
     service = createJsonRpcHttpService(createLimitedJsonRpcConfig());
     service.start().join();
 
@@ -183,6 +189,22 @@ public class JsonRpcHttpServiceTestBase {
 
   protected Request buildGetRequest(final String path) {
     return new Request.Builder().get().url(baseUrl + path).build();
+  }
+
+  protected AutoCloseable disableRpcMethod(final String methodName) {
+    disabledRpcMethods.put(methodName, rpcMethods.remove(methodName));
+    return () -> resetRpcMethods();
+  }
+
+  protected AutoCloseable addRpcMethod(final String methodName, final JsonRpcMethod method) {
+    rpcMethods.put(methodName, method);
+    addedRpcMethods.add(methodName);
+    return () -> resetRpcMethods();
+  }
+
+  protected void resetRpcMethods() {
+    disabledRpcMethods.forEach(rpcMethods::put);
+    addedRpcMethods.forEach(rpcMethods::remove);
   }
 
   /** Tears down the HTTP server. */
