@@ -216,7 +216,8 @@ public class RetestethContext {
                 Subscribers.none(),
                 new EpochCalculator.DefaultEpochCalculator());
 
-    blockReplay = new BlockReplay(protocolSchedule, blockchainQueries.getBlockchain());
+    blockReplay =
+        new BlockReplay(protocolSchedule, protocolContext, blockchainQueries.getBlockchain());
 
     final Bytes localNodeKey = Bytes.wrap(new byte[64]);
 
