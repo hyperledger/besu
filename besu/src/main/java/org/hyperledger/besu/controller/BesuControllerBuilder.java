@@ -793,7 +793,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         configOptionsSupplier.get(),
         subProtocolConfiguration,
         synchronizer,
-        badBlockManager,
         syncState,
         transactionPool,
         miningCoordinator,
