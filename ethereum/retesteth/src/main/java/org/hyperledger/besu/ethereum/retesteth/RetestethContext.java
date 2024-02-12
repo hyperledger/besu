@@ -93,6 +93,7 @@ public class RetestethContext {
   public static final int MAX_PEERS = 25;
 
   private final ReentrantLock contextLock = new ReentrantLock();
+  private final BadBlockManager badBlockManager = new BadBlockManager();
   private Address coinbase;
   private Bytes extraData;
   private MutableBlockchain blockchain;
@@ -156,9 +157,9 @@ public class RetestethContext {
             JsonUtil.getObjectNode(genesisConfig, "config").get());
     protocolSchedule =
         MainnetProtocolSchedule.fromConfig(
-            jsonGenesisConfigOptions, EvmConfiguration.DEFAULT, new BadBlockManager());
+            jsonGenesisConfigOptions, EvmConfiguration.DEFAULT, badBlockManager);
     if ("NoReward".equalsIgnoreCase(sealEngine)) {
-      protocolSchedule = new NoRewardProtocolScheduleWrapper(protocolSchedule);
+      protocolSchedule = new NoRewardProtocolScheduleWrapper(protocolSchedule, badBlockManager);
     }
     blockHeaderFunctions = ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
 
@@ -177,8 +178,7 @@ public class RetestethContext {
 
     blockchain = createInMemoryBlockchain(genesisState.getBlock());
     protocolContext =
-        new ProtocolContext(
-            blockchain, worldStateArchive, null, Optional.empty(), new BadBlockManager());
+        new ProtocolContext(blockchain, worldStateArchive, null, Optional.empty(), badBlockManager);
 
     blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive, ethScheduler);
 
