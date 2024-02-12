@@ -365,7 +365,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
     }
 
     private Bytes rlpEncode(final List<TransactionReceipt> receipts) {
-      return RLP.encode(o -> o.writeList(receipts, TransactionReceipt::writeToWithRevertReason));
+      return RLP.encode(o -> o.writeList(receipts, (tr, rlpOutput) -> tr.writeToForReceiptTrie(rlpOutput, true, true)));
     }
 
     private void removeVariables() {

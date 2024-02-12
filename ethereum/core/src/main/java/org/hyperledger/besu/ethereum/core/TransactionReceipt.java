@@ -179,13 +179,13 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
 
   private void writeTo(final RLPOutput rlpOutput, final boolean withRevertReason) {
     if (transactionType.equals(TransactionType.FRONTIER)) {
-      writeToForReceiptTrie(rlpOutput, withRevertReason);
+      writeToForReceiptTrie(rlpOutput, withRevertReason, false);
     } else {
-      rlpOutput.writeBytes(RLP.encode(out -> writeToForReceiptTrie(out, withRevertReason)));
+      rlpOutput.writeBytes(RLP.encode(out -> writeToForReceiptTrie(out, withRevertReason, false)));
     }
   }
 
-  public void writeToForReceiptTrie(final RLPOutput rlpOutput, final boolean withRevertReason) {
+  public void writeToForReceiptTrie(final RLPOutput rlpOutput, final boolean withRevertReason, final boolean compacted) {
     if (!transactionType.equals(TransactionType.FRONTIER)) {
       rlpOutput.writeIntScalar(transactionType.getSerializedType());
     }
@@ -200,7 +200,11 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       rlpOutput.writeLongScalar(status);
     }
     rlpOutput.writeLongScalar(cumulativeGasUsed);
-    rlpOutput.writeBytes(bloomFilter);
+    if (compacted) {
+      rlpOutput.writeNull();
+    } else {
+      rlpOutput.writeBytes(bloomFilter);
+    }
     rlpOutput.writeList(logs, Log::writeTo);
     if (withRevertReason && revertReason.isPresent()) {
       rlpOutput.writeBytes(revertReason.get());
@@ -240,10 +244,20 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     // correct transaction receipt encoding to use.
     final RLPInput firstElement = input.readAsRlp();
     final long cumulativeGas = input.readLongScalar();
-    // The logs below will populate the bloom filter upon construction.
-    // TODO consider validating that the logs and bloom filter match.
-    final LogsBloomFilter bloomFilter = LogsBloomFilter.readFrom(input);
+
+    LogsBloomFilter bloomFilter = null;
+    if (input.nextIsNull()) {
+      input.skipNext();
+    } else {
+      // The logs below will populate the bloom filter upon construction.
+      // TODO consider validating that the logs and bloom filter match.
+      bloomFilter = LogsBloomFilter.readFrom(input);
+    }
     final List<Log> logs = input.readList(Log::readFrom);
+    if (bloomFilter == null) {
+      bloomFilter = LogsBloomFilter.builder().insertLogs(logs).build();
+    }
+
     final Optional<Bytes> revertReason;
     if (input.isEndOfCurrentList()) {
       revertReason = Optional.empty();
