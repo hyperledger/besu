@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.gascalculator;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.BalanceOperation;
@@ -201,6 +202,11 @@ public interface GasCalculator {
    * @return the amount of gas the CREATE2 operation will consume
    */
   long create2OperationGasCost(MessageFrame frame);
+
+  default long create3OperationGasCost(final Code initCode) {
+    throw new UnsupportedOperationException(
+        "CREATE3 operation not supported by " + getClass().getSimpleName());
+  }
 
   /**
    * Returns the amount of gas parent will provide its child CREATE.

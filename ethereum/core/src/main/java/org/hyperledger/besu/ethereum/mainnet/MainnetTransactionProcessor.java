@@ -434,7 +434,8 @@ public class MainnetTransactionProcessor {
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         worldUpdater.commit();
       } else {
-        if (initialFrame.getExceptionalHaltReason().isPresent() && initialFrame.getCode().isValid()) {
+        if (initialFrame.getExceptionalHaltReason().isPresent()
+            && initialFrame.getCode().isValid()) {
           validationResult =
               ValidationResult.invalid(
                   TransactionInvalidReason.EXECUTION_HALTED,

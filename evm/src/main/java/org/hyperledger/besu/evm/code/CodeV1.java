@@ -23,6 +23,7 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.internal.Words;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -84,6 +85,26 @@ public class CodeV1 implements Code {
   @Override
   public int getEofVersion() {
     return eofLayout.version();
+  }
+
+  @Override
+  public int getSubcontainerCount() {
+    return eofLayout.getSubcontainerCount();
+  }
+
+  @Override
+  public Optional<Code> getSubContainer(final int index, final Bytes auxData) {
+    EOFLayout subcontainerLayout = eofLayout.getSubcontainer(index);
+    if (auxData != null && !auxData.isEmpty()) {
+      Bytes subcontainerWithAuxData = subcontainerLayout.writeContainer(auxData);
+      subcontainerLayout = EOFLayout.parseEOF(subcontainerWithAuxData);
+    }
+
+    Code subContainerCode = CodeFactory.createCode(subcontainerLayout);
+
+    return subContainerCode.isValid() && subContainerCode.getEofVersion() > 0
+        ? Optional.of(subContainerCode)
+        : Optional.empty();
   }
 
   @Override

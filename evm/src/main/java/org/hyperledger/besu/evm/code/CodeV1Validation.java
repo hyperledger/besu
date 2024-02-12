@@ -319,9 +319,9 @@ public final class CodeV1Validation {
     OpcodeInfo.unallocatedOpcode(0xe9),
     OpcodeInfo.unallocatedOpcode(0xea),
     OpcodeInfo.unallocatedOpcode(0xeb),
-    OpcodeInfo.unallocatedOpcode(0xec),
-    OpcodeInfo.unallocatedOpcode(0xed),
-    OpcodeInfo.unallocatedOpcode(0xee),
+    OpcodeInfo.validOpcode("CREATE3", 0xec, 4, 1, 2),
+    OpcodeInfo.validOpcode("CREATE4", 0xed, 5, 1, 1),
+    OpcodeInfo.validOpcode("RETURNCONTRACT", 0xee, 2, 1, -2),
     OpcodeInfo.unallocatedOpcode(0xef),
     OpcodeInfo.validOpcode("CREATE", 0xf0, 3, 1, 1),
     OpcodeInfo.validOpcode("CALL", 0xf1, 7, 1, 1),
@@ -587,7 +587,7 @@ public final class CodeV1Validation {
           if (currentPC >= stackHeights.length) {
             return String.format(
                 "Dangling immediate argument for opcode 0x%x at PC %d in code section %d.",
-                currentStackHeight, codeLength - pcAdvance, codeSectionToValidate);
+                thisOp, currentPC - pcAdvance, codeSectionToValidate);
           }
           stackHeights[currentPC] = currentStackHeight;
           unusedBytes -= pcAdvance;

@@ -34,7 +34,8 @@ public class EOFReferenceTestTools {
   private static final List<String> EIPS_TO_RUN;
 
   static {
-    final String eips = System.getProperty("test.ethereum.eof.eips", "Prague,Osaka,Amsterdam,Bogota,Polis,Bangkok");
+    final String eips =
+        System.getProperty("test.ethereum.eof.eips", "Prague,Osaka,Amsterdam,Bogota,Polis,Bangkok");
     EIPS_TO_RUN = Arrays.asList(eips.split(","));
   }
 
@@ -102,6 +103,14 @@ public class EOFReferenceTestTools {
                             ? null
                             : ((CodeInvalid) parsedCode).getInvalidReason()))
             .isEqualTo(results.result());
+
+        if (results.result()) {
+          System.out.println(code);
+          System.out.println(layout.writeContainer(null));
+          assertThat(code)
+              .withFailMessage("Container round trip failed")
+              .isEqualTo(layout.writeContainer(null));
+        }
       } else {
         assertThat(layout.isValid())
             .withFailMessage(

@@ -22,16 +22,18 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 import org.apache.tuweni.bytes.Bytes;
 
 /** The EOF layout. */
 public record EOFLayout(
     Bytes container,
-    Bytes data,
     int version,
     CodeSection[] codeSections,
     EOFLayout[] containers,
+    int dataLength,
+    Bytes data,
     String invalidReason) {
 
   public static final byte EOF_PREFIX_BYTE = (byte) 0xEF;
@@ -58,15 +60,16 @@ public record EOFLayout(
 
   private EOFLayout(
       final Bytes container,
-      final Bytes data,
       final int version,
       final CodeSection[] codeSections,
-      final EOFLayout[] containers) {
-    this(container, data, version, codeSections, containers, null);
+      final EOFLayout[] containers,
+      final int dataSize,
+      final Bytes data) {
+    this(container, version, codeSections, containers, dataSize, data, null);
   }
 
   private EOFLayout(final Bytes container, final int version, final String invalidReason) {
-    this(container, Bytes.EMPTY, version, null, null, invalidReason);
+    this(container, version, null, null, 0, Bytes.EMPTY, invalidReason);
   }
 
   private static EOFLayout invalidLayout(
@@ -356,7 +359,7 @@ public record EOFLayout(
       return invalidLayout(container, version, "Dangling data after end of all sections");
     }
 
-    return new EOFLayout(container, data, version, codeSections, subContainers);
+    return new EOFLayout(container, version, codeSections, subContainers, dataSize, data);
   }
 
   /**
@@ -541,6 +544,100 @@ public record EOFLayout(
 
       return baos.toByteArray();
     } catch (IOException ioe) {
+      throw new RuntimeException(ioe);
+    }
+  }
+
+  /**
+   * Re-writes the container with optional auxiliary data.
+   *
+   * @param auxData the auxiliary data
+   * @return Null if there was an error (validation or otherwise) , or the bytes of the re-written
+   *     container.
+   */
+  @Nullable
+  public Bytes writeContainer(@Nullable final Bytes auxData) {
+    // do not write invalid containers
+    if (invalidReason != null) {
+      return null;
+    }
+
+    try {
+      ByteArrayOutputStream baos =
+          new ByteArrayOutputStream(container.size() + dataLength - data.size());
+      DataOutputStream out = new DataOutputStream(baos);
+
+      // EOF header
+      out.writeByte(EOF_PREFIX_BYTE);
+      out.writeByte(0);
+      out.writeByte(version);
+
+      // Types header
+      out.writeByte(SECTION_TYPES);
+      out.writeShort(codeSections.length * 4);
+
+      // Code header
+      out.writeByte(SECTION_CODE);
+      out.writeShort(codeSections.length);
+      for (CodeSection cs : codeSections) {
+        out.writeShort(cs.length);
+      }
+
+      // Subcontainers header
+      if (containers != null && containers.length > 0) {
+        out.writeByte(SECTION_CONTAINER);
+        for (EOFLayout container : containers) {
+          out.write(container.container().size());
+        }
+      }
+
+      // Data header
+      out.writeByte(SECTION_DATA);
+      if (auxData == null) {
+        out.writeShort(data.size());
+      } else {
+        int newSize = data.size() + auxData.size();
+        if (newSize < dataLength) {
+          // aux data must cover claimed data lengths.
+          return null;
+        }
+        out.writeShort(newSize);
+      }
+
+      // header end
+      out.writeByte(0);
+
+      // Types information
+      for (CodeSection cs : codeSections) {
+        out.writeByte(cs.inputs);
+        if (cs.returning) {
+          out.writeByte(cs.outputs);
+        } else {
+          out.writeByte(0x80);
+        }
+        out.writeShort(cs.maxStackHeight);
+      }
+
+      // Code sections
+      for (CodeSection cs : codeSections) {
+        out.write(container.slice(cs.entryPoint, cs.length).toArray());
+      }
+
+      // Subcontainers
+      for (EOFLayout container : containers) {
+        out.write(container.container.toArrayUnsafe());
+      }
+
+      // data
+      out.write(data.toArrayUnsafe());
+      if (auxData != null) {
+        out.write(auxData.toArrayUnsafe());
+      }
+
+      return Bytes.wrap(baos.toByteArray());
+    } catch (IOException ioe) {
+      // ByteArrayOutputStream should never throw, so somethings gone very wrong.  Wrap as runtime
+      // and re-throw.
       throw new RuntimeException(ioe);
     }
   }

@@ -216,7 +216,9 @@ public class MessageFrame {
   private final Supplier<ReturnStack> returnStack;
   private Bytes output = Bytes.EMPTY;
   private Bytes returnData = Bytes.EMPTY;
+  private Code createdCode = null;
   private final boolean isStatic;
+  private final boolean isInitCode;
 
   // Transaction state fields.
   private final List<Log> logs = new ArrayList<>();
@@ -268,6 +270,7 @@ public class MessageFrame {
       final Wei apparentValue,
       final Code code,
       final boolean isStatic,
+      final boolean isInitCode,
       final Consumer<MessageFrame> completer,
       final Map<String, Object> contextVariables,
       final Optional<Bytes> revertReason,
@@ -294,6 +297,7 @@ public class MessageFrame {
     this.apparentValue = apparentValue;
     this.code = code;
     this.isStatic = isStatic;
+    this.isInitCode = isInitCode;
     this.completer = completer;
     this.contextVariables = contextVariables;
     this.revertReason = revertReason;
@@ -463,6 +467,24 @@ public class MessageFrame {
     this.output = output;
   }
 
+  /**
+   * Sets the created code from CREATE* operations
+   *
+   * @param createdCode the code that was created
+   */
+  public void setCreatedCode(final Code createdCode) {
+    this.createdCode = createdCode;
+  }
+
+  /**
+   * gets the created code from CREATE* operations
+   *
+   * @return the code that was created
+   */
+  public Code getCreatedCode() {
+    return createdCode;
+  }
+
   /** Clears the output data buffer. */
   public void clearOutputData() {
     setOutputData(Bytes.EMPTY);
@@ -584,6 +606,15 @@ public class MessageFrame {
    */
   public boolean isStatic() {
     return isStatic;
+  }
+
+  /**
+   * Returns whether the message frame is contract creation / initCode or not.
+   *
+   * @return {@code} true if the frame is for initCode; otherwise {@code false}
+   */
+  public boolean isInitCode() {
+    return isInitCode;
   }
 
   /**
@@ -945,6 +976,7 @@ public class MessageFrame {
   public void addCreate(final Address address) {
     txValues.creates().add(address);
   }
+
   /**
    * Add addresses to the create set if they are not already present.
    *
@@ -1119,6 +1151,7 @@ public class MessageFrame {
   public int getDepth() {
     return getMessageStackSize() - 1;
   }
+
   /**
    * Returns the recipient that originated the message.
    *
@@ -1395,6 +1428,7 @@ public class MessageFrame {
     private BlockValues blockValues;
     private int maxStackSize = DEFAULT_MAX_STACK_SIZE;
     private boolean isStatic = false;
+    private boolean isInitCode = false;
     private Consumer<MessageFrame> completer;
     private Address miningBeneficiary;
     private Function<Long, Hash> blockHashLookup;
@@ -1583,6 +1617,17 @@ public class MessageFrame {
     }
 
     /**
+     * Sets Is Init Code.
+     *
+     * @param isInitCode the is Init Code
+     * @return the builder
+     */
+    public Builder isInitCode(final boolean isInitCode) {
+      this.isInitCode = isInitCode;
+      return this;
+    }
+
+    /**
      * Sets Max stack size.
      *
      * @param maxStackSize the max stack size
@@ -1752,6 +1797,7 @@ public class MessageFrame {
               apparentValue,
               code,
               newStatic,
+              isInitCode,
               completer,
               contextVariables == null ? Map.of() : contextVariables,
               reason,

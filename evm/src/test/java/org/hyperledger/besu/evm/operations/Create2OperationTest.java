@@ -186,7 +186,9 @@ public class Create2OperationTest {
       final String expectedAddress,
       final int ignoredExpectedGas) {
     setUp(sender, salt, code);
-    final Address targetContractAddress = operation.targetContractAddress(messageFrame);
+    final Address targetContractAddress =
+        operation.targetContractAddress(
+            messageFrame, CodeFactory.createCode(Bytes.fromHexString(code), 0, true));
     assertThat(targetContractAddress).isEqualTo(Address.fromHexString(expectedAddress));
   }
 

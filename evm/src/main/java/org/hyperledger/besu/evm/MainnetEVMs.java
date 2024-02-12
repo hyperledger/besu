@@ -53,6 +53,7 @@ import org.hyperledger.besu.evm.operation.CodeCopyOperation;
 import org.hyperledger.besu.evm.operation.CodeSizeOperation;
 import org.hyperledger.besu.evm.operation.CoinbaseOperation;
 import org.hyperledger.besu.evm.operation.Create2Operation;
+import org.hyperledger.besu.evm.operation.Create3Operation;
 import org.hyperledger.besu.evm.operation.CreateOperation;
 import org.hyperledger.besu.evm.operation.DataCopyOperation;
 import org.hyperledger.besu.evm.operation.DataLoadNOperation;
@@ -104,6 +105,7 @@ import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpVectorOperation;
 import org.hyperledger.besu.evm.operation.RetFOperation;
+import org.hyperledger.besu.evm.operation.ReturnContractOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataCopyOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataSizeOperation;
 import org.hyperledger.besu.evm.operation.ReturnOperation;
@@ -979,6 +981,9 @@ public class MainnetEVMs {
     registry.put(new DataCopyOperation(gasCalculator));
 
     // TODO CREATE3, CREATE4, RETURNCONTRACT
+    registry.put(new Create3Operation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
+    // registry.put(new Create4Operation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
+    registry.put(new ReturnContractOperation(gasCalculator));
 
     // EIP-7069 Reworked Call Operations
     registry.put(new Call2Operation(gasCalculator));
@@ -1227,7 +1232,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * Operation registry for polis's operations.
+   * Operation registry for Polis's operations.
    *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id

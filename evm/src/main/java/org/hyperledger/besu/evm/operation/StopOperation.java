@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -48,6 +49,10 @@ public class StopOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
+    if (frame.isInitCode()) {
+      return new OperationResult(0, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+    }
+
     frame.setState(MessageFrame.State.CODE_SUCCESS);
     frame.setOutputData(Bytes.EMPTY);
     return stopSuccess;

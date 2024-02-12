@@ -19,6 +19,7 @@ package org.hyperledger.besu.evm.code;
 import org.hyperledger.besu.evm.Code;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.jetbrains.annotations.NotNull;
 
 /** The Code factory. */
 public final class CodeFactory {
@@ -65,26 +66,31 @@ public final class CodeFactory {
         }
 
         final EOFLayout layout = EOFLayout.parseEOF(bytes);
-        if (!layout.isValid()) {
-          return new CodeInvalid(bytes, "Invalid EOF Layout: " + layout.invalidReason());
-        }
-
-        final String codeValidationError = CodeV1Validation.validateCode(layout);
-        if (codeValidationError != null) {
-          return new CodeInvalid(bytes, "EOF Code Invalid : " + codeValidationError);
-        }
-
-        final String stackValidationError = CodeV1Validation.validateStack(layout);
-        if (stackValidationError != null) {
-          return new CodeInvalid(bytes, "EOF Code Invalid : " + stackValidationError);
-        }
-
-        return new CodeV1(layout);
+        return createCode(layout);
       } else {
         return new CodeV0(bytes);
       }
     } else {
       return new CodeInvalid(bytes, "Unsupported max code version " + maxEofVersion);
     }
+  }
+
+  @NotNull
+  static Code createCode(final EOFLayout layout) {
+    if (!layout.isValid()) {
+      return new CodeInvalid(layout.container(), "Invalid EOF Layout: " + layout.invalidReason());
+    }
+
+    final String codeValidationError = CodeV1Validation.validateCode(layout);
+    if (codeValidationError != null) {
+      return new CodeInvalid(layout.container(), "EOF Code Invalid : " + codeValidationError);
+    }
+
+    final String stackValidationError = CodeV1Validation.validateStack(layout);
+    if (stackValidationError != null) {
+      return new CodeInvalid(layout.container(), "EOF Code Invalid : " + stackValidationError);
+    }
+
+    return new CodeV1(layout);
   }
 }

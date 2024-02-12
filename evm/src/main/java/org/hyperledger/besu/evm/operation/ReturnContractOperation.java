@@ -16,25 +16,38 @@ package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
+
 /** The Return operation. */
-public class ReturnOperation extends AbstractOperation {
+public class ReturnContractOperation extends AbstractOperation {
 
   /**
    * Instantiates a new Return operation.
    *
    * @param gasCalculator the gas calculator
    */
-  public ReturnOperation(final GasCalculator gasCalculator) {
-    super(0xF3, "RETURN", 2, 0, gasCalculator);
+  public ReturnContractOperation(final GasCalculator gasCalculator) {
+    super(0xEE, "RETURNCONTRACT", 2, 0, gasCalculator);
   }
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    Code code = frame.getCode();
+    if (code.getEofVersion() == 0) {
+      return InvalidOperation.INVALID_RESULT;
+    }
+
+    int pc = frame.getPC();
+    int index = code.readU8(pc + 1);
+
     final long from = clampedToLong(frame.popStackItem());
     final long length = clampedToLong(frame.popStackItem());
 
@@ -42,11 +55,18 @@ public class ReturnOperation extends AbstractOperation {
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
-    if (frame.isInitCode()) {
-      return new OperationResult(cost, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+
+    if (index >= code.getSubcontainerCount()) {
+      return new OperationResult(cost, ExceptionalHaltReason.NONEXISTENT_CONTAINER);
     }
 
-    frame.setOutputData(frame.readMemory(from, length));
+    Bytes auxData = frame.readMemory(from, length);
+    Optional<Code> newCode = code.getSubContainer(index, auxData);
+    if (newCode.isEmpty()) {
+      return new OperationResult(cost, ExceptionalHaltReason.NONEXISTENT_CONTAINER);
+    }
+
+    frame.setCreatedCode(newCode.get());
     frame.setState(MessageFrame.State.CODE_SUCCESS);
     return new OperationResult(cost, null);
   }

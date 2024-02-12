@@ -17,6 +17,8 @@ package org.hyperledger.besu.evm;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.code.CodeSection;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 
 /** Represents EVM code associated with an account. */
@@ -91,6 +93,28 @@ public interface Code {
    * @return The version of hte ode.
    */
   int getEofVersion();
+
+  /**
+   * Returns the count of subcontainers, or zero if there are none or if the code version does not
+   * support subcontainers.
+   *
+   * @return The subcontainer count or zero if not supported;
+   */
+  default int getSubcontainerCount() {
+    return 0;
+  }
+
+  /**
+   * Returns the subcontainer at the selected index. If the container doesn't exist or is invalid,
+   * an empty result is returned. Legacy code always returns empty.
+   *
+   * @param index the index in the container to return
+   * @param auxData any Auxiliary data to append to the subcontainer code
+   * @return Either the subcontainer, or empty.
+   */
+  default Optional<Code> getSubContainer(final int index, final Bytes auxData) {
+    return Optional.empty();
+  }
 
   /**
    * Loads data from the appropriate data section

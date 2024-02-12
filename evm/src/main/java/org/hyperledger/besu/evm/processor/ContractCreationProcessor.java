@@ -138,7 +138,8 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
 
   @Override
   public void codeSuccess(final MessageFrame frame, final OperationTracer operationTracer) {
-    final Bytes contractCode = frame.getOutputData();
+    final Bytes contractCode =
+        frame.getCreatedCode() == null ? frame.getOutputData() : frame.getCreatedCode().getBytes();
 
     final long depositFee = gasCalculator.codeDepositGasCost(contractCode.size());
 

@@ -63,6 +63,8 @@ public interface ExceptionalHaltReason {
   ExceptionalHaltReason EOF_DELEGATE_CALL_VERSION_INCOMPATIBLE =
       DefaultExceptionalHaltReason.EOF_DELEGATE_CALL_VERSION_INCOMPATIBLE;
 
+  ExceptionalHaltReason NONEXISTENT_CONTAINER = DefaultExceptionalHaltReason.NONEXISTENT_CONTAINER;
+
   /**
    * Name string.
    *
@@ -120,7 +122,8 @@ public interface ExceptionalHaltReason {
         "EOF Code is attempting to create EOF code of an earlier version"),
     /** The Delegate call version incompatible. */
     EOF_DELEGATE_CALL_VERSION_INCOMPATIBLE(
-        "EOF Code is attempting to delegate call code of an earlier version");
+        "EOF Code is attempting to delegate call code of an earlier version"),
+    NONEXISTENT_CONTAINER("Referenced subcontainer index does not exist (too large?)");
 
     /** The Description. */
     final String description;

@@ -721,11 +721,11 @@ public class EVMExecutor {
     final Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
     while (!messageFrameStack.isEmpty()) {
       final MessageFrame messageFrame = messageFrameStack.peek();
-      if (messageFrame.getType() == MessageFrame.Type.CONTRACT_CREATION) {
-        ccp.process(messageFrame, tracer);
-      } else if (messageFrame.getType() == MessageFrame.Type.MESSAGE_CALL) {
-        mcp.process(messageFrame, tracer);
-      }
+      (switch (messageFrame.getType()) {
+            case CONTRACT_CREATION -> ccp;
+            case MESSAGE_CALL -> mcp;
+          })
+          .process(messageFrame, tracer);
     }
     if (commitWorldState) {
       worldUpdater.commit();

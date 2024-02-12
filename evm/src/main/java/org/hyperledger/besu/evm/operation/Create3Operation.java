@@ -29,29 +29,29 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** The Create2 operation. */
-public class Create2Operation extends AbstractCreateOperation {
+public class Create3Operation extends AbstractCreateOperation {
 
   private static final Bytes PREFIX = Bytes.fromHexString("0xFF");
 
   /**
-   * Instantiates a new Create2 operation.
+   * Instantiates a new Create3 operation.
    *
    * @param gasCalculator the gas calculator
    * @param maxInitcodeSize Maximum init code size
    */
-  public Create2Operation(final GasCalculator gasCalculator, final int maxInitcodeSize) {
-    super(0xF5, "CREATE2", 4, 1, gasCalculator, maxInitcodeSize);
+  public Create3Operation(final GasCalculator gasCalculator, final int maxInitcodeSize) {
+    super(0xEC, "CREATE3", 4, 1, gasCalculator, maxInitcodeSize);
   }
 
   @Override
-  public long cost(final MessageFrame frame, final Supplier<Code> unused) {
-    return gasCalculator().create2OperationGasCost(frame);
+  public long cost(final MessageFrame frame, final Supplier<Code> codeSupplier) {
+    return gasCalculator().create3OperationGasCost(codeSupplier.get());
   }
 
   @Override
   public Address targetContractAddress(final MessageFrame frame, final Code targetCode) {
     final Address sender = frame.getRecipientAddress();
-    final Bytes32 salt = Bytes32.leftPad(frame.getStackItem(3));
+    final Bytes32 salt = Bytes32.leftPad(frame.getStackItem(1));
     final Bytes32 hash =
         keccak256(Bytes.concatenate(PREFIX, sender, salt, targetCode.getCodeHash()));
     final Address address = Address.extract(hash);
@@ -60,12 +60,31 @@ public class Create2Operation extends AbstractCreateOperation {
   }
 
   @Override
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    if (frame.getCode().getEofVersion() == 0) {
+      return InvalidOperation.INVALID_RESULT;
+    }
+    return super.execute(frame, evm);
+  }
+
+  @Override
   protected Code getCode(final MessageFrame frame, final EVM evm) {
-    final long inputOffset = clampedToLong(frame.getStackItem(1));
-    final long inputSize = clampedToLong(frame.getStackItem(2));
-    final Bytes inputData = frame.readMemory(inputOffset, inputSize);
-    // Never cache CREATEx initcode. The amount of reuse is very low, and caching mostly
-    // addresses disk loading delay, and we already have the code.
-    return evm.getCode(null, inputData);
+    final Code code = frame.getCode();
+    int startIndex = frame.getPC() + 1;
+    final int initContainerIndex = code.readU8(startIndex);
+
+    return code.getSubContainer(initContainerIndex, Bytes.EMPTY).orElse(null);
+  }
+
+  @Override
+  protected Bytes getAuxData(final MessageFrame frame) {
+    final long inputOffset = clampedToLong(frame.getStackItem(2));
+    final long inputSize = clampedToLong(frame.getStackItem(3));
+    return frame.readMemory(inputOffset, inputSize);
+  }
+
+  @Override
+  protected int getPcIncrement() {
+    return 2;
   }
 }
