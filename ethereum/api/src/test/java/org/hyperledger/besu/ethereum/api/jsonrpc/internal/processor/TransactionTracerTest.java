@@ -93,7 +93,7 @@ public class TransactionTracerTest {
   @Mock private MainnetTransactionProcessor transactionProcessor;
 
   private TransactionTracer transactionTracer;
-  private BadBlockManager badBlockManager = new BadBlockManager();
+  private final BadBlockManager badBlockManager = new BadBlockManager();
 
   private final Hash transactionHash =
       Hash.fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
