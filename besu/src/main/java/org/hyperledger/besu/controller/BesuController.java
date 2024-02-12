@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -67,6 +68,7 @@ public class BesuController implements java.io.Closeable {
   private final SubProtocolConfiguration subProtocolConfiguration;
   private final NodeKey nodeKey;
   private final Synchronizer synchronizer;
+  private final BadBlockManager badBlockManager;
   private final JsonRpcMethods additionalJsonRpcMethodsFactory;
 
   private final TransactionPool transactionPool;
@@ -109,6 +111,7 @@ public class BesuController implements java.io.Closeable {
       final GenesisConfigOptions genesisConfigOptions,
       final SubProtocolConfiguration subProtocolConfiguration,
       final Synchronizer synchronizer,
+      final BadBlockManager badBlockManager,
       final SyncState syncState,
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
@@ -127,6 +130,7 @@ public class BesuController implements java.io.Closeable {
     this.genesisConfigOptions = genesisConfigOptions;
     this.subProtocolConfiguration = subProtocolConfiguration;
     this.synchronizer = synchronizer;
+    this.badBlockManager = badBlockManager;
     this.syncState = syncState;
     this.additionalJsonRpcMethodsFactory = additionalJsonRpcMethodsFactory;
     this.nodeKey = nodeKey;
@@ -184,6 +188,15 @@ public class BesuController implements java.io.Closeable {
    */
   public Synchronizer getSynchronizer() {
     return synchronizer;
+  }
+
+  /**
+   * Get the BadBlockManager.
+   *
+   * @return the BadBlockManager
+   */
+  public BadBlockManager getBadBlockManager() {
+    return badBlockManager;
   }
 
   /**

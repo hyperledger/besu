@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
@@ -177,6 +178,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected EvmConfiguration evmConfiguration;
   /** The Max peers. */
   protected int maxPeers;
+  /** Manages a cache of bad blocks globally */
+  protected final BadBlockManager badBlockManager = new BadBlockManager();
 
   private int maxRemotelyInitiatedPeers;
   /** The Chain pruner configuration. */
@@ -790,6 +793,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         configOptionsSupplier.get(),
         subProtocolConfiguration,
         synchronizer,
+        badBlockManager,
         syncState,
         transactionPool,
         miningCoordinator,

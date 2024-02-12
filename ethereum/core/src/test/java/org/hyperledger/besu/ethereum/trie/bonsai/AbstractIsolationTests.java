@@ -32,6 +32,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -101,7 +102,8 @@ public abstract class AbstractIsolationTests {
           SignatureAlgorithmFactory.getInstance()
               .createKeyPair(SECPPrivateKey.create(Bytes32.fromHexString(key), "ECDSA"));
   protected final ProtocolSchedule protocolSchedule =
-      MainnetProtocolSchedule.fromConfig(GenesisConfigFile.development().getConfigOptions());
+      MainnetProtocolSchedule.fromConfig(
+          GenesisConfigFile.development().getConfigOptions(), new BadBlockManager());
   protected final GenesisState genesisState =
       GenesisState.fromConfig(GenesisConfigFile.development(), protocolSchedule);
   protected final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
