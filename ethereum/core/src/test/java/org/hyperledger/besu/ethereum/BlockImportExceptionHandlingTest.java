@@ -82,7 +82,7 @@ class BlockImportExceptionHandlingTest {
 
   private final WorldStateStorage worldStateStorage =
       new BonsaiWorldStateKeyValueStorage(
-          storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
+          storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
 
   private final WorldStateArchive worldStateArchive =
       // contains a BonsaiWorldState which we need to spy on.
