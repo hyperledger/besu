@@ -157,7 +157,8 @@ public class BlockchainSetupUtil {
             return null;
           }
         },
-        Optional.empty());
+        Optional.empty(),
+        new BadBlockManager());
   }
 
   private static BlockchainSetupUtil create(

@@ -1071,7 +1071,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         worldStateArchive,
         protocolSchedule,
         consensusContextFactory,
-        transactionSelectorFactory);
+        transactionSelectorFactory,
+        badBlockManager);
   }
 
   private Optional<SnapProtocolManager> createSnapProtocolManager(
