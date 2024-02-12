@@ -100,7 +100,7 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new DebugAccountRange(blockchainQueries),
         new DebugStorageRangeAt(blockchainQueries, blockReplay),
         new DebugMetrics(metricsSystem),
-        new DebugResyncWorldstate(protocolSchedule, protocolContext.getBlockchain(), synchronizer),
+        new DebugResyncWorldstate(protocolContext, synchronizer),
         new DebugTraceBlock(
             () -> new BlockTracer(blockReplay),
             ScheduleBasedBlockHeaderFunctions.create(protocolSchedule),
@@ -110,11 +110,11 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new DebugTraceBlockByNumber(() -> new BlockTracer(blockReplay), blockchainQueries),
         new DebugTraceBlockByHash(() -> new BlockTracer(blockReplay), () -> blockchainQueries),
         new DebugBatchSendRawTransaction(transactionPool),
-        new DebugGetBadBlocks(blockchainQueries, protocolSchedule, blockResult),
+        new DebugGetBadBlocks(protocolContext, blockResult),
         new DebugStandardTraceBlockToFile(
             () -> new TransactionTracer(blockReplay), blockchainQueries, dataDir),
         new DebugStandardTraceBadBlockToFile(
-            () -> new TransactionTracer(blockReplay), blockchainQueries, protocolSchedule, dataDir),
+            () -> new TransactionTracer(blockReplay), blockchainQueries, protocolContext, dataDir),
         new DebugAccountAt(blockchainQueries, () -> new BlockTracer(blockReplay)),
         new DebugGetRawHeader(blockchainQueries),
         new DebugGetRawBlock(blockchainQueries),
