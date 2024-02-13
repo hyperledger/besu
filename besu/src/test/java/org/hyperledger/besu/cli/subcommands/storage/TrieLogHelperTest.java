@@ -87,7 +87,9 @@ class TrieLogHelperTest {
 
     inMemoryWorldState =
         new BonsaiWorldStateKeyValueStorage(
-            storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
+            storageProvider,
+            new NoOpMetricsSystem(),
+            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
 
     createTrieLog(blockHeader1);
 
@@ -291,8 +293,8 @@ class TrieLogHelperTest {
                 nonValidatingTrieLogHelper.prune(
                     dataStorageConfiguration, inMemoryWorldStateSpy, blockchain, dataDir))
         .isInstanceOf(RuntimeException.class)
-        .hasMessage(
-            "Remaining trie logs (0) did not match --bonsai-historical-block-limit (3). Trie logs backup files have not been deleted, it is safe to rerun the subcommand.");
+        .hasMessageContaining(
+            "Remaining trie logs (0) did not match --bonsai-historical-block-limit (3)");
   }
 
   @Test

@@ -41,23 +41,27 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
 import org.apache.tuweni.bytes.Bytes;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class EthPeers {
   private static final Logger LOG = LoggerFactory.getLogger(EthPeers.class);
   public static final Comparator<EthPeer> TOTAL_DIFFICULTY =
-      Comparator.comparing(((final EthPeer p) -> p.chainState().getEstimatedTotalDifficulty()));
+      Comparator.comparing((final EthPeer p) -> p.chainState().getEstimatedTotalDifficulty());
 
   public static final Comparator<EthPeer> CHAIN_HEIGHT =
-      Comparator.comparing(((final EthPeer p) -> p.chainState().getEstimatedHeight()));
+      Comparator.comparing((final EthPeer p) -> p.chainState().getEstimatedHeight());
+
+  public static final Comparator<EthPeer> MOST_USEFUL_PEER =
+      Comparator.comparing((final EthPeer p) -> p.getReputation().getScore())
+          .thenComparing(CHAIN_HEIGHT);
 
   public static final Comparator<EthPeer> HEAVIEST_CHAIN =
       TOTAL_DIFFICULTY.thenComparing(CHAIN_HEIGHT);
@@ -83,7 +87,6 @@ public class EthPeers {
   private final Subscribers<ConnectCallback> connectCallbacks = Subscribers.create();
   private final Subscribers<DisconnectCallback> disconnectCallbacks = Subscribers.create();
   private final Collection<PendingPeerRequest> pendingRequests = new CopyOnWriteArrayList<>();
-  private final int peerLowerBound;
   private final int peerUpperBound;
   private final int maxRemotelyInitiatedConnections;
   private final Boolean randomPeerPriority;
@@ -104,7 +107,6 @@ public class EthPeers {
       final int maxMessageSize,
       final List<NodeMessagePermissioningProvider> permissioningProviders,
       final Bytes localNodeId,
-      final int peerLowerBound,
       final int peerUpperBound,
       final int maxRemotelyInitiatedConnections,
       final Boolean randomPeerPriority) {
@@ -115,15 +117,10 @@ public class EthPeers {
     this.maxMessageSize = maxMessageSize;
     this.bestPeerComparator = HEAVIEST_CHAIN;
     this.localNodeId = localNodeId;
-    this.peerLowerBound = peerLowerBound;
     this.peerUpperBound = peerUpperBound;
     this.maxRemotelyInitiatedConnections = maxRemotelyInitiatedConnections;
     this.randomPeerPriority = randomPeerPriority;
-    LOG.trace(
-        "MaxPeers: {}, Lower Bound: {}, Max Remote: {}",
-        peerUpperBound,
-        peerLowerBound,
-        maxRemotelyInitiatedConnections);
+    LOG.trace("MaxPeers: {}, Max Remote: {}", peerUpperBound, maxRemotelyInitiatedConnections);
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.ETHEREUM,
         "peer_count",
@@ -171,11 +168,7 @@ public class EthPeers {
     }
   }
 
-  public int getPeerLowerBound() {
-    return peerLowerBound;
-  }
-
-  @NotNull
+  @Nonnull
   private List<PeerConnection> getIncompleteConnections(final Bytes id) {
     return incompleteConnections.asMap().keySet().stream()
         .filter(nrc -> nrc.getPeer().getId().equals(id))
@@ -200,7 +193,7 @@ public class EthPeers {
         if (peer.getReputation().getScore() > USEFULL_PEER_SCORE_THRESHOLD) {
           LOG.debug("Disconnected USEFULL peer {}", peer);
         } else {
-          LOG.debug("Disconnected EthPeer {}", peer.getShortNodeId());
+          LOG.debug("Disconnected EthPeer {}", peer.getLoggableId());
         }
       }
     }
@@ -389,7 +382,7 @@ public class EthPeers {
               LOG.atDebug()
                   .setMessage(
                       "disconnecting peer {}. Waiting for better peers. Current {} of max {}")
-                  .addArgument(peer::getShortNodeId)
+                  .addArgument(peer::getLoggableId)
                   .addArgument(this::peerCount)
                   .addArgument(this::getMaxPeers)
                   .log();

@@ -1,0 +1,113 @@
+name: docker
+on:
+  release:
+    types:
+      - prereleased
+env:
+  registry: ghcr.io
+
+jobs:
+  hadolint:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Set up Java
+        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: setup gradle
+        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+      - name: hadoLint_openj9-jdk_17
+        run: docker run --rm -i hadolint/hadolint < docker/openj9-jdk-17/Dockerfile
+      - name: hadoLint_openjdk_17
+        run: docker run --rm -i hadolint/hadolint < docker/openjdk-17/Dockerfile
+      - name: hadoLint_openjdk_17_debug
+        run: docker run --rm -i hadolint/hadolint < docker/openjdk-17-debug/Dockerfile
+      - name: hadoLint_openjdk_latest
+        run: docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
+      - name: hadoLint_graalvm
+        run: docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
+  buildDocker:
+    needs: hadolint
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - ubuntu-22.04
+          - [self-hosted, ARM64]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Prepare
+        id: prep
+        run: |
+            platform=${{ matrix.platform }}
+            if [ "$platform" = 'ubuntu-22.04' ]; then 
+              echo "PLATFORM_PAIR=linux-amd64" >> $GITHUB_OUTPUT
+              echo "ARCH=amd64" >> $GITHUB_OUTPUT
+            else
+              echo "PLATFORM_PAIR=linux-arm64" >> $GITHUB_OUTPUT
+              echo "ARCH=arm64" >> $GITHUB_OUTPUT
+            fi
+      - name: Checkout Repo
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: short sha
+        id: shortSha
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Set up Java
+        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: setup gradle
+        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+      - name: install goss
+        run: |
+          mkdir -p docker/reports
+          curl -L https://github.com/aelsabbahy/goss/releases/download/v0.4.4/goss-${{ steps.prep.outputs.PLATFORM_PAIR }} -o ./docker/tests/goss-${{ steps.prep.outputs.PLATFORM_PAIR }}
+      - name: login to ghcr
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
+        with:
+          registry: ${{ env.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: build and test docker
+        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+        env:
+          architecture: ${{ steps.prep.outputs.ARCH }}
+        with:
+          arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Prelease.releaseVersion=${{ github.ref_name }}
+      - name: publish
+        env:
+          architecture: ${{ steps.prep.outputs.ARCH }}
+        run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Prelease.releaseVersion=${{ github.ref_name }}
+  multiArch:
+    needs: buildDocker
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Set up Java
+        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: setup gradle
+        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+      - name: login to ghcr
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
+        with:
+          registry: ${{ env.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: multi-arch docker
+        run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Prelease.releaseVersion=${{ github.ref_name }}
+

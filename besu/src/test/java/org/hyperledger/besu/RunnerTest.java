@@ -462,7 +462,6 @@ public final class RunnerTest {
         .networkConfiguration(NetworkingConfiguration.create())
         .randomPeerPriority(Boolean.FALSE)
         .maxPeers(25)
-        .lowerBoundPeers(25)
         .maxRemotelyInitiatedPeers(15)
         .build();
   }

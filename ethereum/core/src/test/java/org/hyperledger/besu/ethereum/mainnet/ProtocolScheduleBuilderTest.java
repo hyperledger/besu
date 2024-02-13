@@ -41,7 +41,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
 @ExtendWith(MockitoExtension.class)
-public class ProtocolScheduleBuilderTest {
+class ProtocolScheduleBuilderTest {
   private final long PRE_SHANGHAI_TIMESTAMP = 1680488620L; // Mon, 03 Apr 2023 02:23:40 UTC
   @Mock GenesisConfigOptions configOptions;
   @Mock private Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier;
@@ -61,13 +61,14 @@ public class ProtocolScheduleBuilderTest {
   }
 
   @Test
-  public void createProtocolScheduleInOrder() {
+  void createProtocolScheduleInOrder() {
     when(configOptions.getHomesteadBlockNumber()).thenReturn(OptionalLong.of(1L));
     when(configOptions.getDaoForkBlock()).thenReturn(OptionalLong.of(2L));
     when(configOptions.getByzantiumBlockNumber()).thenReturn(OptionalLong.of(13L));
     when(configOptions.getMergeNetSplitBlockNumber()).thenReturn(OptionalLong.of(15L));
     when(configOptions.getShanghaiTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 1));
     when(configOptions.getCancunTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 3));
+    when(configOptions.getPragueTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 5));
     final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
 
     assertThat(protocolSchedule.getChainId()).contains(CHAIN_ID);
@@ -102,10 +103,20 @@ public class ProtocolScheduleBuilderTest {
                 .getByBlockHeader(blockHeader(54, PRE_SHANGHAI_TIMESTAMP + 4))
                 .getName())
         .isEqualTo("Cancun");
+    assertThat(
+            protocolSchedule
+                .getByBlockHeader(blockHeader(55, PRE_SHANGHAI_TIMESTAMP + 5))
+                .getName())
+        .isEqualTo("Prague");
+    assertThat(
+            protocolSchedule
+                .getByBlockHeader(blockHeader(56, PRE_SHANGHAI_TIMESTAMP + 6))
+                .getName())
+        .isEqualTo("Prague");
   }
 
   @Test
-  public void createProtocolScheduleOverlappingUsesLatestFork() {
+  void createProtocolScheduleOverlappingUsesLatestFork() {
     when(configOptions.getHomesteadBlockNumber()).thenReturn(OptionalLong.of(0L));
     when(configOptions.getByzantiumBlockNumber()).thenReturn(OptionalLong.of(0L));
     final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
@@ -116,7 +127,7 @@ public class ProtocolScheduleBuilderTest {
   }
 
   @Test
-  public void createProtocolScheduleOutOfOrderThrows() {
+  void createProtocolScheduleOutOfOrderThrows() {
     when(configOptions.getDaoForkBlock()).thenReturn(OptionalLong.of(0L));
     when(configOptions.getArrowGlacierBlockNumber()).thenReturn(OptionalLong.of(12L));
     when(configOptions.getGrayGlacierBlockNumber()).thenReturn(OptionalLong.of(11L));
@@ -127,7 +138,7 @@ public class ProtocolScheduleBuilderTest {
   }
 
   @Test
-  public void createProtocolScheduleWithTimestampsOutOfOrderThrows() {
+  void createProtocolScheduleWithTimestampsOutOfOrderThrows() {
     when(configOptions.getDaoForkBlock()).thenReturn(OptionalLong.of(0L));
     when(configOptions.getShanghaiTime()).thenReturn(OptionalLong.of(3L));
     when(configOptions.getCancunTime()).thenReturn(OptionalLong.of(2L));
@@ -138,7 +149,7 @@ public class ProtocolScheduleBuilderTest {
   }
 
   @Test
-  public void modifierInsertedBetweenBlocksIsAppliedToLaterAndCreatesInterimMilestone() {
+  void modifierInsertedBetweenBlocksIsAppliedToLaterAndCreatesInterimMilestone() {
     when(configOptions.getHomesteadBlockNumber()).thenReturn(OptionalLong.of(5L));
 
     when(modifier.apply(any()))
@@ -158,7 +169,7 @@ public class ProtocolScheduleBuilderTest {
   }
 
   @Test
-  public void modifierPastEndOfDefinedMilestonesGetsItsOwnMilestoneCreated() {
+  void modifierPastEndOfDefinedMilestonesGetsItsOwnMilestoneCreated() {
     when(modifier.apply(any()))
         .thenAnswer((Answer<ProtocolSpecBuilder>) invocation -> invocation.getArgument(0));
 
@@ -175,7 +186,7 @@ public class ProtocolScheduleBuilderTest {
   }
 
   @Test
-  public void modifierOnDefinedMilestoneIsAppliedButDoesNotGetAnExtraMilestoneCreated() {
+  void modifierOnDefinedMilestoneIsAppliedButDoesNotGetAnExtraMilestoneCreated() {
     when(configOptions.getHomesteadBlockNumber()).thenReturn(OptionalLong.of(5L));
     when(modifier.apply(any()))
         .thenAnswer((Answer<ProtocolSpecBuilder>) invocation -> invocation.getArgument(0));

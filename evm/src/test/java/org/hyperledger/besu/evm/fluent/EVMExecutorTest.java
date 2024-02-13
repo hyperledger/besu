@@ -36,11 +36,11 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import javax.annotation.Nonnull;
 
 import com.google.common.collect.MultimapBuilder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -126,6 +126,10 @@ class EVMExecutorTest {
 
     EVMExecutor cancunEVM = EVMExecutor.cancun(EvmConfiguration.DEFAULT);
     assertThat(cancunEVM.getChainId()).contains(defaultChainId);
+
+    EVMExecutor pragueEVM =
+        EVMExecutor.prague(defaultChainId.toBigInteger(), EvmConfiguration.DEFAULT);
+    assertThat(pragueEVM.getChainId()).contains(defaultChainId);
 
     EVMExecutor futureEipsVM = EVMExecutor.futureEips(EvmConfiguration.DEFAULT);
     assertThat(futureEipsVM.getChainId()).contains(defaultChainId);
@@ -215,7 +219,7 @@ class EVMExecutorTest {
     assertThat(result).isNotNull();
   }
 
-  @NotNull
+  @Nonnull
   private static SimpleWorld createSimpleWorld() {
     SimpleWorld simpleWorld = new SimpleWorld();
 
