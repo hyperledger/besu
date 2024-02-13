@@ -21,10 +21,13 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.PeerRequest;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
+import org.hyperledger.besu.ethereum.eth.manager.RequestManager;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerRequestTask;
 import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -66,9 +69,18 @@ public class GetBytecodeFromPeerTask extends AbstractPeerRequestTask<Map<Bytes32
   @Override
   protected PendingPeerRequest sendRequest() {
     return sendRequestToPeer(
-        peer -> {
-          LOG.trace("Requesting {} Bytecodes from {} .", codeHashes.size(), peer);
-          return peer.getSnapBytecode(blockHeader.getStateRoot(), codeHashes);
+        new PeerRequest() {
+          @Override
+          public RequestManager.ResponseStream sendRequest(final EthPeer peer)
+              throws PeerConnection.PeerNotConnected {
+            LOG.trace("Requesting {} Bytecodes from {} .", codeHashes.size(), peer);
+            return peer.getSnapBytecode(blockHeader.getStateRoot(), codeHashes);
+          }
+
+          @Override
+          public boolean isEthPeerSuitable(final EthPeer ethPeer) {
+            return ethPeer.isServingSnap();
+          }
         },
         blockHeader.getNumber());
   }

@@ -17,10 +17,13 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.PeerRequest;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
+import org.hyperledger.besu.ethereum.eth.manager.RequestManager;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerRequestTask;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -64,14 +67,23 @@ public class GetAccountRangeFromPeerTask
   @Override
   protected PendingPeerRequest sendRequest() {
     return sendRequestToPeer(
-        peer -> {
-          LOG.trace(
-              "Requesting account range [{} ,{}] for state root {} from peer {} .",
-              startKeyHash,
-              endKeyHash,
-              blockHeader.getStateRoot(),
-              peer);
-          return peer.getSnapAccountRange(blockHeader.getStateRoot(), startKeyHash, endKeyHash);
+        new PeerRequest() {
+          @Override
+          public RequestManager.ResponseStream sendRequest(final EthPeer peer)
+              throws PeerConnection.PeerNotConnected {
+            LOG.trace(
+                "Requesting account range [{} ,{}] for state root {} from peer {} .",
+                startKeyHash,
+                endKeyHash,
+                blockHeader.getStateRoot(),
+                peer);
+            return peer.getSnapAccountRange(blockHeader.getStateRoot(), startKeyHash, endKeyHash);
+          }
+
+          @Override
+          public boolean isEthPeerSuitable(final EthPeer ethPeer) {
+            return ethPeer.isServingSnap();
+          }
         },
         blockHeader.getNumber());
   }

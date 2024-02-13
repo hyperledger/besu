@@ -396,20 +396,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   }
 
   @Override
-  public boolean shouldConnect(final Peer peer, final boolean incoming) {
-    if (peer.getForkId().map(forkIdManager::peerCheck).orElse(true)) {
-      LOG.atDebug()
-          .setMessage("ForkId OK or not available for peer {}")
-          .addArgument(peer::getLoggableId)
-          .log();
-      if (ethPeers.shouldConnect(peer, incoming)) {
-        return true;
-      }
-    }
-    LOG.atDebug()
-        .setMessage("ForkId check failed for peer {}")
-        .addArgument(peer::getLoggableId)
-        .log();
+  public boolean shouldTryToConnect(final Peer peer, final boolean incoming) {
     return false;
   }
 

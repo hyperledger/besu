@@ -14,13 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
+import org.hyperledger.besu.ethereum.forkid.ForkId;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -35,6 +43,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
@@ -72,7 +81,7 @@ public class EthPeers {
   public static final int NODE_ID_LENGTH = 64;
   public static final int USEFULL_PEER_SCORE_THRESHOLD = 102;
 
-  private final Map<Bytes, EthPeer> completeConnections = new ConcurrentHashMap<>();
+  private final Map<Bytes, EthPeer> activeConnections = new ConcurrentHashMap<>();
 
   private final Cache<PeerConnection, EthPeer> incompleteConnections =
       CacheBuilder.newBuilder()
@@ -92,12 +101,16 @@ public class EthPeers {
   private final Boolean randomPeerPriority;
   private final Bytes nodeIdMask = Bytes.random(NODE_ID_LENGTH);
   private final Supplier<ProtocolSpec> currentProtocolSpecSupplier;
+  private final SyncMode syncMode;
+  private final ForkIdManager forkIdManager;
+  private final int snapServerTargetNumber;
 
   private Comparator<EthPeer> bestPeerComparator;
   private final Bytes localNodeId;
   private RlpxAgent rlpxAgent;
 
   private final Counter connectedPeersCounter;
+  private List<ProtocolManager> protocolManagers;
 
   public EthPeers(
       final String protocolName,
@@ -109,7 +122,9 @@ public class EthPeers {
       final Bytes localNodeId,
       final int peerUpperBound,
       final int maxRemotelyInitiatedConnections,
-      final Boolean randomPeerPriority) {
+      final Boolean randomPeerPriority,
+      final SyncMode syncMode,
+      final ForkIdManager forkIdManager) {
     this.protocolName = protocolName;
     this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.clock = clock;
@@ -121,6 +136,14 @@ public class EthPeers {
     this.maxRemotelyInitiatedConnections = maxRemotelyInitiatedConnections;
     this.randomPeerPriority = randomPeerPriority;
     LOG.trace("MaxPeers: {}, Max Remote: {}", peerUpperBound, maxRemotelyInitiatedConnections);
+    this.syncMode = syncMode;
+    this.forkIdManager = forkIdManager;
+    if (syncMode == SyncMode.X_CHECKPOINT || syncMode == SyncMode.X_SNAP) {
+      snapServerTargetNumber =
+          peerUpperBound / 2; // hardcoded for now. 50% of peers should be snap servers
+    } else {
+      snapServerTargetNumber = 0;
+    }
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.ETHEREUM,
         "peer_count",
@@ -146,7 +169,7 @@ public class EthPeers {
       final PeerConnection newConnection, final List<PeerValidator> peerValidators) {
     final Bytes id = newConnection.getPeer().getId();
     synchronized (this) {
-      EthPeer ethPeer = completeConnections.get(id);
+      EthPeer ethPeer = activeConnections.get(id);
       if (ethPeer == null) {
         final Optional<EthPeer> peerInList =
             incompleteConnections.asMap().values().stream()
@@ -186,7 +209,7 @@ public class EthPeers {
     boolean removed = false;
     if (peer != null && peer.getConnection().equals(connection)) {
       if (!peerHasIncompleteConnection(id)) {
-        removed = completeConnections.remove(id, peer);
+        removed = activeConnections.remove(id, peer);
         disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
         peer.handleDisconnect();
         abortPendingRequestsAssignedToDisconnectedPeers();
@@ -217,7 +240,7 @@ public class EthPeers {
 
   public EthPeer peer(final PeerConnection connection) {
     final EthPeer ethPeer = incompleteConnections.getIfPresent(connection);
-    return ethPeer != null ? ethPeer : completeConnections.get(connection.getPeer().getId());
+    return ethPeer != null ? ethPeer : activeConnections.get(connection.getPeer().getId());
   }
 
   public PendingPeerRequest executePeerRequest(
@@ -280,7 +303,7 @@ public class EthPeers {
 
   public int peerCount() {
     removeDisconnectedPeers();
-    return completeConnections.size();
+    return activeConnections.size();
   }
 
   public int getMaxPeers() {
@@ -288,11 +311,11 @@ public class EthPeers {
   }
 
   public Stream<EthPeer> streamAllPeers() {
-    return completeConnections.values().stream();
+    return activeConnections.values().stream();
   }
 
   private void removeDisconnectedPeers() {
-    completeConnections
+    activeConnections
         .values()
         .forEach(
             ep -> {
@@ -341,36 +364,60 @@ public class EthPeers {
   }
 
   public Stream<PeerConnection> getAllActiveConnections() {
-    return completeConnections.values().stream()
+    return activeConnections.values().stream()
         .map(EthPeer::getConnection)
         .filter(c -> !c.isDisconnected());
   }
 
   public Stream<PeerConnection> getAllConnections() {
     return Stream.concat(
-            completeConnections.values().stream().map(EthPeer::getConnection),
+            activeConnections.values().stream().map(EthPeer::getConnection),
             incompleteConnections.asMap().keySet().stream())
         .distinct()
         .filter(c -> !c.isDisconnected());
   }
 
-  public boolean shouldConnect(final Peer peer, final boolean inbound) {
+  public boolean shouldTryToConnect(final Peer peer, final boolean inbound) {
+
+    if (peer.getForkId().isPresent()) {
+      final ForkId forkId = peer.getForkId().get();
+      if (!forkIdManager.peerCheck(forkId)) {
+        LOG.atDebug()
+            .setMessage("Wrong fork id, not trying to connect to peer {}")
+            .addArgument(peer::getId)
+            .log();
+
+        return false;
+      }
+    }
+
     final Bytes id = peer.getId();
-    if (peerCount() >= peerUpperBound && !canExceedPeerLimits(id)) {
+    if (alreadyConnectedOrConnecting(inbound, id)) {
       return false;
     }
-    final EthPeer ethPeer = completeConnections.get(id);
+
+    if (peerCount() < getMaxPeers() || canExceedPeerLimits(id)) {
+      return true;
+    }
+
+    // ask the protocol managers whether they want to connect to this peer and if none of them want
+    // to connect, then we don't connect
+    return protocolManagers.stream().anyMatch(p -> p.shouldTryToConnect(peer, inbound));
+  }
+
+  private boolean alreadyConnectedOrConnecting(final boolean inbound, final Bytes id) {
+    final EthPeer ethPeer = activeConnections.get(id);
     if (ethPeer != null && !ethPeer.isDisconnected()) {
-      return false;
+      return true;
     }
     final List<PeerConnection> incompleteConnections = getIncompleteConnections(id);
     if (!incompleteConnections.isEmpty()) {
       if (incompleteConnections.stream()
           .anyMatch(c -> !c.isDisconnected() && (!inbound || (inbound && c.inboundInitiated())))) {
-        return false;
+        return true;
       }
     }
-    return true;
+    return false;
   }
 
   public void disconnectWorstUselessPeer() {
@@ -390,6 +437,10 @@ public class EthPeers {
             });
   }
 
+  public void setProtocolManagers(final List<ProtocolManager> protocolManagers) {
+    this.protocolManagers = protocolManagers;
+  }
+
   @FunctionalInterface
   public interface ConnectCallback {
     void onPeerConnected(EthPeer newPeer);
@@ -397,21 +448,83 @@ public class EthPeers {
 
   @Override
   public String toString() {
-    if (completeConnections.isEmpty()) {
+    if (activeConnections.isEmpty()) {
       return "0 EthPeers {}";
     }
     final String connectionsList =
-        completeConnections.values().stream()
+        activeConnections.values().stream()
             .sorted()
             .map(EthPeer::toString)
             .collect(Collectors.joining(", \n"));
-    return completeConnections.size() + " EthPeers {\n" + connectionsList + '}';
+    return activeConnections.size() + " EthPeers {\n" + connectionsList + '}';
   }
 
   private void ethPeerStatusExchanged(final EthPeer peer) {
-    if (addPeerToEthPeers(peer)) {
-      connectedPeersCounter.inc();
-      connectCallbacks.forEach(cb -> cb.onPeerConnected(peer));
+    // We have a connection to a peer that is on the right chain and is willing to connect to us.
+    // Find out what the EthPeer block hight is and whether it can serve snap data (if we are doing
+    // snap sync)
+    CompletableFuture<Void> future =
+        CompletableFuture.runAsync(
+            () -> {
+              // Call your function here
+              try {
+                final RequestManager.ResponseStream responseStream =
+                    peer.getHeadersByHash(peer.chainState().getBestBlock().getHash(), 1, 0, false);
+                responseStream.then(
+                    (closed, msg, p) -> {
+                      if (closed) {
+                        throw new RuntimeException("Peer disconnected");
+                      }
+                      final List<BlockHeader> blockHeaders =
+                          new BytesValueRLPInput(msg.getData(), false)
+                              .readList(
+                                  rlp ->
+                                      BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()));
+                      if (blockHeaders.isEmpty()) {
+                        // empty response, disconnect
+                        p.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
+                        throw new RuntimeException("Empty response");
+                      }
+                      final BlockHeader header = blockHeaders.get(0);
+                      p.chainState().updateHeightEstimate(header.getNumber());
+                      // make sure that the enforceTrailingPeerLimit() from ChainHeadTracker
+                      // equivalent is done here, instead of after adding to EthPeers
+                      // TODO: once we have the height we could do a SNAP request here to figure out
+                      // whether the peer is serving snap data
+                    });
+              } catch (Exception e) {
+                throw new RuntimeException(e);
+              }
+            });
+
+    CompletableFuture<Void> isServingSnapFuture;
+    if (syncMode == SyncMode.X_CHECKPOINT || syncMode == SyncMode.X_SNAP) {
+      isServingSnapFuture =
+          CompletableFuture.runAsync(
+              () -> {
+                checkIsSnapServer(peer);
+              });
+    } else {
+      isServingSnapFuture = CompletableFuture.completedFuture(null);
+    }
+
+    // join the two futures
+    CompletableFuture.allOf(future, isServingSnapFuture)
+        .thenRun(
+            () -> {
+              if (!peer.getConnection().isDisconnected() && addPeerToEthPeers(peer)) {
+                connectedPeersCounter.inc();
+                connectCallbacks.forEach(cb -> cb.onPeerConnected(peer));
+              }
+            });
+  }
+
+  private void checkIsSnapServer(final EthPeer peer) {
+    if (peer.getAgreedCapabilities().contains(SnapProtocol.SNAP1)) {
+      // could try and retrieve some SNAP data here to check that (e.g. GetByteCodes for a small
+      // contract)
+      LOG.info("XXXXXXX" + peer.getConnection().getPeerInfo().getClientId());
+      peer.setIsServingSnap(peer.getConnection().getPeerInfo().getClientId().contains("Geth"));
     }
   }
 
@@ -467,7 +580,7 @@ public class EthPeers {
   }
 
   private Stream<EthPeer> getActivePrioritizedPeers() {
-    return completeConnections.values().stream()
+    return activeConnections.values().stream()
         .filter(p -> !p.isDisconnected())
         .sorted(this::comparePeerPriorities);
   }
@@ -501,7 +614,7 @@ public class EthPeers {
   }
 
   private long countUntrustedRemotelyInitiatedConnections() {
-    return completeConnections.values().stream()
+    return activeConnections.values().stream()
         .map(ep -> ep.getConnection())
         .filter(c -> c.inboundInitiated())
         .filter(c -> !c.isDisconnected())
@@ -523,21 +636,26 @@ public class EthPeers {
 
   private boolean addPeerToEthPeers(final EthPeer peer) {
     // We have a connection to a peer that is on the right chain and is willing to connect to us.
-    // Figure out whether we want to keep this peer and add it to the EthPeers connections.
-    if (completeConnections.containsValue(peer)) {
+    // Figure out whether we want to keep this peer to add it to the active connections.
+    final PeerConnection connection = peer.getConnection();
+    if (activeConnections.containsValue(peer)) {
+      connection.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
       return false;
     }
-    final PeerConnection connection = peer.getConnection();
     final Bytes id = peer.getId();
     if (!randomPeerPriority) {
       // Disconnect if too many peers
-      if (!canExceedPeerLimits(id) && peerCount() >= peerUpperBound) {
-        LOG.trace(
-            "Too many peers. Disconnect connection: {}, max connections {}",
-            connection,
-            peerUpperBound);
-        connection.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
-        return false;
+      if (peerCount() >= peerUpperBound) {
+        if (needMoreSnapServers()) {
+          disconnectNonSnapServerPeerOrLeastUseful();
+        } else if (!canExceedPeerLimits(id)) {
+          LOG.trace(
+              "Too many peers. Disconnect connection: {}, max connections {}",
+              connection,
+              peerUpperBound);
+          connection.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
+          return false;
+        }
       }
       // Disconnect if too many remotely-initiated connections
       if (connection.inboundInitiated()
@@ -550,7 +668,7 @@ public class EthPeers {
         connection.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
         return false;
       }
-      final boolean added = (completeConnections.putIfAbsent(id, peer) == null);
+      final boolean added = (activeConnections.putIfAbsent(id, peer) == null);
       if (added) {
         LOG.trace("Added peer {} with connection {} to completeConnections", id, connection);
       } else {
@@ -559,10 +677,29 @@ public class EthPeers {
       return added;
     } else {
       // randomPeerPriority! Add the peer and if there are too many connections fix it
-      completeConnections.putIfAbsent(id, peer);
+      // TODO: random peer priority does not care yet about snap server peers -> check later
+      activeConnections.putIfAbsent(id, peer);
       enforceRemoteConnectionLimits();
       enforceConnectionLimits();
-      return completeConnections.containsKey(id);
+      return activeConnections.containsKey(id);
     }
+  }
+
+  private boolean needMoreSnapServers() {
+    return activeConnections.values().stream().filter(EthPeer::isServingSnap).count()
+        < snapServerTargetNumber;
+  }
+
+  private void disconnectNonSnapServerPeerOrLeastUseful() {
+    activeConnections.values().stream()
+        .filter(p -> !p.isServingSnap())
+        .min(MOST_USEFUL_PEER)
+        .ifPresentOrElse(
+            p -> p.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS),
+            () ->
+                activeConnections.values().stream()
+                    .min(MOST_USEFUL_PEER)
+                    .ifPresent(
+                        p -> p.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS)));
   }
 }

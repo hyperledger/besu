@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
@@ -86,7 +87,9 @@ public class EthProtocolManagerTestUtil {
             Bytes.random(64),
             25,
             25,
-            false);
+            false,
+            SyncMode.X_SNAP,
+            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
     final EthMessages messages = new EthMessages();
     final EthScheduler ethScheduler = new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT);
     final EthContext ethContext = new EthContext(peers, messages, ethScheduler);
@@ -205,7 +208,9 @@ public class EthProtocolManagerTestUtil {
             Bytes.random(64),
             25,
             25,
-            false);
+            false,
+            SyncMode.X_SNAP,
+            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
     final EthMessages messages = new EthMessages();
 
     return create(
@@ -239,7 +244,9 @@ public class EthProtocolManagerTestUtil {
             Bytes.random(64),
             25,
             25,
-            false);
+            false,
+            SyncMode.X_SNAP,
+            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
     final EthMessages messages = new EthMessages();
 
     return create(
@@ -269,7 +276,9 @@ public class EthProtocolManagerTestUtil {
             Bytes.random(64),
             25,
             25,
-            false);
+            false,
+            SyncMode.X_SNAP,
+            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
     final EthMessages messages = new EthMessages();
 
     return create(

@@ -49,9 +49,12 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
   }
 
   @Override
-  public void assignPeer(final EthPeer peer) {
-    super.assignPeer(peer);
-    triedPeers.add(peer);
+  public boolean assignPeer(final EthPeer peer) {
+    if (super.assignPeer(peer)) {
+      triedPeers.add(peer);
+      return true;
+    }
+    return false;
   }
 
   protected abstract CompletableFuture<T> executeTaskOnCurrentPeer(final EthPeer peer);
@@ -61,9 +64,9 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
 
     final Optional<EthPeer> maybePeer =
         assignedPeer
-            .filter(u -> getRetryCount() == 1) // first try with the assigned peer if present
-            .map(Optional::of)
-            .orElseGet(this::selectNextPeer); // otherwise, select a new one from the pool
+            .filter(u -> getRetryCount() == 1)
+            .or(this::selectNextPeer); // first try with the assigned peer if present, otherwise
+    // select a new one from the pool
 
     if (maybePeer.isEmpty()) {
       LOG.atTrace()
@@ -101,7 +104,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
   @Override
   protected void handleTaskError(final Throwable error) {
     if (isPeerFailure(error)) {
-      getAssignedPeer().ifPresent(peer -> failedPeers.add(peer));
+      getAssignedPeer().ifPresent(failedPeers::add);
     }
     super.handleTaskError(error);
   }
@@ -124,10 +127,11 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
     return maybeNextPeer;
   }
 
-  private Stream<EthPeer> remainingPeersToTry() {
+  protected Stream<EthPeer> remainingPeersToTry() {
     return getEthContext()
         .getEthPeers()
         .streamBestPeers()
+        .filter(this::isSuitablePeer)
         .filter(peer -> !triedPeers.contains(peer));
   }
 
