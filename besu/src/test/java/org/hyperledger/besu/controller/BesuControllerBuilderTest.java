@@ -166,11 +166,6 @@ public class BesuControllerBuilderTest {
 
   @Test
   public void shouldDisablePruningIfBonsaiIsEnabled() {
-    DataStorageConfiguration dataStorageConfiguration =
-        ImmutableDataStorageConfiguration.builder()
-            .dataStorageFormat(DataStorageFormat.BONSAI)
-            .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
-            .build();
     BonsaiWorldState mockWorldState = mock(BonsaiWorldState.class, Answers.RETURNS_DEEP_STUBS);
     doReturn(worldStateArchive)
         .when(besuControllerBuilder)
@@ -178,9 +173,11 @@ public class BesuControllerBuilderTest {
             any(WorldStateStorage.class), any(Blockchain.class), any(CachedMerkleTrieLoader.class));
     doReturn(mockWorldState).when(worldStateArchive).getMutable();
 
-    when(storageProvider.createWorldStateStorage(dataStorageConfiguration))
+    when(storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG))
         .thenReturn(bonsaiWorldStateStorage);
-    besuControllerBuilder.isPruningEnabled(true).dataStorageConfiguration(dataStorageConfiguration);
+    besuControllerBuilder
+        .isPruningEnabled(true)
+        .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
     besuControllerBuilder.build();
 
     verify(storageProvider, never())
