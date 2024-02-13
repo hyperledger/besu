@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
+import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
@@ -442,6 +443,8 @@ public abstract class MainnetProtocolSpecs {
     final BaseFeeMarket londonFeeMarket =
         genesisConfigOptions.isZeroBaseFee()
             ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
+            : genesisConfigOptions.isFixedBaseFee()
+            ? FeeMarket.fixedBaseFee(londonForkBlockNumber, TransactionPoolOptions.TX_POOL_MIN_GAS_PRICE)
             : FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
     return berlinDefinition(
             chainId,
@@ -645,6 +648,8 @@ public abstract class MainnetProtocolSpecs {
     final BaseFeeMarket cancunFeeMarket =
         genesisConfigOptions.isZeroBaseFee()
             ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
+            : genesisConfigOptions.isFixedBaseFee()
+            ? FeeMarket.fixedBaseFee(londonForkBlockNumber, TransactionPoolOptions.TX_POOL_MIN_GAS_PRICE)
             : FeeMarket.cancun(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
 
     return shanghaiDefinition(

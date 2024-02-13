@@ -53,6 +53,10 @@ public interface FeeMarket {
     return new ZeroBaseFeeMarket(londonForkBlockNumber);
   }
 
+  static BaseFeeMarket fixedBaseFee(final long londonForkBlockNumber, final Wei fixedBaseFee) {
+    return new FixedBaseFeeMarket(londonForkBlockNumber, fixedBaseFee);
+  }
+
   static FeeMarket legacy() {
     return new LegacyFeeMarket();
   }

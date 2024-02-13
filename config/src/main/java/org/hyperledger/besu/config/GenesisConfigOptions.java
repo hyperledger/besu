@@ -505,6 +505,13 @@ public interface GenesisConfigOptions {
   boolean isZeroBaseFee();
 
   /**
+   * Force a Base Fee as Gas Price network to used with London/EIP-1559.
+   *
+   * @return true, if you want the next block to use the base fee as gas price.
+   */
+  boolean isFixedBaseFee();
+
+  /**
    * The deposit contract address that should be in the logger field in Receipt of Deposit
    * transaction
    *
