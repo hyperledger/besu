@@ -195,12 +195,10 @@ class CodeV1Test {
             IntStream.rangeClosed(0x21, 0x2f),
             IntStream.rangeClosed(0x49, 0x4f),
             IntStream.rangeClosed(0xa5, 0xaf),
-            IntStream.rangeClosed(0xb0, 0xbf),
-            IntStream.rangeClosed(0xc0, 0xcf),
+            IntStream.rangeClosed(0xb0, 0xcf),
             IntStream.rangeClosed(0xd4, 0xdf),
-            IntStream.rangeClosed(0xd4, 0xdf),
-            IntStream.rangeClosed(0xe9, 0xef),
-            IntStream.of(0xf6, 0xf7, 0xfc))
+            IntStream.rangeClosed(0xe9, 0xeb),
+            IntStream.of(0xef, 0xf6, 0xf7, 0xfc))
         .flatMapToInt(i -> i)
         .mapToObj(i -> String.format("%02x", i) + ZERO_HEX)
         .map(Arguments::arguments);

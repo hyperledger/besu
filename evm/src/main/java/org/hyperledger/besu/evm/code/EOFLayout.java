@@ -182,15 +182,6 @@ public record EOFLayout(
       if (containerSectionCount <= 0) {
         return invalidLayout(container, version, "Invalid container section count");
       }
-      if (containerSectionCount * 4 != typesLength) {
-        return invalidLayout(
-            container,
-            version,
-            "Type section length incompatible with container section count - 0x"
-                + Integer.toHexString(containerSectionCount)
-                + " * 4 != 0x"
-                + Integer.toHexString(typesLength));
-      }
       if (containerSectionCount > 256) {
         return invalidLayout(
             container,

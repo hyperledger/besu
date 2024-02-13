@@ -49,7 +49,7 @@ public class StopOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    if (frame.isInitCode()) {
+    if (frame.isInitCode() && frame.getCode().getEofVersion() > 0) {
       return new OperationResult(0, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     }
 

@@ -42,7 +42,7 @@ public class ReturnOperation extends AbstractOperation {
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
-    if (frame.isInitCode()) {
+    if (frame.isInitCode() && frame.getCode().getEofVersion() > 0) {
       return new OperationResult(cost, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     }
 
