@@ -24,9 +24,11 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.OptionalInt;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.slf4j.Logger;
@@ -37,7 +39,11 @@ public class DatabaseMetadata {
   private static final Logger LOG = LoggerFactory.getLogger(DatabaseMetadata.class);
 
   private static final String METADATA_FILENAME = "DATABASE_METADATA.json";
-  private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
+  private static final ObjectMapper MAPPER =
+      new ObjectMapper()
+          .registerModule(new Jdk8Module())
+          .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
+          .enable(SerializationFeature.INDENT_OUTPUT);
   private final VersionedStorageFormat versionedStorageFormat;
 
   protected DatabaseMetadata(final VersionedStorageFormat versionedStorageFormat) {

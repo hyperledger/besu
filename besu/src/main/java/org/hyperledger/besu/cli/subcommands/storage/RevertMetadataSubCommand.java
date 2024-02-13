@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.OptionalInt;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.slf4j.Logger;
@@ -41,7 +43,11 @@ import picocli.CommandLine.ParentCommand;
 public class RevertMetadataSubCommand implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(RevertMetadataSubCommand.class);
   private static final String METADATA_FILENAME = "DATABASE_METADATA.json";
-  private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
+  private static final ObjectMapper MAPPER =
+      new ObjectMapper()
+          .registerModule(new Jdk8Module())
+          .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
+          .enable(SerializationFeature.INDENT_OUTPUT);
 
   @SuppressWarnings("unused")
   @ParentCommand
