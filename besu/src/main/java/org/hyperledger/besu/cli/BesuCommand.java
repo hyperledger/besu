@@ -255,8 +255,12 @@ import picocli.CommandLine.ParameterException;
     synopsisHeading = "%n",
     descriptionHeading = "%n@|bold,fg(cyan) Description:|@%n%n",
     optionListHeading = "%n@|bold,fg(cyan) Options:|@%n",
-    footerHeading = "%n",
-    footer = "Besu is licensed under the Apache License 2.0")
+    footerHeading = "%nBesu is licensed under the Apache License 2.0%n",
+    footer = {
+      "%n%n@|fg(cyan) To get started quickly, just choose a network to sync and a profile to run with suggested defaults:|@",
+      "%n@|fg(cyan) for Mainnet|@ --network=mainnet --profile=[minimalist_staker|staker]",
+      "%nMore info and other profiles at https://besu.hyperledger.org%n"
+    })
 public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings("PrivateStaticFinalLoggers")
