@@ -22,7 +22,11 @@ public enum ProfileName {
   STAKER("profiles/staker.toml"),
   /** The 'MINIMALIST_STAKER' profile */
   MINIMALIST_STAKER("profiles/minimalist-staker.toml"),
-  /** The 'DEV' profile. Corresponds to the 'profiles/dev.toml' configuration file. */
+  /** The 'ENTERPRISE' profile */
+  ENTERPRISE("profiles/enterprise-private.toml"),
+  /** The 'PRIVATE' profile */
+  PRIVATE("profiles/enterprise-private.toml"),
+  /** The 'DEV' profile. */
   DEV("profiles/dev.toml");
 
   private final String configFile;

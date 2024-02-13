@@ -51,7 +51,9 @@ class CachedMerkleTrieLoaderTest {
   private final BonsaiWorldStateKeyValueStorage inMemoryWorldState =
       Mockito.spy(
           new BonsaiWorldStateKeyValueStorage(
-              storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG));
+              storageProvider,
+              new NoOpMetricsSystem(),
+              DataStorageConfiguration.DEFAULT_BONSAI_CONFIG));
 
   final List<Address> accounts =
       List.of(Address.fromHexString("0xdeadbeef"), Address.fromHexString("0xdeadbeee"));
@@ -76,7 +78,7 @@ class CachedMerkleTrieLoaderTest {
         new BonsaiWorldStateKeyValueStorage(
             new InMemoryKeyValueStorageProvider(),
             new NoOpMetricsSystem(),
-            DataStorageConfiguration.DEFAULT_CONFIG);
+            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
     StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->

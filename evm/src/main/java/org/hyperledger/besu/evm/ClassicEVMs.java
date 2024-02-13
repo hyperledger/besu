@@ -26,7 +26,7 @@ import org.hyperledger.besu.evm.operation.Push0Operation;
 
 import java.math.BigInteger;
 
-/** Classic EMVs */
+/** Provides EVMs supporting the appropriate operations for ETC network upgrades. */
 public class ClassicEVMs {
 
   /**

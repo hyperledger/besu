@@ -146,6 +146,10 @@ public class EthScheduler {
     servicesExecutor.execute(command);
   }
 
+  public <T> CompletableFuture<Void> scheduleServiceTask(final Runnable task) {
+    return CompletableFuture.runAsync(task, servicesExecutor);
+  }
+
   public <T> CompletableFuture<T> scheduleServiceTask(final EthTask<T> task) {
     final CompletableFuture<T> serviceFuture = task.runAsync(servicesExecutor);
     pendingFutures.add(serviceFuture);

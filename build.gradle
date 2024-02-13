@@ -40,12 +40,12 @@ if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
 
 group = 'io.consensys.linea-besu'
 
-defaultTasks 'build', 'checkLicenses', 'javadoc'
+defaultTasks 'build', 'checkLicense', 'javadoc'
 
 def buildAliases = ['dev': [
     'spotlessApply',
     'build',
-    'checkLicenses',
+    'checkLicense',
     'javadoc'
   ]]
 

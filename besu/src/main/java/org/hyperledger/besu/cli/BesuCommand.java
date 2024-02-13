@@ -1036,6 +1036,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     toCommandLine();
 
+    // use terminal width for usage message
+    commandLine.getCommandSpec().usageMessage().autoWidth(true);
+
     handleStableOptions();
     addSubCommands(in);
     registerConverters();
