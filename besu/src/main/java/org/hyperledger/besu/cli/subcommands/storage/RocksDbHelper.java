@@ -213,7 +213,7 @@ public class RocksDbHelper {
     }
   }
 
-  static void printUsageForColumnFamily(
+  static ColumnFamilyUsage getAndPrintUsageForColumnFamily(
       final RocksDB rocksdb, final ColumnFamilyHandle cfHandle, final PrintWriter out)
       throws RocksDBException, NumberFormatException {
     final String numberOfKeys = rocksdb.getProperty(cfHandle, "rocksdb.estimate-num-keys");
@@ -240,10 +240,36 @@ public class RocksDbHelper {
               formatOutputSize(totalSstFilesSizeLong),
               formatOutputSize(totalBlobFilesSizeLong));
         }
+        return new ColumnFamilyUsage(
+            getNameById(cfHandle.getName()),
+            numberOfKeysLong,
+            totalFilesSize,
+            totalSstFilesSizeLong,
+            totalBlobFilesSizeLong);
       } catch (NumberFormatException e) {
         LOG.error("Failed to parse string into long: " + e.getMessage());
       }
     }
+    // return empty usage on error
+    return new ColumnFamilyUsage(getNameById(cfHandle.getName()), 0, 0, 0, 0);
+  }
+
+  static void printTotals(final PrintWriter out, final List<ColumnFamilyUsage> columnFamilyUsages) {
+    final long totalKeys = columnFamilyUsages.stream().mapToLong(ColumnFamilyUsage::keys).sum();
+    final long totalSize =
+        columnFamilyUsages.stream().mapToLong(ColumnFamilyUsage::totalSize).sum();
+    final long totalSsts =
+        columnFamilyUsages.stream().mapToLong(ColumnFamilyUsage::sstFilesSize).sum();
+    final long totalBlobs =
+        columnFamilyUsages.stream().mapToLong(ColumnFamilyUsage::blobFilesSize).sum();
+    printSeparator(out);
+    printLine(
+        out,
+        "ESTIMATED TOTAL",
+        String.valueOf(totalKeys),
+        formatOutputSize(totalSize),
+        formatOutputSize(totalSsts),
+        formatOutputSize(totalBlobs));
   }
 
   private static boolean isPopulatedColumnFamily(final long size, final long numberOfKeys) {
@@ -277,6 +303,10 @@ public class RocksDbHelper {
   static void printTableHeader(final PrintWriter out) {
     out.format(
         "| Column Family                  | Keys            | Total Size  | SST Files Size  | Blob Files Size  | \n");
+    printSeparator(out);
+  }
+
+  private static void printSeparator(final PrintWriter out) {
     out.format(
         "|--------------------------------|-----------------|-------------|-----------------|------------------|\n");
   }
@@ -291,4 +321,7 @@ public class RocksDbHelper {
     final String format = "| %-30s | %-15s | %-11s | %-15s | %-16s |\n";
     out.format(format, cfName, keys, totalFilesSize, sstFilesSize, blobFilesSize);
   }
+
+  record ColumnFamilyUsage(
+      String name, long keys, long totalSize, long sstFilesSize, long blobFilesSize) {}
 }

@@ -19,6 +19,8 @@ import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import org.hyperledger.besu.cli.util.VersionProvider;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rocksdb.RocksDBException;
 import picocli.CommandLine;
@@ -78,15 +80,18 @@ public class RocksDbSubCommand implements Runnable {
 
       RocksDbHelper.printTableHeader(out);
 
+      final List<RocksDbHelper.ColumnFamilyUsage> columnFamilyUsages = new ArrayList<>();
       RocksDbHelper.forEachColumnFamily(
           dbPath,
           (rocksdb, cfHandle) -> {
             try {
-              RocksDbHelper.printUsageForColumnFamily(rocksdb, cfHandle, out);
+              columnFamilyUsages.add(
+                  RocksDbHelper.getAndPrintUsageForColumnFamily(rocksdb, cfHandle, out));
             } catch (RocksDBException e) {
               throw new RuntimeException(e);
             }
           });
+      RocksDbHelper.printTotals(out, columnFamilyUsages);
     }
   }
 
