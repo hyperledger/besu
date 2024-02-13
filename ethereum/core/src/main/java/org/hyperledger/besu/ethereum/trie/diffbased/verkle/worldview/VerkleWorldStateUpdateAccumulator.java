@@ -104,6 +104,13 @@ public class VerkleWorldStateUpdateAccumulator
   }
 
   @Override
+  public UInt256 getStorageValue(final Address address, final UInt256 slotKey) {
+    StorageSlotKey storageSlotKey =
+            new StorageSlotKey(hashAndSaveSlotPreImage(slotKey), Optional.of(slotKey));
+    return getStorageValueByStorageSlotKey(address, storageSlotKey).orElse(null);
+  }
+
+  @Override
   protected Optional<UInt256> getStorageValueByStorageSlotKey(
       final DiffBasedWorldState worldState,
       final Address address,

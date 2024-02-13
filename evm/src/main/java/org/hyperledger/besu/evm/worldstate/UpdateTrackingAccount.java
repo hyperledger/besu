@@ -239,20 +239,26 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     if (value != null) {
       return value;
     }
-    if (storageWasCleared) {
-      return UInt256.ZERO;
-    }
 
     // We haven't updated the key-value yet, so either it's a new account, and it doesn't have the
     // key, or we should query the underlying storage for its existing value (which might be 0).
-    return account == null ? UInt256.ZERO : account.getStorageValue(key);
+    if (account == null){
+      return null;
+    } else if (storageWasCleared) {
+      return UInt256.ZERO;
+    } else {
+      return account.getOriginalStorageValue(key);
+    }
+
   }
 
   @Override
   public UInt256 getOriginalStorageValue(final UInt256 key) {
     if (transactionBoundary) {
       return getStorageValue(key);
-    } else if (storageWasCleared || account == null) {
+    } else if (account == null){
+      return null;
+    } else if (storageWasCleared) {
       return UInt256.ZERO;
     } else {
       return account.getOriginalStorageValue(key);

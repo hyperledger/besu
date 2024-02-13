@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.gascalculator;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -65,11 +66,11 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
       final Supplier<UInt256> currentValue,
       final Supplier<UInt256> originalValue) {
 
-    final UInt256 localCurrentValue = currentValue.get();
+    final UInt256 localCurrentValue = Optional.ofNullable(currentValue.get()).orElse(UInt256.ZERO);
     if (localCurrentValue.equals(newValue)) {
       return SLOAD_GAS;
     } else {
-      final UInt256 localOriginalValue = originalValue.get();
+      final UInt256 localOriginalValue = Optional.ofNullable(originalValue.get()).orElse(UInt256.ZERO);
       if (localOriginalValue.equals(localCurrentValue)) {
         return localOriginalValue.isZero() ? SSTORE_SET_GAS : SSTORE_RESET_GAS;
       } else {
@@ -85,11 +86,12 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
       final Supplier<UInt256> currentValue,
       final Supplier<UInt256> originalValue) {
 
-    final UInt256 localCurrentValue = currentValue.get();
+
+    final UInt256 localCurrentValue = Optional.ofNullable(currentValue.get()).orElse(UInt256.ZERO);
     if (localCurrentValue.equals(newValue)) {
       return 0L;
     } else {
-      final UInt256 localOriginalValue = originalValue.get();
+      final UInt256 localOriginalValue = Optional.ofNullable(originalValue.get()).orElse(UInt256.ZERO);
       if (localOriginalValue.equals(localCurrentValue)) {
         if (localOriginalValue.isZero()) {
           return 0L;

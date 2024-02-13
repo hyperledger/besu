@@ -171,7 +171,7 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
     // charging the cost of writing to the storage
     if (!newValue.equals(currentValue.get())) {
       AccessWitness accessWitness = frame.getAccessWitness();
-      List<Integer> treeIndexes = accessWitness.getStorageSlotTreeIndexes(key);
+      List<UInt256> treeIndexes = accessWitness.getStorageSlotTreeIndexes(key);
       gasCost +=
           frame
               .getAccessWitness()
@@ -190,7 +190,7 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
   @Override
   public long getSloadOperationGasCost(final MessageFrame frame, final UInt256 key) {
     AccessWitness accessWitness = frame.getAccessWitness();
-    List<Integer> treeIndexes = accessWitness.getStorageSlotTreeIndexes(key);
+    List<UInt256> treeIndexes = accessWitness.getStorageSlotTreeIndexes(key);
     return clampedAdd(
         super.getSloadOperationGasCost(frame, key),
         frame
@@ -206,7 +206,7 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
         frame
             .getAccessWitness()
             .touchAddressOnWriteAndComputeGas(
-                frame.getContractAddress(), 0, BALANCE_LEAF_KEY.intValue()));
+                frame.getContractAddress(), UInt256.ZERO, BALANCE_LEAF_KEY));
   }
 
   @Override
@@ -216,7 +216,7 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
         frame
             .getAccessWitness()
             .touchAddressOnReadAndComputeGas(
-                frame.getContractAddress(), 0, CODE_KECCAK_LEAF_KEY.intValue()));
+                frame.getContractAddress(), UInt256.ZERO, CODE_KECCAK_LEAF_KEY));
   }
 
   @Override
@@ -233,14 +233,14 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
             frame
                 .getAccessWitness()
                 .touchAddressOnReadAndComputeGas(
-                    originatorAddress, 0, BALANCE_LEAF_KEY.intValue()));
+                    originatorAddress, UInt256.ZERO, BALANCE_LEAF_KEY));
     cost =
         clampedAdd(
             cost,
             frame
                 .getAccessWitness()
                 .touchAddressOnReadAndComputeGas(
-                    recipient.getAddress(), 0, BALANCE_LEAF_KEY.intValue()));
+                    recipient.getAddress(), UInt256.ZERO, BALANCE_LEAF_KEY));
     return cost;
   }
 }

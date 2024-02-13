@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.units.bigints.UInt256;
@@ -57,11 +58,11 @@ public class LondonGasCalculator extends BerlinGasCalculator {
       final Supplier<UInt256> currentValue,
       final Supplier<UInt256> originalValue) {
 
-    final UInt256 localCurrentValue = currentValue.get();
+    final UInt256 localCurrentValue = Optional.ofNullable(currentValue.get()).orElse(UInt256.ZERO);
     if (localCurrentValue.equals(newValue)) {
       return 0L;
     } else {
-      final UInt256 localOriginalValue = originalValue.get();
+      final UInt256 localOriginalValue = Optional.ofNullable(originalValue.get()).orElse(UInt256.ZERO);
       if (localOriginalValue.equals(localCurrentValue)) {
         if (localOriginalValue.isZero()) {
           return 0L;

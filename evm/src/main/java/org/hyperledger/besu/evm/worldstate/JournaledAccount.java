@@ -267,13 +267,16 @@ public class JournaledAccount implements MutableAccount, Undoable {
     if (value != null) {
       return value;
     }
-    if (storageWasCleared) {
-      return UInt256.ZERO;
-    }
 
     // We haven't updated the key-value yet, so either it's a new account, and it doesn't have the
     // key, or we should query the underlying storage for its existing value (which might be 0).
-    return account == null ? UInt256.ZERO : account.getStorageValue(key);
+    if(account==null){
+      return null;
+    } else if(storageWasCleared){
+      return UInt256.ZERO;
+    } else {
+      return account.getStorageValue(key);
+    }
   }
 
   @Override
@@ -281,7 +284,13 @@ public class JournaledAccount implements MutableAccount, Undoable {
     // if storage was cleared then it is because it was an empty account, hence zero storage
     // if we have no backing account, it's a new account, hence zero storage
     // otherwise ask outside of what we are journaling, journaled change may not be original value
-    return (storageWasCleared || account == null) ? UInt256.ZERO : account.getStorageValue(key);
+    if(account==null){
+      return null;
+    } else if(storageWasCleared){
+      return UInt256.ZERO;
+    } else {
+      return account.getStorageValue(key);
+    }
   }
 
   @Override
