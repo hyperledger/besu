@@ -164,12 +164,13 @@ public final class RunnerTest {
     final Path dataDirAhead = Files.createTempDirectory(temp, "db-ahead");
     final Path dbAhead = dataDirAhead.resolve("database");
     final int blockCount = 500;
-    final NodeKey aheadDbNodeKey = NodeKeyUtils.createFrom(KeyPairUtil.loadKeyPair(dbAhead));
+    final NodeKey aheadDbNodeKey = NodeKeyUtils.createFrom(KeyPairUtil.loadKeyPair(dataDirAhead));
     final NodeKey behindDbNodeKey = NodeKeyUtils.generate();
     final SynchronizerConfiguration syncConfigAhead =
         SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
     final ObservableMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
-
+    final var miningParameters = MiningParameters.newDefault();
+    final var dataStorageConfiguration = DataStorageConfiguration.DEFAULT_CONFIG;
     // Setup Runner with blocks
     final BesuController controllerAhead =
         getController(
@@ -177,7 +178,8 @@ public final class RunnerTest {
             syncConfigAhead,
             dataDirAhead,
             aheadDbNodeKey,
-            createKeyValueStorageProvider(dataDirAhead, dbAhead),
+            createKeyValueStorageProvider(
+                dataDirAhead, dbAhead, dataStorageConfiguration, miningParameters),
             noOpMetricsSystem);
     setupState(
         blockCount, controllerAhead.getProtocolSchedule(), controllerAhead.getProtocolContext());
@@ -376,7 +378,13 @@ public final class RunnerTest {
     return GenesisConfigFile.fromConfig(jsonNode);
   }
 
-  private StorageProvider createKeyValueStorageProvider(final Path dataDir, final Path dbDir) {
+  private StorageProvider createKeyValueStorageProvider(
+      final Path dataDir,
+      final Path dbDir,
+      final DataStorageConfiguration dataStorageConfiguration,
+      final MiningParameters miningParameters) {
+    final var besuConfiguration = new BesuConfigurationImpl();
+    besuConfiguration.init(dataDir, dbDir, dataStorageConfiguration, miningParameters);
     return new KeyValueStorageProviderBuilder()
         .withStorageFactory(
             new RocksDBKeyValueStorageFactory(
@@ -388,7 +396,7 @@ public final class RunnerTest {
                         DEFAULT_IS_HIGH_SPEC),
                 Arrays.asList(KeyValueSegmentIdentifier.values()),
                 RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
-        .withCommonConfiguration(new BesuConfigurationImpl(dataDir, dbDir))
+        .withCommonConfiguration(besuConfiguration)
         .withMetricsSystem(new NoOpMetricsSystem())
         .build();
   }

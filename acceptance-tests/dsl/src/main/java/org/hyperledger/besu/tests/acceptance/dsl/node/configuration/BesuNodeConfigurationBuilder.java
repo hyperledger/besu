@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
@@ -73,6 +74,8 @@ public class BesuNodeConfigurationBuilder {
   private MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private ApiConfiguration apiConfiguration = ImmutableApiConfiguration.builder().build();
+  private DataStorageConfiguration dataStorageConfiguration =
+      DataStorageConfiguration.DEFAULT_CONFIG;
   private String keyFilePath = null;
   private boolean devMode = true;
   private GenesisConfigurationProvider genesisConfigProvider = ignore -> Optional.empty();
@@ -506,6 +509,12 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder dataStorageConfiguration(
+      final DataStorageConfiguration dataStorageConfiguration) {
+    this.dataStorageConfiguration = dataStorageConfiguration;
+    return this;
+  }
+
   public BesuNodeConfiguration build() {
     return new BesuNodeConfiguration(
         name,
@@ -519,6 +528,7 @@ public class BesuNodeConfigurationBuilder {
         metricsConfiguration,
         permissioningConfiguration,
         apiConfiguration,
+        dataStorageConfiguration,
         Optional.ofNullable(keyFilePath),
         devMode,
         network,
