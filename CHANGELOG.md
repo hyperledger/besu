@@ -9,6 +9,7 @@
 - `--Xfilter-on-enr-fork-id` has been removed. To disable the feature use `--filter-on-enr-fork-id=false`.
 - `--engine-jwt-enabled` has been removed. Use `--engine-jwt-disabled` instead. [#6491](https://github.com/hyperledger/besu/pull/6491)
 - SNAP sync is now the default for named networks [#6530](https://github.com/hyperledger/besu/pull/6530)
+- `--Xbonsai-limit-trie-logs-enabled` is now enabled by default. If you do not want the limit enabled, you need to explicitly disable it using `--Xbonsai-limit-trie-logs-enabled=false` [#6561](https://github.com/hyperledger/besu/pull/6561)
 
 
 ### Deprecations
