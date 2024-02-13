@@ -49,7 +49,7 @@ public interface DataStorageConfiguration {
   @Value.Immutable
   interface Unstable {
 
-    boolean DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED = false;
+    boolean DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED = true;
     long MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
     int DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE = 30_000;
     boolean DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED = false;

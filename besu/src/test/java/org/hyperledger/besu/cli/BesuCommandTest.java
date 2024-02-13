@@ -1295,14 +1295,14 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void parsesValidBonsaiTrieLimitBackLayersOption() {
-    parseCommand("--data-storage-format", "BONSAI", "--bonsai-historical-block-limit", "11");
+    parseCommand("--data-storage-format", "BONSAI", "--bonsai-historical-block-limit", "1024");
     verify(mockControllerBuilder)
         .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
 
     final DataStorageConfiguration dataStorageConfiguration =
         dataStorageConfigurationArgumentCaptor.getValue();
     assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
-    assertThat(dataStorageConfiguration.getBonsaiMaxLayersToLoad()).isEqualTo(11);
+    assertThat(dataStorageConfiguration.getBonsaiMaxLayersToLoad()).isEqualTo(1024);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
