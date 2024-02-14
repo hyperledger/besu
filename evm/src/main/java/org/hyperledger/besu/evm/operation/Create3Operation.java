@@ -40,7 +40,7 @@ public class Create3Operation extends AbstractCreateOperation {
    * @param maxInitcodeSize Maximum init code size
    */
   public Create3Operation(final GasCalculator gasCalculator, final int maxInitcodeSize) {
-    super(0xEC, "CREATE3", 4, 1, gasCalculator, maxInitcodeSize);
+    super(0xEC, "CREATE3", 4, 1, gasCalculator, maxInitcodeSize, 1);
   }
 
   @Override
@@ -57,14 +57,6 @@ public class Create3Operation extends AbstractCreateOperation {
     final Address address = Address.extract(hash);
     frame.warmUpAddress(address);
     return address;
-  }
-
-  @Override
-  public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.getCode().getEofVersion() == 0) {
-      return InvalidOperation.INVALID_RESULT;
-    }
-    return super.execute(frame, evm);
   }
 
   @Override

@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.operations;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.evm.MainnetEVMs.DEV_NET_CHAIN_ID;
 import static org.hyperledger.besu.evm.frame.ExceptionalHaltReason.CODE_TOO_LARGE;
+import static org.hyperledger.besu.evm.frame.ExceptionalHaltReason.INVALID_OPERATION;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -81,7 +82,7 @@ public class Create2OperationTest {
               + "F3" // RETURN
           );
   public static final Bytes SIMPLE_EOF =
-      Bytes.fromHexString("0xEF00010100040200010001030000000000000000");
+      Bytes.fromHexString("0xEF00010100040200010001040000000080000000");
   public static final String SENDER = "0xdeadc0de00000000000000000000000000000000";
   private static final int SHANGHAI_CREATE_GAS = 41240 + (0xc000 / 32) * 6;
 
@@ -313,7 +314,7 @@ public class Create2OperationTest {
 
     final EVM evm = MainnetEVMs.cancun(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
     var result = operation.execute(messageFrame, evm);
-    assertThat(result.getHaltReason()).isNull();
+    assertThat(result.getHaltReason()).isEqualTo(INVALID_OPERATION);
     assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 

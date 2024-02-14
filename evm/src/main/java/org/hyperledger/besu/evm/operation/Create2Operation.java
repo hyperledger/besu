@@ -40,7 +40,7 @@ public class Create2Operation extends AbstractCreateOperation {
    * @param maxInitcodeSize Maximum init code size
    */
   public Create2Operation(final GasCalculator gasCalculator, final int maxInitcodeSize) {
-    super(0xF5, "CREATE2", 4, 1, gasCalculator, maxInitcodeSize);
+    super(0xF5, "CREATE2", 4, 1, gasCalculator, maxInitcodeSize, 0);
   }
 
   @Override

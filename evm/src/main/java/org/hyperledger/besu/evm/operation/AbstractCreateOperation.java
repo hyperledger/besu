@@ -40,8 +40,14 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   protected static final OperationResult UNDERFLOW_RESPONSE =
       new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
 
+  /** The constant UNDERFLOW_RESPONSE. */
+  protected static final OperationResult INVALID_OPERATION =
+      new OperationResult(0L, ExceptionalHaltReason.INVALID_OPERATION);
+
   /** The maximum init code size */
-  protected int maxInitcodeSize;
+  protected final int maxInitcodeSize;
+
+  protected final int eofVersion;
 
   /**
    * Instantiates a new Abstract create operation.
@@ -59,13 +65,19 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       final int stackItemsConsumed,
       final int stackItemsProduced,
       final GasCalculator gasCalculator,
-      final int maxInitcodeSize) {
+      final int maxInitcodeSize,
+      final int eofVersion) {
     super(opcode, name, stackItemsConsumed, stackItemsProduced, gasCalculator);
     this.maxInitcodeSize = maxInitcodeSize;
+    this.eofVersion = eofVersion;
   }
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    if (frame.getCode().getEofVersion() != eofVersion) {
+      return INVALID_OPERATION;
+    }
+
     // manual check because some reads won't come until the "complete" step.
     if (frame.stackSize() < getStackItemsConsumed()) {
       return UNDERFLOW_RESPONSE;

@@ -103,7 +103,7 @@ class AbstractCreateOperationTest {
      * @param maxInitcodeSize Maximum init code size
      */
     public FakeCreateOperation(final GasCalculator gasCalculator, final int maxInitcodeSize) {
-      super(0xEF, "FAKECREATE", 3, 1, gasCalculator, maxInitcodeSize);
+      super(0xEF, "FAKECREATE", 3, 1, gasCalculator, maxInitcodeSize, 0);
     }
 
     @Override
