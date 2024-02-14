@@ -18,8 +18,9 @@ package org.hyperledger.besu.evm.code;
 
 import org.hyperledger.besu.evm.Code;
 
+import javax.annotation.Nonnull;
+
 import org.apache.tuweni.bytes.Bytes;
-import org.jetbrains.annotations.NotNull;
 
 /** The Code factory. */
 public final class CodeFactory {
@@ -75,7 +76,7 @@ public final class CodeFactory {
     }
   }
 
-  @NotNull
+  @Nonnull
   static Code createCode(final EOFLayout layout) {
     if (!layout.isValid()) {
       return new CodeInvalid(layout.container(), "Invalid EOF Layout: " + layout.invalidReason());
