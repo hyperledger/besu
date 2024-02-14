@@ -38,7 +38,7 @@ public class RocksDbSubCommand implements Runnable {
 
   @SuppressWarnings("unused")
   @ParentCommand
-  private StorageSubCommand parentCommand;
+  private StorageSubCommand storageSubCommand;
 
   @SuppressWarnings("unused")
   @CommandLine.Spec
@@ -62,7 +62,7 @@ public class RocksDbSubCommand implements Runnable {
 
     @SuppressWarnings("unused")
     @ParentCommand
-    private RocksDbSubCommand parentCommand;
+    private RocksDbSubCommand rocksDbSubCommand;
 
     @Override
     public void run() {
@@ -70,9 +70,9 @@ public class RocksDbSubCommand implements Runnable {
       final PrintWriter out = spec.commandLine().getOut();
 
       final String dbPath =
-          parentCommand
-              .parentCommand
-              .parentCommand
+          rocksDbSubCommand
+              .storageSubCommand
+              .besuCommand
               .dataDir()
               .toString()
               .concat("/")
@@ -108,7 +108,7 @@ public class RocksDbSubCommand implements Runnable {
 
     @SuppressWarnings("unused")
     @ParentCommand
-    private RocksDbSubCommand parentCommand;
+    private RocksDbSubCommand rocksDbSubCommand;
 
     @Override
     public void run() {
@@ -116,9 +116,9 @@ public class RocksDbSubCommand implements Runnable {
       final PrintWriter out = spec.commandLine().getOut();
 
       final String dbPath =
-          parentCommand
-              .parentCommand
-              .parentCommand
+          rocksDbSubCommand
+              .storageSubCommand
+              .besuCommand
               .dataDir()
               .toString()
               .concat("/")
