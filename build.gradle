@@ -715,7 +715,8 @@ def dockerVariants = project.hasProperty("dockerVariants") ? project.getProperty
   "openjdk-17-debug",
   "openj9-jdk-17",
   "graalvm",
-  "openjdk-latest"
+  "openjdk-latest",
+  "openjdk-latest-debug"
 ]
 
 // rename the top level dir from besu-<version> to besu and this makes it really

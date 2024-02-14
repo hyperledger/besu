@@ -302,6 +302,10 @@ jobs:
           command: |
             docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
       - run:
+          name: hadoLint_openjdk_latest
+          command: |
+            docker run --rm -i hadolint/hadolint < docker/openjdk-latest-debug/Dockerfile
+      - run:
           name: hadoLint_graalvm
           command: |
             docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
