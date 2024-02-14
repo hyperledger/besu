@@ -83,6 +83,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
   public ValidationResult<TransactionInvalidReason> validate(
       final Transaction transaction,
       final Optional<Wei> baseFee,
+      final Optional<Wei> blobFee,
       final TransactionValidationParams transactionValidationParams) {
     final ValidationResult<TransactionInvalidReason> signatureResult =
         validateTransactionSignature(transaction);
@@ -128,17 +129,18 @@ public class MainnetTransactionValidator implements TransactionValidator {
               transaction.getPayload().size(), maxInitcodeSize));
     }
 
-    return validateCostAndFee(transaction, baseFee, transactionValidationParams);
+    return validateCostAndFee(transaction, baseFee, blobFee, transactionValidationParams);
   }
 
   private ValidationResult<TransactionInvalidReason> validateCostAndFee(
       final Transaction transaction,
       final Optional<Wei> maybeBaseFee,
+      final Optional<Wei> maybeBlobFee,
       final TransactionValidationParams transactionValidationParams) {
 
     if (maybeBaseFee.isPresent()) {
       final Wei price = feeMarket.getTransactionPriceCalculator().price(transaction, maybeBaseFee);
-      if (!transactionValidationParams.isAllowMaxFeeGasBelowBaseFee()
+      if (!transactionValidationParams.allowUnderpriced()
           && price.compareTo(maybeBaseFee.orElseThrow()) < 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE,
@@ -167,6 +169,19 @@ public class MainnetTransactionValidator implements TransactionValidator {
             String.format(
                 "total blob gas %d exceeds max blob gas per block %d",
                 txTotalBlobGas, gasLimitCalculator.currentBlobGasLimit()));
+      }
+      if (maybeBlobFee.isEmpty()) {
+        throw new IllegalArgumentException(
+            "blob fee must be provided from blocks containing blobs");
+      } else if (!transactionValidationParams.allowUnderpriced()
+          && maybeBlobFee.get().compareTo(transaction.getMaxFeePerBlobGas().get()) > 0) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE,
+            String.format(
+                "max fee per blob gas less than block blob gas fee: address %s blobGasFeeCap: %s, blobBaseFee: %s",
+                transaction.getSender().toHexString(),
+                transaction.getMaxFeePerBlobGas().get().toHumanReadableString(),
+                maybeBlobFee.get().toHumanReadableString()));
       }
     }
 
