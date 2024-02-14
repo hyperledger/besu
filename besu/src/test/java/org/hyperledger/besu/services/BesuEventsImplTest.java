@@ -137,7 +137,10 @@ public class BesuEventsImplTest {
         .thenReturn(mockTransactionValidatorFactory);
     lenient().when(mockProtocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0L));
     lenient()
-        .when(mockTransactionValidatorFactory.get().validate(any(), any(Optional.class), any()))
+        .when(
+            mockTransactionValidatorFactory
+                .get()
+                .validate(any(), any(Optional.class), any(Optional.class), any()))
         .thenReturn(ValidationResult.valid());
     lenient()
         .when(mockTransactionValidatorFactory.get().validateForSender(any(), any(), any()))
