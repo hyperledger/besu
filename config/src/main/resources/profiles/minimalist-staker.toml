@@ -1,4 +1,4 @@
 sync-mode="CHECKPOINT"
 data-storage-format="BONSAI"
-bonsai-historical-block-limit=128
+bonsai-historical-block-limit=512
 max-peers=25
