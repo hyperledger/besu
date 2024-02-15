@@ -26,7 +26,18 @@ import javax.annotation.Nullable;
 
 import org.apache.tuweni.bytes.Bytes;
 
-/** The EOF layout. */
+/**
+ * The EOF layout.
+ *
+ * @param container The literal EOF bytes fo the whole container
+ * @param version The parsed version id. zero if unparseable.
+ * @param codeSections The parsed Code sections. Null if invalid.
+ * @param containers The parsed subcontainers. Null if invalid.
+ * @param dataLength The length of the data as reported by the container. For subcontainers this may
+ *     be larger than the data in the data field. Zero if invalid.
+ * @param data The data hard coded in the container. Empty if invalid.
+ * @param invalidReason If the raw container is invalid, the reason it is invalid. Null if valid.
+ */
 public record EOFLayout(
     Bytes container,
     int version,

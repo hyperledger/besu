@@ -24,6 +24,9 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Dup operation. */
 public class SwapNOperation extends AbstractFixedCostOperation {
 
+  /** SWAPN Opcode 0xe7 */
+  public static final int OPCODE = 0xe7;
+
   /** The Swap operation success result. */
   static final OperationResult swapSuccess = new OperationResult(3, null);
 
@@ -33,7 +36,7 @@ public class SwapNOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public SwapNOperation(final GasCalculator gasCalculator) {
-    super(0xe7, "SWAPN", 0, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(OPCODE, "SWAPN", 0, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

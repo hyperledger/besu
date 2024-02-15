@@ -22,6 +22,9 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 /** The Dup operation. */
 public class DupNOperation extends AbstractFixedCostOperation {
 
+  /** DUPN Opcode 0xe6 */
+  public static final int OPCODE = 0xe6;
+
   /** The Dup success operation result. */
   static final OperationResult dupSuccess = new OperationResult(3, null);
 
@@ -31,7 +34,7 @@ public class DupNOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public DupNOperation(final GasCalculator gasCalculator) {
-    super(0xe6, "DUPN", 0, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(OPCODE, "DUPN", 0, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

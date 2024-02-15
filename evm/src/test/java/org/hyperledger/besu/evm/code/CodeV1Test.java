@@ -55,16 +55,18 @@ class CodeV1Test {
     for (int i : codeSectionSizes) {
       CodeSection[] codeSections = new CodeSection[i];
       Arrays.fill(codeSections, new CodeSection(1, 0, returning ? 0 : 0x80, 1, 1));
-      assertValidation(error, codeBytes, returning, codeSections);
+      EOFLayout testLayout =
+          new EOFLayout(codeBytes, 1, codeSections, new EOFLayout[0], 0, Bytes.EMPTY, error);
+      assertValidation(error, codeBytes, codeSections[0], testLayout);
     }
   }
 
   private static void assertValidation(
       final String error,
       final Bytes codeBytes,
-      final boolean returning,
-      final CodeSection... codeSections) {
-    final String validationError = validateCode(codeBytes, returning, codeSections);
+      final CodeSection thisCodeSection,
+      final EOFLayout eofLayout) {
+    final String validationError = validateCode(codeBytes, thisCodeSection, eofLayout);
     if (error == null) {
       assertThat(validationError).isNull();
     } else {
@@ -193,7 +195,7 @@ class CodeV1Test {
             IntStream.rangeClosed(0x0c, 0x0f),
             IntStream.of(0x1e, 0x1f),
             IntStream.rangeClosed(0x21, 0x2f),
-            IntStream.rangeClosed(0x49, 0x4f),
+            IntStream.rangeClosed(0x4b, 0x4f),
             IntStream.rangeClosed(0xa5, 0xaf),
             IntStream.rangeClosed(0xb0, 0xcf),
             IntStream.rangeClosed(0xd4, 0xdf),
@@ -374,9 +376,15 @@ class CodeV1Test {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"e3000100", "e3000200", "e3000000"})
+  @ValueSource(strings = {"e3000100", "e3000200"})
   void testCallFValid(final String code) {
-    assertValidation(null, code, false, 3);
+    var testContainer =
+        EOFLayout.parseEOF(
+            Bytes.fromHexString(
+                "ef000101000c0200030001000100010400000000800000000000000000000000e4e4"));
+
+    assertValidation(
+        null, Bytes.fromHexString(code), testContainer.getCodeSection(0), testContainer);
   }
 
   @ParameterizedTest

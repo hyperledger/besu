@@ -20,12 +20,15 @@ import static org.hyperledger.besu.evm.internal.Words.readBigEndianI16;
 import static org.hyperledger.besu.evm.internal.Words.readBigEndianU16;
 
 import org.hyperledger.besu.evm.operation.CallFOperation;
+import org.hyperledger.besu.evm.operation.DataLoadNOperation;
+import org.hyperledger.besu.evm.operation.DupNOperation;
 import org.hyperledger.besu.evm.operation.JumpFOperation;
 import org.hyperledger.besu.evm.operation.PushOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpVectorOperation;
 import org.hyperledger.besu.evm.operation.RetFOperation;
+import org.hyperledger.besu.evm.operation.SwapNOperation;
 
 import java.util.Arrays;
 import java.util.BitSet;
@@ -156,8 +159,8 @@ public final class CodeV1Validation {
     OpcodeInfo.validOpcode("CHAINID", 0x46, 0, 1, 1),
     OpcodeInfo.validOpcode("SELFBALANCE", 0x47, 0, 1, 1),
     OpcodeInfo.validOpcode("BASEFEE", 0x48, 0, 1, 1),
-    OpcodeInfo.unallocatedOpcode(0x49),
-    OpcodeInfo.unallocatedOpcode(0x4a),
+    OpcodeInfo.validOpcode("BLOBAHASH", 0x49, 1, 1, 1),
+    OpcodeInfo.validOpcode("BLOBBASEFEE", 0x4a, 0, 1, 1),
     OpcodeInfo.unallocatedOpcode(0x4b),
     OpcodeInfo.unallocatedOpcode(0x4c),
     OpcodeInfo.unallocatedOpcode(0x4d),
@@ -354,9 +357,7 @@ public final class CodeV1Validation {
     for (CodeSection cs : eofLayout.codeSections()) {
       var validation =
           CodeV1Validation.validateCode(
-              eofLayout.container().slice(cs.getEntryPoint(), cs.getLength()),
-              cs.isReturning(),
-              eofLayout.codeSections());
+              eofLayout.container().slice(cs.getEntryPoint(), cs.getLength()), cs, eofLayout);
       if (validation != null) {
         return validation;
       }
@@ -371,7 +372,7 @@ public final class CodeV1Validation {
    * @return null if valid, otherwise a string containing an error reason.
    */
   static String validateCode(
-      final Bytes code, final boolean returning, final CodeSection... codeSections) {
+      final Bytes code, final CodeSection thisCodeSection, final EOFLayout eofLayout) {
     final int size = code.size();
     final BitSet rjumpdests = new BitSet(size);
     final BitSet immediates = new BitSet(size);
@@ -388,67 +389,129 @@ public final class CodeV1Validation {
       }
       pos += 1;
       int pcPostInstruction = pos;
-      if (operationNum > PushOperation.PUSH_BASE && operationNum <= PushOperation.PUSH_MAX) {
-        final int multiByteDataLen = operationNum - PushOperation.PUSH_BASE;
-        pcPostInstruction += multiByteDataLen;
-      } else if (operationNum == RelativeJumpOperation.OPCODE
-          || operationNum == RelativeJumpIfOperation.OPCODE) {
-        if (pos + 2 > size) {
-          return "Truncated relative jump offset";
-        }
-        pcPostInstruction += 2;
-        final int offset = readBigEndianI16(pos, rawCode);
-        final int rjumpdest = pcPostInstruction + offset;
-        if (rjumpdest < 0 || rjumpdest >= size) {
-          return "Relative jump destination out of bounds";
-        }
-        rjumpdests.set(rjumpdest);
-      } else if (operationNum == RelativeJumpVectorOperation.OPCODE) {
-        pcPostInstruction += 1;
-        if (pcPostInstruction > size) {
-          return "Truncated jump table";
-        }
-        int jumpBasis = pcPostInstruction;
-        final int jumpTableSize = RelativeJumpVectorOperation.getVectorSize(code, pos);
-        pcPostInstruction += 2 * jumpTableSize;
-        if (pcPostInstruction > size) {
-          return "Truncated jump table";
-        }
-        for (int offsetPos = jumpBasis; offsetPos < pcPostInstruction; offsetPos += 2) {
-          final int offset = readBigEndianI16(offsetPos, rawCode);
+      switch (operationNum) {
+        case PushOperation.PUSH_BASE,
+            PushOperation.PUSH_BASE + 1,
+            PushOperation.PUSH_BASE + 2,
+            PushOperation.PUSH_BASE + 3,
+            PushOperation.PUSH_BASE + 4,
+            PushOperation.PUSH_BASE + 5,
+            PushOperation.PUSH_BASE + 6,
+            PushOperation.PUSH_BASE + 7,
+            PushOperation.PUSH_BASE + 8,
+            PushOperation.PUSH_BASE + 9,
+            PushOperation.PUSH_BASE + 10,
+            PushOperation.PUSH_BASE + 11,
+            PushOperation.PUSH_BASE + 12,
+            PushOperation.PUSH_BASE + 13,
+            PushOperation.PUSH_BASE + 14,
+            PushOperation.PUSH_BASE + 15,
+            PushOperation.PUSH_BASE + 16,
+            PushOperation.PUSH_BASE + 17,
+            PushOperation.PUSH_BASE + 18,
+            PushOperation.PUSH_BASE + 19,
+            PushOperation.PUSH_BASE + 20,
+            PushOperation.PUSH_BASE + 21,
+            PushOperation.PUSH_BASE + 22,
+            PushOperation.PUSH_BASE + 23,
+            PushOperation.PUSH_BASE + 24,
+            PushOperation.PUSH_BASE + 25,
+            PushOperation.PUSH_BASE + 26,
+            PushOperation.PUSH_BASE + 27,
+            PushOperation.PUSH_BASE + 28,
+            PushOperation.PUSH_BASE + 29,
+            PushOperation.PUSH_BASE + 30,
+            PushOperation.PUSH_BASE + 31,
+            PushOperation.PUSH_BASE + 32:
+          final int multiByteDataLen = operationNum - PushOperation.PUSH_BASE;
+          pcPostInstruction += multiByteDataLen;
+          break;
+        case DataLoadNOperation.OPCODE:
+          if (pos + 2 > size) {
+            return "Truncated DataLoadN offset";
+          }
+          pcPostInstruction += 2;
+          final int dataLoadOffset = readBigEndianU16(pos, rawCode);
+          // only verfy the last byte of the load is within the minimum data
+          if (dataLoadOffset > eofLayout.dataLength() - 32) {
+            return "DataLoadN loads data past minimum data length";
+          }
+          break;
+        case RelativeJumpOperation.OPCODE, RelativeJumpIfOperation.OPCODE:
+          if (pos + 2 > size) {
+            return "Truncated relative jump offset";
+          }
+          pcPostInstruction += 2;
+          final int offset = readBigEndianI16(pos, rawCode);
           final int rjumpdest = pcPostInstruction + offset;
           if (rjumpdest < 0 || rjumpdest >= size) {
             return "Relative jump destination out of bounds";
           }
           rjumpdests.set(rjumpdest);
-        }
-      } else if (operationNum == CallFOperation.OPCODE) {
-        if (pos + 2 > size) {
-          return "Truncated CALLF";
-        }
-        int section = readBigEndianU16(pos, rawCode);
-        if (section >= codeSections.length) {
-          return "CALLF to non-existent section - " + Integer.toHexString(section);
-        }
-        pcPostInstruction += 2;
-      } else if (operationNum == JumpFOperation.OPCODE) {
-        if (pos + 2 > size) {
-          return "Truncated JUMPF";
-        }
-        int section = readBigEndianU16(pos, rawCode);
-        if (section >= codeSections.length) {
-          return "JUMPF to non-existent section - " + Integer.toHexString(section);
-        }
-        hasReturningOpcode |= codeSections[section].isReturning();
-        pcPostInstruction += 2;
-      } else if (operationNum == RetFOperation.OPCODE) {
-        hasReturningOpcode = true;
+          break;
+        case RelativeJumpVectorOperation.OPCODE:
+          pcPostInstruction += 1;
+          if (pcPostInstruction > size) {
+            return "Truncated jump table";
+          }
+          int jumpBasis = pcPostInstruction;
+          final int jumpTableSize = RelativeJumpVectorOperation.getVectorSize(code, pos);
+          pcPostInstruction += 2 * jumpTableSize;
+          if (pcPostInstruction > size) {
+            return "Truncated jump table";
+          }
+          for (int offsetPos = jumpBasis; offsetPos < pcPostInstruction; offsetPos += 2) {
+            final int rjumpvOffset = readBigEndianI16(offsetPos, rawCode);
+            final int rjumpvDest = pcPostInstruction + rjumpvOffset;
+            if (rjumpvDest < 0 || rjumpvDest >= size) {
+              return "Relative jump destination out of bounds";
+            }
+            rjumpdests.set(rjumpvDest);
+          }
+          break;
+        case CallFOperation.OPCODE:
+          if (pos + 2 > size) {
+            return "Truncated CALLF";
+          }
+          int section = readBigEndianU16(pos, rawCode);
+          if (section >= eofLayout.getCodeSectionCount()) {
+            return "CALLF to non-existent section - " + Integer.toHexString(section);
+          }
+          if (!eofLayout.getCodeSection(section).returning) {
+            return "CALLF to non-returning section - " + Integer.toHexString(section);
+          }
+          pcPostInstruction += 2;
+          break;
+        case RetFOperation.OPCODE:
+          hasReturningOpcode = true;
+          break;
+        case JumpFOperation.OPCODE:
+          if (pos + 2 > size) {
+            return "Truncated JUMPF";
+          }
+          int targetSection = readBigEndianU16(pos, rawCode);
+          if (targetSection >= eofLayout.getCodeSectionCount()) {
+            return "JUMPF to non-existent section - " + Integer.toHexString(targetSection);
+          }
+          CodeSection targetCodeSection = eofLayout.getCodeSection(targetSection);
+          if (targetCodeSection.isReturning()
+              && thisCodeSection.getOutputs() < targetCodeSection.getOutputs()) {
+            return String.format(
+                "JUMPF targeting a returning code section %2x with more outputs %d than current section's outputs %d",
+                targetSection, targetCodeSection.getOutputs(), thisCodeSection.getOutputs());
+          }
+          hasReturningOpcode |= eofLayout.getCodeSection(targetSection).isReturning();
+          pcPostInstruction += 2;
+          break;
+        default:
+          // no validation operations
+          break;
       }
       immediates.set(pos, pcPostInstruction);
       pos = pcPostInstruction;
     }
-    if (returning != hasReturningOpcode) {
-      return returning
+    if (thisCodeSection.isReturning() != hasReturningOpcode) {
+      return thisCodeSection.isReturning()
           ? "No RETF or qualifying JUMPF"
           : "Non-returing section has RETF or JUMPF into returning section";
     }
@@ -534,6 +597,16 @@ public final class CodeV1Validation {
             stackInputs = codeSection.getInputs();
             stackOutputs = codeSection.getOutputs();
             sectionStackUsed = codeSection.getMaxStackHeight();
+          } else if (thisOp == DupNOperation.OPCODE) {
+            int depth = code[currentPC + 1] & 0xff;
+            stackInputs = depth + 1;
+            stackOutputs = depth + 2;
+            sectionStackUsed = 0;
+          } else if (thisOp == SwapNOperation.OPCODE) {
+            int depth = code[currentPC + 1] & 0xff;
+            stackInputs = depth + 2;
+            stackOutputs = depth + 2;
+            sectionStackUsed = 0;
           } else {
             stackInputs = opcodeInfo.inputs();
             stackOutputs = opcodeInfo.outputs();

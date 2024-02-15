@@ -162,7 +162,7 @@ class ContractCreationProcessorTest
             Collections.emptyList());
     final Bytes contractCode =
         Bytes.fromHexString(
-            "0xEF000101000C020003000b000200080400000000800002020100020180000260016002e30001e300020001e460005360106000f3");
+            "0xEF000101000C020003000a000200080400000000800002020100020180000260016002e30001e5000201e460005360106000f3");
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(100L);

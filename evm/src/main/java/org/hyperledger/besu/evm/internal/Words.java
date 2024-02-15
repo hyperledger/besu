@@ -204,7 +204,7 @@ public interface Words {
     if (index + 1 >= array.length) {
       throw new IndexOutOfBoundsException();
     }
-    return ((array[index] & 0xff) << 8) | (array[index + 1] & 0xff);
+    return ((array[index] << 8) & 0xff00) | (array[index + 1] & 0xff);
   }
 
   /**

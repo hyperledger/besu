@@ -24,13 +24,16 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Data load operation. */
 public class DataLoadNOperation extends AbstractFixedCostOperation {
 
+  /** The constant OPCODE. */
+  public static final int OPCODE = 0xd1;
+
   /**
    * Instantiates a new Data Load operation.
    *
    * @param gasCalculator the gas calculator
    */
   public DataLoadNOperation(final GasCalculator gasCalculator) {
-    super(0xd1, "DATALOADN", 0, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(OPCODE, "DATALOADN", 0, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override
