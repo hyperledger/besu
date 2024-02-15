@@ -60,8 +60,6 @@ jobs:
       statuses: write
       checks: write
       packages: read
-    needs:
-      - shouldRun
     if: ${{ needs.shouldRun.outputs.shouldRun == 'true' || github.event_name == 'workflow_dispatch' }}
     strategy:
       fail-fast: true
