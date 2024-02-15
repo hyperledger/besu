@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       shouldRun: ${{steps.shouldRun.outputs.result}}
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     steps:
       - name: required check
         id: shouldRun
