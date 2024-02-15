@@ -247,6 +247,7 @@ public class MessageFrame {
 
   /** The mark of the undoable collections at the creation of this message frame */
   private final long undoMark;
+
   private final AccessWitness accessWitness;
 
   /**
@@ -1705,6 +1706,7 @@ public class MessageFrame {
       this.accessWitness = accessWitness;
       return this;
     }
+
     private void validate() {
       if (parentMessageFrame == null) {
         checkState(worldUpdater != null, "Missing message frame world updater");

@@ -26,11 +26,11 @@ public interface AccessWitness {
 
   long touchAndChargeContractCreateCompleted(final Address address);
 
-  long touchAddressOnWriteAndComputeGas(Address address, int treeIndex, int subIndex);
+  long touchAddressOnWriteAndComputeGas(Address address, UInt256 treeIndex, UInt256 subIndex);
 
-  long touchAddressOnReadAndComputeGas(Address address, int treeIndex, int subIndex);
+  long touchAddressOnReadAndComputeGas(Address address, UInt256 treeIndex, UInt256 subIndex);
 
-  List<Integer> getStorageSlotTreeIndexes(UInt256 storageKey);
+  List<UInt256> getStorageSlotTreeIndexes(UInt256 storageKey);
 
   long touchCodeChunksUponContractCreation(Address address, long codeLength);
 }

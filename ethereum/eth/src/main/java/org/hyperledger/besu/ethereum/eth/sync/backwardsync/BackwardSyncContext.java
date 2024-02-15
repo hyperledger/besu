@@ -327,7 +327,7 @@ public class BackwardSyncContext {
           .setMessage("Block {} was validated, going to import it")
           .addArgument(block::toLogString)
           .log();
-      optResult.getYield().get().getWorldState().persist(block.getHeader());
+      // optResult.getYield().get().getWorldState().persist(block.getHeader());
       this.getProtocolContext()
           .getBlockchain()
           .appendBlock(block, optResult.getYield().get().getReceipts());

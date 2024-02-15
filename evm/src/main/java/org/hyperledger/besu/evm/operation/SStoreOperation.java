@@ -60,8 +60,6 @@ public class SStoreOperation extends AbstractOperation {
     return minimumGasRemaining;
   }
 
-
-
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
 

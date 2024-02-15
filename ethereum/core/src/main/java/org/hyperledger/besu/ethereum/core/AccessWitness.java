@@ -22,7 +22,7 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
   private static final long WITNESS_CHUNK_WRITE_COST = 500;
   private static final long WITNESS_CHUNK_FILL_COST = 6200;
 
-  private static final int zeroTreeIndex = 0;
+  private static final UInt256 zeroTreeIndex = UInt256.ZERO;
   private static final byte AccessWitnessReadFlag = 1;
   private static final byte AccessWitnessWriteFlag = 2;
   private final Map<BranchAccessKey, Byte> branches;
@@ -67,11 +67,11 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
   @Override
   public long touchAndChargeProofOfAbsence(final Address address) {
     long gas = 0;
-    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, 0);
-    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, 1);
-    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, 2);
-    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, 3);
-    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, 4);
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(0));
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(1));
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(2));
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(3));
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(4));
     return gas;
   }
 
@@ -80,8 +80,8 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
 
     long gas = 0;
 
-    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, 0);
-    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, 4);
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(0));
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(4));
 
     return gas;
   }
@@ -91,8 +91,8 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
 
     long gas = 0;
 
-    gas += touchAddressOnWriteAndComputeGas(caller, zeroTreeIndex, 1);
-    gas += touchAddressOnWriteAndComputeGas(target, zeroTreeIndex, 1);
+    gas += touchAddressOnWriteAndComputeGas(caller, zeroTreeIndex, UInt256.valueOf(1));
+    gas += touchAddressOnWriteAndComputeGas(target, zeroTreeIndex, UInt256.valueOf(1));
 
     return gas;
   }
@@ -103,12 +103,12 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
 
     long gas = 0;
 
-    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, 0);
-    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, 1);
-    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, 3);
+    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(0));
+    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(1));
+    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(3));
 
     if (createSendsValue) {
-      gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, 2);
+      gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(2));
     }
 
     return gas;
@@ -119,11 +119,11 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
 
     long gas = 0;
 
-    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, 0);
-    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, 1);
-    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, 2);
-    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, 3);
-    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, 4);
+    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(0));
+    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(1));
+    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(2));
+    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(3));
+    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(4));
 
     return gas;
   }
@@ -134,11 +134,11 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
 
     long gas = 0;
 
-    gas += touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, 0);
-    gas += touchAddressOnWriteAndComputeGas(origin, zeroTreeIndex, 1);
-    gas += touchAddressOnWriteAndComputeGas(origin, zeroTreeIndex, 2);
-    gas += touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, 3);
-    gas += touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, 4);
+    gas += touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, UInt256.valueOf(0));
+    gas += touchAddressOnWriteAndComputeGas(origin, zeroTreeIndex, UInt256.valueOf(1));
+    gas += touchAddressOnWriteAndComputeGas(origin, zeroTreeIndex, UInt256.valueOf(2));
+    gas += touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, UInt256.valueOf(3));
+    gas += touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, UInt256.valueOf(4));
     // modifying this after update on EIP-4762 to not charge simple transfers
 
     return 0;
@@ -150,15 +150,15 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
 
     long gas = 0;
 
-    gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, 0);
-    gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, 2);
-    gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, 4);
-    gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, 3);
+    gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, UInt256.valueOf(0));
+    gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, UInt256.valueOf(2));
+    gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, UInt256.valueOf(4));
+    gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, UInt256.valueOf(3));
 
     if (sendsValue) {
-      gas += touchAddressOnWriteAndComputeGas(target, zeroTreeIndex, 1);
+      gas += touchAddressOnWriteAndComputeGas(target, zeroTreeIndex, UInt256.valueOf(1));
     } else {
-      gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, 1);
+      gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, UInt256.valueOf(1));
     }
     // modifying this after update on EIP-4762 to not charge simple transfers
 
@@ -168,33 +168,36 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
   @Override
   public long touchCodeChunksUponContractCreation(final Address address, final long codeLength) {
     long gas = 0;
-    System.out.println("run touchCodeChunksUponContractCreation ? "+codeLength);
+    System.out.println("run touchCodeChunksUponContractCreation ? " + codeLength);
     for (long i = 0; i < (codeLength + 30) / 31; i++) {
-      System.out.println("run touchCodeChunksUponContractCreation ? "+i);
+      System.out.println("run touchCodeChunksUponContractCreation ? " + i);
       gas +=
           touchAddressOnWriteAndComputeGas(
               address,
-              CODE_OFFSET.subtract(i).divide(VERKLE_NODE_WIDTH).intValue(),
-              CODE_OFFSET.subtract(i).mod(VERKLE_NODE_WIDTH).intValue());
+              CODE_OFFSET.subtract(i).divide(VERKLE_NODE_WIDTH),
+              CODE_OFFSET.subtract(i).mod(VERKLE_NODE_WIDTH));
     }
     return gas;
   }
 
   @Override
   public long touchAddressOnWriteAndComputeGas(
-      final Address address, final int treeIndex, final int subIndex) {
+      final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
 
     return touchAddressAndChargeGas(address, treeIndex, subIndex, true);
   }
 
   @Override
   public long touchAddressOnReadAndComputeGas(
-      final Address address, final int treeIndex, final int subIndex) {
+      final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
     return touchAddressAndChargeGas(address, treeIndex, subIndex, false);
   }
 
   public long touchAddressAndChargeGas(
-      final Address address, final int treeIndex, final int subIndex, final boolean isWrite) {
+      final Address address,
+      final UInt256 treeIndex,
+      final UInt256 subIndex,
+      final boolean isWrite) {
     AccessEvents accessEvent = touchAddress(address, treeIndex, subIndex, isWrite);
 
     long gas = 0;
@@ -273,7 +276,7 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
   }
 
   public AccessEvents touchAddress(
-      final Address addr, final int treeIndex, final int subIndex, final boolean isWrite) {
+      final Address addr, final UInt256 treeIndex, final UInt256 subIndex, final boolean isWrite) {
     AccessEvents accessEvents = new AccessEvents();
     BranchAccessKey branchKey = new BranchAccessKey(addr, treeIndex);
 
@@ -338,17 +341,18 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
     return chunks;
   }
 
-  public record BranchAccessKey(Address address, int treeIndex) {}
+  public record BranchAccessKey(Address address, UInt256 treeIndex) {}
   ;
 
-  public record ChunkAccessKey(BranchAccessKey branchAccessKey, int chunkIndex) {
-    public ChunkAccessKey(final Address address, final int treeIndex, final int chunkIndex) {
+  public record ChunkAccessKey(BranchAccessKey branchAccessKey, UInt256 chunkIndex) {
+    public ChunkAccessKey(
+        final Address address, final UInt256 treeIndex, final UInt256 chunkIndex) {
       this(new BranchAccessKey(address, treeIndex), chunkIndex);
     }
   }
 
   @Override
-  public List<Integer> getStorageSlotTreeIndexes(final UInt256 storageKey) {
+  public List<UInt256> getStorageSlotTreeIndexes(final UInt256 storageKey) {
 
     UInt256 pos;
     if (storageKey.lessThan(CODE_OFFSET.subtract(HEADER_STORAGE_OFFSET))) {
@@ -356,6 +360,6 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
     } else {
       pos = MAIN_STORAGE_OFFSET.add(storageKey);
     }
-    return List.of(pos.divide(VERKLE_NODE_WIDTH).intValue(), pos.mod(VERKLE_NODE_WIDTH).intValue());
+    return List.of(pos.divide(VERKLE_NODE_WIDTH), pos.mod(VERKLE_NODE_WIDTH));
   }
 }
