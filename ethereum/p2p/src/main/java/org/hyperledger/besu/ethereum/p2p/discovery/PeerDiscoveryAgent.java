@@ -282,10 +282,13 @@ public abstract class PeerDiscoveryAgent {
   }
 
   protected void handleIncomingPacket(final Endpoint sourceEndpoint, final Packet packet) {
+    final String host = deriveHost(sourceEndpoint, packet);
+    
     final int udpPort =
         packet
             .getPacketData(PingPacketData.class)
             .flatMap(PingPacketData::getFrom)
+            .filter(endpoint -> endpoint.getHost().equals(host))
             .flatMap(Endpoint::getUdpPort)
             .orElseGet(sourceEndpoint::getUdpPort);
 
@@ -295,8 +298,6 @@ public abstract class PeerDiscoveryAgent {
             .flatMap(PingPacketData::getFrom)
             .flatMap(Endpoint::getTcpPort)
             .orElse(udpPort);
-
-    final String host = deriveHost(sourceEndpoint, packet);
 
     // Notify the peer controller.
     final DiscoveryPeer peer =
