@@ -89,6 +89,8 @@ jobs:
         #shame the test generation isn't less redundant, we used to do this in a dependent job, but artifact downloading broke
       - name: execute generate reference tests
         run: ./gradlew ethereum:referencetests:blockchainReferenceTests ethereum:referencetests:generalstateReferenceTests ethereum:referencetests:generalstateRegressionReferenceTests -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+      - name: count test files generated
+        run: find ethereum/referencetests/build/generated/sources/reference-test | wc
       - name: Split tests
         id: split-tests
         uses: r7kamura/split-tests-by-timings@9322bd292d9423e2bc5a65bec548901801341e3f
@@ -97,8 +99,14 @@ jobs:
           glob: 'ethereum/referencetests/build/generated/sources/reference-test/**/*.java'
           total: ${{env.total-runners}}
           index: ${{ matrix.runner_index }}
+      - name: echo test splits count
+        run: echo ${{ steps.split-tests.outputs.paths }} | wc
+      - name: echo test splits
+        run: echo ${{ steps.split-tests.outputs.paths }}
       - name: compose gradle args
         run: echo ${{ steps.split-tests.outputs.paths }} | sed -e 's/^.*java\///' -e 's@/@.@g' -e 's/\.java//' -e 's/^/--tests /' > refTestArgs.txt
+      - name: refTestArgs.txt
+        run: cat refTestArgs.txt
       - name: run reference tests
         run: ./gradlew ethereum:referenceTests:referenceTests `cat refTestArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Upload Test Report
