@@ -81,8 +81,6 @@ public class RocksDbHelper {
       out.println("Column Family: " + getNameById(cfHandle.getName()));
 
       final String prefix = "rocksdb.";
-      final String num_files_at_level_prefix = "num-files-at-level";
-      final String compression_ratio_at_level_prefix = "compression-ratio-at-level";
       final String cfstats = "cfstats";
       final String cfstats_no_file_histogram = "cfstats-no-file-histogram";
       final String cf_file_histogram = "cf-file-histogram";
@@ -140,8 +138,6 @@ public class RocksDbHelper {
       final String blob_cache_usage = "blob-cache-usage";
       final String blob_cache_pinned_usage = "blob-cache-pinned-usage";
       Stream.of(
-              num_files_at_level_prefix,
-              compression_ratio_at_level_prefix,
               cfstats,
               cfstats_no_file_histogram,
               cf_file_histogram,
@@ -206,7 +202,7 @@ public class RocksDbHelper {
                     out.println(prop + ": " + value);
                   }
                 } catch (RocksDBException e) {
-                  LOG.warn("couldn't get property {}", prop);
+                  LOG.debug("couldn't get property {}", prop);
                 }
               });
       out.println("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
