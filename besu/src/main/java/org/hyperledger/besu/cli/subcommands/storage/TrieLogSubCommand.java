@@ -78,7 +78,7 @@ public class TrieLogSubCommand implements Runnable {
   }
 
   private static BesuController createBesuController() {
-    return parentCommand.parentCommand.buildController();
+    return parentCommand.besuCommand.buildController();
   }
 
   @Command(
@@ -132,7 +132,7 @@ public class TrieLogSubCommand implements Runnable {
       final TrieLogContext context = getTrieLogContext();
       final Path dataDirectoryPath =
           Paths.get(
-              TrieLogSubCommand.parentCommand.parentCommand.dataDir().toAbsolutePath().toString());
+              TrieLogSubCommand.parentCommand.besuCommand.dataDir().toAbsolutePath().toString());
 
       LOG.info("Estimating trie logs size before pruning...");
       long sizeBefore = estimatedSizeOfTrieLogs();
@@ -167,7 +167,7 @@ public class TrieLogSubCommand implements Runnable {
     private long estimatedSizeOfTrieLogs() {
       final String dbPath =
           TrieLogSubCommand.parentCommand
-              .parentCommand
+              .besuCommand
               .dataDir()
               .toString()
               .concat("/")
@@ -180,9 +180,13 @@ public class TrieLogSubCommand implements Runnable {
             (rocksdb, cfHandle) -> {
               try {
                 if (Arrays.equals(cfHandle.getName(), TRIE_LOG_STORAGE.getId())) {
-                  estimatedSaving.set(
-                      Long.parseLong(
-                          rocksdb.getProperty(cfHandle, "rocksdb.estimate-live-data-size")));
+
+                  final long sstSize =
+                      Long.parseLong(rocksdb.getProperty(cfHandle, "rocksdb.total-sst-files-size"));
+                  final long blobSize =
+                      Long.parseLong(rocksdb.getProperty(cfHandle, "rocksdb.total-blob-file-size"));
+
+                  estimatedSaving.set(sstSize + blobSize);
                 }
               } catch (RocksDBException | NumberFormatException e) {
                 throw new RuntimeException(e);
@@ -233,7 +237,7 @@ public class TrieLogSubCommand implements Runnable {
         trieLogFilePath =
             Paths.get(
                 TrieLogSubCommand.parentCommand
-                    .parentCommand
+                    .besuCommand
                     .dataDir()
                     .resolve("trie-logs.bin")
                     .toAbsolutePath()
@@ -283,7 +287,7 @@ public class TrieLogSubCommand implements Runnable {
         trieLogFilePath =
             Paths.get(
                 TrieLogSubCommand.parentCommand
-                    .parentCommand
+                    .besuCommand
                     .dataDir()
                     .resolve("trie-logs.bin")
                     .toAbsolutePath()

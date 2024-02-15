@@ -80,7 +80,7 @@ public class RevertMetadataSubCommand implements Runnable {
     @Override
     public void run() {
 
-      final Path dataDir = parentCommand.parentCommand.parentCommand.dataDir();
+      final Path dataDir = parentCommand.parentCommand.besuCommand.dataDir();
 
       final File dbMetadata = dataDir.resolve(METADATA_FILENAME).toFile();
       if (!dbMetadata.exists()) {

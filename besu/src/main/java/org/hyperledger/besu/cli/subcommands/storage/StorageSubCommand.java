@@ -58,7 +58,7 @@ public class StorageSubCommand implements Runnable {
 
   @SuppressWarnings("unused")
   @ParentCommand
-  BesuCommand parentCommand;
+  BesuCommand besuCommand;
 
   @SuppressWarnings("unused")
   @Spec
@@ -105,8 +105,8 @@ public class StorageSubCommand implements Runnable {
 
     private StorageProvider getStorageProvider() {
       // init collection of ignorable segments
-      parentCommand.parentCommand.setIgnorableStorageSegments();
-      return parentCommand.parentCommand.getStorageProvider();
+      parentCommand.besuCommand.setIgnorableStorageSegments();
+      return parentCommand.besuCommand.getStorageProvider();
     }
 
     private void revert(final StorageProvider storageProvider) {
