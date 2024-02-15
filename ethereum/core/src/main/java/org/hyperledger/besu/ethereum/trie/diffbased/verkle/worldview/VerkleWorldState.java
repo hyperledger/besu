@@ -205,6 +205,30 @@ public class VerkleWorldState extends DiffBasedWorldState {
         }
       }
     }
+    // TODO REMOVE THAT for next testnet (added because of a geth issue on block 4810)
+    if (worldStateUpdater
+        .getAccountsToUpdate()
+        .containsKey(Address.fromHexString("0xb0aed5c6f925e9ed9385fd99ff2edfeedf320c6e"))) {
+      System.out.println("0xb0aed5c6f925e9ed9385fd99ff2edfeedf320c6e");
+      for (int i = 0; i < 256; i++) {
+        System.out.println(
+            "add "
+                + Bytes.concatenate(
+                    Bytes.fromHexString(
+                        "0x3f9de34a8715d3f6926ccb600f552ae879338f664d3e2e5d3471436ae2e40d"),
+                    Bytes.of(i))
+                + " "
+                + Bytes.fromHexString(
+                    "0x0000000000000000000000000000000000000000000000000000000000000000"));
+        stateTrie.put(
+            Bytes.concatenate(
+                Bytes.fromHexString(
+                    "0x3f9de34a8715d3f6926ccb600f552ae879338f664d3e2e5d3471436ae2e40d"),
+                Bytes.of(i)),
+            Bytes.fromHexString(
+                "0x0000000000000000000000000000000000000000000000000000000000000000"));
+      }
+    }
   }
 
   private void updateCode(
