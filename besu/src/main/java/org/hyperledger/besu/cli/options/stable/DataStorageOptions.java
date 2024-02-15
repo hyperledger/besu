@@ -66,8 +66,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
 
   /** The unstable options for data storage. */
   public static class Unstable {
-    private static final String BONSAI_LIMIT_TRIE_LOGS_ENABLED =
-        "--Xbonsai-limit-trie-logs-enabled";
+    private static final String BONSAI_LIMIT_TRIE_LOGS_ENABLED = "--bonsai-limit-trie-logs-enabled";
 
     /** The bonsai trie logs pruning window size. */
     public static final String BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE =
@@ -76,6 +75,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     @CommandLine.Option(
         hidden = true,
         names = {BONSAI_LIMIT_TRIE_LOGS_ENABLED, "--Xbonsai-trie-log-pruning-enabled"},
+        fallbackValue = "true",
         description =
             "Limit the number of trie logs that are retained. (default: ${DEFAULT-VALUE})")
     private boolean bonsaiLimitTrieLogsEnabled = DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;

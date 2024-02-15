@@ -303,7 +303,7 @@ class TrieLogHelperTest {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
-            .bonsaiMaxLayersToLoad(511L)
+            .bonsaiMaxLayersToLoad(127L)
             .unstable(
                 ImmutableDataStorageConfiguration.Unstable.builder()
                     .bonsaiLimitTrieLogsEnabled(true)
@@ -315,7 +315,7 @@ class TrieLogHelperTest {
             () ->
                 helper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
         .isInstanceOf(RuntimeException.class)
-        .hasMessage("--bonsai-historical-block-limit minimum value is 512");
+        .hasMessage("--bonsai-historical-block-limit minimum value is 128");
   }
 
   @Test

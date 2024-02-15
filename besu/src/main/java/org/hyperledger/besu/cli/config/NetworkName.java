@@ -43,17 +43,17 @@ public enum NetworkName {
 
   private final String genesisFile;
   private final BigInteger networkId;
-  private final boolean canFastSync;
+  private final boolean canSnapSync;
   private final String deprecationDate;
 
   NetworkName(final String genesisFile, final BigInteger networkId) {
     this(genesisFile, networkId, true);
   }
 
-  NetworkName(final String genesisFile, final BigInteger networkId, final boolean canFastSync) {
+  NetworkName(final String genesisFile, final BigInteger networkId, final boolean canSnapSync) {
     this.genesisFile = genesisFile;
     this.networkId = networkId;
-    this.canFastSync = canFastSync;
+    this.canSnapSync = canSnapSync;
     // no deprecations planned
     this.deprecationDate = null;
   }
@@ -77,12 +77,12 @@ public enum NetworkName {
   }
 
   /**
-   * Can fast sync boolean.
+   * Can SNAP sync boolean.
    *
    * @return the boolean
    */
-  public boolean canFastSync() {
-    return canFastSync;
+  public boolean canSnapSync() {
+    return canSnapSync;
   }
 
   /**
