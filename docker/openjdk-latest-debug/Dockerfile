@@ -3,7 +3,7 @@ FROM ubuntu:23.10
 ARG VERSION="dev"
 
 RUN apt-get update && \
- apt-get install --no-install-recommends -q --assume-yes curl=7* openjdk-21-jre-headless=21* libjemalloc-dev=5.* adduser=3* && \
+ apt-get install --no-install-recommends -q --assume-yes curl=8* wget=1.21* jq=1.6* net-tools=2.10* openjdk-21-jre-headless=21* libjemalloc-dev=5.* adduser=3* && \
  apt-get clean  && \
  rm -rf /var/lib/apt/lists/*  && \
  # Ubuntu 23.10 comes with an "ubuntu" user with uid 1000. We need 1000 for besu.
@@ -19,19 +19,29 @@ WORKDIR /opt/besu
 COPY --chown=besu:besu besu /opt/besu/
 
 # Expose services ports
+# 5005 JDWP for attaching remote debuggers
 # 8545 HTTP JSON-RPC
 # 8546 WS JSON-RPC
 # 8547 HTTP GraphQL
 # 8550 HTTP ENGINE JSON-RPC
 # 8551 WS ENGINE JSON-RPC
+# 9545 Metrics
+# 1098 JMX / JMX-RMI
 # 30303 P2P
-EXPOSE 8545 8546 8547 8550 8551 30303
+EXPOSE 5005 8545 8546 8547 8550 8551 9545 1098 30303
 
 # defaults for host interfaces
 ENV BESU_RPC_HTTP_HOST 0.0.0.0
 ENV BESU_RPC_WS_HOST 0.0.0.0
 ENV BESU_GRAPHQL_HTTP_HOST 0.0.0.0
+ENV BESU_METRICS_HOST 0.0.0.0
+ENV BESU_JMX_HOST 0.0.0.0
 ENV BESU_PID_PATH "/tmp/pid"
+
+#debug options for maximum observability
+ENV BESU_LOGGING "INFO"
+ENV JDWP_OPTS "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+ENV JAVA_OPTS "${JDWP_OPTS} "
 
 ENV OTEL_RESOURCE_ATTRIBUTES="service.name=besu,service.version=$VERSION"
 
