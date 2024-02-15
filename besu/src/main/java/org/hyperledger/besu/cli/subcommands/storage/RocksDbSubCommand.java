@@ -96,7 +96,7 @@ public class RocksDbSubCommand implements Runnable {
   }
 
   @Command(
-      name = "stats",
+      name = "x-stats",
       description = "Print rocksdb stats",
       mixinStandardHelpOptions = true,
       versionProvider = VersionProvider.class)
