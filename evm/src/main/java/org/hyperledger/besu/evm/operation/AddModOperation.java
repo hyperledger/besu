@@ -34,7 +34,7 @@ public class AddModOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public AddModOperation(final GasCalculator gasCalculator) {
-    super(0x08, "ADDMOD", 3, 1, gasCalculator, gasCalculator.getMidTierGasCost());
+    super(OpCode.ADDMOD.getOpcodeNumber(), OpCode.ADDMOD.getOpcodeName(), 3, 1, gasCalculator, gasCalculator.getMidTierGasCost());
   }
 
   @Override

@@ -46,6 +46,7 @@ import java.util.stream.Stream;
 import com.google.common.collect.Streams;
 import com.google.common.util.concurrent.Atomics;
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.evm.operation.OpCode;
 
 public class FlatTraceGenerator {
 
@@ -534,9 +535,9 @@ public class FlatTraceGenerator {
       if (i + 1 < transactionTrace.getTraceFrames().size()) {
         final TraceFrame next = transactionTrace.getTraceFrames().get(i + 1);
         if (next.getDepth() == callFrame.getDepth()) {
-          if (next.getOpcodeNumber() == 0xFD) { // REVERT opCode
+          if (next.getOpcodeNumber() == OpCode.REVERT.getOpcodeNumber()) { // REVERT opCode
             return true;
-          } else if (next.getOpcodeNumber() == 0xF3) { // RETURN opCode
+          } else if (next.getOpcodeNumber() == OpCode.RETURN.getOpcodeNumber()) { // RETURN opCode
             return false;
           }
         }
