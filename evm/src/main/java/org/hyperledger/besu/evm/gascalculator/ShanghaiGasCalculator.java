@@ -232,7 +232,7 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
                 .getAccessWitness()
                 .touchAddressOnReadAndComputeGas(
                     originatorAddress, UInt256.ZERO, BALANCE_LEAF_KEY));
-    if ((recipient != null && !recipient.isEmpty()) || inheritance.isZero()) {
+    if (recipient != null) {
       cost =
           clampedAdd(
               cost,

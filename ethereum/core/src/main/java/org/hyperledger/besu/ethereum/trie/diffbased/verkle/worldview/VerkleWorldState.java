@@ -41,6 +41,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -151,6 +152,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
     for (final Map.Entry<Address, DiffBasedValue<VerkleAccount>> accountUpdate :
         worldStateUpdater.getAccountsToUpdate().entrySet()) {
       final Address accountKey = accountUpdate.getKey();
+      System.out.println("account "+accountKey+" "+verkleTrieKeyValueGenerator.generateKeysForAccount(accountKey).get(0));
       final DiffBasedValue<VerkleAccount> bonsaiValue = accountUpdate.getValue();
       if (!bonsaiValue.isUnchanged()) {
         final VerkleAccount priorAccount = bonsaiValue.getPrior();
@@ -205,30 +207,29 @@ public class VerkleWorldState extends DiffBasedWorldState {
         }
       }
     }
-    // TODO REMOVE THAT for next testnet (added because of a geth issue on block 4810)
-    if (worldStateUpdater
-        .getAccountsToUpdate()
-        .containsKey(Address.fromHexString("0xb0aed5c6f925e9ed9385fd99ff2edfeedf320c6e"))) {
-      System.out.println("0xb0aed5c6f925e9ed9385fd99ff2edfeedf320c6e");
-      for (int i = 0; i < 256; i++) {
-        System.out.println(
-            "add "
-                + Bytes.concatenate(
-                    Bytes.fromHexString(
-                        "0x3f9de34a8715d3f6926ccb600f552ae879338f664d3e2e5d3471436ae2e40d"),
-                    Bytes.of(i))
-                + " "
-                + Bytes.fromHexString(
-                    "0x0000000000000000000000000000000000000000000000000000000000000000"));
-        stateTrie.put(
-            Bytes.concatenate(
-                Bytes.fromHexString(
-                    "0x3f9de34a8715d3f6926ccb600f552ae879338f664d3e2e5d3471436ae2e40d"),
-                Bytes.of(i)),
-            Bytes.fromHexString(
-                "0x0000000000000000000000000000000000000000000000000000000000000000"));
+    // TODO REMOVE THAT for next testnet (added because of a geth issue on block 4810, 5077)
+    List<Address> buggyAccount = List.of(Address.fromHexString("0xb0aed5c6f925e9ed9385fd99ff2edfeedf320c6e"),
+            Address.fromHexString("0x1edff765b26b0e1dc6fb41ac6638ed2a9437ec23"));
+
+    buggyAccount.forEach(address -> {
+      if (worldStateUpdater
+              .getAccountsToUpdate().containsKey(address)) {
+        System.out.println("fix "+address);
+        for (int i = 0; i < 256; i++) {
+          final Bytes stem = verkleTrieKeyValueGenerator.generateKeysForAccount(address).get(0).slice(0,31);
+          System.out.println("add "+Bytes.concatenate(
+                  stem,
+                  Bytes.of(i))+" 0x0000000000000000000000000000000000000000000000000000000000000000");
+          stateTrie.put(
+                  Bytes.concatenate(
+                          stem,
+                          Bytes.of(i)),
+                  Bytes.fromHexString(
+                          "0x0000000000000000000000000000000000000000000000000000000000000000"));
+        }
       }
-    }
+    });
+
   }
 
   private void updateCode(
