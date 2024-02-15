@@ -160,7 +160,11 @@ public abstract class PeerDiscoveryAgent {
           .thenApply(
               (InetSocketAddress localAddress) -> {
                 // Once listener is set up, finish initializing
-                final int discoveryPort = localAddress.getPort();
+                final int discoveryPort = natService
+                  .getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP)
+                  .map(NatPortMapping::getExternalPort)
+                  .orElseGet(localAddress::getPort);
+
                 final DiscoveryPeer ourNode =
                     DiscoveryPeer.fromEnode(
                         EnodeURLImpl.builder()
@@ -278,7 +282,13 @@ public abstract class PeerDiscoveryAgent {
   }
 
   protected void handleIncomingPacket(final Endpoint sourceEndpoint, final Packet packet) {
-    final int udpPort = sourceEndpoint.getUdpPort();
+    final int udpPort =
+        packet
+            .getPacketData(PingPacketData.class)
+            .flatMap(PingPacketData::getFrom)
+            .flatMap(Endpoint::getUdpPort)
+            .orElseGet(sourceEndpoint::getUdpPort);
+
     final int tcpPort =
         packet
             .getPacketData(PingPacketData.class)
