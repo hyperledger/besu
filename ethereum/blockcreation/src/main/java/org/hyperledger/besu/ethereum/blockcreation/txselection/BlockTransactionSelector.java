@@ -422,7 +422,7 @@ public class BlockTransactionSelector {
     final var pendingTransaction = evaluationContext.getPendingTransaction();
 
     final TransactionSelectionResult actualResult =
-        isTimeout.get() && !wasTimeout(selectionResult)
+        isTimeout.get() && !wasTimeoutAlreadyProcessed(selectionResult)
             ? transactionTookTooLong(evaluationContext)
                 ? TX_EVALUATION_TOO_LONG
                 : BLOCK_SELECTION_TIMEOUT
@@ -442,7 +442,7 @@ public class BlockTransactionSelector {
     return actualResult;
   }
 
-  private boolean wasTimeout(final TransactionSelectionResult selectionResult) {
+  private boolean wasTimeoutAlreadyProcessed(final TransactionSelectionResult selectionResult) {
     return selectionResult.equals(TX_EVALUATION_TOO_LONG)
         || selectionResult.equals(BLOCK_SELECTION_TIMEOUT);
   }
