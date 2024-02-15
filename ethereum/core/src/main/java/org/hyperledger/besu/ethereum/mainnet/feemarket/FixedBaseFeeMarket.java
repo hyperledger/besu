@@ -15,14 +15,13 @@
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 
 import java.util.Optional;
 
 public class FixedBaseFeeMarket extends LondonFeeMarket {
 
-  public FixedBaseFeeMarket(final long londonForkBlockNumber) {
-    super(londonForkBlockNumber, TransactionPoolOptions.TX_POOL_MIN_GAS_PRICE);
+  public FixedBaseFeeMarket(final long londonForkBlockNumber, Wei fixedBaseFee) {
+    super(londonForkBlockNumber, Optional.of(fixedBaseFee));
   }
 
   @Override
@@ -32,11 +31,11 @@ public class FixedBaseFeeMarket extends LondonFeeMarket {
       final long parentBlockGasUsed,
       final long targetGasUsed) {
 
-    return TransactionPoolOptions.TX_POOL_MIN_GAS_PRICE;
+    return baseFeeInitialValue;
   }
 
   @Override
   public ValidationMode baseFeeValidationMode(final long blockNumber) {
-    return ValidationMode.INITIAL;
+    return ValidationMode.NONE;
   }
 }

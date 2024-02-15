@@ -18,20 +18,10 @@ import org.hyperledger.besu.datatypes.Wei;
 
 import java.util.Optional;
 
-public class ZeroBaseFeeMarket extends LondonFeeMarket {
+public class ZeroBaseFeeMarket extends FixedBaseFeeMarket {
 
   public ZeroBaseFeeMarket(final long londonForkBlockNumber) {
-    super(londonForkBlockNumber, Optional.of(Wei.ZERO));
-  }
-
-  @Override
-  public Wei computeBaseFee(
-      final long blockNumber,
-      final Wei parentBaseFee,
-      final long parentBlockGasUsed,
-      final long targetGasUsed) {
-
-    return Wei.ZERO;
+    super(londonForkBlockNumber, Wei.ZERO);
   }
 
   @Override
