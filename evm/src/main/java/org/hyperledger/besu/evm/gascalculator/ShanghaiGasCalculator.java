@@ -232,13 +232,15 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
                 .getAccessWitness()
                 .touchAddressOnReadAndComputeGas(
                     originatorAddress, UInt256.ZERO, BALANCE_LEAF_KEY));
-    cost =
-        clampedAdd(
-            cost,
-            frame
-                .getAccessWitness()
-                .touchAddressOnReadAndComputeGas(
-                    recipient.getAddress(), UInt256.ZERO, BALANCE_LEAF_KEY));
+    if ((recipient != null && !recipient.isEmpty()) || inheritance.isZero()) {
+      cost =
+          clampedAdd(
+              cost,
+              frame
+                  .getAccessWitness()
+                  .touchAddressOnReadAndComputeGas(
+                      recipient.getAddress(), UInt256.ZERO, BALANCE_LEAF_KEY));
+    }
     return cost;
   }
 }
