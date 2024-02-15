@@ -35,6 +35,7 @@ public interface TransactionValidator {
   ValidationResult<TransactionInvalidReason> validate(
       Transaction transaction,
       Optional<Wei> baseFee,
+      Optional<Wei> blobBaseFee,
       TransactionValidationParams transactionValidationParams);
 
   /**
