@@ -35,7 +35,7 @@ public class LondonFeeMarket implements BaseFeeMarket {
 
   private static final Wei DEFAULT_BASEFEE_FLOOR = Wei.of(7L);
 
-  private final Wei baseFeeInitialValue;
+  protected final Wei baseFeeInitialValue;
   private final long londonForkBlockNumber;
   private final TransactionPriceCalculator txPriceCalculator;
   private final Wei baseFeeFloor;
