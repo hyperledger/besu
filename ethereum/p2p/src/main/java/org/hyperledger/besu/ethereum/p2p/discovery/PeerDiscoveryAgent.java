@@ -36,6 +36,9 @@ import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.nat.core.domain.NatPortMapping;
+import org.hyperledger.besu.nat.core.domain.NatServiceType;
+import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.NetworkUtility;
@@ -160,10 +163,11 @@ public abstract class PeerDiscoveryAgent {
           .thenApply(
               (InetSocketAddress localAddress) -> {
                 // Once listener is set up, finish initializing
-                final int discoveryPort = natService
-                  .getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP)
-                  .map(NatPortMapping::getExternalPort)
-                  .orElseGet(localAddress::getPort);
+                final int discoveryPort =
+                    natService
+                        .getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP)
+                        .map(NatPortMapping::getExternalPort)
+                        .orElseGet(localAddress::getPort);
 
                 final DiscoveryPeer ourNode =
                     DiscoveryPeer.fromEnode(
@@ -283,13 +287,13 @@ public abstract class PeerDiscoveryAgent {
 
   protected void handleIncomingPacket(final Endpoint sourceEndpoint, final Packet packet) {
     final String host = deriveHost(sourceEndpoint, packet);
-    
+
     final int udpPort =
         packet
             .getPacketData(PingPacketData.class)
             .flatMap(PingPacketData::getFrom)
             .filter(endpoint -> endpoint.getHost().equals(host))
-            .flatMap(Endpoint::getUdpPort)
+            .map(Endpoint::getUdpPort)
             .orElseGet(sourceEndpoint::getUdpPort);
 
     final int tcpPort =
