@@ -28,7 +28,8 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
-import org.hyperledger.besu.evm.operation.OpCode;
+import org.hyperledger.besu.evm.operation.ReturnOperation;
+import org.hyperledger.besu.evm.operation.RevertOperation;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -535,9 +536,9 @@ public class FlatTraceGenerator {
       if (i + 1 < transactionTrace.getTraceFrames().size()) {
         final TraceFrame next = transactionTrace.getTraceFrames().get(i + 1);
         if (next.getDepth() == callFrame.getDepth()) {
-          if (next.getOpcodeNumber() == OpCode.REVERT.getOpcodeNumber()) { // REVERT opCode
+          if (next.getOpcodeNumber() == RevertOperation.OPCODE) {
             return true;
-          } else if (next.getOpcodeNumber() == OpCode.RETURN.getOpcodeNumber()) { // RETURN opCode
+          } else if (next.getOpcodeNumber() == ReturnOperation.OPCODE) {
             return false;
           }
         }
