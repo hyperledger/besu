@@ -19,6 +19,8 @@ import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import org.hyperledger.besu.cli.util.VersionProvider;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rocksdb.RocksDBException;
 import picocli.CommandLine;
@@ -31,12 +33,12 @@ import picocli.CommandLine.ParentCommand;
     description = "Print RocksDB information",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class,
-    subcommands = {RocksDbSubCommand.RocksDbUsage.class})
+    subcommands = {RocksDbSubCommand.RocksDbUsage.class, RocksDbSubCommand.RocksDbStats.class})
 public class RocksDbSubCommand implements Runnable {
 
   @SuppressWarnings("unused")
   @ParentCommand
-  private StorageSubCommand parentCommand;
+  private StorageSubCommand storageSubCommand;
 
   @SuppressWarnings("unused")
   @CommandLine.Spec
@@ -60,7 +62,7 @@ public class RocksDbSubCommand implements Runnable {
 
     @SuppressWarnings("unused")
     @ParentCommand
-    private RocksDbSubCommand parentCommand;
+    private RocksDbSubCommand rocksDbSubCommand;
 
     @Override
     public void run() {
@@ -68,9 +70,9 @@ public class RocksDbSubCommand implements Runnable {
       final PrintWriter out = spec.commandLine().getOut();
 
       final String dbPath =
-          parentCommand
-              .parentCommand
-              .parentCommand
+          rocksDbSubCommand
+              .storageSubCommand
+              .besuCommand
               .dataDir()
               .toString()
               .concat("/")
@@ -78,11 +80,56 @@ public class RocksDbSubCommand implements Runnable {
 
       RocksDbHelper.printTableHeader(out);
 
+      final List<RocksDbHelper.ColumnFamilyUsage> columnFamilyUsages = new ArrayList<>();
       RocksDbHelper.forEachColumnFamily(
           dbPath,
           (rocksdb, cfHandle) -> {
             try {
-              RocksDbHelper.printUsageForColumnFamily(rocksdb, cfHandle, out);
+              columnFamilyUsages.add(
+                  RocksDbHelper.getAndPrintUsageForColumnFamily(rocksdb, cfHandle, out));
+            } catch (RocksDBException e) {
+              throw new RuntimeException(e);
+            }
+          });
+      RocksDbHelper.printTotals(out, columnFamilyUsages);
+    }
+  }
+
+  @Command(
+      name = "x-stats",
+      description = "Print rocksdb stats",
+      mixinStandardHelpOptions = true,
+      versionProvider = VersionProvider.class)
+  static class RocksDbStats implements Runnable {
+
+    @SuppressWarnings("unused")
+    @CommandLine.Spec
+    private CommandLine.Model.CommandSpec spec;
+
+    @SuppressWarnings("unused")
+    @ParentCommand
+    private RocksDbSubCommand rocksDbSubCommand;
+
+    @Override
+    public void run() {
+
+      final PrintWriter out = spec.commandLine().getOut();
+
+      final String dbPath =
+          rocksDbSubCommand
+              .storageSubCommand
+              .besuCommand
+              .dataDir()
+              .toString()
+              .concat("/")
+              .concat(DATABASE_PATH);
+
+      out.println("Column Family Stats...");
+      RocksDbHelper.forEachColumnFamily(
+          dbPath,
+          (rocksdb, cfHandle) -> {
+            try {
+              RocksDbHelper.printStatsForColumnFamily(rocksdb, cfHandle, out);
             } catch (RocksDBException e) {
               throw new RuntimeException(e);
             }
