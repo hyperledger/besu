@@ -270,6 +270,7 @@ public class RocksDbHelper {
         formatOutputSize(totalSize),
         formatOutputSize(totalSsts),
         formatOutputSize(totalBlobs));
+    printSeparator(out);
   }
 
   private static boolean isPopulatedColumnFamily(final long size, final long numberOfKeys) {
@@ -301,6 +302,7 @@ public class RocksDbHelper {
   }
 
   static void printTableHeader(final PrintWriter out) {
+    printSeparator(out);
     out.format(
         "| Column Family                  | Keys            | Total Size  | SST Files Size  | Blob Files Size  | \n");
     printSeparator(out);
