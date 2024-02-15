@@ -4,6 +4,11 @@ import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_OFF
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.HEADER_STORAGE_OFFSET;
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.MAIN_STORAGE_OFFSET;
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.VERKLE_NODE_WIDTH;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.VERSION_LEAF_KEY;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.BALANCE_LEAF_KEY;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.NONCE_LEAF_KEY;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_KECCAK_LEAF_KEY;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_SIZE_LEAF_KEY;
 
 import org.hyperledger.besu.datatypes.Address;
 
@@ -67,11 +72,11 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
   @Override
   public long touchAndChargeProofOfAbsence(final Address address) {
     long gas = 0;
-    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(0));
-    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(1));
-    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(2));
-    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(3));
-    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(4));
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, VERSION_LEAF_KEY);
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, BALANCE_LEAF_KEY);
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, NONCE_LEAF_KEY);
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, CODE_KECCAK_LEAF_KEY);
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, CODE_SIZE_LEAF_KEY);
     return gas;
   }
 
@@ -80,8 +85,8 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
 
     long gas = 0;
 
-    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(0));
-    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(4));
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, VERSION_LEAF_KEY);
+    gas += touchAddressOnReadAndComputeGas(address, zeroTreeIndex, CODE_SIZE_LEAF_KEY);
 
     return gas;
   }
@@ -91,8 +96,8 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
 
     long gas = 0;
 
-    gas += touchAddressOnWriteAndComputeGas(caller, zeroTreeIndex, UInt256.valueOf(1));
-    gas += touchAddressOnWriteAndComputeGas(target, zeroTreeIndex, UInt256.valueOf(1));
+    gas += touchAddressOnWriteAndComputeGas(caller, zeroTreeIndex, BALANCE_LEAF_KEY);
+    gas += touchAddressOnWriteAndComputeGas(target, zeroTreeIndex, BALANCE_LEAF_KEY);
 
     return gas;
   }
@@ -103,12 +108,11 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
 
     long gas = 0;
 
-    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(0));
-    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(1));
-    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(3));
+    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, VERSION_LEAF_KEY);
+    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, NONCE_LEAF_KEY);
 
     if (createSendsValue) {
-      gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(2));
+      gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, BALANCE_LEAF_KEY);
     }
 
     return gas;
@@ -119,11 +123,11 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
 
     long gas = 0;
 
-    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(0));
-    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(1));
-    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(2));
-    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(3));
-    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, UInt256.valueOf(4));
+    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, VERSION_LEAF_KEY);
+    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, BALANCE_LEAF_KEY);
+    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, NONCE_LEAF_KEY);
+    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, CODE_KECCAK_LEAF_KEY);
+    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, CODE_SIZE_LEAF_KEY);
 
     return gas;
   }
@@ -134,11 +138,11 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
 
     long gas = 0;
 
-    gas += touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, UInt256.valueOf(0));
-    gas += touchAddressOnWriteAndComputeGas(origin, zeroTreeIndex, UInt256.valueOf(1));
-    gas += touchAddressOnWriteAndComputeGas(origin, zeroTreeIndex, UInt256.valueOf(2));
-    gas += touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, UInt256.valueOf(3));
-    gas += touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, UInt256.valueOf(4));
+    gas += touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, VERSION_LEAF_KEY);
+    gas += touchAddressOnWriteAndComputeGas(origin, zeroTreeIndex, BALANCE_LEAF_KEY);
+    gas += touchAddressOnWriteAndComputeGas(origin, zeroTreeIndex, NONCE_LEAF_KEY);
+    gas += touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, CODE_KECCAK_LEAF_KEY);
+    gas += touchAddressOnReadAndComputeGas(origin, zeroTreeIndex, CODE_SIZE_LEAF_KEY);
     // modifying this after update on EIP-4762 to not charge simple transfers
 
     return 0;
@@ -150,15 +154,15 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
 
     long gas = 0;
 
-    gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, UInt256.valueOf(0));
-    gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, UInt256.valueOf(2));
-    gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, UInt256.valueOf(4));
-    gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, UInt256.valueOf(3));
+    gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, VERSION_LEAF_KEY);
+    gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, NONCE_LEAF_KEY);
+    gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, CODE_SIZE_LEAF_KEY);
+    gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, CODE_KECCAK_LEAF_KEY);
 
     if (sendsValue) {
-      gas += touchAddressOnWriteAndComputeGas(target, zeroTreeIndex, UInt256.valueOf(1));
+      gas += touchAddressOnWriteAndComputeGas(target, zeroTreeIndex, BALANCE_LEAF_KEY);
     } else {
-      gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, UInt256.valueOf(1));
+      gas += touchAddressOnReadAndComputeGas(target, zeroTreeIndex, BALANCE_LEAF_KEY);
     }
     // modifying this after update on EIP-4762 to not charge simple transfers
 
