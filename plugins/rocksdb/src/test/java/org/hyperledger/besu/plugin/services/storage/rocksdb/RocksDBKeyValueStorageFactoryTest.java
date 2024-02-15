@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
@@ -152,8 +153,8 @@ public class RocksDBKeyValueStorageFactoryTest {
   public void shouldThrowExceptionWhenExistingDatabaseVersionDifferentFromConfig()
       throws Exception {
 
-    final int actualDatabaseVersion = 1;
-    final int expectedDatabaseVersion = 2;
+    final int actualDatabaseVersion = DataStorageFormat.FOREST.getDatabaseVersion();
+    final int expectedDatabaseVersion = DataStorageFormat.BONSAI.getDatabaseVersion();
 
     final Path tempDataDir = temporaryFolder.resolve("data");
     final Path tempDatabaseDir = temporaryFolder.resolve("db");
@@ -163,6 +164,16 @@ public class RocksDBKeyValueStorageFactoryTest {
     when(commonConfiguration.getDatabaseVersion()).thenReturn(expectedDatabaseVersion);
 
     new DatabaseMetadata(actualDatabaseVersion).writeToDirectory(tempDataDir);
+
+    String exceptionMessage =
+        String.format(
+            "Mismatch: DB at %s is %s (Version %s) but config expects %s (Version %s). Please check your config.",
+            tempDataDir.toAbsolutePath(),
+            DataStorageFormat.getName(actualDatabaseVersion),
+            actualDatabaseVersion,
+            DataStorageFormat.getName(expectedDatabaseVersion),
+            expectedDatabaseVersion);
+
     assertThatThrownBy(
             () ->
                 new RocksDBKeyValueStorageFactory(
@@ -171,10 +182,7 @@ public class RocksDBKeyValueStorageFactoryTest {
                         RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS)
                     .create(segment, commonConfiguration, metricsSystem))
         .isInstanceOf(StorageException.class)
-        .hasMessage(
-            String.format(
-                "Mismatch detected: Database at %s is version '%s', but configuration expects version '%s'.",
-                tempDataDir.toAbsolutePath(), actualDatabaseVersion, expectedDatabaseVersion));
+        .hasMessage(exceptionMessage);
   }
 
   @Test
