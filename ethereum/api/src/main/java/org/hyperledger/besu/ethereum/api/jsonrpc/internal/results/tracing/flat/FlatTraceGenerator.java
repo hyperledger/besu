@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.operation.OpCode;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -46,7 +47,6 @@ import java.util.stream.Stream;
 import com.google.common.collect.Streams;
 import com.google.common.util.concurrent.Atomics;
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.evm.operation.OpCode;
 
 public class FlatTraceGenerator {
 
