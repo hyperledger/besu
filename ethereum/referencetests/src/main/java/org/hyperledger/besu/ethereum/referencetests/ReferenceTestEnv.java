@@ -17,7 +17,7 @@
 package org.hyperledger.besu.ethereum.referencetests;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+import static org.hyperledger.besu.evm.internal.Words.decodeUnsignedLong;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
@@ -139,7 +139,7 @@ public class ReferenceTestEnv extends BlockHeader {
         number == null ? 0 : Long.decode(number),
         gasLimit == null ? 15_000_000L : Long.decode(gasLimit),
         0L,
-        timestamp == null ? 0L : clampedToLong(Bytes.fromHexString(timestamp)),
+        timestamp == null ? 0L : decodeUnsignedLong(timestamp),
         Bytes.EMPTY,
         Optional.ofNullable(baseFee).map(Wei::fromHexString).orElse(null),
         Optional.ofNullable(random).map(Difficulty::fromHexString).orElse(Difficulty.ZERO),
