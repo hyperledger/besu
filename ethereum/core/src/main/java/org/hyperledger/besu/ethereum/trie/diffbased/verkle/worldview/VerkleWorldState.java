@@ -215,7 +215,9 @@ public class VerkleWorldState extends DiffBasedWorldState {
             Address.fromHexString("0x00000000000000000000000000000000000075d0"),
             Address.fromHexString("0x0000000000000000000000000000000000002186"),
             Address.fromHexString("0x00000000000000000000000000000000000075d0"),
-            Address.fromHexString("0xac95f84c87CAB6df30723Be1b444AA73EfD1dD59"));
+            Address.fromHexString("0xac95f84c87CAB6df30723Be1b444AA73EfD1dD59"),
+            Address.fromHexString("0x251e2e004f6A5a51Ff7d94Fe1CA82BbfC6D83F24")
+    );
 
     buggyAccount.forEach(address -> {
       if (worldStateUpdater
