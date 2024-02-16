@@ -1,6 +1,5 @@
 name: reference-tests
 on:
-  workflow_dispatch:
   pull_request_target:
     branches:
       - main
@@ -10,7 +9,7 @@ on:
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
-  total-runners: 6
+  total-runners: 10
 
 jobs:
   shouldRun:
@@ -20,7 +19,6 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       shouldRun: ${{steps.shouldRun.outputs.result}}
-    if: ${{ github.event_name != 'workflow_dispatch' }}
     steps:
       - name: required check
         id: shouldRun
@@ -60,11 +58,13 @@ jobs:
       statuses: write
       checks: write
       packages: read
-    if: ${{ needs.shouldRun.outputs.shouldRun == 'true' || github.event_name == 'workflow_dispatch' }}
+    needs:
+      - shouldRun
+    if: ${{ needs.shouldRun.outputs.shouldRun == 'true' }}
     strategy:
       fail-fast: true
       matrix:
-        runner_index: [1,2,3,4,5,6]
+        runner_index: [1,2,3,4,5,6,7,8,9,10]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -77,7 +77,7 @@ jobs:
           distribution: adopt-openj9
           java-version: 17
       - name: setup gradle
-        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         #shame the test generation isn't less redundant, we used to do this in a dependent job, but artifact downloading broke
       - name: execute generate reference tests
         run: ./gradlew ethereum:referencetests:blockchainReferenceTests ethereum:referencetests:generalstateReferenceTests ethereum:referencetests:generalstateRegressionReferenceTests -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
