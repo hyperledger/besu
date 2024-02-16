@@ -193,7 +193,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
             transferValue,
             recipient,
             to,
-            true);
+            true); // we want the "warmed price" as we will charge for warming ourselves
     return clampedAdd(
         baseCost, accountIsWarm ? getWarmStorageReadCost() : getColdAccountAccessCost());
   }
