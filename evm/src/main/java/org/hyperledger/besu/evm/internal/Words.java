@@ -16,6 +16,8 @@ package org.hyperledger.besu.evm.internal;
 
 import org.hyperledger.besu.datatypes.Address;
 
+import java.math.BigInteger;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -212,5 +214,24 @@ public interface Words {
         (byte) (value >>> 16),
         (byte) (value >>> 8),
         (byte) value);
+  }
+
+  static long decodeUnsignedLong(final String number) {
+    String parsable = number;
+    int radix = 10;
+    if (number.startsWith("0x")) {
+      radix = 16;
+      parsable = number.substring(2);
+    } else if (!number.matches("\\d+")) {
+      // presume naked hex
+      radix = 16;
+    }
+
+    BigInteger bi = new BigInteger(parsable, radix);
+    if (bi.bitCount() > 64) {
+      throw new NumberFormatException("Number larger than uint64");
+    }
+
+    return bi.longValue();
   }
 }

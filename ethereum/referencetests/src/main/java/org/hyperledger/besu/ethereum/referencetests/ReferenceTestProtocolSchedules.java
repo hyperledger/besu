@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -78,6 +79,8 @@ public class ReferenceTestProtocolSchedules {
         "ShanghaiToCancunAtTime15k",
         createSchedule(genesisStub.clone().shanghaiTime(0).cancunTime(15000)));
     builder.put("Cancun", createSchedule(genesisStub.clone().cancunTime(0)));
+    // also load KZG file for mainnet
+    KZGPointEvalPrecompiledContract.init();
     builder.put("Prague", createSchedule(genesisStub.clone().pragueTime(0)));
     builder.put("Future_EIPs", createSchedule(genesisStub.clone().futureEipsTime(0)));
     builder.put("Experimental_EIPs", createSchedule(genesisStub.clone().experimentalEipsTime(0)));
