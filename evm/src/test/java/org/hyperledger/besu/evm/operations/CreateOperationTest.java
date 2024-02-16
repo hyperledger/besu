@@ -43,10 +43,10 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 class CreateOperationTest {
@@ -271,7 +271,7 @@ class CreateOperationTest {
     assertThat(messageFrame.getState()).isEqualTo(MessageFrame.State.CODE_SUSPENDED);
   }
 
-  @NotNull
+  @Nonnull
   private MessageFrame testMemoryFrame(
       final UInt256 memoryOffset,
       final UInt256 memoryLength,

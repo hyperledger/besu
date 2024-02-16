@@ -182,8 +182,6 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.SNAP);
     assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(5);
 
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }

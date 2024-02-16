@@ -27,6 +27,7 @@ import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
@@ -126,6 +127,9 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     startNewRound(0);
 
     final QbftRound qbftRound = currentRound.get();
+
+    logValidatorChanges(qbftRound);
+
     // mining will be checked against round 0 as the current round is initialised to 0 above
     final boolean isProposer =
         finalState.isLocalNodeProposerForRound(qbftRound.getRoundIdentifier());
@@ -139,6 +143,30 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
             "Block timer expired for a round ({}) other than current ({})",
             roundIdentifier,
             qbftRound.getRoundIdentifier());
+      }
+    }
+  }
+
+  /**
+   * If the list of validators for the next block to be proposed/imported has changed from the
+   * previous block, log the change. Only log for round 0 (i.e. once per block).
+   *
+   * @param qbftRound The current round
+   */
+  private void logValidatorChanges(final QbftRound qbftRound) {
+    if (qbftRound.getRoundIdentifier().getRoundNumber() == 0) {
+      final Collection<Address> previousValidators =
+          MessageValidatorFactory.getValidatorsForBlock(qbftRound.protocolContext, parentHeader);
+      final Collection<Address> validatorsForHeight =
+          MessageValidatorFactory.getValidatorsAfterBlock(qbftRound.protocolContext, parentHeader);
+      if (!(validatorsForHeight.containsAll(previousValidators))
+          || !(previousValidators.containsAll(validatorsForHeight))) {
+        LOG.info(
+            "Validator list change. Previous chain height {}: {}. Current chain height {}: {}.",
+            parentHeader.getNumber(),
+            previousValidators,
+            parentHeader.getNumber() + 1,
+            validatorsForHeight);
       }
     }
   }
