@@ -209,7 +209,8 @@ public class VerkleWorldState extends DiffBasedWorldState {
     }
     // TODO REMOVE THAT for next testnet (added because of a geth issue on block 4810, 5077)
     List<Address> buggyAccount = List.of(Address.fromHexString("0xb0aed5c6f925e9ed9385fd99ff2edfeedf320c6e"),
-            Address.fromHexString("0x1edff765b26b0e1dc6fb41ac6638ed2a9437ec23"));
+            Address.fromHexString("0x1edff765b26b0e1dc6fb41ac6638ed2a9437ec23"),
+            Address.fromHexString("0x00000000000000000000000000000000000013D5"));
 
     buggyAccount.forEach(address -> {
       if (worldStateUpdater
