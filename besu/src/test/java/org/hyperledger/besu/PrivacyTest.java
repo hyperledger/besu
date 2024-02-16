@@ -99,7 +99,7 @@ public class PrivacyTest {
       throws IOException, URISyntaxException {
     final Path dbDir = Files.createTempDirectory(dataDir, "database");
     final var miningParameters = MiningParameters.newDefault();
-    final var dataStorageConfiguration = DataStorageConfiguration.DEFAULT_CONFIG;
+    final var dataStorageConfiguration = DataStorageConfiguration.DEFAULT_FOREST_CONFIG;
     final PrivacyParameters privacyParameters =
         new PrivacyParameters.Builder()
             .setEnabled(true)

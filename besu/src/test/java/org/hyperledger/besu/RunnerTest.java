@@ -170,7 +170,7 @@ public final class RunnerTest {
         SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
     final ObservableMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
     final var miningParameters = MiningParameters.newDefault();
-    final var dataStorageConfiguration = DataStorageConfiguration.DEFAULT_CONFIG;
+    final var dataStorageConfiguration = DataStorageConfiguration.DEFAULT_FOREST_CONFIG;
     // Setup Runner with blocks
     final BesuController controllerAhead =
         getController(
