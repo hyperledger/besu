@@ -395,7 +395,6 @@ public class TransactionPool implements BlockAddedObserver {
 
     final FeeMarket feeMarket =
         protocolSchedule.getByBlockHeader(chainHeadBlockHeader).getFeeMarket();
-
     final TransactionInvalidReason priceInvalidReason =
         validatePrice(transaction, isLocal, hasPriority, feeMarket);
     if (priceInvalidReason != null) {
@@ -407,6 +406,9 @@ public class TransactionPool implements BlockAddedObserver {
             .validate(
                 transaction,
                 chainHeadBlockHeader.getBaseFee(),
+                Optional.of(
+                    Wei.ZERO), // TransactionValidationParams.transactionPool() allows underpriced
+                // txs
                 TransactionValidationParams.transactionPool());
     if (!basicValidationResult.isValid()) {
       return new ValidationResultAndAccount(basicValidationResult);
