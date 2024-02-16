@@ -229,7 +229,7 @@ public interface Words {
 
     BigInteger bi = new BigInteger(parsable, radix);
     if (bi.bitCount() > 64) {
-      throw new NumberFormatException("Nuber larger than uint64");
+      throw new NumberFormatException("Number larger than uint64");
     }
 
     return bi.longValue();
