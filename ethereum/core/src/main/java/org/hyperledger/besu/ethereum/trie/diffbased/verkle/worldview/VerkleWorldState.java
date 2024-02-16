@@ -216,7 +216,24 @@ public class VerkleWorldState extends DiffBasedWorldState {
             Address.fromHexString("0x0000000000000000000000000000000000002186"),
             Address.fromHexString("0x00000000000000000000000000000000000075d0"),
             Address.fromHexString("0xac95f84c87CAB6df30723Be1b444AA73EfD1dD59"),
-            Address.fromHexString("0x251e2e004f6A5a51Ff7d94Fe1CA82BbfC6D83F24")
+            Address.fromHexString("0x251e2e004f6A5a51Ff7d94Fe1CA82BbfC6D83F24"),
+            Address.fromHexString("0x000000000000007FA9e5180307ab5e58b9A24017"),
+            Address.fromHexString("0x3c8c8eC65c807b2069f9FDF4A57f62F0550F4ce7"),
+            Address.fromHexString("0x0000000000000000000000000000007fB611D00f"),
+            Address.fromHexString("0x44ddb66BCCe917dcc89EBD8492bAB0c6Bc7Aa5c5"),
+            Address.fromHexString("0x6a1016B7f451507e2fDF29a606F9A57cF951a654"),
+            Address.fromHexString("0x725A6700E74A1f20B3C8ad1E1904632F3edfE918"),
+            Address.fromHexString("0x0000000000000000000000000000000001C9C380"),
+            Address.fromHexString("0xF96a43A69749f5EB775182Ba0c1cae4b1F73DC8e"),
+            Address.fromHexString("0x0000000000000000000000000000000012603860"),
+            Address.fromHexString("0x0000000000007fb5f5Ce380FC7bfaC33E960F51E"),
+            Address.fromHexString("0xE0ba885415A3a0F80beFC1056C67c0DF9782bD3F"),
+            Address.fromHexString("0x5104d40be1670225465EE2f7f14EB79a8959b7d6"),
+            Address.fromHexString("0x00000000000Ba2CBf0AFD59c3fA851BF08ae17f8"),
+            Address.fromHexString("0x3c97716fDD4b191d6f3924C0b0dbb2018656718e"),
+            Address.fromHexString("0x000000e8963d6000593e596000208055817f8382"),
+            Address.fromHexString("0x61553D6000593e5960002080552A7FF584A448f8"),
+            Address.fromHexString("0xf6A918f73c9f0cb90456582153A2B5bd3FF675d4")
     );
 
     buggyAccount.forEach(address -> {
