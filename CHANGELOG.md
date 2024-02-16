@@ -3,15 +3,17 @@
 ## 24.2.0-SNAPSHOT
 
 ### Breaking Changes
+- SNAP - Snap sync is now the default for named networks [#6530](https://github.com/hyperledger/besu/pull/6530)
+  - if you want to use the previous default behavior, you'll need to specify `--sync-mode=FAST`
+- BONSAI - Default data storage format is now Bonsai [#6536](https://github.com/hyperledger/besu/pull/6536)
+  - if you had previously used the default (FOREST), at startup you will get an error indicating the mismatch
+    `Mismatch: DB at '/your-path' is BONSAI (Version 2) but config expects FOREST (Version 1). Please check your config.`
+  - to fix this mismatch, specify the format explicitly using `--data-storage-format=FOREST`
 - Following the OpenMetrics convention, the updated Prometheus client adds the `_total` suffix to every metrics of type counter, with the effect that some existing metrics have been renamed to have this suffix. If you are using the official Besu Grafana dashboard [(available here)](https://grafana.com/grafana/dashboards/16455-besu-full/), just update it to the latest revision, that accepts the old and the new name of the affected metrics. If you have a custom dashboard or use the metrics in other ways, then you need to manually update it to support the new naming.
 - The `trace-filter` method in JSON-RPC API now has a default block range limit of 1000, adjustable with `--rpc-max-trace-filter-range` (thanks @alyokaz) [#6446](https://github.com/hyperledger/besu/pull/6446)
 - Requesting the Ethereum Node Record (ENR) to acquire the fork id from bonded peers is now enabled by default, so the following change has been made [#5628](https://github.com/hyperledger/besu/pull/5628):
 - `--Xfilter-on-enr-fork-id` has been removed. To disable the feature use `--filter-on-enr-fork-id=false`.
 - `--engine-jwt-enabled` has been removed. Use `--engine-jwt-disabled` instead. [#6491](https://github.com/hyperledger/besu/pull/6491)
-- `--data-storage-format` Default data storage format is now Bonsai [#6536](https://github.com/hyperledger/besu/pull/6536)
-  - if you had previously used the default (FOREST), at startup you will get an error indicating the mismatch
-      `Mismatch: DB at '/path' is BONSAI (Version 2) but config expects FOREST (Version 1). Please check your config.`
-  - to fix this mismatch, specify the format explicitly using `--data-storage-format=FOREST`
 
 ### Deprecations
 - X_SNAP and X_CHECKPOINT are marked for deprecation and will be removed in 24.4.0 in favor of SNAP and CHECKPOINT [#6405](https://github.com/hyperledger/besu/pull/6405)
