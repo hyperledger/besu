@@ -93,7 +93,8 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
     if (payloadAttributes.getParentBeaconBlockRoot() == null) {
       LOG.error(
           "Parent beacon block root hash not present in payload attributes after cancun hardfork");
-      return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PAYLOAD_ATTRIBUTES));
+      return Optional.of(
+          new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PAYLOAD_ATTRIBUTES));
     } else if (payloadAttributes.getTimestamp() < cancun.get().milestone()) {
       return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.UNSUPPORTED_FORK));
     } else {
