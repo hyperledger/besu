@@ -78,6 +78,7 @@ jobs:
           - "ethereum:api:testBonsai"
           - "ethereum:api:testForest"
           - "ethereum:api:testRemainder"
+          - "ethereum:eth:test"
           - "ethereum:core:test"
     steps:
       - name: Checkout Repo
