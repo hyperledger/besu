@@ -131,7 +131,8 @@ public class BesuControllerBuilderTest {
     when(synchronizerConfiguration.getBlockPropagationRange()).thenReturn(Range.closed(1L, 2L));
 
     lenient()
-        .when(storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG))
+        .when(
+            storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_FOREST_CONFIG))
         .thenReturn(worldStateStorage);
     lenient()
         .when(storageProvider.createWorldStatePreimageStorage())

@@ -49,7 +49,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
       description =
           "Format to store trie data in.  Either FOREST or BONSAI (default: ${DEFAULT-VALUE}).",
       arity = "1")
-  private DataStorageFormat dataStorageFormat = DataStorageFormat.FOREST;
+  private DataStorageFormat dataStorageFormat = DataStorageFormat.BONSAI;
 
   @Option(
       names = {BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD, "--bonsai-maximum-back-layers-to-load"},
@@ -139,7 +139,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     }
   }
 
-  static DataStorageOptions fromConfig(final DataStorageConfiguration domainObject) {
+  public static DataStorageOptions fromConfig(final DataStorageConfiguration domainObject) {
     final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
     dataStorageOptions.dataStorageFormat = domainObject.getDataStorageFormat();
     dataStorageOptions.bonsaiMaxLayersToLoad = domainObject.getBonsaiMaxLayersToLoad();
