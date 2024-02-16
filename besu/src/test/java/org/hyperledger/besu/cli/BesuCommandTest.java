@@ -1150,6 +1150,20 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void storage_bonsai_by_default() {
+    parseCommand();
+    verify(mockControllerBuilder)
+        .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
+
+    final DataStorageConfiguration dataStorageConfig =
+        dataStorageConfigurationArgumentCaptor.getValue();
+    assertThat(dataStorageConfig.getDataStorageFormat()).isEqualTo(BONSAI);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void syncMode_snap_by_default() {
     parseCommand();
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
