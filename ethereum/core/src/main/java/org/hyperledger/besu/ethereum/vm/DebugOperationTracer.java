@@ -41,7 +41,13 @@ public class DebugOperationTracer implements OperationTracer {
 
   private final TraceOptions options;
 
-  private final boolean additionalCallGas;
+  /**
+   * A flag to indicate if call operations should trace just the operation cost (false, Geth style,
+   * debug_ series RPCs) or the operation cost and all gas granted to the child call (true, Parity
+   * style, trace_ series RPCs)
+   */
+  private final boolean recordChildCallGas;
+
   private List<TraceFrame> traceFrames = new ArrayList<>();
   private TraceFrame lastFrame;
 
@@ -51,9 +57,16 @@ public class DebugOperationTracer implements OperationTracer {
   private int pc;
   private int depth;
 
-  public DebugOperationTracer(final TraceOptions options, final boolean additionalCallGas) {
+  /**
+   * Creates the operation tracer.
+   *
+   * @param options The options, as passed in through the RPC
+   * @param recordChildCallGas A flag on whether to produce geth style (true) or parity style
+   *     (false) gas amounts for call operations
+   */
+  public DebugOperationTracer(final TraceOptions options, final boolean recordChildCallGas) {
     this.options = options;
-    this.additionalCallGas = additionalCallGas;
+    this.recordChildCallGas = recordChildCallGas;
   }
 
   @Override
@@ -83,7 +96,7 @@ public class DebugOperationTracer implements OperationTracer {
     final Optional<Map<Address, Wei>> maybeRefunds =
         frame.getRefunds().isEmpty() ? Optional.empty() : Optional.of(frame.getRefunds());
     long thisGasCost = operationResult.getGasCost();
-    if (additionalCallGas && currentOperation instanceof AbstractCallOperation) {
+    if (recordChildCallGas && currentOperation instanceof AbstractCallOperation) {
       thisGasCost += frame.getMessageFrameStack().getFirst().getRemainingGas();
     }
     lastFrame =

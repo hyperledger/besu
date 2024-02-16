@@ -177,6 +177,16 @@ class DebugOperationTracerTest {
   }
 
   @Test
+  void childGasFlagDoesNotMatterForNonCallOperations() {
+    final TraceFrame flagDisabledTracer =
+        traceFrame(validMessageFrame(), new TraceOptions(false, false, false), false);
+    final TraceFrame flagEnabledTracer =
+        traceFrame(validMessageFrame(), new TraceOptions(false, false, false), true);
+
+    assertThat(flagEnabledTracer.getGasCost()).isEqualTo(flagDisabledTracer.getGasCost());
+  }
+
+  @Test
   void shouldCaptureFrameWhenExceptionalHaltOccurs() {
     final MessageFrame frame = validMessageFrame();
     final Map<UInt256, UInt256> updatedStorage = setupStorageForCapture(frame);
