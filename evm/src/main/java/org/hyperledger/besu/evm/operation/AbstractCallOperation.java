@@ -146,7 +146,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    * @param frame The current message frame
    * @return the gas available to execute the child message call
    */
-  protected abstract long gasAvailableForChildCall(MessageFrame frame);
+  public abstract long gasAvailableForChildCall(MessageFrame frame);
 
   /**
    * Returns whether the child message call should be static.
