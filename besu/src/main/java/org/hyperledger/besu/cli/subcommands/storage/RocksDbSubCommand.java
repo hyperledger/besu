@@ -74,9 +74,8 @@ public class RocksDbSubCommand implements Runnable {
               .storageSubCommand
               .besuCommand
               .dataDir()
-              .toString()
-              .concat("/")
-              .concat(DATABASE_PATH);
+              .resolve(DATABASE_PATH)
+              .toString();
 
       RocksDbHelper.printTableHeader(out);
 
@@ -120,9 +119,8 @@ public class RocksDbSubCommand implements Runnable {
               .storageSubCommand
               .besuCommand
               .dataDir()
-              .toString()
-              .concat("/")
-              .concat(DATABASE_PATH);
+              .resolve(DATABASE_PATH)
+              .toString();
 
       out.println("Column Family Stats...");
       RocksDbHelper.forEachColumnFamily(
