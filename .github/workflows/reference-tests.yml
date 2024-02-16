@@ -107,7 +107,7 @@ jobs:
         with:
           report_paths: '**/build/test-results/referenceTests/TEST-*.xml'
           annotate_only: true
-  reference-tests:
+  reftests-passed:
     runs-on: ubuntu-22.04
     needs: [ referenceTestEthereum ]
     permissions:
