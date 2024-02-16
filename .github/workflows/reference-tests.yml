@@ -84,7 +84,7 @@ jobs:
       - name: list test files generated
         run: find ethereum/referencetests/build/generated/sources/reference-test -name "*.java" | sort >> filenames.txt
       - name: Split tests
-        run: ./.github/workflows/splitList.sh filenames.txt ${{env.total_runners}}
+        run: ./.github/workflows/splitList.sh filenames.txt ${{env.total-runners}}
       - name: echo test file count
         run: cat group_${{matrix.runner_index}}.txt | wc
       - name: convert to test suite classnames
