@@ -114,7 +114,8 @@ public class QbftBesuControllerBuilderTest {
                 new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
                 new MainnetBlockHeaderFunctions()));
     lenient()
-        .when(storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG))
+        .when(
+            storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_FOREST_CONFIG))
         .thenReturn(worldStateStorage);
     lenient().when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
     lenient().when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));
@@ -156,6 +157,7 @@ public class QbftBesuControllerBuilderTest {
             .dataDirectory(tempDir)
             .clock(clock)
             .transactionPoolConfiguration(poolConfiguration)
+            .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
             .nodeKey(nodeKey)
             .storageProvider(storageProvider)
             .gasLimitCalculator(gasLimitCalculator)
