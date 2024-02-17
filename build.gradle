@@ -138,6 +138,9 @@ allprojects {
     from javadoc.outputDirectory
   }
 
+  tasks.build {
+    dependsOn 'javadoc'
+  }
   sourceCompatibility = 17
   targetCompatibility = 17
 
@@ -1038,7 +1041,6 @@ def calculateVersion() {
   }
   return version
 }
-
 
 def getCheckedOutGitCommitHash(length = 8) {
   try {
