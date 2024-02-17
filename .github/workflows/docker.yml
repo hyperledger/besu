@@ -81,11 +81,11 @@ jobs:
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
         with:
-          arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Prelease.releaseVersion=${{ github.ref_name }}
+          arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Pversion=${{github.ref_name}} -Prelease.releaseVersion=${{ github.ref_name }}
       - name: publish
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
-        run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Prelease.releaseVersion=${{ github.ref_name }}
+        run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Pversion=${{github.ref_name}} -Prelease.releaseVersion=${{ github.ref_name }}
   multiArch:
     needs: buildDocker
     runs-on: ubuntu-22.04
@@ -109,5 +109,5 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: multi-arch docker
-        run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Prelease.releaseVersion=${{ github.ref_name }}
+        run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Pversion=${{github.ref_name}} -Prelease.releaseVersion=${{ github.ref_name }}
 
