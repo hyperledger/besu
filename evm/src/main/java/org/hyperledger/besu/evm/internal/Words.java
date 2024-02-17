@@ -216,6 +216,11 @@ public interface Words {
         (byte) value);
   }
 
+  /**
+   * Utility to decode string to unsigned long
+   * @param number to be decoded
+   * @return long value, unsigned
+   */
   static long decodeUnsignedLong(final String number) {
     String parsable = number;
     int radix = 10;
