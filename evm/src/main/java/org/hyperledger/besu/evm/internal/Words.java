@@ -218,6 +218,7 @@ public interface Words {
 
   /**
    * Utility to decode string to unsigned long
+   *
    * @param number to be decoded
    * @return long value, unsigned
    */
