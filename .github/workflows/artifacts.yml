@@ -23,7 +23,7 @@ jobs:
         uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
       - name: assemble distributions
         run:
-          ./gradlew -Prelease.releaseVersion=${{github.ref_name}} assemble -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+          ./gradlew -Prelease.releaseVersion=${{github.ref_name}} -Pversion=${{github.ref_name}} assemble -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: hashes
         id: hashes
         run: |
