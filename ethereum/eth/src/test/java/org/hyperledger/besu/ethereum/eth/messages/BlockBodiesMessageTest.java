@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.messages;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
@@ -54,7 +55,10 @@ public final class BlockBodiesMessageTest {
   public void setup() {
     protocolSchedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.development().getConfigOptions(), false, EvmConfiguration.DEFAULT);
+            GenesisConfigFile.development().getConfigOptions(),
+            false,
+            EvmConfiguration.DEFAULT,
+            new BadBlockManager());
   }
 
   @Test

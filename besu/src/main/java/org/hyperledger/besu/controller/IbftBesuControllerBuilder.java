@@ -278,7 +278,8 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
         privacyParameters,
         isRevertReasonEnabled,
         bftExtraDataCodec().get(),
-        evmConfiguration);
+        evmConfiguration,
+        badBlockManager);
   }
 
   @Override
