@@ -182,7 +182,8 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
         worldStateArchive,
         protocolSchedule,
         consensusContextFactory,
-        transactionSelectorFactory);
+        transactionSelectorFactory,
+        badBlockManager);
   }
 
   @Override

@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketMeth
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -172,7 +173,7 @@ public class WebSocketServiceLoginTest {
                     peerDiscoveryMock,
                     blockchainQueries,
                     synchronizer,
-                    MainnetProtocolSchedule.fromConfig(genesisConfigOptions),
+                    MainnetProtocolSchedule.fromConfig(genesisConfigOptions, new BadBlockManager()),
                     mock(ProtocolContext.class),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),

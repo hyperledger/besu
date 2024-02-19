@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -69,7 +70,9 @@ public class ExecutionContextTestFixture {
             0);
     this.stateArchive = createInMemoryWorldStateArchive();
     this.protocolSchedule = protocolSchedule;
-    this.protocolContext = new ProtocolContext(blockchain, stateArchive, null, Optional.empty());
+    this.protocolContext =
+        new ProtocolContext(
+            blockchain, stateArchive, null, Optional.empty(), new BadBlockManager());
     genesisState.writeStateTo(stateArchive.getMutable());
   }
 
@@ -138,7 +141,8 @@ public class ExecutionContextTestFixture {
                     ProtocolSpecAdapters.create(0, Function.identity()),
                     new PrivacyParameters(),
                     false,
-                    EvmConfiguration.DEFAULT)
+                    EvmConfiguration.DEFAULT,
+                    new BadBlockManager())
                 .createProtocolSchedule();
       }
       if (blockchainKeyValueStorage == null) {
