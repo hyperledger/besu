@@ -164,13 +164,13 @@ public final class RunnerTest {
     final Path dataDirAhead = Files.createTempDirectory(temp, "db-ahead");
     final Path dbAhead = dataDirAhead.resolve("database");
     final int blockCount = 500;
-    final NodeKey aheadDbNodeKey = NodeKeyUtils.createFrom(KeyPairUtil.loadKeyPair(dbAhead));
+    final NodeKey aheadDbNodeKey = NodeKeyUtils.createFrom(KeyPairUtil.loadKeyPair(dataDirAhead));
     final NodeKey behindDbNodeKey = NodeKeyUtils.generate();
     final SynchronizerConfiguration syncConfigAhead =
         SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
     final ObservableMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
     final var miningParameters = MiningParameters.newDefault();
-    final var dataStorageConfiguration = DataStorageConfiguration.DEFAULT_CONFIG;
+    final var dataStorageConfiguration = DataStorageConfiguration.DEFAULT_FOREST_CONFIG;
     // Setup Runner with blocks
     final BesuController controllerAhead =
         getController(
@@ -469,6 +469,7 @@ public final class RunnerTest {
         .privacyParameters(PrivacyParameters.DEFAULT)
         .clock(TestClock.fixed())
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
+        .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
         .gasLimitCalculator(GasLimitCalculator.constant())
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .networkConfiguration(NetworkingConfiguration.create())

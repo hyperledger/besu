@@ -82,7 +82,7 @@ public class EthGetBlockByNumberLatestDesyncIntegrationTest {
 
               @Override
               public void registerTransactionSelectorFactory(
-                  PluginTransactionSelectorFactory transactionSelectorFactory) {}
+                  final PluginTransactionSelectorFactory transactionSelectorFactory) {}
             });
 
     for (final Block block : importer.getBlocks()) {

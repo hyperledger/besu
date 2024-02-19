@@ -93,7 +93,7 @@ public class JsonRpcTestMethodsFactory {
 
               @Override
               public void registerTransactionSelectorFactory(
-                  PluginTransactionSelectorFactory transactionSelectorFactory) {}
+                  final PluginTransactionSelectorFactory transactionSelectorFactory) {}
             });
 
     final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
