@@ -72,6 +72,7 @@ public class BesuNodeFactory {
         config.getMetricsConfiguration(),
         config.getPermissioningConfiguration(),
         config.getApiConfiguration(),
+        config.getDataStorageConfiguration(),
         config.getKeyFilePath(),
         config.isDevMode(),
         config.getNetwork(),

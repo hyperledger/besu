@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.plugin.Unstable;
 
 import java.nio.file.Path;
@@ -41,7 +42,13 @@ public interface BesuConfiguration extends BesuService {
    * @return Database version.
    */
   @Unstable
-  default int getDatabaseVersion() {
-    return 1;
-  }
+  int getDatabaseVersion();
+
+  /**
+   * The runtime value of the min gas price
+   *
+   * @return min gas price in wei
+   */
+  @Unstable
+  Wei getMinGasPrice();
 }
