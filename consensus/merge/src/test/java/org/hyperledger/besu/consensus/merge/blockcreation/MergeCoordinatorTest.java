@@ -71,7 +71,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -186,21 +185,9 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     when(mergeContext.as(MergeContext.class)).thenReturn(mergeContext);
     when(mergeContext.getTerminalTotalDifficulty())
         .thenReturn(genesisState.getBlock().getHeader().getDifficulty().plus(1L));
-    doAnswer(
-            getSpecInvocation -> {
-              ProtocolSpec spec = (ProtocolSpec) spy(getSpecInvocation.callRealMethod());
-              doAnswer(
-                      getBadBlockInvocation -> {
-                        return badBlockManager;
-                      })
-                  .when(spec)
-                  .getBadBlocksManager();
-              return spec;
-            })
-        .when(protocolSchedule)
-        .getByBlockHeader(any(BlockHeader.class));
 
-    protocolContext = new ProtocolContext(blockchain, worldStateArchive, mergeContext);
+    protocolContext =
+        new ProtocolContext(blockchain, worldStateArchive, mergeContext, badBlockManager);
     var mutable = worldStateArchive.getMutable();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);

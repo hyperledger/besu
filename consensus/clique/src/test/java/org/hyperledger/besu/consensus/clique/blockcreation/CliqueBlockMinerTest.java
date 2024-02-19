@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -69,7 +70,8 @@ class CliqueBlockMinerTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(List.of(Address.ZERO));
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, null);
-    final ProtocolContext protocolContext = new ProtocolContext(null, null, cliqueContext);
+    final ProtocolContext protocolContext =
+        new ProtocolContext(null, null, cliqueContext, new BadBlockManager());
 
     final CliqueBlockCreator blockCreator = mock(CliqueBlockCreator.class);
     final Function<BlockHeader, CliqueBlockCreator> blockCreatorSupplier =
@@ -123,7 +125,8 @@ class CliqueBlockMinerTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(List.of(Address.ZERO));
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, null);
-    final ProtocolContext protocolContext = new ProtocolContext(null, null, cliqueContext);
+    final ProtocolContext protocolContext =
+        new ProtocolContext(null, null, cliqueContext, new BadBlockManager());
 
     final CliqueBlockCreator blockCreator = mock(CliqueBlockCreator.class);
     final Function<BlockHeader, CliqueBlockCreator> blockCreatorSupplier =

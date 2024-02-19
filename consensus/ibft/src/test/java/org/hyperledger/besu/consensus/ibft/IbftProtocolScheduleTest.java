@@ -37,6 +37,7 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -99,7 +100,8 @@ public class IbftProtocolScheduleTest {
         PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,
-        EvmConfiguration.DEFAULT);
+        EvmConfiguration.DEFAULT,
+        new BadBlockManager());
   }
 
   private boolean validateHeader(
@@ -119,6 +121,7 @@ public class IbftProtocolScheduleTest {
     return new ProtocolContext(
         null,
         null,
-        setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec));
+        setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec),
+        new BadBlockManager());
   }
 }

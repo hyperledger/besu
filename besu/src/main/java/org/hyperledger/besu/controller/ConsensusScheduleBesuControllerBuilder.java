@@ -176,7 +176,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory) {
     return MigratingProtocolContext.init(
-        blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
+        blockchain, worldStateArchive, protocolSchedule, consensusContextFactory, badBlockManager);
   }
 
   @Override

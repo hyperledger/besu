@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum;
 
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -29,6 +30,7 @@ import java.util.Optional;
 public class ProtocolContext {
   private final MutableBlockchain blockchain;
   private final WorldStateArchive worldStateArchive;
+  private final BadBlockManager badBlockManager;
   private final ConsensusContext consensusContext;
 
   private Optional<Synchronizer> synchronizer;
@@ -36,22 +38,26 @@ public class ProtocolContext {
   public ProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ConsensusContext consensusContext) {
+      final ConsensusContext consensusContext,
+      final BadBlockManager badBlockManager) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.consensusContext = consensusContext;
     this.synchronizer = Optional.empty();
+    this.badBlockManager = badBlockManager;
   }
 
   public static ProtocolContext init(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory) {
+      final ConsensusContextFactory consensusContextFactory,
+      final BadBlockManager badBlockManager) {
     return new ProtocolContext(
         blockchain,
         worldStateArchive,
-        consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule));
+        consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule),
+        badBlockManager);
   }
 
   public Optional<Synchronizer> getSynchronizer() {
@@ -68,6 +74,10 @@ public class ProtocolContext {
 
   public WorldStateArchive getWorldStateArchive() {
     return worldStateArchive;
+  }
+
+  public BadBlockManager getBadBlockManager() {
+    return badBlockManager;
   }
 
   public <C extends ConsensusContext> C getConsensusContext(final Class<C> klass) {

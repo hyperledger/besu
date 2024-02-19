@@ -28,6 +28,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -79,7 +80,8 @@ public class NodeCanProduceNextBlockTest {
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
+    cliqueProtocolContext =
+        new ProtocolContext(blockChain, null, cliqueContext, new BadBlockManager());
 
     headerBuilder.number(1).parentHash(genesisBlock.getHash());
     final Block block_1 = createEmptyBlock(proposerKeyPair);
@@ -103,7 +105,8 @@ public class NodeCanProduceNextBlockTest {
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
+    cliqueProtocolContext =
+        new ProtocolContext(blockChain, null, cliqueContext, new BadBlockManager());
 
     headerBuilder.number(1).parentHash(genesisBlock.getHash());
     final Block block_1 = createEmptyBlock(proposerKeyPair);
@@ -136,7 +139,8 @@ public class NodeCanProduceNextBlockTest {
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
+    cliqueProtocolContext =
+        new ProtocolContext(blockChain, null, cliqueContext, new BadBlockManager());
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
     final Block block_1 = createEmptyBlock(proposerKeyPair);
@@ -165,7 +169,8 @@ public class NodeCanProduceNextBlockTest {
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
+    cliqueProtocolContext =
+        new ProtocolContext(blockChain, null, cliqueContext, new BadBlockManager());
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
     final Block block_1 = createEmptyBlock(proposerKeyPair);
@@ -209,7 +214,8 @@ public class NodeCanProduceNextBlockTest {
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
+    cliqueProtocolContext =
+        new ProtocolContext(blockChain, null, cliqueContext, new BadBlockManager());
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
     final Block block_1 = createEmptyBlock(otherNodeKeyPair);
@@ -237,7 +243,8 @@ public class NodeCanProduceNextBlockTest {
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
+    cliqueProtocolContext =
+        new ProtocolContext(blockChain, null, cliqueContext, new BadBlockManager());
 
     headerBuilder.parentHash(Hash.ZERO).number(3);
     final BlockHeader parentHeader =
@@ -260,7 +267,8 @@ public class NodeCanProduceNextBlockTest {
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
+    cliqueProtocolContext =
+        new ProtocolContext(blockChain, null, cliqueContext, new BadBlockManager());
 
     headerBuilder.parentHash(Hash.ZERO).number(3);
     final BlockHeader parentHeader = headerBuilder.buildHeader();

@@ -69,6 +69,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -327,7 +328,11 @@ public class TestContextBuilder {
 
     final BftProtocolSchedule protocolSchedule =
         IbftProtocolScheduleBuilder.create(
-            genesisConfigOptions, forksSchedule, IBFT_EXTRA_DATA_ENCODER, EvmConfiguration.DEFAULT);
+            genesisConfigOptions,
+            forksSchedule,
+            IBFT_EXTRA_DATA_ENCODER,
+            EvmConfiguration.DEFAULT,
+            new BadBlockManager());
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController
@@ -343,7 +348,8 @@ public class TestContextBuilder {
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            new BftContext(validatorProvider, epochManager, blockInterface));
+            new BftContext(validatorProvider, epochManager, blockInterface),
+            new BadBlockManager());
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();
 

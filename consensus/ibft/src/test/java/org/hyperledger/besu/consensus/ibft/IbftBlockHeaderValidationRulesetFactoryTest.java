@@ -29,6 +29,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -48,7 +49,10 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
     return new ProtocolContext(
-        null, null, setupContextWithBftExtraDataEncoder(validators, new IbftExtraDataCodec()));
+        null,
+        null,
+        setupContextWithBftExtraDataEncoder(validators, new IbftExtraDataCodec()),
+        new BadBlockManager());
   }
 
   @Test
