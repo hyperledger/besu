@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum;
 
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -30,6 +31,7 @@ import java.util.Optional;
 public class ProtocolContext {
   private final MutableBlockchain blockchain;
   private final WorldStateArchive worldStateArchive;
+  private final BadBlockManager badBlockManager;
   private final ConsensusContext consensusContext;
   private final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory;
 
@@ -38,20 +40,23 @@ public class ProtocolContext {
   public ProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ConsensusContext consensusContext) {
-    this(blockchain, worldStateArchive, consensusContext, Optional.empty());
+      final ConsensusContext consensusContext,
+      final BadBlockManager badBlockManager) {
+    this(blockchain, worldStateArchive, consensusContext, Optional.empty(), badBlockManager);
   }
 
   public ProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ConsensusContext consensusContext,
-      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
+      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory,
+      final BadBlockManager badBlockManager) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.consensusContext = consensusContext;
     this.synchronizer = Optional.empty();
     this.transactionSelectorFactory = transactionSelectorFactory;
+    this.badBlockManager = badBlockManager;
   }
 
   public static ProtocolContext init(
@@ -59,12 +64,14 @@ public class ProtocolContext {
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory,
-      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
+      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory,
+      final BadBlockManager badBlockManager) {
     return new ProtocolContext(
         blockchain,
         worldStateArchive,
         consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule),
-        transactionSelectorFactory);
+        transactionSelectorFactory,
+        badBlockManager);
   }
 
   public Optional<Synchronizer> getSynchronizer() {
@@ -81,6 +88,10 @@ public class ProtocolContext {
 
   public WorldStateArchive getWorldStateArchive() {
     return worldStateArchive;
+  }
+
+  public BadBlockManager getBadBlockManager() {
+    return badBlockManager;
   }
 
   public <C extends ConsensusContext> C getConsensusContext(final Class<C> klass) {

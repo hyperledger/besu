@@ -23,6 +23,7 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -142,7 +143,7 @@ public class BlockchainSetupUtil {
   private static ProtocolSchedule mainnetProtocolScheduleProvider(
       final GenesisConfigFile genesisConfigFile) {
     return MainnetProtocolSchedule.fromConfig(
-        genesisConfigFile.getConfigOptions(), EvmConfiguration.DEFAULT);
+        genesisConfigFile.getConfigOptions(), EvmConfiguration.DEFAULT, new BadBlockManager());
   }
 
   private static ProtocolContext mainnetProtocolContextProvider(
@@ -156,7 +157,8 @@ public class BlockchainSetupUtil {
             return null;
           }
         },
-        Optional.empty());
+        Optional.empty(),
+        new BadBlockManager());
   }
 
   private static BlockchainSetupUtil create(

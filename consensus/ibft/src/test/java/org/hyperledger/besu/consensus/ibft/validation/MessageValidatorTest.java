@@ -41,6 +41,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -104,7 +105,8 @@ public class MessageValidatorTest {
             mock(MutableBlockchain.class),
             mock(WorldStateArchive.class),
             mockBftCtx,
-            Optional.empty());
+            Optional.empty(),
+            new BadBlockManager());
 
     lenient()
         .when(protocolSchedule.getByBlockNumberOrTimestamp(anyLong(), anyLong()))
