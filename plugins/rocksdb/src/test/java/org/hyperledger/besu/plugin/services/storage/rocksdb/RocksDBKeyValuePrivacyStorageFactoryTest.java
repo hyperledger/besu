@@ -56,7 +56,8 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
     Files.createDirectories(tempDataDir);
     mockCommonConfiguration(tempDataDir, tempDatabaseDir);
 
-    Utils.createDatabaseMetadataV1Privacy(tempDataDir, 1, 1);
+    Utils.createDatabaseMetadataV1Privacy(
+        tempDataDir, PrivacyVersionedStorageFormat.FOREST_ORIGINAL);
 
     final RocksDBKeyValuePrivacyStorageFactory storageFactory =
         new RocksDBKeyValuePrivacyStorageFactory(

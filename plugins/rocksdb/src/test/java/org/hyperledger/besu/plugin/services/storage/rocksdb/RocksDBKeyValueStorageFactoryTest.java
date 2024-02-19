@@ -101,7 +101,7 @@ public class RocksDBKeyValueStorageFactoryTest {
     Files.createDirectories(tempDataDir);
     mockCommonConfiguration(tempDataDir, tempDatabaseDir, BONSAI);
 
-    Utils.createDatabaseMetadataV1(tempDataDir, 2);
+    Utils.createDatabaseMetadataV1(tempDataDir, BONSAI);
 
     final RocksDBKeyValueStorageFactory storageFactory =
         new RocksDBKeyValueStorageFactory(
@@ -122,7 +122,7 @@ public class RocksDBKeyValueStorageFactoryTest {
     Files.createDirectories(tempDataDir);
     mockCommonConfiguration(tempDataDir, tempDatabaseDir, BONSAI);
 
-    Utils.createDatabaseMetadataV1(tempDataDir, 2);
+    Utils.createDatabaseMetadataV1(tempDataDir, BONSAI);
 
     final RocksDBKeyValueStorageFactory storageFactory =
         new RocksDBKeyValueStorageFactory(

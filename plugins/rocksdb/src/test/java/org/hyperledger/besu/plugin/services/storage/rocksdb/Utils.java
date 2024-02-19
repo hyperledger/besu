@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PrivacyVersionedStorageFormat;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -24,10 +25,24 @@ import java.nio.file.Path;
 public class Utils {
   public static final String METADATA_FILENAME = "DATABASE_METADATA.json";
 
+  public static void createDatabaseMetadataV1(
+      final Path tempDataDir, final DataStorageFormat dataStorageFormat) throws IOException {
+    createDatabaseMetadataV1(tempDataDir, dataStorageFormatToV1(dataStorageFormat));
+  }
+
   public static void createDatabaseMetadataV1(final Path tempDataDir, final int version)
       throws IOException {
     final String content = "{\"version\":" + version + "}";
     Files.write(tempDataDir.resolve(METADATA_FILENAME), content.getBytes(Charset.defaultCharset()));
+  }
+
+  public static void createDatabaseMetadataV1Privacy(
+      final Path tempDataDir, final PrivacyVersionedStorageFormat privacyVersionedStorageFormat)
+      throws IOException {
+    createDatabaseMetadataV1Privacy(
+        tempDataDir,
+        dataStorageFormatToV1(privacyVersionedStorageFormat.getFormat()),
+        privacyVersionedStorageFormat.getPrivacyVersion().getAsInt());
   }
 
   public static void createDatabaseMetadataV1Privacy(
@@ -65,5 +80,12 @@ public class Utils {
   public static void createDatabaseMetadataRaw(final Path tempDataDir, final String content)
       throws IOException {
     Files.write(tempDataDir.resolve(METADATA_FILENAME), content.getBytes(Charset.defaultCharset()));
+  }
+
+  private static int dataStorageFormatToV1(final DataStorageFormat dataStorageFormat) {
+    return switch (dataStorageFormat) {
+      case FOREST -> 1;
+      case BONSAI -> 2;
+    };
   }
 }
