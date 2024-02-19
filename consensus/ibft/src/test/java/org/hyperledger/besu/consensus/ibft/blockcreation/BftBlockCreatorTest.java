@@ -123,8 +123,7 @@ public class BftBlockCreatorTest {
         new ProtocolContext(
             blockchain,
             createInMemoryWorldStateArchive(),
-            setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder),
-            Optional.empty());
+            setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder));
 
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();

@@ -166,9 +166,7 @@ public class IbftBlockHeightManagerTest {
         .when(messageValidatorFactory.createMessageValidator(any(), any()))
         .thenReturn(messageValidator);
 
-    protocolContext =
-        new ProtocolContext(
-            blockchain, null, setupContextWithValidators(validators), Optional.empty());
+    protocolContext = new ProtocolContext(blockchain, null, setupContextWithValidators(validators));
 
     final ProtocolScheduleBuilder protocolScheduleBuilder =
         new ProtocolScheduleBuilder(

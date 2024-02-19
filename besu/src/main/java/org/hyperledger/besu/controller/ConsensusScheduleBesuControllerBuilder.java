@@ -62,7 +62,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
-import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 
 import java.math.BigInteger;
 import java.nio.file.Path;
@@ -175,14 +174,9 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory,
-      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
+      final ConsensusContextFactory consensusContextFactory) {
     return MigratingProtocolContext.init(
-        blockchain,
-        worldStateArchive,
-        protocolSchedule,
-        consensusContextFactory,
-        transactionSelectorFactory);
+        blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
   }
 
   @Override

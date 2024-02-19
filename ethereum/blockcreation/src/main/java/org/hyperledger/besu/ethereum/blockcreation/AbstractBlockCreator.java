@@ -192,8 +192,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       throwIfStopped();
 
       final PluginTransactionSelector pluginTransactionSelector =
-          protocolContext
-              .getTransactionSelectorFactory()
+          miningParameters
+              .transactionSelectionService()
+              .get()
               .map(PluginTransactionSelectorFactory::create)
               .orElseGet(() -> AllAcceptingTransactionSelector.INSTANCE);
 

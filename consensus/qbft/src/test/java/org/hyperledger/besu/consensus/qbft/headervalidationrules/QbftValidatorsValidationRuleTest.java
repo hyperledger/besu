@@ -46,8 +46,7 @@ public class QbftValidatorsValidationRuleTest {
         new ProtocolContext(
             null,
             null,
-            setupContextWithBftExtraData(QbftContext.class, Collections.emptyList(), bftExtraData),
-            Optional.empty());
+            setupContextWithBftExtraData(QbftContext.class, Collections.emptyList(), bftExtraData));
     when(bftExtraData.getValidators()).thenReturn(Collections.emptyList());
     when(bftExtraData.getVote()).thenReturn(Optional.empty());
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isTrue();
@@ -63,10 +62,7 @@ public class QbftValidatorsValidationRuleTest {
 
     final ProtocolContext context =
         new ProtocolContext(
-            null,
-            null,
-            setupContextWithBftExtraData(QbftContext.class, validators, bftExtraData),
-            Optional.empty());
+            null, null, setupContextWithBftExtraData(QbftContext.class, validators, bftExtraData));
     when(bftExtraData.getValidators()).thenReturn(validators);
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isTrue();
   }
@@ -81,10 +77,7 @@ public class QbftValidatorsValidationRuleTest {
 
     final ProtocolContext context =
         new ProtocolContext(
-            null,
-            null,
-            setupContextWithBftExtraData(QbftContext.class, validators, bftExtraData),
-            Optional.empty());
+            null, null, setupContextWithBftExtraData(QbftContext.class, validators, bftExtraData));
     when(bftExtraData.getValidators()).thenReturn(validators);
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isFalse();
   }
@@ -97,8 +90,7 @@ public class QbftValidatorsValidationRuleTest {
         new ProtocolContext(
             null,
             null,
-            setupContextWithBftExtraData(QbftContext.class, Collections.emptyList(), bftExtraData),
-            Optional.empty());
+            setupContextWithBftExtraData(QbftContext.class, Collections.emptyList(), bftExtraData));
     when(bftExtraData.getValidators()).thenReturn(Collections.emptyList());
     when(bftExtraData.getVote()).thenReturn(Optional.of(mock(Vote.class)));
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isFalse();

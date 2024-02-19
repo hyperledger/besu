@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.time.Duration;
@@ -118,6 +119,8 @@ public abstract class MiningParameters {
     getMutableRuntimeValues().nonceGenerator = Optional.of(nonceGenerator);
     return this;
   }
+
+  public abstract TransactionSelectionService transactionSelectionService();
 
   @Value.Default
   public boolean isStratumMiningEnabled() {

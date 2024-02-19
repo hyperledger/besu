@@ -57,7 +57,6 @@ import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleExcepti
 import org.hyperledger.besu.util.Subscribers;
 
 import java.math.BigInteger;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
@@ -129,8 +128,7 @@ public class QbftRoundIntegrationTest {
             blockChain,
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(
-                QbftContext.class, emptyList(), qbftExtraDataEncoder),
-            Optional.empty());
+                QbftContext.class, emptyList(), qbftExtraDataEncoder));
   }
 
   @Test

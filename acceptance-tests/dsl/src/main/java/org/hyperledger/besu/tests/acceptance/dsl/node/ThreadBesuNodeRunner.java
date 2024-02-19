@@ -50,7 +50,6 @@ import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
-import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
@@ -94,6 +93,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       final BesuNode node,
       final StorageServiceImpl storageService,
       final SecurityModuleServiceImpl securityModuleService,
+      final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
       final BesuConfiguration commonPluginConfiguration) {
     final CommandLine commandLine = new CommandLine(CommandSpec.create());
     final BesuPluginContextImpl besuPluginContext = new BesuPluginContextImpl();
@@ -102,7 +102,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
     besuPluginContext.addService(RpcEndpointService.class, new RpcEndpointServiceImpl());
     besuPluginContext.addService(
-        TransactionSelectionService.class, new TransactionSelectionServiceImpl());
+        TransactionSelectionService.class, transactionSelectionServiceImpl);
     besuPluginContext.addService(
         PluginTransactionValidatorService.class, new PluginTransactionValidatorServiceImpl());
     final Path pluginsPath;
@@ -144,6 +144,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final StorageServiceImpl storageService = new StorageServiceImpl();
     final SecurityModuleServiceImpl securityModuleService = new SecurityModuleServiceImpl();
+    final TransactionSelectionServiceImpl transactionSelectionServiceImpl =
+        new TransactionSelectionServiceImpl();
     final Path dataDir = node.homeDirectory();
     final BesuConfigurationImpl commonPluginConfiguration = new BesuConfigurationImpl();
     commonPluginConfiguration.init(
@@ -156,7 +158,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             node,
             n ->
                 buildPluginContext(
-                    node, storageService, securityModuleService, commonPluginConfiguration));
+                    node,
+                    storageService,
+                    securityModuleService,
+                    transactionSelectionServiceImpl,
+                    commonPluginConfiguration));
 
     GlobalOpenTelemetry.resetForTest();
     final ObservableMetricsSystem metricsSystem =
@@ -193,8 +199,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final int maxPeers = 25;
 
-    final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory =
-        getTransactionSelectorFactory(besuPluginContext);
+    final TransactionSelectionService transactionSelectorService =
+        getTransactionSelectorService(besuPluginContext);
 
     final PluginTransactionValidatorFactory pluginTransactionValidatorFactory =
         getPluginTransactionValidatorFactory(besuPluginContext);
@@ -220,7 +226,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .maxRemotelyInitiatedPeers(15)
         .networkConfiguration(node.getNetworkingConfiguration())
         .randomPeerPriority(false)
-        .transactionSelectorFactory(transactionSelectorFactory)
+        .transactionSelectorService(transactionSelectorService)
         .pluginTransactionValidatorFactory(pluginTransactionValidatorFactory);
 
     node.getGenesisConfig()
@@ -332,11 +338,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     throw new RuntimeException("Console contents can only be captured in process execution");
   }
 
-  private Optional<PluginTransactionSelectorFactory> getTransactionSelectorFactory(
+  private TransactionSelectionService getTransactionSelectorService(
       final BesuPluginContextImpl besuPluginContext) {
-    final Optional<TransactionSelectionService> txSelectionService =
-        besuPluginContext.getService(TransactionSelectionService.class);
-    return txSelectionService.isPresent() ? txSelectionService.get().get() : Optional.empty();
+    return besuPluginContext.getService(TransactionSelectionService.class).orElseThrow();
   }
 
   private PluginTransactionValidatorFactory getPluginTransactionValidatorFactory(

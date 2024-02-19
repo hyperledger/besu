@@ -69,8 +69,7 @@ class CliqueBlockMinerTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(List.of(Address.ZERO));
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, null);
-    final ProtocolContext protocolContext =
-        new ProtocolContext(null, null, cliqueContext, Optional.empty());
+    final ProtocolContext protocolContext = new ProtocolContext(null, null, cliqueContext);
 
     final CliqueBlockCreator blockCreator = mock(CliqueBlockCreator.class);
     final Function<BlockHeader, CliqueBlockCreator> blockCreatorSupplier =
@@ -124,8 +123,7 @@ class CliqueBlockMinerTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(List.of(Address.ZERO));
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, null);
-    final ProtocolContext protocolContext =
-        new ProtocolContext(null, null, cliqueContext, Optional.empty());
+    final ProtocolContext protocolContext = new ProtocolContext(null, null, cliqueContext);
 
     final CliqueBlockCreator blockCreator = mock(CliqueBlockCreator.class);
     final Function<BlockHeader, CliqueBlockCreator> blockCreatorSupplier =

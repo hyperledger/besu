@@ -42,7 +42,7 @@ public class MigratingProtocolContext extends ProtocolContext {
       final WorldStateArchive worldStateArchive,
       final ForksSchedule<ConsensusContext> consensusContextSchedule,
       final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
-    super(blockchain, worldStateArchive, null, transactionSelectorFactory);
+    super(blockchain, worldStateArchive, null);
     this.consensusContextSchedule = consensusContextSchedule;
   }
 

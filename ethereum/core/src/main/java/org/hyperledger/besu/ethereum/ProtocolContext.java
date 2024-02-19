@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 
 import java.util.Optional;
 
@@ -31,7 +30,6 @@ public class ProtocolContext {
   private final MutableBlockchain blockchain;
   private final WorldStateArchive worldStateArchive;
   private final ConsensusContext consensusContext;
-  private final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory;
 
   private Optional<Synchronizer> synchronizer;
 
@@ -39,32 +37,21 @@ public class ProtocolContext {
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ConsensusContext consensusContext) {
-    this(blockchain, worldStateArchive, consensusContext, Optional.empty());
-  }
-
-  public ProtocolContext(
-      final MutableBlockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final ConsensusContext consensusContext,
-      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.consensusContext = consensusContext;
     this.synchronizer = Optional.empty();
-    this.transactionSelectorFactory = transactionSelectorFactory;
   }
 
   public static ProtocolContext init(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory,
-      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
+      final ConsensusContextFactory consensusContextFactory) {
     return new ProtocolContext(
         blockchain,
         worldStateArchive,
-        consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule),
-        transactionSelectorFactory);
+        consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule));
   }
 
   public Optional<Synchronizer> getSynchronizer() {
@@ -91,9 +78,5 @@ public class ProtocolContext {
     return Optional.ofNullable(consensusContext)
         .filter(c -> klass.isAssignableFrom(c.getClass()))
         .map(klass::cast);
-  }
-
-  public Optional<PluginTransactionSelectorFactory> getTransactionSelectorFactory() {
-    return transactionSelectorFactory;
   }
 }

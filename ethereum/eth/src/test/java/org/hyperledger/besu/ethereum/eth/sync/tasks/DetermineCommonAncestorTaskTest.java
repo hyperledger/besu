@@ -54,7 +54,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -87,8 +86,7 @@ public class DetermineCommonAncestorTaskTest {
             mock(TransactionPool.class),
             EthProtocolConfiguration.defaultConfig());
     ethContext = ethProtocolManager.ethContext();
-    protocolContext =
-        new ProtocolContext(localBlockchain, worldStateArchive, null, Optional.empty());
+    protocolContext = new ProtocolContext(localBlockchain, worldStateArchive, null);
   }
 
   @Test

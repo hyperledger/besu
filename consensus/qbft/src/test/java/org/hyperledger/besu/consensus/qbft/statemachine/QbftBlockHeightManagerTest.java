@@ -167,8 +167,7 @@ public class QbftBlockHeightManagerTest {
             blockchain,
             null,
             setupContextWithBftExtraDataEncoder(
-                QbftContext.class, validators, new QbftExtraDataCodec()),
-            Optional.empty());
+                QbftContext.class, validators, new QbftExtraDataCodec()));
 
     final ProtocolScheduleBuilder protocolScheduleBuilder =
         new ProtocolScheduleBuilder(

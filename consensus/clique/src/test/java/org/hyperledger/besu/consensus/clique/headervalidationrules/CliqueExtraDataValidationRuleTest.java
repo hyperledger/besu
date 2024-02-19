@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
@@ -62,7 +61,7 @@ public class CliqueExtraDataValidationRuleTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext, Optional.empty());
+    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext);
   }
 
   @Test

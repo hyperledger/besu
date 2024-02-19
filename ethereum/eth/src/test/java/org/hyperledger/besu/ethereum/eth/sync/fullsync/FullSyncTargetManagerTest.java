@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -76,7 +75,7 @@ public class FullSyncTargetManagerTest {
 
     final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
     final ProtocolContext protocolContext =
-        new ProtocolContext(localBlockchain, localWorldState, null, Optional.empty());
+        new ProtocolContext(localBlockchain, localWorldState, null);
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             protocolSchedule,

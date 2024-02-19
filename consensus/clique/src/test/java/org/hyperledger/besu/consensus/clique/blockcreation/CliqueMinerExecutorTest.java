@@ -94,7 +94,7 @@ public class CliqueMinerExecutorTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext, Optional.empty());
+    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext);
     cliqueProtocolSchedule =
         CliqueProtocolSchedule.create(
             GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, EvmConfiguration.DEFAULT);
