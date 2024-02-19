@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.MetricsSystemFactory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -144,8 +145,12 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     final StorageServiceImpl storageService = new StorageServiceImpl();
     final SecurityModuleServiceImpl securityModuleService = new SecurityModuleServiceImpl();
     final Path dataDir = node.homeDirectory();
-    final BesuConfiguration commonPluginConfiguration =
-        new BesuConfigurationImpl(dataDir, dataDir.resolve(DATABASE_PATH));
+    final BesuConfigurationImpl commonPluginConfiguration = new BesuConfigurationImpl();
+    commonPluginConfiguration.init(
+        dataDir,
+        dataDir.resolve(DATABASE_PATH),
+        node.getDataStorageConfiguration(),
+        node.getMiningParameters());
     final BesuPluginContextImpl besuPluginContext =
         besuPluginContextMap.computeIfAbsent(
             node,
@@ -201,6 +206,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))))
         .metricsSystem(metricsSystem)
         .transactionPoolConfiguration(txPoolConfig)
+        .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(node.isRevertReasonEnabled())

@@ -208,6 +208,11 @@ public abstract class AbstractIsolationTests {
               public int getDatabaseVersion() {
                 return 2;
               }
+
+              @Override
+              public Wei getMinGasPrice() {
+                return MiningParameters.newDefault().getMinTransactionGasPrice();
+              }
             })
         .withMetricsSystem(new NoOpMetricsSystem())
         .build();

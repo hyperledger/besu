@@ -9,7 +9,7 @@ on:
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
-  total-runners: 6
+  total-runners: 10
 
 jobs:
   shouldRun:
@@ -64,7 +64,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        runner_index: [0,1,2,3,4,5]
+        runner_index: [1,2,3,4,5,6,7,8,9,10]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -76,29 +76,23 @@ jobs:
         with:
           distribution: adopt-openj9
           java-version: 17
-      - name: get reference test report
-        uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
-        with:
-          branch: main
-          name_is_regexp: true
-          name: 'reference-test-node-\d*\d-results'
-          path: tmp/ref-xml-reports-downloaded
-          if_no_artifact_found: true
       - name: setup gradle
-        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         #shame the test generation isn't less redundant, we used to do this in a dependent job, but artifact downloading broke
       - name: execute generate reference tests
         run: ./gradlew ethereum:referencetests:blockchainReferenceTests ethereum:referencetests:generalstateReferenceTests ethereum:referencetests:generalstateRegressionReferenceTests -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+      - name: list test files generated
+        run: find ethereum/referencetests/build/generated/sources/reference-test -name "*.java" | sort >> filenames.txt
       - name: Split tests
-        id: split-tests
-        uses: r7kamura/split-tests-by-timings@9322bd292d9423e2bc5a65bec548901801341e3f
-        with:
-          reports: tmp/ref-xml-reports-downloaded
-          glob: 'ethereum/referencetests/build/generated/sources/reference-test/**/*.java'
-          total: ${{env.total-runners}}
-          index: ${{ matrix.runner_index }}
+        run: ./.github/workflows/splitList.sh filenames.txt ${{env.total-runners}}
+      - name: echo test file count
+        run: cat group_${{matrix.runner_index}}.txt | wc
+      - name: convert to test suite classnames
+        run: cat group_${{matrix.runner_index}}.txt | sed -e 's/^.*java\///' -e 's@/@.@g' -e 's/\.java//' -e 's/^/--tests /' > testClasses.txt
       - name: compose gradle args
-        run: echo ${{ steps.split-tests.outputs.paths }} | sed -e 's/^.*java\///' -e 's@/@.@g' -e 's/\.java//' -e 's/^/--tests /' > refTestArgs.txt
+        run: tr '\n' ' ' < testClasses.txt > refTestArgs.txt
+      - name: refTestArgs.txt
+        run: cat refTestArgs.txt
       - name: run reference tests
         run: ./gradlew ethereum:referenceTests:referenceTests `cat refTestArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Upload Test Report
@@ -111,9 +105,9 @@ jobs:
         uses: mikepenz/action-junit-report@5f47764eec0e1c1f19f40c8e60a5ba47e47015c5
         if: success() || failure() # always run even if the build step fails
         with:
-          report_paths: '**/build/test-results/referenceTest/TEST-*.xml'
+          report_paths: '**/build/test-results/referenceTests/TEST-*.xml'
           annotate_only: true
-  reference-tests:
+  reftests-passed:
     runs-on: ubuntu-22.04
     needs: [ referenceTestEthereum ]
     permissions:

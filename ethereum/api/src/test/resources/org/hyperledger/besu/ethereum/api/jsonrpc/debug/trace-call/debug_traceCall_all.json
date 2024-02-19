@@ -167,7 +167,7 @@
         "pc" : 21,
         "op" : "CALLCODE",
         "gas" : 16755865,
-        "gasCost" : 700,
+        "gasCost" : 16494066,
         "depth" : 1,
         "stack" : null,
         "memory" : null,
