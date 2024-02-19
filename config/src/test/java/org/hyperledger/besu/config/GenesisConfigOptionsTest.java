@@ -295,6 +295,27 @@ class GenesisConfigOptionsTest {
   }
 
   @Test
+  void isFixedBaseFeeShouldDefaultToFalse() {
+    final GenesisConfigOptions config = GenesisConfigFile.fromConfig("{}").getConfigOptions();
+
+    assertThat(config.isFixedBaseFee()).isFalse();
+  }
+
+  @Test
+  void isFixedBaseFeeParsedCorrectly() {
+    final GenesisConfigOptions config = fromConfigOptions(Map.of("fixedbasefee", true));
+
+    assertThat(config.isFixedBaseFee()).isTrue();
+  }
+
+  @Test
+  void asMapIncludesFixedBaseFee() {
+    final GenesisConfigOptions config = fromConfigOptions(Map.of("fixedbasefee", true));
+
+    assertThat(config.asMap()).containsOnlyKeys("fixedBaseFee").containsValue(true);
+  }
+
+  @Test
   void shouldGetDepositContractAddress() {
     final GenesisConfigOptions config =
         fromConfigOptions(

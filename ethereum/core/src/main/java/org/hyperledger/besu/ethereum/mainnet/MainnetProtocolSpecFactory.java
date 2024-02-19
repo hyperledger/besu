@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -30,6 +31,7 @@ public class MainnetProtocolSpecFactory {
   private final boolean isRevertReasonEnabled;
   private final OptionalLong ecip1017EraRounds;
   private final EvmConfiguration evmConfiguration;
+  private final MiningParameters miningParameters;
 
   public MainnetProtocolSpecFactory(
       final Optional<BigInteger> chainId,
@@ -37,13 +39,15 @@ public class MainnetProtocolSpecFactory {
       final OptionalInt evmStackSize,
       final boolean isRevertReasonEnabled,
       final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters) {
     this.chainId = chainId;
     this.contractSizeLimit = contractSizeLimit;
     this.evmStackSize = evmStackSize;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.ecip1017EraRounds = ecip1017EraRounds;
     this.evmConfiguration = evmConfiguration;
+    this.miningParameters = miningParameters;
   }
 
   public ProtocolSpecBuilder frontierDefinition() {
@@ -113,7 +117,8 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         genesisConfigOptions,
-        evmConfiguration);
+        evmConfiguration,
+        miningParameters);
   }
 
   public ProtocolSpecBuilder arrowGlacierDefinition(
@@ -124,7 +129,8 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         genesisConfigOptions,
-        evmConfiguration);
+        evmConfiguration,
+        miningParameters);
   }
 
   public ProtocolSpecBuilder grayGlacierDefinition(
@@ -165,7 +171,8 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         genesisConfigOptions,
-        evmConfiguration);
+        evmConfiguration,
+        miningParameters);
   }
 
   public ProtocolSpecBuilder pragueDefinition(final GenesisConfigOptions genesisConfigOptions) {
