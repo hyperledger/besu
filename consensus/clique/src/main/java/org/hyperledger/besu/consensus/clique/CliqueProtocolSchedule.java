@@ -37,7 +37,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import java.math.BigInteger;
 import java.util.Optional;
 
-/** Defines the protocol behaviours for a blockchain using Clique. */
+/** Defines the protocol behaviors for a blockchain using Clique. */
 public class CliqueProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.valueOf(4);
