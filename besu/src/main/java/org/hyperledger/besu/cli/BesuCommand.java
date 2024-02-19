@@ -138,6 +138,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
@@ -173,6 +174,7 @@ import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactor
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
+import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
@@ -893,9 +895,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
   private Optional<TLSConfiguration> p2pTLSConfiguration;
+  private DataStorageConfiguration dataStorageConfiguration;
   private Collection<EnodeURL> staticNodes;
   private BesuController besuController;
-  private BesuConfiguration pluginCommonConfiguration;
+  private BesuConfigurationImpl pluginCommonConfiguration;
   private MiningParameters miningParameters;
 
   private BesuComponent besuComponent;
@@ -1000,7 +1003,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.securityModuleService = securityModuleService;
     this.permissioningService = permissioningService;
     this.privacyPluginService = privacyPluginService;
-    pluginCommonConfiguration = new BesuCommandConfigurationService();
+    this.pluginCommonConfiguration = new BesuConfigurationImpl();
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
     this.pkiBlockCreationConfigProvider = pkiBlockCreationConfigProvider;
     this.rpcEndpointServiceImpl = rpcEndpointServiceImpl;
@@ -1076,7 +1079,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       validateOptions();
       configure();
       configureNativeLibs();
-      besuController = initController();
+      besuController = buildController();
 
       besuPluginContext.beforeExternalServices();
 
@@ -1098,7 +1101,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   @VisibleForTesting
-  void setBesuConfiguration(final BesuConfiguration pluginCommonConfiguration) {
+  void setBesuConfiguration(final BesuConfigurationImpl pluginCommonConfiguration) {
     this.pluginCommonConfiguration = pluginCommonConfiguration;
   }
 
@@ -1674,6 +1677,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             unstableIpcOptions.getIpcPath(),
             unstableIpcOptions.getRpcIpcApis());
     apiConfiguration = apiConfigurationOptions.apiConfiguration(getMiningParameters());
+    dataStorageConfiguration = getDataStorageConfiguration();
     // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
     if (!hostsWhitelist.isEmpty()) {
       // if allowlist == default values, remove the default values
@@ -1736,10 +1740,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private BesuController initController() {
-    return buildController();
-  }
-
   /**
    * Builds BesuController
    *
@@ -1761,6 +1761,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @return instance of BesuControllerBuilder
    */
   public BesuControllerBuilder getControllerBuilder() {
+    pluginCommonConfiguration.init(
+        dataDir(),
+        dataDir().resolve(DATABASE_PATH),
+        getDataStorageConfiguration(),
+        getMiningParameters());
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
     return controllerBuilderFactory
         .fromEthNetworkConfig(
@@ -1771,6 +1776,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .transactionSelectorFactory(getTransactionSelectorFactory())
         .pluginTransactionValidatorFactory(getPluginTransactionValidatorFactory())
         .dataDirectory(dataDir())
+        .dataStorageConfiguration(getDataStorageConfiguration())
         .miningParameters(getMiningParameters())
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(new NodeKey(securityModule()))
@@ -1792,7 +1798,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .requiredBlocks(requiredBlocks)
         .reorgLoggingThreshold(reorgLoggingThreshold)
         .evmConfiguration(unstableEvmOptions.toDomainObject())
-        .dataStorageConfiguration(dataStorageOptions.toDomainObject())
         .maxPeers(p2PDiscoveryOptionGroup.maxPeers)
         .maxRemotelyInitiatedPeers(maxRemoteInitiatedPeers)
         .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
@@ -2125,6 +2130,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       miningParameters = miningOptions.toDomainObject();
     }
     return miningParameters;
+  }
+
+  private DataStorageConfiguration getDataStorageConfiguration() {
+    if (dataStorageConfiguration == null) {
+      dataStorageConfiguration = dataStorageOptions.toDomainObject();
+    }
+    return dataStorageConfiguration;
   }
 
   private OptionalInt getGenesisBlockPeriodSeconds(
@@ -2538,24 +2550,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return loggingLevelOption.getLogLevel();
   }
 
-  private class BesuCommandConfigurationService implements BesuConfiguration {
-
-    @Override
-    public Path getStoragePath() {
-      return dataDir().resolve(DATABASE_PATH);
-    }
-
-    @Override
-    public Path getDataPath() {
-      return dataDir();
-    }
-
-    @Override
-    public int getDatabaseVersion() {
-      return dataStorageOptions.toDomainObject().getDataStorageFormat().getDatabaseVersion();
-    }
-  }
-
   private void instantiateSignatureAlgorithmFactory() {
     if (SignatureAlgorithmFactory.isInstanceSet()) {
       return;
@@ -2714,12 +2708,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setHighSpecEnabled();
     }
 
-    if (dataStorageOptions.toDomainObject().getUnstable().getBonsaiLimitTrieLogsEnabled()) {
+    if (getDataStorageConfiguration().getUnstable().getBonsaiLimitTrieLogsEnabled()) {
       builder.setLimitTrieLogsEnabled();
-      builder.setTrieLogRetentionLimit(
-          dataStorageOptions.toDomainObject().getBonsaiMaxLayersToLoad());
+      builder.setTrieLogRetentionLimit(getDataStorageConfiguration().getBonsaiMaxLayersToLoad());
       builder.setTrieLogsPruningWindowSize(
-          dataStorageOptions.toDomainObject().getUnstable().getBonsaiTrieLogPruningWindowSize());
+          getDataStorageConfiguration().getUnstable().getBonsaiTrieLogPruningWindowSize());
     }
 
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
