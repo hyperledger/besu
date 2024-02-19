@@ -116,6 +116,11 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   }
 
   @Override
+  public void commitPrivateNonce() {
+
+  }
+
+  @Override
   public Optional<WorldUpdater> parentUpdater() {
     return Optional.of(parentWorld);
   }

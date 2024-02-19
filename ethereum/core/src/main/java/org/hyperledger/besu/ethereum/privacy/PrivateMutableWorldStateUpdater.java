@@ -104,4 +104,10 @@ public class PrivateMutableWorldStateUpdater implements WorldUpdater {
   public Optional<WorldUpdater> parentUpdater() {
     return privateWorldUpdater.parentUpdater();
   }
+
+  @Override
+  public void commitPrivateNonce() {
+
+    privateWorldUpdater.commitPrivateNonce();
+  }
 }

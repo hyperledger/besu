@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -49,8 +50,11 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ForestMutableWorldState implements MutableWorldState {
+  private static final Logger LOG = LoggerFactory.getLogger(ForestMutableWorldState.class);
 
   private final EvmConfiguration evmConfiguration;
   private final WorldStateStorage worldStateStorage;
@@ -371,21 +375,38 @@ public class ForestMutableWorldState implements MutableWorldState {
 
     @Override
     public void commit() {
+      LOG.info("{} : commit", this.getClass().getName());
+
       final ForestMutableWorldState wrapped = wrappedWorldView();
 
       for (final Address address : getDeletedAccounts()) {
+        LOG.info("{} : getDeletedAccounts", address);
+
         final Hash addressHash = address.addressHash();
+
+        if (wrapped.accountStateTrie.get(addressHash).isPresent()) {
+          LOG.info(
+              "Delete : account state {}",
+              StateTrieAccountValue.readFrom(
+                      new BytesValueRLPInput(
+                          wrapped.accountStateTrie.get(addressHash).get(), false, true))
+                  .getBalance());
+        }
         wrapped.accountStateTrie.remove(addressHash);
         wrapped.updatedStorageTries.remove(address);
         wrapped.updatedAccountCode.remove(address);
       }
 
       for (final UpdateTrackingAccount<WorldStateAccount> updated : getUpdatedAccounts()) {
+        LOG.info(": getUpdatedAccounts");
+
         final WorldStateAccount origin = updated.getWrappedAccount();
 
         // Save the code in key-value storage ...
         Hash codeHash = origin == null ? Hash.EMPTY : origin.getCodeHash();
         if (updated.codeWasUpdated()) {
+          LOG.info(": codeWasUpdated {} ", updated.getAddress());
+
           codeHash = Hash.hash(updated.getCode());
           wrapped.updatedAccountCode.put(updated.getAddress(), updated.getCode());
         }
@@ -393,10 +414,14 @@ public class ForestMutableWorldState implements MutableWorldState {
         final boolean freshState = origin == null || updated.getStorageWasCleared();
         Hash storageRoot = freshState ? Hash.EMPTY_TRIE_HASH : origin.getStorageRoot();
         if (freshState) {
+          LOG.info(": freshState {}", updated.getAddress());
+
           wrapped.updatedStorageTries.remove(updated.getAddress());
         }
         final Map<UInt256, UInt256> updatedStorage = updated.getUpdatedStorage();
         if (!updatedStorage.isEmpty()) {
+          LOG.info(": isEmpty {}", updated.getAddress());
+
           // Apply any storage updates
           final MerkleTrie<Bytes32, Bytes> storageTrie =
               freshState
@@ -411,8 +436,12 @@ public class ForestMutableWorldState implements MutableWorldState {
             final UInt256 value = entry.getValue();
             final Hash keyHash = Hash.hash(entry.getKey());
             if (value.isZero()) {
+              LOG.info(": isZero {}", updated.getAddress());
+
               storageTrie.remove(keyHash);
             } else {
+              LOG.info(": else {}", updated.getAddress());
+
               wrapped.newStorageKeyPreimages.put(keyHash, entry.getKey());
               storageTrie.put(
                   keyHash, RLP.encode(out -> out.writeBytes(entry.getValue().toMinimalBytes())));
@@ -427,8 +456,60 @@ public class ForestMutableWorldState implements MutableWorldState {
         final Bytes account =
             serializeAccount(updated.getNonce(), updated.getBalance(), storageRoot, codeHash);
 
+        if (wrapped.accountStateTrie.get(updated.getAddressHash()).isPresent()) {
+          StateTrieAccountValue previousAccount =
+              StateTrieAccountValue.readFrom(
+                  new BytesValueRLPInput(
+                      wrapped.accountStateTrie.get(updated.getAddressHash()).get(), false, true));
+          LOG.info(
+              "Update : previous account code : {}, balance : {}, nonce : {} , {}",
+              previousAccount.getCodeHash(),
+              previousAccount.getBalance(),
+              previousAccount.getNonce(),
+              updated.getAddress());
+        }
+        LOG.info(
+            "Update : updated account code : {}, balance : {}, nonce : {} ,{}",
+            codeHash,
+            updated.getBalance(),
+            updated.getNonce(),
+            updated.getAddress());
         wrapped.accountStateTrie.put(updated.getAddressHash(), account);
       }
+    }
+
+    @Override
+    public void commitPrivateNonce() {
+      final ForestMutableWorldState wrapped = wrappedWorldView();
+      // get updated  accounts
+      for (final UpdateTrackingAccount<WorldStateAccount> updated : getUpdatedAccounts()) {
+        //        final WorldStateAccount origin = updated.getWrappedAccount();
+
+        Optional<Bytes> existingState = wrapped.accountStateTrie.get(updated.getAddressHash());
+
+        // update account in accountStateTrie
+        if (existingState.isPresent()) {
+          wrapped.accountStateTrie.remove(updated.getAddressHash());
+
+          StateTrieAccountValue previousAccount =
+              StateTrieAccountValue.readFrom(
+                  new BytesValueRLPInput(existingState.get(), false, true));
+
+          final Bytes account =
+              serializeAccount(
+                  updated.getNonce(),
+                  previousAccount.getBalance(),
+                  previousAccount.getStorageRoot(),
+                  previousAccount.getCodeHash());
+
+          wrapped.accountStateTrie.put(updated.getAddressHash(), account);
+
+          return;
+        }
+        // store new nonce
+      }
+
+      //
     }
 
     private static Bytes serializeAccount(
