@@ -15,6 +15,8 @@
 
 package org.hyperledger.besu.plugin.services.txselection;
 
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
+
 import org.hyperledger.besu.datatypes.PendingTransaction;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.TransactionProcessingResult;
@@ -24,6 +26,22 @@ import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 /** Interface for the transaction selector */
 @Unstable
 public interface PluginTransactionSelector {
+  /** Plugin transaction selector that unconditionally select every transaction */
+  PluginTransactionSelector ACCEPT_ALL =
+      new PluginTransactionSelector() {
+        @Override
+        public TransactionSelectionResult evaluateTransactionPreProcessing(
+            TransactionEvaluationContext<? extends PendingTransaction> evaluationContext) {
+          return SELECTED;
+        }
+
+        @Override
+        public TransactionSelectionResult evaluateTransactionPostProcessing(
+            TransactionEvaluationContext<? extends PendingTransaction> evaluationContext,
+            TransactionProcessingResult processingResult) {
+          return SELECTED;
+        }
+      };
 
   /**
    * Method that returns an OperationTracer that will be used when executing transactions that are

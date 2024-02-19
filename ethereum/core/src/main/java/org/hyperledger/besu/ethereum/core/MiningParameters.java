@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.time.Duration;
@@ -120,8 +122,6 @@ public abstract class MiningParameters {
     return this;
   }
 
-  public abstract TransactionSelectionService transactionSelectionService();
-
   @Value.Default
   public boolean isStratumMiningEnabled() {
     return false;
@@ -145,6 +145,20 @@ public abstract class MiningParameters {
   @Value.Default
   public PositiveNumber getPoaBlockTxsSelectionMaxTime() {
     return DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+  }
+
+  @Value.Default
+  public TransactionSelectionService getTransactionSelectionService() {
+    return new TransactionSelectionService() {
+      @Override
+      public PluginTransactionSelector createPluginTransactionSelector() {
+        return PluginTransactionSelector.ACCEPT_ALL;
+      }
+
+      @Override
+      public void registerPluginTransactionSelectorFactory(
+          final PluginTransactionSelectorFactory transactionSelectorFactory) {}
+    };
   }
 
   public abstract OptionalInt getGenesisBlockPeriodSeconds();

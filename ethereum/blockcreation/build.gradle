@@ -27,6 +27,7 @@ dependencies {
   implementation 'io.tmio:tuweni-bytes'
   implementation 'io.tmio:tuweni-units'
 
+  testImplementation project(':besu')
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')

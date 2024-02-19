@@ -117,7 +117,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -2128,11 +2127,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (miningParameters == null) {
       miningOptions.setGenesisBlockPeriodSeconds(
           getGenesisBlockPeriodSeconds(getActualGenesisConfigOptions()));
-      miningParameters =
-          ImmutableMiningParameters.builder()
-              .from(miningOptions.toDomainObject())
-              .transactionSelectionService(transactionSelectionServiceImpl)
-              .build();
+      miningOptions.setTransactionSelectionService(transactionSelectionServiceImpl);
+      miningParameters = miningOptions.toDomainObject();
     }
     return miningParameters;
   }

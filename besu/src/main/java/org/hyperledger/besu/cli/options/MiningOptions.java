@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
@@ -37,6 +38,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.util.List;
@@ -190,6 +192,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
   }
 
   private OptionalInt maybeGenesisBlockPeriodSeconds;
+  private TransactionSelectionService transactionSelectionService;
 
   private MiningOptions() {}
 
@@ -210,6 +213,16 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
    */
   public void setGenesisBlockPeriodSeconds(final OptionalInt genesisBlockPeriodSeconds) {
     maybeGenesisBlockPeriodSeconds = genesisBlockPeriodSeconds;
+  }
+
+  /**
+   * Set the transaction selection service
+   *
+   * @param transactionSelectionService the transaction selection service
+   */
+  public void setTransactionSelectionService(
+      final TransactionSelectionService transactionSelectionService) {
+    this.transactionSelectionService = transactionSelectionService;
   }
 
   /**
@@ -299,6 +312,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
   static MiningOptions fromConfig(final MiningParameters miningParameters) {
     final MiningOptions miningOptions = MiningOptions.create();
     miningOptions.setGenesisBlockPeriodSeconds(miningParameters.getGenesisBlockPeriodSeconds());
+    miningOptions.setTransactionSelectionService(miningParameters.getTransactionSelectionService());
     miningOptions.isMiningEnabled = miningParameters.isMiningEnabled();
     miningOptions.iStratumMiningEnabled = miningParameters.isStratumMiningEnabled();
     miningOptions.stratumNetworkInterface = miningParameters.getStratumNetworkInterface();
@@ -333,10 +347,12 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
 
   @Override
   public MiningParameters toDomainObject() {
-    if (maybeGenesisBlockPeriodSeconds == null) {
-      throw new IllegalStateException(
-          "genesisBlockPeriodSeconds must be set before using this object");
-    }
+    checkNotNull(
+        maybeGenesisBlockPeriodSeconds,
+        "genesisBlockPeriodSeconds must be set before using this object");
+    checkNotNull(
+        transactionSelectionService,
+        "transactionSelectionService must be set before using this object");
 
     final var updatableInitValuesBuilder =
         MutableInitValues.builder()
@@ -355,6 +371,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
 
     return ImmutableMiningParameters.builder()
         .genesisBlockPeriodSeconds(maybeGenesisBlockPeriodSeconds)
+        .transactionSelectionService(transactionSelectionService)
         .mutableInitValues(updatableInitValuesBuilder.build())
         .isStratumMiningEnabled(iStratumMiningEnabled)
         .stratumNetworkInterface(stratumNetworkInterface)
