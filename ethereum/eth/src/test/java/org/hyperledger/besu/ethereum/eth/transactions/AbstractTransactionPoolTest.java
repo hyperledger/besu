@@ -1270,7 +1270,7 @@ public abstract class AbstractTransactionPoolTest {
   private static PluginTransactionValidatorService getPluginTransactionValidatorServiceReturning(
       final String errorMessage) {
     final PluginTransactionValidator pluginTransactionValidator =
-        transaction -> Optional.ofNullable(errorMessage);
+        (transaction, isLocal, hasPriority) -> Optional.ofNullable(errorMessage);
     return new PluginTransactionValidatorService() {
       @Override
       public PluginTransactionValidatorFactory get() {

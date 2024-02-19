@@ -28,8 +28,11 @@ public interface PluginTransactionValidator {
    * Method called to decide whether a transaction can be added to the transaction pool.
    *
    * @param transaction candidate transaction
+   * @param isLocal if the transaction was sent to this node via API
+   * @param hasPriority if the transaction has priority
    * @return Optional.empty() if the transaction is valid, an Optional containing an error message,
    *     if not
    */
-  Optional<String> validateTransaction(final Transaction transaction);
+  Optional<String> validateTransaction(
+      final Transaction transaction, final boolean isLocal, final boolean hasPriority);
 }
