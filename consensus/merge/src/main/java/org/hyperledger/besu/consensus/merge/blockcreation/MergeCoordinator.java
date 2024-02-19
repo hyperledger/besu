@@ -836,11 +836,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
-  public void addBadBlock(final Block block, final Optional<Throwable> maybeCause) {
-    protocolContext.getBadBlockManager().addBadBlock(block, maybeCause);
-  }
-
-  @Override
   public boolean isBadBlock(final Hash blockHash) {
     final BadBlockManager badBlockManager = protocolContext.getBadBlockManager();
     return badBlockManager.getBadBlock(blockHash).isPresent()
