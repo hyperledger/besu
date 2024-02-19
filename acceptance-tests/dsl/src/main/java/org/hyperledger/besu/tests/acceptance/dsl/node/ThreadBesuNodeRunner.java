@@ -145,8 +145,12 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     final StorageServiceImpl storageService = new StorageServiceImpl();
     final SecurityModuleServiceImpl securityModuleService = new SecurityModuleServiceImpl();
     final Path dataDir = node.homeDirectory();
-    final BesuConfiguration commonPluginConfiguration =
-        new BesuConfigurationImpl(dataDir, dataDir.resolve(DATABASE_PATH));
+    final BesuConfigurationImpl commonPluginConfiguration = new BesuConfigurationImpl();
+    commonPluginConfiguration.init(
+        dataDir,
+        dataDir.resolve(DATABASE_PATH),
+        node.getDataStorageConfiguration(),
+        node.getMiningParameters());
     final BesuPluginContextImpl besuPluginContext =
         besuPluginContextMap.computeIfAbsent(
             node,
