@@ -36,11 +36,20 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractTraceCall extends AbstractTraceByBlock {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTraceCall.class);
 
-  public AbstractTraceCall(
+  /**
+   * A flag to indicate if call operations should trace just the operation cost (false, Geth style,
+   * debug_ series RPCs) or the operation cost and all gas granted to the child call (true, Parity
+   * style, trace_ series RPCs)
+   */
+  private final boolean recordChildCallGas;
+
+  protected AbstractTraceCall(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
-      final TransactionSimulator transactionSimulator) {
+      final TransactionSimulator transactionSimulator,
+      final boolean recordChildCallGas) {
     super(blockchainQueries, protocolSchedule, transactionSimulator);
+    this.recordChildCallGas = recordChildCallGas;
   }
 
   @Override
@@ -65,7 +74,7 @@ public abstract class AbstractTraceCall extends AbstractTraceByBlock {
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), BLOCK_NOT_FOUND);
     }
 
-    final DebugOperationTracer tracer = new DebugOperationTracer(traceOptions);
+    final DebugOperationTracer tracer = new DebugOperationTracer(traceOptions, recordChildCallGas);
     return transactionSimulator
         .process(
             callParams,

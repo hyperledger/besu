@@ -139,6 +139,12 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     }
   }
 
+  /**
+   * Converts to options from the configuration
+   *
+   * @param domainObject to be reversed
+   * @return the options that correspond to the configuration
+   */
   public static DataStorageOptions fromConfig(final DataStorageConfiguration domainObject) {
     final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
     dataStorageOptions.dataStorageFormat = domainObject.getDataStorageFormat();
