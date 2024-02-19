@@ -66,13 +66,15 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
                 Tracer.processTracing(
                     blockchainQueriesSupplier.get(),
                     hash,
-                    mutableWorldState -> {
-                      return blockTracerSupplier
-                          .get()
-                          .trace(mutableWorldState, hash, new DebugOperationTracer(traceOptions))
-                          .map(BlockTrace::getTransactionTraces)
-                          .map(DebugTraceTransactionResult::of);
-                    }))
+                    mutableWorldState ->
+                        blockTracerSupplier
+                            .get()
+                            .trace(
+                                mutableWorldState,
+                                hash,
+                                new DebugOperationTracer(traceOptions, true))
+                            .map(BlockTrace::getTransactionTraces)
+                            .map(DebugTraceTransactionResult::of)))
         .orElse(null);
   }
 }

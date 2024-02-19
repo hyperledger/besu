@@ -34,6 +34,7 @@ public class TraceFrame {
 
   private final int pc;
   private final Optional<String> opcode;
+  private final int opcodeNumber;
   private final long gasRemaining;
   private final OptionalLong gasCost;
   private final long gasRefund;
@@ -63,6 +64,7 @@ public class TraceFrame {
   public TraceFrame(
       final int pc,
       final Optional<String> opcode,
+      final int opcodeNumber,
       final long gasRemaining,
       final OptionalLong gasCost,
       final long gasRefund,
@@ -86,6 +88,7 @@ public class TraceFrame {
       final Optional<StorageEntry> maybeUpdatedStorage) {
     this.pc = pc;
     this.opcode = opcode;
+    this.opcodeNumber = opcodeNumber;
     this.gasRemaining = gasRemaining;
     this.gasCost = gasCost;
     this.gasRefund = gasRefund;
@@ -116,6 +119,10 @@ public class TraceFrame {
 
   public String getOpcode() {
     return opcode.orElse("");
+  }
+
+  public int getOpcodeNumber() {
+    return opcodeNumber;
   }
 
   public long getGasRemaining() {
