@@ -95,7 +95,7 @@ public class FixedBaseFeeMarketTest {
             .maxPriorityFeePerGas(Optional.of(Wei.ZERO))
             .gasPrice(null)
             .createTransaction(KEY_PAIR1);
-    assertThat(fixedBaseFeeMarket.satisfiesFloorTxFee(transaction)).isTrue();
+    assertThat(fixedBaseFeeMarket.satisfiesFloorTxFee(transaction)).isFalse();
   }
 
   @Test
