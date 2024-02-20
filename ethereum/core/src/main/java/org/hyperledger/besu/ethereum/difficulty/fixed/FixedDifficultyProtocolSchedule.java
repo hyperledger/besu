@@ -67,6 +67,12 @@ public class FixedDifficultyProtocolSchedule {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager) {
-    return create(config, PrivacyParameters.DEFAULT, false, evmConfiguration, miningParameters, badBlockManager);
+    return create(
+        config,
+        PrivacyParameters.DEFAULT,
+        false,
+        evmConfiguration,
+        miningParameters,
+        badBlockManager);
   }
 }

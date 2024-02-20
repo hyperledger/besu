@@ -51,7 +51,12 @@ public class MainnetProtocolSchedule {
       final BadBlockManager badBlockManager) {
     if (FixedDifficultyCalculators.isFixedDifficultyInConfig(config)) {
       return FixedDifficultyProtocolSchedule.create(
-          config, privacyParameters, isRevertReasonEnabled, evmConfiguration, miningParameters, badBlockManager);
+          config,
+          privacyParameters,
+          isRevertReasonEnabled,
+          evmConfiguration,
+          miningParameters,
+          badBlockManager);
     }
     return new ProtocolScheduleBuilder(
             config,
@@ -106,7 +111,13 @@ public class MainnetProtocolSchedule {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager) {
-    return fromConfig(config, PrivacyParameters.DEFAULT, false, evmConfiguration, miningParameters, badBlockManager);
+    return fromConfig(
+        config,
+        PrivacyParameters.DEFAULT,
+        false,
+        evmConfiguration,
+        miningParameters,
+        badBlockManager);
   }
 
   /**
@@ -119,8 +130,15 @@ public class MainnetProtocolSchedule {
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
-      final GenesisConfigOptions config, final MiningParameters miningParameters, final BadBlockManager badBlockManager) {
+      final GenesisConfigOptions config,
+      final MiningParameters miningParameters,
+      final BadBlockManager badBlockManager) {
     return fromConfig(
-        config, PrivacyParameters.DEFAULT, false, EvmConfiguration.DEFAULT, miningParameters, badBlockManager);
+        config,
+        PrivacyParameters.DEFAULT,
+        false,
+        EvmConfiguration.DEFAULT,
+        miningParameters,
+        badBlockManager);
   }
 }
