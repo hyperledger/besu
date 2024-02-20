@@ -29,13 +29,15 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Return operation. */
 public class ReturnContractOperation extends AbstractOperation {
 
+  public static final int OPCODE = 0xEE;
+
   /**
    * Instantiates a new Return operation.
    *
    * @param gasCalculator the gas calculator
    */
   public ReturnContractOperation(final GasCalculator gasCalculator) {
-    super(0xEE, "RETURNCONTRACT", 2, 0, gasCalculator);
+    super(OPCODE, "RETURNCONTRACT", 2, 0, gasCalculator);
   }
 
   @Override
