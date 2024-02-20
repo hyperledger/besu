@@ -116,7 +116,8 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
         nodeKey,
         privacyParameters,
         isRevertReasonEnabled,
-        evmConfiguration);
+        evmConfiguration,
+        badBlockManager);
   }
 
   @Override

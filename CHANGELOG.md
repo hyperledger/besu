@@ -31,8 +31,9 @@
 - Log blob count when importing a block via Engine API [#6466](https://github.com/hyperledger/besu/pull/6466)
 - Introduce `--Xbonsai-limit-trie-logs-enabled` experimental feature which by default will only retain the latest 512 trie logs, saving about 3GB per week in database growth [#5390](https://github.com/hyperledger/besu/issues/5390)
 - Introduce `besu storage x-trie-log prune` experimental offline subcommand which will prune all redundant trie logs except the latest 512 [#6303](https://github.com/hyperledger/besu/pull/6303)
+- Improve flat trace generation performance [#6472](https://github.com/hyperledger/besu/pull/6472)
 - SNAP and CHECKPOINT sync - early access flag removed so now simply SNAP and CHECKPOINT [#6405](https://github.com/hyperledger/besu/pull/6405)
-  - X_SNAP and X_CHECKPOINT are marked for deprecation and will be removed in 24.4.0
+- X_SNAP and X_CHECKPOINT are marked for deprecation and will be removed in 24.4.0
 - Github Actions based build.
 - Introduce caching mechanism to optimize Keccak hash calculations for account storage slots during block processing [#6452](https://github.com/hyperledger/besu/pull/6452)
 - Added configuration options for `pragueTime` to genesis file for Prague fork development [#6473](https://github.com/hyperledger/besu/pull/6473)
@@ -44,6 +45,7 @@
 - Adds `storage rocksdb x-stats` subcommand [#6540](https://github.com/hyperledger/besu/pull/6540)
 - New `eth_blobBaseFee`JSON-RPC method [#6581](https://github.com/hyperledger/besu/pull/6581)
 - Upgrade reference tests to version 13.1 [#6574](https://github.com/hyperledger/besu/pull/6574)
+- Extend `BesuConfiguration` service [#6584](https://github.com/hyperledger/besu/pull/6584)
 
 ### Bug fixes
 - Fix the way an advertised host configured with `--p2p-host` is treated when communicating with the originator of a PING packet [#6225](https://github.com/hyperledger/besu/pull/6225)

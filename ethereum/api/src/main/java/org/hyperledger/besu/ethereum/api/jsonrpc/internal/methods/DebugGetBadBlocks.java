@@ -14,30 +14,25 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BadBlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
-import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class DebugGetBadBlocks implements JsonRpcMethod {
 
-  private final BlockchainQueries blockchain;
-  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
   private final BlockResultFactory blockResultFactory;
 
   public DebugGetBadBlocks(
-      final BlockchainQueries blockchain,
-      final ProtocolSchedule protocolSchedule,
-      final BlockResultFactory blockResultFactory) {
-    this.blockchain = blockchain;
-    this.protocolSchedule = protocolSchedule;
+      final ProtocolContext protocolContext, final BlockResultFactory blockResultFactory) {
+    this.protocolContext = protocolContext;
     this.blockResultFactory = blockResultFactory;
   }
 
@@ -49,11 +44,7 @@ public class DebugGetBadBlocks implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final List<BadBlockResult> response =
-        protocolSchedule
-            .getByBlockHeader(blockchain.headBlockHeader())
-            .getBadBlocksManager()
-            .getBadBlocks()
-            .stream()
+        protocolContext.getBadBlockManager().getBadBlocks().stream()
             .map(block -> BadBlockResult.from(blockResultFactory.transactionComplete(block), block))
             .collect(Collectors.toList());
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
