@@ -15,7 +15,13 @@
 
 package org.hyperledger.besu.config;
 
+/** A "custom hard fork" used for Proof of Authority network Transitions */
 public interface Fork {
 
+  /**
+   * The block number at which the fork occurs.
+   *
+   * @return the block number at which the fork occurs
+   */
   long getForkBlock();
 }

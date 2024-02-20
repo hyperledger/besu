@@ -17,13 +17,34 @@ package org.hyperledger.besu.config;
 
 import java.util.Map;
 
+/** Configuration options for the Clique consensus mechanism. */
 public interface CliqueConfigOptions {
 
+  /**
+   * The number of blocks in an epoch.
+   *
+   * @return the epoch length
+   */
   long getEpochLength();
 
+  /**
+   * Gets block period seconds.
+   *
+   * @return the block period seconds
+   */
   int getBlockPeriodSeconds();
 
+  /**
+   * Gets create empty blocks.
+   *
+   * @return whether empty blocks are permitted
+   */
   boolean getCreateEmptyBlocks();
 
+  /**
+   * A map of the config options.
+   *
+   * @return the map
+   */
   Map<String, Object> asMap();
 }
