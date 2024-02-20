@@ -120,6 +120,7 @@ public class BftBlockCreatorTest {
             false,
             bftExtraDataEncoder,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager());
     final ProtocolContext protContext =
         new ProtocolContext(
