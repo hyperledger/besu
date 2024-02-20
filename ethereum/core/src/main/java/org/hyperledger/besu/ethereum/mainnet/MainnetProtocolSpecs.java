@@ -445,8 +445,9 @@ public abstract class MainnetProtocolSpecs {
         genesisConfigOptions.isZeroBaseFee()
             ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
             : genesisConfigOptions.isFixedBaseFee()
-            ? FeeMarket.fixedBaseFee(londonForkBlockNumber, miningParameters.getMinTransactionGasPrice())
-            : FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
+                ? FeeMarket.fixedBaseFee(
+                    londonForkBlockNumber, miningParameters.getMinTransactionGasPrice())
+                : FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
     return berlinDefinition(
             chainId,
             configContractSizeLimit,
@@ -653,8 +654,9 @@ public abstract class MainnetProtocolSpecs {
         genesisConfigOptions.isZeroBaseFee()
             ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
             : genesisConfigOptions.isFixedBaseFee()
-            ? FeeMarket.fixedBaseFee(londonForkBlockNumber, miningParameters.getMinTransactionGasPrice())
-            : FeeMarket.cancun(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
+                ? FeeMarket.fixedBaseFee(
+                    londonForkBlockNumber, miningParameters.getMinTransactionGasPrice())
+                : FeeMarket.cancun(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
 
     return shanghaiDefinition(
             chainId,

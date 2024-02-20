@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
 import org.hyperledger.besu.datatypes.Wei;
 
-import java.util.Optional;
-
 public class ZeroBaseFeeMarket extends FixedBaseFeeMarket {
 
   public ZeroBaseFeeMarket(final long londonForkBlockNumber) {

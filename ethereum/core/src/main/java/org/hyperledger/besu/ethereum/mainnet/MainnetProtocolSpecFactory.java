@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
 import java.util.Optional;
