@@ -142,7 +142,7 @@ public class BlockchainSetupUtil {
   private static ProtocolSchedule mainnetProtocolScheduleProvider(
       final GenesisConfigFile genesisConfigFile) {
     return MainnetProtocolSchedule.fromConfig(
-        genesisConfigFile.getConfigOptions(), EvmConfiguration.DEFAULT, new BadBlockManager());
+        genesisConfigFile.getConfigOptions(), EvmConfiguration.DEFAULT, MiningParameters.newDefault(), new BadBlockManager());
   }
 
   private static ProtocolContext mainnetProtocolContextProvider(
