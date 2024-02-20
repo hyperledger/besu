@@ -111,6 +111,7 @@ public class JsonRpcHttpServiceTlsTest {
                 synchronizer,
                 MainnetProtocolSchedule.fromConfig(
                     new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID),
+                    MiningParameters.MINING_DISABLED,
                     new BadBlockManager()),
                 mock(ProtocolContext.class),
                 mock(FilterManager.class),
