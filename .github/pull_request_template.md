@@ -5,7 +5,7 @@
 - [ ] Considered the changelog and included an [update if required](https://wiki.hyperledger.org/display/BESU/Changelog).
 - [ ] For database changes (e.g. KeyValueSegmentIdentifier) considered compatibility and performed forwards and backwards compatibility tests
 
-### Most advanced testing is deferred, but you could:
+### Most advanced CI tests are deferred until PR approval, but you could:
 
 - [ ] locally run all unit tests via: `./gradlew build`
 - [ ] locally run all acceptance tests via: `./gradlew acceptanceTests`
