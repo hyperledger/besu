@@ -173,7 +173,11 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return MergeProtocolSchedule.create(
-        configOptionsSupplier.get(), privacyParameters, isRevertReasonEnabled, miningParameters, badBlockManager);
+        configOptionsSupplier.get(),
+        privacyParameters,
+        isRevertReasonEnabled,
+        miningParameters,
+        badBlockManager);
   }
 
   @Override
