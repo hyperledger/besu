@@ -152,7 +152,8 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         genesisConfigOptions,
-        evmConfiguration);
+        evmConfiguration,
+        miningParameters);
   }
 
   public ProtocolSpecBuilder shanghaiDefinition(final GenesisConfigOptions genesisConfigOptions) {
@@ -162,7 +163,8 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         genesisConfigOptions,
-        evmConfiguration);
+        evmConfiguration,
+        miningParameters);
   }
 
   public ProtocolSpecBuilder cancunDefinition(final GenesisConfigOptions genesisConfigOptions) {
@@ -205,7 +207,8 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         genesisConfigOptions,
-        evmConfiguration);
+        evmConfiguration,
+        miningParameters);
   }
 
   /**
@@ -226,7 +229,8 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         genesisConfigOptions,
-        evmConfiguration);
+        evmConfiguration,
+        miningParameters);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
