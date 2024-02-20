@@ -145,7 +145,8 @@ public class MergeBesuControllerBuilderTest {
         .thenReturn(Range.closed(1L, 2L));
 
     lenient()
-        .when(storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG))
+        .when(
+            storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_FOREST_CONFIG))
         .thenReturn(worldStateStorage);
     lenient()
         .when(storageProvider.createWorldStatePreimageStorage())
@@ -174,6 +175,7 @@ public class MergeBesuControllerBuilderTest {
             .dataDirectory(tempDir)
             .clock(clock)
             .transactionPoolConfiguration(poolConfiguration)
+            .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
             .nodeKey(nodeKey)
             .storageProvider(storageProvider)
             .evmConfiguration(EvmConfiguration.DEFAULT)

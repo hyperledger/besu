@@ -88,7 +88,9 @@ public class EvmToolCommandOptionsModule {
   @Provides
   @Singleton
   BesuConfiguration provideBesuConfiguration() {
-    return new BesuConfigurationImpl(dataPath, dataPath.resolve(BesuController.DATABASE_PATH));
+    final var besuConfiguration = new BesuConfigurationImpl();
+    besuConfiguration.init(dataPath, dataPath.resolve(BesuController.DATABASE_PATH), null, null);
+    return besuConfiguration;
   }
 
   @Option(

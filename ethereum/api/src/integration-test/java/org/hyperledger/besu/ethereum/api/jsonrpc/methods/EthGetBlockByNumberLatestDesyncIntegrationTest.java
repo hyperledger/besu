@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
@@ -67,7 +68,8 @@ public class EthGetBlockByNumberLatestDesyncIntegrationTest {
         InMemoryKeyValueStorageProvider.createInMemoryBlockchain(importer.getGenesisBlock());
     WorldStateArchive state = InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
     importer.getGenesisState().writeStateTo(state.getMutable());
-    ProtocolContext context = new ProtocolContext(chain, state, null, Optional.empty());
+    ProtocolContext context =
+        new ProtocolContext(chain, state, null, Optional.empty(), new BadBlockManager());
 
     for (final Block block : importer.getBlocks()) {
       final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();

@@ -24,13 +24,16 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 /** The Return operation. */
 public class ReturnOperation extends AbstractOperation {
 
+  /** RETURN opcode number */
+  public static final int OPCODE = 0xF3;
+
   /**
    * Instantiates a new Return operation.
    *
    * @param gasCalculator the gas calculator
    */
   public ReturnOperation(final GasCalculator gasCalculator) {
-    super(0xF3, "RETURN", 2, 0, gasCalculator);
+    super(OPCODE, "RETURN", 2, 0, gasCalculator);
   }
 
   @Override

@@ -23,6 +23,7 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolScheduleBuilder;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -44,6 +45,7 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param bftExtraDataCodec the bft extra data codec
    * @param evmConfiguration the evm configuration
+   * @param badBlockManager the cache to use to keep invalid blocks
    * @return the protocol schedule
    */
   public static BftProtocolSchedule create(
@@ -52,7 +54,8 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final BadBlockManager badBlockManager) {
     return new QbftProtocolScheduleBuilder()
         .createProtocolSchedule(
             config,
@@ -60,7 +63,8 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
             privacyParameters,
             isRevertReasonEnabled,
             bftExtraDataCodec,
-            evmConfiguration);
+            evmConfiguration,
+            badBlockManager);
   }
 
   /**
@@ -70,20 +74,23 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param qbftForksSchedule the qbft forks schedule
    * @param bftExtraDataCodec the bft extra data codec
    * @param evmConfiguration the evm configuration
+   * @param badBlockManager the cache to use to keep invalid blocks
    * @return the protocol schedule
    */
   public static BftProtocolSchedule create(
       final GenesisConfigOptions config,
       final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
       final BftExtraDataCodec bftExtraDataCodec,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final BadBlockManager badBlockManager) {
     return create(
         config,
         qbftForksSchedule,
         PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,
-        evmConfiguration);
+        evmConfiguration,
+        badBlockManager);
   }
 
   /**
@@ -93,20 +100,23 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param qbftForksSchedule the qbft forks schedule
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param bftExtraDataCodec the bft extra data codec
+   * @param badBlockManager the cache to use to keep invalid blocks
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
       final boolean isRevertReasonEnabled,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final BftExtraDataCodec bftExtraDataCodec,
+      final BadBlockManager badBlockManager) {
     return create(
         config,
         qbftForksSchedule,
         PrivacyParameters.DEFAULT,
         isRevertReasonEnabled,
         bftExtraDataCodec,
-        EvmConfiguration.DEFAULT);
+        EvmConfiguration.DEFAULT,
+        badBlockManager);
   }
 
   @Override

@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
@@ -55,6 +56,7 @@ public class CliqueProtocolSchedule {
    * @param privacyParameters the privacy parameters
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param evmConfiguration the evm configuration
+   * @param badBlockManager the cache to use to keep invalid blocks
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
@@ -63,7 +65,8 @@ public class CliqueProtocolSchedule {
       final NodeKey nodeKey,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final BadBlockManager badBlockManager) {
 
     final CliqueConfigOptions cliqueConfig = config.getCliqueConfigOptions();
 
@@ -107,7 +110,8 @@ public class CliqueProtocolSchedule {
             specAdapters,
             privacyParameters,
             isRevertReasonEnabled,
-            evmConfiguration)
+            evmConfiguration,
+            badBlockManager)
         .createProtocolSchedule();
   }
 
@@ -119,6 +123,7 @@ public class CliqueProtocolSchedule {
    * @param nodeKey the node key
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param evmConfiguration the evm configuration
+   * @param badBlockManager the cache to use to keep invalid blocks
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
@@ -126,14 +131,16 @@ public class CliqueProtocolSchedule {
       final ForksSchedule<CliqueConfigOptions> forksSchedule,
       final NodeKey nodeKey,
       final boolean isRevertReasonEnabled,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final BadBlockManager badBlockManager) {
     return create(
         config,
         forksSchedule,
         nodeKey,
         PrivacyParameters.DEFAULT,
         isRevertReasonEnabled,
-        evmConfiguration);
+        evmConfiguration,
+        badBlockManager);
   }
 
   private static ProtocolSpecBuilder applyCliqueSpecificModifications(

@@ -58,10 +58,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes32;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -161,7 +161,7 @@ public class TraceFilter extends TraceBlock {
                               "action");
 
                   DebugOperationTracer debugOperationTracer =
-                      new DebugOperationTracer(new TraceOptions(false, false, true));
+                      new DebugOperationTracer(new TraceOptions(false, false, true), false);
                   ExecuteTransactionStep executeTransactionStep =
                       new ExecuteTransactionStep(
                           chainUpdater,
@@ -211,7 +211,7 @@ public class TraceFilter extends TraceBlock {
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result.getArrayNode());
   }
 
-  @NotNull
+  @Nonnull
   private List<Block> getBlockList(
       final long fromBlock, final long toBlock, final Optional<Block> block) {
     List<Block> blockList = new ArrayList<>();
