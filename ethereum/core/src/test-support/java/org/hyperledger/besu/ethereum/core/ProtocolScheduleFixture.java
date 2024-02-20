@@ -39,6 +39,7 @@ public class ProtocolScheduleFixture {
           PrivacyParameters.DEFAULT,
           false,
           EvmConfiguration.DEFAULT,
+          MiningParameters.newDefault(),
           new BadBlockManager());
 
   private static GenesisConfigOptions getMainnetConfigOptions() {
