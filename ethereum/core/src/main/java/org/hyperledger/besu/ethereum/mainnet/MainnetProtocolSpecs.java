@@ -540,14 +540,16 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters) {
     return arrowGlacierDefinition(
             chainId,
             configContractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
             genesisConfigOptions,
-            evmConfiguration)
+            evmConfiguration,
+            miningParameters)
         .difficultyCalculator(MainnetDifficultyCalculators.GRAY_GLACIER)
         .name("GrayGlacier");
   }
@@ -721,7 +723,8 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
 
@@ -731,7 +734,8 @@ public abstract class MainnetProtocolSpecs {
             configStackSizeLimit,
             enableRevertReason,
             genesisConfigOptions,
-            evmConfiguration)
+            evmConfiguration,
+            miningParameters)
         // EVM changes to support EOF EIPs (3670, 4200, 4750, 5450)
         .gasCalculator(PragueGasCalculator::new)
         .evmBuilder(
