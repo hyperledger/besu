@@ -21,6 +21,7 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
@@ -51,6 +52,7 @@ public class CliqueProtocolSchedule {
    * @param privacyParameters the privacy parameters
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param evmConfiguration the evm configuration
+   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @return the protocol schedule
    */
@@ -60,6 +62,7 @@ public class CliqueProtocolSchedule {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager) {
 
     final CliqueConfigOptions cliqueConfig = config.getCliqueConfigOptions();
@@ -87,6 +90,7 @@ public class CliqueProtocolSchedule {
             privacyParameters,
             isRevertReasonEnabled,
             evmConfiguration,
+            miningParameters,
             badBlockManager)
         .createProtocolSchedule();
   }
@@ -98,6 +102,7 @@ public class CliqueProtocolSchedule {
    * @param nodeKey the node key
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param evmConfiguration the evm configuration
+   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @return the protocol schedule
    */
@@ -106,6 +111,7 @@ public class CliqueProtocolSchedule {
       final NodeKey nodeKey,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager) {
     return create(
         config,
@@ -113,6 +119,7 @@ public class CliqueProtocolSchedule {
         PrivacyParameters.DEFAULT,
         isRevertReasonEnabled,
         evmConfiguration,
+        miningParameters,
         badBlockManager);
   }
 

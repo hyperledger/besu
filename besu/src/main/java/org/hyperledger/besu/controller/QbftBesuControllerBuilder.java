@@ -319,6 +319,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
         isRevertReasonEnabled,
         bftExtraDataCodec().get(),
         evmConfiguration,
+        miningParameters,
         badBlockManager);
   }
 
