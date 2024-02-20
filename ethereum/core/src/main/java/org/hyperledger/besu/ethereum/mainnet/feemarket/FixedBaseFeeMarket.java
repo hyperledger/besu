@@ -20,7 +20,7 @@ import java.util.Optional;
 
 public class FixedBaseFeeMarket extends LondonFeeMarket {
 
-  public FixedBaseFeeMarket(final long londonForkBlockNumber, Wei fixedBaseFee) {
+  public FixedBaseFeeMarket(final long londonForkBlockNumber, final Wei fixedBaseFee) {
     super(londonForkBlockNumber, Optional.of(fixedBaseFee));
   }
 
