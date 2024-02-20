@@ -116,6 +116,7 @@ public class TestNode implements Closeable {
             GenesisConfigFile.development().getConfigOptions(),
             false,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager());
 
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, protocolSchedule);

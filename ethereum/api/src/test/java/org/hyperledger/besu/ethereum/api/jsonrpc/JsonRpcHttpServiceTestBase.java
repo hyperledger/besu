@@ -118,6 +118,7 @@ public class JsonRpcHttpServiceTestBase {
                 MainnetProtocolSchedule.fromConfig(
                     new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID),
                     EvmConfiguration.DEFAULT,
+                    MiningParameters.MINING_DISABLED,
                     new BadBlockManager()),
                 mock(ProtocolContext.class),
                 mock(FilterManager.class),
