@@ -52,7 +52,12 @@ public class MergeProtocolSchedule {
       final boolean isRevertReasonEnabled,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager) {
-    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, miningParameters, badBlockManager);
+    return create(
+        config,
+        PrivacyParameters.DEFAULT,
+        isRevertReasonEnabled,
+        miningParameters,
+        badBlockManager);
   }
 
   /**
