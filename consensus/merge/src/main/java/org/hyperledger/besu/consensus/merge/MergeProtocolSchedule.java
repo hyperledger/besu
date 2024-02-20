@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.merge;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
