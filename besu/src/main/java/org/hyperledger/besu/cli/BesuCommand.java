@@ -2140,7 +2140,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
     return dataStorageConfiguration;
   }
-  
+
   private void initMiningParametersMetrics(final MiningParameters miningParameters) {
     new MiningParametersMetrics(getMetricsSystem(), miningParameters);
   }
