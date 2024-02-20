@@ -425,6 +425,7 @@ public class TestContextBuilder {
             forksSchedule,
             BFT_EXTRA_DATA_ENCODER,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager());
 
     final BftValidatorOverrides validatorOverrides = convertBftForks(qbftForks);
