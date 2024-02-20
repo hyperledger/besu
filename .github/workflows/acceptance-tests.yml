@@ -34,7 +34,7 @@ jobs:
               repo: context.repo.repo,
               ref: RELEVANT_SHA,
             });
-            const acceptanceTested = statuses && statuses.filter(({ context }) => context === 'acceptance-tests');
+            const acceptanceTested = statuses && statuses.filter(({ context }) => context === 'accepttests-passed');
             const alreadyRun = acceptanceTested && acceptanceTested.find(({ state }) => state === 'success') > 0;
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,

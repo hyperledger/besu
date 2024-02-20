@@ -37,7 +37,7 @@ jobs:
             });
             
             
-            const refTested = statuses && statuses.filter(({ context }) => context === 'reference-tests');
+            const refTested = statuses && statuses.filter(({ context }) => context === 'reftests-passed');
             const alreadyRun = refTested && refTested.find(({ state }) => state === 'success') > 0;
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
