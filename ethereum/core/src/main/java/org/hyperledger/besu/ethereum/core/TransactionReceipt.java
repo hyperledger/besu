@@ -30,6 +30,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -170,14 +171,15 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
    * @param out The RLP output to write to
    */
   public void writeTo(final RLPOutput out) {
-    writeTo(out, false);
+    writeTo(out, false, false);
   }
 
   public void writeToWithRevertReason(final RLPOutput out) {
-    writeTo(out, true);
+    writeTo(out, true, false);
   }
 
-  private void writeTo(final RLPOutput rlpOutput, final boolean withRevertReason) {
+  @VisibleForTesting
+  void writeTo(final RLPOutput rlpOutput, final boolean withRevertReason, final boolean compacted) {
     if (transactionType.equals(TransactionType.FRONTIER)) {
       writeToForReceiptTrie(rlpOutput, withRevertReason, false);
     } else {
@@ -185,7 +187,8 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     }
   }
 
-  public void writeToForReceiptTrie(final RLPOutput rlpOutput, final boolean withRevertReason, final boolean compacted) {
+  public void writeToForReceiptTrie(
+      final RLPOutput rlpOutput, final boolean withRevertReason, final boolean compacted) {
     if (!transactionType.equals(TransactionType.FRONTIER)) {
       rlpOutput.writeIntScalar(transactionType.getSerializedType());
     }
@@ -205,7 +208,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     } else {
       rlpOutput.writeBytes(bloomFilter);
     }
-    rlpOutput.writeList(logs, Log::writeTo);
+    rlpOutput.writeList(logs, (log, logOutput) -> log.writeTo(logOutput, compacted));
     if (withRevertReason && revertReason.isPresent()) {
       rlpOutput.writeBytes(revertReason.get());
     }
@@ -246,14 +249,17 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     final long cumulativeGas = input.readLongScalar();
 
     LogsBloomFilter bloomFilter = null;
+    final boolean compacted;
     if (input.nextIsNull()) {
       input.skipNext();
+      compacted = true;
     } else {
       // The logs below will populate the bloom filter upon construction.
       // TODO consider validating that the logs and bloom filter match.
       bloomFilter = LogsBloomFilter.readFrom(input);
+      compacted = false;
     }
-    final List<Log> logs = input.readList(Log::readFrom);
+    final List<Log> logs = input.readList(logInput -> Log.readFrom(logInput, compacted));
     if (bloomFilter == null) {
       bloomFilter = LogsBloomFilter.builder().insertLogs(logs).build();
     }

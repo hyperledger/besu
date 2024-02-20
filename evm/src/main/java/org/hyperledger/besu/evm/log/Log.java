@@ -26,6 +26,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 
 /**
  * A log entry is a tuple of a logger’s address (the address of the contract that added the logs), a
@@ -60,11 +62,32 @@ public class Log {
    * @param out the output in which to encode the log entry.
    */
   public void writeTo(final RLPOutput out) {
+    writeTo(out, false);
+  }
+
+  /**
+   * Writes the log entry to the provided RLP output.
+   *
+   * @param out the output in which to encode the log entry.
+   */
+  public void writeTo(final RLPOutput out, final boolean compacted) {
     out.startList();
     out.writeBytes(logger);
-    out.writeList(topics, (topic, listOut) -> listOut.writeBytes(topic));
-    out.writeBytes(data);
+    if (compacted) {
+      out.writeList(topics, (topic, listOut) -> encodeTrimmedData(listOut, topic));
+      encodeTrimmedData(out, data);
+    } else {
+      out.writeList(topics, (topic, listOut) -> listOut.writeBytes(topic));
+      out.writeBytes(data);
+    }
     out.endList();
+  }
+
+  private void encodeTrimmedData(final RLPOutput rlpOutput, final Bytes data) {
+    final Bytes shortData = data.trimLeadingZeros();
+    final int zeroLeadDataSize = data.size() - shortData.size();
+    rlpOutput.writeIntScalar(zeroLeadDataSize);
+    rlpOutput.writeBytes(shortData);
   }
 
   /**
@@ -74,12 +97,46 @@ public class Log {
    * @return the read log entry.
    */
   public static Log readFrom(final RLPInput in) {
+    return readFrom(in, false);
+  }
+
+  /**
+   * Reads the log entry from the provided RLP input.
+   *
+   * @param in the input from which to decode the log entry.
+   * @return the read log entry.
+   */
+  public static Log readFrom(final RLPInput in, final boolean compacted) {
     in.enterList();
     final Address logger = Address.wrap(in.readBytes());
-    final List<LogTopic> topics = in.readList(listIn -> LogTopic.wrap(listIn.readBytes32()));
-    final Bytes data = in.readBytes();
+
+    final List<LogTopic> topics;
+    final Bytes data;
+    if (compacted) {
+      topics = in.readList(listIn -> LogTopic.wrap(Bytes32.wrap(readTrimmedData(in))));
+      data = Bytes.wrap(readTrimmedData(in));
+    } else {
+      topics = in.readList(listIn -> LogTopic.wrap(listIn.readBytes32()));
+      data = in.readBytes();
+    }
+
     in.leaveList();
     return new Log(logger, data, topics);
+  }
+
+  private static Bytes readTrimmedData(final RLPInput in) {
+    final int zeroLeadDataSize = in.readIntScalar();
+    final Bytes data;
+    if (in.nextIsNull()) {
+      data = MutableBytes.create(zeroLeadDataSize);
+      in.skipNext();
+    } else {
+      final Bytes shortData = in.readBytes();
+      MutableBytes unCompactedData = MutableBytes.create(zeroLeadDataSize + shortData.size());
+      unCompactedData.set(zeroLeadDataSize, shortData);
+      data = unCompactedData;
+    }
+    return data;
   }
 
   /**

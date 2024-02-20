@@ -28,7 +28,7 @@ public class TransactionReceiptTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt();
     final TransactionReceipt copy =
-        TransactionReceipt.readFrom(RLP.input(RLP.encode(receipt::writeToWithRevertReason)), false);
+        TransactionReceipt.readFrom(RLP.input(RLP.encode(receipt::writeTo)), false);
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -38,6 +38,16 @@ public class TransactionReceiptTest {
     final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
     final TransactionReceipt copy =
         TransactionReceipt.readFrom(RLP.input(RLP.encode(receipt::writeToWithRevertReason)));
+    assertThat(copy).isEqualTo(receipt);
+  }
+
+  @Test
+  public void toFromRlpCompacted() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
+    final TransactionReceipt copy =
+        TransactionReceipt.readFrom(
+            RLP.input(RLP.encode(rlpOut -> receipt.writeToForReceiptTrie(rlpOut, false, true))));
     assertThat(copy).isEqualTo(receipt);
   }
 }
