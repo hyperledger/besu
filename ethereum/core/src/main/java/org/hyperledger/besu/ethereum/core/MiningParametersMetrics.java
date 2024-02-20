@@ -20,11 +20,9 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 public class MiningParametersMetrics {
   public static final String MIN_GAS_PRICE_GAUGE = "min_gas_price";
   public static final String MIN_PRIORITY_FEE_GAUGE = "min_priority_fee";
-  private final MetricsSystem metricsSystem;
 
   public MiningParametersMetrics(
       final MetricsSystem metricsSystem, final MiningParameters miningParameters) {
-    this.metricsSystem = metricsSystem;
 
     metricsSystem.createGauge(
         BesuMetricCategory.ETHEREUM,
@@ -37,9 +35,5 @@ public class MiningParametersMetrics {
         MIN_PRIORITY_FEE_GAUGE,
         "Gauge to measure the runtime value of min-priority-fee",
         () -> miningParameters.getMinPriorityFeePerGas().toBigInteger().doubleValue());
-  }
-
-  public MetricsSystem getMetricsSystem() {
-    return metricsSystem;
   }
 }
