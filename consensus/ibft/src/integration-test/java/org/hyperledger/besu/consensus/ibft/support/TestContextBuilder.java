@@ -332,6 +332,7 @@ public class TestContextBuilder {
             forksSchedule,
             IBFT_EXTRA_DATA_ENCODER,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager());
 
     /////////////////////////////////////////////////////////////////////////////////////

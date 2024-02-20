@@ -43,14 +43,16 @@ public class MergeProtocolSchedule {
    *
    * @param config the config
    * @param isRevertReasonEnabled the is revert reason enabled
+   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final boolean isRevertReasonEnabled,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager) {
-    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, badBlockManager);
+    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, miningParameters, badBlockManager);
   }
 
   /**
@@ -59,6 +61,7 @@ public class MergeProtocolSchedule {
    * @param config the config
    * @param privacyParameters the privacy parameters
    * @param isRevertReasonEnabled the is revert reason enabled
+   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @return the protocol schedule
    */
@@ -66,6 +69,7 @@ public class MergeProtocolSchedule {
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager) {
 
     Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications =
@@ -84,6 +88,7 @@ public class MergeProtocolSchedule {
             privacyParameters,
             isRevertReasonEnabled,
             EvmConfiguration.DEFAULT,
+            miningParameters,
             badBlockManager)
         .createProtocolSchedule();
   }
