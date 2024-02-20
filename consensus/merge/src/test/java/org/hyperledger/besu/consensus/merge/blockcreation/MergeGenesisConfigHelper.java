@@ -60,6 +60,9 @@ public interface MergeGenesisConfigHelper {
 
   default ProtocolSchedule getMergeProtocolSchedule() {
     return MergeProtocolSchedule.create(
-        getPosGenesisConfigFile().getConfigOptions(), false, MiningParameters.MINING_DISABLED, new BadBlockManager());
+        getPosGenesisConfigFile().getConfigOptions(),
+        false,
+        MiningParameters.MINING_DISABLED,
+        new BadBlockManager());
   }
 }
