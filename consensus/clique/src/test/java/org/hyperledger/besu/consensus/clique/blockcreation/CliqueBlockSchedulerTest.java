@@ -113,7 +113,7 @@ public class CliqueBlockSchedulerTest {
     final CliqueBlockScheduler scheduler =
         new CliqueBlockScheduler(clock, validatorProvider, localAddr, forksSchedule);
 
-    // Last block before transition
+    // getNextTimestamp for last block before transition
     // There are 2 validators, therefore block 3 will put localAddr as the out-of-turn voter,
     // therefore
     // parent block should be number 2.
@@ -123,13 +123,22 @@ public class CliqueBlockSchedulerTest {
     assertThat(result.getTimestampForHeader()).isEqualTo(currentSecondsSinceEpoch + 5);
     assertThat(result.getMillisecondsUntilValid()).isGreaterThan(5 * 1000);
 
-    // Transition block
+    // getNextTimestamp for transition block
     // There are 2 validators, therefore block 4 will put localAddr as the in-turn voter, therefore
     // parent block should be number 3.
     parentHeader = blockHeaderBuilder.number(3).timestamp(currentSecondsSinceEpoch).buildHeader();
     result = scheduler.getNextTimestamp(parentHeader);
+    assertThat(result.getTimestampForHeader()).isEqualTo(currentSecondsSinceEpoch + 5);
+    assertThat(result.getMillisecondsUntilValid()).isEqualTo(5 * 1000);
+
+    // getNextTimestamp for block after transition
+    // There are 2 validators, therefore block 5 will put localAddr as the out-of-turn voter,
+    // therefore
+    // parent block should be number 4.
+    parentHeader = blockHeaderBuilder.number(4).timestamp(currentSecondsSinceEpoch).buildHeader();
+    result = scheduler.getNextTimestamp(parentHeader);
     assertThat(result.getTimestampForHeader()).isEqualTo(currentSecondsSinceEpoch + 1);
-    assertThat(result.getMillisecondsUntilValid()).isEqualTo(1000);
+    assertThat(result.getMillisecondsUntilValid()).isGreaterThan(1000);
   }
 
   @Test
