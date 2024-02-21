@@ -40,7 +40,7 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
       - name: run spotless
         run: ./gradlew spotlessCheck -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
   compile:
@@ -58,7 +58,7 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
       - name: Gradle Compile
         run: ./gradlew build -x test -x spotlessCheck -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
   unitTests:
@@ -78,6 +78,7 @@ jobs:
           - "ethereum:api:testBonsai"
           - "ethereum:api:testForest"
           - "ethereum:api:testRemainder"
+          - "ethereum:eth:test"
           - "ethereum:core:test"
     steps:
       - name: Checkout Repo
@@ -90,7 +91,7 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
       - name: run unit tests
         id: unitTest
         run: ./gradlew $GRADLEW_UNIT_TEST_ARGS -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
@@ -100,7 +101,7 @@ jobs:
         with:
           report_paths: '**/test-results/**/TEST-*.xml'
           annotate_only: true
-  pre-review:
+  unittests-passed:
     runs-on: ubuntu-22.04
     needs: [unitTests]
     permissions:

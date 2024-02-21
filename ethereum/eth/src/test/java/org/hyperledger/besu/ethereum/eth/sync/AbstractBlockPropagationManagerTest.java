@@ -106,7 +106,8 @@ public abstract class AbstractBlockPropagationManagerTest {
             blockchain,
             tempProtocolContext.getWorldStateArchive(),
             tempProtocolContext.getConsensusContext(ConsensusContext.class),
-            Optional.empty());
+            Optional.empty(),
+            new BadBlockManager());
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             protocolSchedule,
@@ -784,8 +785,7 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     blockchainUtil.importFirstBlocks(2);
     final Block firstBlock = blockchainUtil.getBlock(1);
-    final BadBlockManager badBlocksManager =
-        protocolSchedule.getByBlockHeader(blockHeader(1)).getBadBlocksManager();
+    final BadBlockManager badBlocksManager = protocolContext.getBadBlockManager();
     final Block badBlock =
         new BlockDataGenerator()
             .block(
