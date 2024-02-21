@@ -63,7 +63,7 @@ class VersionMetadataTest {
       final VersionMetadata versionMetadata = VersionMetadata.lookUpFrom(tempDataDir);
       assertThat(versionMetadata).isNotNull();
       assertThat(versionMetadata.getBesuVersion()).isEqualTo("23.10.3");
-      assertThatThrownBy(() -> VersionMetadata.performVersionCompatibilityChecks(true, tempDataDir))
+      assertThatThrownBy(() -> VersionMetadata.versionCompatibilityChecks(true, tempDataDir))
           .isInstanceOf(IllegalStateException.class);
     }
 
@@ -92,7 +92,7 @@ class VersionMetadataTest {
       assertThat(versionMetadata.getBesuVersion()).isEqualTo("23.10.3");
 
       assertThatNoException()
-          .isThrownBy(() -> VersionMetadata.performVersionCompatibilityChecks(false, tempDataDir));
+          .isThrownBy(() -> VersionMetadata.versionCompatibilityChecks(false, tempDataDir));
     }
 
     // Check that the file has been updated
@@ -118,7 +118,7 @@ class VersionMetadataTest {
       assertThat(versionMetadata.getBesuVersion()).isEqualTo("23.10.3");
 
       assertThatNoException()
-          .isThrownBy(() -> VersionMetadata.performVersionCompatibilityChecks(true, tempDataDir));
+          .isThrownBy(() -> VersionMetadata.versionCompatibilityChecks(true, tempDataDir));
     }
 
     // Check that the file has been updated

@@ -94,8 +94,8 @@ public class VersionMetadata {
    * necessary. If the --version-compatibility-protection flag is set to true and the compatibilty
    * checks pass, the version metadata is updated to the current version of Besu.
    */
-  public static void performVersionCompatibilityChecks(
-      final boolean versionCompatibilityProtection, final Path dataDir) throws IOException {
+  public static void versionCompatibilityChecks(
+      final boolean enforceCompatibilityProtection, final Path dataDir) throws IOException {
     final VersionMetadata versionMetaData = VersionMetadata.lookUpFrom(dataDir);
     if (versionMetaData.getBesuVersion().equals(VersionMetadata.BESU_VERSION_UNKNOWN)) {
       // The version isn't known, potentially because the file doesn't exist. Write the latest
@@ -114,7 +114,7 @@ public class VersionMetadata {
       if (versionComparison == 0) {
         // Versions match - no-op
       } else if (versionComparison < 0) {
-        if (!versionCompatibilityProtection) {
+        if (!enforceCompatibilityProtection) {
           LOG.warn(
               "Besu version {} is lower than version {} that last started. Allowing startup because --version-compatibility-protection has been disabled.",
               installedVersion,

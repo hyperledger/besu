@@ -1220,7 +1220,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       validateOptions();
 
-      VersionMetadata.performVersionCompatibilityChecks(versionCompatibilityProtection, dataDir());
+      // If we're not running against a named network, or if version compat protection has been
+      // explicitly enabled, perform compatibility check
+      VersionMetadata.versionCompatibilityChecks(
+          versionCompatibilityProtection || (network == null), dataDir());
 
       configure();
       configureNativeLibs();
