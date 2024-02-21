@@ -110,4 +110,15 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: multi-arch docker
         run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Pversion=${{github.ref_name}} -Prelease.releaseVersion=${{ github.ref_name }}
-
+  amendNotes:
+    needs: buildDocker
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - name: add pull command to release notes
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
+        with:
+          append_body: true
+          body: |
+            `docker pull ${{env.registry}}/${{github.repository_owner}}:${{github.ref_name}}`
