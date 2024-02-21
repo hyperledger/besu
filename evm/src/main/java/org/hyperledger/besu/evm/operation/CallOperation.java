@@ -19,7 +19,6 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -88,36 +87,9 @@ public class CallOperation extends AbstractCallOperation {
   }
 
   @Override
-  protected boolean isStatic(final MessageFrame frame) {
-    return frame.isStatic();
-  }
-
-  @Override
-  public long cost(final MessageFrame frame) {
-    final long stipend = gas(frame);
-    final long inputDataOffset = inputDataOffset(frame);
-    final long inputDataLength = inputDataLength(frame);
-    final long outputDataOffset = outputDataOffset(frame);
-    final long outputDataLength = outputDataLength(frame);
-    final Account recipient = frame.getWorldUpdater().get(address(frame));
-
-    return gasCalculator()
-        .callOperationGasCost(
-            frame,
-            stipend,
-            inputDataOffset,
-            inputDataLength,
-            outputDataOffset,
-            outputDataLength,
-            value(frame),
-            recipient,
-            to(frame));
-  }
-
-  @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     if (frame.isStatic() && !value(frame).isZero()) {
-      return new OperationResult(cost(frame), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+      return new OperationResult(cost(frame, true), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     } else {
       return super.execute(frame, evm);
     }
