@@ -80,7 +80,7 @@ public class VersionMetadata {
       versionMetadata = new VersionMetadata(BESU_VERSION_UNKNOWN);
     } catch (JsonProcessingException jpe) {
       throw new IllegalStateException(
-          java.lang.String.format("Invalid metadata file %s", metadataFile.getAbsolutePath()), jpe);
+          String.format("Invalid metadata file %s", metadataFile.getAbsolutePath()), jpe);
     }
     return versionMetadata;
   }
