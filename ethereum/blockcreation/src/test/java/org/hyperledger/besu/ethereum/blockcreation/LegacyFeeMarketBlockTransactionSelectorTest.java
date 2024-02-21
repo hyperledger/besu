@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -59,7 +60,8 @@ public class LegacyFeeMarketBlockTransactionSelectorTest
             ProtocolSpecAdapters.create(0, Function.identity()),
             new PrivacyParameters(),
             false,
-            EvmConfiguration.DEFAULT)
+            EvmConfiguration.DEFAULT,
+            new BadBlockManager())
         .createProtocolSchedule();
   }
 

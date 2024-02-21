@@ -41,6 +41,7 @@ import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -104,7 +105,8 @@ public class CliqueBlockCreatorTest {
             GenesisConfigFile.DEFAULT.getConfigOptions(),
             proposerNodeKey,
             false,
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            new BadBlockManager());
 
     final Address otherAddress = Util.publicKeyToAddress(otherKeyPair.getPublicKey());
     validatorList.add(otherAddress);
@@ -132,7 +134,8 @@ public class CliqueBlockCreatorTest {
               @Override
               public void registerTransactionSelectorFactory(
                   final PluginTransactionSelectorFactory transactionSelectorFactory) {}
-            });
+            },
+            new BadBlockManager());
     epochManager = new EpochManager(10);
 
     // Add a block above the genesis

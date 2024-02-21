@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
@@ -83,7 +84,8 @@ public class EthGetBlockByNumberLatestDesyncIntegrationTest {
               @Override
               public void registerTransactionSelectorFactory(
                   final PluginTransactionSelectorFactory transactionSelectorFactory) {}
-            });
+            },
+            new BadBlockManager());
 
     for (final Block block : importer.getBlocks()) {
       final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();

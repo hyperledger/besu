@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -71,7 +72,8 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             ProtocolSpecAdapters.create(0, Function.identity()),
             new PrivacyParameters(),
             false,
-            EvmConfiguration.DEFAULT)
+            EvmConfiguration.DEFAULT,
+            new BadBlockManager())
         .createProtocolSchedule();
   }
 

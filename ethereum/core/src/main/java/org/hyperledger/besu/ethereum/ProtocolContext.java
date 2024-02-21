@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum;
 
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -30,6 +31,7 @@ import java.util.Optional;
 public class ProtocolContext {
   private final MutableBlockchain blockchain;
   private final WorldStateArchive worldStateArchive;
+  private final BadBlockManager badBlockManager;
   private final ConsensusContext consensusContext;
   private final TransactionSelectionService transactionSelectionService;
 
@@ -39,12 +41,14 @@ public class ProtocolContext {
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ConsensusContext consensusContext,
-      final TransactionSelectionService transactionSelectionService) {
+      final TransactionSelectionService transactionSelectionService,
+      final BadBlockManager badBlockManager) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.consensusContext = consensusContext;
     this.synchronizer = Optional.empty();
     this.transactionSelectionService = transactionSelectionService;
+    this.badBlockManager = badBlockManager;
   }
 
   public static ProtocolContext init(
@@ -52,12 +56,14 @@ public class ProtocolContext {
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory,
-      final TransactionSelectionService transactionSelectionService) {
+      final TransactionSelectionService transactionSelectionService,
+      final BadBlockManager badBlockManager) {
     return new ProtocolContext(
         blockchain,
         worldStateArchive,
         consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule),
-        transactionSelectionService);
+        transactionSelectionService,
+        badBlockManager);
   }
 
   public Optional<Synchronizer> getSynchronizer() {
@@ -74,6 +80,10 @@ public class ProtocolContext {
 
   public WorldStateArchive getWorldStateArchive() {
     return worldStateArchive;
+  }
+
+  public BadBlockManager getBadBlockManager() {
+    return badBlockManager;
   }
 
   public <C extends ConsensusContext> C getConsensusContext(final Class<C> klass) {

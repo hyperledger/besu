@@ -41,6 +41,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -89,7 +90,8 @@ public class ProposalPayloadValidatorTest {
             blockChain,
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(QbftContext.class, emptyList(), bftExtraDataCodec),
-            null);
+            null,
+            new BadBlockManager());
   }
 
   @Test
@@ -243,7 +245,11 @@ public class ProposalPayloadValidatorTest {
     final Bytes cms = Bytes.fromHexStringLenient("0x1");
     final ProtocolContext protocolContext =
         new ProtocolContext(
-            blockChain, worldStateArchive, qbftContext, mock(TransactionSelectionService.class));
+            blockChain,
+            worldStateArchive,
+            qbftContext,
+            mock(TransactionSelectionService.class),
+            new BadBlockManager());
 
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
@@ -279,7 +285,11 @@ public class ProposalPayloadValidatorTest {
     final Bytes cms = Bytes.fromHexStringLenient("0x1");
     final ProtocolContext protocolContext =
         new ProtocolContext(
-            blockChain, worldStateArchive, qbftContext, mock(TransactionSelectionService.class));
+            blockChain,
+            worldStateArchive,
+            qbftContext,
+            mock(TransactionSelectionService.class),
+            new BadBlockManager());
 
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(

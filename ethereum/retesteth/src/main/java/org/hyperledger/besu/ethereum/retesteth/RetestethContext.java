@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -94,6 +95,7 @@ public class RetestethContext {
   public static final int MAX_PEERS = 25;
 
   private final ReentrantLock contextLock = new ReentrantLock();
+  private final BadBlockManager badBlockManager = new BadBlockManager();
   private Address coinbase;
   private Bytes extraData;
   private MutableBlockchain blockchain;
@@ -156,9 +158,10 @@ public class RetestethContext {
         JsonGenesisConfigOptions.fromJsonObject(
             JsonUtil.getObjectNode(genesisConfig, "config").get());
     protocolSchedule =
-        MainnetProtocolSchedule.fromConfig(jsonGenesisConfigOptions, EvmConfiguration.DEFAULT);
+        MainnetProtocolSchedule.fromConfig(
+            jsonGenesisConfigOptions, EvmConfiguration.DEFAULT, badBlockManager);
     if ("NoReward".equalsIgnoreCase(sealEngine)) {
-      protocolSchedule = new NoRewardProtocolScheduleWrapper(protocolSchedule);
+      protocolSchedule = new NoRewardProtocolScheduleWrapper(protocolSchedule, badBlockManager);
     }
     blockHeaderFunctions = ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
 
@@ -176,7 +179,8 @@ public class RetestethContext {
     genesisState.writeStateTo(worldState);
 
     blockchain = createInMemoryBlockchain(genesisState.getBlock());
-    protocolContext = new ProtocolContext(blockchain, worldStateArchive, null, null);
+    protocolContext =
+        new ProtocolContext(blockchain, worldStateArchive, null, null, badBlockManager);
 
     blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive, ethScheduler);
 
@@ -214,7 +218,8 @@ public class RetestethContext {
                 Subscribers.none(),
                 new EpochCalculator.DefaultEpochCalculator());
 
-    blockReplay = new BlockReplay(protocolSchedule, blockchainQueries.getBlockchain());
+    blockReplay =
+        new BlockReplay(protocolSchedule, protocolContext, blockchainQueries.getBlockchain());
 
     final Bytes localNodeKey = Bytes.wrap(new byte[64]);
 

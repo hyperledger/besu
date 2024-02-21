@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.ConsensusContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -43,7 +44,8 @@ public class MigratingProtocolContextTest {
     final ForksSchedule<ConsensusContext> contextSchedule =
         new ForksSchedule<>(List.of(new ForkSpec<>(0L, context1), new ForkSpec<>(10L, context2)));
     final MigratingProtocolContext migratingProtocolContext =
-        new MigratingProtocolContext(blockchain, worldStateArchive, contextSchedule, null);
+        new MigratingProtocolContext(
+            blockchain, worldStateArchive, contextSchedule, null, new BadBlockManager());
 
     assertThat(migratingProtocolContext.getConsensusContext(ConsensusContext.class))
         .isSameAs(context1);

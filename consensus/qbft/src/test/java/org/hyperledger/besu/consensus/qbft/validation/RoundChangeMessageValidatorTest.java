@@ -41,6 +41,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -85,7 +86,8 @@ public class RoundChangeMessageValidatorTest {
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(
                 QbftContext.class, emptyList(), bftExtraDataEncoder),
-            null);
+            null,
+            new BadBlockManager());
 
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
 

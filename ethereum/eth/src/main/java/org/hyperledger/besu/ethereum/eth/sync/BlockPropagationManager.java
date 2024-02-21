@@ -609,7 +609,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
                             + block.toLogString()));
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
     final BlockHeaderValidator blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
-    final BadBlockManager badBlockManager = protocolSpec.getBadBlocksManager();
+    final BadBlockManager badBlockManager = protocolContext.getBadBlockManager();
     return ethContext
         .getScheduler()
         .scheduleSyncWorkerTask(

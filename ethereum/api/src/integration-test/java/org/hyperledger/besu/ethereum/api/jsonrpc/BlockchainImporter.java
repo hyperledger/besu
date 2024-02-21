@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
@@ -42,7 +43,7 @@ public class BlockchainImporter {
   public BlockchainImporter(final URL blocksUrl, final String genesisJson) throws Exception {
     protocolSchedule =
         MainnetProtocolSchedule.fromConfig(
-            GenesisConfigFile.fromConfig(genesisJson).getConfigOptions());
+            GenesisConfigFile.fromConfig(genesisJson).getConfigOptions(), new BadBlockManager());
     final BlockHeaderFunctions blockHeaderFunctions =
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
     blocks = new ArrayList<>();

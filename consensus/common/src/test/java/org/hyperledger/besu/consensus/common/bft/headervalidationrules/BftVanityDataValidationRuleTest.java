@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 
@@ -49,7 +50,8 @@ public class BftVanityDataValidationRuleTest {
             null,
             null,
             setupContextWithBftExtraData(emptyList(), extraData),
-            mock(TransactionSelectionService.class));
+            mock(TransactionSelectionService.class),
+            new BadBlockManager());
     return validationRule.validate(blockHeader, null, context);
   }
 }

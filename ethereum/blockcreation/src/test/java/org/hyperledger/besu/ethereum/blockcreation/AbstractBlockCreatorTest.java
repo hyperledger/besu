@@ -41,6 +41,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -364,7 +365,8 @@ abstract class AbstractBlockCreatorTest {
                         protocolSpecAdapters,
                         PrivacyParameters.DEFAULT,
                         false,
-                        EvmConfiguration.DEFAULT)
+                        EvmConfiguration.DEFAULT,
+                        new BadBlockManager())
                     .createProtocolSchedule())
             .build();
 

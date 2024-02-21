@@ -25,6 +25,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -46,7 +47,8 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
         null,
         setupContextWithBftExtraDataEncoder(
             QbftContext.class, validators, new QbftExtraDataCodec()),
-        null);
+        null,
+        new BadBlockManager());
   }
 
   @Test
