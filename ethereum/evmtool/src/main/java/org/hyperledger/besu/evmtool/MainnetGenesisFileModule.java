@@ -19,6 +19,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.crypto.SignatureAlgorithmType;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -74,7 +75,8 @@ class MainnetGenesisFileModule extends GenesisFileModule {
         return schedule.get();
       }
     }
-    return MainnetProtocolSchedule.fromConfig(configOptions, evmConfiguration);
+    return MainnetProtocolSchedule.fromConfig(
+        configOptions, evmConfiguration, new BadBlockManager());
   }
 
   public static Map<String, Supplier<ProtocolSchedule>> createSchedules() {
@@ -112,6 +114,9 @@ class MainnetGenesisFileModule extends GenesisFileModule {
             "cancun",
             createSchedule(new StubGenesisConfigOptions().cancunTime(0).baseFeePerGas(0x0a))),
         Map.entry(
+            "prague",
+            createSchedule(new StubGenesisConfigOptions().pragueTime(0).baseFeePerGas(0x0a))),
+        Map.entry(
             "futureeips",
             createSchedule(new StubGenesisConfigOptions().futureEipsTime(0).baseFeePerGas(0x0a))),
         Map.entry(
@@ -128,7 +133,8 @@ class MainnetGenesisFileModule extends GenesisFileModule {
                 ProtocolSpecAdapters.create(0, Function.identity()),
                 PrivacyParameters.DEFAULT,
                 false,
-                EvmConfiguration.DEFAULT)
+                EvmConfiguration.DEFAULT,
+                new BadBlockManager())
             .createProtocolSchedule();
   }
 }

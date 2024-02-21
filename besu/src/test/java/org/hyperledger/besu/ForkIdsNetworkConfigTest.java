@@ -28,6 +28,7 @@ import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.TransitionUtils;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -107,8 +108,9 @@ public class ForkIdsNetworkConfigTest {
               new ForkId(Bytes.ofUnsignedInt(0xb715077dL), 13773000L),
               new ForkId(Bytes.ofUnsignedInt(0x20c327fcL), 15050000L),
               new ForkId(Bytes.ofUnsignedInt(0xf0afd0e3L), 1681338455L),
-              new ForkId(Bytes.ofUnsignedInt(0xdce96c2dL), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0xdce96c2dL), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0xdce96c2dL), 1710338135L),
+              new ForkId(Bytes.ofUnsignedInt(0x9f3d2254L), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0x9f3d2254L), 0L))
         },
         new Object[] {
           NetworkName.MORDOR,
@@ -185,10 +187,12 @@ public class ForkIdsNetworkConfigTest {
     final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
     MilestoneStreamingProtocolSchedule preMergeProtocolSchedule =
         new MilestoneStreamingProtocolSchedule(
-            (DefaultProtocolSchedule) MainnetProtocolSchedule.fromConfig(configOptions));
+            (DefaultProtocolSchedule)
+                MainnetProtocolSchedule.fromConfig(configOptions, new BadBlockManager()));
     MilestoneStreamingProtocolSchedule postMergeProtocolSchedule =
         new MilestoneStreamingProtocolSchedule(
-            (DefaultProtocolSchedule) MergeProtocolSchedule.create(configOptions, false));
+            (DefaultProtocolSchedule)
+                MergeProtocolSchedule.create(configOptions, false, new BadBlockManager()));
     final MilestoneStreamingTransitionProtocolSchedule schedule =
         new MilestoneStreamingTransitionProtocolSchedule(
             preMergeProtocolSchedule, postMergeProtocolSchedule);

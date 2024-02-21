@@ -36,8 +36,9 @@ plugins {
 
 sonarqube {
   properties {
-    property "sonar.projectKey", "hyperledger_besu"
-    property "sonar.organization", "hyperledger"
+    property "sonar.projectKey", "$System.env.SONAR_PROJECT_KEY"
+    property "sonar.organization", "$System.env.SONAR_ORGANIZATION"
+    property "sonar.gradle.skipCompile", "true"
     property "sonar.host.url", "https://sonarcloud.io"
     property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
     property "sonar.coverage.exclusions", "acceptance-tests/**/*"
@@ -53,12 +54,12 @@ if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
 
 group = 'org.hyperledger.besu'
 
-defaultTasks 'build', 'checkLicenses', 'javadoc'
+defaultTasks 'build', 'checkLicense', 'javadoc'
 
 def buildAliases = ['dev': [
     'spotlessApply',
     'build',
-    'checkLicenses',
+    'checkLicense',
     'javadoc'
   ]]
 
@@ -137,6 +138,9 @@ allprojects {
     from javadoc.outputDirectory
   }
 
+  tasks.build {
+    dependsOn 'javadoc'
+  }
   sourceCompatibility = 17
   targetCompatibility = 17
 
@@ -646,6 +650,8 @@ task autocomplete(type: JavaExec) {
   }
 }
 
+def archiveBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
+
 installDist { dependsOn checkLicense, untunedStartScripts, evmToolStartScripts }
 
 distTar {
@@ -654,6 +660,7 @@ distTar {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
   compression = Compression.GZIP
+  setVersion(archiveBuildVersion)
   archiveExtension = 'tar.gz'
 }
 
@@ -662,6 +669,7 @@ distZip {
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
+  setVersion(archiveBuildVersion)
 }
 
 publishing {
@@ -983,6 +991,12 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
   ].join("|")
 }
 
+jacocoTestReport {
+  reports {
+    xml.enabled true
+  }
+}
+
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
   sourceDirectories.from files(subprojects.sourceSets.main.allSource.srcDirs)
@@ -1027,7 +1041,6 @@ def calculateVersion() {
   }
   return version
 }
-
 
 def getCheckedOutGitCommitHash(length = 8) {
   try {

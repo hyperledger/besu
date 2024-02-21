@@ -36,6 +36,7 @@ import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -118,13 +119,15 @@ public class BftBlockCreatorTest {
             PrivacyParameters.DEFAULT,
             false,
             bftExtraDataEncoder,
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            new BadBlockManager());
     final ProtocolContext protContext =
         new ProtocolContext(
             blockchain,
             createInMemoryWorldStateArchive(),
             setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder),
-            Optional.empty());
+            Optional.empty(),
+            new BadBlockManager());
 
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();

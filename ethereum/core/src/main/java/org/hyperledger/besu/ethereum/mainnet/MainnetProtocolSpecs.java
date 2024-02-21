@@ -51,6 +51,7 @@ import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
@@ -661,7 +662,7 @@ public abstract class MainnetProtocolSpecs {
             feeMarket ->
                 new CancunTargetingGasLimitCalculator(
                     londonForkBlockNumber, (BaseFeeMarket) feeMarket))
-        // EVM changes to support EOF EIPs (3670, 4200, 4750, 5450)
+        // EVM changes to support EIP-1153: TSTORE and EIP-5656: MCOPY
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.cancun(
@@ -703,6 +704,45 @@ public abstract class MainnetProtocolSpecs {
         .name("Cancun");
   }
 
+  static ProtocolSpecBuilder pragueDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration) {
+    final int contractSizeLimit =
+        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
+
+    return cancunDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration)
+        // EVM changes to support EOF EIPs (3670, 4200, 4750, 5450)
+        .gasCalculator(PragueGasCalculator::new)
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.prague(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        // change contract call creator to accept EOF code
+        .contractCreationProcessorBuilder(
+            (gasCalculator, evm) ->
+                new ContractCreationProcessor(
+                    gasCalculator,
+                    evm,
+                    true,
+                    List.of(
+                        MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1, false)),
+                    1,
+                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+        // use prague precompiled contracts
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
+        .name("Prague");
+  }
+
   static ProtocolSpecBuilder futureEipsDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
@@ -712,7 +752,7 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
-    return cancunDefinition(
+    return pragueDefinition(
             chainId,
             configContractSizeLimit,
             configStackSizeLimit,

@@ -81,6 +81,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -147,6 +148,7 @@ public class TestContextBuilder {
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private boolean useValidatorContract;
   private boolean useLondonMilestone = false;
+  private boolean useShanghaiMilestone = false;
   private boolean useZeroBaseFee = false;
   public static final int EPOCH_LENGTH = 10_000;
   public static final int BLOCK_TIMER_SEC = 3;
@@ -212,6 +214,11 @@ public class TestContextBuilder {
 
   public TestContextBuilder useLondonMilestone(final boolean useLondonMilestone) {
     this.useLondonMilestone = useLondonMilestone;
+    return this;
+  }
+
+  public TestContextBuilder useShanghaiMilestone(final boolean useShanghaiMilestone) {
+    this.useShanghaiMilestone = useShanghaiMilestone;
     return this;
   }
 
@@ -285,6 +292,7 @@ public class TestContextBuilder {
             synchronizerUpdater,
             useValidatorContract,
             useLondonMilestone,
+            useShanghaiMilestone,
             useZeroBaseFee,
             qbftForks);
 
@@ -365,6 +373,7 @@ public class TestContextBuilder {
       final SynchronizerUpdater synchronizerUpdater,
       final boolean useValidatorContract,
       final boolean useLondonMilestone,
+      final boolean useShanghaiMilestone,
       final boolean useZeroBaseFee,
       final List<QbftFork> qbftForks) {
 
@@ -390,6 +399,8 @@ public class TestContextBuilder {
 
     if (useLondonMilestone) {
       genesisConfigOptions.londonBlock(0);
+    } else if (useShanghaiMilestone) {
+      genesisConfigOptions.shanghaiTime(10);
     } else {
       genesisConfigOptions.berlinBlock(0);
     }
@@ -410,7 +421,11 @@ public class TestContextBuilder {
 
     final BftProtocolSchedule protocolSchedule =
         QbftProtocolScheduleBuilder.create(
-            genesisConfigOptions, forksSchedule, BFT_EXTRA_DATA_ENCODER, EvmConfiguration.DEFAULT);
+            genesisConfigOptions,
+            forksSchedule,
+            BFT_EXTRA_DATA_ENCODER,
+            EvmConfiguration.DEFAULT,
+            new BadBlockManager());
 
     final BftValidatorOverrides validatorOverrides = convertBftForks(qbftForks);
     final TransactionSimulator transactionSimulator =
@@ -431,7 +446,8 @@ public class TestContextBuilder {
             blockChain,
             worldStateArchive,
             new QbftContext(validatorProvider, epochManager, blockInterface, Optional.empty()),
-            Optional.empty());
+            Optional.empty(),
+            new BadBlockManager());
 
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.metrics.opentelemetry;
 
 import java.util.Collection;
+import javax.annotation.Nonnull;
 
 import io.opentelemetry.sdk.common.CompletableResultCode;
 import io.opentelemetry.sdk.metrics.InstrumentType;
@@ -22,8 +23,6 @@ import io.opentelemetry.sdk.metrics.data.AggregationTemporality;
 import io.opentelemetry.sdk.metrics.data.MetricData;
 import io.opentelemetry.sdk.metrics.export.CollectionRegistration;
 import io.opentelemetry.sdk.metrics.export.MetricReader;
-import io.opentelemetry.sdk.metrics.internal.export.MetricProducer;
-import org.jetbrains.annotations.NotNull;
 
 class DebugMetricReader implements MetricReader {
   private CollectionRegistration registration;
@@ -31,11 +30,11 @@ class DebugMetricReader implements MetricReader {
   public DebugMetricReader() {}
 
   public Collection<MetricData> getAllMetrics() {
-    return MetricProducer.asMetricProducer(this.registration).collectAllMetrics();
+    return registration.collectAllMetrics();
   }
 
   @Override
-  public void register(final @NotNull CollectionRegistration registration) {
+  public void register(final @Nonnull CollectionRegistration registration) {
     this.registration = registration;
   }
 
@@ -51,7 +50,7 @@ class DebugMetricReader implements MetricReader {
 
   @Override
   public AggregationTemporality getAggregationTemporality(
-      final @NotNull InstrumentType instrumentType) {
+      final @Nonnull InstrumentType instrumentType) {
     return AggregationTemporality.CUMULATIVE;
   }
 }

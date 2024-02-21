@@ -27,6 +27,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
@@ -111,7 +112,10 @@ public class TestNode implements Closeable {
     final GenesisConfigFile genesisConfigFile = GenesisConfigFile.development();
     final ProtocolSchedule protocolSchedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.development().getConfigOptions(), false, EvmConfiguration.DEFAULT);
+            GenesisConfigFile.development().getConfigOptions(),
+            false,
+            EvmConfiguration.DEFAULT,
+            new BadBlockManager());
 
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, protocolSchedule);
     final BlockHeaderFunctions blockHeaderFunctions =
@@ -121,7 +125,8 @@ public class TestNode implements Closeable {
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     genesisState.writeStateTo(worldStateArchive.getMutable());
     final ProtocolContext protocolContext =
-        new ProtocolContext(blockchain, worldStateArchive, null, Optional.empty());
+        new ProtocolContext(
+            blockchain, worldStateArchive, null, Optional.empty(), new BadBlockManager());
 
     final SyncState syncState = mock(SyncState.class);
     final SynchronizerConfiguration syncConfig = mock(SynchronizerConfiguration.class);
@@ -145,7 +150,6 @@ public class TestNode implements Closeable {
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
             Collections.singletonList(nmpp),
             Bytes.random(64),
-            25,
             25,
             25,
             false);

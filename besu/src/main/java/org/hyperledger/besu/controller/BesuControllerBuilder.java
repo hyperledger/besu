@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
@@ -177,8 +178,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected EvmConfiguration evmConfiguration;
   /** The Max peers. */
   protected int maxPeers;
+  /** Manages a cache of bad blocks globally */
+  protected final BadBlockManager badBlockManager = new BadBlockManager();
 
-  private int peerLowerBound;
   private int maxRemotelyInitiatedPeers;
   /** The Chain pruner configuration. */
   protected ChainPrunerConfiguration chainPrunerConfiguration = ChainPrunerConfiguration.DEFAULT;
@@ -476,21 +478,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
-   * Lower bound of peers where we stop actively trying to initiate new outgoing connections
-   *
-   * @param peerLowerBound lower bound of peers where we stop actively trying to initiate new
-   *     outgoing connections
-   * @return the besu controller builder
-   */
-  public BesuControllerBuilder lowerBoundPeers(final int peerLowerBound) {
-    this.peerLowerBound = peerLowerBound;
-    return this;
-  }
-
-  /**
    * Maximum number of remotely initiated peer connections
    *
-   * @param maxRemotelyInitiatedPeers aximum number of remotely initiated peer connections
+   * @param maxRemotelyInitiatedPeers maximum number of remotely initiated peer connections
    * @return the besu controller builder
    */
   public BesuControllerBuilder maxRemotelyInitiatedPeers(final int maxRemotelyInitiatedPeers) {
@@ -511,7 +501,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
-   * Chain pruning configuration besu controller builder.
+   * Sets the number of blocks to cache.
    *
    * @param numberOfBlocksToCache the number of blocks to cache
    * @return the besu controller builder
@@ -589,12 +579,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(gasLimitCalculator, "Missing gas limit calculator");
     checkNotNull(evmConfiguration, "Missing evm config");
     checkNotNull(networkingConfiguration, "Missing network configuration");
+    checkNotNull(dataStorageConfiguration, "Missing data storage configuration");
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
     final GenesisState genesisState =
-        GenesisState.fromConfig(
-            dataStorageConfiguration.getDataStorageFormat(), genesisConfig, protocolSchedule);
+        GenesisState.fromConfig(dataStorageConfiguration, genesisConfig, protocolSchedule);
 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
 
@@ -681,7 +671,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             maxMessageSize,
             messagePermissioningProviders,
             nodeKey.getPublicKey().getEncodedBytes(),
-            peerLowerBound,
             maxPeers,
             maxRemotelyInitiatedPeers,
             randomPeerPriority);
@@ -1082,7 +1071,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         worldStateArchive,
         protocolSchedule,
         consensusContextFactory,
-        transactionSelectorFactory);
+        transactionSelectorFactory,
+        badBlockManager);
   }
 
   private Optional<SnapProtocolManager> createSnapProtocolManager(
@@ -1161,8 +1151,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final CheckpointConfigOptions checkpointConfigOptions =
         genesisConfig.getConfigOptions(genesisConfigOverrides).getCheckpointOptions();
-    if (SyncMode.X_CHECKPOINT.equals(syncConfig.getSyncMode())
-        && checkpointConfigOptions.isValid()) {
+    if (SyncMode.isCheckpointSync(syncConfig.getSyncMode()) && checkpointConfigOptions.isValid()) {
       validators.add(
           new CheckpointBlocksPeerValidator(
               protocolSchedule,

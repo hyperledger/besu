@@ -168,3 +168,29 @@ tasks.register('generateTestBlockchain') {
   }
 }
 test.dependsOn(generateTestBlockchain)
+/*
+ Utility tasks used to separate out long running suites of tests so they can be parallelized in CI
+ */
+tasks.register("testBonsai", Test) {
+  useJUnitPlatform()
+  filter {
+    includeTestsMatching("org.hyperledger.besu.ethereum.api.jsonrpc.bonsai.*")
+  }
+  dependsOn(generateTestBlockchain)
+}
+
+tasks.register("testForest", Test) {
+  useJUnitPlatform()
+  filter {
+    includeTestsMatching("org.hyperledger.besu.ethereum.api.jsonrpc.forest.*")
+  }
+  dependsOn(generateTestBlockchain)
+}
+
+tasks.register("testRemainder", Test) {
+  useJUnitPlatform()
+  filter {
+    excludeTestsMatching("org.hyperledger.besu.ethereum.api.jsonrpc.bonsai.*")
+    excludeTestsMatching("org.hyperledger.besu.ethereum.api.jsonrpc.forest.*")
+  }
+}

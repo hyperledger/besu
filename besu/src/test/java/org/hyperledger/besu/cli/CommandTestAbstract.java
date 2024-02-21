@@ -75,13 +75,13 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
-import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PluginTransactionValidatorServiceImpl;
@@ -207,7 +207,7 @@ public abstract class CommandTestAbstract {
   @Mock protected StorageServiceImpl storageService;
   @Mock protected SecurityModuleServiceImpl securityModuleService;
   @Mock protected SecurityModule securityModule;
-  @Mock protected BesuConfiguration commonPluginConfiguration;
+  @Mock protected BesuConfigurationImpl commonPluginConfiguration;
   @Mock protected KeyValueStorageFactory rocksDBStorageFactory;
   @Mock protected PrivacyKeyValueStorageFactory rocksDBSPrivacyStorageFactory;
   @Mock protected PicoCLIOptions cliOptions;
@@ -288,7 +288,6 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.maxPeers(anyInt())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.chainPruningConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.maxPeers(anyInt())).thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.lowerBoundPeers(anyInt())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.maxRemotelyInitiatedPeers(anyInt()))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.transactionSelectorFactory(any())).thenReturn(mockControllerBuilder);

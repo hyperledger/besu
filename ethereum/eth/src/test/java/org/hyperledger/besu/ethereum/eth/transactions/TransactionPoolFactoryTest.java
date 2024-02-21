@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -108,7 +109,6 @@ public class TransactionPoolFactoryTest {
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
             Collections.singletonList(nmpp),
             Bytes.random(64),
-            25,
             25,
             25,
             false);
@@ -328,7 +328,8 @@ public class TransactionPoolFactoryTest {
                 ProtocolSpecAdapters.create(0, Function.identity()),
                 PrivacyParameters.DEFAULT,
                 false,
-                EvmConfiguration.DEFAULT)
+                EvmConfiguration.DEFAULT,
+                new BadBlockManager())
             .createProtocolSchedule();
 
     protocolContext = mock(ProtocolContext.class);

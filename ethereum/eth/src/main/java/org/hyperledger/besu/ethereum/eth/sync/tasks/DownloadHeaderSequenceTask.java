@@ -199,8 +199,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
               child =
                   (headerIndex == segmentLength - 1) ? referenceHeader : headers[headerIndex + 1];
             }
-            final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(child);
-            final BadBlockManager badBlockManager = protocolSpec.getBadBlocksManager();
+            final BadBlockManager badBlockManager = protocolContext.getBadBlockManager();
 
             if (!validateHeader(child, header)) {
               // Invalid headers - disconnect from peer

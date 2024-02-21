@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
@@ -48,6 +49,7 @@ public class BesuNodeConfiguration {
   private final MetricsConfiguration metricsConfiguration;
   private final Optional<PermissioningConfiguration> permissioningConfiguration;
   private final ApiConfiguration apiConfiguration;
+  private final DataStorageConfiguration dataStorageConfiguration;
   private final Optional<String> keyFilePath;
   private final boolean devMode;
   private final GenesisConfigurationProvider genesisConfigProvider;
@@ -84,6 +86,7 @@ public class BesuNodeConfiguration {
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final ApiConfiguration apiConfiguration,
+      final DataStorageConfiguration dataStorageConfiguration,
       final Optional<String> keyFilePath,
       final boolean devMode,
       final NetworkName network,
@@ -117,6 +120,7 @@ public class BesuNodeConfiguration {
     this.metricsConfiguration = metricsConfiguration;
     this.permissioningConfiguration = permissioningConfiguration;
     this.apiConfiguration = apiConfiguration;
+    this.dataStorageConfiguration = dataStorageConfiguration;
     this.keyFilePath = keyFilePath;
     this.dataPath = dataPath;
     this.devMode = devMode;
@@ -181,6 +185,10 @@ public class BesuNodeConfiguration {
 
   public ApiConfiguration getApiConfiguration() {
     return apiConfiguration;
+  }
+
+  public DataStorageConfiguration getDataStorageConfiguration() {
+    return dataStorageConfiguration;
   }
 
   public Optional<String> getKeyFilePath() {

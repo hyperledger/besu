@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 public class BackwardSyncContext {
   private static final Logger LOG = LoggerFactory.getLogger(BackwardSyncContext.class);
   public static final int BATCH_SIZE = 200;
-  private static final int DEFAULT_MAX_RETRIES = 20;
+  private static final int DEFAULT_MAX_RETRIES = 2;
   private static final long MILLIS_DELAY_BETWEEN_PROGRESS_LOG = 10_000L;
   private static final long DEFAULT_MILLIS_BETWEEN_RETRIES = 5000;
   private static final int DEFAULT_MAX_CHAIN_EVENT_ENTRIES = BadBlockManager.MAX_BAD_BLOCKS_SIZE;
