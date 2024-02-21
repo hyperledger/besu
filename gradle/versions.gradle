@@ -234,5 +234,7 @@ dependencyManagement {
     dependency 'org.yaml:snakeyaml:2.0'
 
     dependency 'tech.pegasys.discovery:discovery:22.12.0'
+
+    dependency 'net.consensys.quorum.tessera:tessera-dist:23.4.0@tar'
   }
 }
