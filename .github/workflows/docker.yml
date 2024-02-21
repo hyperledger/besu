@@ -121,4 +121,4 @@ jobs:
         with:
           append_body: true
           body: |
-            `docker pull ${{env.registry}}/${{github.repository_owner}}:${{github.ref_name}}`
+            `docker pull ${{env.registry}}/${{github.repository_owner}}/besu:${{github.ref_name}}`
