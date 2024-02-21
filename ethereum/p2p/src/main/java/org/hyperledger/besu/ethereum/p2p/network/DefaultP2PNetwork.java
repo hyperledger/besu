@@ -470,7 +470,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     // override advertised host if we detect an external IP address via NAT manager
     final String advertisedAddress = natService.queryExternalIPAddress(address);
-    final int advertisedDiscoveryPort = natService
+    final int advertisedDiscoveryPort =
+        natService
             .getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP)
             .map(NatPortMapping::getExternalPort)
             .orElse(discoveryPort);
