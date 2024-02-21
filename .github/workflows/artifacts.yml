@@ -20,10 +20,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       - name: setup gradle
-        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
       - name: assemble distributions
         run:
-          ./gradlew -Prelease.releaseVersion=${{github.ref_name}} assemble -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+          ./gradlew -Prelease.releaseVersion=${{github.ref_name}} -Pversion=${{github.ref_name}} assemble -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: hashes
         id: hashes
         run: |

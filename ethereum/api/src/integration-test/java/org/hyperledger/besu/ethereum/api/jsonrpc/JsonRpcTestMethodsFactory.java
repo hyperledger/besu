@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
@@ -78,7 +79,9 @@ public class JsonRpcTestMethodsFactory {
     this.blockchain = createInMemoryBlockchain(importer.getGenesisBlock());
     this.stateArchive = createInMemoryWorldStateArchive();
     this.importer.getGenesisState().writeStateTo(stateArchive.getMutable());
-    this.context = new ProtocolContext(blockchain, stateArchive, null, Optional.empty());
+    this.context =
+        new ProtocolContext(
+            blockchain, stateArchive, null, Optional.empty(), new BadBlockManager());
 
     final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
     this.synchronizer = mock(Synchronizer.class);

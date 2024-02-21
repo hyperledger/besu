@@ -27,6 +27,7 @@ import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
@@ -241,7 +242,8 @@ public class BaseBftProtocolScheduleBuilderTest {
         PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,
-        EvmConfiguration.DEFAULT);
+        EvmConfiguration.DEFAULT,
+        new BadBlockManager());
   }
 
   private BftConfigOptions createBftConfig(final BigInteger blockReward) {

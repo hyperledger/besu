@@ -18,7 +18,7 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: setup gradle
-        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
       - name: hadoLint_openj9-jdk_17
         run: docker run --rm -i hadolint/hadolint < docker/openj9-jdk-17/Dockerfile
       - name: hadoLint_openjdk_17
@@ -65,7 +65,7 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: setup gradle
-        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
       - name: install goss
         run: |
           mkdir -p docker/reports
@@ -77,15 +77,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: build and test docker
-        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
         with:
-          arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Prelease.releaseVersion=${{ github.ref_name }}
+          arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Pversion=${{github.ref_name}} -Prelease.releaseVersion=${{ github.ref_name }}
       - name: publish
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
-        run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Prelease.releaseVersion=${{ github.ref_name }}
+        run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Pversion=${{github.ref_name}} -Prelease.releaseVersion=${{ github.ref_name }}
   multiArch:
     needs: buildDocker
     runs-on: ubuntu-22.04
@@ -101,7 +101,7 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: setup gradle
-        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
       - name: login to ghcr
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
         with:
@@ -109,5 +109,5 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: multi-arch docker
-        run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Prelease.releaseVersion=${{ github.ref_name }}
+        run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Pversion=${{github.ref_name}} -Prelease.releaseVersion=${{ github.ref_name }}
 
