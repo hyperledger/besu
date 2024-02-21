@@ -111,7 +111,7 @@ jobs:
       - name: multi-arch docker
         run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Pversion=${{github.ref_name}} -Prelease.releaseVersion=${{ github.ref_name }}
   amendNotes:
-    needs: buildDocker
+    needs: multiArch
     runs-on: ubuntu-22.04
     permissions:
       contents: write
