@@ -174,7 +174,7 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
     gasCost +=
         frame
             .getAccessWitness()
-            .touchAddressOnWriteAndComputeGas(
+            .touchAddressOnReadAndComputeGas(
                 frame.getRecipientAddress(), treeIndexes.get(0), treeIndexes.get(1));
     gasCost +=
         frame
