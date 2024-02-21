@@ -110,6 +110,7 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
 
     gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, VERSION_LEAF_KEY);
     gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, NONCE_LEAF_KEY);
+    gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, CODE_KECCAK_LEAF_KEY);
 
     if (createSendsValue) {
       gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, BALANCE_LEAF_KEY);
