@@ -18,10 +18,21 @@ import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.OptionalInt;
 
+/** Base versioned data storage format */
 public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
+  /** Original Forest version, not used since replace by FOREST_WITH_VARIABLES */
   FOREST_ORIGINAL(DataStorageFormat.FOREST, 1),
+  /**
+   * Current Forest version, with blockchain variables in a dedicated column family, in order to
+   * make BlobDB more effective
+   */
   FOREST_WITH_VARIABLES(DataStorageFormat.FOREST, 2),
+  /** Original Bonsai version, not used since replace by BONSAI_WITH_VARIABLES */
   BONSAI_ORIGINAL(DataStorageFormat.BONSAI, 1),
+  /**
+   * Current Bonsai version, with blockchain variables in a dedicated column family, in order to
+   * make BlobDB more effective
+   */
   BONSAI_WITH_VARIABLES(DataStorageFormat.BONSAI, 2);
 
   private final DataStorageFormat format;
@@ -32,6 +43,12 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
     this.version = version;
   }
 
+  /**
+   * Return the default version for new db for a specific format
+   *
+   * @param format data storage format
+   * @return the version to use for new db
+   */
   public static BaseVersionedStorageFormat defaultForNewDB(final DataStorageFormat format) {
     return switch (format) {
       case FOREST -> FOREST_WITH_VARIABLES;

@@ -18,11 +18,26 @@ import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.OptionalInt;
 
+/** Represent a specific version of a data storage format */
 public interface VersionedStorageFormat {
-
+  /**
+   * Get the data storage format
+   *
+   * @return the data storage format
+   */
   DataStorageFormat getFormat();
 
+  /**
+   * Get the version of the data storage format
+   *
+   * @return the version of the data storage format
+   */
   int getVersion();
 
+  /**
+   * Get the version of the privacy db, in case the privacy feature is enabled, or empty otherwise
+   *
+   * @return the optional privacy version
+   */
   OptionalInt getPrivacyVersion();
 }

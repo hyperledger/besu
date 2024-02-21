@@ -46,18 +46,34 @@ public class DatabaseMetadata {
           .enable(SerializationFeature.INDENT_OUTPUT);
   private final VersionedStorageFormat versionedStorageFormat;
 
-  protected DatabaseMetadata(final VersionedStorageFormat versionedStorageFormat) {
+  private DatabaseMetadata(final VersionedStorageFormat versionedStorageFormat) {
     this.versionedStorageFormat = versionedStorageFormat;
   }
 
+  /**
+   * Return the default metadata for new db for a specific format
+   *
+   * @param dataStorageFormat data storage format
+   * @return the metadata to use for new db
+   */
   public static DatabaseMetadata defaultForNewDb(final DataStorageFormat dataStorageFormat) {
     return new DatabaseMetadata(BaseVersionedStorageFormat.defaultForNewDB(dataStorageFormat));
   }
 
+  /**
+   * Return the default metadata for new db when privacy feature is enabled
+   *
+   * @return the metadata to use for new db
+   */
   public static DatabaseMetadata defaultForNewPrivateDb() {
     return new DatabaseMetadata(PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES);
   }
 
+  /**
+   * Return the version storage format contained in this metadata
+   *
+   * @return version storage format
+   */
   public VersionedStorageFormat getVersionedStorageFormat() {
     return versionedStorageFormat;
   }
@@ -74,6 +90,13 @@ public class DatabaseMetadata {
     return resolveDatabaseMetadata(getDefaultMetadataFile(dataDir));
   }
 
+  /**
+   * Is the metadata file present in the specified data dir?
+   *
+   * @param dataDir the dir to search for the metadata file
+   * @return true is the metadata file exists, false otherwise
+   * @throws IOException if there is an error trying to access the metadata file
+   */
   public static boolean isPresent(final Path dataDir) throws IOException {
     return getDefaultMetadataFile(dataDir).exists();
   }
@@ -188,6 +211,11 @@ public class DatabaseMetadata {
             });
   }
 
+  /**
+   * Update an existing base storage to support privacy feature
+   *
+   * @return the update metadata with the privacy support
+   */
   public DatabaseMetadata upgradeToPrivacy() {
     return new DatabaseMetadata(
         switch (versionedStorageFormat.getFormat()) {

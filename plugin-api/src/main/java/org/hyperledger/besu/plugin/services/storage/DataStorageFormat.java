@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.plugin.services.storage;
 
+/** Supported database storage format */
 public enum DataStorageFormat {
-  FOREST, // Original format.  Store all tries
-  BONSAI; // New format.  Store one trie, and trie logs to roll forward and backward.
+  /** Original format. Store all tries */
+  FOREST,
+  /** New format. Store one trie, and trie logs to roll forward and backward */
+  BONSAI;
 }
