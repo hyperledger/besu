@@ -14,26 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 public class DebugResyncWorldstate implements JsonRpcMethod {
   private final Synchronizer synchronizer;
-  private final ProtocolSchedule protocolSchedule;
-  private final Blockchain blockchain;
+  private final BadBlockManager badBlockManager;
 
   public DebugResyncWorldstate(
-      final ProtocolSchedule protocolSchedule,
-      final Blockchain blockchain,
-      final Synchronizer synchronizer) {
+      final ProtocolContext protocolContext, final Synchronizer synchronizer) {
     this.synchronizer = synchronizer;
-    this.protocolSchedule = protocolSchedule;
-    this.blockchain = blockchain;
+    this.badBlockManager = protocolContext.getBadBlockManager();
   }
 
   @Override
@@ -43,10 +39,7 @@ public class DebugResyncWorldstate implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext request) {
-    protocolSchedule
-        .getByBlockHeader(blockchain.getChainHeadHeader())
-        .getBadBlocksManager()
-        .reset();
+    badBlockManager.reset();
     return new JsonRpcSuccessResponse(
         request.getRequest().getId(), synchronizer.resyncWorldState());
   }
