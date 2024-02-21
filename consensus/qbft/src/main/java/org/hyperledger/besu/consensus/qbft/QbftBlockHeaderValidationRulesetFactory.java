@@ -58,7 +58,7 @@ public class QbftBlockHeaderValidationRulesetFactory {
             new GasLimitRangeAndDeltaValidationRule(
                 DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT, baseFeeMarket))
         .addRule(new TimestampBoundedByFutureParameter(1))
-        .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
+        //.addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
         .addRule(
             new ConstantFieldValidationRule<>(
                 "MixHash", BlockHeader::getMixHash, BftHelpers.EXPECTED_MIX_HASH))

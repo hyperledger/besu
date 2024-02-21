@@ -36,6 +36,8 @@ public class BftFork {
   public static final String VALIDATORS_KEY = "validators";
   /** The constant BLOCK_PERIOD_SECONDS_KEY. */
   public static final String BLOCK_PERIOD_SECONDS_KEY = "blockperiodseconds";
+  /** The constant EMPTY_BLOCK_PERIOD_SECONDS_KEY. */
+  public static final String EMPTY_BLOCK_PERIOD_SECONDS_KEY = "emptyblockperiodseconds";
   /** The constant BLOCK_REWARD_KEY. */
   public static final String BLOCK_REWARD_KEY = "blockreward";
   /** The constant MINING_BENEFICIARY_KEY. */
@@ -74,6 +76,15 @@ public class BftFork {
    */
   public OptionalInt getBlockPeriodSeconds() {
     return JsonUtil.getPositiveInt(forkConfigRoot, BLOCK_PERIOD_SECONDS_KEY);
+  }
+
+  /**
+   * Gets empty block period seconds.
+   *
+   * @return the block empty period seconds
+   */
+  public OptionalInt getEmptyBlockPeriodSeconds() {
+    return JsonUtil.getPositiveInt(forkConfigRoot, EMPTY_BLOCK_PERIOD_SECONDS_KEY);
   }
 
   /**

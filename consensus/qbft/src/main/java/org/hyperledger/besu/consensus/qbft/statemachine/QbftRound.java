@@ -123,6 +123,26 @@ public class QbftRound {
   }
 
   /**
+   * Create a block
+   *
+   * @return a Block
+   */
+  public Block createBlock(final long headerTimeStampSeconds) {
+    LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
+    return blockCreator.createBlock(headerTimeStampSeconds).getBlock();
+  }
+
+  /**
+   * Send proposal message.
+   *
+   * @param headerTimeStampSeconds the header time stamp seconds
+   */
+  public void sendProposalMessage(final Block block) {
+    LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
+    updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
+  }
+
+  /**
    * Create and send proposal message.
    *
    * @param headerTimeStampSeconds the header time stamp seconds

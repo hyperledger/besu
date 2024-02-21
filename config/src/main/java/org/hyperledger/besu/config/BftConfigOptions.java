@@ -38,6 +38,13 @@ public interface BftConfigOptions {
   int getBlockPeriodSeconds();
 
   /**
+   * Gets empty block period seconds.
+   *
+   * @return the block period seconds
+   */
+  int getEmptyBlockPeriodSeconds();
+
+  /**
    * Gets request timeout seconds.
    *
    * @return the request timeout seconds
