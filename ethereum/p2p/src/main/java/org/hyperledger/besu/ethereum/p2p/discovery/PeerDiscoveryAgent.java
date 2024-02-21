@@ -163,11 +163,12 @@ public abstract class PeerDiscoveryAgent {
           .thenApply(
               (InetSocketAddress localAddress) -> {
                 // Once listener is set up, finish initializing
-                final int discoveryPort =
+                final int localDiscoveryPort = localAddress.getPort();
+                final int externalDiscoveryPort =
                     natService
                         .getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP)
                         .map(NatPortMapping::getExternalPort)
-                        .orElseGet(localAddress::getPort);
+                        .orElse(localDiscoveryPort);
 
                 final DiscoveryPeer ourNode =
                     DiscoveryPeer.fromEnode(
@@ -175,14 +176,14 @@ public abstract class PeerDiscoveryAgent {
                             .nodeId(id)
                             .ipAddress(advertisedAddress)
                             .listeningPort(tcpPort)
-                            .discoveryPort(discoveryPort)
+                            .discoveryPort(externalDiscoveryPort)
                             .build());
                 this.localNode = Optional.of(ourNode);
                 isActive = true;
                 LOG.info("P2P peer discovery agent started and listening on {}", localAddress);
                 updateNodeRecord();
                 startController(ourNode);
-                return discoveryPort;
+                return localDiscoveryPort;
               });
     } else {
       this.isActive = false;

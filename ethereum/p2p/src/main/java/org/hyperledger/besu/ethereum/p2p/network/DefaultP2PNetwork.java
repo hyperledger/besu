@@ -50,6 +50,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.NatManager;
+import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
@@ -469,13 +470,17 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     // override advertised host if we detect an external IP address via NAT manager
     final String advertisedAddress = natService.queryExternalIPAddress(address);
+    final int advertisedDiscoveryPort = natService
+            .getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP)
+            .map(NatPortMapping::getExternalPort)
+            .orElse(discoveryPort);
 
     final EnodeURL localEnode =
         EnodeURLImpl.builder()
             .nodeId(nodeId)
             .ipAddress(advertisedAddress)
             .listeningPort(listeningPort)
-            .discoveryPort(discoveryPort)
+            .discoveryPort(advertisedDiscoveryPort)
             .build();
 
     LOG.info("Enode URL {}", localEnode.toString());
