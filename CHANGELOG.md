@@ -48,6 +48,8 @@
 - Upgrade reference tests to version 13.1 [#6574](https://github.com/hyperledger/besu/pull/6574)
 - Extend `BesuConfiguration` service [#6584](https://github.com/hyperledger/besu/pull/6584)
 - Add `ethereum_min_gas_price` and `ethereum_min_priority_fee` metrics to track runtime values of `min-gas-price` and `min-priority-fee` [#6587](https://github.com/hyperledger/besu/pull/6587)
+- Option to perform version incompatibility checks when starting Besu. In this first release of the feature, if `--version-compatibility-protection` is set to true it checks that the version of Besu being started is the same or higher than the previous version. [6307](https://github.com/hyperledger/besu/pull/6307)
+
 
 ### Bug fixes
 - Fix the way an advertised host configured with `--p2p-host` is treated when communicating with the originator of a PING packet [#6225](https://github.com/hyperledger/besu/pull/6225)
