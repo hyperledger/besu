@@ -561,7 +561,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--version-compatibility-protection"},
       description =
           "Perform compatibility checks between the version of Besu being started and the version of Besu that last started with this data directory. (default: ${DEFAULT-VALUE})")
-  private Boolean versionCompatibilityProtection = false;
+  private Boolean versionCompatibilityProtection = null;
 
   @CommandLine.ArgGroup(validate = false, heading = "@|bold GraphQL Options|@%n")
   GraphQlOptionGroup graphQlOptionGroup = new GraphQlOptionGroup();
@@ -1220,12 +1220,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       validateOptions();
 
+      configure();
+
       // If we're not running against a named network, or if version compat protection has been
       // explicitly enabled, perform compatibility check
-      VersionMetadata.versionCompatibilityChecks(
-          versionCompatibilityProtection || (network == null), dataDir());
+      VersionMetadata.versionCompatibilityChecks(versionCompatibilityProtection, dataDir());
 
-      configure();
       configureNativeLibs();
       besuController = initController();
 
@@ -1810,6 +1810,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     checkPortClash();
     checkIfRequiredPortsAreAvailable();
     syncMode = getDefaultSyncModeIfNotSet();
+    versionCompatibilityProtection = getDefaultVersionCompatibilityProtectionIfNotSet();
 
     ethNetworkConfig = updateNetworkConfig(network);
 
@@ -2973,6 +2974,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     && Optional.ofNullable(network).map(NetworkName::canFastSync).orElse(false)
                 ? SyncMode.FAST
                 : SyncMode.FULL);
+  }
+
+  private Boolean getDefaultVersionCompatibilityProtectionIfNotSet() {
+    // Version compatibility protection is enabled by default for non-named networks
+    return Optional.ofNullable(versionCompatibilityProtection)
+        .orElse(commandLine.getParseResult().hasMatchedOption("network") ? false : true);
   }
 
   private String generateConfigurationOverview() {
