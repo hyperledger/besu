@@ -58,7 +58,7 @@ public class VersionMetadata {
   }
 
   public static VersionMetadata lookUpFrom(final Path dataDir) throws IOException {
-    LOG.info("Lookup version metadata file in data directory: {}", dataDir.toString());
+    LOG.info("Lookup version metadata file in data directory: {}", dataDir);
     return resolveVersionMetadata(getDefaultMetadataFile(dataDir));
   }
 
