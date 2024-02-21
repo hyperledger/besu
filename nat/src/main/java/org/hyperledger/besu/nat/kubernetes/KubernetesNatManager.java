@@ -49,21 +49,26 @@ import org.slf4j.LoggerFactory;
 public class KubernetesNatManager extends AbstractNatManager {
   private static final Logger LOG = LoggerFactory.getLogger(KubernetesNatManager.class);
 
-  /** The constant DEFAULT_BESU_SERVICE_NAME_FILTER. */
-  public static final String DEFAULT_BESU_SERVICE_NAME_FILTER = "besu";
+  /** The constant DEFAULT_BESU_SERVICE_NAME. */
+  public static final String DEFAULT_BESU_SERVICE_NAME = "besu";
+
+  public static final String DEFAULT_BESU_SERVICE_NAMESPACE = "besu";
 
   private String internalAdvertisedHost;
-  private final String besuServiceNameFilter;
+  private final String besuServiceName;
+  private final String besuServiceNamespace;
   private final List<NatPortMapping> forwardedPorts = new ArrayList<>();
 
   /**
    * Instantiates a new Kubernetes nat manager.
    *
-   * @param besuServiceNameFilter the besu service name filter
+   * @param besuServiceName the besu service name
+   * @param besuServiceNamespace the besu service namespace
    */
-  public KubernetesNatManager(final String besuServiceNameFilter) {
+  public KubernetesNatManager(final String besuServiceName, final String besuServiceNamespace) {
     super(NatMethod.KUBERNETES);
-    this.besuServiceNameFilter = besuServiceNameFilter;
+    this.besuServiceName = besuServiceName;
+    this.besuServiceNamespace = besuServiceNamespace;
   }
 
   @Override
@@ -83,15 +88,7 @@ public class KubernetesNatManager extends AbstractNatManager {
       final CoreV1Api api = new CoreV1Api();
       // invokes the CoreV1Api client
       final V1Service service =
-          api
-              .listServiceForAllNamespaces(
-                  null, null, null, null, null, null, null, null, null, null)
-              .getItems()
-              .stream()
-              .filter(
-                  v1Service -> v1Service.getMetadata().getName().contains(besuServiceNameFilter))
-              .findFirst()
-              .orElseThrow(() -> new NatInitializationException("Service not found"));
+          api.readNamespacedService(besuServiceName, besuServiceNamespace, null);
       updateUsingBesuService(service);
     } catch (Exception e) {
       throw new NatInitializationException(e.getMessage(), e);

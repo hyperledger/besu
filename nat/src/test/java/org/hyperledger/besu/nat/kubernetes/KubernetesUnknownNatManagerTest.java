@@ -15,7 +15,8 @@
 package org.hyperledger.besu.nat.kubernetes;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
+import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME;
+import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAMESPACE;
 import static org.mockito.Mockito.when;
 
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
@@ -38,9 +39,9 @@ public final class KubernetesUnknownNatManagerTest {
   public void initialize() {
 
     when(v1Service.getSpec()).thenReturn(new V1ServiceSpec().type("Unknown"));
-    when(v1Service.getMetadata())
-        .thenReturn(new V1ObjectMeta().name(DEFAULT_BESU_SERVICE_NAME_FILTER));
-    natManager = new KubernetesNatManager(DEFAULT_BESU_SERVICE_NAME_FILTER);
+    when(v1Service.getMetadata()).thenReturn(new V1ObjectMeta().name(DEFAULT_BESU_SERVICE_NAME));
+    natManager =
+        new KubernetesNatManager(DEFAULT_BESU_SERVICE_NAME, DEFAULT_BESU_SERVICE_NAMESPACE);
     try {
       natManager.start();
     } catch (Exception ignored) {
