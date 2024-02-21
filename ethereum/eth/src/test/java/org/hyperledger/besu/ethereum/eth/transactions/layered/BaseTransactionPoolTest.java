@@ -55,6 +55,7 @@ public class BaseTransactionPoolTest {
   protected static final Address SENDER1 = Util.publicKeyToAddress(KEYS1.getPublicKey());
   protected static final Address SENDER2 = Util.publicKeyToAddress(KEYS2.getPublicKey());
   protected static final Wei DEFAULT_MIN_GAS_PRICE = Wei.of(50);
+  protected static final Wei DEFAULT_MIN_PRIORITY_FEE = Wei.ZERO;
   private static final Random randomizeTxType = new Random();
 
   protected final Transaction transaction0 = createTransaction(0);

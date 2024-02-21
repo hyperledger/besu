@@ -14,8 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.datatypes.TransactionType.EIP1559;
 import static org.hyperledger.besu.datatypes.TransactionType.FRONTIER;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.DROPPED;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -34,6 +37,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.function.BiFunction;
@@ -43,7 +47,7 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 
 public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTransactionsTestBase {
-
+  private static final FeeMarket EIP1559_FEE_MARKET = FeeMarket.london(0L);
   private static final Random randomizeTxType = new Random();
 
   @Override
@@ -61,15 +65,19 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
         nextLayer,
         txPoolMetrics,
         transactionReplacementTester,
-        FeeMarket.london(0L),
+        EIP1559_FEE_MARKET,
         new BlobCache(),
         miningParameters);
   }
 
   @Override
   protected BlockHeader mockBlockHeader() {
+    return mockBlockHeader(Wei.ONE);
+  }
+
+  private BlockHeader mockBlockHeader(final Wei baseFee) {
     final BlockHeader blockHeader = mock(BlockHeader.class);
-    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ONE));
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(baseFee));
     return blockHeader;
   }
 
@@ -157,6 +165,29 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
         lowValueTxs.iterator(), highGasPriceTransaction, firstLowValueTx);
   }
 
+  @Test
+  public void txBelowCurrentMineableMinPriorityFeeIsNotPrioritized() {
+    setBaseFee(DEFAULT_MIN_GAS_PRICE.subtract(2));
+    miningParameters.setMinPriorityFeePerGas(Wei.of(5));
+    final PendingTransaction lowPriorityFeeTx =
+        createRemotePendingTransaction(
+            createTransaction(0, DEFAULT_MIN_GAS_PRICE.subtract(1), KEYS1));
+    assertThat(prioritizeTransaction(lowPriorityFeeTx)).isEqualTo(DROPPED);
+    assertEvicted(lowPriorityFeeTx);
+    assertTransactionNotPrioritized(lowPriorityFeeTx);
+  }
+
+  @Test
+  public void txWithPriorityBelowCurrentMineableMinPriorityFeeIsPrioritized() {
+    setBaseFee(DEFAULT_MIN_GAS_PRICE.subtract(2));
+    miningParameters.setMinPriorityFeePerGas(Wei.of(5));
+    final PendingTransaction lowGasPriceTx =
+        createRemotePendingTransaction(
+            createTransaction(0, DEFAULT_MIN_GAS_PRICE.subtract(1), KEYS1), true);
+    assertThat(prioritizeTransaction(lowGasPriceTx)).isEqualTo(ADDED);
+    assertTransactionPrioritized(lowGasPriceTx);
+  }
+
   private void shouldPrioritizePriorityFeeThenTimeAddedToPoolSameTypeTxs(
       final TransactionType transactionType) {
     final PendingTransaction highGasPriceTransaction =
@@ -178,5 +209,9 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
 
     shouldPrioritizeValueThenTimeAddedToPool(
         lowValueTxs.iterator(), highGasPriceTransaction, lowValueTxs.get(0));
+  }
+
+  private void setBaseFee(final Wei baseFee) {
+    transactions.blockAdded(EIP1559_FEE_MARKET, mockBlockHeader(baseFee), Map.of());
   }
 }

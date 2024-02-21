@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.DROPPED;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -41,7 +42,9 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
   protected final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
   protected final EvictCollectorLayer evictCollector = new EvictCollectorLayer(txPoolMetrics);
   protected final MiningParameters miningParameters =
-      MiningParameters.newDefault().setMinTransactionGasPrice(DEFAULT_MIN_GAS_PRICE);
+      MiningParameters.newDefault()
+          .setMinTransactionGasPrice(DEFAULT_MIN_GAS_PRICE)
+          .setMinPriorityFeePerGas(DEFAULT_MIN_PRIORITY_FEE);
   protected AbstractPrioritizedTransactions transactions =
       getSorter(
           ImmutableTransactionPoolConfiguration.builder()
@@ -127,6 +130,25 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
 
     localTransactions.forEach(this::assertTransactionPrioritized);
     assertTransactionNotPrioritized(lastLocalTransaction);
+  }
+
+  @Test
+  public void txBelowCurrentMineableMinGasPriceIsNotPrioritized() {
+    final PendingTransaction lowGasPriceTx =
+        createRemotePendingTransaction(
+            createTransaction(0, DEFAULT_MIN_GAS_PRICE.subtract(1), KEYS1));
+    assertThat(prioritizeTransaction(lowGasPriceTx)).isEqualTo(DROPPED);
+    assertEvicted(lowGasPriceTx);
+    assertTransactionNotPrioritized(lowGasPriceTx);
+  }
+
+  @Test
+  public void txWithPriorityBelowCurrentMineableMinGasPriceIsPrioritized() {
+    final PendingTransaction lowGasPriceTx =
+        createRemotePendingTransaction(
+            createTransaction(0, DEFAULT_MIN_GAS_PRICE.subtract(1), KEYS1), true);
+    assertThat(prioritizeTransaction(lowGasPriceTx)).isEqualTo(ADDED);
+    assertTransactionPrioritized(lowGasPriceTx);
   }
 
   protected void shouldPrioritizeValueThenTimeAddedToPool(
