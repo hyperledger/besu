@@ -18,6 +18,7 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -51,7 +52,10 @@ public class ChainHeadTrackerTest {
 
   private final ProtocolSchedule protocolSchedule =
       FixedDifficultyProtocolSchedule.create(
-          GenesisConfigFile.development().getConfigOptions(), false, EvmConfiguration.DEFAULT);
+          GenesisConfigFile.development().getConfigOptions(),
+          false,
+          EvmConfiguration.DEFAULT,
+          new BadBlockManager());
 
   private final TrailingPeerLimiter trailingPeerLimiter = mock(TrailingPeerLimiter.class);
 

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
@@ -42,7 +43,13 @@ public interface BesuConfiguration extends BesuService {
    * @return Database format.
    */
   @Unstable
-  default DataStorageFormat getDatabaseFormat() {
-    return DataStorageFormat.FOREST;
-  }
+  DataStorageFormat getDatabaseFormat();
+
+  /**
+   * The runtime value of the min gas price
+   *
+   * @return min gas price in wei
+   */
+  @Unstable
+  Wei getMinGasPrice();
 }

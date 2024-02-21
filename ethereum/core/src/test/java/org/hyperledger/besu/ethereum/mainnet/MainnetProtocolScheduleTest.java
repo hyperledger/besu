@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
@@ -71,7 +72,9 @@ public class MainnetProtocolScheduleTest {
   public void shouldOnlyUseFrontierWhenEmptyJsonConfigIsUsed() {
     final ProtocolSchedule sched =
         MainnetProtocolSchedule.fromConfig(
-            GenesisConfigFile.fromConfig("{}").getConfigOptions(), EvmConfiguration.DEFAULT);
+            GenesisConfigFile.fromConfig("{}").getConfigOptions(),
+            EvmConfiguration.DEFAULT,
+            new BadBlockManager());
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(1L)).getName()).isEqualTo("Frontier");
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(Long.MAX_VALUE)).getName())
         .isEqualTo("Frontier");
@@ -83,7 +86,9 @@ public class MainnetProtocolScheduleTest {
         "{\"config\": {\"homesteadBlock\": 2, \"daoForkBlock\": 3, \"eip150Block\": 14, \"eip158Block\": 15, \"byzantiumBlock\": 16, \"constantinopleBlock\": 18, \"petersburgBlock\": 19, \"chainId\":1234}}";
     final ProtocolSchedule sched =
         MainnetProtocolSchedule.fromConfig(
-            GenesisConfigFile.fromConfig(json).getConfigOptions(), EvmConfiguration.DEFAULT);
+            GenesisConfigFile.fromConfig(json).getConfigOptions(),
+            EvmConfiguration.DEFAULT,
+            new BadBlockManager());
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(1)).getName()).isEqualTo("Frontier");
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(2)).getName()).isEqualTo("Homestead");
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(3)).getName())
@@ -113,7 +118,8 @@ public class MainnetProtocolScheduleTest {
             () ->
                 MainnetProtocolSchedule.fromConfig(
                     GenesisConfigFile.fromConfig(json).getConfigOptions(),
-                    EvmConfiguration.DEFAULT));
+                    EvmConfiguration.DEFAULT,
+                    new BadBlockManager()));
   }
 
   @Test
@@ -124,7 +130,8 @@ public class MainnetProtocolScheduleTest {
                     Resources.toString(
                         this.getClass().getResource("/goerli.json"), StandardCharsets.UTF_8))
                 .getConfigOptions(),
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            new BadBlockManager());
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(0L)).getName())
         .isEqualTo("Petersburg");
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(1_561_651L)).getName())
