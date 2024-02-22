@@ -228,6 +228,7 @@ public class FrontierGasCalculator implements GasCalculator {
     return NEW_ACCOUNT_GAS_COST;
   }
 
+  @SuppressWarnings("removal")
   @Override
   public long callOperationGasCost(
       final MessageFrame frame,
@@ -239,6 +240,31 @@ public class FrontierGasCalculator implements GasCalculator {
       final Wei transferValue,
       final Account recipient,
       final Address to) {
+    return callOperationGasCost(
+        frame,
+        stipend,
+        inputDataOffset,
+        inputDataLength,
+        outputDataOffset,
+        outputDataLength,
+        transferValue,
+        recipient,
+        to,
+        true);
+  }
+
+  @Override
+  public long callOperationGasCost(
+      final MessageFrame frame,
+      final long stipend,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
+      final Wei transferValue,
+      final Account recipient,
+      final Address to,
+      final boolean accountIsWarm) {
     final long inputDataMemoryExpansionCost =
         memoryExpansionGasCost(frame, inputDataOffset, inputDataLength);
     final long outputDataMemoryExpansionCost =

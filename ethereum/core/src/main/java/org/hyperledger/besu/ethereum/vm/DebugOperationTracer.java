@@ -109,7 +109,8 @@ public class DebugOperationTracer implements OperationTracer {
             thisGasCost == 0 ? OptionalLong.empty() : OptionalLong.of(thisGasCost),
             frame.getGasRefund(),
             depth,
-            Optional.ofNullable(operationResult.getHaltReason()),
+            Optional.ofNullable(operationResult.getHaltReason())
+                .or(frame::getExceptionalHaltReason),
             frame.getRecipientAddress(),
             frame.getApparentValue(),
             inputData,
