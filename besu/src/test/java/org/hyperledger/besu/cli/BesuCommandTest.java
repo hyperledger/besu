@@ -1342,6 +1342,13 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void versionCompatibilityProtectionTrueOptionIsParsedCorrectly() {
+    final TestBesuCommand besuCommand = parseCommand("--version-compatibility-protection", "true");
+
+    assertThat(besuCommand.getVersionCompatibilityProtection()).isTrue();
+  }
+
+  @Test
   public void dnsUpdateEnabledOptionIsParsedCorrectly() {
     final TestBesuCommand besuCommand =
         parseCommand("--Xdns-enabled", "true", "--Xdns-update-enabled", "true");

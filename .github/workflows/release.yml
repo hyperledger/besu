@@ -16,7 +16,7 @@ jobs:
       - name: Login to DockerHub
         run: echo '${{ secrets.DOCKER_PASSWORD_RW }}' | docker login -u '${{ secrets.DOCKER_USER_RW }}' --password-stdin
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
       - name: Docker upload
         run: ./gradlew "-Prelease.releaseVersion=${{ github.ref_name }}" "-PdockerOrgName=${{ secrets.DOCKER_ORG }}" dockerUploadRelease
       - name: Docker manifest
