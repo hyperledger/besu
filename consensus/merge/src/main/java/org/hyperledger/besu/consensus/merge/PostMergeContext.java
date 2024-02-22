@@ -70,7 +70,6 @@ public class PostMergeContext implements MergeContext {
   private final AtomicReference<Optional<BlockHeader>> terminalPoWBlock =
       new AtomicReference<>(Optional.empty());
   private final BlockValueCalculator blockValueCalculator = new BlockValueCalculator();
-  private boolean isCheckpointPostMergeSync;
   private boolean isPostMergeAtGenesis;
 
   // TODO: cleanup - isChainPruningEnabled will not be required after
@@ -92,7 +91,6 @@ public class PostMergeContext implements MergeContext {
   PostMergeContext(final Difficulty difficulty) {
     this.terminalTotalDifficulty = new AtomicReference<>(difficulty);
     this.syncState = new AtomicReference<>();
-    this.isCheckpointPostMergeSync = false;
   }
 
   /**
@@ -312,22 +310,6 @@ public class PostMergeContext implements MergeContext {
   @Override
   public boolean isChainPruningEnabled() {
     return isChainPruningEnabled;
-  }
-
-  /**
-   * Sets checkpoint post merge sync.
-   *
-   * @param isCheckpointPostMergeSync the is checkpoint post merge sync
-   * @return the checkpoint post merge sync
-   */
-  public PostMergeContext setCheckpointPostMergeSync(final boolean isCheckpointPostMergeSync) {
-    this.isCheckpointPostMergeSync = isCheckpointPostMergeSync;
-    return this;
-  }
-
-  @Override
-  public boolean isCheckpointPostMergeSync() {
-    return this.isCheckpointPostMergeSync;
   }
 
   @Override
