@@ -1,6 +1,16 @@
 # Changelog
 
-## 24.2.0-SNAPSHOT
+## Next Release
+
+### Breaking Changes
+
+### Additions and Improvements
+
+### Bug fixes
+
+### Download Links
+
+## 24.2.0
 
 ### Breaking Changes
 - SNAP - Snap sync is now the default for named networks [#6530](https://github.com/hyperledger/besu/pull/6530)
