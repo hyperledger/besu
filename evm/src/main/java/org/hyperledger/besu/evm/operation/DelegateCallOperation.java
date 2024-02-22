@@ -18,7 +18,6 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
@@ -83,32 +82,5 @@ public class DelegateCallOperation extends AbstractCallOperation {
   @Override
   public long gasAvailableForChildCall(final MessageFrame frame) {
     return gasCalculator().gasAvailableForChildCall(frame, gas(frame), false);
-  }
-
-  @Override
-  protected boolean isStatic(final MessageFrame frame) {
-    return frame.isStatic();
-  }
-
-  @Override
-  public long cost(final MessageFrame frame) {
-    final long stipend = gas(frame);
-    final long inputDataOffset = inputDataOffset(frame);
-    final long inputDataLength = inputDataLength(frame);
-    final long outputDataOffset = outputDataOffset(frame);
-    final long outputDataLength = outputDataLength(frame);
-    final Account recipient = frame.getWorldUpdater().get(address(frame));
-
-    return gasCalculator()
-        .callOperationGasCost(
-            frame,
-            stipend,
-            inputDataOffset,
-            inputDataLength,
-            outputDataOffset,
-            outputDataLength,
-            Wei.ZERO,
-            recipient,
-            to(frame));
   }
 }
