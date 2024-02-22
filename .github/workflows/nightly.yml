@@ -9,7 +9,7 @@ on:
 
 env:
   nightly-tag: develop
-  registry: docker.com
+  registry: docker.io
 
 jobs:
   hadolint:
