@@ -249,18 +249,18 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     final long cumulativeGas = input.readLongScalar();
 
     LogsBloomFilter bloomFilter = null;
-    final boolean compacted;
-    if (input.nextIsNull()) {
+
+    // Compacted receipts don't include the bloom filter so use this to detect the receipt format
+    final boolean compacted = input.nextIsNull();
+    if (compacted) {
       input.skipNext();
-      compacted = true;
     } else {
       // The logs below will populate the bloom filter upon construction.
-      // TODO consider validating that the logs and bloom filter match.
       bloomFilter = LogsBloomFilter.readFrom(input);
-      compacted = false;
     }
+    // TODO consider validating that the logs and bloom filter match.
     final List<Log> logs = input.readList(logInput -> Log.readFrom(logInput, compacted));
-    if (bloomFilter == null) {
+    if (compacted) {
       bloomFilter = LogsBloomFilter.builder().insertLogs(logs).build();
     }
 

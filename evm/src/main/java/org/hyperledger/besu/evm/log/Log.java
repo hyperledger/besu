@@ -126,16 +126,9 @@ public class Log {
 
   private static Bytes readTrimmedData(final RLPInput in) {
     final int zeroLeadDataSize = in.readIntScalar();
-    final Bytes data;
-    if (in.nextIsNull()) {
-      data = MutableBytes.create(zeroLeadDataSize);
-      in.skipNext();
-    } else {
-      final Bytes shortData = in.readBytes();
-      MutableBytes unCompactedData = MutableBytes.create(zeroLeadDataSize + shortData.size());
-      unCompactedData.set(zeroLeadDataSize, shortData);
-      data = unCompactedData;
-    }
+    final Bytes shortData = in.readBytes();
+    MutableBytes data = MutableBytes.create(zeroLeadDataSize + shortData.size());
+    data.set(zeroLeadDataSize, shortData);
     return data;
   }
 
