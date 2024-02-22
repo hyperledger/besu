@@ -174,8 +174,8 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     writeTo(out, false, false);
   }
 
-  public void writeToWithRevertReason(final RLPOutput out) {
-    writeTo(out, true, false);
+  public void writeToCompactedWithRevertReason(final RLPOutput out) {
+    writeTo(out, true, true);
   }
 
   @VisibleForTesting
@@ -183,7 +183,8 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     if (transactionType.equals(TransactionType.FRONTIER)) {
       writeToForReceiptTrie(rlpOutput, withRevertReason, false);
     } else {
-      rlpOutput.writeBytes(RLP.encode(out -> writeToForReceiptTrie(out, withRevertReason, false)));
+      rlpOutput.writeBytes(
+          RLP.encode(out -> writeToForReceiptTrie(out, withRevertReason, compacted)));
     }
   }
 

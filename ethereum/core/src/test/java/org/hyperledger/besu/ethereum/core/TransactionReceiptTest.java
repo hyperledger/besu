@@ -37,7 +37,8 @@ public class TransactionReceiptTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
     final TransactionReceipt copy =
-        TransactionReceipt.readFrom(RLP.input(RLP.encode(receipt::writeToWithRevertReason)));
+        TransactionReceipt.readFrom(
+            RLP.input(RLP.encode(receipt::writeToCompactedWithRevertReason)));
     assertThat(copy).isEqualTo(receipt);
   }
 
