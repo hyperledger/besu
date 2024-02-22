@@ -1,6 +1,17 @@
 # Changelog
 
-## 24.2.0-SNAPSHOT
+## Next Release
+
+### Breaking Changes
+
+### Additions and Improvements
+- Add bft-style blockperiodseconds transitions to Clique [#6596](https://github.com/hyperledger/besu/pull/6596)
+
+### Bug fixes
+
+### Download Links
+
+## 24.2.0
 
 ### Breaking Changes
 - SNAP - Snap sync is now the default for named networks [#6530](https://github.com/hyperledger/besu/pull/6530)
