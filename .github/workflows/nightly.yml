@@ -9,7 +9,7 @@ on:
 
 env:
   nightly-tag: develop
-  registry: ghcr.io
+  registry: docker.com
 
 jobs:
   hadolint:
@@ -68,12 +68,12 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - name: login to ghcr
+      - name: login to ${{ env.registry }}
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
         with:
           registry: ${{ env.registry }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USER_RW }}
+          password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: build image
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
@@ -88,16 +88,16 @@ jobs:
           architecture: ${{ steps.prep.outputs.ARCH }}
         with:
           arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Pbranch=main
-      - name: login to ghcr
+      - name: login to $ {{ env.registry }}
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
         with:
           registry: ${{ env.registry }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USER_RW }}
+          password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: publish
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
-        run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Pbranch=main
+        run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pbranch=main
   multiArch:
     permissions:
       contents: read
@@ -114,12 +114,12 @@ jobs:
           java-version: 17
       - name: setup gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
-      - name: Login to DockerHub
+      - name: Login to ${{ env.registry }}
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
         with:
           registry: ${{ env.registry }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USER_RW }}
+          password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: multi-arch docker
-        run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Pbranch=main
+        run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pbranch=main
 
