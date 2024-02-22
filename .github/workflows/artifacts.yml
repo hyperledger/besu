@@ -2,6 +2,7 @@
 name: artifacts
 
 on:
+  workflow_dispatch: 
   release:
     types:
       - prereleased
