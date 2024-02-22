@@ -32,7 +32,7 @@ public class CliqueFork implements Fork {
   protected final ObjectNode forkConfigRoot;
 
   /**
-   * Instantiates a new Bft fork.
+   * Instantiates a new Clique fork.
    *
    * @param forkConfigRoot the fork config root
    */
@@ -52,7 +52,7 @@ public class CliqueFork implements Fork {
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
-                    "Fork block not specified for Bft fork in custom forks"));
+                    "Fork block not specified for Clique fork in custom forks"));
   }
 
   /**

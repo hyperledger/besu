@@ -14,15 +14,14 @@
  */
 package org.hyperledger.besu.consensus.clique;
 
-import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 
 import java.util.Map;
 
 /**
- * A mutable {@link BftConfigOptions} that is used for building config for transitions in the {@link
- * ForksSchedule}*.
+ * A mutable {@link CliqueConfigOptions} that is used for building config for transitions in the
+ * {@link ForksSchedule}*.
  */
 public class MutableCliqueConfigOptions implements CliqueConfigOptions {
   private long epochLength;
@@ -30,14 +29,14 @@ public class MutableCliqueConfigOptions implements CliqueConfigOptions {
   private boolean createEmptyBlocks;
 
   /**
-   * Instantiates a new Mutable bft config options.
+   * Instantiates a new Mutable clique config options.
    *
-   * @param bftConfigOptions the bft config options
+   * @param cliqueConfigOptions the clique config options
    */
-  public MutableCliqueConfigOptions(final CliqueConfigOptions bftConfigOptions) {
-    this.epochLength = bftConfigOptions.getEpochLength();
-    this.blockPeriodSeconds = bftConfigOptions.getBlockPeriodSeconds();
-    this.createEmptyBlocks = bftConfigOptions.getCreateEmptyBlocks();
+  public MutableCliqueConfigOptions(final CliqueConfigOptions cliqueConfigOptions) {
+    this.epochLength = cliqueConfigOptions.getEpochLength();
+    this.blockPeriodSeconds = cliqueConfigOptions.getBlockPeriodSeconds();
+    this.createEmptyBlocks = cliqueConfigOptions.getCreateEmptyBlocks();
   }
 
   @Override

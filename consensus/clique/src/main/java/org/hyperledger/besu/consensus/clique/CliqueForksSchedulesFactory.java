@@ -21,7 +21,7 @@ import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.ForksScheduleFactory;
 
-/** The Ibft forks schedules factory. */
+/** The Clique forks schedules factory. */
 public class CliqueForksSchedulesFactory {
 
   /**
