@@ -155,7 +155,6 @@ public final class RunnerBuilderTest {
             .p2pAdvertisedHost(p2pAdvertisedHost)
             .p2pEnabled(true)
             .discovery(false)
-            .natMethod(NatMethod.NONE)
             .besuController(besuController)
             .ethNetworkConfig(mock(EthNetworkConfig.class))
             .metricsSystem(mock(ObservableMetricsSystem.class))
