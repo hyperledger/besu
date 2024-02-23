@@ -296,6 +296,7 @@ public abstract class PeerDiscoveryAgent {
             .flatMap(PingPacketData::getFrom)
             .filter(endpoint -> endpoint.getHost().equals(host))
             .map(Endpoint::getUdpPort)
+            .filter((packetDataUdpPort) -> packetDataUdpPort != 0)
             .orElseGet(sourceEndpoint::getUdpPort);
 
     final int tcpPort =
