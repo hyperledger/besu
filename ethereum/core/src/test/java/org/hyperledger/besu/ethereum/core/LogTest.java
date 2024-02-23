@@ -26,7 +26,7 @@ public class LogTest {
   @Test
   public void toFromRlp() {
     final BlockDataGenerator gen = new BlockDataGenerator();
-    final Log log = gen.log();
+    final Log log = gen.log(2);
     final Log copy = Log.readFrom(RLP.input(RLP.encode(log::writeTo)));
     assertThat(copy).isEqualTo(log);
   }
@@ -34,7 +34,7 @@ public class LogTest {
   @Test
   public void toFromRlpCompacted() {
     final BlockDataGenerator gen = new BlockDataGenerator();
-    final Log log = gen.log();
+    final Log log = gen.log(2);
     final Log copy = Log.readFrom(RLP.input(RLP.encode(rlpOut -> log.writeTo(rlpOut, true))), true);
     assertThat(copy).isEqualTo(log);
   }

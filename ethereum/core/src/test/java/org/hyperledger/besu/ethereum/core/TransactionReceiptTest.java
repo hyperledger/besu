@@ -38,7 +38,7 @@ public class TransactionReceiptTest {
     final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
     final TransactionReceipt copy =
         TransactionReceipt.readFrom(
-            RLP.input(RLP.encode(receipt::writeToCompactedWithRevertReason)));
+            RLP.input(RLP.encode(rlpOut -> receipt.writeToForReceiptTrie(rlpOut, true, false))));
     assertThat(copy).isEqualTo(receipt);
   }
 

@@ -181,7 +181,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
   @VisibleForTesting
   void writeTo(final RLPOutput rlpOutput, final boolean withRevertReason, final boolean compacted) {
     if (transactionType.equals(TransactionType.FRONTIER)) {
-      writeToForReceiptTrie(rlpOutput, withRevertReason, false);
+      writeToForReceiptTrie(rlpOutput, withRevertReason, compacted);
     } else {
       rlpOutput.writeBytes(
           RLP.encode(out -> writeToForReceiptTrie(out, withRevertReason, compacted)));

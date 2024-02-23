@@ -84,10 +84,12 @@ public class Log {
   }
 
   private void encodeTrimmedData(final RLPOutput rlpOutput, final Bytes data) {
+    rlpOutput.startList();
     final Bytes shortData = data.trimLeadingZeros();
     final int zeroLeadDataSize = data.size() - shortData.size();
     rlpOutput.writeIntScalar(zeroLeadDataSize);
     rlpOutput.writeBytes(shortData);
+    rlpOutput.endList();
   }
 
   /**
@@ -125,10 +127,12 @@ public class Log {
   }
 
   private static Bytes readTrimmedData(final RLPInput in) {
+    in.enterList();
     final int zeroLeadDataSize = in.readIntScalar();
     final Bytes shortData = in.readBytes();
-    MutableBytes data = MutableBytes.create(zeroLeadDataSize + shortData.size());
+    final MutableBytes data = MutableBytes.create(zeroLeadDataSize + shortData.size());
     data.set(zeroLeadDataSize, shortData);
+    in.leaveList();
     return data;
   }
 
