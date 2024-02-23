@@ -152,7 +152,11 @@ public class VerkleWorldState extends DiffBasedWorldState {
     for (final Map.Entry<Address, DiffBasedValue<VerkleAccount>> accountUpdate :
         worldStateUpdater.getAccountsToUpdate().entrySet()) {
       final Address accountKey = accountUpdate.getKey();
-      System.out.println("account "+accountKey+" "+verkleTrieKeyValueGenerator.generateKeysForAccount(accountKey).get(0));
+      System.out.println(
+          "account "
+              + accountKey
+              + " "
+              + verkleTrieKeyValueGenerator.generateKeysForAccount(accountKey).get(0));
       final DiffBasedValue<VerkleAccount> bonsaiValue = accountUpdate.getValue();
       if (!bonsaiValue.isUnchanged()) {
         final VerkleAccount priorAccount = bonsaiValue.getPrior();
@@ -208,7 +212,9 @@ public class VerkleWorldState extends DiffBasedWorldState {
       }
     }
     // TODO REMOVE THAT for next testnet (added because of a geth issue on block 4810, 5077)
-    List<Address> buggyAccount = List.of(Address.fromHexString("0xb0aed5c6f925e9ed9385fd99ff2edfeedf320c6e"),
+    List<Address> buggyAccount =
+        List.of(
+            Address.fromHexString("0xb0aed5c6f925e9ed9385fd99ff2edfeedf320c6e"),
             Address.fromHexString("0x1edff765b26b0e1dc6fb41ac6638ed2a9437ec23"),
             Address.fromHexString("0x00000000000000000000000000000000000013D5"),
             Address.fromHexString("0x45173e92E492642fC0D545Fd869BDee90568aD18"),
@@ -222,7 +228,6 @@ public class VerkleWorldState extends DiffBasedWorldState {
             Address.fromHexString("0x44ddb66BCCe917dcc89EBD8492bAB0c6Bc7Aa5c5"),
             Address.fromHexString("0x6a1016B7f451507e2fDF29a606F9A57cF951a654"),
             Address.fromHexString("0x725A6700E74A1f20B3C8ad1E1904632F3edfE918"),
-
             Address.fromHexString("0xF96a43A69749f5EB775182Ba0c1cae4b1F73DC8e"),
             Address.fromHexString("0x0000000000000000000000000000000012603860"),
             Address.fromHexString("0x0000000000007fb5f5Ce380FC7bfaC33E960F51E"),
@@ -232,28 +237,26 @@ public class VerkleWorldState extends DiffBasedWorldState {
             Address.fromHexString("0x3c97716fDD4b191d6f3924C0b0dbb2018656718e"),
             Address.fromHexString("0x000000e8963d6000593e596000208055817f8382"),
             Address.fromHexString("0x61553D6000593e5960002080552A7FF584A448f8"),
-            Address.fromHexString("0xf6A918f73c9f0cb90456582153A2B5bd3FF675d4")
-    );
+            Address.fromHexString("0xf6A918f73c9f0cb90456582153A2B5bd3FF675d4"));
 
-    buggyAccount.forEach(address -> {
-      if (worldStateUpdater
-              .getAccountsToUpdate().containsKey(address)) {
-        System.out.println("fix "+address);
-        for (int i = 0; i < 256; i++) {
-          final Bytes stem = verkleTrieKeyValueGenerator.generateKeysForAccount(address).get(0).slice(0,31);
-          System.out.println("add "+Bytes.concatenate(
-                  stem,
-                  Bytes.of(i))+" 0x0000000000000000000000000000000000000000000000000000000000000000");
-          stateTrie.put(
-                  Bytes.concatenate(
-                          stem,
-                          Bytes.of(i)),
+    buggyAccount.forEach(
+        address -> {
+          if (worldStateUpdater.getAccountsToUpdate().containsKey(address)) {
+            System.out.println("fix " + address);
+            for (int i = 0; i < 256; i++) {
+              final Bytes stem =
+                  verkleTrieKeyValueGenerator.generateKeysForAccount(address).get(0).slice(0, 31);
+              System.out.println(
+                  "add "
+                      + Bytes.concatenate(stem, Bytes.of(i))
+                      + " 0x0000000000000000000000000000000000000000000000000000000000000000");
+              stateTrie.put(
+                  Bytes.concatenate(stem, Bytes.of(i)),
                   Bytes.fromHexString(
-                          "0x0000000000000000000000000000000000000000000000000000000000000000"));
-        }
-      }
-    });
-
+                      "0x0000000000000000000000000000000000000000000000000000000000000000"));
+            }
+          }
+        });
   }
 
   private void updateCode(

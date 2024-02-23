@@ -182,7 +182,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
 
         frame.decrementRemainingGas(gasCalculator.completedCreateContractGasCost(frame));
 
-        if(frame.getRemainingGas() < 0){
+        if (frame.getRemainingGas() < 0) {
           frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
           frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
         }

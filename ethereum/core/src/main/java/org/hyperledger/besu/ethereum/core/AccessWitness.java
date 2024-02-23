@@ -208,82 +208,82 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
     long gas = 0;
     if (accessEvent.isBranchRead()) {
       gas += WITNESS_BRANCH_READ_COST;
-      if(logEnabled) {
+      if (logEnabled) {
         System.out.println(
-                "touchAddressAndChargeGas WitnessBranchReadCost "
-                        + address
-                        + " "
-                        + treeIndex
-                        + " "
-                        + subIndex
-                        + " "
-                        + isWrite
-                        + " "
-                        + gas);
+            "touchAddressAndChargeGas WitnessBranchReadCost "
+                + address
+                + " "
+                + treeIndex
+                + " "
+                + subIndex
+                + " "
+                + isWrite
+                + " "
+                + gas);
       }
     }
     if (accessEvent.isChunkRead()) {
       gas += WITNESS_CHUNK_READ_COST;
-      if(logEnabled) {
+      if (logEnabled) {
         System.out.println(
-                "touchAddressAndChargeGas WitnessChunkReadCost "
-                        + address
-                        + " "
-                        + treeIndex
-                        + " "
-                        + subIndex
-                        + " "
-                        + isWrite
-                        + " "
-                        + gas);
+            "touchAddressAndChargeGas WitnessChunkReadCost "
+                + address
+                + " "
+                + treeIndex
+                + " "
+                + subIndex
+                + " "
+                + isWrite
+                + " "
+                + gas);
       }
     }
     if (accessEvent.isBranchWrite()) {
       gas += WITNESS_BRANCH_WRITE_COST;
-      if(logEnabled) {
-      System.out.println(
-          "touchAddressAndChargeGas WitnessBranchWriteCost "
-              + address
-              + " "
-              + treeIndex
-              + " "
-              + subIndex
-              + " "
-              + isWrite
-              + " "
-              + gas);
+      if (logEnabled) {
+        System.out.println(
+            "touchAddressAndChargeGas WitnessBranchWriteCost "
+                + address
+                + " "
+                + treeIndex
+                + " "
+                + subIndex
+                + " "
+                + isWrite
+                + " "
+                + gas);
       }
     }
     if (accessEvent.isChunkWrite()) {
       gas += WITNESS_CHUNK_WRITE_COST;
-      if(logEnabled) {
+      if (logEnabled) {
         System.out.println(
-                "touchAddressAndChargeGas WitnessChunkWriteCost "
-                        + address
-                        + " "
-                        + treeIndex
-                        + " "
-                        + subIndex
-                        + " "
-                        + isWrite
-                        + " "
-                        + gas);
+            "touchAddressAndChargeGas WitnessChunkWriteCost "
+                + address
+                + " "
+                + treeIndex
+                + " "
+                + subIndex
+                + " "
+                + isWrite
+                + " "
+                + gas);
       }
     }
     if (accessEvent.isChunkFill()) {
       gas += WITNESS_CHUNK_FILL_COST;
-      if(logEnabled) {
+      if (logEnabled) {
         System.out.println(
-                "touchAddressAndChargeGas WitnessChunkFillCost "
-                        + address
-                        + " "
-                        + treeIndex
-                        + " "
-                        + subIndex
-                        + " "
-                        + isWrite
-                        + " "
-                        + gas);
+            "touchAddressAndChargeGas WitnessChunkFillCost "
+                + address
+                + " "
+                + treeIndex
+                + " "
+                + subIndex
+                + " "
+                + isWrite
+                + " "
+                + gas);
       }
     }
 
