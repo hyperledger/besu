@@ -18,6 +18,7 @@ package org.hyperledger.besu.evm.code;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static java.lang.String.format;
 import static org.hyperledger.besu.evm.internal.Words.readBigEndianI16;
 import static org.hyperledger.besu.evm.internal.Words.readBigEndianU16;
 
@@ -33,6 +34,7 @@ import org.hyperledger.besu.evm.operation.RelativeJumpVectorOperation;
 import org.hyperledger.besu.evm.operation.RetFOperation;
 import org.hyperledger.besu.evm.operation.ReturnContractOperation;
 import org.hyperledger.besu.evm.operation.ReturnOperation;
+import org.hyperledger.besu.evm.operation.RevertOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SwapNOperation;
 
@@ -45,6 +47,52 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** Code V1 Validation */
 public final class CodeV1Validation {
+
+  static class CodeSectionWorkList {
+    boolean[] visited;
+    int[] sections;
+    int nextIndex;
+    int listEnd;
+
+    CodeSectionWorkList(final int size) {
+      visited = new boolean[size];
+      sections = new int[size];
+      visited[0] = true;
+      sections[0] = 0;
+      nextIndex = 0;
+      listEnd = 0;
+    }
+
+    int take() {
+      if (nextIndex > listEnd) {
+        return -1;
+      }
+      int result = sections[nextIndex];
+      nextIndex++;
+      return result;
+    }
+
+    boolean isComplete() {
+      return nextIndex >= sections.length;
+    }
+
+    void markSection(final int section) {
+      if (!visited[section]) {
+        listEnd++;
+        sections[listEnd] = section;
+        visited[section] = true;
+      }
+    }
+
+    int getFirstUnvisitedSection() {
+      for (int i = 0; i < visited.length; i++) {
+        if (!visited[i]) {
+          return i;
+        }
+      }
+      return -1;
+    }
+  }
 
   record OpcodeInfo(
       String name,
@@ -389,7 +437,7 @@ public final class CodeV1Validation {
       opcodeInfo = OPCODE_INFO[operationNum];
       if (!opcodeInfo.valid()) {
         // undefined instruction
-        return String.format("Invalid Instruction 0x%02x", operationNum);
+        return format("Invalid Instruction 0x%02x", operationNum);
       }
       pos += 1;
       int pcPostInstruction = pos;
@@ -500,7 +548,7 @@ public final class CodeV1Validation {
           CodeSection targetCodeSection = eofLayout.getCodeSection(targetSection);
           if (targetCodeSection.isReturning()
               && thisCodeSection.getOutputs() < targetCodeSection.getOutputs()) {
-            return String.format(
+            return format(
                 "JUMPF targeting a returning code section %2x with more outputs %d than current section's outputs %d",
                 targetSection, targetCodeSection.getOutputs(), thisCodeSection.getOutputs());
           }
@@ -530,11 +578,17 @@ public final class CodeV1Validation {
 
   @Nullable
   static String validateStack(final EOFLayout eofLayout) {
-    for (int i = 0; i < eofLayout.getCodeSectionCount(); i++) {
-      var validation = CodeV1Validation.validateStack(i, eofLayout);
+    CodeSectionWorkList workList = new CodeSectionWorkList(eofLayout.getCodeSectionCount());
+    int sectionToValidatie = workList.take();
+    while (sectionToValidatie >= 0) {
+      var validation = CodeV1Validation.validateStack(sectionToValidatie, eofLayout, workList);
       if (validation != null) {
         return validation;
       }
+      sectionToValidatie = workList.take();
+    }
+    if (!workList.isComplete()) {
+      return format("Unreachable code section %d", workList.getFirstUnvisitedSection());
     }
     return null;
   }
@@ -547,10 +601,11 @@ public final class CodeV1Validation {
    *
    * @param codeSectionToValidate The index of code to validate in the code sections
    * @param eofLayout The EOF container to validate
+   * @param workList The list of code sections needing validation
    * @return null if valid, otherwise an error string providing the validation error.
    */
   @Nullable
-  public static String validateStack(final int codeSectionToValidate, final EOFLayout eofLayout) {
+  static String validateStack(final int codeSectionToValidate, final EOFLayout eofLayout, final CodeSectionWorkList workList) {
     if (!eofLayout.isValid()) {
       return "EOF Layout invalid - " + eofLayout.invalidReason();
     }
@@ -574,7 +629,6 @@ public final class CodeV1Validation {
       int current_min = initialStackHeight;
       int current_max = initialStackHeight;
 
-      CODE_LOOP:
       while (currentPC < codeLength) {
         int thisOp = code[currentPC] & 0xff;
 
@@ -586,6 +640,7 @@ public final class CodeV1Validation {
         switch (thisOp) {
           case CallFOperation.OPCODE:
             int section = readBigEndianU16(currentPC + 1, code);
+            workList.markSection(section);
             CodeSection codeSection = eofLayout.getCodeSection(section);
             stackInputs = codeSection.getInputs();
             stackOutputs = codeSection.getOutputs();
@@ -611,23 +666,23 @@ public final class CodeV1Validation {
 
         int nextPC;
         if (!opcodeInfo.valid()) {
-          return String.format("Invalid Instruction 0x%02x", thisOp);
+          return format("Invalid Instruction 0x%02x", thisOp);
         }
         nextPC = currentPC + pcAdvance;
 
         if (nextPC > codeLength) {
-          return String.format(
+          return format(
               "Dangling immediate argument for opcode 0x%x at PC %d in code section %d.",
               thisOp, currentPC - pcAdvance, codeSectionToValidate);
         }
         if (stack_max[currentPC] < 0) {
-          return String.format(
+          return format(
               "Code that was not forward referenced in section 0x%x pc %d",
               codeSectionToValidate, currentPC);
         }
 
         if (stackInputs > current_min) {
-          return String.format(
+          return format(
               "Operation 0x%02X requires stack of %d but may only have %d items",
               thisOp, stackInputs, current_min);
         }
@@ -644,19 +699,50 @@ public final class CodeV1Validation {
 
         String validationError = null;
         switch (thisOp) {
+          case RelativeJumpOperation.OPCODE:
+            int jValue = readBigEndianI16(currentPC + 1, code);
+            int targetPC = nextPC + jValue;
+            if (targetPC > currentPC) {
+              stack_min[targetPC] = min(stack_min[targetPC], current_min);
+              stack_max[targetPC] = max(stack_max[targetPC], current_max);
+            } else {
+              if (stack_min[targetPC] != current_min) {
+                return format(
+                    "Stack minimum violation on backwards jump from %d to %d, %d != %d",
+                    currentPC, targetPC, stack_min[currentPC], current_max);
+              }
+              if (stack_max[targetPC] != current_max) {
+                return format(
+                    "Stack maximum violation on backwards jump from %d to %d, %d != %d",
+                    currentPC, targetPC, stack_max[currentPC], current_max);
+              }
+            }
+
+            // terminal op, reset current_min and current_max to forward set values
+            if (nextPC < codeLength) {
+              current_max = stack_max[nextPC];
+              current_min = stack_min[nextPC];
+            }
+            break;
           case RelativeJumpIfOperation.OPCODE:
             stack_max[nextPC] = max(stack_max[nextPC], current_max);
             stack_min[nextPC] = min(stack_min[nextPC], current_min);
             int jiValue = readBigEndianI16(currentPC + 1, code);
-            validationError = checkJumpTarget(nextPC, nextPC + jiValue, stack_min, stack_max);
-            break;
-          case RelativeJumpOperation.OPCODE:
-            // this is the uncommon case we want a signed integer as an immediate
-            int jValue = readBigEndianI16(currentPC + 1, code);
-            validationError = checkJumpTarget(currentPC, nextPC + jValue, stack_min, stack_max);
-            if (nextPC < codeLength) {
-              current_max = stack_max[currentPC + pcAdvance];
-              current_min = stack_min[currentPC + pcAdvance];
+            int targetPCi = nextPC + jiValue;
+            if (targetPCi > currentPC) {
+              stack_min[targetPCi] = min(stack_min[targetPCi], current_min);
+              stack_max[targetPCi] = max(stack_max[targetPCi], current_max);
+            } else {
+              if (stack_min[targetPCi] != current_min) {
+                return format(
+                    "Stack minimum violation on backwards jump from %d to %d, %d != %d",
+                    currentPC, targetPCi, stack_min[currentPC], current_min);
+              }
+              if (stack_max[targetPCi] != current_max) {
+                return format(
+                    "Stack maximum violation on backwards jump from %d to %d, %d != %d",
+                    currentPC, targetPCi, stack_max[currentPC], current_max);
+              }
             }
             break;
           case RelativeJumpVectorOperation.OPCODE:
@@ -668,19 +754,34 @@ public final class CodeV1Validation {
             stack_min[nextPC] = min(stack_min[nextPC], current_min);
             for (int i = currentPC + 2; i < tableEnd && validationError == null; i += 2) {
               int vValue = readBigEndianI16(i, code);
-              validationError = checkJumpTarget(tableEnd, tableEnd + vValue, stack_min, stack_max);
+              int targetPCv = tableEnd + vValue;
+              if (targetPCv > currentPC) {
+                stack_min[targetPCv] = min(stack_min[targetPCv], current_min);
+                stack_max[targetPCv] = max(stack_max[targetPCv], current_max);
+              } else {
+                if (stack_min[targetPCv] != current_min) {
+                  return format(
+                      "Stack minimum violation on backwards jump from %d to %d, %d != %d",
+                      currentPC, targetPCv, stack_min[currentPC], current_min);
+                }
+                if (stack_max[targetPCv] != current_max) {
+                  return format(
+                      "Stack maximum violation on backwards jump from %d to %d, %d != %d",
+                      currentPC, targetPCv, stack_max[currentPC], current_max);
+                }
+              }
             }
             break;
           case RetFOperation.OPCODE:
             int returnStackItems = toValidate.getOutputs();
             if (current_min != current_max) {
-              return String.format(
+              return format(
                   "RETF in section %d has a stack range (%d/%d)and must have only one stack value",
                   codeSectionToValidate, current_min, current_max);
             }
             if (stack_min[currentPC] != returnStackItems
                 || stack_min[currentPC] != stack_max[currentPC]) {
-              return String.format(
+              return format(
                   "RETF in section %d calculated height %d does not match configured return stack %d, min height %d, and max height %d",
                   codeSectionToValidate,
                   current_min,
@@ -688,41 +789,70 @@ public final class CodeV1Validation {
                   stack_min[currentPC],
                   stack_max[currentPC]);
             }
-            if (nextPC == codeLength) {
-              break CODE_LOOP;
+            // terminal op, reset current_min and current_max to forward set values
+            if (nextPC < codeLength) {
+              current_max = stack_max[nextPC];
+              current_min = stack_min[nextPC];
             }
-            current_max = stack_max[currentPC + 2];
-            current_min = stack_min[currentPC + 2];
             break;
           case JumpFOperation.OPCODE:
             int jumpFTargetSectionNum = readBigEndianI16(currentPC + 1, code);
-            CodeSection jumpFTargetSection = eofLayout.getCodeSection(jumpFTargetSectionNum);
-            if (jumpFTargetSection.isReturning()) {
-              // FIXME undone
+            workList.markSection(jumpFTargetSectionNum);
+            CodeSection targetCs = eofLayout.getCodeSection(jumpFTargetSectionNum);
+            if (current_max + targetCs.getMaxStackHeight() - targetCs.getInputs()
+                > MAX_STACK_HEIGHT) {
+              return format(
+                  "JUMPF at section %d pc %d would exceed maximum stack with %d items",
+                  codeSectionToValidate,
+                  currentPC,
+                  current_max + targetCs.getMaxStackHeight() - targetCs.getInputs());
+            }
+            if (targetCs.isReturning()) {
+              if (current_min != current_max) {
+                return format(
+                    "JUMPF at section %d pc %d has a variable stack height %d/%d",
+                    codeSectionToValidate, currentPC, current_min, current_max);
+              }
+              if (current_max != toValidate.outputs + targetCs.inputs - targetCs.outputs) {
+                return format(
+                    "JUMPF at section %d pc %d has incompatible stack height for returning section %d (%d != %d + %d - %d)",
+                    codeSectionToValidate,
+                    currentPC,
+                    jumpFTargetSectionNum,
+                    current_max,
+                    toValidate.outputs,
+                    targetCs.inputs,
+                    targetCs.outputs);
+              }
             } else {
-              // FIXME undne
+              if (current_min < targetCs.getInputs()) {
+                return format(
+                    "JUMPF at section %d pc %d has insufficient minimum stack height for non returning section %d (%d != %d)",
+                    codeSectionToValidate,
+                    currentPC,
+                    jumpFTargetSectionNum,
+                    current_min,
+                    targetCs.inputs);
+              }
             }
-
-            if (nextPC == codeLength) {
-              break CODE_LOOP;
-            }
-            current_max = stack_max[currentPC + 2];
-            current_min = stack_min[currentPC + 2];
-            break;
+            // fall through for terminal op handling
           case StopOperation.OPCODE,
-              InvalidOperation.OPCODE,
+              ReturnContractOperation.OPCODE,
               ReturnOperation.OPCODE,
-              ReturnContractOperation.OPCODE:
-            if (nextPC >= codeLength) {
-              break CODE_LOOP;
+              RevertOperation.OPCODE,
+              InvalidOperation.OPCODE:
+            // terminal op, reset current_min and current_max to forward set values
+            if (nextPC < codeLength) {
+              current_max = stack_max[nextPC];
+              current_min = stack_min[nextPC];
             }
-            current_max = stack_max[currentPC + 2];
-            current_min = stack_min[currentPC + 2];
             break;
           default:
             // Ordinary operations, update stack for next operation
             if (nextPC < codeLength) {
-              stack_max[nextPC] = max(stack_max[nextPC], current_max);
+              current_max = max(stack_max[nextPC], current_max);
+              stack_max[nextPC] = current_max;
+              current_min = min(stack_min[nextPC], current_min);
               stack_min[nextPC] = min(stack_min[nextPC], current_min);
             }
             break;
@@ -735,12 +865,12 @@ public final class CodeV1Validation {
       }
 
       if (maxStackHeight > toValidate.maxStackHeight) {
-        return String.format(
+        return format(
             "Calculated max stack height (%d) exceeds reported stack height (%d)",
             maxStackHeight, toValidate.maxStackHeight);
       }
       if (unusedBytes != 0) {
-        return String.format("Dead code detected in section %d", codeSectionToValidate);
+        return format("Dead code detected in section %d", codeSectionToValidate);
       }
 
       return null;
@@ -748,33 +878,5 @@ public final class CodeV1Validation {
       re.printStackTrace();
       return "Internal Exception " + re.getMessage();
     }
-  }
-
-  /**
-   * @param currentPC the PC to use for stack comparison numbers. Differes for terminal operations
-   * @param targetPC the PC we are jumping to
-   * @param stack_min stack min array
-   * @param stack_max stack msx array
-   * @return null if valid, error string if invalid.
-   */
-  @Nullable
-  private static String checkJumpTarget(
-      final int currentPC, final int targetPC, final int[] stack_min, final int[] stack_max) {
-    if (targetPC > currentPC) {
-      stack_min[targetPC] = min(stack_min[targetPC], stack_min[currentPC]);
-      stack_max[targetPC] = max(stack_max[targetPC], stack_max[currentPC]);
-    } else {
-      if (stack_min[targetPC] != stack_min[currentPC]) {
-        return String.format(
-            "Stack minimum violation on backwards jump from 0x%x to 0x%x, %d != %d",
-            currentPC, targetPC, stack_min[currentPC], stack_min[targetPC]);
-      }
-      if (stack_max[targetPC] != stack_max[currentPC]) {
-        return String.format(
-            "Stack maximum violation on backwards jump from 0x%x to 0x%x, %d != %d",
-            currentPC, targetPC, stack_min[currentPC], stack_min[targetPC]);
-      }
-    }
-    return null;
   }
 }

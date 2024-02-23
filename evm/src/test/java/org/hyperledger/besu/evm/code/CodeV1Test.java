@@ -473,7 +473,7 @@ class CodeV1Test {
 
     EOFLayout eofLayout = EOFLayout.parseEOF(Bytes.fromHexString(sb));
 
-    assertThat(validateStack(sectionToTest, eofLayout)).isEqualTo(expectedError);
+    assertThat(validateStack(sectionToTest, eofLayout, null)).isEqualTo(expectedError);
   }
 
   /**
