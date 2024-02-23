@@ -69,6 +69,8 @@ public class Log {
    * Writes the log entry to the provided RLP output.
    *
    * @param out the output in which to encode the log entry.
+   * @param compacted whether to compact the rlp log entry by trimming leading zeros on topics and
+   *     data.
    */
   public void writeTo(final RLPOutput out, final boolean compacted) {
     out.startList();
@@ -106,6 +108,8 @@ public class Log {
    * Reads the log entry from the provided RLP input.
    *
    * @param in the input from which to decode the log entry.
+   * @param compacted whether to compact the rlp log entry by trimming leading zeros on topics and
+   *     data.
    * @return the read log entry.
    */
   public static Log readFrom(final RLPInput in, final boolean compacted) {
