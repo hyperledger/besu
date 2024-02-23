@@ -19,23 +19,26 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeers.ConnectCallback;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-public class ChainHeadTracker implements ConnectCallback {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-  //  private static final Logger LOG = LoggerFactory.getLogger(ChainHeadTracker.class);
+public class ChainHeadTracker {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ChainHeadTracker.class);
 
   private final EthContext ethContext;
   private final ProtocolSchedule protocolSchedule;
-  //  private final TrailingPeerLimiter trailingPeerLimiter;
+  private final TrailingPeerLimiter trailingPeerLimiter;
   private final MetricsSystem metricsSystem;
 
   public ChainHeadTracker(
@@ -45,7 +48,7 @@ public class ChainHeadTracker implements ConnectCallback {
       final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.protocolSchedule = protocolSchedule;
-    //    this.trailingPeerLimiter = trailingPeerLimiter;
+    this.trailingPeerLimiter = trailingPeerLimiter;
     this.metricsSystem = metricsSystem;
   }
 
@@ -59,42 +62,41 @@ public class ChainHeadTracker implements ConnectCallback {
         new TrailingPeerLimiter(ethContext.getEthPeers(), trailingPeerRequirementsCalculator);
     final ChainHeadTracker tracker =
         new ChainHeadTracker(ethContext, protocolSchedule, trailingPeerLimiter, metricsSystem);
-    ethContext.getEthPeers().subscribeConnect(tracker);
+    ethContext.getEthPeers().subscribeStatusExchanged(tracker);
     blockchain.observeBlockAdded(trailingPeerLimiter);
   }
 
-  @Override
-  public void onPeerConnected(final EthPeer peer) {
-    //    LOG.atDebug()
-    //        .setMessage("Requesting chain head info from {}...")
-    //        .addArgument(peer::getLoggableId)
-    //        .log();
-    //    getBestHeaderFromPeerCompletableFuture(peer)
-    //        .whenComplete(
-    //            (peerResult, error) -> {
-    //              if (peerResult != null && !peerResult.getResult().isEmpty()) {
-    //                final BlockHeader chainHeadHeader = peerResult.getResult().get(0);
-    //                peer.chainState().update(chainHeadHeader);
-    //                trailingPeerLimiter.enforceTrailingPeerLimit();
-    //                LOG.atDebug()
-    //                    .setMessage("Retrieved chain head info {} from {}...")
-    //                    .addArgument(
-    //                        () ->
-    //                            chainHeadHeader.getNumber()
-    //                                + " ("
-    //                                + chainHeadHeader.getBlockHash()
-    //                                + ")")
-    //                    .addArgument(peer::getLoggableId)
-    //                    .log();
-    //              } else {
-    //                LOG.atDebug()
-    //                    .setMessage("Failed to retrieve chain head info. Disconnecting {}... {}")
-    //                    .addArgument(peer::getLoggableId)
-    //                    .addArgument(error)
-    //                    .log();
-    //                peer.disconnect(DisconnectReason.USELESS_PEER);
-    //              }
-    //            });
+  public CompletableFuture<Void> onPeerConnected(final EthPeer peer) {
+    LOG.atDebug()
+        .setMessage("Requesting chain head info from {}...")
+        .addArgument(peer::getLoggableId)
+        .log();
+    final CompletableFuture<AbstractPeerTask.PeerTaskResult<List<BlockHeader>>>
+        bestHeaderFromPeerCompletableFuture = getBestHeaderFromPeerCompletableFuture(peer);
+    final CompletableFuture<Void> future = new CompletableFuture<>();
+    bestHeaderFromPeerCompletableFuture.whenComplete(
+        (peerResult, error) -> {
+          if (peerResult != null && !peerResult.getResult().isEmpty()) {
+            final BlockHeader chainHeadHeader = peerResult.getResult().get(0);
+            peer.chainState().update(chainHeadHeader);
+            trailingPeerLimiter.enforceTrailingPeerLimit();
+            LOG.atDebug()
+                .setMessage("Retrieved chain head info {} from {}...")
+                .addArgument(
+                    () -> chainHeadHeader.getNumber() + " (" + chainHeadHeader.getBlockHash() + ")")
+                .addArgument(peer::getLoggableId)
+                .log();
+          } else {
+            LOG.atDebug()
+                .setMessage("Failed to retrieve chain head info. Disconnecting {}... {}")
+                .addArgument(peer::getLoggableId)
+                .addArgument(error)
+                .log();
+            peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
+          }
+          future.complete(null);
+        });
+    return future;
   }
 
   public CompletableFuture<AbstractPeerTask.PeerTaskResult<List<BlockHeader>>>

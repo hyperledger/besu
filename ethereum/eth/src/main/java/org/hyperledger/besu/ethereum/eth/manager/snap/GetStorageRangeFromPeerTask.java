@@ -82,6 +82,15 @@ public class GetStorageRangeFromPeerTask
                 endKeyHash,
                 accountHashes.size(),
                 peer);
+            if (!peer.isServingSnap()) {
+              LOG.debug(
+                  "EthPeer that is not serving snap called in {}, {}",
+                  GetAccountRangeFromPeerTask.class,
+                  peer);
+              throw new RuntimeException(
+                  "EthPeer that is not serving snap called in "
+                      + GetAccountRangeFromPeerTask.class);
+            }
             return peer.getSnapStorageRange(
                 blockHeader.getStateRoot(), accountHashes, startKeyHash, endKeyHash);
           }

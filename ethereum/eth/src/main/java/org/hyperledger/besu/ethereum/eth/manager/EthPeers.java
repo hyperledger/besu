@@ -14,21 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.eth.sync.ChainHeadTracker;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -110,7 +107,8 @@ public class EthPeers {
   private RlpxAgent rlpxAgent;
 
   private final Counter connectedPeersCounter;
-  private List<ProtocolManager> protocolManagers;
+  //  private List<ProtocolManager> protocolManagers;
+  private ChainHeadTracker tracker;
 
   public EthPeers(
       final String protocolName,
@@ -396,13 +394,15 @@ public class EthPeers {
       return false;
     }
 
-    if (peerCount() < getMaxPeers() || canExceedPeerLimits(id)) {
+    if (peerCount() < getMaxPeers() || needMoreSnapServers() || canExceedPeerLimits(id)) {
       return true;
+    } else {
+      return false;
     }
 
     // ask the protocol managers whether they want to connect to this peer and if none of them want
     // to connect, then we don't connect
-    return protocolManagers.stream().anyMatch(p -> p.shouldTryToConnect(peer, inbound));
+    //    return protocolManagers.stream().anyMatch(p -> p.shouldTryToConnect(peer, inbound));
   }
 
   private boolean alreadyConnectedOrConnecting(final boolean inbound, final Bytes id) {
@@ -437,8 +437,12 @@ public class EthPeers {
             });
   }
 
-  public void setProtocolManagers(final List<ProtocolManager> protocolManagers) {
-    this.protocolManagers = protocolManagers;
+  //  public void setProtocolManagers(final List<ProtocolManager> protocolManagers) {
+  //    this.protocolManagers = protocolManagers;
+  //  }
+
+  public void subscribeStatusExchanged(final ChainHeadTracker tracker) {
+    this.tracker = tracker;
   }
 
   @FunctionalInterface
@@ -461,41 +465,10 @@ public class EthPeers {
 
   private void ethPeerStatusExchanged(final EthPeer peer) {
     // We have a connection to a peer that is on the right chain and is willing to connect to us.
-    // Find out what the EthPeer block hight is and whether it can serve snap data (if we are doing
+    // Find out what the EthPeer block height is and whether it can serve snap data (if we are doing
     // snap sync)
-    CompletableFuture<Void> future =
-        CompletableFuture.runAsync(
-            () -> {
-              // Call your function here
-              try {
-                final RequestManager.ResponseStream responseStream =
-                    peer.getHeadersByHash(peer.chainState().getBestBlock().getHash(), 1, 0, false);
-                responseStream.then(
-                    (closed, msg, p) -> {
-                      if (closed) {
-                        throw new RuntimeException("Peer disconnected");
-                      }
-                      final List<BlockHeader> blockHeaders =
-                          new BytesValueRLPInput(msg.getData(), false)
-                              .readList(
-                                  rlp ->
-                                      BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()));
-                      if (blockHeaders.isEmpty()) {
-                        // empty response, disconnect
-                        p.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
-                        throw new RuntimeException("Empty response");
-                      }
-                      final BlockHeader header = blockHeaders.get(0);
-                      p.chainState().updateHeightEstimate(header.getNumber());
-                      // make sure that the enforceTrailingPeerLimit() from ChainHeadTracker
-                      // equivalent is done here, instead of after adding to EthPeers
-                      // TODO: once we have the height we could do a SNAP request here to figure out
-                      // whether the peer is serving snap data
-                    });
-              } catch (Exception e) {
-                throw new RuntimeException(e);
-              }
-            });
+    LOG.debug("Peer {} status exchanged", peer);
+    CompletableFuture<Void> future = tracker.onPeerConnected(peer);
 
     CompletableFuture<Void> isServingSnapFuture;
     if (syncMode == SyncMode.X_CHECKPOINT || syncMode == SyncMode.X_SNAP) {
@@ -523,7 +496,7 @@ public class EthPeers {
     if (peer.getAgreedCapabilities().contains(SnapProtocol.SNAP1)) {
       // could try and retrieve some SNAP data here to check that (e.g. GetByteCodes for a small
       // contract)
-      LOG.info("XXXXXXX" + peer.getConnection().getPeerInfo().getClientId());
+      // LOG.info("XXXXXXX" + peer.getConnection().getPeerInfo().getClientId());
       peer.setIsServingSnap(peer.getConnection().getPeerInfo().getClientId().contains("Geth"));
     }
   }
@@ -639,7 +612,7 @@ public class EthPeers {
     // Figure out whether we want to keep this peer to add it to the active connections.
     final PeerConnection connection = peer.getConnection();
     if (activeConnections.containsValue(peer)) {
-      connection.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
+      //      connection.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
       return false;
     }
     final Bytes id = peer.getId();
@@ -661,7 +634,7 @@ public class EthPeers {
       if (connection.inboundInitiated()
           && !canExceedPeerLimits(id)
           && remoteConnectionLimitReached()) {
-        LOG.trace(
+        LOG.info(
             "Too many remotely-initiated connections. Disconnect incoming connection: {}, maxRemote={}",
             connection,
             maxRemotelyInitiatedConnections);
@@ -670,9 +643,9 @@ public class EthPeers {
       }
       final boolean added = (activeConnections.putIfAbsent(id, peer) == null);
       if (added) {
-        LOG.trace("Added peer {} with connection {} to completeConnections", id, connection);
+        LOG.debug("Added peer {} with connection {} to activeConnections", id, connection);
       } else {
-        LOG.trace("Did not add peer {} with connection {} to completeConnections", id, connection);
+        LOG.debug("Did not add peer {} with connection {} to activeConnections", id, connection);
       }
       return added;
     } else {

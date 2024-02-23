@@ -432,13 +432,12 @@ public class EthPeer implements Comparable<EthPeer> {
     Optional<RequestManager> requestManager = getRequestManager(protocolName, messageCode);
     requestManager.ifPresentOrElse(
         localRequestManager -> localRequestManager.dispatchResponse(ethMessage),
-        () -> {
-          LOG.trace(
-              "Message {} not expected has just been received for protocol {}, peer {} ",
-              messageCode,
-              protocolName,
-              this);
-        });
+        () ->
+            LOG.debug(
+                "Message {} not expected has just been received for protocol {}, peer {} ",
+                messageCode,
+                protocolName,
+                this));
     return requestManager;
   }
 
@@ -569,9 +568,9 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   /**
-   * Return A read-only snapshot of this peer's current {@code chainState} }
+   * Return A read-only snapshot of this peer's current {@code chainState}
    *
-   * @return A read-only snapshot of this peer's current {@code chainState} }
+   * @return A read-only snapshot of this peer's current {@code chainState}
    */
   public ChainHeadEstimate chainStateSnapshot() {
     return chainHeadState.getSnapshot();
@@ -616,14 +615,17 @@ public class EthPeer implements Comparable<EthPeer> {
   @Override
   public String toString() {
     return String.format(
-        "PeerId: %s... %s, validated? %s, disconnected? %s, client: %s, %s, %s",
+        "PeerId: %s... %s, validated? %s, disconnected? %s, client: %s, %s, %s, isServingSNAP %s, has height %s, connected for %s ms",
         getLoggableId(),
         reputation,
         isFullyValidated(),
         isDisconnected(),
         connection.getPeerInfo().getClientId(),
         connection,
-        connection.getPeer().getEnodeURLString());
+        connection.getPeer().getEnodeURLString(),
+        isServingSnap,
+        chainHeadState.getEstimatedHeight(),
+        System.currentTimeMillis() - connection.getInitiatedAt());
   }
 
   @Nonnull

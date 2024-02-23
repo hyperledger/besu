@@ -159,7 +159,7 @@ public class TransactionLogBloomCacher {
         return;
       }
       final long blockNumber = blockHeader.getNumber();
-      LOG.atDebug()
+      LOG.atTrace()
           .setMessage("Caching logs bloom for block {}")
           .addArgument(() -> "0x" + Long.toHexString(blockNumber))
           .log();

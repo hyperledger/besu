@@ -635,7 +635,7 @@ public class RunnerBuilder {
             .collect(Collectors.toSet());
 
     final EthPeers ethPeers = besuController.getEthPeers();
-    ethPeers.setProtocolManagers(protocolManagers);
+    //    ethPeers.setProtocolManagers(protocolManagers);
 
     final RlpxConfiguration rlpxConfiguration =
         RlpxConfiguration.create()
