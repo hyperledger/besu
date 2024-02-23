@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
+import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.common.ConsensusHelpers;
 import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -48,7 +50,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
   private final Address localAddress;
   private final NodeKey nodeKey;
   private final EpochManager epochManager;
-  private final boolean createEmptyBlocks;
+  private final ForksSchedule<CliqueConfigOptions> forksSchedule;
 
   /**
    * Instantiates a new Clique miner executor.
@@ -60,7 +62,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
    * @param miningParams the mining params
    * @param blockScheduler the block scheduler
    * @param epochManager the epoch manager
-   * @param createEmptyBlocks whether clique should allow the creation of empty blocks.
+   * @param forksSchedule the clique forks schedule
    * @param ethScheduler the scheduler for asynchronous block creation tasks
    */
   public CliqueMinerExecutor(
@@ -71,7 +73,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
       final EpochManager epochManager,
-      final boolean createEmptyBlocks,
+      final ForksSchedule<CliqueConfigOptions> forksSchedule,
       final EthScheduler ethScheduler) {
     super(
         protocolContext,
@@ -83,7 +85,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
     this.nodeKey = nodeKey;
     this.localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     this.epochManager = epochManager;
-    this.createEmptyBlocks = createEmptyBlocks;
+    this.forksSchedule = forksSchedule;
     miningParams.setCoinbase(localAddress);
   }
 
@@ -113,7 +115,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
         blockScheduler,
         parentHeader,
         localAddress,
-        createEmptyBlocks);
+        forksSchedule);
   }
 
   @Override

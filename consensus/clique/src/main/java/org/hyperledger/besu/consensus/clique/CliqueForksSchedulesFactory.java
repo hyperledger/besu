@@ -44,6 +44,7 @@ public class CliqueForksSchedulesFactory {
         new MutableCliqueConfigOptions(lastSpec.getValue());
 
     fork.getBlockPeriodSeconds().ifPresent(cliqueConfigOptions::setBlockPeriodSeconds);
+    cliqueConfigOptions.setCreateEmptyBlocks(fork.getCreateEmptyBlocks());
 
     return cliqueConfigOptions;
   }

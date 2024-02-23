@@ -56,7 +56,7 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
   protected final ProtocolContext protocolContext;
   protected final BlockHeader parentHeader;
 
-  private final ProtocolSchedule protocolSchedule;
+  protected final ProtocolSchedule protocolSchedule;
   private final Subscribers<MinedBlockObserver> observers;
   private final AbstractBlockScheduler scheduler;
 

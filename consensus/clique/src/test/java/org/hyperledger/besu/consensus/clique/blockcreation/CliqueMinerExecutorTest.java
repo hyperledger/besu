@@ -125,7 +125,7 @@ public class CliqueMinerExecutorTest {
             miningParameters,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
-            true,
+            null,
             ethScheduler);
 
     // NOTE: Passing in the *parent* block, so must be 1 less than EPOCH
@@ -161,7 +161,7 @@ public class CliqueMinerExecutorTest {
             miningParameters,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
-            true,
+            null,
             ethScheduler);
 
     // Parent block was epoch, so the next block should contain no validators.
@@ -197,7 +197,7 @@ public class CliqueMinerExecutorTest {
             miningParameters,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
-            true,
+            null,
             ethScheduler);
 
     executor.setExtraData(modifiedVanityData);

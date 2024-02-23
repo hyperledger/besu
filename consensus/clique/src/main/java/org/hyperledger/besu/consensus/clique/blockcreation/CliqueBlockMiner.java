@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
+import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueHelpers;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockScheduler;
@@ -36,7 +38,7 @@ public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
   private static final int WAIT_IN_MS_BETWEEN_EMPTY_BUILD_ATTEMPTS = 1_000;
 
   private final Address localAddress;
-  private final boolean createEmptyBlocks;
+  private final ForksSchedule<CliqueConfigOptions> forksSchedule;
 
   /**
    * Instantiates a new Clique block miner.
@@ -48,7 +50,7 @@ public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
    * @param scheduler the scheduler
    * @param parentHeader the parent header
    * @param localAddress the local address
-   * @param createEmptyBlocks whether clique should allow the creation of empty blocks.
+   * @param forksSchedule the forks schedule
    */
   public CliqueBlockMiner(
       final Function<BlockHeader, CliqueBlockCreator> blockCreator,
@@ -58,10 +60,10 @@ public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
       final AbstractBlockScheduler scheduler,
       final BlockHeader parentHeader,
       final Address localAddress,
-      final boolean createEmptyBlocks) {
+      final ForksSchedule<CliqueConfigOptions> forksSchedule) {
     super(blockCreator, protocolSchedule, protocolContext, observers, scheduler, parentHeader);
     this.localAddress = localAddress;
-    this.createEmptyBlocks = createEmptyBlocks;
+    this.forksSchedule = forksSchedule;
   }
 
   @Override
@@ -76,7 +78,7 @@ public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
 
   @Override
   protected boolean shouldImportBlock(final Block block) throws InterruptedException {
-    if (createEmptyBlocks) {
+    if (forksSchedule.getFork(block.getHeader().getNumber()).getValue().getCreateEmptyBlocks()) {
       return true;
     }
 
