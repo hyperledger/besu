@@ -16,14 +16,14 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
       - name: Set up Java
-        uses: actions/setup-java@v4.0.0
+        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
           distribution: temurin
           java-version: 17
       - name: setup gradle
-        uses: gradle/gradle-build-action@v2.12.0
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
       - name: hadoLint_openj9-jdk_17
         run: docker run --rm -i hadolint/hadolint < docker/openj9-jdk-17/Dockerfile
       - name: hadoLint_openjdk_17
@@ -59,19 +59,23 @@ jobs:
             echo "ARCH=arm64" >> $GITHUB_OUTPUT
           fi
       - name: Checkout Repo
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
       - name: short sha
         id: shortSha
         run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: Set up Java
-        uses: actions/setup-java@v4.0.0
+        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
           distribution: temurin
           java-version: 17
-      - name: setup gradle
-        uses: gradle/gradle-build-action@v2.12.0
+      - name: login to ghcr
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
+        with:
+          registry: ${{ env.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: build image
-        uses: gradle/gradle-build-action@v2.12.0
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
           arguments: distDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Pbranch=main
       - name: install goss
@@ -79,13 +83,13 @@ jobs:
           mkdir -p docker/reports
           curl -L https://github.com/aelsabbahy/goss/releases/download/v0.4.4/goss-${{ steps.prep.outputs.PLATFORM_PAIR }} -o ./docker/tests/goss-${{ steps.prep.outputs.PLATFORM_PAIR }}
       - name: test docker
-        uses: gradle/gradle-build-action@v2.12.0
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
         with:
           arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Pbranch=main
       - name: login to ghcr
-        uses: docker/login-action@v3.0.0
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
         with:
           registry: ${{ env.registry }}
           username: ${{ github.actor }}
@@ -102,16 +106,16 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
       - name: Set up Java
-        uses: actions/setup-java@v4.0.0
+        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
           distribution: temurin
           java-version: 17
       - name: setup gradle
-        uses: gradle/gradle-build-action@v2.12.0
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
       - name: Login to DockerHub
-        uses: docker/login-action@v3.0.0
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
         with:
           registry: ${{ env.registry }}
           username: ${{ github.actor }}

@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -72,8 +71,6 @@ public class ProtocolSpec {
 
   private final FeeMarket feeMarket;
 
-  private final BadBlockManager badBlockManager;
-
   private final Optional<PoWHasher> powHasher;
 
   private final WithdrawalsValidator withdrawalsValidator;
@@ -106,7 +103,6 @@ public class ProtocolSpec {
    * @param gasCalculator the gas calculator to use.
    * @param gasLimitCalculator the gas limit calculator to use.
    * @param feeMarket an {@link Optional} wrapping {@link FeeMarket} class if appropriate.
-   * @param badBlockManager the cache to use to keep invalid blocks
    * @param powHasher the proof-of-work hasher
    * @param withdrawalsValidator the withdrawals validator to use
    * @param withdrawalsProcessor the Withdrawals processor to use
@@ -137,7 +133,6 @@ public class ProtocolSpec {
       final GasCalculator gasCalculator,
       final GasLimitCalculator gasLimitCalculator,
       final FeeMarket feeMarket,
-      final BadBlockManager badBlockManager,
       final Optional<PoWHasher> powHasher,
       final WithdrawalsValidator withdrawalsValidator,
       final Optional<WithdrawalsProcessor> withdrawalsProcessor,
@@ -165,7 +160,6 @@ public class ProtocolSpec {
     this.gasCalculator = gasCalculator;
     this.gasLimitCalculator = gasLimitCalculator;
     this.feeMarket = feeMarket;
-    this.badBlockManager = badBlockManager;
     this.powHasher = powHasher;
     this.withdrawalsValidator = withdrawalsValidator;
     this.withdrawalsProcessor = withdrawalsProcessor;
@@ -352,15 +346,6 @@ public class ProtocolSpec {
    */
   public FeeMarket getFeeMarket() {
     return feeMarket;
-  }
-
-  /**
-   * Returns the bad blocks manager
-   *
-   * @return the bad blocks manager
-   */
-  public BadBlockManager getBadBlocksManager() {
-    return badBlockManager;
   }
 
   /**

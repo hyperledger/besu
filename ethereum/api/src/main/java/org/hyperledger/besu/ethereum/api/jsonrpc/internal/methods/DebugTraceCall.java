@@ -43,7 +43,7 @@ public class DebugTraceCall extends AbstractTraceCall {
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final TransactionSimulator transactionSimulator) {
-    super(blockchainQueries, protocolSchedule, transactionSimulator);
+    super(blockchainQueries, protocolSchedule, transactionSimulator, true);
   }
 
   @Override

@@ -257,7 +257,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     assertThat(storageProviderArgumentCaptor.getValue()).isNotNull();
-    assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.FAST);
+    assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.SNAP);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.empty());
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
@@ -1150,6 +1150,32 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void storage_bonsai_by_default() {
+    parseCommand();
+    verify(mockControllerBuilder)
+        .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
+
+    final DataStorageConfiguration dataStorageConfig =
+        dataStorageConfigurationArgumentCaptor.getValue();
+    assertThat(dataStorageConfig.getDataStorageFormat()).isEqualTo(BONSAI);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void syncMode_snap_by_default() {
+    parseCommand();
+    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
+
+    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.SNAP);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void helpShouldDisplayFastSyncOptions() {
     parseCommand("--help");
 
@@ -1313,6 +1339,13 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(besuCommand.getEnodeDnsConfiguration().dnsEnabled()).isTrue();
     assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isFalse();
+  }
+
+  @Test
+  public void versionCompatibilityProtectionTrueOptionIsParsedCorrectly() {
+    final TestBesuCommand besuCommand = parseCommand("--version-compatibility-protection", "true");
+
+    assertThat(besuCommand.getVersionCompatibilityProtection()).isTrue();
   }
 
   @Test
@@ -2587,6 +2620,24 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Fast sync cannot be enabled with privacy.");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void privacyWithSnapSyncMustError() {
+    parseCommand("--sync-mode=SNAP", "--privacy-enabled");
+
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Snap sync cannot be enabled with privacy.");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void privacyWithCheckpointSyncMustError() {
+    parseCommand("--sync-mode=CHECKPOINT", "--privacy-enabled");
+
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Checkpoint sync cannot be enabled with privacy.");
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 

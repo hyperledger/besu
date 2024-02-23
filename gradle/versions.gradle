@@ -233,6 +233,8 @@ dependencyManagement {
 
     dependency 'org.yaml:snakeyaml:2.0'
 
+    dependency 'org.apache.maven:maven-artifact:3.9.6'
+
     dependency 'tech.pegasys.discovery:discovery:22.12.0'
   }
 }
