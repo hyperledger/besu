@@ -179,6 +179,10 @@ public final class RunnerBuilderTest {
             .listeningPort(p2pListenPort)
             .nodeId(nodeKey.getPublicKey().getEncoded())
             .build();
+    assertThat(runner.getLocalEnode().orElseThrow().getClass()).isEqualTo(expectedEnodeURL.getClass());
+    assertThat(runner.getLocalEnode().orElseThrow().getIp()).isEqualTo(expectedEnodeURL.getIp());
+    assertThat(runner.getLocalEnode().orElseThrow().getListeningPort()).isEqualTo(expectedEnodeURL.getListeningPort());
+    assertThat(runner.getLocalEnode().orElseThrow().getDiscoveryPort()).isEqualTo(expectedEnodeURL.getDiscoveryPort());
     assertThat(runner.getLocalEnode().orElseThrow()).isEqualTo(expectedEnodeURL);
   }
 
