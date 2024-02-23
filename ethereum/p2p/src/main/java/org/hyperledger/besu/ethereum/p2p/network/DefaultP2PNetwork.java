@@ -474,6 +474,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
         natService
             .getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP)
             .map(NatPortMapping::getExternalPort)
+            .filter((externalPort) -> externalPort != 0)
             .orElse(discoveryPort);
 
     final EnodeURL localEnode =
