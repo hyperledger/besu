@@ -164,12 +164,14 @@ public abstract class PeerDiscoveryAgent {
               (InetSocketAddress localAddress) -> {
                 // Once listener is set up, finish initializing
                 final int localDiscoveryPort = localAddress.getPort();
-                final int externalDiscoveryPort = localDiscoveryPort != 0 ?
-                    natService
-                        .getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP)
-                        .map(NatPortMapping::getExternalPort)
-                        .filter((externalPort) -> externalPort != 0)
-                        .orElse(localDiscoveryPort) : localDiscoveryPort;
+                final int externalDiscoveryPort =
+                    localDiscoveryPort != 0
+                        ? natService
+                            .getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP)
+                            .map(NatPortMapping::getExternalPort)
+                            .filter((externalPort) -> externalPort != 0)
+                            .orElse(localDiscoveryPort)
+                        : localDiscoveryPort;
 
                 final DiscoveryPeer ourNode =
                     DiscoveryPeer.fromEnode(
