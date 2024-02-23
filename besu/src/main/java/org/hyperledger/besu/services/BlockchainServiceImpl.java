@@ -117,7 +117,10 @@ public class BlockchainServiceImpl implements BlockchainService {
         receipts.stream()
             .map(org.hyperledger.besu.ethereum.core.TransactionReceipt.class::cast)
             .toList();
-    blockchain.storeBlock(new Block(coreHeader, coreBody), coreReceipts);
+    blockchain.unsafeImportBlock(
+        new Block(coreHeader, coreBody),
+        coreReceipts,
+        Optional.ofNullable(blockchain.calculateTotalDifficulty(coreHeader)));
   }
 
   @Override

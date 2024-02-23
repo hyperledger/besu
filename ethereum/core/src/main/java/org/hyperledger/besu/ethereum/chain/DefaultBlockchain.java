@@ -409,6 +409,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private void appendBlockHelper(
       final BlockWithReceipts blockWithReceipts, final boolean storeOnly) {
 
+    // TODO: before merging fleet-mode, re-enable this check
     /*if (!blockShouldBeProcessed(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts())) {
       return;
     }*/
@@ -470,7 +471,8 @@ public class DefaultBlockchain implements MutableBlockchain {
     updater.commit();
   }
 
-  private Difficulty calculateTotalDifficulty(final BlockHeader blockHeader) {
+  @Override
+  public Difficulty calculateTotalDifficulty(final BlockHeader blockHeader) {
     if (blockHeader.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
       return blockHeader.getDifficulty();
     }
