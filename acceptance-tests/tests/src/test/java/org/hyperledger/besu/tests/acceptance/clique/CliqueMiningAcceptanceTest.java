@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.clique;
 
 import static java.util.stream.Collectors.joining;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.data.Percentage.withPercentage;
 
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBaseJunit5;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
@@ -30,7 +31,6 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.web3j.protocol.core.DefaultBlockParameter;
-import org.web3j.protocol.core.methods.response.EthBlock;
 
 public class CliqueMiningAcceptanceTest extends AcceptanceTestBaseJunit5 {
 
@@ -140,34 +140,48 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBaseJunit5 {
     final BesuNode minerNode = besu.createCliqueNode("miner1", cliqueOptions);
 
     // setup transitions
-    final Map<String, Object> decreasePeriodTransitionTo2 =
-        Map.of("block", 2, "blockperiodseconds", 2);
-    final Map<String, Object> decreasePeriodTransitionTo1 =
-        Map.of("block", 3, "blockperiodseconds", 1);
+    final Map<String, Object> decreasePeriodTo2_Transition =
+        Map.of("block", 3, "blockperiodseconds", 2);
+    final Map<String, Object> decreasePeriodTo1_Transition =
+        Map.of("block", 4, "blockperiodseconds", 1);
+    final Map<String, Object> increasePeriodTo2_Transition =
+        Map.of("block", 6, "blockperiodseconds", 2);
+
     final Optional<String> initialGenesis =
         minerNode.getGenesisConfigProvider().create(List.of(minerNode));
     final String genesisWithTransitions =
         prependTransitionsToCliqueOptions(
             initialGenesis.orElseThrow(),
-            List.of(decreasePeriodTransitionTo2, decreasePeriodTransitionTo1));
+            List.of(
+                decreasePeriodTo2_Transition,
+                decreasePeriodTo1_Transition,
+                increasePeriodTo2_Transition));
     minerNode.setGenesisConfig(genesisWithTransitions);
 
-    // Mine 4 blocks
+    // Mine 6 blocks
     cluster.start(minerNode);
-    minerNode.verify(blockchain.reachesHeight(minerNode, 3));
+    minerNode.verify(blockchain.reachesHeight(minerNode, 5));
 
-    // Assert the block period decreased after each transition
-    final EthBlock.Block block1 =
-        minerNode.execute(ethTransactions.block(DefaultBlockParameter.valueOf(BigInteger.ONE)));
-    final EthBlock.Block block2 =
-        minerNode.execute(ethTransactions.block(DefaultBlockParameter.valueOf(BigInteger.TWO)));
-    final EthBlock.Block block3 =
-        minerNode.execute(
-            ethTransactions.block(DefaultBlockParameter.valueOf(BigInteger.valueOf(3))));
-    final EthBlock.Block block4 = minerNode.execute(ethTransactions.block());
-    assertThat(block2.getTimestamp().subtract(block1.getTimestamp()).longValue()).isGreaterThan(2);
-    assertThat(block3.getTimestamp().subtract(block2.getTimestamp()).longValue()).isLessThan(3);
-    assertThat(block4.getTimestamp().subtract(block3.getTimestamp()).longValue()).isLessThan(2);
+    // Assert the block period decreased/increased after each transition
+    final long block1Timestamp = getTimestampForBlock(minerNode, 1);
+    final long block2Timestamp = getTimestampForBlock(minerNode, 2);
+    final long block3Timestamp = getTimestampForBlock(minerNode, 3);
+    final long block4Timestamp = getTimestampForBlock(minerNode, 4);
+    final long block5Timestamp = getTimestampForBlock(minerNode, 5);
+    final long block6Timestamp = getTimestampForBlock(minerNode, 6);
+    assertThat(block2Timestamp - block1Timestamp).isCloseTo(3, withPercentage(20));
+    assertThat(block3Timestamp - block2Timestamp).isCloseTo(2, withPercentage(20));
+    assertThat(block4Timestamp - block3Timestamp).isCloseTo(1, withPercentage(20));
+    assertThat(block5Timestamp - block4Timestamp).isCloseTo(1, withPercentage(20));
+    assertThat(block6Timestamp - block5Timestamp).isCloseTo(2, withPercentage(20));
+  }
+
+  private long getTimestampForBlock(final BesuNode minerNode, final int blockNumber) {
+    return minerNode
+        .execute(
+            ethTransactions.block(DefaultBlockParameter.valueOf(BigInteger.valueOf(blockNumber))))
+        .getTimestamp()
+        .longValue();
   }
 
   private String prependTransitionsToCliqueOptions(

@@ -128,8 +128,8 @@ public class CliqueBlockSchedulerTest {
     // parent block should be number 3.
     parentHeader = blockHeaderBuilder.number(3).timestamp(currentSecondsSinceEpoch).buildHeader();
     result = scheduler.getNextTimestamp(parentHeader);
-    assertThat(result.getTimestampForHeader()).isEqualTo(currentSecondsSinceEpoch + 5);
-    assertThat(result.getMillisecondsUntilValid()).isEqualTo(5 * 1000);
+    assertThat(result.getTimestampForHeader()).isEqualTo(currentSecondsSinceEpoch + 1);
+    assertThat(result.getMillisecondsUntilValid()).isEqualTo(1000);
 
     // getNextTimestamp for block after transition
     // There are 2 validators, therefore block 5 will put localAddr as the out-of-turn voter,
