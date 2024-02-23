@@ -15,7 +15,6 @@
 package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
-import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -38,7 +37,6 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings({"FieldCanBeLocal", "unused"})
 public class SynchronizationServiceImpl implements SynchronizationService {
 
   private static final Logger LOG = LoggerFactory.getLogger(SynchronizationServiceImpl.class);
@@ -47,17 +45,13 @@ public class SynchronizationServiceImpl implements SynchronizationService {
   private final ProtocolSchedule protocolSchedule;
 
   private final SyncState syncState;
-  private final Optional<BonsaiWorldStateProvider>
-      worldStateArchive; // TODO check bonsai activated for this plugin
-  private final BesuController besuController;
+  private final Optional<BonsaiWorldStateProvider> worldStateArchive;
 
   public SynchronizationServiceImpl(
-      final BesuController besuController,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final SyncState syncState,
       final WorldStateArchive worldStateArchive) {
-    this.besuController = besuController;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.syncState = syncState;
@@ -74,7 +68,10 @@ public class SynchronizationServiceImpl implements SynchronizationService {
     if (mergeContext != null) {
       mergeContext.fireNewUnverifiedForkchoiceEvent(head, safeBlock, finalizedBlock);
     } else {
-      // TODO merge context not available (display error message)
+      LOG.atWarn()
+          .setMessage(
+              "The merge context is unavailable, hence the fork choice event cannot be triggered")
+          .log();
     }
   }
 
@@ -98,8 +95,6 @@ public class SynchronizationServiceImpl implements SynchronizationService {
   public boolean setHeadUnsafe(final BlockHeader blockHeader, final BlockBody blockBody) {
     final org.hyperledger.besu.ethereum.core.BlockHeader coreHeader =
         (org.hyperledger.besu.ethereum.core.BlockHeader) blockHeader;
-    final org.hyperledger.besu.ethereum.core.BlockBody coreBody =
-        (org.hyperledger.besu.ethereum.core.BlockBody) blockBody;
 
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
@@ -118,6 +113,10 @@ public class SynchronizationServiceImpl implements SynchronizationService {
             .log();
         return blockchain.rewindToBlock(coreHeader.getBlockHash());
       }
+    } else {
+      LOG.atWarn()
+          .setMessage("The world state is unavailable, setting of head cannot be performed.")
+          .log();
     }
     return false;
   }
@@ -129,7 +128,7 @@ public class SynchronizationServiceImpl implements SynchronizationService {
 
   @Override
   public void disableWorldStateTrie() {
-    // TODO MAYBE FIND A BEST WAY TO DELETE AND DISABLE TRIE
+    // TODO maybe find a best way in the future to delete and disable trie
     worldStateArchive.ifPresent(
         archive -> {
           archive.getDefaultBonsaiWorldStateConfig().setTrieDisabled(true);

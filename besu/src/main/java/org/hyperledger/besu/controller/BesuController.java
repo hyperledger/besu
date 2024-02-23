@@ -70,7 +70,7 @@ public class BesuController implements java.io.Closeable {
   private final JsonRpcMethods additionalJsonRpcMethodsFactory;
 
   private final TransactionPool transactionPool;
-  private MiningCoordinator miningCoordinator;
+  private final MiningCoordinator miningCoordinator;
   private final PrivacyParameters privacyParameters;
   private final List<Closeable> closeables;
   private final MiningParameters miningParameters;
@@ -220,10 +220,6 @@ public class BesuController implements java.io.Closeable {
    */
   public MiningCoordinator getMiningCoordinator() {
     return miningCoordinator;
-  }
-
-  public void setMiningCoordinator(final MiningCoordinator miningCoordinator) {
-    this.miningCoordinator = miningCoordinator;
   }
 
   /**
