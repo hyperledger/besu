@@ -141,13 +141,12 @@ sourceSets {
       compileClasspath += main.output
       runtimeClasspath += main.output
       srcDirs "src/reference-test/java",
-//FIXME uncomment
-//        blockchainReferenceTests,
-//        eipBlockchainReferenceTests,
-//        eipStateReferenceTests,
-//        executionSpecTests,
-//        generalstateReferenceTests,
-//        generalstateRegressionReferenceTests,
+        blockchainReferenceTests,
+        eipBlockchainReferenceTests,
+        eipStateReferenceTests,
+        executionSpecTests,
+        generalstateReferenceTests,
+        generalstateRegressionReferenceTests,
         eofReferenceTests
     }
     resources {

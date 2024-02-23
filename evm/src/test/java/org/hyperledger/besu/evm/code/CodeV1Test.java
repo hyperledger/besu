@@ -473,7 +473,8 @@ class CodeV1Test {
 
     EOFLayout eofLayout = EOFLayout.parseEOF(Bytes.fromHexString(sb));
 
-    assertThat(validateStack(sectionToTest, eofLayout, null)).isEqualTo(expectedError);
+    assertThat(validateStack(sectionToTest, eofLayout, new WorkList(sectionCount)))
+        .isEqualTo(expectedError);
   }
 
   /**
@@ -514,7 +515,7 @@ class CodeV1Test {
     return Stream.of(
         Arguments.of(
             "Stack underflow",
-            "Operation 0x50 requires stack of 1 but only has 0 items",
+            "Operation 0x50 requires stack of 1 but may only have 0 items",
             0,
             List.of(List.of("50 00", 0, 0x80, 1))));
   }
@@ -524,17 +525,17 @@ class CodeV1Test {
         Arguments.of("RJUMP 0", null, 0, List.of(List.of("e00000 00", 0, 0x80, 0))),
         Arguments.of(
             "RJUMP 1 w/ dead code",
-            "Dead code detected in section 0",
+            "Code that was not forward referenced in section 0x0 pc 3",
             0,
             List.of(List.of("e00001 43 00", 0, 0x80, 0))),
         Arguments.of(
             "RJUMP 2 w/ dead code",
-            "Dead code detected in section 0",
+            "Code that was not forward referenced in section 0x0 pc 3",
             0,
             List.of(List.of("e00002 43 50 00", 0, 0x80, 0))),
         Arguments.of(
             "RJUMP 3 and -10",
-            null,
+            "Code that was not forward referenced in section 0x0 pc 3",
             0,
             List.of(List.of("e00003 01 50 00 6001 6001 e0fff6", 0, 0x80, 2))));
   }
@@ -545,12 +546,12 @@ class CodeV1Test {
         Arguments.of("RJUMP -4", null, 0, List.of(List.of("5B e0fffc", 0, 0x80, 0))),
         Arguments.of(
             "RJUMP -4 unmatched stack",
-            "Jump into code stack height (0) does not match previous value (1)",
+            "Stack minimum violation on backwards jump from 1 to 0, 1 != 1",
             0,
             List.of(List.of("43 e0fffc", 0, 0x80, 0))),
         Arguments.of(
             "RJUMP -4 unmatched stack",
-            "Jump into code stack height (1) does not match previous value (0)",
+            "Stack minimum violation on backwards jump from 2 to 1, 0 != 0",
             0,
             List.of(List.of("43 50 e0fffc 00", 0, 0x80, 0))),
         Arguments.of(
@@ -561,7 +562,7 @@ class CodeV1Test {
             "RJUMP -5 matched stack", null, 0, List.of(List.of("43 50 43 e0fffb", 0, 0x80, 1))),
         Arguments.of(
             "RJUMP -4 unmatched stack",
-            "Jump into code stack height (0) does not match previous value (1)",
+            "Stack minimum violation on backwards jump from 3 to 2, 1 != 1",
             0,
             List.of(List.of("43 50 43 e0fffc 50 00", 0, 0x80, 0))));
   }
@@ -602,17 +603,17 @@ class CodeV1Test {
             List.of(List.of("6001 e10003 30 50 00 30 30 30 50 50 50 00", 0, 0x80, 3))),
         Arguments.of(
             "RJUMPI Missing stack argument",
-            "Operation 0xE1 requires stack of 1 but only has 0 items",
+            "Operation 0xE1 requires stack of 1 but may only have 0 items",
             0,
             List.of(List.of("e10000 00", 0, 0x80, 0))),
         Arguments.of(
             "Stack underflow one branch",
-            "Operation 0x02 requires stack of 2 but only has 1 items",
+            "Operation 0x02 requires stack of 2 but may only have 1 items",
             0,
             List.of(List.of("60ff 6001 e10002 50 00 02 50 00", 0, 0x80, 0))),
         Arguments.of(
             "Stack underflow another branch",
-            "Operation 0x02 requires stack of 2 but only has 1 items",
+            "Operation 0x02 requires stack of 2 but may only have 1 items",
             0,
             List.of(List.of("60ff 6001 e10002 02 00 19 50 00", 0, 0x80, 0))),
         // this depends on requiring stacks to be "clean" returns
@@ -713,22 +714,22 @@ class CodeV1Test {
                 List.of("e4", 2, 2, 2))),
         Arguments.of(
             "underflow",
-            "Operation 0xE3 requires stack of 1 but only has 0 items",
+            "Operation 0xE3 requires stack of 1 but may only have 0 items",
             0,
             List.of(List.of("e30001 00", 0, 0x80, 0), List.of("e4", 1, 0, 0))),
         Arguments.of(
             "underflow 2",
-            "Operation 0xE3 requires stack of 2 but only has 1 items",
+            "Operation 0xE3 requires stack of 2 but may only have 1 items",
             0,
             List.of(List.of("30 e30001 00", 0, 0x80, 0), List.of("e4", 2, 0, 2))),
         Arguments.of(
             "underflow 3",
-            "Operation 0xE3 requires stack of 1 but only has 0 items",
+            "Operation 0xE3 requires stack of 1 but may only have 0 items",
             1,
             List.of(List.of("00", 0, 0x80, 0), List.of("50 e30001 e4", 1, 0, 1))),
         Arguments.of(
             "underflow 4",
-            "Operation 0xE3 requires stack of 3 but only has 2 items",
+            "Operation 0xE3 requires stack of 3 but may only have 2 items",
             0,
             List.of(
                 List.of("44 e30001 80 e30002 00", 0, 0x80, 0),
@@ -788,17 +789,17 @@ class CodeV1Test {
             List.of(List.of("00", 0, 0x80, 0), List.of("e10003 44 80 e4 30 80 e4", 1, 2, 2))),
         Arguments.of(
             "underflow 1",
-            "Section return (RETF) calculated height 0x0 does not match configured height 0x1",
+            "RETF in section 1 calculated height 0 does not match configured return stack 1, min height 0, and max height 0",
             1,
             List.of(List.of("00", 0, 0x80, 0), List.of("e4", 0, 1, 0))),
         Arguments.of(
             "underflow 2",
-            "Section return (RETF) calculated height 0x1 does not match configured height 0x2",
+            "RETF in section 1 calculated height 1 does not match configured return stack 2, min height 1, and max height 1",
             1,
             List.of(List.of("00", 0, 0x80, 0), List.of("44 e4", 0, 2, 1))),
         Arguments.of(
             "underflow 3",
-            "Section return (RETF) calculated height 0x1 does not match configured height 0x2",
+            "RETF in section 1 calculated height 1 does not match configured return stack 2, min height 1, and max height 1",
             1,
             List.of(List.of("00", 0, 0x80, 0), List.of("e10003 44 80 e4 30 e4", 1, 2, 2))));
   }
@@ -807,32 +808,32 @@ class CodeV1Test {
     return Stream.of(
         Arguments.of(
             "Max stack not changed by unreachable code",
-            "Dead code detected in section 0",
+            "Code that was not forward referenced in section 0x0 pc 3",
             0,
             List.of(List.of("30 50 00 30 30 30 50 50 50 00", 0, 0x80, 1))),
         Arguments.of(
             "Max stack not changed by unreachable code RETf",
-            "Dead code detected in section 0",
+            "Code that was not forward referenced in section 0x0 pc 3",
             0,
             List.of(List.of("30 50 e4 30 30 30 50 50 50 00", 0, 0x80, 1))),
         Arguments.of(
             "Max stack not changed by unreachable code RJUMP",
-            "Dead code detected in section 0",
+            "Code that was not forward referenced in section 0x0 pc 5",
             0,
             List.of(List.of("30 50 e00006 30 30 30 50 50 50 00", 0, 0x80, 1))),
         Arguments.of(
             "Stack underflow in unreachable code",
-            "Dead code detected in section 0",
+            "Code that was not forward referenced in section 0x0 pc 3",
             0,
             List.of(List.of("30 50 00 50 00", 0, 0x80, 1))),
         Arguments.of(
             "Stack underflow in unreachable code RETF",
-            "Dead code detected in section 0",
+            "Code that was not forward referenced in section 0x0 pc 3",
             0,
             List.of(List.of("30 50 e4 50 00", 0, 0x80, 1))),
         Arguments.of(
             "Stack underflow in unreachable code RJUMP",
-            "Dead code detected in section 0",
+            "Code that was not forward referenced in section 0x0 pc 5",
             0,
             List.of(List.of("30 50 e00001 50 00", 0, 0x80, 1))));
   }
@@ -841,19 +842,19 @@ class CodeV1Test {
     return Stream.of(
         Arguments.of(
             "Stack height mismatch backwards",
-            "Jump into code stack height (0) does not match previous value (1)",
+            "Stack minimum violation on backwards jump from 1 to 0, 1 != 1",
             0,
             List.of(List.of("30 e0fffc00", 0, 0x80, 1))),
         Arguments.of(
             "Stack height mismatch forwards",
-            "Jump into code stack height (3) does not match previous value (0)",
+            "Calculated max stack height (5) exceeds reported stack height (2)",
             0,
             List.of(List.of("30e10003303030303000", 0, 0x80, 2))));
   }
 
   static Stream<Arguments> invalidInstructions() {
     return IntStream.range(0, 256)
-        .filter(opcode -> !CodeV1Validation.OPCODE_INFO[opcode].valid())
+        .filter(opcode -> !OpcodeInfo.V1_OPCODES[opcode].valid())
         .mapToObj(
             opcode ->
                 Arguments.of(

@@ -68,7 +68,11 @@ public class EOFReferenceTestTools {
       params.ignoreAll();
     }
 
-    // add exclusions here
+    // Current EOF validation tests are based off of old specs
+    params.ignore("EOFTests/efExample");
+    params.ignore("EOFTests/EIP4200");
+    params.ignore("EOFTests/EIP4750");
+    params.ignore("EOFTests/EIP5450");
   }
 
   private EOFReferenceTestTools() {
