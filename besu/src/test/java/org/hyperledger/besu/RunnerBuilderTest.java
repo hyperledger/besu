@@ -155,6 +155,7 @@ public final class RunnerBuilderTest {
             .p2pAdvertisedHost(p2pAdvertisedHost)
             .p2pEnabled(true)
             .discovery(false)
+            .natMethod(NatMethod.NONE)
             .besuController(besuController)
             .ethNetworkConfig(mock(EthNetworkConfig.class))
             .metricsSystem(mock(ObservableMetricsSystem.class))
@@ -179,13 +180,6 @@ public final class RunnerBuilderTest {
             .listeningPort(p2pListenPort)
             .nodeId(nodeKey.getPublicKey().getEncoded())
             .build();
-    assertThat(runner.getLocalEnode().orElseThrow().getClass())
-        .isEqualTo(expectedEnodeURL.getClass());
-    assertThat(runner.getLocalEnode().orElseThrow().getIp()).isEqualTo(expectedEnodeURL.getIp());
-    assertThat(runner.getLocalEnode().orElseThrow().getListeningPort())
-        .isEqualTo(expectedEnodeURL.getListeningPort());
-    assertThat(runner.getLocalEnode().orElseThrow().getDiscoveryPort())
-        .isEqualTo(expectedEnodeURL.getDiscoveryPort());
     assertThat(runner.getLocalEnode().orElseThrow()).isEqualTo(expectedEnodeURL);
   }
 
