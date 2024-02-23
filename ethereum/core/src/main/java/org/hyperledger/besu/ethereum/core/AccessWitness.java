@@ -204,38 +204,43 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
       final boolean isWrite) {
 
     AccessEvents accessEvent = touchAddress(address, treeIndex, subIndex, isWrite);
-
+    boolean logEnabled = false;
     long gas = 0;
     if (accessEvent.isBranchRead()) {
       gas += WITNESS_BRANCH_READ_COST;
-      System.out.println(
-          "touchAddressAndChargeGas WitnessBranchReadCost "
-              + address
-              + " "
-              + treeIndex
-              + " "
-              + subIndex
-              + " "
-              + isWrite
-              + " "
-              + gas);
+      if(logEnabled) {
+        System.out.println(
+                "touchAddressAndChargeGas WitnessBranchReadCost "
+                        + address
+                        + " "
+                        + treeIndex
+                        + " "
+                        + subIndex
+                        + " "
+                        + isWrite
+                        + " "
+                        + gas);
+      }
     }
     if (accessEvent.isChunkRead()) {
       gas += WITNESS_CHUNK_READ_COST;
-      System.out.println(
-          "touchAddressAndChargeGas WitnessChunkReadCost "
-              + address
-              + " "
-              + treeIndex
-              + " "
-              + subIndex
-              + " "
-              + isWrite
-              + " "
-              + gas);
+      if(logEnabled) {
+        System.out.println(
+                "touchAddressAndChargeGas WitnessChunkReadCost "
+                        + address
+                        + " "
+                        + treeIndex
+                        + " "
+                        + subIndex
+                        + " "
+                        + isWrite
+                        + " "
+                        + gas);
+      }
     }
     if (accessEvent.isBranchWrite()) {
       gas += WITNESS_BRANCH_WRITE_COST;
+      if(logEnabled) {
       System.out.println(
           "touchAddressAndChargeGas WitnessBranchWriteCost "
               + address
@@ -247,34 +252,39 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
               + isWrite
               + " "
               + gas);
+      }
     }
     if (accessEvent.isChunkWrite()) {
       gas += WITNESS_CHUNK_WRITE_COST;
-      System.out.println(
-          "touchAddressAndChargeGas WitnessChunkWriteCost "
-              + address
-              + " "
-              + treeIndex
-              + " "
-              + subIndex
-              + " "
-              + isWrite
-              + " "
-              + gas);
+      if(logEnabled) {
+        System.out.println(
+                "touchAddressAndChargeGas WitnessChunkWriteCost "
+                        + address
+                        + " "
+                        + treeIndex
+                        + " "
+                        + subIndex
+                        + " "
+                        + isWrite
+                        + " "
+                        + gas);
+      }
     }
     if (accessEvent.isChunkFill()) {
       gas += WITNESS_CHUNK_FILL_COST;
-      System.out.println(
-          "touchAddressAndChargeGas WitnessChunkFillCost "
-              + address
-              + " "
-              + treeIndex
-              + " "
-              + subIndex
-              + " "
-              + isWrite
-              + " "
-              + gas);
+      if(logEnabled) {
+        System.out.println(
+                "touchAddressAndChargeGas WitnessChunkFillCost "
+                        + address
+                        + " "
+                        + treeIndex
+                        + " "
+                        + subIndex
+                        + " "
+                        + isWrite
+                        + " "
+                        + gas);
+      }
     }
 
     return gas;
