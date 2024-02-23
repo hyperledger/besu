@@ -50,6 +50,17 @@ class VersionMetadataTest {
   }
 
   @Test
+  void dataDirShouldBeCreatedIfNotPresent() throws Exception {
+    Files.deleteIfExists(temporaryFolder);
+    assertThat(Files.exists(temporaryFolder)).isFalse();
+
+    final VersionMetadata versionMetadata = VersionMetadata.lookUpFrom(temporaryFolder);
+    assertThat(versionMetadata).isNotNull();
+
+    assertThat(Files.exists(temporaryFolder)).isTrue();
+  }
+
+  @Test
   void compatibilityCheckShouldThrowExceptionIfEnabled() throws Exception {
     // The version file says the last version to start was 23.10.3
     final Path tempDataDir =
