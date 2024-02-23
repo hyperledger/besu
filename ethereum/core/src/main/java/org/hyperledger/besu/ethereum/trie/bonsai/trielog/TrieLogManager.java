@@ -173,18 +173,19 @@ public class TrieLogManager {
       }
 
       @Override
-      public void saveRawTrieLogLayer(final Hash blockHash, final Bytes trieLog) {
+      public void saveRawTrieLogLayer(
+          final Hash blockHash, final long blockNumber, final Bytes trieLog) {
         final BonsaiWorldStateKeyValueStorage.Updater updater = rootWorldStateStorage.updater();
         updater
             .getTrieLogStorageTransaction()
             .put(blockHash.toArrayUnsafe(), trieLog.toArrayUnsafe());
         updater.commit();
         // TODO maybe find a way to have a clean and complete trielog for observers
-        // trieLogObservers.forEach(
-        //     o ->
-        //         o.onTrieLogAdded(
-        //             new TrieLogAddedEvent(
-        //                new TrieLogLayer().setBlockHash(blockHash).setBlockNumber(blockNumber))));
+        trieLogObservers.forEach(
+            o ->
+                o.onTrieLogAdded(
+                    new TrieLogAddedEvent(
+                        new TrieLogLayer().setBlockHash(blockHash).setBlockNumber(blockNumber))));
       }
 
       @Override

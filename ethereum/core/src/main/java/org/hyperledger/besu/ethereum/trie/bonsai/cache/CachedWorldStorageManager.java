@@ -235,6 +235,11 @@ public class CachedWorldStorageManager
   }
 
   @Override
+  public void onClearTrie() {
+    this.cachedWorldStatesByHash.clear();
+  }
+
+  @Override
   public void onCloseStorage() {
     this.cachedWorldStatesByHash.clear();
   }

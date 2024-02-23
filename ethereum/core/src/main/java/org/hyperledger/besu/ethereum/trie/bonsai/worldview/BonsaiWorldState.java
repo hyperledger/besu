@@ -234,8 +234,7 @@ public class BonsaiWorldState
   }
 
   private Hash unsafeRootHashUpdate(
-      final BlockHeader blockHeader,
-      final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater) {
+      final BlockHeader blockHeader, final BonsaiWorldStateKeyValueStorage.Updater stateUpdater) {
     // calling calculateRootHash in order to update the state
     calculateRootHash(
         bonsaiWorldStateConfig.isFrozen() ? Optional.empty() : Optional.of(stateUpdater),
@@ -323,7 +322,6 @@ public class BonsaiWorldState
                   || worldStateUpdater.getStorageToClear().contains(updatedAddress))
               ? Hash.EMPTY_TRIE_HASH
               : accountOriginal.getStorageRoot();
-      //      final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
       final MerkleTrie<Bytes, Bytes> storageTrie =
           createTrie(
               (location, key) ->
