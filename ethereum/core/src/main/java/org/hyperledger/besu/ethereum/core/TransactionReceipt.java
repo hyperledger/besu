@@ -170,7 +170,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
    *
    * @param out The RLP output to write to
    */
-  public void writeTo(final RLPOutput out) {
+  public void writeToForNetwork(final RLPOutput out) {
     writeTo(out, false, false);
   }
 

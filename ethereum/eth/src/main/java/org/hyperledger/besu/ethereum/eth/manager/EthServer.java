@@ -234,7 +234,7 @@ class EthServer {
       }
       final BytesValueRLPOutput encodedReceipts = new BytesValueRLPOutput();
       encodedReceipts.startList();
-      maybeReceipts.get().forEach(r -> r.writeTo(encodedReceipts));
+      maybeReceipts.get().forEach(r -> r.writeToForNetwork(encodedReceipts));
       encodedReceipts.endList();
       final int encodedSize = encodedReceipts.encodedSize();
       if (responseSizeEstimate + encodedSize > maxMessageSize) {

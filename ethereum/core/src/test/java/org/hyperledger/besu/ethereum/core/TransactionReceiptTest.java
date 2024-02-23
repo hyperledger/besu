@@ -28,7 +28,7 @@ public class TransactionReceiptTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt();
     final TransactionReceipt copy =
-        TransactionReceipt.readFrom(RLP.input(RLP.encode(receipt::writeTo)), false);
+        TransactionReceipt.readFrom(RLP.input(RLP.encode(receipt::writeToForNetwork)), false);
     assertThat(copy).isEqualTo(receipt);
   }
 
