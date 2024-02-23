@@ -168,6 +168,7 @@ public abstract class PeerDiscoveryAgent {
                     natService
                         .getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP)
                         .map(NatPortMapping::getExternalPort)
+                        .filter((externalPort) -> externalPort != 0)
                         .orElse(localDiscoveryPort);
 
                 final DiscoveryPeer ourNode =
