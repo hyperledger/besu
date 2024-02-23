@@ -470,12 +470,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     // override advertised host if we detect an external IP address via NAT manager
     final String advertisedAddress = natService.queryExternalIPAddress(address);
-    final int advertisedDiscoveryPort =
+    final int advertisedDiscoveryPort = discoveryPort != 0 ?
         natService
             .getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP)
             .map(NatPortMapping::getExternalPort)
             .filter((externalPort) -> externalPort != 0)
-            .orElse(discoveryPort);
+            .orElse(discoveryPort) : discoveryPort;
 
     final EnodeURL localEnode =
         EnodeURLImpl.builder()
