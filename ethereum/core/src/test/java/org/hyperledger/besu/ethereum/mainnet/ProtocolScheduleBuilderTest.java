@@ -60,7 +60,8 @@ class ProtocolScheduleBuilderTest {
             new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
-            MiningParameters.MINING_DISABLED);
+            MiningParameters.MINING_DISABLED,
+            new BadBlockManager());
   }
 
   @Test
@@ -214,7 +215,8 @@ class ProtocolScheduleBuilderTest {
             new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
-            MiningParameters.MINING_DISABLED);
+            MiningParameters.MINING_DISABLED,
+            new BadBlockManager());
 
     return new MilestoneStreamingProtocolSchedule(
         (DefaultProtocolSchedule) builder.createProtocolSchedule());

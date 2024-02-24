@@ -41,8 +41,8 @@ public class ProtocolScheduleBuilder {
   private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
   private final EvmConfiguration evmConfiguration;
-  private final BadBlockManager badBlockManager = new BadBlockManager();
   private final MiningParameters miningParameters;
+  private final BadBlockManager badBlockManager;
 
   private DefaultProtocolSchedule protocolSchedule;
 
@@ -53,7 +53,8 @@ public class ProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters) {
+      final MiningParameters miningParameters,
+      final BadBlockManager badBlockManager) {
     this(
         config,
         Optional.of(defaultChainId),
@@ -61,7 +62,8 @@ public class ProtocolScheduleBuilder {
         privacyParameters,
         isRevertReasonEnabled,
         evmConfiguration,
-        miningParameters);
+        miningParameters,
+        badBlockManager);
   }
 
   public ProtocolScheduleBuilder(
@@ -70,7 +72,8 @@ public class ProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters) {
+      final MiningParameters miningParameters,
+      final BadBlockManager badBlockManager) {
     this(
         config,
         Optional.empty(),
@@ -78,7 +81,8 @@ public class ProtocolScheduleBuilder {
         privacyParameters,
         isRevertReasonEnabled,
         evmConfiguration,
-        miningParameters);
+        miningParameters,
+        badBlockManager);
   }
 
   private ProtocolScheduleBuilder(
@@ -88,7 +92,8 @@ public class ProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters) {
+      final MiningParameters miningParameters,
+      final BadBlockManager badBlockManager) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
     this.privacyParameters = privacyParameters;
@@ -96,6 +101,7 @@ public class ProtocolScheduleBuilder {
     this.evmConfiguration = evmConfiguration;
     this.defaultChainId = defaultChainId;
     this.miningParameters = miningParameters;
+    this.badBlockManager = badBlockManager;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
