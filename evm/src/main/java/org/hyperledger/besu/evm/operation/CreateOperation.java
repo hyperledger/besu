@@ -46,7 +46,7 @@ public class CreateOperation extends AbstractCreateOperation {
   }
 
   @Override
-  protected Address targetContractAddress(final MessageFrame frame, final Code targetCode) {
+  protected Address targetContractAddress(final MessageFrame frame, final Code initcode) {
     final Account sender = frame.getWorldUpdater().get(frame.getRecipientAddress());
     // Decrement nonce by 1 to normalize the effect of transaction execution
     final Address address =
@@ -56,7 +56,7 @@ public class CreateOperation extends AbstractCreateOperation {
   }
 
   @Override
-  protected Code getCode(final MessageFrame frame, final EVM evm) {
+  protected Code getInitCode(final MessageFrame frame, final EVM evm) {
     final long inputOffset = clampedToLong(frame.getStackItem(1));
     final long inputSize = clampedToLong(frame.getStackItem(2));
     final Bytes inputData = frame.readMemory(inputOffset, inputSize);

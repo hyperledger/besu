@@ -29,6 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Return operation. */
 public class ReturnContractOperation extends AbstractOperation {
 
+  /** Opcode of RETURNCONTRACT operation */
   public static final int OPCODE = 0xEE;
 
   /**

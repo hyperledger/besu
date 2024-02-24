@@ -51,6 +51,7 @@ public enum EvmSpecVersion {
   CANCUN(0, true, "Cancun", "Finalized"),
   /** Prague evm spec version. */
   PRAGUE(1, false, "Prague", "In Development"),
+  /** Osaka evm spec version. */
   OSAKA(1, false, "Osaka", "Placeholder"),
   /** Amstedam evm spec version. */
   AMSTERDAM(1, false, "Amsterdam", "Placeholder"),
@@ -69,11 +70,13 @@ public enum EvmSpecVersion {
 
   /** The Spec finalized. */
   final boolean specFinalized;
+
   /** The Max eof version. */
   final int maxEofVersion;
 
   /** Public name matching execution-spec-tests name */
   final String name;
+
   /** A brief description of the state of the fork */
   final String description;
 

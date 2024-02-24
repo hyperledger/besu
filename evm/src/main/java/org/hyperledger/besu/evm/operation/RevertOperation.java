@@ -26,6 +26,7 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Revert operation. */
 public class RevertOperation extends AbstractOperation {
 
+  /** Opcode of REVERT operation */
   public static final int OPCODE = 0xFD;
 
   /**

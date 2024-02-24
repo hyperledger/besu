@@ -24,6 +24,7 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Stop operation. */
 public class StopOperation extends AbstractFixedCostOperation {
 
+  /** Opcode of STOP operation */
   public static final int OPCODE = 0x00;
 
   /** The Stop operation success result. */

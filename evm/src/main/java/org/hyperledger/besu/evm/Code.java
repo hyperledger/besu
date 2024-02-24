@@ -127,14 +127,32 @@ public interface Code {
     return Bytes.EMPTY;
   }
 
+  /**
+   * Read a signed 16-bit big-endian integer
+   *
+   * @param startIndex the index to start reading the integer in the code
+   * @return a java int representing the 16-bit signed integer.
+   */
   default int readBigEndianI16(final int startIndex) {
     return 0;
   }
 
+  /**
+   * Read an unsigned 16 bit big-endian integer
+   *
+   * @param startIndex the index to start reading the integer in the code
+   * @return a java int representing the 16-bit unsigned integer.
+   */
   default int readBigEndianU16(final int startIndex) {
     return 0;
   }
 
+  /**
+   * Read an unsigned 8-bit integer
+   *
+   * @param startIndex the index to start reading the integer in the code
+   * @return a java int representing the 8-bit unsigned integer.
+   */
   default int readU8(final int startIndex) {
     return 0;
   }

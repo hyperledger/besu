@@ -49,18 +49,17 @@ public class Create2Operation extends AbstractCreateOperation {
   }
 
   @Override
-  public Address targetContractAddress(final MessageFrame frame, final Code targetCode) {
+  public Address targetContractAddress(final MessageFrame frame, final Code initcode) {
     final Address sender = frame.getRecipientAddress();
     final Bytes32 salt = Bytes32.leftPad(frame.getStackItem(3));
-    final Bytes32 hash =
-        keccak256(Bytes.concatenate(PREFIX, sender, salt, targetCode.getCodeHash()));
+    final Bytes32 hash = keccak256(Bytes.concatenate(PREFIX, sender, salt, initcode.getCodeHash()));
     final Address address = Address.extract(hash);
     frame.warmUpAddress(address);
     return address;
   }
 
   @Override
-  protected Code getCode(final MessageFrame frame, final EVM evm) {
+  protected Code getInitCode(final MessageFrame frame, final EVM evm) {
     final long inputOffset = clampedToLong(frame.getStackItem(1));
     final long inputSize = clampedToLong(frame.getStackItem(2));
     final Bytes inputData = frame.readMemory(inputOffset, inputSize);

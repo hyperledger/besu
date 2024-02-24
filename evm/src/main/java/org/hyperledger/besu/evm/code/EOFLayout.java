@@ -47,6 +47,7 @@ public record EOFLayout(
     Bytes data,
     String invalidReason) {
 
+  /** The EOF prefix byte as a (signed) java byte. */
   public static final byte EOF_PREFIX_BYTE = (byte) 0xEF;
 
   /** header terminator */

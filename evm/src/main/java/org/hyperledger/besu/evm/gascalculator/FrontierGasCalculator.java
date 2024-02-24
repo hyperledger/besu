@@ -75,6 +75,7 @@ public class FrontierGasCalculator implements GasCalculator {
 
   private static final long NEW_ACCOUNT_GAS_COST = 25_000L;
 
+  /** Yelllow paper constant for the cost of creating a new contract on-chain */
   protected static final long CREATE_OPERATION_GAS_COST = 32_000L;
 
   private static final long COPY_WORD_GAS_COST = 3L;

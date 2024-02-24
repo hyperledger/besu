@@ -19,42 +19,57 @@ public interface ExceptionalHaltReason {
 
   /** The constant NONE. */
   ExceptionalHaltReason NONE = DefaultExceptionalHaltReason.NONE;
+
   /** The constant INSUFFICIENT_GAS. */
   ExceptionalHaltReason INSUFFICIENT_GAS = DefaultExceptionalHaltReason.INSUFFICIENT_GAS;
+
   /** The constant INSUFFICIENT_STACK_ITEMS. */
   ExceptionalHaltReason INSUFFICIENT_STACK_ITEMS =
       DefaultExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS;
+
   /** The constant INVALID_JUMP_DESTINATION. */
   ExceptionalHaltReason INVALID_JUMP_DESTINATION =
       DefaultExceptionalHaltReason.INVALID_JUMP_DESTINATION;
+
   /** The constant INVALID_OPERATION. */
   ExceptionalHaltReason INVALID_OPERATION = DefaultExceptionalHaltReason.INVALID_OPERATION;
+
   /** The constant INVALID_RETURN_DATA_BUFFER_ACCESS. */
   ExceptionalHaltReason INVALID_RETURN_DATA_BUFFER_ACCESS =
       DefaultExceptionalHaltReason.INVALID_RETURN_DATA_BUFFER_ACCESS;
+
   /** The constant TOO_MANY_STACK_ITEMS. */
   ExceptionalHaltReason TOO_MANY_STACK_ITEMS = DefaultExceptionalHaltReason.TOO_MANY_STACK_ITEMS;
+
   /** The constant ILLEGAL_STATE_CHANGE. */
   ExceptionalHaltReason ILLEGAL_STATE_CHANGE = DefaultExceptionalHaltReason.ILLEGAL_STATE_CHANGE;
+
   /** The constant OUT_OF_BOUNDS. */
   ExceptionalHaltReason OUT_OF_BOUNDS = DefaultExceptionalHaltReason.OUT_OF_BOUNDS;
+
   /** The constant CODE_TOO_LARGE. */
   ExceptionalHaltReason CODE_TOO_LARGE = DefaultExceptionalHaltReason.CODE_TOO_LARGE;
+
   /** The constant INVALID_CODE. */
   ExceptionalHaltReason INVALID_CODE = DefaultExceptionalHaltReason.INVALID_CODE;
+
   /** The constant PRECOMPILE_ERROR. */
   ExceptionalHaltReason PRECOMPILE_ERROR = DefaultExceptionalHaltReason.PRECOMPILE_ERROR;
 
   /** The constant CODE_SECTION_MISSING. */
   ExceptionalHaltReason CODE_SECTION_MISSING = DefaultExceptionalHaltReason.CODE_SECTION_MISSING;
+
   /** The constant INCORRECT_CODE_SECTION_RETURN_OUTPUTS. */
   ExceptionalHaltReason INCORRECT_CODE_SECTION_RETURN_OUTPUTS =
       DefaultExceptionalHaltReason.INCORRECT_CODE_SECTION_RETURN_OUTPUTS;
+
   /** The constant TOO_FEW_INPUTS_FOR_CODE_SECTION. */
   ExceptionalHaltReason TOO_FEW_INPUTS_FOR_CODE_SECTION =
       DefaultExceptionalHaltReason.TOO_FEW_INPUTS_FOR_CODE_SECTION;
+
   /** The constant JUMPF_STACK_MISMATCH. */
   ExceptionalHaltReason JUMPF_STACK_MISMATCH = DefaultExceptionalHaltReason.JUMPF_STACK_MISMATCH;
+
   /** The constant EOF_CREATE_VERSION_INCOMPATIBLE. */
   ExceptionalHaltReason EOF_CREATE_VERSION_INCOMPATIBLE =
       DefaultExceptionalHaltReason.EOF_CREATE_VERSION_INCOMPATIBLE;
@@ -63,6 +78,7 @@ public interface ExceptionalHaltReason {
   ExceptionalHaltReason EOF_DELEGATE_CALL_VERSION_INCOMPATIBLE =
       DefaultExceptionalHaltReason.EOF_DELEGATE_CALL_VERSION_INCOMPATIBLE;
 
+  /** The constant NONEXISTENT_CONTAINER */
   ExceptionalHaltReason NONEXISTENT_CONTAINER = DefaultExceptionalHaltReason.NONEXISTENT_CONTAINER;
 
   /**
@@ -123,6 +139,7 @@ public interface ExceptionalHaltReason {
     /** The Delegate call version incompatible. */
     EOF_DELEGATE_CALL_VERSION_INCOMPATIBLE(
         "EOF Code is attempting to delegate call code of an earlier version"),
+    /** Container referenced by CREATE3 operation does not exist */
     NONEXISTENT_CONTAINER("Referenced subcontainer index does not exist (too large?)");
 
     /** The Description. */

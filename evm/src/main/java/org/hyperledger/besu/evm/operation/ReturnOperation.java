@@ -24,6 +24,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 /** The Return operation. */
 public class ReturnOperation extends AbstractOperation {
 
+  /** Opcode of RETURN operation */
   public static final int OPCODE = 0xF3;
 
   /**

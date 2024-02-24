@@ -47,6 +47,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   /** The maximum init code size */
   protected final int maxInitcodeSize;
 
+  /** The EOF Version this create operation requires initcode to be in */
   protected final int eofVersion;
 
   /**
@@ -58,6 +59,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    * @param stackItemsProduced the stack items produced
    * @param gasCalculator the gas calculator
    * @param maxInitcodeSize Maximum init code size
+   * @param eofVersion the EOF version this create operation is valid in
    */
   protected AbstractCreateOperation(
       final int opcode,
@@ -83,7 +85,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       return UNDERFLOW_RESPONSE;
     }
 
-    Supplier<Code> codeSupplier = () -> getCode(frame, evm);
+    Supplier<Code> codeSupplier = () -> getInitCode(frame, evm);
 
     final long cost = cost(frame, codeSupplier);
     if (frame.isStatic()) {
@@ -127,6 +129,11 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     return new OperationResult(cost, null, getPcIncrement());
   }
 
+  /**
+   * How many bytes does thsi operation occupy?
+   *
+   * @return The number of bytes the operation and immediate arguments occupy
+   */
   protected int getPcIncrement() {
     return 1;
   }
@@ -135,6 +142,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    * Cost operation.
    *
    * @param frame the frame
+   * @param codeSupplier a supplier for the initcode, if needed for costing
    * @return the long
    */
   protected abstract long cost(final MessageFrame frame, Supplier<Code> codeSupplier);
@@ -143,11 +151,19 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    * Target contract address.
    *
    * @param frame the frame
+   * @param initcode the initcode generating the new contract
    * @return the address
    */
-  protected abstract Address targetContractAddress(MessageFrame frame, Code targetCode);
+  protected abstract Address targetContractAddress(MessageFrame frame, Code initcode);
 
-  protected abstract Code getCode(MessageFrame frame, EVM evm);
+  /**
+   * Gets the initcode that will be run.
+   *
+   * @param frame The message frame the operation executed in
+   * @param evm the EVM executing the message frame
+   * @return the initcode, raw bytes, unparsed and unvalidated
+   */
+  protected abstract Code getInitCode(MessageFrame frame, EVM evm);
 
   private void fail(final MessageFrame frame) {
     final long inputOffset = clampedToLong(frame.getStackItem(1));
@@ -186,6 +202,12 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     parent.setState(MessageFrame.State.CODE_SUSPENDED);
   }
 
+  /**
+   * Get the auxiluray data to be appended to the EOF factory contract
+   *
+   * @param frame the message frame the operation was called in
+   * @return the auxiliary data as raw bytes, or `Bytes.EMPTY` if there is no aux data
+   */
   protected Bytes getAuxData(final MessageFrame frame) {
     return Bytes.EMPTY;
   }
