@@ -48,7 +48,8 @@ import picocli.CommandLine.Spec;
     subcommands = {
       StorageSubCommand.RevertVariablesStorage.class,
       RocksDbSubCommand.class,
-      TrieLogSubCommand.class
+      TrieLogSubCommand.class,
+      RevertMetadataSubCommand.class
     })
 public class StorageSubCommand implements Runnable {
 
