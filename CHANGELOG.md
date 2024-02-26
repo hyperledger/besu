@@ -1,5 +1,16 @@
 # Changelog
 
+## 24.2.1-SNAPSHOT
+
+### Breaking Changes
+
+### Deprecations
+
+### Additions and Improvements
+- Extend `Blockchain` service [#6592](https://github.com/hyperledger/besu/pull/6592)
+
+### Bug fixes
+
 ## 24.2.0-SNAPSHOT
 
 ### Breaking Changes

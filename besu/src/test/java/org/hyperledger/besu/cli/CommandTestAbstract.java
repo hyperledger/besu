@@ -83,6 +83,7 @@ import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactor
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.BlockchainServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PluginTransactionValidatorServiceImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
@@ -569,7 +570,8 @@ public abstract class CommandTestAbstract {
           pkiBlockCreationConfigProvider,
           rpcEndpointServiceImpl,
           new TransactionSelectionServiceImpl(),
-          new PluginTransactionValidatorServiceImpl());
+          new PluginTransactionValidatorServiceImpl(),
+          new BlockchainServiceImpl());
     }
 
     @Override
