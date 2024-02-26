@@ -73,6 +73,6 @@ public class CliqueFork implements Fork {
    * @return the create empty blocks
    */
   public boolean getCreateEmptyBlocks() {
-    return JsonUtil.getBoolean(forkConfigRoot, CREATE_EMPTY_BLOCKS_KEY).orElse(false);
+    return JsonUtil.getBoolean(forkConfigRoot, CREATE_EMPTY_BLOCKS_KEY).orElse(true);
   }
 }

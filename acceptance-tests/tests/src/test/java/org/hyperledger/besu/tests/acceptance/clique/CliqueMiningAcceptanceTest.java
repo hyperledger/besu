@@ -64,7 +64,7 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBaseJunit5 {
   }
 
   @Test
-  public void shouldMineBlocksOnlyWhenTransactionsArePresentWhenCreateEmptyBlockIsFalse()
+  public void shouldMineBlocksOnlyWhenTransactionsArePresentWhenCreateEmptyBlocksIsFalse()
       throws IOException {
     final var cliqueOptionsNoEmptyBlocks =
         new CliqueOptions(
@@ -134,7 +134,7 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBaseJunit5 {
   }
 
   @Test
-  public void shouldMineBlocksWithBlockPeriodAccordingToTransitions() throws IOException {
+  public void shouldMineBlocksAccordingToBlockPeriodTransitions() throws IOException {
 
     final var cliqueOptions = new CliqueOptions(3, CliqueOptions.DEFAULT.epochLength(), true);
     final BesuNode minerNode = besu.createCliqueNode("miner1", cliqueOptions);
@@ -174,6 +174,50 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBaseJunit5 {
     assertThat(block4Timestamp - block3Timestamp).isCloseTo(1, withPercentage(20));
     assertThat(block5Timestamp - block4Timestamp).isCloseTo(1, withPercentage(20));
     assertThat(block6Timestamp - block5Timestamp).isCloseTo(2, withPercentage(20));
+  }
+
+  @Test
+  public void shouldMineBlocksAccordingToCreateEmptyBlocksTransitions() throws IOException {
+
+    final var cliqueOptionsEmptyBlocks =
+        new CliqueOptions(2, CliqueOptions.DEFAULT.epochLength(), true);
+    final BesuNode minerNode = besu.createCliqueNode("miner1", cliqueOptionsEmptyBlocks);
+
+    // setup transitions
+    final Map<String, Object> noEmptyBlocks_Transition =
+        Map.of("block", 3, "createemptyblocks", false);
+    final Map<String, Object> emptyBlocks_Transition =
+        Map.of("block", 4, "createemptyblocks", true);
+    final Map<String, Object> secondNoEmptyBlocks_Transition =
+        Map.of("block", 6, "createemptyblocks", false);
+
+    final Optional<String> initialGenesis =
+        minerNode.getGenesisConfigProvider().create(List.of(minerNode));
+    final String genesisWithTransitions =
+        prependTransitionsToCliqueOptions(
+            initialGenesis.orElseThrow(),
+            List.of(
+                noEmptyBlocks_Transition, emptyBlocks_Transition, secondNoEmptyBlocks_Transition));
+    minerNode.setGenesisConfig(genesisWithTransitions);
+
+    final Account sender = accounts.createAccount("account1");
+
+    // Mine 2 blocks
+    cluster.start(minerNode);
+    minerNode.verify(blockchain.reachesHeight(minerNode, 1));
+
+    // tx required to mine block
+    cluster.verify(clique.noNewBlockCreated(minerNode));
+    minerNode.execute(accountTransactions.createTransfer(sender, 50));
+    minerNode.verify(clique.blockIsCreatedByProposer(minerNode));
+
+    // Mine 2 more blocks so chain head is 5
+    minerNode.verify(blockchain.reachesHeight(minerNode, 2));
+
+    // tx required to mine block
+    cluster.verify(clique.noNewBlockCreated(minerNode));
+    minerNode.execute(accountTransactions.createTransfer(sender, 50));
+    minerNode.verify(clique.blockIsCreatedByProposer(minerNode));
   }
 
   private long getTimestampForBlock(final BesuNode minerNode, final int blockNumber) {
