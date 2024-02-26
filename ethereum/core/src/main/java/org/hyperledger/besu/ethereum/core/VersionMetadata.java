@@ -67,7 +67,14 @@ public class VersionMetadata {
   }
 
   private static File getDefaultMetadataFile(final Path dataDir) {
-    return dataDir.resolve(METADATA_FILENAME).toFile();
+    File metaDataFile = dataDir.resolve(METADATA_FILENAME).toFile();
+
+    // Create the data dir here if it doesn't exist yet
+    if (!metaDataFile.getParentFile().exists()) {
+      LOG.info("Data directory {} does not exist - creating it", dataDir);
+      metaDataFile.getParentFile().mkdirs();
+    }
+    return metaDataFile;
   }
 
   private static VersionMetadata resolveVersionMetadata(final File metadataFile)
