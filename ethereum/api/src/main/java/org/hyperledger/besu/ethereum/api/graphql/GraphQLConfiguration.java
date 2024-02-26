@@ -37,7 +37,7 @@ public class GraphQLConfiguration {
   private String host;
   private List<String> corsAllowedDomains = Collections.emptyList();
   private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
-  private long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
+  private long httpTimeoutSec;
   private int maxActiveConnections;
   private boolean prettyJsonEnabled;
 
@@ -46,7 +46,7 @@ public class GraphQLConfiguration {
     config.setEnabled(false);
     config.setPort(DEFAULT_GRAPHQL_HTTP_PORT);
     config.setHost(DEFAULT_GRAPHQL_HTTP_HOST);
-    config.httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
+    config.setHttpTimeoutSec(TimeoutOptions.defaultOptions().getTimeoutSeconds());
     config.setMaxActiveConnections(DEFAULT_MAX_ACTIVE_CONNECTIONS);
     config.setPrettyJsonEnabled(DEFAULT_PRETTY_JSON_ENABLED);
     return config;
