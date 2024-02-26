@@ -52,7 +52,7 @@ public class JsonRpcConfiguration {
   private JwtAlgorithm authenticationAlgorithm = JwtAlgorithm.RS256;
   private File authenticationPublicKeyFile;
   private Optional<TlsConfiguration> tlsConfiguration = Optional.empty();
-  private long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
+  private long httpTimeoutSec;
   private int maxActiveConnections;
   private int maxBatchSize;
   private long maxRequestContentLength;
@@ -64,7 +64,7 @@ public class JsonRpcConfiguration {
     config.setPort(DEFAULT_JSON_RPC_PORT);
     config.setHost(DEFAULT_JSON_RPC_HOST);
     config.setRpcApis(DEFAULT_RPC_APIS);
-    config.httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
+    config.setHttpTimeoutSec(TimeoutOptions.defaultOptions().getTimeoutSeconds());
     config.setMaxActiveConnections(DEFAULT_MAX_ACTIVE_CONNECTIONS);
     config.setMaxBatchSize(DEFAULT_MAX_BATCH_SIZE);
     config.setMaxRequestContentLength(DEFAULT_MAX_REQUEST_CONTENT_LENGTH);
