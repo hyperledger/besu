@@ -12,6 +12,7 @@
 name: "CodeQL"
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
     pull_request:
@@ -48,7 +49,7 @@ jobs:
         queries: security-and-quality,security-extended
 
     - name: setup gradle
-      uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+      uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
     - name: compileJava noscan
       run: |
         JAVA_OPTS="-Xmx2048M" ./gradlew --no-scan compileJava

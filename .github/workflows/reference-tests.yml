@@ -1,5 +1,6 @@
 name: reference-tests
 on:
+  workflow_dispatch:
   pull_request_target:
     branches:
       - main
@@ -36,7 +37,7 @@ jobs:
             });
             
             
-            const refTested = statuses && statuses.filter(({ context }) => context === 'reference-tests');
+            const refTested = statuses && statuses.filter(({ context }) => context === 'reftests-passed');
             const alreadyRun = refTested && refTested.find(({ state }) => state === 'success') > 0;
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
