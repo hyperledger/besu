@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.nio.file.Path;
 
@@ -58,8 +59,8 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   }
 
   @Override
-  public int getDatabaseVersion() {
-    return dataStorageConfiguration.getDataStorageFormat().getDatabaseVersion();
+  public DataStorageFormat getDatabaseFormat() {
+    return dataStorageConfiguration.getDataStorageFormat();
   }
 
   @Override

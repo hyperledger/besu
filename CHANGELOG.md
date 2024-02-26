@@ -3,11 +3,13 @@
 ## 24.2.1-SNAPSHOT
 
 ### Breaking Changes
+- RocksDB database metadata format has changed to be more expressive, the migration of an existing metadata file to the new format is automatic at startup. Before performing a downgrade to a previous version it is mandatory to revert to the original format using the subcommand `besu --data-path=/path/to/besu/datadir storage revert-metadata v2-to-v1`.
 
 ### Deprecations
 
 ### Additions and Improvements
 - Extend `Blockchain` service [#6592](https://github.com/hyperledger/besu/pull/6592)
+- RocksDB database metadata refactoring [#6555](https://github.com/hyperledger/besu/pull/6555)
 
 ### Bug fixes
 
