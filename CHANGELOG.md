@@ -6,6 +6,7 @@
 
 ### Additions and Improvements
 - Add bft-style blockperiodseconds transitions to Clique [#6596](https://github.com/hyperledger/besu/pull/6596)
+- Add createemptyblocks transitions to Clique [#6608](https://github.com/hyperledger/besu/pull/6608)
 
 ### Bug fixes
 
