@@ -62,24 +62,25 @@ public class ChainHeadTracker {
         new TrailingPeerLimiter(ethContext.getEthPeers(), trailingPeerRequirementsCalculator);
     final ChainHeadTracker tracker =
         new ChainHeadTracker(ethContext, protocolSchedule, trailingPeerLimiter, metricsSystem);
-    ethContext.getEthPeers().subscribeStatusExchanged(tracker);
+    ethContext.getEthPeers().setChainHeadTracker(tracker);
     blockchain.observeBlockAdded(trailingPeerLimiter);
   }
 
-  public CompletableFuture<Void> onPeerConnected(final EthPeer peer) {
+  public CompletableFuture<BlockHeader> getBestHeaderFromPeer(final EthPeer peer) {
     LOG.atDebug()
         .setMessage("Requesting chain head info from {}...")
         .addArgument(peer::getLoggableId)
         .log();
     final CompletableFuture<AbstractPeerTask.PeerTaskResult<List<BlockHeader>>>
         bestHeaderFromPeerCompletableFuture = getBestHeaderFromPeerCompletableFuture(peer);
-    final CompletableFuture<Void> future = new CompletableFuture<>();
+    final CompletableFuture<BlockHeader> future = new CompletableFuture<>();
     bestHeaderFromPeerCompletableFuture.whenComplete(
         (peerResult, error) -> {
           if (peerResult != null && !peerResult.getResult().isEmpty()) {
             final BlockHeader chainHeadHeader = peerResult.getResult().get(0);
             peer.chainState().update(chainHeadHeader);
             trailingPeerLimiter.enforceTrailingPeerLimit();
+            future.complete(chainHeadHeader);
             LOG.atDebug()
                 .setMessage("Retrieved chain head info {} from {}...")
                 .addArgument(
@@ -93,8 +94,8 @@ public class ChainHeadTracker {
                 .addArgument(error)
                 .log();
             peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
+            future.complete(null);
           }
-          future.complete(null);
         });
     return future;
   }

@@ -92,7 +92,7 @@ public class ChainHeadTrackerTest {
             blockchainSetupUtil.getBlockchain(),
             blockchainSetupUtil.getWorldArchive(),
             blockchainSetupUtil.getTransactionPool());
-    chainHeadTracker.onPeerConnected(respondingPeer.getEthPeer());
+    chainHeadTracker.getBestHeaderFromPeer(respondingPeer.getEthPeer());
 
     Assertions.assertThat(chainHeadState().getEstimatedHeight()).isZero();
 
@@ -112,7 +112,7 @@ public class ChainHeadTrackerTest {
             blockchainSetupUtil.getBlockchain(),
             blockchainSetupUtil.getWorldArchive(),
             blockchainSetupUtil.getTransactionPool());
-    chainHeadTracker.onPeerConnected(respondingPeer.getEthPeer());
+    chainHeadTracker.getBestHeaderFromPeer(respondingPeer.getEthPeer());
 
     // Change the hash of the current known head
     respondingPeer.getEthPeer().chainState().statusReceived(Hash.EMPTY_TRIE_HASH, Difficulty.ONE);
@@ -131,7 +131,7 @@ public class ChainHeadTrackerTest {
             blockchainSetupUtil.getBlockchain(),
             blockchainSetupUtil.getWorldArchive(),
             blockchainSetupUtil.getTransactionPool());
-    chainHeadTracker.onPeerConnected(respondingPeer.getEthPeer());
+    chainHeadTracker.getBestHeaderFromPeer(respondingPeer.getEthPeer());
 
     Assertions.assertThat(chainHeadState().getEstimatedHeight()).isZero();
 

@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.ChainHeadTracker;
+import org.hyperledger.besu.ethereum.eth.sync.SnapServerChecker;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
@@ -43,6 +45,9 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -109,6 +114,7 @@ public class EthPeers {
   private final Counter connectedPeersCounter;
   //  private List<ProtocolManager> protocolManagers;
   private ChainHeadTracker tracker;
+  private SnapServerChecker snapServerChecker;
 
   public EthPeers(
       final String protocolName,
@@ -146,7 +152,17 @@ public class EthPeers {
         BesuMetricCategory.ETHEREUM,
         "peer_count",
         "The current number of peers connected",
-        () -> (int) streamAvailablePeers().filter(p -> p.readyForRequests()).count());
+        () -> (int) streamAvailablePeers().filter(EthPeer::readyForRequests).count());
+    metricsSystem.createIntegerGauge(
+        BesuMetricCategory.ETHEREUM,
+        "peer_count_snap_server",
+        "The current number of peers connected that serve snap data",
+        () ->
+            (int)
+                streamAvailablePeers()
+                    .filter(EthPeer::readyForRequests)
+                    .filter(EthPeer::isServingSnap)
+                    .count());
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.PEERS,
         "pending_peer_requests_current",
@@ -441,8 +457,12 @@ public class EthPeers {
   //    this.protocolManagers = protocolManagers;
   //  }
 
-  public void subscribeStatusExchanged(final ChainHeadTracker tracker) {
+  public void setChainHeadTracker(final ChainHeadTracker tracker) {
     this.tracker = tracker;
+  }
+
+  public void setSnapServerChecker(final SnapServerChecker checker) {
+    this.snapServerChecker = checker;
   }
 
   @FunctionalInterface
@@ -468,36 +488,73 @@ public class EthPeers {
     // Find out what the EthPeer block height is and whether it can serve snap data (if we are doing
     // snap sync)
     LOG.debug("Peer {} status exchanged", peer);
-    CompletableFuture<Void> future = tracker.onPeerConnected(peer);
+    CompletableFuture<BlockHeader> future = tracker.getBestHeaderFromPeer(peer);
 
-    CompletableFuture<Void> isServingSnapFuture;
-    if (syncMode == SyncMode.X_CHECKPOINT || syncMode == SyncMode.X_SNAP) {
-      isServingSnapFuture =
-          CompletableFuture.runAsync(
-              () -> {
-                checkIsSnapServer(peer);
-              });
-    } else {
-      isServingSnapFuture = CompletableFuture.completedFuture(null);
-    }
-
-    // join the two futures
-    CompletableFuture.allOf(future, isServingSnapFuture)
-        .thenRun(
-            () -> {
-              if (!peer.getConnection().isDisconnected() && addPeerToEthPeers(peer)) {
-                connectedPeersCounter.inc();
-                connectCallbacks.forEach(cb -> cb.onPeerConnected(peer));
-              }
-            });
+    future.whenComplete(
+        (peersHeadBlockHeader, error) -> {
+          if (peersHeadBlockHeader == null) {
+            LOG.debug(
+                "Failed to retrieve chain head info. Disconnecting {}... {}",
+                peer.getLoggableId(),
+                error);
+            peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
+          } else {
+            CompletableFuture<Void> isServingSnapFuture;
+            if (syncMode == SyncMode.X_CHECKPOINT || syncMode == SyncMode.X_SNAP) {
+              isServingSnapFuture =
+                  CompletableFuture.runAsync(
+                      () -> {
+                        try {
+                          checkIsSnapServer(peer, peersHeadBlockHeader);
+                        } catch (Exception e) {
+                          throw new RuntimeException(e);
+                        }
+                      });
+            } else {
+              isServingSnapFuture = CompletableFuture.completedFuture(null);
+            }
+            isServingSnapFuture.thenRun(
+                // TODO: might be a good idea not to connect to syncing peers if we are syncing
+                // ourselves (initial sync)
+                () -> {
+                  if (!peer.getConnection().isDisconnected() && addPeerToEthPeers(peer)) {
+                    connectedPeersCounter.inc();
+                    connectCallbacks.forEach(cb -> cb.onPeerConnected(peer));
+                  }
+                });
+          }
+        });
   }
 
-  private void checkIsSnapServer(final EthPeer peer) {
+  private void checkIsSnapServer(final EthPeer peer, final BlockHeader peersHeadBlockHeader)
+      throws ExecutionException, InterruptedException, TimeoutException {
     if (peer.getAgreedCapabilities().contains(SnapProtocol.SNAP1)) {
       // could try and retrieve some SNAP data here to check that (e.g. GetByteCodes for a small
       // contract)
-      // LOG.info("XXXXXXX" + peer.getConnection().getPeerInfo().getClientId());
-      peer.setIsServingSnap(peer.getConnection().getPeerInfo().getClientId().contains("Geth"));
+      if (snapServerChecker != null) {
+        // set that peer is a snap server for the test
+        peer.setIsServingSnap(true);
+        Boolean isServer;
+        try {
+          isServer = snapServerChecker.check(peer, peersHeadBlockHeader).get(10L, TimeUnit.SECONDS);
+        } catch (Exception e) {
+          LOG.debug("XXXXXX Error checking if peer is a snap server: {}", e);
+          peer.setIsServingSnap(false);
+          return;
+        }
+        peer.setIsServingSnap(isServer);
+        final boolean simpleCheck =
+            peer.getConnection().getPeerInfo().getClientId().contains("Geth");
+        if (simpleCheck && !isServer) {
+          LOG.debug(
+              "YYYYYYYYYY Found a peer that is Geth but not a snap server: {}",
+              peer.getLoggableId());
+        } else if (!simpleCheck && isServer) {
+          LOG.debug(
+              "ZZZZZZZZZZ Found a peer that is NOT Geth but is a snap server: {}",
+              peer.getLoggableId());
+        }
+      }
     }
   }
 
