@@ -23,6 +23,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
@@ -51,7 +52,8 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
       final TransactionsLayer nextLayer,
       final TransactionPoolMetrics txPoolMetrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
-          transactionReplacementTester) {
+          transactionReplacementTester,
+      final MiningParameters miningParameters) {
 
     return new BaseFeePrioritizedTransactions(
         poolConfig,
@@ -60,7 +62,8 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
         txPoolMetrics,
         transactionReplacementTester,
         FeeMarket.london(0L),
-        new BlobCache());
+        new BlobCache(),
+        miningParameters);
   }
 
   @Override
@@ -116,7 +119,8 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
     final var nextBlockBaseFee = Optional.of(Wei.ONE);
 
     final PendingTransaction highGasPriceTransaction =
-        createRemotePendingTransaction(createTransaction(0, Wei.of(100), KEYS1));
+        createRemotePendingTransaction(
+            createTransaction(0, DEFAULT_MIN_GAS_PRICE.multiply(2), KEYS1));
 
     final List<PendingTransaction> lowValueTxs =
         IntStream.range(0, MAX_TRANSACTIONS)
@@ -124,7 +128,9 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
                 i ->
                     new PendingTransaction.Remote(
                         createTransaction(
-                            0, Wei.of(10), SIGNATURE_ALGORITHM.get().generateKeyPair())))
+                            0,
+                            DEFAULT_MIN_GAS_PRICE.add(1),
+                            SIGNATURE_ALGORITHM.get().generateKeyPair())))
             .collect(Collectors.toUnmodifiableList());
 
     final var lowestPriorityFee =
@@ -154,7 +160,8 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
   private void shouldPrioritizePriorityFeeThenTimeAddedToPoolSameTypeTxs(
       final TransactionType transactionType) {
     final PendingTransaction highGasPriceTransaction =
-        createRemotePendingTransaction(createTransaction(0, Wei.of(100), KEYS1));
+        createRemotePendingTransaction(
+            createTransaction(0, DEFAULT_MIN_GAS_PRICE.multiply(20), KEYS1));
 
     final var lowValueTxs =
         IntStream.range(0, MAX_TRANSACTIONS)
@@ -164,7 +171,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
                         createTransaction(
                             transactionType,
                             0,
-                            Wei.of(10),
+                            DEFAULT_MIN_GAS_PRICE.add(1),
                             0,
                             SIGNATURE_ALGORITHM.get().generateKeyPair())))
             .collect(Collectors.toUnmodifiableList());
