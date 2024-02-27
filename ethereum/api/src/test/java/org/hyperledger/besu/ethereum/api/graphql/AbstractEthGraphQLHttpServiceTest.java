@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql;
 
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -36,9 +35,8 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.plugin.data.SyncStatus;
-import org.hyperledger.besu.plugin.services.TransactionSelectionService;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.nio.file.Path;
 import java.util.Collections;
@@ -111,11 +109,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     final MutableBlockchain blockchain = blockchainSetupUtil.getBlockchain();
     ProtocolContext context =
         new ProtocolContext(
-            blockchain,
-            blockchainSetupUtil.getWorldArchive(),
-            null,
-            mock(TransactionSelectionService.class),
-            new BadBlockManager());
+            blockchain, blockchainSetupUtil.getWorldArchive(), null, new BadBlockManager());
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
             context.getBlockchain(),

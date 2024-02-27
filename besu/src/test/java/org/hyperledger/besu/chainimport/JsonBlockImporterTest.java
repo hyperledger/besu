@@ -42,7 +42,6 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.PluginTransactionValidatorServiceImpl;
-import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.io.IOException;
@@ -434,8 +433,7 @@ public abstract class JsonBlockImporterTest {
     return createController(genesisConfigFile);
   }
 
-  protected BesuController createController(final GenesisConfigFile genesisConfigFile)
-      throws IOException {
+  protected BesuController createController(final GenesisConfigFile genesisConfigFile) {
     return new BesuController.Builder()
         .fromGenesisConfig(genesisConfigFile, SyncMode.FAST)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
@@ -460,7 +458,6 @@ public abstract class JsonBlockImporterTest {
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .networkConfiguration(NetworkingConfiguration.create())
         .pluginTransactionValidatorService(new PluginTransactionValidatorServiceImpl())
-        .transactionSelectorService(new TransactionSelectionServiceImpl())
         .build();
   }
 }

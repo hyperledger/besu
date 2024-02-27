@@ -130,9 +130,6 @@ public class BesuEventsImplTest {
     when(mockEthContext.getScheduler()).thenReturn(new DeterministicEthScheduler());
     lenient().when(mockEthPeers.streamAvailablePeers()).thenAnswer(z -> Stream.empty());
     when(mockProtocolContext.getBlockchain()).thenReturn(blockchain);
-    lenient()
-        .when(mockProtocolContext.getTransactionSelectionService())
-        .thenReturn(new TransactionSelectionServiceImpl());
     lenient().when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
     lenient().when(mockProtocolSchedule.getByBlockHeader(any())).thenReturn(mockProtocolSpec);
     lenient()

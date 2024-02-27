@@ -104,7 +104,6 @@ public class ProposalValidatorTest {
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(
                 QbftContext.class, emptyList(), bftExtraDataEncoder),
-            null,
             new BadBlockManager());
 
     // typically tests require the blockValidation to be successful

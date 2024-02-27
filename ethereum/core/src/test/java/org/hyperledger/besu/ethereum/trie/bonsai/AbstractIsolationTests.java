@@ -73,11 +73,10 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.PluginTransactionValidatorService;
-import org.hyperledger.besu.plugin.services.TransactionSelectionService;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
-import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
@@ -164,22 +163,7 @@ public abstract class AbstractIsolationTests {
             EvmConfiguration.DEFAULT);
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
-    protocolContext =
-        new ProtocolContext(
-            blockchain,
-            archive,
-            null,
-            new TransactionSelectionService() {
-              @Override
-              public Optional<PluginTransactionSelectorFactory> get() {
-                return Optional.empty();
-              }
-
-              @Override
-              public void registerTransactionSelectorFactory(
-                  final PluginTransactionSelectorFactory transactionSelectorFactory) {}
-            },
-            new BadBlockManager());
+    protocolContext = new ProtocolContext(blockchain, archive, null, new BadBlockManager());
     ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
     when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
     transactionPool =
@@ -216,7 +200,6 @@ public abstract class AbstractIsolationTests {
                         8388608 /*CACHE_CAPACITY*/,
                         false),
                 Arrays.asList(KeyValueSegmentIdentifier.values()),
-                2,
                 RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
         .withCommonConfiguration(
             new BesuConfiguration() {
@@ -232,8 +215,8 @@ public abstract class AbstractIsolationTests {
               }
 
               @Override
-              public int getDatabaseVersion() {
-                return 2;
+              public DataStorageFormat getDatabaseFormat() {
+                return DataStorageFormat.BONSAI;
               }
 
               @Override

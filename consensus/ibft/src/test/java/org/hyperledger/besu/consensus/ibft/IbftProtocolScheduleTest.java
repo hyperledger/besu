@@ -122,7 +122,6 @@ public class IbftProtocolScheduleTest {
         null,
         null,
         setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec),
-        null,
         new BadBlockManager());
   }
 }

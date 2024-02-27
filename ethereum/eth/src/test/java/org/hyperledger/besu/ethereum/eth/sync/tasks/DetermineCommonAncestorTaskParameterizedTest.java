@@ -150,7 +150,7 @@ public class DetermineCommonAncestorTaskParameterizedTest {
 
     final EthContext ethContext = ethProtocolManager.ethContext();
     final ProtocolContext protocolContext =
-        new ProtocolContext(localBlockchain, worldStateArchive, null, null, new BadBlockManager());
+        new ProtocolContext(localBlockchain, worldStateArchive, null, new BadBlockManager());
 
     final EthTask<BlockHeader> task =
         DetermineCommonAncestorTask.create(

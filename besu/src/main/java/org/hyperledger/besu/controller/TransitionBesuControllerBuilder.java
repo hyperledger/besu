@@ -59,7 +59,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
 import java.math.BigInteger;
@@ -189,15 +188,10 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory,
-      final TransactionSelectionService transactionSelectionService) {
+      final ConsensusContextFactory consensusContextFactory) {
     final ProtocolContext protocolContext =
         super.createProtocolContext(
-            blockchain,
-            worldStateArchive,
-            protocolSchedule,
-            consensusContextFactory,
-            transactionSelectionService);
+            blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
     transitionProtocolSchedule.setProtocolContext(protocolContext);
     return protocolContext;
   }

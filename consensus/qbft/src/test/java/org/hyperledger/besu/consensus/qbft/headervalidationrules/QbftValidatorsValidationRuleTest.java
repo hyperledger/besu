@@ -48,7 +48,6 @@ public class QbftValidatorsValidationRuleTest {
             null,
             null,
             setupContextWithBftExtraData(QbftContext.class, Collections.emptyList(), bftExtraData),
-            null,
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(Collections.emptyList());
     when(bftExtraData.getVote()).thenReturn(Optional.empty());
@@ -68,7 +67,6 @@ public class QbftValidatorsValidationRuleTest {
             null,
             null,
             setupContextWithBftExtraData(QbftContext.class, validators, bftExtraData),
-            null,
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(validators);
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isTrue();
@@ -87,7 +85,6 @@ public class QbftValidatorsValidationRuleTest {
             null,
             null,
             setupContextWithBftExtraData(QbftContext.class, validators, bftExtraData),
-            null,
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(validators);
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isFalse();
@@ -102,7 +99,6 @@ public class QbftValidatorsValidationRuleTest {
             null,
             null,
             setupContextWithBftExtraData(QbftContext.class, Collections.emptyList(), bftExtraData),
-            null,
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(Collections.emptyList());
     when(bftExtraData.getVote()).thenReturn(Optional.of(mock(Vote.class)));

@@ -130,7 +130,6 @@ public class QbftRoundIntegrationTest {
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(
                 QbftContext.class, emptyList(), qbftExtraDataEncoder),
-            null,
             new BadBlockManager());
   }
 

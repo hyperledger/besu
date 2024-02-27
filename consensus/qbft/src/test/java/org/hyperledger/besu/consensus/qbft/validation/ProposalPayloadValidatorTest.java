@@ -18,7 +18,6 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
@@ -50,7 +49,6 @@ import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.pki.cms.CmsValidator;
-import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 
 import java.util.Collections;
 import java.util.List;
@@ -90,7 +88,6 @@ public class ProposalPayloadValidatorTest {
             blockChain,
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(QbftContext.class, emptyList(), bftExtraDataCodec),
-            null,
             new BadBlockManager());
   }
 
@@ -244,12 +241,7 @@ public class ProposalPayloadValidatorTest {
         setupContextWithBftExtraDataEncoder(QbftContext.class, emptyList(), pkiQbftExtraDataCodec);
     final Bytes cms = Bytes.fromHexStringLenient("0x1");
     final ProtocolContext protocolContext =
-        new ProtocolContext(
-            blockChain,
-            worldStateArchive,
-            qbftContext,
-            mock(TransactionSelectionService.class),
-            new BadBlockManager());
+        new ProtocolContext(blockChain, worldStateArchive, qbftContext, new BadBlockManager());
 
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
@@ -284,12 +276,7 @@ public class ProposalPayloadValidatorTest {
         setupContextWithBftExtraDataEncoder(QbftContext.class, emptyList(), pkiQbftExtraDataCodec);
     final Bytes cms = Bytes.fromHexStringLenient("0x1");
     final ProtocolContext protocolContext =
-        new ProtocolContext(
-            blockChain,
-            worldStateArchive,
-            qbftContext,
-            mock(TransactionSelectionService.class),
-            new BadBlockManager());
+        new ProtocolContext(blockChain, worldStateArchive, qbftContext, new BadBlockManager());
 
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(

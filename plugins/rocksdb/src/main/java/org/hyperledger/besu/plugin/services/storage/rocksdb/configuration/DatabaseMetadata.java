@@ -14,19 +14,23 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
+import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Optional;
+import java.util.Arrays;
+import java.util.OptionalInt;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,79 +39,43 @@ public class DatabaseMetadata {
   private static final Logger LOG = LoggerFactory.getLogger(DatabaseMetadata.class);
 
   private static final String METADATA_FILENAME = "DATABASE_METADATA.json";
-  private static final ObjectMapper MAPPER = new ObjectMapper();
-  private final int version;
+  private static final ObjectMapper MAPPER =
+      new ObjectMapper()
+          .registerModule(new Jdk8Module())
+          .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
+          .enable(SerializationFeature.INDENT_OUTPUT);
+  private final VersionedStorageFormat versionedStorageFormat;
 
-  private Optional<Integer> privacyVersion;
-
-  /**
-   * Instantiates a new Database metadata.
-   *
-   * @param version the version
-   */
-  @JsonCreator
-  public DatabaseMetadata(@JsonProperty("version") final int version) {
-    this(version, Optional.empty());
+  private DatabaseMetadata(final VersionedStorageFormat versionedStorageFormat) {
+    this.versionedStorageFormat = versionedStorageFormat;
   }
 
   /**
-   * Instantiates a new Database metadata.
+   * Return the default metadata for new db for a specific format
    *
-   * @param version the version
-   * @param privacyVersion the privacy version
+   * @param dataStorageFormat data storage format
+   * @return the metadata to use for new db
    */
-  public DatabaseMetadata(final int version, final Optional<Integer> privacyVersion) {
-    this.version = version;
-    this.privacyVersion = privacyVersion;
+  public static DatabaseMetadata defaultForNewDb(final DataStorageFormat dataStorageFormat) {
+    return new DatabaseMetadata(BaseVersionedStorageFormat.defaultForNewDB(dataStorageFormat));
   }
 
   /**
-   * Instantiates a new Database metadata.
+   * Return the default metadata for new db when privacy feature is enabled
    *
-   * @param version the version
-   * @param privacyVersion the privacy version
+   * @return the metadata to use for new db
    */
-  public DatabaseMetadata(final int version, final int privacyVersion) {
-    this(version, Optional.of(privacyVersion));
+  public static DatabaseMetadata defaultForNewPrivateDb() {
+    return new DatabaseMetadata(PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES);
   }
 
   /**
-   * Gets version.
+   * Return the version storage format contained in this metadata
    *
-   * @return the version
+   * @return version storage format
    */
-  public int getVersion() {
-    return version;
-  }
-
-  /**
-   * Sets privacy version.
-   *
-   * @param privacyVersion the privacy version
-   */
-  @JsonSetter("privacyVersion")
-  public void setPrivacyVersion(final int privacyVersion) {
-    this.privacyVersion = Optional.of(privacyVersion);
-  }
-
-  /**
-   * Gets privacy version.
-   *
-   * @return the privacy version
-   */
-  @JsonInclude(JsonInclude.Include.NON_NULL)
-  @JsonGetter("privacyVersion")
-  public Integer getPrivacyVersion() {
-    return privacyVersion.orElse(null);
-  }
-
-  /**
-   * Maybe privacy version.
-   *
-   * @return the optional
-   */
-  public Optional<Integer> maybePrivacyVersion() {
-    return privacyVersion;
+  public VersionedStorageFormat getVersionedStorageFormat() {
+    return versionedStorageFormat;
   }
 
   /**
@@ -123,22 +91,34 @@ public class DatabaseMetadata {
   }
 
   /**
+   * Is the metadata file present in the specified data dir?
+   *
+   * @param dataDir the dir to search for the metadata file
+   * @return true is the metadata file exists, false otherwise
+   * @throws IOException if there is an error trying to access the metadata file
+   */
+  public static boolean isPresent(final Path dataDir) throws IOException {
+    return getDefaultMetadataFile(dataDir).exists();
+  }
+
+  /**
    * Write to directory.
    *
    * @param dataDir the data dir
    * @throws IOException the io exception
    */
   public void writeToDirectory(final Path dataDir) throws IOException {
-    try {
-      final DatabaseMetadata currentMetadata =
-          MAPPER.readValue(getDefaultMetadataFile(dataDir), DatabaseMetadata.class);
-      if (currentMetadata.maybePrivacyVersion().isPresent()) {
-        setPrivacyVersion(currentMetadata.getPrivacyVersion());
-      }
-      MAPPER.writeValue(getDefaultMetadataFile(dataDir), this);
-    } catch (FileNotFoundException fnfe) {
-      MAPPER.writeValue(getDefaultMetadataFile(dataDir), this);
-    }
+    writeToFile(getDefaultMetadataFile(dataDir));
+  }
+
+  private void writeToFile(final File file) throws IOException {
+    MAPPER.writeValue(
+        file,
+        new V2(
+            new MetadataV2(
+                versionedStorageFormat.getFormat(),
+                versionedStorageFormat.getVersion(),
+                versionedStorageFormat.getPrivacyVersion())));
   }
 
   private static File getDefaultMetadataFile(final Path dataDir) {
@@ -147,15 +127,129 @@ public class DatabaseMetadata {
 
   private static DatabaseMetadata resolveDatabaseMetadata(final File metadataFile)
       throws IOException {
-    DatabaseMetadata databaseMetadata;
     try {
-      databaseMetadata = MAPPER.readValue(metadataFile, DatabaseMetadata.class);
+      try {
+        return tryReadAndMigrateV1(metadataFile);
+      } catch (DatabindException dbe) {
+        return tryReadV2(metadataFile);
+      }
     } catch (FileNotFoundException fnfe) {
-      databaseMetadata = new DatabaseMetadata(1, 1);
+      throw new StorageException(
+          "Database exists but metadata file "
+              + metadataFile.toString()
+              + " not found, without it there is no safe way to open the database",
+          fnfe);
     } catch (JsonProcessingException jpe) {
       throw new IllegalStateException(
           String.format("Invalid metadata file %s", metadataFile.getAbsolutePath()), jpe);
     }
-    return databaseMetadata;
   }
+
+  private static DatabaseMetadata tryReadAndMigrateV1(final File metadataFile) throws IOException {
+    final V1 v1 = MAPPER.readValue(metadataFile, V1.class);
+    // when migrating from v1, this version will automatically migrate the db to the variables
+    // storage, so we use the `_WITH_VARIABLES` variants
+    final VersionedStorageFormat versionedStorageFormat;
+    if (v1.privacyVersion().isEmpty()) {
+      versionedStorageFormat =
+          switch (v1.version()) {
+            case 1 -> BaseVersionedStorageFormat.FOREST_WITH_VARIABLES;
+            case 2 -> BaseVersionedStorageFormat.BONSAI_WITH_VARIABLES;
+            default -> throw new StorageException("Unsupported db version: " + v1.version());
+          };
+    } else {
+      versionedStorageFormat =
+          switch (v1.privacyVersion().getAsInt()) {
+            case 1 -> switch (v1.version()) {
+              case 1 -> PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES;
+              case 2 -> PrivacyVersionedStorageFormat.BONSAI_WITH_VARIABLES;
+              default -> throw new StorageException("Unsupported db version: " + v1.version());
+            };
+            default -> throw new StorageException(
+                "Unsupported db privacy version: " + v1.privacyVersion().getAsInt());
+          };
+    }
+
+    final DatabaseMetadata metadataV2 = new DatabaseMetadata(versionedStorageFormat);
+    // writing the metadata will migrate to v2
+    metadataV2.writeToFile(metadataFile);
+    return metadataV2;
+  }
+
+  private static DatabaseMetadata tryReadV2(final File metadataFile) throws IOException {
+    final V2 v2 = MAPPER.readValue(metadataFile, V2.class);
+    return new DatabaseMetadata(fromV2(v2.v2));
+  }
+
+  private static VersionedStorageFormat fromV2(final MetadataV2 metadataV2) {
+    if (metadataV2.privacyVersion().isEmpty()) {
+      return Arrays.stream(BaseVersionedStorageFormat.values())
+          .filter(
+              vsf ->
+                  vsf.getFormat().equals(metadataV2.format())
+                      && vsf.getVersion() == metadataV2.version())
+          .findFirst()
+          .orElseThrow(
+              () -> {
+                final String message = "Unsupported RocksDB metadata: " + metadataV2;
+                LOG.error(message);
+                throw new StorageException(message);
+              });
+    }
+    return Arrays.stream(PrivacyVersionedStorageFormat.values())
+        .filter(
+            vsf ->
+                vsf.getFormat().equals(metadataV2.format())
+                    && vsf.getVersion() == metadataV2.version()
+                    && vsf.getPrivacyVersion().equals(metadataV2.privacyVersion()))
+        .findFirst()
+        .orElseThrow(
+            () -> {
+              final String message = "Unsupported RocksDB metadata: " + metadataV2;
+              LOG.error(message);
+              throw new StorageException(message);
+            });
+  }
+
+  /**
+   * Update an existing base storage to support privacy feature
+   *
+   * @return the update metadata with the privacy support
+   */
+  public DatabaseMetadata upgradeToPrivacy() {
+    return new DatabaseMetadata(
+        switch (versionedStorageFormat.getFormat()) {
+          case FOREST -> switch (versionedStorageFormat.getVersion()) {
+            case 1 -> PrivacyVersionedStorageFormat.FOREST_ORIGINAL;
+            case 2 -> PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES;
+            default -> throw new StorageException(
+                "Unsupported database with format FOREST and version "
+                    + versionedStorageFormat.getVersion());
+          };
+          case BONSAI -> switch (versionedStorageFormat.getVersion()) {
+            case 1 -> PrivacyVersionedStorageFormat.BONSAI_ORIGINAL;
+            case 2 -> PrivacyVersionedStorageFormat.BONSAI_WITH_VARIABLES;
+            default -> throw new StorageException(
+                "Unsupported database with format BONSAI and version "
+                    + versionedStorageFormat.getVersion());
+          };
+        });
+  }
+
+  @Override
+  public String toString() {
+    return "versionedStorageFormat=" + versionedStorageFormat;
+  }
+
+  @JsonSerialize
+  @SuppressWarnings("unused")
+  private record V1(int version, OptionalInt privacyVersion) {}
+
+  @JsonSerialize
+  @SuppressWarnings("unused")
+  private record V2(MetadataV2 v2) {}
+
+  @JsonSerialize
+  @SuppressWarnings("unused")
+  private record MetadataV2(DataStorageFormat format, int version, OptionalInt privacyVersion) {}
 }

@@ -47,7 +47,6 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
         null,
         setupContextWithBftExtraDataEncoder(
             QbftContext.class, validators, new QbftExtraDataCodec()),
-        null,
         new BadBlockManager());
   }
 

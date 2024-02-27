@@ -127,7 +127,6 @@ public class IbftRoundIntegrationTest {
             blockChain,
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(emptyList(), bftExtraDataEncoder),
-            null,
             new BadBlockManager());
   }
 

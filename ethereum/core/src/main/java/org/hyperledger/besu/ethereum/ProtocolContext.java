@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 
 import java.util.Optional;
 
@@ -33,7 +32,6 @@ public class ProtocolContext {
   private final WorldStateArchive worldStateArchive;
   private final BadBlockManager badBlockManager;
   private final ConsensusContext consensusContext;
-  private final TransactionSelectionService transactionSelectionService;
 
   private Optional<Synchronizer> synchronizer;
 
@@ -41,13 +39,11 @@ public class ProtocolContext {
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ConsensusContext consensusContext,
-      final TransactionSelectionService transactionSelectionService,
       final BadBlockManager badBlockManager) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.consensusContext = consensusContext;
     this.synchronizer = Optional.empty();
-    this.transactionSelectionService = transactionSelectionService;
     this.badBlockManager = badBlockManager;
   }
 
@@ -56,13 +52,11 @@ public class ProtocolContext {
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory,
-      final TransactionSelectionService transactionSelectionService,
       final BadBlockManager badBlockManager) {
     return new ProtocolContext(
         blockchain,
         worldStateArchive,
         consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule),
-        transactionSelectionService,
         badBlockManager);
   }
 
@@ -94,9 +88,5 @@ public class ProtocolContext {
     return Optional.ofNullable(consensusContext)
         .filter(c -> klass.isAssignableFrom(c.getClass()))
         .map(klass::cast);
-  }
-
-  public TransactionSelectionService getTransactionSelectionService() {
-    return transactionSelectionService;
   }
 }

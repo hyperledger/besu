@@ -169,7 +169,6 @@ public class QbftBlockHeightManagerTest {
             null,
             setupContextWithBftExtraDataEncoder(
                 QbftContext.class, validators, new QbftExtraDataCodec()),
-            null,
             new BadBlockManager());
 
     final ProtocolScheduleBuilder protocolScheduleBuilder =

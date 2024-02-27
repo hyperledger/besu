@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 
 /** The Migrating protocol context. */
 public class MigratingProtocolContext extends ProtocolContext {
@@ -34,16 +33,14 @@ public class MigratingProtocolContext extends ProtocolContext {
    * @param blockchain the blockchain
    * @param worldStateArchive the world state archive
    * @param consensusContextSchedule the consensus context schedule
-   * @param transactionSelectorService the optional transaction selector service
    * @param badBlockManager the cache to use to keep invalid blocks
    */
   public MigratingProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ForksSchedule<ConsensusContext> consensusContextSchedule,
-      final TransactionSelectionService transactionSelectorService,
       final BadBlockManager badBlockManager) {
-    super(blockchain, worldStateArchive, null, transactionSelectorService, badBlockManager);
+    super(blockchain, worldStateArchive, null, badBlockManager);
     this.consensusContextSchedule = consensusContextSchedule;
   }
 
@@ -54,7 +51,6 @@ public class MigratingProtocolContext extends ProtocolContext {
    * @param worldStateArchive the world state archive
    * @param protocolSchedule the protocol schedule
    * @param consensusContextFactory the consensus context factory
-   * @param transactionSelectorService the optional transaction selector service
    * @param badBlockManager the cache to use to keep invalid blocks
    * @return the protocol context
    */
@@ -63,7 +59,6 @@ public class MigratingProtocolContext extends ProtocolContext {
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory,
-      final TransactionSelectionService transactionSelectorService,
       final BadBlockManager badBlockManager) {
     final ConsensusContext consensusContext =
         consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule);
@@ -72,7 +67,6 @@ public class MigratingProtocolContext extends ProtocolContext {
         blockchain,
         worldStateArchive,
         migratingContext.getConsensusContextSchedule(),
-        transactionSelectorService,
         badBlockManager);
   }
 
