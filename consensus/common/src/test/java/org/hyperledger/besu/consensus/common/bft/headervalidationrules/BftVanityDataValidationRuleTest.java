@@ -25,8 +25,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-import java.util.Optional;
-
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
@@ -51,7 +49,6 @@ public class BftVanityDataValidationRuleTest {
             null,
             null,
             setupContextWithBftExtraData(emptyList(), extraData),
-            Optional.empty(),
             new BadBlockManager());
     return validationRule.validate(blockHeader, null, context);
   }
