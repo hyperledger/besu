@@ -97,7 +97,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
@@ -530,17 +529,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    */
   public BesuControllerBuilder randomPeerPriority(final Boolean randomPeerPriority) {
     this.randomPeerPriority = randomPeerPriority;
-    return this;
-  }
-
-  /**
-   * sets the transactionSelectionService in the builder
-   *
-   * @param transactionSelectionService the transaction selector service
-   * @return the besu controller builder
-   */
-  public BesuControllerBuilder transactionSelectorService(
-      final TransactionSelectionService transactionSelectionService) {
     return this;
   }
 

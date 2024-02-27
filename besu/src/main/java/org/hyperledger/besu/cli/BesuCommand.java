@@ -1791,7 +1791,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .synchronizerConfiguration(buildSyncConfig())
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .networkConfiguration(unstableNetworkingOptions.toDomainObject())
-        .transactionSelectorService(getTransactionSelectorService())
         .pluginTransactionValidatorFactory(getPluginTransactionValidatorFactory())
         .dataDirectory(dataDir())
         .dataStorageConfiguration(getDataStorageConfiguration())
@@ -1821,10 +1820,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
         .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
         .cacheLastBlocks(numberOfblocksToCache);
-  }
-
-  private TransactionSelectionService getTransactionSelectorService() {
-    return besuPluginContext.getService(TransactionSelectionService.class).orElseThrow();
   }
 
   private PluginTransactionValidatorFactory getPluginTransactionValidatorFactory() {
