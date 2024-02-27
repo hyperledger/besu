@@ -109,11 +109,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     final MutableBlockchain blockchain = blockchainSetupUtil.getBlockchain();
     ProtocolContext context =
         new ProtocolContext(
-            blockchain,
-            blockchainSetupUtil.getWorldArchive(),
-            null,
-            Optional.empty(),
-            new BadBlockManager());
+            blockchain, blockchainSetupUtil.getWorldArchive(), null, new BadBlockManager());
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
             context.getBlockchain(),

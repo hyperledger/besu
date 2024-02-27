@@ -162,8 +162,7 @@ public abstract class AbstractIsolationTests {
             EvmConfiguration.DEFAULT);
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
-    protocolContext =
-        new ProtocolContext(blockchain, archive, null, Optional.empty(), new BadBlockManager());
+    protocolContext = new ProtocolContext(blockchain, archive, null, new BadBlockManager());
     ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
     when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
     transactionPool =

@@ -1,9 +1,11 @@
 # Changelog
 
-## 24.2.1-SNAPSHOT
+## Next Release
 
 ### Breaking Changes
 - RocksDB database metadata format has changed to be more expressive, the migration of an existing metadata file to the new format is automatic at startup. Before performing a downgrade to a previous version it is mandatory to revert to the original format using the subcommand `besu --data-path=/path/to/besu/datadir storage revert-metadata v2-to-v1`.
+
+### Upcoming Breaking Changes
 
 ### Deprecations
 
@@ -13,6 +15,8 @@
 - Make layered txpool aware of minGasPrice and minPriorityFeePerGas dynamic options [#6611](https://github.com/hyperledger/besu/pull/6611)
 
 ### Bug fixes
+
+### Download Links
 
 ## 24.2.0-SNAPSHOT
 

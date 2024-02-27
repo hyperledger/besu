@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.junit.jupiter.api.Test;
@@ -50,7 +49,6 @@ public class BftValidatorsValidationRuleTest {
             null,
             null,
             setupContextWithBftExtraData(validators, bftExtraData),
-            Optional.empty(),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(validators);
 
@@ -69,7 +67,6 @@ public class BftValidatorsValidationRuleTest {
             null,
             null,
             setupContextWithBftExtraData(validators, bftExtraData),
-            Optional.empty(),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(Lists.reverse(validators));
 
@@ -91,7 +88,6 @@ public class BftValidatorsValidationRuleTest {
             null,
             null,
             setupContextWithBftExtraData(storedValidators, bftExtraData),
-            Optional.empty(),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(Lists.reverse(reportedValidators));
 

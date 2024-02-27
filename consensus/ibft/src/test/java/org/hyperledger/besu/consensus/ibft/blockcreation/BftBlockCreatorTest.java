@@ -126,7 +126,6 @@ public class BftBlockCreatorTest {
             blockchain,
             createInMemoryWorldStateArchive(),
             setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder),
-            Optional.empty(),
             new BadBlockManager());
 
     final TransactionPoolConfiguration poolConf =
