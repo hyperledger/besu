@@ -158,7 +158,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
 
     // priority txs are promoted even if they pay less
     if (!pendingTransaction.hasPriority()) {
-      // check if max fee per gas is higher that the min gas price
+      // check if max fee per gas is higher than the min gas price
       if (pendingTransaction
           .getTransaction()
           .getMaxGasPrice()
