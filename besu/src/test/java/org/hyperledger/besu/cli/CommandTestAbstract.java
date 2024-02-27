@@ -223,6 +223,7 @@ public abstract class CommandTestAbstract {
   @Mock protected WorldStateArchive mockWorldStateArchive;
   @Mock protected TransactionPool mockTransactionPool;
   @Mock protected PrivacyPluginServiceImpl privacyPluginService;
+  @Mock protected StorageProvider storageProvider;
 
   @SuppressWarnings("PrivateStaticFinalLoggers") // @Mocks are inited by JUnit
   @Mock
@@ -318,6 +319,7 @@ public abstract class CommandTestAbstract {
     when(mockProtocolContext.getBlockchain()).thenReturn(mockMutableBlockchain);
     lenient().when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
     when(mockController.getTransactionPool()).thenReturn(mockTransactionPool);
+    when(mockController.getStorageProvider()).thenReturn(storageProvider);
 
     when(mockRunnerBuilder.vertx(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.besuController(any())).thenReturn(mockRunnerBuilder);
