@@ -174,7 +174,6 @@ import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
-import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
@@ -224,7 +223,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
@@ -1793,7 +1791,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .synchronizerConfiguration(buildSyncConfig())
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .networkConfiguration(unstableNetworkingOptions.toDomainObject())
-        .transactionSelectorFactory(getTransactionSelectorFactory())
+        .transactionSelectorService(getTransactionSelectorService())
         .pluginTransactionValidatorFactory(getPluginTransactionValidatorFactory())
         .dataDirectory(dataDir())
         .dataStorageConfiguration(getDataStorageConfiguration())
@@ -1825,11 +1823,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .cacheLastBlocks(numberOfblocksToCache);
   }
 
-  @Nonnull
-  private Optional<PluginTransactionSelectorFactory> getTransactionSelectorFactory() {
-    final Optional<TransactionSelectionService> txSelectionService =
-        besuPluginContext.getService(TransactionSelectionService.class);
-    return txSelectionService.isPresent() ? txSelectionService.get().get() : Optional.empty();
+  private TransactionSelectionService getTransactionSelectorService() {
+    return besuPluginContext.getService(TransactionSelectionService.class).orElseThrow();
   }
 
   private PluginTransactionValidatorFactory getPluginTransactionValidatorFactory() {
@@ -2147,6 +2142,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (miningParameters == null) {
       miningOptions.setGenesisBlockPeriodSeconds(
           getGenesisBlockPeriodSeconds(getActualGenesisConfigOptions()));
+      miningOptions.setTransactionSelectionService(transactionSelectionServiceImpl);
       miningParameters = miningOptions.toDomainObject();
       initMiningParametersMetrics(miningParameters);
     }

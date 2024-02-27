@@ -125,8 +125,7 @@ public class TestNode implements Closeable {
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     genesisState.writeStateTo(worldStateArchive.getMutable());
     final ProtocolContext protocolContext =
-        new ProtocolContext(
-            blockchain, worldStateArchive, null, Optional.empty(), new BadBlockManager());
+        new ProtocolContext(blockchain, worldStateArchive, null, new BadBlockManager());
 
     final SyncState syncState = mock(SyncState.class);
     final SynchronizerConfiguration syncConfig = mock(SynchronizerConfiguration.class);
