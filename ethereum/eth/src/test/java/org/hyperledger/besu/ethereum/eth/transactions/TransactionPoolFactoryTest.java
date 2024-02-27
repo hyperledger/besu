@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -252,7 +253,8 @@ public class TransactionPoolFactoryTest {
             transactionsMessageSender,
             newPooledTransactionHashesMessageSender,
             null,
-            new BlobCache());
+            new BlobCache(),
+            MiningParameters.newDefault());
 
     ethProtocolManager =
         new EthProtocolManager(
@@ -360,7 +362,8 @@ public class TransactionPoolFactoryTest {
                         .build())
                 .build(),
             mock(PluginTransactionValidatorService.class),
-            new BlobCache());
+            new BlobCache(),
+            MiningParameters.newDefault());
 
     txPool.setEnabled();
     return txPool;

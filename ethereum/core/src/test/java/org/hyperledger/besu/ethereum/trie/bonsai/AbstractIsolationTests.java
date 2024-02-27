@@ -134,7 +134,8 @@ public abstract class AbstractIsolationTests {
               new EndLayer(txPoolMetrics),
               txPoolMetrics,
               transactionReplacementTester,
-              new BlobCache()));
+              new BlobCache(),
+              MiningParameters.newDefault()));
 
   protected final List<GenesisAllocation> accounts =
       GenesisConfigFile.development()
