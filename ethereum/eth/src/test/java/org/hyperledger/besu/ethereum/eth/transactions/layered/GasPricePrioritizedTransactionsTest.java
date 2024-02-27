@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
@@ -42,10 +43,16 @@ public class GasPricePrioritizedTransactionsTest extends AbstractPrioritizedTran
       final TransactionsLayer nextLayer,
       final TransactionPoolMetrics txPoolMetrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
-          transactionReplacementTester) {
+          transactionReplacementTester,
+      final MiningParameters miningParameters) {
 
     return new GasPricePrioritizedTransactions(
-        poolConfig, nextLayer, txPoolMetrics, transactionReplacementTester, new BlobCache());
+        poolConfig,
+        nextLayer,
+        txPoolMetrics,
+        transactionReplacementTester,
+        new BlobCache(),
+        miningParameters);
   }
 
   @Override
@@ -80,11 +87,14 @@ public class GasPricePrioritizedTransactionsTest extends AbstractPrioritizedTran
                 i ->
                     createRemotePendingTransaction(
                         createTransaction(
-                            0, Wei.of(10), SIGNATURE_ALGORITHM.get().generateKeyPair())))
+                            0,
+                            DEFAULT_MIN_GAS_PRICE.add(1),
+                            SIGNATURE_ALGORITHM.get().generateKeyPair())))
             .toList();
 
     final PendingTransaction highGasPriceTransaction =
-        createRemotePendingTransaction(createTransaction(0, Wei.of(100), KEYS1));
+        createRemotePendingTransaction(
+            createTransaction(0, DEFAULT_MIN_GAS_PRICE.multiply(2), KEYS1));
 
     shouldPrioritizeValueThenTimeAddedToPool(
         lowValueTxs.iterator(), highGasPriceTransaction, lowValueTxs.get(0));
