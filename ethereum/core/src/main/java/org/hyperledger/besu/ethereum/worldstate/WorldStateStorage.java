@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.Collection;
 import java.util.Collections;
