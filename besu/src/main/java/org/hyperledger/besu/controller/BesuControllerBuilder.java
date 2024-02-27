@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
@@ -91,7 +92,6 @@ import org.hyperledger.besu.ethereum.trie.forest.pruner.MarkSweepPruner;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.Pruner;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -99,6 +99,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 
@@ -178,6 +179,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected EvmConfiguration evmConfiguration;
   /** The Max peers. */
   protected int maxPeers;
+  /** Manages a cache of bad blocks globally */
+  protected final BadBlockManager badBlockManager = new BadBlockManager();
 
   private int maxRemotelyInitiatedPeers;
   /** The Chain pruner configuration. */
@@ -577,6 +580,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(gasLimitCalculator, "Missing gas limit calculator");
     checkNotNull(evmConfiguration, "Missing evm config");
     checkNotNull(networkingConfiguration, "Missing network configuration");
+    checkNotNull(dataStorageConfiguration, "Missing data storage configuration");
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
@@ -1076,7 +1080,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         worldStateArchive,
         protocolSchedule,
         consensusContextFactory,
-        transactionSelectorFactory);
+        transactionSelectorFactory,
+        badBlockManager);
   }
 
   private Optional<SnapProtocolManager> createSnapProtocolManager(

@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -46,7 +47,11 @@ public class BftValidatorsValidationRuleTest {
 
     final ProtocolContext context =
         new ProtocolContext(
-            null, null, setupContextWithBftExtraData(validators, bftExtraData), Optional.empty());
+            null,
+            null,
+            setupContextWithBftExtraData(validators, bftExtraData),
+            Optional.empty(),
+            new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(validators);
 
     assertThat(validatorsValidationRule.validate(blockHeader, null, context)).isTrue();
@@ -61,7 +66,11 @@ public class BftValidatorsValidationRuleTest {
 
     final ProtocolContext context =
         new ProtocolContext(
-            null, null, setupContextWithBftExtraData(validators, bftExtraData), Optional.empty());
+            null,
+            null,
+            setupContextWithBftExtraData(validators, bftExtraData),
+            Optional.empty(),
+            new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(Lists.reverse(validators));
 
     assertThat(validatorsValidationRule.validate(blockHeader, null, context)).isFalse();
@@ -82,7 +91,8 @@ public class BftValidatorsValidationRuleTest {
             null,
             null,
             setupContextWithBftExtraData(storedValidators, bftExtraData),
-            Optional.empty());
+            Optional.empty(),
+            new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(Lists.reverse(reportedValidators));
 
     assertThat(validatorsValidationRule.validate(blockHeader, null, context)).isFalse();

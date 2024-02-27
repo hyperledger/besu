@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -42,11 +43,14 @@ public class MergeProtocolSchedule {
    *
    * @param config the config
    * @param isRevertReasonEnabled the is revert reason enabled
+   * @param badBlockManager the cache to use to keep invalid blocks
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
-      final GenesisConfigOptions config, final boolean isRevertReasonEnabled) {
-    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
+      final GenesisConfigOptions config,
+      final boolean isRevertReasonEnabled,
+      final BadBlockManager badBlockManager) {
+    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, badBlockManager);
   }
 
   /**
@@ -55,12 +59,14 @@ public class MergeProtocolSchedule {
    * @param config the config
    * @param privacyParameters the privacy parameters
    * @param isRevertReasonEnabled the is revert reason enabled
+   * @param badBlockManager the cache to use to keep invalid blocks
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
+      final boolean isRevertReasonEnabled,
+      final BadBlockManager badBlockManager) {
 
     Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications =
         new HashMap<>();
@@ -77,7 +83,8 @@ public class MergeProtocolSchedule {
             new ProtocolSpecAdapters(postMergeModifications),
             privacyParameters,
             isRevertReasonEnabled,
-            EvmConfiguration.DEFAULT)
+            EvmConfiguration.DEFAULT,
+            badBlockManager)
         .createProtocolSchedule();
   }
 

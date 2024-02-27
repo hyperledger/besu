@@ -76,6 +76,7 @@ public class PrivacyNode implements AutoCloseable {
   private final boolean isFlexiblePrivacyEnabled;
   private final boolean isMultitenancyEnabled;
   private final boolean isPrivacyPluginEnabled;
+  private final BesuNodeConfiguration besuConfig;
 
   public PrivacyNode(
       final PrivacyNodeConfiguration privacyConfiguration,
@@ -89,7 +90,7 @@ public class PrivacyNode implements AutoCloseable {
         selectEnclave(enclaveType, enclaveDir, config, privacyConfiguration, containerNetwork);
     this.vertx = vertx;
 
-    final BesuNodeConfiguration besuConfig = config;
+    this.besuConfig = config;
 
     isFlexiblePrivacyEnabled = privacyConfiguration.isFlexiblePrivacyGroupEnabled();
     isMultitenancyEnabled = privacyConfiguration.isMultitenancyEnabled();
@@ -108,6 +109,7 @@ public class PrivacyNode implements AutoCloseable {
             besuConfig.getMetricsConfiguration(),
             besuConfig.getPermissioningConfiguration(),
             besuConfig.getApiConfiguration(),
+            besuConfig.getDataStorageConfiguration(),
             besuConfig.getKeyFilePath(),
             besuConfig.isDevMode(),
             besuConfig.getNetwork(),
@@ -272,6 +274,8 @@ public class PrivacyNode implements AutoCloseable {
 
   private PrivacyStorageProvider createKeyValueStorageProvider(
       final Path dataLocation, final Path dbLocation) {
+    final var besuConfiguration = new BesuConfigurationImpl();
+    besuConfiguration.init(dataLocation, dbLocation, null, besuConfig.getMiningParameters());
     return new PrivacyKeyValueStorageProviderBuilder()
         .withStorageFactory(
             new RocksDBKeyValuePrivacyStorageFactory(
@@ -284,7 +288,7 @@ public class PrivacyNode implements AutoCloseable {
                             DEFAULT_IS_HIGH_SPEC),
                     Arrays.asList(KeyValueSegmentIdentifier.values()),
                     RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS)))
-        .withCommonConfiguration(new BesuConfigurationImpl(dataLocation, dbLocation))
+        .withCommonConfiguration(besuConfiguration)
         .withMetricsSystem(new NoOpMetricsSystem())
         .build();
   }

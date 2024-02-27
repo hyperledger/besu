@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
@@ -173,7 +174,8 @@ public class CombinedProtocolScheduleFactoryTest {
             ProtocolSpecAdapters.create(0, Function.identity()),
             new PrivacyParameters(),
             false,
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            new BadBlockManager());
 
     return new BftProtocolSchedule(
         (DefaultProtocolSchedule) protocolScheduleBuilder.createProtocolSchedule());

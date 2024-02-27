@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -97,11 +98,15 @@ public class PrivacyTest {
   private BesuController setUpControllerWithPrivacyEnabled(final boolean flexibleEnabled)
       throws IOException, URISyntaxException {
     final Path dbDir = Files.createTempDirectory(dataDir, "database");
+    final var miningParameters = MiningParameters.newDefault();
+    final var dataStorageConfiguration = DataStorageConfiguration.DEFAULT_FOREST_CONFIG;
     final PrivacyParameters privacyParameters =
         new PrivacyParameters.Builder()
             .setEnabled(true)
             .setEnclaveUrl(new URI("http://127.0.0.1:8000"))
-            .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
+            .setStorageProvider(
+                createKeyValueStorageProvider(
+                    dataDir, dbDir, dataStorageConfiguration, miningParameters))
             .setEnclaveFactory(new EnclaveFactory(vertx))
             .setFlexiblePrivacyGroupsEnabled(flexibleEnabled)
             .build();
@@ -111,7 +116,8 @@ public class PrivacyTest {
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .networkId(BigInteger.ONE)
-        .miningParameters(MiningParameters.newDefault())
+        .miningParameters(miningParameters)
+        .dataStorageConfiguration(dataStorageConfiguration)
         .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())
         .dataDirectory(dataDir)
@@ -125,7 +131,12 @@ public class PrivacyTest {
   }
 
   private PrivacyStorageProvider createKeyValueStorageProvider(
-      final Path dataDir, final Path dbDir) {
+      final Path dataDir,
+      final Path dbDir,
+      final DataStorageConfiguration dataStorageConfiguration,
+      final MiningParameters miningParameters) {
+    final var besuConfiguration = new BesuConfigurationImpl();
+    besuConfiguration.init(dataDir, dbDir, dataStorageConfiguration, miningParameters);
     return new PrivacyKeyValueStorageProviderBuilder()
         .withStorageFactory(
             new RocksDBKeyValuePrivacyStorageFactory(
@@ -138,7 +149,7 @@ public class PrivacyTest {
                             DEFAULT_IS_HIGH_SPEC),
                     Arrays.asList(KeyValueSegmentIdentifier.values()),
                     RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS)))
-        .withCommonConfiguration(new BesuConfigurationImpl(dataDir, dbDir))
+        .withCommonConfiguration(besuConfiguration)
         .withMetricsSystem(new NoOpMetricsSystem())
         .build();
   }

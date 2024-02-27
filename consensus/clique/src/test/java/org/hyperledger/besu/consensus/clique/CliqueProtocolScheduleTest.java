@@ -26,6 +26,7 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -55,7 +56,8 @@ public class CliqueProtocolScheduleTest {
 
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
     final ProtocolSchedule protocolSchedule =
-        CliqueProtocolSchedule.create(config, NODE_KEY, false, EvmConfiguration.DEFAULT);
+        CliqueProtocolSchedule.create(
+            config, NODE_KEY, false, EvmConfiguration.DEFAULT, new BadBlockManager());
 
     final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockHeader(blockHeader(1));
     final ProtocolSpec tangerineWhistleSpec = protocolSchedule.getByBlockHeader(blockHeader(2));
@@ -74,7 +76,8 @@ public class CliqueProtocolScheduleTest {
                 GenesisConfigFile.DEFAULT.getConfigOptions(),
                 NODE_KEY,
                 false,
-                EvmConfiguration.DEFAULT)
+                EvmConfiguration.DEFAULT,
+                new BadBlockManager())
             .getByBlockHeader(blockHeader(0));
 
     assertThat(homestead.getName()).isEqualTo("Frontier");
@@ -92,7 +95,11 @@ public class CliqueProtocolScheduleTest {
     assertThatThrownBy(
             () ->
                 CliqueProtocolSchedule.create(
-                    genesisConfig, NODE_KEY, false, EvmConfiguration.DEFAULT))
+                    genesisConfig,
+                    NODE_KEY,
+                    false,
+                    EvmConfiguration.DEFAULT,
+                    new BadBlockManager()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -106,7 +113,11 @@ public class CliqueProtocolScheduleTest {
     assertThatThrownBy(
             () ->
                 CliqueProtocolSchedule.create(
-                    genesisConfig, NODE_KEY, false, EvmConfiguration.DEFAULT))
+                    genesisConfig,
+                    NODE_KEY,
+                    false,
+                    EvmConfiguration.DEFAULT,
+                    new BadBlockManager()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -121,7 +132,8 @@ public class CliqueProtocolScheduleTest {
 
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
     final ProtocolSchedule protocolSchedule =
-        CliqueProtocolSchedule.create(config, NODE_KEY, false, EvmConfiguration.DEFAULT);
+        CliqueProtocolSchedule.create(
+            config, NODE_KEY, false, EvmConfiguration.DEFAULT, new BadBlockManager());
 
     BlockHeader emptyFrontierParent =
         headerBuilder
