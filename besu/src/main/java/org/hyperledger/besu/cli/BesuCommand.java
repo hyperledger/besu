@@ -141,7 +141,6 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
@@ -172,6 +171,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
@@ -373,6 +373,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private final TransactionSelectionServiceImpl transactionSelectionServiceImpl;
   private final PluginTransactionValidatorServiceImpl transactionValidatorServiceImpl;
+  private final BlockchainServiceImpl blockchainServiceImpl;
 
   static class P2PDiscoveryOptionGroup {
 
@@ -957,7 +958,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new PkiBlockCreationConfigurationProvider(),
         new RpcEndpointServiceImpl(),
         new TransactionSelectionServiceImpl(),
-        new PluginTransactionValidatorServiceImpl());
+        new PluginTransactionValidatorServiceImpl(),
+        new BlockchainServiceImpl());
   }
 
   /**
@@ -979,6 +981,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param rpcEndpointServiceImpl instance of RpcEndpointServiceImpl
    * @param transactionSelectionServiceImpl instance of TransactionSelectionServiceImpl
    * @param transactionValidatorServiceImpl instance of TransactionValidatorServiceImpl
+   * @param blockchainServiceImpl instance of BlockchainServiceImpl
    */
   @VisibleForTesting
   protected BesuCommand(
@@ -997,7 +1000,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl,
       final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
-      final PluginTransactionValidatorServiceImpl transactionValidatorServiceImpl) {
+      final PluginTransactionValidatorServiceImpl transactionValidatorServiceImpl,
+      final BlockchainServiceImpl blockchainServiceImpl) {
     this.besuComponent = besuComponent;
     this.logger = besuComponent.getBesuCommandLogger();
     this.rlpBlockImporter = rlpBlockImporter;
@@ -1017,6 +1021,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.rpcEndpointServiceImpl = rpcEndpointServiceImpl;
     this.transactionSelectionServiceImpl = transactionSelectionServiceImpl;
     this.transactionValidatorServiceImpl = transactionValidatorServiceImpl;
+    this.blockchainServiceImpl = blockchainServiceImpl;
   }
 
   /**
@@ -1208,6 +1213,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         TransactionSelectionService.class, transactionSelectionServiceImpl);
     besuPluginContext.addService(
         PluginTransactionValidatorService.class, transactionValidatorServiceImpl);
+    besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
 
     // register built-in plugins
     rocksDBPlugin = new RocksDBPlugin();
@@ -1288,6 +1294,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void startPlugins() {
+    blockchainServiceImpl.init(
+        besuController.getProtocolContext(), besuController.getProtocolSchedule());
+
     besuPluginContext.addService(
         BesuEvents.class,
         new BesuEventsImpl(
@@ -1296,10 +1305,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getTransactionPool(),
             besuController.getSyncState()));
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
-
-    besuPluginContext.addService(
-        BlockchainService.class,
-        new BlockchainServiceImpl(besuController.getProtocolContext().getBlockchain()));
 
     besuPluginContext.addService(
         TraceService.class,

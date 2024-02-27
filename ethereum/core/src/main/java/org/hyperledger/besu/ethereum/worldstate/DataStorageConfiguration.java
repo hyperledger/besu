@@ -16,6 +16,8 @@
 
 package org.hyperledger.besu.ethereum.worldstate;
 
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+
 import org.immutables.value.Value;
 
 @Value.Immutable
