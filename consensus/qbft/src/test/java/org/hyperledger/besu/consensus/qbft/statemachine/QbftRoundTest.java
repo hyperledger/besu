@@ -123,7 +123,6 @@ public class QbftRoundTest {
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(
                 QbftContext.class, emptyList(), new QbftExtraDataCodec()),
-            Optional.empty(),
             new BadBlockManager());
 
     when(messageValidator.validateProposal(any())).thenReturn(true);

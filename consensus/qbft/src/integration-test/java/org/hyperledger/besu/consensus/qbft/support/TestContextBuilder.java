@@ -447,7 +447,6 @@ public class TestContextBuilder {
             blockChain,
             worldStateArchive,
             new QbftContext(validatorProvider, epochManager, blockInterface, Optional.empty()),
-            Optional.empty(),
             new BadBlockManager());
 
     final TransactionPoolConfiguration poolConf =
