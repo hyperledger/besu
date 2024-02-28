@@ -110,6 +110,24 @@ public class DataStorageOptionsTest
         "false");
   }
 
+  @Test
+  public void receiptCompactionCanBeEnabled() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(dataStorageConfiguration.getReceiptCompactionEnabled()).isEqualTo(true),
+        "--receipt-compaction-enabled",
+        "true");
+  }
+
+  @Test
+  public void receiptCompactionCanBeDisabled() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(dataStorageConfiguration.getReceiptCompactionEnabled()).isEqualTo(false),
+        "--receipt-compaction-enabled",
+        "false");
+  }
+
   @Override
   protected DataStorageConfiguration createDefaultDomainObject() {
     return DataStorageConfiguration.DEFAULT_CONFIG;

@@ -17,6 +17,7 @@ package org.hyperledger.besu.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -107,12 +108,13 @@ public class QbftBesuControllerBuilderTest {
     lenient().when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     lenient()
-        .when(storageProvider.createBlockchainStorage(any(), any()))
+        .when(storageProvider.createBlockchainStorage(any(), any(), anyBoolean()))
         .thenReturn(
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(),
                 new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
-                new MainnetBlockHeaderFunctions()));
+                new MainnetBlockHeaderFunctions(),
+                false));
     lenient()
         .when(
             storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_FOREST_CONFIG))

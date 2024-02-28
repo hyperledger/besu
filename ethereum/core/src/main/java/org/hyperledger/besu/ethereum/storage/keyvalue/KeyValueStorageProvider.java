@@ -68,11 +68,14 @@ public class KeyValueStorageProvider implements StorageProvider {
 
   @Override
   public BlockchainStorage createBlockchainStorage(
-      final ProtocolSchedule protocolSchedule, final VariablesStorage variablesStorage) {
+      final ProtocolSchedule protocolSchedule,
+      final VariablesStorage variablesStorage,
+      final boolean receiptCompaction) {
     return new KeyValueStoragePrefixedKeyBlockchainStorage(
         getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BLOCKCHAIN),
         variablesStorage,
-        ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
+        ScheduleBasedBlockHeaderFunctions.create(protocolSchedule),
+        receiptCompaction);
   }
 
   @Override

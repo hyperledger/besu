@@ -174,8 +174,8 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     writeTo(out, false, false);
   }
 
-  public void writeToForStorage(final RLPOutput out) {
-    writeTo(out, true, true);
+  public void writeToForStorage(final RLPOutput out, final boolean compacted) {
+    writeTo(out, true, compacted);
   }
 
   @VisibleForTesting

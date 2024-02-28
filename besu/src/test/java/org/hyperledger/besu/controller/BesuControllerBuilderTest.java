@@ -15,6 +15,7 @@
 package org.hyperledger.besu.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -118,12 +119,13 @@ public class BesuControllerBuilderTest {
     when(ethashConfigOptions.getFixedDifficulty()).thenReturn(OptionalLong.empty());
     when(storageProvider.getStorageBySegmentIdentifier(any()))
         .thenReturn(new InMemoryKeyValueStorage());
-    when(storageProvider.createBlockchainStorage(any(), any()))
+    when(storageProvider.createBlockchainStorage(any(), any(), anyBoolean()))
         .thenReturn(
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(),
                 new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
-                new MainnetBlockHeaderFunctions()));
+                new MainnetBlockHeaderFunctions(),
+                false));
     when(synchronizerConfiguration.getDownloaderParallelism()).thenReturn(1);
     when(synchronizerConfiguration.getTransactionsParallelism()).thenReturn(1);
     when(synchronizerConfiguration.getComputationParallelism()).thenReturn(1);
