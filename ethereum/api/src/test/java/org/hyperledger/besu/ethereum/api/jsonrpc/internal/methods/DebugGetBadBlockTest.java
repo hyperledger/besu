@@ -16,32 +16,30 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BadBlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
-import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("unchecked")
@@ -49,13 +47,17 @@ public class DebugGetBadBlockTest {
 
   private final TransactionTestFixture transactionTestFixture = new TransactionTestFixture();
 
-  private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
-  private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
+  private final ProtocolContext protocolContext = mock(ProtocolContext.class);
   private final BlockResultFactory blockResult = new BlockResultFactory();
   private final BadBlockManager badBlockManager = new BadBlockManager();
 
   private final DebugGetBadBlocks debugGetBadBlocks =
-      new DebugGetBadBlocks(blockchainQueries, protocolSchedule, blockResult);
+      new DebugGetBadBlocks(protocolContext, blockResult);
+
+  @BeforeEach
+  public void setup() {
+    when(protocolContext.getBadBlockManager()).thenReturn(badBlockManager);
+  }
 
   @Test
   public void nameShouldBeDebugTraceBlock() {
@@ -95,9 +97,6 @@ public class DebugGetBadBlockTest {
 
     badBlockManager.addBadBlock(badBlockWithTransaction, Optional.empty());
     badBlockManager.addBadBlock(badBlockWoTransaction, Optional.empty());
-    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
-    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(protocolSpec.getBadBlocksManager()).thenReturn(badBlockManager);
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlock", new Object[] {}));
@@ -123,11 +122,6 @@ public class DebugGetBadBlockTest {
 
   @Test
   public void shouldReturnCorrectResponseWhenNoInvalidBlockFound() {
-    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
-
-    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(protocolSpec.getBadBlocksManager()).thenReturn(badBlockManager);
-
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlock", new Object[] {}));
 

@@ -21,6 +21,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer;
@@ -31,11 +32,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -56,16 +53,18 @@ public class DebugStandardTraceBadBlockToFileTest {
   private final Blockchain blockchain = mock(Blockchain.class);
   private final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
 
-  private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
+  private final ProtocolContext protocolContext = mock(ProtocolContext.class);
   private final TransactionTracer transactionTracer = mock(TransactionTracer.class);
-  private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
+
+  private final BadBlockManager badBlockManager = new BadBlockManager();
 
   private final DebugStandardTraceBadBlockToFile debugStandardTraceBadBlockToFile =
       new DebugStandardTraceBadBlockToFile(
-          () -> transactionTracer, blockchainQueries, protocolSchedule, folder);
+          () -> transactionTracer, blockchainQueries, protocolContext, folder);
 
   @BeforeEach
   public void setup() {
+    when(protocolContext.getBadBlockManager()).thenReturn(badBlockManager);
     doAnswer(
             invocation ->
                 invocation
@@ -100,14 +99,9 @@ public class DebugStandardTraceBadBlockToFileTest {
     final List<String> paths = new ArrayList<>();
     paths.add("path-1");
 
-    final BadBlockManager badBlockManager = new BadBlockManager();
     badBlockManager.addBadBlock(block, Optional.empty());
 
-    final BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
-    when(protocolSpec.getBadBlocksManager()).thenReturn(badBlockManager);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
-    when(blockchain.getChainHeadHeader()).thenReturn(new BlockHeaderTestFixture().buildHeader());
-    when(protocolSchedule.getByBlockHeader(blockHeader)).thenReturn(protocolSpec);
     when(transactionTracer.traceTransactionToFile(
             any(MutableWorldState.class), eq(block.getHash()), any(), any()))
         .thenReturn(paths);

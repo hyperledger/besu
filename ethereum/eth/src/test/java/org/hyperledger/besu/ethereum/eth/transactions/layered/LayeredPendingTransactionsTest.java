@@ -39,6 +39,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -136,7 +137,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
             txPoolMetrics,
             transactionReplacementTester,
             FeeMarket.london(0L),
-            new BlobCache());
+            new BlobCache(),
+            MiningParameters.newDefault().setMinTransactionGasPrice(DEFAULT_MIN_GAS_PRICE));
     return new CreatedLayers(
         prioritizedTransactions, readyTransactions, sparseTransactions, evictCollector);
   }
@@ -216,7 +218,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
       final var tx =
           createTransaction(
               i,
-              Wei.of((i + 1) * 100L),
+              DEFAULT_MIN_GAS_PRICE.multiply(2 * (i + 1)),
               (int) poolConf.getPendingTransactionsLayerMaxCapacityBytes() + 1,
               SIGNATURE_ALGORITHM.get().generateKeyPair());
       pendingTransactions.addTransaction(createRemotePendingTransaction(tx), Optional.of(sender));
@@ -229,7 +231,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     final Transaction lastBigTx =
         createTransaction(
             0,
-            Wei.of(100_000L),
+            DEFAULT_MIN_GAS_PRICE.multiply(1000),
             (int) poolConf.getPendingTransactionsLayerMaxCapacityBytes(),
             SIGNATURE_ALGORITHM.get().generateKeyPair());
     final Account lastSender = mock(Account.class);
@@ -458,8 +460,10 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     final Account sender2 = mock(Account.class);
     when(sender2.getNonce()).thenReturn(1L);
 
-    final Transaction transactionSender1 = createTransaction(0, Wei.of(100), KEYS1);
-    final Transaction transactionSender2 = createTransaction(1, Wei.of(200), KEYS2);
+    final Transaction transactionSender1 =
+        createTransaction(0, DEFAULT_MIN_GAS_PRICE.multiply(2), KEYS1);
+    final Transaction transactionSender2 =
+        createTransaction(1, DEFAULT_MIN_GAS_PRICE.multiply(4), KEYS2);
 
     pendingTransactions.addTransaction(
         createLocalPendingTransaction(transactionSender1), Optional.empty());
@@ -523,9 +527,9 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   @Test
   public void replaceTransactionWithSameSenderAndNonce() {
-    final Transaction transaction1 = createTransaction(0, Wei.of(200), KEYS1);
+    final Transaction transaction1 = createTransaction(0, DEFAULT_MIN_GAS_PRICE.multiply(4), KEYS1);
     final Transaction transaction1b = createTransactionReplacement(transaction1, KEYS1);
-    final Transaction transaction2 = createTransaction(1, Wei.of(100), KEYS1);
+    final Transaction transaction2 = createTransaction(1, DEFAULT_MIN_GAS_PRICE.multiply(2), KEYS1);
     assertThat(
             pendingTransactions.addTransaction(
                 createRemotePendingTransaction(transaction1), Optional.empty()))
@@ -646,8 +650,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   @Test
   public void notReplaceTransactionWithSameSenderAndNonceWhenGasPriceIsLower() {
-    final Transaction transaction1 = createTransaction(0, Wei.of(2));
-    final Transaction transaction1b = createTransaction(0, Wei.ONE);
+    final Transaction transaction1 = createTransaction(0, DEFAULT_MIN_GAS_PRICE.add(1));
+    final Transaction transaction1b = createTransaction(0, DEFAULT_MIN_GAS_PRICE);
     assertThat(
             pendingTransactions.addTransaction(
                 createRemotePendingTransaction(transaction1), Optional.empty()))

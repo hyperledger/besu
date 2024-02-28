@@ -93,7 +93,7 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
     return getBlockchainQueries()
         .getBlockchain()
         .getBlockByNumber(blockNumber)
-        .map((block) -> traceBlock(block, traceTypeParameter))
+        .map(block -> traceBlock(block, traceTypeParameter))
         .orElse(null);
   }
 
@@ -127,7 +127,7 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
                           "step",
                           "action");
               final DebugOperationTracer debugOperationTracer =
-                  new DebugOperationTracer(new TraceOptions(false, false, true));
+                  new DebugOperationTracer(new TraceOptions(false, false, true), false);
               final ExecuteTransactionStep executeTransactionStep =
                   new ExecuteTransactionStep(
                       chainUpdater,

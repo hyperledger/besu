@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -69,7 +70,8 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             ProtocolSpecAdapters.create(0, Function.identity()),
             new PrivacyParameters(),
             false,
-            EvmConfiguration.DEFAULT)
+            EvmConfiguration.DEFAULT,
+            new BadBlockManager())
         .createProtocolSchedule();
   }
 
@@ -110,12 +112,15 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
             createMiningParameters(
-                Wei.of(6), MIN_OCCUPANCY_80_PERCENT, DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
+                transactionSelectionService,
+                Wei.of(6),
+                MIN_OCCUPANCY_80_PERCENT,
+                DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
             Wei.ZERO,
-            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
+            transactionSelectionService);
 
     // tx is willing to pay max 7 wei for gas, but current network condition (baseFee == 1)
     // result in it paying 2 wei, that is below the minimum accepted by the node, so it is skipped
@@ -139,12 +144,15 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
             createMiningParameters(
-                Wei.of(6), MIN_OCCUPANCY_80_PERCENT, DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
+                transactionSelectionService,
+                Wei.of(6),
+                MIN_OCCUPANCY_80_PERCENT,
+                DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
             Wei.ZERO,
-            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
+            transactionSelectionService);
 
     // tx is willing to pay max 7 wei for gas, and current network condition (baseFee == 5)
     // result in it paying the max, that is >= the minimum accepted by the node, so it is selected
@@ -167,12 +175,15 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
             createMiningParameters(
-                Wei.of(6), MIN_OCCUPANCY_80_PERCENT, DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
+                transactionSelectionService,
+                Wei.of(6),
+                MIN_OCCUPANCY_80_PERCENT,
+                DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
             Wei.ZERO,
-            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
+            transactionSelectionService);
 
     // tx is willing to pay max 7 wei for gas, but current network condition (baseFee == 1)
     // result in it paying 2 wei, that is below the minimum accepted by the node, but since it is
@@ -211,7 +222,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             blockHeader,
             miningBeneficiary,
             Wei.ZERO,
-            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
+            transactionSelectionService);
 
     transactionPool.addRemoteTransactions(List.of(txFrontier1, txLondon1, txFrontier2, txLondon2));
 
@@ -252,7 +263,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             blockHeader,
             AddressHelpers.ofValue(1),
             Wei.ZERO,
-            NO_PLUGIN_TRANSACTION_SELECTOR_FACTORY);
+            transactionSelectionService);
 
     transactionPool.addRemoteTransactions(
         List.of(txSelected1, txNotSelected1, txSelected2, txNotSelected2));

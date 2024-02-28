@@ -127,7 +127,6 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
         contract.setNonce(initialContractNonce);
         contract.clearStorage();
         frame.setState(MessageFrame.State.CODE_EXECUTING);
-        frame.addCreate(contractAddress);
       }
     } catch (final ModificationNotAllowedException ex) {
       LOG.trace("Contract creation error: attempt to mutate an immutable account");

@@ -78,19 +78,18 @@ public abstract class AbstractTraceByHash implements JsonRpcMethod {
     return Tracer.processTracing(
             blockchainQueries,
             Optional.of(block.getHeader()),
-            mutableWorldState -> {
-              return blockTracerSupplier
-                  .get()
-                  .trace(
-                      mutableWorldState,
-                      block,
-                      new DebugOperationTracer(new TraceOptions(false, false, true)))
-                  .map(BlockTrace::getTransactionTraces)
-                  .orElse(Collections.emptyList())
-                  .stream()
-                  .filter(trxTrace -> trxTrace.getTransaction().getHash().equals(transactionHash))
-                  .findFirst();
-            })
+            mutableWorldState ->
+                blockTracerSupplier
+                    .get()
+                    .trace(
+                        mutableWorldState,
+                        block,
+                        new DebugOperationTracer(new TraceOptions(false, false, true), false))
+                    .map(BlockTrace::getTransactionTraces)
+                    .orElse(Collections.emptyList())
+                    .stream()
+                    .filter(trxTrace -> trxTrace.getTransaction().getHash().equals(transactionHash))
+                    .findFirst())
         .orElseThrow();
   }
 
