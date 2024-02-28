@@ -20,8 +20,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.CliqueConfigOptions;
+import org.hyperledger.besu.config.ImmutableCliqueConfigOptions;
 import org.hyperledger.besu.config.JsonCliqueConfigOptions;
-import org.hyperledger.besu.consensus.clique.MutableCliqueConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
@@ -63,12 +63,10 @@ public class CliqueBlockSchedulerTest {
 
     blockHeaderBuilder = new BlockHeaderTestFixture();
 
-    final MutableCliqueConfigOptions initialTransition =
-        new MutableCliqueConfigOptions(JsonCliqueConfigOptions.DEFAULT);
-    initialTransition.setBlockPeriodSeconds(5);
-    forksSchedule =
-        new ForksSchedule<>(
-            List.of(new ForkSpec<>(0, new MutableCliqueConfigOptions(initialTransition))));
+    var initialTransition =
+        ImmutableCliqueConfigOptions.builder().from(JsonCliqueConfigOptions.DEFAULT);
+    initialTransition.blockPeriodSeconds(5);
+    forksSchedule = new ForksSchedule<>(List.of(new ForkSpec<>(0, initialTransition.build())));
   }
 
   @Test
@@ -98,17 +96,17 @@ public class CliqueBlockSchedulerTest {
     final long currentSecondsSinceEpoch = 10L;
     when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);
 
-    final MutableCliqueConfigOptions initialTransition =
-        new MutableCliqueConfigOptions(JsonCliqueConfigOptions.DEFAULT);
-    initialTransition.setBlockPeriodSeconds(5);
-    final MutableCliqueConfigOptions decreaseBlockTimeTransition =
-        new MutableCliqueConfigOptions(initialTransition);
-    decreaseBlockTimeTransition.setBlockPeriodSeconds(1);
+    final var initialTransition =
+        ImmutableCliqueConfigOptions.builder().from(JsonCliqueConfigOptions.DEFAULT);
+    initialTransition.blockPeriodSeconds(5);
+    final var decreaseBlockTimeTransition =
+        ImmutableCliqueConfigOptions.builder().from(JsonCliqueConfigOptions.DEFAULT);
+    decreaseBlockTimeTransition.blockPeriodSeconds(1);
     forksSchedule =
         new ForksSchedule<>(
             List.of(
-                new ForkSpec<>(0, new MutableCliqueConfigOptions(initialTransition)),
-                new ForkSpec<>(4, new MutableCliqueConfigOptions(decreaseBlockTimeTransition))));
+                new ForkSpec<>(0, initialTransition.build()),
+                new ForkSpec<>(4, decreaseBlockTimeTransition.build())));
 
     final CliqueBlockScheduler scheduler =
         new CliqueBlockScheduler(clock, validatorProvider, localAddr, forksSchedule);
@@ -142,7 +140,7 @@ public class CliqueBlockSchedulerTest {
   }
 
   @Test
-  public void outOfturnValidatorWaitsLongerThanBlockInterval() {
+  public void outOfTurnValidatorWaitsLongerThanBlockInterval() {
     final Clock clock = mock(Clock.class);
     final long currentSecondsSinceEpoch = 10L;
     when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);

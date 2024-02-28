@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.clique;
 import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.config.CliqueFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.ImmutableCliqueConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.ForksScheduleFactory;
@@ -40,11 +41,9 @@ public class CliqueForksSchedulesFactory {
 
   private static CliqueConfigOptions createCliqueConfigOptions(
       final ForkSpec<CliqueConfigOptions> lastSpec, final CliqueFork fork) {
-    final MutableCliqueConfigOptions cliqueConfigOptions =
-        new MutableCliqueConfigOptions(lastSpec.getValue());
 
-    fork.getBlockPeriodSeconds().ifPresent(cliqueConfigOptions::setBlockPeriodSeconds);
-
-    return cliqueConfigOptions;
+    var options = ImmutableCliqueConfigOptions.builder().from(lastSpec.getValue());
+    fork.getBlockPeriodSeconds().ifPresent(options::blockPeriodSeconds);
+    return options.build();
   }
 }
