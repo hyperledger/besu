@@ -169,22 +169,30 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
       if (invalidReason.isEmpty()) {
         frame.decrementRemainingGas(depositFee);
 
-        // Finalize contract creation, setting the contract code.
-        final MutableAccount contract =
-            frame.getWorldUpdater().getOrCreate(frame.getContractAddress());
-        contract.setCode(contractCode);
-        LOG.info(
-            "Successful creation of contract {} with code of size {} (Gas remaining: {})",
-            frame.getContractAddress(),
-            contractCode.size(),
-            frame.getRemainingGas());
-        frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
+        final long statelessContractCompletionFee = gasCalculator.completedCreateContractGasCost(frame);
 
-        frame.decrementRemainingGas(gasCalculator.completedCreateContractGasCost(frame));
-
-        if (frame.getRemainingGas() < 0) {
-          frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-          frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+        if(frame.getRemainingGas() < statelessContractCompletionFee){
+            LOG.trace(
+                    "Not enough gas to pay the contract creation completion fee for {}: "
+                            + "remaining gas = {} < {} = deposit fee",
+                    frame.getContractAddress(),
+                    frame.getRemainingGas(),
+                    statelessContractCompletionFee);
+            frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+            frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+        }
+        else{
+          frame.decrementRemainingGas(gasCalculator.completedCreateContractGasCost(frame));
+          // Finalize contract creation, setting the contract code.
+          final MutableAccount contract =
+                  frame.getWorldUpdater().getOrCreate(frame.getContractAddress());
+          contract.setCode(contractCode);
+          LOG.info(
+                  "Successful creation of contract {} with code of size {} (Gas remaining: {})",
+                  frame.getContractAddress(),
+                  contractCode.size(),
+                  frame.getRemainingGas());
+          frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
         }
 
         if (operationTracer.isExtendedTracing()) {
