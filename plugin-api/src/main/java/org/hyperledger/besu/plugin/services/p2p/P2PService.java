@@ -16,9 +16,12 @@ package org.hyperledger.besu.plugin.services.p2p;
 
 import org.hyperledger.besu.plugin.services.BesuService;
 
+/** Service to enable and disable P2P service. */
 public interface P2PService extends BesuService {
 
+  /** Enables P2P discovery. */
   void enableDiscovery();
 
+  /** Disables P2P discovery. */
   void disableDiscovery();
 }

@@ -109,6 +109,11 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
     return chainDataPruningBlocksRetained;
   }
 
+  /**
+   * Get the configured number of retained blocks for chain pruning.
+   *
+   * @return the number of retained blocks
+   */
   public Long getChainDataPruningBlocksRetainedLimit() {
     return chainDataPruningBlocksRetainedLimit;
   }

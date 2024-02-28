@@ -63,8 +63,8 @@ public interface BesuPlugin {
    */
   void start();
 
+  /** Hook to execute plugin setup code after external services */
   default void afterExternalServicePostMainLoop() {}
-  ;
 
   /**
    * Called when the plugin is being reloaded. This method will be called through a dedicated JSON

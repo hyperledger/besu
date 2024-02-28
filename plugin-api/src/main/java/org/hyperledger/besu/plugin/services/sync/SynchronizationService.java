@@ -19,15 +19,44 @@ import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.BesuService;
 
+/** Synchronization service wraps the sync state and sync event lifecycle. */
 public interface SynchronizationService extends BesuService {
 
+  /**
+   * Enables P2P discovery.
+   *
+   * @param head the head of the chain.
+   * @param safeBlock the safe block.
+   * @param finalizedBlock the finalized block.
+   */
   void fireNewUnverifiedForkchoiceEvent(Hash head, Hash safeBlock, Hash finalizedBlock);
 
+  /**
+   * Set the head of the chain.
+   *
+   * @param blockHeader the block header
+   * @param blockBody the block body
+   * @return true if the head was set, false otherwise.
+   */
   boolean setHead(final BlockHeader blockHeader, final BlockBody blockBody);
 
+  /**
+   * Adds the block header and body to the head of the chain directly, without using a block
+   * importer or validation.
+   *
+   * @param blockHeader the block header
+   * @param blockBody the block body
+   * @return true if the head was set, false otherwise.
+   */
   boolean setHeadUnsafe(BlockHeader blockHeader, BlockBody blockBody);
 
+  /**
+   * Returns whether the initial chain and worldstate sync is complete.
+   *
+   * @return true if the initial sync phase is done, false otherwise.
+   */
   boolean isInitialSyncPhaseDone();
 
+  /** Disables the worldstate trie for update. */
   void disableWorldStateTrie();
 }

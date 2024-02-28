@@ -23,6 +23,13 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** Trielog provider interface for a given block hash. */
 public interface TrieLogProvider {
+  /**
+   * Saves the TrieLog layer for the given block hash.
+   *
+   * @param blockHash the block hash
+   * @param blockNumber the block number
+   * @param trieLog the associated TrieLog layer
+   */
   void saveRawTrieLogLayer(final Hash blockHash, final long blockNumber, final Bytes trieLog);
 
   /**
@@ -34,6 +41,12 @@ public interface TrieLogProvider {
    */
   <T extends TrieLog.LogTuple<?>> Optional<TrieLog> getTrieLogLayer(final Hash blockHash);
 
+  /**
+   * Get the raw TrieLog layer for the given block hash.
+   *
+   * @param blockHash the block hash
+   * @return the raw TrieLog layer bytes for the given block hash
+   */
   Optional<Bytes> getRawTrieLogLayer(final Hash blockHash);
 
   /**
@@ -45,6 +58,12 @@ public interface TrieLogProvider {
    */
   <T extends TrieLog.LogTuple<?>> Optional<TrieLog> getTrieLogLayer(final long blockNumber);
 
+  /**
+   * Get the raw TrieLog layer for the given block number.
+   *
+   * @param blockNumber the block number
+   * @return the raw TrieLog layer bytes for the given block number
+   */
   Optional<Bytes> getRawTrieLogLayer(final long blockNumber);
 
   /**

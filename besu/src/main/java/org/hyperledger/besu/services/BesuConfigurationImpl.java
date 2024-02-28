@@ -41,6 +41,7 @@ public class BesuConfigurationImpl implements BesuConfiguration {
    * @param dataPath The Path representing data folder
    * @param storagePath The path representing storage folder
    * @param dataStorageConfiguration The data storage configuration
+   * @return BesuConfigurationImpl instance
    */
   public BesuConfigurationImpl init(
       final Path dataPath,
@@ -52,11 +53,23 @@ public class BesuConfigurationImpl implements BesuConfiguration {
     return this;
   }
 
+  /**
+   * Set the mining parameters
+   *
+   * @param miningParameters configured mining parameters
+   * @return BesuConfigurationImpl instance
+   */
   public BesuConfigurationImpl withMiningParameters(final MiningParameters miningParameters) {
     this.miningParameters = miningParameters;
     return this;
   }
 
+  /**
+   * Set the RPC http options
+   *
+   * @param rpcHttpOptions configured rpc http options
+   * @return BesuConfigurationImpl instance
+   */
   public BesuConfigurationImpl withJsonRpcHttpOptions(final JsonRpcHttpOptions rpcHttpOptions) {
     this.rpcHttpHost = Optional.ofNullable(rpcHttpOptions.getRpcHttpHost());
     this.rpcHttpPort = Optional.ofNullable(rpcHttpOptions.getRpcHttpPort());

@@ -17,10 +17,16 @@ package org.hyperledger.besu.services;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolService;
 
+/** Service to enable and disable the transaction pool. */
 public class TransactionPoolServiceImpl implements TransactionPoolService {
 
   private final TransactionPool transactionPool;
 
+  /**
+   * Creates a new TransactionPoolServiceImpl.
+   *
+   * @param transactionPool the transaction pool to control
+   */
   public TransactionPoolServiceImpl(final TransactionPool transactionPool) {
     this.transactionPool = transactionPool;
   }

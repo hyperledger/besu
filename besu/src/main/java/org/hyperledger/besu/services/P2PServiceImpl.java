@@ -17,14 +17,21 @@ package org.hyperledger.besu.services;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.plugin.services.p2p.P2PService;
 
+/** Service to enable and disable P2P discovery. */
 public class P2PServiceImpl implements P2PService {
 
   private final P2PNetwork p2PNetwork;
 
+  /**
+   * Creates a new P2PServiceImpl.
+   *
+   * @param p2PNetwork the P2P network to enable and disable.
+   */
   public P2PServiceImpl(final P2PNetwork p2PNetwork) {
     this.p2PNetwork = p2PNetwork;
   }
 
+  /** Enables P2P discovery. */
   @Override
   public void enableDiscovery() {
     p2PNetwork.start();

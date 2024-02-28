@@ -37,6 +37,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** Synchronization service. */
 public class SynchronizationServiceImpl implements SynchronizationService {
 
   private static final Logger LOG = LoggerFactory.getLogger(SynchronizationServiceImpl.class);
@@ -47,6 +48,14 @@ public class SynchronizationServiceImpl implements SynchronizationService {
   private final SyncState syncState;
   private final Optional<BonsaiWorldStateProvider> worldStateArchive;
 
+  /**
+   * Constructor for SynchronizationServiceImpl.
+   *
+   * @param protocolContext protocol context
+   * @param protocolSchedule protocol schedule
+   * @param syncState sync state
+   * @param worldStateArchive world state archive
+   */
   public SynchronizationServiceImpl(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,

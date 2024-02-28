@@ -43,8 +43,21 @@ public interface BlockchainService extends BesuService {
    */
   Hash getChainHeadHash();
 
+  /**
+   * Get the receipts for a block by block hash
+   *
+   * @param blockHash the block hash
+   * @return the transaction receipts
+   */
   Optional<List<TransactionReceipt>> getReceiptsByBlockHash(Hash blockHash);
 
+  /**
+   * Store a block
+   *
+   * @param blockHeader the block header
+   * @param blockBody the block body
+   * @param receipts the transaction receipts
+   */
   void storeBlock(BlockHeader blockHeader, BlockBody blockBody, List<TransactionReceipt> receipts);
 
   /**
@@ -61,7 +74,17 @@ public interface BlockchainService extends BesuService {
    */
   Optional<Wei> getNextBlockBaseFee();
 
+  /**
+   * Get the block hash of the safe block
+   *
+   * @return the block hash of the safe block
+   */
   Optional<Hash> getSafeBlock();
 
+  /**
+   * Get the block hash of the finalized block
+   *
+   * @return the block hash of the finalized block
+   */
   Optional<Hash> getFinalizedBlock();
 }

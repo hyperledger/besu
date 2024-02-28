@@ -91,6 +91,12 @@ public interface BesuEvents extends BesuService {
    */
   void removeBlockReorgListener(long listenerIdentifier);
 
+  /**
+   * Add an initial sync completion listener.
+   *
+   * @param listener to subscribe to initial sync completion events
+   * @return id of listener subscription
+   */
   long addInitialSyncCompletionListener(final InitialSyncCompletionListener listener);
 
   /**
