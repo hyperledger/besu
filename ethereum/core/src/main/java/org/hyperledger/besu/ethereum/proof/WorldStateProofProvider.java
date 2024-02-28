@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,8 @@ import com.google.common.collect.Ordering;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The WorldStateProofProvider class is responsible for providing proofs for world state entries. It
@@ -49,6 +52,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class WorldStateProofProvider {
 
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
+  private static final Logger LOG = LoggerFactory.getLogger(WorldStateProofProvider.class);
 
   public WorldStateProofProvider(final WorldStateStorageCoordinator worldStateStorageCoordinator) {
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
@@ -85,7 +89,8 @@ public class WorldStateProofProvider {
       final List<UInt256> accountStorageKeys) {
     final MerkleTrie<Bytes32, Bytes> storageTrie =
         newAccountStorageTrie(accountHash, account.getStorageRoot());
-    final NavigableMap<UInt256, Proof<Bytes>> storageProofs = new TreeMap<>();
+    final NavigableMap<UInt256, Proof<Bytes>> storageProofs =
+        new TreeMap<>(Comparator.comparing(Bytes32::toHexString));
     accountStorageKeys.forEach(
         key -> storageProofs.put(key, storageTrie.getValueWithProof(Hash.hash(key))));
     return storageProofs;
@@ -153,19 +158,26 @@ public class WorldStateProofProvider {
       final SortedMap<Bytes32, Bytes> keys) {
 
     // check if it's monotonic increasing
-    if (!Ordering.natural().isOrdered(keys.keySet())) {
+    if (keys.size() > 1 && !Ordering.natural().isOrdered(keys.keySet())) {
       return false;
     }
 
-    // when proof is empty we need to have all the keys to reconstruct the trie
+    // when proof is empty and we requested the full range, we should
+    // have all the keys to reconstruct the trie
     if (proofs.isEmpty()) {
-      final MerkleTrie<Bytes, Bytes> trie = new SimpleMerklePatriciaTrie<>(Function.identity());
-      // add the received keys in the trie
-      for (Map.Entry<Bytes32, Bytes> key : keys.entrySet()) {
-        trie.put(key.getKey(), key.getValue());
+      if (startKeyHash.equals(Bytes32.ZERO)) {
+        final MerkleTrie<Bytes, Bytes> trie = new SimpleMerklePatriciaTrie<>(Function.identity());
+        // add the received keys in the trie
+        for (Map.Entry<Bytes32, Bytes> key : keys.entrySet()) {
+          trie.put(key.getKey(), key.getValue());
+        }
+        return rootHash.equals(trie.getRootHash());
+      } else {
+        // TODO: possibly accept a node loader so we can verify this with already
+        //  completed partial storage requests
+        LOG.info("failing proof due to incomplete range without proofs");
+        return false;
       }
-
-      return rootHash.equals(trie.getRootHash());
     }
 
     // reconstruct a part of the trie with the proof

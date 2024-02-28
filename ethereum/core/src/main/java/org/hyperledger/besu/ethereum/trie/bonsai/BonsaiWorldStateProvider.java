@@ -135,7 +135,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
 
   @Override
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
-    return cachedWorldStorageManager.containWorldStateStorage(blockHash)
+    return cachedWorldStorageManager.contains(blockHash)
         || persistedState.blockHash().equals(blockHash)
         || worldStateKeyValueStorage.isWorldStateAvailable(rootHash, blockHash);
   }
@@ -273,6 +273,10 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     return cachedMerkleTrieLoader;
   }
 
+  public CachedWorldStorageManager getCachedWorldStorageManager() {
+    return cachedWorldStorageManager;
+  }
+
   @Override
   public MutableWorldState getMutable() {
     return persistedState;
@@ -340,10 +344,6 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
 
   public TrieLogManager getTrieLogManager() {
     return trieLogManager;
-  }
-
-  public CachedWorldStorageManager getCachedWorldStorageManager() {
-    return cachedWorldStorageManager;
   }
 
   @Override

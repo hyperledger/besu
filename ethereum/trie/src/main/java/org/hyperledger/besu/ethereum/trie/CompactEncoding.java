@@ -24,6 +24,13 @@ public abstract class CompactEncoding {
 
   public static final byte LEAF_TERMINATOR = 0x10;
 
+  /**
+   * Converts a byte sequence into a path by splitting each byte into two nibbles. The resulting
+   * path is terminated with a leaf terminator.
+   *
+   * @param bytes the byte sequence to convert into a path
+   * @return the resulting path
+   */
   public static Bytes bytesToPath(final Bytes bytes) {
     final MutableBytes path = MutableBytes.create(bytes.size() * 2 + 1);
     int j = 0;
@@ -36,6 +43,15 @@ public abstract class CompactEncoding {
     return path;
   }
 
+  /**
+   * Converts a path into a byte sequence by combining each pair of nibbles into a byte. The path
+   * must be a leaf path, i.e., it must be terminated with a leaf terminator.
+   *
+   * @param path the path to convert into a byte sequence
+   * @return the resulting byte sequence
+   * @throws IllegalArgumentException if the path is empty or not a leaf path, or if it contains
+   *     elements larger than a nibble
+   */
   public static Bytes pathToBytes(final Bytes path) {
     checkArgument(!path.isEmpty(), "Path must not be empty");
     checkArgument(path.get(path.size() - 1) == LEAF_TERMINATOR, "Path must be a leaf path");
@@ -52,6 +68,14 @@ public abstract class CompactEncoding {
     return bytes;
   }
 
+  /**
+   * Encodes a path into a compact form. The encoding includes a metadata byte that indicates
+   * whether the path is a leaf path and whether its length is odd or even.
+   *
+   * @param path the path to encode
+   * @return the encoded path
+   * @throws IllegalArgumentException if the path contains elements larger than a nibble
+   */
   public static Bytes encode(final Bytes path) {
     int size = path.size();
     final boolean isLeaf = size > 0 && path.get(size - 1) == LEAF_TERMINATOR;
@@ -88,6 +112,14 @@ public abstract class CompactEncoding {
     return encoded;
   }
 
+  /**
+   * Decodes a path from its compact form. The decoding process takes into account the metadata byte
+   * that indicates whether the path is a leaf path and whether its length is odd or even.
+   *
+   * @param encoded the encoded path to decode
+   * @return the decoded path
+   * @throws IllegalArgumentException if the encoded path is empty or its metadata byte is invalid
+   */
   public static Bytes decode(final Bytes encoded) {
     final int size = encoded.size();
     checkArgument(size > 0);

@@ -34,6 +34,13 @@ public interface DataStorageConfiguration {
           .unstable(Unstable.DEFAULT)
           .build();
 
+  DataStorageConfiguration BONSAI_CODE_BY_HASH_CONFIG =
+      ImmutableDataStorageConfiguration.builder()
+          .dataStorageFormat(DataStorageFormat.BONSAI)
+          .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+          .unstable(Unstable.CODE_BY_CODE_HASH)
+          .build();
+
   DataStorageConfiguration DEFAULT_BONSAI_CONFIG =
       ImmutableDataStorageConfiguration.builder()
           .dataStorageFormat(DataStorageFormat.BONSAI)
@@ -71,6 +78,11 @@ public interface DataStorageConfiguration {
 
     DataStorageConfiguration.Unstable DEFAULT =
         ImmutableDataStorageConfiguration.Unstable.builder().build();
+
+    DataStorageConfiguration.Unstable CODE_BY_CODE_HASH =
+        ImmutableDataStorageConfiguration.Unstable.builder()
+            .bonsaiCodeStoredByCodeHashEnabled(true)
+            .build();
 
     @Value.Default
     default boolean getBonsaiLimitTrieLogsEnabled() {

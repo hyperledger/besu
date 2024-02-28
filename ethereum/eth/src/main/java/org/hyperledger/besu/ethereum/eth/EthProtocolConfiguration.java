@@ -24,7 +24,7 @@ import com.google.common.base.MoreObjects;
 public class EthProtocolConfiguration {
 
   public static final int DEFAULT_MAX_MESSAGE_SIZE = 10 * ByteUnits.MEGABYTE;
-  public static final int DEFAULT_MAX_GET_BLOCK_HEADERS = 192;
+  public static final int DEFAULT_MAX_GET_BLOCK_HEADERS = 512;
   public static final int DEFAULT_MAX_GET_BLOCK_BODIES = 128;
   public static final int DEFAULT_MAX_GET_RECEIPTS = 256;
   public static final int DEFAULT_MAX_GET_NODE_DATA = 384;
