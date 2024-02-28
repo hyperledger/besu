@@ -165,6 +165,9 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   private static final JsonObject GENESIS_WITH_ZERO_BASE_FEE_MARKET =
       new JsonObject().put("config", new JsonObject().put("zeroBaseFee", true));
+  
+  private static final JsonObject GENESIS_WITH_FIXED_BASE_FEE_MARKET =
+      new JsonObject().put("config", new JsonObject().put("fixedBaseFee", true));
 
   static {
     DEFAULT_JSON_RPC_CONFIGURATION = JsonRpcConfiguration.createDefault();
@@ -3444,6 +3447,20 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Price bump option is not compatible with zero base fee market");
+  }
+
+  @Test
+  public void txpoolPriceBumpKeepItsValueIfSetEvenWhenMinGasPriceIsSetWithFixedBaseFee() throws IOException {
+    final Path genesisFile = createFakeGenesisFile(GENESIS_WITH_FIXED_BASE_FEE_MARKET);
+    parseCommand("--min-gas-price", "1", "--tx-pool-price-bump", "10");
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+
+    final Percentage priceBump = transactionPoolConfigCaptor.getValue().getPriceBump();
+    assertThat(priceBump).isEqualTo(Percentage.fromInt(10));
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
