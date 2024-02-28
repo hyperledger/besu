@@ -16,6 +16,9 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.plugin.services.PluginTransactionPoolValidatorService;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolTransactionValidator;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolValidatorFactory;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
@@ -152,6 +155,20 @@ public interface TransactionPoolConfiguration {
   @Value.Default
   default Wei getMinGasPrice() {
     return DEFAULT_TX_POOL_MIN_GAS_PRICE;
+  }
+
+  @Value.Default
+  default PluginTransactionPoolValidatorService getPluginTransactionValidatorService() {
+    return new PluginTransactionPoolValidatorService() {
+      @Override
+      public PluginTransactionPoolTransactionValidator createTransactionValidator() {
+        return PluginTransactionPoolTransactionValidator.VALIDATE_ALL;
+      }
+
+      @Override
+      public void registerTransactionValidatorFactory(
+          final PluginTransactionPoolValidatorFactory transactionValidatorFactory) {}
+    };
   }
 
   @Value.Default

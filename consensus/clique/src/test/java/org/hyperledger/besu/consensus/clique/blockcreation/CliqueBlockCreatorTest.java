@@ -241,8 +241,7 @@ public class CliqueBlockCreatorTest {
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            conf,
-            null);
+            conf);
     transactionPool.setEnabled();
     return transactionPool;
   }

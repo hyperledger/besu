@@ -214,8 +214,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            poolConf,
-            null);
+            poolConf);
 
     this.transactionPool.setEnabled();
 

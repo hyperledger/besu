@@ -160,7 +160,7 @@ import org.hyperledger.besu.plugin.services.BlockchainService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
-import org.hyperledger.besu.plugin.services.PluginTransactionValidatorService;
+import org.hyperledger.besu.plugin.services.PluginTransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
@@ -174,14 +174,13 @@ import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
-import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
-import org.hyperledger.besu.services.PluginTransactionValidatorServiceImpl;
+import org.hyperledger.besu.services.PluginTransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
@@ -370,7 +369,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   P2PDiscoveryOptionGroup p2PDiscoveryOptionGroup = new P2PDiscoveryOptionGroup();
 
   private final TransactionSelectionServiceImpl transactionSelectionServiceImpl;
-  private final PluginTransactionValidatorServiceImpl transactionValidatorServiceImpl;
+  private final PluginTransactionPoolValidatorServiceImpl transactionValidatorServiceImpl;
   private final BlockchainServiceImpl blockchainServiceImpl;
 
   static class P2PDiscoveryOptionGroup {
@@ -956,7 +955,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new PkiBlockCreationConfigurationProvider(),
         new RpcEndpointServiceImpl(),
         new TransactionSelectionServiceImpl(),
-        new PluginTransactionValidatorServiceImpl(),
+        new PluginTransactionPoolValidatorServiceImpl(),
         new BlockchainServiceImpl());
   }
 
@@ -998,7 +997,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl,
       final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
-      final PluginTransactionValidatorServiceImpl transactionValidatorServiceImpl,
+      final PluginTransactionPoolValidatorServiceImpl transactionValidatorServiceImpl,
       final BlockchainServiceImpl blockchainServiceImpl) {
     this.besuComponent = besuComponent;
     this.logger = besuComponent.getBesuCommandLogger();
@@ -1210,7 +1209,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(
         TransactionSelectionService.class, transactionSelectionServiceImpl);
     besuPluginContext.addService(
-        PluginTransactionValidatorService.class, transactionValidatorServiceImpl);
+        PluginTransactionPoolValidatorService.class, transactionValidatorServiceImpl);
     besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
 
     // register built-in plugins
@@ -1791,7 +1790,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .synchronizerConfiguration(buildSyncConfig())
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .networkConfiguration(unstableNetworkingOptions.toDomainObject())
-        .pluginTransactionValidatorFactory(getPluginTransactionValidatorFactory())
         .dataDirectory(dataDir())
         .dataStorageConfiguration(getDataStorageConfiguration())
         .miningParameters(getMiningParameters())
@@ -1820,12 +1818,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
         .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
         .cacheLastBlocks(numberOfblocksToCache);
-  }
-
-  private PluginTransactionValidatorFactory getPluginTransactionValidatorFactory() {
-    final Optional<PluginTransactionValidatorService> txSValidatorService =
-        besuPluginContext.getService(PluginTransactionValidatorService.class);
-    return txSValidatorService.map(PluginTransactionValidatorService::get).orElse(null);
   }
 
   private JsonRpcConfiguration createEngineJsonRpcConfiguration(
@@ -2094,6 +2086,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private TransactionPoolConfiguration buildTransactionPoolConfiguration() {
+    transactionPoolOptions.setPluginTransactionValidatorService(transactionValidatorServiceImpl);
     final var txPoolConf = transactionPoolOptions.toDomainObject();
     final var txPoolConfBuilder =
         ImmutableTransactionPoolConfiguration.builder()

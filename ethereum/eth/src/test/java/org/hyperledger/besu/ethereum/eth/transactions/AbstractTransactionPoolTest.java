@@ -87,8 +87,9 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidator;
-import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
+import org.hyperledger.besu.plugin.services.PluginTransactionPoolValidatorService;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolTransactionValidator;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolValidatorFactory;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.math.BigInteger;
@@ -256,14 +257,8 @@ public abstract class AbstractTransactionPoolTest {
     return createTransactionPool(b -> b.minGasPrice(Wei.of(2)));
   }
 
-  protected TransactionPool createTransactionPool(
-      final Consumer<ImmutableTransactionPoolConfiguration.Builder> configConsumer) {
-    return createTransactionPool(configConsumer, null);
-  }
-
   private TransactionPool createTransactionPool(
-      final Consumer<ImmutableTransactionPoolConfiguration.Builder> configConsumer,
-      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory) {
+      final Consumer<ImmutableTransactionPoolConfiguration.Builder> configConsumer) {
     final ImmutableTransactionPoolConfiguration.Builder configBuilder =
         ImmutableTransactionPoolConfiguration.builder();
     configConsumer.accept(configBuilder);
@@ -287,8 +282,7 @@ public abstract class AbstractTransactionPoolTest {
             transactionBroadcaster,
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            poolConfig,
-            pluginTransactionValidatorFactory);
+            poolConfig);
     txPool.setEnabled();
     return txPool;
   }
@@ -794,11 +788,13 @@ public abstract class AbstractTransactionPoolTest {
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
   public void transactionNotRejectedByPluginShouldBeAdded(final boolean noLocalPriority) {
-    final PluginTransactionValidatorFactory pluginTransactionValidatorFactory =
-        getPluginTransactionValidatorFactoryReturning(null); // null -> not rejecting !!
+    final PluginTransactionPoolValidatorService pluginTransactionPoolValidatorService =
+        getPluginTransactionPoolValidatorServiceReturning(null); // null -> not rejecting !!
     this.transactionPool =
         createTransactionPool(
-            b -> b.noLocalPriority(noLocalPriority), pluginTransactionValidatorFactory);
+            b ->
+                b.noLocalPriority(noLocalPriority)
+                    .pluginTransactionValidatorService(pluginTransactionPoolValidatorService));
 
     givenTransactionIsValid(transaction0);
 
@@ -808,11 +804,13 @@ public abstract class AbstractTransactionPoolTest {
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
   public void transactionRejectedByPluginShouldNotBeAdded(final boolean noLocalPriority) {
-    final PluginTransactionValidatorFactory pluginTransactionValidatorFactory =
-        getPluginTransactionValidatorFactoryReturning("false");
+    final PluginTransactionPoolValidatorService pluginTransactionPoolValidatorService =
+        getPluginTransactionPoolValidatorServiceReturning("false");
     this.transactionPool =
         createTransactionPool(
-            b -> b.noLocalPriority(noLocalPriority), pluginTransactionValidatorFactory);
+            b ->
+                b.noLocalPriority(noLocalPriority)
+                    .pluginTransactionValidatorService(pluginTransactionPoolValidatorService));
 
     givenTransactionIsValid(transaction0);
 
@@ -822,9 +820,11 @@ public abstract class AbstractTransactionPoolTest {
 
   @Test
   public void remoteTransactionRejectedByPluginShouldNotBeAdded() {
-    final PluginTransactionValidatorFactory pluginTransactionValidatorFactory =
-        getPluginTransactionValidatorFactoryReturning("false");
-    this.transactionPool = createTransactionPool(b -> {}, pluginTransactionValidatorFactory);
+    final PluginTransactionPoolValidatorService pluginTransactionPoolValidatorService =
+        getPluginTransactionPoolValidatorServiceReturning("false");
+    this.transactionPool =
+        createTransactionPool(
+            b -> b.pluginTransactionValidatorService(pluginTransactionPoolValidatorService));
 
     givenTransactionIsValid(transaction0);
 
@@ -1270,11 +1270,18 @@ public abstract class AbstractTransactionPoolTest {
         .containsExactlyInAnyOrder(transaction1, transaction2a, transaction3);
   }
 
-  private static PluginTransactionValidatorFactory getPluginTransactionValidatorFactoryReturning(
-      final String errorMessage) {
-    final PluginTransactionValidator pluginTransactionValidator =
-        transaction -> Optional.ofNullable(errorMessage);
-    return () -> pluginTransactionValidator;
+  private static PluginTransactionPoolValidatorService
+      getPluginTransactionPoolValidatorServiceReturning(final String errorMessage) {
+    return new PluginTransactionPoolValidatorService() {
+      @Override
+      public PluginTransactionPoolTransactionValidator createTransactionValidator() {
+        return (transaction, isLocal, hasPriority) -> Optional.ofNullable(errorMessage);
+      }
+
+      @Override
+      public void registerTransactionValidatorFactory(
+          final PluginTransactionPoolValidatorFactory transactionValidatorFactory) {}
+    };
   }
 
   @SuppressWarnings("unused")
