@@ -13,6 +13,7 @@
 - Extend `Blockchain` service [#6592](https://github.com/hyperledger/besu/pull/6592)
 - Add bft-style blockperiodseconds transitions to Clique [#6596](https://github.com/hyperledger/besu/pull/6596)
 - RocksDB database metadata refactoring [#6555](https://github.com/hyperledger/besu/pull/6555)
+- Make layered txpool aware of minGasPrice and minPriorityFeePerGas dynamic options [#6611](https://github.com/hyperledger/besu/pull/6611)
 
 ### Bug fixes
 
