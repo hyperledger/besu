@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.processor;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
@@ -182,7 +183,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
             frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
         }
         else{
-          frame.decrementRemainingGas(gasCalculator.completedCreateContractGasCost(frame));
+          frame.decrementRemainingGas(statelessContractCompletionFee);
           // Finalize contract creation, setting the contract code.
           final MutableAccount contract =
                   frame.getWorldUpdater().getOrCreate(frame.getContractAddress());
