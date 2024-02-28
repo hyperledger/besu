@@ -165,7 +165,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   private static final JsonObject GENESIS_WITH_ZERO_BASE_FEE_MARKET =
       new JsonObject().put("config", new JsonObject().put("zeroBaseFee", true));
-  
+
   private static final JsonObject GENESIS_WITH_FIXED_BASE_FEE_MARKET =
       new JsonObject().put("config", new JsonObject().put("fixedBaseFee", true));
 
@@ -3450,7 +3450,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void txpoolPriceBumpKeepItsValueIfSetEvenWhenMinGasPriceIsSetWithFixedBaseFee() throws IOException {
+  public void txpoolPriceBumpKeepItsValueIfSetEvenWhenMinGasPriceIsSetWithFixedBaseFee()
+      throws IOException {
     final Path genesisFile = createFakeGenesisFile(GENESIS_WITH_FIXED_BASE_FEE_MARKET);
     parseCommand("--min-gas-price", "1", "--tx-pool-price-bump", "10");
     verify(mockControllerBuilder)
