@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.bft;
+package org.hyperledger.besu.consensus.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -22,9 +22,8 @@ import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.JsonBftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
-import org.hyperledger.besu.consensus.common.ForkSpec;
-import org.hyperledger.besu.consensus.common.ForksSchedule;
-import org.hyperledger.besu.consensus.common.bft.BftForksScheduleFactory.BftSpecCreator;
+import org.hyperledger.besu.consensus.common.ForksScheduleFactory.SpecCreator;
+import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 
 import java.util.List;
 import java.util.Map;
@@ -32,18 +31,17 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-public class BftForksScheduleFactoryTest {
+public class ForksScheduleFactoryTest {
 
   @Test
   @SuppressWarnings("unchecked")
   public void throwsErrorIfHasForkForGenesisBlock() {
     final BftConfigOptions genesisConfigOptions = JsonBftConfigOptions.DEFAULT;
     final BftFork fork = createFork(0, 10, 30);
-    final BftSpecCreator<BftConfigOptions, BftFork> specCreator =
-        Mockito.mock(BftSpecCreator.class);
+    final SpecCreator<BftConfigOptions, BftFork> specCreator = Mockito.mock(SpecCreator.class);
 
     assertThatThrownBy(
-            () -> BftForksScheduleFactory.create(genesisConfigOptions, List.of(fork), specCreator))
+            () -> ForksScheduleFactory.create(genesisConfigOptions, List.of(fork), specCreator))
         .hasMessage("Transition cannot be created for genesis block");
   }
 
@@ -54,25 +52,23 @@ public class BftForksScheduleFactoryTest {
     final BftFork fork1 = createFork(1, 10, 30);
     final BftFork fork2 = createFork(1, 20, 60);
     final BftFork fork3 = createFork(2, 30, 90);
-    final BftSpecCreator<BftConfigOptions, BftFork> specCreator =
-        Mockito.mock(BftSpecCreator.class);
+    final SpecCreator<BftConfigOptions, BftFork> specCreator = Mockito.mock(SpecCreator.class);
 
     assertThatThrownBy(
             () ->
-                BftForksScheduleFactory.create(
+                ForksScheduleFactory.create(
                     genesisConfigOptions, List.of(fork1, fork2, fork3), specCreator))
         .hasMessage("Duplicate transitions cannot be created for the same block");
   }
 
   @SuppressWarnings("unchecked")
   @Test
-  public void createsScheduleUsingSpecCreator() {
+  public void createsSchegit statusduleUsingSpecCreator() {
     final BftConfigOptions genesisConfigOptions = JsonBftConfigOptions.DEFAULT;
     final ForkSpec<BftConfigOptions> genesisForkSpec = new ForkSpec<>(0, genesisConfigOptions);
     final BftFork fork1 = createFork(1, 10, 30);
-    final BftFork fork2 = createFork(2, 20, 60;
-    final BftSpecCreator<BftConfigOptions, BftFork> specCreator =
-        Mockito.mock(BftSpecCreator.class);
+    final BftFork fork2 = createFork(2, 20, 60);
+    final SpecCreator<BftConfigOptions, BftFork> specCreator = Mockito.mock(SpecCreator.class);
 
     final BftConfigOptions configOptions1 = createBftConfigOptions(10, 30);
     final BftConfigOptions configOptions2 = createBftConfigOptions(20, 60);
@@ -80,7 +76,7 @@ public class BftForksScheduleFactoryTest {
     when(specCreator.create(new ForkSpec<>(1, configOptions1), fork2)).thenReturn(configOptions2);
 
     final ForksSchedule<BftConfigOptions> schedule =
-        BftForksScheduleFactory.create(genesisConfigOptions, List.of(fork1, fork2), specCreator);
+        ForksScheduleFactory.create(genesisConfigOptions, List.of(fork1, fork2), specCreator);
     assertThat(schedule.getFork(0)).isEqualTo(genesisForkSpec);
     assertThat(schedule.getFork(1)).isEqualTo(new ForkSpec<>(1, configOptions1));
     assertThat(schedule.getFork(2)).isEqualTo(new ForkSpec<>(2, configOptions2));
@@ -94,7 +90,7 @@ public class BftForksScheduleFactoryTest {
     return bftConfigOptions;
   }
 
-  private BftFork createFork(final long block, final long blockPeriodSeconds) {
+  private BftFork createFork(final long block, final long blockPeriodSeconds, final long emptyBlockPeriodSeconds) {
     return new BftFork(
         JsonUtil.objectNodeFromMap(
             Map.of(
