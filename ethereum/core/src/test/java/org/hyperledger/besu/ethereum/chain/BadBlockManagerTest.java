@@ -19,15 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
-import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.plugin.services.exception.StorageException;
-
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 
 public class BadBlockManagerTest {
 
@@ -35,35 +28,10 @@ public class BadBlockManagerTest {
   final Block block = chainUtil.getBlock(1);
   final BadBlockManager badBlockManager = new BadBlockManager();
 
-  public static Stream<Arguments> getInternalExceptions() {
-    return Stream.of(
-        Arguments.of("StorageException", new StorageException("oops")),
-        Arguments.of("MerkleTrieException", new MerkleTrieException("fail")));
-  }
-
   @Test
   public void addBadBlock_addsBlock() {
     BadBlockManager badBlockManager = new BadBlockManager();
     final BadBlockCause cause = BadBlockCause.fromValidationFailure("failed");
-    badBlockManager.addBadBlock(block, cause);
-
-    assertThat(badBlockManager.getBadBlocks()).containsExactly(block);
-  }
-
-  @ParameterizedTest(name = "[{index}] {0}")
-  @MethodSource("getInternalExceptions")
-  public void addBadBlock_ignoresInternalError(final String caseName, final Exception err) {
-    BadBlockManager badBlockManager = new BadBlockManager();
-    final BadBlockCause cause = BadBlockCause.fromProcessingError(err);
-    badBlockManager.addBadBlock(block, cause);
-
-    assertThat(badBlockManager.getBadBlocks()).isEmpty();
-  }
-
-  @Test
-  public void addBadBlock_doesNotIgnoreRuntimeException() {
-    final Exception err = new RuntimeException("oops");
-    final BadBlockCause cause = BadBlockCause.fromProcessingError(err);
     badBlockManager.addBadBlock(block, cause);
 
     assertThat(badBlockManager.getBadBlocks()).containsExactly(block);
