@@ -41,9 +41,7 @@ public class BadBlockCause {
 
   public static BadBlockCause fromBadAncestorBlock(final Block badAncestor) {
     final String description =
-        String.format(
-            "Descends from bad block %s (#%d)",
-            badAncestor.getHash(), badAncestor.getHeader().getNumber());
+        String.format("Descends from bad block %s", badAncestor.toLogString());
     return new BadBlockCause(BadBlockReason.DESCENDS_FROM_BAD_BLOCK, description, Optional.empty());
   }
 
