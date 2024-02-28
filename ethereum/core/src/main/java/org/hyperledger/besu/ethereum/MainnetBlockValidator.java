@@ -105,7 +105,8 @@ public class MainnetBlockValidator implements BlockValidator {
         var retval =
             new BlockProcessingResult(
                 "Parent block with hash " + header.getParentHash() + " not present");
-        handleAndLogImportFailure(block, retval, shouldRecordBadBlock);
+        // Blocks should not be marked bad due to missing data
+        handleFailedBlockProcessing(block, retval, false);
         return retval;
       }
       parentHeader = maybeParentHeader.get();
@@ -114,12 +115,13 @@ public class MainnetBlockValidator implements BlockValidator {
           header, parentHeader, context, headerValidationMode)) {
         final String error = String.format("Header validation failed (%s)", headerValidationMode);
         var retval = new BlockProcessingResult(error);
-        handleAndLogImportFailure(block, retval, shouldRecordBadBlock);
+        handleFailedBlockProcessing(block, retval, shouldRecordBadBlock);
         return retval;
       }
     } catch (StorageException ex) {
       var retval = new BlockProcessingResult(Optional.empty(), ex);
-      handleAndLogImportFailure(block, retval, shouldRecordBadBlock);
+      // Blocks should not be marked bad due to a local storage failure
+      handleFailedBlockProcessing(block, retval, false);
       return retval;
     }
     try (final var worldState =
@@ -131,12 +133,13 @@ public class MainnetBlockValidator implements BlockValidator {
                 "Unable to process block because parent world state "
                     + parentHeader.getStateRoot()
                     + " is not available");
-        handleAndLogImportFailure(block, retval, shouldRecordBadBlock);
+        // Blocks should not be marked bad due to missing data
+        handleFailedBlockProcessing(block, retval, false);
         return retval;
       }
       var result = processBlock(context, worldState, block);
       if (result.isFailed()) {
-        handleAndLogImportFailure(block, result, shouldRecordBadBlock);
+        handleFailedBlockProcessing(block, result, shouldRecordBadBlock);
         return result;
       } else {
         List<TransactionReceipt> receipts =
@@ -144,7 +147,7 @@ public class MainnetBlockValidator implements BlockValidator {
         if (!blockBodyValidator.validateBody(
             context, block, receipts, worldState.rootHash(), ommerValidationMode)) {
           result = new BlockProcessingResult("failed to validate output of imported block");
-          handleAndLogImportFailure(block, result, shouldRecordBadBlock);
+          handleFailedBlockProcessing(block, result, shouldRecordBadBlock);
           return result;
         }
 
@@ -157,53 +160,50 @@ public class MainnetBlockValidator implements BlockValidator {
           .ifPresentOrElse(
               synchronizer -> synchronizer.healWorldState(ex.getMaybeAddress(), ex.getLocation()),
               () ->
-                  handleAndLogImportFailure(
+                  handleFailedBlockProcessing(
                       block,
                       new BlockProcessingResult(Optional.empty(), ex),
-                      shouldRecordBadBlock));
+                      // Do not record bad black due to missing data
+                      false));
       return new BlockProcessingResult(Optional.empty(), ex);
     } catch (StorageException ex) {
       var retval = new BlockProcessingResult(Optional.empty(), ex);
-      handleAndLogImportFailure(block, retval, shouldRecordBadBlock);
+      // Do not record bad block due to a local storage issue
+      handleFailedBlockProcessing(block, retval, false);
       return retval;
     } catch (Exception ex) {
+      // Wrap checked autocloseable exception from try-with-resources
       throw new RuntimeException(ex);
     }
   }
 
-  private void handleAndLogImportFailure(
-      final Block invalidBlock,
+  private void handleFailedBlockProcessing(
+      final Block failedBlock,
       final BlockValidationResult result,
       final boolean shouldRecordBadBlock) {
     if (result.causedBy().isPresent()) {
+      // Block processing failed exceptionally, we cannot assume the block was intrinsically invalid
       LOG.info(
-          "Invalid block {}: {}, caused by {}",
-          invalidBlock.toLogString(),
+          "Failed to process block {}: {}, caused by {}",
+          failedBlock.toLogString(),
           result.errorMessage,
           result.causedBy().get());
       LOG.debug("with stack", result.causedBy().get());
     } else {
       if (result.errorMessage.isPresent()) {
-        LOG.info("Invalid block {}: {}", invalidBlock.toLogString(), result.errorMessage);
+        LOG.info("Invalid block {}: {}", failedBlock.toLogString(), result.errorMessage);
       } else {
-        LOG.info("Invalid block {}", invalidBlock.toLogString());
+        LOG.info("Invalid block {}", failedBlock.toLogString());
       }
-    }
-    if (shouldRecordBadBlock) {
-      BadBlockCause cause =
-          result
-              .causedBy()
-              .map(BadBlockCause::fromProcessingError)
-              .orElseGet(
-                  () -> {
-                    // Result.errorMessage should not be empty on failure, but add a default to be
-                    // safe
-                    String description = result.errorMessage.orElse("Unknown cause");
-                    return BadBlockCause.fromValidationFailure(description);
-                  });
-      badBlockManager.addBadBlock(invalidBlock, cause);
-    } else {
-      LOG.debug("Invalid block {} not added to badBlockManager ", invalidBlock.toLogString());
+
+      if (shouldRecordBadBlock) {
+        // Result.errorMessage should not be empty on failure, but add a default to be safe
+        String description = result.errorMessage.orElse("Unknown cause");
+        final BadBlockCause cause = BadBlockCause.fromValidationFailure(description);
+        badBlockManager.addBadBlock(failedBlock, cause);
+      } else {
+        LOG.debug("Invalid block {} not added to badBlockManager ", failedBlock.toLogString());
+      }
     }
   }
 
