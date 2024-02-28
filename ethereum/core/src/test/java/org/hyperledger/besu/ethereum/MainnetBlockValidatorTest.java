@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import java.util.Collection;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -45,8 +44,8 @@ import org.junit.jupiter.api.Test;
 public class MainnetBlockValidatorTest {
 
   private final BlockchainSetupUtil chainUtil = BlockchainSetupUtil.forMainnet();
-  private final Block badBlock = chainUtil.getBlock(3);
-  private final Block badBlockParent = chainUtil.getBlock(2);
+  private final Block block = chainUtil.getBlock(3);
+  private final Block blockParent = chainUtil.getBlock(2);
 
   private final MutableBlockchain blockchain = spy(chainUtil.getBlockchain());
   private final ProtocolContext protocolContext = mock(ProtocolContext.class);
@@ -94,7 +93,7 @@ public class MainnetBlockValidatorTest {
     BlockProcessingResult result =
         mainnetBlockValidator.validateAndProcessBlock(
             protocolContext,
-            badBlock,
+            block,
             HeaderValidationMode.DETACHED_ONLY,
             HeaderValidationMode.DETACHED_ONLY);
 
@@ -104,19 +103,19 @@ public class MainnetBlockValidatorTest {
 
   @Test
   public void shouldDetectAndCacheInvalidBlocksWhenParentBlockNotPresent() {
-    final Hash parentHash = badBlockParent.getHash();
+    final Hash parentHash = blockParent.getHash();
     doReturn(Optional.empty()).when(blockchain).getBlockHeader(eq(parentHash));
 
     BlockProcessingResult result =
         mainnetBlockValidator.validateAndProcessBlock(
             protocolContext,
-            badBlock,
+            block,
             HeaderValidationMode.DETACHED_ONLY,
             HeaderValidationMode.DETACHED_ONLY);
 
     final String expectedError = "Parent block with hash " + parentHash + " not present";
     assertValidationFailed(result, expectedError);
-    assertBadBlockIsTracked();
+    assertBadBlockIsTracked(block);
   }
 
   @Test
@@ -131,78 +130,77 @@ public class MainnetBlockValidatorTest {
     BlockProcessingResult result =
         mainnetBlockValidator.validateAndProcessBlock(
             protocolContext,
-            badBlock,
+            block,
             HeaderValidationMode.DETACHED_ONLY,
             HeaderValidationMode.DETACHED_ONLY);
 
     final String expectedError = "Header validation failed (DETACHED_ONLY)";
     assertValidationFailed(result, expectedError);
-    assertBadBlockIsTracked();
+    assertBadBlockIsTracked(block);
   }
 
   @Test
   public void shouldDetectAndCacheInvalidBlocksWhenBlockBodyInvalid() {
-    when(blockBodyValidator.validateBody(any(), eq(badBlock), any(), any(), any()))
-        .thenReturn(false);
+    when(blockBodyValidator.validateBody(any(), eq(block), any(), any(), any())).thenReturn(false);
 
     BlockProcessingResult result =
         mainnetBlockValidator.validateAndProcessBlock(
             protocolContext,
-            badBlock,
+            block,
             HeaderValidationMode.DETACHED_ONLY,
             HeaderValidationMode.DETACHED_ONLY);
 
     final String expectedError = "failed to validate output of imported block";
     assertValidationFailed(result, expectedError);
-    assertBadBlockIsTracked();
+    assertBadBlockIsTracked(block);
   }
 
   @Test
   public void shouldDetectAndCacheInvalidBlocksWhenParentWorldStateNotAvailable() {
-    when(worldStateArchive.getMutable(eq(badBlockParent.getHeader()), anyBoolean()))
+    when(worldStateArchive.getMutable(eq(blockParent.getHeader()), anyBoolean()))
         .thenReturn(Optional.empty());
 
     BlockProcessingResult result =
         mainnetBlockValidator.validateAndProcessBlock(
             protocolContext,
-            badBlock,
+            block,
             HeaderValidationMode.DETACHED_ONLY,
             HeaderValidationMode.DETACHED_ONLY);
 
     final String expectedError =
         "Unable to process block because parent world state "
-            + badBlockParent.getHeader().getStateRoot()
+            + blockParent.getHeader().getStateRoot()
             + " is not available";
     assertValidationFailed(result, expectedError);
-    assertBadBlockIsTracked();
+    assertBadBlockIsTracked(block);
   }
 
   @Test
   public void shouldDetectAndCacheInvalidBlocksWhenProcessBlockFailed() {
-    when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
+    when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(block)))
         .thenReturn(BlockProcessingResult.FAILED);
 
     BlockProcessingResult result =
         mainnetBlockValidator.validateAndProcessBlock(
             protocolContext,
-            badBlock,
+            block,
             HeaderValidationMode.DETACHED_ONLY,
             HeaderValidationMode.DETACHED_ONLY);
 
     final String expectedError = "processing failed";
     assertValidationFailed(result, expectedError);
-    assertBadBlockIsTracked();
+    assertBadBlockIsTracked(block);
   }
 
   @Test
   public void when_shouldRecordBadBlockIsFalse_Expect_BlockNotAddedToBadBlockManager() {
-    when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
+    when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(block)))
         .thenReturn(BlockProcessingResult.FAILED);
 
     BlockProcessingResult result =
         mainnetBlockValidator.validateAndProcessBlock(
             protocolContext,
-            badBlock,
+            block,
             HeaderValidationMode.DETACHED_ONLY,
             HeaderValidationMode.DETACHED_ONLY,
             false,
@@ -214,48 +212,46 @@ public class MainnetBlockValidatorTest {
 
   @Test
   public void when_shouldRecordBadBlockIsTrue_Expect_BlockAddedToBadBlockManager() {
-    when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
+    when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(block)))
         .thenReturn(BlockProcessingResult.FAILED);
 
     BlockProcessingResult result =
         mainnetBlockValidator.validateAndProcessBlock(
             protocolContext,
-            badBlock,
+            block,
             HeaderValidationMode.DETACHED_ONLY,
             HeaderValidationMode.DETACHED_ONLY,
             false,
             true);
 
     assertThat(result.isFailed()).isTrue();
-    assertBadBlockIsTracked();
+    assertBadBlockIsTracked(block);
   }
 
   @Test
   public void when_shouldRecordBadBlockIsNotSet_Expect_BlockAddedToBadBlockManager() {
-    when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
+    when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(block)))
         .thenReturn(BlockProcessingResult.FAILED);
 
     BlockProcessingResult result =
         mainnetBlockValidator.validateAndProcessBlock(
             protocolContext,
-            badBlock,
+            block,
             HeaderValidationMode.DETACHED_ONLY,
             HeaderValidationMode.DETACHED_ONLY,
             false);
 
     assertThat(result.isFailed()).isTrue();
-    assertBadBlockIsTracked();
+    assertBadBlockIsTracked(block);
   }
 
   private void assertNoBadBlocks() {
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
   }
 
-  private void assertBadBlockIsTracked() {
-    final Collection<Block> badBlocks = badBlockManager.getBadBlocks();
-    assertThat(badBlocks).hasSize(1);
-    assertThat(badBlocks).containsExactly(badBlock);
-    assertThat(badBlockManager.getBadBlock(badBlock.getHash())).contains(badBlock);
+  private void assertBadBlockIsTracked(final Block badBlock) {
+    assertThat(badBlockManager.getBadBlocks()).containsExactly(badBlock);
+    assertThat(badBlockManager.getBadBlock(badBlock.getHash())).contains(block);
   }
 
   private void assertValidationFailed(
