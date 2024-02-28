@@ -171,7 +171,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         return new BlockProcessingResult(Optional.empty(), errorMessage);
       }
       worldStateUpdater.commit();
-
+      LOG.info("Gas used by tx({}): {}",transaction.getHash(), transaction.getGasLimit() - result.getGasRemaining());
       currentGasUsed += transaction.getGasLimit() - result.getGasRemaining();
       LOG.info("Current gas used: {} for block {}", currentGasUsed, blockHeader.getNumber());
       final TransactionReceipt transactionReceipt =
