@@ -3453,7 +3453,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void txpoolPriceBumpKeepItsValueIfSetEvenWhenMinGasPriceIsSetWithFixedBaseFee()
       throws IOException {
     final Path genesisFile = createFakeGenesisFile(GENESIS_WITH_FIXED_BASE_FEE_MARKET);
-    parseCommand("--min-gas-price", "1", "--tx-pool-price-bump", "10");
+    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "1", "--tx-pool-price-bump", "10");
     verify(mockControllerBuilder)
         .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
 
