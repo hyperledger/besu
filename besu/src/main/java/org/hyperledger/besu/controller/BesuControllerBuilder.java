@@ -97,7 +97,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
@@ -534,17 +533,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
-   * sets the transactionSelectionService in the builder
-   *
-   * @param transactionSelectionService the transaction selector service
-   * @return the besu controller builder
-   */
-  public BesuControllerBuilder transactionSelectorService(
-      final TransactionSelectionService transactionSelectionService) {
-    return this;
-  }
-
-  /**
    * sets the pluginTransactionValidatorFactory
    *
    * @param pluginTransactionValidatorFactory factory that creates plugin transaction Validators
@@ -710,7 +698,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncState,
             transactionPoolConfiguration,
             pluginTransactionValidatorFactory,
-            besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()));
+            besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()),
+            miningParameters);
 
     final List<PeerValidator> peerValidators = createPeerValidators(protocolSchedule);
 
