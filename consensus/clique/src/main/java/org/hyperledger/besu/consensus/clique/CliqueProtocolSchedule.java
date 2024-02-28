@@ -94,16 +94,6 @@ public class CliqueProtocolSchedule {
                             builder)));
     final ProtocolSpecAdapters specAdapters = new ProtocolSpecAdapters(specMap);
 
-    ProtocolSpecAdapters.create(
-        0,
-        builder ->
-            applyCliqueSpecificModifications(
-                epochManager,
-                cliqueConfig.getBlockPeriodSeconds(),
-                cliqueConfig.getCreateEmptyBlocks(),
-                localNodeAddress,
-                builder));
-
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
