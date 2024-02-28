@@ -19,6 +19,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.CliqueConfigOptions;
+import org.hyperledger.besu.config.ImmutableCliqueConfigOptions;
+import org.hyperledger.besu.config.JsonCliqueConfigOptions;
+import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -44,6 +49,7 @@ public class CliqueBlockSchedulerTest {
   private final List<Address> validatorList = Lists.newArrayList();
   private ValidatorProvider validatorProvider;
   private BlockHeaderTestFixture blockHeaderBuilder;
+  private ForksSchedule<CliqueConfigOptions> forksSchedule;
 
   @BeforeEach
   public void setup() {
@@ -56,16 +62,21 @@ public class CliqueBlockSchedulerTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
 
     blockHeaderBuilder = new BlockHeaderTestFixture();
+
+    var initialTransition =
+        ImmutableCliqueConfigOptions.builder().from(JsonCliqueConfigOptions.DEFAULT);
+    initialTransition.blockPeriodSeconds(5);
+    forksSchedule = new ForksSchedule<>(List.of(new ForkSpec<>(0, initialTransition.build())));
   }
 
   @Test
   public void inturnValidatorWaitsExactlyBlockInterval() {
     final Clock clock = mock(Clock.class);
     final long currentSecondsSinceEpoch = 10L;
-    final long secondsBetweenBlocks = 5L;
+    final int secondsBetweenBlocks = 5;
     when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);
     final CliqueBlockScheduler scheduler =
-        new CliqueBlockScheduler(clock, validatorProvider, localAddr, secondsBetweenBlocks);
+        new CliqueBlockScheduler(clock, validatorProvider, localAddr, forksSchedule);
 
     // There are 2 validators, therefore block 2 will put localAddr as the in-turn voter, therefore
     // parent block should be number 1.
@@ -80,13 +91,61 @@ public class CliqueBlockSchedulerTest {
   }
 
   @Test
-  public void outOfturnValidatorWaitsLongerThanBlockInterval() {
+  public void validatorWithTransitionForBlockTimeWaitsBlockInterval() {
     final Clock clock = mock(Clock.class);
     final long currentSecondsSinceEpoch = 10L;
-    final long secondsBetweenBlocks = 5L;
+    when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);
+
+    final var initialTransition =
+        ImmutableCliqueConfigOptions.builder().from(JsonCliqueConfigOptions.DEFAULT);
+    initialTransition.blockPeriodSeconds(5);
+    final var decreaseBlockTimeTransition =
+        ImmutableCliqueConfigOptions.builder().from(JsonCliqueConfigOptions.DEFAULT);
+    decreaseBlockTimeTransition.blockPeriodSeconds(1);
+    forksSchedule =
+        new ForksSchedule<>(
+            List.of(
+                new ForkSpec<>(0, initialTransition.build()),
+                new ForkSpec<>(4, decreaseBlockTimeTransition.build())));
+
+    final CliqueBlockScheduler scheduler =
+        new CliqueBlockScheduler(clock, validatorProvider, localAddr, forksSchedule);
+
+    // getNextTimestamp for last block before transition
+    // There are 2 validators, therefore block 3 will put localAddr as the out-of-turn voter,
+    // therefore
+    // parent block should be number 2.
+    BlockHeader parentHeader =
+        blockHeaderBuilder.number(2).timestamp(currentSecondsSinceEpoch).buildHeader();
+    BlockCreationTimeResult result = scheduler.getNextTimestamp(parentHeader);
+    assertThat(result.getTimestampForHeader()).isEqualTo(currentSecondsSinceEpoch + 5);
+    assertThat(result.getMillisecondsUntilValid()).isGreaterThan(5 * 1000);
+
+    // getNextTimestamp for transition block
+    // There are 2 validators, therefore block 4 will put localAddr as the in-turn voter, therefore
+    // parent block should be number 3.
+    parentHeader = blockHeaderBuilder.number(3).timestamp(currentSecondsSinceEpoch).buildHeader();
+    result = scheduler.getNextTimestamp(parentHeader);
+    assertThat(result.getTimestampForHeader()).isEqualTo(currentSecondsSinceEpoch + 1);
+    assertThat(result.getMillisecondsUntilValid()).isEqualTo(1000);
+
+    // getNextTimestamp for block after transition
+    // There are 2 validators, therefore block 5 will put localAddr as the out-of-turn voter,
+    // therefore
+    // parent block should be number 4.
+    parentHeader = blockHeaderBuilder.number(4).timestamp(currentSecondsSinceEpoch).buildHeader();
+    result = scheduler.getNextTimestamp(parentHeader);
+    assertThat(result.getTimestampForHeader()).isEqualTo(currentSecondsSinceEpoch + 1);
+    assertThat(result.getMillisecondsUntilValid()).isGreaterThan(1000);
+  }
+
+  @Test
+  public void outOfTurnValidatorWaitsLongerThanBlockInterval() {
+    final Clock clock = mock(Clock.class);
+    final long currentSecondsSinceEpoch = 10L;
     when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);
     final CliqueBlockScheduler scheduler =
-        new CliqueBlockScheduler(clock, validatorProvider, localAddr, secondsBetweenBlocks);
+        new CliqueBlockScheduler(clock, validatorProvider, localAddr, forksSchedule);
 
     // There are 2 validators, therefore block 3 will put localAddr as the out-turn voter, therefore
     // parent block should be number 2.
@@ -95,6 +154,7 @@ public class CliqueBlockSchedulerTest {
 
     final BlockCreationTimeResult result = scheduler.getNextTimestamp(parentHeader);
 
+    long secondsBetweenBlocks = 5L;
     assertThat(result.getTimestampForHeader())
         .isEqualTo(currentSecondsSinceEpoch + secondsBetweenBlocks);
     assertThat(result.getMillisecondsUntilValid()).isGreaterThan(secondsBetweenBlocks * 1000);
@@ -107,7 +167,7 @@ public class CliqueBlockSchedulerTest {
     final long secondsBetweenBlocks = 5L;
     when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);
     final CliqueBlockScheduler scheduler =
-        new CliqueBlockScheduler(clock, validatorProvider, localAddr, secondsBetweenBlocks);
+        new CliqueBlockScheduler(clock, validatorProvider, localAddr, forksSchedule);
 
     // There are 2 validators, therefore block 2 will put localAddr as the in-turn voter, therefore
     // parent block should be number 1.
