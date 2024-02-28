@@ -1639,6 +1639,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         SyncMode.isCheckpointSync(getDefaultSyncModeIfNotSet()),
         singletonList("--Xcheckpoint-post-merge-enabled"));
 
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
+        commandLine,
+        "--Xsnapsync-synchronizer-flat option can only be used when -Xsnapsync-synchronizer-flat-db-healing-enabled is true",
+        unstableSynchronizerOptions.isSnapsyncFlatDbHealingEnabled(),
+        asList(
+            "--Xsnapsync-synchronizer-flat-account-healed-count-per-request",
+            "--Xsnapsync-synchronizer-flat-slot-healed-count-per-request"));
+
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
         && nodePrivateKeyFileOption.getNodePrivateKeyFile() != null) {
       logger.warn(
