@@ -77,12 +77,14 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.StorageService;
+import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.BlockchainServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PluginTransactionValidatorServiceImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
@@ -205,6 +207,7 @@ public abstract class CommandTestAbstract {
   @Mock protected JsonBlockImporter jsonBlockImporter;
   @Mock protected RlpBlockImporter rlpBlockImporter;
   @Mock protected StorageServiceImpl storageService;
+  @Mock protected TransactionSelectionServiceImpl txSelectionService;
   @Mock protected SecurityModuleServiceImpl securityModuleService;
   @Mock protected SecurityModule securityModule;
   @Mock protected BesuConfigurationImpl commonPluginConfiguration;
@@ -217,6 +220,7 @@ public abstract class CommandTestAbstract {
   @Mock protected WorldStateArchive mockWorldStateArchive;
   @Mock protected TransactionPool mockTransactionPool;
   @Mock protected PrivacyPluginServiceImpl privacyPluginService;
+  @Mock protected StorageProvider storageProvider;
 
   @SuppressWarnings("PrivateStaticFinalLoggers") // @Mocks are inited by JUnit
   @Mock
@@ -290,7 +294,6 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.maxPeers(anyInt())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.maxRemotelyInitiatedPeers(anyInt()))
         .thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.transactionSelectorFactory(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.pluginTransactionValidatorFactory(any()))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.besuComponent(any(BesuComponent.class)))
@@ -312,6 +315,7 @@ public abstract class CommandTestAbstract {
     when(mockProtocolContext.getBlockchain()).thenReturn(mockMutableBlockchain);
     lenient().when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
     when(mockController.getTransactionPool()).thenReturn(mockTransactionPool);
+    when(mockController.getStorageProvider()).thenReturn(storageProvider);
 
     when(mockRunnerBuilder.vertx(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.besuController(any())).thenReturn(mockRunnerBuilder);
@@ -377,6 +381,9 @@ public abstract class CommandTestAbstract {
     lenient()
         .when(mockBesuPluginContext.getService(StorageService.class))
         .thenReturn(Optional.of(storageService));
+    lenient()
+        .when(mockBesuPluginContext.getService(TransactionSelectionService.class))
+        .thenReturn(Optional.of(txSelectionService));
 
     lenient()
         .doReturn(mockPkiBlockCreationConfiguration)
@@ -564,7 +571,8 @@ public abstract class CommandTestAbstract {
           pkiBlockCreationConfigProvider,
           rpcEndpointServiceImpl,
           new TransactionSelectionServiceImpl(),
-          new PluginTransactionValidatorServiceImpl());
+          new PluginTransactionValidatorServiceImpl(),
+          new BlockchainServiceImpl());
     }
 
     @Override

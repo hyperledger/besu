@@ -48,7 +48,6 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -123,7 +122,6 @@ public class IbftProtocolScheduleTest {
         null,
         null,
         setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec),
-        Optional.empty(),
         new BadBlockManager());
   }
 }

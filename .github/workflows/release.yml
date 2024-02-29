@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
   release:
     types: [released]
+env:
+  registry: docker.io
 jobs:
   dockerPromoteX64:
     runs-on: ubuntu-22.04
@@ -13,11 +15,15 @@ jobs:
           distribution: 'temurin' # See 'Supported distributions' for available options
           java-version: '17'
           cache: gradle
-      - name: Login to DockerHub
-        run: echo '${{ secrets.DOCKER_PASSWORD_RW }}' | docker login -u '${{ secrets.DOCKER_USER_RW }}' --password-stdin
+      - name: login to ${{ env.registry }}
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
+        with:
+          registry: ${{ env.registry }}
+          username: ${{ secrets.DOCKER_USER_RW }}
+          password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
       - name: Docker upload
-        run: ./gradlew "-Prelease.releaseVersion=${{ github.ref_name }}" "-PdockerOrgName=${{ secrets.DOCKER_ORG }}" dockerUploadRelease
+        run: ./gradlew "-Prelease.releaseVersion=${{ github.ref_name }}" "-PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }}" dockerUploadRelease
       - name: Docker manifest
-        run: ./gradlew "-Prelease.releaseVersion=${{ github.ref_name }}" "-PdockerOrgName=${{ secrets.DOCKER_ORG }}" manifestDockerRelease
+        run: ./gradlew "-Prelease.releaseVersion=${{ github.ref_name }}" "-PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }}" manifestDockerRelease

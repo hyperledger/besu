@@ -91,7 +91,6 @@ import org.hyperledger.besu.ethereum.trie.forest.pruner.MarkSweepPruner;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.Pruner;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -99,7 +98,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
-import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 
 import java.io.Closeable;
@@ -187,7 +186,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   private NetworkingConfiguration networkingConfiguration;
   private Boolean randomPeerPriority;
-  private Optional<PluginTransactionSelectorFactory> transactionSelectorFactory = Optional.empty();
   /** the Dagger configured context that can provide dependencies */
   protected Optional<BesuComponent> besuComponent = Optional.empty();
 
@@ -535,18 +533,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
-   * sets the transactionSelectorFactory in the builder
-   *
-   * @param transactionSelectorFactory the optional transaction selector factory
-   * @return the besu controller builder
-   */
-  public BesuControllerBuilder transactionSelectorFactory(
-      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
-    this.transactionSelectorFactory = transactionSelectorFactory;
-    return this;
-  }
-
-  /**
    * sets the pluginTransactionValidatorFactory
    *
    * @param pluginTransactionValidatorFactory factory that creates plugin transaction Validators
@@ -620,11 +606,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final ProtocolContext protocolContext =
         createProtocolContext(
-            blockchain,
-            worldStateArchive,
-            protocolSchedule,
-            this::createConsensusContext,
-            transactionSelectorFactory);
+            blockchain, worldStateArchive, protocolSchedule, this::createConsensusContext);
     validateContext(protocolContext);
 
     if (chainPrunerConfiguration.getChainPruningEnabled()) {
@@ -719,7 +701,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncState,
             transactionPoolConfiguration,
             pluginTransactionValidatorFactory,
-            besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()));
+            besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()),
+            miningParameters);
 
     final List<PeerValidator> peerValidators = createPeerValidators(protocolSchedule);
 
@@ -1060,22 +1043,15 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param worldStateArchive the world state archive
    * @param protocolSchedule the protocol schedule
    * @param consensusContextFactory the consensus context factory
-   * @param transactionSelectorFactory optional transaction selector factory
    * @return the protocol context
    */
   protected ProtocolContext createProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory,
-      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
+      final ConsensusContextFactory consensusContextFactory) {
     return ProtocolContext.init(
-        blockchain,
-        worldStateArchive,
-        protocolSchedule,
-        consensusContextFactory,
-        transactionSelectorFactory,
-        badBlockManager);
+        blockchain, worldStateArchive, protocolSchedule, consensusContextFactory, badBlockManager);
   }
 
   private Optional<SnapProtocolManager> createSnapProtocolManager(

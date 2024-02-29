@@ -28,7 +28,7 @@ import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Bft fork. */
-public class BftFork {
+public class BftFork implements Fork {
 
   /** The constant FORK_BLOCK_KEY. */
   public static final String FORK_BLOCK_KEY = "block";
@@ -59,6 +59,7 @@ public class BftFork {
    *
    * @return the fork block
    */
+  @Override
   public long getForkBlock() {
     return JsonUtil.getLong(forkConfigRoot, FORK_BLOCK_KEY)
         .orElseThrow(

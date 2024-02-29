@@ -36,7 +36,6 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
-import java.util.Optional;
 import java.util.function.Function;
 
 public class ExecutionContextTestFixture {
@@ -72,8 +71,7 @@ public class ExecutionContextTestFixture {
     this.stateArchive = createInMemoryWorldStateArchive();
     this.protocolSchedule = protocolSchedule;
     this.protocolContext =
-        new ProtocolContext(
-            blockchain, stateArchive, null, Optional.empty(), new BadBlockManager());
+        new ProtocolContext(blockchain, stateArchive, null, new BadBlockManager());
     genesisState.writeStateTo(stateArchive.getMutable());
   }
 

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
@@ -36,6 +37,7 @@ import java.util.stream.Stream;
  */
 public abstract class AbstractPrioritizedTransactions extends AbstractSequentialTransactionsLayer {
   protected final TreeSet<PendingTransaction> orderByFee;
+  protected final MiningParameters miningParameters;
 
   public AbstractPrioritizedTransactions(
       final TransactionPoolConfiguration poolConfig,
@@ -43,9 +45,11 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
       final TransactionPoolMetrics metrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
-      final BlobCache blobCache) {
+      final BlobCache blobCache,
+      final MiningParameters miningParameters) {
     super(poolConfig, prioritizedTransactions, transactionReplacementTester, metrics, blobCache);
     this.orderByFee = new TreeSet<>(this::compareByFee);
+    this.miningParameters = miningParameters;
   }
 
   @Override
