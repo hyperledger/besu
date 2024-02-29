@@ -24,7 +24,7 @@ import java.util.Optional;
 public class PluginTransactionPoolValidatorServiceImpl
     implements PluginTransactionPoolValidatorService {
 
-  private Optional<PluginTransactionPoolValidatorFactory> factory;
+  private Optional<PluginTransactionPoolValidatorFactory> factory = Optional.empty();
 
   @Override
   public PluginTransactionPoolTransactionValidator createTransactionValidator() {
