@@ -27,6 +27,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat;
@@ -51,6 +52,7 @@ public class RocksDBKeyValueStorageFactoryTest {
 
   @Mock private RocksDBFactoryConfiguration rocksDbConfiguration;
   @Mock private BesuConfiguration commonConfiguration;
+  @Mock private DataStorageConfiguration dataStorageConfiguration;
   @TempDir public Path temporaryFolder;
   private final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final SegmentIdentifier segment = TestSegment.FOO;
@@ -274,5 +276,8 @@ public class RocksDBKeyValueStorageFactoryTest {
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
     lenient().when(commonConfiguration.getDatabaseFormat()).thenReturn(format);
+    lenient()
+        .when(commonConfiguration.getDataStorageConfiguration())
+        .thenReturn(dataStorageConfiguration);
   }
 }

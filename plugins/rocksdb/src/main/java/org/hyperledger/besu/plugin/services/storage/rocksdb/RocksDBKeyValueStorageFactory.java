@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.BONSAI_WITH_VARIABLES;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.FOREST_WITH_VARIABLES;
 
@@ -55,7 +56,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBKeyValueStorageFactory.class);
   private static final EnumSet<BaseVersionedStorageFormat> SUPPORTED_VERSIONED_FORMATS =
-      EnumSet.of(FOREST_WITH_VARIABLES, BONSAI_WITH_VARIABLES);
+      EnumSet.of(FOREST_WITH_VARIABLES, BONSAI_WITH_VARIABLES, BONSAI_WITH_RECEIPT_COMPACTION);
   private static final String NAME = "rocksdb";
   private final RocksDBMetricsFactory rocksDBMetricsFactory;
   private DatabaseMetadata databaseMetadata;
@@ -225,7 +226,9 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       }
 
       final var runtimeVersion =
-          BaseVersionedStorageFormat.defaultForNewDB(commonConfiguration.getDatabaseFormat());
+          BaseVersionedStorageFormat.defaultForNewDB(
+              commonConfiguration.getDatabaseFormat(),
+              commonConfiguration.getDataStorageConfiguration());
 
       if (metadata.getVersionedStorageFormat().getVersion() > runtimeVersion.getVersion()) {
         final var maybeDowngradedMetadata =
@@ -247,7 +250,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       LOG.info("Existing database at {}. Metadata {}. Processing WAL...", dataDir, metadata);
     } else {
 
-      metadata = DatabaseMetadata.defaultForNewDb(commonConfiguration.getDatabaseFormat());
+      metadata = DatabaseMetadata.defaultForNewDb(commonConfiguration);
       LOG.info(
           "No existing database at {}. Using default metadata for new db {}", dataDir, metadata);
       if (!dataDirExists) {
@@ -311,6 +314,17 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     // database.
     // In case we do an automated upgrade, then we also need to update the metadata on disk to
     // reflect the change to the runtime version, and return it.
+
+    // Besu supports both formats of receipts so no upgrade is needed other than updating metadata
+    if (runtimeVersion == BONSAI_WITH_RECEIPT_COMPACTION) {
+      final DatabaseMetadata metadata = new DatabaseMetadata(runtimeVersion);
+      try {
+        metadata.writeToDirectory(dataDir);
+        return Optional.of(metadata);
+      } catch (IOException e) {
+        throw new StorageException("Database upgrade to use receipt compaction failed", e);
+      }
+    }
 
     // for the moment there are no planned automated upgrades, so we just fail.
     String error =

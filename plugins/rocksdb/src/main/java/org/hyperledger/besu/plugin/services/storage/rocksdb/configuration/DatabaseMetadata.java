@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
+import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
@@ -46,18 +47,26 @@ public class DatabaseMetadata {
           .enable(SerializationFeature.INDENT_OUTPUT);
   private final VersionedStorageFormat versionedStorageFormat;
 
-  private DatabaseMetadata(final VersionedStorageFormat versionedStorageFormat) {
+  /**
+   * Instantiates a new Database metadata.
+   *
+   * @param versionedStorageFormat the version storage format
+   */
+  public DatabaseMetadata(final VersionedStorageFormat versionedStorageFormat) {
     this.versionedStorageFormat = versionedStorageFormat;
   }
 
   /**
    * Return the default metadata for new db for a specific format
    *
-   * @param dataStorageFormat data storage format
+   * @param besuConfiguration data storage format
    * @return the metadata to use for new db
    */
-  public static DatabaseMetadata defaultForNewDb(final DataStorageFormat dataStorageFormat) {
-    return new DatabaseMetadata(BaseVersionedStorageFormat.defaultForNewDB(dataStorageFormat));
+  public static DatabaseMetadata defaultForNewDb(final BesuConfiguration besuConfiguration) {
+    return new DatabaseMetadata(
+        BaseVersionedStorageFormat.defaultForNewDB(
+            besuConfiguration.getDatabaseFormat(),
+            besuConfiguration.getDataStorageConfiguration()));
   }
 
   /**

@@ -67,4 +67,10 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   public Wei getMinGasPrice() {
     return miningParameters.getMinTransactionGasPrice();
   }
+
+  @Override
+  public org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration
+      getDataStorageConfiguration() {
+    return () -> dataStorageConfiguration.getReceiptCompactionEnabled();
+  }
 }
