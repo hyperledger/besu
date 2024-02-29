@@ -174,7 +174,6 @@ import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
-import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
@@ -224,7 +223,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
@@ -1608,6 +1606,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       throw new ParameterException(
           this.commandLine, "Unable to load genesis file. " + e.getCause());
     }
+    if (genesisConfigOptions.isPoa()) {
+      final String errorSuffix = "can't be used with PoA networks";
+      if (SyncMode.CHECKPOINT.equals(syncMode) || SyncMode.X_CHECKPOINT.equals(syncMode)) {
+        throw new ParameterException(
+            commandLine, String.format("%s %s", "Checkpoint sync", errorSuffix));
+      }
+      if (syncMode == SyncMode.SNAP || syncMode == SyncMode.X_SNAP) {
+        throw new ParameterException(commandLine, String.format("%s %s", "Snap sync", errorSuffix));
+      }
+    }
     return genesisConfigOptions;
   }
 
@@ -1640,6 +1648,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         "--Xcheckpoint-post-merge-enabled can only be used with CHECKPOINT sync-mode",
         SyncMode.isCheckpointSync(getDefaultSyncModeIfNotSet()),
         singletonList("--Xcheckpoint-post-merge-enabled"));
+
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
+        commandLine,
+        "--Xsnapsync-synchronizer-flat option can only be used when -Xsnapsync-synchronizer-flat-db-healing-enabled is true",
+        unstableSynchronizerOptions.isSnapsyncFlatDbHealingEnabled(),
+        asList(
+            "--Xsnapsync-synchronizer-flat-account-healed-count-per-request",
+            "--Xsnapsync-synchronizer-flat-slot-healed-count-per-request"));
 
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
         && nodePrivateKeyFileOption.getNodePrivateKeyFile() != null) {
@@ -1793,7 +1809,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .synchronizerConfiguration(buildSyncConfig())
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .networkConfiguration(unstableNetworkingOptions.toDomainObject())
-        .transactionSelectorFactory(getTransactionSelectorFactory())
         .pluginTransactionValidatorFactory(getPluginTransactionValidatorFactory())
         .dataDirectory(dataDir())
         .dataStorageConfiguration(getDataStorageConfiguration())
@@ -1823,13 +1838,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
         .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
         .cacheLastBlocks(numberOfblocksToCache);
-  }
-
-  @Nonnull
-  private Optional<PluginTransactionSelectorFactory> getTransactionSelectorFactory() {
-    final Optional<TransactionSelectionService> txSelectionService =
-        besuPluginContext.getService(TransactionSelectionService.class);
-    return txSelectionService.isPresent() ? txSelectionService.get().get() : Optional.empty();
   }
 
   private PluginTransactionValidatorFactory getPluginTransactionValidatorFactory() {
@@ -1952,10 +1960,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (syncMode == SyncMode.FAST) {
         throw new ParameterException(commandLine, String.format("%s %s", "Fast sync", errorSuffix));
       }
-      if (syncMode == SyncMode.SNAP) {
+      if (syncMode == SyncMode.SNAP || syncMode == SyncMode.X_SNAP) {
         throw new ParameterException(commandLine, String.format("%s %s", "Snap sync", errorSuffix));
       }
-      if (syncMode == SyncMode.CHECKPOINT) {
+      if (syncMode == SyncMode.CHECKPOINT || syncMode == SyncMode.X_CHECKPOINT) {
         throw new ParameterException(
             commandLine, String.format("%s %s", "Checkpoint sync", errorSuffix));
       }
@@ -2147,6 +2155,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (miningParameters == null) {
       miningOptions.setGenesisBlockPeriodSeconds(
           getGenesisBlockPeriodSeconds(getActualGenesisConfigOptions()));
+      miningOptions.setTransactionSelectionService(transactionSelectionServiceImpl);
       miningParameters = miningOptions.toDomainObject();
       initMiningParametersMetrics(miningParameters);
     }

@@ -25,6 +25,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -141,7 +142,8 @@ public abstract class AbstractMessageTaskTest<T, R> {
             syncState,
             TransactionPoolConfiguration.DEFAULT,
             null,
-            new BlobCache());
+            new BlobCache(),
+            MiningParameters.newDefault());
     transactionPool.setEnabled();
 
     ethProtocolManager =

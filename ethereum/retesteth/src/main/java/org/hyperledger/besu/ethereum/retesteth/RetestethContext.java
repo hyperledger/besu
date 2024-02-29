@@ -180,8 +180,7 @@ public class RetestethContext {
     genesisState.writeStateTo(worldState);
 
     blockchain = createInMemoryBlockchain(genesisState.getBlock());
-    protocolContext =
-        new ProtocolContext(blockchain, worldStateArchive, null, Optional.empty(), badBlockManager);
+    protocolContext = new ProtocolContext(blockchain, worldStateArchive, null, badBlockManager);
 
     blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive, ethScheduler);
 
@@ -262,7 +261,8 @@ public class RetestethContext {
             syncState,
             transactionPoolConfiguration,
             null,
-            new BlobCache());
+            new BlobCache(),
+            MiningParameters.newDefault());
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("Genesis Block {} ", genesisState.getBlock());
