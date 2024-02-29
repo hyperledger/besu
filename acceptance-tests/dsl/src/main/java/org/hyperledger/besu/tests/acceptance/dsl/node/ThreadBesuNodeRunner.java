@@ -227,6 +227,12 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final PluginTransactionValidatorService pluginTransactionValidatorService =
         getPluginTransactionValidatorService(besuPluginContext);
+
+    final DataStorageConfiguration dataStorageConfiguration =
+        node.getDataStorageConfiguration() == null
+            ? DataStorageConfiguration.DEFAULT_BONSAI_CONFIG
+            : node.getDataStorageConfiguration();
+
     builder
         .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
         .dataDirectory(node.homeDirectory())
@@ -235,7 +241,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))))
         .metricsSystem(metricsSystem)
         .transactionPoolConfiguration(txPoolConfig)
-        .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
+        .dataStorageConfiguration(dataStorageConfiguration)
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(node.isRevertReasonEnabled())
