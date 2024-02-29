@@ -60,16 +60,8 @@ public class EthGetBlockReceipts extends AbstractBlockParameterOrBlockHashMethod
   }
 
   /*
-   * For a given transaction, get its receipt and if it exists, wrap in a transaction receipt of the correct type
+   * For a given block, get receipts of transactions in the block and if they exist, wrap in transaction receipts of the correct type
    */
-  private TransactionReceiptResult txReceipt(final TransactionReceiptWithMetadata receipt) {
-    if (receipt.getReceipt().getTransactionReceiptType() == TransactionReceiptType.ROOT) {
-      return new TransactionReceiptRootResult(receipt);
-    } else {
-      return new TransactionReceiptStatusResult(receipt);
-    }
-  }
-
   private BlockReceiptsResult getBlockReceiptsResult(final Hash blockHash) {
     final List<TransactionReceiptResult> receiptList =
         blockchainQueries
@@ -77,7 +69,11 @@ public class EthGetBlockReceipts extends AbstractBlockParameterOrBlockHashMethod
             .transactionReceiptsByBlockHash(blockHash, protocolSchedule)
             .orElse(new ArrayList<TransactionReceiptWithMetadata>())
             .stream()
-            .map(receipt -> txReceipt(receipt))
+            .map(
+                receipt ->
+                    receipt.getReceipt().getTransactionReceiptType() == TransactionReceiptType.ROOT
+                        ? new TransactionReceiptRootResult(receipt)
+                        : new TransactionReceiptStatusResult(receipt))
             .collect(Collectors.toList());
 
     return new BlockReceiptsResult(receiptList);
