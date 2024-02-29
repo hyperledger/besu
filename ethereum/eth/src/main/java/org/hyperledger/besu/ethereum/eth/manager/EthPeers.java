@@ -415,10 +415,6 @@ public class EthPeers {
     } else {
       return false;
     }
-
-    // ask the protocol managers whether they want to connect to this peer and if none of them want
-    // to connect, then we don't connect
-    //    return protocolManagers.stream().anyMatch(p -> p.shouldTryToConnect(peer, inbound));
   }
 
   private boolean alreadyConnectedOrConnecting(final boolean inbound, final Bytes id) {
@@ -452,10 +448,6 @@ public class EthPeers {
               peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
             });
   }
-
-  //  public void setProtocolManagers(final List<ProtocolManager> protocolManagers) {
-  //    this.protocolManagers = protocolManagers;
-  //  }
 
   public void setChainHeadTracker(final ChainHeadTracker tracker) {
     this.tracker = tracker;
@@ -532,25 +524,28 @@ public class EthPeers {
       // could try and retrieve some SNAP data here to check that (e.g. GetByteCodes for a small
       // contract)
       if (snapServerChecker != null) {
-        // set that peer is a snap server for the test
+        // set that peer is a snap server for doing the test
         peer.setIsServingSnap(true);
         Boolean isServer;
         try {
           isServer = snapServerChecker.check(peer, peersHeadBlockHeader).get(10L, TimeUnit.SECONDS);
         } catch (Exception e) {
-          LOG.debug("XXXXXX Error checking if peer is a snap server: {}", e);
+          // TODO: change LOG to debug?
+          LOG.info("XXXXXX Error checking if peer is a snap server: {}", e);
           peer.setIsServingSnap(false);
           return;
         }
         peer.setIsServingSnap(isServer);
+
+        // TODO: remove the following code. Just here for testing
         final boolean simpleCheck =
             peer.getConnection().getPeerInfo().getClientId().contains("Geth");
         if (simpleCheck && !isServer) {
-          LOG.debug(
+          LOG.info(
               "YYYYYYYYYY Found a peer that is Geth but not a snap server: {}",
               peer.getLoggableId());
         } else if (!simpleCheck && isServer) {
-          LOG.debug(
+          LOG.info(
               "ZZZZZZZZZZ Found a peer that is NOT Geth but is a snap server: {}",
               peer.getLoggableId());
         }

@@ -64,9 +64,8 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
 
     final Optional<EthPeer> maybePeer =
         assignedPeer
-            .filter(u -> getRetryCount() == 1)
-            .or(this::selectNextPeer); // first try with the assigned peer if present, otherwise
-    // select a new one from the pool
+            .filter(u -> getRetryCount() == 1) // first try with the assigned peer if present
+            .or(this::selectNextPeer); // otherwise select a new one from the pool
 
     if (maybePeer.isEmpty()) {
       LOG.atTrace()

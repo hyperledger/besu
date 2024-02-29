@@ -50,6 +50,7 @@ import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.Pruner;
@@ -160,7 +161,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final EthMessages ethMessages,
       final EthScheduler scheduler,
       final List<PeerValidator> peerValidators,
-      final Optional<MergePeerFilter> mergePeerFilter) {
+      final Optional<MergePeerFilter> mergePeerFilter,
+      final ForkIdManager forkIdManager) {
     return mergeBesuControllerBuilder.createEthProtocolManager(
         protocolContext,
         synchronizerConfiguration,
@@ -171,7 +173,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
         ethMessages,
         scheduler,
         peerValidators,
-        mergePeerFilter);
+        mergePeerFilter,
+        forkIdManager);
   }
 
   @Override

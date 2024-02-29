@@ -634,9 +634,6 @@ public class RunnerBuilder {
             .flatMap(protocolManager -> protocolManager.getSupportedCapabilities().stream())
             .collect(Collectors.toSet());
 
-    final EthPeers ethPeers = besuController.getEthPeers();
-    //    ethPeers.setProtocolManagers(protocolManagers);
-
     final RlpxConfiguration rlpxConfiguration =
         RlpxConfiguration.create()
             .setBindHost(p2pListenInterface)
@@ -669,6 +666,8 @@ public class RunnerBuilder {
             .map(nodePC -> new PeerPermissionsAdapter(nodePC, bootnodes, context.getBlockchain()))
             .map(nodePerms -> PeerPermissions.combine(nodePerms, bannedNodes))
             .orElse(bannedNodes);
+
+    final EthPeers ethPeers = besuController.getEthPeers();
 
     LOG.info("Detecting NAT service.");
     final boolean fallbackEnabled = natMethod == NatMethod.AUTO || natMethodFallbackEnabled;

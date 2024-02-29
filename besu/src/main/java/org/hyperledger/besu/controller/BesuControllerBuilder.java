@@ -740,7 +740,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             ethMessages,
             scheduler,
             peerValidators,
-            Optional.empty());
+            Optional.empty(),
+            forkIdManager);
 
     final Optional<SnapProtocolManager> maybeSnapProtocolManager =
         createSnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive);
@@ -1029,6 +1030,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param scheduler the scheduler
    * @param peerValidators the peer validators
    * @param mergePeerFilter the merge peer filter
+   * @param forkIdManager the fork id manager
    * @return the eth protocol manager
    */
   protected EthProtocolManager createEthProtocolManager(
@@ -1041,7 +1043,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final EthMessages ethMessages,
       final EthScheduler scheduler,
       final List<PeerValidator> peerValidators,
-      final Optional<MergePeerFilter> mergePeerFilter) {
+      final Optional<MergePeerFilter> mergePeerFilter,
+      final ForkIdManager forkIdManager) {
     return new EthProtocolManager(
         protocolContext.getBlockchain(),
         networkId,
@@ -1055,8 +1058,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         mergePeerFilter,
         synchronizerConfiguration,
         scheduler,
-        genesisConfig.getForkBlockNumbers(),
-        genesisConfig.getForkTimestamps());
+        forkIdManager);
   }
 
   /**
