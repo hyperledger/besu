@@ -65,6 +65,13 @@ public class TransactionAdapter extends AdapterBase {
     this.transactionWithMetadata = transactionWithMetadata;
   }
 
+  public TransactionAdapter(
+      final @Nonnull TransactionWithMetadata transactionWithMetadata,
+      final @Nonnull TransactionReceiptWithMetadata transactionReceiptWithMetadata) {
+    this.transactionWithMetadata = transactionWithMetadata;
+    this.transactionReceiptWithMetadata = Optional.of(transactionReceiptWithMetadata);
+  }
+
   private Optional<TransactionReceiptWithMetadata> getReceipt(
       final DataFetchingEnvironment environment) {
     if (transactionReceiptWithMetadata == null) {
