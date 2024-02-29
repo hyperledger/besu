@@ -261,4 +261,37 @@ public class CommandLineUtils {
         .filter(optionSpec -> Arrays.stream(optionSpec.names()).anyMatch(optionName::equals))
         .anyMatch(CommandLineUtils::isOptionSet);
   }
+
+  public static <T> T getOptionValueOrDefault(
+      final CommandLine commandLine,
+      final String optionName,
+      final CommandLine.ITypeConverter<T> converter) {
+
+    // Attempt to get the option's value if it was provided by the user
+    T value = commandLine.getParseResult().matchedOptionValue(optionName, null);
+
+    if (value != null) {
+      // User provided a value for the option
+      return value;
+    } else {
+      // Option was not set by the user, attempt to get the default value
+      CommandLine.Model.OptionSpec optionSpec = commandLine.getCommandSpec().findOption(optionName);
+      if (optionSpec != null) {
+        String defaultValueString = null;
+        try {
+          defaultValueString = commandLine.getDefaultValueProvider().defaultValue(optionSpec);
+          if (defaultValueString != null) {
+            // Convert the default value string to the option's type
+            return converter.convert(defaultValueString);
+          }
+        } catch (Exception e) {
+          throw new RuntimeException(
+              "Failed to convert default value for option " + optionName + ": " + e.getMessage(),
+              e);
+        }
+      }
+    }
+    // No value was provided by the user, and no default is available
+    return null;
+  }
 }

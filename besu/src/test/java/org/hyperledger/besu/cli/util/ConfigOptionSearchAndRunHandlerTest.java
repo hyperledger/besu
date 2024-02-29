@@ -84,9 +84,7 @@ public class ConfigOptionSearchAndRunHandlerTest {
     lenient().when(mockConfigOptionSpec.getter()).thenReturn(mockConfigOptionGetter);
     levelOption = new LoggingLevelOption();
     levelOption.setLogLevel("INFO");
-    configParsingHandler =
-        new ConfigOptionSearchAndRunHandler(
-            resultHandler, mockParameterExceptionHandler, environment);
+    configParsingHandler = new ConfigOptionSearchAndRunHandler(resultHandler, environment);
   }
 
   @Test
@@ -108,7 +106,6 @@ public class ConfigOptionSearchAndRunHandlerTest {
     final ConfigOptionSearchAndRunHandler environmentConfigFileParsingHandler =
         new ConfigOptionSearchAndRunHandler(
             resultHandler,
-            mockParameterExceptionHandler,
             singletonMap(
                 "BESU_CONFIG_FILE",
                 Files.createFile(temp.resolve("tmp")).toFile().getAbsolutePath()));
@@ -131,9 +128,7 @@ public class ConfigOptionSearchAndRunHandlerTest {
   public void handleWithEnvironmentVariableOptionShouldRaiseExceptionIfNoFileParam() {
     final ConfigOptionSearchAndRunHandler environmentConfigFileParsingHandler =
         new ConfigOptionSearchAndRunHandler(
-            resultHandler,
-            mockParameterExceptionHandler,
-            singletonMap("BESU_CONFIG_FILE", "not_found.toml"));
+            resultHandler, singletonMap("BESU_CONFIG_FILE", "not_found.toml"));
 
     when(mockParseResult.hasMatchedOption(CONFIG_FILE_OPTION_NAME)).thenReturn(false);
 
@@ -166,7 +161,6 @@ public class ConfigOptionSearchAndRunHandlerTest {
     final ConfigOptionSearchAndRunHandler environmentConfigFileParsingHandler =
         new ConfigOptionSearchAndRunHandler(
             resultHandler,
-            mockParameterExceptionHandler,
             singletonMap("BESU_CONFIG_FILE", temp.resolve("tmp").toFile().getAbsolutePath()));
 
     when(mockParseResult.hasMatchedOption(CONFIG_FILE_OPTION_NAME)).thenReturn(true);

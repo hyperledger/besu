@@ -17,6 +17,7 @@ package org.hyperledger.besu.services;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
+import org.hyperledger.besu.cli.converter.PluginInfoConverter;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.services.BesuService;
@@ -99,12 +100,17 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     return Optional.ofNullable((T) serviceRegistry.get(serviceType));
   }
 
+  public void registerPlugins(final Path pluginsDir) {
+    registerPlugins(pluginsDir, List.of());
+  }
+
   /**
    * Register plugins.
    *
    * @param pluginsDir the plugins dir
    */
-  public void registerPlugins(final Path pluginsDir) {
+  public void registerPlugins(
+      final Path pluginsDir, List<PluginInfoConverter.PluginInfo> pluginsTolLoad) {
     lines.add("Plugins:");
     checkState(
         state == Lifecycle.UNINITIALIZED,
@@ -120,11 +126,20 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
 
     int pluginsCount = 0;
     for (final BesuPlugin plugin : serviceLoader) {
+      String pluginName = plugin.getClass().getSimpleName();
+      String pluginVersion = getPluginVersion(plugin);
+      // Check if the plugin is in the list of plugins to load
+      boolean shouldLoad = pluginsTolLoad.stream().anyMatch(p -> p.getName().equals(pluginName));
+
+      if (!shouldLoad) {
+        lines.add(String.format("%s  (Skipped)", plugin.getClass().getSimpleName()));
+        continue;
+      }
+
       pluginsCount++;
       try {
         plugin.register(this);
         LOG.info("Registered plugin of type {}.", plugin.getClass().getName());
-        String pluginVersion = getPluginVersion(plugin);
         pluginVersions.add(pluginVersion);
         lines.add(String.format("%s (%s)", plugin.getClass().getSimpleName(), pluginVersion));
       } catch (final Exception e) {
@@ -142,7 +157,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     LOG.debug("Plugin registration complete.");
     lines.add(
         String.format(
-            "TOTAL = %d of %d plugins successfully loaded", plugins.size(), pluginsCount));
+            "TOTAL = %d of %d plugins successfully registered", plugins.size(), pluginsCount));
     lines.add(String.format("from %s", pluginsDir.toAbsolutePath()));
 
     state = Lifecycle.REGISTERED;

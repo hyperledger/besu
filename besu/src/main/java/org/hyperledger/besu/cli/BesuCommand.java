@@ -44,6 +44,7 @@ import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.config.ProfileName;
 import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
+import org.hyperledger.besu.cli.converter.PluginInfoConverter;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
@@ -58,6 +59,7 @@ import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
 import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.stable.P2PTLSConfigOptions;
 import org.hyperledger.besu.cli.options.stable.PermissionsOptions;
+import org.hyperledger.besu.cli.options.stable.PluginsConfigurationOptions;
 import org.hyperledger.besu.cli.options.stable.RpcWebsocketOptions;
 import org.hyperledger.besu.cli.options.unstable.ChainPruningOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
@@ -892,6 +894,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Mixin private PkiBlockCreationOptions pkiBlockCreationOptions;
 
+  // Plugins Configuration Option Group
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold Plugin Configuration Options|@%n")
+  PluginsConfigurationOptions pluginsConfigurationOptions = new PluginsConfigurationOptions();
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private JsonRpcConfiguration engineJsonRpcConfiguration;
@@ -1050,10 +1056,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     handleUnstableOptions();
     preparePlugins();
 
-    final int exitCode =
-        parse(resultHandler, executionExceptionHandler, parameterExceptionHandler, args);
+    final ConfigOptionSearchAndRunHandler configParsingHandler =
+      new ConfigOptionSearchAndRunHandler(
+        (parseResult -> {
+          registerPlugins(parseResult);
+          commandLine.setExecutionStrategy(resultHandler);
+          commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
+          return 0;
+        }),
+        environment);
 
-    return exitCode;
+    return commandLine
+      .setExecutionStrategy(configParsingHandler)
+      .setParameterExceptionHandler(parameterExceptionHandler)
+      .setExecutionExceptionHandler(executionExceptionHandler)
+      .execute(args);
   }
 
   /** Used by Dagger to parse all options into a commandline instance. */
@@ -1218,8 +1235,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     rocksDBPlugin.register(besuPluginContext);
     new InMemoryStoragePlugin().register(besuPluginContext);
 
-    besuPluginContext.registerPlugins(pluginsDir());
-
     metricCategoryRegistry
         .getMetricCategories()
         .forEach(metricCategoryConverter::addRegistryCategory);
@@ -1233,6 +1248,25 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return new KeyPairSecurityModule(loadKeyPair(nodePrivateKeyFileOption.getNodePrivateKeyFile()));
   }
 
+  private void registerPlugins(final CommandLine.ParseResult parseResult) {
+    var pluginsStrictRegistration =
+        CommandLineUtils.getOptionValueOrDefault(
+            parseResult.commandSpec().commandLine(),
+            DEFAULT_PLUGINS_STRICT_REGISTRATION_OPTION_NAME,
+            Boolean::valueOf);
+
+    List<PluginInfoConverter.PluginInfo> plugins = List.of();
+    if (Boolean.TRUE.equals(pluginsStrictRegistration)) {
+      plugins =
+          CommandLineUtils.getOptionValueOrDefault(
+              parseResult.commandSpec().commandLine(),
+              DEFAULT_PLUGINS_OPTION_NAME,
+              new PluginInfoConverter());
+      logger.info("Plugins to register: {}", plugins);
+    }
+    besuPluginContext.registerPlugins(pluginsDir(), plugins);
+  }
+
   // loadKeyPair() is public because it is accessed by subcommands
 
   /**
@@ -1243,26 +1277,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public KeyPair loadKeyPair(final File nodePrivateKeyFile) {
     return KeyPairUtil.loadKeyPair(resolveNodePrivateKeyFile(nodePrivateKeyFile));
-  }
-
-  private int parse(
-      final CommandLine.IExecutionStrategy resultHandler,
-      final BesuExecutionExceptionHandler besuExecutionExceptionHandler,
-      final BesuParameterExceptionHandler besuParameterExceptionHandler,
-      final String... args) {
-    // Create a handler that will search for a config file option and use it for
-    // default values
-    // and eventually it will run regular parsing of the remaining options.
-
-    final ConfigOptionSearchAndRunHandler configParsingHandler =
-        new ConfigOptionSearchAndRunHandler(
-            resultHandler, besuParameterExceptionHandler, environment);
-
-    return commandLine
-        .setExecutionStrategy(configParsingHandler)
-        .setParameterExceptionHandler(besuParameterExceptionHandler)
-        .setExecutionExceptionHandler(besuExecutionExceptionHandler)
-        .execute(args);
   }
 
   private void preSynchronization() {
