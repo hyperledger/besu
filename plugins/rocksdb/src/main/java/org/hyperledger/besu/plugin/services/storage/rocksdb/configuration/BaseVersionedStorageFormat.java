@@ -28,6 +28,11 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
    * make BlobDB more effective
    */
   FOREST_WITH_VARIABLES(DataStorageFormat.FOREST, 2),
+  /**
+   * Current Forest version, with receipts using compaction, in order to make Receipts use less disk
+   * space
+   */
+  FOREST_WITH_RECEIPT_COMPACTION(DataStorageFormat.FOREST, 3),
   /** Original Bonsai version, not used since replace by BONSAI_WITH_VARIABLES */
   BONSAI_ORIGINAL(DataStorageFormat.BONSAI, 1),
   /**
@@ -59,7 +64,9 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
   public static BaseVersionedStorageFormat defaultForNewDB(
       final DataStorageFormat format, final DataStorageConfiguration configuration) {
     return switch (format) {
-      case FOREST -> FOREST_WITH_VARIABLES;
+      case FOREST -> configuration.getReceiptCompactionEnabled()
+          ? FOREST_WITH_RECEIPT_COMPACTION
+          : BONSAI_WITH_VARIABLES;
       case BONSAI -> configuration.getReceiptCompactionEnabled()
           ? BONSAI_WITH_RECEIPT_COMPACTION
           : BONSAI_WITH_VARIABLES;

@@ -59,7 +59,7 @@ public class DatabaseMetadata {
   /**
    * Return the default metadata for new db for a specific format
    *
-   * @param besuConfiguration data storage format
+   * @param besuConfiguration besu configuration
    * @return the metadata to use for new db
    */
   public static DatabaseMetadata defaultForNewDb(final BesuConfiguration besuConfiguration) {
