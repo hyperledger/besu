@@ -15,12 +15,11 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.trie.CommitVisitor;
 import org.hyperledger.besu.ethereum.trie.InnerNodeDiscoveryManager;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
-import org.hyperledger.besu.ethereum.trie.SnapPutVisitor;
+import org.hyperledger.besu.ethereum.trie.SnapCommitVisitor;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 
 import java.util.ArrayList;
@@ -118,7 +117,9 @@ public class StackTrie {
 
       final InnerNodeDiscoveryManager<Bytes> snapStoredNodeFactory =
           new InnerNodeDiscoveryManager<>(
-              (location, hash) -> Optional.ofNullable(proofsEntries.get(hash)),
+              (location, hash) -> {
+                return Optional.ofNullable(proofsEntries.get(hash));
+              },
               Function.identity(),
               Function.identity(),
               startKeyHash,
@@ -130,14 +131,14 @@ public class StackTrie {
               snapStoredNodeFactory, proofs.isEmpty() ? MerkleTrie.EMPTY_TRIE_NODE_HASH : rootHash);
 
       for (Map.Entry<Bytes32, Bytes> entry : keys.entrySet()) {
-        trie.put(entry.getKey(), new SnapPutVisitor<>(snapStoredNodeFactory, entry.getValue()));
+        trie.put(entry.getKey(), entry.getValue());
       }
 
       keys.forEach(flatDatabaseUpdater::update);
 
       trie.commit(
           nodeUpdater,
-          (new CommitVisitor<>(nodeUpdater) {
+          (new SnapCommitVisitor<>(nodeUpdater, startKeyHash, keys.lastKey()) {
             @Override
             public void maybeStoreNode(final Bytes location, final Node<Bytes> node) {
               if (!node.isHealNeeded()) {

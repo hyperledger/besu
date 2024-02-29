@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MAX_RANGE;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MIN_RANGE;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNewBeginElementInRange;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.ACCOUNT_RANGE;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncMetricsManager.Step.DOWNLOAD;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie.FlatDatabaseUpdater.noop;
+import static org.hyperledger.besu.ethereum.trie.RangeManager.MAX_RANGE;
+import static org.hyperledger.besu.ethereum.trie.RangeManager.MIN_RANGE;
+import static org.hyperledger.besu.ethereum.trie.RangeManager.findNewBeginElementInRange;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
