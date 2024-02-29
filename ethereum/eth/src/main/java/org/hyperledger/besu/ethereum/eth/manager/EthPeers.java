@@ -536,6 +536,7 @@ public class EthPeers {
           return;
         }
         peer.setIsServingSnap(isServer);
+        LOG.info("Peer {} is a snap server: {}", peer.getLoggableId(), isServer);
 
         // TODO: remove the following code. Just here for testing
         final boolean simpleCheck =
