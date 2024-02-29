@@ -26,5 +26,5 @@ public interface PluginTransactionPoolValidatorFactory {
    *
    * @return the transaction validator
    */
-  PluginTransactionPoolTransactionValidator createTransactionValidator();
+  PluginTransactionPoolValidator createTransactionValidator();
 }

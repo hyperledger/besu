@@ -160,12 +160,12 @@ import org.hyperledger.besu.plugin.services.BlockchainService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
-import org.hyperledger.besu.plugin.services.PluginTransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.TraceService;
+import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
@@ -180,12 +180,12 @@ import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
-import org.hyperledger.besu.services.PluginTransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.TraceServiceImpl;
+import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
 import org.hyperledger.besu.util.InvalidConfigurationException;
@@ -369,7 +369,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   P2PDiscoveryOptionGroup p2PDiscoveryOptionGroup = new P2PDiscoveryOptionGroup();
 
   private final TransactionSelectionServiceImpl transactionSelectionServiceImpl;
-  private final PluginTransactionPoolValidatorServiceImpl transactionValidatorServiceImpl;
+  private final TransactionPoolValidatorServiceImpl transactionValidatorServiceImpl;
   private final BlockchainServiceImpl blockchainServiceImpl;
 
   static class P2PDiscoveryOptionGroup {
@@ -955,7 +955,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new PkiBlockCreationConfigurationProvider(),
         new RpcEndpointServiceImpl(),
         new TransactionSelectionServiceImpl(),
-        new PluginTransactionPoolValidatorServiceImpl(),
+        new TransactionPoolValidatorServiceImpl(),
         new BlockchainServiceImpl());
   }
 
@@ -997,7 +997,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl,
       final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
-      final PluginTransactionPoolValidatorServiceImpl transactionValidatorServiceImpl,
+      final TransactionPoolValidatorServiceImpl transactionValidatorServiceImpl,
       final BlockchainServiceImpl blockchainServiceImpl) {
     this.besuComponent = besuComponent;
     this.logger = besuComponent.getBesuCommandLogger();
@@ -1209,7 +1209,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(
         TransactionSelectionService.class, transactionSelectionServiceImpl);
     besuPluginContext.addService(
-        PluginTransactionPoolValidatorService.class, transactionValidatorServiceImpl);
+        TransactionPoolValidatorService.class, transactionValidatorServiceImpl);
     besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
 
     // register built-in plugins

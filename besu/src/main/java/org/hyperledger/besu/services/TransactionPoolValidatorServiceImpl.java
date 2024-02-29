@@ -14,28 +14,27 @@
  */
 package org.hyperledger.besu.services;
 
-import org.hyperledger.besu.plugin.services.PluginTransactionPoolValidatorService;
-import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolTransactionValidator;
+import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolValidator;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolValidatorFactory;
 
 import java.util.Optional;
 
-/** The Transaction Validation service implementation. */
-public class PluginTransactionPoolValidatorServiceImpl
-    implements PluginTransactionPoolValidatorService {
+/** The Transaction pool validator service implementation. */
+public class TransactionPoolValidatorServiceImpl implements TransactionPoolValidatorService {
 
   private Optional<PluginTransactionPoolValidatorFactory> factory = Optional.empty();
 
   @Override
-  public PluginTransactionPoolTransactionValidator createTransactionValidator() {
+  public PluginTransactionPoolValidator createTransactionValidator() {
     return factory
         .map(PluginTransactionPoolValidatorFactory::createTransactionValidator)
-        .orElse(PluginTransactionPoolTransactionValidator.VALIDATE_ALL);
+        .orElse(PluginTransactionPoolValidator.VALIDATE_ALL);
   }
 
   @Override
-  public void registerTransactionValidatorFactory(
-      final PluginTransactionPoolValidatorFactory transactionValidatorFactory) {
-    factory = Optional.ofNullable(transactionValidatorFactory);
+  public void registerPluginTransactionValidatorFactory(
+      final PluginTransactionPoolValidatorFactory pluginTransactionPoolValidatorFactory) {
+    factory = Optional.ofNullable(pluginTransactionPoolValidatorFactory);
   }
 }

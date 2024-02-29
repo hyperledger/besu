@@ -373,6 +373,6 @@ public class TransactionPoolOptionsTest
 
   @Override
   protected String[] getNonOptionFields() {
-    return new String[] {"pluginTransactionPoolValidatorService"};
+    return new String[] {"transactionPoolValidatorService"};
   }
 }

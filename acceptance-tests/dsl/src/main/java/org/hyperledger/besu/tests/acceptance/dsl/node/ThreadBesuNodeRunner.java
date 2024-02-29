@@ -45,10 +45,10 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
-import org.hyperledger.besu.plugin.services.PluginTransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
+import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
@@ -56,10 +56,10 @@ import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
-import org.hyperledger.besu.services.PluginTransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
+import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 
 import java.io.File;
@@ -103,8 +103,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     besuPluginContext.addService(
         TransactionSelectionService.class, transactionSelectionServiceImpl);
     besuPluginContext.addService(
-        PluginTransactionPoolValidatorService.class,
-        new PluginTransactionPoolValidatorServiceImpl());
+        TransactionPoolValidatorService.class, new TransactionPoolValidatorServiceImpl());
     final Path pluginsPath;
     final String pluginDir = System.getProperty("besu.plugins.dir");
     if (pluginDir == null || pluginDir.isEmpty()) {

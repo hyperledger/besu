@@ -22,9 +22,9 @@ import java.util.Optional;
 
 /** Interface for the transaction validator plugin for txpool usage */
 @Unstable
-public interface PluginTransactionPoolTransactionValidator {
+public interface PluginTransactionPoolValidator {
   /** Plugin transaction pool validator that unconditionally validates every transaction */
-  PluginTransactionPoolTransactionValidator VALIDATE_ALL =
+  PluginTransactionPoolValidator VALIDATE_ALL =
       (transaction, isLocal, hasPriority) -> Optional.empty();
 
   /**

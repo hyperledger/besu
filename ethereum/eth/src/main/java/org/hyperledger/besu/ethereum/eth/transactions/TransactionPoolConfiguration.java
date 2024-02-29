@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.plugin.services.PluginTransactionPoolValidatorService;
-import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolTransactionValidator;
+import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolValidator;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolValidatorFactory;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
@@ -158,16 +158,16 @@ public interface TransactionPoolConfiguration {
   }
 
   @Value.Default
-  default PluginTransactionPoolValidatorService getPluginTransactionValidatorService() {
-    return new PluginTransactionPoolValidatorService() {
+  default TransactionPoolValidatorService getTransactionPoolValidatorService() {
+    return new TransactionPoolValidatorService() {
       @Override
-      public PluginTransactionPoolTransactionValidator createTransactionValidator() {
-        return PluginTransactionPoolTransactionValidator.VALIDATE_ALL;
+      public PluginTransactionPoolValidator createTransactionValidator() {
+        return PluginTransactionPoolValidator.VALIDATE_ALL;
       }
 
       @Override
-      public void registerTransactionValidatorFactory(
-          final PluginTransactionPoolValidatorFactory transactionValidatorFactory) {}
+      public void registerPluginTransactionValidatorFactory(
+          final PluginTransactionPoolValidatorFactory pluginTransactionPoolValidatorFactory) {}
     };
   }
 
