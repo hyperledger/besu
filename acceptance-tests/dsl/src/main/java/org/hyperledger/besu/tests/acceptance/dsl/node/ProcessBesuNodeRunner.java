@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolCo
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.tests.acceptance.dsl.StaticNodesUtils;
@@ -114,9 +113,9 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     params.addAll(
         DataStorageOptions.fromConfig(
-                ImmutableDataStorageConfiguration.builder()
-                    .from(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
-                    .build())
+                node.getDataStorageConfiguration() == null
+                    ? DataStorageConfiguration.DEFAULT_BONSAI_CONFIG
+                    : node.getDataStorageConfiguration())
             .getCLIOptions());
 
     if (node.getMiningParameters().isMiningEnabled()) {

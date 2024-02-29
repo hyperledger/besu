@@ -22,6 +22,9 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.JsonCliqueConfigOptions;
+import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
@@ -36,6 +39,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -59,6 +63,7 @@ public class CliqueProtocolScheduleTest {
     final ProtocolSchedule protocolSchedule =
         CliqueProtocolSchedule.create(
             config,
+            new ForksSchedule<>(List.of()),
             NODE_KEY,
             false,
             EvmConfiguration.DEFAULT,
@@ -77,9 +82,12 @@ public class CliqueProtocolScheduleTest {
 
   @Test
   public void parametersAlignWithMainnetWithAdjustments() {
+    final ForksSchedule<CliqueConfigOptions> forksSchedule =
+        new ForksSchedule<>(List.of(new ForkSpec<>(0, JsonCliqueConfigOptions.DEFAULT)));
     final ProtocolSpec homestead =
         CliqueProtocolSchedule.create(
                 GenesisConfigFile.DEFAULT.getConfigOptions(),
+                forksSchedule,
                 NODE_KEY,
                 false,
                 EvmConfiguration.DEFAULT,
@@ -95,7 +103,7 @@ public class CliqueProtocolScheduleTest {
 
   @Test
   public void zeroEpochLengthThrowsException() {
-    final CliqueConfigOptions cliqueOptions = mock(CliqueConfigOptions.class);
+    final CliqueConfigOptions cliqueOptions = mock(JsonCliqueConfigOptions.class);
     when(cliqueOptions.getEpochLength()).thenReturn(0L);
     when(genesisConfig.getCliqueConfigOptions()).thenReturn(cliqueOptions);
 
@@ -103,6 +111,7 @@ public class CliqueProtocolScheduleTest {
             () ->
                 CliqueProtocolSchedule.create(
                     genesisConfig,
+                    new ForksSchedule<>(List.of()),
                     NODE_KEY,
                     false,
                     EvmConfiguration.DEFAULT,
@@ -114,7 +123,7 @@ public class CliqueProtocolScheduleTest {
 
   @Test
   public void negativeEpochLengthThrowsException() {
-    final CliqueConfigOptions cliqueOptions = mock(CliqueConfigOptions.class);
+    final CliqueConfigOptions cliqueOptions = mock(JsonCliqueConfigOptions.class);
     when(cliqueOptions.getEpochLength()).thenReturn(-3000L);
     when(genesisConfig.getCliqueConfigOptions()).thenReturn(cliqueOptions);
 
@@ -122,6 +131,7 @@ public class CliqueProtocolScheduleTest {
             () ->
                 CliqueProtocolSchedule.create(
                     genesisConfig,
+                    new ForksSchedule<>(List.of()),
                     NODE_KEY,
                     false,
                     EvmConfiguration.DEFAULT,
@@ -140,9 +150,12 @@ public class CliqueProtocolScheduleTest {
         "{\"config\": " + "\t{\"chainId\": 1337,\n" + "\t\"londonBlock\": 2}\n" + "}";
 
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
+    final ForksSchedule<CliqueConfigOptions> forksSchedule =
+        new ForksSchedule<>(List.of(new ForkSpec<>(0, JsonCliqueConfigOptions.DEFAULT)));
     final ProtocolSchedule protocolSchedule =
         CliqueProtocolSchedule.create(
             config,
+            forksSchedule,
             NODE_KEY,
             false,
             EvmConfiguration.DEFAULT,
