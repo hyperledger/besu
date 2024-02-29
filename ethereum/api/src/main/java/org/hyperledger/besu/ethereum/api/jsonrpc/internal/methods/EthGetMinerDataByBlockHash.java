@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.MinerDataResul
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.MinerDataResult.UncleRewardResult;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -91,19 +92,16 @@ public class EthGetMinerDataByBlockHash implements JsonRpcMethod {
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
     final Wei staticBlockReward = protocolSpec.getBlockReward();
     final Wei transactionFee =
-        block.getTransactions().stream()
+        blockchainQueries
+            .transactionReceiptsByBlockHash(blockHeader.getHash(), protocolSchedule)
+            .orElse(new ArrayList<TransactionReceiptWithMetadata>())
+            .stream()
             .map(
-                t ->
-                    blockchainQueries
-                        .transactionReceiptByTransactionHash(
-                            t.getTransaction().getHash(), protocolSchedule)
-                        .map(
-                            receipt ->
-                                receipt
-                                    .getTransaction()
-                                    .getEffectiveGasPrice(receipt.getBaseFee())
-                                    .multiply(receipt.getGasUsed()))
-                        .orElse(Wei.ZERO))
+                receipt ->
+                    receipt
+                        .getTransaction()
+                        .getEffectivePriorityFeePerGas(receipt.getBaseFee())
+                        .multiply(receipt.getGasUsed()))
             .reduce(Wei.ZERO, BaseUInt256Value::add);
     final Wei uncleInclusionReward =
         staticBlockReward.multiply(block.getOmmers().size()).divide(32);
