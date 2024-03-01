@@ -49,7 +49,7 @@ jobs:
           name: besu-${{ github.ref_name }}.zip
           compression-level: 0
       - name: Upload Release assets
-        if: ${{ github.event_name === 'release' }}
+        if: ${{ github.event_name == 'release' }}
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
           append_body: true
