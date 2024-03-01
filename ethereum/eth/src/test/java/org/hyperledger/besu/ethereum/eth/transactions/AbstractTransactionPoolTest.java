@@ -50,6 +50,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -127,6 +128,7 @@ public abstract class AbstractTransactionPoolTest {
   private static final KeyPair KEY_PAIR2 =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
   protected static final Wei BASE_FEE_FLOOR = Wei.of(7L);
+  protected static final Wei DEFAULT_MIN_GAS_PRICE = Wei.of(50L);
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   protected TransactionValidatorFactory transactionValidatorFactory;
@@ -191,7 +193,8 @@ public abstract class AbstractTransactionPoolTest {
                 ProtocolSpecAdapters.create(0, Function.identity()),
                 new PrivacyParameters(),
                 false,
-                EvmConfiguration.DEFAULT)
+                EvmConfiguration.DEFAULT,
+                new BadBlockManager())
             .createProtocolSchedule();
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder().protocolSchedule(protocolSchedule).build();
@@ -453,6 +456,7 @@ public abstract class AbstractTransactionPoolTest {
   }
 
   @Test
+  @EnabledIf("isBaseFeeMarket")
   public void shouldReAddBlobTxsWhenReorgHappens() {
     givenTransactionIsValid(transaction0);
     givenTransactionIsValid(transaction1);
@@ -551,11 +555,11 @@ public abstract class AbstractTransactionPoolTest {
     assertTransactionNotPending(transaction1);
     verify(transactionBroadcaster).onTransactionsAdded(singletonList(transaction0));
     verify(transactionValidatorFactory.get())
-        .validate(eq(transaction0), any(Optional.class), any());
+        .validate(eq(transaction0), any(Optional.class), any(Optional.class), any());
     verify(transactionValidatorFactory.get())
         .validateForSender(eq(transaction0), eq(null), any(TransactionValidationParams.class));
     verify(transactionValidatorFactory.get())
-        .validate(eq(transaction1), any(Optional.class), any());
+        .validate(eq(transaction1), any(Optional.class), any(Optional.class), any());
     verify(transactionValidatorFactory.get()).validateForSender(eq(transaction1), any(), any());
     verifyNoMoreInteractions(transactionValidatorFactory.get());
   }
@@ -726,7 +730,9 @@ public abstract class AbstractTransactionPoolTest {
     final ArgumentCaptor<TransactionValidationParams> txValidationParamCaptor =
         ArgumentCaptor.forClass(TransactionValidationParams.class);
 
-    when(transactionValidatorFactory.get().validate(eq(transaction0), any(Optional.class), any()))
+    when(transactionValidatorFactory
+            .get()
+            .validate(eq(transaction0), any(Optional.class), any(Optional.class), any()))
         .thenReturn(valid());
     when(transactionValidatorFactory
             .get()
@@ -1345,7 +1351,9 @@ public abstract class AbstractTransactionPoolTest {
 
   @SuppressWarnings("unchecked")
   protected void givenTransactionIsValid(final Transaction transaction) {
-    when(transactionValidatorFactory.get().validate(eq(transaction), any(Optional.class), any()))
+    when(transactionValidatorFactory
+            .get()
+            .validate(eq(transaction), any(Optional.class), any(Optional.class), any()))
         .thenReturn(valid());
     when(transactionValidatorFactory
             .get()

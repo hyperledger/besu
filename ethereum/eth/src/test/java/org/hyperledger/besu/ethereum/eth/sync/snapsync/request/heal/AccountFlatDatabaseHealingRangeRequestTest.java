@@ -192,7 +192,9 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
 
     final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(
-            storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
+            storageProvider,
+            new NoOpMetricsSystem(),
+            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
         new WorldStateStorageCoordinator(worldStateKeyValueStorage);
     final WorldStateProofProvider proofProvider =
@@ -251,7 +253,9 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
 
     final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(
-            storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
+            storageProvider,
+            new NoOpMetricsSystem(),
+            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
         new WorldStateStorageCoordinator(worldStateKeyValueStorage);
     final WorldStateProofProvider proofProvider =

@@ -422,6 +422,6 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
 
   @Override
   protected String[] getNonOptionFields() {
-    return new String[] {"maybeGenesisBlockPeriodSeconds"};
+    return new String[] {"maybeGenesisBlockPeriodSeconds", "transactionSelectionService"};
   }
 }

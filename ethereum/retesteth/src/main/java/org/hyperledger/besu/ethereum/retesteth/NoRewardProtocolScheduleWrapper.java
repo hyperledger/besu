@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.retesteth;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
@@ -36,9 +37,12 @@ import java.util.function.Predicate;
 public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
 
   private final ProtocolSchedule delegate;
+  private final BadBlockManager badBlockManager;
 
-  NoRewardProtocolScheduleWrapper(final ProtocolSchedule delegate) {
+  NoRewardProtocolScheduleWrapper(
+      final ProtocolSchedule delegate, final BadBlockManager badBlockManager) {
     this.delegate = delegate;
+    this.badBlockManager = badBlockManager;
   }
 
   @Override
@@ -57,7 +61,7 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
             original.getBlockHeaderValidator(),
             original.getBlockBodyValidator(),
             noRewardBlockProcessor,
-            original.getBadBlocksManager());
+            badBlockManager);
     final BlockImporter noRewardBlockImporter = new MainnetBlockImporter(noRewardBlockValidator);
     return new ProtocolSpec(
         original.getName(),
@@ -81,7 +85,6 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
         original.getGasCalculator(),
         original.getGasLimitCalculator(),
         original.getFeeMarket(),
-        original.getBadBlocksManager(),
         Optional.empty(),
         original.getWithdrawalsValidator(),
         original.getWithdrawalsProcessor(),

@@ -46,12 +46,12 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import javax.annotation.Nonnull;
 
 import com.google.common.collect.ForwardingMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -781,7 +781,7 @@ public class BonsaiWorldStateUpdateAccumulator
     }
 
     @Override
-    public T put(@NotNull final Address address, @NotNull final T value) {
+    public T put(@Nonnull final Address address, @Nonnull final T value) {
       consumer.process(address, value);
       return accounts.put(address, value);
     }
@@ -811,7 +811,7 @@ public class BonsaiWorldStateUpdateAccumulator
     }
 
     @Override
-    public T put(@NotNull final K slotKey, @NotNull final T value) {
+    public T put(@Nonnull final K slotKey, @Nonnull final T value) {
       consumer.process(address, slotKey);
       return storages.put(slotKey, value);
     }

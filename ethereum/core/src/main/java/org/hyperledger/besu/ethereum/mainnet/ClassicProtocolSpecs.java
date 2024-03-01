@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.evm.ClassicEVMs;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
@@ -355,7 +356,7 @@ public class ClassicProtocolSpecs {
         // EIP-3855
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
-                MainnetEVMs.shanghai(
+                ClassicEVMs.spiral(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         // EIP-3651
         .transactionProcessorBuilder(

@@ -102,11 +102,6 @@ public class BlockHeader extends SealableBlockHeader
     return Hash.wrap(mixHashOrPrevRandao);
   }
 
-  @Override
-  public Bytes32 getMixHashOrPrevRandao() {
-    return mixHashOrPrevRandao;
-  }
-
   /**
    * Returns the block nonce.
    *
@@ -207,7 +202,7 @@ public class BlockHeader extends SealableBlockHeader
             : null;
     final Long blobGasUsed = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
     final BlobGas excessBlobGas =
-        !input.isEndOfCurrentList() ? BlobGas.of(input.readLongScalar()) : null;
+        !input.isEndOfCurrentList() ? BlobGas.of(input.readUInt64Scalar()) : null;
     final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
     final Hash depositHashRoot =
         !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
@@ -242,10 +237,9 @@ public class BlockHeader extends SealableBlockHeader
     if (obj == this) {
       return true;
     }
-    if (!(obj instanceof BlockHeader)) {
+    if (!(obj instanceof BlockHeader other)) {
       return false;
     }
-    final BlockHeader other = (BlockHeader) obj;
     return getHash().equals(other.getHash());
   }
 

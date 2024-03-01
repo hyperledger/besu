@@ -37,6 +37,8 @@ dependencies {
   testImplementation 'com.google.errorprone:error_prone_test_helpers'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
+  // imported to get org.jetbrains.annotations.NotNull
+  testImplementation 'org.jetbrains.kotlin:kotlin-stdlib'
 
   epJavac 'com.google.errorprone:error_prone_check_api'
 }

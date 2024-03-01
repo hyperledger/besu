@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,22 +11,17 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 
-package org.hyperledger.besu.ethereum.worldstate;
+package org.hyperledger.besu.config;
 
-public enum DataStorageFormat {
-  FOREST(1), // Original format.  Store all tries
-  BONSAI(2); // New format.  Store one trie, and trie logs to roll forward and backward.
+/** A "custom hard fork" used for Proof of Authority network Transitions */
+public interface Fork {
 
-  private final int databaseVersion;
-
-  DataStorageFormat(final int databaseVersion) {
-    this.databaseVersion = databaseVersion;
-  }
-
-  public int getDatabaseVersion() {
-    return databaseVersion;
-  }
+  /**
+   * The block number at which the fork occurs.
+   *
+   * @return the block number at which the fork occurs
+   */
+  long getForkBlock();
 }

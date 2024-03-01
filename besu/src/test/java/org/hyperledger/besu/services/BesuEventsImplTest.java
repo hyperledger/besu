@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
@@ -137,7 +138,10 @@ public class BesuEventsImplTest {
         .thenReturn(mockTransactionValidatorFactory);
     lenient().when(mockProtocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0L));
     lenient()
-        .when(mockTransactionValidatorFactory.get().validate(any(), any(Optional.class), any()))
+        .when(
+            mockTransactionValidatorFactory
+                .get()
+                .validate(any(), any(Optional.class), any(Optional.class), any()))
         .thenReturn(ValidationResult.valid());
     lenient()
         .when(mockTransactionValidatorFactory.get().validateForSender(any(), any(), any()))
@@ -164,7 +168,8 @@ public class BesuEventsImplTest {
             syncState,
             txPoolConfig,
             null,
-            new BlobCache());
+            new BlobCache(),
+            MiningParameters.newDefault());
 
     serviceImpl = new BesuEventsImpl(blockchain, blockBroadcaster, transactionPool, syncState);
   }

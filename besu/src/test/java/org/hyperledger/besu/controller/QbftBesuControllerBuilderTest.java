@@ -122,7 +122,7 @@ public class QbftBesuControllerBuilderTest {
     lenient()
         .when(
             storageProvider.createWorldStateStorageCoordinator(
-                DataStorageConfiguration.DEFAULT_CONFIG))
+                DataStorageConfiguration.DEFAULT_FOREST_CONFIG))
         .thenReturn(worldStateStorageCoordinator);
     lenient().when(worldStateKeyValueStorage.isWorldStateAvailable(any())).thenReturn(true);
     lenient()
@@ -166,6 +166,7 @@ public class QbftBesuControllerBuilderTest {
             .dataDirectory(tempDir)
             .clock(clock)
             .transactionPoolConfiguration(poolConfiguration)
+            .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
             .nodeKey(nodeKey)
             .storageProvider(storageProvider)
             .gasLimitCalculator(gasLimitCalculator)

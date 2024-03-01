@@ -24,10 +24,10 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
@@ -73,13 +73,12 @@ class StorageTrieNodeHealingRequestTest {
               new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage()));
     } else {
       final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
-
       worldStateStorageCoordinator =
           new WorldStateStorageCoordinator(
               new BonsaiWorldStateKeyValueStorage(
                   storageProvider,
                   new NoOpMetricsSystem(),
-                  DataStorageConfiguration.DEFAULT_CONFIG));
+                  DataStorageConfiguration.DEFAULT_BONSAI_CONFIG));
     }
     final MerkleTrie<Bytes, Bytes> trie =
         TrieGenerator.generateTrie(

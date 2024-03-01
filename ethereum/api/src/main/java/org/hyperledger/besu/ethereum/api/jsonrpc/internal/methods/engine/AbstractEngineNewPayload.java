@@ -25,6 +25,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -178,6 +179,19 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               .map(Bytes::fromHexString)
               .map(in -> TransactionDecoder.decodeOpaqueBytes(in, EncodingContext.BLOCK_BODY))
               .collect(Collectors.toList());
+      transactions.forEach(
+          transaction ->
+              mergeCoordinator
+                  .getEthScheduler()
+                  .scheduleTxWorkerTask(
+                      () -> {
+                        Address sender = transaction.getSender();
+                        LOG.atTrace()
+                            .setMessage("The sender for transaction {} is calculated : {}")
+                            .addArgument(transaction::getHash)
+                            .addArgument(sender)
+                            .log();
+                      }));
     } catch (final RLPException | IllegalArgumentException e) {
       return respondWithInvalid(
           reqId,

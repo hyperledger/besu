@@ -108,7 +108,7 @@ public class PersistDataStepTest {
             assertThat(
                     worldStateStorageCoordinator
                         .getStrategy(ForestWorldStateKeyValueStorage.class)
-                        .getCode(data.getCodeHash()))
+                        .getCode(Hash.wrap(data.getCodeHash())))
                 .isPresent();
           } else {
             fail("not expected message");

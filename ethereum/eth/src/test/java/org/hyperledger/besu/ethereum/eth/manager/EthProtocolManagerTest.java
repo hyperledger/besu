@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -71,10 +72,10 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
@@ -1118,7 +1119,8 @@ public final class EthProtocolManagerTest {
               new SyncState(blockchain, ethManager.ethContext().getEthPeers()),
               TransactionPoolConfiguration.DEFAULT,
               null,
-              new BlobCache())
+              new BlobCache(),
+              MiningParameters.newDefault())
           .setEnabled();
 
       // Send just a transaction message.
@@ -1152,9 +1154,9 @@ public final class EthProtocolManagerTest {
 
   @Test
   public void shouldUseRightCapabilityDependingOnSyncMode() {
-    assertHighestCapability(SyncMode.X_SNAP, EthProtocol.ETH68);
+    assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH68);
     assertHighestCapability(SyncMode.FULL, EthProtocol.ETH68);
-    assertHighestCapability(SyncMode.X_CHECKPOINT, EthProtocol.ETH68);
+    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH68);
     /* Eth67 does not support fast sync, see EIP-4938 */
     assertHighestCapability(SyncMode.FAST, EthProtocol.ETH66);
   }
@@ -1166,9 +1168,9 @@ public final class EthProtocolManagerTest {
     final EthProtocolConfiguration configuration =
         EthProtocolConfiguration.builder().maxEthCapability(EthProtocolVersion.V65).build();
 
-    assertHighestCapability(SyncMode.X_SNAP, EthProtocol.ETH65, configuration);
+    assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH65, configuration);
     assertHighestCapability(SyncMode.FULL, EthProtocol.ETH65, configuration);
-    assertHighestCapability(SyncMode.X_CHECKPOINT, EthProtocol.ETH65, configuration);
+    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH65, configuration);
     /* Eth67 does not support fast sync, see EIP-4938 */
     assertHighestCapability(SyncMode.FAST, EthProtocol.ETH65, configuration);
   }
@@ -1180,7 +1182,7 @@ public final class EthProtocolManagerTest {
     final EthProtocolConfiguration configuration =
         EthProtocolConfiguration.builder().minEthCapability(EthProtocolVersion.V64).build();
 
-    final EthProtocolManager ethManager = createEthManager(SyncMode.X_SNAP, configuration);
+    final EthProtocolManager ethManager = createEthManager(SyncMode.SNAP, configuration);
 
     assertThat(ethManager.getSupportedCapabilities()).contains(EthProtocol.ETH64);
     assertThat(ethManager.getSupportedCapabilities()).doesNotContain(EthProtocol.ETH63);
@@ -1193,9 +1195,9 @@ public final class EthProtocolManagerTest {
     final EthProtocolConfiguration configuration =
         EthProtocolConfiguration.builder().maxEthCapability(EthProtocolVersion.V67).build();
 
-    assertHighestCapability(SyncMode.X_SNAP, EthProtocol.ETH67, configuration);
+    assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH67, configuration);
     assertHighestCapability(SyncMode.FULL, EthProtocol.ETH67, configuration);
-    assertHighestCapability(SyncMode.X_CHECKPOINT, EthProtocol.ETH67, configuration);
+    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH67, configuration);
     /* Eth67 does not support fast sync, see EIP-4938 */
     assertHighestCapability(SyncMode.FAST, EthProtocol.ETH66, configuration);
   }

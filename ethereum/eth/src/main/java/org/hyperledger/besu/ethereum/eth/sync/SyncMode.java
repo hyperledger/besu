@@ -24,8 +24,11 @@ public enum SyncMode {
   // Perform light validation on older blocks, and switch to full validation for more recent blocks
   FAST,
   // Perform snapsync
-  X_SNAP,
+  SNAP,
   // Perform snapsync but starting from a checkpoint instead of starting from genesis
+  CHECKPOINT,
+  // Deprecated and will be removed in 24.4.0 (X_SNAP and X_CHECKPOINT)
+  X_SNAP,
   X_CHECKPOINT;
 
   public String normalize() {
@@ -38,10 +41,16 @@ public enum SyncMode {
   }
 
   public static boolean isFullSync(final SyncMode syncMode) {
-    return !EnumSet.of(SyncMode.FAST, SyncMode.X_SNAP, SyncMode.X_CHECKPOINT).contains(syncMode);
+    return !EnumSet.of(
+            SyncMode.FAST,
+            SyncMode.SNAP,
+            SyncMode.X_SNAP,
+            SyncMode.CHECKPOINT,
+            SyncMode.X_CHECKPOINT)
+        .contains(syncMode);
   }
 
   public static boolean isCheckpointSync(final SyncMode syncMode) {
-    return syncMode.equals(X_CHECKPOINT);
+    return X_CHECKPOINT.equals(syncMode) || CHECKPOINT.equals(syncMode);
   }
 }

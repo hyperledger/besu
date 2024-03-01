@@ -1,13 +1,16 @@
 name: reference-tests
 on:
-  pull_request:
+  workflow_dispatch:
+  pull_request_target:
+    branches:
+      - main
+      - release-*
   pull_request_review:
-    types:
-      - submitted
+    types: [ submitted ]
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
-  total-runners: 6
+  total-runners: 10
 
 jobs:
   shouldRun:
@@ -20,7 +23,7 @@ jobs:
     steps:
       - name: required check
         id: shouldRun
-        uses: actions/github-script@v7.0.1
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         env:
           # fun fact, this changes based on incoming event, it will be different when we run this on pushes to main
           RELEVANT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -34,7 +37,7 @@ jobs:
             });
             
             
-            const refTested = statuses && statuses.filter(({ context }) => context === 'reference-tests');
+            const refTested = statuses && statuses.filter(({ context }) => context === 'reftests-passed');
             const alreadyRun = refTested && refTested.find(({ state }) => state === 'success') > 0;
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
@@ -50,92 +53,62 @@ jobs:
 
             return shouldRun;
 
-  prepareReferenceTestEthereum:
-    runs-on: ubuntu-22.04
-    needs: shouldRun
-    if: ${{ needs.shouldRun.outputs.shouldRun == 'true' }}
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4.1.1
-        with:
-          submodules: recursive
-          set-safe-directory: true
-      - name: Set up Java
-        uses: actions/setup-java@v4.0.0
-        with:
-          distribution: temurin
-          java-version: 17
-      - name: setup gradle
-        uses: gradle/gradle-build-action@v2.12.0
-      - name: execute generate reference tests
-        run: ./gradlew ethereum:referencetests:blockchainReferenceTests ethereum:referencetests:generalstateReferenceTests ethereum:referencetests:generalstateRegressionReferenceTests -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
-      - name: store generated tests
-        uses: actions/upload-artifact@v3
-        with:
-          name: 'reference-tests'
-          path: 'ethereum/referencetests/build/generated/sources/reference-test/**/*.java'
-
   referenceTestEthereum:
     runs-on: ubuntu-22.04
     permissions:
       statuses: write
       checks: write
+      packages: read
     needs:
-      - prepareReferenceTestEthereum
+      - shouldRun
     if: ${{ needs.shouldRun.outputs.shouldRun == 'true' }}
     strategy:
       fail-fast: true
       matrix:
-        runner_index: [0,1,2,3,4,5]
+        runner_index: [1,2,3,4,5,6,7,8,9,10]
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
           submodules: recursive
       - name: Set up Java
-        uses: actions/setup-java@v4.0.0
+        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
           distribution: adopt-openj9
           java-version: 17
-      - name: retrieve generated tests
-        uses: actions/download-artifact@v3.0.2
-        with:
-          name: 'reference-tests'
-          path: 'ethereum/referencetests/build/generated/sources/reference-test/'
-      - name: get reference test report
-        uses: dawidd6/action-download-artifact@v2
-        with:
-          branch: main
-          name_is_regexp: true
-          name: 'reference-test-node-\d*\d-results'
-          path: tmp/ref-xml-reports-downloaded
-          if_no_artifact_found: true
       - name: setup gradle
-        uses: gradle/gradle-build-action@v2.12.0
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+        #shame the test generation isn't less redundant, we used to do this in a dependent job, but artifact downloading broke
+      - name: execute generate reference tests
+        run: ./gradlew ethereum:referencetests:blockchainReferenceTests ethereum:referencetests:generalstateReferenceTests ethereum:referencetests:generalstateRegressionReferenceTests -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+      - name: list test files generated
+        run: find ethereum/referencetests/build/generated/sources/reference-test -name "*.java" | sort >> filenames.txt
       - name: Split tests
-        id: split-tests
-        uses: r7kamura/split-tests-by-timings@v0
-        with:
-          reports: tmp/ref-xml-reports-downloaded
-          glob: 'ethereum/referencetests/build/generated/sources/reference-test/**/*.java'
-          total: ${{env.total-runners}}
-          index: ${{ matrix.runner_index }}
+        run: ./.github/workflows/splitList.sh filenames.txt ${{env.total-runners}}
+      - name: echo test file count
+        run: cat group_${{matrix.runner_index}}.txt | wc
+      - name: convert to test suite classnames
+        run: cat group_${{matrix.runner_index}}.txt | sed -e 's/^.*java\///' -e 's@/@.@g' -e 's/\.java//' -e 's/^/--tests /' > testClasses.txt
       - name: compose gradle args
-        run: echo ${{ steps.split-tests.outputs.paths }} | sed -e 's/^.*java\///' -e 's@/@.@g' -e 's/\.java//' -e 's/^/--tests /' > refTestArgs.txt
+        run: tr '\n' ' ' < testClasses.txt > refTestArgs.txt
+      - name: refTestArgs.txt
+        run: cat refTestArgs.txt
       - name: run reference tests
         run: ./gradlew ethereum:referenceTests:referenceTests `cat refTestArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Upload Test Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         if: always() # always run even if the previous step fails
         with:
           name: reference-test-node-${{matrix.runner_index}}-results
           path: '**/build/test-results/referenceTests/TEST-*.xml'
       - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v4
+        uses: mikepenz/action-junit-report@5f47764eec0e1c1f19f40c8e60a5ba47e47015c5
         if: success() || failure() # always run even if the build step fails
         with:
-          report_paths: '**/build/test-results/referenceTest/TEST-*.xml'
-  reference-tests:
+          report_paths: '**/build/test-results/referenceTests/TEST-*.xml'
+          annotate_only: true
+  reftests-passed:
     runs-on: ubuntu-22.04
     needs: [ referenceTestEthereum ]
     permissions:

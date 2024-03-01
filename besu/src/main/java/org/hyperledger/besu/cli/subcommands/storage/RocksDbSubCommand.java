@@ -22,10 +22,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rocksdb.ColumnFamilyDescriptor;
-import org.rocksdb.ColumnFamilyHandle;
-import org.rocksdb.Options;
-import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -37,12 +33,12 @@ import picocli.CommandLine.ParentCommand;
     description = "Print RocksDB information",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class,
-    subcommands = {RocksDbSubCommand.RocksDbUsage.class})
+    subcommands = {RocksDbSubCommand.RocksDbUsage.class, RocksDbSubCommand.RocksDbStats.class})
 public class RocksDbSubCommand implements Runnable {
 
   @SuppressWarnings("unused")
   @ParentCommand
-  private StorageSubCommand parentCommand;
+  private StorageSubCommand storageSubCommand;
 
   @SuppressWarnings("unused")
   @CommandLine.Spec
@@ -66,7 +62,7 @@ public class RocksDbSubCommand implements Runnable {
 
     @SuppressWarnings("unused")
     @ParentCommand
-    private RocksDbSubCommand parentCommand;
+    private RocksDbSubCommand rocksDbSubCommand;
 
     @Override
     public void run() {
@@ -74,42 +70,68 @@ public class RocksDbSubCommand implements Runnable {
       final PrintWriter out = spec.commandLine().getOut();
 
       final String dbPath =
-          parentCommand
-              .parentCommand
-              .parentCommand
+          rocksDbSubCommand
+              .storageSubCommand
+              .besuCommand
               .dataDir()
-              .toString()
-              .concat("/")
-              .concat(DATABASE_PATH);
+              .resolve(DATABASE_PATH)
+              .toString();
 
-      RocksDB.loadLibrary();
-      Options options = new Options();
-      options.setCreateIfMissing(true);
+      RocksDbHelper.printTableHeader(out);
 
-      // Open the RocksDB database with multiple column families
-      List<byte[]> cfNames;
-      try {
-        cfNames = RocksDB.listColumnFamilies(options, dbPath);
-      } catch (RocksDBException e) {
-        throw new RuntimeException(e);
-      }
-      final List<ColumnFamilyHandle> cfHandles = new ArrayList<>();
-      final List<ColumnFamilyDescriptor> cfDescriptors = new ArrayList<>();
-      for (byte[] cfName : cfNames) {
-        cfDescriptors.add(new ColumnFamilyDescriptor(cfName));
-      }
-      RocksDbUsageHelper.printTableHeader(out);
-      try (final RocksDB rocksdb = RocksDB.openReadOnly(dbPath, cfDescriptors, cfHandles)) {
-        for (ColumnFamilyHandle cfHandle : cfHandles) {
-          RocksDbUsageHelper.printUsageForColumnFamily(rocksdb, cfHandle, out);
-        }
-      } catch (RocksDBException e) {
-        throw new RuntimeException(e);
-      } finally {
-        for (ColumnFamilyHandle cfHandle : cfHandles) {
-          cfHandle.close();
-        }
-      }
+      final List<RocksDbHelper.ColumnFamilyUsage> columnFamilyUsages = new ArrayList<>();
+      RocksDbHelper.forEachColumnFamily(
+          dbPath,
+          (rocksdb, cfHandle) -> {
+            try {
+              columnFamilyUsages.add(
+                  RocksDbHelper.getAndPrintUsageForColumnFamily(rocksdb, cfHandle, out));
+            } catch (RocksDBException e) {
+              throw new RuntimeException(e);
+            }
+          });
+      RocksDbHelper.printTotals(out, columnFamilyUsages);
+    }
+  }
+
+  @Command(
+      name = "x-stats",
+      description = "Print rocksdb stats",
+      mixinStandardHelpOptions = true,
+      versionProvider = VersionProvider.class)
+  static class RocksDbStats implements Runnable {
+
+    @SuppressWarnings("unused")
+    @CommandLine.Spec
+    private CommandLine.Model.CommandSpec spec;
+
+    @SuppressWarnings("unused")
+    @ParentCommand
+    private RocksDbSubCommand rocksDbSubCommand;
+
+    @Override
+    public void run() {
+
+      final PrintWriter out = spec.commandLine().getOut();
+
+      final String dbPath =
+          rocksDbSubCommand
+              .storageSubCommand
+              .besuCommand
+              .dataDir()
+              .resolve(DATABASE_PATH)
+              .toString();
+
+      out.println("Column Family Stats...");
+      RocksDbHelper.forEachColumnFamily(
+          dbPath,
+          (rocksdb, cfHandle) -> {
+            try {
+              RocksDbHelper.printStatsForColumnFamily(rocksdb, cfHandle, out);
+            } catch (RocksDBException e) {
+              throw new RuntimeException(e);
+            }
+          });
     }
   }
 }

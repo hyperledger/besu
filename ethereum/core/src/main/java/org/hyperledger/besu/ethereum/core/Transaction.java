@@ -51,6 +51,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.primitives.Longs;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -74,6 +76,9 @@ public class Transaction
   public static final BigInteger REPLAY_PROTECTED_V_MIN = BigInteger.valueOf(36);
 
   public static final BigInteger TWO = BigInteger.valueOf(2);
+
+  private static final Cache<Hash, Address> senderCache =
+      CacheBuilder.newBuilder().recordStats().maximumSize(100_000L).build();
 
   private final long nonce;
 
@@ -411,16 +416,23 @@ public class Transaction
   @Override
   public Address getSender() {
     if (sender == null) {
-      final SECPPublicKey publicKey =
-          signatureAlgorithm
-              .recoverPublicKeyFromSignature(getOrComputeSenderRecoveryHash(), signature)
-              .orElseThrow(
-                  () ->
-                      new IllegalStateException(
-                          "Cannot recover public key from signature for " + this));
-      sender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
+      Optional<Address> cachedSender = Optional.ofNullable(senderCache.getIfPresent(getHash()));
+      sender = cachedSender.orElseGet(this::computeSender);
     }
     return sender;
+  }
+
+  private Address computeSender() {
+    final SECPPublicKey publicKey =
+        signatureAlgorithm
+            .recoverPublicKeyFromSignature(getOrComputeSenderRecoveryHash(), signature)
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Cannot recover public key from signature for " + this));
+    final Address calculatedSender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
+    senderCache.put(this.hash, calculatedSender);
+    return calculatedSender;
   }
 
   /**

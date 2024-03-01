@@ -15,8 +15,13 @@
 
 package org.hyperledger.besu.services;
 
-import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.BlockContext;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -29,15 +34,21 @@ import java.util.function.Supplier;
 @Unstable
 public class BlockchainServiceImpl implements BlockchainService {
 
-  private final Blockchain blockchain;
+  private ProtocolContext protocolContext;
+  private ProtocolSchedule protocolSchedule;
+
+  /** Create a new instance */
+  public BlockchainServiceImpl() {}
 
   /**
    * Instantiates a new Blockchain service.
    *
-   * @param blockchain the blockchain
+   * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol schedule
    */
-  public BlockchainServiceImpl(final Blockchain blockchain) {
-    this.blockchain = blockchain;
+  public void init(final ProtocolContext protocolContext, final ProtocolSchedule protocolSchedule) {
+    this.protocolContext = protocolContext;
+    this.protocolSchedule = protocolSchedule;
   }
 
   /**
@@ -48,9 +59,37 @@ public class BlockchainServiceImpl implements BlockchainService {
    */
   @Override
   public Optional<BlockContext> getBlockByNumber(final long number) {
-    return blockchain
+    return protocolContext
+        .getBlockchain()
         .getBlockByNumber(number)
         .map(block -> blockContext(block::getHeader, block::getBody));
+  }
+
+  @Override
+  public Hash getChainHeadHash() {
+    return protocolContext.getBlockchain().getChainHeadHash();
+  }
+
+  @Override
+  public BlockHeader getChainHeadHeader() {
+    return protocolContext.getBlockchain().getChainHeadHeader();
+  }
+
+  @Override
+  public Optional<Wei> getNextBlockBaseFee() {
+    final var chainHeadHeader = protocolContext.getBlockchain().getChainHeadHeader();
+    final var protocolSpec =
+        protocolSchedule.getForNextBlockHeader(chainHeadHeader, System.currentTimeMillis());
+    return Optional.of(protocolSpec.getFeeMarket())
+        .filter(FeeMarket::implementsBaseFee)
+        .map(BaseFeeMarket.class::cast)
+        .map(
+            feeMarket ->
+                feeMarket.computeBaseFee(
+                    chainHeadHeader.getNumber() + 1,
+                    chainHeadHeader.getBaseFee().orElse(Wei.ZERO),
+                    chainHeadHeader.getGasUsed(),
+                    feeMarket.targetGasUsed(chainHeadHeader)));
   }
 
   private static BlockContext blockContext(
