@@ -50,7 +50,7 @@ public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
    * @param scheduler the scheduler
    * @param parentHeader the parent header
    * @param localAddress the local address
-   * @param forksSchedule the forks schedule
+   * @param forksSchedule the transitions
    */
   public CliqueBlockMiner(
       final Function<BlockHeader, CliqueBlockCreator> blockCreator,

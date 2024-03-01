@@ -62,7 +62,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
    * @param miningParams the mining params
    * @param blockScheduler the block scheduler
    * @param epochManager the epoch manager
-   * @param forksSchedule the clique forks schedule
+   * @param forksSchedule the clique transitions
    * @param ethScheduler the scheduler for asynchronous block creation tasks
    */
   public CliqueMinerExecutor(
