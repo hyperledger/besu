@@ -1,5 +1,5 @@
 
-name: snapshot artifacts
+name: develop pre-release
 
 on:
   workflow_dispatch:
@@ -50,10 +50,11 @@ jobs:
           name: develop
           tag_name: develop
           fail_on_unmatched_files: true
-          append_body: true
+          append_body: false
           files: |
             build/distributions/besu*.tar.gz
             build/distributions/besu*.zip
           body: |
+            This is an automated, bleeding edge build from the tip of ${{ github.ref_name }}. No promises. YOLO.
             ${{steps.hashes.outputs.tarSha}}
             ${{steps.hashes.outputs.zipSha}}
