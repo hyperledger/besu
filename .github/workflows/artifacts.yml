@@ -77,6 +77,7 @@ jobs:
       - name: test Besu
         run: |
           mkdir besu-tmp
+          ls -lR
           unzip besu-*.zip -d besu-tmp
           cd besu-tmp
           mv besu-* ../besu
