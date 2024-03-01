@@ -45,9 +45,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -228,7 +226,7 @@ public class EthPeers {
         peer.handleDisconnect();
         abortPendingRequestsAssignedToDisconnectedPeers();
         if (peer.getReputation().getScore() > USEFULL_PEER_SCORE_THRESHOLD) {
-          LOG.debug("Disconnected USEFULL peer {}", peer);
+          LOG.debug("Disconnected USEFUL peer {}", peer);
         } else {
           LOG.debug("Disconnected EthPeer {}", peer.getLoggableId());
         }
@@ -292,7 +290,7 @@ public class EthPeers {
   @VisibleForTesting
   void reattemptPendingPeerRequests() {
     synchronized (this) {
-      final List<EthPeer> peers = streamAvailablePeers().collect(Collectors.toList());
+      final List<EthPeer> peers = streamAvailablePeers().toList();
       final Iterator<PendingPeerRequest> iterator = pendingRequests.iterator();
       while (iterator.hasNext() && peers.stream().anyMatch(EthPeer::hasAvailableRequestCapacity)) {
         final PendingPeerRequest request = iterator.next();
@@ -410,11 +408,7 @@ public class EthPeers {
       return false;
     }
 
-    if (peerCount() < getMaxPeers() || needMoreSnapServers() || canExceedPeerLimits(id)) {
-      return true;
-    } else {
-      return false;
-    }
+    return peerCount() < getMaxPeers() || needMoreSnapServers() || canExceedPeerLimits(id);
   }
 
   private boolean alreadyConnectedOrConnecting(final boolean inbound, final Bytes id) {
@@ -424,18 +418,16 @@ public class EthPeers {
     }
     final List<PeerConnection> incompleteConnections = getIncompleteConnections(id);
     if (!incompleteConnections.isEmpty()) {
-      if (incompleteConnections.stream()
-          .anyMatch(c -> !c.isDisconnected() && (!inbound || (inbound && c.inboundInitiated())))) {
-        return true;
-      }
+      return incompleteConnections.stream()
+          .anyMatch(c -> !c.isDisconnected() && (!inbound || (inbound && c.inboundInitiated())));
     }
     return false;
   }
 
   public void disconnectWorstUselessPeer() {
     streamAvailablePeers()
-        .sorted(getBestChainComparator())
-        .findFirst()
+        .filter(p -> !canExceedPeerLimits(p.getId()))
+        .min(getBestChainComparator())
         .ifPresent(
             peer -> {
               LOG.atDebug()
@@ -447,6 +439,24 @@ public class EthPeers {
                   .log();
               peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
             });
+  }
+
+  public void disconnectWorstIncomingUselessPeer() {
+    streamAvailablePeers()
+            .filter(p -> p.getConnection().inboundInitiated())
+            .filter(p -> !canExceedPeerLimits(p.getId()))
+            .min(getBestChainComparator())
+            .ifPresent(
+                    peer -> {
+                      LOG.atDebug()
+                              .setMessage(
+                                      "disconnecting peer {}. Waiting for better peers. Current {} of max {}")
+                              .addArgument(peer::getLoggableId)
+                              .addArgument(this::peerCount)
+                              .addArgument(this::getMaxPeers)
+                              .log();
+                      peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
+                    });
   }
 
   public void setChainHeadTracker(final ChainHeadTracker tracker) {
@@ -518,8 +528,7 @@ public class EthPeers {
         });
   }
 
-  private void checkIsSnapServer(final EthPeer peer, final BlockHeader peersHeadBlockHeader)
-      throws ExecutionException, InterruptedException, TimeoutException {
+  private void checkIsSnapServer(final EthPeer peer, final BlockHeader peersHeadBlockHeader) {
     if (peer.getAgreedCapabilities().contains(SnapProtocol.SNAP1)) {
       // could try and retrieve some SNAP data here to check that (e.g. GetByteCodes for a small
       // contract)
@@ -531,7 +540,7 @@ public class EthPeers {
           isServer = snapServerChecker.check(peer, peersHeadBlockHeader).get(10L, TimeUnit.SECONDS);
         } catch (Exception e) {
           // TODO: change LOG to debug?
-          LOG.info("XXXXXX Error checking if peer is a snap server: {}", e);
+          LOG.info("XXXXXX Error checking if peer is a snap server.", e);
           peer.setIsServingSnap(false);
           return;
         }
@@ -641,8 +650,8 @@ public class EthPeers {
 
   private long countUntrustedRemotelyInitiatedConnections() {
     return activeConnections.values().stream()
-        .map(ep -> ep.getConnection())
-        .filter(c -> c.inboundInitiated())
+        .map(EthPeer::getConnection)
+        .filter(PeerConnection::inboundInitiated)
         .filter(c -> !c.isDisconnected())
         .filter(conn -> !canExceedPeerLimits(conn.getPeer().getId()))
         .count();
@@ -652,10 +661,16 @@ public class EthPeers {
       final RemovalNotification<PeerConnection, EthPeer> removalNotification) {
     if (removalNotification.wasEvicted()) {
       final PeerConnection peerConnectionRemoved = removalNotification.getKey();
-      final PeerConnection peerConnectionOfEthPeer = removalNotification.getValue().getConnection();
-      if (!peerConnectionRemoved.equals(peerConnectionOfEthPeer)) {
-        // If this connection is not the connection of the EthPeer by now we can disconnect
-        peerConnectionRemoved.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
+      final EthPeer peer = removalNotification.getValue();
+      if (peer == null) {
+        return;
+      }
+      final PeerConnection peerConnectionOfEthPeer = peer.getConnection();
+      if (peerConnectionRemoved != null) {
+        if (!peerConnectionRemoved.equals(peerConnectionOfEthPeer)) {
+          // If this connection is not the connection of the EthPeer by now we can disconnect
+          peerConnectionRemoved.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
+        }
       }
     }
   }
@@ -665,7 +680,7 @@ public class EthPeers {
     // Figure out whether we want to keep this peer to add it to the active connections.
     final PeerConnection connection = peer.getConnection();
     if (activeConnections.containsValue(peer)) {
-      //      connection.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
+      //            connection.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
       return false;
     }
     final Bytes id = peer.getId();
@@ -674,6 +689,12 @@ public class EthPeers {
       if (peerCount() >= peerUpperBound) {
         if (needMoreSnapServers()) {
           disconnectNonSnapServerPeerOrLeastUseful();
+        } else if (!remoteConnectionLimitReached() && !peer.getConnection().inboundInitiated()) {
+          if (peer.isServingSnap()) {
+            disconnectWorstIncomingUselessPeer();
+          } else {
+            disconnectNonSnapServerPeerOrLeastUseful();
+          }
         } else if (!canExceedPeerLimits(id)) {
           LOG.trace(
               "Too many peers. Disconnect connection: {}, max connections {}",
@@ -683,17 +704,7 @@ public class EthPeers {
           return false;
         }
       }
-      // Disconnect if too many remotely-initiated connections
-      if (connection.inboundInitiated()
-          && !canExceedPeerLimits(id)
-          && remoteConnectionLimitReached()) {
-        LOG.info(
-            "Too many remotely-initiated connections. Disconnect incoming connection: {}, maxRemote={}",
-            connection,
-            maxRemotelyInitiatedConnections);
-        connection.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
-        return false;
-      }
+
       final boolean added = (activeConnections.putIfAbsent(id, peer) == null);
       if (added) {
         LOG.debug("Added peer {} with connection {} to activeConnections", id, connection);
@@ -719,6 +730,7 @@ public class EthPeers {
   private void disconnectNonSnapServerPeerOrLeastUseful() {
     activeConnections.values().stream()
         .filter(p -> !p.isServingSnap())
+        .filter(p -> !canExceedPeerLimits(p.getId()))
         .min(MOST_USEFUL_PEER)
         .ifPresentOrElse(
             p -> p.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS),
