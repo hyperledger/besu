@@ -22,9 +22,14 @@ jobs:
           java-version: '17'
       - name: setup gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
-      - name: assemble distributions
+      - name: assemble release
+        if: ${{ github.event_name == 'release' }}
         run:
           ./gradlew -Prelease.releaseVersion=${{github.ref_name}} -Pversion=${{github.ref_name}} assemble -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+      - name: assemble snapshot
+        if: ${{ github.event_name != 'release' }}
+        run:
+          ./gradlew assemble -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: hashes
         id: hashes
         run: |
@@ -44,6 +49,7 @@ jobs:
           name: besu-${{ github.ref_name }}.zip
           compression-level: 0
       - name: Upload Release assets
+        if: ${{ github.event_name === 'release' }}
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
           append_body: true
@@ -67,7 +73,7 @@ jobs:
       - name: Download zip
         uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe
         with:
-          name: besu-${{ github.ref_name }}.zip
+          pattern: besu-*.zip
       - name: test Besu
         run: |
           unzip besu-*.zip -d besu-tmp
