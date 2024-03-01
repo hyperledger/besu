@@ -18,6 +18,7 @@
 - Update commons-compress to 1.26.0 [#6648](https://github.com/hyperledger/besu/pull/6648)
 
 ### Bug fixes
+- Fix txpool dump/restore race condition [#6665](https://github.com/hyperledger/besu/pull/6665)
 
 ### Download Links
 
