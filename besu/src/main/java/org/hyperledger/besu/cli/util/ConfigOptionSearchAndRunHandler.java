@@ -40,8 +40,8 @@ public class ConfigOptionSearchAndRunHandler extends CommandLine.RunLast {
    */
   public ConfigOptionSearchAndRunHandler(
       final IExecutionStrategy resultHandler, final Map<String, String> environment) {
-    this.environment = environment;
     this.resultHandler = resultHandler;
+    this.environment = environment;
   }
 
   @Override

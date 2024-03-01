@@ -44,7 +44,6 @@ import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.config.ProfileName;
 import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
-import org.hyperledger.besu.cli.converter.PluginInfoConverter;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
@@ -123,6 +122,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParametersMetrics;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.VersionMetadata;
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -1057,20 +1057,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     preparePlugins();
 
     final ConfigOptionSearchAndRunHandler configParsingHandler =
-      new ConfigOptionSearchAndRunHandler(
-        (parseResult -> {
-          registerPlugins(parseResult);
-          commandLine.setExecutionStrategy(resultHandler);
-          commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
-          return 0;
-        }),
-        environment);
+        new ConfigOptionSearchAndRunHandler(
+            (parseResult -> {
+              registerPlugins(parseResult);
+              commandLine.setExecutionStrategy(resultHandler);
+              commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
+              return 0;
+            }),
+            environment);
 
     return commandLine
-      .setExecutionStrategy(configParsingHandler)
-      .setParameterExceptionHandler(parameterExceptionHandler)
-      .setExecutionExceptionHandler(executionExceptionHandler)
-      .execute(args);
+        .setExecutionStrategy(configParsingHandler)
+        .setParameterExceptionHandler(parameterExceptionHandler)
+        .setExecutionExceptionHandler(executionExceptionHandler)
+        .execute(args);
   }
 
   /** Used by Dagger to parse all options into a commandline instance. */
@@ -1249,22 +1249,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void registerPlugins(final CommandLine.ParseResult parseResult) {
-    var pluginsStrictRegistration =
-        CommandLineUtils.getOptionValueOrDefault(
-            parseResult.commandSpec().commandLine(),
-            DEFAULT_PLUGINS_STRICT_REGISTRATION_OPTION_NAME,
-            Boolean::valueOf);
 
-    List<PluginInfoConverter.PluginInfo> plugins = List.of();
-    if (Boolean.TRUE.equals(pluginsStrictRegistration)) {
-      plugins =
-          CommandLineUtils.getOptionValueOrDefault(
-              parseResult.commandSpec().commandLine(),
-              DEFAULT_PLUGINS_OPTION_NAME,
-              new PluginInfoConverter());
-      logger.info("Plugins to register: {}", plugins);
-    }
-    besuPluginContext.registerPlugins(pluginsDir(), plugins);
+    PluginConfiguration configuration =
+        PluginsConfigurationOptions.fromCommandLine(parseResult.commandSpec().commandLine());
+
+    besuPluginContext.registerPlugins(configuration);
   }
 
   // loadKeyPair() is public because it is accessed by subcommands
@@ -2399,15 +2388,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public Path dataDir() {
     return dataPath.toAbsolutePath();
-  }
-
-  private Path pluginsDir() {
-    final String pluginsDir = System.getProperty("besu.plugins.dir");
-    if (pluginsDir == null) {
-      return new File(System.getProperty("besu.home", "."), "plugins").toPath();
-    } else {
-      return new File(pluginsDir).toPath();
-    }
   }
 
   private SecurityModule securityModule() {

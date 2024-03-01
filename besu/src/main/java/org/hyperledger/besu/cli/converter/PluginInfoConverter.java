@@ -1,12 +1,13 @@
 package org.hyperledger.besu.cli.converter;
 
+import org.hyperledger.besu.ethereum.core.plugins.PluginInfo;
+
 import java.util.Arrays;
 import java.util.List;
 
 import picocli.CommandLine;
 
-public class PluginInfoConverter
-    implements CommandLine.ITypeConverter<List<PluginInfoConverter.PluginInfo>> {
+public class PluginInfoConverter implements CommandLine.ITypeConverter<List<PluginInfo>> {
 
   @Override
   public List<PluginInfo> convert(final String value) {
@@ -15,17 +16,5 @@ public class PluginInfoConverter
 
   private PluginInfo toPluginInfo(final String pluginName) {
     return new PluginInfo(pluginName);
-  }
-
-  public static class PluginInfo {
-    String name;
-
-    PluginInfo(final String name) {
-      this.name = name;
-    }
-
-    public String getName() {
-      return name;
-    }
   }
 }

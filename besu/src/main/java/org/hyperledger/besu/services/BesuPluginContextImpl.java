@@ -17,7 +17,7 @@ package org.hyperledger.besu.services;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
-import org.hyperledger.besu.cli.converter.PluginInfoConverter;
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.services.BesuService;
@@ -75,6 +75,9 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
   private Lifecycle state = Lifecycle.UNINITIALIZED;
   private final Map<Class<?>, ? super BesuService> serviceRegistry = new HashMap<>();
   private final List<BesuPlugin> plugins = new ArrayList<>();
+
+  private int registeredPlugins = 0;
+
   private final List<String> pluginVersions = new ArrayList<>();
   final List<String> lines = new ArrayList<>();
 
@@ -100,67 +103,98 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     return Optional.ofNullable((T) serviceRegistry.get(serviceType));
   }
 
-  public void registerPlugins(final Path pluginsDir) {
-    registerPlugins(pluginsDir, List.of());
+  public void registerPlugins(final Path path) {
+    PluginConfiguration configuration = new PluginConfiguration(List.of(), false);
+    registerPlugins(configuration);
   }
 
-  /**
-   * Register plugins.
-   *
-   * @param pluginsDir the plugins dir
-   */
-  public void registerPlugins(
-      final Path pluginsDir, List<PluginInfoConverter.PluginInfo> pluginsTolLoad) {
-    lines.add("Plugins:");
+  public void registerPlugins(final PluginConfiguration config) {
+    List<BesuPlugin> detectedPlugins = findPlugins(config);
+    List<BesuPlugin> pluginsToRegister;
+
+    if (config.isStrictPluginRegistrationEnabled()) {
+      pluginsToRegister = filterPluginsBasedOnConfiguration(detectedPlugins, config);
+    } else {
+      pluginsToRegister = detectedPlugins;
+    }
+
+    registerPlugins(pluginsToRegister);
+    logPluginRegistrationSummary(pluginsToRegister, config);
+  }
+
+  private List<BesuPlugin> filterPluginsBasedOnConfiguration(
+      List<BesuPlugin> detectedPlugins, PluginConfiguration config) {
+    return detectedPlugins.stream()
+        .filter(
+            plugin ->
+                config.getPluginInfos().stream()
+                    .anyMatch(
+                        pluginInfo ->
+                            pluginInfo.getName().equals(plugin.getClass().getSimpleName())))
+        .collect(Collectors.toList());
+  }
+
+  private void logPluginRegistrationSummary(
+      List<BesuPlugin> registeredPlugins, PluginConfiguration config) {
+    LOG.debug("Plugin registration complete.");
+    LOG.debug(
+        String.format(
+            "TOTAL = %d of %d plugins successfully registered",
+            registeredPlugins.size(), plugins.size()));
+    LOG.debug(String.format("from %s", config.pluginsDir().toAbsolutePath()));
+  }
+
+  private List<BesuPlugin> findPlugins(final PluginConfiguration config) {
     checkState(
         state == Lifecycle.UNINITIALIZED,
         "Besu plugins have already been registered.  Cannot register additional plugins.");
 
     final ClassLoader pluginLoader =
-        pluginDirectoryLoader(pluginsDir).orElse(this.getClass().getClassLoader());
-
-    state = Lifecycle.REGISTERING;
+        pluginDirectoryLoader(config.pluginsDir()).orElse(this.getClass().getClassLoader());
 
     final ServiceLoader<BesuPlugin> serviceLoader =
         ServiceLoader.load(BesuPlugin.class, pluginLoader);
 
-    int pluginsCount = 0;
+    List<BesuPlugin> plugins = new ArrayList<>();
     for (final BesuPlugin plugin : serviceLoader) {
-      String pluginName = plugin.getClass().getSimpleName();
-      String pluginVersion = getPluginVersion(plugin);
-      // Check if the plugin is in the list of plugins to load
-      boolean shouldLoad = pluginsTolLoad.stream().anyMatch(p -> p.getName().equals(pluginName));
-
-      if (!shouldLoad) {
-        lines.add(String.format("%s  (Skipped)", plugin.getClass().getSimpleName()));
-        continue;
-      }
-
-      pluginsCount++;
-      try {
-        plugin.register(this);
-        LOG.info("Registered plugin of type {}.", plugin.getClass().getName());
-        pluginVersions.add(pluginVersion);
-        lines.add(String.format("%s (%s)", plugin.getClass().getSimpleName(), pluginVersion));
-      } catch (final Exception e) {
-        LOG.error(
-            "Error registering plugin of type "
-                + plugin.getClass().getName()
-                + ", start and stop will not be called.",
-            e);
-        lines.add(String.format("ERROR %s", plugin.getClass().getSimpleName()));
-        continue;
-      }
       plugins.add(plugin);
     }
+    return plugins;
+  }
 
-    LOG.debug("Plugin registration complete.");
-    lines.add(
-        String.format(
-            "TOTAL = %d of %d plugins successfully registered", plugins.size(), pluginsCount));
-    lines.add(String.format("from %s", pluginsDir.toAbsolutePath()));
-
+  /**
+   * Register plugins.
+   *
+   * @param serviceLoader the serviceLoader
+   */
+  private void registerPlugins(final List<BesuPlugin> serviceLoader) {
+    state = Lifecycle.REGISTERING;
+    lines.add("Plugins:");
+    for (final BesuPlugin plugin : serviceLoader) {
+      if (registerPlugin(plugin)) {
+        plugins.add(plugin);
+      }
+    }
     state = Lifecycle.REGISTERED;
+  }
+
+  private boolean registerPlugin(BesuPlugin plugin) {
+    try {
+      plugin.register(this);
+      LOG.info("Registered plugin of type {}.", plugin.getClass().getName());
+      String pluginVersion = getPluginVersion(plugin);
+      pluginVersions.add(pluginVersion);
+      lines.add(String.format("%s (%s)", plugin.getClass().getSimpleName(), pluginVersion));
+    } catch (final Exception e) {
+      LOG.error(
+          "Error registering plugin of type "
+              + plugin.getClass().getName()
+              + ", start and stop will not be called.",
+          e);
+      lines.add(String.format("ERROR %s", plugin.getClass().getSimpleName()));
+      return false;
+    }
+    return true;
   }
 
   /**
