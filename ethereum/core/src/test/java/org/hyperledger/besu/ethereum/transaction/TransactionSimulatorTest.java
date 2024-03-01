@@ -28,6 +28,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -50,11 +51,13 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -600,6 +603,46 @@ public class TransactionSimulatorTest {
     verifyTransactionWasProcessed(expectedTransaction);
   }
 
+  @Test
+  public void shouldReturnSuccessfulResultWhenBlobTransactionProcessingIsSuccessful() {
+    final List<VersionedHash> versionedHashes =
+        List.of(
+            new VersionedHash(
+                Bytes32.fromHexString(
+                    "0x0148b0d226ded90804ec8a9ce337cc7abc86d718ceea7ae0cbb6acf4fdee215f")));
+    final CallParameter callParameter =
+        blobTransactionCallParameter(Wei.ONE, Wei.ONE, Wei.ONE, 300, versionedHashes);
+
+    final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE);
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .type(TransactionType.BLOB)
+            .chainId(BigInteger.ONE)
+            .nonce(1L)
+            .gasLimit(callParameter.getGasLimit())
+            .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
+            .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
+            .to(callParameter.getTo())
+            .sender(callParameter.getFrom())
+            .value(callParameter.getValue())
+            .payload(callParameter.getPayload())
+            .maxFeePerBlobGas(Wei.ONE)
+            .versionedHashes(versionedHashes)
+            .signature(FAKE_SIGNATURE)
+            .build();
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
+
+    final Optional<TransactionSimulatorResult> result =
+        transactionSimulator.process(callParameter, 1L);
+
+    assertThat(result.get().isSuccessful()).isTrue();
+    verifyTransactionWasProcessed(expectedTransaction);
+  }
+
   private void mockWorldStateForAccount(
       final BlockHeader blockHeader, final Address address, final long nonce) {
     final Account account = mock(Account.class);
@@ -723,5 +766,25 @@ public class TransactionSimulatorTest {
         Wei.of(0),
         Bytes.EMPTY,
         Optional.empty());
+  }
+
+  private CallParameter blobTransactionCallParameter(
+      final Wei maxFeePerBlobGas,
+      final Wei maxFeePerGas,
+      final Wei maxPriorityFeePerGas,
+      final long gasLimit,
+      final List<VersionedHash> versionedHashes) {
+    return new CallParameter(
+        Address.fromHexString("0x0"),
+        Address.fromHexString("0x0"),
+        gasLimit,
+        Wei.of(0),
+        Optional.of(maxFeePerGas),
+        Optional.of(maxPriorityFeePerGas),
+        Wei.of(0),
+        Bytes.EMPTY,
+        Optional.empty(),
+        Optional.of(maxFeePerBlobGas),
+        Optional.of(versionedHashes));
   }
 }

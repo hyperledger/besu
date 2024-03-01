@@ -294,6 +294,11 @@ public class TransactionSimulator {
 
     // Set access list if present
     callParams.getAccessList().ifPresent(transactionBuilder::accessList);
+    // Set versioned hashes if present
+    callParams.getBlobVersionedHashes().ifPresent(transactionBuilder::versionedHashes);
+    // Set max fee per blob gas if present
+    // TODO blob gas fee calculation - do we need to do anything else with this value
+    callParams.getMaxFeePerBlobGas().ifPresent(transactionBuilder::maxFeePerBlobGas);
 
     final Wei gasPrice;
     final Wei maxFeePerGas;
