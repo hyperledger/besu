@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import graphql.schema.DataFetchingEnvironment;
 import org.apache.tuweni.bytes.Bytes;
@@ -48,9 +49,9 @@ public class TransactionAdapter extends AdapterBase {
 
   public TransactionAdapter(
       final @Nonnull TransactionWithMetadata transactionWithMetadata,
-      final @Nonnull TransactionReceiptWithMetadata transactionReceiptWithMetadata) {
+      final @Nullable TransactionReceiptWithMetadata transactionReceiptWithMetadata) {
     this.transactionWithMetadata = transactionWithMetadata;
-    this.transactionReceiptWithMetadata = Optional.of(transactionReceiptWithMetadata);
+    this.transactionReceiptWithMetadata = Optional.ofNullable(transactionReceiptWithMetadata);
   }
 
   private Optional<TransactionReceiptWithMetadata> getReceipt(
