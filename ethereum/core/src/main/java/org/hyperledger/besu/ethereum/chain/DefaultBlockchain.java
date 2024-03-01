@@ -393,7 +393,6 @@ public class DefaultBlockchain implements MutableBlockchain {
         cache -> cache.put(block.getHash(), block.getHeader().getDifficulty()));
   }
 
-  @SuppressWarnings("unused")
   private boolean blockShouldBeProcessed(
       final Block block, final List<TransactionReceipt> receipts) {
     checkArgument(
