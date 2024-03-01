@@ -26,9 +26,14 @@ jobs:
         env:
           # fun fact, this changes based on incoming event, it will be different when we run this on pushes to main
           RELEVANT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
         with:
           script: |
             const { RELEVANT_SHA } = process.env;
+            const { EVENT_NAME } = process.env;
+            if(EVENT_NAME === 'workflow_dispatch') {
+              return true;
+            }
             const { data: { statuses } } = await github.rest.repos.getCombinedStatusForRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -49,6 +54,7 @@ jobs:
               console.log("approvingReviews = %j", approvingReviews.length);
             
             return shouldRun;
+
   acceptanceTestEthereum:
     runs-on: ubuntu-22.04
     name: "Acceptance Runner"
@@ -56,7 +62,7 @@ jobs:
     permissions:
       statuses: write
       checks: write
-    if: ${{ needs.shouldRun.outputs.shouldRun == 'true' || github.event_name == 'workflow_dispatch'}}
+    if: ${{ needs.shouldRun.outputs.shouldRun == 'true'}}
     strategy:
       fail-fast: true
       matrix:
