@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.trie.InnerNodeDiscoveryManager;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
+import org.hyperledger.besu.ethereum.trie.RangeManager;
 import org.hyperledger.besu.ethereum.trie.SnapCommitVisitor;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 
@@ -117,9 +118,7 @@ public class StackTrie {
 
       final InnerNodeDiscoveryManager<Bytes> snapStoredNodeFactory =
           new InnerNodeDiscoveryManager<>(
-              (location, hash) -> {
-                return Optional.ofNullable(proofsEntries.get(hash));
-              },
+              (location, hash) -> Optional.ofNullable(proofsEntries.get(hash)),
               Function.identity(),
               Function.identity(),
               startKeyHash,
@@ -138,7 +137,10 @@ public class StackTrie {
 
       trie.commit(
           nodeUpdater,
-          (new SnapCommitVisitor<>(nodeUpdater, startKeyHash, keys.lastKey()) {
+          (new SnapCommitVisitor<>(
+              nodeUpdater,
+              startKeyHash,
+              proofs.isEmpty() ? RangeManager.MAX_RANGE : keys.lastKey()) {
             @Override
             public void maybeStoreNode(final Bytes location, final Node<Bytes> node) {
               if (!node.isHealNeeded()) {
