@@ -153,6 +153,14 @@ public class CallParameter {
     return accessList;
   }
 
+  public Optional<Wei> getMaxFeePerBlobGas() {
+    return maxFeePerBlobGas;
+  }
+
+  public Optional<List<VersionedHash>> getBlobVersionedHashes() {
+    return blobVersionedHashes;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {
@@ -202,7 +210,7 @@ public class CallParameter {
         Wei.fromQuantity(tx.getValue()),
         tx.getPayload(),
         tx.getAccessList(),
-        tx.getMaxFeePerBlobGas(),
+        Optional.of(Wei.fromQuantity(tx.getMaxFeePerBlobGas().orElseGet(() -> Wei.ZERO))),
         tx.getVersionedHashes());
   }
 }
