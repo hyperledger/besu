@@ -76,6 +76,7 @@ jobs:
           pattern: besu-*.zip
       - name: test Besu
         run: |
+          mkdir besu-tmp
           unzip besu-*.zip -d besu-tmp
           cd besu-tmp
           mv besu-* ../besu
