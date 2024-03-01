@@ -61,7 +61,7 @@ public class BytecodeRequest extends SnapDataRequest {
     applyForStrategy(
         updater,
         onBonsai -> {
-          onBonsai.putCode(Hash.wrap(accountHash), codeHash, code);
+          onBonsai.putCode(Hash.wrap(accountHash), Hash.wrap(codeHash), code);
         },
         onForest -> {
           onForest.putCode(codeHash, code);
