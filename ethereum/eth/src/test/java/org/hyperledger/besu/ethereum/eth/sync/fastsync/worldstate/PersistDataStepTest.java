@@ -41,7 +41,7 @@ public class PersistDataStepTest {
 
   private final WorldStateStorage worldStateStorage =
       new InMemoryKeyValueStorageProvider()
-          .createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG);
+          .createWorldStateStorage(DataStorageConfiguration.DEFAULT_FOREST_CONFIG);
   private final FastWorldDownloadState downloadState = mock(FastWorldDownloadState.class);
 
   private final Bytes rootNodeData = Bytes.of(1, 1, 1, 1);

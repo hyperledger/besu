@@ -161,7 +161,7 @@ public class TraceFilter extends TraceBlock {
                               "action");
 
                   DebugOperationTracer debugOperationTracer =
-                      new DebugOperationTracer(new TraceOptions(false, false, true));
+                      new DebugOperationTracer(new TraceOptions(false, false, true), false);
                   ExecuteTransactionStep executeTransactionStep =
                       new ExecuteTransactionStep(
                           chainUpdater,

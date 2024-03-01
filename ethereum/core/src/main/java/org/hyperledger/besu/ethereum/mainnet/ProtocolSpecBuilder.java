@@ -380,7 +380,6 @@ public class ProtocolSpecBuilder {
         gasCalculator,
         gasLimitCalculator,
         feeMarket,
-        badBlockManager,
         Optional.ofNullable(powHasher),
         withdrawalsValidator,
         Optional.ofNullable(withdrawalsProcessor),

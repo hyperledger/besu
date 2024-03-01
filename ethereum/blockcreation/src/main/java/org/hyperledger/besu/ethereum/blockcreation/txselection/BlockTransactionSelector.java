@@ -383,33 +383,11 @@ public class BlockTransactionSelector {
     if (tooLate) {
       // even if this tx passed all the checks, it is too late to include it in this block,
       // so we need to treat it as not selected
-      final var evaluationTimer = evaluationContext.getEvaluationTimer();
-
-      // check if this tx took too much to evaluate, and in case remove it from the pool
-      final TransactionSelectionResult timeoutSelectionResult;
-      if (evaluationTimer.elapsed(TimeUnit.MILLISECONDS) > blockTxsSelectionMaxTime) {
-        LOG.atWarn()
-            .setMessage(
-                "Transaction {} is too late for inclusion, evaluated in {} that is over the max limit of {}ms"
-                    + ", removing it from the pool")
-            .addArgument(transaction::toTraceLog)
-            .addArgument(evaluationTimer)
-            .addArgument(blockTxsSelectionMaxTime)
-            .log();
-        timeoutSelectionResult = TX_EVALUATION_TOO_LONG;
-      } else {
-        LOG.atTrace()
-            .setMessage("Transaction {} is too late for inclusion")
-            .addArgument(transaction::toTraceLog)
-            .addArgument(evaluationTimer)
-            .log();
-        timeoutSelectionResult = BLOCK_SELECTION_TIMEOUT;
-      }
 
       // do not rely on the presence of this result, since by the time it is added, the code
       // reading it could have been already executed by another thread
       return handleTransactionNotSelected(
-          evaluationContext, timeoutSelectionResult, txWorldStateUpdater);
+          evaluationContext, BLOCK_SELECTION_TIMEOUT, txWorldStateUpdater);
     }
 
     pluginTransactionSelector.onTransactionSelected(evaluationContext, processingResult);
@@ -437,17 +415,47 @@ public class BlockTransactionSelector {
 
     final var pendingTransaction = evaluationContext.getPendingTransaction();
 
-    transactionSelectionResults.updateNotSelected(
-        evaluationContext.getTransaction(), selectionResult);
-    pluginTransactionSelector.onTransactionNotSelected(evaluationContext, selectionResult);
+    // check if this tx took too much to evaluate, and in case remove it from the pool
+    final TransactionSelectionResult actualResult =
+        isTimeout.get()
+            ? transactionTookTooLong(evaluationContext)
+                ? TX_EVALUATION_TOO_LONG
+                : BLOCK_SELECTION_TIMEOUT
+            : selectionResult;
+
+    transactionSelectionResults.updateNotSelected(evaluationContext.getTransaction(), actualResult);
+    pluginTransactionSelector.onTransactionNotSelected(evaluationContext, actualResult);
     LOG.atTrace()
-        .setMessage("Not selected {} for block creation with result {}, evaluated in {}")
+        .setMessage(
+            "Not selected {} for block creation with result {} (original result {}), evaluated in {}")
         .addArgument(pendingTransaction::toTraceLog)
+        .addArgument(actualResult)
         .addArgument(selectionResult)
         .addArgument(evaluationContext.getEvaluationTimer())
         .log();
 
-    return selectionResult;
+    return actualResult;
+  }
+
+  private boolean transactionTookTooLong(final TransactionEvaluationContext evaluationContext) {
+    final var evaluationTimer = evaluationContext.getEvaluationTimer();
+    if (evaluationTimer.elapsed(TimeUnit.MILLISECONDS) > blockTxsSelectionMaxTime) {
+      LOG.atWarn()
+          .setMessage(
+              "Transaction {} is too late for inclusion, evaluated in {} that is over the max limit of {}ms"
+                  + ", removing it from the pool")
+          .addArgument(evaluationContext.getPendingTransaction()::getHash)
+          .addArgument(evaluationTimer)
+          .addArgument(blockTxsSelectionMaxTime)
+          .log();
+      return true;
+    }
+    LOG.atTrace()
+        .setMessage("Transaction {} is too late for inclusion")
+        .addArgument(evaluationContext.getPendingTransaction()::toTraceLog)
+        .log();
+
+    return false;
   }
 
   private TransactionSelectionResult handleTransactionNotSelected(

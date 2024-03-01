@@ -18,11 +18,13 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
+import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.tests.acceptance.dsl.StaticNodesUtils;
@@ -107,6 +109,13 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
                     .strictTransactionReplayProtectionEnabled(
                         node.isStrictTxReplayProtectionEnabled())
                     .build())
+            .getCLIOptions());
+
+    params.addAll(
+        DataStorageOptions.fromConfig(
+                node.getDataStorageConfiguration() == null
+                    ? DataStorageConfiguration.DEFAULT_BONSAI_CONFIG
+                    : node.getDataStorageConfiguration())
             .getCLIOptions());
 
     if (node.getMiningParameters().isMiningEnabled()) {

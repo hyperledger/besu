@@ -29,6 +29,7 @@ import org.hyperledger.besu.cryptoservices.KeyPairSecurityModule;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -36,6 +37,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.MetricsSystemFactory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -49,7 +51,6 @@ import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
-import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
@@ -93,6 +94,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       final BesuNode node,
       final StorageServiceImpl storageService,
       final SecurityModuleServiceImpl securityModuleService,
+      final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
       final BesuConfiguration commonPluginConfiguration) {
     final CommandLine commandLine = new CommandLine(CommandSpec.create());
     final BesuPluginContextImpl besuPluginContext = new BesuPluginContextImpl();
@@ -101,7 +103,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
     besuPluginContext.addService(RpcEndpointService.class, new RpcEndpointServiceImpl());
     besuPluginContext.addService(
-        TransactionSelectionService.class, new TransactionSelectionServiceImpl());
+        TransactionSelectionService.class, transactionSelectionServiceImpl);
     besuPluginContext.addService(
         PluginTransactionValidatorService.class, new PluginTransactionValidatorServiceImpl());
     final Path pluginsPath;
@@ -143,15 +145,30 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final StorageServiceImpl storageService = new StorageServiceImpl();
     final SecurityModuleServiceImpl securityModuleService = new SecurityModuleServiceImpl();
+    final TransactionSelectionServiceImpl transactionSelectionServiceImpl =
+        new TransactionSelectionServiceImpl();
     final Path dataDir = node.homeDirectory();
-    final BesuConfiguration commonPluginConfiguration =
-        new BesuConfigurationImpl(dataDir, dataDir.resolve(DATABASE_PATH));
+    final BesuConfigurationImpl commonPluginConfiguration = new BesuConfigurationImpl();
+    final var miningParameters =
+        ImmutableMiningParameters.builder()
+            .from(node.getMiningParameters())
+            .transactionSelectionService(transactionSelectionServiceImpl)
+            .build();
+    commonPluginConfiguration.init(
+        dataDir,
+        dataDir.resolve(DATABASE_PATH),
+        node.getDataStorageConfiguration(),
+        miningParameters);
     final BesuPluginContextImpl besuPluginContext =
         besuPluginContextMap.computeIfAbsent(
             node,
             n ->
                 buildPluginContext(
-                    node, storageService, securityModuleService, commonPluginConfiguration));
+                    node,
+                    storageService,
+                    securityModuleService,
+                    transactionSelectionServiceImpl,
+                    commonPluginConfiguration));
 
     GlobalOpenTelemetry.resetForTest();
     final ObservableMetricsSystem metricsSystem =
@@ -188,19 +205,23 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final int maxPeers = 25;
 
-    final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory =
-        getTransactionSelectorFactory(besuPluginContext);
-
     final PluginTransactionValidatorFactory pluginTransactionValidatorFactory =
         getPluginTransactionValidatorFactory(besuPluginContext);
+
+    final DataStorageConfiguration dataStorageConfiguration =
+        node.getDataStorageConfiguration() == null
+            ? DataStorageConfiguration.DEFAULT_BONSAI_CONFIG
+            : node.getDataStorageConfiguration();
+
     builder
         .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
         .dataDirectory(node.homeDirectory())
-        .miningParameters(node.getMiningParameters())
+        .miningParameters(miningParameters)
         .privacyParameters(node.getPrivacyParameters())
         .nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))))
         .metricsSystem(metricsSystem)
         .transactionPoolConfiguration(txPoolConfig)
+        .dataStorageConfiguration(dataStorageConfiguration)
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(node.isRevertReasonEnabled())
@@ -214,7 +235,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .maxRemotelyInitiatedPeers(15)
         .networkConfiguration(node.getNetworkingConfiguration())
         .randomPeerPriority(false)
-        .transactionSelectorFactory(transactionSelectorFactory)
         .pluginTransactionValidatorFactory(pluginTransactionValidatorFactory);
 
     node.getGenesisConfig()
@@ -324,13 +344,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   @Override
   public String getConsoleContents() {
     throw new RuntimeException("Console contents can only be captured in process execution");
-  }
-
-  private Optional<PluginTransactionSelectorFactory> getTransactionSelectorFactory(
-      final BesuPluginContextImpl besuPluginContext) {
-    final Optional<TransactionSelectionService> txSelectionService =
-        besuPluginContext.getService(TransactionSelectionService.class);
-    return txSelectionService.isPresent() ? txSelectionService.get().get() : Optional.empty();
   }
 
   private PluginTransactionValidatorFactory getPluginTransactionValidatorFactory(

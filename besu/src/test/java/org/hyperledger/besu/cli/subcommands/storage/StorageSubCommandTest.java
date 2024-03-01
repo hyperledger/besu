@@ -25,16 +25,13 @@ import static org.hyperledger.besu.ethereum.core.VariablesStorageHelper.populate
 import static org.hyperledger.besu.ethereum.core.VariablesStorageHelper.populateVariablesStorage;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.BLOCKCHAIN;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.VARIABLES;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.CommandTestAbstract;
+import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
-
-import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -67,10 +64,10 @@ public class StorageSubCommandTest extends CommandTestAbstract {
     final var kvVariables = new SegmentedKeyValueStorageAdapter(VARIABLES, kvVariablesSeg);
     final var kvBlockchainSeg = new SegmentedInMemoryKeyValueStorage();
     final var kvBlockchain = new SegmentedKeyValueStorageAdapter(BLOCKCHAIN, kvBlockchainSeg);
-    when(rocksDBStorageFactory.create(eq(List.of(VARIABLES)), any(), any()))
-        .thenReturn(kvVariablesSeg);
-    when(rocksDBStorageFactory.create(eq(List.of(BLOCKCHAIN)), any(), any()))
-        .thenReturn(kvBlockchainSeg);
+    when(storageProvider.createVariablesStorage())
+        .thenReturn(new VariablesKeyValueStorage(kvVariables));
+    when(storageProvider.getStorageBySegmentIdentifier(BLOCKCHAIN)).thenReturn(kvBlockchain);
+
     final var variableValues = getSampleVariableValues();
     assertNoVariablesInStorage(kvBlockchain);
     populateVariablesStorage(kvVariables, variableValues);
@@ -87,10 +84,9 @@ public class StorageSubCommandTest extends CommandTestAbstract {
     final var kvVariables = new SegmentedKeyValueStorageAdapter(VARIABLES, kvVariablesSeg);
     final var kvBlockchainSeg = new SegmentedInMemoryKeyValueStorage();
     final var kvBlockchain = new SegmentedKeyValueStorageAdapter(BLOCKCHAIN, kvBlockchainSeg);
-    when(rocksDBStorageFactory.create(eq(List.of(VARIABLES)), any(), any()))
-        .thenReturn(kvVariablesSeg);
-    when(rocksDBStorageFactory.create(eq(List.of(BLOCKCHAIN)), any(), any()))
-        .thenReturn(kvBlockchainSeg);
+    when(storageProvider.createVariablesStorage())
+        .thenReturn(new VariablesKeyValueStorage(kvVariables));
+    when(storageProvider.getStorageBySegmentIdentifier(BLOCKCHAIN)).thenReturn(kvBlockchain);
 
     final var variableValues = getSampleVariableValues();
     variableValues.remove(FINALIZED_BLOCK_HASH);
@@ -108,8 +104,9 @@ public class StorageSubCommandTest extends CommandTestAbstract {
   public void doesNothingWhenVariablesAlreadyReverted() {
     final var kvVariables = new InMemoryKeyValueStorage();
     final var kvBlockchain = new InMemoryKeyValueStorage();
-    when(rocksDBStorageFactory.create(eq(VARIABLES), any(), any())).thenReturn(kvVariables);
-    when(rocksDBStorageFactory.create(eq(BLOCKCHAIN), any(), any())).thenReturn(kvBlockchain);
+    when(storageProvider.createVariablesStorage())
+        .thenReturn(new VariablesKeyValueStorage(kvVariables));
+    when(storageProvider.getStorageBySegmentIdentifier(BLOCKCHAIN)).thenReturn(kvBlockchain);
 
     final var variableValues = getSampleVariableValues();
     assertNoVariablesInStorage(kvVariables);

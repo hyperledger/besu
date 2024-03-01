@@ -7,8 +7,8 @@
   ],
   "stdin": "",
   "stdout": [
-    {"pc":0,"op":96,"gas":"0x2540b91f8","gasCost":"0x3","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH1"},
-    {"pc":2,"op":239,"gas":"0x2540b91f5","gasCost":"0x0","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"INVALID","error":"Bad instruction"},
-    {"gasUser":"0x2540b91f8","gasTotal":"0x2540b91f8","output":"0x"}
+    {"pc":0,"op":96,"gas":"0x2540be400","gasCost":"0x3","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":2,"op":239,"gas":"0x2540be3fd","gasCost":"0x0","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"INVALID","error":"Bad instruction"},
+    {"gasUser":"0x2540be400","gasTotal":"0x2540be400","output":"0x"}
   ]
 }

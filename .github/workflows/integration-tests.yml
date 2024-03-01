@@ -1,5 +1,6 @@
 name: integration-tests
 on:
+  workflow_dispatch:
   pull_request_target:
     branches:
       - main
@@ -66,7 +67,7 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: setup gradle
-        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
       - name: run integration tests
         run: ./gradlew integrationTest compileJmh -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Publish Test Report
