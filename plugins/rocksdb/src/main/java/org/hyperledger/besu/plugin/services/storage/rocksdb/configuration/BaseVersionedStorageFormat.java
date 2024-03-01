@@ -66,7 +66,7 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
     return switch (format) {
       case FOREST -> configuration.getReceiptCompactionEnabled()
           ? FOREST_WITH_RECEIPT_COMPACTION
-          : BONSAI_WITH_VARIABLES;
+          : FOREST_WITH_VARIABLES;
       case BONSAI -> configuration.getReceiptCompactionEnabled()
           ? BONSAI_WITH_RECEIPT_COMPACTION
           : BONSAI_WITH_VARIABLES;

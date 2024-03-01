@@ -17,11 +17,13 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.FOREST;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorageTest.TestSegment;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
+import org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.DatabaseMetadata;
@@ -42,6 +44,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class RocksDBKeyValuePrivacyStorageFactoryTest {
   @Mock private RocksDBFactoryConfiguration rocksDbConfiguration;
   @Mock private BesuConfiguration commonConfiguration;
+  @Mock private DataStorageConfiguration dataStorageConfiguration;
   @TempDir private Path temporaryFolder;
   private final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final SegmentIdentifier segment = TestSegment.BAR;
@@ -127,5 +130,8 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
     when(commonConfiguration.getDatabaseFormat()).thenReturn(FOREST);
+    lenient()
+        .when(commonConfiguration.getDataStorageConfiguration())
+        .thenReturn(dataStorageConfiguration);
   }
 }
