@@ -137,13 +137,14 @@ public class CallParameter {
         && Objects.equals(maxPriorityFeePerGas, that.maxPriorityFeePerGas)
         && Objects.equals(maxFeePerGas, that.maxFeePerGas)
         && Objects.equals(value, that.value)
-        && Objects.equals(payload, that.payload);
+        && Objects.equals(payload, that.payload)
+        && Objects.equals(accessList, that.accessList);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(
-        from, to, gasLimit, gasPrice, maxPriorityFeePerGas, maxFeePerGas, value, payload);
+        from, to, gasLimit, gasPrice, maxPriorityFeePerGas, maxFeePerGas, value, payload, accessList);
   }
 
   public static CallParameter fromTransaction(final Transaction tx) {
