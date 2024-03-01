@@ -24,9 +24,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.CliqueConfigOptions;
+import org.hyperledger.besu.config.ImmutableCliqueConfigOptions;
 import org.hyperledger.besu.config.JsonCliqueConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
-import org.hyperledger.besu.consensus.clique.MutableCliqueConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
@@ -68,10 +68,9 @@ class CliqueBlockMinerTest {
 
   @BeforeEach
   public void setup() {
-    final MutableCliqueConfigOptions options =
-        new MutableCliqueConfigOptions(JsonCliqueConfigOptions.DEFAULT);
-    options.setCreateEmptyBlocks(false);
-    forksSchedule = new ForksSchedule<>(List.of(new ForkSpec<>(0, options)));
+    var options = ImmutableCliqueConfigOptions.builder().from(JsonCliqueConfigOptions.DEFAULT);
+    options.createEmptyBlocks(false);
+    forksSchedule = new ForksSchedule<>(List.of(new ForkSpec<>(0, options.build())));
   }
 
   @Test
