@@ -17,7 +17,10 @@ package org.hyperledger.besu.config;
 
 import java.util.Map;
 
+import org.immutables.value.Value;
+
 /** Configuration options for the Clique consensus mechanism. */
+@Value.Immutable
 public interface CliqueConfigOptions {
 
   /**

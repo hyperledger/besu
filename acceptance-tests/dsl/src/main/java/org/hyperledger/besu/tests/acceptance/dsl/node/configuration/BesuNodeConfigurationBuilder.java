@@ -75,7 +75,7 @@ public class BesuNodeConfigurationBuilder {
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private ApiConfiguration apiConfiguration = ImmutableApiConfiguration.builder().build();
   private DataStorageConfiguration dataStorageConfiguration =
-      DataStorageConfiguration.DEFAULT_FOREST_CONFIG;
+      DataStorageConfiguration.DEFAULT_BONSAI_CONFIG;
   private String keyFilePath = null;
   private boolean devMode = true;
   private GenesisConfigurationProvider genesisConfigProvider = ignore -> Optional.empty();

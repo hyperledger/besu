@@ -105,7 +105,6 @@ public class MessageValidatorTest {
             mock(MutableBlockchain.class),
             mock(WorldStateArchive.class),
             mockBftCtx,
-            Optional.empty(),
             new BadBlockManager());
 
     lenient()

@@ -76,8 +76,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
   private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
   private final EthScheduler ethScheduler = new DeterministicEthScheduler();
   private final ProtocolContext protocolContext =
-      new ProtocolContext(
-          blockchain, worldStateArchive, mergeContext, Optional.empty(), new BadBlockManager());
+      new ProtocolContext(blockchain, worldStateArchive, mergeContext, new BadBlockManager());
 
   private final Address coinbase = genesisAllocations(getPowGenesisConfigFile()).findFirst().get();
   private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();

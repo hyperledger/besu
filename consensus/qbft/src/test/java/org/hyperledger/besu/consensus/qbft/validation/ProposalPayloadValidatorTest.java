@@ -88,7 +88,6 @@ public class ProposalPayloadValidatorTest {
             blockChain,
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(QbftContext.class, emptyList(), bftExtraDataCodec),
-            Optional.empty(),
             new BadBlockManager());
   }
 
@@ -242,8 +241,7 @@ public class ProposalPayloadValidatorTest {
         setupContextWithBftExtraDataEncoder(QbftContext.class, emptyList(), pkiQbftExtraDataCodec);
     final Bytes cms = Bytes.fromHexStringLenient("0x1");
     final ProtocolContext protocolContext =
-        new ProtocolContext(
-            blockChain, worldStateArchive, qbftContext, Optional.empty(), new BadBlockManager());
+        new ProtocolContext(blockChain, worldStateArchive, qbftContext, new BadBlockManager());
 
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
@@ -278,8 +276,7 @@ public class ProposalPayloadValidatorTest {
         setupContextWithBftExtraDataEncoder(QbftContext.class, emptyList(), pkiQbftExtraDataCodec);
     final Bytes cms = Bytes.fromHexStringLenient("0x1");
     final ProtocolContext protocolContext =
-        new ProtocolContext(
-            blockChain, worldStateArchive, qbftContext, Optional.empty(), new BadBlockManager());
+        new ProtocolContext(blockChain, worldStateArchive, qbftContext, new BadBlockManager());
 
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(

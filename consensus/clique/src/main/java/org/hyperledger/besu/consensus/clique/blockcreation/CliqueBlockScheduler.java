@@ -42,17 +42,17 @@ public class CliqueBlockScheduler extends DefaultBlockScheduler {
    * @param clock the clock
    * @param validatorProvider the validator provider
    * @param localNodeAddress the local node address
-   * @param forkSchedule the seconds between blocks
+   * @param forksSchedule the transitions
    */
   public CliqueBlockScheduler(
       final Clock clock,
       final ValidatorProvider validatorProvider,
       final Address localNodeAddress,
-      final ForksSchedule<CliqueConfigOptions> forkSchedule) {
+      final ForksSchedule<CliqueConfigOptions> forksSchedule) {
     super(
         parentHeader ->
             (long)
-                forkSchedule
+                forksSchedule
                     .getFork(parentHeader.getNumber() + 1)
                     .getValue()
                     .getBlockPeriodSeconds(),

@@ -24,6 +24,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -202,7 +203,8 @@ public class ReplayTest {
         txPoolMetrics,
         txReplacementTester,
         baseFeeMarket,
-        new BlobCache());
+        new BlobCache(),
+        MiningParameters.newDefault());
   }
 
   // ToDo: commented since not always working, needs fix
