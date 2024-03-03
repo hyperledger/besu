@@ -210,7 +210,7 @@ public class CallParameter {
         Wei.fromQuantity(tx.getValue()),
         tx.getPayload(),
         tx.getAccessList(),
-        Optional.of(Wei.fromQuantity(tx.getMaxFeePerBlobGas().orElseGet(() -> Wei.ZERO))),
+        tx.getMaxFeePerBlobGas(),
         tx.getVersionedHashes());
   }
 }
