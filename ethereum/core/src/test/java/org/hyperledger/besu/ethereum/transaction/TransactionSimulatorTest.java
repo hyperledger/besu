@@ -57,7 +57,6 @@ import java.util.Optional;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -605,11 +604,10 @@ public class TransactionSimulatorTest {
 
   @Test
   public void shouldReturnSuccessfulResultWhenBlobTransactionProcessingIsSuccessful() {
-    final List<VersionedHash> versionedHashes =
-        List.of(
-            new VersionedHash(
-                Bytes32.fromHexString(
-                    "0x0148b0d226ded90804ec8a9ce337cc7abc86d718ceea7ae0cbb6acf4fdee215f")));
+    final Hash fakedHash = Hash.hash(Bytes.fromBase64String("ThisIsAFakeHash"));
+    final VersionedHash fakeVersionedHash =
+        new VersionedHash(VersionedHash.SHA256_VERSION_ID, fakedHash);
+    final List<VersionedHash> versionedHashes = List.of(fakeVersionedHash);
     final CallParameter callParameter =
         blobTransactionCallParameter(Wei.ONE, Wei.ONE, Wei.ONE, 300, versionedHashes);
 
