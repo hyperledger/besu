@@ -1606,8 +1606,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       throw new ParameterException(
           this.commandLine, "Unable to load genesis file. " + e.getCause());
     }
-    if (genesisConfigOptions.isPoa()) {
-      final String errorSuffix = "can't be used with PoA networks";
+    // snap and checkpoint can't be used with BFT but can for clique
+    if (genesisConfigOptions.isIbftLegacy()
+        || genesisConfigOptions.isIbft2()
+        || genesisConfigOptions.isQbft()) {
+      final String errorSuffix = "can't be used with BFT networks";
       if (SyncMode.CHECKPOINT.equals(syncMode) || SyncMode.X_CHECKPOINT.equals(syncMode)) {
         throw new ParameterException(
             commandLine, String.format("%s %s", "Checkpoint sync", errorSuffix));
