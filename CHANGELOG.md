@@ -20,7 +20,6 @@
 
 ### Deprecations
 - X_SNAP and X_CHECKPOINT are marked for deprecation and will be removed in 24.4.0 in favor of SNAP and CHECKPOINT [#6405](https://github.com/hyperledger/besu/pull/6405)
-- `--Xsnapsync-synchronizer-flat-db-healing-enabled` is deprecated (always enabled). [#6499](https://github.com/hyperledger/besu/pull/6499)
 - `--Xp2p-peer-lower-bound` is deprecated. [#6501](https://github.com/hyperledger/besu/pull/6501)
 
 ### Upcoming Breaking Changes
