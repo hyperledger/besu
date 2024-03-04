@@ -44,6 +44,7 @@ public class CliqueForksSchedulesFactory {
 
     var options = ImmutableCliqueConfigOptions.builder().from(lastSpec.getValue());
     fork.getBlockPeriodSeconds().ifPresent(options::blockPeriodSeconds);
+    fork.getCreateEmptyBlocks().ifPresent(options::createEmptyBlocks);
     return options.build();
   }
 }
