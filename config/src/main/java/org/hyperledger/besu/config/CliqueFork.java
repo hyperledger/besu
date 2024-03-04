@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.config;
 
+import java.util.Optional;
 import java.util.OptionalInt;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -27,6 +28,9 @@ public class CliqueFork implements Fork {
 
   /** The constant BLOCK_PERIOD_SECONDS_KEY. */
   public static final String BLOCK_PERIOD_SECONDS_KEY = "blockperiodseconds";
+
+  /** The constant CREATE_EMPTY_BLOCKS_KEY. */
+  public static final String CREATE_EMPTY_BLOCKS_KEY = "createemptyblocks";
 
   /** The Fork config root. */
   protected final ObjectNode forkConfigRoot;
@@ -62,5 +66,14 @@ public class CliqueFork implements Fork {
    */
   public OptionalInt getBlockPeriodSeconds() {
     return JsonUtil.getPositiveInt(forkConfigRoot, BLOCK_PERIOD_SECONDS_KEY);
+  }
+
+  /**
+   * Gets create empty blocks.
+   *
+   * @return the create empty blocks
+   */
+  public Optional<Boolean> getCreateEmptyBlocks() {
+    return JsonUtil.getBoolean(forkConfigRoot, CREATE_EMPTY_BLOCKS_KEY);
   }
 }

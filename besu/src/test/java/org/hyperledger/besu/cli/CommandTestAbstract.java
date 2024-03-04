@@ -169,6 +169,9 @@ public abstract class CommandTestAbstract {
                       "clique",
                       new JsonObject().put("blockperiodseconds", POA_BLOCK_PERIOD_SECONDS)));
 
+  protected static final JsonObject GENESIS_WITH_ZERO_BASE_FEE_MARKET =
+      new JsonObject().put("config", new JsonObject().put("zeroBaseFee", true));
+
   protected final PrintStream originalOut = System.out;
   protected final PrintStream originalErr = System.err;
   protected final ByteArrayOutputStream commandOutput = new ByteArrayOutputStream();
@@ -752,5 +755,16 @@ public abstract class CommandTestAbstract {
     }
 
     assertThat(stringArgumentCaptor.getAllValues().get(2)).isEqualTo(mainOption);
+  }
+  /**
+   * Check logger calls
+   *
+   * <p>Here we check the calls to logger and not the result of the log line as we don't test the
+   * logger itself but the fact that we call it.
+   *
+   * @param stringToLog the string that is logged
+   */
+  void verifyMultiOptionsConstraintLoggerCall(final String stringToLog) {
+    verify(mockLogger, atLeast(1)).warn(stringToLog);
   }
 }
