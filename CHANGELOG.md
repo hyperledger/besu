@@ -16,6 +16,7 @@
 - Add createemptyblocks transitions to Clique [#6608](https://github.com/hyperledger/besu/pull/6608)
 - RocksDB database metadata refactoring [#6555](https://github.com/hyperledger/besu/pull/6555)
 - Make layered txpool aware of minGasPrice and minPriorityFeePerGas dynamic options [#6611](https://github.com/hyperledger/besu/pull/6611)
+- Update commons-compress to 1.26.0 [#6648](https://github.com/hyperledger/besu/pull/6648)
 
 ### Bug fixes
 
