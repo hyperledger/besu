@@ -628,6 +628,11 @@ public class TransactionSimulatorTest {
             .versionedHashes(callParameter.getBlobVersionedHashes().get())
             .signature(FAKE_SIGNATURE)
             .build();
+
+    final CallParameter reverseEngineeredCallParam =
+        CallParameter.fromTransaction(expectedTransaction);
+    assertThat(reverseEngineeredCallParam).isEqualTo(callParameter);
+
     mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     final Optional<TransactionSimulatorResult> result =
