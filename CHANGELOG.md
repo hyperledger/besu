@@ -4,6 +4,7 @@
 
 ### Breaking Changes
 - RocksDB database metadata format has changed to be more expressive, the migration of an existing metadata file to the new format is automatic at startup. Before performing a downgrade to a previous version it is mandatory to revert to the original format using the subcommand `besu --data-path=/path/to/besu/datadir storage revert-metadata v2-to-v1`.
+- PoA networks won't start with SNAP or CHECKPOINT sync (previously Besu would start with this config but quietly fail to sync, so it's now more obvious that it won't work) [#6625](https://github.com/hyperledger/besu/pull/6625)
 
 ### Upcoming Breaking Changes
 
@@ -11,8 +12,11 @@
 
 ### Additions and Improvements
 - Extend `Blockchain` service [#6592](https://github.com/hyperledger/besu/pull/6592)
+- Add bft-style blockperiodseconds transitions to Clique [#6596](https://github.com/hyperledger/besu/pull/6596)
+- Add createemptyblocks transitions to Clique [#6608](https://github.com/hyperledger/besu/pull/6608)
 - RocksDB database metadata refactoring [#6555](https://github.com/hyperledger/besu/pull/6555)
 - Make layered txpool aware of minGasPrice and minPriorityFeePerGas dynamic options [#6611](https://github.com/hyperledger/besu/pull/6611)
+- Update commons-compress to 1.26.0 [#6648](https://github.com/hyperledger/besu/pull/6648)
 
 ### Bug fixes
 
@@ -36,7 +40,6 @@
 
 ### Deprecations
 - X_SNAP and X_CHECKPOINT are marked for deprecation and will be removed in 24.4.0 in favor of SNAP and CHECKPOINT [#6405](https://github.com/hyperledger/besu/pull/6405)
-- `--Xsnapsync-synchronizer-flat-db-healing-enabled` is deprecated (always enabled). [#6499](https://github.com/hyperledger/besu/pull/6499)
 - `--Xp2p-peer-lower-bound` is deprecated. [#6501](https://github.com/hyperledger/besu/pull/6501)
 
 ### Upcoming Breaking Changes

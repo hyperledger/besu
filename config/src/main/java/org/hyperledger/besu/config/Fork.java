@@ -15,39 +15,13 @@
 
 package org.hyperledger.besu.config;
 
-import java.util.Map;
-
-import org.immutables.value.Value;
-
-/** Configuration options for the Clique consensus mechanism. */
-@Value.Immutable
-public interface CliqueConfigOptions {
+/** A "custom hard fork" used for Proof of Authority network Transitions */
+public interface Fork {
 
   /**
-   * The number of blocks in an epoch.
+   * The block number at which the fork occurs.
    *
-   * @return the epoch length
+   * @return the block number at which the fork occurs
    */
-  long getEpochLength();
-
-  /**
-   * Gets block period seconds.
-   *
-   * @return the block period seconds
-   */
-  int getBlockPeriodSeconds();
-
-  /**
-   * Gets create empty blocks.
-   *
-   * @return whether empty blocks are permitted
-   */
-  boolean getCreateEmptyBlocks();
-
-  /**
-   * A map of the config options.
-   *
-   * @return the map
-   */
-  Map<String, Object> asMap();
+  long getForkBlock();
 }
