@@ -88,6 +88,7 @@ public class PrivCallTest {
             null,
             null,
             null,
+            null,
             null);
     final JsonRpcRequestContext request = ethCallRequest(privacyGroupId, callParameter, "latest");
 
@@ -116,6 +117,7 @@ public class PrivCallTest {
         new JsonCallParameter(
             null,
             Address.fromHexString("0x0"),
+            null,
             null,
             null,
             null,
@@ -205,6 +207,7 @@ public class PrivCallTest {
         null,
         Wei.ZERO,
         Bytes.EMPTY,
+        null,
         null,
         null,
         null,
