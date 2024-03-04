@@ -26,13 +26,11 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -611,7 +609,7 @@ public class TransactionSimulatorTest {
         new VersionedHash(VersionedHash.SHA256_VERSION_ID, fakedHash);
     final List<VersionedHash> versionedHashes = List.of(fakeVersionedHash);
     final CallParameter callParameter =
-        blobTransactionCallParameter(Wei.ONE, Wei.ONE, Wei.ONE, 300, 3);
+        blobTransactionCallParameter(Wei.ONE, Wei.ONE, Wei.ONE, 300, versionedHashes);
 
     final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE);
 
@@ -773,8 +771,7 @@ public class TransactionSimulatorTest {
       final Wei maxFeePerGas,
       final Wei maxPriorityFeePerGas,
       final long gasLimit,
-      final int numberOfBlobs) {
-    BlobsWithCommitments bwc = new BlobTestFixture().createBlobsWithCommitments(numberOfBlobs);
+      final List<VersionedHash> versionedHashes) {
     return new CallParameter(
         Address.fromHexString("0x0"),
         Address.fromHexString("0x0"),
@@ -786,7 +783,6 @@ public class TransactionSimulatorTest {
         Bytes.EMPTY,
         Optional.empty(),
         Optional.of(maxFeePerBlobGas),
-        Optional.of(bwc.getVersionedHashes()),
-        Optional.of(bwc.getBlobs()));
+        Optional.of(versionedHashes));
   }
 }

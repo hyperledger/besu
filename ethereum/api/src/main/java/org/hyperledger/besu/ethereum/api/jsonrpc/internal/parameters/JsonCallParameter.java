@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Blob;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.json.HexLongDeserializer;
@@ -57,8 +56,7 @@ public class JsonCallParameter extends CallParameter {
       @JsonProperty("strict") final Boolean strict,
       @JsonProperty("accessList") final List<AccessListEntry> accessList,
       @JsonProperty("maxFeePerBlobGas") final Wei maxFeePerBlobGas,
-      @JsonProperty("blobVersionedHashes") final List<VersionedHash> blobVersionedHashes,
-      @JsonProperty("blobs") final List<Blob> blobs) {
+      @JsonProperty("blobVersionedHashes") final List<VersionedHash> blobVersionedHashes) {
 
     super(
         from,
@@ -71,8 +69,7 @@ public class JsonCallParameter extends CallParameter {
         Optional.ofNullable(input != null ? input : data).orElse(null),
         Optional.ofNullable(accessList),
         Optional.ofNullable(maxFeePerBlobGas),
-        Optional.ofNullable(blobVersionedHashes),
-        Optional.ofNullable(blobs));
+        Optional.ofNullable(blobVersionedHashes));
 
     if (input != null && data != null) {
       throw new IllegalArgumentException("Only one of 'input' or 'data' should be provided");

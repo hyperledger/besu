@@ -475,7 +475,6 @@ public class EthEstimateGasTest {
         isStrict,
         null,
         null,
-        null,
         null);
   }
 
@@ -508,7 +507,6 @@ public class EthEstimateGasTest {
         Bytes.EMPTY,
         null,
         false,
-        null,
         null,
         null,
         null);

@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.transaction;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Blob;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -50,8 +49,6 @@ public class CallParameter {
   private final Optional<List<AccessListEntry>> accessList;
   private final Optional<List<VersionedHash>> blobVersionedHashes;
 
-  private final Optional<List<Blob>> blobs;
-
   public CallParameter(
       final Address from,
       final Address to,
@@ -70,7 +67,6 @@ public class CallParameter {
     this.payload = payload;
     this.maxFeePerBlobGas = Optional.empty();
     this.blobVersionedHashes = Optional.empty();
-    this.blobs = Optional.empty();
   }
 
   public CallParameter(
@@ -94,7 +90,6 @@ public class CallParameter {
     this.accessList = accessList;
     this.maxFeePerBlobGas = Optional.empty();
     this.blobVersionedHashes = Optional.empty();
-    this.blobs = Optional.empty();
   }
 
   public CallParameter(
@@ -108,8 +103,7 @@ public class CallParameter {
       final Bytes payload,
       final Optional<List<AccessListEntry>> accessList,
       final Optional<Wei> maxFeePerBlobGas,
-      final Optional<List<VersionedHash>> blobVersionedHashes,
-      final Optional<List<Blob>> blobs) {
+      final Optional<List<VersionedHash>> blobVersionedHashes) {
     this.from = from;
     this.to = to;
     this.gasLimit = gasLimit;
@@ -121,7 +115,6 @@ public class CallParameter {
     this.accessList = accessList;
     this.maxFeePerBlobGas = maxFeePerBlobGas;
     this.blobVersionedHashes = blobVersionedHashes;
-    this.blobs = blobs;
   }
 
   public Address getFrom() {
@@ -168,10 +161,6 @@ public class CallParameter {
     return blobVersionedHashes;
   }
 
-  public Optional<List<Blob>> getBlobs() {
-    return blobs;
-  }
-
   @Override
   public boolean equals(final Object o) {
     if (this == o) {
@@ -191,8 +180,7 @@ public class CallParameter {
         && Objects.equals(payload, that.payload)
         && Objects.equals(accessList, that.accessList)
         && Objects.equals(maxFeePerBlobGas, that.maxFeePerBlobGas)
-        && Objects.equals(blobVersionedHashes, that.blobVersionedHashes)
-        && Objects.equals(blobs, that.blobs);
+        && Objects.equals(blobVersionedHashes, that.blobVersionedHashes);
   }
 
   @Override
@@ -208,8 +196,7 @@ public class CallParameter {
         payload,
         accessList,
         maxFeePerBlobGas,
-        blobVersionedHashes,
-        blobs);
+        blobVersionedHashes);
   }
 
   public static CallParameter fromTransaction(final Transaction tx) {
@@ -224,8 +211,6 @@ public class CallParameter {
         tx.getPayload(),
         tx.getAccessList(),
         tx.getMaxFeePerBlobGas(),
-        tx.getVersionedHashes(),
-        tx.getBlobsWithCommitments()
-            .flatMap(blobsWithCommitments -> Optional.of(blobsWithCommitments.getBlobs())));
+        tx.getVersionedHashes());
   }
 }

@@ -141,7 +141,7 @@ public class EthCreateAccessListIntegrationTest {
   public void shouldReturnExpectedValueForEmptyCallParameter() {
     final JsonCallParameter callParameter =
         new JsonCallParameter(
-            null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+            null, null, null, null, null, null, null, null, null, null, null, null, null);
     final JsonRpcRequestContext request = requestWithParams(callParameter);
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, new CreateAccessListResult(new ArrayList<>(), 0xcf08));
@@ -162,7 +162,6 @@ public class EthCreateAccessListIntegrationTest {
             null,
             null,
             Wei.ZERO,
-            null,
             null,
             null,
             null,
@@ -195,7 +194,6 @@ public class EthCreateAccessListIntegrationTest {
             null,
             null,
             null,
-            null,
             null);
     final JsonRpcRequestContext request = requestWithParams(callParameter);
     final JsonRpcResponse expectedResponse =
@@ -223,7 +221,6 @@ public class EthCreateAccessListIntegrationTest {
             false,
             null,
             null,
-            null,
             null);
     final JsonRpcRequestContext request = requestWithParams(callParameter);
     final JsonRpcResponse expectedResponse =
@@ -238,7 +235,7 @@ public class EthCreateAccessListIntegrationTest {
   public void shouldReturnExpectedValueForInsufficientGas() {
     final JsonCallParameter callParameter =
         new JsonCallParameter(
-            null, null, 1L, null, null, null, null, null, null, null, null, null, null, null);
+            null, null, 1L, null, null, null, null, null, null, null, null, null, null);
     final JsonRpcRequestContext request = requestWithParams(callParameter);
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, new CreateAccessListResult(new ArrayList<>(), 0xcf08));
@@ -274,7 +271,6 @@ public class EthCreateAccessListIntegrationTest {
         null,
         null,
         accessList,
-        null,
         null,
         null);
   }
