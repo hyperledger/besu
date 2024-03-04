@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,21 +18,23 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
-/** The Delegate call operation. */
-public class DelegateCall2Operation extends AbstractCallOperation {
+/** The Call operation. */
+public class ExtCallOperation extends AbstractCallOperation {
 
   /**
-   * Instantiates a new Delegate call operation.
+   * Instantiates a new Call operation.
    *
    * @param gasCalculator the gas calculator
    */
-  public DelegateCall2Operation(final GasCalculator gasCalculator) {
-    super(0xF9, "LDELEGATECALL", 3, 1, gasCalculator);
+  public ExtCallOperation(final GasCalculator gasCalculator) {
+    super(0xF8, "EXTCALL", 4, 1, gasCalculator);
   }
 
   @Override
@@ -47,22 +49,22 @@ public class DelegateCall2Operation extends AbstractCallOperation {
 
   @Override
   protected Wei value(final MessageFrame frame) {
-    return Wei.ZERO;
+    return Wei.wrap(frame.getStackItem(1));
   }
 
   @Override
   protected Wei apparentValue(final MessageFrame frame) {
-    return frame.getApparentValue();
+    return value(frame);
   }
 
   @Override
   protected long inputDataOffset(final MessageFrame frame) {
-    return clampedToLong(frame.getStackItem(1));
+    return clampedToLong(frame.getStackItem(2));
   }
 
   @Override
   protected long inputDataLength(final MessageFrame frame) {
-    return clampedToLong(frame.getStackItem(2));
+    return clampedToLong(frame.getStackItem(3));
   }
 
   @Override
@@ -77,17 +79,17 @@ public class DelegateCall2Operation extends AbstractCallOperation {
 
   @Override
   protected Address address(final MessageFrame frame) {
-    return frame.getRecipientAddress();
+    return to(frame);
   }
 
   @Override
   protected Address sender(final MessageFrame frame) {
-    return frame.getSenderAddress();
+    return frame.getRecipientAddress();
   }
 
   @Override
   public long gasAvailableForChildCall(final MessageFrame frame) {
-    return gasCalculator().gasAvailableForChildCall(frame, gas(frame), false);
+    return gasCalculator().gasAvailableForChildCall(frame, gas(frame), !value(frame).isZero());
   }
 
   @Override
@@ -97,7 +99,7 @@ public class DelegateCall2Operation extends AbstractCallOperation {
 
   @Override
   protected boolean isDelegate() {
-    return true;
+    return false;
   }
 
   @Override
@@ -114,8 +116,17 @@ public class DelegateCall2Operation extends AbstractCallOperation {
             inputDataLength,
             0,
             0,
-            Wei.ZERO,
+            value(frame),
             recipient,
             to(frame));
+  }
+
+  @Override
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    if (frame.isStatic() && !value(frame).isZero()) {
+      return new OperationResult(cost(frame), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+    } else {
+      return super.execute(frame, evm);
+    }
   }
 }

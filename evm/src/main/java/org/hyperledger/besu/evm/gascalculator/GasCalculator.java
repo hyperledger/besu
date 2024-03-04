@@ -204,14 +204,14 @@ public interface GasCalculator {
   long create2OperationGasCost(MessageFrame frame);
 
   /**
-   * Returns the amount of gas the CREATE3 operation will consume.
+   * Returns the amount of gas the EOFCREATE operation will consume.
    *
    * @param initCode the raw bytes of the initcode
-   * @return the amount of gas the CREATE3 operation will consume
+   * @return the amount of gas the EOFCREATE operation will consume
    */
-  default long create3OperationGasCost(final Code initCode) {
+  default long eofCreateOperationGasCost(final Code initCode) {
     throw new UnsupportedOperationException(
-        "CREATE3 operation not supported by " + getClass().getSimpleName());
+        "EOFCREATE operation not supported by " + getClass().getSimpleName());
   }
 
   /**

@@ -139,7 +139,7 @@ public interface ExceptionalHaltReason {
     /** The Delegate call version incompatible. */
     EOF_DELEGATE_CALL_VERSION_INCOMPATIBLE(
         "EOF Code is attempting to delegate call code of an earlier version"),
-    /** Container referenced by CREATE3 operation does not exist */
+    /** Container referenced by EOFCREATE operation does not exist */
     NONEXISTENT_CONTAINER("Referenced subcontainer index does not exist (too large?)");
 
     /** The Description. */

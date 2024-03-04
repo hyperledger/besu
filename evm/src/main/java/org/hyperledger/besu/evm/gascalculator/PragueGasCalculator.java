@@ -45,7 +45,7 @@ public class PragueGasCalculator extends CancunGasCalculator {
   }
 
   @Override
-  public long create3OperationGasCost(final Code initCode) {
+  public long eofCreateOperationGasCost(final Code initCode) {
     return CREATE_OPERATION_GAS_COST
         + (initCode.getBytes().size() + 31L) / 32L * KECCAK256_OPERATION_WORD_GAS_COST;
   }

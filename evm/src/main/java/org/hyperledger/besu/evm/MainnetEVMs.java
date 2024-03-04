@@ -39,7 +39,6 @@ import org.hyperledger.besu.evm.operation.BlobBaseFeeOperation;
 import org.hyperledger.besu.evm.operation.BlobHashOperation;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.operation.ByteOperation;
-import org.hyperledger.besu.evm.operation.Call2Operation;
 import org.hyperledger.besu.evm.operation.CallCodeOperation;
 import org.hyperledger.besu.evm.operation.CallDataCopyOperation;
 import org.hyperledger.besu.evm.operation.CallDataLoadOperation;
@@ -53,23 +52,25 @@ import org.hyperledger.besu.evm.operation.CodeCopyOperation;
 import org.hyperledger.besu.evm.operation.CodeSizeOperation;
 import org.hyperledger.besu.evm.operation.CoinbaseOperation;
 import org.hyperledger.besu.evm.operation.Create2Operation;
-import org.hyperledger.besu.evm.operation.Create3Operation;
 import org.hyperledger.besu.evm.operation.CreateOperation;
 import org.hyperledger.besu.evm.operation.DataCopyOperation;
 import org.hyperledger.besu.evm.operation.DataLoadNOperation;
 import org.hyperledger.besu.evm.operation.DataLoadOperation;
 import org.hyperledger.besu.evm.operation.DataSizeOperation;
-import org.hyperledger.besu.evm.operation.DelegateCall2Operation;
 import org.hyperledger.besu.evm.operation.DelegateCallOperation;
 import org.hyperledger.besu.evm.operation.DifficultyOperation;
 import org.hyperledger.besu.evm.operation.DivOperation;
 import org.hyperledger.besu.evm.operation.DupNOperation;
 import org.hyperledger.besu.evm.operation.DupOperation;
+import org.hyperledger.besu.evm.operation.EOFCreateOperation;
 import org.hyperledger.besu.evm.operation.EqOperation;
 import org.hyperledger.besu.evm.operation.ExpOperation;
+import org.hyperledger.besu.evm.operation.ExtCallOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeCopyOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeHashOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeSizeOperation;
+import org.hyperledger.besu.evm.operation.ExtDCallOperation;
+import org.hyperledger.besu.evm.operation.ExtSCallOperation;
 import org.hyperledger.besu.evm.operation.GasLimitOperation;
 import org.hyperledger.besu.evm.operation.GasOperation;
 import org.hyperledger.besu.evm.operation.GasPriceOperation;
@@ -122,7 +123,6 @@ import org.hyperledger.besu.evm.operation.SelfDestructOperation;
 import org.hyperledger.besu.evm.operation.ShlOperation;
 import org.hyperledger.besu.evm.operation.ShrOperation;
 import org.hyperledger.besu.evm.operation.SignExtendOperation;
-import org.hyperledger.besu.evm.operation.StaticCall2Operation;
 import org.hyperledger.besu.evm.operation.StaticCallOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SubOperation;
@@ -958,6 +958,10 @@ public class MainnetEVMs {
       final BigInteger chainID) {
     registerCancunOperations(registry, gasCalculator, chainID);
 
+    // EIP-663 Unlimited Swap and Dup
+    registry.put(new DupNOperation(gasCalculator));
+    registry.put(new SwapNOperation(gasCalculator));
+
     // EIP-4200 relative jump
     registry.put(new RelativeJumpOperation(gasCalculator));
     registry.put(new RelativeJumpIfOperation(gasCalculator));
@@ -970,25 +974,21 @@ public class MainnetEVMs {
     // EIP-6209 JUMPF Instruction
     registry.put(new JumpFOperation(gasCalculator));
 
-    // EIP-663 Unlimited Swap and Dup
-    registry.put(new DupNOperation(gasCalculator));
-    registry.put(new SwapNOperation(gasCalculator));
+    // EIP-7069 Revamped EOF Call
+    registry.put(new ExtCallOperation(gasCalculator));
+    registry.put(new ExtDCallOperation(gasCalculator));
+    registry.put(new ExtSCallOperation(gasCalculator));
 
-    // "mega" EOF
+    // EIP-7480 EOF Data Section Access
     registry.put(new DataLoadOperation(gasCalculator));
     registry.put(new DataLoadNOperation(gasCalculator));
     registry.put(new DataSizeOperation(gasCalculator));
     registry.put(new DataCopyOperation(gasCalculator));
 
-    // TODO CREATE3, CREATE4, RETURNCONTRACT
-    registry.put(new Create3Operation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
-    // registry.put(new Create4Operation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
+    // EIP-7620 EOF Create and Transaction Create
+    registry.put(new EOFCreateOperation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
+    // registry.put(new TxCreateOperation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
     registry.put(new ReturnContractOperation(gasCalculator));
-
-    // EIP-7069 Reworked Call Operations
-    registry.put(new Call2Operation(gasCalculator));
-    registry.put(new DelegateCall2Operation(gasCalculator));
-    registry.put(new StaticCall2Operation(gasCalculator));
   }
 
   /**

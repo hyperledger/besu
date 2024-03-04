@@ -29,23 +29,23 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** The Create2 operation. */
-public class Create3Operation extends AbstractCreateOperation {
+public class EOFCreateOperation extends AbstractCreateOperation {
 
   private static final Bytes PREFIX = Bytes.fromHexString("0xFF");
 
   /**
-   * Instantiates a new Create3 operation.
+   * Instantiates a new EOFCreate operation.
    *
    * @param gasCalculator the gas calculator
    * @param maxInitcodeSize Maximum init code size
    */
-  public Create3Operation(final GasCalculator gasCalculator, final int maxInitcodeSize) {
-    super(0xEC, "CREATE3", 4, 1, gasCalculator, maxInitcodeSize, 1);
+  public EOFCreateOperation(final GasCalculator gasCalculator, final int maxInitcodeSize) {
+    super(0xEC, "EOFCREATE", 4, 1, gasCalculator, maxInitcodeSize, 1);
   }
 
   @Override
   public long cost(final MessageFrame frame, final Supplier<Code> codeSupplier) {
-    return gasCalculator().create3OperationGasCost(codeSupplier.get());
+    return gasCalculator().eofCreateOperationGasCost(codeSupplier.get());
   }
 
   @Override
