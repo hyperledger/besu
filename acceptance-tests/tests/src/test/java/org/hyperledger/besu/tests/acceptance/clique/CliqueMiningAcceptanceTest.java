@@ -144,6 +144,8 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBaseJunit5 {
         Map.of("block", 3, "blockperiodseconds", 2);
     final Map<String, Object> decreasePeriodTo1_Transition =
         Map.of("block", 4, "blockperiodseconds", 1);
+    // ensure previous blockperiodseconds transition is carried over
+    final Map<String, Object> dummy_Transition = Map.of("block", 5, "createemptyblocks", true);
     final Map<String, Object> increasePeriodTo2_Transition =
         Map.of("block", 6, "blockperiodseconds", 2);
 
@@ -155,6 +157,7 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBaseJunit5 {
             List.of(
                 decreasePeriodTo2_Transition,
                 decreasePeriodTo1_Transition,
+                dummy_Transition,
                 increasePeriodTo2_Transition));
     minerNode.setGenesisConfig(genesisWithTransitions);
 
@@ -190,6 +193,8 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBaseJunit5 {
         Map.of("block", 4, "createemptyblocks", true);
     final Map<String, Object> secondNoEmptyBlocks_Transition =
         Map.of("block", 6, "createemptyblocks", false);
+    // ensure previous createemptyblocks transition is carried over
+    final Map<String, Object> dummy_Transition = Map.of("block", 7, "blockperiodseconds", 1);
 
     final Optional<String> initialGenesis =
         minerNode.getGenesisConfigProvider().create(List.of(minerNode));
@@ -197,7 +202,10 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBaseJunit5 {
         prependTransitionsToCliqueOptions(
             initialGenesis.orElseThrow(),
             List.of(
-                noEmptyBlocks_Transition, emptyBlocks_Transition, secondNoEmptyBlocks_Transition));
+                noEmptyBlocks_Transition,
+                emptyBlocks_Transition,
+                secondNoEmptyBlocks_Transition,
+                dummy_Transition));
     minerNode.setGenesisConfig(genesisWithTransitions);
 
     final Account sender = accounts.createAccount("account1");
@@ -214,10 +222,14 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBaseJunit5 {
     // Mine 2 more blocks so chain head is 5
     minerNode.verify(blockchain.reachesHeight(minerNode, 2));
 
-    // tx required to mine block
+    // tx required to mine block 6
     cluster.verify(clique.noNewBlockCreated(minerNode));
     minerNode.execute(accountTransactions.createTransfer(sender, 50));
     minerNode.verify(clique.blockIsCreatedByProposer(minerNode));
+
+    // check createemptyblocks transition carried over when other transition activated...
+    // tx required to mine block 7
+    cluster.verify(clique.noNewBlockCreated(minerNode));
   }
 
   private long getTimestampForBlock(final BesuNode minerNode, final int blockNumber) {
