@@ -43,7 +43,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-/** Defines the protocol behaviors for a blockchain using Clique. */
+import com.google.common.annotations.VisibleForTesting;
+
+/** Defines the protocol behaviours for a blockchain using Clique. */
 public class CliqueProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.valueOf(4);
@@ -92,7 +94,7 @@ public class CliqueProtocolSchedule {
                         applyCliqueSpecificModifications(
                             epochManager,
                             forkSpec.getValue().getBlockPeriodSeconds(),
-                            cliqueConfig.getCreateEmptyBlocks(),
+                            forkSpec.getValue().getCreateEmptyBlocks(),
                             localNodeAddress,
                             builder)));
     final ProtocolSpecAdapters specAdapters = new ProtocolSpecAdapters(specMap);
@@ -121,6 +123,7 @@ public class CliqueProtocolSchedule {
    * @param badBlockManager the cache to use to keep invalid blocks
    * @return the protocol schedule
    */
+  @VisibleForTesting
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final ForksSchedule<CliqueConfigOptions> forksSchedule,
