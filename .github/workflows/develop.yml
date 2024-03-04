@@ -2,7 +2,6 @@
 name: develop pre-release
 
 on:
-  workflow_dispatch:
   push:
     -branches:
       - main
@@ -56,5 +55,6 @@ jobs:
             build/distributions/besu*.zip
           body: |
             This is an automated, bleeding edge build from the tip of ${{ github.ref_name }}. No promises. YOLO.
+            
             ${{steps.hashes.outputs.tarSha}}
             ${{steps.hashes.outputs.zipSha}}
