@@ -92,7 +92,8 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
                 clock,
                 protocolContext.getConsensusContext(CliqueContext.class).getValidatorProvider(),
                 localAddress,
-                forksSchedule),
+                forksSchedule,
+                miningParameters),
             epochManager,
             forksSchedule,
             ethProtocolManager.ethContext().getScheduler());

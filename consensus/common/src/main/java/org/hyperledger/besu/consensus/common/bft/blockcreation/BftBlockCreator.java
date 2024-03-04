@@ -74,6 +74,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
         parentHeader,
         Optional.empty(),
         ethScheduler);
+    setBlockPeriodSeconds(miningParameters, forksSchedule, parentHeader);
     this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
@@ -81,6 +82,14 @@ public class BftBlockCreator extends AbstractBlockCreator {
       final Address localAddress, final ForksSchedule<? extends BftConfigOptions> forksSchedule) {
     return blockNum ->
         forksSchedule.getFork(blockNum).getValue().getMiningBeneficiary().orElse(localAddress);
+  }
+
+  private void setBlockPeriodSeconds(
+      final MiningParameters miningParameters,
+      final ForksSchedule<? extends BftConfigOptions> forksSchedule,
+      final BlockHeader parentHeader) {
+    miningParameters.setBlockPeriodSeconds(
+        forksSchedule.getFork(parentHeader.getNumber() + 1).getValue().getBlockPeriodSeconds());
   }
 
   @Override

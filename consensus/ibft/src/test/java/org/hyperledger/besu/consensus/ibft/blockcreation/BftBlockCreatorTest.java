@@ -62,6 +62,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
+import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.time.ZoneId;
 import java.util.Collections;
@@ -168,6 +169,7 @@ public class BftBlockCreatorTest {
                     .minTransactionGasPrice(Wei.ZERO)
                     .coinbase(AddressHelpers.ofValue(1))
                     .build())
+            .poaBlockTxsSelectionMaxTime(PositiveNumber.fromInt(90))
             .build();
 
     final BftBlockCreator blockCreator =
@@ -189,6 +191,8 @@ public class BftBlockCreatorTest {
             parentHeader,
             bftExtraDataEncoder,
             new DeterministicEthScheduler());
+
+    assertThat(miningParameters.getBlockTxsSelectionMaxTime()).isEqualTo(900);
 
     final int secondsBetweenBlocks = 1;
     final Block block = blockCreator.createBlock(parentHeader.getTimestamp() + 1).getBlock();
