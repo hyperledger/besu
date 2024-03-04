@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
+import org.hyperledger.besu.ethereum.core.plugins.PluginInfo;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.services.BesuService;
@@ -38,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -75,8 +77,6 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
   private Lifecycle state = Lifecycle.UNINITIALIZED;
   private final Map<Class<?>, ? super BesuService> serviceRegistry = new HashMap<>();
   private final List<BesuPlugin> plugins = new ArrayList<>();
-
-  private int registeredPlugins = 0;
 
   private final List<String> pluginVersions = new ArrayList<>();
   final List<String> lines = new ArrayList<>();
@@ -119,29 +119,36 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     }
 
     registerPlugins(pluginsToRegister);
-    logPluginRegistrationSummary(pluginsToRegister, config);
+    logPluginRegistrationSummary(pluginsToRegister, detectedPlugins);
   }
 
   private List<BesuPlugin> filterPluginsBasedOnConfiguration(
       List<BesuPlugin> detectedPlugins, PluginConfiguration config) {
+    Set<String> configuredPluginNames =
+        config.getPluginInfos().stream().map(PluginInfo::getName).collect(Collectors.toSet());
+
     return detectedPlugins.stream()
-        .filter(
-            plugin ->
-                config.getPluginInfos().stream()
-                    .anyMatch(
-                        pluginInfo ->
-                            pluginInfo.getName().equals(plugin.getClass().getSimpleName())))
+        .filter(plugin -> configuredPluginNames.contains(plugin.getClass().getSimpleName()))
         .collect(Collectors.toList());
   }
 
   private void logPluginRegistrationSummary(
-      List<BesuPlugin> registeredPlugins, PluginConfiguration config) {
-    LOG.debug("Plugin registration complete.");
-    LOG.debug(
-        String.format(
-            "TOTAL = %d of %d plugins successfully registered",
-            registeredPlugins.size(), plugins.size()));
-    LOG.debug(String.format("from %s", config.pluginsDir().toAbsolutePath()));
+      List<BesuPlugin> registeredPlugins, List<BesuPlugin> allDetectedPlugins) {
+    lines.add("Plugin registration summary:");
+
+    Set<String> registeredPluginNames =
+        registeredPlugins.stream()
+            .map(plugin -> plugin.getClass().getSimpleName())
+            .collect(Collectors.toSet());
+
+    for (BesuPlugin plugin : allDetectedPlugins) {
+      String pluginName = plugin.getClass().getSimpleName();
+      if (registeredPluginNames.contains(pluginName)) {
+        lines.add(pluginName + " (Registered)");
+      } else {
+        lines.add(pluginName + " (Skipped)");
+      }
+    }
   }
 
   private List<BesuPlugin> findPlugins(final PluginConfiguration config) {

@@ -8,7 +8,8 @@ public class PluginConfiguration {
   final List<PluginInfo> pluginInfos;
   final boolean strictPluginRegistrationEnabled;
 
-  public PluginConfiguration(List<PluginInfo> pluginInfos, boolean pluginsStrictRegistration) {
+  public PluginConfiguration(
+      final List<PluginInfo> pluginInfos, final boolean pluginsStrictRegistration) {
     this.pluginInfos = pluginInfos;
     this.strictPluginRegistrationEnabled = pluginsStrictRegistration;
   }

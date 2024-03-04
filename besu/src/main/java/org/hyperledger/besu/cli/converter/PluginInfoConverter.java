@@ -11,6 +11,9 @@ public class PluginInfoConverter implements CommandLine.ITypeConverter<List<Plug
 
   @Override
   public List<PluginInfo> convert(final String value) {
+    if (value == null || value.isEmpty()) {
+      return List.of();
+    }
     return Arrays.stream(value.split(",")).map(this::toPluginInfo).toList();
   }
 

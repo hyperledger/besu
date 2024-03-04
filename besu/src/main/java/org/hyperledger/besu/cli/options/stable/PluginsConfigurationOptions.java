@@ -38,7 +38,7 @@ public class PluginsConfigurationOptions {
   }) // PicoCLI requires non-final Strings.
   private boolean requireExplicitPlugins = false;
 
-  public static PluginConfiguration fromCommandLine(CommandLine commandLine) {
+  public static PluginConfiguration fromCommandLine(final CommandLine commandLine) {
     Boolean pluginsStrictRegistration =
         CommandLineUtils.getOptionValueOrDefault(
             commandLine, DEFAULT_PLUGINS_STRICT_REGISTRATION_OPTION_NAME, Boolean::valueOf);
@@ -47,6 +47,7 @@ public class PluginsConfigurationOptions {
         CommandLineUtils.getOptionValueOrDefault(
             commandLine, DEFAULT_PLUGINS_OPTION_NAME, new PluginInfoConverter());
 
-    return new PluginConfiguration(plugins, Boolean.TRUE.equals(pluginsStrictRegistration));
+    return new PluginConfiguration(
+        plugins != null ? plugins : List.of(), Boolean.TRUE.equals(pluginsStrictRegistration));
   }
 }
