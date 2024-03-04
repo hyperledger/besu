@@ -4,6 +4,7 @@
 
 ### Breaking Changes
 - RocksDB database metadata format has changed to be more expressive, the migration of an existing metadata file to the new format is automatic at startup. Before performing a downgrade to a previous version it is mandatory to revert to the original format using the subcommand `besu --data-path=/path/to/besu/datadir storage revert-metadata v2-to-v1`.
+- RocksDB database version incremented for receipt compaction. It will not be possible to downgrade to the previous Besu version.
 
 ### Upcoming Breaking Changes
 
