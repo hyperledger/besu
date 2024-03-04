@@ -10,7 +10,7 @@ on:
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
-  total-runners: 16
+  total-runners: 15
 
 jobs:
   shouldRun:
