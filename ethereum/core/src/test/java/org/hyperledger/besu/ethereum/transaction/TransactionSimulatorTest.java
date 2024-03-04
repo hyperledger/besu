@@ -642,6 +642,46 @@ public class TransactionSimulatorTest {
     verifyTransactionWasProcessed(expectedTransaction);
   }
 
+  @Test
+  public void shouldReturnFailureResultWhenBlobTransactionProcessingFails() {
+    final CallParameter callParameter =
+        blobTransactionCallParameter(Wei.ONE, Wei.ONE, Wei.ONE, 300, 3);
+
+    final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE);
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .type(TransactionType.BLOB)
+            .chainId(BigInteger.ONE)
+            .nonce(1L)
+            .gasLimit(callParameter.getGasLimit())
+            .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
+            .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
+            .to(callParameter.getTo())
+            .sender(callParameter.getFrom())
+            .value(callParameter.getValue())
+            .payload(callParameter.getPayload())
+            .maxFeePerBlobGas(callParameter.getMaxFeePerBlobGas().get())
+            .versionedHashes(callParameter.getBlobVersionedHashes().get())
+            .signature(FAKE_SIGNATURE)
+            .build();
+
+    final CallParameter reverseEngineeredCallParam =
+        CallParameter.fromTransaction(expectedTransaction);
+    assertThat(reverseEngineeredCallParam).isEqualTo(callParameter);
+
+    mockProcessorStatusForTransaction(expectedTransaction, Status.FAILED);
+
+    final Optional<TransactionSimulatorResult> result =
+        transactionSimulator.process(callParameter, 1L);
+
+    assertThat(result.get().isSuccessful()).isFalse();
+    verifyTransactionWasProcessed(expectedTransaction);
+  }
+
   private void mockWorldStateForAccount(
       final BlockHeader blockHeader, final Address address, final long nonce) {
     final Account account = mock(Account.class);
