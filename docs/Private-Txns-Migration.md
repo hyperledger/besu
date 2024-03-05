@@ -12,7 +12,7 @@ state storage when upgrading to v1.4. It is not possible to upgrade to v1.4 with
 ## Private transactions created using v1.3.4 or earlier 
 
 A critical issue for privacy users with private transactions created using Hyperledger Besu v1.3.4 
-or earlier has been identified. If you have a network with private transaction created using v1.3.4 
+or earlier has been identified. If you have a network with private transactions created using v1.3.4 
 or earlier, please read the following and take the appropriate steps: 
 
 https://wiki.hyperledger.org/display/BESU/Critical+Issue+for+Privacy+Users 
