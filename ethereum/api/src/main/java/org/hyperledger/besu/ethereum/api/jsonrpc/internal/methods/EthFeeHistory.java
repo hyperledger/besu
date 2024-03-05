@@ -48,7 +48,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
@@ -339,7 +338,6 @@ public class EthFeeHistory implements JsonRpcMethod {
   }
 
   private List<Wei> getBaseFees(final List<BlockHeader> blockHeaders) {
-    // we return the base fees for the blocks requested and 1 more because we can always compute it
     return blockHeaders.stream()
         .map(blockHeader -> blockHeader.getBaseFee().orElse(Wei.ZERO))
         .toList();
@@ -349,24 +347,26 @@ public class EthFeeHistory implements JsonRpcMethod {
     if (blockHeaders.isEmpty()) {
       return Collections.emptyList();
     }
-    // Extend block headers with their first parent
-    List<BlockHeader> extendedBlockHeaders = prependParent(blockHeaders);
-
-    // Calculate base fees for each pair of parent and headers.
+    // Calculate the BlobFee for the requested range
     List<Wei> baseFeesPerBlobGas =
-        IntStream.range(0, extendedBlockHeaders.size() - 1)
-            .mapToObj(
-                i -> {
-                  BlockHeader parent = extendedBlockHeaders.get(i);
-                  BlockHeader header = extendedBlockHeaders.get(i + 1);
-                  return getBlobGasFee(protocolSchedule.getByBlockHeader(header), parent);
-                })
-            .collect(Collectors.toList());
+        blockHeaders.stream().map(this::getBlobGasFee).collect(Collectors.toList());
 
+    // Calculate the next blob base fee and add it to the list
     Wei nextBlobBaseFee = getNextBlobFee(blockHeaders.get(blockHeaders.size() - 1));
     baseFeesPerBlobGas.add(nextBlobBaseFee);
 
     return baseFeesPerBlobGas;
+  }
+
+  private Wei getBlobGasFee(final BlockHeader header) {
+    return blockchain
+        .getBlockHeader(header.getParentHash())
+        .map(parent -> getBlobGasFee(protocolSchedule.getByBlockHeader(header), parent))
+        .orElse(Wei.ZERO);
+  }
+
+  private Wei getBlobGasFee(final ProtocolSpec spec, final BlockHeader parent) {
+    return spec.getFeeMarket().blobGasPricePerGas(calculateExcessBlobGasForParent(spec, parent));
   }
 
   private Wei getNextBlobFee(final BlockHeader header) {
@@ -381,18 +381,6 @@ public class EthFeeHistory implements JsonRpcMethod {
                 getBlobGasFee(
                     protocolSchedule.getForNextBlockHeader(header, System.currentTimeMillis()),
                     header));
-  }
-
-  private List<BlockHeader> prependParent(final List<BlockHeader> blockHeaders) {
-    List<BlockHeader> extendedBlockHeaders = new ArrayList<>();
-    Optional<BlockHeader> parent = blockchain.getBlockHeader(blockHeaders.get(0).getParentHash());
-    parent.ifPresent(extendedBlockHeaders::add);
-    extendedBlockHeaders.addAll(blockHeaders);
-    return extendedBlockHeaders;
-  }
-
-  private Wei getBlobGasFee(final ProtocolSpec spec, final BlockHeader parent) {
-    return spec.getFeeMarket().blobGasPricePerGas(calculateExcessBlobGasForParent(spec, parent));
   }
 
   private List<Double> getGasUsedRatios(final List<BlockHeader> blockHeaders) {

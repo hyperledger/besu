@@ -260,6 +260,8 @@ public class EthFeeHistoryTest {
     assertThat(Long.decode(result.getOldestBlock())).isEqualTo(0);
     assertThat(result.getBaseFeePerGas()).hasSize(12);
     assertThat(result.getGasUsedRatio()).hasSize(11);
+    assertThat(result.getBaseFeePerBlobGas()).hasSize(12);
+    assertThat(result.getBlobGasUsedRatio()).hasSize(11);
     assertThat(result.getReward()).isNull();
   }
 
@@ -330,6 +332,10 @@ public class EthFeeHistoryTest {
         .isEqualTo(blockCount + 1);
     assertThat(((ImmutableFeeHistoryResult) feeObject).getReward().size()).isEqualTo(blockCount);
     assertThat(((ImmutableFeeHistoryResult) feeObject).getGasUsedRatio().size())
+        .isEqualTo(blockCount);
+    assertThat(((ImmutableFeeHistoryResult) feeObject).getBaseFeePerBlobGas().size())
+        .isEqualTo(blockCount + 1);
+    assertThat(((ImmutableFeeHistoryResult) feeObject).getBlobGasUsedRatio().size())
         .isEqualTo(blockCount);
   }
 
