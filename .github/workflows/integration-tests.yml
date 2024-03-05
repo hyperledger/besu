@@ -5,9 +5,10 @@ on:
     branches:
       - main
       - release-*
-  pull_request_review:
-    types:
-      - submitted
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"

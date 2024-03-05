@@ -10,6 +10,10 @@ env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
   total-runners: 10
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   referenceTestEthereum:
     runs-on: ubuntu-22.04

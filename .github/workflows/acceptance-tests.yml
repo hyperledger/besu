@@ -6,6 +6,10 @@ on:
       - main
       - release-*
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
   total-runners: 16
