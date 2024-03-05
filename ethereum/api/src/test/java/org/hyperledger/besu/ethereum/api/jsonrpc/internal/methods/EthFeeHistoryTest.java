@@ -84,13 +84,7 @@ public class EthFeeHistoryTest {
     miningCoordinator = mock(MergeCoordinator.class);
     when(miningCoordinator.getMinPriorityFeePerGas()).thenReturn(Wei.ONE);
 
-    final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getGasCalculator()).thenReturn(new LondonGasCalculator());
-    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
-    when(londonSpec.getGasLimitCalculator()).thenReturn(mock(GasLimitCalculator.class));
-
-    when(protocolSchedule.getByBlockHeader(any())).thenReturn(londonSpec);
-    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(londonSpec);
+    mockFork();
 
     method =
         new EthFeeHistory(
@@ -356,6 +350,16 @@ public class EthFeeHistoryTest {
   public void shouldCalculateBlobFeeCorrectly_transitionFork() {
     mockTransitionBlobFork();
     assertBlobBaseFee(List.of(Wei.ZERO, Wei.ONE));
+  }
+
+  private void mockFork() {
+    final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
+    when(londonSpec.getGasCalculator()).thenReturn(new LondonGasCalculator());
+    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
+    when(londonSpec.getGasLimitCalculator()).thenReturn(mock(GasLimitCalculator.class));
+
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(londonSpec);
+    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(londonSpec);
   }
 
   private void mockPostBlobFork() {
