@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -34,13 +35,19 @@ import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.Collections;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class MainnetBlockValidatorTest {
 
@@ -60,6 +67,19 @@ public class MainnetBlockValidatorTest {
   private final MainnetBlockValidator mainnetBlockValidator =
       new MainnetBlockValidator(
           blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
+
+  public static Stream<Arguments> getStorageExceptions() {
+    return Stream.of(
+        Arguments.of("StorageException", new StorageException("Database closed")),
+        Arguments.of("MerkleTrieException", new MerkleTrieException("Missing trie node")));
+  }
+
+  public static Stream<Arguments> getBlockProcessingErrors() {
+    return Stream.of(
+        Arguments.of("StorageException", new StorageException("Database closed")),
+        Arguments.of("MerkleTrieException", new MerkleTrieException("Missing trie node")),
+        Arguments.of("RuntimeException", new RuntimeException("Oops")));
+  }
 
   @BeforeEach
   public void setup() {
@@ -116,7 +136,7 @@ public class MainnetBlockValidatorTest {
 
     final String expectedError = "Parent block with hash " + parentHash + " not present";
     assertValidationFailed(result, expectedError);
-    assertBadBlockIsTracked(block);
+    assertNoBadBlocks();
   }
 
   @Test
@@ -173,7 +193,7 @@ public class MainnetBlockValidatorTest {
             + blockParent.getHeader().getStateRoot()
             + " is not available";
     assertValidationFailed(result, expectedError);
-    assertBadBlockIsTracked(block);
+    assertNoBadBlocks();
   }
 
   @Test
@@ -191,6 +211,80 @@ public class MainnetBlockValidatorTest {
     final String expectedError = "processing failed";
     assertValidationFailed(result, expectedError);
     assertBadBlockIsTracked(block);
+  }
+
+  @Test
+  public void validateAndProcessBlock_whenStorageExceptionThrownGettingParent() {
+    final Throwable storageException = new StorageException("Database closed");
+    final Hash parentHash = blockParent.getHash();
+    doThrow(storageException).when(blockchain).getBlockHeader(eq(parentHash));
+
+    BlockProcessingResult result =
+        mainnetBlockValidator.validateAndProcessBlock(
+            protocolContext,
+            block,
+            HeaderValidationMode.DETACHED_ONLY,
+            HeaderValidationMode.DETACHED_ONLY);
+
+    assertValidationFailedExceptionally(result, storageException);
+    assertNoBadBlocks();
+  }
+
+  @ParameterizedTest(name = "[{index}] {0}")
+  @MethodSource("getStorageExceptions")
+  public void validateAndProcessBlock_whenStorageExceptionThrownProcessingBlock(
+      final String caseName, final Exception storageException) {
+    doThrow(storageException)
+        .when(blockProcessor)
+        .processBlock(eq(blockchain), any(MutableWorldState.class), eq(block));
+
+    BlockProcessingResult result =
+        mainnetBlockValidator.validateAndProcessBlock(
+            protocolContext,
+            block,
+            HeaderValidationMode.DETACHED_ONLY,
+            HeaderValidationMode.DETACHED_ONLY);
+
+    assertValidationFailedExceptionally(result, storageException);
+    assertNoBadBlocks();
+  }
+
+  @ParameterizedTest(name = "[{index}] {0}")
+  @MethodSource("getStorageExceptions")
+  public void validateAndProcessBlock_whenStorageExceptionThrownGettingWorldState(
+      final String caseName, final Exception storageException) {
+    final BlockHeader parentHeader = blockParent.getHeader();
+    doThrow(storageException).when(worldStateArchive).getMutable(eq(parentHeader), anyBoolean());
+
+    BlockProcessingResult result =
+        mainnetBlockValidator.validateAndProcessBlock(
+            protocolContext,
+            block,
+            HeaderValidationMode.DETACHED_ONLY,
+            HeaderValidationMode.DETACHED_ONLY);
+
+    assertValidationFailedExceptionally(result, storageException);
+    assertNoBadBlocks();
+  }
+
+  @ParameterizedTest(name = "[{index}] {0}")
+  @MethodSource("getBlockProcessingErrors")
+  public void validateAndProcessBlock_whenProcessBlockYieldsExceptionalResult(
+      final String caseName, final Exception cause) {
+    final BlockProcessingResult exceptionalResult =
+        new BlockProcessingResult(Optional.empty(), cause);
+    when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(block)))
+        .thenReturn(exceptionalResult);
+
+    BlockProcessingResult result =
+        mainnetBlockValidator.validateAndProcessBlock(
+            protocolContext,
+            block,
+            HeaderValidationMode.DETACHED_ONLY,
+            HeaderValidationMode.DETACHED_ONLY);
+
+    assertValidationFailedExceptionally(result, cause);
+    assertNoBadBlocks();
   }
 
   @Test
@@ -304,5 +398,14 @@ public class MainnetBlockValidatorTest {
     assertThat(result.isFailed()).isTrue();
     assertThat(result.errorMessage).isPresent();
     assertThat(result.errorMessage.get()).containsIgnoringWhitespaces(expectedError);
+  }
+
+  private void assertValidationFailedExceptionally(
+      final BlockProcessingResult result, final Throwable exception) {
+    assertThat(result.isFailed()).isTrue();
+    assertThat(result.causedBy()).containsSame(exception);
+    assertThat(result.errorMessage).isPresent();
+    assertThat(result.errorMessage.get())
+        .containsIgnoringWhitespaces(exception.getLocalizedMessage());
   }
 }
