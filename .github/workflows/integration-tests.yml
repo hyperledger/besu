@@ -16,7 +16,6 @@ jobs:
   integration-tests:
     name: "integration-passed"
     runs-on: ubuntu-22.04
-    needs: shouldRun
     permissions:
       statuses: write
       checks: write
