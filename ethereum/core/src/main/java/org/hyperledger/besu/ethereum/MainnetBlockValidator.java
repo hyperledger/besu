@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum;
 
+import org.hyperledger.besu.ethereum.chain.BadBlockCause;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -111,7 +112,8 @@ public class MainnetBlockValidator implements BlockValidator {
 
       if (!blockHeaderValidator.validateHeader(
           header, parentHeader, context, headerValidationMode)) {
-        var retval = new BlockProcessingResult("header validation rule violated, see logs");
+        final String error = String.format("Header validation failed (%s)", headerValidationMode);
+        var retval = new BlockProcessingResult(error);
         handleAndLogImportFailure(block, retval, shouldRecordBadBlock);
         return retval;
       }
@@ -141,8 +143,9 @@ public class MainnetBlockValidator implements BlockValidator {
             result.getYield().map(BlockProcessingOutputs::getReceipts).orElse(new ArrayList<>());
         if (!blockBodyValidator.validateBody(
             context, block, receipts, worldState.rootHash(), ommerValidationMode)) {
+          result = new BlockProcessingResult("failed to validate output of imported block");
           handleAndLogImportFailure(block, result, shouldRecordBadBlock);
-          return new BlockProcessingResult("failed to validate output of imported block");
+          return result;
         }
 
         return new BlockProcessingResult(
@@ -187,7 +190,18 @@ public class MainnetBlockValidator implements BlockValidator {
       }
     }
     if (shouldRecordBadBlock) {
-      badBlockManager.addBadBlock(invalidBlock, result.causedBy());
+      BadBlockCause cause =
+          result
+              .causedBy()
+              .map(BadBlockCause::fromProcessingError)
+              .orElseGet(
+                  () -> {
+                    // Result.errorMessage should not be empty on failure, but add a default to be
+                    // safe
+                    String description = result.errorMessage.orElse("Unknown cause");
+                    return BadBlockCause.fromValidationFailure(description);
+                  });
+      badBlockManager.addBadBlock(invalidBlock, cause);
     } else {
       LOG.debug("Invalid block {} not added to badBlockManager ", invalidBlock.toLogString());
     }
@@ -216,12 +230,14 @@ public class MainnetBlockValidator implements BlockValidator {
       final HeaderValidationMode ommerValidationMode) {
     final BlockHeader header = block.getHeader();
     if (!blockHeaderValidator.validateHeader(header, context, headerValidationMode)) {
-      badBlockManager.addBadBlock(block, Optional.empty());
+      String description = String.format("Failed header validation (%s)", headerValidationMode);
+      badBlockManager.addBadBlock(block, BadBlockCause.fromValidationFailure(description));
       return false;
     }
 
     if (!blockBodyValidator.validateBodyLight(context, block, receipts, ommerValidationMode)) {
-      badBlockManager.addBadBlock(block, Optional.empty());
+      badBlockManager.addBadBlock(
+          block, BadBlockCause.fromValidationFailure("Failed body validation (light)"));
       return false;
     }
     return true;
