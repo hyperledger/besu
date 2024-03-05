@@ -1118,7 +1118,6 @@ public final class EthProtocolManagerTest {
               metricsSystem,
               new SyncState(blockchain, ethManager.ethContext().getEthPeers()),
               TransactionPoolConfiguration.DEFAULT,
-              null,
               new BlobCache(),
               MiningParameters.newDefault())
           .setEnabled();
