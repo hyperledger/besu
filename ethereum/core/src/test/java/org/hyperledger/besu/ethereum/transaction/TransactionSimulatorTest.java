@@ -26,10 +26,12 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -600,6 +602,86 @@ public class TransactionSimulatorTest {
     verifyTransactionWasProcessed(expectedTransaction);
   }
 
+  @Test
+  public void shouldReturnSuccessfulResultWhenBlobTransactionProcessingIsSuccessful() {
+    final CallParameter callParameter =
+        blobTransactionCallParameter(Wei.ONE, Wei.ONE, Wei.ONE, 300, 3);
+
+    final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE);
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .type(TransactionType.BLOB)
+            .chainId(BigInteger.ONE)
+            .nonce(1L)
+            .gasLimit(callParameter.getGasLimit())
+            .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
+            .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
+            .to(callParameter.getTo())
+            .sender(callParameter.getFrom())
+            .value(callParameter.getValue())
+            .payload(callParameter.getPayload())
+            .maxFeePerBlobGas(callParameter.getMaxFeePerBlobGas().get())
+            .versionedHashes(callParameter.getBlobVersionedHashes().get())
+            .signature(FAKE_SIGNATURE)
+            .build();
+
+    final CallParameter reverseEngineeredCallParam =
+        CallParameter.fromTransaction(expectedTransaction);
+    assertThat(reverseEngineeredCallParam).isEqualTo(callParameter);
+
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
+
+    final Optional<TransactionSimulatorResult> result =
+        transactionSimulator.process(callParameter, 1L);
+
+    assertThat(result.get().isSuccessful()).isTrue();
+    verifyTransactionWasProcessed(expectedTransaction);
+  }
+
+  @Test
+  public void shouldReturnFailureResultWhenBlobTransactionProcessingFails() {
+    final CallParameter callParameter =
+        blobTransactionCallParameter(Wei.ONE, Wei.ONE, Wei.ONE, 300, 3);
+
+    final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE);
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .type(TransactionType.BLOB)
+            .chainId(BigInteger.ONE)
+            .nonce(1L)
+            .gasLimit(callParameter.getGasLimit())
+            .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
+            .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
+            .to(callParameter.getTo())
+            .sender(callParameter.getFrom())
+            .value(callParameter.getValue())
+            .payload(callParameter.getPayload())
+            .maxFeePerBlobGas(callParameter.getMaxFeePerBlobGas().get())
+            .versionedHashes(callParameter.getBlobVersionedHashes().get())
+            .signature(FAKE_SIGNATURE)
+            .build();
+
+    final CallParameter reverseEngineeredCallParam =
+        CallParameter.fromTransaction(expectedTransaction);
+    assertThat(reverseEngineeredCallParam).isEqualTo(callParameter);
+
+    mockProcessorStatusForTransaction(expectedTransaction, Status.FAILED);
+
+    final Optional<TransactionSimulatorResult> result =
+        transactionSimulator.process(callParameter, 1L);
+
+    assertThat(result.get().isSuccessful()).isFalse();
+    verifyTransactionWasProcessed(expectedTransaction);
+  }
+
   private void mockWorldStateForAccount(
       final BlockHeader blockHeader, final Address address, final long nonce) {
     final Account account = mock(Account.class);
@@ -723,5 +805,26 @@ public class TransactionSimulatorTest {
         Wei.of(0),
         Bytes.EMPTY,
         Optional.empty());
+  }
+
+  private CallParameter blobTransactionCallParameter(
+      final Wei maxFeePerBlobGas,
+      final Wei maxFeePerGas,
+      final Wei maxPriorityFeePerGas,
+      final long gasLimit,
+      final int numberOfBlobs) {
+    BlobsWithCommitments bwc = new BlobTestFixture().createBlobsWithCommitments(numberOfBlobs);
+    return new CallParameter(
+        Address.fromHexString("0x0"),
+        Address.fromHexString("0x0"),
+        gasLimit,
+        Wei.of(0),
+        Optional.of(maxFeePerGas),
+        Optional.of(maxPriorityFeePerGas),
+        Wei.of(0),
+        Bytes.EMPTY,
+        Optional.empty(),
+        Optional.of(maxFeePerBlobGas),
+        Optional.of(bwc.getVersionedHashes()));
   }
 }
