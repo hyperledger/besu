@@ -79,6 +79,8 @@ public class JsonRpcErrorConverter {
         return RpcErrorType.PLUGIN_TX_VALIDATOR;
       case INVALID_BLOBS:
         return RpcErrorType.INVALID_BLOBS;
+      case BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE:
+        return RpcErrorType.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE;
       case EXECUTION_HALTED:
         return RpcErrorType.EXECUTION_HALTED;
       default:
