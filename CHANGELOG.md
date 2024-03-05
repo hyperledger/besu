@@ -17,7 +17,8 @@
 - RocksDB database metadata refactoring [#6555](https://github.com/hyperledger/besu/pull/6555)
 - Make layered txpool aware of minGasPrice and minPriorityFeePerGas dynamic options [#6611](https://github.com/hyperledger/besu/pull/6611)
 - Update commons-compress to 1.26.0 [#6648](https://github.com/hyperledger/besu/pull/6648)
-- `eth_call` support for blob transactions [#6661](https://github.com/hyperledger/besu/pull/6661)
+- Add blob transaction support to `eth_call` [#6661](https://github.com/hyperledger/besu/pull/6661)
+- Add blobs to `eth_feeHistory` [#6679](https://github.com/hyperledger/besu/pull/6679)
 
 ### Bug fixes
 
