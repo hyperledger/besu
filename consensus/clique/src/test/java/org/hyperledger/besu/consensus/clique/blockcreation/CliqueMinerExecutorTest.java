@@ -28,6 +28,7 @@ import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
@@ -99,6 +100,7 @@ public class CliqueMinerExecutorTest {
     cliqueProtocolSchedule =
         CliqueProtocolSchedule.create(
             GENESIS_CONFIG_OPTIONS,
+            new ForksSchedule<>(List.of()),
             proposerNodeKey,
             false,
             EvmConfiguration.DEFAULT,
@@ -122,7 +124,7 @@ public class CliqueMinerExecutorTest {
             miningParameters,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
-            true,
+            null,
             ethScheduler);
 
     // NOTE: Passing in the *parent* block, so must be 1 less than EPOCH
@@ -158,7 +160,7 @@ public class CliqueMinerExecutorTest {
             miningParameters,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
-            true,
+            null,
             ethScheduler);
 
     // Parent block was epoch, so the next block should contain no validators.
@@ -194,7 +196,7 @@ public class CliqueMinerExecutorTest {
             miningParameters,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
-            true,
+            null,
             ethScheduler);
 
     executor.setExtraData(modifiedVanityData);

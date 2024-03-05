@@ -202,9 +202,7 @@ public class PersistBlockTask extends AbstractEthTask<Block> {
           .log();
       blockImportResult = blockImporter.importBlock(protocolContext, block, validateHeaders);
       if (!blockImportResult.isImported()) {
-        result.completeExceptionally(
-            new InvalidBlockException(
-                "Failed to import block", block.getHeader().getNumber(), block.getHash()));
+        result.completeExceptionally(InvalidBlockException.fromInvalidBlock(block.getHeader()));
         return;
       }
       result.complete(block);

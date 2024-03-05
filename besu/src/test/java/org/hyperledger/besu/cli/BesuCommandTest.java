@@ -17,7 +17,6 @@ package org.hyperledger.besu.cli;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.startsWith;
 import static org.hyperledger.besu.cli.config.NetworkName.CLASSIC;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 import static org.hyperledger.besu.cli.config.NetworkName.EXPERIMENTAL_EIPS;
@@ -32,7 +31,6 @@ import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfigura
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_DISCOVERY_URL;
-import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
 import static org.junit.Assume.assumeThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,11 +38,8 @@ import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
@@ -61,21 +56,15 @@ import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
-import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.nat.NatMethod;
-import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
-import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 import org.hyperledger.besu.util.number.PositiveNumber;
@@ -88,9 +77,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -101,13 +88,11 @@ import java.util.stream.Stream;
 
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
-import org.apache.commons.io.FileUtils;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -119,8 +104,6 @@ import picocli.CommandLine;
 @ExtendWith(MockitoExtension.class)
 public class BesuCommandTest extends CommandTestAbstract {
 
-  private static final String ENCLAVE_URI = "http://1.2.3.4:5555";
-  private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private static final String VALID_NODE_ID =
       "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0";
   private static final JsonRpcConfiguration DEFAULT_JSON_RPC_CONFIGURATION;
@@ -139,8 +122,6 @@ public class BesuCommandTest extends CommandTestAbstract {
       (new JsonObject()).put("config", new JsonObject().put("ecCurve", "abcd"));
   private static final JsonObject VALID_GENESIS_EC_CURVE =
       (new JsonObject()).put("config", new JsonObject().put("ecCurve", "secp256k1"));
-  private static final String ENCLAVE_PUBLIC_KEY_PATH =
-      BesuCommand.class.getResource("/orion_publickey.pub").getPath();
 
   private static final String[] VALID_ENODE_STRINGS = {
     "enode://" + VALID_NODE_ID + "@192.168.0.1:4567",
@@ -162,9 +143,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   private static final JsonObject GENESIS_WITH_DATA_BLOBS_ENABLED =
       new JsonObject().put("config", new JsonObject().put("cancunTime", 1L));
-
-  private static final JsonObject GENESIS_WITH_ZERO_BASE_FEE_MARKET =
-      new JsonObject().put("config", new JsonObject().put("zeroBaseFee", true));
 
   static {
     DEFAULT_JSON_RPC_CONFIGURATION = JsonRpcConfiguration.createDefault();
@@ -410,8 +388,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void dataDirOptionMustBeUsed() {
-    final Path path = Paths.get(".");
+  public void dataDirOptionMustBeUsed(final @TempDir Path path) {
 
     parseCommand("--data-path", path.toString());
 
@@ -625,9 +602,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(networkArg.getValue().getGenesisConfig())
         .isEqualTo(encodeJsonGenesis(GENESIS_INVALID_DATA));
-
-    //    assertThat(networkArg.getValue().getNetworkId())
-    //        .isEqualTo(EthNetworkConfig.getNetworkConfig(MAINNET).getNetworkId());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1246,42 +1220,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void natMethodOptionIsParsedCorrectly() {
-
-    parseCommand("--nat-method", "NONE");
-    verify(mockRunnerBuilder).natMethod(eq(NatMethod.NONE));
-
-    parseCommand("--nat-method", "UPNP");
-    verify(mockRunnerBuilder).natMethod(eq(NatMethod.UPNP));
-
-    parseCommand("--nat-method", "UPNPP2PONLY");
-    verify(mockRunnerBuilder).natMethod(eq(NatMethod.UPNPP2PONLY));
-
-    parseCommand("--nat-method", "AUTO");
-    verify(mockRunnerBuilder).natMethod(eq(NatMethod.AUTO));
-
-    parseCommand("--nat-method", "DOCKER");
-    verify(mockRunnerBuilder).natMethod(eq(NatMethod.DOCKER));
-
-    parseCommand("--nat-method", "KUBERNETES");
-    verify(mockRunnerBuilder).natMethod(eq(NatMethod.KUBERNETES));
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void parsesInvalidNatMethodOptionsShouldFail() {
-
-    parseCommand("--nat-method", "invalid");
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "Invalid value for option '--nat-method': expected one of [UPNP, UPNPP2PONLY, DOCKER, KUBERNETES, AUTO, NONE] (case-insensitive) but was 'invalid'");
-  }
-
-  @Test
   public void ethStatsOptionIsParsedCorrectly() {
     final String url = "besu-node:secret@host:443";
     parseCommand("--ethstats", url);
@@ -1368,113 +1306,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void helpShouldDisplayNatMethodInfo() {
-    parseCommand("--help");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).contains("--nat-method");
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void natMethodPropertyDefaultIsAuto() {
-    parseCommand();
-
-    verify(mockRunnerBuilder).natMethod(eq(NatMethod.AUTO));
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void natManagerPodNamePropertyDefaultIsBesu() {
-    parseCommand();
-
-    verify(mockRunnerBuilder).natManagerServiceName(eq(DEFAULT_BESU_SERVICE_NAME_FILTER));
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void natManagerPodNamePropertyIsCorrectlyUpdated() {
-    final String podName = "besu-updated";
-    parseCommand("--Xnat-kube-service-name", podName);
-
-    verify(mockRunnerBuilder).natManagerServiceName(eq(podName));
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void natManagerPodNameCannotBeUsedWithNatDockerMethod() {
-    parseCommand("--nat-method", "DOCKER", "--Xnat-kube-service-name", "besu-updated");
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-name or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
-  }
-
-  @Test
-  public void natManagerPodNameCannotBeUsedWithNatNoneMethod() {
-    parseCommand("--nat-method", "NONE", "--Xnat-kube-service-name", "besu-updated");
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-name or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
-  }
-
-  @Test
-  public void natMethodFallbackEnabledPropertyIsCorrectlyUpdatedWithKubernetes() {
-
-    parseCommand("--nat-method", "KUBERNETES", "--Xnat-method-fallback-enabled", "false");
-    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(false));
-    parseCommand("--nat-method", "KUBERNETES", "--Xnat-method-fallback-enabled", "true");
-    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(true));
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void natMethodFallbackEnabledPropertyIsCorrectlyUpdatedWithDocker() {
-
-    parseCommand("--nat-method", "DOCKER", "--Xnat-method-fallback-enabled", "false");
-    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(false));
-    parseCommand("--nat-method", "DOCKER", "--Xnat-method-fallback-enabled", "true");
-    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(true));
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void natMethodFallbackEnabledPropertyIsCorrectlyUpdatedWithUpnp() {
-
-    parseCommand("--nat-method", "UPNP", "--Xnat-method-fallback-enabled", "false");
-    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(false));
-    parseCommand("--nat-method", "UPNP", "--Xnat-method-fallback-enabled", "true");
-    verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(true));
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void natMethodFallbackEnabledCannotBeUsedWithAutoMethod() {
-    parseCommand("--nat-method", "AUTO", "--Xnat-method-fallback-enabled", "false");
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "The `--Xnat-method-fallback-enabled` parameter cannot be used in AUTO mode. Either remove --Xnat-method-fallback-enabled or select another mode (via --nat--method=XXXX)");
-  }
-
-  @Test
   public void rpcHttpEnabledPropertyDefaultIsFalse() {
     parseCommand();
 
@@ -1545,272 +1376,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().isAuthenticationEnabled()).isFalse();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void privacyTlsOptionsRequiresTlsToBeEnabled() {
-    when(storageService.getByName("rocksdb-privacy"))
-        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
-    final URL configFile = this.getClass().getResource("/orion_publickey.pub");
-    final String coinbaseStr = String.format("%040x", 1);
-
-    parseCommand(
-        "--privacy-enabled",
-        "--miner-enabled",
-        "--miner-coinbase=" + coinbaseStr,
-        "--min-gas-price",
-        "0",
-        "--privacy-url",
-        ENCLAVE_URI,
-        "--privacy-public-key-file",
-        configFile.getPath(),
-        "--privacy-tls-keystore-file",
-        "/Users/me/key");
-
-    verifyOptionsConstraintLoggerCall("--privacy-tls-enabled", "--privacy-tls-keystore-file");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void privacyTlsOptionsRequiresTlsToBeEnabledToml() throws IOException {
-    when(storageService.getByName("rocksdb-privacy"))
-        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
-    final URL configFile = this.getClass().getResource("/orion_publickey.pub");
-    final String coinbaseStr = String.format("%040x", 1);
-
-    final Path toml =
-        createTempFile(
-            "toml",
-            "privacy-enabled=true\n"
-                + "miner-enabled=true\n"
-                + "miner-coinbase=\""
-                + coinbaseStr
-                + "\"\n"
-                + "min-gas-price=0\n"
-                + "privacy-url=\""
-                + ENCLAVE_URI
-                + "\"\n"
-                + "privacy-public-key-file=\""
-                + configFile.getPath()
-                + "\"\n"
-                + "privacy-tls-keystore-file=\"/Users/me/key\"");
-
-    parseCommand("--config-file", toml.toString());
-
-    verifyOptionsConstraintLoggerCall("--privacy-tls-enabled", "--privacy-tls-keystore-file");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void privacyTlsOptionsRequiresPrivacyToBeEnabled() {
-    parseCommand("--privacy-tls-enabled", "--privacy-tls-keystore-file", "/Users/me/key");
-
-    verifyOptionsConstraintLoggerCall("--privacy-enabled", "--privacy-tls-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void privacyTlsOptionsRequiresPrivacyToBeEnabledToml() throws IOException {
-    final Path toml =
-        createTempFile(
-            "toml", "privacy-tls-enabled=true\n" + "privacy-tls-keystore-file=\"/Users/me/key\"");
-
-    parseCommand("--config-file", toml.toString());
-
-    verifyOptionsConstraintLoggerCall("--privacy-enabled", "--privacy-tls-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  /** test deprecated CLI option * */
-  @Deprecated
-  @Test
-  public void rpcHttpHostWhitelistAcceptsSingleArgument() {
-    parseCommand("--host-whitelist", "a");
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist().size()).isEqualTo(1);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).contains("a");
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
-        .doesNotContain("localhost");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpHostAllowlistAcceptsSingleArgument() {
-    parseCommand("--host-allowlist", "a");
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist().size()).isEqualTo(1);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).contains("a");
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
-        .doesNotContain("localhost");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpHostAllowlistAcceptsMultipleArguments() {
-    parseCommand("--host-allowlist", "a,b");
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist().size()).isEqualTo(2);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).contains("a", "b");
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
-        .doesNotContain("*", "localhost");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpHostAllowlistAcceptsDoubleComma() {
-    parseCommand("--host-allowlist", "a,,b");
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist().size()).isEqualTo(2);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).contains("a", "b");
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
-        .doesNotContain("*", "localhost");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Deprecated
-  @Test
-  public void rpcHttpHostWhitelistAllowlistAcceptsMultipleFlags() {
-    parseCommand("--host-whitelist=a", "--host-allowlist=b");
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist().size()).isEqualTo(2);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).contains("a", "b");
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
-        .doesNotContain("*", "localhost");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpHostAllowlistAcceptsMultipleFlags() {
-    parseCommand("--host-allowlist=a", "--host-allowlist=b");
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist().size()).isEqualTo(2);
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).contains("a", "b");
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
-        .doesNotContain("*", "localhost");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpHostAllowlistStarWithAnotherHostnameMustFail() {
-    final String[] origins = {"friend", "*"};
-    parseCommand("--host-allowlist", String.join(",", origins));
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Values '*' or 'all' can't be used with other hostnames");
-  }
-
-  @Test
-  public void rpcHttpHostAllowlistStarWithAnotherHostnameMustFailStarFirst() {
-    final String[] origins = {"*", "friend"};
-    parseCommand("--host-allowlist", String.join(",", origins));
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Values '*' or 'all' can't be used with other hostnames");
-  }
-
-  @Test
-  public void rpcHttpHostAllowlistAllWithAnotherHostnameMustFail() {
-    final String[] origins = {"friend", "all"};
-    parseCommand("--host-allowlist", String.join(",", origins));
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Values '*' or 'all' can't be used with other hostnames");
-  }
-
-  @Test
-  public void rpcHttpHostAllowlistWithNoneMustBuildEmptyList() {
-    final String[] origins = {"none"};
-    parseCommand("--host-allowlist", String.join(",", origins));
-
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).isEmpty();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void rpcHttpHostAllowlistNoneWithAnotherDomainMustFail() {
-    final String[] origins = {"http://domain1.com", "none"};
-    parseCommand("--host-allowlist", String.join(",", origins));
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Value 'none' can't be used with other hostnames");
-  }
-
-  @Test
-  public void rpcHttpHostAllowlistNoneWithAnotherDomainMustFailNoneFirst() {
-    final String[] origins = {"none", "http://domain1.com"};
-    parseCommand("--host-allowlist", String.join(",", origins));
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Value 'none' can't be used with other hostnames");
-  }
-
-  @Test
-  public void rpcHttpHostAllowlistEmptyValueFails() {
-    parseCommand("--host-allowlist=");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Hostname cannot be empty string or null string.");
   }
 
   @Test
@@ -2062,103 +1627,6 @@ public class BesuCommandTest extends CommandTestAbstract {
             });
   }
 
-  @Disabled
-  public void pruningIsEnabledIfSyncModeIsFast() {
-    parseCommand("--sync-mode", "FAST");
-
-    verify(mockControllerBuilder).isPruningEnabled(true);
-    verify(mockControllerBuilder).build();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Disabled
-  public void pruningIsDisabledIfSyncModeIsFull() {
-    parseCommand("--sync-mode", "FULL");
-
-    verify(mockControllerBuilder).isPruningEnabled(false);
-    verify(mockControllerBuilder).build();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void pruningEnabledExplicitly() {
-    parseCommand("--pruning-enabled", "--sync-mode=FULL");
-
-    verify(mockControllerBuilder).isPruningEnabled(true);
-    verify(mockControllerBuilder).build();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Disabled
-  public void pruningDisabledExplicitly() {
-    parseCommand("--pruning-enabled=false", "--sync-mode=FAST");
-
-    verify(mockControllerBuilder).isPruningEnabled(false);
-    verify(mockControllerBuilder).build();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void pruningDisabledByDefault() {
-    parseCommand();
-
-    verify(mockControllerBuilder).isPruningEnabled(false);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void pruningParametersAreCaptured() throws Exception {
-    parseCommand(
-        "--pruning-enabled", "--pruning-blocks-retained=15", "--pruning-block-confirmations=4");
-
-    final ArgumentCaptor<PrunerConfiguration> pruningArg =
-        ArgumentCaptor.forClass(PrunerConfiguration.class);
-
-    verify(mockControllerBuilder).pruningConfiguration(pruningArg.capture());
-    verify(mockControllerBuilder).build();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(pruningArg.getValue().getBlocksRetained()).isEqualTo(15);
-    assertThat(pruningArg.getValue().getBlockConfirmations()).isEqualTo(4);
-  }
-
-  @Test
-  public void pruningLogsDeprecationWarningWithForest() {
-    parseCommand("--pruning-enabled", "--data-storage-format=FOREST");
-
-    verify(mockControllerBuilder).isPruningEnabled(true);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    verify(mockLogger)
-        .warn(
-            contains(
-                "Forest pruning is deprecated and will be removed soon."
-                    + " To save disk space consider switching to Bonsai data storage format."));
-  }
-
-  @Test
-  public void pruningLogsIgnoredWarningWithBonsai() {
-    parseCommand("--pruning-enabled", "--data-storage-format=BONSAI");
-
-    verify(mockControllerBuilder).isPruningEnabled(true);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    verify(mockLogger).warn(contains("Forest pruning is ignored with Bonsai data storage format."));
-  }
-
   @Test
   public void devModeOptionMustBeUsed() throws Exception {
     parseCommand("--network", "dev");
@@ -2363,294 +1831,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void mustUseEnclaveUriAndOptions() {
-    final URL configFile = this.getClass().getResource("/orion_publickey.pub");
-
-    parseCommand(
-        "--privacy-enabled",
-        "--privacy-url",
-        ENCLAVE_URI,
-        "--privacy-public-key-file",
-        configFile.getPath(),
-        "--min-gas-price",
-        "0");
-
-    final ArgumentCaptor<PrivacyParameters> enclaveArg =
-        ArgumentCaptor.forClass(PrivacyParameters.class);
-
-    verify(mockControllerBuilder).privacyParameters(enclaveArg.capture());
-    verify(mockControllerBuilder).build();
-
-    assertThat(enclaveArg.getValue().isEnabled()).isEqualTo(true);
-    assertThat(enclaveArg.getValue().getEnclaveUri()).isEqualTo(URI.create(ENCLAVE_URI));
-    assertThat(enclaveArg.getValue().getPrivacyUserId()).isEqualTo(ENCLAVE_PUBLIC_KEY);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void privacyOptionsRequiresServiceToBeEnabled() {
-
-    final File file = new File("./specific/enclavePublicKey");
-    file.deleteOnExit();
-
-    parseCommand("--privacy-url", ENCLAVE_URI, "--privacy-public-key-file", file.toString());
-
-    verifyMultiOptionsConstraintLoggerCall(
-        "--privacy-url and/or --privacy-public-key-file ignored because none of --privacy-enabled was defined.");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void privacyWithoutPrivacyPublicKeyFails() {
-    parseCommand("--privacy-enabled", "--privacy-url", ENCLAVE_URI);
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith("Please specify Enclave public key file path to enable privacy");
-  }
-
-  @Test
-  public void mustVerifyPrivacyIsDisabled() {
-    parseCommand();
-
-    final ArgumentCaptor<PrivacyParameters> enclaveArg =
-        ArgumentCaptor.forClass(PrivacyParameters.class);
-
-    verify(mockControllerBuilder).privacyParameters(enclaveArg.capture());
-    verify(mockControllerBuilder).build();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(enclaveArg.getValue().isEnabled()).isEqualTo(false);
-  }
-
-  @Test
-  public void privacyMultiTenancyIsConfiguredWhenConfiguredWithNecessaryOptions() {
-    parseCommand(
-        "--privacy-enabled",
-        "--rpc-http-authentication-enabled",
-        "--privacy-multi-tenancy-enabled",
-        "--rpc-http-authentication-jwt-public-key-file",
-        "/non/existent/file",
-        "--min-gas-price",
-        "0");
-
-    final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
-        ArgumentCaptor.forClass(PrivacyParameters.class);
-
-    verify(mockControllerBuilder).privacyParameters(privacyParametersArgumentCaptor.capture());
-    verify(mockControllerBuilder).build();
-
-    assertThat(privacyParametersArgumentCaptor.getValue().isMultiTenancyEnabled()).isTrue();
-  }
-
-  @Test
-  public void privacyMultiTenancyWithoutAuthenticationFails() {
-    parseCommand(
-        "--privacy-enabled",
-        "--privacy-multi-tenancy-enabled",
-        "--rpc-http-authentication-jwt-public-key-file",
-        "/non/existent/file");
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith(
-            "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
-  }
-
-  @Test
-  public void privacyMultiTenancyWithPrivacyPublicKeyFileFails() {
-    parseCommand(
-        "--privacy-enabled",
-        "--rpc-http-authentication-enabled",
-        "--privacy-multi-tenancy-enabled",
-        "--rpc-http-authentication-jwt-public-key-file",
-        "/non/existent/file",
-        "--privacy-public-key-file",
-        ENCLAVE_PUBLIC_KEY_PATH);
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith("Privacy multi-tenancy and privacy public key cannot be used together");
-  }
-
-  @Test
-  public void flexiblePrivacyGroupEnabledFlagDefaultValueIsFalse() {
-    parseCommand(
-        "--privacy-enabled",
-        "--privacy-public-key-file",
-        ENCLAVE_PUBLIC_KEY_PATH,
-        "--min-gas-price",
-        "0");
-
-    final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
-        ArgumentCaptor.forClass(PrivacyParameters.class);
-
-    verify(mockControllerBuilder).privacyParameters(privacyParametersArgumentCaptor.capture());
-    verify(mockControllerBuilder).build();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
-    final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
-    assertThat(privacyParameters.isFlexiblePrivacyGroupsEnabled()).isEqualTo(false);
-  }
-
-  @Test
-  public void flexiblePrivacyGroupEnabledFlagValueIsSet() {
-    parseCommand(
-        "--privacy-enabled",
-        "--privacy-public-key-file",
-        ENCLAVE_PUBLIC_KEY_PATH,
-        "--privacy-flexible-groups-enabled",
-        "--min-gas-price",
-        "0");
-
-    final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
-        ArgumentCaptor.forClass(PrivacyParameters.class);
-
-    verify(mockControllerBuilder).privacyParameters(privacyParametersArgumentCaptor.capture());
-    verify(mockControllerBuilder).build();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
-    final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
-    assertThat(privacyParameters.isFlexiblePrivacyGroupsEnabled()).isEqualTo(true);
-  }
-
-  @Test
-  public void privateMarkerTransactionSigningKeyFileRequiredIfMinGasPriceNonZero() {
-    parseCommand(
-        "--privacy-enabled",
-        "--privacy-public-key-file",
-        ENCLAVE_PUBLIC_KEY_PATH,
-        "--min-gas-price",
-        "1");
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith(
-            "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified");
-  }
-
-  @Test
-  public void
-      privateMarkerTransactionSigningKeyFileNotRequiredIfMinGasPriceNonZeroAndUsingPluginPrivateMarkerTransactionFactory() {
-
-    when(privacyPluginService.getPrivateMarkerTransactionFactory())
-        .thenReturn(mock(PrivateMarkerTransactionFactory.class));
-
-    parseCommand(
-        "--privacy-enabled",
-        "--privacy-public-key-file",
-        ENCLAVE_PUBLIC_KEY_PATH,
-        "--min-gas-price",
-        "1");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void
-      privateMarkerTransactionSigningKeyFileNotCanNotBeUsedWithPluginPrivateMarkerTransactionFactory()
-          throws IOException {
-    when(privacyPluginService.getPrivateMarkerTransactionFactory())
-        .thenReturn(mock(PrivateMarkerTransactionFactory.class));
-    final Path toml =
-        createTempFile(
-            "key",
-            "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63".getBytes(UTF_8));
-
-    parseCommand(
-        "--privacy-enabled",
-        "--privacy-public-key-file",
-        ENCLAVE_PUBLIC_KEY_PATH,
-        "--privacy-marker-transaction-signing-key-file",
-        toml.toString());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    //    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith(
-            "--privacy-marker-transaction-signing-key-file can not be used in conjunction with a plugin that specifies");
-  }
-
-  @Test
-  public void mustProvidePayloadWhenPrivacyPluginEnabled() {
-    parseCommand("--privacy-enabled", "--Xprivacy-plugin-enabled", "--min-gas-price", "0");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith(
-            "No Payload Provider has been provided. You must register one when enabling privacy plugin!");
-  }
-
-  @Test
-  public void canNotUseFlexiblePrivacyWhenPrivacyPluginEnabled() {
-    parseCommand(
-        "--privacy-enabled",
-        "--Xprivacy-plugin-enabled",
-        "--min-gas-price",
-        "0",
-        "--privacy-flexible-groups-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith(
-            "No Payload Provider has been provided. You must register one when enabling privacy plugin!");
-  }
-
-  /**
-   * Check logger calls
-   *
-   * <p>Here we check the calls to logger and not the result of the log line as we don't test the
-   * logger itself but the fact that we call it.
-   *
-   * @param stringToLog the string that is logged
-   */
-  private void verifyMultiOptionsConstraintLoggerCall(final String stringToLog) {
-    verify(mockLogger, atLeast(1)).warn(stringToLog);
-  }
-
-  @Test
-  public void privacyWithFastSyncMustError() {
-    parseCommand("--sync-mode=FAST", "--privacy-enabled");
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Fast sync cannot be enabled with privacy.");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void privacyWithSnapSyncMustError() {
-    parseCommand("--sync-mode=SNAP", "--privacy-enabled");
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Snap sync cannot be enabled with privacy.");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void privacyWithCheckpointSyncMustError() {
-    parseCommand("--sync-mode=CHECKPOINT", "--privacy-enabled");
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Checkpoint sync cannot be enabled with privacy.");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void privacyWithPruningMustError() {
-    parseCommand("--pruning-enabled", "--privacy-enabled");
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Pruning cannot be enabled with privacy.");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void tomlThatHasInvalidOptions() throws IOException {
     final URL configFile = this.getClass().getResource("/complete_config.toml");
     // update genesis file path, "similar" valid option and add invalid options
@@ -2759,91 +1939,6 @@ public class BesuCommandTest extends CommandTestAbstract {
         .containsEntry(block1, Hash.fromHexStringLenient(hash1));
     assertThat(requiredBlocksArg.getValue())
         .containsEntry(block2, Hash.fromHexStringLenient(hash2));
-  }
-
-  @Test
-  public void privHttpApisWithPrivacyDisabledLogsWarning() {
-    parseCommand("--privacy-enabled=false", "--rpc-http-api", "PRIV", "--rpc-http-enabled");
-
-    verify(mockRunnerBuilder).build();
-    verify(mockLogger)
-        .warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void privWsApisWithPrivacyDisabledLogsWarning() {
-    parseCommand("--privacy-enabled=false", "--rpc-ws-api", "PRIV", "--rpc-ws-enabled");
-
-    verify(mockRunnerBuilder).build();
-    verify(mockLogger)
-        .warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void eeaHttpApisWithPrivacyDisabledLogsWarning() {
-    parseCommand("--privacy-enabled=false", "--rpc-http-api", "EEA", "--rpc-http-enabled");
-
-    verify(mockRunnerBuilder).build();
-    verify(mockLogger)
-        .warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void eeaWsApisWithPrivacyDisabledLogsWarning() {
-    parseCommand("--privacy-enabled=false", "--rpc-ws-api", "EEA", "--rpc-ws-enabled");
-
-    verify(mockRunnerBuilder).build();
-    verify(mockLogger)
-        .warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void privEnclaveKeyFileDoesNotExist() {
-    assumeThat(
-        "Ignored if system language is not English",
-        System.getProperty("user.language"),
-        startsWith("en"));
-    parseCommand("--privacy-enabled=true", "--privacy-public-key-file", "/non/existent/file");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith("Problem with privacy-public-key-file");
-    assertThat(commandErrorOutput.toString(UTF_8)).contains("No such file");
-  }
-
-  @Test
-  public void privEnclaveKeyFileInvalidContentTooShort() throws IOException {
-    final Path file = createTempFile("privacy.key", "lkjashdfiluhwelrk");
-    parseCommand("--privacy-enabled=true", "--privacy-public-key-file", file.toString());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith("Contents of privacy-public-key-file invalid");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Last unit does not have enough valid bits");
-  }
-
-  @Test
-  public void privEnclaveKeyFileInvalidContentNotValidBase64() throws IOException {
-    final Path file = createTempFile("privacy.key", "l*jashdfillk9ashdfillkjashdfillkjashdfilrtg=");
-    parseCommand("--privacy-enabled=true", "--privacy-public-key-file", file.toString());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith("Contents of privacy-public-key-file invalid");
-    assertThat(commandErrorOutput.toString(UTF_8)).contains("Illegal base64 character");
   }
 
   @Test
@@ -3103,73 +2198,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void pkiBlockCreationIsDisabledByDefault() {
-    parseCommand();
-
-    verifyNoInteractions(mockPkiBlockCreationConfigProvider);
-  }
-
-  @Test
-  public void pkiBlockCreationKeyStoreFileRequired() {
-    parseCommand(
-        "--Xpki-block-creation-enabled",
-        "--Xpki-block-creation-keystore-password-file",
-        "/tmp/pwd");
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("KeyStore file is required when PKI Block Creation is enabled");
-  }
-
-  @Test
-  public void pkiBlockCreationPasswordFileRequired() {
-    parseCommand(
-        "--Xpki-block-creation-enabled", "--Xpki-block-creation-keystore-file", "/tmp/keystore");
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "File containing password to unlock keystore is required when PKI Block Creation is enabled");
-  }
-
-  @Test
-  public void pkiBlockCreationFullConfig(final @TempDir Path pkiTempFolder) throws Exception {
-    // Create temp file with password
-    final File pwdFile = pkiTempFolder.resolve("pwd").toFile();
-    FileUtils.writeStringToFile(pwdFile, "foo", UTF_8);
-
-    parseCommand(
-        "--Xpki-block-creation-enabled",
-        "--Xpki-block-creation-keystore-type",
-        "JKS",
-        "--Xpki-block-creation-keystore-file",
-        "/tmp/keystore",
-        "--Xpki-block-creation-keystore-password-file",
-        pwdFile.getAbsolutePath(),
-        "--Xpki-block-creation-keystore-certificate-alias",
-        "anAlias",
-        "--Xpki-block-creation-truststore-type",
-        "JKS",
-        "--Xpki-block-creation-truststore-file",
-        "/tmp/truststore",
-        "--Xpki-block-creation-truststore-password-file",
-        pwdFile.getAbsolutePath(),
-        "--Xpki-block-creation-crl-file",
-        "/tmp/crl");
-
-    final PkiKeyStoreConfiguration pkiKeyStoreConfig =
-        pkiKeyStoreConfigurationArgumentCaptor.getValue();
-
-    assertThat(pkiKeyStoreConfig).isNotNull();
-    assertThat(pkiKeyStoreConfig.getKeyStoreType()).isEqualTo("JKS");
-    assertThat(pkiKeyStoreConfig.getKeyStorePath()).isEqualTo(Path.of("/tmp/keystore"));
-    assertThat(pkiKeyStoreConfig.getKeyStorePassword()).isEqualTo("foo");
-    assertThat(pkiKeyStoreConfig.getCertificateAlias()).isEqualTo("anAlias");
-    assertThat(pkiKeyStoreConfig.getTrustStoreType()).isEqualTo("JKS");
-    assertThat(pkiKeyStoreConfig.getTrustStorePath()).isEqualTo(Path.of("/tmp/truststore"));
-    assertThat(pkiKeyStoreConfig.getTrustStorePassword()).isEqualTo("foo");
-    assertThat(pkiKeyStoreConfig.getCrlFilePath()).hasValue(Path.of("/tmp/crl"));
-  }
-
-  @Test
   public void logsWarningWhenFailToLoadJemalloc() {
     assumeThat(PlatformDetector.getOSType(), is("linux"));
     setEnvironmentVariable("BESU_USING_JEMALLOC", "true");
@@ -3193,42 +2221,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void logWarnIfFastSyncMinPeersUsedWithFullSync() {
     parseCommand("--sync-mode", "FULL", "--fast-sync-min-peers", "1");
     verify(mockLogger).warn("--sync-min-peers is ignored in FULL sync-mode");
-  }
-
-  @Test
-  public void presentRequiredOptionShouldPass() {
-    parseCommandWithRequiredOption("--accept-terms-and-conditions", "true");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void missingRequiredOptionShouldFail() {
-    parseCommandWithRequiredOption();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith(
-            "Missing required option: '--accept-terms-and-conditions=<acceptTermsAndConditions>'");
-  }
-
-  @Test
-  public void havingRequiredOptionInEnvVarShouldFail() {
-    setEnvironmentVariable("BESU_ACCEPT_TERMS_AND_CONDITIONS", "true");
-    parseCommandWithRequiredOption();
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith(
-            "Missing required option: '--accept-terms-and-conditions=<acceptTermsAndConditions>'");
-  }
-
-  @Test
-  public void havingRequiredOptionInConfigShouldFail() throws IOException {
-    final Path toml = createTempFile("toml", "accept-terms-and-conditions=true\n");
-    parseCommandWithRequiredOption("--config-file", toml.toString());
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith(
-            "Missing required option: '--accept-terms-and-conditions=<acceptTermsAndConditions>'");
   }
 
   @Test
@@ -3361,149 +2353,29 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void txpoolDefaultSaveFileRelativeToDataPath() throws IOException {
-    final Path dataDir = Files.createTempDirectory("data-dir");
-    parseCommand("--data-path", dataDir.toString(), "--tx-pool-enable-save-restore", "true");
-    verify(mockControllerBuilder)
-        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
-
-    assertThat(transactionPoolConfigCaptor.getValue().getSaveFile())
-        .isEqualTo(dataDir.resolve(TransactionPoolConfiguration.DEFAULT_SAVE_FILE_NAME).toFile());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  public void snapsyncHealingOptionShouldBeDisabledByDefault() {
+    final TestBesuCommand besuCommand = parseCommand();
+    assertThat(besuCommand.unstableSynchronizerOptions.isSnapsyncFlatDbHealingEnabled()).isFalse();
   }
 
   @Test
-  public void txpoolCustomSaveFileRelativeToDataPath() throws IOException {
-    final Path dataDir = Files.createTempDirectory("data-dir");
-    dataDir.toFile().deleteOnExit();
-    final File saveFile = Files.createTempFile(dataDir, "txpool", "save").toFile();
-    saveFile.deleteOnExit();
-    parseCommand(
-        "--data-path",
-        dataDir.toString(),
-        "--tx-pool-enable-save-restore",
-        "true",
-        "--tx-pool-save-file",
-        saveFile.getName());
-    verify(mockControllerBuilder)
-        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
-
-    final File configuredSaveFile = transactionPoolConfigCaptor.getValue().getSaveFile();
-    assertThat(configuredSaveFile).isEqualTo(saveFile);
-    assertThat(configuredSaveFile.toPath().getParent()).isEqualTo(dataDir);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  public void snapsyncHealingOptionShouldWork() {
+    final TestBesuCommand besuCommand =
+        parseCommand("--Xsnapsync-synchronizer-flat-db-healing-enabled", "true");
+    assertThat(besuCommand.unstableSynchronizerOptions.isSnapsyncFlatDbHealingEnabled()).isTrue();
   }
 
   @Test
-  public void txpoolSaveFileAbsolutePathOutsideDataPath() throws IOException {
-    final Path dataDir = Files.createTempDirectory("data-dir");
-    dataDir.toFile().deleteOnExit();
-    final File saveFile = File.createTempFile("txpool", "dump");
-    saveFile.deleteOnExit();
-    parseCommand(
-        "--data-path",
-        dataDir.toString(),
-        "--tx-pool-enable-save-restore",
-        "true",
-        "--tx-pool-save-file",
-        saveFile.getAbsolutePath());
-    verify(mockControllerBuilder)
-        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
-
-    final File configuredSaveFile = transactionPoolConfigCaptor.getValue().getSaveFile();
-    assertThat(configuredSaveFile).isEqualTo(saveFile);
-    assertThat(configuredSaveFile.toPath().getParent()).isNotEqualTo(dataDir);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void txpoolForcePriceBumpToZeroWhenZeroBaseFeeMarket() throws IOException {
-    final Path genesisFile = createFakeGenesisFile(GENESIS_WITH_ZERO_BASE_FEE_MARKET);
-    parseCommand("--genesis-file", genesisFile.toString());
-    verify(mockControllerBuilder)
-        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
-
-    final Percentage priceBump = transactionPoolConfigCaptor.getValue().getPriceBump();
-    assertThat(priceBump).isEqualTo(Percentage.ZERO);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void txpoolPriceBumpOptionIncompatibleWithZeroWhenZeroBaseFeeMarket() throws IOException {
-    final Path genesisFile = createFakeGenesisFile(GENESIS_WITH_ZERO_BASE_FEE_MARKET);
-    parseCommand("--genesis-file", genesisFile.toString(), "--tx-pool-price-bump", "5");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Price bump option is not compatible with zero base fee market");
-  }
-
-  @Test
-  public void txpoolForcePriceBumpToZeroWhenMinGasPriceZero() {
-    parseCommand("--min-gas-price", "0");
-    verify(mockControllerBuilder)
-        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
-
-    final Percentage priceBump = transactionPoolConfigCaptor.getValue().getPriceBump();
-    assertThat(priceBump).isEqualTo(Percentage.ZERO);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void txpoolPriceBumpKeepItsValueIfSetEvenWhenMinGasPriceZero() {
-    parseCommand("--min-gas-price", "0", "--tx-pool-price-bump", "1");
-    verify(mockControllerBuilder)
-        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
-
-    final Percentage priceBump = transactionPoolConfigCaptor.getValue().getPriceBump();
-    assertThat(priceBump).isEqualTo(Percentage.fromInt(1));
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void txpoolWhenNotSetForceTxPoolMinGasPriceToZeroWhenMinGasPriceZero() {
-    parseCommand("--min-gas-price", "0");
-    verify(mockControllerBuilder)
-        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
-
-    final Wei txPoolMinGasPrice = transactionPoolConfigCaptor.getValue().getMinGasPrice();
-    assertThat(txPoolMinGasPrice).isEqualTo(Wei.ZERO);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    verify(mockLogger, atLeast(1))
-        .warn(
-            contains(
-                "Forcing tx-pool-min-gas-price=0, since it cannot be greater than the value of min-gas-price"));
-  }
-
-  @Test
-  public void txpoolTxPoolMinGasPriceMustNotBeGreaterThanMinGasPriceZero() {
-    parseCommand("--min-gas-price", "100", "--tx-pool-min-gas-price", "101");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("tx-pool-min-gas-price cannot be greater than the value of min-gas-price");
-  }
-
-  @Test
-  public void snapsyncForHealingFeaturesShouldFailWhenHealingIsNotSet_EnabledByDefault() {
+  public void snapsyncForHealingFeaturesShouldFailWhenHealingIsNotEnabled() {
     parseCommand("--Xsnapsync-synchronizer-flat-account-healed-count-per-request", "100");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "--Xsnapsync-synchronizer-flat option can only be used when -Xsnapsync-synchronizer-flat-db-healing-enabled is true");
 
     parseCommand("--Xsnapsync-synchronizer-flat-slot-healed-count-per-request", "100");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "--Xsnapsync-synchronizer-flat option can only be used when -Xsnapsync-synchronizer-flat-db-healing-enabled is true");
   }
 
   @Test
