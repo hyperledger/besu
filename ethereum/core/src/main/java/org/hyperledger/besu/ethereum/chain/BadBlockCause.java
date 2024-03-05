@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.chain;
 
 import org.hyperledger.besu.ethereum.core.Block;
 
+import com.google.common.base.MoreObjects;
+
 public class BadBlockCause {
   public enum BadBlockReason {
     // Standard spec-related validation failures
@@ -55,6 +57,9 @@ public class BadBlockCause {
 
   @Override
   public String toString() {
-    return "BadBlockCause{" + "reason=" + reason + ", description='" + description + '\'' + '}';
+    return MoreObjects.toStringHelper(this)
+        .add("reason", reason)
+        .add("description", description)
+        .toString();
   }
 }
