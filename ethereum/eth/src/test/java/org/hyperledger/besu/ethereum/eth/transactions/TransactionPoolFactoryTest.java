@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -99,6 +100,9 @@ public class TransactionPoolFactoryTest {
   @BeforeEach
   public void setup() {
     when(blockchain.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(mock(Hash.class)));
+    final Block mockBlock = mock(Block.class);
+    when(mockBlock.getHash()).thenReturn(Hash.ZERO);
+    when(blockchain.getGenesisBlock()).thenReturn(mockBlock);
     when(context.getBlockchain()).thenReturn(blockchain);
 
     final NodeMessagePermissioningProvider nmpp = (destinationEnode, code) -> true;

@@ -443,20 +443,20 @@ public class EthPeers {
 
   public void disconnectWorstIncomingUselessPeer() {
     streamAvailablePeers()
-            .filter(p -> p.getConnection().inboundInitiated())
-            .filter(p -> !canExceedPeerLimits(p.getId()))
-            .min(getBestChainComparator())
-            .ifPresent(
-                    peer -> {
-                      LOG.atDebug()
-                              .setMessage(
-                                      "disconnecting peer {}. Waiting for better peers. Current {} of max {}")
-                              .addArgument(peer::getLoggableId)
-                              .addArgument(this::peerCount)
-                              .addArgument(this::getMaxPeers)
-                              .log();
-                      peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
-                    });
+        .filter(p -> p.getConnection().inboundInitiated())
+        .filter(p -> !canExceedPeerLimits(p.getId()))
+        .min(getBestChainComparator())
+        .ifPresent(
+            peer -> {
+              LOG.atDebug()
+                  .setMessage(
+                      "disconnecting peer {}. Waiting for better peers. Current {} of max {}")
+                  .addArgument(peer::getLoggableId)
+                  .addArgument(this::peerCount)
+                  .addArgument(this::getMaxPeers)
+                  .log();
+              peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
+            });
   }
 
   public void setChainHeadTracker(final ChainHeadTracker tracker) {
@@ -490,24 +490,26 @@ public class EthPeers {
     // Find out what the EthPeer block height is and whether it can serve snap data (if we are doing
     // snap sync)
     LOG.debug("Peer {} status exchanged", peer);
+    assert tracker != null : "ChainHeadTracker must be set before EthPeers can be used";
     CompletableFuture<BlockHeader> future = tracker.getBestHeaderFromPeer(peer);
 
     future.whenComplete(
-        (peersHeadBlockHeader, error) -> {
-          if (peersHeadBlockHeader == null) {
+        (peerHeadBlockHeader, error) -> {
+          if (peerHeadBlockHeader == null) {
             LOG.debug(
                 "Failed to retrieve chain head info. Disconnecting {}... {}",
                 peer.getLoggableId(),
                 error);
             peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
           } else {
+            peer.chainState().updateHeightEstimate(peerHeadBlockHeader.getNumber());
             CompletableFuture<Void> isServingSnapFuture;
             if (syncMode == SyncMode.X_CHECKPOINT || syncMode == SyncMode.X_SNAP) {
               isServingSnapFuture =
                   CompletableFuture.runAsync(
                       () -> {
                         try {
-                          checkIsSnapServer(peer, peersHeadBlockHeader);
+                          checkIsSnapServer(peer, peerHeadBlockHeader);
                         } catch (Exception e) {
                           throw new RuntimeException(e);
                         }

@@ -581,10 +581,12 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public int outstandingRequests() {
-    return requestManagers.values().stream()
-        .flatMap(m -> m.values().stream())
-        .mapToInt(RequestManager::outstandingRequests)
-        .sum();
+    final int sum =
+        requestManagers.values().stream()
+            .flatMap(m -> m.values().stream())
+            .mapToInt(RequestManager::outstandingRequests)
+            .sum();
+    return sum;
   }
 
   public long getLastRequestTimestamp() {

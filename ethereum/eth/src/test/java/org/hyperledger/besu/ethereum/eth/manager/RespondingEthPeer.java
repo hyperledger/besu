@@ -121,7 +121,8 @@ public class RespondingEthPeer {
       final Hash chainHeadHash,
       final Difficulty totalDifficulty,
       final OptionalLong estimatedHeight,
-      final List<PeerValidator> peerValidators) {
+      final List<PeerValidator> peerValidators,
+      final boolean isServingSnap) {
     final EthPeers ethPeers = ethProtocolManager.ethContext().getEthPeers();
 
     final Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.ETH63));
@@ -130,10 +131,20 @@ public class RespondingEthPeer {
         new MockPeerConnection(
             caps, (cap, msg, conn) -> outgoingMessages.add(new OutgoingMessage(cap, msg)));
     ethPeers.registerNewConnection(peerConnection, peerValidators);
+    final int before = ethPeers.peerCount();
     final EthPeer peer = ethPeers.peer(peerConnection);
     peer.registerStatusReceived(chainHeadHash, totalDifficulty, 63, peerConnection);
     estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));
     peer.registerStatusSent(peerConnection);
+    while (ethPeers.peerCount()
+        <= before) { // this is needed to make sure that the peer is added to the active connections
+      try {
+        Thread.sleep(100L);
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    peer.setIsServingSnap(isServingSnap);
 
     return new RespondingEthPeer(
         ethProtocolManager, snapProtocolManager, peerConnection, peer, outgoingMessages);
@@ -396,6 +407,7 @@ public class RespondingEthPeer {
     private Difficulty totalDifficulty = Difficulty.of(1000L);
     private OptionalLong estimatedHeight = OptionalLong.of(1000L);
     private final List<PeerValidator> peerValidators = new ArrayList<>();
+    private boolean isServingSnap = false;
 
     public RespondingEthPeer build() {
       checkNotNull(ethProtocolManager, "Must configure EthProtocolManager");
@@ -406,7 +418,8 @@ public class RespondingEthPeer {
           chainHeadHash,
           totalDifficulty,
           estimatedHeight,
-          peerValidators);
+          peerValidators,
+          isServingSnap);
     }
 
     public Builder ethProtocolManager(final EthProtocolManager ethProtocolManager) {
@@ -441,6 +454,11 @@ public class RespondingEthPeer {
 
     public Builder estimatedHeight(final long estimatedHeight) {
       this.estimatedHeight = OptionalLong.of(estimatedHeight);
+      return this;
+    }
+
+    public Builder isServingSnap(final boolean isServingSnap) {
+      this.isServingSnap = isServingSnap;
       return this;
     }
 
