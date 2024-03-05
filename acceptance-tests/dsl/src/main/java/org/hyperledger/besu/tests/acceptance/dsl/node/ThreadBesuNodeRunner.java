@@ -100,6 +100,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       final SecurityModuleServiceImpl securityModuleService,
       final TransactionSimulationServiceImpl transactionSimulationServiceImpl,
       final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
+      final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl,
       final BlockchainServiceImpl blockchainServiceImpl,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl,
       final BesuConfiguration commonPluginConfiguration) {
@@ -112,7 +113,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     besuPluginContext.addService(
         TransactionSelectionService.class, transactionSelectionServiceImpl);
     besuPluginContext.addService(
-        TransactionPoolValidatorService.class, new TransactionPoolValidatorServiceImpl());
+        TransactionPoolValidatorService.class, transactionPoolValidatorServiceImpl);
     besuPluginContext.addService(
         TransactionSimulationService.class, transactionSimulationServiceImpl);
     besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
@@ -158,6 +159,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         new TransactionSimulationServiceImpl();
     final TransactionSelectionServiceImpl transactionSelectionServiceImpl =
         new TransactionSelectionServiceImpl();
+    final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl =
+        new TransactionPoolValidatorServiceImpl();
     final BlockchainServiceImpl blockchainServiceImpl = new BlockchainServiceImpl();
     final RpcEndpointServiceImpl rpcEndpointServiceImpl = new RpcEndpointServiceImpl();
     final Path dataDir = node.homeDirectory();
@@ -182,6 +185,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                     securityModuleService,
                     transactionSimulationServiceImpl,
                     transactionSelectionServiceImpl,
+                    transactionPoolValidatorServiceImpl,
                     blockchainServiceImpl,
                     rpcEndpointServiceImpl,
                     commonPluginConfiguration));
@@ -217,6 +221,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         ImmutableTransactionPoolConfiguration.builder()
             .from(node.getTransactionPoolConfiguration())
             .strictTransactionReplayProtectionEnabled(node.isStrictTxReplayProtectionEnabled())
+            .transactionPoolValidatorService(transactionPoolValidatorServiceImpl)
             .build();
 
     final int maxPeers = 25;
