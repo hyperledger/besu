@@ -68,7 +68,13 @@ public class RpcErrorTypeConverterTest {
           {
             TransactionInvalidReason.TRANSACTION_REPLACEMENT_UNDERPRICED,
             RpcErrorType.ETH_SEND_TX_REPLACEMENT_UNDERPRICED
-          }
+          },
+          {
+            TransactionInvalidReason.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE,
+            RpcErrorType.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE
+          },
+          {TransactionInvalidReason.TOTAL_BLOB_GAS_TOO_HIGH, RpcErrorType.TOTAL_BLOB_GAS_TOO_HIGH},
+          {TransactionInvalidReason.INVALID_BLOBS, RpcErrorType.INVALID_BLOBS}
         });
   }
 

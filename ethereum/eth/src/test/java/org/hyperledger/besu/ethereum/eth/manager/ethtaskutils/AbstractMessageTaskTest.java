@@ -138,7 +138,6 @@ public abstract class AbstractMessageTaskTest<T, R> {
             metricsSystem,
             syncState,
             TransactionPoolConfiguration.DEFAULT,
-            null,
             new BlobCache(),
             MiningParameters.newDefault());
     transactionPool.setEnabled();

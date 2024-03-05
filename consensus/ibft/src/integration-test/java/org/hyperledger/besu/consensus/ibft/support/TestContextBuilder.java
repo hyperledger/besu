@@ -368,8 +368,7 @@ public class TestContextBuilder {
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            poolConf,
-            null);
+            poolConf);
 
     transactionPool.setEnabled();
 
