@@ -48,9 +48,11 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.CancunTargetingGasLimitCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 
 import java.util.ArrayList;
@@ -337,6 +339,56 @@ public class EthFeeHistoryTest {
         .isEqualTo(blockCount + 1);
     assertThat(((ImmutableFeeHistoryResult) feeObject).getBlobGasUsedRatio().size())
         .isEqualTo(blockCount);
+  }
+
+  @Test
+  public void shouldCalculateBlobFeeCorrectly_preBlob() {
+    assertBlobBaseFee(List.of(Wei.ZERO, Wei.ZERO));
+  }
+
+  @Test
+  public void shouldCalculateBlobFeeCorrectly_postBlob() {
+    mockPostBlobFork();
+    assertBlobBaseFee(List.of(Wei.ONE, Wei.ONE));
+  }
+
+  @Test
+  public void shouldCalculateBlobFeeCorrectly_transitionFork() {
+    mockTransitionBlobFork();
+    assertBlobBaseFee(List.of(Wei.ZERO, Wei.ONE));
+  }
+
+  private void mockPostBlobFork() {
+    final ProtocolSpec cancunSpec = mock(ProtocolSpec.class);
+    when(cancunSpec.getGasCalculator()).thenReturn(new CancunGasCalculator());
+    when(cancunSpec.getFeeMarket()).thenReturn(FeeMarket.cancun(5, Optional.empty()));
+    when(cancunSpec.getGasLimitCalculator())
+        .thenReturn(mock(CancunTargetingGasLimitCalculator.class));
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(cancunSpec);
+    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(cancunSpec);
+  }
+
+  private void mockTransitionBlobFork() {
+    final ProtocolSpec cancunSpec = mock(ProtocolSpec.class);
+    when(cancunSpec.getGasCalculator()).thenReturn(new CancunGasCalculator());
+    when(cancunSpec.getFeeMarket()).thenReturn(FeeMarket.cancun(5, Optional.empty()));
+    when(cancunSpec.getGasLimitCalculator())
+        .thenReturn(mock(CancunTargetingGasLimitCalculator.class));
+    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(cancunSpec);
+  }
+
+  private void assertBlobBaseFee(final List<Wei> baseFeePerBlobGas) {
+    final Object latest = ((JsonRpcSuccessResponse) feeHistoryRequest("0x1", "latest")).getResult();
+    assertThat(latest)
+        .isEqualTo(
+            FeeHistory.FeeHistoryResult.from(
+                ImmutableFeeHistory.builder()
+                    .oldestBlock(10)
+                    .baseFeePerGas(List.of(Wei.of(25496L), Wei.of(28683L)))
+                    .gasUsedRatio(List.of(0.9999999992132459))
+                    .baseFeePerBlobGas(baseFeePerBlobGas)
+                    .blobGasUsedRatio(List.of(0.0))
+                    .build()));
   }
 
   private JsonRpcResponse feeHistoryRequest(final Object... params) {
