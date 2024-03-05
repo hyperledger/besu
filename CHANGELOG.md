@@ -13,8 +13,12 @@
 ### Additions and Improvements
 - Extend `Blockchain` service [#6592](https://github.com/hyperledger/besu/pull/6592)
 - Add bft-style blockperiodseconds transitions to Clique [#6596](https://github.com/hyperledger/besu/pull/6596)
+- Add createemptyblocks transitions to Clique [#6608](https://github.com/hyperledger/besu/pull/6608)
 - RocksDB database metadata refactoring [#6555](https://github.com/hyperledger/besu/pull/6555)
 - Make layered txpool aware of minGasPrice and minPriorityFeePerGas dynamic options [#6611](https://github.com/hyperledger/besu/pull/6611)
+- Update commons-compress to 1.26.0 [#6648](https://github.com/hyperledger/besu/pull/6648)
+- Add blob transaction support to `eth_call` [#6661](https://github.com/hyperledger/besu/pull/6661)
+- Add blobs to `eth_feeHistory` [#6679](https://github.com/hyperledger/besu/pull/6679)
 
 ### Bug fixes
 
