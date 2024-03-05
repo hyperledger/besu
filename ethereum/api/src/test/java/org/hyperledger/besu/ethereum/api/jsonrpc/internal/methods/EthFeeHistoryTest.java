@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -84,6 +85,8 @@ public class EthFeeHistoryTest {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
     when(londonSpec.getGasCalculator()).thenReturn(new LondonGasCalculator());
     when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
+    when(londonSpec.getGasLimitCalculator()).thenReturn(mock(GasLimitCalculator.class));
+
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(londonSpec);
     when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(londonSpec);
 
@@ -126,6 +129,7 @@ public class EthFeeHistoryTest {
                     .baseFeePerGas(List.of(Wei.of(25496L), Wei.of(28683L)))
                     .gasUsedRatio(List.of(0.9999999992132459))
                     .baseFeePerBlobGas(List.of(Wei.of(0), Wei.of(0)))
+                    .blobGasUsedRatio(List.of(0.0))
                     .reward(List.of(List.of(Wei.of(1524763764L))))
                     .build()));
   }
