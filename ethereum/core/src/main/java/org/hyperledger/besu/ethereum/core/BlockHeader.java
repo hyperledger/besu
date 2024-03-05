@@ -252,6 +252,7 @@ public class BlockHeader extends SealableBlockHeader
   public String toString() {
     final StringBuilder sb = new StringBuilder();
     sb.append("BlockHeader{");
+    sb.append("number=").append(number).append(", ");
     sb.append("hash=").append(getHash()).append(", ");
     sb.append("parentHash=").append(parentHash).append(", ");
     sb.append("ommersHash=").append(ommersHash).append(", ");
@@ -261,7 +262,6 @@ public class BlockHeader extends SealableBlockHeader
     sb.append("receiptsRoot=").append(receiptsRoot).append(", ");
     sb.append("logsBloom=").append(logsBloom).append(", ");
     sb.append("difficulty=").append(difficulty).append(", ");
-    sb.append("number=").append(number).append(", ");
     sb.append("gasLimit=").append(gasLimit).append(", ");
     sb.append("gasUsed=").append(gasUsed).append(", ");
     sb.append("timestamp=").append(timestamp).append(", ");
