@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.chain;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -48,10 +46,8 @@ public class BadBlockManager {
    */
   public void addBadBlock(final Block badBlock, final BadBlockCause cause) {
     // TODO(#6301) Expose bad block with cause through BesuEvents
-    if (badBlock != null && !isInternalError(cause)) {
-      LOG.debug("Register bad block {} with cause: {}", badBlock.toLogString(), cause);
-      this.badBlocks.put(badBlock.getHash(), badBlock);
-    }
+    LOG.debug("Register bad block {} with cause: {}", badBlock.toLogString(), cause);
+    this.badBlocks.put(badBlock.getHash(), badBlock);
   }
 
   public void reset() {
@@ -100,14 +96,5 @@ public class BadBlockManager {
 
   public Optional<Hash> getLatestValidHash(final Hash blockHash) {
     return Optional.ofNullable(latestValidHashes.getIfPresent(blockHash));
-  }
-
-  private boolean isInternalError(final BadBlockCause cause) {
-    if (cause.getException().isEmpty()) {
-      return false;
-    }
-    // As new "internal only" types of exception are discovered, add them here.
-    Throwable causedBy = cause.getException().get();
-    return causedBy instanceof StorageException || causedBy instanceof MerkleTrieException;
   }
 }
