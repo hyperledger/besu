@@ -42,7 +42,7 @@ public class BadBlockCause {
     return new BadBlockCause(BadBlockReason.SPEC_VALIDATION_FAILURE, failureMessage);
   }
 
-  private BadBlockCause(BadBlockReason reason, String description) {
+  private BadBlockCause(final BadBlockReason reason, final String description) {
     this.reason = reason;
     this.description = description;
   }
