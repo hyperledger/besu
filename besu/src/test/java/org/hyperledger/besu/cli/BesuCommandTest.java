@@ -1347,14 +1347,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void engineApiAuthOptions() {
-    // TODO: once we have mainnet TTD, we can remove the TTD override parameter here
-    // https://github.com/hyperledger/besu/issues/3874
-    parseCommand(
-        "--override-genesis-config",
-        "terminalTotalDifficulty=1337",
-        "--rpc-http-enabled",
-        "--engine-jwt-secret",
-        "/tmp/fakeKey.hex");
+    parseCommand("--rpc-http-enabled", "--engine-jwt-secret", "/tmp/fakeKey.hex");
     verify(mockRunnerBuilder).engineJsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     assertThat(jsonRpcConfigArgumentCaptor.getValue().isAuthenticationEnabled()).isTrue();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -1363,15 +1356,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void engineApiDisableAuthOptions() {
-    // TODO: once we have mainnet TTD, we can remove the TTD override parameter here
-    // https://github.com/hyperledger/besu/issues/3874
     parseCommand(
-        "--override-genesis-config",
-        "terminalTotalDifficulty=1337",
-        "--rpc-http-enabled",
-        "--engine-jwt-disabled",
-        "--engine-jwt-secret",
-        "/tmp/fakeKey.hex");
+        "--rpc-http-enabled", "--engine-jwt-disabled", "--engine-jwt-secret", "/tmp/fakeKey.hex");
     verify(mockRunnerBuilder).engineJsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     assertThat(jsonRpcConfigArgumentCaptor.getValue().isAuthenticationEnabled()).isFalse();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
