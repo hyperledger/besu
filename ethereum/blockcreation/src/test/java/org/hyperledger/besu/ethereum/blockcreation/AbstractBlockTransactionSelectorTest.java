@@ -736,9 +736,11 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final Transaction transaction = createTransaction(0, Wei.of(10), 21_000);
     ensureTransactionIsValid(transaction, 21_000, 0);
 
-    final TransactionInvalidReason invalidReason = TransactionInvalidReason.PLUGIN_TX_VALIDATOR;
+    final TransactionInvalidReason invalidReason =
+        TransactionInvalidReason.PLUGIN_TX_POOL_VALIDATOR;
     final Transaction invalidTransaction = createTransaction(1, Wei.of(10), 21_000);
-    ensureTransactionIsInvalid(invalidTransaction, TransactionInvalidReason.PLUGIN_TX_VALIDATOR);
+    ensureTransactionIsInvalid(
+        invalidTransaction, TransactionInvalidReason.PLUGIN_TX_POOL_VALIDATOR);
 
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(

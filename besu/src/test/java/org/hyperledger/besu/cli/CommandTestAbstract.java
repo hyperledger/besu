@@ -76,7 +76,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
-import org.hyperledger.besu.plugin.services.PluginTransactionValidatorService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
@@ -87,11 +86,11 @@ import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
-import org.hyperledger.besu.services.PluginTransactionValidatorServiceImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
+import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -213,7 +212,6 @@ public abstract class CommandTestAbstract {
   @Mock protected RlpBlockImporter rlpBlockImporter;
   @Mock protected StorageServiceImpl storageService;
   @Mock protected TransactionSelectionServiceImpl txSelectionService;
-  @Mock protected PluginTransactionValidatorServiceImpl txValidatorService;
   @Mock protected SecurityModuleServiceImpl securityModuleService;
   @Mock protected SecurityModule securityModule;
   @Mock protected BesuConfigurationImpl commonPluginConfiguration;
@@ -299,8 +297,6 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.chainPruningConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.maxPeers(anyInt())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.maxRemotelyInitiatedPeers(anyInt()))
-        .thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.pluginTransactionValidatorService(any()))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.besuComponent(any(BesuComponent.class)))
         .thenReturn(mockControllerBuilder);
@@ -390,9 +386,6 @@ public abstract class CommandTestAbstract {
     lenient()
         .when(mockBesuPluginContext.getService(TransactionSelectionService.class))
         .thenReturn(Optional.of(txSelectionService));
-    lenient()
-        .when(mockBesuPluginContext.getService(PluginTransactionValidatorService.class))
-        .thenReturn(Optional.of(txValidatorService));
 
     lenient()
         .doReturn(mockPkiBlockCreationConfiguration)
@@ -580,7 +573,7 @@ public abstract class CommandTestAbstract {
           pkiBlockCreationConfigProvider,
           rpcEndpointServiceImpl,
           new TransactionSelectionServiceImpl(),
-          new PluginTransactionValidatorServiceImpl(),
+          new TransactionPoolValidatorServiceImpl(),
           new TransactionSimulationServiceImpl(),
           new BlockchainServiceImpl());
     }

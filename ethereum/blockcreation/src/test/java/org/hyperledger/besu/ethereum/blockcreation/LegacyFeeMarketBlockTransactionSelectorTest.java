@@ -35,8 +35,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.plugin.services.PluginTransactionValidatorService;
-import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.number.Fraction;
 
@@ -92,17 +90,7 @@ public class LegacyFeeMarketBlockTransactionSelectorTest
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            poolConf,
-            new PluginTransactionValidatorService() {
-              @Override
-              public PluginTransactionValidatorFactory get() {
-                return null;
-              }
-
-              @Override
-              public void registerTransactionValidatorFactory(
-                  final PluginTransactionValidatorFactory transactionValidatorFactory) {}
-            });
+            poolConf);
     transactionPool.setEnabled();
     return transactionPool;
   }

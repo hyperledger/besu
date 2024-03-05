@@ -53,7 +53,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.PluginTransactionValidatorService;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -252,7 +251,6 @@ public class TransactionPoolFactoryTest {
             peerTransactionTracker,
             transactionsMessageSender,
             newPooledTransactionHashesMessageSender,
-            null,
             new BlobCache(),
             MiningParameters.newDefault());
 
@@ -361,7 +359,6 @@ public class TransactionPoolFactoryTest {
                         .txMessageKeepAliveSeconds(1)
                         .build())
                 .build(),
-            mock(PluginTransactionValidatorService.class),
             new BlobCache(),
             MiningParameters.newDefault());
 

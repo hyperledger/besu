@@ -48,10 +48,10 @@ import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.BlockchainService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
-import org.hyperledger.besu.plugin.services.PluginTransactionValidatorService;
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
+import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
@@ -61,10 +61,10 @@ import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
-import org.hyperledger.besu.services.PluginTransactionValidatorServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
+import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 
@@ -99,7 +99,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       final StorageServiceImpl storageService,
       final SecurityModuleServiceImpl securityModuleService,
       final TransactionSimulationServiceImpl transactionSimulationServiceImpl,
-      final PluginTransactionValidatorServiceImpl transactionValidatorServiceImpl,
       final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
       final BlockchainServiceImpl blockchainServiceImpl,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl,
@@ -113,7 +112,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     besuPluginContext.addService(
         TransactionSelectionService.class, transactionSelectionServiceImpl);
     besuPluginContext.addService(
-        PluginTransactionValidatorService.class, transactionValidatorServiceImpl);
+        TransactionPoolValidatorService.class, new TransactionPoolValidatorServiceImpl());
     besuPluginContext.addService(
         TransactionSimulationService.class, transactionSimulationServiceImpl);
     besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
@@ -159,8 +158,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         new TransactionSimulationServiceImpl();
     final TransactionSelectionServiceImpl transactionSelectionServiceImpl =
         new TransactionSelectionServiceImpl();
-    final PluginTransactionValidatorServiceImpl transactionValidatorServiceImpl =
-        new PluginTransactionValidatorServiceImpl();
     final BlockchainServiceImpl blockchainServiceImpl = new BlockchainServiceImpl();
     final RpcEndpointServiceImpl rpcEndpointServiceImpl = new RpcEndpointServiceImpl();
     final Path dataDir = node.homeDirectory();
@@ -184,7 +181,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                     storageService,
                     securityModuleService,
                     transactionSimulationServiceImpl,
-                    transactionValidatorServiceImpl,
                     transactionSelectionServiceImpl,
                     blockchainServiceImpl,
                     rpcEndpointServiceImpl,
@@ -225,14 +221,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final int maxPeers = 25;
 
-    final PluginTransactionValidatorService pluginTransactionValidatorService =
-        getPluginTransactionValidatorService(besuPluginContext);
-
-    final DataStorageConfiguration dataStorageConfiguration =
-        node.getDataStorageConfiguration() == null
-            ? DataStorageConfiguration.DEFAULT_BONSAI_CONFIG
-            : node.getDataStorageConfiguration();
-
     builder
         .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
         .dataDirectory(node.homeDirectory())
@@ -241,7 +229,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))))
         .metricsSystem(metricsSystem)
         .transactionPoolConfiguration(txPoolConfig)
-        .dataStorageConfiguration(dataStorageConfiguration)
+        .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(node.isRevertReasonEnabled())
@@ -254,8 +242,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .maxPeers(maxPeers)
         .maxRemotelyInitiatedPeers(15)
         .networkConfiguration(node.getNetworkingConfiguration())
-        .randomPeerPriority(false)
-        .pluginTransactionValidatorService(pluginTransactionValidatorService);
+        .randomPeerPriority(false);
 
     node.getGenesisConfig()
         .map(GenesisConfigFile::fromConfig)
@@ -387,12 +374,5 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   @Override
   public String getConsoleContents() {
     throw new RuntimeException("Console contents can only be captured in process execution");
-  }
-
-  private PluginTransactionValidatorService getPluginTransactionValidatorService(
-      final BesuPluginContextImpl besuPluginContext) {
-    return besuPluginContext
-        .getService(org.hyperledger.besu.plugin.services.PluginTransactionValidatorService.class)
-        .orElseThrow();
   }
 }

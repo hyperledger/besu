@@ -55,8 +55,6 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationTestUtils;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.PluginTransactionValidatorService;
-import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -340,17 +338,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            poolConf,
-            new PluginTransactionValidatorService() {
-              @Override
-              public PluginTransactionValidatorFactory get() {
-                return null;
-              }
-
-              @Override
-              public void registerTransactionValidatorFactory(
-                  final PluginTransactionValidatorFactory transactionValidatorFactory) {}
-            });
+            poolConf);
     transactionPool.setEnabled();
 
     return transactionPool;

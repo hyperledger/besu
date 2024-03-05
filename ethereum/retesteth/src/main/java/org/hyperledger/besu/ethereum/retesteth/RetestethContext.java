@@ -67,8 +67,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.PluginTransactionValidatorService;
-import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.util.Subscribers;
 import org.hyperledger.besu.util.number.Fraction;
@@ -257,16 +255,6 @@ public class RetestethContext {
             metricsSystem,
             syncState,
             transactionPoolConfiguration,
-            new PluginTransactionValidatorService() {
-              @Override
-              public PluginTransactionValidatorFactory get() {
-                return null;
-              }
-
-              @Override
-              public void registerTransactionValidatorFactory(
-                  final PluginTransactionValidatorFactory transactionValidatorFactory) {}
-            },
             new BlobCache(),
             MiningParameters.newDefault());
 

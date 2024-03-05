@@ -161,12 +161,12 @@ import org.hyperledger.besu.plugin.services.BlockchainService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
-import org.hyperledger.besu.plugin.services.PluginTransactionValidatorService;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.TraceService;
+import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -182,12 +182,12 @@ import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
-import org.hyperledger.besu.services.PluginTransactionValidatorServiceImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.TraceServiceImpl;
+import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
@@ -348,16 +348,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "The path to Besu data directory (default: ${DEFAULT-VALUE})")
   final Path dataPath = getDefaultBesuDataPath(this);
 
-  // Genesis file path with null default option if the option
-  // is not defined on command line as this default is handled by Runner
+  // Genesis file path with null default option.
+  // This default is handled by Runner
   // to use mainnet json file from resources as indicated in the
   // default network option
-  // Then we have no control over genesis default value here.
+  // Then we ignore genesis default value here.
   @CommandLine.Option(
       names = {"--genesis-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
-          "Genesis file. Setting this option makes --network option ignored and requires --network-id to be set.")
+          "Genesis file for your custom network. Setting this option requires --network-id to be set. (Cannot be used with --network)")
   private final File genesisFile = null;
 
   @Option(
@@ -372,7 +372,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   P2PDiscoveryOptionGroup p2PDiscoveryOptionGroup = new P2PDiscoveryOptionGroup();
 
   private final TransactionSelectionServiceImpl transactionSelectionServiceImpl;
-  private final PluginTransactionValidatorServiceImpl transactionValidatorServiceImpl;
+  private final TransactionPoolValidatorServiceImpl transactionValidatorServiceImpl;
   private final TransactionSimulationServiceImpl transactionSimulationServiceImpl;
   private final BlockchainServiceImpl blockchainServiceImpl;
 
@@ -959,7 +959,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new PkiBlockCreationConfigurationProvider(),
         new RpcEndpointServiceImpl(),
         new TransactionSelectionServiceImpl(),
-        new PluginTransactionValidatorServiceImpl(),
+        new TransactionPoolValidatorServiceImpl(),
         new TransactionSimulationServiceImpl(),
         new BlockchainServiceImpl());
   }
@@ -1003,7 +1003,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl,
       final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
-      final PluginTransactionValidatorServiceImpl transactionValidatorServiceImpl,
+      final TransactionPoolValidatorServiceImpl transactionValidatorServiceImpl,
       final TransactionSimulationServiceImpl transactionSimulationServiceImpl,
       final BlockchainServiceImpl blockchainServiceImpl) {
     this.besuComponent = besuComponent;
@@ -1217,7 +1217,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(
         TransactionSelectionService.class, transactionSelectionServiceImpl);
     besuPluginContext.addService(
-        PluginTransactionValidatorService.class, transactionValidatorServiceImpl);
+        TransactionPoolValidatorService.class, transactionValidatorServiceImpl);
     besuPluginContext.addService(
         TransactionSimulationService.class, transactionSimulationServiceImpl);
     besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
@@ -1828,7 +1828,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .synchronizerConfiguration(buildSyncConfig())
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .networkConfiguration(unstableNetworkingOptions.toDomainObject())
-        .pluginTransactionValidatorService(getPluginTransactionValidatorService())
         .dataDirectory(dataDir())
         .dataStorageConfiguration(getDataStorageConfiguration())
         .miningParameters(getMiningParameters())
@@ -1857,10 +1856,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
         .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
         .cacheLastBlocks(numberOfblocksToCache);
-  }
-
-  private PluginTransactionValidatorService getPluginTransactionValidatorService() {
-    return besuPluginContext.getService(PluginTransactionValidatorService.class).orElseThrow();
   }
 
   private JsonRpcConfiguration createEngineJsonRpcConfiguration(
@@ -2129,6 +2124,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private TransactionPoolConfiguration buildTransactionPoolConfiguration() {
+    transactionPoolOptions.setPluginTransactionValidatorService(transactionValidatorServiceImpl);
     final var txPoolConf = transactionPoolOptions.toDomainObject();
     final var txPoolConfBuilder =
         ImmutableTransactionPoolConfiguration.builder()

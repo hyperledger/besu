@@ -72,12 +72,10 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
-import org.hyperledger.besu.plugin.services.PluginTransactionValidatorService;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
-import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.nio.file.Path;
@@ -175,17 +173,7 @@ public abstract class AbstractIsolationTests {
             mock(TransactionBroadcaster.class),
             ethContext,
             txPoolMetrics,
-            poolConfiguration,
-            new PluginTransactionValidatorService() {
-              @Override
-              public PluginTransactionValidatorFactory get() {
-                return null;
-              }
-
-              @Override
-              public void registerTransactionValidatorFactory(
-                  final PluginTransactionValidatorFactory transactionValidatorFactory) {}
-            });
+            poolConfiguration);
     transactionPool.setEnabled();
   }
 
