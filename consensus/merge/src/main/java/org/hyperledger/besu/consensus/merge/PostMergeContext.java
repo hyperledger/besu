@@ -72,10 +72,6 @@ public class PostMergeContext implements MergeContext {
   private final BlockValueCalculator blockValueCalculator = new BlockValueCalculator();
   private boolean isPostMergeAtGenesis;
 
-  // TODO: cleanup - isChainPruningEnabled will not be required after
-  // https://github.com/hyperledger/besu/pull/4703 is merged.
-  private boolean isChainPruningEnabled = false;
-
   /** Instantiates a new Post merge context. */
   @VisibleForTesting
   PostMergeContext() {
@@ -300,16 +296,6 @@ public class PostMergeContext implements MergeContext {
         + block.getHeader().getGasUsed()
         + " transactions "
         + block.getBody().getTransactions().size();
-  }
-
-  @Override
-  public void setIsChainPruningEnabled(final boolean isChainPruningEnabled) {
-    this.isChainPruningEnabled = isChainPruningEnabled;
-  }
-
-  @Override
-  public boolean isChainPruningEnabled() {
-    return isChainPruningEnabled;
   }
 
   @Override
