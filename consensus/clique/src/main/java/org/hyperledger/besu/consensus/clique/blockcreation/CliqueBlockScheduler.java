@@ -20,7 +20,6 @@ import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
 
 import java.time.Clock;
 import java.util.Collection;
@@ -44,24 +43,19 @@ public class CliqueBlockScheduler extends DefaultBlockScheduler {
    * @param validatorProvider the validator provider
    * @param localNodeAddress the local node address
    * @param forksSchedule the transitions
-   * @param miningParameters the mining parameters to set the block period in seconds
    */
   public CliqueBlockScheduler(
       final Clock clock,
       final ValidatorProvider validatorProvider,
       final Address localNodeAddress,
-      final ForksSchedule<CliqueConfigOptions> forksSchedule,
-      final MiningParameters miningParameters) {
+      final ForksSchedule<CliqueConfigOptions> forksSchedule) {
     super(
-        parentHeader -> {
-          final var blockPeriodSeconds =
-              forksSchedule
-                  .getFork(parentHeader.getNumber() + 1)
-                  .getValue()
-                  .getBlockPeriodSeconds();
-          miningParameters.setBlockPeriodSeconds(blockPeriodSeconds);
-          return (long) blockPeriodSeconds;
-        },
+        parentHeader ->
+            (long)
+                forksSchedule
+                    .getFork(parentHeader.getNumber() + 1)
+                    .getValue()
+                    .getBlockPeriodSeconds(),
         0L,
         clock);
     this.validatorProvider = validatorProvider;

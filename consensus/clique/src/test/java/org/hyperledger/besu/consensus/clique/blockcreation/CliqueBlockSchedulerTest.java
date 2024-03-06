@@ -32,10 +32,7 @@ import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockScheduler.BlockC
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.time.Clock;
 import java.util.List;
@@ -45,8 +42,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class CliqueBlockSchedulerTest {
-  private static final PositiveNumber BLOCK_TXS_SELECTION_MAX_PERCENTAGE =
-      PositiveNumber.fromInt(75);
   private final KeyPair proposerKeyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private Address localAddr;
 
@@ -54,7 +49,6 @@ public class CliqueBlockSchedulerTest {
   private ValidatorProvider validatorProvider;
   private BlockHeaderTestFixture blockHeaderBuilder;
   private ForksSchedule<CliqueConfigOptions> forksSchedule;
-  private MiningParameters miningParameters;
 
   @BeforeEach
   public void setup() {
@@ -72,12 +66,6 @@ public class CliqueBlockSchedulerTest {
         ImmutableCliqueConfigOptions.builder().from(JsonCliqueConfigOptions.DEFAULT);
     initialTransition.blockPeriodSeconds(5);
     forksSchedule = new ForksSchedule<>(List.of(new ForkSpec<>(0, initialTransition.build())));
-
-    miningParameters =
-        ImmutableMiningParameters.builder()
-            .poaBlockTxsSelectionMaxTime(BLOCK_TXS_SELECTION_MAX_PERCENTAGE)
-            .build()
-            .setBlockPeriodSeconds(10);
   }
 
   @Test
@@ -87,8 +75,7 @@ public class CliqueBlockSchedulerTest {
     final int secondsBetweenBlocks = 5;
     when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);
     final CliqueBlockScheduler scheduler =
-        new CliqueBlockScheduler(
-            clock, validatorProvider, localAddr, forksSchedule, miningParameters);
+        new CliqueBlockScheduler(clock, validatorProvider, localAddr, forksSchedule);
 
     // There are 2 validators, therefore block 2 will put localAddr as the in-turn voter, therefore
     // parent block should be number 1.
@@ -100,9 +87,6 @@ public class CliqueBlockSchedulerTest {
     assertThat(result.getTimestampForHeader())
         .isEqualTo(currentSecondsSinceEpoch + secondsBetweenBlocks);
     assertThat(result.getMillisecondsUntilValid()).isEqualTo(secondsBetweenBlocks * 1000);
-    assertThat(miningParameters.getBlockTxsSelectionMaxTime())
-        .isEqualTo(
-            secondsBetweenBlocks * 1000 * BLOCK_TXS_SELECTION_MAX_PERCENTAGE.getValue() / 100);
   }
 
   @Test
@@ -124,8 +108,7 @@ public class CliqueBlockSchedulerTest {
                 new ForkSpec<>(4, decreaseBlockTimeTransition.build())));
 
     final CliqueBlockScheduler scheduler =
-        new CliqueBlockScheduler(
-            clock, validatorProvider, localAddr, forksSchedule, miningParameters);
+        new CliqueBlockScheduler(clock, validatorProvider, localAddr, forksSchedule);
 
     // getNextTimestamp for last block before transition
     // There are 2 validators, therefore block 3 will put localAddr as the out-of-turn voter,
@@ -136,8 +119,6 @@ public class CliqueBlockSchedulerTest {
     BlockCreationTimeResult result = scheduler.getNextTimestamp(parentHeader);
     assertThat(result.getTimestampForHeader()).isEqualTo(currentSecondsSinceEpoch + 5);
     assertThat(result.getMillisecondsUntilValid()).isGreaterThan(5 * 1000);
-    assertThat(miningParameters.getBlockTxsSelectionMaxTime())
-        .isEqualTo(5 * 1000 * BLOCK_TXS_SELECTION_MAX_PERCENTAGE.getValue() / 100);
 
     // getNextTimestamp for transition block
     // There are 2 validators, therefore block 4 will put localAddr as the in-turn voter, therefore
@@ -146,8 +127,6 @@ public class CliqueBlockSchedulerTest {
     result = scheduler.getNextTimestamp(parentHeader);
     assertThat(result.getTimestampForHeader()).isEqualTo(currentSecondsSinceEpoch + 1);
     assertThat(result.getMillisecondsUntilValid()).isEqualTo(1000);
-    assertThat(miningParameters.getBlockTxsSelectionMaxTime())
-        .isEqualTo(1 * 1000 * BLOCK_TXS_SELECTION_MAX_PERCENTAGE.getValue() / 100);
 
     // getNextTimestamp for block after transition
     // There are 2 validators, therefore block 5 will put localAddr as the out-of-turn voter,
@@ -157,8 +136,6 @@ public class CliqueBlockSchedulerTest {
     result = scheduler.getNextTimestamp(parentHeader);
     assertThat(result.getTimestampForHeader()).isEqualTo(currentSecondsSinceEpoch + 1);
     assertThat(result.getMillisecondsUntilValid()).isGreaterThan(1000);
-    assertThat(miningParameters.getBlockTxsSelectionMaxTime())
-        .isEqualTo(1 * 1000 * BLOCK_TXS_SELECTION_MAX_PERCENTAGE.getValue() / 100);
   }
 
   @Test
@@ -167,8 +144,7 @@ public class CliqueBlockSchedulerTest {
     final long currentSecondsSinceEpoch = 10L;
     when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);
     final CliqueBlockScheduler scheduler =
-        new CliqueBlockScheduler(
-            clock, validatorProvider, localAddr, forksSchedule, miningParameters);
+        new CliqueBlockScheduler(clock, validatorProvider, localAddr, forksSchedule);
 
     // There are 2 validators, therefore block 3 will put localAddr as the out-turn voter, therefore
     // parent block should be number 2.
@@ -181,9 +157,6 @@ public class CliqueBlockSchedulerTest {
     assertThat(result.getTimestampForHeader())
         .isEqualTo(currentSecondsSinceEpoch + secondsBetweenBlocks);
     assertThat(result.getMillisecondsUntilValid()).isGreaterThan(secondsBetweenBlocks * 1000);
-    assertThat(miningParameters.getBlockTxsSelectionMaxTime())
-        .isEqualTo(
-            secondsBetweenBlocks * 1000 * BLOCK_TXS_SELECTION_MAX_PERCENTAGE.getValue() / 100);
   }
 
   @Test
@@ -193,8 +166,7 @@ public class CliqueBlockSchedulerTest {
     final long secondsBetweenBlocks = 5L;
     when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);
     final CliqueBlockScheduler scheduler =
-        new CliqueBlockScheduler(
-            clock, validatorProvider, localAddr, forksSchedule, miningParameters);
+        new CliqueBlockScheduler(clock, validatorProvider, localAddr, forksSchedule);
 
     // There are 2 validators, therefore block 2 will put localAddr as the in-turn voter, therefore
     // parent block should be number 1.
@@ -208,8 +180,5 @@ public class CliqueBlockSchedulerTest {
 
     assertThat(result.getTimestampForHeader()).isEqualTo(currentSecondsSinceEpoch);
     assertThat(result.getMillisecondsUntilValid()).isEqualTo(0);
-    assertThat(miningParameters.getBlockTxsSelectionMaxTime())
-        .isEqualTo(
-            secondsBetweenBlocks * 1000 * BLOCK_TXS_SELECTION_MAX_PERCENTAGE.getValue() / 100);
   }
 }
