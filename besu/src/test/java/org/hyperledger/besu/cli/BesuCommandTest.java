@@ -2356,12 +2356,12 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--Xsnapsync-synchronizer-flat-account-healed-count-per-request", "100");
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "--Xsnapsync-synchronizer-flat option can only be used when -Xsnapsync-synchronizer-flat-db-healing-enabled is true");
+            "--Xsnapsync-synchronizer-flat option can only be used when --Xsnapsync-synchronizer-flat-db-healing-enabled is true");
 
     parseCommand("--Xsnapsync-synchronizer-flat-slot-healed-count-per-request", "100");
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "--Xsnapsync-synchronizer-flat option can only be used when -Xsnapsync-synchronizer-flat-db-healing-enabled is true");
+            "--Xsnapsync-synchronizer-flat option can only be used when --Xsnapsync-synchronizer-flat-db-healing-enabled is true");
   }
 
   @Test

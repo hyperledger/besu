@@ -99,6 +99,11 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     this.trieLogStorage = trieLogStorage;
   }
 
+  public BonsaiWorldStateKeyValueStorage getContextSafeCopy() {
+    return new BonsaiWorldStateKeyValueStorage(
+        flatDbStrategyProvider.contextSafeClone(), composedWorldStateStorage, trieLogStorage);
+  }
+
   @Override
   public DataStorageFormat getDataStorageFormat() {
     return DataStorageFormat.BONSAI;

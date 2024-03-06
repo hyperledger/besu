@@ -1049,13 +1049,20 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final Blockchain blockchain,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
-      case BONSAI -> new BonsaiWorldStateProvider(
-          (BonsaiWorldStateKeyValueStorage) worldStateStorage,
-          blockchain,
-          Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
-          cachedMerkleTrieLoader,
-          besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
-          evmConfiguration);
+      case BONSAI -> {
+        // TODO, better integrate. Just for PoC, explicitly set our bonsai context chain head:
+        ((BonsaiWorldStateKeyValueStorage) worldStateStorage)
+            .getFlatDbStrategy()
+            .updateBlockContext(blockchain.getChainHeadHeader());
+
+        yield new BonsaiWorldStateProvider(
+            (BonsaiWorldStateKeyValueStorage) worldStateStorage,
+            blockchain,
+            Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
+            cachedMerkleTrieLoader,
+            besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
+            evmConfiguration);
+      }
       case FOREST -> {
         final WorldStatePreimageStorage preimageStorage =
             storageProvider.createWorldStatePreimageStorage();

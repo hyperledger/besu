@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.flat.ArchiveFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
@@ -61,6 +62,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
   private final Blockchain blockchain;
 
   private final CachedWorldStorageManager cachedWorldStorageManager;
+  private final EvmConfiguration evmConfiguration;
   private final TrieLogManager trieLogManager;
   private final BonsaiWorldState persistedState;
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
@@ -83,6 +85,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     this.worldStateStorage = worldStateStorage;
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
     this.persistedState = new BonsaiWorldState(this, worldStateStorage, evmConfiguration);
+    this.evmConfiguration = evmConfiguration;
     blockchain
         .getBlockHeader(persistedState.getWorldStateBlockHash())
         .ifPresent(
@@ -105,6 +108,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     this.worldStateStorage = worldStateStorage;
     this.persistedState = new BonsaiWorldState(this, worldStateStorage, evmConfiguration);
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
+    this.evmConfiguration = evmConfiguration;
     blockchain
         .getBlockHeader(persistedState.getWorldStateBlockHash())
         .ifPresent(
@@ -141,6 +145,19 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     if (shouldPersistState) {
       return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());
     } else {
+      // TODO this needs to be better integrated && ensure block is canonical
+      // HACK for kikori PoC, if we have the trielog for this block, we can assume we have it in
+      // flatDB
+      // although, in practice we can only serve canonical chain worldstates and need to fall back
+      // to state rolling if the requested block is a fork.
+      if (this.worldStateStorage.getFlatDbStrategy() instanceof ArchiveFlatDbStrategy
+          && trieLogManager.getTrieLogLayer(blockHeader.getBlockHash()).isPresent()) {
+
+        var contextSafeCopy = worldStateStorage.getContextSafeCopy();
+        contextSafeCopy.getFlatDbStrategy().updateBlockContext(blockHeader);
+        return Optional.of(new BonsaiWorldState(this, contextSafeCopy, evmConfiguration));
+      }
+
       final BlockHeader chainHeadBlockHeader = blockchain.getChainHeadHeader();
       if (chainHeadBlockHeader.getNumber() - blockHeader.getNumber()
           >= trieLogManager.getMaxLayersToLoad()) {
