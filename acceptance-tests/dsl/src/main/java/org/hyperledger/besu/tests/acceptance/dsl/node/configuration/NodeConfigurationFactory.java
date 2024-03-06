@@ -30,8 +30,10 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.Gene
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class NodeConfigurationFactory {
 
@@ -44,8 +46,10 @@ public class NodeConfigurationFactory {
     return genesisConfigProvider.create(nodes);
   }
 
-  public JsonRpcConfiguration createJsonRpcWithCliqueEnabledConfig() {
-    return createJsonRpcWithRpcApiEnabledConfig(CLIQUE.name());
+  public JsonRpcConfiguration createJsonRpcWithCliqueEnabledConfig(final Set<String> extraRpcApis) {
+    final var enabledApis = new HashSet<>(extraRpcApis);
+    enabledApis.add(CLIQUE.name());
+    return createJsonRpcWithRpcApiEnabledConfig(enabledApis.toArray(String[]::new));
   }
 
   public JsonRpcConfiguration createJsonRpcWithIbft2EnabledConfig(final boolean minerEnabled) {

@@ -106,7 +106,21 @@ public class TransactionSimulator {
         header);
   }
 
+  public Optional<TransactionSimulatorResult> process(
+      final CallParameter callParams,
+      final TransactionValidationParams transactionValidationParams,
+      final OperationTracer operationTracer,
+      final BlockHeader blockHeader) {
+    return process(
+        callParams,
+        transactionValidationParams,
+        operationTracer,
+        (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
+        blockHeader);
+  }
+
   public Optional<TransactionSimulatorResult> processAtHead(final CallParameter callParams) {
+    final var chainHeadHash = blockchain.getChainHeadHash();
     return process(
         callParams,
         ImmutableTransactionValidationParams.builder()
@@ -115,7 +129,10 @@ public class TransactionSimulator {
             .build(),
         OperationTracer.NO_TRACING,
         (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
-        blockchain.getChainHeadHeader());
+        blockchain
+            .getBlockHeader(chainHeadHash)
+            .or(() -> blockchain.getBlockHeaderSafe(chainHeadHash))
+            .orElse(null));
   }
 
   /**
