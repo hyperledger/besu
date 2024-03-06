@@ -14,11 +14,25 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions;
 
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public class InvalidBlockException extends RuntimeException {
 
-  public InvalidBlockException(final String message, final long blockNumber, final Hash blockHash) {
-    super(message + ": Invalid block at #" + blockNumber + " (" + blockHash + ")");
+  private InvalidBlockException(final String message) {
+    super(message);
+  }
+
+  public static InvalidBlockException create(final String message) {
+    return new InvalidBlockException(message);
+  }
+
+  public static InvalidBlockException fromInvalidBlock(final BlockHeader header) {
+    return fromInvalidBlock("Failed to import block", header);
+  }
+
+  public static InvalidBlockException fromInvalidBlock(
+      final String description, final BlockHeader header) {
+    final String message = description + ": Invalid block " + header.toLogString();
+    return new InvalidBlockException(message);
   }
 }

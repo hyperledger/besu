@@ -60,7 +60,7 @@ public class PoWMinerExecutorTest {
             null,
             transactionPool,
             miningParameters,
-            new DefaultBlockScheduler(1, 10, TestClock.fixed()),
+            new DefaultBlockScheduler(1L, 10, TestClock.fixed()),
             new EpochCalculator.DefaultEpochCalculator(),
             ethScheduler);
 
@@ -117,8 +117,7 @@ public class PoWMinerExecutorTest {
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
-            poolConf,
-            null);
+            poolConf);
     transactionPool.setEnabled();
 
     return transactionPool;

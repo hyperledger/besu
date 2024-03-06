@@ -90,8 +90,7 @@ public class LegacyFeeMarketBlockTransactionSelectorTest
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            poolConf,
-            null);
+            poolConf);
     transactionPool.setEnabled();
     return transactionPool;
   }

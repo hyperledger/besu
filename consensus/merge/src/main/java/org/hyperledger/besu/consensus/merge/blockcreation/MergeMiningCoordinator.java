@@ -142,14 +142,6 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
   boolean isMiningBeforeMerge();
 
   /**
-   * Add bad block.
-   *
-   * @param block the block
-   * @param maybeCause the maybe cause
-   */
-  void addBadBlock(final Block block, Optional<Throwable> maybeCause);
-
-  /**
    * Is bad block.
    *
    * @param blockHash the block hash
