@@ -108,15 +108,19 @@ public class StorageRangeDataRequest extends SnapDataRequest {
         new AtomicReference<>(noop());
 
     // we have a flat DB only with Bonsai
-    worldStateStorageCoordinator.applyOnMatchingFlatMode(
-        FlatDbMode.FULL,
-        bonsaiWorldStateStorageStrategy -> {
-          flatDatabaseUpdater.set(
+
+    if (!worldStateStorage.getFlatDbMode().equals(FlatDbMode.PARTIAL)) {
+      // we have a flat DB only with Bonsai
+      flatDatabaseUpdater =
               (key, value) ->
-                  ((BonsaiWorldStateKeyValueStorage.Updater) updater)
-                      .putStorageValueBySlotHash(
-                          accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value))));
-        });
+                      ((BonsaiWorldStateKeyValueStorage.Updater) updater)
+                              .putStorageValueBySlotHash(
+                                      accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
+    } else {
+      worldStateStorageCoordinator.applyOnMatchingFlatMode(FlatDbMode.FULL, bonsaiWorldStateStorageStrategy -> {
+        flatDatabaseUpdater.set((key, value) -> ((BonsaiWorldStateKeyValueStorage.Updater) updater).putStorageValueBySlotHash(accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value))));
+      });
+    }
 
     stackTrie.commit(flatDatabaseUpdater.get(), nodeUpdater);
 

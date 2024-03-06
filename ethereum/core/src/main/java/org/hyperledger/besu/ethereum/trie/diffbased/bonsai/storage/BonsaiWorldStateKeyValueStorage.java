@@ -73,6 +73,11 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     this.flatDbStrategyProvider = flatDbStrategyProvider;
   }
 
+  public BonsaiWorldStateKeyValueStorage getContextSafeCopy() {
+    return new BonsaiWorldStateKeyValueStorage(
+        flatDbStrategyProvider.contextSafeClone(), composedWorldStateStorage, trieLogStorage);
+  }
+
   @Override
   public DataStorageFormat getDataStorageFormat() {
     return DataStorageFormat.BONSAI;

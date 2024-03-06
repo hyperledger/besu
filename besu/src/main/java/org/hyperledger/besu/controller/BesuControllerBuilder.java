@@ -1106,6 +1106,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       case BONSAI -> {
         final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
             worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
+
+
+        // TODO, better integrate. Just for PoC, explicitly set our bonsai context chain head:
+        worldStateKeyValueStorage.getFlatDbStrategy()
+                .updateBlockContext(blockchain.getChainHeadHeader());
+
         yield new BonsaiWorldStateProvider(
             worldStateKeyValueStorage,
             blockchain,
