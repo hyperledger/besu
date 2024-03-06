@@ -23,10 +23,12 @@
         "0x3437004a",
         "0x2dbc88c1"
       ],
+      "baseFeePerBlobGas" : [ "0x0", "0x1", "0x1" ],
       "gasUsedRatio": [
         0.004079142040086682,
         0.003713085594819442
       ],
+      "blobGasUsedRatio" : [ 0.0, 0.3333333333333333 ],
       "reward": [
         [
           "0x3b9aca00",
