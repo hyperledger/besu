@@ -72,7 +72,7 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
     return DefaultBlockchain.createMutable(
         genesisBlock,
         new KeyValueStoragePrefixedKeyBlockchainStorage(
-            keyValueStorage, variablesStorage, blockHeaderFunctions, false),
+            keyValueStorage, variablesStorage, blockHeaderFunctions, true),
         new NoOpMetricsSystem(),
         0);
   }

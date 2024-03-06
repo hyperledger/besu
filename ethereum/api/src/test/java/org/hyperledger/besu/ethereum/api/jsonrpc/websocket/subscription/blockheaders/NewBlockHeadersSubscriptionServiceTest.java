@@ -64,7 +64,7 @@ public class NewBlockHeadersSubscriptionServiceTest {
           new InMemoryKeyValueStorage(),
           new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
           new MainnetBlockHeaderFunctions(),
-          false);
+          true);
   private final Block genesisBlock = gen.genesisBlock();
   private final MutableBlockchain blockchain =
       DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, new NoOpMetricsSystem(), 0);

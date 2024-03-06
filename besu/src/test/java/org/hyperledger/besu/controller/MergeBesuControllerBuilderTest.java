@@ -134,7 +134,7 @@ public class MergeBesuControllerBuilderTest {
                 new InMemoryKeyValueStorage(),
                 new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
                 new MainnetBlockHeaderFunctions(),
-                false));
+                true));
     lenient()
         .when(storageProvider.getStorageBySegmentIdentifier(any()))
         .thenReturn(new InMemoryKeyValueStorage());

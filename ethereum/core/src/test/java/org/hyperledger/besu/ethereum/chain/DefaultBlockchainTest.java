@@ -1056,7 +1056,7 @@ public class DefaultBlockchainTest {
         kvStoreChain,
         new VariablesKeyValueStorage(kvStorageVariables),
         new MainnetBlockHeaderFunctions(),
-        false);
+        true);
   }
 
   private DefaultBlockchain createMutableBlockchain(

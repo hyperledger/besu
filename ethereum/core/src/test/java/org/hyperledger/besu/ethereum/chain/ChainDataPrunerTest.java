@@ -42,7 +42,7 @@ public class ChainDataPrunerTest {
             new InMemoryKeyValueStorage(),
             new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
             new MainnetBlockHeaderFunctions(),
-            false);
+            true);
     final ChainDataPruner chainDataPruner =
         new ChainDataPruner(
             blockchainStorage,
@@ -81,7 +81,7 @@ public class ChainDataPrunerTest {
             new InMemoryKeyValueStorage(),
             new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
             new MainnetBlockHeaderFunctions(),
-            false);
+            true);
     final ChainDataPruner chainDataPruner =
         new ChainDataPruner(
             blockchainStorage,

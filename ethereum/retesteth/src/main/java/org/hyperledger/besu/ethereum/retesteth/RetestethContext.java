@@ -278,7 +278,7 @@ public class RetestethContext {
     return DefaultBlockchain.createMutable(
         genesisBlock,
         new KeyValueStoragePrefixedKeyBlockchainStorage(
-            keyValueStorage, variablesStorage, blockHeaderFunctions, false),
+            keyValueStorage, variablesStorage, blockHeaderFunctions, true),
         new NoOpMetricsSystem(),
         100);
   }

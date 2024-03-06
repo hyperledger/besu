@@ -114,7 +114,7 @@ public class QbftBesuControllerBuilderTest {
                 new InMemoryKeyValueStorage(),
                 new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
                 new MainnetBlockHeaderFunctions(),
-                false));
+                true));
     lenient()
         .when(
             storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_FOREST_CONFIG))

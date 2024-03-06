@@ -65,7 +65,7 @@ public class ExecutionContextTestFixture {
                 blockchainKeyValueStorage,
                 new VariablesKeyValueStorage(variablesKeyValueStorage),
                 new MainnetBlockHeaderFunctions(),
-                false),
+                true),
             new NoOpMetricsSystem(),
             0);
     this.stateArchive = createInMemoryWorldStateArchive();

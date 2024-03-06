@@ -145,6 +145,6 @@ public class DataStoreModule {
         keyValueStorage,
         new VariablesKeyValueStorage(variablesKeyValueStorage),
         blockHashFunction,
-        false);
+        true);
   }
 }

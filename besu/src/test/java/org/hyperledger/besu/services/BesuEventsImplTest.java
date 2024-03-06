@@ -123,7 +123,7 @@ public class BesuEventsImplTest {
                 new InMemoryKeyValueStorage(),
                 new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
                 new MainnetBlockHeaderFunctions(),
-                false),
+                true),
             new NoOpMetricsSystem(),
             0);
 
