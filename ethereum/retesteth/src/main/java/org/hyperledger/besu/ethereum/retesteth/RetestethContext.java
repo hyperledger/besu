@@ -260,7 +260,6 @@ public class RetestethContext {
             metricsSystem,
             syncState,
             transactionPoolConfiguration,
-            null,
             new BlobCache(),
             MiningParameters.newDefault());
 

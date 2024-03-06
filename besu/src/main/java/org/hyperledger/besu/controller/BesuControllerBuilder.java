@@ -100,7 +100,6 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
-import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 
 import java.io.Closeable;
 import java.math.BigInteger;
@@ -189,8 +188,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   private Boolean randomPeerPriority;
   /** the Dagger configured context that can provide dependencies */
   protected Optional<BesuComponent> besuComponent = Optional.empty();
-
-  private PluginTransactionValidatorFactory pluginTransactionValidatorFactory;
 
   private int numberOfBlocksToCache = 0;
 
@@ -534,18 +531,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
-   * sets the pluginTransactionValidatorFactory
-   *
-   * @param pluginTransactionValidatorFactory factory that creates plugin transaction Validators
-   * @return the besu controller builder
-   */
-  public BesuControllerBuilder pluginTransactionValidatorFactory(
-      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory) {
-    this.pluginTransactionValidatorFactory = pluginTransactionValidatorFactory;
-    return this;
-  }
-
-  /**
    * Build besu controller.
    *
    * @return the besu controller
@@ -608,9 +593,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     validateContext(protocolContext);
 
     if (chainPrunerConfiguration.getChainPruningEnabled()) {
-      protocolContext
-          .safeConsensusContext(MergeContext.class)
-          .ifPresent(mergeContext -> mergeContext.setIsChainPruningEnabled(true));
       final ChainDataPruner chainDataPruner = createChainPruner(blockchainStorage);
       blockchain.observeBlockAdded(chainDataPruner);
       LOG.info(
@@ -706,7 +688,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             metricsSystem,
             syncState,
             transactionPoolConfiguration,
-            pluginTransactionValidatorFactory,
             besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()),
             miningParameters);
 

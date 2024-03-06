@@ -170,22 +170,6 @@ public interface MergeContext extends ConsensusContext {
   Optional<BlockWithReceipts> retrieveBlockById(final PayloadIdentifier payloadId);
 
   /**
-   * Sets is chain pruning enabled.
-   *
-   * @param isChainPruningEnabled whether chain pruning is enabled
-   */
-  default void setIsChainPruningEnabled(final boolean isChainPruningEnabled) {}
-
-  /**
-   * Is chain pruning enabled.
-   *
-   * @return the boolean
-   */
-  default boolean isChainPruningEnabled() {
-    return false;
-  }
-
-  /**
    * Is configured for a post-merge from genesis.
    *
    * @return the boolean

@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.chain;
 
 import org.hyperledger.besu.ethereum.core.Block;
 
-import java.util.Optional;
+import com.google.common.base.MoreObjects;
 
 public class BadBlockCause {
   public enum BadBlockReason {
@@ -31,29 +31,20 @@ public class BadBlockCause {
 
   private final BadBlockReason reason;
   private final String description;
-  private final Optional<Throwable> exception;
-
-  public static BadBlockCause fromProcessingError(final Throwable t) {
-    final String description = t.getLocalizedMessage();
-    return new BadBlockCause(
-        BadBlockReason.EXCEPTIONAL_BLOCK_PROCESSING, description, Optional.of(t));
-  }
 
   public static BadBlockCause fromBadAncestorBlock(final Block badAncestor) {
     final String description =
         String.format("Descends from bad block %s", badAncestor.toLogString());
-    return new BadBlockCause(BadBlockReason.DESCENDS_FROM_BAD_BLOCK, description, Optional.empty());
+    return new BadBlockCause(BadBlockReason.DESCENDS_FROM_BAD_BLOCK, description);
   }
 
   public static BadBlockCause fromValidationFailure(final String failureMessage) {
-    return new BadBlockCause(
-        BadBlockReason.SPEC_VALIDATION_FAILURE, failureMessage, Optional.empty());
+    return new BadBlockCause(BadBlockReason.SPEC_VALIDATION_FAILURE, failureMessage);
   }
 
-  private BadBlockCause(BadBlockReason reason, String description, Optional<Throwable> exception) {
+  private BadBlockCause(final BadBlockReason reason, final String description) {
     this.reason = reason;
     this.description = description;
-    this.exception = exception;
   }
 
   public BadBlockReason getReason() {
@@ -64,20 +55,11 @@ public class BadBlockCause {
     return description;
   }
 
-  public Optional<Throwable> getException() {
-    return exception;
-  }
-
   @Override
   public String toString() {
-    return "BadBlockCause{"
-        + "reason="
-        + reason
-        + ", description='"
-        + description
-        + '\''
-        + ", exception="
-        + exception
-        + '}';
+    return MoreObjects.toStringHelper(this)
+        .add("reason", reason)
+        .add("description", description)
+        .toString();
   }
 }
