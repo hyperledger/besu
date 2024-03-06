@@ -167,7 +167,6 @@ public class BesuEventsImplTest {
             new NoOpMetricsSystem(),
             syncState,
             txPoolConfig,
-            null,
             new BlobCache(),
             MiningParameters.newDefault());
 

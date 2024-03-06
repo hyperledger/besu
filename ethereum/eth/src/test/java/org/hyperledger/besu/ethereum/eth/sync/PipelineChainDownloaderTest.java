@@ -318,7 +318,7 @@ public class PipelineChainDownloaderTest {
     if (isCancelled) {
       chainDownloader.cancel();
     }
-    selectTargetFuture.completeExceptionally(new InvalidBlockException("", 1, null));
+    selectTargetFuture.completeExceptionally(InvalidBlockException.create("Failed"));
 
     verify(syncState, times(1)).disconnectSyncTarget(DisconnectReason.BREACH_OF_PROTOCOL);
   }

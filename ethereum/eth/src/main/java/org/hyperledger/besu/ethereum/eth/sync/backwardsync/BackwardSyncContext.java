@@ -324,10 +324,9 @@ public class BackwardSyncContext {
                 HeaderValidationMode.NONE);
     if (optResult.isSuccessful()) {
       LOG.atTrace()
-          .setMessage("Block {} was validated, going to import it")
+          .setMessage("Block {} was validated, going to move the head")
           .addArgument(block::toLogString)
           .log();
-      optResult.getYield().get().getWorldState().persist(block.getHeader());
       this.getProtocolContext()
           .getBlockchain()
           .appendBlock(block, optResult.getYield().get().getReceipts());

@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.chain.BadBlockCause;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -99,7 +100,7 @@ public class DebugStandardTraceBadBlockToFileTest {
     final List<String> paths = new ArrayList<>();
     paths.add("path-1");
 
-    badBlockManager.addBadBlock(block, Optional.empty());
+    badBlockManager.addBadBlock(block, BadBlockCause.fromValidationFailure("failed"));
 
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(transactionTracer.traceTransactionToFile(

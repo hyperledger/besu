@@ -42,8 +42,6 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
-import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidator;
-import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.io.BufferedReader;
@@ -92,7 +90,6 @@ public class TransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
   private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
   private final Supplier<PendingTransactions> pendingTransactionsSupplier;
-  private final PluginTransactionValidator pluginTransactionValidator;
   private volatile PendingTransactions pendingTransactions;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
@@ -115,8 +112,7 @@ public class TransactionPool implements BlockAddedObserver {
       final TransactionBroadcaster transactionBroadcaster,
       final EthContext ethContext,
       final TransactionPoolMetrics metrics,
-      final TransactionPoolConfiguration configuration,
-      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory) {
+      final TransactionPoolConfiguration configuration) {
     this.pendingTransactionsSupplier = pendingTransactionsSupplier;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -124,10 +120,6 @@ public class TransactionPool implements BlockAddedObserver {
     this.transactionBroadcaster = transactionBroadcaster;
     this.metrics = metrics;
     this.configuration = configuration;
-    this.pluginTransactionValidator =
-        pluginTransactionValidatorFactory == null
-            ? null
-            : pluginTransactionValidatorFactory.create();
     this.blockAddedEventOrderedProcessor =
         ethContext.getScheduler().createOrderedProcessor(this::processBlockAddedEvent);
     initLogForReplay();
@@ -442,14 +434,15 @@ public class TransactionPool implements BlockAddedObserver {
           TransactionInvalidReason.INVALID_BLOBS, "Blob transaction must have at least one blob");
     }
 
-    // Call the transaction validator plugin if one is available
-    if (pluginTransactionValidator != null) {
-      final Optional<String> maybeError =
-          pluginTransactionValidator.validateTransaction(transaction);
-      if (maybeError.isPresent()) {
-        return ValidationResultAndAccount.invalid(
-            TransactionInvalidReason.PLUGIN_TX_VALIDATOR, maybeError.get());
-      }
+    // Call the transaction validator plugin
+    final Optional<String> maybePluginInvalid =
+        configuration
+            .getTransactionPoolValidatorService()
+            .createTransactionValidator()
+            .validateTransaction(transaction, isLocal, hasPriority);
+    if (maybePluginInvalid.isPresent()) {
+      return ValidationResultAndAccount.invalid(
+          TransactionInvalidReason.PLUGIN_TX_POOL_VALIDATOR, maybePluginInvalid.get());
     }
 
     try (final var worldState =
