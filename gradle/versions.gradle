@@ -121,7 +121,7 @@ dependencyManagement {
       entry 'tuweni-units'
     }
 
-    dependencySet(group: 'io.vertx', version: '4.3.5') {
+    dependencySet(group: 'io.vertx', version: '4.5.4') {
       entry 'vertx-auth-jwt'
       entry 'vertx-codegen'
       entry 'vertx-core'
