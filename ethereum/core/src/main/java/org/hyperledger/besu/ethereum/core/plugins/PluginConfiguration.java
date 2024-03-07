@@ -6,28 +6,41 @@ import java.util.List;
 
 public class PluginConfiguration {
   final List<PluginInfo> pluginInfos;
-  final boolean strictPluginRegistrationEnabled;
+  final DetectionType detectionType;
+  final Path pluginsDir;
 
   public PluginConfiguration(
-      final List<PluginInfo> pluginInfos, final boolean pluginsStrictRegistration) {
+      final List<PluginInfo> pluginInfos,
+      final DetectionType pluginsStrictRegistration,
+      final Path pluginsDir) {
     this.pluginInfos = pluginInfos;
-    this.strictPluginRegistrationEnabled = pluginsStrictRegistration;
+    this.detectionType = pluginsStrictRegistration;
+    this.pluginsDir = pluginsDir;
   }
 
   public List<PluginInfo> getPluginInfos() {
     return pluginInfos;
   }
 
-  public boolean isStrictPluginRegistrationEnabled() {
-    return strictPluginRegistrationEnabled;
+  public DetectionType getDetectionType() {
+    return detectionType;
   }
 
-  public Path pluginsDir() {
+  public Path getPluginsDir() {
+    return pluginsDir;
+  }
+
+  public static Path defaultPluginsDir() {
     final String pluginsDir = System.getProperty("besu.plugins.dir");
     if (pluginsDir == null) {
       return new File(System.getProperty("besu.home", "."), "plugins").toPath();
     } else {
       return new File(pluginsDir).toPath();
     }
+  }
+
+  public enum DetectionType {
+    ALL,
+    EXPLICIT
   }
 }

@@ -53,11 +53,12 @@ public class BesuPluginContextImplTest {
   public void verifyEverythingGoesSmoothly() {
     final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
 
-    assertThat(contextImpl.getPlugins()).isEmpty();
+    assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
     contextImpl.registerPlugins(new File(".").toPath());
-    assertThat(contextImpl.getPlugins()).isNotEmpty();
+    assertThat(contextImpl.getRegisteredPlugins()).isNotEmpty();
 
-    final Optional<TestPicoCLIPlugin> testPluginOptional = findTestPlugin(contextImpl.getPlugins());
+    final Optional<TestPicoCLIPlugin> testPluginOptional =
+        findTestPlugin(contextImpl.getRegisteredPlugins());
     Assertions.assertThat(testPluginOptional).isPresent();
     final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");
@@ -75,18 +76,18 @@ public class BesuPluginContextImplTest {
     final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
     System.setProperty("testPicoCLIPlugin.testOption", "FAILREGISTER");
 
-    assertThat(contextImpl.getPlugins()).isEmpty();
+    assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
     contextImpl.registerPlugins(new File(".").toPath());
-    assertThat(contextImpl.getPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
+    assertThat(contextImpl.getRegisteredPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
 
     contextImpl.beforeExternalServices();
-    assertThat(contextImpl.getPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
+    assertThat(contextImpl.getRegisteredPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
 
     contextImpl.startPlugins();
-    assertThat(contextImpl.getPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
+    assertThat(contextImpl.getRegisteredPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
 
     contextImpl.stopPlugins();
-    assertThat(contextImpl.getPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
+    assertThat(contextImpl.getRegisteredPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
   }
 
   @Test
@@ -94,11 +95,14 @@ public class BesuPluginContextImplTest {
     final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
     System.setProperty("testPicoCLIPlugin.testOption", "FAILSTART");
 
-    assertThat(contextImpl.getPlugins()).isEmpty();
+    assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
     contextImpl.registerPlugins(new File(".").toPath());
-    assertThat(contextImpl.getPlugins()).extracting("class").contains(TestPicoCLIPlugin.class);
+    assertThat(contextImpl.getRegisteredPlugins())
+        .extracting("class")
+        .contains(TestPicoCLIPlugin.class);
 
-    final Optional<TestPicoCLIPlugin> testPluginOptional = findTestPlugin(contextImpl.getPlugins());
+    final Optional<TestPicoCLIPlugin> testPluginOptional =
+        findTestPlugin(contextImpl.getRegisteredPlugins());
     assertThat(testPluginOptional).isPresent();
     final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");
@@ -106,10 +110,10 @@ public class BesuPluginContextImplTest {
     contextImpl.beforeExternalServices();
     contextImpl.startPlugins();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("failstart");
-    assertThat(contextImpl.getPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
+    assertThat(contextImpl.getRegisteredPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
 
     contextImpl.stopPlugins();
-    assertThat(contextImpl.getPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
+    assertThat(contextImpl.getRegisteredPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
   }
 
   @Test
@@ -117,11 +121,14 @@ public class BesuPluginContextImplTest {
     final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
     System.setProperty("testPicoCLIPlugin.testOption", "FAILSTOP");
 
-    assertThat(contextImpl.getPlugins()).isEmpty();
+    assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
     contextImpl.registerPlugins(new File(".").toPath());
-    assertThat(contextImpl.getPlugins()).extracting("class").contains(TestPicoCLIPlugin.class);
+    assertThat(contextImpl.getRegisteredPlugins())
+        .extracting("class")
+        .contains(TestPicoCLIPlugin.class);
 
-    final Optional<TestPicoCLIPlugin> testPluginOptional = findTestPlugin(contextImpl.getPlugins());
+    final Optional<TestPicoCLIPlugin> testPluginOptional =
+        findTestPlugin(contextImpl.getRegisteredPlugins());
     assertThat(testPluginOptional).isPresent();
     final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");

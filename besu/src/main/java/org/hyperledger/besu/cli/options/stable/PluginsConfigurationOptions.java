@@ -39,15 +39,19 @@ public class PluginsConfigurationOptions {
   private boolean requireExplicitPlugins = false;
 
   public static PluginConfiguration fromCommandLine(final CommandLine commandLine) {
-    Boolean pluginsStrictRegistration =
+    PluginConfiguration.DetectionType detectionType =
         CommandLineUtils.getOptionValueOrDefault(
-            commandLine, DEFAULT_PLUGINS_STRICT_REGISTRATION_OPTION_NAME, Boolean::valueOf);
+            commandLine,
+            DEFAULT_PLUGINS_STRICT_REGISTRATION_OPTION_NAME,
+            PluginConfiguration.DetectionType::valueOf);
 
     List<PluginInfo> plugins =
         CommandLineUtils.getOptionValueOrDefault(
             commandLine, DEFAULT_PLUGINS_OPTION_NAME, new PluginInfoConverter());
 
     return new PluginConfiguration(
-        plugins != null ? plugins : List.of(), Boolean.TRUE.equals(pluginsStrictRegistration));
+        plugins != null ? plugins : List.of(),
+        detectionType,
+        PluginConfiguration.defaultPluginsDir());
   }
 }
