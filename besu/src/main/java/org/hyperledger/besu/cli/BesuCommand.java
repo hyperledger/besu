@@ -1056,20 +1056,35 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     preparePlugins();
 
     final ConfigOptionSearchAndRunHandler configParsingHandler =
-        new ConfigOptionSearchAndRunHandler(
-            (parseResult -> {
-              registerPlugins(parseResult);
-              commandLine.setExecutionStrategy(resultHandler);
-              commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
-              return 0;
-            }),
-            environment);
+        getConfigOptionSearchAndRunHandler(resultHandler);
 
     return commandLine
         .setExecutionStrategy(configParsingHandler)
         .setParameterExceptionHandler(parameterExceptionHandler)
         .setExecutionExceptionHandler(executionExceptionHandler)
         .execute(args);
+  }
+
+  /**
+   * Creates a handler for searching and running configuration options with plugin registration.
+   *
+   * @param nextHandler The next execution strategy to be used after plugin registration.
+   * @return A {@link ConfigOptionSearchAndRunHandler} configured to register plugins and then
+   *     delegate to the next handler.
+   */
+  private ConfigOptionSearchAndRunHandler getConfigOptionSearchAndRunHandler(
+      IExecutionStrategy nextHandler) {
+    final IExecutionStrategy pluginRegistrationTask =
+        parseResult -> {
+          // Extract PluginConfiguration from command line arguments and register plugins.
+          PluginConfiguration configuration =
+              PluginsConfigurationOptions.fromCommandLine(parseResult.commandSpec().commandLine());
+          besuPluginContext.registerPlugins(configuration);
+
+          commandLine.setExecutionStrategy(nextHandler);
+          return commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
+        };
+    return new ConfigOptionSearchAndRunHandler(pluginRegistrationTask, environment);
   }
 
   /** Used by Dagger to parse all options into a commandline instance. */
@@ -1245,14 +1260,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private SecurityModule defaultSecurityModule() {
     return new KeyPairSecurityModule(loadKeyPair(nodePrivateKeyFileOption.getNodePrivateKeyFile()));
-  }
-
-  private void registerPlugins(final CommandLine.ParseResult parseResult) {
-
-    PluginConfiguration configuration =
-        PluginsConfigurationOptions.fromCommandLine(parseResult.commandSpec().commandLine());
-
-    besuPluginContext.registerPlugins(configuration);
   }
 
   // loadKeyPair() is public because it is accessed by subcommands
