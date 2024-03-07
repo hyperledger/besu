@@ -1,7 +1,10 @@
 package org.hyperledger.besu.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.getOptionValueOrDefault;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -16,65 +19,64 @@ import picocli.CommandLine;
  * (getOptionValueOrDefault).
  */
 public class CommandLineUtilsDefaultsTest {
+  private static final String OPTION_NAME = "option";
+  private static final String OPTION_VALUE = "optionValue";
+  private static final String DEFAULT_VALUE = "defaultValue";
+  public final CommandLine.ITypeConverter<String> converter = String::valueOf;
   private CommandLine commandLine;
-  private CommandLine.ParseResult parseResult;
-  private CommandLine.Model.CommandSpec commandSpec;
   private CommandLine.Model.OptionSpec optionSpec;
-
   private CommandLine.IDefaultValueProvider defaultValueProvider;
+  private CommandLine.ParseResult parseResult;
 
   @BeforeEach
   public void setUp() {
     commandLine = mock(CommandLine.class);
     parseResult = mock(CommandLine.ParseResult.class);
-    commandSpec = mock(CommandLine.Model.CommandSpec.class);
+    CommandLine.Model.CommandSpec commandSpec = mock(CommandLine.Model.CommandSpec.class);
     optionSpec = mock(CommandLine.Model.OptionSpec.class);
     defaultValueProvider = mock(CommandLine.IDefaultValueProvider.class);
-
     when(commandLine.getParseResult()).thenReturn(parseResult);
     when(commandLine.getCommandSpec()).thenReturn(commandSpec);
     when(commandLine.getDefaultValueProvider()).thenReturn(defaultValueProvider);
+    when(parseResult.matchedOptionValue(anyString(), any())).thenCallRealMethod();
+    when(commandSpec.findOption(OPTION_NAME)).thenReturn(optionSpec);
   }
 
   @Test
   public void testGetOptionValueOrDefault_UserProvidedValue() {
-    when(parseResult.matchedOptionValue("option", null)).thenReturn("optionValue");
-    String result =
-        CommandLineUtils.getOptionValueOrDefault(commandLine, "option", String::valueOf);
-    assertThat(result).isEqualTo("optionValue");
+    when(parseResult.matchedOption(OPTION_NAME)).thenReturn(optionSpec);
+    when(optionSpec.getValue()).thenReturn(OPTION_VALUE);
+
+    String result = getOptionValueOrDefault(commandLine, OPTION_NAME, converter);
+    assertThat(result).isEqualTo(OPTION_VALUE);
   }
 
   @Test
   public void testGetOptionValueOrDefault_DefaultValue() throws Exception {
-    when(commandSpec.findOption("option")).thenReturn(optionSpec);
-    when(defaultValueProvider.defaultValue(optionSpec)).thenReturn("defaultValue");
-    String result =
-        CommandLineUtils.getOptionValueOrDefault(commandLine, "option", String::valueOf);
-    assertThat(result).isEqualTo("defaultValue");
+    when(defaultValueProvider.defaultValue(optionSpec)).thenReturn(DEFAULT_VALUE);
+    String result = getOptionValueOrDefault(commandLine, OPTION_NAME, converter);
+    assertThat(result).isEqualTo(DEFAULT_VALUE);
   }
 
   @Test
   public void userOptionOverridesDefaultValue() throws Exception {
-    when(parseResult.matchedOptionValue("option", null)).thenReturn("optionValue");
-    when(defaultValueProvider.defaultValue(optionSpec)).thenReturn("defaultValue");
-    String result =
-        CommandLineUtils.getOptionValueOrDefault(commandLine, "option", String::valueOf);
-    assertThat(result).isEqualTo("optionValue");
+    when(parseResult.matchedOption(OPTION_NAME)).thenReturn(optionSpec);
+    when(optionSpec.getValue()).thenReturn(OPTION_VALUE);
+
+    when(defaultValueProvider.defaultValue(optionSpec)).thenReturn(DEFAULT_VALUE);
+    String result = getOptionValueOrDefault(commandLine, OPTION_NAME, converter);
+    assertThat(result).isEqualTo(OPTION_VALUE);
   }
 
   @Test
   public void testGetOptionValueOrDefault_NoValueOrDefault() {
-    when(commandSpec.findOption("option")).thenReturn(null);
-    String result =
-        CommandLineUtils.getOptionValueOrDefault(commandLine, "option", String::valueOf);
+    String result = getOptionValueOrDefault(commandLine, OPTION_NAME, converter);
     assertThat(result).isNull();
   }
 
   @Test
   public void testGetOptionValueOrDefault_ConversionFailure() throws Exception {
-    when(commandSpec.findOption("option")).thenReturn(optionSpec);
-    when(commandLine.getDefaultValueProvider()).thenReturn(defaultValueProvider);
-    when(defaultValueProvider.defaultValue(optionSpec)).thenReturn("defaultValue");
+    when(defaultValueProvider.defaultValue(optionSpec)).thenReturn(DEFAULT_VALUE);
 
     CommandLine.ITypeConverter<Integer> failingConverter =
         value -> {
@@ -84,9 +86,7 @@ public class CommandLineUtilsDefaultsTest {
     String actualMessage =
         assertThrows(
                 RuntimeException.class,
-                () ->
-                    CommandLineUtils.getOptionValueOrDefault(
-                        commandLine, "option", failingConverter))
+                () -> getOptionValueOrDefault(commandLine, OPTION_NAME, failingConverter))
             .getMessage();
     final String expectedMessage =
         "Failed to convert default value for option option: Conversion failed";

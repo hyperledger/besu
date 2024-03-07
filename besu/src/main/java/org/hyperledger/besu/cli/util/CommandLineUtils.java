@@ -267,15 +267,9 @@ public class CommandLineUtils {
       final String optionName,
       final CommandLine.ITypeConverter<T> converter) {
 
-    // Attempt to get the option's value if it was provided by the user
-    T value = commandLine.getParseResult().matchedOptionValue(optionName, null);
-    if (value != null) {
-      // User provided a value for the option
-      return value;
-    }
-
-    // Attempt to get the default value if the option was not set by the user
-    return getDefaultOptionValue(commandLine, optionName, converter);
+    return commandLine
+        .getParseResult()
+        .matchedOptionValue(optionName, getDefaultOptionValue(commandLine, optionName, converter));
   }
 
   private static <T> T getDefaultOptionValue(
