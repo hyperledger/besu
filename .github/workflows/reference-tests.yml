@@ -7,7 +7,7 @@ on:
       - release-*
 
 env:
-  GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false"
+  GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
   total-runners: 10
 
 concurrency:
@@ -54,7 +54,7 @@ jobs:
       - name: refTestArgs.txt
         run: cat refTestArgs.txt
       - name: run reference tests
-        run: ./gradlew ethereum:referenceTests:referenceTests `cat refTestArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+        run: ./gradlew ethereum:referenceTests:referenceTests `cat refTestArgs.txt`
       - name: Upload Test Report
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         if: always() # always run even if the previous step fails
