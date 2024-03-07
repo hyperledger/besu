@@ -100,7 +100,8 @@ public class EOFReferenceTestTools {
         assertThat(parsedCode.isValid())
             .withFailMessage(
                 () ->
-                    "Expected exception :"
+                    EOFLayout.parseEOF(code).prettyPrint()
+                        + "\nExpected exception :"
                         + results.exception()
                         + " actual exception :"
                         + (parsedCode.isValid()

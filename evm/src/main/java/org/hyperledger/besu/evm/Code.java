@@ -156,4 +156,13 @@ public interface Code {
   default int readU8(final int startIndex) {
     return 0;
   }
+
+  /**
+   * A more readable representation of the hex bytes, including whitespace and comments after hashes
+   *
+   * @return The pretty printed code
+   */
+  default String prettyPrint() {
+    return getBytes().toString();
+  }
 }

@@ -57,6 +57,10 @@ public class EvmToolSpecTests {
     return findSpecFiles(new String[] {"b11r"});
   }
 
+  public static Object[][] prettyPrintTests() {
+    return findSpecFiles(new String[] {"pretty-print"});
+  }
+
   public static Object[][] stateTestTests() {
     return findSpecFiles(new String[] {"state-test"});
   }
@@ -110,7 +114,7 @@ public class EvmToolSpecTests {
   }
 
   @ParameterizedTest(name = "{0}")
-  @MethodSource({"b11rTests", "stateTestTests", "t8nTests", "traceTests"})
+  @MethodSource({"b11rTests", "prettyPrintTests", "stateTestTests", "t8nTests", "traceTests"})
   void testBySpec(
       final String file,
       final JsonNode cliNode,

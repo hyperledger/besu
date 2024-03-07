@@ -89,6 +89,7 @@ import picocli.CommandLine.Option;
       B11rSubCommand.class,
       CodeValidateSubCommand.class,
       EOFTestSubCommand.class,
+      PrettyCodeSubCommand.class,
       StateTestSubCommand.class,
       T8nSubCommand.class,
       T8nServerSubCommand.class

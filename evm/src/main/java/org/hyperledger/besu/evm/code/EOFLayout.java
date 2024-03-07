@@ -16,10 +16,18 @@
 
 package org.hyperledger.besu.evm.code;
 
+import static org.hyperledger.besu.evm.code.OpcodeInfo.V1_OPCODES;
+
+import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
+import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
+import org.hyperledger.besu.evm.operation.RelativeJumpVectorOperation;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -32,7 +40,7 @@ import org.apache.tuweni.bytes.Bytes;
  * @param container The literal EOF bytes fo the whole container
  * @param version The parsed version id. zero if unparseable.
  * @param codeSections The parsed Code sections. Null if invalid.
- * @param containers The parsed subcontainers. Null if invalid.
+ * @param subContainers The parsed subcontainers. Null if invalid.
  * @param dataLength The length of the data as reported by the container. For subcontainers this may
  *     be larger than the data in the data field. Zero if invalid.
  * @param data The data hard coded in the container. Empty if invalid.
@@ -42,7 +50,7 @@ public record EOFLayout(
     Bytes container,
     int version,
     CodeSection[] codeSections,
-    EOFLayout[] containers,
+    EOFLayout[] subContainers,
     int dataLength,
     Bytes data,
     String invalidReason) {
@@ -59,7 +67,7 @@ public record EOFLayout(
   /** code */
   static final int SECTION_CODE = 0x02;
 
-  /** sub-EOF containers for create */
+  /** sub-EOF subContainers for create */
   static final int SECTION_CONTAINER = 0x03;
 
   /** data */
@@ -338,24 +346,6 @@ public record EOFLayout(
   }
 
   /**
-   * Gets container.
-   *
-   * @return the container
-   */
-  public Bytes getContainer() {
-    return container;
-  }
-
-  /**
-   * Gets version.
-   *
-   * @return the version
-   */
-  public int getVersion() {
-    return version;
-  }
-
-  /**
    * Get code section count.
    *
    * @return the code section count
@@ -380,7 +370,7 @@ public record EOFLayout(
    * @return the sub container count
    */
   public int getSubcontainerCount() {
-    return containers == null ? 0 : containers.length;
+    return subContainers == null ? 0 : subContainers.length;
   }
 
   /**
@@ -390,7 +380,7 @@ public record EOFLayout(
    * @return the Code section
    */
   public EOFLayout getSubcontainer(final int i) {
-    return containers[i];
+    return subContainers[i];
   }
 
   /**
@@ -409,7 +399,7 @@ public record EOFLayout(
     return version == eofLayout.version
         && container.equals(eofLayout.container)
         && Arrays.equals(codeSections, eofLayout.codeSections)
-        && Arrays.equals(containers, eofLayout.containers)
+        && Arrays.equals(subContainers, eofLayout.subContainers)
         && Objects.equals(invalidReason, eofLayout.invalidReason);
   }
 
@@ -417,7 +407,7 @@ public record EOFLayout(
   public int hashCode() {
     int result = Objects.hash(container, version, invalidReason);
     result = 31 * result + Arrays.hashCode(codeSections);
-    result = 31 * result + Arrays.hashCode(containers);
+    result = 31 * result + Arrays.hashCode(subContainers);
     return result;
   }
 
@@ -431,7 +421,7 @@ public record EOFLayout(
         + ", codeSections="
         + (codeSections == null ? "null" : Arrays.asList(codeSections).toString())
         + ", containers="
-        + (containers == null ? "null" : Arrays.asList(containers).toString())
+        + (subContainers == null ? "null" : Arrays.asList(subContainers).toString())
         + ", invalidReason='"
         + invalidReason
         + '\''
@@ -456,11 +446,11 @@ public record EOFLayout(
       dataOutput.writeByte(SECTION_DATA);
       dataOutput.writeShort(data.size() + auxData.size());
 
-      if (containers != null && containers.length > 0) {
+      if (subContainers != null && subContainers.length > 0) {
         dataOutput.writeByte(SECTION_CONTAINER);
-        dataOutput.write(containers.length);
-        for (var subcontainer : containers) {
-          dataOutput.writeShort(subcontainer.getContainer().size());
+        dataOutput.write(subContainers.length);
+        for (var subcontainer : subContainers) {
+          dataOutput.writeShort(subcontainer.container.size());
         }
       }
 
@@ -472,16 +462,16 @@ public record EOFLayout(
         dataOutput.writeShort(codeSection.maxStackHeight);
       }
 
-      byte[] container = container().toArrayUnsafe();
+      byte[] containerByteArray = container.toArrayUnsafe();
       for (var codeSection : codeSections) {
-        dataOutput.write(container, codeSection.entryPoint, codeSection.length);
+        dataOutput.write(containerByteArray, codeSection.entryPoint, codeSection.length);
       }
 
-      dataOutput.write(data().toArrayUnsafe());
+      dataOutput.write(data.toArrayUnsafe());
       dataOutput.write(auxData.toArrayUnsafe());
 
-      for (var subcontainer : containers) {
-        dataOutput.write(subcontainer.getContainer().toArrayUnsafe());
+      for (var subcontainer : subContainers) {
+        dataOutput.write(subcontainer.container.toArrayUnsafe());
       }
 
       return baos.toByteArray();
@@ -526,10 +516,10 @@ public record EOFLayout(
       }
 
       // Subcontainers header
-      if (containers != null && containers.length > 0) {
+      if (subContainers != null && subContainers.length > 0) {
         out.writeByte(SECTION_CONTAINER);
-        for (EOFLayout container : containers) {
-          out.write(container.container().size());
+        for (EOFLayout container : subContainers) {
+          out.write(container.container.size());
         }
       }
 
@@ -566,7 +556,7 @@ public record EOFLayout(
       }
 
       // Subcontainers
-      for (EOFLayout container : containers) {
+      for (EOFLayout container : subContainers) {
         out.write(container.container.toArrayUnsafe());
       }
 
@@ -578,9 +568,175 @@ public record EOFLayout(
 
       return Bytes.wrap(baos.toByteArray());
     } catch (IOException ioe) {
-      // ByteArrayOutputStream should never throw, so somethings gone very wrong.  Wrap as runtime
+      // ByteArrayOutputStream should never throw, so something has gone very wrong.  Wrap as
+      // runtime
       // and re-throw.
       throw new RuntimeException(ioe);
     }
+  }
+
+  /**
+   * A more readable representation of the hex bytes, including whitespace and comments after hashes
+   *
+   * @return The pretty printed code
+   */
+  public String prettyPrint() {
+    StringWriter sw = new StringWriter();
+    prettyPrint(new PrintWriter(sw, true), "", "");
+    return sw.toString();
+  }
+
+  /**
+   * A more readable representation of the hex bytes, including whitespace and comments after hashes
+   *
+   * @param out the print writer to pretty print to
+   */
+  public void prettyPrint(final PrintWriter out) {
+    out.println("0x # EOF");
+    prettyPrint(out, "", "");
+  }
+
+  /**
+   * A more readable representation of the hex bytes, including whitespace and comments after hashes
+   *
+   * @param out the print writer to pretty print to
+   * @param prefix The prefix to prepend to all output lines (useful for nested subconntainers)
+   */
+  public void prettyPrint(
+      final PrintWriter out, final String prefix, final String subcontainerPrefix) {
+
+    if (!isValid()) {
+      out.print(prefix);
+      out.println("# Invalid EOF");
+      out.print(prefix);
+      out.println("# " + invalidReason);
+      out.println(container);
+    }
+
+    out.print(prefix);
+    out.printf("ef00%02x # Magic and Version ( %1$d )%n", version);
+    out.print(prefix);
+    out.printf("01%04x # Types length ( %1$d )%n", codeSections.length * 4);
+    out.print(prefix);
+    out.printf("02%04x # Total code sections ( %1$d )%n", codeSections.length);
+    for (int i = 0; i < codeSections.length; i++) {
+      out.print(prefix);
+      out.printf("  %04x # Code section %d , %1$d bytes%n", getCodeSection(i).getLength(), i);
+    }
+    if (subContainers.length > 0) {
+      out.print(prefix);
+      out.printf("03%04x # Total subcontainers ( %1$d )%n", subContainers.length);
+      for (int i = 0; i < subContainers.length; i++) {
+        out.print(prefix);
+        out.printf("  %04x # Sub container %d, %1$d byte%n", subContainers[i].container.size(), i);
+      }
+    }
+    out.print(prefix);
+    out.printf("04%04x # Data section length(  %1$d )", dataLength);
+    if (dataLength != data.size()) {
+      out.printf(" (actual size %d)", data.size());
+    }
+    out.print(prefix);
+    out.printf("%n");
+    out.print(prefix);
+    out.printf("    00 # Terminator (end of header)%n");
+    for (int i = 0; i < codeSections.length; i++) {
+      CodeSection cs = getCodeSection(i);
+      out.print(prefix);
+      out.printf("       # Code %d types%n", i);
+      out.print(prefix);
+      out.printf("    %02x # %1$d inputs %n", cs.getInputs());
+      out.print(prefix);
+      out.printf(
+          "    %02x # %d outputs %s%n",
+          cs.isReturning() ? cs.getOutputs() : 0x80,
+          cs.getOutputs(),
+          cs.isReturning() ? "" : " (Non-returning function)");
+      out.print(prefix);
+      out.printf("  %04x # max stack:  %1$d%n", cs.getMaxStackHeight());
+    }
+    for (int i = 0; i < codeSections.length; i++) {
+      CodeSection cs = getCodeSection(i);
+      out.print(prefix);
+      out.printf("       # Code section %d%n", i);
+      byte[] byteCode = container.slice(cs.getEntryPoint(), cs.getLength()).toArray();
+      int pc = 0;
+      while (pc < byteCode.length) {
+        out.print(prefix);
+        OpcodeInfo ci = V1_OPCODES[byteCode[pc] & 0xff];
+
+        if (ci.opcode() == RelativeJumpVectorOperation.OPCODE) {
+          int tableSize = byteCode[pc + 1];
+          out.printf("%02x%02x", byteCode[pc], byteCode[pc + 1]);
+          for (int j = 0; j <= tableSize; j++) {
+            out.printf("%02x%02x", byteCode[pc + j * 2 + 2], byteCode[pc + j * 2 + 3]);
+          }
+          out.printf(" # [%d] %s(", pc, ci.name());
+          for (int j = 0; j <= tableSize; j++) {
+            if (j != 0) {
+              out.print(',');
+            }
+            int b0 = byteCode[pc + j * 2 + 2]; // we want sign extension, so no `& 0xff`
+            int b1 = byteCode[pc + j * 2 + 3];
+            out.print(b0 << 8 | b1);
+          }
+          pc += tableSize * 2 + 4;
+          out.print(")\n");
+        } else if (ci.opcode() == RelativeJumpOperation.OPCODE
+            || ci.opcode() == RelativeJumpIfOperation.OPCODE) {
+          int b0 = byteCode[pc + 1] & 0xff;
+          int b1 = byteCode[pc + 2] & 0xff;
+          short delta = (short) (b0 << 8 | b1);
+          out.printf("%02x%02x \t# [%d] %s(%d)", b0, b1, pc, ci.name(), delta);
+          pc += 3;
+          out.printf("%n");
+        } else {
+          int advance = ci.pcAdvance();
+          if (advance == 1) {
+            out.print("    ");
+          } else if (advance == 2) {
+            out.print("  ");
+          }
+          out.printf("%02x", byteCode[pc]);
+          for (int j = 1; j < advance; j++) {
+            out.printf("%02x", byteCode[pc + j]);
+          }
+          out.printf(" # [%d] %s", pc, ci.name());
+          if (advance == 2) {
+            out.printf("(%d)", byteCode[pc + 1]);
+          } else if (advance > 2) {
+            out.print("(0x");
+            for (int j = 1; j < advance; j++) {
+              out.printf("%02x", byteCode[pc + j]);
+            }
+            out.print(")");
+          }
+          out.printf("%n");
+          pc += advance;
+        }
+      }
+    }
+
+    for (int i = 0; i < subContainers.length; i++) {
+      var subContainer = subContainers[i];
+      out.print(prefix);
+      out.printf("           # Subcontainer %s%d starts here%n", subcontainerPrefix, i);
+
+      subContainer.prettyPrint(out, prefix + "    ", subcontainerPrefix + i + ".");
+      out.print(prefix);
+      out.printf("           # Subcontainer %s%d ends%n", subcontainerPrefix, i);
+    }
+
+    out.print(prefix);
+    if (data.isEmpty()) {
+      out.print("       # Data section (empty)\n");
+    } else {
+      out.printf("  # Data section length ( %1$d )", dataLength);
+      if (dataLength != data.size()) {
+        out.printf(" actual length ( %d )", data.size());
+      }
+      out.printf("%n%s  %s%n", prefix, data.toUnprefixedHexString());
+    }
+    out.flush();
   }
 }

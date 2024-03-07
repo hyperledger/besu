@@ -307,19 +307,19 @@ public class EOFLayoutTest {
           },
           {
             "EF00 01 010004 0200010001 030003001400140014 040000 00 00800000 00 (EF0001 010004 0200010001 040000 00 00800000 00)(EF0001 010004 0200010001 040000 00 00800000 00)(EF0001 010004 0200010001 040000 00 00800000 00)",
-            "evmone - three containers",
+            "evmone - three subContainers",
             null,
             1
           },
           {
             "EF00 01 010004 0200010001 030003001400140014 040003 00 00800000 00 (EF0001 010004 0200010001 040000 00 00800000 00)(EF0001 010004 0200010001 040000 00 00800000 00)(EF0001 010004 0200010001 040000 00 00800000 00) ddeeff",
-            "evmone - three containers and data",
+            "evmone - three subContainers and data",
             null,
             1
           },
           {
             "EF00 01 01000C 020003000100010001 030003001400140014 040003 00 008000000000000000000000 00 00 00 (EF0001 010004 0200010001 040000 00 00800000 00)(EF0001 010004 0200010001 040000 00 00800000 00)(EF0001 010004 0200010001 040000 00 00800000 00) ddeeff",
-            "evmone - three containers three code and data",
+            "evmone - three subContainers three code and data",
             null,
             1
           },
@@ -336,7 +336,7 @@ public class EOFLayoutTest {
                 + "0014".repeat(256)
                 + "040000 00 00800000 00 "
                 + "(EF0001 010004 0200010001 040000 00 00800000 00)".repeat(256),
-            "evmone - 256 containers",
+            "evmone - 256 subContainers",
             null,
             1
           },

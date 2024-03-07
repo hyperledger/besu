@@ -22,6 +22,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.internal.Words;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -38,10 +40,10 @@ public class CodeV1 implements Code {
   /**
    * Instantiates a new CodeV1.
    *
-   * @param layout the layout
+   * @param eofLayout the layout
    */
-  CodeV1(final EOFLayout layout) {
-    this.eofLayout = layout;
+  CodeV1(final EOFLayout eofLayout) {
+    this.eofLayout = eofLayout;
     this.codeHash = Suppliers.memoize(() -> Hash.hash(eofLayout.container()));
   }
 
@@ -146,5 +148,21 @@ public class CodeV1 implements Code {
   @Override
   public int readU8(final int index) {
     return eofLayout.container().toArrayUnsafe()[index] & 0xff;
+  }
+
+  @Override
+  public String prettyPrint() {
+    StringWriter sw = new StringWriter();
+    eofLayout.prettyPrint(new PrintWriter(sw, true), "", "");
+    return sw.toString();
+  }
+
+  /**
+   * A more readable representation of the hex bytes, including whitespace and comments after hashes
+   *
+   * @param out the printwriter to pretty print to
+   */
+  public void prettyPrint(final PrintWriter out) {
+    eofLayout.prettyPrint(out);
   }
 }

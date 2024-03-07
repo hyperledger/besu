@@ -26,11 +26,11 @@ record OpcodeInfo(
     int stackDelta,
     int pcAdvance) {
   static OpcodeInfo unallocatedOpcode(final int opcode) {
-    return new OpcodeInfo("-", opcode, false, false, 0, 0, 0, 0);
+    return new OpcodeInfo("-", opcode, false, false, 0, 0, 0, 1);
   }
 
   static OpcodeInfo invalidOpcode(final String name, final int opcode) {
-    return new OpcodeInfo(name, opcode, false, false, 0, 0, 0, 0);
+    return new OpcodeInfo(name, opcode, false, false, 0, 0, 0, 1);
   }
 
   static OpcodeInfo terminalOpcode(
