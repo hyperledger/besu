@@ -29,7 +29,7 @@ plugins {
   id 'com.jfrog.artifactory' version '5.1.11'
   id 'io.spring.dependency-management' version '1.1.4'
   id 'me.champeau.jmh' version '0.7.2' apply false
-  id 'net.ltgt.errorprone' version '3.0.1'
+  id 'net.ltgt.errorprone' version '3.1.0'
   id 'maven-publish'
   id 'org.sonarqube' version '4.4.1.3373'
 }
@@ -129,12 +129,12 @@ allprojects {
   }
 
   task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
+    archiveClassifier = 'sources'
     from sourceSets.main.allSource
   }
 
   task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc.outputDirectory
   }
 
@@ -178,6 +178,8 @@ allprojects {
   dependencies {
     components.all(BouncyCastleCapability)
     errorprone 'com.google.errorprone:error_prone_core'
+    // TODO: Move to Hyperledger BESU's errorprone-checks once it's published
+    errorprone "tech.pegasys.tools.epchecks:errorprone-checks"
   }
 
   configurations.all {
@@ -213,7 +215,7 @@ allprojects {
     format 'sol', { target '**/*.sol' }
   }
 
-  tasks.withType(JavaCompile) {
+  tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += [
       '-Xlint:unchecked',
       '-Xlint:cast',
@@ -394,7 +396,7 @@ subprojects {
 
     task testSupportJar(type: Jar) {
       archiveBaseName = "${project.name}-support-test"
-      classifier = 'test-support'
+      archiveClassifier = 'test-support'
       from sourceSets.testSupport.output
     }
   }
@@ -993,7 +995,7 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
 
 jacocoTestReport {
   reports {
-    xml.enabled true
+    xml.required = true
   }
 }
 
@@ -1004,23 +1006,10 @@ task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   executionData.from fileTree(dir: '.', includes: ['**/jacoco/*.exec'])
   reports {
     xml.required = true
-    xml.enabled = true
     csv.required = true
     html.destination file("build/reports/jacocoHtml")
   }
   onlyIf = { true }
-}
-
-configurations { annotationProcessor }
-
-// Prevent errorprone-checks being dependent upon errorprone-checks!
-// However, ensure all subprojects comply with the custom rules.
-configure(subprojects.findAll { it.name != 'errorprone-checks' }) {
-  dependencies { annotationProcessor project(":errorprone-checks") }
-
-  tasks.withType(JavaCompile) {
-    options.annotationProcessorPath = configurations.annotationProcessor
-  }
 }
 
 // http://label-schema.org/rc1/
@@ -1098,6 +1087,8 @@ dependencies {
   implementation project(':besu')
   implementation project(':ethereum:evmtool')
   errorprone 'com.google.errorprone:error_prone_core'
+  // TODO: Use Hyperledger BESU's errorprone-checks once it's published
+  errorprone 'tech.pegasys.tools.epchecks:errorprone-checks'
 }
 
 @CompileStatic

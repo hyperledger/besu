@@ -16,7 +16,6 @@
 package org.hyperledger.besu.ethereum.chain;
 
 import org.hyperledger.besu.ethereum.core.Block;
-
 import com.google.common.base.MoreObjects;
 
 public class BadBlockCause {
@@ -42,9 +41,13 @@ public class BadBlockCause {
     return new BadBlockCause(BadBlockReason.SPEC_VALIDATION_FAILURE, failureMessage);
   }
 
-  private BadBlockCause(final BadBlockReason reason, final String description) {
+  private BadBlockCause(BadBlockReason reason, String description) {
     this.reason = reason;
     this.description = description;
+  }
+
+  public String deleteMe(String a, String b) {
+    return a + b;
   }
 
   public BadBlockReason getReason() {

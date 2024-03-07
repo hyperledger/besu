@@ -46,6 +46,9 @@ dependencyManagement {
       entry 'error_prone_test_helpers'
     }
 
+    // TODO: Use Hyperledger BESU's errorprone-checks once it's published
+    dependency 'tech.pegasys.tools.epchecks:errorprone-checks:1.0.0'
+
     dependency 'com.google.guava:guava:33.0.0-jre'
 
     dependency 'com.graphql-java:graphql-java:21.3'
