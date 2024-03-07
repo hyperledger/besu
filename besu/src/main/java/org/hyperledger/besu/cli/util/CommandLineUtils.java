@@ -262,6 +262,18 @@ public class CommandLineUtils {
         .anyMatch(CommandLineUtils::isOptionSet);
   }
 
+  /**
+   * Retrieves the value of a specified command line option, converting it to its appropriate type,
+   * or returns the default value if the option was not specified.
+   *
+   * @param <T> The type of the option value.
+   * @param commandLine The {@link CommandLine} instance containing the parsed command line options.
+   * @param optionName The name of the option whose value is to be retrieved.
+   * @param converter A converter that converts the option's string value to its appropriate type.
+   * @return The value of the specified option converted to its type, or the default value if the
+   *     option was not specified. Returns {@code null} if the option does not exist or if there is
+   *     no default value and the option was not specified.
+   */
   public static <T> T getOptionValueOrDefault(
       final CommandLine commandLine,
       final String optionName,
@@ -272,6 +284,20 @@ public class CommandLineUtils {
         .matchedOptionValue(optionName, getDefaultOptionValue(commandLine, optionName, converter));
   }
 
+  /**
+   * Retrieves the default value for a specified command line option, converting it to its
+   * appropriate type.
+   *
+   * @param <T> The type of the option value.
+   * @param commandLine The {@link CommandLine} instance containing the parsed command line options.
+   * @param optionName The name of the option whose default value is to be retrieved.
+   * @param converter A converter that converts the option's default string value to its appropriate
+   *     type.
+   * @return The default value of the specified option converted to its type, or {@code null} if the
+   *     option does not exist, does not have a default value, or if an error occurs during
+   *     conversion.
+   * @throws RuntimeException if there is an error converting the default value string to its type.
+   */
   private static <T> T getDefaultOptionValue(
       final CommandLine commandLine,
       final String optionName,

@@ -107,6 +107,13 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     return Optional.ofNullable((T) serviceRegistry.get(serviceType));
   }
 
+  private List<BesuPlugin> detectPlugins(final PluginConfiguration config) {
+    ClassLoader pluginLoader =
+        pluginDirectoryLoader(config.getPluginsDir()).orElse(getClass().getClassLoader());
+    ServiceLoader<BesuPlugin> serviceLoader = ServiceLoader.load(BesuPlugin.class, pluginLoader);
+    return StreamSupport.stream(serviceLoader.spliterator(), false).collect(Collectors.toList());
+  }
+
   /**
    * Registers plugins located at the specified path. This method constructs a plugin configuration
    * with the default settings and the provided path, then delegates to the overloaded {@code
@@ -137,11 +144,11 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
         "Besu plugins have already been registered. Cannot register additional plugins.");
     state = Lifecycle.REGISTERING;
 
-    detectedPlugins = findPlugins(config);
+    detectedPlugins = detectPlugins(config);
     if (config.getDetectionType() == PluginConfiguration.DetectionType.EXPLICIT) {
       // Extract the set of plugin names from the configuration
       requestedPlugins =
-          config.getPluginInfos().stream().map(PluginInfo::getName).collect(Collectors.toList());
+          config.getPluginInfos().stream().map(PluginInfo::name).collect(Collectors.toList());
 
       // Filter the detected Besu plugins to include only those explicitly configured
       List<BesuPlugin> registeringPlugins =
@@ -153,13 +160,6 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     } else {
       registerPlugins(detectedPlugins);
     }
-  }
-
-  private List<BesuPlugin> findPlugins(final PluginConfiguration config) {
-    ClassLoader pluginLoader =
-        pluginDirectoryLoader(config.getPluginsDir()).orElse(getClass().getClassLoader());
-    ServiceLoader<BesuPlugin> serviceLoader = ServiceLoader.load(BesuPlugin.class, pluginLoader);
-    return StreamSupport.stream(serviceLoader.spliterator(), false).collect(Collectors.toList());
   }
 
   /**
