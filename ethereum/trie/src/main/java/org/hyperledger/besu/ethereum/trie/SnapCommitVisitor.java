@@ -15,13 +15,15 @@
 package org.hyperledger.besu.ethereum.trie;
 
 import static org.hyperledger.besu.ethereum.trie.RangeManager.createPath;
-import static org.hyperledger.besu.ethereum.trie.RangeManager.isInRange;
 
 import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
 import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
 
+import java.util.Arrays;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 
 public class SnapCommitVisitor<V> extends CommitVisitor<V> implements LocationNodeVisitor<V> {
 
@@ -73,5 +75,13 @@ public class SnapCommitVisitor<V> extends CommitVisitor<V> implements LocationNo
     }
 
     maybeStoreNode(location, branchNode);
+  }
+
+  public static boolean isInRange(
+      final Bytes location, final Bytes startKeyPath, final Bytes endKeyPath) {
+    final MutableBytes path = MutableBytes.create(Bytes32.SIZE * 2);
+    path.set(0, location);
+    return Arrays.compare(path.toArrayUnsafe(), startKeyPath.toArrayUnsafe()) >= 0
+        && Arrays.compare(path.toArrayUnsafe(), endKeyPath.toArrayUnsafe()) <= 0;
   }
 }
