@@ -45,8 +45,6 @@ public class PluginsConfigurationOptions {
             commandLine, DEFAULT_PLUGINS_OPTION_NAME, new PluginInfoConverter());
 
     return new PluginConfiguration(
-        plugins != null ? plugins : List.of(),
-        strictRegistration,
-        PluginConfiguration.defaultPluginsDir());
+        plugins, strictRegistration, PluginConfiguration.defaultPluginsDir());
   }
 }

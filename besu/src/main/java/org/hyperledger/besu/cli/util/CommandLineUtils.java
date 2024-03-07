@@ -310,7 +310,9 @@ public class CommandLineUtils {
 
     try {
       String defaultValueString = commandLine.getDefaultValueProvider().defaultValue(optionSpec);
-      return defaultValueString != null ? converter.convert(defaultValueString) : null;
+      return defaultValueString != null
+          ? converter.convert(defaultValueString)
+          : optionSpec.getValue();
     } catch (Exception e) {
       throw new RuntimeException(
           "Failed to convert default value for option " + optionName + ": " + e.getMessage(), e);

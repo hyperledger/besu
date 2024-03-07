@@ -83,7 +83,6 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
   private final List<BesuPlugin> registeredPlugins = new ArrayList<>();
 
   private final List<String> pluginVersions = new ArrayList<>();
-  final List<String> lines = new ArrayList<>();
 
   /**
    * Add service.
@@ -201,7 +200,6 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
               + plugin.getClass().getName()
               + ", start and stop will not be called.",
           e);
-      lines.add(String.format("ERROR %s", plugin.getClass().getSimpleName()));
       return false;
     }
     return true;
@@ -355,28 +353,39 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
    */
   public List<String> getPluginsSummaryLog() {
     List<String> summary = new ArrayList<>();
-    summary.add("Plugin registration summary:");
+    summary.add("Plugin Registration Summary:");
 
     // Log registered plugins with their names and versions
-    registeredPlugins.forEach(
-        plugin -> summary.add(String.format("%s %s", plugin.getName(), plugin.getVersion())));
+    if (registeredPlugins.isEmpty()) {
+      summary.add("No plugins have been registered.");
+    } else {
+      summary.add("Registered Plugins:");
+      registeredPlugins.forEach(
+          plugin ->
+              summary.add(
+                  String.format(
+                      " - %s (Version: %s)",
+                      plugin.getClass().getSimpleName(), plugin.getVersion())));
+    }
 
-    // Log detected but not registered (skipped) plugins
-    detectedPlugins.stream()
-        .filter(plugin -> !registeredPlugins.contains(plugin))
-        .forEach(plugin -> summary.add(String.format(" %s (Skipped)", plugin.getName())));
-
-    // Collect names of detected plugins for comparison
-    Set<String> detectedPluginNames =
+    // Identify and log detected but not registered (skipped) plugins
+    List<String> skippedPlugins =
         detectedPlugins.stream()
-            .map(BesuPlugin::getName)
-            .flatMap(Optional::stream)
-            .collect(Collectors.toSet());
+            .filter(plugin -> !registeredPlugins.contains(plugin))
+            .map(plugin -> plugin.getClass().getSimpleName())
+            .toList();
 
-    // Log requested but not found plugins
-    requestedPlugins.stream()
-        .filter(plugin -> !detectedPluginNames.contains(plugin))
-        .forEach(plugin -> summary.add(String.format("%s (Not Found)", plugin)));
+    if (!skippedPlugins.isEmpty()) {
+      summary.add("Skipped Plugins:");
+      skippedPlugins.forEach(
+          pluginName ->
+              summary.add(String.format(" - %s (Detected but not registered)", pluginName)));
+    }
+    summary.add(
+        String.format(
+            "TOTAL = %d of %d plugins successfully registered.",
+            registeredPlugins.size(), detectedPlugins.size()));
+
     return summary;
   }
 }
