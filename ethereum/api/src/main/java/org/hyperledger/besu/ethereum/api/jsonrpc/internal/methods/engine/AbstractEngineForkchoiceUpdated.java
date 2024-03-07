@@ -48,6 +48,7 @@ import java.util.function.BiConsumer;
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.spi.LoggingEventBuilder;
 
 public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineForkchoiceUpdated.class);
@@ -277,12 +278,20 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
   }
 
   private void logPayload(final EnginePayloadAttributesParameter payloadAttributes) {
-    LOG.atDebug()
-        .setMessage("timestamp: {}, prevRandao: {}, suggestedFeeRecipient: {}")
-        .addArgument(payloadAttributes::getTimestamp)
-        .addArgument(() -> payloadAttributes.getPrevRandao().toHexString())
-        .addArgument(() -> payloadAttributes.getSuggestedFeeRecipient().toHexString())
-        .log();
+    final LoggingEventBuilder loggingEventBuilder =
+        LOG.atDebug()
+            .setMessage("timestamp: {}, prevRandao: {}, suggestedFeeRecipient: {}")
+            .addArgument(payloadAttributes::getTimestamp)
+            .addArgument(() -> payloadAttributes.getPrevRandao().toHexString())
+            .addArgument(() -> payloadAttributes.getSuggestedFeeRecipient().toHexString())
+            .addArgument(
+                () ->
+                    payloadAttributes.getWithdrawals().stream().map(WithdrawalParameter::toString));
+    if (payloadAttributes.getParentBeaconBlockRoot() != null) {
+      loggingEventBuilder.addArgument(
+          () -> payloadAttributes.getParentBeaconBlockRoot().toHexString());
+    }
+    loggingEventBuilder.log();
   }
 
   private boolean isValidForkchoiceState(
