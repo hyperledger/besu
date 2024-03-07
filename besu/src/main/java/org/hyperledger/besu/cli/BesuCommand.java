@@ -1468,6 +1468,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateApiOptions();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
     pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
+    validatePluginOptions(logger, commandLine);
+  }
+
+  private void validatePluginOptions(final Logger logger, final CommandLine commandLine) {
+    pluginsConfigurationOptions.validate(logger, commandLine);
   }
 
   private void validateApiOptions() {

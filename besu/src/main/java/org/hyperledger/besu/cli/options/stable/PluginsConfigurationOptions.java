@@ -4,17 +4,17 @@ import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_OPTI
 import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_STRICT_REGISTRATION_OPTION_NAME;
 
 import org.hyperledger.besu.cli.converter.PluginInfoConverter;
+import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginInfo;
 
 import java.util.List;
 
+import org.slf4j.Logger;
 import picocli.CommandLine;
 
-@SuppressWarnings("UnusedVariable")
-public class PluginsConfigurationOptions {
-
+public class PluginsConfigurationOptions implements CLIOptions<PluginConfiguration> {
   @CommandLine.Option(
       names = {DEFAULT_PLUGINS_OPTION_NAME},
       description = "Comma-separated list of plugins.",
@@ -28,6 +28,30 @@ public class PluginsConfigurationOptions {
       defaultValue = "false",
       description = "Enables strict registration of plugins.")
   private boolean strictRegistration;
+
+  public void validate(final Logger logger, final CommandLine commandLine) {
+    this.checkDependencies(logger, commandLine);
+  }
+
+  private void checkDependencies(final Logger logger, final CommandLine commandLine) {
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        DEFAULT_PLUGINS_STRICT_REGISTRATION_OPTION_NAME,
+        !strictRegistration,
+        List.of("--plugins"));
+  }
+
+  @Override
+  public PluginConfiguration toDomainObject() {
+    return new PluginConfiguration(
+        plugins, strictRegistration, PluginConfiguration.defaultPluginsDir());
+  }
+
+  @Override
+  public List<String> getCLIOptions() {
+    return CommandLineUtils.getCLIOptions(this, new PluginsConfigurationOptions());
+  }
 
   /**
    * Constructs a {@link PluginConfiguration} instance based on the command line options.
