@@ -6,45 +6,52 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Configuration for managing plugins, including their information, detection type, and directory.
  */
 public class PluginConfiguration {
-  private final List<PluginInfo> pluginInfos;
-  private final DetectionType detectionType;
+  private final List<PluginInfo> requestedPlugins;
+  private final boolean strictRegistration;
   private final Path pluginsDir;
 
   /**
    * Constructs a new PluginConfiguration with the specified plugin information, detection type, and
-   * plugins directory.
+   * requestedPlugins directory.
    *
-   * @param pluginInfos List of {@link PluginInfo} objects representing the plugins.
-   * @param detectionType The {@link DetectionType} indicating how plugins should be detected.
-   * @param pluginsDir The directory where plugins are located.
+   * @param requestedPlugins List of {@link PluginInfo} objects representing the requestedPlugins.
+   * @param strictRegistration strictRegistration
+   * @param pluginsDir The directory where requestedPlugins are located.
    */
   public PluginConfiguration(
-      final List<PluginInfo> pluginInfos,
-      final DetectionType detectionType,
+      final List<PluginInfo> requestedPlugins,
+      final boolean strictRegistration,
       final Path pluginsDir) {
-    this.pluginInfos =
-        Collections.unmodifiableList(requireNonNull(pluginInfos, "pluginInfos cannot be null"));
-    this.detectionType = requireNonNull(detectionType, "detectionType cannot be null");
-    this.pluginsDir = requireNonNull(pluginsDir, "pluginsDir cannot be null");
+    this.requestedPlugins = requestedPlugins;
+    this.strictRegistration = strictRegistration;
+    this.pluginsDir = pluginsDir;
   }
 
   public PluginConfiguration(final Path pluginsDir) {
-    this.pluginInfos = List.of();
-    this.detectionType = DetectionType.ALL;
-    this.pluginsDir = requireNonNull(pluginsDir, "pluginsDir cannot be null");
+    this.requestedPlugins = null;
+    this.strictRegistration = false;
+    this.pluginsDir = requireNonNull(pluginsDir);
   }
 
-  public List<PluginInfo> getPluginInfos() {
-    return pluginInfos;
+  /**
+   * Returns the names of requested plugins, or an empty list if none.
+   *
+   * @return List of requested plugin names, never {@code null}.
+   */
+  public List<String> getRequestedPlugins() {
+    return requestedPlugins == null
+        ? Collections.emptyList()
+        : requestedPlugins.stream().map(PluginInfo::name).collect(Collectors.toList());
   }
 
-  public DetectionType getDetectionType() {
-    return detectionType;
+  public boolean isStrictRegistration() {
+    return strictRegistration;
   }
 
   public Path getPluginsDir() {
@@ -63,29 +70,5 @@ public class PluginConfiguration {
     } else {
       return Paths.get(pluginsDirProperty);
     }
-  }
-
-  /**
-   * Enumerates the types of plugin detection mechanisms.
-   *
-   * <p>This enum defines how plugins should be detected and loaded by the system.
-   */
-  public enum DetectionType {
-    /**
-     * Indicates that all discoverable plugins should be loaded.
-     *
-     * <p>When set to {@code ALL}, the system will attempt to load all plugins found within the
-     * specified plugins directory, without requiring explicit configuration for each plugin.
-     */
-    ALL,
-
-    /**
-     * Indicates that only explicitly specified plugins should be loaded.
-     *
-     * <p>When set to {@code EXPLICIT}, the system will only load plugins that have been explicitly
-     * listed in the configuration. This allows for more controlled and selective loading of
-     * plugins.
-     */
-    EXPLICIT
   }
 }

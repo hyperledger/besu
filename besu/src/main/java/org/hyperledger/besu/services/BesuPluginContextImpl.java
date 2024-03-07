@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
-import org.hyperledger.besu.ethereum.core.plugins.PluginInfo;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.services.BesuService;
@@ -132,18 +131,17 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     state = Lifecycle.REGISTERING;
 
     detectedPlugins = detectPlugins(config);
-    if (config.getDetectionType() == PluginConfiguration.DetectionType.EXPLICIT) {
-      // Extract the set of plugin names from the configuration
-      requestedPlugins =
-          config.getPluginInfos().stream().map(PluginInfo::name).collect(Collectors.toList());
+    if (config.isStrictRegistration()) {
+      // Register only the plugins that were explicitly requested and validated
+      requestedPlugins = config.getRequestedPlugins();
 
-      // Filter the detected Besu plugins to include only those explicitly configured
+      // Match and validate the requested plugins against the detected plugins
       List<BesuPlugin> registeringPlugins =
           matchAndValidateRequestedPlugins(requestedPlugins, detectedPlugins);
 
       registerPlugins(registeringPlugins);
-
     } else {
+      // If strict registration is not enabled, register all detected plugins
       registerPlugins(detectedPlugins);
     }
   }
