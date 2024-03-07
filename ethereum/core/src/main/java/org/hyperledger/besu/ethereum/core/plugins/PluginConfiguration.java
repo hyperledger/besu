@@ -1,10 +1,11 @@
 package org.hyperledger.besu.ethereum.core.plugins;
 
+import static java.util.Objects.requireNonNull;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Configuration for managing plugins, including their information, detection type, and directory.
@@ -27,10 +28,15 @@ public class PluginConfiguration {
       final DetectionType detectionType,
       final Path pluginsDir) {
     this.pluginInfos =
-        Collections.unmodifiableList(
-            Objects.requireNonNull(pluginInfos, "pluginInfos cannot be null"));
-    this.detectionType = Objects.requireNonNull(detectionType, "detectionType cannot be null");
-    this.pluginsDir = Objects.requireNonNull(pluginsDir, "pluginsDir cannot be null");
+        Collections.unmodifiableList(requireNonNull(pluginInfos, "pluginInfos cannot be null"));
+    this.detectionType = requireNonNull(detectionType, "detectionType cannot be null");
+    this.pluginsDir = requireNonNull(pluginsDir, "pluginsDir cannot be null");
+  }
+
+  public PluginConfiguration(final Path pluginsDir) {
+    this.pluginInfos = List.of();
+    this.detectionType = DetectionType.ALL;
+    this.pluginsDir = requireNonNull(pluginsDir, "pluginsDir cannot be null");
   }
 
   public List<PluginInfo> getPluginInfos() {

@@ -116,20 +116,6 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
   }
 
   /**
-   * Registers plugins located at the specified path. This method constructs a plugin configuration
-   * with the default settings and the provided path, then delegates to the overloaded {@code
-   * registerPlugins} method that accepts a {@link PluginConfiguration} object.
-   *
-   * @param path The path where plugins are located. This path will be used to search for plugin
-   *     implementations to be registered.
-   */
-  public void registerPlugins(final Path path) {
-    PluginConfiguration configuration =
-        new PluginConfiguration(List.of(), PluginConfiguration.DetectionType.ALL, path);
-    registerPlugins(configuration);
-  }
-
-  /**
    * Registers plugins based on the provided {@link PluginConfiguration}. This method finds plugins
    * according to the configuration settings, filters them if necessary (based on the detection
    * type), and then registers the filtered or found plugins. It also logs a summary of the plugin

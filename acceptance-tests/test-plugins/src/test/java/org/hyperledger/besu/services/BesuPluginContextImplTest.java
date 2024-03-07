@@ -24,7 +24,6 @@ import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.tests.acceptance.plugins.TestBesuEventsPlugin;
 import org.hyperledger.besu.tests.acceptance.plugins.TestPicoCLIPlugin;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,6 +39,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class BesuPluginContextImplTest {
+
+  private static final Path PATH = Paths.get(".");
 
   @BeforeAll
   public static void createFakePluginDir() throws IOException {
@@ -60,7 +61,7 @@ public class BesuPluginContextImplTest {
     final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
 
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
-    contextImpl.registerPlugins(new File(".").toPath());
+    contextImpl.registerPlugins(new PluginConfiguration(PATH));
     assertThat(contextImpl.getRegisteredPlugins()).isNotEmpty();
 
     final Optional<TestPicoCLIPlugin> testPluginOptional =
@@ -83,7 +84,7 @@ public class BesuPluginContextImplTest {
     System.setProperty("testPicoCLIPlugin.testOption", "FAILREGISTER");
 
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
-    contextImpl.registerPlugins(new File(".").toPath());
+    contextImpl.registerPlugins(new PluginConfiguration(PATH));
     assertThat(contextImpl.getRegisteredPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
 
     contextImpl.beforeExternalServices();
@@ -102,7 +103,7 @@ public class BesuPluginContextImplTest {
     System.setProperty("testPicoCLIPlugin.testOption", "FAILSTART");
 
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
-    contextImpl.registerPlugins(new File(".").toPath());
+    contextImpl.registerPlugins(new PluginConfiguration(PATH));
     assertThat(contextImpl.getRegisteredPlugins())
         .extracting("class")
         .contains(TestPicoCLIPlugin.class);
@@ -128,7 +129,7 @@ public class BesuPluginContextImplTest {
     System.setProperty("testPicoCLIPlugin.testOption", "FAILSTOP");
 
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
-    contextImpl.registerPlugins(new File(".").toPath());
+    contextImpl.registerPlugins(new PluginConfiguration(PATH));
     assertThat(contextImpl.getRegisteredPlugins())
         .extracting("class")
         .contains(TestPicoCLIPlugin.class);
@@ -151,7 +152,7 @@ public class BesuPluginContextImplTest {
   public void lifecycleExceptions() throws Throwable {
     final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
     final ThrowableAssert.ThrowingCallable registerPlugins =
-        () -> contextImpl.registerPlugins(new File(".").toPath());
+        () -> contextImpl.registerPlugins(new PluginConfiguration(PATH));
 
     assertThatExceptionOfType(IllegalStateException.class).isThrownBy(contextImpl::startPlugins);
     assertThatExceptionOfType(IllegalStateException.class).isThrownBy(contextImpl::stopPlugins);
