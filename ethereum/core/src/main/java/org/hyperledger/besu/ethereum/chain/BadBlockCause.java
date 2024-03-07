@@ -19,6 +19,9 @@ import org.hyperledger.besu.ethereum.core.Block;
 
 import com.google.common.base.MoreObjects;
 
+import java.security.SecureRandom;
+
+
 public class BadBlockCause {
   public enum BadBlockReason {
     // Standard spec-related validation failures
@@ -47,8 +50,11 @@ public class BadBlockCause {
     this.description = description;
   }
 
+  // method input parameters should fail, but they aren't
   public String deleteMe(String a, String b) {
-    return a + b;
+    // This is a dummy method to test the rule
+    System.out.println(a);
+    return new SecureRandom().getAlgorithm();
   }
 
   public BadBlockReason getReason() {
