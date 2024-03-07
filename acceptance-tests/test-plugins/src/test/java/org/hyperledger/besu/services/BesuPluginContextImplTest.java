@@ -36,11 +36,12 @@ import org.assertj.core.api.Assertions;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class BesuPluginContextImplTest {
-
   private static final Path PATH = Paths.get(".");
+  private BesuPluginContextImpl contextImpl;
 
   @BeforeAll
   public static void createFakePluginDir() throws IOException {
@@ -56,10 +57,13 @@ public class BesuPluginContextImplTest {
     System.clearProperty("testPicoCLIPlugin.testOption");
   }
 
+  @BeforeEach
+  void setup() {
+    contextImpl = new BesuPluginContextImpl();
+  }
+
   @Test
   public void verifyEverythingGoesSmoothly() {
-    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
-
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
     contextImpl.registerPlugins(new PluginConfiguration(PATH));
     assertThat(contextImpl.getRegisteredPlugins()).isNotEmpty();
@@ -80,7 +84,6 @@ public class BesuPluginContextImplTest {
 
   @Test
   public void registrationErrorsHandledSmoothly() {
-    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
     System.setProperty("testPicoCLIPlugin.testOption", "FAILREGISTER");
 
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
@@ -99,7 +102,6 @@ public class BesuPluginContextImplTest {
 
   @Test
   public void startErrorsHandledSmoothly() {
-    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
     System.setProperty("testPicoCLIPlugin.testOption", "FAILSTART");
 
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
@@ -125,7 +127,6 @@ public class BesuPluginContextImplTest {
 
   @Test
   public void stopErrorsHandledSmoothly() {
-    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
     System.setProperty("testPicoCLIPlugin.testOption", "FAILSTOP");
 
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
@@ -150,7 +151,6 @@ public class BesuPluginContextImplTest {
 
   @Test
   public void lifecycleExceptions() throws Throwable {
-    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
     final ThrowableAssert.ThrowingCallable registerPlugins =
         () -> contextImpl.registerPlugins(new PluginConfiguration(PATH));
 
@@ -174,7 +174,6 @@ public class BesuPluginContextImplTest {
 
   @Test
   public void shouldRegisterAllPluginsWhenDetectionTypeIsAll() {
-    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
     final PluginConfiguration config =
         new PluginConfiguration(List.of(), PluginConfiguration.DetectionType.ALL, Paths.get("."));
 
@@ -189,7 +188,6 @@ public class BesuPluginContextImplTest {
 
   @Test
   public void shouldRegisterOnlySpecifiedPluginWhenDetectionTypeIsExplicit() {
-    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
     final PluginConfiguration config =
         new PluginConfiguration(
             List.of(new PluginInfo("TestPicoCLIPlugin")),
@@ -207,7 +205,6 @@ public class BesuPluginContextImplTest {
 
   @Test
   public void shouldNotRegisterUnspecifiedPluginsWhenDetectionTypeIsExplicit() {
-    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
     final PluginConfiguration config =
         new PluginConfiguration(
             List.of(new PluginInfo("TestPicoCLIPlugin")),
@@ -224,7 +221,6 @@ public class BesuPluginContextImplTest {
 
   @Test
   void shouldThrowExceptionIfExplicitlySpecifiedPluginNotFound() {
-    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
     PluginConfiguration config =
         new PluginConfiguration(
             List.of(new PluginInfo("NonExistentPlugin")),
