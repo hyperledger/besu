@@ -5,6 +5,8 @@ on:
   release:
     types:
       - prereleased
+env:
+  GRADLE_OPTS: "-Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
 
 jobs:
   artifacts:
@@ -23,7 +25,7 @@ jobs:
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
       - name: assemble release
         run:
-          ./gradlew -Prelease.releaseVersion=${{github.ref_name}} -Pversion=${{github.ref_name}} assemble -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+          ./gradlew -Prelease.releaseVersion=${{github.ref_name}} -Pversion=${{github.ref_name}} assemble
       - name: hashes
         id: hashes
         run: |
