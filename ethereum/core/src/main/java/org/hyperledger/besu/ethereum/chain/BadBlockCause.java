@@ -17,10 +17,7 @@ package org.hyperledger.besu.ethereum.chain;
 
 import org.hyperledger.besu.ethereum.core.Block;
 
-import com.google.common.base.MoreObjects;
-
 import java.security.SecureRandom;
-
 
 public class BadBlockCause {
   public enum BadBlockReason {
@@ -67,9 +64,6 @@ public class BadBlockCause {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("reason", reason)
-        .add("description", description)
-        .toString();
+    return "BadBlockCause{" + "reason=" + reason + ", description='" + description + '\'' + '}';
   }
 }
