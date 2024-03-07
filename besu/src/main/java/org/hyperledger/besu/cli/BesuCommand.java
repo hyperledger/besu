@@ -1073,7 +1073,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    *     delegate to the next handler.
    */
   private ConfigOptionSearchAndRunHandler getConfigOptionSearchAndRunHandler(
-      IExecutionStrategy nextHandler) {
+      final IExecutionStrategy nextHandler) {
     final IExecutionStrategy pluginRegistrationTask =
         parseResult -> {
           // Extract PluginConfiguration from command line arguments and register plugins.

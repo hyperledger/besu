@@ -17,13 +17,17 @@ package org.hyperledger.besu.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
+import org.hyperledger.besu.ethereum.core.plugins.PluginInfo;
 import org.hyperledger.besu.plugin.BesuPlugin;
+import org.hyperledger.besu.tests.acceptance.plugins.TestBesuEventsPlugin;
 import org.hyperledger.besu.tests.acceptance.plugins.TestPicoCLIPlugin;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -58,7 +62,7 @@ public class BesuPluginContextImplTest {
     assertThat(contextImpl.getRegisteredPlugins()).isNotEmpty();
 
     final Optional<TestPicoCLIPlugin> testPluginOptional =
-        findTestPlugin(contextImpl.getRegisteredPlugins());
+        findTestPlugin(contextImpl.getRegisteredPlugins(), TestPicoCLIPlugin.class);
     Assertions.assertThat(testPluginOptional).isPresent();
     final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");
@@ -102,7 +106,7 @@ public class BesuPluginContextImplTest {
         .contains(TestPicoCLIPlugin.class);
 
     final Optional<TestPicoCLIPlugin> testPluginOptional =
-        findTestPlugin(contextImpl.getRegisteredPlugins());
+        findTestPlugin(contextImpl.getRegisteredPlugins(), TestPicoCLIPlugin.class);
     assertThat(testPluginOptional).isPresent();
     final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");
@@ -128,7 +132,7 @@ public class BesuPluginContextImplTest {
         .contains(TestPicoCLIPlugin.class);
 
     final Optional<TestPicoCLIPlugin> testPluginOptional =
-        findTestPlugin(contextImpl.getRegisteredPlugins());
+        findTestPlugin(contextImpl.getRegisteredPlugins(), TestPicoCLIPlugin.class);
     assertThat(testPluginOptional).isPresent();
     final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");
@@ -165,9 +169,63 @@ public class BesuPluginContextImplTest {
     assertThatExceptionOfType(IllegalStateException.class).isThrownBy(contextImpl::stopPlugins);
   }
 
-  private Optional<TestPicoCLIPlugin> findTestPlugin(final List<BesuPlugin> plugins) {
+  @Test
+  public void shouldRegisterAllPluginsWhenDetectionTypeIsAll() {
+    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
+    final PluginConfiguration config =
+        new PluginConfiguration(
+            List.of(), // Explicitly include our test plugin
+            PluginConfiguration.DetectionType.ALL,
+            Paths.get("."));
+
+    assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
+    contextImpl.registerPlugins(config);
+    final Optional<TestPicoCLIPlugin> testPluginOptional =
+        findTestPlugin(contextImpl.getRegisteredPlugins(), TestPicoCLIPlugin.class);
+    Assertions.assertThat(testPluginOptional).isPresent();
+    final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
+    assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");
+  }
+
+  @Test
+  public void shouldRegisterOnlySpecifiedPluginWhenDetectionTypeIsExplicit() {
+    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
+    final PluginConfiguration config =
+        new PluginConfiguration(
+            List.of(new PluginInfo("TestPicoCLIPlugin")), // Explicitly include our test plugin
+            PluginConfiguration.DetectionType.EXPLICIT,
+            Paths.get("."));
+
+    assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
+    contextImpl.registerPlugins(config);
+
+    final Optional<TestPicoCLIPlugin> nonRequestedPlugin =
+        findTestPlugin(contextImpl.getRegisteredPlugins(), TestBesuEventsPlugin.class);
+
+    Assertions.assertThat(nonRequestedPlugin).isEmpty();
+  }
+
+  @Test
+  public void shouldNotRegisterUnspecifiedPluginsWhenDetectionTypeIsExplicit() {
+    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
+    final PluginConfiguration config =
+        new PluginConfiguration(
+            List.of(new PluginInfo("TestPicoCLIPlugin")), // Explicitly include our test plugin
+            PluginConfiguration.DetectionType.EXPLICIT,
+            Paths.get("."));
+
+    assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
+    contextImpl.registerPlugins(config);
+
+    final Optional<TestPicoCLIPlugin> nonRequestedPlugin =
+        findTestPlugin(contextImpl.getRegisteredPlugins(), TestBesuEventsPlugin.class);
+    Assertions.assertThat(nonRequestedPlugin).isEmpty();
+  }
+
+  private Optional<TestPicoCLIPlugin> findTestPlugin(
+      final List<BesuPlugin> plugins, final Class<?> type) {
     return plugins.stream()
-        .filter(p -> p instanceof TestPicoCLIPlugin)
+        .filter(p -> type.equals(p.getClass()))
         .map(p -> (TestPicoCLIPlugin) p)
         .findFirst();
   }
