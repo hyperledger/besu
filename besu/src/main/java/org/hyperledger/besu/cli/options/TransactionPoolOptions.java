@@ -30,6 +30,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
@@ -56,6 +57,8 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
       "--strict-tx-replay-protection-enabled";
   private static final String TX_POOL_PRIORITY_SENDERS = "--tx-pool-priority-senders";
   private static final String TX_POOL_MIN_GAS_PRICE = "--tx-pool-min-gas-price";
+
+  private TransactionPoolValidatorService transactionPoolValidatorService;
 
   @CommandLine.Option(
       names = {TX_POOL_IMPLEMENTATION},
@@ -253,6 +256,16 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   }
 
   /**
+   * Set the plugin txpool validator service
+   *
+   * @param transactionPoolValidatorService the plugin txpool validator service
+   */
+  public void setPluginTransactionValidatorService(
+      final TransactionPoolValidatorService transactionPoolValidatorService) {
+    this.transactionPoolValidatorService = transactionPoolValidatorService;
+  }
+
+  /**
    * Create Transaction Pool Options from Transaction Pool Configuration.
    *
    * @param config the Transaction Pool Configuration
@@ -277,6 +290,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         config.getTxPoolLimitByAccountPercentage();
     options.sequencedOptions.txPoolMaxSize = config.getTxPoolMaxSize();
     options.sequencedOptions.pendingTxRetentionPeriod = config.getPendingTxRetentionPeriod();
+    options.transactionPoolValidatorService = config.getTransactionPoolValidatorService();
     options.unstableOptions.txMessageKeepAliveSeconds =
         config.getUnstable().getTxMessageKeepAliveSeconds();
     options.unstableOptions.eth65TrxAnnouncedBufferingPeriod =
@@ -331,6 +345,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         .txPoolLimitByAccountPercentage(sequencedOptions.txPoolLimitByAccountPercentage)
         .txPoolMaxSize(sequencedOptions.txPoolMaxSize)
         .pendingTxRetentionPeriod(sequencedOptions.pendingTxRetentionPeriod)
+        .transactionPoolValidatorService(transactionPoolValidatorService)
         .unstable(
             ImmutableTransactionPoolConfiguration.Unstable.builder()
                 .txMessageKeepAliveSeconds(unstableOptions.txMessageKeepAliveSeconds)

@@ -149,8 +149,7 @@ public class BftBlockCreatorTest {
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            poolConf,
-            null);
+            poolConf);
 
     transactionPool.setEnabled();
 

@@ -173,8 +173,7 @@ public abstract class AbstractIsolationTests {
             mock(TransactionBroadcaster.class),
             ethContext,
             txPoolMetrics,
-            poolConfiguration,
-            null);
+            poolConfiguration);
     transactionPool.setEnabled();
   }
 

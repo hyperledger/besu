@@ -20,16 +20,22 @@ import org.hyperledger.besu.plugin.Unstable;
 
 import java.util.Optional;
 
-/** Interface for the transaction validator plugin */
+/** Interface for the transaction validator plugin for txpool usage */
 @Unstable
-public interface PluginTransactionValidator {
+public interface PluginTransactionPoolValidator {
+  /** Plugin transaction pool validator that unconditionally validates every transaction */
+  PluginTransactionPoolValidator VALIDATE_ALL =
+      (transaction, isLocal, hasPriority) -> Optional.empty();
 
   /**
    * Method called to decide whether a transaction can be added to the transaction pool.
    *
    * @param transaction candidate transaction
+   * @param isLocal if the transaction was sent to this node via API
+   * @param hasPriority if the transaction has priority
    * @return Optional.empty() if the transaction is valid, an Optional containing an error message,
    *     if not
    */
-  Optional<String> validateTransaction(final Transaction transaction);
+  Optional<String> validateTransaction(
+      final Transaction transaction, final boolean isLocal, final boolean hasPriority);
 }

@@ -103,7 +103,7 @@ public class EthSendRawTransaction implements JsonRpcMethod {
     if (sendEmptyHashOnInvalidBlock) {
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Hash.EMPTY.toString());
     } else {
-      if (errorReason == TransactionInvalidReason.PLUGIN_TX_VALIDATOR) {
+      if (errorReason == TransactionInvalidReason.PLUGIN_TX_POOL_VALIDATOR) {
         final RpcErrorType rpcErrorType =
             JsonRpcErrorConverter.convertTransactionInvalidReason(
                 validationResult.getInvalidReason());

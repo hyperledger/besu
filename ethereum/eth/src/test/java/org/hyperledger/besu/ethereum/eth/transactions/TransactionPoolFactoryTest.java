@@ -251,7 +251,6 @@ public class TransactionPoolFactoryTest {
             peerTransactionTracker,
             transactionsMessageSender,
             newPooledTransactionHashesMessageSender,
-            null,
             new BlobCache(),
             MiningParameters.newDefault());
 
@@ -360,7 +359,6 @@ public class TransactionPoolFactoryTest {
                         .txMessageKeepAliveSeconds(1)
                         .build())
                 .build(),
-            null,
             new BlobCache(),
             MiningParameters.newDefault());
 
