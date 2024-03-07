@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -152,14 +153,40 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
 
       // Filter the detected Besu plugins to include only those explicitly configured
       List<BesuPlugin> registeringPlugins =
-          detectedPlugins.stream()
-              .filter(plugin -> requestedPlugins.contains(plugin.getClass().getSimpleName()))
-              .toList();
+          matchAndValidateRequestedPlugins(requestedPlugins, detectedPlugins);
+
       registerPlugins(registeringPlugins);
 
     } else {
       registerPlugins(detectedPlugins);
     }
+  }
+
+  private List<BesuPlugin> matchAndValidateRequestedPlugins(
+      final List<String> requestedPluginNames, final List<BesuPlugin> detectedPlugins)
+      throws NoSuchElementException {
+
+    // Filter detected plugins to include only those that match the requested names
+    List<BesuPlugin> matchingPlugins =
+        detectedPlugins.stream()
+            .filter(plugin -> requestedPluginNames.contains(plugin.getClass().getSimpleName()))
+            .collect(Collectors.toList());
+
+    // Check if all requested plugins were found among the detected plugins
+    if (matchingPlugins.size() != requestedPluginNames.size()) {
+      // Find which requested plugins were not matched to throw a detailed exception
+      Set<String> matchedPluginNames =
+          matchingPlugins.stream()
+              .map(plugin -> plugin.getClass().getSimpleName())
+              .collect(Collectors.toSet());
+      String missingPlugins =
+          requestedPluginNames.stream()
+              .filter(name -> !matchedPluginNames.contains(name))
+              .collect(Collectors.joining(", "));
+      throw new NoSuchElementException(
+          "The following requested plugins were not found: " + missingPlugins);
+    }
+    return matchingPlugins;
   }
 
   /**
