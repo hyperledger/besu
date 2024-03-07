@@ -16,6 +16,7 @@
 package org.hyperledger.besu.ethereum.chain;
 
 import org.hyperledger.besu.ethereum.core.Block;
+
 import com.google.common.base.MoreObjects;
 
 public class BadBlockCause {
