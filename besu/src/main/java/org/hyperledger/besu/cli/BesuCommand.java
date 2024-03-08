@@ -894,7 +894,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Mixin private PkiBlockCreationOptions pkiBlockCreationOptions;
 
   // Plugins Configuration Option Group
-  @CommandLine.ArgGroup(validate = false, heading = "@|bold Plugin Configuration Options|@%n")
+  @CommandLine.ArgGroup(validate = false)
   PluginsConfigurationOptions pluginsConfigurationOptions = new PluginsConfigurationOptions();
 
   private EthNetworkConfig ethNetworkConfig;
