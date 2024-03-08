@@ -1056,7 +1056,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     preparePlugins();
 
     final ConfigOptionSearchAndRunHandler configParsingHandler =
-        getConfigOptionSearchAndRunHandler(resultHandler);
+        getConfigOptionSearchAndRunHandler(resultHandler, parameterExceptionHandler);
 
     return commandLine
         .setExecutionStrategy(configParsingHandler)
@@ -1069,11 +1069,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * Creates a handler for searching and running configuration options with plugin registration.
    *
    * @param nextHandler The next execution strategy to be used after plugin registration.
+   * @param parameterExceptionHandler The parameterExceptionHandler
    * @return A {@link ConfigOptionSearchAndRunHandler} configured to register plugins and then
    *     delegate to the next handler.
    */
   private ConfigOptionSearchAndRunHandler getConfigOptionSearchAndRunHandler(
-      final IExecutionStrategy nextHandler) {
+      final IExecutionStrategy nextHandler,
+      final BesuParameterExceptionHandler parameterExceptionHandler) {
     final IExecutionStrategy pluginRegistrationTask =
         parseResult -> {
           // Extract PluginConfiguration from command line arguments and register plugins.
@@ -1084,7 +1086,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           commandLine.setExecutionStrategy(nextHandler);
           return commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
         };
-    return new ConfigOptionSearchAndRunHandler(pluginRegistrationTask, environment);
+    return new ConfigOptionSearchAndRunHandler(
+        pluginRegistrationTask, parameterExceptionHandler, environment);
   }
 
   /** Used by Dagger to parse all options into a commandline instance. */

@@ -28,19 +28,25 @@ import picocli.CommandLine.IExecutionStrategy;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.ParseResult;
 
+/** Custom Config option search and run handler. */
 public class ConfigOptionSearchAndRunHandler extends CommandLine.RunLast {
   private final IExecutionStrategy resultHandler;
+  private final CommandLine.IParameterExceptionHandler parameterExceptionHandler;
   private final Map<String, String> environment;
 
   /**
    * Instantiates a new Config option search and run handler.
    *
    * @param resultHandler the result handler
+   * @param parameterExceptionHandler the parameterExceptionHandler
    * @param environment the environment variables map
    */
   public ConfigOptionSearchAndRunHandler(
-      final IExecutionStrategy resultHandler, final Map<String, String> environment) {
+      final IExecutionStrategy resultHandler,
+      final CommandLine.IParameterExceptionHandler parameterExceptionHandler,
+      final Map<String, String> environment) {
     this.resultHandler = resultHandler;
+    this.parameterExceptionHandler = parameterExceptionHandler;
     this.environment = environment;
   }
 
@@ -55,6 +61,7 @@ public class ConfigOptionSearchAndRunHandler extends CommandLine.RunLast {
             new ProfileFinder().findConfiguration(environment, parseResult)));
 
     commandLine.setExecutionStrategy(resultHandler);
+    commandLine.setParameterExceptionHandler(parameterExceptionHandler);
     commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
 
     return new ArrayList<>();

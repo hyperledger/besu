@@ -28,6 +28,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import picocli.CommandLine;
 
+/** The Plugins Options options. */
 public class PluginsConfigurationOptions implements CLIOptions<PluginConfiguration> {
   @CommandLine.Option(
       names = {DEFAULT_PLUGINS_OPTION_NAME},
@@ -46,6 +47,12 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
           "If true, only listed plugins are registered; otherwise, all discoverable plugins are.")
   private boolean strictRegistration;
 
+  /**
+   * Validate plugin options
+   *
+   * @param commandLine the full commandLine to check all the options specified by the user
+   * @param logger the logger
+   */
   public void validate(final Logger logger, final CommandLine commandLine) {
     this.checkDependencies(logger, commandLine);
   }
