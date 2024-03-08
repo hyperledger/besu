@@ -168,7 +168,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
                 new InMemoryKeyValueStorage(),
                 new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
                 new MainnetBlockHeaderFunctions(),
-                true),
+                false),
             new NoOpMetricsSystem(),
             0);
 
