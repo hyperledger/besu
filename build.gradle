@@ -1040,8 +1040,17 @@ def buildTime() {
 
 @Memoized
 def calculateVersion() {
-  def gitDetails = getGitCommitDetails(10) // Adjust length as needed
-  return "${gitDetails.date}-develop-${gitDetails.hash}"
+  // Regex pattern for basic semantic versioning
+  def semVerPattern = ~/\d+\.\d+\.\d+(-.*)?/
+
+  if (project.hasProperty('version') && (project.version =~ semVerPattern)) {
+    return "${project.version}"
+  } else {
+    // If no version is supplied or it doesn't match the semantic versioning, calculate from git
+    println("Generating project version as supplied is version not semver: ${project.version}")
+    def gitDetails = getGitCommitDetails(10) // Adjust length as needed
+    return "${gitDetails.date}-develop-${gitDetails.hash}"
+  }
 }
 
 def getGitCommitDetails(length = 8) {
