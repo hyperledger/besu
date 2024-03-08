@@ -435,7 +435,6 @@ public class EthCallIntegrationTest {
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
-
   private JsonRpcRequestContext requestWithParams(final Object... params) {
     return new JsonRpcRequestContext(new JsonRpcRequest("2.0", "eth_call", params));
   }
