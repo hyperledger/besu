@@ -24,14 +24,14 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
 /** The Delegate call operation. */
-public class ExtDCallOperation extends AbstractCallOperation {
+public class ExtDelegateCallOperation extends AbstractCallOperation {
 
   /**
    * Instantiates a new Delegate call operation.
    *
    * @param gasCalculator the gas calculator
    */
-  public ExtDCallOperation(final GasCalculator gasCalculator) {
+  public ExtDelegateCallOperation(final GasCalculator gasCalculator) {
     super(0xF9, "EXTDCALL", 3, 1, gasCalculator);
   }
 

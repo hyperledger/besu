@@ -31,6 +31,9 @@ import org.apache.tuweni.bytes.Bytes32;
 /** The Create2 operation. */
 public class EOFCreateOperation extends AbstractCreateOperation {
 
+  /** Opcode 0xEC for operation EOFCREATE */
+  public static final int OPCODE = 0xec;
+
   private static final Bytes PREFIX = Bytes.fromHexString("0xFF");
 
   /**
@@ -40,7 +43,7 @@ public class EOFCreateOperation extends AbstractCreateOperation {
    * @param maxInitcodeSize Maximum init code size
    */
   public EOFCreateOperation(final GasCalculator gasCalculator, final int maxInitcodeSize) {
-    super(0xEC, "EOFCREATE", 4, 1, gasCalculator, maxInitcodeSize, 1);
+    super(OPCODE, "EOFCREATE", 4, 1, gasCalculator, maxInitcodeSize, 1);
   }
 
   @Override

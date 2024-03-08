@@ -69,8 +69,8 @@ import org.hyperledger.besu.evm.operation.ExtCallOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeCopyOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeHashOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeSizeOperation;
-import org.hyperledger.besu.evm.operation.ExtDCallOperation;
-import org.hyperledger.besu.evm.operation.ExtSCallOperation;
+import org.hyperledger.besu.evm.operation.ExtDelegateCallOperation;
+import org.hyperledger.besu.evm.operation.ExtStaticCallOperation;
 import org.hyperledger.besu.evm.operation.GasLimitOperation;
 import org.hyperledger.besu.evm.operation.GasOperation;
 import org.hyperledger.besu.evm.operation.GasPriceOperation;
@@ -976,8 +976,8 @@ public class MainnetEVMs {
 
     // EIP-7069 Revamped EOF Call
     registry.put(new ExtCallOperation(gasCalculator));
-    registry.put(new ExtDCallOperation(gasCalculator));
-    registry.put(new ExtSCallOperation(gasCalculator));
+    registry.put(new ExtDelegateCallOperation(gasCalculator));
+    registry.put(new ExtStaticCallOperation(gasCalculator));
 
     // EIP-7480 EOF Data Section Access
     registry.put(new DataLoadOperation(gasCalculator));

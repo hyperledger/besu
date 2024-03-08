@@ -24,14 +24,14 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
 /** The Static call operation. */
-public class ExtSCallOperation extends AbstractCallOperation {
+public class ExtStaticCallOperation extends AbstractCallOperation {
 
   /**
    * Instantiates a new Static call operation.
    *
    * @param gasCalculator the gas calculator
    */
-  public ExtSCallOperation(final GasCalculator gasCalculator) {
+  public ExtStaticCallOperation(final GasCalculator gasCalculator) {
     super(0xFB, "EXTSTATICCALL", 3, 1, gasCalculator);
   }
 

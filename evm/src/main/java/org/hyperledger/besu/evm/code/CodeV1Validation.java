@@ -23,9 +23,14 @@ import static org.hyperledger.besu.evm.code.OpcodeInfo.V1_OPCODES;
 import static org.hyperledger.besu.evm.internal.Words.readBigEndianI16;
 import static org.hyperledger.besu.evm.internal.Words.readBigEndianU16;
 
+import java.util.Arrays;
+import java.util.BitSet;
+import javax.annotation.Nullable;
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.evm.operation.CallFOperation;
 import org.hyperledger.besu.evm.operation.DataLoadNOperation;
 import org.hyperledger.besu.evm.operation.DupNOperation;
+import org.hyperledger.besu.evm.operation.EOFCreateOperation;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.JumpFOperation;
 import org.hyperledger.besu.evm.operation.PushOperation;
@@ -39,20 +44,14 @@ import org.hyperledger.besu.evm.operation.RevertOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SwapNOperation;
 
-import java.util.Arrays;
-import java.util.BitSet;
-import javax.annotation.Nullable;
-
-import org.apache.tuweni.bytes.Bytes;
-
 /** Code V1 Validation */
 public final class CodeV1Validation {
+
+  static final int MAX_STACK_HEIGHT = 1024;
 
   private CodeV1Validation() {
     // to prevent instantiation
   }
-
-  static final int MAX_STACK_HEIGHT = 1024;
 
   /**
    * Validate Code
@@ -213,8 +212,30 @@ public final class CodeV1Validation {
           hasReturningOpcode |= eofLayout.getCodeSection(targetSection).isReturning();
           pcPostInstruction += 2;
           break;
+        case EOFCreateOperation.OPCODE, ReturnContractOperation.OPCODE:
+          if (pos + 1 > size) {
+            return format(
+                "Dangling immediate for %s at pc=%d",
+                opcodeInfo.name(), pos - opcodeInfo.pcAdvance());
+          }
+          int subcontainerNum = rawCode[pos] & 0xff;
+          if (subcontainerNum >= eofLayout.getSubcontainerCount()) {
+            return format(
+                "%s refers to non-existent subcontainer %d at pc=%d",
+                opcodeInfo.name(), subcontainerNum, pos - opcodeInfo.pcAdvance());
+          }
+          pcPostInstruction += 1;
+          break;
         default:
-          // no validation operations
+          // a few opcodes have potentially dangling immediates
+          if (opcodeInfo.pcAdvance() > 1) {
+            pcPostInstruction += opcodeInfo.pcAdvance() - 1;
+            if (pcPostInstruction >= size) {
+              return format(
+                  "Dangling immediate for %s at pc=%d",
+                  opcodeInfo.name(), pos - opcodeInfo.pcAdvance());
+            }
+          }
           break;
       }
       immediates.set(pos, pcPostInstruction);
@@ -524,9 +545,9 @@ public final class CodeV1Validation {
         currentPC = nextPC;
       }
 
-      if (maxStackHeight > toValidate.maxStackHeight) {
+      if (maxStackHeight != toValidate.maxStackHeight) {
         return format(
-            "Calculated max stack height (%d) exceeds reported stack height (%d)",
+            "Calculated max stack height (%d) does not match reported stack height (%d)",
             maxStackHeight, toValidate.maxStackHeight);
       }
       if (unusedBytes != 0) {

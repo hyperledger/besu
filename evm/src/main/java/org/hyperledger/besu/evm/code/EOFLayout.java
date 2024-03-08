@@ -300,11 +300,11 @@ public record EOFLayout(
     EOFLayout[] subContainers = new EOFLayout[containerSectionCount];
     for (int i = 0; i < containerSectionCount; i++) {
       int subcontianerSize = containerSectionSizes[i];
-      Bytes subcontainer = container.slice(pos, subcontianerSize);
-      pos += subcontianerSize;
       if (subcontianerSize != inputStream.skip(subcontianerSize)) {
         return invalidLayout(container, version, "incomplete subcontainer");
       }
+      Bytes subcontainer = container.slice(pos, subcontianerSize);
+      pos += subcontianerSize;
       EOFLayout subLayout = EOFLayout.parseEOF(subcontainer, true);
       if (!subLayout.isValid()) {
         String invalidSubReason = subLayout.invalidReason;
@@ -518,8 +518,9 @@ public record EOFLayout(
       // Subcontainers header
       if (subContainers != null && subContainers.length > 0) {
         out.writeByte(SECTION_CONTAINER);
+        out.writeShort(subContainers.length);
         for (EOFLayout container : subContainers) {
-          out.write(container.container.size());
+          out.writeShort(container.container.size());
         }
       }
 
