@@ -34,7 +34,8 @@ import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -75,7 +76,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
   @Override
   public Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SnapSyncProcessState snapSyncState) {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
     if (!existingAccounts.isEmpty()) {
@@ -144,8 +145,8 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
   @Override
   protected int doPersist(
-      final WorldStateStorage worldStateStorage,
-      final WorldStateStorage.Updater updater,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
+      final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncProcessState snapSyncState,
       final SnapSyncConfiguration syncConfig) {
@@ -157,7 +158,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
       final MerkleTrie<Bytes, Bytes> accountTrie =
           new StoredMerklePatriciaTrie<>(
-              worldStateStorage::getAccountStateTrieNode,
+              worldStateStorageCoordinator::getAccountStateTrieNode,
               getRootHash(),
               Function.identity(),
               Function.identity());

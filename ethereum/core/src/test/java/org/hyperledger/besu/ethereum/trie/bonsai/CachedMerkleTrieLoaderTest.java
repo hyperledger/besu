@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValu
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.ArrayList;
@@ -54,6 +55,8 @@ class CachedMerkleTrieLoaderTest {
               storageProvider,
               new NoOpMetricsSystem(),
               DataStorageConfiguration.DEFAULT_BONSAI_CONFIG));
+  private final WorldStateStorageCoordinator worldStateStorageCoordinator =
+      new WorldStateStorageCoordinator(inMemoryWorldState);
 
   final List<Address> accounts =
       List.of(Address.fromHexString("0xdeadbeef"), Address.fromHexString("0xdeadbeee"));
@@ -64,7 +67,7 @@ class CachedMerkleTrieLoaderTest {
   public void setup() {
     trie =
         TrieGenerator.generateTrie(
-            inMemoryWorldState,
+            worldStateStorageCoordinator,
             accounts.stream().map(Address::addressHash).collect(Collectors.toList()));
     merkleTrieLoader = new CachedMerkleTrieLoader(new NoOpMetricsSystem());
   }
