@@ -76,8 +76,8 @@ public class PersistDataStepTest {
     assertThat(result).isSameAs(tasks);
     assertThat(
             worldStateStorageCoordinator
-                .getStrategy(ForestWorldStateKeyValueStorage.class)
-                .getNodeData(tasks.get(0).getData().getRootHash()))
+                .getStrategy(BonsaiWorldStateKeyValueStorage.class)
+                .getTrieNodeUnsafe(tasks.get(0).getData().getRootHash()))
         .isEmpty();
   }
 
