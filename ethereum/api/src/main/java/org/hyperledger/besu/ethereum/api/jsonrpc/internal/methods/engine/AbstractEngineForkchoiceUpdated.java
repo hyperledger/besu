@@ -278,9 +278,10 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
   }
 
   private void logPayload(final EnginePayloadAttributesParameter payloadAttributes) {
-    final LoggingEventBuilder loggingEventBuilder =
+    LoggingEventBuilder loggingEventBuilder =
         LOG.atDebug()
-            .setMessage("timestamp: {}, prevRandao: {}, suggestedFeeRecipient: {}")
+            .setMessage(
+                "payloadAttributes: timestamp: {}, prevRandao: {}, suggestedFeeRecipient: {}")
             .addArgument(payloadAttributes::getTimestamp)
             .addArgument(() -> payloadAttributes.getPrevRandao().toHexString())
             .addArgument(() -> payloadAttributes.getSuggestedFeeRecipient().toHexString())
@@ -288,8 +289,9 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
                 () ->
                     payloadAttributes.getWithdrawals().stream().map(WithdrawalParameter::toString));
     if (payloadAttributes.getParentBeaconBlockRoot() != null) {
-      loggingEventBuilder.addArgument(
-          () -> payloadAttributes.getParentBeaconBlockRoot().toHexString());
+      loggingEventBuilder =
+          loggingEventBuilder.addArgument(
+              () -> payloadAttributes.getParentBeaconBlockRoot().toHexString());
     }
     loggingEventBuilder.log();
   }

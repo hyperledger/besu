@@ -75,7 +75,8 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
     if (blockWithReceipts.isPresent()) {
       final BlockWithReceipts proposal = blockWithReceipts.get();
       LOG.atDebug()
-          .setMessage("assembledBlock {}")
+          .setMessage("assembledBlock for payloadId {}: {}")
+          .addArgument(() -> payloadId)
           .addArgument(() -> proposal.getBlock().toLogString())
           .log();
       LOG.atTrace().setMessage("assembledBlock with receipts {}").addArgument(() -> proposal).log();
