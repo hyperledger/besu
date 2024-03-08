@@ -122,6 +122,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
    * @param config The configuration settings used to find and filter plugins for registration. The
    *     configuration includes the plugin directory, detection type, and any explicit plugin
    *     identifiers if applicable.
+   * @throws IllegalStateException if the system is not in the UNINITIALIZED state.
    */
   public void registerPlugins(final PluginConfiguration config) {
     checkState(
@@ -172,13 +173,6 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     return matchingPlugins;
   }
 
-  /**
-   * Registers a list of plugins if the system is uninitialized. Updates system state throughout the
-   * registration process and adds successfully registered plugins to the system.
-   *
-   * @param pluginsToRegister The list of plugins to be registered.
-   * @throws IllegalStateException if the system is not in the UNINITIALIZED state.
-   */
   private void registerPlugins(final List<BesuPlugin> pluginsToRegister) {
 
     for (final BesuPlugin plugin : pluginsToRegister) {
