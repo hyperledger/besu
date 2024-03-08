@@ -41,7 +41,6 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -211,6 +210,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
         }
       }
     }
+    /*
     // TODO REMOVE THAT for next testnet (added because of a geth issue on block 4810, 5077)
     List<Address> buggyAccount =
         List.of(
@@ -256,7 +256,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
                       "0x0000000000000000000000000000000000000000000000000000000000000000"));
             }
           }
-        });
+        });*/
   }
 
   private void updateCode(

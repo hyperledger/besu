@@ -15,7 +15,6 @@
 package org.hyperledger.besu.evm.processor;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
@@ -170,29 +169,29 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
       if (invalidReason.isEmpty()) {
         frame.decrementRemainingGas(depositFee);
 
-        final long statelessContractCompletionFee = gasCalculator.completedCreateContractGasCost(frame);
+        final long statelessContractCompletionFee =
+            gasCalculator.completedCreateContractGasCost(frame);
 
-        if(frame.getRemainingGas() < statelessContractCompletionFee){
-            LOG.trace(
-                    "Not enough gas to pay the contract creation completion fee for {}: "
-                            + "remaining gas = {} < {} = deposit fee",
-                    frame.getContractAddress(),
-                    frame.getRemainingGas(),
-                    statelessContractCompletionFee);
-            frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-            frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
-        }
-        else{
+        if (frame.getRemainingGas() < statelessContractCompletionFee) {
+          LOG.trace(
+              "Not enough gas to pay the contract creation completion fee for {}: "
+                  + "remaining gas = {} < {} = deposit fee",
+              frame.getContractAddress(),
+              frame.getRemainingGas(),
+              statelessContractCompletionFee);
+          frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+          frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+        } else {
           frame.decrementRemainingGas(statelessContractCompletionFee);
           // Finalize contract creation, setting the contract code.
           final MutableAccount contract =
-                  frame.getWorldUpdater().getOrCreate(frame.getContractAddress());
+              frame.getWorldUpdater().getOrCreate(frame.getContractAddress());
           contract.setCode(contractCode);
           LOG.info(
-                  "Successful creation of contract {} with code of size {} (Gas remaining: {})",
-                  frame.getContractAddress(),
-                  contractCode.size(),
-                  frame.getRemainingGas());
+              "Successful creation of contract {} with code of size {} (Gas remaining: {})",
+              frame.getContractAddress(),
+              contractCode.size(),
+              frame.getRemainingGas());
           frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
         }
 
