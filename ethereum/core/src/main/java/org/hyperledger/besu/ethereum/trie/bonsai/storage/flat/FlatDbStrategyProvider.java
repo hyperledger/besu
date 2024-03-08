@@ -80,7 +80,9 @@ public class FlatDbStrategyProvider {
             composedWorldStateStorage
                 .get(TRIE_BRANCH_STORAGE, FLAT_DB_MODE)
                 .map(Bytes::wrap)
-                .orElse(FlatDbMode.PARTIAL.getVersion()));
+                // .orElse(FlatDbMode.PARTIAL.getVersion()));
+                // TODO: this is for archive testing only, remove me.
+                .orElse(FlatDbMode.ARCHIVE.getVersion()));
     LOG.info("Bonsai flat db mode found {}", flatDbMode);
 
     return flatDbMode;
