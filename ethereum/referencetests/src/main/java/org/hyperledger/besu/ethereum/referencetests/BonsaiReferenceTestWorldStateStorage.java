@@ -23,6 +23,8 @@ import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateLayerSt
 import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldView;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.worldstate.WorldState;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.util.Comparator;
 import java.util.NavigableMap;
@@ -36,11 +38,23 @@ import org.apache.tuweni.rlp.RLP;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiReferenceTestWorldStateStorage extends BonsaiWorldStateLayerStorage {
+  private final BonsaiWorldStateKeyValueStorage parent;
   private final BonsaiPreImageProxy preImageProxy;
 
   public BonsaiReferenceTestWorldStateStorage(
       final BonsaiWorldStateKeyValueStorage parent, final BonsaiPreImageProxy preImageProxy) {
     super(parent);
+    this.parent = parent;
+    this.preImageProxy = preImageProxy;
+  }
+
+  private BonsaiReferenceTestWorldStateStorage(
+      final SnappedKeyValueStorage composedWorldStateStorage,
+      final KeyValueStorage trieLogStorage,
+      final BonsaiWorldStateKeyValueStorage parent,
+      final BonsaiPreImageProxy preImageProxy) {
+    super(composedWorldStateStorage, trieLogStorage, parent);
+    this.parent = parent;
     this.preImageProxy = preImageProxy;
   }
 
@@ -81,5 +95,11 @@ public class BonsaiReferenceTestWorldStateStorage extends BonsaiWorldStateLayerS
         .filter(Optional::isPresent)
         .map(Optional::get)
         .sorted(Comparator.comparing(account -> account.getAddress().orElse(Address.ZERO)));
+  }
+
+  @Override
+  public BonsaiWorldStateKeyValueStorage getContextSafeCopy() {
+    return new BonsaiReferenceTestWorldStateStorage(
+        (SnappedKeyValueStorage) composedWorldStateStorage, trieLogStorage, parent, preImageProxy);
   }
 }
